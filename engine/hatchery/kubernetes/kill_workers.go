@@ -1,7 +1,6 @@
 package kubernetes
 
 import (
-	"strconv"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,25 +28,23 @@ func (h *HatcheryKubernetes) killAwolWorkers() error {
 		if toDelete {
 			// If its a worker "register", check registration before deleting it
 			if strings.Contains(pod.Name, "register-") {
-				var modelIDS string
+				var modelPath string
 				for _, e := range pod.Spec.Containers[0].Env {
-					if e.Name == "CDS_MODEL" {
-						modelIDS = e.Value
+					if e.Name == "CDS_MODEL_PATH" {
+						modelPath = e.Value
 					}
 				}
-				modelID, err := strconv.ParseInt(modelIDS, 10, 64)
-				if err != nil {
-					log.Error("killAndRemove> unable to get model from registering container %s", pod.Name)
-				} else {
-					if err := hatchery.CheckWorkerModelRegister(h, modelID); err != nil {
-						var spawnErr = sdk.SpawnErrorForm{
-							Error: err.Error(),
-						}
-						if err := h.CDSClient().WorkerModelSpawnError(modelID, spawnErr); err != nil {
-							log.Error("killAndRemove> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelID, err)
-						}
+
+				if err := hatchery.CheckWorkerModelRegister(h, modelPath); err != nil {
+					var spawnErr = sdk.SpawnErrorForm{
+						Error: err.Error(),
+					}
+					tuple := strings.SplitN(modelPath, "/", 2)
+					if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
+						log.Error("killAndRemove> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelPath, err)
 					}
 				}
+
 			}
 			if err := h.k8sClient.CoreV1().Pods(pod.Namespace).Delete(pod.Name, nil); err != nil {
 				globalErr = err

@@ -43,7 +43,7 @@ type WorkerArgs struct {
 	Name            string `json:"name"`
 	BaseDir         string `json:"base_dir"`
 	HTTPInsecure    bool   `json:"http_insecure"`
-	Model           int64  `json:"model"`
+	ModelPath       string `json:"model"`
 	HatcheryName    string `json:"hatchery_name"`
 	WorkflowJobID   int64  `json:"workflow_job_id"`
 	TTL             int    `json:"ttl"`

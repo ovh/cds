@@ -333,7 +333,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	//labels are used to make container cleanup easier
 	labels := map[string]string{
-		"worker_model":        strconv.FormatInt(spawnArgs.Model.ID, 10),
+		"worker_model_path":   spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		"worker_name":         name,
 		"worker_requirements": strings.Join(services, ","),
 		"hatchery":            h.Config.Name,
@@ -350,7 +350,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		Token:             h.Configuration().API.Token,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              name,
-		Model:             spawnArgs.Model.ID,
+		ModelPath:         spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		TTL:               h.Config.WorkerTTL,
 		HatcheryName:      h.Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
@@ -386,7 +386,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name
-	envsWm["CDS_MODEL"] = fmt.Sprintf("%d", udataParam.Model)
+	envsWm["CDS_MODEL_PATH"] = udataParam.ModelPath
 	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
 	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)

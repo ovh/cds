@@ -76,8 +76,6 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		go workflow.SendEvent(context.Background(), api.mustDB(), p.Key, report)
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
-
-		return nil
 	}
 }
 

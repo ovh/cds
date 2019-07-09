@@ -69,7 +69,7 @@ loopModels:
 		}
 
 		if h.NeedRegistration(&models[k]) || models[k].CheckRegistration {
-			if err := h.CDSClient().WorkerModelBook(models[k].ID); err != nil {
+			if err := h.CDSClient().WorkerModelBook(models[k].Group.Name, models[k].Name); err != nil {
 				log.Debug("%v", sdk.WrapError(err, "cannot book model %s with id %d", models[k].Name, models[k].ID))
 			} else {
 				log.Info("hatchery> workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
@@ -84,13 +84,13 @@ loopModels:
 }
 
 // CheckWorkerModelRegister checks if a model has been registered, if not it raises an error on the API
-func CheckWorkerModelRegister(h Interface, modelID int64) error {
+func CheckWorkerModelRegister(h Interface, modelPath string) error {
 	var sendError bool
 	var m *sdk.Model
 	for i := range models {
 		m = &models[i]
 		year, month, day := m.LastRegistration.Date()
-		if m.ID == modelID {
+		if m.Group.Name+"/"+m.Name == modelPath {
 			sendError = year == 1 && month == 1 && day == 1
 			log.Debug("checking last registration date of %s: %v (%v)", m.Name, m.LastRegistration, sendError)
 			break

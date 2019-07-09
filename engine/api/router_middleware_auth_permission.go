@@ -2,9 +2,12 @@ package api
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/workflow"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/group"
@@ -24,13 +27,14 @@ func permissionFunc(api *API) map[string]PermCheckFunc {
 		"permProjectKey":        api.checkProjectPermissions,
 		"permWorkflowName":      api.checkWorkflowPermissions,
 		"permGroupName":         api.checkGroupPermissions,
-		"permModelID":           api.checkWorkerModelPermissions,
+		"permModelName":         api.checkWorkerModelPermissions,
 		"permActionName":        api.checkActionPermissions,
 		"permActionBuiltinName": api.checkActionBuiltinPermissions,
 		"permTemplateSlug":      api.checkTemplateSlugPermissions,
 		"permUsername":          api.checkUserPermissions,
 		"permConsumerID":        api.checkConsumerPermissions,
 		"permSessionID":         api.checkSessionPermissions,
+		"permID":                api.checkJobIDPermissions,
 	}
 }
 
@@ -42,6 +46,49 @@ func (api *API) checkPermission(ctx context.Context, routeVar map[string]string,
 			}
 		}
 	}
+	return nil
+}
+
+func (api *API) checkJobIDPermissions(ctx context.Context, permID string, perm int, routeVars map[string]string) error {
+	ctx, end := observability.Span(ctx, "api.checkJobIDPermissions")
+	defer end()
+
+	id, err := strconv.ParseInt(permID, 10, 64)
+	if err != nil {
+		log.Error("checkJobIDPermissions> Unable to parse permID:%s err:%v", permID, err)
+		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", permID)
+	}
+
+	runNodeJob, err := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+	if err != nil {
+		log.Error("checkWorkerPermission> Unable to load job %d err:%v", id, err)
+		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", permID)
+	}
+
+	// If the expected permission if >= RX and the consumer is a worker
+	// We check that the worker has took this job
+	if wk, isWorker := api.isWorker(ctx); isWorker && perm >= sdk.PermissionReadExecute {
+		var ok bool
+		k := cache.Key("api:workers", getAPIConsumer(ctx).ID, "perm", permID)
+		if api.Cache.Get(k, &ok) && ok {
+			return nil
+		}
+
+		if wk.JobRunID != nil && runNodeJob.ID == *wk.JobRunID {
+			ok = true
+		}
+		api.Cache.SetWithTTL(k, ok, 60*60)
+		if !ok {
+			return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", permID)
+		}
+		return nil
+	}
+
+	// Else we check the exec groups
+	if !runNodeJob.ExecGroups.HasOneOf(getAPIConsumer(ctx).GetGroupIDs()...) && !isAdmin(ctx) {
+		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", permID)
+	}
+
 	return nil
 }
 
@@ -67,17 +114,18 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 			log.Debug("checkProjectPermissions> %s(%s) access granted to %s because is maintainer", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
 			observability.Current(ctx, observability.Tag(observability.TagPermission, "is_maintainer"))
 			return nil
-		} else {
-			// If it's about Execute of Write: we have to check if the user is an admin
-			if !isAdmin(ctx) {
-				// The caller doesn't enough permission level from its groups and is not an admin
-				log.Debug("checkProjectPermissions> %s(%s) is not authorized to %s", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
-				return sdk.WrapError(sdk.ErrForbidden, "not authorized for project %s", projectKey)
-			}
-			log.Debug("checkProjectPermissions> %s(%s) access granted to %s because is admin", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
-			observability.Current(ctx, observability.Tag(observability.TagPermission, "is_admin"))
-			return nil
 		}
+
+		// If it's about Execute of Write: we have to check if the user is an admin
+		if !isAdmin(ctx) {
+			// The caller doesn't enough permission level from its groups and is not an admin
+			log.Debug("checkProjectPermissions> %s(%s) is not authorized to %s", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
+			return sdk.WrapError(sdk.ErrForbidden, "not authorized for project %s", projectKey)
+		}
+		log.Debug("checkProjectPermissions> %s(%s) access granted to %s because is admin", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
+		observability.Current(ctx, observability.Tag(observability.TagPermission, "is_admin"))
+		return nil
+
 	}
 	log.Debug("checkWorkflowPermissions> %s(%s) access granted to %s because has permission (max permission = %d)", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey, maxLevelPermission)
 	observability.Current(ctx, observability.Tag(observability.TagPermission, "is_granted"))

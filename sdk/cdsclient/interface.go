@@ -260,7 +260,7 @@ type UserClient interface {
 
 // WorkerClient exposes workers functions
 type WorkerClient interface {
-	WorkerModelBook(id int64) error
+	WorkerModelBook(groupName, name string) error
 	WorkerList(ctx context.Context) ([]sdk.Worker, error)
 	WorkerRefresh(ctx context.Context) error
 	WorkerUnregister(ctx context.Context) error
@@ -268,7 +268,7 @@ type WorkerClient interface {
 	WorkerModelAdd(name, modelType, patternName string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModel(groupName, name string) (sdk.Model, error)
 	WorkerModelDelete(groupName, name string) error
-	WorkerModelSpawnError(id int64, info sdk.SpawnErrorForm) error
+	WorkerModelSpawnError(groupName, name string, info sdk.SpawnErrorForm) error
 	WorkerModels(*WorkerModelFilter) ([]sdk.Model, error)
 	WorkerModelsEnabled() ([]sdk.Model, error)
 	WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)

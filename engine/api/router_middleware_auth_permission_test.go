@@ -523,3 +523,7 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 		}
 	}
 }
+
+func Test_checkJobIDPermissions(t *testing.T) {
+	// TODO
+}

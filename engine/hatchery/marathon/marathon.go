@@ -239,7 +239,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              workerName,
 		TTL:               h.Config.WorkerTTL,
-		Model:             spawnArgs.Model.ID,
+		ModelPath:         spawnArgs.Model.GetPath(spawnArgs.Model.Group.Name),
 		HatcheryName:      h.Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
@@ -293,7 +293,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name
-	envsWm["CDS_MODEL"] = fmt.Sprintf("%d", udataParam.Model)
+	envsWm["CDS_MODEL_PATH"] = udataParam.ModelPath
 	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
 	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
@@ -578,17 +578,14 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 			log.Debug("killAwolWorkers> killing awol worker %s", app.ID)
 			// If its a worker "register", check registration before deleting it
 			if strings.Contains(app.ID, "register-") && app.Env != nil {
-				modelID, err := strconv.ParseInt((*app.Env)["CDS_MODEL"], 10, 64)
-				if err != nil {
-					log.Error("killAndRemove> unable to get model from registering container %s", app.ID)
-				} else {
-					if err := hatchery.CheckWorkerModelRegister(h, modelID); err != nil {
-						var spawnErr = sdk.SpawnErrorForm{
-							Error: err.Error(),
-						}
-						if err := h.CDSClient().WorkerModelSpawnError(modelID, spawnErr); err != nil {
-							log.Error("killAndRemove> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelID, err)
-						}
+				model := (*app.Env)["CDS_MODEL_PATH"]
+				if err := hatchery.CheckWorkerModelRegister(h, model); err != nil {
+					var spawnErr = sdk.SpawnErrorForm{
+						Error: err.Error(),
+					}
+					tuple := strings.SplitN(model, "/", 2)
+					if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
+						log.Error("killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", model, err)
 					}
 				}
 			}

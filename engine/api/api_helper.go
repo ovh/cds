@@ -78,19 +78,6 @@ func getAuthSession(c context.Context) *sdk.AuthSession {
 	return u
 }
 
-func JWTRaw(c context.Context) string {
-	i := c.Value(contextJWTRaw)
-	if i == nil {
-		log.Debug("api.JWTRaw> no jwt raw token found in context")
-		return ""
-	}
-	u, ok := i.(string)
-	if !ok {
-		return ""
-	}
-	return u
-}
-
 func (a *API) mustDB() *gorp.DbMap {
 	db := a.DBConnectionFactory.GetDBMap()
 	if db == nil {

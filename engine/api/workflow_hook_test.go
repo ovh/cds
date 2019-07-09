@@ -38,8 +38,6 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
-	// TODO
-	//loadUserPermissions(db, cache, u)
 	proj, _ = project.LoadByID(db, cache, proj.ID,
 		project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines,

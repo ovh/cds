@@ -85,7 +85,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 				var spawnError = sdk.SpawnErrorForm{
 					Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
 				}
-				if err := h.CDSClient().WorkerModelSpawnError(m.ID, spawnError); err != nil {
+				if err := h.CDSClient().WorkerModelSpawnError(m.Group.Name, m.Name, spawnError); err != nil {
 					log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
 				}
 			}

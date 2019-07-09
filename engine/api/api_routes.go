@@ -364,9 +364,7 @@ func (api *API) InitRouter() {
 
 	// Worker models
 	r.Handle("/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.POST(api.postWorkerModelHandler), r.GET(api.getWorkerModelsHandler))
-	r.Handle("/worker/model/book/{permModelID}", Scope(sdk.AuthConsumerScopeWorkerModel), r.PUT(api.bookWorkerModelHandler /*NeedHatchery()*/))
-	r.Handle("/worker/model/error/{permModelID}", Scope(sdk.AuthConsumerScopeWorkerModel), r.PUT(api.spawnErrorWorkerModelHandler /*NeedHatchery()*/))
-	r.Handle("/worker/model/enabled", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsEnabledHandler /*NeedHatchery()*/))
+	r.Handle("/worker/model/enabled", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsEnabledHandler))
 	r.Handle("/worker/model/type", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelTypesHandler))
 	r.Handle("/worker/model/communication", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelCommunicationsHandler))
 	r.Handle("/worker/model/capability/type", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getRequirementTypesHandler))
@@ -376,11 +374,14 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/{permGroupName}/{permModelName}", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelHandler), r.PUT(api.putWorkerModelHandler), r.DELETE(api.deleteWorkerModelHandler))
 	r.Handle("/worker/model/{permGroupName}/{permModelName}/export", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelExportHandler))
 	r.Handle("/worker/model/{permGroupName}/{permModelName}/usage", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelUsageHandler))
+	r.Handle("/worker/model/{permGroupName}/{permModelName}/book", Scope(sdk.AuthConsumerScopeWorkerModel), r.PUT(api.putBookWorkerModelHandler))
+	r.Handle("/worker/model/{permGroupName}/{permModelName}/error", Scope(sdk.AuthConsumerScopeWorkerModel), r.PUT(api.putSpawnErrorWorkerModelHandler))
+
 	r.Handle("/project/{permProjectKey}/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsForProjectHandler))
 	r.Handle("/group/{groupID}/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsForGroupHandler))
 
 	// Workflows
-	r.Handle("/workflow/hook", Scope(sdk.AuthConsumerScopeHooks), r.GET(api.getWorkflowHooksHandler /*, NeedService()*/))
+	r.Handle("/workflow/hook", Scope(sdk.AuthConsumerScopeHooks), r.GET(api.getWorkflowHooksHandler))
 	r.Handle("/workflow/hook/model/{model}", ScopeNone(), r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
 	// SSE

@@ -6,7 +6,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -66,9 +65,6 @@ func (api *API) postWorkerModelHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "unable to commit transaction")
 		}
-
-		key := cache.Key("api:workermodels:*")
-		api.Cache.DeleteAll(key)
 
 		// reload complete worker model
 		new, err := workermodel.LoadByID(api.mustDB(), model.ID)
@@ -149,9 +145,6 @@ func (api *API) putWorkerModelHandler() service.Handler {
 			return sdk.WrapError(err, "unable to commit transaction")
 		}
 
-		key := cache.Key("api:workermodels:*")
-		api.Cache.DeleteAll(key)
-
 		new, err := workermodel.LoadByID(api.mustDB(), model.ID)
 		if err != nil {
 			return err
@@ -192,9 +185,6 @@ func (api *API) deleteWorkerModelHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
-
-		key := cache.Key("api:workermodels:*")
-		api.Cache.DeleteAll(key)
 
 		return nil
 	}

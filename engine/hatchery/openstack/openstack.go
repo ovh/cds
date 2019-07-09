@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rsa"
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -414,25 +413,23 @@ func (h *HatcheryOpenstack) deleteServer(s servers.Server) error {
 
 	// If its a worker "register", check registration before deleting it
 	if strings.Contains(s.Name, "register-") {
-		modelID, err := strconv.ParseInt(s.Metadata["worker_model_id"], 10, 64)
+		modelPath := s.Metadata["worker_model_path"]
+		//Send registering logs....
+		consoleLog, err := h.getConsoleLog(s)
 		if err != nil {
-			log.Error("killAndRemove> unable to get model from registering server %s", s.Name)
-		} else {
-			//Send registering logs....
-			consoleLog, err := h.getConsoleLog(s)
-			if err != nil {
-				log.Error("killAndRemove> unable to get console log from registering server %s: %v", s.Name, err)
+			log.Error("killAndRemove> unable to get console log from registering server %s: %v", s.Name, err)
+		}
+		if err := hatchery.CheckWorkerModelRegister(h, modelPath); err != nil {
+			var spawnErr = sdk.SpawnErrorForm{
+				Error: err.Error(),
+				Logs:  []byte(consoleLog),
 			}
-			if err := hatchery.CheckWorkerModelRegister(h, modelID); err != nil {
-				var spawnErr = sdk.SpawnErrorForm{
-					Error: err.Error(),
-					Logs:  []byte(consoleLog),
-				}
-				if err := h.CDSClient().WorkerModelSpawnError(modelID, spawnErr); err != nil {
-					log.Error("CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelID, spawnErr)
-				}
+			tuple := strings.SplitN(modelPath, "/", 2)
+			if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
+				log.Error("CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", modelPath, spawnErr)
 			}
 		}
+
 	}
 
 	r := servers.Delete(h.openstackClient, s.ID)

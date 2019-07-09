@@ -4,13 +4,14 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ovh/cds/engine/api/cache"
+	"github.com/gorilla/mux"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) bookWorkerModelHandler() service.Handler {
+func (api *API) putBookWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// this handler should only answer to an hatchery
 		s, ok := api.isHatchery(ctx)
@@ -18,13 +19,21 @@ func (api *API) bookWorkerModelHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		// TODO permModelID middleware
-		workerModelID, errr := requestVarInt(r, "permModelID")
-		if errr != nil {
-			return sdk.WrapError(errr, "invalid permModelID")
+		vars := mux.Vars(r)
+
+		groupName := vars["permGroupName"]
+		modelName := vars["permModelName"]
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		if err != nil {
+			return err
 		}
 
-		if err := workermodel.BookForRegister(api.Cache, workerModelID, s.ID); err != nil {
+		m, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load worker model")
+		}
+
+		if err := workermodel.BookForRegister(api.Cache, m.ID, s.ID); err != nil {
 			return sdk.WithStack(err)
 		}
 
@@ -32,16 +41,25 @@ func (api *API) bookWorkerModelHandler() service.Handler {
 	}
 }
 
-func (api *API) spawnErrorWorkerModelHandler() service.Handler {
+func (api *API) putSpawnErrorWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var spawnErrorForm sdk.SpawnErrorForm
 		if err := service.UnmarshalBody(r, &spawnErrorForm); err != nil {
 			return sdk.WrapError(err, "Unable to parse spawn error form")
 		}
 
-		workerModelID, err := requestVarInt(r, "permModelID")
+		vars := mux.Vars(r)
+
+		groupName := vars["permGroupName"]
+		modelName := vars["permModelName"]
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
+		}
+
+		model, err := workermodel.LoadByNameAndGroupID(api.mustDB(), modelName, g.ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load worker model")
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -49,11 +67,6 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 		defer tx.Rollback() // nolint
-
-		model, err := workermodel.LoadByID(tx, workerModelID)
-		if err != nil {
-			return err
-		}
 
 		if spawnErrorForm.Error == "" && len(spawnErrorForm.Logs) == 0 {
 			return nil
@@ -67,9 +80,7 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		key := cache.Key("api:workermodels:*")
-		api.Cache.DeleteAll(key)
-		workermodel.UnbookForRegister(api.Cache, workerModelID)
+		workermodel.UnbookForRegister(api.Cache, model.ID)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}

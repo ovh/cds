@@ -23,7 +23,7 @@ type annotation struct {
 	WorkerName              string    `json:"worker_name"`
 	RegisterOnly            bool      `json:"register_only"`
 	WorkerModelName         string    `json:"worker_model_name"`
-	WorkerModelID           int64     `json:"worker_model_id"`
+	WorkerModelPath         string    `json:"worker_model_path"`
 	WorkerModelLastModified string    `json:"worker_model_last_modified"`
 	Model                   bool      `json:"model"`
 	ToDelete                bool      `json:"to_delete"`
@@ -59,7 +59,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		RegisterOnly:            spawnArgs.RegisterOnly,
 		WorkerModelLastModified: fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
 		WorkerModelName:         spawnArgs.Model.Name,
-		WorkerModelID:           spawnArgs.Model.ID,
+		WorkerModelPath:         spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		Created:                 time.Now(),
 	}
 
@@ -196,7 +196,7 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, model sdk
 		API:               h.Configuration().API.HTTP.URL,
 		Name:              name,
 		Token:             h.Configuration().API.Token,
-		Model:             model.ID,
+		ModelPath:         model.Group.Name + "/" + model.Name,
 		HatcheryName:      h.Name,
 		TTL:               h.Config.WorkerTTL,
 		FromWorkerImage:   true,

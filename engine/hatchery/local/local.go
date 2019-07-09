@@ -245,13 +245,12 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	}
 
 	udataParam := sdk.WorkerArgs{
-		API:          h.Configuration().API.HTTP.URL,
-		Token:        h.Configuration().API.Token,
-		BaseDir:      basedir,
-		HTTPInsecure: h.Config.API.HTTP.Insecure,
-		// TODO
-		//Name:              wName,
-		Model:             spawnArgs.Model.ID,
+		API:               h.Configuration().API.HTTP.URL,
+		Token:             h.Configuration().API.Token,
+		BaseDir:           basedir,
+		HTTPInsecure:      h.Config.API.HTTP.Insecure,
+		Name:              spawnArgs.WorkerName,
+		ModelPath:         spawnArgs.Model.GetPath(spawnArgs.Model.Group.Name),
 		HatcheryName:      h.Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,

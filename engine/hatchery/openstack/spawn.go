@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -90,7 +89,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		API:               h.Configuration().API.HTTP.URL,
 		Name:              name,
 		Token:             h.Configuration().API.Token,
-		Model:             spawnArgs.Model.ID,
+		ModelPath:         spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		HatcheryName:      h.Name,
 		TTL:               h.Config.WorkerTTL,
 		FromWorkerImage:   withExistingImage,
@@ -119,7 +118,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		"register_only":              fmt.Sprintf("%t", spawnArgs.RegisterOnly),
 		"flavor":                     spawnArgs.Model.ModelVirtualMachine.Flavor,
 		"model":                      spawnArgs.Model.ModelVirtualMachine.Image,
-		"worker_model_id":            strconv.FormatInt(udataParam.Model, 10),
+		"worker_model_path":          spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		"worker_model_name":          spawnArgs.Model.Name,
 		"worker_model_last_modified": fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
 	}

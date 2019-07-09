@@ -81,7 +81,7 @@ func provisioning(h Interface, models []sdk.Model) {
 							Error: fmt.Sprintf("hatchery %s cannot spawn worker %s for provisioning", h.Service().Name, m.Name),
 							Logs:  []byte(errSpawn.Error()),
 						}
-						if err := h.CDSClient().WorkerModelSpawnError(m.ID, spawnError); err != nil {
+						if err := h.CDSClient().WorkerModelSpawnError(m.Group.Name, m.Name, spawnError); err != nil {
 							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %v", arg.WorkerName, m.Name, errSpawn)
 						}
 					}
