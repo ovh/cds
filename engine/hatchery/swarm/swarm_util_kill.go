@@ -66,7 +66,7 @@ func (h *HatcherySwarm) killAndRemove(dockerClient *dockerClient, ID string) err
 
 				tuple := strings.SplitN(modelPath, "/", 2)
 				if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
-					log.Error("hatchery> swarm> killAndRemove> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelPath, err)
+					log.Error("hatchery> swarm> killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", modelPath, err)
 				}
 			}
 		}

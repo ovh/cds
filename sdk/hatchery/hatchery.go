@@ -374,12 +374,15 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 
 // SendSpawnInfo sends a spawnInfo
 func SendSpawnInfo(ctx context.Context, h Interface, jobID int64, spawnMsg sdk.SpawnMsg) {
+	if h.CDSClient() == nil {
+		return
+	}
 	infos := []sdk.SpawnInfo{{RemoteTime: time.Now(), Message: spawnMsg}}
-	ctxc, cancel := context.WithTimeout(ctx, 10*time.Second)
-	if err := h.CDSClient().QueueJobSendSpawnInfo(ctxc, jobID, infos); err != nil {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	if err := h.CDSClient().QueueJobSendSpawnInfo(ctx, jobID, infos); err != nil {
 		log.Warning("spawnWorkerForJob> cannot client.sendSpawnInfo for job %d: %s", jobID, err)
 	}
-	cancel()
 }
 
 func logTime(h Interface, name string, then time.Time) {
