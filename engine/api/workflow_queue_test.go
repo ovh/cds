@@ -802,7 +802,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 
 	// Create user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	// Create project
 	key := sdk.RandomString(10)
