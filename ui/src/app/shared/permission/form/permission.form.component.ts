@@ -1,14 +1,15 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Group, GroupPermission } from 'app/model/group.model';
 import { GroupService } from 'app/service/group/group.service';
 import { PermissionEvent } from 'app/shared/permission/permission.event.model';
 import { PermissionService } from 'app/shared/permission/permission.service';
-import { first } from 'rxjs/operators';
+import { finalize, first } from 'rxjs/operators';
 
 @Component({
     selector: 'app-permission-form',
     templateUrl: './permission.form.html',
-    styleUrls: ['./permission.form.scss']
+    styleUrls: ['./permission.form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PermissionFormComponent {
     public ready = false;
@@ -23,7 +24,7 @@ export class PermissionFormComponent {
 
     @Output() createGroupPermissionEvent = new EventEmitter<PermissionEvent>();
 
-    constructor(_permService: PermissionService, private _groupService: GroupService) {
+    constructor(_permService: PermissionService, private _groupService: GroupService, private _cd: ChangeDetectorRef) {
         this.newGroupPermission = new GroupPermission();
         this.permissionList = _permService.getPermissions();
         this.loadGroups();
@@ -36,7 +37,7 @@ export class PermissionFormComponent {
     }
 
     loadGroups() {
-        this._groupService.getAll().pipe(first()).subscribe(groups => {
+        this._groupService.getAll().pipe(first(), finalize(() => this._cd.markForCheck())).subscribe(groups => {
             this.groupList = groups;
             this.ready = true;
         });

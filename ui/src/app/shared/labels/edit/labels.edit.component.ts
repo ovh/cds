@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { PermissionValue } from 'app/model/permission.model';
@@ -10,10 +10,20 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-labels-edit',
     templateUrl: './labels.edit.component.html',
-    styleUrls: ['./labels.edit.component.scss']
+    styleUrls: ['./labels.edit.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LabelsEditComponent {
-    @Input() project: Project;
+    _project: Project;
+    @Input('project') set project(data: Project) {
+        this._project = data;
+        if (this._project) {
+            this.labels = cloneDeep(this.project.labels);
+        }
+    }
+    get project() {
+        return this._project;
+    }
 
     @ViewChild('labelsEditModal', {static: false})
     public labelsEditModal: ModalTemplate<boolean, boolean, void>;
@@ -27,7 +37,8 @@ export class LabelsEditComponent {
 
     constructor(
         private store: Store,
-        private _suiService: SuiModalService
+        private _suiService: SuiModalService,
+        private _cd: ChangeDetectorRef
     ) {
 
     }
@@ -37,7 +48,6 @@ export class LabelsEditComponent {
             return;
         }
         this.newLabel = new Label();
-        this.labels = cloneDeep(this.project.labels);
         this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.labelsEditModal);
         this.modalConfig.mustScroll = true;
         this.modal = this._suiService.open(this.modalConfig);
@@ -63,6 +73,7 @@ export class LabelsEditComponent {
         })).pipe(finalize(() => {
             this.loading = false;
             this.newLabel = new Label();
+            this._cd.markForCheck();
         })).subscribe(() => {
             if (close) {
                 this.modal.approve(true);

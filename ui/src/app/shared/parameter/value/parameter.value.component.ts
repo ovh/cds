@@ -1,13 +1,4 @@
-import {
-    AfterViewChecked,
-    ChangeDetectionStrategy,
-    Component,
-    EventEmitter,
-    Input,
-    OnInit,
-    Output,
-    ViewChild
-} from '@angular/core';
+import { AfterViewChecked, ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { AllKeys } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Project } from 'app/model/project.model';
@@ -72,7 +63,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
     @Output() valueChange = new EventEmitter<string | number | boolean>();
     @Output() valueUpdating = new EventEmitter<boolean>();
 
-    @ViewChild('codeMirror', {static: false}) codemirror: any;
+    @ViewChild('codeMirror', { static: false }) codemirror: any;
 
     codeMirrorConfig: any;
     repositoriesManager: Array<RepositoriesManager>;
@@ -204,5 +195,9 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
                     this.loadingRepos = false;
                 });
         }
+    }
+
+    keyExist(key: string): boolean {
+        return this.keys.ssh.find((k) => k.name === key) != null;
     }
 }

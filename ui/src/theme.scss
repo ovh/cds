@@ -9,6 +9,8 @@ $darkTheme_grey_4: #494949;
 $darkTheme_grey_5: #a2a3a3; // title on darkTheme_grey_1
 $darkTheme_grey_6: #cccccc; // text on darkTheme_grey_1
 
+$darkTheme_grey_inactive: #676767;
+
 $darkTheme_green: #007611;
 $darkTheme_blue: #0070d9;
 $darkTheme_red: #e42805;
@@ -145,6 +147,12 @@ a.ui.card:hover,
   .night & {
     color: $darkTheme_grey_5;
   }
+}
+
+.ui.ui.menu .item.disabled {
+    .night & {
+        color: $darkTheme_grey_inactive;
+    }
 }
 
 .ui.secondary.menu {

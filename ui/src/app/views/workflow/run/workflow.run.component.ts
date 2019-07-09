@@ -17,6 +17,7 @@ import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import { ErrorMessageMap } from './errors';
 
 @Component({
     selector: 'app-workflow-run',
@@ -25,7 +26,7 @@ import { filter } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowRunComponent implements OnInit {
-    @ViewChild('workflowRunParam', {static: false})
+    @ViewChild('workflowRunParam', { static: false })
     runWithParamComponent: WorkflowNodeRunParamComponent;
 
     workflow: Workflow;
@@ -50,6 +51,7 @@ export class WorkflowRunComponent implements OnInit {
     parentParamsSubs: Subscription;
     qpsSubs: Subscription;
     loadingRun = true;
+    errorsMap = ErrorMessageMap;
 
     // copy of root node to send it into run modal
     nodeToRun: WNode;

@@ -192,7 +192,9 @@ var (
 	ErrInvalidPayloadVariable                        = Error{ID: 176, Status: http.StatusBadRequest}
 	ErrRepositoryUsedByHook                          = Error{ID: 177, Status: http.StatusForbidden}
 	ErrResourceNotInProject                          = Error{ID: 178, Status: http.StatusForbidden}
-	ErrSignupDisabled                                = Error{ID: 179, Status: http.StatusForbidden}
+	ErrEnvironmentNotFound                           = Error{ID: 179, Status: http.StatusBadRequest}
+	ErrIntegrationtNotFound                          = Error{ID: 180, Status: http.StatusBadRequest}
+	ErrSignupDisabled                                = Error{ID: 181, Status: http.StatusForbidden}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -367,6 +369,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidPassword.ID:                               "Your value of type password isn't correct",
 	ErrRepositoryUsedByHook.ID:                          "There is still a hook on this repository",
 	ErrResourceNotInProject.ID:                          "The resource is not attached to the project",
+	ErrEnvironmentNotFound.ID:                           "environment not found",
+	ErrIntegrationtNotFound.ID:                          "integration not found",
 	ErrSignupDisabled.ID:                                "Sign up is disabled for target consumer type",
 }
 
@@ -542,6 +546,7 @@ var errorsFrench = map[int]string{
 	ErrInvalidPassword.ID:                               "Votre valeur de type mot de passe n'est pas correct",
 	ErrRepositoryUsedByHook.ID:                          "Il y a encore un hook sur ce dépôt",
 	ErrResourceNotInProject.ID:                          "La ressource n'est pas lié au projet",
+	ErrEnvironmentNotFound.ID:                           "l'environnement n'existe pas",
 	ErrSignupDisabled.ID:                                "La création de compte est désactivée pour ce mode d'authentification.",
 }
 
@@ -776,6 +781,12 @@ func WithStack(err error) error {
 	}
 }
 
+// ErrorWithData returns an error with data from given error.
+func ErrorWithData(err Error, data interface{}) error {
+	err.Data = data
+	return err
+}
+
 // ExtractHTTPError tries to recognize given error and return http error
 // with message in a language matching Accepted-Language.
 func ExtractHTTPError(source error, al string) Error {
@@ -839,16 +850,14 @@ func ErrorIs(err error, target Error) bool {
 		return false
 	}
 
-	if e, ok := err.(Error); ok {
-		return e.ID == target.ID
-	}
-
-	if e, ok := err.(errorWithStack); ok {
+	switch e := err.(type) {
+	case errorWithStack:
 		return e.httpError.ID == target.ID
+	case Error:
+		return e.ID == target.ID
+	default:
+		return target.ID == ErrUnknownError.ID
 	}
-
-	// if err is not of type Error or errorWithStack, it's a unknown error
-	return target.ID == ErrUnknownError.ID
 }
 
 // Cause returns recursively the root error from given error.

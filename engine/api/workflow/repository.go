@@ -87,11 +87,12 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	ope sdk.Operation, ident sdk.Identifiable, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.extractWorkflow")
 	defer end()
-
+	var allMsgs []sdk.Message
 	// Read files
 	tr, err := ReadCDSFiles(ope.LoadFiles.Results)
 	if err != nil {
-		return nil, sdk.WrapError(err, "unable to read cds files")
+		allMsgs = append(allMsgs, sdk.NewMessage(sdk.MsgWorkflowErrorBadCdsDir))
+		return allMsgs, sdk.WrapError(err, "unable to read cds files")
 	}
 	ope.RepositoryStrategy.SSHKeyContent = ""
 	opt := &PushOption{
@@ -107,7 +108,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 
 	allMsg, workflowPushed, errP := Push(ctx, db, store, p, tr, opt, ident, decryptFunc)
 	if errP != nil {
-		return nil, sdk.WrapError(errP, "unable to get workflow from file")
+		return allMsg, sdk.WrapError(errP, "unable to get workflow from file")
 	}
 	*w = *workflowPushed
 
@@ -115,7 +116,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		log.Debug("workflow.extractWorkflow> Workflow has been renamed from %s to %s", w.Name, workflowPushed.Name)
 	}
 
-	return allMsg, nil
+	return append(allMsgs, allMsg...), nil
 }
 
 // ReadCDSFiles reads CDS files

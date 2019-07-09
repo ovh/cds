@@ -1,4 +1,13 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
@@ -14,7 +23,8 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-vcs-strategy',
     templateUrl: './vcs.strategy.html',
-    styleUrls: ['./vcs.strategy.scss']
+    styleUrls: ['./vcs.strategy.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VCSStrategyComponent implements OnInit {
     @Input() project: Project;
@@ -55,7 +65,8 @@ export class VCSStrategyComponent implements OnInit {
         private _keyService: KeyService,
         private _modalService: SuiModalService,
         private _toast: ToastService,
-        private _translate: TranslateService
+        private _translate: TranslateService,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit() {
@@ -67,11 +78,15 @@ export class VCSStrategyComponent implements OnInit {
 
     loadKeys() {
         if (this.projectKeysOnly) {
-            this._keyService.getProjectKeys(this.project.key).subscribe(k => {
+            this._keyService.getProjectKeys(this.project.key)
+                .pipe(finalize(() => this._cd.markForCheck()))
+                .subscribe(k => {
                 this.keys = k;
             });
         } else {
-            this._keyService.getAllKeys(this.project.key, this.appName).subscribe(k => {
+            this._keyService.getAllKeys(this.project.key, this.appName)
+                .pipe(finalize(() => this._cd.markForCheck()))
+                .subscribe(k => {
                 this.keys = k;
             });
         }

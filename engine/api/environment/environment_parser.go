@@ -31,7 +31,7 @@ func ParseAndImport(db gorp.SqlExecutor, proj *sdk.Project, eenv *exportentities
 
 	//Check if env exist
 	oldEnv, errl := LoadEnvironmentByName(db, proj.Key, eenv.Name)
-	if errl != nil && !sdk.ErrorIs(errl, sdk.ErrNoEnvironment) {
+	if errl != nil && !sdk.ErrorIs(errl, sdk.ErrEnvironmentNotFound) {
 		return nil, nil, sdk.WrapError(errl, "ParseAndImport>> Unable to load environment")
 	}
 

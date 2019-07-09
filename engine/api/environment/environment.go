@@ -77,7 +77,7 @@ func Lock(db gorp.SqlExecutor, projectKey, envName string) error {
 	) FOR UPDATE SKIP LOCKED
 	`, projectKey, envName)
 	if err == sql.ErrNoRows {
-		return sdk.ErrNoEnvironment
+		return sdk.ErrEnvironmentNotFound
 	}
 	return err
 }
@@ -93,7 +93,7 @@ func LoadEnvironmentByID(db gorp.SqlExecutor, ID int64) (*sdk.Environment, error
 		 	WHERE id = $1`
 	if err := db.QueryRow(query, ID).Scan(&env.ID, &env.Name, &env.ProjectID, &env.FromRepository); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoEnvironment
+			return nil, sdk.ErrEnvironmentNotFound
 		}
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sd
 	var lastModified time.Time
 	if err := db.QueryRow(query, projectKey, envName).Scan(&env.ID, &env.Name, &env.ProjectID, &env.FromRepository, &lastModified); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoEnvironment
+			return nil, sdk.ErrorWithData(sdk.ErrEnvironmentNotFound, envName)
 		}
 		return nil, err
 	}

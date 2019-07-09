@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { LinkLabelOnWorkflow, UnlinkLabelOnWorkflow } from 'app/store/workflow.action';
+import { AddLabelWorkflowInProject, DeleteLabelWorkflowInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
 import { IdName, Label, Project } from '../../../../../model/project.model';
 import { Warning } from '../../../../../model/warning.model';
@@ -13,7 +13,18 @@ import { HelpersService } from '../../../../../service/helpers/helpers.service';
 })
 export class ProjectWorkflowListBlocsComponent {
 
-  @Input() project: Project;
+  _project: Project;
+  @Input('project') set project(data: Project) {
+      this._project = data;
+      if (data && data.labels) {
+          let labelFilter = this.labelFilter.toLowerCase();
+          this.filteredLabels = data.labels.filter((lbl) => lbl.name.toLowerCase().indexOf(labelFilter) !== -1);
+      }
+  }
+  get project() {
+      return this._project;
+  }
+
   @Input() warnMap: Map<string, Array<Warning>>;
   @Input('workflows')
   set workflows(workflows: IdName[]) {
@@ -34,31 +45,20 @@ export class ProjectWorkflowListBlocsComponent {
   get workflows(): IdName[] {
     return this._workflows;
   }
-  @Input('labels')
-  set labels(labels: Label[]) {
-    this._labels = labels;
-    if (labels) {
-      let labelFilter = this.labelFilter.toLowerCase();
-      this.filteredLabels = labels.filter((lbl) => lbl.name.toLowerCase().indexOf(labelFilter) !== -1);
-    }
-  }
-  get labels(): Label[] {
-    return this._labels;
-  }
+
   @Output() edit = new EventEmitter<null>();
 
   set labelFilter(filter: string) {
     this._filterLabel = filter;
-    if (this.labels) {
+    if (this.project.labels) {
       let filterLower = filter.toLowerCase();
-      this.filteredLabels = this.labels.filter((lbl) => lbl.name.toLowerCase().indexOf(filterLower) !== -1);
+      this.filteredLabels = this.project.labels.filter((lbl) => lbl.name.toLowerCase().indexOf(filterLower) !== -1);
     }
   }
   get labelFilter(): string {
     return this._filterLabel;
   }
 
-  _labels: Label[];
   _workflows: IdName[];
   _filterLabel = '';
 
@@ -73,8 +73,7 @@ export class ProjectWorkflowListBlocsComponent {
 
   linkLabelToWorkflow(wfName: string, label: Label) {
     this.loadingLabel = true;
-    this.store.dispatch(new LinkLabelOnWorkflow({
-      projectKey: this.project.key,
+    this.store.dispatch(new AddLabelWorkflowInProject({
       workflowName: wfName,
       label
     })).pipe(finalize(() => this.loadingLabel = false))
@@ -83,10 +82,9 @@ export class ProjectWorkflowListBlocsComponent {
 
   unlinkLabelToWorkflow(wfName: string, label: Label) {
     this.loadingLabel = true;
-    this.store.dispatch(new UnlinkLabelOnWorkflow({
-      projectKey: this.project.key,
+    this.store.dispatch(new DeleteLabelWorkflowInProject({
       workflowName: wfName,
-      label
+      labelId: label.id
     })).pipe(finalize(() => this.loadingLabel = false))
       .subscribe();
   }
@@ -96,8 +94,7 @@ export class ProjectWorkflowListBlocsComponent {
     label.name = labelName;
 
     this.loadingLabel = true;
-    this.store.dispatch(new LinkLabelOnWorkflow({
-      projectKey: this.project.key,
+    this.store.dispatch(new AddLabelWorkflowInProject({
       workflowName: wfName,
       label
     })).pipe(finalize(() => this.loadingLabel = false))

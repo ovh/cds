@@ -1,11 +1,48 @@
 <div *ngIf="workflowRun" class="workflowRun">
-    <app-workflow-run-summary [(direction)]="direction" [project]="project"
-        [workflowName]="workflowName" (relaunch)="relaunch()"
-        [class.above]="workflowRun.status === pipelineStatusEnum.PENDING">
+    <app-workflow-run-summary [(direction)]="direction" [project]="project" [workflowName]="workflowName"
+        (relaunch)="relaunch()" [class.above]="workflowRun.status === pipelineStatusEnum.PENDING">
     </app-workflow-run-summary>
     <ng-container *ngIf="workflowRun.status !== pipelineStatusEnum.PENDING; else pendingBlock">
-        <app-workflow-graph class="graph" [direction]="direction" [project]="project" [workflowRun]="workflowRun">
-        </app-workflow-graph>
+        <ng-container *ngIf="workflowRun.workflow && workflowRun.workflow.workflow_data">
+            <app-workflow-graph class="graph" [direction]="direction" [project]="project" [workflowRun]="workflowRun">
+            </app-workflow-graph>
+        </ng-container>
+        <ng-container *ngIf="!workflowRun.workflow || !workflowRun.workflow.workflow_data">
+            <div class="ui grid">
+                <div class="ui row">
+                    <div class="ui one wide column mt">
+                    </div>
+                    <div class="ui fourteen wide column mt">
+                        <!-- ERRORS PANEL -->
+                        <sui-accordion class="styled fluid">
+                            <ng-container *ngFor="let info of workflowRun.infos; let first = first">
+                                <sui-accordion-panel [isOpen]="first"
+                                    *ngIf="info.message.id !== 'MsgWorkflowError' || workflowRun.infos.length === 1">
+                                    <div title>
+                                        <i class="dropdown icon"></i>
+                                        <i class="red exclamation triangle icon"></i>
+                                        <span *ngIf="!errorsMap[info.message.id]">{{info.message.id}}</span>
+                                        <span
+                                            *ngIf="errorsMap[info.message.id]">{{errorsMap[info.message.id].title | translate}}</span>
+                                    </div>
+                                    <div content>
+                                        <p>
+                                            {{info.user_message}}. <span
+                                                *ngIf="errorsMap[info.message.id] && errorsMap[info.message.id].description">{{errorsMap[info.message.id].description}}</span>
+                                        </p>
+                                        <p *ngIf="errorsMap[info.message.id] && errorsMap[info.message.id].link">
+                                            <i class="book open icon"></i>{{'common_find_help' | translate}} <a
+                                                target="_blank"
+                                                [href]="errorsMap[info.message.id].link">{{'common_here' | translate}}</a>.
+                                        </p>
+                                    </div>
+                                </sui-accordion-panel>
+                            </ng-container>
+                        </sui-accordion>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
     </ng-container>
     <ng-template #pendingBlock>
         <div class="loadingWrapper">

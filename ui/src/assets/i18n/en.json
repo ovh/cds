@@ -317,6 +317,8 @@
   "common_migrate": "Migrate",
   "common_capabilities": "Capabilities",
   "common_help_no_group": "No group can be found, you will not be able to save current resource.",
+  "common_find_help": "Maybe you could find some help",
+  "common_here": "here",
   "common_deleted": "Deleted with success",
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",
@@ -1105,5 +1107,15 @@
   "environment_repository_help_line_1": "Your environment was not imported from your code.",
   "pipeline_repository_help_line_1": "Your pipeline was not imported from your code.",
   "workflow_repository_help_line_1": "Your workflow was not imported from your code.",
-  "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches."
+  "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches.",
+  "workflow_error_bad_environment_name_title": "Bad environment name",
+  "workflow_error_bad_integration_name_title": "Bad integration name",
+  "workflow_error_bad_application_name_title": "Bad application name",
+  "workflow_error_bad_pipeline_name_title": "Bad pipeline name",
+  "workflow_error_bad_cds_dir_title": "Directory .cds not found",
+  "workflow_error_bad_cds_dir_description": "Please check that your directory .cds which contains all your workflow as code files is commited and pushed on your git repository. Then please also check that .cds doesn't appear in your .gitignore",
+  "workflow_error_unknown_key_title": "Key not found",
+  "workflow_error_unknown_key_description": "Key not found, please check that your all keys mentioned really exist. Or you can check if your SSH key which you mentioned in your application settings for your git repository is always valid and added on your git repository to have at least READ access.",
+  "workflow_error_bad_vcs_strategy_title": "Bad VCS settings on application",
+  "workflow_error_bad_vcs_strategy_description": "Please check if your SSH key which you mentioned in your application settings for your git repository is always valid and added on your git repository to have at least READ access. You can also check that you have a SSH key mentioned if you selected SSH mode on your application."
 }

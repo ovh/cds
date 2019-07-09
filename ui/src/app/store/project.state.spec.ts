@@ -478,6 +478,28 @@ describe('Project', () => {
         label.color = 'red';
         store.dispatch(new ProjectAction.AddLabelWorkflowInProject({ workflowName: 'myWorkflow', label }));
 
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/workflows/myWorkflow/label';
+        })).flush(<Label>{
+            name: 'testLabel'
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1';
+        })).flush(<Project>{
+            name: 'proj1',
+            key: 'test1',
+            workflow_names: [
+                {
+                    name: 'myWorkflow',
+                    labels: [
+                        {
+                            name: 'testLabel'
+                        }
+                    ]
+                }
+            ]
+        });
+
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();
             expect(state.project.name).toEqual('proj1');
@@ -515,6 +537,10 @@ describe('Project', () => {
         store.dispatch(new ProjectAction.AddWorkflowInProject(workflow));
 
         store.dispatch(new ProjectAction.DeleteLabelWorkflowInProject({ workflowName: 'myWorkflow', labelId: label.id }));
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/test1/workflows/myWorkflow/label/25';
+        })).flush(<any>{
+        });
 
         store.selectOnce(ProjectState).subscribe((state: ProjectStateModel) => {
             expect(state.project).toBeTruthy();

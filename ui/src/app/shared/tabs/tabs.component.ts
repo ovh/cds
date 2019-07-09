@@ -1,11 +1,4 @@
-import {
-    Component,
-    EventEmitter,
-    Input,
-    OnChanges,
-    OnInit,
-    Output
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs/Subscription';
@@ -20,7 +13,8 @@ export class Tab {
 @Component({
     selector: 'app-tabs',
     templateUrl: './tabs.html',
-    styleUrls: ['./tabs.scss']
+    styleUrls: ['./tabs.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class TabsComponent implements OnInit, OnChanges {

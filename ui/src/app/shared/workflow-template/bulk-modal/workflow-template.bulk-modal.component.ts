@@ -1,10 +1,21 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import {
     InstanceStatus,
-    InstanceStatusUtil, OperationStatus, OperationStatusUtil,
+    InstanceStatusUtil,
+    OperationStatus,
+    OperationStatusUtil,
     ParamData,
-    WorkflowTemplate, WorkflowTemplateBulk,
+    WorkflowTemplate,
+    WorkflowTemplateBulk,
     WorkflowTemplateBulkOperation,
     WorkflowTemplateInstance
 } from 'app/model/workflow-template.model';
@@ -17,7 +28,8 @@ import { finalize } from 'rxjs/internal/operators/finalize';
 @Component({
     selector: 'app-workflow-template-bulk-modal',
     templateUrl: './workflow-template.bulk-modal.html',
-    styleUrls: ['./workflow-template.bulk-modal.scss']
+    styleUrls: ['./workflow-template.bulk-modal.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateBulkModalComponent {
@@ -41,7 +53,8 @@ export class WorkflowTemplateBulkModalComponent {
 
     constructor(
         private _modalService: SuiModalService,
-        private _workflowTemplateService: WorkflowTemplateService
+        private _workflowTemplateService: WorkflowTemplateService,
+        private _cd: ChangeDetectorRef
     ) {
         this.columnsInstances = [
             <Column<WorkflowTemplateInstance>>{
@@ -136,7 +149,10 @@ export class WorkflowTemplateBulkModalComponent {
     clickGoToInstanceReset() {
         this.loadingInstances = true;
         this._workflowTemplateService.getInstances(this.workflowTemplate.group.name, this.workflowTemplate.slug)
-            .pipe(finalize(() => this.loadingInstances = false))
+            .pipe(finalize(() => {
+                this.loadingInstances = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(is => this.instances = is.sort((a, b) => a.key() < b.key() ? -1 : 1));
 
         this.selectedInstanceKeys = [];
@@ -162,7 +178,9 @@ export class WorkflowTemplateBulkModalComponent {
         });
 
         this.response = null;
-        this._workflowTemplateService.bulk(this.workflowTemplate.group.name, this.workflowTemplate.slug, req).subscribe(b => {
+        this._workflowTemplateService.bulk(this.workflowTemplate.group.name, this.workflowTemplate.slug, req)
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(b => {
             this.response = b;
             this.startPollingStatus();
         });
@@ -185,7 +203,9 @@ export class WorkflowTemplateBulkModalComponent {
     startPollingStatus() {
         this.pollingStatusSub = Observable.interval(500).subscribe(() => {
             this._workflowTemplateService.getBulk(this.workflowTemplate.group.name,
-                this.workflowTemplate.slug, this.response.id).subscribe(b => {
+                this.workflowTemplate.slug, this.response.id)
+                .pipe(finalize(() => this._cd.markForCheck()))
+                .subscribe(b => {
                     this.response = b;
 
                     // check if all operation are done to stop polling

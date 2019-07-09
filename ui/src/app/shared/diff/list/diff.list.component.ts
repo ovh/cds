@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { Mode } from 'app/shared/diff/item/diff.item.component';
 
 export class Item {
@@ -13,7 +13,8 @@ export class Item {
 @Component({
     selector: 'app-diff-list',
     templateUrl: './diff.list.html',
-    styleUrls: ['./diff.list.scss']
+    styleUrls: ['./diff.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DiffListComponent {
     mode: Mode = Mode.UNIFIED;
