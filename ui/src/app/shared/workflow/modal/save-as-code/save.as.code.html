@@ -6,13 +6,13 @@
                 <div class="ui text active loader">{{ 'workflow_save_as_code_pending' | translate }}</div>
             </div>
         </ng-container>
-        <ng-container *ngIf="ope.status === 2">
+        <ng-container *ngIf="ope && ope.status === 2">
             <div class="ui success message">
                 {{ 'workflow_as_code_pr_success' | translate }}
                 <a href="{{ope.setup.push.pr_link}}" target="_blank">{{ ope.setup.push.pr_link }}</a>
             </div>
         </ng-container>
-        <ng-container *ngIf="ope.status === 3">
+        <ng-container *ngIf="ope && ope.status === 3">
             <div class="ui negative message">
                 {{ ope.error }}
             </div>
