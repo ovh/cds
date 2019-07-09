@@ -18,10 +18,11 @@ export default class LoginPage {
         this.loginButton = Selector('.ui.green.button');
     }
 
-    async login() {
+    async login(user: string, password: string) {
         await t
-            .typeText(this.userNameInput, 'aa')
-            .typeText(this.passwordInput, '46738385e8d13d2ce4412e5aebb189c0fa65cd4745c182777bc4f1bf408d25bf07c4ad9bea4454fd5927c5beefd1138d45387697b2e94a12ecd5869148dfafc5')
+            .navigateTo(this.url)
+            .typeText(this.userNameInput, user)
+            .typeText(this.passwordInput, password)
             .click(this.loginButton)
             .expect(this.getLocation()).eql(config.baseUrl + '/home');
     }
