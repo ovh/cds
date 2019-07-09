@@ -11,11 +11,10 @@
     "ng": "ng",
     "start": "ng serve -c development",
     "test": "ng lint && ng test --watch false --code-coverage",
-    "test:model": "ng lint && ng test --include src/app/model --watch false --code-coverage",
-    "test:shared": "ng lint && ng test --include src/app/shared --watch false --code-coverage",
-    "test:views": "ng lint && ng test --include src/app/views --watch false --code-coverage",
-    "test:service": "ng lint && ng test --include src/app/service --watch false --code-coverage",
-    "test:store": "ng lint && ng test --include src/app/store --watch false --code-coverage",
+    "test:model": "ng test --include src/app/model --watch false --code-coverage",
+    "test:shared": "ng test --include src/app/shared --watch false --code-coverage",
+    "test:views": "ng test --include src/app/views --watch false --code-coverage",
+    "test:store": "ng test --include src/app/store --watch false --code-coverage",
     "pree2e": "webdriver-manager update --standalone false --gecko false",
     "e2e": "protractor",
     "doc": "./node_modules/.bin/compodoc -p tsconfig.json -s",
@@ -28,7 +27,7 @@
   },
   "lint-staged": {
     "linters": {
-      "*.ts": "ng lint ui-ng2"
+      "*.ts": "ng lint"
     },
     "relative": true,
     "fileFlag": "--files",
