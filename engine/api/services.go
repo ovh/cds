@@ -45,9 +45,21 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", getAPIConsumer(ctx).ID, srv.Type)
 		}
 
-		// TODO: for hatcheries, the user who created the used token must be admin of all groups in the token
-		srv.Uptodate = srv.Version == sdk.VERSION
+		// For hatcheries, the user who created the used token must be admin of all groups in the token
+		if srv.Type == services.TypeHatchery {
+			gAdmins, err := group.LoadGroupByAdmin(api.mustDB(), getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID)
+			if err != nil {
+				return err
+			}
+			groupsAdminIDs := sdk.GroupsToIDs(gAdmins)
+			for _, gID := range getAPIConsumer(ctx).GetGroupIDs() {
+				if !sdk.IsInInt64Array(gID, groupsAdminIDs) {
+					return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", getAPIConsumer(ctx).ID, srv.Type)
+				}
+			}
+		}
 
+		srv.Uptodate = srv.Version == sdk.VERSION
 		srv.ConsumerID = &getAPIConsumer(ctx).ID
 
 		//Insert or update the service

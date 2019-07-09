@@ -80,6 +80,12 @@ func (api *API) updateGroupHandler() service.Handler {
 		}
 
 		// TODO
+		// Update a group should:
+		// - Do not update members
+		// - Only rename the group
+		// - Update worker model names related to this group
+		// - Udpate the action names related to this group
+
 		/*if len(updatedGroup.Admins) == 0 {
 			return sdk.WrapError(sdk.ErrGroupNeedAdmin, "Cannot Delete all admins for group %s", updatedGroup.Name)
 		}*/
