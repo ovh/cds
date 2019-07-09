@@ -400,8 +400,13 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunWithPayloadProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
@@ -516,7 +521,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
