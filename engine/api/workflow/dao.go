@@ -1155,6 +1155,7 @@ func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 				for i := range d.MultipleChoiceList {
 					if h.Config[k].Value == d.MultipleChoiceList[i] {
 						found = true
+            break
 					}
 				}
 				if !found {
