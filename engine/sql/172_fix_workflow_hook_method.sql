@@ -18,7 +18,7 @@ UPDATE workflow SET workflow_data = (
   jsonb_set(
     workflow_data,
     hookInfoWithPath.hook_path,
-    '{"type":"string","value":"POST","configurable":true,"multiple_choice_list":null}',
+    '{"type":"string","value":"POST","configurable":false,"multiple_choice_list":null}',
     true
   )
 )
