@@ -197,7 +197,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -368,7 +368,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -891,7 +891,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -1077,7 +1077,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -1257,7 +1257,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -1449,7 +1449,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -1655,7 +1655,7 @@ func TestGitParamWithJoin(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -1867,7 +1867,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
@@ -2055,7 +2055,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
-	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
