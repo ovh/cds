@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 
 @Component({
     selector: 'app-confirm-modal',
     templateUrl: './confirm.html',
-    styleUrls: ['./confirm.scss']
+    styleUrls: ['./confirm.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConfirmModalComponent {
     @Input() title: string;

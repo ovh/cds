@@ -77,7 +77,7 @@ var environmentDeleteCmd = cli.Command{
 
 func environmentDeleteRun(v cli.Values) error {
 	err := client.EnvironmentDelete(v.GetString(_ProjectKey), v.GetString("environment-name"))
-	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNoEnvironment) {
+	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrEnvironmentNotFound) {
 		fmt.Println(err.Error())
 		os.Exit(0)
 	}

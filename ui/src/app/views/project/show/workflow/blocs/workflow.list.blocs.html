@@ -1,4 +1,4 @@
-<div class="workflow-list-blocs">
+<div class="workflow-list-blocs" *ngIf="project">
     <div class="ui stackable four cards">
         <div class="ui link card" *ngFor="let wf of workflows">
             <a [routerLink]="['./workflow', wf.name]" class="content">

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { LinkLabelOnWorkflow, UnlinkLabelOnWorkflow } from 'app/store/workflow.action';
+import { AddLabelWorkflowInProject, DeleteLabelWorkflowInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
 import { IdName, Label, Project } from '../../../../../model/project.model';
 import { Warning } from '../../../../../model/warning.model';
@@ -72,8 +72,7 @@ export class ProjectWorkflowListLinesComponent {
 
   linkLabelToWorkflow(wfName: string, label: Label) {
     this.loadingLabel = true;
-    this.store.dispatch(new LinkLabelOnWorkflow({
-      projectKey: this.project.key,
+    this.store.dispatch(new AddLabelWorkflowInProject({
       workflowName: wfName,
       label
     })).pipe(finalize(() => this.loadingLabel = false))
@@ -82,10 +81,9 @@ export class ProjectWorkflowListLinesComponent {
 
   unlinkLabelToWorkflow(wfName: string, label: Label) {
     this.loadingLabel = true;
-    this.store.dispatch(new UnlinkLabelOnWorkflow({
-      projectKey: this.project.key,
+    this.store.dispatch(new DeleteLabelWorkflowInProject({
       workflowName: wfName,
-      label
+      labelId: label.id
     })).pipe(finalize(() => this.loadingLabel = false))
       .subscribe();
   }
@@ -95,8 +93,7 @@ export class ProjectWorkflowListLinesComponent {
     label.name = labelName;
 
     this.loadingLabel = true;
-    this.store.dispatch(new LinkLabelOnWorkflow({
-      projectKey: this.project.key,
+    this.store.dispatch(new AddLabelWorkflowInProject({
       workflowName: wfName,
       label
     })).pipe(finalize(() => this.loadingLabel = false))

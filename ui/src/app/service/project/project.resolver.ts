@@ -17,6 +17,7 @@ export class ProjectResolver implements Resolve<Project> {
             new LoadOpts('withApplicationNames', 'application_names'),
             new LoadOpts('withPipelineNames', 'pipeline_names'),
             new LoadOpts('withWorkflowNames', 'workflow_names'),
+            new LoadOpts('withEnvironmentNames', 'environment_names'),
             new LoadOpts('withLabels', 'labels')
         ];
 

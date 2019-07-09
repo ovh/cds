@@ -85,6 +85,13 @@ var (
 	MsgWorkflowRunBranchDeleted            = &Message{"MsgWorkflowRunBranchDeleted", trad{FR: "La branche %s  a été supprimée", EN: "Branch %s has been deleted"}, nil}
 	MsgWorkflowTemplateImportedInserted    = &Message{"MsgWorkflowTemplateImportedInserted", trad{FR: "Le template de workflow %s/%s a été créé", EN: "Workflow template %s/%s has been created"}, nil}
 	MsgWorkflowTemplateImportedUpdated     = &Message{"MsgWorkflowTemplateImportedUpdated", trad{FR: "Le template de workflow %s/%s a été mis à jour", EN: "Workflow template %s/%s has been updated"}, nil}
+	MsgWorkflowErrorBadPipelineName        = &Message{"MsgWorkflowErrorBadPipelineName", trad{FR: "Le pipeline %s indiqué dans votre fichier yaml de workflow n'existe pas", EN: "The pipeline %s mentioned in your workflow's yaml file doesn't exist"}, nil}
+	MsgWorkflowErrorBadApplicationName     = &Message{"MsgWorkflowErrorBadApplicationName", trad{FR: "L'application %s indiquée dans votre fichier yaml de workflow n'existe pas ou ne correspond pas aux normes ^[a-zA-Z0-9._-]{1,}$", EN: "The application %s mentioned in your workflow's yaml file doesn't exist or is incorrect with ^[a-zA-Z0-9._-]{1,}$"}, nil}
+	MsgWorkflowErrorBadEnvironmentName     = &Message{"MsgWorkflowErrorBadEnvironmentName", trad{FR: "L'environnement %s indiqué dans votre fichier yaml de workflow n'existe pas", EN: "The environment %s mentioned in your workflow's yaml file doesn't exist"}, nil}
+	MsgWorkflowErrorBadIntegrationName     = &Message{"MsgWorkflowErrorBadIntegrationName", trad{FR: "L'intégration %s indiquée dans votre fichier yaml n'existe pas", EN: "The integration %s mentioned in your yaml file doesn't exist"}, nil}
+	MsgWorkflowErrorBadCdsDir              = &Message{"MsgWorkflowErrorBadCdsDir", trad{FR: "Un problème est survenu avec votre répertoire .cds", EN: "A problem occured about your .cds directory"}, nil}
+	MsgWorkflowErrorUnknownKey             = &Message{"MsgWorkflowErrorUnknownKey", trad{FR: "La clé '%s' est incorrecte ou n'existe pas", EN: "The key '%s' is incorrect or doesn't exist"}, nil}
+	MsgWorkflowErrorBadVCSStrategy         = &Message{"MsgWorkflowErrorBadVCSStrategy", trad{FR: "Vos informations vcs_* sont incorrectes", EN: "Your vcs_* fields are incorrects"}, nil}
 )
 
 // Messages contains all sdk Messages
@@ -154,6 +161,13 @@ var Messages = map[string]*Message{
 	MsgWorkflowRunBranchDeleted.ID:            MsgWorkflowRunBranchDeleted,
 	MsgWorkflowTemplateImportedInserted.ID:    MsgWorkflowTemplateImportedInserted,
 	MsgWorkflowTemplateImportedUpdated.ID:     MsgWorkflowTemplateImportedUpdated,
+	MsgWorkflowErrorBadPipelineName.ID:        MsgWorkflowErrorBadPipelineName,
+	MsgWorkflowErrorBadApplicationName.ID:     MsgWorkflowErrorBadApplicationName,
+	MsgWorkflowErrorBadEnvironmentName.ID:     MsgWorkflowErrorBadEnvironmentName,
+	MsgWorkflowErrorBadIntegrationName.ID:     MsgWorkflowErrorBadIntegrationName,
+	MsgWorkflowErrorBadCdsDir.ID:              MsgWorkflowErrorBadCdsDir,
+	MsgWorkflowErrorUnknownKey.ID:             MsgWorkflowErrorUnknownKey,
+	MsgWorkflowErrorBadVCSStrategy.ID:         MsgWorkflowErrorBadVCSStrategy,
 }
 
 //Message represent a struc format translated messages
@@ -207,4 +221,21 @@ func MessagesToError(messages []Message) error {
 		s += err.String(language.AmericanEnglish.String())
 	}
 	return errors.New(s)
+}
+
+// ErrorToMessage returns message from an error if possible
+func ErrorToMessage(err error) (Message, bool) {
+	cdsError := ExtractHTTPError(err, "EN")
+	switch cdsError.ID {
+	case ErrPipelineNotFound.ID:
+		return NewMessage(MsgWorkflowErrorBadPipelineName, cdsError.Data), true
+	case ErrApplicationNotFound.ID:
+		return NewMessage(MsgWorkflowErrorBadApplicationName, cdsError.Data), true
+	case ErrEnvironmentNotFound.ID:
+		return NewMessage(MsgWorkflowErrorBadEnvironmentName, cdsError.Data), true
+	case ErrIntegrationtNotFound.ID:
+		return NewMessage(MsgWorkflowErrorBadIntegrationName, cdsError.Data), true
+	}
+
+	return Message{}, false
 }

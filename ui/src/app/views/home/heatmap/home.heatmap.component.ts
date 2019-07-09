@@ -145,6 +145,24 @@ export class HomeHeatmapComponent implements AfterViewInit {
      * This keep all events to let search them on demand.
      */
     filterEvents() {
+        const ONE_HOUR = 60 * 60 * 1000;
+        Object.keys(this.unfilteredGroupedEvents).forEach(proj => {
+          Object.keys(this.unfilteredGroupedEvents[proj]).forEach(workflow => {
+            this.unfilteredGroupedEvents[proj][workflow] = this.unfilteredGroupedEvents[proj][workflow].filter(event => {
+              let diffWithNow = new Date().getTime() - new Date(event.timestamp).getTime();
+              if (event.pipelineStatus === 'Building') {
+                return true;
+              }
+              return diffWithNow < ONE_HOUR;
+            });
+            if (this.unfilteredGroupedEvents[proj][workflow].length === 0) {
+              delete this.unfilteredGroupedEvents[proj][workflow];
+            }
+          });
+          if (Object.keys(this.unfilteredGroupedEvents[proj]).length === 0) {
+            delete this.unfilteredGroupedEvents[proj];
+          }
+        });
         this.workflows = HomeHeatmapComponent.clone(this.unfilteredWorkflows);
         this.projects = Object.keys(this.unfilteredGroupedEvents).sort();
         this.groupedEvents = HomeHeatmapComponent.clone(this.unfilteredGroupedEvents);

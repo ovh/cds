@@ -1,8 +1,17 @@
-import { Component, Input, OnChanges, OnInit, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    Input,
+    OnChanges,
+    OnInit,
+    ViewChild
+} from '@angular/core';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import * as JsDiff from 'diff';
 import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 export class Mode {
     static UNIFIED = 'unified';
@@ -12,7 +21,8 @@ export class Mode {
 @Component({
     selector: 'app-diff-item',
     templateUrl: './diff.item.html',
-    styleUrls: ['./diff.item.scss']
+    styleUrls: ['./diff.item.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class DiffItemComponent implements OnInit, OnChanges {
@@ -31,7 +41,7 @@ export class DiffItemComponent implements OnInit, OnChanges {
     themeSubscription: Subscription;
 
     constructor(
-        private _theme: ThemeStore
+        private _theme: ThemeStore, private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit() {
@@ -45,7 +55,9 @@ export class DiffItemComponent implements OnInit, OnChanges {
             lineNumbers: true
         };
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._theme.get()
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codeLeft && this.codeLeft.instance) {
                 this.codeLeft.instance.setOption('theme', this.codeMirrorConfig.theme);

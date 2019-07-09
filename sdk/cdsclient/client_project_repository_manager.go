@@ -18,6 +18,9 @@ func (c *client) ProjectRepositoryManagerList(projectKey string) ([]sdk.ProjectV
 
 func (c *client) ProjectRepositoryManagerDelete(projectKey string, repomanagerName string, force bool) error {
 	path := fmt.Sprintf("/project/%s/repositories_manager/%s", projectKey, repomanagerName)
+	if force {
+		path += "?force=true"
+	}
 	var s sdk.ProjectVCSServer
 	if _, err := c.DeleteJSON(context.Background(), path, &s); err != nil {
 		return err

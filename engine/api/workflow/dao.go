@@ -1170,7 +1170,7 @@ func checkProjectIntegration(proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) er
 			}
 		}
 		if ppProj.ID == 0 {
-			return sdk.WrapError(sdk.ErrNotFound, "Integration %s not found", n.Context.ProjectIntegrationName)
+			return sdk.ErrorWithData(sdk.ErrIntegrationtNotFound, n.Context.ProjectIntegrationName)
 		}
 		w.ProjectIntegrations[ppProj.ID] = ppProj
 		n.Context.ProjectIntegrationID = ppProj.ID
@@ -1192,7 +1192,7 @@ func checkEnvironment(db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n
 			env = *envDB
 
 			if env.ProjectID != proj.ID {
-				return sdk.NewErrorFrom(sdk.ErrResourceNotInProject, "can not found a environment with id %d", n.Context.EnvironmentID)
+				return sdk.NewErrorFrom(sdk.ErrEnvironmentNotFound, "can not found a environment with id %d", n.Context.EnvironmentID)
 			}
 
 			w.Environments[n.Context.EnvironmentID] = env
@@ -1233,6 +1233,9 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project,
 	if n.Context.ApplicationName != "" {
 		appDB, err := application.LoadByName(db, store, proj.Key, n.Context.ApplicationName, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
 		if err != nil {
+			if sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
+				return sdk.ErrorWithData(sdk.ErrApplicationNotFound, n.Context.ApplicationName)
+			}
 			return sdk.WrapError(err, "unable to load application %s", n.Context.ApplicationName)
 		}
 		w.Applications[appDB.ID] = *appDB
@@ -1277,6 +1280,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, 
 func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *PushOption, u *sdk.User, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, error) {
 	ctx, end := observability.Span(ctx, "workflow.Push")
 	defer end()
+	allMsg := []sdk.Message{}
 
 	data, err := ExtractFromCDSFiles(tr)
 	if err != nil {
@@ -1313,7 +1317,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 	defer tx.Rollback()
 
-	allMsg := []sdk.Message{}
 	for filename, app := range data.apps {
 		log.Debug("Push> Parsing %s", filename)
 		var fromRepo string
@@ -1397,7 +1400,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	wf, msgList, err := ParseAndImport(ctx, tx, store, proj, oldWf, &data.wrkflw, u, importOptions)
 	if err != nil {
-		return nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.wrkflw.Name)
+		return msgList, nil, sdk.WrapError(err, "unable to import workflow %s", data.wrkflw.Name)
 	}
 
 	// If the workflow is "as-code", it should always be linked to a git repository

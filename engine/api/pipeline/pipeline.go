@@ -31,7 +31,7 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 
 	if err := db.SelectOne(&p, query, name, projectKey); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.WithStack(sdk.ErrPipelineNotFound)
+			return nil, sdk.WithStack(sdk.ErrorWithData(sdk.ErrPipelineNotFound, name))
 		}
 		return nil, sdk.WithStack(err)
 	}

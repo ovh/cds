@@ -1,9 +1,10 @@
-import {Component, Input} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 @Component({
     selector: 'app-zone',
     templateUrl: './zone.html',
-    styleUrls: ['./zone.scss']
+    styleUrls: ['./zone.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ZoneComponent {
 

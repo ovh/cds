@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 
 @Component({
     selector: 'app-delete-modal',
     templateUrl: './delete.html',
-    styleUrls: ['./delete.scss']
+    styleUrls: ['./delete.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DeleteModalComponent {
     @Input() title: string;
