@@ -1,6 +1,5 @@
 {
   "access_refused": "access refused",
-
   "auth_button_signin_with": "Sign in with {{consumer}}",
   "auth_value_copied": "Value copied",
   "auth_message_copy": "You can now copy this parameters to your terminal then close this tab.",
@@ -14,11 +13,9 @@
   "auth_signup_success": "You successfully sign up to CDS, check your emails to verify your account.",
   "auth_verify_error": "Unable to verify this account.",
   "auth_verify_success": "The account for user '{{username}}' was successfully verified.",
-
   "account_btn_password": "Forgotten password",
   "account_btn_signup": "Sign up",
   "account_btn_signin": "Sign in",
-
   "account_login_btn_connect": "Sign in",
   "account_btn_login": "Sign In",
   "account_login_title": "Sign In to CDS",
@@ -30,7 +27,6 @@
   "account_signup_title": "Create a new user",
   "account_signup_waiting_text": "You will receive an email to activate your account.",
   "account_verify_title": "Account information",
-
   "account_verify_error": "Unable to activate this account.",
   "action_step_title": "Job steps",
   "action_step_final_title": "Job final steps",
@@ -782,6 +778,10 @@
   "user_deleted": "User is deleted",
   "user_list_title": "Users",
   "user_none": "No user",
+  "user_profile_btn": "Profile",
+  "user_groups_btn": "Groups",
+  "user_contacts_btn": "Contacts",
+  "user_authentication_btn": "Authentication",
   "vcs_connection": "Connection:",
   "vcs_user": "User: ",
   "vcs_password": "Password: ",

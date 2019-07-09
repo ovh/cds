@@ -37,6 +37,7 @@ import { FavoriteCardsComponent } from './favorite-cards/favorite-cards.componen
 import { KeysFormComponent } from './keys/form/keys.form.component';
 import { KeysListComponent } from './keys/list/keys.list.component';
 import { LabelsEditComponent } from './labels/edit/labels.edit.component';
+import { MenuComponent } from './menu/menu.component';
 import { ConfirmModalComponent } from './modal/confirm/confirm.component';
 import { DeleteModalComponent } from './modal/delete/delete.component';
 import { WarningModalComponent } from './modal/warning/warning.component';
@@ -233,6 +234,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowTemplateBulkModalComponent,
         WorkflowTemplateParamFormComponent,
         TabsComponent,
+        MenuComponent,
         ScrollviewComponent
     ],
     entryComponents: [],
@@ -341,6 +343,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowTemplateBulkModalComponent,
         WorkflowTemplateParamFormComponent,
         TabsComponent,
+        MenuComponent,
         ScrollviewComponent
     ]
 })

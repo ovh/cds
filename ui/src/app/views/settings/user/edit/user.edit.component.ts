@@ -2,12 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Item } from 'app/shared/menu/menu.component';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { Group } from '../../../../model/group.model';
 import { User } from '../../../../model/user.model';
 import { UserService } from '../../../../service/user/user.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
+
 @Component({
     selector: 'app-user-edit',
     templateUrl: './user.edit.html',
@@ -24,6 +26,8 @@ export class UserEditComponent implements OnInit {
     private usernamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     userPatternError = false;
     path: Array<PathItem>;
+    items: Array<Item>;
+    selectedItem: Item;
 
     constructor(
         private _userService: UserService,
@@ -32,6 +36,21 @@ export class UserEditComponent implements OnInit {
         private _store: Store
     ) {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
+
+        this.items = [<Item>{
+            translate: 'user_profile_btn',
+            key: 'profile',
+            default: true
+        }, <Item>{
+            translate: 'user_groups_btn',
+            key: 'groups'
+        }, <Item>{
+            translate: 'user_contacts_btn',
+            key: 'contacts'
+        }, <Item>{
+            translate: 'user_authentication_btn',
+            key: 'authentication'
+        }];
     }
 
     ngOnInit() {
@@ -111,5 +130,20 @@ export class UserEditComponent implements OnInit {
                 routerLink: ['/', 'settings', 'user', this.user.username]
             });
         }
+    }
+
+    selectItem(item: Item): void {
+        switch (item.key) {
+            case 'groups':
+
+                break;
+            case 'contacts':
+
+                break;
+            case 'authentication':
+
+                break;
+        }
+        this.selectedItem = item;
     }
 }
