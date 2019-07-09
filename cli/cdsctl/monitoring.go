@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"sort"
 	"strings"
 	"time"
 
@@ -460,78 +459,7 @@ func (ui *Termui) updateStatus() {
 }
 
 func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
-	hatcheryNames, statusTitle := []string{}, []string{}
-	hatcheries := make(map[string]map[string]int64)
-	status := make(map[string]int)
-
-	if ui.me != nil && (ui.me.Maintainer() || ui.me.Admin()) {
-		for _, s := range ui.services {
-			if _, ok := hatcheries[s.Name]; !ok {
-				hatcheries[s.Name] = make(map[string]int64)
-				hatcheryNames = append(hatcheryNames, s.Name)
-			}
-		}
-	}
-
-	without := "Without hatchery"
-	hatcheries[without] = make(map[string]int64)
-	hatcheryNames = append(hatcheryNames, without)
-
-	for _, w := range workers {
-		var name string
-		// TODO
-		//if w.HatcheryName == "" {
-		//	name = "Without hatchery"
-		//} else {
-		//	name = w.HatcheryName
-		//}
-		if _, ok := hatcheries[name]; !ok {
-			hatcheries[name] = make(map[string]int64)
-			hatcheryNames = append(hatcheryNames, name)
-		}
-		hatcheries[name][w.Status] = hatcheries[name][w.Status] + 1
-		if _, ok := status[w.Status]; !ok {
-			statusTitle = append(statusTitle, w.Status)
-		}
-		status[w.Status] = status[w.Status] + 1
-	}
-
-	sort.Slice(statusTitle, func(i, j int) bool {
-		return statusWeight(statusTitle[i]) < statusWeight(statusTitle[j])
-	})
-
-	var items []string
-	sort.Strings(hatcheryNames)
-	for _, name := range hatcheryNames {
-		v := hatcheries[name]
-		var t string
-		var statusText []string
-		for _, status := range statusTitle {
-			if v[status] > 0 {
-				icon, color := statusShort(status)
-				statusText = append(statusText, fmt.Sprintf("[%d%s](%s)", v[status], icon, color))
-			}
-		}
-		if len(statusText) == 0 {
-			t = fmt.Sprintf(" [_ %s](fg-white)", name)
-		} else {
-			t = fmt.Sprintf(" %s [%s](fg-white)", strings.Join(statusText, " "), name)
-		}
-		items = append(items, t)
-	}
-	ui.statusHatcheriesWorkers.SetItems(items...)
-
-	var titleStatusText []string
-	for _, s := range statusTitle {
-		if status[s] > 0 {
-			icon, color := statusShort(s)
-			titleStatusText = append(titleStatusText, fmt.Sprintf("[%d%s](%s)", status[s], icon, color))
-		}
-	}
 	title := " Hatcheries "
-	if len(titleStatusText) > 0 {
-		title = fmt.Sprintf("%s%s ", title, strings.Join(titleStatusText, " "))
-	}
 	ui.statusHatcheriesWorkers.BorderLabel = title
 }
 

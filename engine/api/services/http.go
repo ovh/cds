@@ -213,6 +213,14 @@ func DoRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, met
 
 // doRequest performs an http request on service
 func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, method, path string, args []byte, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
+	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+	return doRequestFromURL(ctx, db, method, callURL, args, mods...)
+}
+
+func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, callURL *url.URL, args []byte, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
 	if HTTPClient == nil {
 		HTTPClient = &http.Client{
 			Timeout: 60 * time.Second,
@@ -221,11 +229,6 @@ func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, metho
 
 	if HTTPSigner == nil {
 		HTTPSigner = httpsig.NewRSASHA256Signer(authentication.IssuerName, authentication.GetSigningKey(), []string{"(request-target)", "host", "date"})
-	}
-
-	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)
-	if err != nil {
-		return nil, nil, 0, err
 	}
 
 	var requestError error
@@ -273,7 +276,7 @@ func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, metho
 		return nil, resp.Header, resp.StatusCode, sdk.WrapError(errBody, "services.DoRequest> Unable to read body")
 	}
 
-	log.Debug("services.DoRequest> response code:%d body:%s", resp.StatusCode, string(body))
+	log.Debug("services.DoRequest> response code:%d", resp.StatusCode)
 
 	// if everything is fine, return body
 	if resp.StatusCode < 400 {
@@ -286,4 +289,5 @@ func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, metho
 	}
 
 	return nil, resp.Header, resp.StatusCode, fmt.Errorf("Request Failed")
+
 }

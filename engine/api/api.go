@@ -112,7 +112,7 @@ type Configuration struct {
 					SigningKeyClaim string `json:"signing_key_claim" toml:"signingKeyClaim"`
 				} `json:"key_signing_key" toml:"keySigningKey"`
 			} `json:"keys" toml:"keys"`
-			Claims struct { // TODO meh ? => so it is
+			Claims struct { // TODO
 				Username     string `json:"username"`
 				SessionLevel string `json:"session_level"`
 			} `json:"claims" toml:"claims"`
@@ -592,8 +592,8 @@ func (a *API) Serve(ctx context.Context) error {
 	notification.Init(a.Config.URL.UI)
 
 	log.Info("Initializing Authentication drivers...")
-	// TODO
 	a.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
+
 	a.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 	if a.Config.Auth.Local.Enable {
 		a.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(
@@ -602,6 +602,7 @@ func (a *API) Serve(ctx context.Context) error {
 			a.Config.Auth.Local.SignupAllowedDomains,
 		)
 	}
+
 	if a.Config.Auth.LDAP.Enable {
 		a.AuthenticationDrivers[sdk.ConsumerLDAP] = ldap.NewDriver(
 			a.Config.Auth.LDAP.SignupDisabled,
@@ -773,11 +774,11 @@ func (a *API) Serve(ctx context.Context) error {
 			Port:       s.Port,
 		}
 		externalServices = append(externalServices, serv)
-  }
-  // TODO
-	//if err := services.InitExternal(ctx, a.mustDB, a.Cache, externalServices); err != nil {
-	//	return fmt.Errorf("unable to init external service: %+v", err)
-	//}
+	}
+
+	if err := services.InitExternal(ctx, a.mustDB(), externalServices); err != nil {
+		return fmt.Errorf("unable to init external service: %+v", err)
+	}
 	sdk.GoRoutine(ctx, "pings-external-services",
 		func(ctx context.Context) {
 			services.Pings(ctx, a.mustDB, externalServices)

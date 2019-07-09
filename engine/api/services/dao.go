@@ -99,6 +99,12 @@ func LoadByName(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.Ser
 	return get(ctx, db, query)
 }
 
+// LoadByNameForUpdateAndSkipLocked returns a service by its name.
+func LoadByNameForUpdateAndSkipLocked(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.Service, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM services WHERE name = $1  FOR UPDATE SKIP LOCKED").Args(name)
+	return get(ctx, db, query)
+}
+
 // LoadByID returns a service by its id.
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64) (*sdk.Service, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM services WHERE id = $1").Args(id)

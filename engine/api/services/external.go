@@ -2,12 +2,11 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -31,6 +30,7 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalServ
 					continue
 				}
 				if err := ping(tx, s); err != nil {
+					log.Error("unable to ping service %s: %v", s.Name, err)
 					_ = tx.Rollback()
 					continue
 				}
@@ -44,15 +44,9 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalServ
 
 func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 	// Select for update
-	var serv service
-	query := `select * from services where name = $1 for update SKIP LOCKED`
-	if err := db.SelectOne(&serv, query, s.Name); err != nil {
-		if err == sql.ErrNoRows {
-			log.Debug("services.ping> Unable to lock service %s: %v", s.Name, err)
-			return nil
-		}
-		log.Warning("services.ping> Unable to lock service %s: %v", s.Name, err)
-		return err
+	serv, err := LoadByNameForUpdateAndSkipLocked(context.Background(), db, s.Name)
+	if err != nil {
+		return sdk.WithStack(err)
 	}
 
 	mon := sdk.MonitoringStatus{
@@ -70,8 +64,15 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 	} else {
 		pingURL = fmt.Sprintf("%s:%s", s.HealthURL, s.HealthPort)
 	}
-	s.HTTPURL = pingURL
-	_, _, code, err := doRequest(context.Background(), db, &serv.Service, "GET", s.HealthPath, nil)
+
+	u, err := url.ParseRequestURI(pingURL + s.HealthPath)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	log.Debug("services.ping> Checking service %s (%v)", s.Name, u.String())
+
+	_, _, code, err := doRequestFromURL(context.Background(), db, "GET", u, nil)
 	if err != nil || code >= 400 {
 		mon.Lines[0].Status = sdk.MonitoringStatusWarn
 		mon.Lines[0].Value = "Health: KO"
@@ -82,40 +83,38 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 
 	serv.LastHeartbeat = time.Now()
 	serv.MonitoringStatus = mon
-	if _, err := db.Update(&serv); err != nil {
-		log.Warning("service.ping> unable to update monitoring status: %v", err)
+	if err := Update(db, serv); err != nil {
+		log.Warning("services.ping> unable to update monitoring status: %v", err)
 		return err
 	}
 	return nil
 }
 
 // InitExternal initializes external services
-func InitExternal(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.ExternalService) error {
-	db := dbFunc()
+func InitExternal(ctx context.Context, db *gorp.DbMap, ss []sdk.ExternalService) error {
 	for _, s := range ss {
-		oldSrv, errOldSrv := LoadByName(ctx, db, s.Name)
+		tx, err := db.Begin()
+		if err != nil {
+			return sdk.WrapError(err, "Unable to start transaction")
+		}
+
+		log.Debug("services.InitExternal> Initializing service %s", s.Name)
+
+		oldSrv, errOldSrv := LoadByNameForUpdateAndSkipLocked(ctx, tx, s.Name)
 		if errOldSrv != nil && !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
+			_ = tx.Rollback()
 			return sdk.WithStack(fmt.Errorf("Unable to find service %s", s.Name))
 		}
 
 		if oldSrv == nil {
 			s.Service.LastHeartbeat = time.Now()
 			s.Service.Config = s.ServiceConfig()
-			if err := Insert(db, &s.Service); err != nil {
+			if err := Insert(tx, &s.Service); err != nil {
+				_ = tx.Rollback()
 				return sdk.WrapError(err, "Unable to insert external service")
 			}
 		} else {
-			tx, err := db.Begin()
-			if err != nil {
-				return sdk.WrapError(err, "Unable to start transaction")
-			}
-			var serv service
-			query := `select * from services where name = $1 for update SKIP LOCKED`
-			if err := tx.SelectOne(&serv, query, s.Name); err != nil {
-				log.Warning("services.ping> Unable to lock service %s: %v", s.Name, err)
-				_ = tx.Rollback()
-				return err
-			}
+			s.Service.ID = oldSrv.ID
 			s.Service.LastHeartbeat = oldSrv.LastHeartbeat
 			s.Service.MonitoringStatus = oldSrv.MonitoringStatus
 			s.Service.Config = s.ServiceConfig()
@@ -123,9 +122,10 @@ func InitExternal(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.St
 				_ = tx.Rollback()
 				return sdk.WrapError(err, "Unable to update external service")
 			}
-			if err := tx.Commit(); err != nil {
-				_ = tx.Rollback()
-			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			_ = tx.Rollback()
 		}
 	}
 	return nil
