@@ -79,9 +79,9 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"project_key":          proj.Key,
 			"last_modified":        strconv.FormatInt(time.Now().Unix(), 10),
 			"repositories_manager": rmName,
-			"url":                  url,
-			"request_token":        token,
-			"username":             deprecatedGetUser(ctx).Username,
+			"url":           url,
+			"request_token": token,
+			"username":      deprecatedGetUser(ctx).Username,
 		}
 
 		if token != "" {
@@ -446,6 +446,32 @@ func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot get repos")
 		}
 		return service.WriteJSON(w, repo, http.StatusOK)
+	}
+}
+
+func (api *API) getRepositoriesManagerLinkedApplicationsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Get project name in URL
+		vars := mux.Vars(r)
+		projectKey := vars[permProjectKey]
+		rmName := vars["name"]
+
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
+		if errproj != nil {
+			return sdk.WrapError(errproj, "Cannot get client got %s %s", projectKey, rmName)
+		}
+
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rmName)
+		if vcsServer == nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "Cannot get client got %s %s", projectKey, rmName)
+		}
+
+		appNames, err := repositoriesmanager.LoadLinkedApplicationNames(api.mustDB(), proj.Key, rmName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load linked application names")
+		}
+
+		return service.WriteJSON(w, appNames, http.StatusOK)
 	}
 }
 
