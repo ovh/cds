@@ -118,7 +118,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 	var lasterr error
 	for try := 1; try <= 10; try++ {
 		log.Info("takeWorkflowJob> Sending build result...")
-		ctxSendResult, cancelSendResult := context.WithTimeout(ctx, 5*time.Second)
+		ctxSendResult, cancelSendResult := context.WithTimeout(ctx, 120*time.Second)
 		lasterr = w.client.QueueSendResult(ctxSendResult, job.ID, res)
 		if lasterr == nil {
 			log.Info("takeWorkflowJob> Send build result OK")
