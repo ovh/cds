@@ -35,7 +35,6 @@
                     <ng-container *ngSwitchCase="'blocs'">
                         <app-project-workflows-blocs
                             [project]="project"
-                            [labels]="project.labels"
                             [workflows]="filteredWorkflows"
                             [warnMap]="warnMap"
                             (edit)="editLabels()">

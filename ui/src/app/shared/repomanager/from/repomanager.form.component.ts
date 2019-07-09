@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
@@ -16,7 +16,8 @@ import { finalize, flatMap } from 'rxjs/operators';
 @Component({
     selector: 'app-repomanager-form',
     templateUrl: './repomanager.form.html',
-    styleUrls: ['./repomanager.form.scss']
+    styleUrls: ['./repomanager.form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RepoManagerFormComponent {
 
@@ -45,10 +46,13 @@ export class RepoManagerFormComponent {
 
     constructor(
         private _repoManService: RepoManagerService,
-                private _toast: ToastService,
+        private _toast: ToastService,
         public _translate: TranslateService,
+        private _cd: ChangeDetectorRef,
         private store: Store) {
-        this._repoManService.getAll().subscribe( res => {
+        this._repoManService.getAll()
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe( res => {
             this.ready = true;
             this.reposManagerList = res;
         });
@@ -65,7 +69,10 @@ export class RepoManagerFormComponent {
                     repoManager: this.reposManagerList[this.selectedRepoId]
                 })).pipe(
                     flatMap(() => this.store.selectOnce(ProjectState)),
-                    finalize(() => this.connectLoading = false)
+                    finalize(() => {
+                        this.connectLoading = false;
+                        this._cd.markForCheck();
+                    })
                 ).subscribe((projState: ProjectStateModel) => {
                     this.addRepoResponse = projState.repoManager;
                     this.modalInstance = verificationModal;
@@ -85,7 +92,9 @@ export class RepoManagerFormComponent {
             basicUser: this.basicUser,
             basicPassword: this.basicPassword
         }))
-            .pipe(finalize(() => this.verificationLoading = false))
+            .pipe(finalize(() => {
+                this.verificationLoading = false;
+            }))
             .subscribe( () => {
                 this.modalInstance.hide();
                 this.basicUser = '';

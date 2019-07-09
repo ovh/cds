@@ -244,7 +244,7 @@ func (label *Label) Validate() error {
 		return WrapError(fmt.Errorf("Label must have a name"), "IsValid>")
 	}
 	if label.Color == "" {
-		bytes := make([]byte, 4)
+		bytes := make([]byte, 3)
 		if _, err := rand.Read(bytes); err != nil {
 			return WrapError(err, "IsValid> Cannot create random color")
 		}
