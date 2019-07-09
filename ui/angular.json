@@ -160,21 +160,6 @@
             ]
           },
           "configurations": {
-            "model": {
-              "main": "src/test_model.ts"
-            },
-            "service": {
-              "main": "src/test_service.ts"
-            },
-            "shared": {
-              "main": "src/test_shared.ts"
-            },
-            "views": {
-              "main": "src/test_views.ts"
-            },
-            "store": {
-              "main": "src/test_store.ts"
-            },
             "all": {
               "main": "src/test.ts"
             }

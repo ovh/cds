@@ -46,7 +46,7 @@ workflow:
     depends_on:
     - myBuild
     when:
-    - success
+    - success 
     pipeline: test`;
 
     repos: Array<Repository>;
