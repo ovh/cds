@@ -22,11 +22,13 @@ type ImportOptions struct {
 // ParseAndImport parse an exportentities.Application and insert or update the application in database
 func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u *sdk.User) (*sdk.Application, []sdk.Message, error) {
 	log.Info("ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, proj.Key, opts.Force)
+	msgList := []sdk.Message{}
 
 	//Check valid application name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(eapp.Name) {
-		return nil, nil, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "application name %s do not respect pattern %s", eapp.Name, sdk.NamePattern)
+		msgList = append(msgList, sdk.NewMessage(sdk.MsgWorkflowErrorBadApplicationName, eapp.Name))
+		return nil, msgList, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "application name %s do not respect pattern %s", eapp.Name, sdk.NamePattern)
 	}
 
 	//Check if app exist
@@ -36,16 +38,16 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		LoadOptions.WithClearDeploymentStrategies,
 	)
 	if errl != nil && !sdk.ErrorIs(errl, sdk.ErrApplicationNotFound) {
-		return nil, nil, sdk.WrapError(errl, "unable to load application")
+		return nil, msgList, sdk.WrapError(errl, "unable to load application")
 	}
 
 	//If the application exist and we don't want to force, raise an error
 	if oldApp != nil && !opts.Force {
-		return nil, nil, sdk.ErrApplicationExist
+		return nil, msgList, sdk.ErrApplicationExist
 	}
 
 	if oldApp != nil && oldApp.FromRepository != "" && opts.FromRepository != oldApp.FromRepository {
-		return nil, nil, sdk.WrapError(sdk.ErrApplicationAsCodeOverride, "unable to update as code application %s/%s.", oldApp.FromRepository, opts.FromRepository)
+		return nil, msgList, sdk.WrapError(sdk.ErrApplicationAsCodeOverride, "unable to update as code application %s/%s.", oldApp.FromRepository, opts.FromRepository)
 	}
 
 	//Craft the application
@@ -63,7 +65,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		case sdk.SecretVariable:
 			secret, err := decryptFunc(db, proj.ID, v.Value)
 			if err != nil {
-				return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt secret variable")
+				return app, msgList, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt secret variable")
 			}
 			v.Value = secret
 		}
@@ -75,7 +77,8 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	//Compute keys
 	for kname, kval := range eapp.Keys {
 		if !strings.HasPrefix(kname, "app-") {
-			return app, nil, sdk.WrapError(sdk.ErrInvalidKeyName, "unable to parse key %s", kname)
+			msgList = append(msgList, sdk.NewMessage(sdk.MsgWorkflowErrorUnknownKey, kname))
+			return app, msgList, sdk.WrapError(sdk.ErrInvalidKeyName, "unable to parse key %s", kname)
 		}
 
 		var oldKey *sdk.ApplicationKey
@@ -100,7 +103,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
 		if err != nil {
-			return app, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to parse key %s", kname)
+			return app, msgList, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to parse key %s", kname)
 		}
 
 		k := sdk.ApplicationKey{
@@ -127,16 +130,16 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		app.RepositoryStrategy.ConnectionType = "https"
 	}
 	if app.RepositoryStrategy.ConnectionType == "ssh" && app.RepositoryStrategy.SSHKey == "" {
-		return app, nil, sdk.NewErrorFrom(sdk.ErrInvalidApplicationRepoStrategy, "could not import application %s with a connection type ssh without ssh key", app.Name)
+		return app, msgList, sdk.NewErrorFrom(sdk.ErrInvalidApplicationRepoStrategy, "could not import application %s with a connection type ssh without ssh key", app.Name)
 	}
 	if eapp.VCSPassword != "" {
 		clearPWD, err := decryptFunc(db, proj.ID, eapp.VCSPassword)
 		if err != nil {
-			return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt vcs password")
+			return app, msgList, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "unable to decrypt vcs password")
 		}
 		app.RepositoryStrategy.Password = clearPWD
 		if errE := EncryptVCSStrategyPassword(app); errE != nil {
-			return app, nil, sdk.WrapError(errE, "cannot encrypt vcs password")
+			return app, msgList, sdk.WrapError(errE, "cannot encrypt vcs password")
 		}
 	}
 
@@ -146,7 +149,8 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		// init deployment strategy from project if default exists
 		projIt, has := proj.GetIntegration(pfName)
 		if !has {
-			return app, nil, sdk.WrapError(sdk.NewErrorFrom(sdk.ErrWrongRequest, "deployment platform not found"), "deployment platform %s not found", pfName)
+			msgList = append(msgList, sdk.NewMessage(sdk.MsgWorkflowErrorBadIntegrationName, pfName))
+			return app, msgList, sdk.WrapError(sdk.NewErrorFrom(sdk.ErrWrongRequest, "deployment platform not found"), "deployment platform %s not found", pfName)
 		}
 		if projIt.Model.DeploymentDefaultConfig != nil {
 			deploymentStrategies[pfName] = projIt.Model.DeploymentDefaultConfig.Clone()
@@ -183,7 +187,6 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	done := new(sync.WaitGroup)
 	done.Add(1)
 	msgChan := make(chan sdk.Message)
-	msgList := []sdk.Message{}
 	go func(array *[]sdk.Message) {
 		defer done.Done()
 		for m := range msgChan {

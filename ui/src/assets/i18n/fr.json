@@ -302,6 +302,8 @@
   "common_migrate": "Migrer",
   "common_capabilities": "Capacités",
   "common_help_no_group": "Aucun groupe n'a été trouvé, vous ne pourrez pas sauvegarder la ressource en cours d'édition.",
+  "common_find_help": "Vous trouverez peut être de l'aide",
+  "common_here": "ici",
   "common_deleted": "Supprimé avec succès",
   "coverage_branches_title": "Branches couvertes : ",
   "coverage_functions_title": "Fonctions couvertes : ",
@@ -1086,5 +1088,15 @@
   "pipeline_repository_help_line_1": "Votre pipeline n'a pas été importé depuis votre code.",
   "environment_repository_help_line_1": "Votre environnement n'a pas été importé depuis votre code.",
   "workflow_repository_help_line_1": "Votre workflow n'a pas été importé depuis votre code.",
-  "workflow_repository_help_line_2": "Gérez votre workflow \"as code\" depuis votre gestionnaire de dépôt pour modifier automatiquement celui-ci avec les changements sur vos branches."
+  "workflow_repository_help_line_2": "Gérez votre workflow \"as code\" depuis votre gestionnaire de dépôt pour modifier automatiquement celui-ci avec les changements sur vos branches.",
+  "workflow_error_bad_environment_name_title": "Environnement introuvable",
+  "workflow_error_bad_integration_name_title": "Intégration introuvable",
+  "workflow_error_bad_application_name_title": "Application introuvable",
+  "workflow_error_bad_pipeline_name_title": "Pipeline introuvable",
+  "workflow_error_bad_cds_dir_title": "Dossier .cds introuvable",
+  "workflow_error_bad_cds_dir_description": "Veuillez vérifier que votre dossier .cds contenant tout vos fichiers de workflow as code a bien été commité et envoyé sur votre dépôt git. Le cas échéant, vérifiez que votre dossier .cds ne se trouve pas dans votre .gitignore",
+  "workflow_error_unknown_key_title": "Clé introuvable",
+  "workflow_error_unknown_key_description": "Veuillez vérifier que la clé SSH avec laquelle vous avez lié votre application à votre dépôt git est bien active et indiqué sur votre dépôt git pour avoir les accès",
+  "workflow_error_bad_vcs_strategy_title": "Mauvaise configuration des paramètres VCS de votre application",
+  "workflow_error_bad_vcs_strategy_description": "Veuillez vérifier que la clé SSH avec laquelle vous avez lié votre application à votre dépôt git est bien active et indiqué sur votre dépôt git pour avoir les accès. Veuillez aussi vérifier que vous ayez bien une clé ssh de mentionnée dans votre fichier yaml d'application pointant sur votre dépôt git si vous avez mis le mode de clone SSH."
 }
