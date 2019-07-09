@@ -67,11 +67,17 @@ func InitializeDefaultGroupName(db gorp.SqlExecutor, defaultGrpName string) erro
 
 // IsDefaultGroupName returns true if groupName is the defaultGroupName
 func IsDefaultGroupName(groupName string) bool {
+	if DefaultGroup == nil {
+		return false
+	}
 	return groupName == DefaultGroup.Name
 }
 
 // IsDefaultGroupID returns true if groupID is the defaultGroupID
 func IsDefaultGroupID(groupID int64) bool {
+	if DefaultGroup == nil {
+		return false
+	}
 	return groupID == DefaultGroup.ID
 }
 
