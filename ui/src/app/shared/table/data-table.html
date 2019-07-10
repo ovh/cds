@@ -86,6 +86,12 @@
                             <i class="copy icon"></i>
                         </button>
                     </div>
+                    <span *ngSwitchCase="'text-labels'" class="text-labels">
+                        {{c.selector.value |
+                                translate}}
+                        <span *ngFor="let l of c.selector.labels"
+                            class="ui label {{l.color}}">{{l.title | translate}}</span>
+                    </span>
                     <ng-container *ngSwitchDefault>
                         <ng-container *ngIf="c.selector && c.translate">
                             {{c.selector | translate}}

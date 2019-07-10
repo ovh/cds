@@ -3,7 +3,6 @@ package user_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -14,20 +13,19 @@ import (
 
 func TestLoadContacts(t *testing.T) {
 	var u = sdk.AuthentifiedUser{
-		Username:     sdk.RandomString(10),
-		Fullname:     sdk.RandomString(10),
-		Ring:         sdk.UserRingAdmin,
-		DateCreation: time.Now(),
+		Username: sdk.RandomString(10),
+		Fullname: sdk.RandomString(10),
+		Ring:     sdk.UserRingAdmin,
 	}
 
 	db, _, _ := test.SetupPG(t)
 	assert.NoError(t, user.Insert(db, &u))
 
 	c := sdk.UserContact{
-		UserID:         u.ID,
-		PrimaryContact: true,
-		Type:           sdk.UserContactTypeEmail,
-		Value:          u.Username + "@lolcat.host",
+		UserID:  u.ID,
+		Primary: true,
+		Type:    sdk.UserContactTypeEmail,
+		Value:   u.Username + "@lolcat.host",
 	}
 	assert.NoError(t, user.InsertContact(db, &c))
 

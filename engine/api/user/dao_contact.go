@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -57,8 +58,8 @@ func getContact(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (
 	return &uc.UserContact, nil
 }
 
-// LoadContactsByUserID returns all contacts from database for given user ids.
-func LoadContactsByUserID(ctx context.Context, db gorp.SqlExecutor, userIDs []string) ([]sdk.UserContact, error) {
+// LoadContactsByUserIDs returns all contacts from database for given user ids.
+func LoadContactsByUserIDs(ctx context.Context, db gorp.SqlExecutor, userIDs []string) ([]sdk.UserContact, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM user_contact
@@ -80,6 +81,7 @@ func LoadContactsByTypeAndValue(ctx context.Context, db gorp.SqlExecutor, contac
 
 // InsertContact in database.
 func InsertContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
+	c.Created = time.Now()
 	dbc := userContact{UserContact: *c}
 	if err := gorpmapping.InsertAndSign(db, &dbc); err != nil {
 		return err

@@ -32,7 +32,7 @@ func loadDefault(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.Authentif
 func loadContacts(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.AuthentifiedUser) error {
 	userIDs := sdk.AuthentifiedUsersToIDs(aus)
 
-	contacts, err := LoadContactsByUserID(ctx, db, userIDs)
+	contacts, err := LoadContactsByUserIDs(ctx, db, userIDs)
 	if err != nil {
 		return err
 	}

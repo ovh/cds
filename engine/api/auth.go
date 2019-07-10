@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 
@@ -131,10 +130,9 @@ func (api *API) postAuthSigninHandler() service.Handler {
 
 			// Prepare new user
 			newUser := sdk.AuthentifiedUser{
-				Ring:         sdk.UserRingUser,
-				Username:     userInfo.Username,
-				Fullname:     userInfo.Fullname,
-				DateCreation: time.Now(),
+				Ring:     sdk.UserRingUser,
+				Username: userInfo.Username,
+				Fullname: userInfo.Fullname,
 			}
 
 			// The first user is set as ADMIN
@@ -152,11 +150,11 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			}
 
 			userContact := sdk.UserContact{
-				PrimaryContact: true,
-				Type:           sdk.UserContactTypeEmail,
-				UserID:         newUser.ID,
-				Value:          userInfo.Email,
-				Verified:       true,
+				Primary:  true,
+				Type:     sdk.UserContactTypeEmail,
+				UserID:   newUser.ID,
+				Value:    userInfo.Email,
+				Verified: true,
 			}
 
 			// Insert the primary contact for the new user in database

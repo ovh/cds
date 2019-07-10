@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Group } from 'app/model/group.model';
 import { Observable } from 'rxjs';
 import { Bookmark } from '../../model/bookmark.model';
-import { Groups } from '../../model/group.model';
-import { User } from '../../model/user.model';
+import { User, UserContact } from '../../model/user.model';
 
 @Injectable()
 export class UserService {
@@ -19,8 +19,12 @@ export class UserService {
         return this._http.get<User[]>('/user');
     }
 
-    getGroups(username: string): Observable<Groups> {
-        return this._http.get<Groups>('/user/' + username + '/groups');
+    getGroups(username: string): Observable<Array<Group>> {
+        return this._http.get<Array<Group>>('/user/' + username + '/groups');
+    }
+
+    getContacts(username: string): Observable<Array<UserContact>> {
+        return this._http.get<Array<UserContact>>('/user/' + username + '/contacts');
     }
 
     getUser(username: string): Observable<User> {

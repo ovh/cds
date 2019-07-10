@@ -63,11 +63,11 @@ type Identifiable interface {
 }
 
 type AuthentifiedUser struct {
-	ID           string    `json:"id" yaml:"id" cli:"id,key" db:"id"`
-	Username     string    `json:"username" yaml:"username" cli:"username" db:"username"`
-	Fullname     string    `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
-	Ring         string    `json:"ring" yaml:"ring,omitempty" cli:"ring" db:"ring"`
-	DateCreation time.Time `json:"date_creation" yaml:"date_creation" cli:"date_creation" db:"date_creation"`
+	ID       string    `json:"id" yaml:"id" cli:"id,key" db:"id"`
+	Created  time.Time `json:"created" yaml:"created" cli:"created" db:"created"`
+	Username string    `json:"username" yaml:"username" cli:"username" db:"username"`
+	Fullname string    `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
+	Ring     string    `json:"ring" yaml:"ring,omitempty" cli:"ring" db:"ring"`
 	// aggregates
 	Contacts      UserContacts `json:"contacts" yaml:"contacts" db:"-"`
 	OldUserStruct *User        `json:"old_user_struct" yaml:"old_user_struct" db:"-"`
@@ -130,12 +130,13 @@ func (u AuthentifiedUser) GetEmail() string {
 
 // UserContact struct
 type UserContact struct {
-	ID             int    `json:"id" db:"id"`
-	UserID         string `json:"user_id" db:"user_id"`
-	Type           string `json:"type" db:"type"`
-	Value          string `json:"value" db:"value"`
-	PrimaryContact bool   `json:"primary_contact" db:"primary_contact"`
-	Verified       bool   `json:"verified" db:"verified"`
+	ID       int64     `json:"id" cli:"id,key" db:"id"`
+	Created  time.Time `json:"created" cli:"created" db:"created"`
+	UserID   string    `json:"user_id" db:"user_id"`
+	Type     string    `json:"type" cli:"type" db:"type"`
+	Value    string    `json:"value" cli:"value" db:"value"`
+	Primary  bool      `json:"primary" cli:"primary" db:"primary_contact"`
+	Verified bool      `json:"verified" cli:"verified" db:"verified"`
 }
 
 const UserContactTypeEmail = "email"
@@ -163,7 +164,7 @@ func (u UserContacts) Find(contactType, contactValue string) *UserContact {
 
 func (u UserContacts) Primary() *UserContact {
 	for _, c := range u {
-		if c.PrimaryContact {
+		if c.Primary {
 			return &c
 		}
 	}

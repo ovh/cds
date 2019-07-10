@@ -1,4 +1,5 @@
 @import '../../../common';
+
 th.sortable:after {
     font-family: Icons;
     content: '\f0dc';
@@ -17,5 +18,11 @@ th.descending:after {
 .table {
     tbody tr td {
         overflow: hidden;
+    }
+}
+
+.text-labels {
+    .label:first-child {
+        margin-left: 5px;
     }
 }

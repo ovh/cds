@@ -57,6 +57,18 @@
                     <div class="ui text active loader">{{ 'user_load_user' | translate }}</div>
                 </ng-template>
             </ng-container>
+            <div *ngSwitchCase="'groups'" class="ui grid">
+                <div class="wide column">
+                    <app-data-table [withPagination]="10" [columns]="columnsGroups" [data]="groups"
+                        [loading]="loadingGroups"></app-data-table>
+                </div>
+            </div>
+            <div *ngSwitchCase="'contacts'" class="ui grid">
+                <div class="wide column">
+                    <app-data-table [withPagination]="10" [columns]="columnsContacts" [data]="contacts"
+                        [loading]="loadingContacts"></app-data-table>
+                </div>
+            </div>
         </app-scrollview>
     </div>
 </div>

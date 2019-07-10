@@ -14,9 +14,11 @@ const (
 
 // Group represent a group of user.
 type Group struct {
-	ID      int64  `json:"id" yaml:"-" db:"id"`
-	Name    string `json:"name" yaml:"name" cli:"name,key" db:"name"`
+	ID   int64  `json:"id" yaml:"-" db:"id"`
+	Name string `json:"name" yaml:"name" cli:"name,key" db:"name"`
+	// aggregate
 	Members []User `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
+	Admin   bool   `json:"admin,omitempty" yaml:"admin,omitempty" db:"-"`
 }
 
 type Groups []Group

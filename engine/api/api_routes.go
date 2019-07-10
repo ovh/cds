@@ -355,6 +355,7 @@ func (api *API) InitRouter() {
 	r.Handle("/user/timeline/filter", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
 	r.Handle("/user/{permUsername}", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserHandler), r.PUT(api.updateUserHandler), r.DELETE(api.deleteUserHandler))
 	r.Handle("/user/{permUsername}/groups", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserGroupsHandler))
+	r.Handle("/user/{permUsername}/contacts", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserContactsHandler))
 
 	// Workers
 	r.Handle("/worker", Scope(sdk.AuthConsumerScopeAdmin, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeHatchery), r.GET(api.getWorkersHandler))

@@ -5,44 +5,46 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-// getUserGroupsHandler returns groups of the user
 func (api *API) getUserGroupsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		username := vars["username"]
+		username := vars["permUsername"]
 
-		if getAPIConsumer(ctx).AuthentifiedUser.Username != username && !isAdmin(ctx) {
-			return service.WriteJSON(w, nil, http.StatusForbidden)
-		}
-
-		usr, err := user.LoadByUsername(ctx, api.mustDB(), username, user.LoadOptions.WithDeprecatedUser)
+		u, err := user.LoadByUsername(ctx, api.mustDB(), username, user.LoadOptions.WithDeprecatedUser)
 		if err != nil {
-			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
+			return sdk.WrapError(err, "cannot load user %s", username)
 		}
 
-		var groups, groupsAdmin []sdk.Group
-
-		var err1, err2 error
-		groups, err1 = group.LoadGroupByUser(api.mustDB(), usr.OldUserStruct.ID)
-		if err1 != nil {
-			return sdk.WrapError(err1, "getUserGroupsHandler: Cannot load group by user")
+		// Get all links group user for user id
+		links, err := group.LoadLinksGroupUserForUserIDs(ctx, api.mustDB(), []int64{u.OldUserStruct.ID})
+		if err != nil {
+			return err
+		}
+		mLinks := make(map[int64]group.LinkGroupUser, len(links))
+		for i := range links {
+			mLinks[links[i].GroupID] = links[i]
 		}
 
-		groupsAdmin, err2 = group.LoadGroupByAdmin(api.mustDB(), usr.OldUserStruct.ID)
-		if err2 != nil {
-			return sdk.WrapError(err2, "getUserGroupsHandler: Cannot load group by admin")
+		// Load all groups for links and add role data
+		groupIDs := make([]int64, 0, len(links))
+		for i := range links {
+			groupIDs = append(groupIDs, links[i].GroupID)
+		}
+		groups, err := group.LoadAllByIDs(ctx, api.mustDB(), groupIDs)
+		if err != nil {
+			return err
+		}
+		for i := range groups {
+			groups[i].Admin = mLinks[groups[i].ID].Admin
 		}
 
-		res := map[string][]sdk.Group{}
-		res["groups"] = groups
-		res["groups_admin"] = groupsAdmin
-
-		return service.WriteJSON(w, res, http.StatusOK)
+		return service.WriteJSON(w, groups, http.StatusOK)
 	}
 }

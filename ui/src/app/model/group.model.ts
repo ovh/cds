@@ -6,6 +6,7 @@ export class Group {
     id: number;
     name: string;
     members: Array<User>;
+    admin: boolean;
 
     constructor() {
         this.name = '';

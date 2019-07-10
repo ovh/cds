@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/local"
@@ -50,10 +49,9 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 
 		// Prepare new user
 		newUser := sdk.AuthentifiedUser{
-			Ring:         sdk.UserRingUser,
-			Username:     reqData["username"],
-			Fullname:     reqData["fullname"],
-			DateCreation: time.Now(),
+			Ring:     sdk.UserRingUser,
+			Username: reqData["username"],
+			Fullname: reqData["fullname"],
 		}
 
 		// The first user is set as ADMIN
@@ -71,11 +69,11 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 		}
 
 		userContact := sdk.UserContact{
-			PrimaryContact: true,
-			Type:           sdk.UserContactTypeEmail,
-			UserID:         newUser.ID,
-			Value:          reqData["email"],
-			Verified:       true,
+			Primary:  true,
+			Type:     sdk.UserContactTypeEmail,
+			UserID:   newUser.ID,
+			Value:    reqData["email"],
+			Verified: true,
 		}
 
 		// Insert the primary contact for the new user in database
