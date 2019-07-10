@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { AuthConsumer } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
 import { Observable } from 'rxjs';
 import { Bookmark } from '../../model/bookmark.model';
@@ -25,6 +26,10 @@ export class UserService {
 
     getContacts(username: string): Observable<Array<UserContact>> {
         return this._http.get<Array<UserContact>>('/user/' + username + '/contacts');
+    }
+
+    getConsumers(username: string): Observable<Array<AuthConsumer>> {
+        return this._http.get<Array<AuthConsumer>>(`/user/${username}/auth/consumer/`);
     }
 
     getUser(username: string): Observable<User> {

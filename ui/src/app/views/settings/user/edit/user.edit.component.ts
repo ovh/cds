@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AuthConsumer } from 'app/model/authentication.model';
 import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
 import { AuthenticationState } from 'app/store/authentication.state';
@@ -36,6 +37,8 @@ export class UserEditComponent implements OnInit {
     columnsContacts: Array<Column<UserContact>>;
     loadingContacts = false;
     contacts: Array<UserContact>;
+    loadingAuthData: boolean;
+    consumers: Array<AuthConsumer>;
 
     constructor(
         private _userService: UserService,
@@ -161,7 +164,7 @@ export class UserEditComponent implements OnInit {
                 this.getContacts();
                 break;
             case 'authentication':
-
+                this.getAuthData();
                 break;
         }
         this.selectedItem = item;
@@ -192,6 +195,15 @@ export class UserEditComponent implements OnInit {
             .pipe(finalize(() => this.loadingContacts = false))
             .subscribe((cs) => {
                 this.contacts = cs;
+            });
+    }
+
+    getAuthData(): void {
+        this.loadingAuthData = true;
+        this._userService.getConsumers(this.currentUser.username)
+            .pipe(finalize(() => this.loadingAuthData = false))
+            .subscribe((cs) => {
+                this.consumers = cs;
             });
     }
 }
