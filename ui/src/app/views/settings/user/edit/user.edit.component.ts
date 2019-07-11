@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthConsumer, AuthDriverManifest, AuthSession } from 'app/model/authentication.model';
@@ -54,6 +54,7 @@ export class UserEditComponent implements OnInit {
         private _userService: UserService,
         private _translate: TranslateService,
         private _route: ActivatedRoute,
+        private _router: Router,
         private _store: Store
     ) {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
@@ -199,6 +200,7 @@ export class UserEditComponent implements OnInit {
                 selector: (s: AuthSession) => {
                     return {
                         title: 'user_auth_revoke_btn',
+                        color: 'red',
                         click: () => { this.clickSessionRevoke(s) }
                     };
                 }
@@ -218,7 +220,15 @@ export class UserEditComponent implements OnInit {
     }
 
     clickSessionRevoke(s: AuthSession): void {
-
+        if (s.current) {
+            this._authenticationService.signout().subscribe(() => {
+                this._router.navigate(['/auth/signin']);
+            });
+        } else {
+            this._userService.deleteSession(this.currentUser.username, s.id).subscribe(() => {
+                this.getAuthData();
+            });
+        }
     }
 
     clickDeleteButton(): void {

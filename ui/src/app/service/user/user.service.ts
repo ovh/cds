@@ -36,6 +36,10 @@ export class UserService {
         return this._http.get<Array<AuthSession>>(`/user/${username}/auth/session`);
     }
 
+    deleteSession(username: string, sessionID: string): Observable<any> {
+        return this._http.delete(`/user/${username}/auth/session/${sessionID}`);
+    }
+
     getUser(username: string): Observable<User> {
         return this._http.get<User>('/user/' + username);
     }

@@ -20,6 +20,10 @@ export class AuthenticationService {
         });
     }
 
+    signout(): Observable<any> {
+        return this._http.post('/auth/consumer/signout', null);
+    }
+
     localSignup(fullname: string, email: string, username: string, password: string): Observable<AuthConsumerSigninResponse> {
         return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/local/signup', {
             fullname,
