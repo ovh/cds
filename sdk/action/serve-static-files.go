@@ -9,7 +9,6 @@ import (
 var ServeStaticFiles = Manifest{
 	Action: sdk.Action{
 		Name:        sdk.ServeStaticFiles,
-		Enabled:     false,
 		Description: "This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, ...",
 		Parameters: []sdk.Parameter{
 			{

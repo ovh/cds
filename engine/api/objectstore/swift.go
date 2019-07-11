@@ -66,38 +66,39 @@ func (s *SwiftStore) Status() sdk.MonitoringStatusLine {
 
 // ServeStaticFiles send files to serve static files with the entrypoint of html page and return public URL taking a tar file
 func (s *SwiftStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) {
-	container := s.containerPrefix + o.GetPath()
-	object := o.GetName()
-	escape(container, object)
-	log.Debug("SwiftStore> Storing /%s/%s\n", container, object)
+	// container := s.containerPrefix + o.GetPath()
+	// object := o.GetName()
+	// escape(container, object)
+	// log.Debug("SwiftStore> Storing /%s/%s\n", container, object)
 
-	if entrypoint == "" {
-		entrypoint = "index.html"
-	}
-	headers := map[string]string{
-		"X-Web-Mode":                    "TRUE",
-		"X-Container-Meta-Web-Listings": "TRUE",
-		"X-Container-Meta-Web-Index":    entrypoint,
-		"X-Container-Read":              ".r:*,.rlistings",
-		"X-Delete-After":                fmt.Sprintf("%d", time.Now().Add(time.Hour*1500).Unix()), //TODO: to delete when purge will be developed
-	}
+	// if entrypoint == "" {
+	// 	entrypoint = "index.html"
+	// }
+	// headers := map[string]string{
+	// 	"X-Web-Mode":                    "TRUE",
+	// 	"X-Container-Meta-Web-Listings": "TRUE",
+	// 	"X-Container-Meta-Web-Index":    entrypoint,
+	// 	"X-Container-Read":              ".r:*,.rlistings",
+	// 	"X-Delete-After":                fmt.Sprintf("%d", time.Now().Add(time.Hour*1500).Unix()), //TODO: to delete when purge will be developed
+	// }
 
-	log.Debug("SwiftStore> creating container %s", container)
-	if err := s.ContainerCreate(container, headers); err != nil {
-		return "", sdk.WrapError(err, "Unable to create container %s", container)
-	}
+	// log.Debug("SwiftStore> creating container %s", container)
+	// if err := s.ContainerCreate(container, headers); err != nil {
+	// 	return "", sdk.WrapError(err, "Unable to create container %s", container)
+	// }
 
-	log.Debug("SwiftStore> creating object %s/%s", container, object)
-	res, errU := s.BulkUpload(container, data, "tar", nil)
-	if errU != nil {
-		return "", sdk.WrapError(errU, "SwiftStore> Unable to bulk upload %s : %v : %+v", object, errU, res.Errors)
-	}
+	// log.Debug("SwiftStore> creating object %s/%s", container, object)
+	// res, errU := s.BulkUpload(container, data, "tar", nil)
+	// if errU != nil {
+	// 	return "", sdk.WrapError(errU, "SwiftStore> Unable to bulk upload %s : %v : %+v", object, errU, res.Errors)
+	// }
 
-	if err := data.Close(); err != nil {
-		return "", sdk.WrapError(err, "Unable to close data buffer")
-	}
+	// if err := data.Close(); err != nil {
+	// 	return "", sdk.WrapError(err, "Unable to close data buffer")
+	// }
 
-	return s.StorageUrl + "/" + container, nil
+	// return s.StorageUrl + "/" + container, nil
+	return "", "", sdk.WithStack(sdk.ErrNotImplemented)
 }
 
 // Store stores in swift
@@ -194,30 +195,31 @@ func (s *SwiftStore) StoreURL(o Object, contentType string) (string, string, err
 
 // ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
 func (s *SwiftStore) ServeStaticFilesURL(o Object, entrypoint string) (string, string, error) {
-	container := s.containerPrefix + o.GetPath()
-	object := o.GetName()
-	escape(container, object)
-	if entrypoint == "" {
-		entrypoint = "index.html"
-	}
+	// container := s.containerPrefix + o.GetPath()
+	// object := o.GetName()
+	// escape(container, object)
+	// if entrypoint == "" {
+	// 	entrypoint = "index.html"
+	// }
 
-	headers := map[string]string{
-		"X-Web-Mode":                    "TRUE",
-		"X-Container-Meta-Web-Listings": "TRUE",
-		"X-Container-Meta-Web-Index":    entrypoint,
-		"X-Container-Read":              ".r:*,.rlistings",
-	}
-	if err := s.ContainerCreate(container, headers); err != nil {
-		return "", "", sdk.WrapError(err, "Unable to create container %s", container)
-	}
+	// headers := map[string]string{
+	// 	"X-Web-Mode":                    "TRUE",
+	// 	"X-Container-Meta-Web-Listings": "TRUE",
+	// 	"X-Container-Meta-Web-Index":    entrypoint,
+	// 	"X-Container-Read":              ".r:*,.rlistings",
+	// }
+	// if err := s.ContainerCreate(container, headers); err != nil {
+	// 	return "", "", sdk.WrapError(err, "Unable to create container %s", container)
+	// }
 
-	key, err := s.containerKey(container)
-	if err != nil {
-		return "", "", sdk.WrapError(err, "Unable to get container key %s", container)
-	}
+	// key, err := s.containerKey(container)
+	// if err != nil {
+	// 	return "", "", sdk.WrapError(err, "Unable to get container key %s", container)
+	// }
 
-	url := s.ObjectTempUrl(container, object, string(key), "PUT", time.Now().Add(time.Hour))
-	return url, string(key), nil
+	// url := s.ObjectTempUrl(container, object, string(key), "PUT", time.Now().Add(time.Hour))
+	// return url, string(key), nil
+	return "", "", sdk.WithStack(sdk.ErrNotImplemented)
 }
 
 func (s *SwiftStore) containerKey(container string) (string, error) {
