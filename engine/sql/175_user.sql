@@ -56,7 +56,7 @@ DROP TABLE IF EXISTS auth_session;
 CREATE TABLE "auth_session" (
   id VARCHAR(36) PRIMARY KEY,
   consumer_id VARCHAR(36),
-  expired_at TIMESTAMP WITH TIME ZONE,
+  expire_at TIMESTAMP WITH TIME ZONE,
   created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
   group_ids JSONB,
   scopes JSONB,

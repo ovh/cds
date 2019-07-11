@@ -98,6 +98,8 @@ func (api *API) deleteConsumerByUserHandler() service.Handler {
 
 func (api *API) getSessionsByUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		session := getAuthSession(ctx)
+
 		vars := mux.Vars(r)
 
 		username := vars["permUsername"]
@@ -114,6 +116,13 @@ func (api *API) getSessionsByUserHandler() service.Handler {
 		ss, err := authentication.LoadSessionsByConsumerIDs(ctx, api.mustDB(), sdk.AuthConsumersToIDs(cs))
 		if err != nil {
 			return err
+		}
+
+		// Set extra data on sessions
+		for i := range ss {
+			if ss[i].ID == session.ID {
+				ss[i].Current = true
+			}
 		}
 
 		return service.WriteJSON(w, ss, http.StatusOK)

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AuthConsumer } from 'app/model/authentication.model';
+import { AuthConsumer, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
 import { Observable } from 'rxjs';
 import { Bookmark } from '../../model/bookmark.model';
@@ -29,7 +29,11 @@ export class UserService {
     }
 
     getConsumers(username: string): Observable<Array<AuthConsumer>> {
-        return this._http.get<Array<AuthConsumer>>(`/user/${username}/auth/consumer/`);
+        return this._http.get<Array<AuthConsumer>>(`/user/${username}/auth/consumer`);
+    }
+
+    getSessions(username: string): Observable<Array<AuthSession>> {
+        return this._http.get<Array<AuthSession>>(`/user/${username}/auth/session`);
     }
 
     getUser(username: string): Observable<User> {
