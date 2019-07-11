@@ -72,7 +72,7 @@
     "font-awesome": "4.7.0",
     "immutable": "4.0.0-rc.12",
     "js-beautify": "1.8.9",
-    "lodash-es": "4.17.11",
+    "lodash-es": "4.17.14",
     "moment": "2.24.0",
     "ng-event-source": "1.0.14",
     "ng-semantic": "https://github.com/sguiheux/ngSemantic/tarball/sgu-master",
