@@ -220,6 +220,9 @@ func doLogin(url, username, password string, env, insecureSkipVerifyTLS bool) er
 		if strings.HasSuffix(url, "/") {
 			fmt.Fprintf(os.Stderr, "Invalid URL. Remove trailing '/'\n")
 		}
+		if sdk.ErrorIs(err, sdk.ErrInvalidUser) {
+			return fmt.Errorf(sdk.ErrInvalidUser.Error())
+		}
 		return fmt.Errorf("Please check CDS API URL")
 	}
 	if !ok {
