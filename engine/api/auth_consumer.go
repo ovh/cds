@@ -23,7 +23,8 @@ func (api *API) getConsumersByUserHandler() service.Handler {
 			return nil
 		}
 
-		cs, err := authentication.LoadConsumersByUserID(ctx, api.mustDB(), u.ID)
+		cs, err := authentication.LoadConsumersByUserID(ctx, api.mustDB(), u.ID,
+			authentication.LoadConsumerOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -48,6 +49,9 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		newConsumer, token, err := builtin.NewConsumer(api.mustDB(), reqData.Name, reqData.Description,
 			consumer, reqData.GroupIDs, reqData.Scopes)
 		if err != nil {
+			return err
+		}
+		if err := authentication.LoadConsumerOptions.Default(ctx, api.mustDB(), newConsumer); err != nil {
 			return err
 		}
 

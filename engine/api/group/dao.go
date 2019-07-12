@@ -52,7 +52,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 }
 
 // LoadAllByIDs returns all groups from database for given ids.
-func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64, opts ...LoadOptionFunc) ([]sdk.Group, error) {
+func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64, opts ...LoadOptionFunc) (sdk.Groups, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM "group"

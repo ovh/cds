@@ -15,6 +15,7 @@ import { GroupListComponent } from './group/list/group.list.component';
 import { QueueComponent } from './queue/queue.component';
 import { SettingsComponent } from './settings.component';
 import { SettingsRouting } from './settings.routing';
+import { ConsumerDetailsModalComponent } from './user/consumer-details-modal/consumer-details-modal.component';
 import { UserEditComponent } from './user/edit/user.edit.component';
 import { UserListComponent } from './user/list/user.list.component';
 import { WorkerModelAddComponent } from './worker-model/add/worker-model.add.component';
@@ -40,6 +41,7 @@ import { WorkflowTemplateListComponent } from './workflow-template/list/workflow
         ActionFormComponent,
         ActionHelpComponent,
         CdsctlComponent,
+        ConsumerDetailsModalComponent,
         DownloadComponent,
         GroupEditComponent,
         GroupListComponent,

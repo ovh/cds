@@ -160,9 +160,9 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.Authentified
 	)
   `
 
-	rows, err := db.Query(query, u.OldUserStruct.ID, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.OldUserStruct.Groups)), group.SharedInfraGroup.ID)
+	rows, err := db.Query(query, u.OldUserStruct.ID, gorpmapping.IDsToQueryString(u.OldUserStruct.Groups.ToIDs()), group.SharedInfraGroup.ID)
 	if err != nil {
-		return data, err
+		return data, sdk.WithStack(err)
 	}
 	defer rows.Close()
 

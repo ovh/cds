@@ -1,3 +1,4 @@
+import { Group } from './group.model';
 import { User } from './user.model';
 
 export class AuthDriverManifest {
@@ -21,6 +22,7 @@ export class AuthConsumer {
     created: string;
     group_ids: Array<number>;
     scopes: Array<string>;
+    groups: Array<Group>;
 
     // UI fields
     parent: AuthConsumer;

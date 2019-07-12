@@ -393,14 +393,14 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		}
 
 		_, next = observability.Span(ctx, "workflow.processNodeJobRunRequirements")
-		jobRequirements, containsService, wm, err := processNodeJobRunRequirements(ctx, db, *job, run, sdk.GroupsToIDs(groups), integrationPluginBinaries)
+		jobRequirements, containsService, wm, err := processNodeJobRunRequirements(ctx, db, *job, run, sdk.Groups(groups).ToIDs(), integrationPluginBinaries)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
 		}
 
 		// check that children actions used by job can be used by the project
-		if err := action.CheckChildrenForGroupIDsWithLoop(ctx, db, &job.Action, sdk.GroupsToIDs(groups)); err != nil {
+		if err := action.CheckChildrenForGroupIDsWithLoop(ctx, db, &job.Action, sdk.Groups(groups).ToIDs()); err != nil {
 			spawnErrs.Append(err)
 		}
 

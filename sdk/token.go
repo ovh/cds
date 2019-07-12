@@ -179,6 +179,7 @@ type AuthConsumer struct {
 	Scopes             AuthConsumerScopeSlice `json:"scopes,omitempty" cli:"scopes" db:"scopes"`
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
+	Groups           Groups            `json:"groups,omitempty" db:"-"`
 }
 
 // IsValid returns validity for auth consumer.

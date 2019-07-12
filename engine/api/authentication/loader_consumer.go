@@ -15,9 +15,17 @@ type LoadConsumerOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.Auth
 
 // LoadConsumerOptions provides all options on auth consumer loads functions.
 var LoadConsumerOptions = struct {
+	Default              LoadConsumerOptionFunc
 	WithAuthentifiedUser LoadConsumerOptionFunc
+	WithConsumerGroups   LoadConsumerOptionFunc
 }{
+	Default:              loadDefault,
 	WithAuthentifiedUser: loadAuthentifiedUser,
+	WithConsumerGroups:   loadConsumerGroups,
+}
+
+func loadDefault(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsumer) error {
+	return loadConsumerGroups(ctx, db, cs...)
 }
 
 func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsumer) error {
@@ -54,10 +62,7 @@ func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.A
 	if err != nil {
 		return err
 	}
-	mGroups := make(map[int64]sdk.Group, len(groups))
-	for i := range groups {
-		mGroups[groups[i].ID] = groups[i]
-	}
+	mGroups := groups.ToMap()
 
 	// Set groups for each
 	for i := range users {
@@ -79,6 +84,30 @@ func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.A
 	for i := range cs {
 		if user, ok := mUsers[cs[i].AuthentifiedUserID]; ok {
 			cs[i].AuthentifiedUser = &user
+		}
+	}
+
+	return nil
+}
+
+func loadConsumerGroups(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsumer) error {
+	var groupIDs []int64
+	for i := range cs {
+		groupIDs = append(groupIDs, cs[i].GroupIDs...)
+	}
+
+	// Load all groups for given ids
+	gs, err := group.LoadAllByIDs(ctx, db, groupIDs)
+	if err != nil {
+		return err
+	}
+
+	// Set groups on each consumers
+	mGroups := gs.ToMap()
+	for i := range cs {
+		cs[i].Groups = make([]sdk.Group, 0, len(cs[i].GroupIDs))
+		for _, groupID := range cs[i].GroupIDs {
+			cs[i].Groups = append(cs[i].Groups, mGroups[groupID])
 		}
 	}
 

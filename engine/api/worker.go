@@ -65,7 +65,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 			if err != nil {
 				return sdk.NewError(sdk.ErrForbidden, err)
 			}
-			groupIDs = sdk.GroupsToIDs(job.ExecGroups)
+			groupIDs = sdk.Groups(job.ExecGroups).ToIDs()
 		} else {
 			groupIDs = hatcheryConsumer.GetGroupIDs()
 		}

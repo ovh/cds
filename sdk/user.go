@@ -16,7 +16,7 @@ type User struct {
 	Username  string     `json:"username" yaml:"username" cli:"username,key"`
 	Fullname  string     `json:"fullname" yaml:"fullname,omitempty" cli:"fullname"`
 	Email     string     `json:"email" yaml:"email,omitempty" cli:"email"`
-	Groups    []Group    `json:"groups,omitempty" yaml:"-" cli:"-"`
+	Groups    Groups     `json:"groups,omitempty" yaml:"-" cli:"-"`
 	Origin    string     `json:"origin" yaml:"origin,omitempty"`
 	Favorites []Favorite `json:"favorites" yaml:"favorites"`
 	// aggregated
@@ -95,7 +95,7 @@ func (u AuthentifiedUser) GetGroupIDs() []int64 {
 	if u.OldUserStruct == nil {
 		return nil
 	}
-	return GroupsToIDs(u.OldUserStruct.Groups)
+	return u.OldUserStruct.Groups.ToIDs()
 }
 
 func (u AuthentifiedUser) GetUsername() string {

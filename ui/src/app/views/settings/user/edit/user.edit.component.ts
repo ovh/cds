@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -13,6 +13,7 @@ import { Group } from '../../../../model/group.model';
 import { User, UserContact } from '../../../../model/user.model';
 import { UserService } from '../../../../service/user/user.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { ConsumerDetailsModalComponent } from '../consumer-details-modal/consumer-details-modal.component';
 
 @Component({
     selector: 'app-user-edit',
@@ -20,6 +21,9 @@ import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
     styleUrls: ['./user.edit.scss']
 })
 export class UserEditComponent implements OnInit {
+    @ViewChild('consumerDetailsModal', { static: false })
+    consumerDetailsModal: ConsumerDetailsModalComponent;
+
     loading = false;
     deleteLoading = false;
     groupsAdmin: Array<Group>;
@@ -43,6 +47,7 @@ export class UserEditComponent implements OnInit {
     drivers: Array<AuthDriverManifest>;
     consumers: Array<AuthConsumer>;
     myConsumers: Array<AuthConsumer>;
+    selectedConsumer: AuthConsumer;
     columnsConsumers: Array<Column<AuthConsumer>>;
     filterConsumers: Filter<AuthConsumer>;
     columnsSessions: Array<Column<AuthSession>>;
@@ -136,8 +141,8 @@ export class UserEditComponent implements OnInit {
                 selector: (c: AuthConsumer) => c.scopes.join(', ')
             },
             <Column<AuthConsumer>>{
-                name: 'user_auth_groups_count',
-                selector: (c: AuthConsumer) => c.group_ids ? c.group_ids.length : '*'
+                name: 'user_auth_groups',
+                selector: (c: AuthConsumer) => c.groups ? c.groups.map((g: Group) => g.name).join(', ') : '*'
             },
             <Column<AuthConsumer>>{
                 type: ColumnType.BUTTON,
@@ -216,7 +221,8 @@ export class UserEditComponent implements OnInit {
     }
 
     clickConsumerDetails(c: AuthConsumer): void {
-
+        this.selectedConsumer = c;
+        this.consumerDetailsModal.show();
     }
 
     clickSessionRevoke(s: AuthSession): void {
@@ -344,5 +350,9 @@ export class UserEditComponent implements OnInit {
                     return s;
                 });
             });
+    }
+
+    modalClose() {
+        this.selectedConsumer = null;
     }
 }
