@@ -3,7 +3,6 @@ package user_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/user"
@@ -47,10 +46,9 @@ func TestAuthenticatedUserDAO(t *testing.T) {
 
 func TestLoadDeprecatedUser(t *testing.T) {
 	var u = sdk.AuthentifiedUser{
-		Username:     sdk.RandomString(10),
-		Fullname:     sdk.RandomString(10),
-		Ring:         sdk.UserRingAdmin,
-		DateCreation: time.Now(),
+		Username: sdk.RandomString(10),
+		Fullname: sdk.RandomString(10),
+		Ring:     sdk.UserRingAdmin,
 	}
 
 	db, _, _ := test.SetupPG(t)
@@ -67,19 +65,18 @@ func TestLoadAll(t *testing.T) {
 	db, _, _ := test.SetupPG(t)
 	for i := 0; i < 10; i++ {
 		var u = sdk.AuthentifiedUser{
-			Username:     sdk.RandomString(10),
-			Fullname:     sdk.RandomString(10),
-			Ring:         sdk.UserRingAdmin,
-			DateCreation: time.Now(),
+			Username: sdk.RandomString(10),
+			Fullname: sdk.RandomString(10),
+			Ring:     sdk.UserRingAdmin,
 		}
 
 		assert.NoError(t, user.Insert(db, &u))
 
 		var c = sdk.UserContact{
-			UserID:         u.ID,
-			PrimaryContact: true,
-			Type:           sdk.UserContactTypeEmail,
-			Value:          u.Username + "@lolcat.host",
+			UserID:  u.ID,
+			Primary: true,
+			Type:    sdk.UserContactTypeEmail,
+			Value:   u.Username + "@lolcat.host",
 		}
 		assert.NoError(t, user.InsertContact(db, &c))
 	}
@@ -96,10 +93,9 @@ func TestLoadAllByIDs(t *testing.T) {
 	ids := make([]string, 3)
 	for i := 0; i < 2; i++ {
 		var u = sdk.AuthentifiedUser{
-			Username:     sdk.RandomString(10),
-			Fullname:     sdk.RandomString(10),
-			Ring:         sdk.UserRingAdmin,
-			DateCreation: time.Now(),
+			Username: sdk.RandomString(10),
+			Fullname: sdk.RandomString(10),
+			Ring:     sdk.UserRingAdmin,
 		}
 
 		assert.NoError(t, user.Insert(db, &u))

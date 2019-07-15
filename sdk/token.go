@@ -178,7 +178,8 @@ type AuthConsumer struct {
 	GroupIDs           Int64Slice             `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
 	Scopes             AuthConsumerScopeSlice `json:"scopes,omitempty" cli:"scopes" db:"scopes"`
 	// aggregates
-	AuthentifiedUser *AuthentifiedUser `json:"user" db:"-"`
+	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
+	Groups           Groups            `json:"groups,omitempty" db:"-"`
 }
 
 // IsValid returns validity for auth consumer.
@@ -239,13 +240,14 @@ func (c AuthConsumer) GetDEPRECATEDUserStruct() *User {
 type AuthSession struct {
 	ID         string                 `json:"id" cli:"id,key" db:"id"`
 	ConsumerID string                 `json:"consumer_id" cli:"consumer_id" db:"consumer_id"`
-	ExpireAt   time.Time              `json:"expired_at,omitempty" cli:"expired_at" db:"expired_at"`
+	ExpireAt   time.Time              `json:"expire_at,omitempty" cli:"expire_at" db:"expire_at"`
 	Created    time.Time              `json:"created" cli:"created" db:"created"`
 	GroupIDs   Int64Slice             `json:"group_ids" cli:"group_ids" db:"group_ids"`
 	Scopes     AuthConsumerScopeSlice `json:"scopes" cli:"scopes" db:"scopes"`
 	// aggregates
-	Consumer *AuthConsumer `json:"consumer" db:"-"`
-	Groups   []Group       `json:"groups" db:"-"`
+	Consumer *AuthConsumer `json:"consumer,omitempty" db:"-"`
+	Groups   []Group       `json:"groups,omitempty" db:"-"`
+	Current  bool          `json:"current,omitempty" db:"-"`
 }
 
 // AuthSessionJWTClaims is the specific claims format for JWT session.

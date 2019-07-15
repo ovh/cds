@@ -19,7 +19,7 @@ func (u authentifiedUser) Canonical() ([]byte, error) {
 	canonical += u.Username
 	canonical += u.Fullname
 	canonical += u.Ring
-	canonical += u.DateCreation.In(time.UTC).Format(time.RFC3339)
+	canonical += u.Created.In(time.UTC).Format(time.RFC3339)
 	return []byte(canonical), nil
 }
 
@@ -34,7 +34,7 @@ func (c userContact) Canonical() ([]byte, error) {
 	canonical += c.UserID
 	canonical += c.Type
 	canonical += c.Value
-	canonical += fmt.Sprintf("%t", c.PrimaryContact)
+	canonical += fmt.Sprintf("%t", c.Primary)
 	canonical += fmt.Sprintf("%t", c.Verified)
 	return []byte(canonical), nil
 }

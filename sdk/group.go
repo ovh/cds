@@ -14,21 +14,42 @@ const (
 
 // Group represent a group of user.
 type Group struct {
-	ID      int64  `json:"id" yaml:"-" db:"id"`
-	Name    string `json:"name" yaml:"name" cli:"name,key" db:"name"`
+	ID   int64  `json:"id" yaml:"-" db:"id"`
+	Name string `json:"name" yaml:"name" cli:"name,key" db:"name"`
+	// aggregate
 	Members []User `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
+	Admin   bool   `json:"admin,omitempty" yaml:"admin,omitempty" db:"-"`
 }
 
 type Groups []Group
 
-func (groups Groups) HasOneOf(groupIDs ...int64) bool {
-	ids := GroupsToIDs(groups)
+// HasOneOf returns true if one of the given ids is in groups list.
+func (g Groups) HasOneOf(groupIDs ...int64) bool {
+	ids := g.ToIDs()
 	for _, id := range groupIDs {
 		if IsInInt64Array(id, ids) {
 			return true
 		}
 	}
 	return false
+}
+
+// ToIDs returns ids for groups.
+func (g Groups) ToIDs() []int64 {
+	ids := make([]int64, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return ids
+}
+
+// ToMap returns a map of groups by ids.
+func (g Groups) ToMap() map[int64]Group {
+	mGroups := make(map[int64]Group, len(g))
+	for i := range g {
+		mGroups[g[i].ID] = g[i]
+	}
+	return mGroups
 }
 
 // GroupPermission represent a group and his role in the project
@@ -47,15 +68,6 @@ type ProjectGroup struct {
 type WorkflowGroup struct {
 	Workflow   Workflow `json:"workflow"`
 	Permission int      `json:"permission"`
-}
-
-// GroupsToIDs returns ids of given groups.
-func GroupsToIDs(gs []Group) []int64 {
-	ids := make([]int64, len(gs))
-	for i := range gs {
-		ids[i] = gs[i].ID
-	}
-	return ids
 }
 
 // GroupPointersToIDs returns ids of given groups.

@@ -119,7 +119,7 @@ func Count(db gorp.SqlExecutor) (int64, error) {
 // Insert a user in database.
 func Insert(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
 	au.ID = sdk.UUID()
-	au.DateCreation = time.Now()
+	au.Created = time.Now()
 	u := authentifiedUser{AuthentifiedUser: *au}
 	if err := gorpmapping.InsertAndSign(db, &u); err != nil {
 		return err

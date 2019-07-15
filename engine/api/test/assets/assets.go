@@ -111,10 +111,9 @@ func DeleteTestGroup(t *testing.T, db gorp.SqlExecutor, g *sdk.Group) error {
 // InsertAdminUser have to be used only for tests
 func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 	data := sdk.AuthentifiedUser{
-		Username:     sdk.RandomString(10),
-		Fullname:     sdk.RandomString(10),
-		Ring:         sdk.UserRingAdmin,
-		DateCreation: time.Now(),
+		Username: sdk.RandomString(10),
+		Fullname: sdk.RandomString(10),
+		Ring:     sdk.UserRingAdmin,
 	}
 
 	if err := user.Insert(db, &data); err != nil {

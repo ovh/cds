@@ -7,13 +7,21 @@ export class User {
     token: string;
     password: string;
 
-    constructor() {}
+    constructor() { }
 }
 
 export class UserLoginRequest {
     username: string;
     password: string;
     request_token: string;
+}
 
-    constructor() {}
+export class UserContact {
+    id: number;
+    created: string;
+    user_id: string;
+    type: string;
+    value: string;
+    primary: boolean;
+    verified: boolean;
 }

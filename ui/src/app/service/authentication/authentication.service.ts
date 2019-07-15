@@ -5,53 +5,57 @@ import { Observable } from 'rxjs';
 
 @Injectable()
 export class AuthenticationService {
-  constructor(
-    private _http: HttpClient
-  ) { }
+    constructor(
+        private _http: HttpClient
+    ) { }
 
-  getDrivers(): Observable<Array<AuthDriverManifest>> {
-    return this._http.get<Array<AuthDriverManifest>>('/auth/driver');
-  }
+    getDrivers(): Observable<Array<AuthDriverManifest>> {
+        return this._http.get<Array<AuthDriverManifest>>('/auth/driver');
+    }
 
-  signin(consumerType: string, code: string, state: string): Observable<AuthConsumerSigninResponse> {
-    return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/${consumerType}/signin`, {
-      code,
-      state
-    });
-  }
+    signin(consumerType: string, code: string, state: string): Observable<AuthConsumerSigninResponse> {
+        return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/${consumerType}/signin`, {
+            code,
+            state
+        });
+    }
 
-  localSignup(fullname: string, email: string, username: string, password: string): Observable<AuthConsumerSigninResponse> {
-    return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/local/signup', {
-      fullname,
-      email,
-      username,
-      password
-    });
-  }
+    signout(): Observable<any> {
+        return this._http.post('/auth/consumer/signout', null);
+    }
 
-  localSignin(username: string, password: string): Observable<AuthConsumerSigninResponse> {
-    return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/local/signin', {
-      username,
-      password
-    });
-  }
+    localSignup(fullname: string, email: string, username: string, password: string): Observable<AuthConsumerSigninResponse> {
+        return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/local/signup', {
+            fullname,
+            email,
+            username,
+            password
+        });
+    }
 
-  localVerify(token: string): Observable<AuthConsumerSigninResponse> {
-    return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/verify`, {
-      token
-    });
-  }
+    localSignin(username: string, password: string): Observable<AuthConsumerSigninResponse> {
+        return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/local/signin', {
+            username,
+            password
+        });
+    }
 
-  localAskReset(email: string): Observable<AuthConsumerSigninResponse> {
-    return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/askReset`, {
-      email,
-    });
-  }
+    localVerify(token: string): Observable<AuthConsumerSigninResponse> {
+        return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/verify`, {
+            token
+        });
+    }
 
-  localReset(token: string, password: string): Observable<AuthConsumerSigninResponse> {
-    return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/reset`, {
-      token,
-      password
-    });
-  }
+    localAskReset(email: string): Observable<AuthConsumerSigninResponse> {
+        return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/askReset`, {
+            email,
+        });
+    }
+
+    localReset(token: string, password: string): Observable<AuthConsumerSigninResponse> {
+        return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/reset`, {
+            token,
+            password
+        });
+    }
 }

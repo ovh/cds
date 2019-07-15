@@ -42,27 +42,18 @@ func (api *API) InitRouter() {
 
 	// Auth
 	r.Handle("/auth/driver", ScopeNone(), r.GET(api.getAuthDriversHandler, Auth(false)))
-
 	r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.postAuthLocalSignupHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.postAuthLocalSigninHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/verify", ScopeNone(), r.POST(api.postAuthLocalVerifyHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/askReset", ScopeNone(), r.POST(api.postAuthLocalAskResetHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/reset", ScopeNone(), r.POST(api.postAuthLocalResetHandler, Auth(false)))
-
 	r.Handle("/auth/consumer/builtin/signin", ScopeNone(), r.POST(api.postAuthBuiltinSigninHandler, Auth(false)))
 	r.Handle("/auth/consumer/builtin/signout", ScopeNone(), r.POST(api.postAuthBuiltinSignoutHandler))
-
 	r.Handle("/auth/consumer/worker/signin", ScopeNone(), r.POST(api.postRegisterWorkerHandler, Auth(false)))
 	r.Handle("/auth/consumer/worker/signout", ScopeNone(), r.POST(api.postUnregisterWorkerHandler))
-
 	r.Handle("/auth/consumer/{consumerType}/askSignin", ScopeNone(), r.GET(api.getAuthAskSigninHandler, Auth(false)))
 	r.Handle("/auth/consumer/{consumerType}/signin", ScopeNone(), r.POST(api.postAuthSigninHandler, Auth(false)))
 	r.Handle("/auth/consumer/signout", ScopeNone(), r.POST(api.postAuthSignoutHandler))
-
-	r.Handle("/user/{permUsername}/auth/consumer", Scope(sdk.AuthConsumerScopeAccessToken), r.GET(api.getConsumersByUserHandler), r.POST(api.postConsumerByUserHandler))
-	r.Handle("/user/{permUsername}/auth/consumer/{permConsumerID}", Scope(sdk.AuthConsumerScopeAccessToken), r.DELETE(api.deleteConsumerByUserHandler))
-	r.Handle("/user/{permUsername}/auth/session", Scope(sdk.AuthConsumerScopeAccessToken), r.GET(api.getSessionsByUserHandler))
-	r.Handle("/user/{permUsername}/auth/session/{permSessionID}", Scope(sdk.AuthConsumerScopeAccessToken), r.DELETE(api.deleteSessionByUserHandler))
 
 	// Action
 	r.Handle("/action", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getActionsHandler), r.POST(api.postActionHandler))
@@ -355,6 +346,11 @@ func (api *API) InitRouter() {
 	r.Handle("/user/timeline/filter", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
 	r.Handle("/user/{permUsername}", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserHandler), r.PUT(api.updateUserHandler), r.DELETE(api.deleteUserHandler))
 	r.Handle("/user/{permUsername}/groups", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserGroupsHandler))
+	r.Handle("/user/{permUsername}/contacts", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserContactsHandler))
+	r.Handle("/user/{permUsername}/auth/consumer", Scope(sdk.AuthConsumerScopeAccessToken), r.GET(api.getConsumersByUserHandler), r.POST(api.postConsumerByUserHandler))
+	r.Handle("/user/{permUsername}/auth/consumer/{permConsumerID}", Scope(sdk.AuthConsumerScopeAccessToken), r.DELETE(api.deleteConsumerByUserHandler))
+	r.Handle("/user/{permUsername}/auth/session", Scope(sdk.AuthConsumerScopeAccessToken), r.GET(api.getSessionsByUserHandler))
+	r.Handle("/user/{permUsername}/auth/session/{permSessionID}", Scope(sdk.AuthConsumerScopeAccessToken), r.DELETE(api.deleteSessionByUserHandler))
 
 	// Workers
 	r.Handle("/worker", Scope(sdk.AuthConsumerScopeAdmin, sdk.AuthConsumerScopeWorker, sdk.AuthConsumerScopeHatchery), r.GET(api.getWorkersHandler))

@@ -51,7 +51,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			if err != nil {
 				return err
 			}
-			groupsAdminIDs := sdk.GroupsToIDs(gAdmins)
+			groupsAdminIDs := sdk.Groups(gAdmins).ToIDs()
 			for _, gID := range getAPIConsumer(ctx).GetGroupIDs() {
 				if !sdk.IsInInt64Array(gID, groupsAdminIDs) {
 					return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", getAPIConsumer(ctx).ID, srv.Type)

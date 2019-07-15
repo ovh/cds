@@ -4,13 +4,17 @@
     display: flex;
     flex-direction: column;
 
-    .content {
+    .page-content {
         flex: 1;
         display: flex;
         flex-direction: row;
 
         .menu {
             margin: 20px 0 0 20px;
+        }
+
+        .icon {
+            margin: 0;
         }
     }
 }
