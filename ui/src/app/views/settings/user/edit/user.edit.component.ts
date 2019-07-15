@@ -13,6 +13,7 @@ import { Group } from '../../../../model/group.model';
 import { User, UserContact } from '../../../../model/user.model';
 import { UserService } from '../../../../service/user/user.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
 import { ConsumerDetailsModalComponent } from '../consumer-details-modal/consumer-details-modal.component';
 
 @Component({
@@ -23,6 +24,9 @@ import { ConsumerDetailsModalComponent } from '../consumer-details-modal/consume
 export class UserEditComponent implements OnInit {
     @ViewChild('consumerDetailsModal', { static: false })
     consumerDetailsModal: ConsumerDetailsModalComponent;
+
+    @ViewChild('consumerCreateModal', { static: false })
+    consumerCreateModal: ConsumerCreateModalComponent;
 
     loading = false;
     deleteLoading = false;
@@ -46,6 +50,7 @@ export class UserEditComponent implements OnInit {
     loadingAuthData: boolean;
     drivers: Array<AuthDriverManifest>;
     consumers: Array<AuthConsumer>;
+    mConsumers: { [key: string]: AuthConsumer };
     myConsumers: Array<AuthConsumer>;
     selectedConsumer: AuthConsumer;
     columnsConsumers: Array<Column<AuthConsumer>>;
@@ -137,8 +142,21 @@ export class UserEditComponent implements OnInit {
                 selector: (c: AuthConsumer) => c.description
             },
             <Column<AuthConsumer>>{
+                type: ColumnType.TEXT_ICONS,
                 name: 'user_auth_scopes',
-                selector: (c: AuthConsumer) => c.scopes.join(', ')
+                selector: (c: AuthConsumer) => {
+                    return {
+                        value: c.scopes.join(', '),
+                        icons: [
+                            {
+                                label: 'user_auth_info_scopes',
+                                class: ['info', 'circle', 'icon', 'primary', 'link'],
+                                title: 'user_auth_info_scopes',
+                                trigger: 'outsideClick'
+                            }
+                        ]
+                    }
+                }
             },
             <Column<AuthConsumer>>{
                 name: 'user_auth_groups',
@@ -223,6 +241,18 @@ export class UserEditComponent implements OnInit {
     clickConsumerDetails(c: AuthConsumer): void {
         this.selectedConsumer = c;
         this.consumerDetailsModal.show();
+    }
+
+    clickConsumerSignin(consumerType: string): void {
+
+    }
+
+    clickConsumerDetach(c: AuthConsumer): void {
+
+    }
+
+    clickConsumerCreate(): void {
+        this.consumerCreateModal.show();
     }
 
     clickSessionRevoke(s: AuthSession): void {
@@ -334,19 +364,32 @@ export class UserEditComponent implements OnInit {
         )
             .pipe(finalize(() => this.loadingAuthData = false))
             .subscribe(res => {
-                this.drivers = res[0].filter(m => m.type !== 'builtin');
+                this.drivers = res[0].filter(m => m.type !== 'builtin').sort((a, b) => {
+                    if (a.type === 'local') {
+                        return -1;
+                    }
+                    if (b.type === 'local') {
+                        return 1;
+                    }
+                    return a.type < b.type ? -1 : 1;
+                });
                 this.consumers = res[1];
 
-                let mConsumers = {};
-                this.consumers.forEach((c: AuthConsumer) => { mConsumers[c.id] = c });
+                this.mConsumers = {};
+                this.consumers.forEach((c: AuthConsumer) => {
+                    this.mConsumers[c.id] = c;
+                    if (c.type !== 'builtin') {
+                        this.mConsumers[c.type] = c;
+                    }
+                });
 
                 this.myConsumers = res[1].filter((c: AuthConsumer) => c.type === 'builtin').map((c: AuthConsumer) => {
-                    c.parent = mConsumers[c.parent_id];
+                    c.parent = this.mConsumers[c.parent_id];
                     return c;
                 });
 
                 this.sessions = res[2].map((s: AuthSession) => {
-                    s.consumer = mConsumers[s.consumer_id];
+                    s.consumer = this.mConsumers[s.consumer_id];
                     return s;
                 });
             });
