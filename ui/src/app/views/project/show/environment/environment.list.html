@@ -5,7 +5,7 @@
         </div>
         <div class="four wide column centered">
             <a class="ui blue button" [routerLink]="['./environment']"
-                [class.disabled]="project.permission < 7">{{ 'environment_create' | translate }}</a>
+                [class.disabled]="!project.permissions.writable">{{ 'environment_create' | translate }}</a>
         </div>
         <div class="right aligned six wide column">
             <div class="ui icon input">

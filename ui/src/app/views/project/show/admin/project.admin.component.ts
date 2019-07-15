@@ -51,7 +51,7 @@ export class ProjectAdminComponent implements OnInit {
     ) { };
 
     ngOnInit(): void {
-        if (this.project.permission !== 7) {
+        if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
         }
         this.user = this._store.selectSnapshot(AuthenticationState.user);

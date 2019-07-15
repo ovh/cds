@@ -39,7 +39,7 @@
     </div>
     <div class="actions">
         <button class="ui grey button" [disabled]="loading" [class.loading]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
-        <button class="ui green button" *ngIf="project.permission === permission.READ_WRITE_EXECUTE" [disabled]="loading" [class.loading]="loading" (click)="saveLabels(true)">
+        <button class="ui green button" *ngIf="project.permissions.writable" [disabled]="loading" [class.loading]="loading" (click)="saveLabels(true)">
             {{ 'btn_save' | translate }}
         </button>
     </div>

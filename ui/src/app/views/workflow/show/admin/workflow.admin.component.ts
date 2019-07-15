@@ -68,7 +68,7 @@ export class WorkflowAdminComponent implements OnInit {
             this.existingTags.push(...this.selectedTags);
         }
 
-        if (this.project.permission !== 7) {
+        if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
         }
         this.oldName = this.workflow.name;

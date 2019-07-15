@@ -39,7 +39,7 @@
                 </div>
             </td>
             <td class="border">
-                <ng-container *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE && !p.model.public">
+                <ng-container *ngIf="project.permissions.writable && !p.model.public">
                     <app-delete-button [loading]="loading" [disabled]="loading" (event)="deleteIntegration(p)" *ngIf="!p.hasChanged"></app-delete-button>
                     <button type="button" class="ui green button" *ngIf="p.hasChanged" (click)="updateIntegration(p)">{{ 'btn_save' | translate}}</button>
                 </ng-container>

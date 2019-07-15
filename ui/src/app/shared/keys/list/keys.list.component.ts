@@ -14,7 +14,7 @@ import { Table } from 'app/shared/table/table';
 export class KeysListComponent extends Table<Key> {
     @Input() keys: Array<Key>;
     @Input() loading: boolean;
-    @Input() edit: number;
+    @Input() edit: boolean;
     @Input() warnings: Map<string, Warning>;
     @Output() deleteEvent = new EventEmitter<KeyEvent>();
     permission = PermissionValue;

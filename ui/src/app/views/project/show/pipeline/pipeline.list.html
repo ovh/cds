@@ -4,7 +4,7 @@
           <h3>{{ 'project_pipelines_list' | translate }}</h3>
       </div>
       <div class="four wide column centered">
-        <a class="ui blue button" [routerLink]="['./pipeline']" [class.disabled]="project.permission < 7">{{ 'pipeline_create' | translate }}</a>
+        <a class="ui blue button" [routerLink]="['./pipeline']" [class.disabled]="!project.permissions.writable">{{ 'pipeline_create' | translate }}</a>
       </div>
       <div class="right aligned six wide column">
         <div class="ui icon input">
