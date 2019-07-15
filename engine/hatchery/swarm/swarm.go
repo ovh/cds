@@ -2,7 +2,6 @@ package swarm
 
 import (
 	"bytes"
-	"crypto/rsa"
 	"crypto/tls"
 	"fmt"
 	"html/template"
