@@ -43,7 +43,7 @@ type WorkerArgs struct {
 	Name            string `json:"name"`
 	BaseDir         string `json:"base_dir"`
 	HTTPInsecure    bool   `json:"http_insecure"`
-	ModelPath       string `json:"model"`
+	Model           string `json:"model"`
 	HatcheryName    string `json:"hatchery_name"`
 	WorkflowJobID   int64  `json:"workflow_job_id"`
 	TTL             int    `json:"ttl"`
@@ -53,9 +53,6 @@ type WorkerArgs struct {
 	GraylogPort       int    `json:"graylog_port"`
 	GraylogExtraKey   string `json:"graylog_extra_key"`
 	GraylogExtraValue string `json:"graylog_extra_value"`
-	//GRPC Params
-	GrpcAPI      string `json:"grpc_api"`
-	GrpcInsecure bool   `json:"grpc_insecure"`
 }
 
 // TemplateEnvs return envs interpolated with worker arguments

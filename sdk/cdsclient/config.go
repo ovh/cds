@@ -31,6 +31,8 @@ type ServiceConfig struct {
 	Token                 string
 	RequestSecondsTimeout int
 	InsecureSkipVerifyTLS bool
+	Hook                  func(Interface) error // This hook is used by unit tests
+	Verbose               bool
 }
 
 func (c Config) HasValidSessionToken() bool {

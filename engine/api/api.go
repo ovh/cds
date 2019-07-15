@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/jws"
 
 	"github.com/blang/semver"
 	"github.com/gorilla/mux"
@@ -561,6 +563,15 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := integration.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap()); err != nil {
 		return fmt.Errorf("cannot setup integrations: %v", err)
 	}
+
+	pubKey, err := jws.ExportPublicKey(authentication.GetSigningKey())
+	if err != nil {
+		return sdk.WrapError(err, "Unable to export public signing key")
+	}
+	encodedPubKey := base64.StdEncoding.EncodeToString(pubKey)
+
+	log.Info("API Public Key: \n%s", string(pubKey))
+	log.Info("API Public Key (base64 encoded): %s", encodedPubKey)
 
 	log.Info("Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
 	// Init the cache

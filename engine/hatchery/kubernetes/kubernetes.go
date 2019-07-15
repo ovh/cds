@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"bytes"
 	"context"
-	"crypto/rsa"
 	"fmt"
 	"html/template"
 	"os"
@@ -146,9 +145,8 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryKubernetes) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
-	if h.IsInitialized() {
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
-	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+
 	return m
 }
 
@@ -226,11 +224,6 @@ func (h *HatcheryKubernetes) WorkerModelsEnabled() ([]sdk.Model, error) {
 	return h.CDSClient().WorkerModelsEnabled()
 }
 
-// PrivateKey TODO.
-func (h *HatcheryKubernetes) PrivateKey() *rsa.PrivateKey {
-	return nil
-}
-
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
 func (h *HatcheryKubernetes) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
@@ -273,15 +266,13 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		Token:             h.Configuration().API.Token,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              name,
-		ModelPath:         spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
+		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		HatcheryName:      h.Name,
 		TTL:               h.Config.WorkerTTL,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
 		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-		GrpcAPI:           h.Configuration().API.GRPC.URL,
-		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
 	udataParam.WorkflowJobID = spawnArgs.JobID
@@ -310,18 +301,13 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name
-	envsWm["CDS_MODEL_PATH"] = udataParam.ModelPath
+	envsWm["CDS_MODEL_PATH"] = udataParam.Model
 	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
 	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
 
 	if spawnArgs.JobID > 0 {
 		envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-	}
-
-	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
-		envsWm["CDS_GRPC_API"] = udataParam.GrpcAPI
-		envsWm["CDS_GRPC_INSECURE"] = fmt.Sprintf("%v", udataParam.GrpcInsecure)
 	}
 
 	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
@@ -388,7 +374,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	// Check here to add secret if needed
 	secretName := "cds-credreg-" + spawnArgs.Model.Name
 	if spawnArgs.Model.ModelDocker.Private {
-		if err := h.createSecret(secretName, spawnArgs.Model); err != nil {
+		if err := h.createSecret(secretName, *spawnArgs.Model); err != nil {
 			return sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.Name)
 		}
 		podSchema.Spec.ImagePullSecrets = []apiv1.LocalObjectReference{{Name: secretName}}

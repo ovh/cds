@@ -89,26 +89,24 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				jobRunID, ok := apiEvent.Payload["ID"].(float64)
 				status, okStatus := apiEvent.Payload["Status"].(string)
 				if ok && okStatus && status == sdk.StatusWaiting {
-					// wait for the grace time before pushing the job in the channel
-					go func() {
-						job, err := c.QueueJobInfo(ctx, int64(jobRunID))
+					job, err := c.QueueJobInfo(ctx, int64(jobRunID))
 
-						// Do not log the error if the job does not exist
-						if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
-							return
-						}
+					// Do not log the error if the job does not exist
+					if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
+						continue
+					}
 
-						if err != nil {
-							errs <- fmt.Errorf("unable to get job %v info: %v", jobRunID, err)
-							return
-						}
+					if err != nil {
+						errs <- fmt.Errorf("unable to get job %v info: %v", jobRunID, err)
+						continue
+					}
 
-						// push the job in the channel
-						if job.Status == sdk.StatusWaiting && job.BookedBy.Name == "" {
-							job.Header["SSE"] = "true"
-							jobs <- *job
-						}
-					}()
+					// push the job in the channel
+					if job.Status == sdk.StatusWaiting && job.BookedBy.Name == "" {
+						job.Header["SSE"] = "true"
+						jobs <- *job
+					}
+
 				}
 			}
 
@@ -132,7 +130,11 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 
 			ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
 			queue := sdk.WorkflowQueue{}
-			if _, err := c.GetJSON(ctxt, "/queue/workflows?"+urlValues.Encode(), &queue, nil); err != nil {
+			var urlSuffix = urlValues.Encode()
+			if urlSuffix != "" {
+				urlSuffix = "?" + urlSuffix
+			}
+			if _, err := c.GetJSON(ctxt, "/queue/workflows"+urlSuffix, &queue, nil); err != nil {
 				errs <- sdk.WrapError(err, "Unable to load jobs")
 				cancel()
 				continue

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk/jws"
+	"github.com/ovh/cds/sdk/log"
 
 	"github.com/ovh/cds/sdk/cdsclient"
 
@@ -92,6 +93,7 @@ func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStat
 			return ctx.Err()
 		case <-ticker.C:
 			if err := c.Client.ServiceHeartbeat(status()); err != nil {
+				log.Warning("%s> Heartbeat failure: %v", c.Name, err)
 				heartbeatFailures++
 			}
 

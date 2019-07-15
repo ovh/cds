@@ -3,7 +3,6 @@ package marathon
 import (
 	"bytes"
 	"context"
-	"crypto/rsa"
 	"fmt"
 	"html/template"
 	"math"
@@ -74,9 +73,8 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryMarathon) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
-	if h.IsInitialized() {
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
-	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+
 	return m
 }
 
@@ -164,11 +162,6 @@ func (h *HatcheryMarathon) WorkerModelsEnabled() ([]sdk.Model, error) {
 	return h.CDSClient().WorkerModelsEnabled()
 }
 
-// PrivateKey TODO.
-func (h *HatcheryMarathon) PrivateKey() *rsa.PrivateKey {
-	return nil
-}
-
 // CanSpawn return wether or not hatchery can spawn model
 // requirements services are not supported
 func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
@@ -239,14 +232,12 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              workerName,
 		TTL:               h.Config.WorkerTTL,
-		ModelPath:         spawnArgs.Model.GetPath(spawnArgs.Model.Group.Name),
+		Model:             spawnArgs.Model.GetPath(spawnArgs.Model.Group.Name),
 		HatcheryName:      h.Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
 		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-		GrpcAPI:           h.Configuration().API.GRPC.URL,
-		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
 	udataParam.WorkflowJobID = spawnArgs.JobID
@@ -293,18 +284,13 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name
-	envsWm["CDS_MODEL_PATH"] = udataParam.ModelPath
+	envsWm["CDS_MODEL_PATH"] = udataParam.Model
 	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
 	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
 
 	if spawnArgs.JobID > 0 {
 		envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-	}
-
-	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
-		envsWm["CDS_GRPC_API"] = udataParam.GrpcAPI
-		envsWm["CDS_GRPC_INSECURE"] = fmt.Sprintf("%v", udataParam.GrpcInsecure)
 	}
 
 	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)

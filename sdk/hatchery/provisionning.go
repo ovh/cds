@@ -61,7 +61,7 @@ func checkCapacities(ctx context.Context, h Interface) bool {
 	return true
 }
 
-func provisioning(h Interface, models []sdk.Model) {
+func provisioning(h InterfaceWithModels, models []sdk.Model) {
 	if h.Configuration().Provision.Disabled {
 		log.Debug("provisioning> disabled on this hatchery")
 		return
@@ -73,8 +73,24 @@ func provisioning(h Interface, models []sdk.Model) {
 			for i := existing; i < int(models[k].Provision); i++ {
 				go func(m sdk.Model) {
 					arg := SpawnArguments{
-						WorkerName: fmt.Sprintf("%s-%s", strings.ToLower(m.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+						WorkerName:   fmt.Sprintf("%s-%s", strings.ToLower(m.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+						Model:        &m,
+						HatcheryName: h.ServiceName(),
 					}
+					// Get a JWT to authentified the worker
+					_, jwt, err := NewWorkerToken(h.ServiceName(), h.PrivateKey(), time.Now().Add(1*time.Hour), arg)
+					if err != nil {
+						var spawnError = sdk.SpawnErrorForm{
+							Error: fmt.Sprintf("hatchery %s cannot spawn worker %s for provisioning", h.Service().Name, m.Name),
+							Logs:  []byte(err.Error()),
+						}
+						if err := h.CDSClient().WorkerModelSpawnError(m.Group.Name, m.Name, spawnError); err != nil {
+							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %v", arg.WorkerName, m.Name, err)
+						}
+						return
+					}
+					arg.WorkerToken = jwt
+
 					if errSpawn := h.SpawnWorker(context.Background(), arg); errSpawn != nil {
 						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %v", arg.WorkerName, m.Name, errSpawn)
 						var spawnError = sdk.SpawnErrorForm{

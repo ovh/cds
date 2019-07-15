@@ -13,8 +13,9 @@ import (
 
 // CommonConfiguration is the base configuration for all hatcheries
 type CommonConfiguration struct {
-	Name string `toml:"name" default:"" comment:"Name of Hatchery" json:"name"`
-	HTTP struct {
+	Name          string `toml:"name" default:"" comment:"Name of Hatchery" json:"name"`
+	RSAPrivateKey string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used by the hatchery.\nThis is mandatory." json:"-"`
+	HTTP          struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
 		Port int    `toml:"port" default:"8086" json:"port"`
 	} `toml:"http" comment:"######################\n CDS Hatchery HTTP Configuration \n######################" json:"http"`
@@ -24,10 +25,6 @@ type CommonConfiguration struct {
 			URL      string `toml:"url" default:"http://localhost:8081" commented:"true" comment:"CDS API URL" json:"url"`
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`
 		} `toml:"http" json:"http"`
-		GRPC struct {
-			URL      string `toml:"url" default:"http://localhost:8082" commented:"true" json:"url"`
-			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`
-		} `toml:"grpc" json:"grpc"`
 		Token                string `toml:"token" default:"" comment:"CDS Token to reach CDS API. See https://ovh.github.io/cds/docs/components/cdsctl/token/ " json:"-"`
 		RequestTimeout       int    `toml:"requestTimeout" default:"10" comment:"Request CDS API: timeout in seconds" json:"requestTimeout"`
 		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" comment:"Maximum allowed consecutives failures on heatbeat routine" json:"maxHeartbeatFailures"`
@@ -65,12 +62,20 @@ type WorkerJWTClaims struct {
 
 // SpawnArguments contains arguments to func SpawnWorker
 type SpawnArguments struct {
-	WorkerName   string            `json:"worker_model"`
-	Model        sdk.Model         `json:"model"`
+	WorkerName   string `json:"worker_model"`
+	WorkerToken  string
+	Model        *sdk.Model        `json:"model"`
 	JobID        int64             `json:"job_id"`
 	Requirements []sdk.Requirement `json:"requirements"`
 	RegisterOnly bool              `json:"register_only"`
 	HatcheryName string            `json:"hatchery_name"`
+}
+
+func (s *SpawnArguments) ModelName() string {
+	if s.Model != nil {
+		return s.Model.Group.Name + "/" + s.Model.Name
+	}
+	return ""
 }
 
 // Interface describe an interface for each hatchery mode
@@ -88,22 +93,26 @@ type Interface interface {
 	InitHatchery() error
 	SpawnWorker(ctx context.Context, spawnArgs SpawnArguments) error
 	CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool
-	WorkersStartedByModel(model *sdk.Model) int
+
 	WorkersStarted() []string
 	Hatchery() *sdk.Hatchery
 	Service() *sdk.Service
 	CDSClient() cdsclient.Interface
 	Configuration() CommonConfiguration
-	ModelType() string
-	NeedRegistration(model *sdk.Model) bool
+
 	Serve(ctx context.Context) error
-	IsInitialized() bool
-	SetInitialized()
 	ServiceName() string
 	Metrics() *Metrics
 	PanicDumpDirectory() (string, error)
-	WorkerModelsEnabled() ([]sdk.Model, error)
 	PrivateKey() *rsa.PrivateKey
+}
+
+type InterfaceWithModels interface {
+	Interface
+	WorkersStartedByModel(model *sdk.Model) int
+	ModelType() string
+	NeedRegistration(model *sdk.Model) bool
+	WorkerModelsEnabled() ([]sdk.Model, error)
 }
 
 type Metrics struct {

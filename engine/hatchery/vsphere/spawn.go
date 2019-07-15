@@ -43,7 +43,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 	if errM != nil || spawnArgs.Model.NeedRegistration {
 		// Generate worker model vm
-		vm, errV = h.createVMModel(spawnArgs.Model)
+		vm, errV = h.createVMModel(*spawnArgs.Model)
 	}
 
 	if vm == nil || errV != nil {
@@ -58,8 +58,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		WorkerName:              name,
 		RegisterOnly:            spawnArgs.RegisterOnly,
 		WorkerModelLastModified: fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
-		WorkerModelName:         spawnArgs.Model.Name,
-		WorkerModelPath:         spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
+		WorkerModelName:         spawnArgs.ModelName(),
 		Created:                 time.Now(),
 	}
 
@@ -80,7 +79,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WrapError(errW, "state in error")
 	}
 
-	return h.launchScriptWorker(name, spawnArgs.JobID, spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
+	return h.launchScriptWorker(name, spawnArgs.JobID, *spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
 }
 
 // createVMModel create a model for a specific worker model
@@ -196,7 +195,7 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, model sdk
 		API:               h.Configuration().API.HTTP.URL,
 		Name:              name,
 		Token:             h.Configuration().API.Token,
-		ModelPath:         model.Group.Name + "/" + model.Name,
+		Model:             model.Group.Name + "/" + model.Name,
 		HatcheryName:      h.Name,
 		TTL:               h.Config.WorkerTTL,
 		FromWorkerImage:   true,
@@ -204,8 +203,6 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, model sdk
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
 		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-		GrpcAPI:           h.Configuration().API.GRPC.URL,
-		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
 	udataParam.WorkflowJobID = jobID

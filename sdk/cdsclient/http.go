@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/cli"
+
 	"github.com/dgrijalva/jwt-go"
 
 	"github.com/ovh/cds/sdk"
@@ -160,12 +162,15 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 	// Checks that current session_token is still valid
 	// If not, challenge a new one against the authenticationToken
 	if path != "/auth/consumer/builtin/signin" && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+		if c.config.Verbose {
+			fmt.Printf("session token invalid: (%s). Relogin...\n", c.config.SessionToken)
+		}
 		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
 		if err != nil {
 			return nil, nil, -1, err
 		}
 		if c.config.Verbose {
-			fmt.Println("jwt: ", resp.Token)
+			fmt.Println("jwt: ", resp.Token[:12])
 		}
 		c.config.SessionToken = resp.Token
 	}
@@ -233,9 +238,11 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 
 		if c.config.Verbose {
-			log.Println("********REQUEST**********")
+			log.Println(cli.Green("********REQUEST**********"))
 			dmp, _ := httputil.DumpRequestOut(req, true)
 			log.Printf("%s", string(dmp))
+			log.Println(cli.Green("**************************"))
+
 		}
 
 		var errDo error
@@ -247,10 +254,10 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 
 		if errDo == nil && c.config.Verbose {
-			log.Println("********RESPONSE**********")
+			log.Println(cli.Yellow("********RESPONSE**********"))
 			dmp, _ := httputil.DumpResponse(resp, true)
 			log.Printf("%s", string(dmp))
-			log.Println("**************************")
+			log.Println(cli.Yellow("**************************"))
 		}
 
 		// if everything is fine, return body

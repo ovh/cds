@@ -351,15 +351,13 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		Token:             h.Configuration().API.Token,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              name,
-		ModelPath:         spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
+		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		TTL:               h.Config.WorkerTTL,
 		HatcheryName:      h.Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
 		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-		GrpcAPI:           h.Configuration().API.GRPC.URL,
-		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
 	udataParam.WorkflowJobID = spawnArgs.JobID
@@ -387,18 +385,13 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name
-	envsWm["CDS_MODEL_PATH"] = udataParam.ModelPath
+	envsWm["CDS_MODEL_PATH"] = udataParam.Model
 	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
 	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
 
 	if spawnArgs.JobID > 0 {
 		envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-	}
-
-	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
-		envsWm["CDS_GRPC_API"] = udataParam.GrpcAPI
-		envsWm["CDS_GRPC_INSECURE"] = fmt.Sprintf("%v", udataParam.GrpcInsecure)
 	}
 
 	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, modelEnvs)
@@ -594,11 +587,6 @@ func (h *HatcherySwarm) Configuration() hatchery.CommonConfiguration {
 // WorkerModelsEnabled returns Worker model enabled
 func (h *HatcherySwarm) WorkerModelsEnabled() ([]sdk.Model, error) {
 	return h.CDSClient().WorkerModelsEnabled()
-}
-
-// PrivateKey TODO.
-func (h *HatcherySwarm) PrivateKey() *rsa.PrivateKey {
-	return nil
 }
 
 func (h *HatcherySwarm) routines(ctx context.Context) {

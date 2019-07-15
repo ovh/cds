@@ -89,7 +89,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		API:               h.Configuration().API.HTTP.URL,
 		Name:              name,
 		Token:             h.Configuration().API.Token,
-		ModelPath:         spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
+		Model:         spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		HatcheryName:      h.Name,
 		TTL:               h.Config.WorkerTTL,
 		FromWorkerImage:   withExistingImage,
@@ -97,8 +97,6 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
 		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-		GrpcAPI:           h.Configuration().API.GRPC.URL,
-		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
 	udataParam.WorkflowJobID = spawnArgs.JobID

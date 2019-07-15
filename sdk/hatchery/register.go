@@ -18,14 +18,14 @@ import (
 // than a tick.
 var nbRegisteringWorkerModels int64
 
-func workerRegister(ctx context.Context, h Interface, startWorkerChan chan<- workerStarterRequest) error {
+func workerRegister(ctx context.Context, h InterfaceWithModels, startWorkerChan chan<- workerStarterRequest) error {
 	if len(models) == 0 {
 		return fmt.Errorf("hatchery> workerRegister> No model returned by GetWorkerModels")
 	}
 	// currentRegister contains the register spawned in this ticker
 	currentRegistering, err := WorkerPool(ctx, h, sdk.StatusWorkerRegistering)
 	if err != nil {
-		log.Error("hatchery> workerRegister> %v", err)
+		log.Error("hatchery> workerRegister> worker pool error: %v", err)
 	}
 
 	atomic.StoreInt64(&nbRegisteringWorkerModels, int64(len(currentRegistering)))

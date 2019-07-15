@@ -22,7 +22,7 @@ type workerStarterRequest struct {
 	ctx                 context.Context
 	cancel              func(reason string)
 	id                  int64
-	model               sdk.Model
+	model               *sdk.Model
 	execGroups          []sdk.Group
 	requirements        []sdk.Requirement
 	hostname            string
@@ -76,10 +76,24 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
 			arg := SpawnArguments{
 				WorkerName:   fmt.Sprintf("register-%s-%s", strings.ToLower(m.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
-				Model:        *m,
+				Model:        m,
 				RegisterOnly: true,
 				HatcheryName: h.ServiceName(),
 			}
+
+			// Get a JWT to authentified the worker
+			_, jwt, err := NewWorkerToken(h.ServiceName(), h.PrivateKey(), time.Now().Add(1*time.Hour), arg)
+			if err != nil {
+				var spawnError = sdk.SpawnErrorForm{
+					Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
+				}
+				if err := h.CDSClient().WorkerModelSpawnError(m.Group.Name, m.Name, spawnError); err != nil {
+					log.Error("workerStarter> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
+				}
+				continue
+			}
+			arg.WorkerToken = jwt
+
 			if err := h.SpawnWorker(j.ctx, arg); err != nil {
 				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, err)
 				var spawnError = sdk.SpawnErrorForm{
@@ -117,8 +131,13 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 		atomic.AddInt64(i, -1)
 	}(&nbWorkerToStart)
 
+	var modelName = "local"
+	if j.model != nil {
+		modelName = j.model.Group.Name + "+" + j.model.Name
+	}
+
 	if h.Service() == nil {
-		log.Warning("hatchery> spawnWorkerForJob> %d - job %d %s- hatchery not registered", j.timestamp, j.id, j.model.Name)
+		log.Warning("hatchery> spawnWorkerForJob> %d - job %d %s- hatchery not registered", j.timestamp, j.id, modelName)
 		return false
 	}
 
@@ -127,13 +146,13 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 	if err := h.CDSClient().QueueJobBook(ctxQueueJobBook, j.id); err != nil {
 		next()
 		// perhaps already booked by another hatchery
-		log.Info("hatchery> spawnWorkerForJob> %d - cannot book job %d %s: %s", j.timestamp, j.id, j.model.Name, err)
+		log.Info("hatchery> spawnWorkerForJob> %d - cannot book job %d: %s", j.timestamp, j.id, err)
 		cancel()
 		return false
 	}
 	next()
 	cancel()
-	log.Debug("hatchery> spawnWorkerForJob> %d - send book job %d %s", j.timestamp, j.id, j.model.Name)
+	log.Debug("hatchery> spawnWorkerForJob> %d - send book job %d", j.timestamp, j.id)
 
 	ctxSendSpawnInfo, next := observability.Span(ctx, "hatchery.SendSpawnInfo", observability.Tag("msg", sdk.MsgSpawnInfoHatcheryStarts.ID))
 	start := time.Now()
@@ -141,29 +160,44 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 		ID: sdk.MsgSpawnInfoHatcheryStarts.ID,
 		Args: []interface{}{
 			h.Service().Name,
-			fmt.Sprintf("%s/%s", j.model.Group.Name, j.model.Name),
+			modelName,
 		},
 	})
 	next()
 
-	log.Info("hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", j.model.Name, j.id)
+	log.Info("hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", modelName, j.id)
+
 	_, next = observability.Span(ctx, "hatchery.SpawnWorker")
 	arg := SpawnArguments{
-		WorkerName:   fmt.Sprintf("%s-%s", strings.ToLower(j.model.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+		WorkerName:   fmt.Sprintf("%s-%s", strings.ToLower(modelName), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
 		Model:        j.model,
 		JobID:        j.id,
 		Requirements: j.requirements,
 		HatcheryName: h.ServiceName(),
 	}
+
+	// Get a JWT to authentified the worker
+	_, jwt, err := NewWorkerToken(h.ServiceName(), h.PrivateKey(), time.Now().Add(1*time.Hour), arg)
+	if err != nil {
+		var spawnError = sdk.SpawnErrorForm{
+			Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
+		}
+		if err := h.CDSClient().WorkerModelSpawnError(j.model.Group.Name, j.model.Name, spawnError); err != nil {
+			log.Error("spawnWorkerForJob> error on call client.WorkerModelSpawnError on worker model %s for register: %s", j.model.Name, err)
+		}
+		return false
+	}
+	arg.WorkerToken = jwt
+
 	errSpawn := h.SpawnWorker(j.ctx, arg)
 	next()
 	if errSpawn != nil {
 		ctxSendSpawnInfo, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "errSpawn"), observability.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
 		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
-			Args: []interface{}{h.Service().Name, j.model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()},
+			Args: []interface{}{h.Service().Name, modelName, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()},
 		})
-		log.Error("hatchery %s cannot spawn worker %s for job %d: %v", h.Service().Name, j.model.Name, j.id, errSpawn)
+		log.Error("hatchery %s cannot spawn worker %s for job %d: %v", h.Service().Name, modelName, j.id, errSpawn)
 		next()
 		return false
 	}
@@ -178,11 +212,11 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 	})
 	next()
 
-	if j.model.IsDeprecated {
+	if j.model != nil && j.model.IsDeprecated {
 		ctxSendSpawnInfo, next = observability.Span(ctx, "hatchery.SendSpawnInfo", observability.Tag("msg", sdk.MsgSpawnInfoDeprecatedModel.ID))
 		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoDeprecatedModel.ID,
-			Args: []interface{}{j.model.Name},
+			Args: []interface{}{modelName},
 		})
 		next()
 	}

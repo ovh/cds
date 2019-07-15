@@ -2,7 +2,6 @@ package vsphere
 
 import (
 	"context"
-	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -67,10 +66,7 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryVSphere) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
-
-	if h.IsInitialized() {
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
-	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 
@@ -151,11 +147,6 @@ func (h *HatcheryVSphere) NeedRegistration(m *sdk.Model) bool {
 // WorkerModelsEnabled returns Worker model enabled
 func (h *HatcheryVSphere) WorkerModelsEnabled() ([]sdk.Model, error) {
 	return h.CDSClient().WorkerModelsEnabled()
-}
-
-// PrivateKey TODO.
-func (h *HatcheryVSphere) PrivateKey() *rsa.PrivateKey {
-	return nil
 }
 
 // WorkersStartedByModel returns the number of instances of given model started but

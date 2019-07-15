@@ -332,6 +332,7 @@ type IntegrationClient interface {
 
 // Interface is the main interface for cdsclient package
 type Interface interface {
+	Raw
 	AuthClient
 	ActionClient
 	AdminService

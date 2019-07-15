@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"io"
 	"net"
 	"net/http"
@@ -126,7 +127,14 @@ func NewServiceClient(cfg ServiceConfig) (Interface, []byte, error) {
 	cli.config = conf
 	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
 	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
+	cli.config.Verbose = cfg.Verbose
 	cli.init()
+
+	if cfg.Hook != nil {
+		if err := cfg.Hook(cli); err != nil {
+			return nil, nil, sdk.WithStack(err)
+		}
+	}
 
 	var res sdk.AuthConsumerSigninResponse
 	_, headers, _, err := cli.RequestJSON(context.Background(), "POST", "/auth/consumer/"+string(sdk.ConsumerBuiltin)+"/signin", sdk.AuthConsumerSigninRequest{"token": cfg.Token}, &res)
@@ -135,7 +143,10 @@ func NewServiceClient(cfg ServiceConfig) (Interface, []byte, error) {
 	}
 	cli.config.SessionToken = res.Token
 
-	return cli, []byte(headers.Get("X-Api-Pub-Signing-Key")), nil
+	base64EncodedPubKey := headers.Get("X-Api-Pub-Signing-Key")
+	pubKey, err := base64.StdEncoding.DecodeString(base64EncodedPubKey)
+
+	return cli, pubKey, err
 }
 
 func (c *client) init() {

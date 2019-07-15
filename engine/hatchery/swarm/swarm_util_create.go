@@ -125,7 +125,7 @@ checkImage:
 		})
 
 		_, next := observability.Span(ctx, "swarm.dockerClient.pullImage", observability.Tag("image", cArgs.image))
-		if err := h.pullImage(dockerClient, cArgs.image, timeoutPullImage, spawnArgs.Model); err != nil {
+		if err := h.pullImage(dockerClient, cArgs.image, timeoutPullImage, *spawnArgs.Model); err != nil {
 			next()
 			hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 				ID:   sdk.MsgSpawnInfoHatcheryEndDockerPullErr.ID,

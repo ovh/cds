@@ -14,7 +14,6 @@ import (
 type HatcheryConfiguration struct {
 	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
 	Basedir                      string `mapstructure:"basedir" toml:"basedir" default:"/tmp" comment:"BaseDir for worker workspace" json:"basedir"`
-	NbProvision                  int    `mapstructure:"nbProvision" toml:"nbProvision" default:"1" comment:"Nb Workers to provision" json:"nbProvision"`
 }
 
 // HatcheryLocal implements HatcheryMode interface for local usage
@@ -22,12 +21,16 @@ type HatcheryLocal struct {
 	hatcheryCommon.Common
 	Config HatcheryConfiguration
 	sync.Mutex
-	hatch      *sdk.Hatchery
-	workers    map[string]workerCmd
-	ModelLocal sdk.Model
+	hatch             *sdk.Hatchery
+	workers           map[string]workerCmd
+	LocalWorkerRunner LocalWorkerRunner
 }
 
 type workerCmd struct {
 	cmd     *exec.Cmd
 	created time.Time
+}
+
+type LocalWorkerRunner interface {
+	NewCmd(command string, args ...string) *exec.Cmd
 }

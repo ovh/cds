@@ -2,6 +2,7 @@ package hatchery
 
 import (
 	"context"
+	"crypto/rsa"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
@@ -24,9 +26,9 @@ import (
 
 type Common struct {
 	service.Common
-	Router      *api.Router
-	initialized bool
-	metrics     hatchery.Metrics
+	Router     *api.Router
+	metrics    hatchery.Metrics
+	privateKey *rsa.PrivateKey
 }
 
 const panicDumpDir = "panic_dumps"
@@ -107,20 +109,20 @@ func (c *Common) CDSClient() cdsclient.Interface {
 	return c.Client
 }
 
-// IsInitialized returns true if hatchery is fully initialized
-func (c *Common) IsInitialized() bool {
-	return c.initialized
-}
-
-// SetInitialized set initialized = true for this hatchery
-func (c *Common) SetInitialized() {
-	c.initialized = true
+func (c *Common) PrivateKey() *rsa.PrivateKey {
+	return c.privateKey
 }
 
 // CommonServe start the HatcheryLocal server
 func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 	log.Info("%s> Starting service %s (%s)...", c.Name, h.Configuration().Name, sdk.VERSION)
 	c.StartupTime = time.Now()
+
+	var err error
+	c.privateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Configuration().RSAPrivateKey))
+	if err != nil {
+		return fmt.Errorf("unable to parse RSA private Key: %v", err)
+	}
 
 	//Init the http server
 	c.initRouter(ctx, h)

@@ -175,6 +175,7 @@ func GoRoutine(c context.Context, name string, fn func(ctx context.Context), wri
 				runtime.Stack(buf, false)
 				uuid := UUID()
 				log.Error("[PANIC][%s] %s Failed (%s)", hostname, name, uuid)
+				log.Error("%s", string(buf))
 
 				for _, f := range writerFactories {
 					w, err := f(uuid)

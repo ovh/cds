@@ -75,11 +75,10 @@ func (c *client) WorkerModelSpawnError(groupName, name string, data sdk.SpawnErr
 func (c *client) WorkerModelAdd(name, modelType, patternName string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error) {
 	uri := "/worker/model"
 	model := sdk.Model{
-		Name:          name,
-		Type:          modelType,
-		GroupID:       groupID,
-		Communication: "http",
-		PatternName:   patternName,
+		Name:        name,
+		Type:        modelType,
+		GroupID:     groupID,
+		PatternName: patternName,
 	}
 
 	if dockerModel == nil && vmModel == nil {

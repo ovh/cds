@@ -2,7 +2,6 @@ package openstack
 
 import (
 	"context"
-	"crypto/rsa"
 	"fmt"
 	"strings"
 	"sync"
@@ -83,10 +82,7 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryOpenstack) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
-	if h.IsInitialized() {
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
-
-	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 
@@ -165,11 +161,6 @@ func (*HatcheryOpenstack) ModelType() string {
 // WorkerModelsEnabled returns Worker model enabled
 func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 	return h.CDSClient().WorkerModelsEnabled()
-}
-
-// PrivateKey TODO.
-func (h *HatcheryOpenstack) PrivateKey() *rsa.PrivateKey {
-	return nil
 }
 
 // CanSpawn return wether or not hatchery can spawn model

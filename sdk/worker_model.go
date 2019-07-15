@@ -58,7 +58,6 @@ type Model struct {
 	Image                  string              `json:"image" db:"image" cli:"image"` // TODO: DELETE after migration done
 	ModelVirtualMachine    ModelVirtualMachine `json:"model_virtual_machine,omitempty" db:"-" cli:"-"`
 	ModelDocker            ModelDocker         `json:"model_docker,omitempty" db:"-" cli:"-"`
-	Communication          string              `json:"communication"  db:"communication" cli:"communication"`
 	Disabled               bool                `json:"disabled"  db:"disabled" cli:"disabled"`
 	Restricted             bool                `json:"restricted"  db:"restricted" cli:"restricted"`
 	RegisteredCapabilities []Requirement       `json:"registered_capabilities"  db:"-" cli:"-"`
@@ -94,7 +93,6 @@ func (m *Model) Update(data Model) {
 	m.GroupID = data.GroupID
 	m.Type = data.Type
 	m.Provision = data.Provision
-	m.Communication = data.Communication
 	m.ModelDocker = ModelDocker{}
 	m.ModelVirtualMachine = ModelVirtualMachine{}
 	switch m.Type {
