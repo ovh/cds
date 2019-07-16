@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeType, Workflow } from 'app/model/workflow.model';
@@ -52,7 +51,6 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     displayEditOption = false;
     duration: string;
     canBeRun = false;
-    perm = PermissionValue;
     pipelineStatusEnum = PipelineStatus;
 
     durationIntervalID: number;
@@ -145,7 +143,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             return;
         }
 
-        if (this.workflow && this.workflow.permission < PermissionValue.READ_EXECUTE) {
+        if (this.workflow && !this.workflow.permissions.executable) {
             return false;
         }
 

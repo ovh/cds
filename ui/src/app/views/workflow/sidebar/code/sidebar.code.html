@@ -15,7 +15,7 @@
                     </button>
                 </div>
                 <div class="eight wide column">
-                    <button class="ui fluid green button" name="updatebtn" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0) || workflow.permission < permissionEnum.READ_WRITE_EXECUTE" [class.loading]="loading" (click)="save()">
+                    <button class="ui fluid green button" name="updatebtn" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0) || !workflow.permissions.writable" [class.loading]="loading" (click)="save()">
                         <i class="save icon"></i>{{ 'btn_save' | translate }}
                     </button>
                 </div>

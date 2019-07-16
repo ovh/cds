@@ -31,7 +31,6 @@ export class Workflow {
     last_modified: string;
     groups: Array<GroupPermission>;
     permissions: Permission;
-    permission: number;
     metadata: Map<string, string>;
     usage: Usage;
     history_length: number;
