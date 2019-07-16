@@ -41,7 +41,7 @@ func (h *HatcheryKubernetes) killAwolWorkers() error {
 					}
 					tuple := strings.SplitN(modelPath, "/", 2)
 					if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
-						log.Error("killAndRemove> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelPath, err)
+						log.Error("killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", modelPath, err)
 					}
 				}
 

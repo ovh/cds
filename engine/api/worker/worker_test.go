@@ -78,7 +78,7 @@ func TestRegister(t *testing.T) {
 
 	w, err := worker.RegisterWorker(db, store, hatchery.SpawnArguments{
 		HatcheryName: h.Name,
-		Model:        *m,
+		Model:        m,
 		RegisterOnly: true,
 		WorkerName:   sdk.RandomString(10),
 	}, h.ID, c, sdk.WorkerRegistrationForm{
