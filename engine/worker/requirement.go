@@ -123,9 +123,7 @@ func checkModelRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 		return modelName == fmt.Sprintf("%s/%s", w.model.Group.Name, w.model.Name), nil
 	}
 
-	isSharedInfra := w.model.Group.Name == sdk.SharedInfraGroupName && modelName == w.model.Name
-	isSameName := modelName == w.model.Name // for backward compatibility with runs, if only the name match we considered that the model can be used, keep this condition until the workflow runs were not migrated.
-	return isSharedInfra || isSameName, nil
+	return w.model.Group.Name == sdk.SharedInfraGroupName && modelName == w.model.Name, nil
 }
 
 func checkNetworkAccessRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
