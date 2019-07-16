@@ -32,7 +32,7 @@ func RegisterWorker(t *testing.T, api *API, groupID int64, existingWorkerModelNa
 	hSrv, hPrivKey, hConsumer, _ := assets.InsertHatchery(t, api.mustDB(), *g)
 	session, jwt, err := hatchery.NewWorkerToken(hSrv.Name, hPrivKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
 		HatcheryName: hSrv.Name,
-		Model:        *model,
+		Model:        model,
 		WorkerName:   hSrv.Name + "-worker",
 	})
 	test.NoError(t, err)

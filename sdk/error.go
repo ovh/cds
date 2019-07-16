@@ -356,7 +356,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrApplicationUsedByWorkflow.ID:                     "Application still used by a workflow",
 	ErrLocked.ID:                                        "Resource locked",
 	ErrInvalidJobRequirementWorkerModelPermission.ID:    "Invalid job requirements: unable to use worker model due to permissions",
-	ErrInvalidJobRequirementWorkerModelCapabilitites.ID: "Invalid job requirements: the worker model does't match with the binary requirements",
+	ErrInvalidJobRequirementWorkerModelCapabilitites.ID: "Invalid job requirements: the worker model doesn't match with the binary requirements",
 	ErrMalformattedStep.ID:                              "Malformatted step",
 	ErrVCSUsedByApplication.ID:                          "Repository manager still used by an application",
 	ErrApplicationAsCodeOverride.ID:                     "You cannot override application from this repository",

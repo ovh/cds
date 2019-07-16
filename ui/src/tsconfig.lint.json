@@ -8,6 +8,7 @@
   "exclude": [
     "test.ts",
     "**/*.spec.ts",
-    "../node_modules/**/*.ts"
+    "../node_modules/**/*.ts",
+    "../e2e/**/*.ts"
   ]
 }
