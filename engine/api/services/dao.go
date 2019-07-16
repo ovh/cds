@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/worker"
 
 	"github.com/go-gorp/gorp"
@@ -152,16 +151,8 @@ func Delete(db gorp.SqlExecutor, s *sdk.Service) error {
 		}
 	}
 
-	if s.ConsumerID != nil {
-		authConsumer, _ := authentication.LoadConsumerByID(context.Background(), db, *s.ConsumerID)
-		if authConsumer != nil {
-			if err := authentication.DeleteConsumerByID(db, authConsumer.ID); err != nil {
-				return err
-			}
-		}
-	}
-
 	sdb := service{Service: *s}
+	log.Debug("services.Delete> deleting service %s(%d) from database", s.Name, s.ID)
 	if _, err := db.Delete(&sdb); err != nil {
 		return sdk.WrapError(err, "unable to delete service %s", s.Name)
 	}

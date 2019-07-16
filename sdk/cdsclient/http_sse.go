@@ -69,6 +69,11 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 	if err != nil {
 		return err
 	}
+
+	if resp.StatusCode == 401 {
+		c.config.SessionToken = ""
+	}
+
 	br := bufio.NewReader(resp.Body)
 	defer resp.Body.Close() // nolint
 

@@ -2,7 +2,7 @@ package sdk
 
 import (
 	"database/sql/driver"
-	json "encoding/json"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -29,8 +29,8 @@ func (s CanonicalService) Canonical() ([]byte, error) {
 		canonical += *s.ConsumerID
 	}
 	canonical += s.Type
-	canonical += fmt.Sprintf("%v", s.Config)
-	canonical += string(s.PublicKey)
+	md5PubKey, _ := FileMd5sum(string(s.PublicKey))
+	canonical += string(md5PubKey)
 	return []byte(canonical), nil
 }
 

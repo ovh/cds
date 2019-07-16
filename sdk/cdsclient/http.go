@@ -260,6 +260,10 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			log.Println(cli.Yellow("**************************"))
 		}
 
+		if resp.StatusCode == 401 {
+			c.config.SessionToken = ""
+		}
+
 		// if everything is fine, return body
 		if errDo == nil && resp.StatusCode < 500 {
 			return resp.Body, resp.Header, resp.StatusCode, nil
@@ -355,6 +359,10 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 		fmt.Printf("Request path: %s\n", c.config.Host+path)
 		fmt.Printf("Request Headers: %s\n", req.Header)
 		fmt.Printf("Response Headers: %s\n", resp.Header)
+	}
+
+	if resp.StatusCode == 401 {
+		c.config.SessionToken = ""
 	}
 
 	var respBody []byte

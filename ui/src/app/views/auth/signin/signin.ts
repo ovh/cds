@@ -13,6 +13,7 @@ export class SigninComponent implements OnInit {
     redirect: string;
     apiURL: string;
 
+    isFirstConnection: boolean;
     localDriver: AuthDriverManifest;
     ldapDriver: AuthDriverManifest;
     externalDrivers: Array<AuthDriverManifest>;
@@ -29,10 +30,11 @@ export class SigninComponent implements OnInit {
     }
 
     ngOnInit() {
-        this._authenticationService.getDrivers().subscribe((ds) => {
-            this.localDriver = ds.find(d => d.type === 'local');
-            this.ldapDriver = ds.find(d => d.type === 'ldap');
-            this.externalDrivers = ds.filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin');
+        this._authenticationService.getDrivers().subscribe((data) => {
+            this.isFirstConnection = data.isFirstConnection;
+            this.localDriver = data.manifests.find(d => d.type === 'local');
+            this.ldapDriver = data.manifests.find(d => d.type === 'ldap');
+            this.externalDrivers = data.manifests.filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin');
         });
     }
 
@@ -45,7 +47,8 @@ export class SigninComponent implements OnInit {
             f.value.fullname,
             f.value.email,
             f.value.username,
-            f.value.password
+            f.value.password,
+            f.value.magic_token
         ).subscribe(() => {
             this.showSuccessSignup = true;
         });

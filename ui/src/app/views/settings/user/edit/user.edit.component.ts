@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { AuthConsumer, AuthDriverManifest, AuthSession } from 'app/model/authentication.model';
+import { AuthConsumer, AuthDriverManifest, AuthDriverManifests, AuthSession } from 'app/model/authentication.model';
 import { AuthenticationService } from 'app/service/services.module';
 import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
@@ -327,14 +327,14 @@ export class UserEditComponent implements OnInit {
 
     getAuthData(): void {
         this.loadingAuthData = true;
-        forkJoin<Array<AuthDriverManifest>, Array<AuthConsumer>, Array<AuthSession>>(
+        forkJoin<AuthDriverManifests, Array<AuthConsumer>, Array<AuthSession>>(
             this._authenticationService.getDrivers(),
             this._userService.getConsumers(this.currentUser.username),
             this._userService.getSessions(this.currentUser.username)
         )
             .pipe(finalize(() => this.loadingAuthData = false))
             .subscribe(res => {
-                this.drivers = res[0].filter(m => m.type !== 'builtin');
+                this.drivers = res[0].manifests.filter(m => m.type !== 'builtin');
                 this.consumers = res[1];
 
                 let mConsumers = {};

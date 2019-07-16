@@ -1,6 +1,8 @@
 package cdsclient
 
 import (
+	"sync"
+
 	"github.com/dgrijalva/jwt-go"
 
 	"github.com/ovh/cds/sdk"
@@ -15,6 +17,7 @@ type Config struct {
 	Verbose                           bool
 	Retry                             int
 	InsecureSkipVerifyTLS             bool
+	Mutex                             sync.Mutex
 }
 
 //ProviderConfig is the configuration data used by the cdsclient ProviderClient interface implementation
@@ -35,7 +38,10 @@ type ServiceConfig struct {
 	Verbose               bool
 }
 
-func (c Config) HasValidSessionToken() bool {
+func (c *Config) HasValidSessionToken() bool {
+	c.Mutex.Lock()
+	defer c.Mutex.Unlock()
+
 	if c.SessionToken == "" {
 		return false
 	}

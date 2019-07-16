@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AuthConsumerSigninResponse, AuthDriverManifest } from 'app/model/authentication.model';
+import { AuthConsumerSigninResponse, AuthDriverManifests } from 'app/model/authentication.model';
 import { Observable } from 'rxjs';
 
 @Injectable()
@@ -9,8 +9,8 @@ export class AuthenticationService {
         private _http: HttpClient
     ) { }
 
-    getDrivers(): Observable<Array<AuthDriverManifest>> {
-        return this._http.get<Array<AuthDriverManifest>>('/auth/driver');
+    getDrivers(): Observable<AuthDriverManifests> {
+        return this._http.get<AuthDriverManifests>('/auth/driver');
     }
 
     signin(consumerType: string, code: string, state: string): Observable<AuthConsumerSigninResponse> {
@@ -24,12 +24,14 @@ export class AuthenticationService {
         return this._http.post('/auth/consumer/signout', null);
     }
 
-    localSignup(fullname: string, email: string, username: string, password: string): Observable<AuthConsumerSigninResponse> {
+    localSignup(fullname: string, email: string, username: string, password: string, magic_token: string):
+        Observable<AuthConsumerSigninResponse> {
         return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/local/signup', {
             fullname,
             email,
             username,
-            password
+            password,
+            magic_token
         });
     }
 

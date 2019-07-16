@@ -20,7 +20,20 @@ func (api *API) getAuthDriversHandler() service.Handler {
 			drivers = append(drivers, d.GetManifest())
 		}
 
-		return service.WriteJSON(w, drivers, http.StatusOK)
+		countUsers, err := user.Count(api.mustDB())
+		if err != nil {
+			return err
+		}
+
+		var response = struct {
+			IsFirstConnection bool                     `json:"isFirstConnection"`
+			Drivers           []sdk.AuthDriverManifest `json:"manifests"`
+		}{
+			IsFirstConnection: countUsers == 0,
+			Drivers:           drivers,
+		}
+
+		return service.WriteJSON(w, response, http.StatusOK)
 	}
 }
 

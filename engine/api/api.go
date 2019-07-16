@@ -10,9 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/jws"
-
 	"github.com/blang/semver"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -51,6 +48,8 @@ import (
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -81,10 +80,9 @@ type Configuration struct {
 		Keys     string `toml:"keys" default:"/tmp/cds/keys" json:"keys"`
 	} `toml:"directories" json:"directories"`
 	Auth struct {
-		DefaultGroup     string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
-		SharedInfraToken string `toml:"sharedInfraToken" default:"" comment:"Token for shared.infra group. This value will be used when shared.infra will be created\nat first CDS launch. This token can be used by CDS CLI, Hatchery, etc...\nThis is mandatory." json:"-"`
-		RSAPrivateKey    string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
-		LDAP             struct {
+		DefaultGroup  string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
+		RSAPrivateKey string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
+		LDAP          struct {
 			Enable         bool   `toml:"enable" default:"false" json:"enable"`
 			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
 			Host           string `toml:"host" json:"host"`
@@ -322,6 +320,7 @@ func (a *API) ApplyConfiguration(config interface{}) error {
 
 	a.Type = services.TypeAPI
 	a.ServiceName = "cds-api"
+	a.Name = event.GetCDSName()
 
 	return nil
 }
@@ -405,6 +404,16 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	return nil
 }
 
+type StartupConfig struct {
+	Consumers []StartupConfigService
+}
+type StartupConfigService struct {
+	ID          string
+	Name        string
+	Description string
+	ServiceType string
+}
+
 // Serve will start the http api server
 func (a *API) Serve(ctx context.Context) error {
 	log.Info("Starting CDS API Server %s", sdk.VERSION)
@@ -442,7 +451,7 @@ func (a *API) Serve(ctx context.Context) error {
 	secret.Init(a.Config.Secrets.Key)
 
 	// Initialize the jwt layer
-	if err := authentication.Init(a.Name, []byte(a.Config.Auth.RSAPrivateKey)); err != nil {
+	if err := authentication.Init(a.ServiceName, []byte(a.Config.Auth.RSAPrivateKey)); err != nil {
 		return sdk.WrapError(err, "unable to initialize the JWT Layer")
 	}
 
@@ -546,7 +555,6 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info("Bootstrapping database...")
 	defaultValues := sdk.DefaultValues{
 		DefaultGroupName: a.Config.Auth.DefaultGroup,
-		SharedInfraToken: a.Config.Auth.SharedInfraToken,
 	}
 	if err := bootstrap.InitiliazeDB(defaultValues, a.DBConnectionFactory.GetDBMap); err != nil {
 		return fmt.Errorf("cannot setup databases: %v", err)

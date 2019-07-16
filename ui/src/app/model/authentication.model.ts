@@ -1,6 +1,11 @@
 import { Group } from './group.model';
 import { User } from './user.model';
 
+export class AuthDriverManifests {
+    isFirstConnection: boolean;
+    manifests: Array<AuthDriverManifest>;
+}
+
 export class AuthDriverManifest {
     type: string;
     signup_disabled: boolean;

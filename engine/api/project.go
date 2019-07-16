@@ -201,6 +201,10 @@ func (api *API) updateProjectHandler() service.Handler {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
 		event.PublishUpdateProject(proj, p, getAPIConsumer(ctx))
+
+		proj.Permissions.Readable = true
+		proj.Permissions.Writable = true
+
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
 }
@@ -556,8 +560,6 @@ func (api *API) addProjectHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
-		p.Permissions.Readable = true
-		p.Permissions.Writable = true
 
 		event.PublishAddProject(&p, consumer)
 
@@ -568,6 +570,9 @@ func (api *API) addProjectHandler() service.Handler {
 		if errL != nil {
 			return sdk.WrapError(errL, "Cannot load project %s", p.Key)
 		}
+
+		proj.Permissions.Readable = true
+		proj.Permissions.Writable = true
 
 		return service.WriteJSON(w, *proj, http.StatusCreated)
 	}

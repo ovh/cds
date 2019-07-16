@@ -43,7 +43,7 @@ func GetSigningKey() *rsa.PrivateKey {
 
 // SignJWT returns a jwt string using CDS signing key.
 func SignJWT(jwtToken *jwt.Token) (string, error) {
-	ss, err := jwtToken.SignedString(signingKey)
+	ss, err := jwtToken.SignedString(GetSigningKey())
 	if err != nil {
 		return "", sdk.WithStack(err)
 	}
@@ -75,7 +75,7 @@ func SignJWS(content interface{}, duration time.Duration) (string, error) {
 		payload.Expire = time.Now().Add(duration).Unix()
 	}
 
-	signer, err := jws.NewSigner(signingKey)
+	signer, err := jws.NewSigner(GetSigningKey())
 	if err != nil {
 		return "", err
 	}
@@ -94,7 +94,7 @@ func VerifyJWS(signature string, content interface{}) error {
 	}
 
 	if payload.Type != payloadDataType(content) || (payload.Expire > 0 && payload.Expire < time.Now().Unix()) {
-		return sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given jws token")
+		return sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given jws token: %+v", payload)
 	}
 
 	if err := mapstructure.Decode(payload.Data, content); err != nil {

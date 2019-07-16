@@ -22,7 +22,7 @@ type CommonConfiguration struct {
 	URL string `toml:"url" default:"http://localhost:8086" comment:"URL of this Hatchery" json:"url"`
 	API struct {
 		HTTP struct {
-			URL      string `toml:"url" default:"http://localhost:8081" commented:"true" comment:"CDS API URL" json:"url"`
+			URL      string `toml:"url" default:"http://localhost:8081" comment:"CDS API URL" json:"url"`
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`
 		} `toml:"http" json:"http"`
 		Token                string `toml:"token" default:"" comment:"CDS Token to reach CDS API. See https://ovh.github.io/cds/docs/components/cdsctl/token/ " json:"-"`

@@ -134,8 +134,11 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			if urlSuffix != "" {
 				urlSuffix = "?" + urlSuffix
 			}
-			if _, err := c.GetJSON(ctxt, "/queue/workflows"+urlSuffix, &queue, nil); err != nil {
+			if _, err := c.GetJSON(ctxt, "/queue/workflows"+urlSuffix, &queue, nil); err != nil && !sdk.ErrorIs(err, sdk.ErrUnauthorized) {
 				errs <- sdk.WrapError(err, "Unable to load jobs")
+				cancel()
+				continue
+			} else if sdk.ErrorIs(err, sdk.ErrUnauthorized) {
 				cancel()
 				continue
 			}

@@ -118,6 +118,9 @@ func (a *API) isWorker(ctx context.Context) (*sdk.Worker, bool) {
 		return nil, false
 	}
 	w, err := worker.LoadByConsumerID(ctx, db, s.ConsumerID)
+	if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return nil, false
+	}
 	if err != nil {
 		log.Error("unable to get worker from session %s: %v", s.ID, err)
 		return nil, false

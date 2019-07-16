@@ -190,7 +190,7 @@ export class AppComponent implements OnInit {
             urlSubscribe: '/cdsapi/events/subscribe',
             urlUnsubscribe: '/cdsapi/events/unsubscribe',
             sseURL: '/cdsapi/events',
-            pingURL: '/cdsapi/user/logged'
+            pingURL: '/cdsapi/user/me'
         });
         this._sseSubscription = this.sseWorker.response()
             .pipe(

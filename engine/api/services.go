@@ -46,7 +46,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 
 		// For hatcheries, the user who created the used token must be admin of all groups in the token
-		if srv.Type == services.TypeHatchery {
+		if srv.Type == services.TypeHatchery && !isAdmin(ctx) {
 			gAdmins, err := group.LoadGroupByAdmin(api.mustDB(), getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID)
 			if err != nil {
 				return err
@@ -61,6 +61,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 
 		srv.Uptodate = srv.Version == sdk.VERSION
 		srv.ConsumerID = &getAPIConsumer(ctx).ID
+		srv.LastHeartbeat = time.Now()
 
 		//Insert or update the service
 		tx, err := api.mustDB().Begin()
@@ -76,14 +77,16 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			if err := services.Update(tx, &srv); err != nil {
 				return sdk.WithStack(err)
 			}
+			log.Debug("postServiceRegisterHandler> service %s(%d) registered for consumer %v", srv.Name, srv.ID, *srv.ConsumerID)
 		} else if !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
-			log.Error("unable to find service by name %s: %v", srv.Name, errOldSrv)
+			log.Error("postServiceRegisterHandler> unable to find service by name %s: %v", srv.Name, errOldSrv)
 			return sdk.WithStack(errOldSrv)
 		} else {
 			srv.Maintainer = *getAPIConsumer(ctx).AuthentifiedUser
 			if err := services.Insert(tx, &srv); err != nil {
 				return sdk.WithStack(err)
 			}
+			log.Debug("postServiceRegisterHandler> new service %s(%d) registered for consumer %v", srv.Name, srv.ID, *srv.ConsumerID)
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -119,10 +122,9 @@ func (api *API) postServiceHearbeatHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		srv, err := services.LoadByConsumerID(ctx, tx, getAPIConsumer(ctx).ID)
-		if err != nil {
-			return err
-
+		srv, ok := api.isService(ctx)
+		if !ok {
+			return sdk.ErrForbidden
 		}
 
 		srv.LastHeartbeat = time.Now()
