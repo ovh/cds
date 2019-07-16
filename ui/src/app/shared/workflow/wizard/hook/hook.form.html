@@ -78,13 +78,11 @@
                 </ng-container>
                 <div class="ui info message" *ngIf="!_hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
             </ng-container>
-            <div class="ui right floated" suiPopup [popupText]="'workflow_as_code_no_edit' | translate"
-                 popupPlacement="left" *ngIf="mode === 'update'">
-                <button class="ui green button" type="button" name="savebtn" [class.loading]="loading"
-                        [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)">
-                    {{'btn_save' | translate}}
-                </button>
-            </div>
+
+            <button class="ui right floated green button" type="button" *ngIf="mode === 'update'" (click)="updateHook()"
+                    [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)" [class.loading]="loading">
+                {{ 'btn_save' | translate }}
+            </button>
         </div>
     </div>
 </ng-container>
