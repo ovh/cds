@@ -172,26 +172,17 @@ func DeleteForApplication(db gorp.SqlExecutor, app *sdk.Application) error {
 
 //LoadLinkedApplicationNames loads applications which are linked with this repository manager name
 func LoadLinkedApplicationNames(db gorp.SqlExecutor, projectKey, rmName string) (sdk.IDNames, error) {
-	query := `SELECT application.id, application.name, application.description
+	query := `SELECT application.id, application.name, application.description, '' AS icon
 	FROM application
 		JOIN project ON project.id = application.project_id
 	WHERE project.projectkey = $1 AND application.vcs_server = $2`
-	rows, err := db.Query(query, projectKey, rmName)
-	if err != nil {
+	var idNames sdk.IDNames
+	if _, err := db.Select(&idNames, query, projectKey, rmName); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, sdk.WithStack(err)
 	}
 
-	var appNames sdk.IDNames
-	for rows.Next() {
-		var appIDName sdk.IDName
-		if err := rows.Scan(&appIDName.ID, &appIDName.Name, &appIDName.Description); err != nil {
-			return appNames, sdk.WrapError(err, "cannot scan application name")
-		}
-		appNames = append(appNames, appIDName)
-	}
-
-	return appNames, nil
+	return idNames, nil
 }
