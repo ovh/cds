@@ -22,7 +22,7 @@ func TestAPI_checkWorkflowPermissions(t *testing.T) {
 
 	wctx := testRunWorkflow(t, api, api.Router)
 
-	consumer, err := local.NewConsumer(api.mustDB(), wctx.user.ID, sdk.RandomString(20))
+	consumer, err := local.NewConsumer(api.mustDB(), wctx.user.ID)
 	require.NoError(t, err)
 
 	consumer.AuthentifiedUser = wctx.user

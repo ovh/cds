@@ -19,7 +19,7 @@
                 <i class="play icon"></i>
             </button>
             <button class="ui red icon button" [class.loading]="loading"
-                [disabled]="loading || workflow.permission < perm.READ_EXECUTE" [title]="'btn_run' | translate"
+                [disabled]="loading || !workflow.permissions.executable" [title]="'btn_run' | translate"
                 (click)="stopNodeRun()"
                 *ngIf="currentWorkflowNodeRun && (currentWorkflowNodeRun?.status === pipelineStatusEnum.BUILDING || currentWorkflowNodeRun?.status === pipelineStatusEnum.WAITING)">
                 <i class="stop icon"></i>

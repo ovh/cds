@@ -1,4 +1,5 @@
 import { notificationTypes, UserNotificationSettings } from 'app/model/notification.model';
+import { Permission } from 'app/model/permission.model';
 import { Application } from './application.model';
 import { AuditWorkflow } from './audit.model';
 import { Environment } from './environment.model';
@@ -29,7 +30,7 @@ export class Workflow {
     project_key: string;
     last_modified: string;
     groups: Array<GroupPermission>;
-    permission: number;
+    permissions: Permission;
     metadata: Map<string, string>;
     usage: Usage;
     history_length: number;

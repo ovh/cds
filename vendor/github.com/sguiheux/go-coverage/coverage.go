@@ -26,8 +26,55 @@ func (l Parser) Parse() (Report, error) {
 		return l.processLcov()
 	case COBERTURA:
 		return l.processCobertura()
+	case CLOVER:
+		return l.processClover()
 	}
 	return Report{}, fmt.Errorf("coverage.parse> Unknown mode %s", l.mode)
+}
+
+func (l Parser) processClover() (Report, error) {
+	file, errF := os.Open(l.path)
+	if errF != nil {
+		return Report{}, fmt.Errorf("coverage.processClover> Unable to open file: %v", errF)
+	}
+	defer file.Close()
+
+	b, errR := ioutil.ReadAll(file)
+	if errR != nil {
+		return Report{}, fmt.Errorf("coverage.processClover> Unable to read file: %v", errR)
+	}
+
+	var cloReport CloverCoverage
+	if err := xml.Unmarshal(b, &cloReport); err != nil {
+		return Report{}, fmt.Errorf("coverage.processClover> Unable to unmarshal content: %v", err)
+	}
+
+	report := Report{
+		CoveredBranches:  int(cloReport.Project.Metrics.CoveredConditionals),
+		CoveredFunctions: int(cloReport.Project.Metrics.CoveredMethods),
+		CoveredLines:     int(cloReport.Project.Metrics.CoveredStatements),
+		TotalBranches:    int(cloReport.Project.Metrics.Conditionnals),
+		TotalFunctions:   int(cloReport.Project.Metrics.Methods),
+		TotalLines:       int(cloReport.Project.Metrics.Statements),
+		Files:            make([]FileReport, 0, cloReport.Project.Metrics.Files),
+	}
+
+	for _, p := range cloReport.Project.Package {
+		for _, f := range p.File {
+			fp := FileReport{
+				TotalLines:       int(f.Metrics.Statements),
+				TotalFunctions:   int(f.Metrics.Methods),
+				TotalBranches:    int(f.Metrics.Conditionnals),
+				CoveredLines:     int(f.Metrics.CoveredStatements),
+				CoveredFunctions: int(f.Metrics.CoveredMethods),
+				CoveredBranches:  int(f.Metrics.CoveredConditionals),
+				Path:             f.Path,
+			}
+			report.Files = append(report.Files, fp)
+		}
+	}
+	return report, nil
+
 }
 
 func (l Parser) processCobertura() (Report, error) {

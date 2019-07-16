@@ -38,7 +38,7 @@ export class PipelineAdminComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        if (this.editablePipeline.permission !== 7) {
+        if (!this.project.permissions.writable) {
             this._router.navigate([
                 '/project',
                 this.project.key,

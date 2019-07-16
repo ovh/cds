@@ -236,9 +236,15 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 			return sdk.WrapError(err, "cannot read body")
 		}
 
-		proj, errP := project.Load(db, api.Cache, key)
-		if errP != nil {
-			return sdk.WrapError(errP, "cannot load project %s", key)
+		proj, err := project.Load(db, api.Cache, key,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithGroups,
+			project.LoadOptions.WithIntegrations,
+		)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 		label.ProjectID = proj.ID
 
@@ -295,20 +301,25 @@ func (api *API) deleteWorkflowLabelHandler() service.Handler {
 		workflowName := vars["permWorkflowName"]
 		labelID, errV := requestVarInt(r, "labelID")
 		if errV != nil {
-			return sdk.WrapError(errV, "deleteWorkflowLabelHandler> Cannot convert to int labelID")
+			return sdk.WrapError(errV, "cannot convert to int labelID")
 		}
 
 		db := api.mustDB()
-		//u := getAPIConsumer(ctx)
 
-		proj, errP := project.Load(db, api.Cache, key)
-		if errP != nil {
-			return sdk.WrapError(errP, "deleteWorkflowLabelHandler> cannot load project %s", key)
+		proj, err := project.Load(db, api.Cache, key,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithGroups,
+			project.LoadOptions.WithIntegrations,
+		)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
-		wf, errW := workflow.Load(ctx, db, api.Cache, proj, workflowName, workflow.LoadOptions{})
-		if errW != nil {
-			return sdk.WrapError(errW, "deleteWorkflowLabelHandler> cannot load workflow %s/%s", key, workflowName)
+		wf, err := workflow.Load(ctx, db, api.Cache, proj, workflowName, workflow.LoadOptions{})
+		if err != nil {
+			return sdk.WrapError(err, "cannot load workflow %s/%s", key, workflowName)
 		}
 
 		if err := workflow.UnLabelWorkflow(db, labelID, wf.ID); err != nil {

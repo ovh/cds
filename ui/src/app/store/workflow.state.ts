@@ -1,7 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { GroupPermission } from 'app/model/group.model';
-import { PermissionValue } from 'app/model/permission.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -615,7 +614,7 @@ export class WorkflowState {
         return this._workflowService.getWorkflow(action.payload.projectKey, action.payload.workflowName).pipe(first(),
             tap(wf => {
                 const state = ctx.getState();
-                let canEdit = wf.permission === PermissionValue.READ_WRITE_EXECUTE;
+                let canEdit = wf.permissions.writable;
                 ctx.setState({
                     ...state,
                     projectKey: action.payload.projectKey,
@@ -804,7 +803,7 @@ export class WorkflowState {
             ...state,
             workflowRun: null,
             workflowNodeRun: null,
-            canEdit: state.workflow.permission === PermissionValue.READ_WRITE_EXECUTE,
+            canEdit: state.workflow.permissions.writable,
             sidebar: WorkflowSidebarMode.RUNS
         });
 

@@ -172,7 +172,6 @@ export class PipelineAuditComponent implements OnInit {
 
     cleanPipeline(p: Pipeline): Pipeline {
         delete p.last_modified;
-        delete p.permission;
         if (p.usage) {
             delete p.usage.applications;
         }

@@ -1,3 +1,4 @@
+import { Permission } from 'app/model/permission.model';
 import { Application } from './application.model';
 import { Environment } from './environment.model';
 import { GroupPermission } from './group.model';
@@ -23,7 +24,7 @@ export class Project {
   variables: Array<Variable>;
   environments: Array<Environment>;
   environment_names: Array<IdName>;
-  permission: number;
+  permissions: Permission;
   last_modified: string;
   vcs_servers: Array<RepositoriesManager>;
   keys: Array<Key>;

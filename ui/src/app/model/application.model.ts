@@ -14,7 +14,6 @@ export class Application {
     description: string;
     icon: string;
     variables: Array<Variable>;
-    permission: number;
     notifications: Array<Notification>;
     last_modified: string;
     vcs_server: string;

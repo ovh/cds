@@ -180,8 +180,12 @@ func loginRunExternal(v cli.Values) error {
 	fmt.Println(" >\t" + cli.Green("%s", askSigninURI.String()))
 	browser.OpenURL(askSigninURI.String()) // nolint
 
-	state := cli.AskValueChoice("Enter 'state' value:")
-	code := cli.AskValueChoice("Enter 'code' value:")
+	token := cli.AskValueChoice("Enter 'token' value:")
+	splittedToken := strings.Split(token, ":")
+	if len(splittedToken) != 2 {
+		return fmt.Errorf("invalid given 'token' value")
+	}
+	state, code := splittedToken[0], splittedToken[1]
 
 	res, err := client.AuthConsumerSignin(consumerType, sdk.AuthConsumerSigninRequest{
 		"state": state,

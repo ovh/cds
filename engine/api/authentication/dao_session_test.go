@@ -23,7 +23,7 @@ func TestLoadSession(t *testing.T) {
 	u := sdk.AuthentifiedUser{Username: sdk.RandomString(10)}
 	require.NoError(t, user.Insert(db, &u))
 
-	c1, err := local.NewConsumer(db, u.ID, sdk.RandomString(10))
+	c1, err := local.NewConsumer(db, u.ID)
 	require.NoError(t, err)
 
 	s1, err := authentication.NewSession(db, c1, time.Second)
@@ -31,7 +31,7 @@ func TestLoadSession(t *testing.T) {
 	s2, err := authentication.NewSession(db, c1, time.Second)
 	require.NoError(t, err)
 
-	c2, err := local.NewConsumer(db, u.ID, sdk.RandomString(10))
+	c2, err := local.NewConsumer(db, u.ID)
 	require.NoError(t, err)
 	s3, err := authentication.NewSession(db, c2, time.Second)
 	require.NoError(t, err)
@@ -68,7 +68,7 @@ func TestInsertSession(t *testing.T) {
 	}
 	test.NoError(t, user.Insert(db, &u))
 
-	c, err := local.NewConsumer(db, u.ID, sdk.RandomString(10))
+	c, err := local.NewConsumer(db, u.ID)
 	test.NoError(t, err)
 
 	s, err := authentication.NewSession(db, c, time.Second)
@@ -91,7 +91,7 @@ func TestUpdateSession(t *testing.T) {
 	}
 	test.NoError(t, user.Insert(db, &u))
 
-	c, err := local.NewConsumer(db, u.ID, sdk.RandomString(10))
+	c, err := local.NewConsumer(db, u.ID)
 	test.NoError(t, err)
 
 	s, err := authentication.NewSession(db, c, time.Second)
@@ -115,7 +115,7 @@ func TestDeleteSession(t *testing.T) {
 	}
 	test.NoError(t, user.Insert(db, &u))
 
-	c, err := local.NewConsumer(db, u.ID, sdk.RandomString(10))
+	c, err := local.NewConsumer(db, u.ID)
 	test.NoError(t, err)
 
 	s, err := authentication.NewSession(db, c, time.Second)

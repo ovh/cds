@@ -97,7 +97,6 @@ describe('CDS: Application Admin Component', () => {
 
         let appRenamed = new Application();
         appRenamed.name = 'appRenamed';
-        appRenamed.permission = 7;
 
 
         let fixture = TestBed.createComponent(ApplicationAdminComponent);
@@ -106,7 +105,6 @@ describe('CDS: Application Admin Component', () => {
 
         let app: Application = new Application();
         app.name = 'app';
-        app.permission = 7;
         let p: Project = new Project();
         p.key = 'key1';
         p.name = 'proj1';

@@ -36,7 +36,7 @@
                                     ...
                                 </div>
                               </span>
-                              <ng-container *ngIf="project.permission === 7">
+                              <ng-container *ngIf="project.permissions.writable">
                                   <span class="right floated tag btn-label"
                                     suiPopup
                                     #popup="suiPopup"

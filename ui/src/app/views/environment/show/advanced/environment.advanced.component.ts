@@ -37,7 +37,7 @@ export class EnvironmentAdvancedComponent implements OnInit {
     ngOnInit() {
         this.user = this.store.selectSnapshot(AuthenticationState.user);
         this.oldName = this.environment.name;
-        if (this.environment.permission !== 7) {
+        if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key, 'environment', this.environment.name]);
         }
     }
