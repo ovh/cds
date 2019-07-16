@@ -17,7 +17,7 @@
     "get-port": "4.0.0",
     "google-protobuf": "3.6.1",
     "grpc": "1.22.2",
-    "lodash": "4.17.13",
+    "lodash": "4.17.14",
     "yaml": "1.0.0"
   }
 }
