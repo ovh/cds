@@ -22,6 +22,12 @@
                     <sui-select-option value="">{{'common_loading' | translate}}</sui-select-option>
                 </sui-select>
             </ng-container>
+            <div class="inline fields uuid" *ngIf="_hook.uuid">
+                <div class="four wide field"><label>UUID</label></div>
+                <div class="twelve wide field">
+                    <input type="text" value="{{hook.uuid}}" disabled>
+                </div>
+            </div>
             <ng-container *ngIf="_hook.model && displayConfig">
                 <ng-container *ngIf="_hook.config && _hook.model.name !== 'Workflow'">
                     <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
