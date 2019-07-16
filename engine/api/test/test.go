@@ -139,7 +139,7 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	}
 
 	for _, f := range bootstrapFunc {
-		if err := f(sdk.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, DBConnectionFactory.GetDBMap); err != nil {
+		if err := f(sdk.DefaultValues{}, DBConnectionFactory.GetDBMap); err != nil {
 			log.Error("Error: %v", err)
 			return nil, nil, func() {}
 		}
