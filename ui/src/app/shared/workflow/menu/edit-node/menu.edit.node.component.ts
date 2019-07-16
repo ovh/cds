@@ -77,7 +77,7 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
             return;
         }
 
-        if (this.workflow && this.workflow.permission < PermissionValue.READ_EXECUTE) {
+        if (this.workflow && !this.workflow.permissions.executable) {
             return false;
         }
 
