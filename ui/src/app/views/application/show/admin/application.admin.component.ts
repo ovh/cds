@@ -42,7 +42,7 @@ export class ApplicationAdminComponent implements OnInit {
     ngOnInit() {
         this.user = this._store.selectSnapshot(AuthenticationState.user);
         this.newName = this.application.name;
-        if (this.application.permission !== 7) {
+        if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key, 'application', this.application.name],
                 { queryParams: { tab: 'workflow' } });
         }
