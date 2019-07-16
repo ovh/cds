@@ -78,8 +78,9 @@
                 </ng-container>
                 <div class="ui info message" *ngIf="!_hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
             </ng-container>
+
             <button class="ui right floated green button" type="button" *ngIf="mode === 'update'" (click)="updateHook()"
-                    [disabled]="loading" [class.loading]="loading">
+                    [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)" [class.loading]="loading">
                 {{ 'btn_save' | translate }}
             </button>
         </div>

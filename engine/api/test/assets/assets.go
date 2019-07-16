@@ -125,7 +125,7 @@ func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 		log.Error("user cannot be load for id %s: %v", data.ID, err)
 	}
 
-	consumer, err := local.NewConsumer(db, u.ID, sdk.RandomString(20))
+	consumer, err := local.NewConsumer(db, u.ID)
 	if err != nil {
 		log.Error("cannot create auth consumer: %v", err)
 	}
@@ -175,7 +175,7 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 
 	log.Debug("lambda user: %s", string(btes))
 
-	consumer, err := local.NewConsumer(db, u.ID, sdk.RandomString(20))
+	consumer, err := local.NewConsumer(db, u.ID)
 	if err != nil {
 		log.Error("cannot create auth consumer: %v", err)
 	}

@@ -528,7 +528,7 @@ github.com/sclevine/agouti/api/internal/bus
 github.com/sclevine/agouti/api/internal/service
 # github.com/sethgrid/pester v0.0.0-20171127025028-760f8913c048
 github.com/sethgrid/pester
-# github.com/sguiheux/go-coverage v0.0.0-20180713093848-6a8eac16bbb6
+# github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
 github.com/sguiheux/go-coverage
 # github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8
 github.com/shirou/gopsutil/mem

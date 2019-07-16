@@ -19,6 +19,8 @@ type SwiftStore struct {
 	projectIntegration sdk.ProjectIntegration
 }
 
+var swiftServeStaticFileEnabled bool
+
 func newSwiftStore(integration sdk.ProjectIntegration, conf ConfigOptionsOpenstack) (*SwiftStore, error) {
 	log.Info("ObjectStore> Initialize Swift driver on url: %s", conf.Address)
 	s := &SwiftStore{
@@ -65,6 +67,10 @@ func (s *SwiftStore) Status() sdk.MonitoringStatusLine {
 
 // ServeStaticFiles send files to serve static files with the entrypoint of html page and return public URL taking a tar file
 func (s *SwiftStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) {
+	if !swiftServeStaticFileEnabled {
+		return "", sdk.WithStack(sdk.ErrNotImplemented)
+	}
+
 	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
@@ -97,6 +103,7 @@ func (s *SwiftStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadC
 	}
 
 	return s.StorageUrl + "/" + container, nil
+
 }
 
 // Store stores in swift
@@ -193,6 +200,9 @@ func (s *SwiftStore) StoreURL(o Object, contentType string) (string, string, err
 
 // ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
 func (s *SwiftStore) ServeStaticFilesURL(o Object, entrypoint string) (string, string, error) {
+	if !swiftServeStaticFileEnabled {
+		return "", "", sdk.WithStack(sdk.ErrNotImplemented)
+	}
 	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
@@ -217,6 +227,7 @@ func (s *SwiftStore) ServeStaticFilesURL(o Object, entrypoint string) (string, s
 
 	url := s.ObjectTempUrl(container, object, string(key), "PUT", time.Now().Add(time.Hour))
 	return url, string(key), nil
+
 }
 
 func (s *SwiftStore) containerKey(container string) (string, error) {

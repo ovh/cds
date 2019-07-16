@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import * as actionsWorkflow from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { PermissionValue } from '../../../model/permission.model';
@@ -73,7 +72,7 @@ export class WorkflowShowComponent implements OnInit {
         });
 
         this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
-            this.detailedWorkflow = cloneDeep(s.workflow);
+            this.detailedWorkflow = s.workflow;
             if (this.detailedWorkflow) {
                 this.previewWorkflow = this.detailedWorkflow.preview;
                 // If a node is selected, update it

@@ -4,7 +4,7 @@
             <div class="ui row" *ngIf="coverage">
                 <div class="right aligned five wide column">
                     <ng-container *ngIf="coverage.report.total_lines > 0">
-                        <span suiPopup popupText="{{coverage.report.covered_lines}}/{{coverage.report.total_lines}}">{{ 'coverage_lines_title' | translate}}{{percentLines}}%</span>
+                        <span suiPopup popupText="{{coverage.report.covered_lines}}/{{coverage.report.total_lines}} ({{(percentLines - currentBranchTrendLines).toFixed(2) + '%'}})">{{ 'coverage_lines_title' | translate}}{{percentLines}}%</span>
                         <span *ngIf="currentBranchTrendLines" suiPopup popupText="{{'coverage_trend_current_branch' | translate }}">
                             <i class="arrow icon" [class.down]="currentBranchTrendLines > percentLines" [class.red]="currentBranchTrendLines > percentLines"
                                 [class.up]="currentBranchTrendLines < percentLines" [class.green]="currentBranchTrendLines < percentLines"
@@ -21,7 +21,7 @@
                 </div>
                 <div class="centered five wide column">
                     <ng-container *ngIf="coverage.report.total_functions > 0">
-                        <span suiPopup popupText="{{coverage.report.covered_functions}}/{{coverage.report.total_functions}}">{{ 'coverage_functions_title' | translate}}: {{percentFunctions}}%</span>
+                        <span suiPopup popupText="{{coverage.report.covered_functions}}/{{coverage.report.total_functions}} ({{(percentFunctions - currentBranchTrendFunctions).toFixed(2) + '%'}})">{{ 'coverage_functions_title' | translate}}: {{percentFunctions}}%</span>
                         <span *ngIf="currentBranchTrendFunctions" suiPopup popupText="{{'coverage_trend_current_branch' | translate }}">
                             <i class="arrow icon" [class.down]="currentBranchTrendFunctions > percentFunctions" [class.red]="currentBranchTrendFunctions > percentFunctions"
                                [class.up]="currentBranchTrendFunctions < percentFunctions" [class.green]="currentBranchTrendFunctions < percentFunctions"
@@ -38,7 +38,7 @@
                 </div>
                 <div class="five wide column">
                     <ng-container *ngIf="coverage.report.total_branches > 0">
-                        <span suiPopup popupText="{{coverage.report.covered_branches}}/{{coverage.report.total_branches}}">{{ 'coverage_branches_title' | translate}}: {{percentBranches}}%</span>
+                        <span suiPopup popupText="{{coverage.report.covered_branches}}/{{coverage.report.total_branches}} ({{(percentBranches - currentBranchTrendBranches).toFixed(2) + '%'}})">{{ 'coverage_branches_title' | translate}}: {{percentBranches}}%</span>
                          <span *ngIf="currentBranchTrendBranches" suiPopup popupText="{{'coverage_trend_current_branch' | translate }}">
                             <i class="arrow icon" [class.down]="currentBranchTrendBranches > percentBranches" [class.red]="currentBranchTrendBranches > percentBranches"
                                [class.up]="currentBranchTrendBranches < percentBranches" [class.green]="currentBranchTrendBranches < percentBranches"

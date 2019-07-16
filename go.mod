@@ -214,7 +214,7 @@ require (
 	github.com/sclevine/agouti v0.0.0-20171003013254-8cf0313221cb // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/sethgrid/pester v0.0.0-20171127025028-760f8913c048 // indirect
-	github.com/sguiheux/go-coverage v0.0.0-20180713093848-6a8eac16bbb6
+	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
 	github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8
 	github.com/sirupsen/logrus v1.0.6
 	github.com/skratchdot/open-golang v0.0.0-20160302144031-75fb7ed4208c
