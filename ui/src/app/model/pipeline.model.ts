@@ -51,7 +51,6 @@ export class Pipeline {
     icon: string;
     stages: Array<Stage>;
     parameters: Array<Parameter>;
-    permission: number;
     last_modified: number;
     projectKey: string;
     usage: Usage;

@@ -4,22 +4,22 @@
             <div class="eight wide field">
                 <label>{{'common_name' | translate}}</label>
                 <input type="text" name="stageName" [(ngModel)]="stage.name" (keydown)="stage.hasChanged = true"
-                    *ngIf="pipeline.permission === permissionEnum.READ_WRITE_EXECUTE">
-                <div class="inline" *ngIf="pipeline.permission !== permissionEnum.READ_WRITE_EXECUTE">{{stage.name}}
+                    *ngIf="project.permissions.writable">
+                <div class="inline" *ngIf="!project.permissions.writable">{{stage.name}}
                 </div>
             </div>
             <div class="eight wide field">
                 <div class="ui checkbox">
                     <input type="checkbox" id="enabled_stage_{{stage.id}}" name="enabled" [(ngModel)]="stage.enabled"
                         (change)="stage.hasChanged = true"
-                        [disabled]="pipeline.permission !== permissionEnum.READ_WRITE_EXECUTE">
+                        [disabled]="!project.permissions.writable">
                     <label for="enabled_stage_{{stage.id}}">{{ 'common_enable' | translate }}</label>
                 </div>
             </div>
         </div>
         <div class="field">
             <app-conditions *ngIf="!loading" [project]="project"
-                [readonly]="pipeline.permission < permissionEnum.READ_WRITE_EXECUTE" [pipelineId]="pipeline.id"
+                [readonly]="!project.permissions.writable" [pipelineId]="pipeline.id"
                 [triggerConditions]="triggerConditions" [(conditions)]="stage.conditions">
             </app-conditions>
             <div class="ui active centered inline loader" *ngIf="loading"></div>

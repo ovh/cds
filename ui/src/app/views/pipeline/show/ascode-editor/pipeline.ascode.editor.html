@@ -14,7 +14,7 @@
                     </button>
                 </div>
                 <div class="eight wide column">
-                    <button class="ui fluid green button" name="updatebtn" [disabled]="pipeline.from_repository || loading || pipeline.permission < statusEnum.READ_WRITE_EXECUTE"
+                    <button class="ui fluid green button" name="updatebtn" [disabled]="pipeline.from_repository || loading || !project.permissions.writable"
                         [class.loading]="loading" (click)="save()">
                         <i class="save icon"></i>{{ 'btn_save' | translate }}
                     </button>
