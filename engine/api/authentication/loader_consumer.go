@@ -54,11 +54,7 @@ func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.A
 	}
 
 	// Load all groups for links
-	groupIDs := make([]int64, 0, len(links))
-	for i := range links {
-		groupIDs = append(groupIDs, links[i].GroupID)
-	}
-	groups, err := group.LoadAllByIDs(ctx, db, groupIDs)
+	groups, err := group.LoadAllByIDs(ctx, db, links.ToGroupIDs())
 	if err != nil {
 		return err
 	}

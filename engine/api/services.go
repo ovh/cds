@@ -47,11 +47,11 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 
 		// For hatcheries, the user who created the used token must be admin of all groups in the token
 		if srv.Type == services.TypeHatchery && !isAdmin(ctx) {
-			gAdmins, err := group.LoadGroupByAdmin(api.mustDB(), getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID)
+			links, err := group.LoadLinksGroupUserForUserIDs(ctx, api.mustDB(), []int64{getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID})
 			if err != nil {
 				return err
 			}
-			groupsAdminIDs := sdk.Groups(gAdmins).ToIDs()
+			groupsAdminIDs := links.ToGroupIDs()
 			for _, gID := range getAPIConsumer(ctx).GetGroupIDs() {
 				if !sdk.IsInInt64Array(gID, groupsAdminIDs) {
 					return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", getAPIConsumer(ctx).ID, srv.Type)

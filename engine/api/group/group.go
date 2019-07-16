@@ -58,87 +58,6 @@ func AddGroup(db gorp.SqlExecutor, group *sdk.Group) (int64, bool, error) {
 	return group.ID, true, nil
 }
 
-// LoadGroups load all groups from database
-func LoadGroups(db gorp.SqlExecutor) ([]sdk.Group, error) {
-	groups := []sdk.Group{}
-
-	query := `SELECT * FROM "group" ORDER BY name`
-	rows, err := db.Query(query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id int64
-		var name string
-		if err := rows.Scan(&id, &name); err != nil {
-			return nil, err
-		}
-		g := sdk.Group{ID: id, Name: name}
-		groups = append(groups, g)
-	}
-	return groups, nil
-}
-
-//LoadGroupByUser return group list from database
-func LoadGroupByUser(db gorp.SqlExecutor, userID int64) ([]sdk.Group, error) {
-	groups := []sdk.Group{}
-
-	query := `
-		SELECT "group".id, "group".name
-		FROM "group"
-		JOIN "group_user" ON "group".id = "group_user".group_id
-		WHERE "group_user".user_id = $1
-    	ORDER BY "group".name
-		`
-	rows, err := db.Query(query, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id int64
-		var name string
-		if err := rows.Scan(&id, &name); err != nil {
-			return nil, err
-		}
-		g := sdk.Group{ID: id, Name: name}
-		groups = append(groups, g)
-	}
-	return groups, nil
-}
-
-//LoadGroupByAdmin return group list from database
-func LoadGroupByAdmin(db gorp.SqlExecutor, userID int64) ([]sdk.Group, error) {
-	groups := []sdk.Group{}
-
-	query := `
-		SELECT "group".id, "group".name
-		FROM "group"
-		JOIN "group_user" ON "group".id = "group_user".group_id
-		WHERE "group_user".user_id = $1
-		and "group_user".group_admin = true
-		`
-	rows, err := db.Query(query, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id int64
-		var name string
-		if err := rows.Scan(&id, &name); err != nil {
-			return nil, err
-		}
-		g := sdk.Group{ID: id, Name: name}
-		groups = append(groups, g)
-	}
-	return groups, nil
-}
-
 // CheckUserInGroup verivies that user is in given group
 func CheckUserInGroup(db gorp.SqlExecutor, groupID, userID int64) (bool, error) {
 	query := `SELECT COUNT(user_id) FROM group_user WHERE group_id = $1 AND user_id = $2`
@@ -241,10 +160,13 @@ func InsertGroup(db gorp.SqlExecutor, g *sdk.Group) error {
 
 // LoadGroupByProject retrieves all groups related to project
 func LoadGroupByProject(db gorp.SqlExecutor, project *sdk.Project) error {
-	query := `SELECT "group".id,"group".name,project_group.role FROM "group"
-	 		  JOIN project_group ON project_group.group_id = "group".id
-	 		  WHERE project_group.project_id = $1 ORDER BY "group".name ASC`
-
+	query := `
+    SELECT "group".id, "group".name, project_group.role
+    FROM "group"
+	  JOIN project_group ON project_group.group_id = "group".id
+    WHERE project_group.project_id = $1
+    ORDER BY "group".name ASC
+  `
 	rows, err := db.Query(query, project.ID)
 	if err != nil {
 		return err

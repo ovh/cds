@@ -67,11 +67,8 @@ func (api *API) getProjectsHandler() service.Handler {
 		case isMaintainer(ctx) && requestedUser == nil:
 			projects, err = project.LoadAll(ctx, api.mustDB(), api.Cache, opts...)
 		case isMaintainer(ctx) && requestedUser != nil:
-			groups, err := group.LoadGroupByUser(api.mustDB(), requestedUser.OldUserStruct.ID)
+			groups, err := group.LoadAllByDeprecatedUserID(context.TODO(), api.mustDB(), requestedUser.OldUserStruct.ID)
 			if err != nil {
-				if sdk.Cause(err) == sql.ErrNoRows {
-					return sdk.ErrUserNotFound
-				}
 				return sdk.WrapError(err, "unable to load user '%s' groups", requestedUserName)
 			}
 			requestedUser.OldUserStruct.Groups = groups
@@ -138,7 +135,7 @@ func (api *API) getProjectsHandler() service.Handler {
 			p.Workflows = ws
 			return nil
 		}
-		opts = append(opts, &filterByRepoFunc)
+		opts = append(opts, filterByRepoFunc)
 
 		if isMaintainer(ctx) || isAdmin(ctx) {
 			projects, err = project.LoadAllByRepo(api.mustDB(), api.Cache, filterByRepo, opts...)

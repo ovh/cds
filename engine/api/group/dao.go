@@ -51,6 +51,16 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 	return &g, nil
 }
 
+// LoadAll returns all groups from database.
+func LoadAll(ctx context.Context, db gorp.SqlExecutor, opts ...LoadOptionFunc) (sdk.Groups, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM "group"
+    ORDER BY "group".name
+  `)
+	return getAll(ctx, db, query, opts...)
+}
+
 // LoadAllByIDs returns all groups from database for given ids.
 func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64, opts ...LoadOptionFunc) (sdk.Groups, error) {
 	query := gorpmapping.NewQuery(`
@@ -67,7 +77,8 @@ func LoadAllByDeprecatedUserID(ctx context.Context, db gorp.SqlExecutor, depreca
     SELECT "group".*
     FROM "group"
 		JOIN "group_user" ON "group".id = "group_user".group_id
-		WHERE "group_user".user_id = $1
+    WHERE "group_user".user_id = $1
+    ORDER BY "group".name
   `).Args(deprecatedUserID)
 	return getAll(ctx, db, query, opts...)
 }
@@ -92,8 +103,8 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64, opts ...LoadOp
 	return get(ctx, db, query, opts...)
 }
 
-// LoadLinksGroupUserForGroupIDs returns data from group_user table for given group ids.
-func LoadLinksGroupUserForGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) ([]LinkGroupUser, error) {
+// LoadLinksGroupUserForGroupIDs xreturns data from group_user table for given group ids.
+func LoadLinksGroupUserForGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) (LinksGroupUser, error) {
 	ls := []LinkGroupUser{}
 
 	query := gorpmapping.NewQuery(`
@@ -110,7 +121,7 @@ func LoadLinksGroupUserForGroupIDs(ctx context.Context, db gorp.SqlExecutor, gro
 }
 
 // LoadLinksGroupUserForUserIDs returns data from group_user table for given user ids.
-func LoadLinksGroupUserForUserIDs(ctx context.Context, db gorp.SqlExecutor, userIDs []int64) ([]LinkGroupUser, error) {
+func LoadLinksGroupUserForUserIDs(ctx context.Context, db gorp.SqlExecutor, userIDs []int64) (LinksGroupUser, error) {
 	ls := []LinkGroupUser{}
 
 	query := gorpmapping.NewQuery(`

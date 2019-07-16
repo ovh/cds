@@ -81,7 +81,7 @@ func TestAPI_checkProjectPermissions(t *testing.T) {
 	require.NoError(t, group.InsertUserInGroup(api.mustDB(), p.ProjectGroups[0].Group.ID, authUser.OldUserStruct.ID, false))
 
 	// Reload the groups for the user
-	groups, err := group.LoadGroupByUser(api.mustDB(), authUser.OldUserStruct.ID)
+	groups, err := group.LoadAllByDeprecatedUserID(context.TODO(), api.mustDB(), authUser.OldUserStruct.ID)
 	require.NoError(t, err)
 	authUser.OldUserStruct.Groups = groups
 
