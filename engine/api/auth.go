@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -165,6 +166,11 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			// Create a new consumer for the new user
 			consumer, err = authentication.NewConsumerExternal(tx, newUser.ID, consumerType, userInfo)
 			if err != nil {
+				return err
+			}
+
+			// For each account we want to create a local consumer too
+			if _, err := local.NewConsumer(tx, newUser.ID); err != nil {
 				return err
 			}
 		}

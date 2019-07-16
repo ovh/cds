@@ -15,21 +15,11 @@
                     </div>
                     <form class="ui form">
                         <div class="field">
-                            <label>State</label>
+                            <label>Token</label>
                             <div class="ui fluid action input">
-                                <input type="text" value="{{state}}" [readonly]="true">
+                                <input type="text" value="{{state + ':' + code}}" [readonly]="true">
                                 <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
-                                    ngxClipboard [cbContent]="state" (click)="confirmCopy()">
-                                    <i class="copy icon"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="field">
-                            <label>Code</label>
-                            <div class="ui fluid action input">
-                                <input type="text" value="{{code}}" [readonly]="true">
-                                <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
-                                    ngxClipboard [cbContent]="code" (click)="confirmCopy()">
+                                    ngxClipboard [cbContent]="state + ':' + code" (click)="confirmCopy()">
                                     <i class="copy icon"></i>
                                 </button>
                             </div>

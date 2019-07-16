@@ -93,6 +93,12 @@
                         <span *ngFor="let l of c.selector.labels"
                             class="ui label {{l.color}}">{{l.title | translate}}</span>
                     </span>
+                    <span *ngSwitchCase="'text-icons'">
+                        {{c.selector.value | translate}}
+                        <span *ngFor="let i of c.selector.icons" suiPopup [popupText]="i.label | translate" popupTrigger="{{i.trigger ? i.trigger : 'hover'}}">
+                            {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
+                        </span>
+                    </span>
                     <ng-container *ngSwitchDefault>
                         <ng-container *ngIf="c.selector && c.translate">
                             {{c.selector | translate}}

@@ -88,8 +88,11 @@
                                         Local
                                     </div>
                                 </div>
-                                <div class="extra content">
-
+                                <div class="extra content center aligned">
+                                    <button class="ui primary button small"
+                                        (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' | translate}}</button>
+                                    <button class="ui green button small"
+                                        (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
                                 </div>
                             </div>
                             <div class="ui card" *ngSwitchDefault>
@@ -101,8 +104,19 @@
                                         {{d.type | titlecase}}
                                     </div>
                                 </div>
-                                <div class="extra content">
-
+                                <div class="extra content center aligned">
+                                    <ng-container *ngIf="mConsumers[d.type]">
+                                        <button class="ui primary button small"
+                                            (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' | translate}}</button>
+                                        <app-confirm-button [class]="'small'" [color]="'red'"
+                                            (event)="clickConsumerDetach(mConsumers[d.type])"
+                                            [title]="'user_auth_consumer_detach_btn'">
+                                        </app-confirm-button>
+                                    </ng-container>
+                                    <ng-container *ngIf="!mConsumers[d.type]">
+                                        <button class="ui green button small"
+                                            (click)="clickConsumerSignin(d.type)">{{'account_btn_signin' | translate}}</button>
+                                    </ng-container>
                                 </div>
                             </div>
                         </ng-container>
@@ -112,6 +126,7 @@
                     <h3 class="ui header">
                         <div class="content">
                             {{ 'user_auth_my_consumers' | translate }}
+                            <i class="add circle link icon green" (click)="clickConsumerCreate()"></i>
                         </div>
                     </h3>
                     <app-data-table [withFilter]="filterConsumers" [withPagination]="10" [columns]="columnsConsumers"
@@ -131,5 +146,6 @@
         </app-scrollview>
     </div>
 </div>
+<app-consumer-create-modal #consumerCreateModal (close)="modalClose()"></app-consumer-create-modal>
 <app-consumer-details-modal #consumerDetailsModal [consumer]="selectedConsumer" (close)="modalClose()">
 </app-consumer-details-modal>

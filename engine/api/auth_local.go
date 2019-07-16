@@ -82,7 +82,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 		}
 
 		// Create new local consumer for new user, set this consumer as pending validation
-		consumer, err := local.NewConsumer(tx, newUser.ID, reqData["password"])
+		consumer, err := local.NewConsumerWithPassword(tx, newUser.ID, reqData["password"])
 		if err != nil {
 			return err
 		}
