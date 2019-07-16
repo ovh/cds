@@ -217,7 +217,13 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot read body")
 		}
 
-		proj, errP := project.Load(db, api.Cache, key, u)
+		proj, errP := project.Load(db, api.Cache, key, u,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithGroups,
+			project.LoadOptions.WithIntegrations,
+		)
 		if errP != nil {
 			return sdk.WrapError(errP, "postWorkflowLabelHandler> cannot load project %s", key)
 		}
@@ -282,7 +288,13 @@ func (api *API) deleteWorkflowLabelHandler() service.Handler {
 		db := api.mustDB()
 		u := deprecatedGetUser(ctx)
 
-		proj, errP := project.Load(db, api.Cache, key, u)
+		proj, errP := project.Load(db, api.Cache, key, u,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithGroups,
+			project.LoadOptions.WithIntegrations,
+		)
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteWorkflowLabelHandler> cannot load project %s", key)
 		}

@@ -114,12 +114,13 @@ export class WorkflowComponent {
         this._store.dispatch(new CleanWorkflowState());
         this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
             this.sidebarMode = s.sidebar;
+
             if (s.workflow && (!this.workflow || (this.workflow && s.workflow.id !== this.workflow.id))) {
+                this.workflow = s.workflow;
                 this.initRuns(s.projectKey, s.workflow.name);
             }
             if (s.workflow) {
                 this.workflow = s.workflow;
-
                 if (this.selectecHookRef) {
                     let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
                     if (h) {
