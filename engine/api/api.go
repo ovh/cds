@@ -724,10 +724,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}, a.PanicDump())
 
 	//Temporary migration code
-	//DEPRECATED Migrations
-	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
-		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.AuthentifiedUser{Ring: sdk.UserRingAdmin})
-	}, a.PanicDump())
 	migrate.Add(sdk.Migration{Name: "WorkflowNotification", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.WorkflowNotifications(a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})

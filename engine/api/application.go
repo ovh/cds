@@ -52,11 +52,8 @@ func (api *API) getApplicationsHandler() service.Handler {
 				return err
 			}
 
-			groups, err := group.LoadGroupByUser(api.mustDB(), requestedUser.OldUserStruct.ID)
+			groups, err := group.LoadAllByDeprecatedUserID(context.TODO(), api.mustDB(), requestedUser.OldUserStruct.ID)
 			if err != nil {
-				if sdk.Cause(err) == sql.ErrNoRows {
-					return sdk.ErrUserNotFound
-				}
 				return sdk.WrapError(err, "unable to load user '%s' groups", requestedUserName)
 			}
 			requestedUser.OldUserStruct.Groups = groups

@@ -40,11 +40,7 @@ func loadMembers(ctx context.Context, db gorp.SqlExecutor, gs ...*sdk.Group) err
 	log.Debug("group.loadMembers> links: %v", links)
 
 	// Get all users for links
-	userIDs := make([]int64, len(links))
-	for i := range links {
-		userIDs[i] = links[i].UserID
-	}
-	members, err := user.LoadDeprecatedUsersWithoutAuthByIDs(ctx, db, userIDs)
+	members, err := user.LoadDeprecatedUsersWithoutAuthByIDs(ctx, db, links.ToUserIDs())
 	if err != nil {
 		return err
 	}

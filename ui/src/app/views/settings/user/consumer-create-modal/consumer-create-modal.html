@@ -3,6 +3,21 @@
         {{ 'auth_consumer_create_modal_title' | translate }}
     </div>
     <div class="content">
-
+        <div class="ui form">
+            <div class="ui grid">
+                <div class="ui wide sixteen field">
+                    <div class="fields">
+                        <div class="eight wide field">
+                            <label>{{'common_name' | translate}}</label>
+                            <input class="ui input" type="text" name="name" [ngModel]="newConsumer.name">
+                        </div>
+                        <div class="eight wide field">
+                            <label>{{'common_description' | translate}}</label>
+                            <input class="ui input" type="text" name="group" [ngModel]="newConsumer.description">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </ng-template>

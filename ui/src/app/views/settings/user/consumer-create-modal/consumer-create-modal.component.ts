@@ -6,6 +6,7 @@ import {
     ViewChild
 } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import { AuthConsumer } from 'app/model/authentication.model';
 
 @Component({
     selector: 'app-consumer-create-modal',
@@ -19,6 +20,8 @@ export class ConsumerCreateModalComponent {
     open: boolean;
 
     @Output() close = new EventEmitter();
+
+    newConsumer: AuthConsumer = new AuthConsumer();
 
     constructor(
         private _modalService: SuiModalService
@@ -42,9 +45,15 @@ export class ConsumerCreateModalComponent {
             this.open = false;
             this.close.emit();
         });
+
+        this.init();
     }
 
     clickClose() {
         this.modal.approve(true);
+    }
+
+    init(): void {
+        this.newConsumer = new AuthConsumer();
     }
 }
