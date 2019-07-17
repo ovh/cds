@@ -192,7 +192,7 @@ type MaintenanceClient interface {
 
 // ProjectClient exposes project related functions
 type ProjectClient interface {
-	ProjectCreate(proj *sdk.Project, groupName string) error
+	ProjectCreate(proj *sdk.Project) error
 	ProjectDelete(projectKey string) error
 	ProjectGroupAdd(projectKey, groupName string, permission int, projectOnly bool) error
 	ProjectGroupDelete(projectKey, groupName string) error

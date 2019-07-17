@@ -129,8 +129,21 @@ var projectCreateCmd = cli.Command{
 }
 
 func projectCreateRun(v cli.Values) error {
-	proj := &sdk.Project{Name: v.GetString("project-name"), Key: v.GetString(_ProjectKey)}
-	return client.ProjectCreate(proj, v.GetString("group-name"))
+	proj := &sdk.Project{
+		Name: v.GetString("project-name"),
+		Key:  v.GetString(_ProjectKey),
+	}
+
+	groupName := v.GetString("group-name")
+	if groupName != "" {
+		proj.ProjectGroups = []sdk.GroupPermission{
+			{
+				Group: sdk.Group{Name: groupName},
+			},
+		}
+	}
+
+	return client.ProjectCreate(proj)
 }
 
 var projectDeleteCmd = cli.Command{

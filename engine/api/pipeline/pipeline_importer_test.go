@@ -95,7 +95,7 @@ func TestImportUpdate(t *testing.T) {
 			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -132,7 +132,7 @@ func TestImportUpdate(t *testing.T) {
 			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -186,7 +186,7 @@ func TestImportUpdate(t *testing.T) {
 			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -228,7 +228,7 @@ func TestImportUpdate(t *testing.T) {
 			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -269,7 +269,7 @@ func TestImportUpdate(t *testing.T) {
 			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -352,7 +352,7 @@ func TestImportUpdate(t *testing.T) {
 			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -439,7 +439,7 @@ func TestImportUpdate(t *testing.T) {
 			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -516,7 +516,7 @@ func TestImportUpdate(t *testing.T) {
 			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key

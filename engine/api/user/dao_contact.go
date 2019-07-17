@@ -93,7 +93,7 @@ func InsertContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
 // UpdateContact in database.
 func UpdateContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
 	dbc := userContact{UserContact: *c}
-	if err := gorpmapping.UpdatetAndSign(db, &dbc); err != nil {
+	if err := gorpmapping.UpdateAndSign(db, &dbc); err != nil {
 		return err
 	}
 	*c = dbc.UserContact

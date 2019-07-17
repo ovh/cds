@@ -36,7 +36,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -60,7 +60,7 @@ func Test_getWorkflowHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -89,8 +89,12 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 	u, _ := assets.InsertLambdaUser(api.mustDB())
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
-	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true))
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
+	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -144,7 +148,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -208,7 +212,7 @@ func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -233,7 +237,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -296,7 +300,7 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -350,7 +354,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// Init pipeline
 	pip := sdk.Pipeline{
@@ -446,7 +450,7 @@ func Test_postWorkflowHandlerWithChildNodePayloadOverriding(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -503,7 +507,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// Init pipeline
 	pip := sdk.Pipeline{
@@ -660,7 +664,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	lbl1 := sdk.Label{
 		Name:      sdk.RandomString(5),
@@ -802,7 +806,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -859,11 +863,9 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
 
-	// Init user
-	u, _ := assets.InsertAdminUser(db)
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -928,7 +930,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// Init user
 	u, pass := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)

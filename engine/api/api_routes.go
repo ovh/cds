@@ -99,11 +99,10 @@ func (api *API) InitRouter() {
 	r.Handle("/download/{name}/{os}/{arch}", ScopeNone(), r.GET(api.downloadHandler, Auth(false)))
 
 	// Group
-	r.Handle("/group", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getGroupsHandler), r.POST(api.addGroupHandler))
+	r.Handle("/group", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getGroupsHandler), r.POST(api.postGroupHandler))
 	r.Handle("/group/{permGroupName}", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getGroupHandler), r.PUT(api.updateGroupHandler), r.DELETE(api.deleteGroupHandler))
-	r.Handle("/group/{permGroupName}/user", Scope(sdk.AuthConsumerScopeGroup), r.POST(api.addUserInGroupHandler))
-	r.Handle("/group/{permGroupName}/user/{user}", Scope(sdk.AuthConsumerScopeGroup), r.DELETE(api.removeUserFromGroupHandler))
-	r.Handle("/group/{permGroupName}/user/{user}/admin", Scope(sdk.AuthConsumerScopeGroup), r.POST(api.setUserGroupAdminHandler), r.DELETE(api.removeUserGroupAdminHandler))
+	r.Handle("/group/{permGroupName}/user", Scope(sdk.AuthConsumerScopeGroup), r.POST(api.postGroupUserHandler), r.PUT(api.putGroupUserHandler))
+	r.Handle("/group/{permGroupName}/user/{username}", Scope(sdk.AuthConsumerScopeGroup), r.DELETE(api.deleteGroupUserHandler))
 
 	// Hooks
 	r.Handle("/hook/{uuid}/workflow/{workflowID}/vcsevent/{vcsServer}", Scope(sdk.AuthConsumerScopeRun), r.GET(api.getHookPollingVCSEvents))
@@ -137,12 +136,12 @@ func (api *API) InitRouter() {
 	r.Handle("/bookmarks", ScopeNone(), r.GET(api.getBookmarksHandler))
 
 	// Project
-	r.Handle("/project", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectsHandler, AllowProvider(true), EnableTracing()), r.POST(api.addProjectHandler))
+	r.Handle("/project", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectsHandler, AllowProvider(true), EnableTracing()), r.POST(api.postProjectHandler))
 	r.Handle("/project/{permProjectKey}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectHandler), r.PUT(api.updateProjectHandler), r.DELETE(api.deleteProjectHandler))
 	r.Handle("/project/{permProjectKey}/labels", Scope(sdk.AuthConsumerScopeProject), r.PUT(api.putProjectLabelsHandler))
-	r.Handle("/project/{permProjectKey}/group", Scope(sdk.AuthConsumerScopeProject), r.POST(api.addGroupInProjectHandler))
-	r.Handle("/project/{permProjectKey}/group/import", Scope(sdk.AuthConsumerScopeProject), r.POST(api.importGroupsInProjectHandler, DEPRECATED))
-	r.Handle("/project/{permProjectKey}/group/{group}", Scope(sdk.AuthConsumerScopeProject), r.PUT(api.updateGroupRoleOnProjectHandler), r.DELETE(api.deleteGroupFromProjectHandler))
+	r.Handle("/project/{permProjectKey}/group", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postGroupInProjectHandler))
+	r.Handle("/project/{permProjectKey}/group/import", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postImportGroupsInProjectHandler))
+	r.Handle("/project/{permProjectKey}/group/{groupName}", Scope(sdk.AuthConsumerScopeProject), r.PUT(api.putGroupRoleOnProjectHandler), r.DELETE(api.deleteGroupFromProjectHandler))
 	r.Handle("/project/{permProjectKey}/variable", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getVariablesInProjectHandler))
 	r.Handle("/project/{permProjectKey}/encrypt", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postEncryptVariableHandler))
 	r.Handle("/project/{key}/variable/audit", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getVariablesAuditInProjectnHandler))

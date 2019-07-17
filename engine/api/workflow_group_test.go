@@ -24,7 +24,7 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -60,7 +60,11 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 	t.Logf("%+v\n", proj)
 
 	newGrp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGrp.ID, sdk.PermissionRead))
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   newGrp.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionRead,
+	}))
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -92,7 +96,7 @@ func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -128,7 +132,11 @@ func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
 	t.Logf("%+v\n", proj)
 
 	newGrp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGrp.ID, sdk.PermissionReadWriteExecute))
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   newGrp.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}))
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -154,7 +162,7 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -190,21 +198,28 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 	gr := sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	_, _, errG := group.AddGroup(api.mustDB(), &gr)
-	test.NoError(t, errG)
+	require.NoError(t, group.Insert(api.mustDB(), &gr))
 
 	tmpGr := assets.InsertTestGroup(t, db, sdk.RandomString(5))
-	test.NoError(t, group.InsertGroupInProject(db, proj2.ID, tmpGr.ID, sdk.PermissionRead))
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   tmpGr.ID,
+		ProjectID: proj2.ID,
+		Role:      sdk.PermissionRead,
+	}))
 
-	test.NoError(t, group.InsertGroupInProject(db, proj2.ID, gr.ID, sdk.PermissionRead))
-	test.NoError(t, group.AddWorkflowGroup(db, &w, sdk.GroupPermission{
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   gr.ID,
+		ProjectID: proj2.ID,
+		Role:      sdk.PermissionRead,
+	}))
+	test.NoError(t, group.AddWorkflowGroup(context.TODO(), db, &w, sdk.GroupPermission{
 		Permission: 7,
 		Group: sdk.Group{
 			ID:   tmpGr.ID,
 			Name: tmpGr.Name,
 		},
 	}))
-	test.NoError(t, group.AddWorkflowGroup(db, &w, sdk.GroupPermission{
+	test.NoError(t, group.AddWorkflowGroup(context.TODO(), db, &w, sdk.GroupPermission{
 		Permission: 7,
 		Group: sdk.Group{
 			ID:   gr.ID,
@@ -251,7 +266,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -288,12 +303,15 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 	gr := sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	_, _, errG := group.AddGroup(api.mustDB(), &gr)
-	test.NoError(t, errG)
+	require.NoError(t, group.Insert(api.mustDB(), &gr))
 
-	test.NoError(t, group.InsertGroupInProject(db, proj2.ID, gr.ID, 7))
-	test.NoError(t, group.AddWorkflowGroup(api.mustDB(), &w, sdk.GroupPermission{
-		Permission: 7,
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   gr.ID,
+		ProjectID: proj2.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}))
+	test.NoError(t, group.AddWorkflowGroup(context.TODO(), api.mustDB(), &w, sdk.GroupPermission{
+		Permission: sdk.PermissionReadWriteExecute,
 		Group: sdk.Group{
 			ID:   gr.ID,
 			Name: gr.Name,
@@ -329,7 +347,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertLambdaUser(api.mustDB(), &proj.ProjectGroups[0].Group)
 
 	//First pipeline
@@ -351,7 +369,6 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 				},
 			},
 		},
-
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 	}
@@ -377,7 +394,7 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 		Permission: sdk.PermissionReadWriteExecute,
 	}
 
-	uri = router.GetRoute("POST", api.addGroupInProjectHandler, vars)
+	uri = router.GetRoute("POST", api.postGroupInProjectHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &newGp)
 	//Do the request
@@ -411,16 +428,24 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertLambdaUser(api.mustDB(), &proj.ProjectGroups[0].Group)
 
 	// Add a new group on project to let us update the previous group permission to READ (because we must have at least one RW permission on project)
 	newGr := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGr.ID, sdk.PermissionReadWriteExecute))
-	test.NoError(t, group.InsertUserInGroup(db, newGr.ID, u.OldUserStruct.ID, true))
-	test.NoError(t, group.UpdateGroupRoleInProject(db, proj.ID, proj.ProjectGroups[0].Group.ID, sdk.PermissionRead))
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   newGr.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionRead,
+	}))
+	require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
+		GroupID: newGr.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
 
-	//First pipeline
+	// First pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
@@ -455,7 +480,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
 
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &newWf))
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &newWf))
 	require.NotEqual(t, 0, newWf.ID)
 
 	// Update workflow group to change READ to RWX and get permission on project in READ and permission on workflow in RWX to test edition and run
@@ -477,12 +502,12 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	test.NoError(t, group.DeleteUserFromGroup(db, proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID))
+	require.NoError(t, group.DeleteUserFromGroup(db, proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID))
 
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
-	test.NoError(t, errP)
+	require.NoError(t, errP)
 	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, workflow.LoadOptions{DeepPipeline: true})
-	test.NoError(t, errL)
+	require.NoError(t, errL)
 	assert.Equal(t, 2, len(wfLoaded.Groups))
 
 	// Try to update workflow
@@ -511,7 +536,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 		"permWorkflowName": wfLoaded.Name,
 	}
 	uri = router.GetRoute("POST", api.postWorkflowRunHandler, vars)
-	test.NotEmpty(t, uri)
+	require.NotEmpty(t, uri)
 
 	opts := sdk.WorkflowRunPostHandlerOption{
 		FromNodeIDs: []int64{wfLoaded.WorkflowData.Node.ID},
@@ -567,14 +592,24 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertLambdaUser(api.mustDB(), &proj.ProjectGroups[0].Group)
 
 	// Add a new group on project to let us update the previous group permission to READ (because we must have at least one RW permission on project)
 	newGr := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGr.ID, sdk.PermissionReadWriteExecute))
-	test.NoError(t, group.InsertUserInGroup(db, newGr.ID, u.OldUserStruct.ID, true))
-	test.NoError(t, group.UpdateGroupRoleInProject(db, proj.ID, proj.ProjectGroups[0].Group.ID, sdk.PermissionRead))
+	linkGroupProject := group.LinkGroupProject{
+		GroupID:   newGr.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}
+	require.NoError(t, group.InsertLinkGroupProject(db, &linkGroupProject))
+	require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
+		GroupID: newGr.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
+	linkGroupProject.Role = sdk.PermissionRead
+	require.NoError(t, group.UpdateLinkGroupProject(db, &linkGroupProject))
 
 	//First pipeline
 	pip := sdk.Pipeline{

@@ -10,11 +10,9 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) ProjectCreate(p *sdk.Project, groupName string) error {
-	if _, err := c.PostJSON(context.Background(), "/project", p, nil); err != nil {
-		return err
-	}
-	return nil
+func (c *client) ProjectCreate(p *sdk.Project) error {
+	_, err := c.PostJSON(context.Background(), "/project", p, nil)
+	return err
 }
 
 func (c *client) ProjectDelete(key string) error {
@@ -74,9 +72,9 @@ func (c *client) ProjectGroupsImport(projectKey string, content io.Reader, forma
 		url += "&forceUpdate=true"
 	}
 
-	btes, _, _, errReq := c.Request(context.Background(), "POST", url, content)
-	if errReq != nil {
-		return proj, errReq
+	btes, _, _, err := c.Request(context.Background(), "POST", url, content)
+	if err != nil {
+		return proj, err
 	}
 
 	if err := json.Unmarshal(btes, &proj); err != nil {

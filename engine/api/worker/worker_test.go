@@ -32,7 +32,7 @@ func TestDAO(t *testing.T) {
 	w := &sdk.Worker{
 		ID:         "foofoo",
 		Name:       "foo.bar.io",
-		ModelID:    m.ID,
+		ModelID:    &m.ID,
 		HatcheryID: hSrv.ID,
 		ConsumerID: hCons.ID,
 		Status:     sdk.StatusWaiting,

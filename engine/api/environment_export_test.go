@@ -18,7 +18,7 @@ func Test_getEnvironmentExportHandler(t *testing.T) {
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 	envName := sdk.RandomString(10)
 	env := &sdk.Environment{

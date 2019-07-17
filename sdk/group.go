@@ -12,15 +12,34 @@ const (
 	PermissionReadWriteExecute = 7
 )
 
+// IsValidPermissionValue checks that given permission int value match an exiting level.
+func IsValidPermissionValue(v int) bool {
+	switch v {
+	case PermissionRead, PermissionReadExecute, PermissionReadWriteExecute:
+		return true
+	}
+	return false
+}
+
 // Group represent a group of user.
 type Group struct {
 	ID   int64  `json:"id" yaml:"-" db:"id"`
 	Name string `json:"name" yaml:"name" cli:"name,key" db:"name"`
 	// aggregate
-	Members []User `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
-	Admin   bool   `json:"admin,omitempty" yaml:"admin,omitempty" db:"-"`
+	Members []AuthentifiedUser `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
+	Admin   bool               `json:"admin,omitempty" yaml:"admin,omitempty" db:"-"`
 }
 
+// IsValid returns an error if given group is not valid.
+func (g Group) IsValid() error {
+	rx := NamePatternRegex
+	if !rx.MatchString(g.Name) {
+		return NewErrorFrom(ErrInvalidName, "invalid group name, should match %s", NamePattern)
+	}
+	return nil
+}
+
+// Groups type provides useful func on group list.
 type Groups []Group
 
 // HasOneOf returns true if one of the given ids is in groups list.
@@ -58,6 +77,17 @@ type GroupPermission struct {
 	Permission int   `json:"permission"`
 }
 
+// IsValid returns an error if group permission is not valid.
+func (g GroupPermission) IsValid() error {
+	if g.Group.Name == "" {
+		return NewErrorFrom(ErrWrongRequest, "invalid given group name for permission")
+	}
+	if !IsValidPermissionValue(g.Permission) {
+		return NewErrorFrom(ErrWrongRequest, "invalid given permission value")
+	}
+	return nil
+}
+
 // ProjectGroup represent a link with a project
 type ProjectGroup struct {
 	Project    Project `json:"project"`
@@ -93,7 +123,7 @@ func (g Group) IsMember(groupIDs []int64) bool {
 // group should have members aggregated and authentified user old user struct should be set.
 func (g Group) IsAdmin(u AuthentifiedUser) bool {
 	for _, member := range g.Members {
-		if member.ID == u.OldUserStruct.ID {
+		if member.ID == u.ID {
 			return member.GroupAdmin
 		}
 	}

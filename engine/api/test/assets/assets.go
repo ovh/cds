@@ -37,10 +37,13 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// InsertTestProject create a test project
-func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, name string, u *sdk.AuthentifiedUser) *sdk.Project {
-
-	oldProj, _ := project.Load(db, store, key, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithWorkflows)
+// InsertTestProject create a test project.
+func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, name string) *sdk.Project {
+	oldProj, _ := project.Load(db, store, key,
+		project.LoadOptions.WithApplications,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithWorkflows,
+	)
 	if oldProj != nil {
 		for _, w := range oldProj.Workflows {
 			require.NoError(t, workflow.Delete(context.TODO(), db, store, oldProj, &w))
@@ -54,27 +57,19 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, nam
 		require.NoError(t, project.Delete(db, store, key))
 	}
 
-	proj := sdk.Project{
-		Key:  key,
-		Name: name,
-	}
+	proj := sdk.Project{Key: key, Name: name}
 
 	g := InsertTestGroup(t, db, name+"-group")
 
-	if err := project.Insert(db, store, &proj); err != nil {
-		t.Fatalf("Cannot insert project : %s", err)
-		return nil
-	}
+	require.NoError(t, project.Insert(db, store, &proj))
 
-	if err := group.InsertGroupInProject(db, proj.ID, g.ID, sdk.PermissionReadWriteExecute); err != nil {
-		t.Fatalf("Cannot insert permission : %s", err)
-		return nil
-	}
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   g.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}))
 
-	if err := group.LoadGroupByProject(db, &proj); err != nil {
-		t.Fatalf("Cannot load permission : %s", err)
-		return nil
-	}
+	require.NoError(t, group.LoadGroupByProject(db, &proj))
 
 	return &proj
 }
@@ -86,7 +81,7 @@ func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, store cache.Store, key
 }
 
 // InsertTestGroup create a test group
-func InsertTestGroup(t *testing.T, db *gorp.DbMap, name string) *sdk.Group {
+func InsertTestGroup(t *testing.T, db gorp.SqlExecutor, name string) *sdk.Group {
 	g := sdk.Group{
 		Name: name,
 	}
@@ -94,18 +89,41 @@ func InsertTestGroup(t *testing.T, db *gorp.DbMap, name string) *sdk.Group {
 	eg, _ := group.LoadByName(context.TODO(), db, g.Name)
 	if eg != nil {
 		g = *eg
-	} else if err := group.InsertGroup(db, &g); err != nil {
-		t.Fatalf("Cannot insert group : %s", err)
+	} else if err := group.Insert(db, &g); err != nil {
+		t.Fatalf("cannot insert group: %s", err)
 		return nil
 	}
 
 	return &g
 }
 
+// SetUserGroupAdmin allows a user to perform operations on given group
+func SetUserGroupAdmin(t *testing.T, db gorp.SqlExecutor, groupID int64, userID int64) {
+	l, err := group.LoadLinkGroupUserForGroupIDAndUserID(context.TODO(), db, groupID, userID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		t.Fatalf("cannot load link between group %d and user %d", groupID, userID)
+		return
+	}
+	if l == nil {
+		t.Fatalf("given user %d is not member of group %d", userID, groupID)
+		return
+	}
+
+	if l.Admin {
+		return
+	}
+	l.Admin = true
+
+	if err := group.UpdateLinkGroupUser(db, l); err != nil {
+		t.Fatalf("cannot set user %d group admin of %d", userID, groupID)
+		return
+	}
+}
+
 // DeleteTestGroup delete a test group.
 func DeleteTestGroup(t *testing.T, db gorp.SqlExecutor, g *sdk.Group) error {
 	t.Logf("Delete Group %s", g.Name)
-	return group.DeleteGroupAndDependencies(db, g)
+	return group.Delete(context.TODO(), db, g)
 }
 
 // InsertAdminUser have to be used only for tests
@@ -161,12 +179,18 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 	}
 
 	for _, g := range groups {
-		if err := group.InsertGroup(db, g); err != nil {
-			log.Error("unable to insert group: %v", err)
+		existingGroup, _ := group.LoadByName(context.TODO(), db, g.Name)
+		if existingGroup == nil {
+			if err := group.Insert(db, g); err != nil {
+				log.Error("unable to insert group: %v", err)
+			}
 		}
-		if err := group.InsertUserInGroup(db, g.ID, u.OldUserStruct.ID, false); err != nil {
+		if err := group.InsertLinkGroupUser(db, &group.LinkGroupUser{
+			GroupID: g.ID,
+			UserID:  u.OldUserStruct.ID,
+			Admin:   false,
+		}); err != nil {
 			log.Error("unable to insert user in group: %v", err)
-
 		}
 		u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, *g)
 	}
@@ -363,12 +387,12 @@ func InsertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 			workermodel.Delete(db, m.ID)
 		}
 
-		if err := group.DeleteGroupAndDependencies(db, g1); err != nil {
+		if err := group.Delete(context.TODO(), db, g1); err != nil {
 			t.Logf("unable to delete group: %v", err)
 		}
 	}
 
-	if err := group.InsertGroup(db, g); err != nil {
+	if err := group.Insert(db, g); err != nil {
 		t.Fatalf("Unable to create group %s", err)
 	}
 

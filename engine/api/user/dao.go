@@ -80,13 +80,13 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 }
 
 // LoadAll returns all users from database.
-func LoadAll(ctx context.Context, db gorp.SqlExecutor, opts ...LoadOptionFunc) ([]sdk.AuthentifiedUser, error) {
+func LoadAll(ctx context.Context, db gorp.SqlExecutor, opts ...LoadOptionFunc) (sdk.AuthentifiedUsers, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM authentified_user")
 	return getAll(ctx, db, query, opts...)
 }
 
 // LoadAllByIDs returns users from database for given ids.
-func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []string, opts ...LoadOptionFunc) ([]sdk.AuthentifiedUser, error) {
+func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []string, opts ...LoadOptionFunc) (sdk.AuthentifiedUsers, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM authentified_user
@@ -126,7 +126,7 @@ func Insert(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
 	}
 	*au = u.AuthentifiedUser
 
-	// TODO: refactor this when authenticatedUser.group will replace user.group
+	// TODO refactor this when authenticatedUser will replace user
 	oldUser := &sdk.User{
 		Admin:    u.Ring == sdk.UserRingAdmin,
 		Email:    "no-reply-" + u.Username + "@corp.ovh.com",
@@ -137,18 +137,16 @@ func Insert(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
 	if err := insertDeprecatedUser(db, oldUser); err != nil {
 		return sdk.WrapError(err, "unable to insert old user for authenticated_user.id=%s", u.ID)
 	}
-	query := "INSERT INTO authentified_user_migration(authentified_user_id, user_id) VALUES($1, $2)"
-	if _, err := db.Exec(query, u.ID, oldUser.ID); err != nil {
-		return sdk.WrapError(err, "unable to insert into table authentified_user_migration")
-	}
-
-	return nil
+	return insertUserMigration(db, &MigrationUser{
+		AuthentifiedUserID: u.ID,
+		UserID:             oldUser.ID,
+	})
 }
 
 // Update a user in database.
 func Update(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
 	u := authentifiedUser{AuthentifiedUser: *au}
-	if err := gorpmapping.UpdatetAndSign(db, &u); err != nil {
+	if err := gorpmapping.UpdateAndSign(db, &u); err != nil {
 		return sdk.WrapError(err, "unable to update authentified user with id: %s", au.ID)
 	}
 	*au = u.AuthentifiedUser

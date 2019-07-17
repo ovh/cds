@@ -10,6 +10,7 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
@@ -27,7 +28,7 @@ func Test_postWorkflowImportHandler(t *testing.T) {
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -91,7 +92,7 @@ func Test_postWorkflowImportHandlerWithExistingIcon(t *testing.T) {
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -163,7 +164,7 @@ func Test_putWorkflowImportHandler(t *testing.T) {
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	pip := &sdk.Pipeline{
@@ -227,7 +228,7 @@ func Test_putWorkflowImportHandlerWithJoinAndCondition(t *testing.T) {
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	pip := &sdk.Pipeline{
@@ -354,7 +355,7 @@ func Test_putWorkflowImportHandlerWithJoinWithOrWithoutCondition(t *testing.T) {
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	pip := &sdk.Pipeline{
@@ -487,7 +488,7 @@ func Test_putWorkflowImportHandlerWithJoinWithoutCondition(t *testing.T) {
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	pip := &sdk.Pipeline{
@@ -626,8 +627,12 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
+	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
 	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
@@ -791,7 +796,7 @@ func Test_putWorkflowImportHandlerMustNotHave2Joins(t *testing.T) {
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	pip := &sdk.Pipeline{

@@ -68,7 +68,7 @@ func getDeprecatedUser(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Q
 }
 
 // LoadDeprecatedUsersWithoutAuthByIDs returns deprecated users from database for given ids.
-func LoadDeprecatedUsersWithoutAuthByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64, opts ...LoadDeprecatedUserOptionFunc) ([]sdk.User, error) {
+func LoadDeprecatedUsersWithoutAuthByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64, opts ...LoadDeprecatedUserOptionFunc) (sdk.Users, error) {
 	query := gorpmapping.NewQuery(`
     SELECT id, username, admin, data, origin
     FROM "user"

@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -57,34 +56,18 @@ func loadContacts(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.Authenti
 func loadDeprecatedUser(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.AuthentifiedUser) error {
 	authentifiedUserIDs := sdk.AuthentifiedUsersToIDs(aus)
 
-	// Get all authentified user migration entries.
-	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM authentified_user_migration
-    WHERE authentified_user_id = ANY(string_to_array($1, ',')::text[])
-  `).Args(gorpmapping.IDStringsToQueryString(authentifiedUserIDs))
-	var userMigrations []authentifiedUserMigration
-	if err := gorpmapping.GetAll(ctx, db, query, &userMigrations); err != nil {
-		return err
-	}
-	mUserMigrations := make(map[string]authentifiedUserMigration, len(userMigrations))
-	for i := range userMigrations {
-		mUserMigrations[userMigrations[i].AuthentifiedUserID] = userMigrations[i]
-	}
-
-	userIDs := make([]int64, len(userMigrations))
-	for i := range userMigrations {
-		userIDs[i] = userMigrations[i].UserID
-	}
-	us, err := LoadDeprecatedUsersWithoutAuthByIDs(ctx, db, userIDs)
+	userMigrations, err := LoadMigrationUsersByUserIDs(ctx, db, authentifiedUserIDs)
 	if err != nil {
 		return err
 	}
-	mUsers := make(map[int64]sdk.User, len(us))
-	for i := range us {
-		mUsers[us[i].ID] = us[i]
+
+	us, err := LoadDeprecatedUsersWithoutAuthByIDs(ctx, db, userMigrations.ToUserIDs())
+	if err != nil {
+		return err
 	}
 
+	mUsers := us.ToMapByID()
+	mUserMigrations := userMigrations.ToMapByAuthentifiedUserID()
 	for _, au := range aus {
 		if userMigration, okMigration := mUserMigrations[au.ID]; okMigration {
 			if oldUser, okUser := mUsers[userMigration.UserID]; okUser {

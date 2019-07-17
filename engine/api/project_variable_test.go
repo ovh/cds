@@ -23,7 +23,7 @@ func Test_getVariableAuditInProjectHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	// Add variable
 	v := sdk.Variable{
@@ -66,7 +66,7 @@ func Test_postEncryptVariableHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	vars := map[string]string{
 		"permProjectKey": proj.Key,

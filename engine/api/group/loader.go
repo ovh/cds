@@ -7,7 +7,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadOptionFunc for group.
@@ -15,9 +14,15 @@ type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.Group) error
 
 // LoadOptions provides all options on group loads functions.
 var LoadOptions = struct {
+	Default     LoadOptionFunc
 	WithMembers LoadOptionFunc
 }{
+	Default:     loadDefault,
 	WithMembers: loadMembers,
+}
+
+func loadDefault(ctx context.Context, db gorp.SqlExecutor, gs ...*sdk.Group) error {
+	return loadMembers(ctx, db, gs...)
 }
 
 func loadMembers(ctx context.Context, db gorp.SqlExecutor, gs ...*sdk.Group) error {
@@ -37,27 +42,29 @@ func loadMembers(ctx context.Context, db gorp.SqlExecutor, gs ...*sdk.Group) err
 		}
 	}
 
-	log.Debug("group.loadMembers> links: %v", links)
-
-	// Get all users for links
-	members, err := user.LoadDeprecatedUsersWithoutAuthByIDs(ctx, db, links.ToUserIDs())
+	// Get all user migrations for links
+	userMigrations, err := user.LoadMigrationUsersByDeprecatedUserIDs(ctx, db, links.ToUserIDs())
 	if err != nil {
 		return err
 	}
-	mMembers := make(map[int64]sdk.User, len(members))
-	for i := range members {
-		mMembers[members[i].ID] = members[i]
+	mMigrations := userMigrations.ToMapByUserID()
+
+	// Get all authentified users for migrations
+	members, err := user.LoadAllByIDs(ctx, db, userMigrations.ToAuthentifiedUserIDs())
+	if err != nil {
+		return err
 	}
+	mMembers := members.ToMapByID()
 
-	log.Debug("group.loadMembers> members: %v", members)
-
-	// Set links on each groups
+	// Set members on each groups
 	for _, g := range gs {
 		if _, ok := mLinks[g.ID]; ok {
 			for _, link := range mLinks[g.ID] {
-				if member, ok := mMembers[link.UserID]; ok {
-					member.GroupAdmin = link.Admin
-					g.Members = append(g.Members, member)
+				if migration, ok := mMigrations[link.UserID]; ok {
+					if member, ok := mMembers[migration.AuthentifiedUserID]; ok {
+						member.GroupAdmin = link.Admin
+						g.Members = append(g.Members, member)
+					}
 				}
 			}
 		}

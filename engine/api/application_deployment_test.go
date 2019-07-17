@@ -26,7 +26,7 @@ func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
@@ -53,7 +53,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
@@ -176,7 +176,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentInteg
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
@@ -305,7 +305,7 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}

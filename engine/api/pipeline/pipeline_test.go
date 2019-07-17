@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -146,7 +147,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 	defer end()
 	key := sdk.RandomString(10)
 
-	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	app := sdk.Application{
 		Name:       "my-app",
 		ProjectKey: proj.Key,
@@ -201,9 +202,13 @@ func TestLoadByWorkerModel(t *testing.T) {
 	model2 := sdk.Model{Name: sdk.RandomString(10), Group: g2, GroupID: g2.ID}
 
 	projectKey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, projectKey, projectKey, nil)
+	proj := assets.InsertTestProject(t, db, cache, projectKey, projectKey)
 
-	assert.NoError(t, group.InsertGroupInProject(db, proj.ID, g2.ID, sdk.PermissionReadWriteExecute))
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   g2.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}))
 
 	// first pipeline with requirement shared.infra/model
 	pip1 := sdk.Pipeline{ProjectID: proj.ID, ProjectKey: proj.Key, Name: sdk.RandomString(10)}

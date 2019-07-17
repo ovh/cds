@@ -25,7 +25,7 @@ func TestManualRun1(t *testing.T) {
 	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	ctx := context.Background()
 
 	//First pipeline
@@ -184,7 +184,7 @@ func TestManualRun2(t *testing.T) {
 	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	ctx := context.Background()
 
 	//First pipeline
@@ -305,7 +305,7 @@ func TestManualRun3(t *testing.T) {
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	ctx := context.Background()
 
 	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
@@ -655,7 +655,7 @@ func TestNoStage(t *testing.T) {
 	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -727,7 +727,7 @@ func TestNoJob(t *testing.T) {
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{

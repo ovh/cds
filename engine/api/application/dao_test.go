@@ -22,7 +22,7 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -41,7 +41,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -62,7 +62,7 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -82,7 +82,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 	defer end()
 	key := sdk.RandomString(10)
 
-	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -103,7 +103,7 @@ func TestLoadAllAsAdmin(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	app := sdk.Application{
 		Name: "my-app",
 		Metadata: sdk.Metadata{
@@ -136,7 +136,7 @@ func TestLoadAllAsUser(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -161,7 +161,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 	defer end()
 	key := sdk.RandomString(10)
 
-	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	app := sdk.Application{
 		Name:       "my-app",
 		ProjectKey: proj.Key,

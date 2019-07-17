@@ -42,10 +42,10 @@ func insertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 
 	g1, _ := group.LoadByName(context.TODO(), db, g.Name)
 	if g1 != nil {
-		group.DeleteGroupAndDependencies(db, g1)
+		require.NoError(t, group.Delete(context.TODO(), db, g1))
 	}
 
-	if err := group.InsertGroup(db, g); err != nil {
+	if err := group.Insert(db, g); err != nil {
 		t.Fatalf("Unable to create group %s", err)
 	}
 

@@ -20,11 +20,14 @@ func (projects Projects) Keys() []string {
 
 // Project represent a team with group of users and pipelines
 type Project struct {
-	ID               int64                `json:"-" yaml:"-" db:"id" cli:"-"`
-	Key              string               `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
-	Name             string               `json:"name" yaml:"name" db:"name" cli:"name"`
-	Description      string               `json:"description" yaml:"description" db:"description" cli:"description"`
-	Icon             string               `json:"icon" yaml:"icon" db:"icon" cli:"-"`
+	ID           int64     `json:"-" yaml:"-" db:"id" cli:"-"`
+	Key          string    `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
+	Name         string    `json:"name" yaml:"name" db:"name" cli:"name"`
+	Description  string    `json:"description" yaml:"description" db:"description" cli:"description"`
+	Icon         string    `json:"icon" yaml:"icon" db:"icon" cli:"-"`
+	Created      time.Time `json:"created" yaml:"created" db:"created" `
+	LastModified time.Time `json:"last_modified" yaml:"last_modified" db:"last_modified"`
+	// aggregates
 	Workflows        []Workflow           `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
 	WorkflowNames    IDNames              `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
 	Pipelines        []Pipeline           `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
@@ -33,12 +36,10 @@ type Project struct {
 	ApplicationNames IDNames              `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
 	ProjectGroups    []GroupPermission    `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
 	Variable         []Variable           `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
-	Environments     []Environment        `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
-	EnvironmentNames IDNames              `json:"environment_names,omitempty"  yaml:"environment_names,omitempty" db:"-"  cli:"-"`
-	Labels           []Label              `json:"labels,omitempty"  yaml:"labels,omitempty" db:"-"  cli:"-"`
-	Permissions      Permissions          `json:"permissions"  yaml:"-" db:"-"  cli:"-"`
-	Created          time.Time            `json:"created"  yaml:"created" db:"created" `
-	LastModified     time.Time            `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
+	Environments     []Environment        `json:"environments,omitempty" yaml:"environments,omitempty" db:"-"  cli:"-"`
+	EnvironmentNames IDNames              `json:"environment_names,omitempty" yaml:"environment_names,omitempty" db:"-"  cli:"-"`
+	Labels           []Label              `json:"labels,omitempty" yaml:"labels,omitempty" db:"-"  cli:"-"`
+	Permissions      Permissions          `json:"permissions" yaml:"-" db:"-"  cli:"-"`
 	Metadata         Metadata             `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
 	Keys             []ProjectKey         `json:"keys" yaml:"keys" db:"-" cli:"-"`
 	VCSServers       []ProjectVCSServer   `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`

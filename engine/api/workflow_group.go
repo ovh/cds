@@ -117,7 +117,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := group.UpdateWorkflowGroup(tx, wf, gp); err != nil {
+		if err := group.UpdateWorkflowGroup(ctx, tx, wf, gp); err != nil {
 			return sdk.WrapError(err, "Cannot add group")
 		}
 
@@ -168,18 +168,18 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 			gp.Group = *g
 		}
 
-		tx, errT := api.mustDB().Begin()
-		if errT != nil {
-			return sdk.WrapError(errT, "postWorkflowGroupHandler> Cannot start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := group.AddWorkflowGroup(tx, wf, gp); err != nil {
-			return sdk.WrapError(err, "Cannot add group")
+		if err := group.AddWorkflowGroup(ctx, tx, wf, gp); err != nil {
+			return sdk.WrapError(err, "cannot add group")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		event.PublishWorkflowPermissionAdd(key, *wf, gp, getAPIConsumer(ctx))

@@ -19,7 +19,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithoutSecret(t *testing.T)
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//Prepare request
@@ -88,7 +88,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//We will create an env, with a pgp key, export it then import as a new environment(with a different name)
@@ -213,7 +213,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	env := &sdk.Environment{
@@ -397,7 +397,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithEmptyKey(t *testing.T) 
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//Prepare request
@@ -464,7 +464,7 @@ func Test_postEnvironmentImportHandler_ExistingAppFromYAMLWithoutForce(t *testin
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	env := sdk.Environment{
@@ -500,7 +500,7 @@ func Test_postEnvironmentImportHandler_ExistingAppFromYAMLInheritPermissions(t *
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	env := sdk.Environment{

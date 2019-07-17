@@ -22,7 +22,7 @@ func Test_postTemplateApplyHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	u, jwt := assets.InsertAdminUser(api.mustDB())
+	_, jwt := assets.InsertAdminUser(api.mustDB())
 	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	assert.NoError(t, err)
 
@@ -56,7 +56,7 @@ jobs:
 	}
 	assert.NoError(t, workflowtemplate.Insert(db, template))
 
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
 	// prepare the request
 	uri := api.Router.GetRoute("POST", api.postTemplateApplyHandler, map[string]string{
@@ -89,7 +89,7 @@ func Test_postTemplateBulkHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	u, jwt := assets.InsertAdminUser(api.mustDB())
+	_, jwt := assets.InsertAdminUser(api.mustDB())
 	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	assert.NoError(t, err)
 
@@ -123,7 +123,7 @@ jobs:
 	}
 	assert.NoError(t, workflowtemplate.Insert(db, template))
 
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
 	// prepare the request
 	uri := api.Router.GetRoute("POST", api.postTemplateBulkHandler, map[string]string{

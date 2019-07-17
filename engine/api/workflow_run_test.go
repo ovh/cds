@@ -23,7 +23,7 @@ import (
 	defer end()
 	u, pass := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -149,7 +149,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -302,7 +302,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -416,7 +416,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -490,7 +490,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
@@ -548,7 +548,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -663,7 +663,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// Application
 	app := sdk.Application{
@@ -812,7 +812,7 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -954,7 +954,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -1058,7 +1058,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
@@ -1238,7 +1238,7 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 	defer end()
 	u, _ := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -1352,7 +1352,7 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	gr := &sdk.Group{
 		Name: sdk.RandomString(10),
@@ -1420,7 +1420,7 @@ func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	gr := &sdk.Group{
 		Name: sdk.RandomString(10),
@@ -1490,7 +1490,7 @@ func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk.AuthentifiedUser, string, *sdk.Project, *sdk.Workflow, *sdk.WorkflowRun, *sdk.WorkflowNodeJobRun) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -1684,7 +1684,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -1839,7 +1839,7 @@ func Test_deleteWorkflowRunHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{

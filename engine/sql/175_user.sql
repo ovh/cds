@@ -1,5 +1,6 @@
 -- +migrate Up
 
+-- Create auth tables
 CREATE TABLE IF NOT EXISTS "authentified_user" (
   id VARCHAR(36) PRIMARY KEY,
   created TIMESTAMP WITH TIME ZONE,
@@ -10,11 +11,13 @@ CREATE TABLE IF NOT EXISTS "authentified_user" (
 );
 
 CREATE TABLE IF NOT EXISTS "authentified_user_migration" (
-    authentified_user_id VARCHAR(36),
-    user_id BIGINT,
-    PRIMARY KEY (authentified_user_id, user_id)
+  id BIGSERIAL PRIMARY KEY,
+  authentified_user_id VARCHAR(36),
+  user_id BIGINT,
+  sig BYTEA
 );
 
+SELECT create_unique_index('authentified_user_migration', 'IDX_AUTHENTIFIED_USER_MIGRATION_LINK', 'authentified_user_id,user_id');
 SELECT create_foreign_key_idx_cascade('FK_AUTHENTIFIED_USER_MIGRATION_USER', 'authentified_user_migration', 'user', 'user_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_AUTHENTIFIED_USER_MIGRATION_AUTHENTIFIED_USER', 'authentified_user_migration', 'authentified_user', 'authentified_user_id', 'id');
 
@@ -65,6 +68,7 @@ CREATE TABLE "auth_session" (
 
 SELECT create_foreign_key_idx_cascade('FK_AUTH_SESSION_CONSUMER', 'auth_session', 'auth_consumer', 'consumer_id', 'id');
 
+-- Update services and workers tables
 ALTER TABLE services ADD COLUMN IF NOT EXISTS auth_consumer_id VARCHAR(36);
 ALTER TABLE services ADD COLUMN IF NOT EXISTS maintainer JSONB;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS public_key BYTEA;
@@ -99,7 +103,17 @@ SELECT create_unique_index('worker', 'IDX_WORKER_AUTH_CONSUMER_ID', 'auth_consum
 
 ALTER TABLE worker alter column model_id DROP NOT NULL;
 
--- TODO DELETE CASCASDE access_token when worker is removed
+-- Update groups and dependencies tables
+ALTER TABLE project_group DROP CONSTRAINT IF EXISTS "fk_project_group_pipeline";
+SELECT create_foreign_key_idx_cascade('FK_PROJECT_GROUP_PIPELINE', 'project_group', 'project', 'project_id', 'id');
+ALTER TABLE group_user DROP CONSTRAINT IF EXISTS "fk_group_user_user";
+SELECT create_foreign_key_idx_cascade('FK_GROUP_USER_USER', 'group_user', 'user', 'user_id', 'id');
+ALTER TABLE workflow_template DROP CONSTRAINT IF EXISTS "fk_workflow_template_group";
+SELECT create_foreign_key('FK_WORKFLOW_TEMPLATE_GROUP', 'workflow_template', 'group', 'group_id', 'id');
+ALTER TABLE "action" DROP CONSTRAINT IF EXISTS "fk_action_group";
+SELECT create_foreign_key('FK_ACTION_GROUP', 'action', 'group', 'group_id', 'id');
+
+-- TODO DELETE CASCADE access_token when worker is removed
 
 -- +migrate Down
 DROP TABLE "authentified_user_migration";

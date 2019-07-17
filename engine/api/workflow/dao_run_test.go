@@ -156,7 +156,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -263,7 +263,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -420,7 +420,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -611,7 +611,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -721,7 +721,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -807,7 +807,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{

@@ -6,8 +6,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ovh/cds/engine/api/group"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,7 +21,7 @@ func Test_getUserGroupsHandler(t *testing.T) {
 	g2 := assets.InsertGroup(t, db)
 
 	u, jwtRaw := assets.InsertLambdaUser(db, g1, g2)
-	require.NoError(t, group.SetUserGroupAdmin(db, g2.ID, u.OldUserStruct.ID))
+	assets.SetUserGroupAdmin(t, db, g2.ID, u.OldUserStruct.ID)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getUserGroupsHandler, map[string]string{
 		"permUsername": u.Username,

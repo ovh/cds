@@ -14,8 +14,7 @@ func TestEncryptWithBuiltinKey(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
 	key := sdk.RandomString(10)
-	u, _ := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	content := "This is my content"
 	encryptedContent, err := project.EncryptWithBuiltinKey(db, proj.ID, "test", content)
@@ -32,5 +31,4 @@ func TestEncryptWithBuiltinKey(t *testing.T) {
 	test.NoError(t, err)
 	t.Logf("%s => %s", content, encryptedContent2)
 	assert.Equal(t, encryptedContent, encryptedContent2)
-
 }

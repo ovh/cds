@@ -28,8 +28,8 @@ func InsertAndSign(db gorp.SqlExecutor, i Canonicaller) error {
 	return sdk.WithStack(dbSign(db, i))
 }
 
-// UpdatetAndSign a data in database, given data should implement canonicaller interface.
-func UpdatetAndSign(db gorp.SqlExecutor, i Canonicaller) error {
+// UpdateAndSign a data in database, given data should implement canonicaller interface.
+func UpdateAndSign(db gorp.SqlExecutor, i Canonicaller) error {
 	if err := Update(db, i); err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func dbSign(db gorp.SqlExecutor, i Canonicaller) error {
 
 	table, key, id, err := dbMappingPKey(i)
 	if err != nil {
-		return sdk.WithStack(fmt.Errorf("primary key field %s not found in: %v", table, err))
+		return sdk.WrapError(err, "primary key field not found in table: %s", table)
 	}
 
 	query := fmt.Sprintf("UPDATE %s SET sig = $2 WHERE %s = $1", table, key)

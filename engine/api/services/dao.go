@@ -129,7 +129,7 @@ func Insert(db gorp.SqlExecutor, s *sdk.Service) error {
 // Update a service in database.
 func Update(db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service{Service: *s}
-	if err := gorpmapping.UpdatetAndSign(db, &sdb); err != nil {
+	if err := gorpmapping.UpdateAndSign(db, &sdb); err != nil {
 		return err
 	}
 	*s = sdb.Service

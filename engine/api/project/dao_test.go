@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -74,7 +75,7 @@ func TestLoadAllByRepo(t *testing.T) {
 	eg, _ := group.LoadByName(context.TODO(), db, g.Name)
 	if eg != nil {
 		g = *eg
-	} else if err := group.InsertGroup(db, &g); err != nil {
+	} else if err := group.Insert(db, &g); err != nil {
 		t.Fatalf("Cannot insert group : %s", err)
 	}
 
@@ -84,7 +85,11 @@ func TestLoadAllByRepo(t *testing.T) {
 	}
 
 	test.NoError(t, project.Insert(db, cache, &proj))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, sdk.PermissionReadWriteExecute))
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   g.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}))
 	test.NoError(t, group.LoadGroupByProject(db, &proj))
 
 	u, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
@@ -100,61 +105,62 @@ func TestLoadAll(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	project.Delete(db, cache, "test_TestLoadAll")
 	project.Delete(db, cache, "test_TestLoadAll1")
+	project.Delete(db, cache, "test_TestLoadAll2")
 
-	proj := sdk.Project{
-		Key:  "test_TestLoadAll",
-		Name: "test_TestLoadAll",
+	proj1 := sdk.Project{
+		Key:  "test_TestLoadAll1",
+		Name: "test_TestLoadAll1",
 		Metadata: map[string]string{
 			"data1": "value1",
 			"data2": "value2",
 		},
 	}
+	require.NoError(t, project.Insert(db, cache, &proj1))
 
-	proj1 := sdk.Project{
-		Key:  "test_TestLoadAll1",
-		Name: "test_TestLoadAll1",
+	proj2 := sdk.Project{
+		Key:  "test_TestLoadAll2",
+		Name: "test_TestLoadAll2",
 	}
+	require.NoError(t, project.Insert(db, cache, &proj2))
 
-	g := sdk.Group{
-		Name: "test_TestLoadAll_group",
-	}
+	g := sdk.Group{Name: sdk.RandomString(10)}
+	require.NoError(t, group.Insert(db, &g))
 
-	eg, _ := group.LoadByName(context.TODO(), db, g.Name)
-	if eg != nil {
-		g = *eg
-	} else if err := group.InsertGroup(db, &g); err != nil {
-		t.Fatalf("Cannot insert group : %s", err)
-	}
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   g.ID,
+		ProjectID: proj1.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}))
+	test.NoError(t, group.LoadGroupByProject(db, &proj1))
 
-	test.NoError(t, project.Insert(db, cache, &proj))
-	test.NoError(t, project.Insert(db, cache, &proj1))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, sdk.PermissionReadWriteExecute))
-	test.NoError(t, group.LoadGroupByProject(db, &proj))
-
-	u2, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
-
-	actualGroups1, err := project.LoadAll(nil, db, cache)
-	test.NoError(t, err)
-	assert.True(t, len(actualGroups1) > 1, "This should return more than one project")
-
-	for _, p := range actualGroups1 {
-		if p.Name == "test_TestLoadAll" {
-			assert.EqualValues(t, proj.Metadata, p.Metadata)
+	allProjects, err := project.LoadAll(nil, db, cache)
+	require.NoError(t, err)
+	assert.True(t, len(allProjects) > 1, "This should return more than one project")
+	var foundProj1, foundProj2 bool
+	for _, p := range allProjects {
+		if p.Name == proj1.Name {
+			foundProj1 = true
+		}
+		if p.Name == proj2.Name {
+			foundProj2 = true
+		}
+		if p.Name == "test_TestLoadAll1" {
+			assert.EqualValues(t, proj1.Metadata, p.Metadata)
 		}
 	}
+	assert.True(t, foundProj1, "Project 1 should be in list")
+	assert.True(t, foundProj2, "Project 2 should be in list")
 
-	actualGroups2, err := project.LoadAllByGroupIDs(nil, db, cache, u2.GetGroupIDs())
-	t.Log(actualGroups2)
-	test.NoError(t, err)
-	assert.True(t, len(actualGroups2) == 1, "This should return one project")
+	groupProjects, err := project.LoadAllByGroupIDs(context.TODO(), db, cache, []int64{g.ID})
+	require.NoError(t, err)
+	assert.True(t, len(groupProjects) == 1, "This should return only one project")
+	assert.Equal(t, proj1.Name, groupProjects[0].Name)
 
-	ok, err := project.Exist(db, "test_TestLoadAll")
-	test.NoError(t, err)
+	ok, err := project.Exist(db, "test_TestLoadAll1")
+	require.NoError(t, err)
 	assert.True(t, ok)
 
-	project.Delete(db, cache, "test_TestLoadAll")
-	project.Delete(db, cache, "test_TestLoadAll1")
-
+	assert.NoError(t, project.Delete(db, cache, "test_TestLoadAll1"))
+	assert.NoError(t, project.Delete(db, cache, "test_TestLoadAll2"))
 }

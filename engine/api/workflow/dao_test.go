@@ -36,9 +36,8 @@ import (
 func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
@@ -50,10 +49,9 @@ func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -113,10 +111,9 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -151,9 +148,8 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
 
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -215,9 +211,8 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
 
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip1 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -357,9 +352,8 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
 
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip1 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -491,9 +485,9 @@ func assertEqualNode(t *testing.T, n1, n2 *sdk.Node) {
 func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -627,9 +621,9 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip1 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -845,9 +839,9 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip1 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1115,9 +1109,9 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 func TestUpdateWorkflowWithJoins(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1318,10 +1312,8 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		}
 	}
 
-	u, _ := assets.InsertAdminUser(db)
-
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1512,7 +1504,7 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{

@@ -56,7 +56,7 @@ func deleteAll(t *testing.T, api *API, key string) error {
 	}
 
 	for _, g := range proj.ProjectGroups {
-		if err := group.DeleteGroupAndDependencies(api.mustDB(), &g.Group); err != nil {
+		if err := group.Delete(context.TODO(), api.mustDB(), &g.Group); err != nil {
 			return err
 		}
 	}
@@ -76,7 +76,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T)
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -129,7 +129,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T)
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -199,7 +199,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -305,7 +305,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -441,7 +441,7 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -502,7 +502,7 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{

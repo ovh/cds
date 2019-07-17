@@ -2,9 +2,7 @@ package cdsclient
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
@@ -40,26 +38,6 @@ func (c *client) ApplicationList(key string) ([]sdk.Application, error) {
 		return nil, err
 	}
 	return apps, nil
-}
-
-func (c *client) ApplicationGroupsImport(projectKey, appName string, content io.Reader, format string, force bool) (sdk.Application, error) {
-	var app sdk.Application
-	uri := fmt.Sprintf("/project/%s/application/%s/group/import?format=%s", projectKey, appName, format)
-
-	if force {
-		uri += "&forceUpdate=true"
-	}
-
-	btes, _, _, errReq := c.Request(context.Background(), "POST", uri, content)
-	if errReq != nil {
-		return app, errReq
-	}
-
-	if err := json.Unmarshal(btes, &app); err != nil {
-		return app, errReq
-	}
-
-	return app, errReq
 }
 
 //ApplicationAttachToReposistoriesManager attachs the application to the repo identified by its fullname in the reposManager

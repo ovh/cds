@@ -111,7 +111,7 @@ func InsertSession(db gorp.SqlExecutor, as *sdk.AuthSession) error {
 // UpdateSession in database.
 func UpdateSession(db gorp.SqlExecutor, as *sdk.AuthSession) error {
 	s := authSession{AuthSession: *as}
-	if err := gorpmapping.UpdatetAndSign(db, &s); err != nil {
+	if err := gorpmapping.UpdateAndSign(db, &s); err != nil {
 		return sdk.WrapError(err, "unable to update auth session with id: %s", s.ID)
 	}
 	*as = s.AuthSession

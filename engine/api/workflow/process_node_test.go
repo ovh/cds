@@ -44,7 +44,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -223,7 +223,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -391,7 +391,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -544,7 +544,7 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -690,7 +690,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -931,7 +931,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -1112,7 +1112,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -1288,7 +1288,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -1484,7 +1484,7 @@ func TestGitParamWithJoin(t *testing.T) {
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -1697,7 +1697,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -1909,7 +1909,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -2162,7 +2162,7 @@ func createApplication1(t *testing.T, db gorp.SqlExecutor, cache cache.Store, pr
 	// Add application
 	appS := `version: v1.0
 name: blabla
-vcs_server: github 
+vcs_server: github
 repo: sguiheux/demo
 vcs_ssh_key: proj-blabla
 `

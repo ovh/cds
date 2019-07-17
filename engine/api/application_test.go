@@ -27,8 +27,12 @@ func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
-	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true))
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
+	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
 
 	//Insert Application
 	app := &sdk.Application{

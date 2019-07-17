@@ -19,7 +19,7 @@ func Test_postPipelinePreviewHandler(t *testing.T) {
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//Prepare request
@@ -65,7 +65,7 @@ func Test_putPipelineImportHandler(t *testing.T) {
 	defer end()
 
 	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//Prepare request

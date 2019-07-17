@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/ovh/cds/sdk/slug"
+
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
@@ -390,106 +392,99 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 	}
 }
 
-func (api *API) addProjectHandler() service.Handler {
+func (api *API) postProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		//Unmarshal data
+		consumer := getAPIConsumer(ctx)
+
 		var p sdk.Project
 		if err := service.UnmarshalBody(r, &p); err != nil {
-			return sdk.WrapError(err, "Unable to unmarshal body")
+			return sdk.WrapError(err, "unable to unmarshal body")
 		}
 
-		// check projectKey pattern
+		// Check key pattern
 		if rgxp := regexp.MustCompile(sdk.ProjectKeyPattern); !rgxp.MatchString(p.Key) {
-			return sdk.WrapError(sdk.ErrInvalidProjectKey, "addProjectHandler> Project key %s do not respect pattern %s", p.Key, sdk.ProjectKeyPattern)
+			return sdk.WrapError(sdk.ErrInvalidProjectKey, "project key %s do not respect pattern %s", p.Key, sdk.ProjectKeyPattern)
 		}
 
-		//check project Name
+		// Check project name
 		if p.Name == "" {
-			return sdk.WrapError(sdk.ErrInvalidProjectName, "addProjectHandler> Project name must no be empty")
-		}
-
-		// Check that project does not already exists
-		exist, errExist := project.Exist(api.mustDB(), p.Key)
-		if errExist != nil {
-			return sdk.WrapError(errExist, "Cannot check if project %s exist", p.Key)
-		}
-
-		if exist {
-			return sdk.WrapError(sdk.ErrConflict, "Project %s already exists", p.Key)
-		}
-
-		var groupAttached bool
-		for i := range p.ProjectGroups {
-			groupPermission := &p.ProjectGroups[i]
-			if strings.TrimSpace(groupPermission.Group.Name) == "" {
-				continue
-			}
-			// the default group could not be selected on ui 'Project Add'
-			if groupPermission.Group.ID != 0 && !group.IsDefaultGroupID(groupPermission.Group.ID) {
-				groupAttached = true
-				continue
-			}
-			if groupPermission.Group.Name != "" && !group.IsDefaultGroupName(groupPermission.Group.Name) {
-				groupAttached = true
-			}
-		}
-
-		if !groupAttached {
-			// check if new auto group does not already exists
-			if g, errl := group.LoadByName(ctx, api.mustDB(), p.Name); errl != nil {
-				if sdk.ErrorIs(errl, sdk.ErrNotFound) {
-					// group name does not exists, add it on project
-					permG := sdk.GroupPermission{
-						Group:      sdk.Group{Name: strings.Replace(p.Name, " ", "", -1)},
-						Permission: sdk.PermissionReadWriteExecute,
-					}
-					p.ProjectGroups = append(p.ProjectGroups, permG)
-				} else {
-					return sdk.WrapError(errl, "Cannot check if group already exists")
-				}
-			} else {
-				return sdk.WrapError(sdk.ErrGroupPresent, "Group %s already exists :%+v", p.Name, g)
-			}
+			return sdk.WrapError(sdk.ErrInvalidProjectName, "project name must no be empty")
 		}
 
 		//Create a project within a transaction
-		tx, errBegin := api.mustDB().Begin()
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
+		}
 		defer tx.Rollback()
-		if errBegin != nil {
-			return sdk.WrapError(errBegin, "Cannot start transaction")
+
+		// Check that project does not already exists
+		exist, errExist := project.Exist(tx, p.Key)
+		if errExist != nil {
+			return sdk.WrapError(errExist, "cannot check if project %s exist", p.Key)
+		}
+		if exist {
+			return sdk.WrapError(sdk.ErrConflict, "project %s already exists", p.Key)
 		}
 
 		if err := project.Insert(tx, api.Cache, &p); err != nil {
-			return sdk.WrapError(err, "Cannot insert project")
+			return sdk.WrapError(err, "cannot insert project")
 		}
 
-		consumer := getAPIConsumer(ctx)
-
-		// Add group
-		for i := range p.ProjectGroups {
-			groupPermission := &p.ProjectGroups[i]
-
-			// Insert group
-			groupID, newGroup, errGroup := group.AddGroup(tx, &groupPermission.Group)
-			if groupID == 0 {
-				return errGroup
+		// Check that given project groups are valid
+		var groupIDs []int64
+		for _, gp := range p.ProjectGroups {
+			var grp *sdk.Group
+			var err error
+			if gp.Group.ID != 0 {
+				grp, err = group.LoadByID(ctx, tx, gp.Group.ID)
+			} else {
+				grp, err = group.LoadByName(ctx, tx, gp.Group.Name)
 			}
-			groupPermission.Group.ID = groupID
-
-			if group.IsDefaultGroupID(groupID) {
-				groupPermission.Permission = sdk.PermissionRead
+			if err != nil {
+				return err
 			}
 
-			// Add group on project
-			if err := group.InsertGroupInProject(tx, p.ID, groupPermission.Group.ID, groupPermission.Permission); err != nil {
-				return sdk.WrapError(err, "Cannot add group %s in project %s", groupPermission.Group.Name, p.Name)
+			// the default group could not be selected
+			if group.IsDefaultGroupID(grp.ID) {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot use default group to create project")
 			}
 
-			// Add user in group
-			if newGroup {
-				if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, consumer.AuthentifiedUser.OldUserStruct.ID, true); err != nil {
-					return sdk.WrapError(err, "Cannot add user %s in group %s", consumer.AuthentifiedUser.Username, groupPermission.Group.Name)
-				}
+			// consumer should be group member to add it on a project
+			if !isGroupMember(ctx, grp) && !isAdmin(ctx) {
+				return sdk.WithStack(sdk.ErrInvalidGroupMember)
+			}
+
+			groupIDs = append(groupIDs, grp.ID)
+		}
+
+		// If no groups were given, try to create a new one with project name
+		if len(groupIDs) == 0 {
+			groupSlug := slug.Convert(p.Name)
+			existingGroop, err := group.LoadByName(ctx, tx, groupSlug)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			if existingGroop != nil {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot create a new group for given project name")
+			}
+
+			newGroup, err := group.Create(tx, sdk.Group{Name: groupSlug}, consumer.AuthentifiedUser.OldUserStruct.ID)
+			if err != nil {
+				return err
+			}
+
+			groupIDs = []int64{newGroup.ID}
+		}
+
+		// Insert all links between project and group
+		for _, groupID := range groupIDs {
+			if err := group.InsertLinkGroupProject(tx, &group.LinkGroupProject{
+				GroupID:   groupID,
+				ProjectID: p.ID,
+				Role:      sdk.PermissionReadWriteExecute,
+			}); err != nil {
+				return sdk.WrapError(err, "cannot add group %d in project %s", groupID, p.Name)
 			}
 		}
 
@@ -542,30 +537,35 @@ func (api *API) addProjectHandler() service.Handler {
 			}
 		}
 
-		integrationModels, errP := integration.LoadModels(tx)
-		if errP != nil {
-			return sdk.WrapError(errP, "addProjectHandler> Cannot load integration models")
+		integrationModels, err := integration.LoadModels(tx)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load integration models")
 		}
 
 		for i := range integrationModels {
 			pf := &integrationModels[i]
 			if err := propagatePublicIntegrationModelOnProject(tx, api.Cache, *pf, p, consumer); err != nil {
-				return sdk.WrapError(err, "propagatePublicIntegrationModelOnProject error")
+				return sdk.WithStack(err)
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		event.PublishAddProject(&p, consumer)
 
-		proj, errL := project.Load(api.mustDB(), api.Cache, p.Key, project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames,
+		proj, err := project.Load(api.mustDB(), api.Cache, p.Key,
+			project.LoadOptions.WithLabels,
+			project.LoadOptions.WithWorkflowNames,
 			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.OldUserStruct.ID),
-			project.LoadOptions.WithKeys, project.LoadOptions.WithPermission,
-			project.LoadOptions.WithIntegrations, project.LoadOptions.WithVariables)
-		if errL != nil {
-			return sdk.WrapError(errL, "Cannot load project %s", p.Key)
+			project.LoadOptions.WithKeys,
+			project.LoadOptions.WithPermission,
+			project.LoadOptions.WithIntegrations,
+			project.LoadOptions.WithVariables,
+		)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project %s", p.Key)
 		}
 
 		proj.Permissions.Readable = true

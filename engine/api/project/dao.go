@@ -191,11 +191,6 @@ func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 // DeleteByID removes given project from database (project and project_group table)
 // DeleteByID also removes all pipelines inside project (pipeline and pipeline_group table).
 func DeleteByID(db gorp.SqlExecutor, id int64) error {
-	log.Debug("project.Delete> Deleting project %d", id)
-	if err := group.DeleteGroupProjectByProject(db, id); err != nil {
-		return err
-	}
-
 	if err := deleteAllVariable(db, id); err != nil {
 		return err
 	}

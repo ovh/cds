@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
@@ -175,14 +176,14 @@ func TestImportInto_Group(t *testing.T) {
 	for _, g := range []sdk.Group{g0, g1, g2, g3} {
 		oldg, _ := group.LoadByName(context.TODO(), db, g.Name)
 		if oldg != nil {
-			group.DeleteGroupAndDependencies(db, oldg)
+			require.NoError(t, group.Delete(context.TODO(), db, oldg))
 		}
 	}
 
-	test.NoError(t, group.InsertGroup(db, &g0))
-	test.NoError(t, group.InsertGroup(db, &g1))
-	test.NoError(t, group.InsertGroup(db, &g2))
-	test.NoError(t, group.InsertGroup(db, &g3))
+	require.NoError(t, group.Insert(db, &g0))
+	require.NoError(t, group.Insert(db, &g1))
+	require.NoError(t, group.Insert(db, &g2))
+	require.NoError(t, group.Insert(db, &g3))
 
 	var err error
 	env.Variable, err = environment.GetAllVariableByID(db, env.ID)

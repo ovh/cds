@@ -24,7 +24,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	//Insert Application
 	env := &sdk.Environment{
@@ -87,7 +87,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	//Insert Application
 	env := &sdk.Environment{
@@ -143,7 +143,7 @@ func Test_addKeyInEnvironmentHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	//Insert Environment
 	env := &sdk.Environment{

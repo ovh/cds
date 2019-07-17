@@ -64,7 +64,7 @@ func (b *eventsBroker) Init(ctx context.Context, panicCallback func(s string) (i
 }
 
 func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
-	if cacheMsgChan == nil {
+	if cacheMsgChan == nil || store == nil {
 		return
 	}
 

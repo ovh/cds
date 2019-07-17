@@ -111,7 +111,7 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 
 	// Create Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{

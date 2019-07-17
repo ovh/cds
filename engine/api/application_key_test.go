@@ -25,7 +25,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	//Insert Application
 	app := &sdk.Application{
@@ -84,7 +84,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	//Insert Application
 	app := &sdk.Application{
@@ -139,7 +139,7 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	//Insert Application
 	app := &sdk.Application{

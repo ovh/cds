@@ -34,7 +34,7 @@ func TestImport(t *testing.T) {
 	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	srvs, _ := services.LoadAll(context.TODO(), db)
 	for _, srv := range srvs {

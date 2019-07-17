@@ -103,36 +103,17 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64, opts ...LoadOp
 	return get(ctx, db, query, opts...)
 }
 
-// LoadLinksGroupUserForGroupIDs xreturns data from group_user table for given group ids.
-func LoadLinksGroupUserForGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int64) (LinksGroupUser, error) {
-	ls := []LinkGroupUser{}
-
-	query := gorpmapping.NewQuery(`
-		SELECT *
-		FROM group_user
-		WHERE group_id = ANY(string_to_array($1, ',')::int[])
-	`).Args(gorpmapping.IDsToQueryString(groupIDs))
-
-	if err := gorpmapping.GetAll(ctx, db, query, &ls); err != nil {
-		return nil, sdk.WrapError(err, "cannot get links between group and user")
-	}
-
-	return ls, nil
+// Insert given group into database.
+func Insert(db gorp.SqlExecutor, g *sdk.Group) error {
+	return sdk.WrapError(gorpmapping.Insert(db, g), "unable to insert group %s", g.Name)
 }
 
-// LoadLinksGroupUserForUserIDs returns data from group_user table for given user ids.
-func LoadLinksGroupUserForUserIDs(ctx context.Context, db gorp.SqlExecutor, userIDs []int64) (LinksGroupUser, error) {
-	ls := []LinkGroupUser{}
+// Update given group into database.
+func Update(db gorp.SqlExecutor, g *sdk.Group) error {
+	return sdk.WrapError(gorpmapping.Update(db, g), "unable to update group %s", g.Name)
+}
 
-	query := gorpmapping.NewQuery(`
-		SELECT *
-		FROM group_user
-		WHERE user_id = ANY(string_to_array($1, ',')::int[])
-	`).Args(gorpmapping.IDsToQueryString(userIDs))
-
-	if err := gorpmapping.GetAll(ctx, db, query, &ls); err != nil {
-		return nil, sdk.WrapError(err, "cannot get links between group and user")
-	}
-
-	return ls, nil
+// delete given group from database.
+func deleteDB(db gorp.SqlExecutor, g *sdk.Group) error {
+	return sdk.WrapError(gorpmapping.Delete(db, g), "unable to delete group %s", g.Name)
 }

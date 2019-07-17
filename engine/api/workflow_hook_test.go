@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
@@ -27,8 +28,12 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 	u, passUser := assets.InsertLambdaUser(api.mustDB())
 
-	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10), u)
-	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.OldUserStruct.ID, true))
+	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
+	require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -91,7 +96,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 	admin, passAdmin := assets.InsertAdminUser(api.mustDB())
 
-	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10), admin)
+	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
