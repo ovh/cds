@@ -3,7 +3,6 @@ package workflow
 import (
 	"context"
 	"fmt"
-
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
@@ -61,7 +60,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	oldHooksByRef := oldW.WorkflowData.GetHooksMapRef()
 	for i := range w.WorkflowData.Node.Hooks {
 		h := &w.WorkflowData.Node.Hooks[i]
-		if h.Ref != "" {
+		if h.Ref != "" && h.UUID == "" {
 			if oldH, has := oldHooksByRef[h.Ref]; has {
 				if len(h.Config) == 0 {
 					h.Config = oldH.Config
