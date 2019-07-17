@@ -427,6 +427,13 @@ a.ui.basic.grey.label:hover {
         color: $darkTheme_grey_6;
     }
 }
+.ui.table tr.active {
+    .night &,
+    :host-context(.night) & {
+        background-color: $darkTheme_grey_4 !important;
+        color: $darkTheme_grey_6;
+    }
+}
 
 .ui.popup {
 

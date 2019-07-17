@@ -1,4 +1,13 @@
-import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy, ChangeDetectorRef,
+    Component,
+    ElementRef,
+    Input,
+    NgZone,
+    OnDestroy,
+    OnInit,
+    ViewChild
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as AU from 'ansi_up';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -17,7 +26,8 @@ import { CDSWebWorker } from '../../../../../../shared/worker/web.worker';
 @Component({
     selector: 'app-workflow-step-log',
     templateUrl: './step.log.html',
-    styleUrls: ['step.log.scss']
+    styleUrls: ['step.log.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowStepLogComponent implements OnInit, OnDestroy {
@@ -99,7 +109,8 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         private _durationService: DurationService,
         private _router: Router,
         private _route: ActivatedRoute,
-        private _hostElement: ElementRef
+        private _hostElement: ElementRef,
+        private _cd: ChangeDetectorRef
     ) {
         this.ansi_up.escape_for_html = !this.htmlViewSelected;
     }
@@ -117,6 +128,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         }
 
         this.queryParamsSubscription = this._route.queryParams.subscribe((qps) => {
+            this._cd.markForCheck();
             let activeStep = parseInt(qps['stageId'], 10) === this.job.pipeline_stage_id &&
                 parseInt(qps['actionId'], 10) === this.job.pipeline_action_id && parseInt(qps['stepOrder'], 10) === this.stepOrder;
 
@@ -165,6 +177,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                 if (msg) {
                     let build: BuildResult = JSON.parse(String.raw`${msg}`);
                     this.zone.run(() => {
+                        this._cd.markForCheck();
                         if (build.step_logs) {
                             this.logs = build.step_logs;
                             this.parseLogs();

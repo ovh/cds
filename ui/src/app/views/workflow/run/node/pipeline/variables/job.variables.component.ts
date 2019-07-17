@@ -1,11 +1,12 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, ViewChild } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Parameter } from 'app/model/parameter.model';
 
 @Component({
     selector: 'app-workflow-run-job-variable',
     templateUrl: './job.variable.html',
-    styleUrls: ['./job.variable.scss']
+    styleUrls: ['./job.variable.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowRunJobVariableComponent {
     @ViewChild('jobVariablesModal', { static: false }) jobVariablesModal: ModalTemplate<boolean, boolean, void>;

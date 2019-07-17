@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,7 +22,8 @@ import { ErrorMessageMap } from './errors';
 @Component({
     selector: 'app-workflow-run',
     templateUrl: './workflow.run.html',
-    styleUrls: ['./workflow.run.scss']
+    styleUrls: ['./workflow.run.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowRunComponent implements OnInit {
@@ -35,21 +36,15 @@ export class WorkflowRunComponent implements OnInit {
     project: Project;
     workflowRun: WorkflowRun;
     project$: Subscription;
-    subRun: Subscription;
 
     workflowName: string;
     version: string;
     direction: string;
 
-    selectedNodeID: number;
-    selectedNodeRef: string;
-
     pipelineStatusEnum = PipelineStatus;
     notificationSubscription: Subscription;
     dataSubs: Subscription;
     paramsSubs: Subscription;
-    parentParamsSubs: Subscription;
-    qpsSubs: Subscription;
     loadingRun = true;
     errorsMap = ErrorMessageMap;
 
@@ -62,7 +57,8 @@ export class WorkflowRunComponent implements OnInit {
         private _workflowStore: WorkflowStore,
         private _notification: NotificationService,
         private _translate: TranslateService,
-        private _titleService: Title
+        private _titleService: Title,
+        private _cd: ChangeDetectorRef
     ) {
         // Get project
         this.dataSubs = this._activatedRoute.data.subscribe(datas => {
@@ -82,6 +78,7 @@ export class WorkflowRunComponent implements OnInit {
 
         // Subscribe to route event
         this.paramsSubs = this._activatedRoute.params.subscribe(ps => {
+            this._cd.markForCheck();
             // if there is no current workflow run
             if (!this.workflowRun) {
                 this._store.dispatch(
@@ -103,6 +100,7 @@ export class WorkflowRunComponent implements OnInit {
         });
 
         this.subWorkflow = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+            this._cd.markForCheck();
             this.loadingRun = s.loadingWorkflowRun;
             if (s.workflowRun) {
                 this.workflow = s.workflow;

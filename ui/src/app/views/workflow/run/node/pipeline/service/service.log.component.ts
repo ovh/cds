@@ -1,9 +1,17 @@
-import { Component, ElementRef, Input, NgZone, OnDestroy, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    Input,
+    NgZone,
+    OnDestroy,
+    ViewChild
+} from '@angular/core';
 import * as AU from 'ansi_up';
 import { Subscription } from 'rxjs';
 import { environment } from '../../../../../../../environments/environment';
-import { ServiceLog } from '../../../../../../model/pipeline.model';
-import { PipelineStatus } from '../../../../../../model/pipeline.model';
+import { PipelineStatus, ServiceLog } from '../../../../../../model/pipeline.model';
 import { Project } from '../../../../../../model/project.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from '../../../../../../model/workflow.run.model';
 import { AuthentificationStore } from '../../../../../../service/auth/authentification.store';
@@ -13,7 +21,8 @@ import { CDSWebWorker } from '../../../../../../shared/worker/web.worker';
 @Component({
     selector: 'app-workflow-service-log',
     templateUrl: './service.log.html',
-    styleUrls: ['service.log.scss']
+    styleUrls: ['service.log.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowServiceLogComponent implements OnDestroy {
@@ -51,7 +60,7 @@ export class WorkflowServiceLogComponent implements OnDestroy {
     _nodeJobRun: WorkflowNodeJobRun;
     ansi_up = new AU.default;
 
-    constructor(private _authStore: AuthentificationStore) {
+    constructor(private _authStore: AuthentificationStore, private _cd: ChangeDetectorRef) {
         this.zone = new NgZone({ enableLongStackTrace: false });
     }
 
@@ -84,6 +93,7 @@ export class WorkflowServiceLogComponent implements OnDestroy {
                 if (msg) {
                     let serviceLogs: Array<ServiceLog> = JSON.parse(msg);
                     this.zone.run(() => {
+                        this._cd.markForCheck();
                         this.serviceLogs = serviceLogs.map((log, id) => {
                             this.showLog[id] = this.showLog[id] || false;
                             log.logsSplitted = this.getLogs(log).split('\n');

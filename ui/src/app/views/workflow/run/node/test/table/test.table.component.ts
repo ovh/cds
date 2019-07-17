@@ -1,11 +1,12 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { TestCase, TestSuite } from '../../../../../../model/pipeline.model';
 import { Table } from '../../../../../../shared/table/table';
 
 @Component({
     selector: 'app-workflow-test-table',
     templateUrl: './test.table.html',
-    styleUrls: ['./test.table.scss']
+    styleUrls: ['./test.table.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowRunTestTableComponent extends Table<TestCase> {
 

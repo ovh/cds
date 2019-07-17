@@ -1,25 +1,25 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Parameter } from 'app/model/parameter.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { Workflow } from 'app/model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
-import { Parameter } from '../../../../../model/parameter.model';
-import { Project } from '../../../../../model/project.model';
-import { Workflow } from '../../../../../model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from '../../../../../model/workflow.run.model';
 
 @Component({
     selector: 'app-workflow-node-run-history',
     templateUrl: './history.html',
-    styleUrls: ['./history.scss']
+    styleUrls: ['./history.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowNodeRunHistoryComponent implements OnInit {
     @Input() project: Project;
     @Input() run: WorkflowRun;
-    @Input() history: Array<WorkflowNodeRun>
+    @Input() history: Array<WorkflowNodeRun>;
     @Input() currentBuild: WorkflowNodeRun;
     @Input() workflowName: string;
 
-    _history: Array<WorkflowNodeRun>;
     loading: boolean;
     columns: Array<Column<WorkflowNodeRun>>;
 
