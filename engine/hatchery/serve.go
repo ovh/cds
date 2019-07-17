@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
@@ -26,9 +25,8 @@ import (
 
 type Common struct {
 	service.Common
-	Router     *api.Router
-	metrics    hatchery.Metrics
-	privateKey *rsa.PrivateKey
+	Router  *api.Router
+	metrics hatchery.Metrics
 }
 
 const panicDumpDir = "panic_dumps"
@@ -109,20 +107,10 @@ func (c *Common) CDSClient() cdsclient.Interface {
 	return c.Client
 }
 
-func (c *Common) PrivateKey() *rsa.PrivateKey {
-	return c.privateKey
-}
-
 // CommonServe start the HatcheryLocal server
 func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 	log.Info("%s> Starting service %s (%s)...", c.Name, h.Configuration().Name, sdk.VERSION)
 	c.StartupTime = time.Now()
-
-	var err error
-	c.privateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Configuration().RSAPrivateKey))
-	if err != nil {
-		return fmt.Errorf("unable to parse RSA private Key: %v", err)
-	}
 
 	//Init the http server
 	c.initRouter(ctx, h)
@@ -184,6 +172,10 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.Mux.HandleFunc("/debug/pprof/", pprof.Index)
 
 	r.Mux.NotFoundHandler = http.HandlerFunc(api.NotFoundHandler)
+}
+
+func (c *Common) GetPrivateKey() *rsa.PrivateKey {
+	return c.Common.PrivateKey
 }
 
 func (c *Common) getPanicDumpListHandler() service.Handler {

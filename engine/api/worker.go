@@ -48,10 +48,12 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// Retrieve the authentifed Consumer from the hatchery
-		hatcheryConsumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), *hatchSrv.ConsumerID)
+		hatcheryConsumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), *hatchSrv.ConsumerID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return sdk.WrapError(err, "registerWorkerHandler> Unable to load consumer %v", hatchSrv.ConsumerID)
 		}
+
+		hatchSrv.Maintainer = *hatcheryConsumer.AuthentifiedUser
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {

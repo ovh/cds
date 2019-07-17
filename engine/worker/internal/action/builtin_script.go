@@ -3,10 +3,14 @@ package action
 import (
 	"bufio"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"strings"
 
 	"github.com/kardianos/osext"
@@ -66,10 +70,18 @@ func prepareScriptContent(parameters []sdk.Parameter) (*script, error) {
 
 func writeScriptContent(script *script, basedir afero.Fs) (func(), error) {
 	// Create a tmp file
-	tmpscript, errt := afero.TempFile(basedir, "", "cds-")
-	if errt != nil {
-		log.Warning("Cannot create tmp file: %s", errt)
-		return nil, errors.New("cannot create temporary file, aborting")
+
+	// Generate a random string 16 chars length
+	bs := make([]byte, 16)
+	if _, err := rand.Read(bs); err != nil {
+		return nil, err
+	}
+	tmpFileName := hex.EncodeToString(bs)[0:16]
+
+	tmpscript, err := basedir.OpenFile(tmpFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
+	if err != nil {
+		log.Warning("Cannot create tmp file: %s", err)
+		return nil, fmt.Errorf("cannot create temporary file, aborting: %v", err)
 	}
 	log.Debug("runScriptAction> writeScriptContent> Writing script to %s", tmpscript.Name())
 
@@ -84,31 +96,27 @@ func writeScriptContent(script *script, basedir afero.Fs) (func(), error) {
 		return nil, errors.New("cannot write script in temporary file, aborting")
 	}
 
-	oldPath := tmpscript.Name()
 	tmpscript.Close()
-	var scriptPath string
-	if sdk.GOOS == "windows" {
-		//Remove all .txt Extensions, there is not always a .txt extension
-		newPath := strings.Replace(oldPath, ".txt", "", -1)
+	if runtime.GOOS == "windows" {
 		//and add .PS1 extension
-		newPath = newPath + ".PS1"
-		if err := basedir.Rename(oldPath, newPath); err != nil {
-			return nil, errors.New("cannot rename script to add powershell Extension, aborting")
-		}
-		//This aims to stop a the very first error and return the right exit code
-		psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", newPath)
-		scriptPath = newPath
-		script.opts = append(script.opts, psCommand)
+		//newName := tmpFileName + ".PS1"
+		//if err := basedir.Rename(tmpFileName, newName); err != nil {
+		//	return nil, errors.New("cannot rename script to add powershell Extension, aborting")
+		//}
+		//tmpFileName = newName
+		////This aims to stop a the very first error and return the right exit code
+		//psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", tmpFileName)
+		//scriptPath = newPath
+		//script.opts = append(script.opts, psCommand)
 	} else {
-		scriptPath = oldPath
-		script.opts = append(script.opts, scriptPath)
+		script.opts = append(script.opts, tmpscript.Name())
 	}
-	deferFunc := func() { basedir.Remove(scriptPath) }
+	deferFunc := func() { basedir.Remove(tmpFileName) }
 
 	// Chmod file
-	if err := basedir.Chmod(scriptPath, 0755); err != nil {
-		log.Warning("runScriptAction> cannot chmod script %s: %s", scriptPath, err)
-		return deferFunc, errors.New("cannot chmod script, aborting")
+	if err := basedir.Chmod(tmpFileName, 0755); err != nil {
+		log.Warning("runScriptAction> cannot chmod script %s: %s", tmpscript.Name(), err)
+		return deferFunc, fmt.Errorf("cannot chmod script %s: %v, aborting", tmpscript.Name(), err)
 	}
 
 	return deferFunc, nil
@@ -217,12 +225,8 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 	case <-ctx.Done():
 		log.Error("CDS Worker execution canceled: %v", ctx.Err())
 		return res, errors.New("CDS Worker execution canceled")
-		break
-
 	case res = <-chanRes:
-		break
 	case globalErr = <-chanErr:
-		break
 	}
 
 	log.Info("runScriptAction> %s %s", res.Status, res.Reason)

@@ -1,18 +1,17 @@
 package vsphere
 
 import (
+	"github.com/ovh/cds/engine/service"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/hatchery"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
 type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
+	service.HatcheryCommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
 
 	// User vsphere-user
 	VSphereUser string `mapstructure:"user" toml:"user" default:"" commented:"false" comment:"VSphere User" json:"user"`
@@ -49,7 +48,6 @@ type HatcheryConfiguration struct {
 type HatcheryVSphere struct {
 	hatcheryCommon.Common
 	Config     HatcheryConfiguration
-	hatch      *sdk.Hatchery
 	images     []string
 	datacenter *object.Datacenter
 	finder     *find.Finder

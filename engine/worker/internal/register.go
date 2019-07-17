@@ -36,20 +36,22 @@ func (w *CurrentWorker) Register(ctx context.Context) error {
 
 	w.id = worker.ID
 
-	models, err := w.client.WorkerModels(nil)
-	if err != nil {
-		return sdk.WrapError(err, "unable to get worker model list")
-	}
-
-	for _, m := range models {
-		if m.ID == worker.ModelID {
-			w.model = m
-			break
+	if worker.ModelID != nil {
+		models, err := w.client.WorkerModels(nil)
+		if err != nil {
+			return sdk.WrapError(err, "unable to get worker model list")
 		}
-	}
 
-	if w.model.ID == 0 {
-		return sdk.WithStack(errors.New("worker model not found"))
+		for _, m := range models {
+			if m.ID == *worker.ModelID {
+				w.model = m
+				break
+			}
+		}
+
+		if w.model.ID == 0 {
+			return sdk.WithStack(errors.New("worker model not found"))
+		}
 	}
 
 	if !uptodate {

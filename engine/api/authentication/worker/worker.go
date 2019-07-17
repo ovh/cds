@@ -37,6 +37,7 @@ func VerifyToken(db gorp.SqlExecutor, s string) (*hatchery.WorkerJWTClaims, erro
 
 	h, err := services.LoadByNameAndType(context.Background(), db, claims.Worker.HatcheryName, services.TypeHatchery)
 	if err != nil {
+		log.Error("worker.VerifyToken> unable to load hatchery %s: %v", claims.Worker.HatcheryName, err)
 		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 

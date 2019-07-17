@@ -242,7 +242,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	var w = new(internal.CurrentWorker)
 
 	fs := afero.NewOsFs()
-	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", 1, true, fs); err != nil {
+	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, fs); err != nil {
 		t.Fatalf("worker init failed: %v", err)
 	}
 	gock.InterceptClient(w.Client().(cdsclient.Raw).HTTPClient())

@@ -14,6 +14,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
+	"github.com/ovh/cds/engine/service"
+
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
@@ -67,6 +70,11 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = "cds-hatchery-local"
+	var err error
+	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
+	if err != nil {
+		return fmt.Errorf("unable to parse RSA private Key: %v", err)
+	}
 
 	return nil
 }
@@ -114,35 +122,19 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
-//Service returns service instance
-func (h *HatcheryLocal) Service() *sdk.Service {
-	return h.Common.Common.ServiceInstance
-}
-
-//Hatchery returns hatchery instance
-func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
-	return h.hatch
-}
-
 // Serve start the hatchery server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
-	h.hatch = &sdk.Hatchery{}
 	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration
-func (h *HatcheryLocal) Configuration() hatchery.CommonConfiguration {
-	return h.Config.CommonConfiguration
+func (h *HatcheryLocal) Configuration() service.HatcheryCommonConfiguration {
+	return h.Config.HatcheryCommonConfiguration
 }
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
 func (h *HatcheryLocal) CanSpawn(_ *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
-	if h.Hatchery() == nil {
-		log.Debug("CanSpawn false Hatchery nil")
-		return false
-	}
-
 	for _, r := range requirements {
 		ok, err := h.checkRequirement(r)
 		if err != nil || !ok {
@@ -159,7 +151,7 @@ func (h *HatcheryLocal) CanSpawn(_ *sdk.Model, jobID int64, requirements []sdk.R
 
 		if r.Type == sdk.OSArchRequirement && r.Value != (runtime.GOOS+"/"+runtime.GOARCH) {
 			log.Debug("CanSpawn> job %d cannot spawn on this OSArch.", jobID)
-			return false 
+			return false
 		}
 	}
 	log.Debug("CanSpawn true for job %d", jobID)
@@ -180,7 +172,7 @@ func (localWorkerRunner) NewCmd(command string, args ...string) *exec.Cmd {
 	return cmd
 }
 
-const workerCmdTmpl = "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --single-use"
+const workerCmdTmpl = "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}}"
 
 // SpawnWorker starts a new worker process
 func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
@@ -198,9 +190,11 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		return err
 	}
 
+	log.Info("HatcheryLocal.SpawnWorker> basedir: %s", basedir)
+
 	udataParam := sdk.WorkerArgs{
 		API:               h.Configuration().API.HTTP.URL,
-		Token:             h.Configuration().API.Token,
+		Token:             spawnArgs.WorkerToken,
 		BaseDir:           basedir,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              spawnArgs.WorkerName,

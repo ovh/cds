@@ -300,7 +300,7 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permID}/vulnerability", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postVulnerabilityReportHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{id}/spawn/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1) /*, NeedHatchery()*/, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/result", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobResultHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/log", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobLogsHandler, 1) /*, NeedWorker()*/, MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/log", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobLogsHandler /*, NeedWorker()*/, MaintenanceAware()))
 	r.Handle("/queue/workflows/log/service", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1) /*, NeedHatchery()*/, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/coverage", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobCoverageResultsHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/test", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler /*, NeedWorker()*/, EnableTracing(), MaintenanceAware()))

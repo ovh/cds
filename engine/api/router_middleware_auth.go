@@ -65,7 +65,6 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	if err != nil {
 		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
-	log.Debug("api.authMiddleware> consumer is on behalf of user %s who can access groups: %v", consumer.AuthentifiedUser.GetFullname(), consumer.AuthentifiedUser.OldUserStruct.Groups)
 
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 
@@ -123,8 +122,6 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 	var jwtRaw string
 	var xsrfTokenNeeded bool
 
-	log.Debug("authJWTMiddleware> searching for a jwt token")
-
 	// Try to get the jwt from the cookie firstly then from the authorization bearer header, a XSRF token with cookie
 	jwtCookie, _ := req.Cookie(jwtCookieName)
 	if jwtCookie != nil {
@@ -136,8 +133,6 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 	if jwtRaw == "" {
 		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
-
-	log.Debug("authJWTMiddleware> checking jwt token %s...", jwtRaw[:12])
 
 	jwt, err := authentication.CheckSessionJWT(jwtRaw)
 	if err != nil {

@@ -136,9 +136,18 @@ func NewServiceClient(cfg ServiceConfig) (Interface, []byte, error) {
 		}
 	}
 
+	var nbError int
+retry:
 	var res sdk.AuthConsumerSigninResponse
-	_, headers, _, err := cli.RequestJSON(context.Background(), "POST", "/auth/consumer/"+string(sdk.ConsumerBuiltin)+"/signin", sdk.AuthConsumerSigninRequest{"token": cfg.Token}, &res)
+	_, headers, code, err := cli.RequestJSON(context.Background(), "POST", "/auth/consumer/"+string(sdk.ConsumerBuiltin)+"/signin", sdk.AuthConsumerSigninRequest{"token": cfg.Token}, &res)
 	if err != nil {
+		if code == 401 {
+			nbError++
+			if nbError == 60 {
+				time.Sleep(time.Minute)
+				goto retry
+			}
+		}
 		return nil, nil, err
 	}
 	cli.config.SessionToken = res.Token

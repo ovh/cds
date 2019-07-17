@@ -45,8 +45,10 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalServ
 func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 	// Select for update
 	serv, err := LoadByNameForUpdateAndSkipLocked(context.Background(), db, s.Name)
-	if err != nil {
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return sdk.WithStack(err)
+	} else if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return nil
 	}
 
 	mon := sdk.MonitoringStatus{

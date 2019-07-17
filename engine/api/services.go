@@ -89,6 +89,10 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			log.Debug("postServiceRegisterHandler> new service %s(%d) registered for consumer %v", srv.Name, srv.ID, *srv.ConsumerID)
 		}
 
+		if len(srv.PublicKey) > 0 {
+			log.Debug("postServiceRegisterHandler> service %s registered with public key: %s", srv.Name, string(srv.PublicKey))
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}

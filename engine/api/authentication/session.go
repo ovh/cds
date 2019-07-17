@@ -66,9 +66,7 @@ func CheckSessionJWT(jwtToken string) (*jwt.Token, error) {
 		return nil, sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrUnauthorized))
 	}
 
-	if claims, ok := token.Claims.(*sdk.AuthSessionJWTClaims); ok && token.Valid {
-		log.Debug("authentication.CheckSessionJWT> jwt token is valid: %v %v",
-			claims.StandardClaims.Issuer, claims.StandardClaims.ExpiresAt)
+	if _, ok := token.Claims.(*sdk.AuthSessionJWTClaims); ok && token.Valid {
 		return token, nil
 	}
 

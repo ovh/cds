@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/engine/service"
+
 	types "github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
@@ -482,14 +484,15 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		// hatcherySwarm.ratioService: Percent reserved for spawning worker with service requirement
 		// if no link -> we need to check ratioService
 		if len(links) == 0 {
-			if h.Config.RatioService >= 100 {
+			ratioService := h.Configuration().Provision.RatioService
+			if ratioService != nil && *ratioService >= 100 {
 				log.Debug("hatchery> swarm> CanSpawn> ratioService 100 by conf on %s - no spawn worker without CDS Service", dockerName)
 				return false
 			}
 			if nbContainersFromHatchery > 0 {
 				percentFree := 100 - (100 * len(ws) / h.Config.MaxContainers)
-				if percentFree <= h.Config.RatioService {
-					log.Debug("hatchery> swarm> CanSpawn> ratio reached on %s. percentFree:%d ratioService:%d", dockerName, percentFree, h.Config.RatioService)
+				if ratioService != nil && percentFree <= *ratioService {
+					log.Debug("hatchery> swarm> CanSpawn> ratio reached on %s. percentFree:%d ratioService:%d", dockerName, percentFree, *ratioService)
 					return false
 				}
 			}
@@ -568,19 +571,14 @@ func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
 	return len(list)
 }
 
-// Hatchery returns Hatchery instances
-func (h *HatcherySwarm) Hatchery() *sdk.Hatchery {
-	return h.hatch
-}
-
 // Serve start the hatchery server
 func (h *HatcherySwarm) Serve(ctx context.Context) error {
 	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration
-func (h *HatcherySwarm) Configuration() hatchery.CommonConfiguration {
-	return h.Config.CommonConfiguration
+func (h *HatcherySwarm) Configuration() service.HatcheryCommonConfiguration {
+	return h.Config.HatcheryCommonConfiguration
 }
 
 // WorkerModelsEnabled returns Worker model enabled

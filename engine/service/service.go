@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
-
-	"github.com/ovh/cds/sdk/cdsclient"
-
-	"github.com/ovh/cds/sdk"
 )
 
 // CommonMonitoring returns common part of MonitoringStatus
@@ -67,6 +65,16 @@ func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 		},
 		LastHeartbeat: time.Time{},
 		Version:       sdk.VERSION,
+	}
+
+	log.Debug("Registing service %T %s", c, c.Name)
+
+	if c.PrivateKey != nil {
+		pubKeyPEM, err := jws.ExportPublicKey(c.PrivateKey)
+		if err != nil {
+			return fmt.Errorf("unable get public key from private key: %v", err)
+		}
+		srv.PublicKey = pubKeyPEM
 	}
 
 	srv2, err := c.Client.ServiceRegister(srv)

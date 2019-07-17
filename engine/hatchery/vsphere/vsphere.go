@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
+	"github.com/ovh/cds/engine/service"
+
 	"github.com/gorilla/mux"
 	"github.com/vmware/govmomi/vim25/types"
 
@@ -53,12 +56,16 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	h.hatch = &sdk.Hatchery{}
 	h.Name = h.Config.Name
 	h.HTTPURL = h.Config.URL
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = "cds-hatchery-vsphere"
+	var err error
+	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
+	if err != nil {
+		return fmt.Errorf("unable to parse RSA private Key: %v", err)
+	}
 
 	return nil
 }
@@ -125,8 +132,8 @@ func (h *HatcheryVSphere) Serve(ctx context.Context) error {
 }
 
 //Configuration returns Hatchery CommonConfiguration
-func (h *HatcheryVSphere) Configuration() hatchery.CommonConfiguration {
-	return h.Config.CommonConfiguration
+func (h *HatcheryVSphere) Configuration() service.HatcheryCommonConfiguration {
+	return h.Config.HatcheryCommonConfiguration
 }
 
 // NeedRegistration return true if worker model need regsitration
@@ -174,11 +181,6 @@ func (h *HatcheryVSphere) WorkersStarted() []string {
 		}
 	}
 	return res
-}
-
-//Hatchery returns hatchery instance
-func (h *HatcheryVSphere) Hatchery() *sdk.Hatchery {
-	return h.hatch
 }
 
 // ModelType returns type of hatchery

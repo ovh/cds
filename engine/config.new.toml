@@ -1,0 +1,480 @@
+
+#####################
+# API Configuration 
+#####################
+[api]
+
+  # if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)
+  defaultArch = "amd64"
+
+  # if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)
+  defaultOS = "darwin"
+
+  # Either filesystem local storage or Openstack Swift Storage are supported
+  [api.artifact]
+
+    # swift, awss3 or local
+    mode = "local"
+
+    [api.artifact.awss3]
+
+      # A static AWS Secret Key ID
+      accessKeyId = ""
+
+      # Pull S3 auth information from env vars AWS_SECRET_ACCESS_KEY and AWS_SECRET_KEY_ID
+      authFromEnv = false
+
+      # Name of the S3 bucket to use when storing artifacts
+      bucketName = ""
+
+      # A subfolder of the bucket to store objects in, if left empty will store at the root of the bucket
+      prefix = ""
+
+      # The profile within the AWS credentials file to use
+      profile = ""
+
+      # The AWS region
+      region = "us-east-1"
+
+      # A static AWS Secret Access Key
+      secretAccessKey = ""
+
+      # A static AWS session token
+      sessionToken = ""
+
+      # The path for the AWS credential file, used with profile
+      sharedCredsFile = ""
+
+    [api.artifact.local]
+      baseDirectory = "/tmp/cds/artifacts"
+
+    [api.artifact.openstack]
+
+      # Use if your want to prefix containers for CDS Artifacts
+      containerPrefix = ""
+
+      # True if you want to disable Temporary URL in file upload
+      # disableTempURL = false
+
+      # Openstack Domain, generally value of $OS_DOMAIN_NAME, v3 auth only
+      domain = ""
+
+      # Openstack Password, generally value of $OS_PASSWORD
+      password = ""
+
+      # Region, generally value of $OS_REGION_NAME
+      region = ""
+
+      # Openstack Tenant, generally value of $OS_TENANT_NAME, v2 auth only
+      tenant = ""
+
+      # Authentication Endpoint, generally value of $OS_AUTH_URL
+      url = ""
+
+      # Openstack Username, generally value of $OS_USERNAME
+      username = ""
+
+  ##############################
+  # CDS Authentication Settings#
+  ##############################
+  [api.auth]
+
+    # The default group is the group in which every new user will be granted at signup
+    defaultGroup = ""
+
+    # The RSA Private Key used to sign and verify the JWT Tokens issued by the API 
+    #This is mandatory.
+    rsaPrivateKey = "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAKCAQEAxD9XTE3DOvHAECsJ+/pe1VgxgyLRXy/I6h0MRGSoSyYEMxt0\nCgNZGqxiPKUk6UaslqtFGCIWYovTMeFh5Gj8FH35DnQBR5G9zu3ucMjlbFyAt/Md\nox9pBP4Yb/Da4PZBwUQeWhLjh0Pt3qk/Zek1UvpmRye2484+j9Ux46oXo+b1kTrn\nZyozycYd7hYqA0VcCzstIg+8Z6SToRCDaGjcOCDVoqPBsmKAcdR6Pw77Kz8HBJVo\nbnwHo/NOk0wu1yKdygMGxKTo0532MGnNdXfk4c0ePLq3tXnx48N+UHFna+j9hIOf\na9/ZMoTEEVSxw+zF8ghmhfpC/Qinau6yVsx12QIDAQABAoIBABICNgKciDPah2N0\nb6Ad46H0S+baxRfVDLzfGYcVLZRn0q7V8BoTIJQgCYvDI9X8VE4nPVnvltpINoM3\nSYJqV+eRf89hudRVfXOFxgG3jcYZ3v4CY0/azApXPurW0V8fef1AQQDHBvYct7Fd\nGqJBelE5BTW2YUQaYwdT6xYXP8AcgjXJNUFBIi2RlAD3Z+omjOMpAAtM9u44LTIR\nyBpNP0m+ooHHv4vQI5gGXdgWaeO2wvoI5wW5GCHNfK0CNRuvZSz+qogkPtdUJAix\nmF847MUz9lZq1SXDzVfTsm4t1rczpVP3bYeua415jr+BogLPafCib3+ggJhY0c/Y\nfmh4/GECgYEAx4DyjtAkRRre8BTY3MXTOZIRsAvidacDdIBYnIerIEPxvsfFNh6i\nFibMREIuxV1XOcg0oXz2ly8cCCMbrL31nEX6/0KDp561jwQ/qoVih/dhEp5/q1R7\nX7plIN7i7taFCEIpRYJEOkydM2Q34JZpx67L6lftWPrXBZW7PzV+Cx0CgYEA+9JU\nTkTaBuqtj6Upg1HF8rmdIqkpWa/lVuFr9FNcL/NAMM2pnsBKW9AvNUmSOk+ffjJs\nI+JG9ONG3clff2DsRFRyo1sFHlHP04NxhOSexUkPhgaOVB864l/Pf4Cy9KpnQXii\n/hcSaotxuq/9rahisfrbFdhnqID7/ZRmhQ1pHO0CgYA1LZT6JlcUqIX2XsgziPO1\nq87VK0XQ8JTGMBPunWcq8ZF1thBGTcIMv4jBRRbseuXuPARzazjbsa36KUmOMRBP\n+INgGR24x2BD3/EMhgNulK0mZmNHivxb1vZv3ZmF6l6JhgE0SvXeyF86vKL8VXua\nw2gNbiSRDEPWdEP2JE8VrQKBgB3PQieZwu16rl0IwidHcNVQ36cQu1Jgnhdwy+S6\nUXljpD+iuOeP/71qoYv/T44Tit/XfDGrQZcPqH3srp9Xi+By1rc7uRljueRh9Pg0\nUA8unOXStNqEb+YITXncdFK+MUbwzuqhNI7kPuxIlREPk89Z0MF/QpYR3sKf5Jrv\ngXfpAoGALbxBsvr9hcod7qy0WzjD4GGIGB5ftNHuEAkweckhMqX1MafBdyho1aum\n7WaRy/6Ls9c7NQwFas/FtlMgEbasUQPFeloTvIrHtrlAUxT5/6Rk8Pz3ctsHgKHp\nMGmBY0Ro9SNuyFeJNpHOsxsrmi2ZHGRNby1DEfbU4bjwhIF/N5Y=\n-----END RSA PRIVATE KEY-----\n"
+
+    [api.auth.corporateSSO]
+      enabled = false
+      redirectMethod = ""
+      redirectURL = ""
+      signupDisabled = false
+
+      [api.auth.corporateSSO.claims]
+        SessionLevel = ""
+        Username = ""
+
+      [api.auth.corporateSSO.keys]
+        requestSigningKey = ""
+        tokenSigningKey = ""
+
+    [api.auth.github]
+
+      #######
+      # Github API URL
+      apiUrl = "https://api.github.com"
+
+      #######
+      # Github OAuth Client ID
+      clientId = ""
+
+      # Github OAuth Client Secret
+      clientSecret = ""
+      enabled = false
+      signupDisabled = false
+
+      #######
+      # Github URL
+      url = "https://github.com"
+
+    [api.auth.gitlab]
+
+      #######
+      # Gitlab OAuth Application ID
+      applicationID = ""
+      enabled = false
+
+      # Gitlab OAuth Application Secret
+      secret = ""
+      signupDisabled = false
+
+      #######
+      # Gitlab URL
+      url = "https://gitlab.com"
+
+    [api.auth.ldap]
+      base = "dc=myorganization,dc=com"
+
+      # Define it if ldapsearch need to be authenticated
+      bindDN = ""
+
+      # Define it if ldapsearch need to be authenticated
+      bindPwd = ""
+      dn = "uid=%s,ou=people,dc=myorganization,dc=com"
+      enable = false
+      fullname = "{{.givenName}} {{.sn}}"
+      host = ""
+      port = 636
+      signupDisabled = false
+      ssl = true
+
+    [api.auth.local]
+      enable = true
+
+      # Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com
+      # signupAllowedDomains = ""
+      signupDisabled = false
+
+  ######################
+  # CDS Cache Settings 
+  ######################
+  #
+  [api.cache]
+    ttl = 60
+
+    # Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup
+    [api.cache.redis]
+
+      # If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379
+      host = "localhost:6379"
+      password = ""
+
+  ################################
+  # Postgresql Database settings 
+  ################################
+  [api.database]
+
+    # Maximum wait for connection, in seconds
+    connectTimeout = 10
+    host = "localhost"
+
+    # DB Max connection
+    maxconn = 20
+    name = "cds2"
+    password = "cds"
+    port = 5432
+
+    # Set a specific role to run SET ROLE for each connection
+    # role = "cds-adm"
+
+    # DB SSL Mode: require (default), verify-full, or disable
+    sslmode = "disable"
+
+    # Statement timeout value in milliseconds
+    timeout = 3000
+    user = "cds"
+
+    # Encryption rolling keys
+    [api.database.encryptionRollingKeys]
+      cipher = "xchacha20-poly1305"
+
+      [[api.database.encryptionRollingKeys.keys]]
+        key = "5d11c2c593e587011095f219545d79ecd4b47e78ea0cdeea213fa1ee4ea0831c"
+        timestamp = 1563199557
+
+    # Signature rolling keys
+    [api.database.signatureRollingKeys]
+      cipher = "hmac"
+
+      [[api.database.signatureRollingKeys.keys]]
+        key = "ae851bd9c5a501eb231182d7920f8187ba669bdc0df6c4e65d2982ad93d2360e"
+        timestamp = 1563199557
+
+  [api.directories]
+    download = "/tmp/cds/download"
+    keys = "/tmp/cds/keys"
+
+  #######################
+  # CDS Events Settings 
+  #######################
+  [api.events]
+
+    [api.events.kafka]
+      broker = ""
+      enabled = false
+      maxmessagebytes = 10000000
+      password = ""
+      topic = ""
+      user = ""
+
+  ###########################
+  # CDS Features flipping Settings 
+  ###########################
+  [api.features]
+
+    # Feature flipping provider: https://maif.github.io/izanami
+    [api.features.izanami]
+      apiurl = ""
+      clientid = ""
+      clientsecret = ""
+
+      # Token shared between Izanami and CDS to be able to send webhooks from izanami
+      token = ""
+
+  ###########################
+  # Graylog Search. 
+  # When CDS API generates errors, you can fetch them with cdsctl. 
+  # Examples: 
+  # $ cdsctl admin errors get <error-id> 
+  # $ cdsctl admin errors get 55f6e977-d39b-11e8-8513-0242ac110007 
+  ###########################
+  [api.graylog]
+    accessToken = ""
+    stream = ""
+
+    # Example: http://localhost:9000
+    url = ""
+
+  [api.http]
+
+    # Listen HTTP address without port, example: 127.0.0.1
+    # addr = ""
+    port = 8081
+    sessionTTL = 60
+
+  ###########################
+  # Log settings.
+  ###########################
+  [api.log]
+
+    # Max service logs size in bytes (default: 15MB)
+    serviceMaxSize = 15728640
+
+    # Max step logs size in bytes (default: 15MB)
+    stepMaxSize = 15728640
+
+  [api.secrets]
+    key = "khckq03e89pfw8lsqo08rino2pbzfy4h"
+
+  [[api.services]]
+    healthPath = "/cds"
+    healthPort = "443"
+    healthUrl = "https://ovh.github.io"
+    name = "sample-service"
+    path = "/cds"
+    port = "443"
+    type = "doc"
+    url = "https://ovh.github.io"
+
+  #####################
+  ## CDS SMTP Settings 
+  #####################
+  [api.smtp]
+    disable = true
+    from = "no-reply@cds.local"
+    host = ""
+    password = ""
+    port = ""
+    tls = false
+    user = ""
+
+  ###########################
+  # CDS Status Settings 
+  # Documentation: https://ovh.github.io/cds/hosting/monitoring/ 
+  ###########################
+  [api.status]
+
+    [api.status.api]
+
+      # if less than minInstance of API is running, an alert will on Global/API be created on /mon/status
+      minInstance = 1
+
+    [api.status.dbmigrate]
+
+      # if less than minInstance of dbmigrate service is running, an alert on Global/dbmigrate will be created on /mon/status
+      minInstance = 1
+
+    [api.status.elasticsearch]
+
+      # if less than minInstance of elasticsearch service is running, an alert on Global/elasticsearch will be created on /mon/status
+      minInstance = 1
+
+    [api.status.hatchery]
+
+      # if less than minInstance of hatchery service is running, an alert on Global/hatchery will be created on /mon/status
+      minInstance = 1
+
+    [api.status.hooks]
+
+      # if less than minInstance of hooks service is running, an alert on Global/hooks will be created on /mon/status
+      minInstance = 1
+
+    [api.status.repositories]
+
+      # if less than minInstance of repositories service is running, an alert on Global/hooks will be created on /mon/status
+      minInstance = 1
+
+    [api.status.vcs]
+
+      # if less than minInstance of vcs service is running, an alert will on Global/vcs be created on /mon/status
+      minInstance = 1
+
+  #####################
+  # CDS URLs Settings 
+  #####################
+  [api.url]
+    api = "http://localhost:8081"
+    ui = "http://localhost:2015"
+
+  [api.vault]
+    configurationKey = ""
+
+[hatchery]
+
+  # Hatchery Local. Doc: https://ovh.github.io/cds/docs/components/hatchery/local/
+  [hatchery.local]
+
+    # BaseDir for worker workspace
+    basedir = "/tmp"
+
+    [hatchery.local.commonConfiguration]
+
+      # Name of Hatchery
+      name = "cds-hatchery-local-trusting_and_friendly_ride"
+
+      # The RSA Private Key used by the hatchery.
+      #This is mandatory.
+      rsaPrivateKey = "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAqOmHw4udMTHGyOu4iSlktk6xYaAUnYFHq5IUted9pWUhgpgi\nukpwhnWDtet/WU/iAFzGtyXT7yaiC7xzi04wTn9KLbBz6uMX95ijJzvJNWUDbZdZ\nGYOVoP/Rgq1souTLKAbKRlN/Tk+LeZQfLAqMxDn0Rg96qwRVFqxBxVmG5EnJLLpY\nG+cObXGTCEtuoFTDLAwmNz7V1eKKu02Tc2dG4AWOob9FNfudqjlhAIYZaDq6+Lf4\nZU0SAp5TsO4PuvfQ0x6/bnPlw10W9+KFH7PsC41ySeTAucspLVq4g1DkL0T/zj9w\nTF3WiTlbUJqGskLAaE6gPq5uHWzrhUbZsHIeJQIDAQABAoIBADvV/nIXEyhKKdEj\nL8vnDfZHCi87NhJVqb3tkcieqLPej3Bj1GmJ1TLMjkvzkLliwvy94OcgT2N4nA7s\nQ0ImAJbOIMjuqSGcMPFU8PcFBtITZpN7+eQ/6NGPzfgs1z8dLZqQTTd8fKyRISeA\ngUposlUQ8qee9CWA82OEwgfXHyHfLjxJuTkbP48bM9CghsThg9/odpF1KZ1WiRRs\nwD6h1PQpA585f2SiacjpKTxPUZGNf7hcHExBCiHjMLtH+rMdVbmvRH9LAU9Dp4h9\n37ccJ1vRugQNGpnD4B5/5S5Ne3gadTJl5vIFmv1AwGN1TyM7S6jGOtgJUUJzqMcY\nQbC68gECgYEAzM61H7Y9UMNeav0P5oTGs8d/I8oJPwE6G32ZNE/TKn/8ZMlkJ7Qe\nWUmXyXyUZsTQOQUFFhxjzB4v1nFWIM42QfXO75zbwDJ6IamwOTdyemDsoihRnFmT\nUfpLLMYKBe82KITiiHO1zTsESIipsGqFz2l8ZZ4VBqGUCrhP0JTtul0CgYEA0yHy\nSBF05IqNNrvKiO4e/TRtARUKmDbthjuF60Z9IqkZqX1ZiuodVCGc+yNXsqD00JM8\nzQVeLPu/+JcBubJyESs9IVhkcjMlwBDqZiPvPpce5Wpco9vpkrfpkqPXbtx8bw0T\n79/tlS7ZiDystNc8sGCK6U/swM3VOcd794q0hmkCgYEAp8zoSx4l6IjZT/Ec2PKK\nVnuqKGl839kigamLH3gTfCu2X+E9JOaHQwJv0U43zGeOblk1jKMgBPnqmdjsBx7N\nB4fczycGSNdSh0gfMRHDwo6s8kL0cpRVhoH6m6l6Rthx2ArgC4o6NvcWkFMgLIFq\nNsCngh5d/bverlXKVwveJqUCgYBybwbDevqxWEs7rEMVPoL7WCvwlzf70mGhDKgE\nIlt2qtKm47LhsQyeae2MzNYeklC+r98XfF5T4UtmcGpV/NsIZTgn16Hxp7lBRanW\nHInykbQEQkbd5TbO9/GYMkd05fpnsl3o+KTr482xork09ygErP79f/1hbu6v92hA\nfiRkaQKBgQC0ycnoz5n1TDsTP3WqGlkzfV6GyLAXL2jbDN5WAI9M7XS5xujX8fef\nbJBoUAkIvIYuzqpNhqmDBz2SfsNE8dFNfqi7q5LFNq9KqgfO5cNFxbDoIdYpycso\nDkS6nl3xhGIBkpcQ8LKWVacPHwIUZBgIjotMoHsLIwt1ZBitU/+4Aw==\n-----END RSA PRIVATE KEY-----\n"
+
+      # URL of this Hatchery
+      url = "http://localhost:8086"
+
+      [hatchery.local.commonConfiguration.api]
+
+        # Maximum allowed consecutives failures on heatbeat routine
+        maxHeartbeatFailures = 10
+
+        # Request CDS API: timeout in seconds
+        requestTimeout = 10
+
+        # CDS Token to reach CDS API. See https://ovh.github.io/cds/docs/components/cdsctl/token/ 
+        token = "eyJhbGciOiJQUzUxMiIsImtpZCI6IiJ9.eyJ0eXBlIjoic2lnbmluQnVpbHRpbkNvbnN1bWVyVG9rZW4iLCJleHBpcmUiOjAsImRhdGEiOnsiQ29uc3VtZXJJRCI6IjFmODNiZjM3LWY0YzctNDVlMC05NTM0LWRhM2NkNTE4Yjk4ZCIsIk5vbmNlIjoxNTYzMjc1NDgxfX0.NnjAtTMAj-GQ-dZE3z_JBCFqYWkpNMHKIXinISsdSsaGvBnErusTq2LTzfHIPmhxNhFWCeeS6ChQOBelZRMKATat0fCh64xpLLKlqR1y79xc-4l-aYqguSybLCaqcSR_kVPln4c3Qkmask2YQa0H2cqOwTF6dh679u3YFgk9ghg-TopfhxcES8Uv_K4Y2tTA-BDh6rSEhsvIadOHvL0JOHqRnkIipBqylskpBuG2a3By1oxDtPuxq2Pk1bSNzA4QVQ_fbX23g2Qv1dQMUnqSISBwUq_8RopT-XCaQImkWVuVfqJ-Wf4Y2xFY6cHhkpXneyL8WQKqi4r7HrsKTq0GJQ"
+
+        [hatchery.local.commonConfiguration.api.http]
+
+          # sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API
+          # insecure = false
+
+          # CDS API URL
+          url = "http://localhost:8081"
+
+      ######################
+      # CDS Hatchery HTTP Configuration 
+      #######################
+      [hatchery.local.commonConfiguration.http]
+
+        # Listen address without port, example: 127.0.0.1
+        # addr = ""
+        port = 8086
+
+      # Hatchery Log Configuration
+      [hatchery.local.commonConfiguration.logOptions]
+
+        [hatchery.local.commonConfiguration.logOptions.spawnOptions]
+
+          # log critical if spawn take more than this value (in seconds)
+          thresholdCritical = 480
+
+          # log warning if spawn take more than this value (in seconds)
+          thresholdWarning = 360
+
+      [hatchery.local.commonConfiguration.provision]
+
+        # Disabled provisioning. Format:true or false
+        disabled = false
+
+        # Check provisioning each n Seconds
+        frequency = 30
+
+        # Maximum allowed simultaneous workers provisioning
+        maxConcurrentProvisioning = 10
+
+        # Maximum allowed simultaneous workers registering. -1 to disable registering on this hatchery
+        maxConcurrentRegistering = 2
+
+        # Maximum allowed simultaneous workers
+        maxWorker = 10
+
+        # Check if some worker model have to be registered each n Seconds
+        registerFrequency = 60
+
+        # Worker Log Configuration
+        [hatchery.local.commonConfiguration.provision.workerLogsOptions]
+
+          [hatchery.local.commonConfiguration.provision.workerLogsOptions.graylog]
+
+            # Example: X-OVH-TOKEN. You can use many keys: aaa,bbb
+            extraKey = ""
+
+            # value for extraKey field. For many keys: valueaaa,valuebbb
+            extraValue = ""
+
+            # Example: thot.ovh.com
+            host = ""
+
+            # Example: 12202
+            port = 0
+
+            # tcp or udp
+            protocol = "tcp"
+
+#####################
+# CDS Logs Settings 
+#####################
+[log]
+
+  # Log Level: debug, info, warning, notice, critical
+  level = "debug"
+
+  [log.graylog]
+
+    # Example: X-OVH-TOKEN. You can use many keys: aaa,bbb
+    extraKey = ""
+
+    # value for extraKey field. For many keys: valueaaa,valuebbb
+    extraValue = ""
+
+    # Example: thot.ovh.com
+    host = ""
+
+    # Example: 12202
+    port = 0
+
+    # tcp or udp
+    protocol = ""
+
+# On first login, you will be asked to enter the following token:
+# eyJhbGciOiJQUzUxMiIsImtpZCI6IiJ9.eyJ0eXBlIjoiU3RhcnR1cENvbmZpZyIsImV4cGlyZSI6MTU2MzI3OTA4MiwiZGF0YSI6eyJDb25zdW1lcnMiOlt7IkRlc2NyaXB0aW9uIjoiQXV0b2dlbmVyYXRlZCBjb25maWd1cmF0aW9uIGZvciBsb2NhbCBoYXRjaGVyeSIsIklEIjoiMWY4M2JmMzctZjRjNy00NWUwLTk1MzQtZGEzY2Q1MThiOThkIiwiTmFtZSI6ImhhdGNoZXJ5OmxvY2FsIiwiU2VydmljZVR5cGUiOiJoYXRjaGVyeSJ9XX19.JHEepDtZA0SC0hcT7jU7jew27qM8iuOzrUlt1ndN7x_rOKN9HKzy0-3fFqxwBCvJySImb757-VnBbiPjoaLHp9Y9l8st9KLEUvmSr4tpIpvHolrfonAui4k8jPCfO4_OsGKUUE6n_yABYydcV7UTuV1o9cZoMRPYizijBfzrwjQo48rlHdlKWOxqT0zXxN8vC5IQTPCorZ78rYN73AcF93gxCPZD66Hc6t-Z_EOMWvHEfdrdrokPTcGh_-nsy9G7Z0rWDXOsflvUUCzD2ImQpFR2F0DIRkJ_EREqRLyN3sq1QrKI1oU9FakcuuMlSC4hhyVSvv1ccSW3tm1H1ATG-A
+# Here the API public key

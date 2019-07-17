@@ -78,7 +78,7 @@ func provisioning(h InterfaceWithModels, models []sdk.Model) {
 						HatcheryName: h.ServiceName(),
 					}
 					// Get a JWT to authentified the worker
-					_, jwt, err := NewWorkerToken(h.ServiceName(), h.PrivateKey(), time.Now().Add(1*time.Hour), arg)
+					_, jwt, err := NewWorkerToken(h.ServiceName(), h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
 					if err != nil {
 						var spawnError = sdk.SpawnErrorForm{
 							Error: fmt.Sprintf("hatchery %s cannot spawn worker %s for provisioning", h.Service().Name, m.Name),

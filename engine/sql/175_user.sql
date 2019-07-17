@@ -97,6 +97,8 @@ SELECT create_unique_index('worker', 'IDX_WORKER_NAME', 'name');
 SELECT create_foreign_key('FK_WORKER_SERVICES', 'worker', 'services', 'hatchery_id', 'id');
 SELECT create_unique_index('worker', 'IDX_WORKER_AUTH_CONSUMER_ID', 'auth_consumer_id');
 
+ALTER TABLE worker alter column model_id DROP NOT NULL;
+
 -- TODO DELETE CASCASDE access_token when worker is removed
 
 -- +migrate Down

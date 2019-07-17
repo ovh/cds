@@ -365,6 +365,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	if err != nil {
 		return sdk.Result{}, err
 	}
+
 	ctx = workerruntime.SetWorkingDirectory(ctx, wd)
 	log.Debug("processJob> Setup workspace - %s", wd)
 

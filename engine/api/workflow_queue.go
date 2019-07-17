@@ -44,9 +44,13 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		// Load worker model
-		wm, err := workermodel.LoadByID(api.mustDB(), wk.ModelID)
-		if err != nil {
-			return sdk.WithStack(sdk.ErrNoWorkerModel)
+		var workerModelName string
+		if wk.ModelID != nil {
+			wm, err := workermodel.LoadByID(api.mustDB(), *wk.ModelID)
+			if err != nil {
+				return sdk.WithStack(sdk.ErrNoWorkerModel)
+			}
+			workerModelName = wm.Name
 		}
 
 		// Load job run
@@ -63,11 +67,11 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		// Checks that the token used by the worker cas access to one of the execgroups
 		grantedGroupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
 		if !pbj.ExecGroups.HasOneOf(grantedGroupIDs...) {
-			return sdk.WrapError(sdk.ErrForbidden, "Worker %s (%s) is not authorized to take this job:%d execGroups:%+v", wk.Name, wm.Name, id, pbj.ExecGroups)
+			return sdk.WrapError(sdk.ErrForbidden, "Worker %s (%s) is not authorized to take this job:%d execGroups:%+v", wk.Name, workerModelName, id, pbj.ExecGroups)
 		}
 
 		pbji := &sdk.WorkflowNodeJobRunData{}
-		report, errT := takeJob(ctx, api.mustDB, api.Cache, p, id, wm.Name, pbji, wk)
+		report, errT := takeJob(ctx, api.mustDB, api.Cache, p, id, workerModelName, pbji, wk)
 		if errT != nil {
 			return sdk.WrapError(errT, "Cannot takeJob nodeJobRunID:%d", id)
 		}
@@ -478,8 +482,8 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	return report, nil
 }
 
-func (api *API) postWorkflowJobLogsHandler() service.AsynchronousHandler {
-	return func(ctx context.Context, r *http.Request) error {
+func (api *API) postWorkflowJobLogsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
 			return sdk.WrapError(errr, "Invalid id")
@@ -500,6 +504,8 @@ func (api *API) postWorkflowJobLogsHandler() service.AsynchronousHandler {
 		if err := service.UnmarshalBody(r, &logs); err != nil {
 			return sdk.WrapError(err, "Unable to parse body")
 		}
+
+		log.Debug("postWorkflowJobLogsHandler> Logs: %+v", logs)
 
 		if err := workflow.AddLog(api.mustDB(), pbJob, &logs, api.Config.Log.StepMaxSize); err != nil {
 			return sdk.WithStack(err)

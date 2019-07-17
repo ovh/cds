@@ -7,8 +7,6 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
-
-	"github.com/ovh/cds/sdk/log"
 )
 
 // AuthDriver interface.
@@ -208,7 +206,6 @@ func (c AuthConsumer) GetGroupIDs() []int64 {
 
 func (c AuthConsumer) Admin() bool {
 	admin := c.AuthentifiedUser.Admin()
-	log.Debug("AuthConsumer.Admin> consumer on behalf of user %s is admin: %t", c.AuthentifiedUser.GetFullname(), admin)
 	return admin
 }
 

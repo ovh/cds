@@ -82,7 +82,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			}
 
 			// Get a JWT to authentified the worker
-			_, jwt, err := NewWorkerToken(h.ServiceName(), h.PrivateKey(), time.Now().Add(1*time.Hour), arg)
+			_, jwt, err := NewWorkerToken(h.ServiceName(), h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
 			if err != nil {
 				var spawnError = sdk.SpawnErrorForm{
 					Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
@@ -173,21 +173,22 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 		Model:        j.model,
 		JobID:        j.id,
 		Requirements: j.requirements,
-		HatcheryName: h.ServiceName(),
+		HatcheryName: h.Service().Name,
 	}
 
 	// Get a JWT to authentified the worker
-	_, jwt, err := NewWorkerToken(h.ServiceName(), h.PrivateKey(), time.Now().Add(1*time.Hour), arg)
+	_, jwt, err := NewWorkerToken(h.ServiceName(), h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
 	if err != nil {
 		var spawnError = sdk.SpawnErrorForm{
 			Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
 		}
 		if err := h.CDSClient().WorkerModelSpawnError(j.model.Group.Name, j.model.Name, spawnError); err != nil {
-			log.Error("spawnWorkerForJob> error on call client.WorkerModelSpawnError on worker model %s for register: %s", j.model.Name, err)
+			log.Error("hatchery> spawnWorkerForJob> error on call client.WorkerModelSpawnError on worker model %s for register: %s", j.model.Name, err)
 		}
 		return false
 	}
 	arg.WorkerToken = jwt
+	log.Debug("hatchery> spawnWorkerForJob> new JWT for worker: %s", jwt)
 
 	errSpawn := h.SpawnWorker(j.ctx, arg)
 	next()

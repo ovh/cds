@@ -49,7 +49,7 @@ func initFlagsRun(cmd *cobra.Command) {
 	flags.Bool(flagInsecure, false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 	flags.String(flagToken, "", "CDS Token")
 	flags.String(flagName, "", "Name of worker")
-	flags.Int(flagModel, 0, "Model of worker")
+	flags.String(flagModel, "", "Model of worker")
 	flags.String(flagHatcheryName, "", "Hatchery Name spawing worker")
 }
 
@@ -163,7 +163,7 @@ func initFromFlags(cmd *cobra.Command, w *internal.CurrentWorker) {
 		hatcheryName,
 		apiEndpoint,
 		token,
-		FlagInt64(cmd, flagModel),
+		FlagString(cmd, flagModel),
 		FlagBool(cmd, flagInsecure),
 		afero.NewBasePathFs(afero.NewOsFs(), basedir)); err != nil {
 		log.Error("Cannot init worker: %v", err)

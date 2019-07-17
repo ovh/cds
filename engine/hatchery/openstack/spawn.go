@@ -32,10 +32,6 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		log.Debug("spawnWorker> spawning worker %s model:%s", name, spawnArgs.Model.Name)
 	}
 
-	if h.hatch == nil {
-		return fmt.Errorf("hatchery disconnected from engine")
-	}
-
 	if len(h.getServers()) == h.Configuration().Provision.MaxWorker {
 		log.Debug("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker)
 		return nil
@@ -89,7 +85,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		API:               h.Configuration().API.HTTP.URL,
 		Name:              name,
 		Token:             h.Configuration().API.Token,
-		Model:         spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
+		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		HatcheryName:      h.Name,
 		TTL:               h.Config.WorkerTTL,
 		FromWorkerImage:   withExistingImage,

@@ -60,16 +60,20 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 	if spawnArgs.WorkerName == "" {
 		return nil, sdk.WithStack(sdk.ErrWrongRequest)
 	}
-	// Load Model
-	model, err := workermodel.LoadByID(db, spawnArgs.Model.ID)
-	if err != nil {
-		return nil, err
+	var model *sdk.Model
+	if spawnArgs.Model != nil {
+		// Load Model
+		var err error
+		model, err = workermodel.LoadByID(db, spawnArgs.Model.ID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// If worker model is public (sharedInfraGroup) it can be ran by every one
 	// If worker is public it can run every model
 	// Private worker for a group cannot run a private model for another group
-	if !sdk.IsInInt64Array(group.SharedInfraGroup.ID, consumer.GetGroupIDs()) &&
+	if model != nil && !sdk.IsInInt64Array(group.SharedInfraGroup.ID, consumer.GetGroupIDs()) &&
 		!sdk.IsInInt64Array(model.GroupID, consumer.GetGroupIDs()) &&
 		model.GroupID != group.SharedInfraGroup.ID {
 		return nil, sdk.WithStack(sdk.ErrForbidden)
@@ -79,7 +83,6 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 	w := &sdk.Worker{
 		ID:         sdk.UUID(),
 		Name:       spawnArgs.WorkerName,
-		ModelID:    spawnArgs.Model.ID,
 		Status:     sdk.StatusWaiting,
 		HatcheryID: hatcheryID,
 		LastBeat:   time.Now(),
@@ -88,6 +91,10 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 		OS:         registrationForm.OS,
 		Arch:       registrationForm.Arch,
 	}
+	if model != nil {
+		w.ModelID = &spawnArgs.Model.ID
+	}
+
 	w.Uptodate = registrationForm.Version == sdk.VERSION
 
 	if err := Insert(db, w); err != nil {
@@ -95,7 +102,7 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 	}
 
 	//If the worker is registered for a model and it gave us BinaryCapabilities...
-	if spawnArgs.RegisterOnly && len(registrationForm.BinaryCapabilities) > 0 && spawnArgs.Model.ID != 0 {
+	if model != nil && spawnArgs.RegisterOnly && len(registrationForm.BinaryCapabilities) > 0 && spawnArgs.Model.ID != 0 {
 		if err := workermodel.UpdateCapabilities(db, spawnArgs, registrationForm); err != nil {
 			log.Error("updateWorkerModelCapabilities> %v", err)
 		}
