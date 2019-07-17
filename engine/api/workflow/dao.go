@@ -1368,22 +1368,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		isDefaultBranch = opts.IsDefaultBranch
 	}
 
-	// In workflow as code context, if we only have the repowebhook, we skip it
-	//  because it will be automatically recreated later with the proper configuration
-	if opts != nil && opts.FromRepository != "" {
-		if len(data.wrkflw.Workflow) == 0 {
-			if len(data.wrkflw.PipelineHooks) == 1 && data.wrkflw.PipelineHooks[0].Model == sdk.RepositoryWebHookModelName {
-				data.wrkflw.PipelineHooks = nil
-			}
-		} else {
-			for node, hooks := range data.wrkflw.Hooks {
-				if len(hooks) == 1 && hooks[0].Model == sdk.RepositoryWebHookModelName {
-					data.wrkflw.Hooks[node] = nil
-				}
-			}
-		}
-	}
-
 	var importOptions = ImportOptions{
 		Force: true,
 	}
