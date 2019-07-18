@@ -1,22 +1,23 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Project } from 'app/model/project.model';
+import { Workflow } from 'app/model/workflow.model';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteWorkflow, DeleteWorkflowIcon, UpdateWorkflow, UpdateWorkflowIcon } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { forkJoin } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
-import { Project } from '../../../../model/project.model';
-import { Workflow } from '../../../../model/workflow.model';
-import { WorkflowRunService } from '../../../../service/workflow/run/workflow.run.service';
-import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 
 @Component({
     selector: 'app-workflow-admin',
     templateUrl: 'workflow.admin.component.html',
-    styleUrls: ['./workflow.admin.scss']
+    styleUrls: ['./workflow.admin.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 
 export class WorkflowAdminComponent implements OnInit {
@@ -56,7 +57,8 @@ export class WorkflowAdminComponent implements OnInit {
         public _translate: TranslateService,
         private _toast: ToastService,
         private _router: Router,
-        private _workflowRunService: WorkflowRunService
+        private _workflowRunService: WorkflowRunService,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
@@ -73,7 +75,9 @@ export class WorkflowAdminComponent implements OnInit {
         }
         this.oldName = this.workflow.name;
 
-        this._workflowRunService.getTags(this.project.key, this._workflow.name).subscribe(tags => {
+        this._workflowRunService.getTags(this.project.key, this._workflow.name)
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(tags => {
             let existingTags = [];
             Object.keys(tags).forEach(k => {
                 if (tags.hasOwnProperty(k) && this.existingTags.indexOf(k) === -1) {
@@ -82,7 +86,8 @@ export class WorkflowAdminComponent implements OnInit {
             });
             this.existingTags = this.existingTags.concat(existingTags);
         });
-        this._workflowRunService.getRunNumber(this.project.key, this.workflow).pipe(first()).subscribe(n => {
+        this._workflowRunService.getRunNumber(this.project.key, this.workflow)
+            .pipe(first(), finalize(() => this._cd.markForCheck())).subscribe(n => {
             this.originalRunNumber = n.num;
             this.runnumber = n.num;
         });
@@ -103,7 +108,10 @@ export class WorkflowAdminComponent implements OnInit {
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             icon: this.workflow.icon
-        })).pipe(finalize(() => this.loading = false))
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => {
                 this.iconUpdated = false;
                 this._toast.success('', this._translate.instant('workflow_updated'));

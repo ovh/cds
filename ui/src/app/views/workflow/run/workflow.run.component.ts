@@ -100,7 +100,6 @@ export class WorkflowRunComponent implements OnInit {
         });
 
         this.subWorkflow = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
-            this._cd.markForCheck();
             this.loadingRun = s.loadingWorkflowRun;
             if (s.workflowRun) {
                 this.workflow = s.workflow;
@@ -116,6 +115,7 @@ export class WorkflowRunComponent implements OnInit {
                     this.handleNotification();
                 }
                 this.updateTitle();
+                this._cd.markForCheck();
             } else {
                 delete this.workflowRun;
             }

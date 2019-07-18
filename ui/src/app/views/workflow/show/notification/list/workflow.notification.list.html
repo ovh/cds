@@ -13,7 +13,7 @@
                                 <div class="title">
                                     {{n.type}}
                                     <div class="ui right floated">
-                                        <i class="copy icon pointing" title="{{ 'workflow_notification_copy' | translate}}" (click)="copy(i)"></i>
+                                        <i class="copy icon pointing" title="{{ 'workflow_notification_copy' | translate}}" (click)="copy(i); $event.stopPropagation();"></i>
                                     </div>
                                 </div>
                                 <div class="description">

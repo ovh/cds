@@ -27,9 +27,15 @@ import {workflowRouting} from './workflow.routing';
 @NgModule({
     declarations: [
         // OnPush
+        WorkflowAddComponent,
+        WorkflowAdminComponent,
+        WorkflowBreadCrumbComponent,
+        WorkflowGraphComponent,
         WorkflowNodeRunComponent,
         WorkflowNodeRunHistoryComponent,
         WorkflowNodeRunSummaryComponent,
+        WorkflowNotificationFormComponent,
+        WorkflowNotificationListComponent,
         WorkflowRunArtifactListComponent,
         WorkflowRunComponent,
         WorkflowRunJobSpawnInfoComponent,
@@ -39,20 +45,12 @@ import {workflowRouting} from './workflow.routing';
         WorkflowRunTestsResultComponent,
         WorkflowRunTestTableComponent,
         WorkflowServiceLogComponent,
+        WorkflowSidebarCodeComponent,
         WorkflowStepLogComponent,
 
         // To Migrate
-        WorkflowAdminComponent,
         WorkflowComponent,
-        WorkflowAddComponent,
-        WorkflowBreadCrumbComponent,
-        WorkflowGraphComponent,
-
-        WorkflowSidebarCodeComponent,
         WorkflowShowComponent,
-
-        WorkflowNotificationFormComponent,
-        WorkflowNotificationListComponent
     ],
     imports: [
         SharedModule,

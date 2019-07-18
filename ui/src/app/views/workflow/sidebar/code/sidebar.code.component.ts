@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -16,7 +16,8 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-workflow-sidebar-code',
     templateUrl: './sidebar.code.html',
-    styleUrls: ['./sidebar.code.scss']
+    styleUrls: ['./sidebar.code.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowSidebarCodeComponent implements OnInit {
@@ -33,7 +34,10 @@ export class WorkflowSidebarCodeComponent implements OnInit {
             this.store.dispatch(new FetchAsCodeWorkflow({
                 projectKey: this.project.key,
                 workflowName: this.workflow.name
-            })).pipe(finalize(() => this.loadingGet = false))
+            })).pipe(finalize(() => {
+                this.loadingGet = false;
+                this._cd.markForCheck();
+            }))
                 .subscribe(() => this.exportedWf = this.workflow.asCode);
         }
         this._open = data;
@@ -61,7 +65,8 @@ export class WorkflowSidebarCodeComponent implements OnInit {
         private _workflowCore: WorkflowCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = {
             mode: 'text/x-yaml',
@@ -124,7 +129,10 @@ export class WorkflowSidebarCodeComponent implements OnInit {
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             wfCode: this.exportedWf
-        })).pipe(finalize(() => this.loading = false))
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => this._workflowCore.toggleAsCodeEditor({ open: false, save: false }));
     }
 
@@ -135,7 +143,10 @@ export class WorkflowSidebarCodeComponent implements OnInit {
             projectKey: this.project.key,
             wfName: this.workflow.name,
             workflowCode: this.exportedWf
-        })).pipe(finalize(() => this.loading = false))
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => {
                 this.previewMode = false;
                 this.updated = false;
