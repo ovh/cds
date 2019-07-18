@@ -249,6 +249,7 @@ func WorkflowSkipIfOnlyOneRepoWebhook(w sdk.Workflow, exportedWorkflow *Workflow
 		if len(exportedWorkflow.PipelineHooks) == 1 && exportedWorkflow.PipelineHooks[0].Model == sdk.RepositoryWebHookModelName {
 			exportedWorkflow.PipelineHooks = nil
 			exportedWorkflow.Payload = nil
+
 		}
 		return nil
 	}
@@ -684,6 +685,9 @@ func (w *Workflow) processHooks(n *sdk.Node, wf *sdk.Workflow) {
 					Configurable: true,
 					Type:         hType,
 				}
+			}
+			if h.Ref == "" {
+				h.Ref = fmt.Sprintf("%d", time.Now().Unix())
 			}
 
 			n.Hooks = append(n.Hooks, sdk.NodeHook{
