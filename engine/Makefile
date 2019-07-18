@@ -15,7 +15,8 @@ GO_BUILD = go build
 GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
-GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
+GO_COBERTURA = ${GOPATH}/bin/gocov
+GO_COBERTURA_XML = ${GOPATH}/bin/gocov-xml
 
 PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 
@@ -45,7 +46,10 @@ $(GO_GOJUNIT):
 	go get -u github.com/jstemmer/go-junit-report
 
 $(GO_COBERTURA):
-	go get -u github.com/t-yuki/gocover-cobertura
+	go get -u github.com/axw/gocov/gocov
+
+$(GO_COBERTURA_XML):
+	go get -u github.com/AlekSi/gocov-xml
 
 default: build
 
@@ -101,7 +105,7 @@ test: test-config clean
 test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@echo "Generating unit tests coverage..."
 	@$(GO_COV_MERGE) `find ../ -name "*.coverprofile"` > $(TARGET_DIR)/cover.out
-	@$(GO_COBERTURA) < $(TARGET_DIR)/cover.out > $(TARGET_DIR)/coverage.xml
+	@$(GO_COBERTURA) convert $(TARGET_DIR)/cover.out | @$(GO_COBERTURA_XML) > $(TARGET_DIR)/coverage.xml
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
 	@if [ ! -z "${CDS_VERSION}" ]; then \
 		echo "Sending coverage report to CDS"; \
