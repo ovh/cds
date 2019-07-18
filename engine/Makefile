@@ -16,7 +16,6 @@ GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 GO_COBERTURA = ${GOPATH}/bin/gocov
-GO_COBERTURA_XML = ${GOPATH}/bin/gocov-xml
 
 PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 
@@ -47,8 +46,6 @@ $(GO_GOJUNIT):
 
 $(GO_COBERTURA):
 	go get -u github.com/axw/gocov/gocov
-
-$(GO_COBERTURA_XML):
 	go get -u github.com/AlekSi/gocov-xml
 
 default: build
