@@ -370,9 +370,13 @@ This integration enables some features:
 <ul>
 <li><a href="#how-to-configure-bitbucket-cloud-integration">How to configure Bitbucket Cloud integration</a>
 <ul>
-<li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
+<li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a>
+<ul>
+<li><a href="#vcs-µservice-configuration">VCS µService Configuration</a></li>
+<li><a href="#hooks-µservice-configuration">hooks µService Configuration</a></li>
 </ul></li>
-<li><a href="#start-the-vcs-µservice">Start the vcs µService</a></li>
+<li><a href="#start-the-vcs-and-hooks-µservice">Start the vcs and hooks µService</a></li>
+</ul></li>
 <li><a href="#vcs-events">Vcs events</a></li>
 </ul></li>
 </ul>
@@ -406,9 +410,75 @@ to a CDS Application.</p>
 
 <h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
 
-<p>Set value to <code>clientId</code> and <code>clientSecret</code>.</p>
+<h4 id="vcs-µservice-configuration">VCS µService Configuration</h4>
 
-<pre><code class="language-yaml"> [vcs.servers]
+<p>If you don&rsquo;t already have any of vcs integrations on your CDS please follow these steps. The file configuration for the VCS µService can be retreived with:</p>
+
+<pre><code class="language-bash">$ engine config new vcs &gt; vcs-config.toml
+
+# or with all other configuration parts:
+$ engine config new &gt; config.toml
+</code></pre>
+
+<p>Edit the toml file:</p>
+
+<ul>
+<li>section <code>[vcs]</code>
+
+<ul>
+<li>the URL will be used by CDS API to reach this µService</li>
+<li>add a name, as <code>cds-vcs</code>. Without a name, the service VCS will not start
+<br /></li>
+</ul></li>
+</ul>
+
+<pre><code class="language-toml">[vcs]
+  URL = &quot;http://localhost:8084&quot;
+
+  # Name of this CDS VCS Service
+  # Enter a name to enable this service
+  name = &quot;cds-vcs&quot;
+</code></pre>
+
+<ul>
+<li>section <code>[vcs.UI.http]</code>
+
+<ul>
+<li>URL of CDS UI. This URL will be used by Bitbucket Cloud as a callback on Oauth2. This url must be accessible by users&rsquo; browsers.
+<br /></li>
+</ul></li>
+</ul>
+
+<pre><code class="language-toml">    [vcs.UI.http]
+      url = &quot;http://localhost:4200&quot;
+</code></pre>
+
+<ul>
+<li>section <code>[vcs.api]</code>
+
+<ul>
+<li>this section will be used to communicate with CDS API. Check the url and enter a shared.infra token.</li>
+<li>Token can be generated with cdsctl: <code>cdsctl token generate shared.infra persistent</code>.</li>
+</ul></li>
+</ul>
+
+<pre><code class="language-toml">  [vcs.api]
+    maxHeartbeatFailures = 10
+    requestTimeout = 10
+    token = &quot;enter sharedInfraToken from section [api.auth] here&quot;
+
+    [vcs.api.grpc]
+      # insecure = false
+      url = &quot;http://localhost:8082&quot;
+
+    [vcs.api.http]
+      # insecure = false
+      url = &quot;http://localhost:8081&quot;
+</code></pre>
+
+<p>Then add this part to specify you want to add bitbucketcloud integration. Set value to <code>clientId</code> and <code>clientSecret</code>.</p>
+
+<pre><code class="language-toml"> [vcs.servers]
     [vcs.servers.bitbucketcloud]
 
       [vcs.servers.bitbucketcloud.bitbucketcloud]
@@ -436,14 +506,36 @@ to a CDS Application.</p>
           showDetail = false
 </code></pre>
 
-<p>See how to generate <strong><a href="https://ovh.github.io/cds/hosting/configuration/">Configuration File</a></strong></p>
+<h4 id="hooks-µservice-configuration">hooks µService Configuration</h4>
 
-<h2 id="start-the-vcs-µservice">Start the vcs µService</h2>
+<p>If you have not already a hooks µService configured. Then, as the <code>vcs</code> µService, you have to configure the <code>hooks</code> µService</p>
 
-<pre><code class="language-bash">$ engine start vcs
+<pre><code class="language-bash">$ engine config new hooks &gt; hooks-config.toml
+</code></pre>
+
+<p>In the <code>[hooks]</code> section</p>
+
+<ul>
+<li>check the URL, this will be used by CDS API to call CDS Hooks</li>
+<li>configure <code>urlPublic</code> if you want to use <a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/webhook/">simple Webhook</a></li>
+<li>add a name, as <code>cds-hooks</code></li>
+</ul>
+
+<p>In the <code>[hooks.api]</code> section</p>
+
+<ul>
+<li>put the same token as the <code>[vcs.api]</code> section</li>
+</ul>
+
+<h3 id="start-the-vcs-and-hooks-µservice">Start the vcs and hooks µService</h3>
+
+<p><em>As a CDS Administrator</em></p>
+
+<pre><code class="language-bash">$ engine start vcs --config vcs-config.toml
+$ engine start hooks --config hooks-config.toml
 
 # you can also start CDS api and vcs in the same process:
-$ engine start api vcs
+$ engine start api vcs hooks --config config.toml
 </code></pre>
 
 <h2 id="vcs-events">Vcs events</h2>
