@@ -1120,17 +1120,15 @@ func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 	for i := range n.Hooks {
 		h := &n.Hooks[i]
 		if h.HookModelID != 0 {
-			hm, ok := w.HookModels[h.HookModelID]
-			if !ok {
+			if _, ok := w.HookModels[h.HookModelID]; !ok {
 				hmDB, err := LoadHookModelByID(db, h.HookModelID)
 				if err != nil {
 					return err
 				}
-				hm = *hmDB
-				w.HookModels[h.HookModelID] = hm
+				w.HookModels[h.HookModelID] = *hmDB
 			}
-			h.HookModelName = hm.Name
-		} else if h.HookModelName != "" {
+			h.HookModelName = w.HookModels[h.HookModelID].Name
+		} else {
 			hm, err := LoadHookModelByName(db, h.HookModelName)
 			if err != nil {
 				return err
@@ -1138,7 +1136,35 @@ func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 			w.HookModels[hm.ID] = *hm
 			h.HookModelID = hm.ID
 		}
+
+		// Add missing default value for hook
+		model := w.HookModels[h.HookModelID]
+		for k := range model.DefaultConfig {
+			if _, ok := h.Config[k]; !ok {
+				h.Config[k] = model.DefaultConfig[k]
+			}
+		}
+
+		// Check that given config is valid according hook model
+		for k, d := range model.DefaultConfig {
+			if !d.Configurable && h.Config[k].Value != d.Value {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given hook config, '%s' is not configurable", k)
+			}
+			if len(d.MultipleChoiceList) > 0 {
+				var found bool
+				for i := range d.MultipleChoiceList {
+					if h.Config[k].Value == d.MultipleChoiceList[i] {
+						found = true
+            break
+					}
+				}
+				if !found {
+					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given value for hook config '%s', given value not in choices list", k)
+				}
+			}
+		}
 	}
+
 	return nil
 }
 
