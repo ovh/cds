@@ -30,7 +30,7 @@ spec:
       {{- end }}
       containers:
       - name: {{ template "cds.fullname" . }}-ui
-        image: "{{ .Values.ui.image.registry }}/{{ .Values.ui.image.repository }}:{{ .Values.ui.image.tag }}"
+        image: "{{ .Values.ui.image.registry }}/{{ .Values.ui.image.repository }}:{{ .Values.ui.image.cdstag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
         env:
           - name: BACKEND_HOST
