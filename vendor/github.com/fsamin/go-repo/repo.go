@@ -423,13 +423,19 @@ func (r Repo) ResetHard(hash string) error {
 
 // DefaultBranch returns the default branch of the remote origin
 func (r Repo) DefaultBranch() (string, error) {
-	s, err := r.runCmd("git", "symbolic-ref", "refs/remotes/origin/HEAD")
+	details, err := r.runCmd("git", "remote", "show", "origin")
 	if err != nil {
 		return "", err
 	}
-	s = strings.Replace(s, "\n", "", 1)
-	s = strings.Replace(s, "refs/remotes/origin/", "", 1)
-	return s, nil
+	var defaultBranch string
+	splitted := strings.Split(details, "\n")
+	for _, l := range splitted {
+		if strings.Contains(l, "HEAD branch:") {
+			defaultBranch = strings.TrimSpace(strings.Replace(l, "HEAD branch:", "", 1))
+			return defaultBranch, nil
+		}
+	}
+	return "", fmt.Errorf("no default branch found")
 }
 
 // Glob returns the matching files in the repo
