@@ -140,7 +140,10 @@ export class WorkflowAdminComponent implements OnInit {
             })));
 
             forkJoin(...actions)
-                .pipe(finalize(() => this.loading = false))
+                .pipe(finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                }))
                 .subscribe(() => {
                     this._toast.success('', this._translate.instant('workflow_updated'));
                     this._router.navigate([
