@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -13,7 +13,8 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-environment-add',
     templateUrl: './environment.add.html',
-    styleUrls: ['./environment.add.scss']
+    styleUrls: ['./environment.add.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class EnvironmentAddComponent {

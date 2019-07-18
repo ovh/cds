@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -7,13 +7,18 @@ import { Project } from 'app/model/project.model';
 import { User } from 'app/model/user.model';
 import { AuthentificationStore } from 'app/service/auth/authentification.store';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { CloneEnvironmentInProject, DeleteEnvironmentInProject, UpdateEnvironmentInProject } from 'app/store/project.action';
+import {
+    CloneEnvironmentInProject,
+    DeleteEnvironmentInProject,
+    UpdateEnvironmentInProject
+} from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-environment-advanced',
     templateUrl: './environment.advanced.html',
-    styleUrls: ['./environment.advanced.scss']
+    styleUrls: ['./environment.advanced.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EnvironmentAdvancedComponent implements OnInit {
 
@@ -32,7 +37,8 @@ export class EnvironmentAdvancedComponent implements OnInit {
         public _translate: TranslateService,
         private _router: Router,
         private _authStore: AuthentificationStore,
-        private store: Store
+        private store: Store,
+        private _cd: ChangeDetectorRef
     ) {
 
     }
@@ -51,7 +57,10 @@ export class EnvironmentAdvancedComponent implements OnInit {
             projectKey: this.project.key,
             environmentName: this.oldName,
             changes: this.environment
-        })).pipe(finalize(() => this.loading = false))
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('environment_renamed'));
                 this._router.navigate(['/project', this.project.key, 'environment', this.environment.name]);
@@ -68,6 +77,7 @@ export class EnvironmentAdvancedComponent implements OnInit {
             this.loading = false;
             this.cloneName = '';
             cloneModal.hide();
+            this._cd.markForCheck();
         })).subscribe(() => {
             this._toast.success('', this._translate.instant('environment_cloned'));
             this._router.navigate(['/project', this.project.key, 'environment', this.cloneName]);
