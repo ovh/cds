@@ -102,7 +102,7 @@ test: test-config clean
 test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@echo "Generating unit tests coverage..."
 	@$(GO_COV_MERGE) `find ../ -name "*.coverprofile"` > $(TARGET_DIR)/cover.out
-	@$(GO_COBERTURA) convert $(TARGET_DIR)/cover.out | @$(GO_COBERTURA_XML) > $(TARGET_DIR)/coverage.xml
+	@$(GO_COBERTURA) convert $(TARGET_DIR)/cover.out | gocov-xml > $(TARGET_DIR)/coverage.xml
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
 	@if [ ! -z "${CDS_VERSION}" ]; then \
 		echo "Sending coverage report to CDS"; \
