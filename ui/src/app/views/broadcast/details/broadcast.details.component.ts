@@ -1,14 +1,15 @@
-import {Component} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {Broadcast} from 'app/model/broadcast.model';
-import {Subscription} from 'rxjs';
-import {BroadcastStore} from '../../../service/broadcast/broadcast.store';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Broadcast } from 'app/model/broadcast.model';
+import { Subscription } from 'rxjs';
+import { BroadcastStore } from '../../../service/broadcast/broadcast.store';
+import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-broadcast-details',
     templateUrl: './broadcast.details.component.html',
-    styleUrls: ['./broadcast.details.component.scss']
+    styleUrls: ['./broadcast.details.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class BroadcastDetailsComponent {
@@ -19,7 +20,8 @@ export class BroadcastDetailsComponent {
     _broadcastSub: Subscription;
     _routeParamsSub: Subscription;
 
-    constructor(private _broadcastStore: BroadcastStore, private _route: ActivatedRoute) {
+    constructor(private _broadcastStore: BroadcastStore, private _route: ActivatedRoute,
+                private _cd: ChangeDetectorRef) {
         this._routeParamsSub = this._route.params.subscribe((params) => {
             let id = parseInt(params['id'], 10);
 
@@ -33,6 +35,7 @@ export class BroadcastDetailsComponent {
                     if (this.broadcast) {
                         this.loading = false;
                     }
+                    this._cd.markForCheck();
                 });
         });
 
