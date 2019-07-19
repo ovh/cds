@@ -50,6 +50,8 @@ func runParseCoverageResultAction(w *currentWorker) BuiltInAction {
 			parserMode = coverage.COBERTURA
 		case string(coverage.LCOV):
 			parserMode = coverage.LCOV
+		case string(coverage.CLOVER):
+			parserMode = coverage.CLOVER
 		default:
 			res.Reason = fmt.Sprintf("Coverage parser: unknown format %s", mode)
 			sendLog(res.Reason)
