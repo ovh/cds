@@ -140,7 +140,6 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
                 if (msg) {
                     let serviceSpawnInfos: Array<SpawnInfo> = JSON.parse(msg);
                     this.zone.run(() => {
-                        this._cd.markForCheck();
                         if (serviceSpawnInfos && serviceSpawnInfos.length > 0) {
                             this.spawnInfos = this.getSpawnInfos(serviceSpawnInfos);
                         }
@@ -151,6 +150,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
                                 this.spawnInfos = this.getSpawnInfos(this.nodeJobRun.spawninfos);
                             }
                         }
+                        this._cd.markForCheck();
                     });
                 }
             });
