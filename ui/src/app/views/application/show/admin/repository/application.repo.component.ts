@@ -1,7 +1,11 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { ConnectVcsRepoOnApplication, DeleteVcsRepoOnApplication, UpdateApplication } from 'app/store/applications.action';
+import {
+    ConnectVcsRepoOnApplication,
+    DeleteVcsRepoOnApplication,
+    UpdateApplication
+} from 'app/store/applications.action';
 import { finalize, first } from 'rxjs/operators';
 import { Application } from '../../../../../model/application.model';
 import { Project } from '../../../../../model/project.model';
@@ -13,7 +17,8 @@ import { ToastService } from '../../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-application-repo',
     templateUrl: './application.repo.html',
-    styleUrls: ['./application.repo.scss']
+    styleUrls: ['./application.repo.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ApplicationRepositoryComponent implements OnInit {
 
@@ -37,7 +42,8 @@ export class ApplicationRepositoryComponent implements OnInit {
         private _repoManagerService: RepoManagerService,
         private _toast: ToastService,
         public _translate: TranslateService,
-        private store: Store
+        private store: Store,
+        private _cd: ChangeDetectorRef
     ) {
 
     }
@@ -59,7 +65,10 @@ export class ApplicationRepositoryComponent implements OnInit {
                 projectKey: this.project.key,
                 applicationName: this.application.name,
                 repoManager: this.application.vcs_server
-            })).pipe(finalize(() => this.loadingBtn = false))
+            })).pipe(finalize(() => {
+                this.loadingBtn = false;
+                this._cd.markForCheck();
+            }))
                 .subscribe(() => this._toast.success('', this._translate.instant('application_repo_detach_ok')));
         }
     }
@@ -80,14 +89,15 @@ export class ApplicationRepositoryComponent implements OnInit {
     updateListRepo(sync: boolean): void {
         if (this.selectedRepoManager) {
             this.loadingRepos = true;
-            this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager, sync).pipe(first())
+            this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager, sync)
+                .pipe(first(), finalize(() => {
+                    this.loadingRepos = false;
+                    this._cd.markForCheck();
+                }))
                 .subscribe(repos => {
                     this.repos = repos;
                     this.reposFiltered = repos.slice(0, 50);
-                },
-                    null,
-                    () => this.loadingRepos = false
-                );
+                });
         }
     }
 
@@ -101,7 +111,10 @@ export class ApplicationRepositoryComponent implements OnInit {
                 applicationName: this.application.name,
                 repoManager: this.selectedRepoManager,
                 repoFullName: this.selectedRepo
-            })).pipe(finalize(() => this.loadingBtn = false))
+            })).pipe(finalize(() => {
+                this.loadingBtn = false;
+                this._cd.markForCheck();
+            }))
                 .subscribe(() => {
                     this.displayVCSStrategy = !this.application.vcs_strategy || !this.application.vcs_strategy.connection_type;
                     this._toast.success('', this._translate.instant('application_repo_attach_ok'));
@@ -115,7 +128,10 @@ export class ApplicationRepositoryComponent implements OnInit {
             projectKey: this.project.key,
             applicationName: this.application.name,
             changes: this.application
-        })).pipe(finalize(() => this.loadingBtn = false))
+        })).pipe(finalize(() => {
+            this.loadingBtn = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => this._toast.success('', this._translate.instant('application_update_ok')));
     }
 }

@@ -1,7 +1,11 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { AddApplicationDeployment, DeleteApplicationDeployment, UpdateApplicationDeployment } from 'app/store/applications.action';
+import {
+    AddApplicationDeployment,
+    DeleteApplicationDeployment,
+    UpdateApplicationDeployment
+} from 'app/store/applications.action';
 import { finalize } from 'rxjs/operators';
 import { Application } from '../../../../../model/application.model';
 import { ProjectIntegration } from '../../../../../model/integration.model';
@@ -12,7 +16,8 @@ import { ToastService } from '../../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-application-deployment',
     templateUrl: './application.deployment.html',
-    styleUrls: ['./application.deployment.scss']
+    styleUrls: ['./application.deployment.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ApplicationDeploymentComponent {
 
@@ -48,7 +53,8 @@ export class ApplicationDeploymentComponent {
     constructor(
         private _toast: ToastService,
         public _translate: TranslateService,
-        private store: Store
+        private store: Store,
+        private _cd: ChangeDetectorRef
     ) {
 
     }
@@ -59,7 +65,10 @@ export class ApplicationDeploymentComponent {
             projectKey: this.project.key,
             applicationName: this.application.name,
             integrationName: pfName
-        })).pipe(finalize(() => this.loadingBtn = false))
+        })).pipe(finalize(() => {
+            this.loadingBtn = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => this._toast.success('', this._translate.instant('application_integration_deleted')));
     }
 
@@ -70,7 +79,10 @@ export class ApplicationDeploymentComponent {
             applicationName: this.application.name,
             deploymentName: pfName,
             config: this.application.deployment_strategies[pfName]
-        })).pipe(finalize(() => this.loadingBtn = false))
+        })).pipe(finalize(() => {
+            this.loadingBtn = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => this._toast.success('', this._translate.instant('application_integration_updated')));
     }
 
@@ -81,7 +93,10 @@ export class ApplicationDeploymentComponent {
                 projectKey: this.project.key,
                 applicationName: this.application.name,
                 integration: this.selectedIntegration
-            })).pipe(finalize(() => this.loadingBtn = false))
+            })).pipe(finalize(() => {
+                this.loadingBtn = false;
+                this._cd.markForCheck();
+            }))
                 .subscribe(() => {
                     this.selectedIntegration = null;
                     this._toast.success('', this._translate.instant('application_integration_added'));

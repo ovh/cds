@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AddApplicationKey, DeleteApplicationKey } from 'app/store/applications.action';
@@ -11,7 +11,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-application-keys',
     templateUrl: './application.keys.html',
-    styleUrls: ['./application.keys.scss']
+    styleUrls: ['./application.keys.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ApplicationKeysComponent {
 
@@ -23,7 +24,8 @@ export class ApplicationKeysComponent {
     constructor(
         private _toast: ToastService,
         private _translate: TranslateService,
-        private store: Store
+        private store: Store,
+        private _cd: ChangeDetectorRef
     ) {
 
     }
@@ -36,7 +38,10 @@ export class ApplicationKeysComponent {
                     projectKey: this.project.key,
                     applicationName: this.application.name,
                     key: event.key
-                })).pipe(finalize(() => this.loading = false))
+                })).pipe(finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                }))
                     .subscribe(() => this._toast.success('', this._translate.instant('keys_added')));
                 break;
             case 'delete':
@@ -45,7 +50,10 @@ export class ApplicationKeysComponent {
                     projectKey: this.project.key,
                     applicationName: this.application.name,
                     key: event.key
-                })).pipe(finalize(() => this.loading = false))
+                })).pipe(finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                }))
                     .subscribe(() => this._toast.success('', this._translate.instant('keys_removed')));
         }
     }

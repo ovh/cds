@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -26,7 +26,8 @@ import { CDSWebWorker } from '../../../shared/worker/web.worker';
 @Component({
     selector: 'app-application-show',
     templateUrl: './application.html',
-    styleUrls: ['./application.scss']
+    styleUrls: ['./application.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class ApplicationShowComponent implements OnInit {
@@ -35,7 +36,6 @@ export class ApplicationShowComponent implements OnInit {
     public readyApp = false;
     public varFormLoading = false;
     public permFormLoading = false;
-    public notifFormLoading = false;
 
     // Project & Application data
     project: Project;
@@ -44,7 +44,6 @@ export class ApplicationShowComponent implements OnInit {
     // Subscription
     applicationSubscription: Subscription;
     projectSubscription: Subscription;
-    workerSubscription: Subscription;
     _routeParamsSub: Subscription;
     _routeDataSub: Subscription;
     _queryParamsSub: Subscription;
@@ -76,7 +75,8 @@ export class ApplicationShowComponent implements OnInit {
         private _authStore: AuthentificationStore,
         private _toast: ToastService,
         public _translate: TranslateService,
-        private store: Store
+        private store: Store,
+        private _cd: ChangeDetectorRef
     ) {
         this.currentUser = this._authStore.getUser();
         // Update data if route change
@@ -126,11 +126,13 @@ export class ApplicationShowComponent implements OnInit {
 
                             // Update recent application viewed
                             this._applicationStore.updateRecentApplication(key, this.application);
+                            this._cd.markForCheck();
 
                         }, () => {
                             this._router.navigate(['/project', key], { queryParams: { tab: 'applications' } });
                         })
                 }
+                this._cd.markForCheck();
             }
         });
     }
@@ -141,6 +143,7 @@ export class ApplicationShowComponent implements OnInit {
             if (tab) {
                 this.selectedTab = tab;
             }
+            this._cd.markForCheck();
         });
     }
 
@@ -167,6 +170,7 @@ export class ApplicationShowComponent implements OnInit {
                     })).pipe(finalize(() => {
                         event.variable.updating = false;
                         this.varFormLoading = false;
+                        this._cd.markForCheck();
                     })).subscribe(() => this._toast.success('', this._translate.instant('variable_added')));
                     break;
                 case 'update':
@@ -175,7 +179,10 @@ export class ApplicationShowComponent implements OnInit {
                         applicationName: this.application.name,
                         variableName: event.variable.name,
                         variable: event.variable
-                    })).pipe(finalize(() => event.variable.updating = false))
+                    })).pipe(finalize(() => {
+                        event.variable.updating = false;
+                        this._cd.markForCheck();
+                    }))
                         .subscribe(() => this._toast.success('', this._translate.instant('variable_updated')));
                     break;
                 case 'delete':
@@ -183,7 +190,8 @@ export class ApplicationShowComponent implements OnInit {
                         projectKey: this.project.key,
                         applicationName: this.application.name,
                         variable: event.variable
-                    })).subscribe(() => this._toast.success('', this._translate.instant('variable_deleted')));
+                    })).pipe(finalize(() => this._cd.markForCheck()))
+                        .subscribe(() => this._toast.success('', this._translate.instant('variable_deleted')));
                     break;
             }
         }
