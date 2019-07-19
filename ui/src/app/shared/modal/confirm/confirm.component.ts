@@ -10,10 +10,11 @@ import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } f
 export class ConfirmModalComponent {
     @Input() title: string;
     @Input() msg: string;
+    @Input() loading: boolean;
     @Output() event = new EventEmitter<boolean>();
 
     // Ng semantic modal
-    @ViewChild('myConfirmModal', {static: false})
+    @ViewChild('myConfirmModal', { static: false })
     public myConfirmModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;

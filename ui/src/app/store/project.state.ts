@@ -1150,9 +1150,12 @@ export class ProjectState {
     @Action(ProjectAction.DisconnectRepositoryManagerInProject)
     disconnectRepositoryManager(ctx: StateContext<ProjectStateModel>, action: ProjectAction.DisconnectRepositoryManagerInProject) {
         const state = ctx.getState();
+        let params = new HttpParams();
+        params = params.append('force', 'true');
+
         return this._http.delete<Project>(
             '/project/' + action.payload.projectKey + '/repositories_manager/' +
-            action.payload.repoManager
+            action.payload.repoManager, { params }
         ).pipe(tap((project: Project) => {
             ctx.setState({
                 ...state,

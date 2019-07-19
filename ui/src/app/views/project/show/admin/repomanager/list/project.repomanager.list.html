@@ -1,40 +1,46 @@
 <div id="projectRepoManagers">
     <table class="ui fixed single line celled table">
         <thead>
-        <tr>
-            <th class="seven wide">{{ 'common_name' | translate }}</th>
-            <th class="two wide"></th>
-        </tr>
+            <tr>
+                <th class="seven wide">{{ 'common_name' | translate }}</th>
+                <th class="two wide"></th>
+            </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let r of getDataForCurrentPage()">
-            <td>
-                <ng-container *ngIf="warnings">
-                    <app-warning-mark [warning]="warnings.get(r.name)"></app-warning-mark>
-                </ng-container>
-                {{r.name}}
-                <span *ngIf="r.username !== ''"> - {{ 'project_repoman_created_by' | translate }}{{r.username}}</span>
-            </td>
-            <td class="right aligned">
-                <app-delete-button (event)="clickDeleteButton(r.name)" [loading]="deleteLoading"></app-delete-button>
-            </td>
-        </tr>
+            <tr *ngFor="let r of getDataForCurrentPage()">
+                <td>
+                    <ng-container *ngIf="warnings">
+                        <app-warning-mark [warning]="warnings.get(r.name)"></app-warning-mark>
+                    </ng-container>
+                    {{r.name}}
+                    <span *ngIf="r.username !== ''"> -
+                        {{ 'project_repoman_created_by' | translate }}{{r.username}}</span>
+                </td>
+                <td class="right aligned">
+                    <app-delete-button (event)="clickDeleteButton(r.name)" [loading]="deleteLoading">
+                    </app-delete-button>
+                </td>
+            </tr>
         </tbody>
         <tfoot *ngIf="getNbOfPages() > 1">
-        <tr>
-            <th colspan="4">
-                <div class="ui right floated pagination menu" >
-                    <a class="icon item" (click)="downPage()">
-                        <i class="left chevron icon"></i>
-                    </a>
-                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
-                    <a class="icon item" (click)="upPage()">
-                        <i class="right chevron icon"></i>
-                    </a>
-                </div>
-            </th>
-        </tr>
+            <tr>
+                <th colspan="4">
+                    <div class="ui right floated pagination menu">
+                        <a class="icon item" (click)="downPage()">
+                            <i class="left chevron icon"></i>
+                        </a>
+                        <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)"
+                            [class.active]="currentPage === page">{{page}}</a>
+                        <a class="icon item" (click)="upPage()">
+                            <i class="right chevron icon"></i>
+                        </a>
+                    </div>
+                </th>
+            </tr>
         </tfoot>
     </table>
 </div>
-<app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="clickDeleteButton($event, true)" #deleteRepoWarning></app-warning-modal>
+<app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')"
+    (event)="clickDeleteButton($event, true)" #deleteRepoWarning></app-warning-modal>
+<app-confirm-modal [loading]="loadingDependencies" [title]="'repoman_delete_confirm_title' | translate"
+    [msg]="confirmationMessage" (event)="confirmDeletion($event)" #confirmDeletionModal></app-confirm-modal>

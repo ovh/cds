@@ -309,6 +309,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize/callback", r.POST(api.repositoriesManagerAuthorizeCallbackHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize/basicauth", r.POST(api.repositoriesManagerAuthorizeBasicHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}", r.DELETE(api.deleteRepositoriesManagerHandler))
+	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/applications", r.GET(api.getRepositoriesManagerLinkedApplicationsHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repo", r.GET(api.getRepoFromRepositoriesManagerHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repos", r.GET(api.getReposFromRepositoriesManagerHandler))
 

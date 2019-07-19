@@ -30,7 +30,7 @@ import { environment } from '../../../../environments/environment';
 })
 @AutoUnsubscribe()
 export class WorkflowAddComponent implements OnInit {
-    @ViewChild('codeMirror', {static: false}) codemirror: any;
+    @ViewChild('codeMirror', { static: false }) codemirror: any;
 
     workflow: Workflow;
     project: Project;
@@ -46,7 +46,7 @@ workflow:
     depends_on:
     - myBuild
     when:
-    - success 
+    - success
     pipeline: test`;
 
     repos: Array<Repository>;
