@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { Broadcast } from 'app/model/broadcast.model';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
@@ -6,7 +6,8 @@ import { Column, ColumnType, Filter } from 'app/shared/table/data-table.componen
 
 @Component({
     selector: 'app-broadcast-list',
-    templateUrl: './broadcast.list.html'
+    templateUrl: './broadcast.list.html',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BroadcastListComponent {
     broadcasts: Array<Broadcast>;
@@ -15,7 +16,8 @@ export class BroadcastListComponent {
     filter: Filter<Broadcast>;
 
     constructor(
-        private _broadcastStore: BroadcastStore
+        private _broadcastStore: BroadcastStore,
+        private _cd: ChangeDetectorRef
     ) {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
@@ -90,6 +92,7 @@ export class BroadcastListComponent {
             .subscribe(broadcasts => {
                 this.broadcasts = broadcasts.valueSeq().toArray()
                     .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
+                this._cd.markForCheck();
             });
     }
 }

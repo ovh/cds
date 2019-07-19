@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { ModelPattern } from 'app/model/worker-model.model';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
@@ -7,7 +7,8 @@ import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-worker-model-pattern-list',
-    templateUrl: './worker-model-pattern.list.html'
+    templateUrl: './worker-model-pattern.list.html',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkerModelPatternListComponent {
     loading: boolean;
@@ -17,7 +18,8 @@ export class WorkerModelPatternListComponent {
     filter: Filter<ModelPattern>;
 
     constructor(
-        private _workerModelService: WorkerModelService
+        private _workerModelService: WorkerModelService,
+        private _cd: ChangeDetectorRef
     ) {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
@@ -52,7 +54,10 @@ export class WorkerModelPatternListComponent {
 
         this.loading = true;
         this._workerModelService.getPatterns()
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(wmp => this.workerModelPatterns = wmp);
     }
 }
