@@ -345,6 +345,27 @@ func (r Repo) CurrentBranch() (string, error) {
 	return b[:len(b)-1], nil
 }
 
+// FetchRemoteTag runs a git fetch then checkout the remote tag
+func (r Repo) FetchRemoteTag(remote, tag string) error {
+	// delete tag if exist
+	if _, err := r.runCmd("git", "rev-parse", "--verify", tag); err == nil {
+		if _, err := r.runCmd("git", "tag", "-d", tag); err != nil {
+			return fmt.Errorf("unable to git delete tag: %s", err)
+		}
+	}
+
+	// Get tag from remote
+	if _, err := r.runCmd("git", "fetch"); err != nil {
+		return fmt.Errorf("unable to git fetch tags: %s", err)
+	}
+
+	_, err := r.runCmd("git", "checkout", tag)
+	if err != nil {
+		return fmt.Errorf("unable to git checkout: %s", err)
+	}
+	return nil
+}
+
 // FetchRemoteBranch runs a git fetch then checkout the remote branch
 func (r Repo) FetchRemoteBranch(remote, branch string) error {
 	if _, err := r.runCmd("git", "fetch"); err != nil {
