@@ -16,14 +16,22 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 		return err
 	}
 
-	if op.Setup.Checkout.Branch == "" {
-		op.Setup.Checkout.Branch = op.RepositoryInfo.DefaultBranch
-	}
+	if op.Setup.Checkout.Tag != "" {
+		log.Debug("Repositories> processCheckout> fetching tag %s from %s", op.Setup.Checkout.Tag, op.URL)
+		if err := gitRepo.FetchRemoteTag("origin", op.Setup.Checkout.Tag); err != nil {
+			log.Error("Repositories> processCheckout> FetchRemoteTag> [%s] error %v", op.UUID, err)
+			return err
+		}
+	} else {
+		if op.Setup.Checkout.Branch == "" {
+			op.Setup.Checkout.Branch = op.RepositoryInfo.DefaultBranch
+		}
 
-	log.Debug("Repositories> processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, op.URL)
-	if err := gitRepo.FetchRemoteBranch("origin", op.Setup.Checkout.Branch); err != nil {
-		log.Error("Repositories> processCheckout> FetchRemoteBranch> [%s] error %v", op.UUID, err)
-		return err
+		log.Debug("Repositories> processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, op.URL)
+		if err := gitRepo.FetchRemoteBranch("origin", op.Setup.Checkout.Branch); err != nil {
+			log.Error("Repositories> processCheckout> FetchRemoteBranch> [%s] error %v", op.UUID, err)
+			return err
+		}
 	}
 
 	//Check commit

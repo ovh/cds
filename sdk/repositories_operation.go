@@ -42,6 +42,7 @@ type OperationLoadFiles struct {
 
 // OperationCheckout represents a smart git checkout
 type OperationCheckout struct {
+	Tag    string `json:"tag,omitempty"`
 	Branch string `json:"branch,omitempty"`
 	Commit string `json:"commit,omitempty"`
 }

@@ -40,7 +40,7 @@ func (s *Service) do(op sdk.Operation) error {
 
 	switch {
 	// Load workflow as code file
-	case op.Setup.Checkout.Branch != "":
+	case op.Setup.Checkout.Branch != "" || op.Setup.Checkout.Tag != "":
 		if err := s.processCheckout(&op); err != nil {
 			op.Error = sdk.Cause(err).Error()
 			op.Status = sdk.OperationStatusError

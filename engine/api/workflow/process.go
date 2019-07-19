@@ -12,14 +12,21 @@ import (
 func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) {
 	if run.ApplicationID != 0 {
 		run.VCSRepository = vcsInfos.Repository
-		run.VCSBranch = vcsInfos.Branch
+		if vcsInfos.Tag == "" {
+			run.VCSBranch = vcsInfos.Branch
+		}
+
 		run.VCSTag = vcsInfos.Tag
 		run.VCSHash = vcsInfos.Hash
 		run.VCSServer = vcsInfos.Server
 	}
 
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, vcsInfos.Repository)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, vcsInfos.Branch)
+
+	if vcsInfos.Tag == "" {
+		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, vcsInfos.Branch)
+	}
+
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitTag, sdk.StringParameter, vcsInfos.Tag)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, vcsInfos.Hash)
 	hashShort := run.VCSHash
