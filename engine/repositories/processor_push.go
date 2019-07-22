@@ -17,19 +17,6 @@ func (s *Service) processPush(op *sdk.Operation) error {
 	if err != nil {
 		return sdk.WrapError(err, "unable to process gitclone")
 	}
-	//Check is repo has diverged
-	hasDiverged, err := gitRepo.HasDiverged()
-	if err != nil {
-		log.Error("Repositories> processPush> HasDiverged> [%s] Error: %v", op.UUID, err)
-		return sdk.WrapError(err, "HasDiverged> [%s] Error: %v", op.UUID, err)
-	}
-
-	if hasDiverged {
-		if err := gitRepo.ResetHard("origin/" + currentBranch); err != nil {
-			log.Error("Repositories> processPush> ResetHard> [%s] Error: %v", op.UUID, err)
-			return sdk.WrapError(err, "ResetHard> [%s] Error: %v", op.UUID, err)
-		}
-	}
 
 	if op.Setup.Push.ToBranch == "" {
 		op.Setup.Push.ToBranch = op.RepositoryInfo.DefaultBranch
@@ -41,6 +28,12 @@ func (s *Service) processPush(op *sdk.Operation) error {
 			log.Error("Repositories> processPush> Checkout to default branch> [%s] error %v", op.UUID, err)
 			return sdk.WrapError(err, "Checkout to default branch> [%s] error %v", op.UUID, err)
 		}
+	}
+
+	// Reset hard default branch
+	if err := gitRepo.ResetHard("origin/" + op.RepositoryInfo.DefaultBranch); err != nil {
+		log.Error("Repositories> processPush> ResetHard> [%s] Error: %v", op.UUID, err)
+		return err
 	}
 
 	// Create new branch
