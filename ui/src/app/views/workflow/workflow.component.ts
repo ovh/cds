@@ -1,34 +1,45 @@
-import { Component, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    QueryList,
+    ViewChild,
+    ViewChildren
+} from '@angular/core';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from '@richardlt/ng2-semantic-ui';
+import { Project } from 'app/model/project.model';
+import { Workflow } from 'app/model/workflow.model';
+import { WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
+import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { WorkflowTemplateApplyModalComponent } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
+import { WorkflowSaveAsCodeComponent } from 'app/shared/workflow/modal/save-as-code/save.as.code.component';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import {
     CleanWorkflowRun,
     CleanWorkflowState,
-    GetWorkflow, GetWorkflowRuns, SelectHook,
+    GetWorkflow,
+    GetWorkflowRuns,
+    SelectHook,
     SidebarRunsMode,
     UpdateFavoriteWorkflow
 } from 'app/store/workflow.action';
-import { WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
-import { Project } from '../../model/project.model';
-import { Workflow } from '../../model/workflow.model';
-import { WorkflowRun } from '../../model/workflow.run.model';
-import { WorkflowCoreService } from '../../service/workflow/workflow.core.service';
-import { WorkflowService } from '../../service/workflow/workflow.service';
-import { WorkflowSidebarMode } from '../../service/workflow/workflow.sidebar.store';
-import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
-import { ToastService } from '../../shared/toast/ToastService';
-import { WorkflowTemplateApplyModalComponent } from '../../shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
-import { WorkflowSaveAsCodeComponent } from '../../shared/workflow/modal/save-as-code/save.as.code.component';
+
 
 @Component({
     selector: 'app-workflow',
     templateUrl: './workflow.html',
-    styleUrls: ['./workflow.scss']
+    styleUrls: ['./workflow.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowComponent {
@@ -65,7 +76,6 @@ export class WorkflowComponent {
     selectedNodeRef: string;
     selectecHookRef: string;
 
-    runSubscription: Subscription;
     workflowRun: WorkflowRun;
 
     showButtons = false;
@@ -78,7 +88,8 @@ export class WorkflowComponent {
         private _workflowCore: WorkflowCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _store: Store
+        private _store: Store,
+        private _cd: ChangeDetectorRef
     ) {
         this.dataRouteSubscription = this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -86,12 +97,16 @@ export class WorkflowComponent {
 
         this.projectSubscription = this._store.select(ProjectState)
             .pipe(filter((projState) => projState.project && projState.project.key))
-            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
+            .subscribe((projectState: ProjectStateModel) => {
+                this.project = projectState.project;
+                this._cd.markForCheck();
+            });
 
         this.asCodeEditorSubscription = this._workflowCore.getAsCodeEditor()
             .subscribe((state) => {
                 if (state != null) {
                     this.asCodeEditorOpen = state.open;
+                    this._cd.markForCheck();
                 }
             });
 
@@ -109,6 +124,7 @@ export class WorkflowComponent {
                 delete this.selectedNodeRef;
                 delete this.selectedNodeID;
             }
+            this._cd.markForCheck();
         });
 
         this._store.dispatch(new CleanWorkflowState());
@@ -133,6 +149,7 @@ export class WorkflowComponent {
             } else {
                 delete this.workflowRun;
             }
+            this._cd.markForCheck();
         });
 
 
@@ -196,7 +213,10 @@ export class WorkflowComponent {
     migrateAsCode(): void {
         this.loadingPopupButton = true;
         this._workflowService.migrateAsCode(this.project.key, this.workflow.name)
-            .pipe(finalize(() => this.loadingPopupButton = false))
+            .pipe(finalize(() => {
+                this.loadingPopupButton = false;
+                this._cd.markForCheck();
+            }))
             .subscribe((ope) => {
                 this.showButtons = false;
                 this.popupFromlRepository.close();

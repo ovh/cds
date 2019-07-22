@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { Project } from '../../../model/project.model';
 import { Workflow } from '../../../model/workflow.model';
 import { WorkflowRun } from '../../../model/workflow.run.model';
@@ -7,7 +7,8 @@ import { PathItem } from '../../../shared/breadcrumb/breadcrumb.component';
 @Component({
     selector: 'app-workflow-breadcrumb',
     templateUrl: './workflow.breadcrumb.html',
-    styleUrls: ['./workflow.breadcrumb.scss']
+    styleUrls: ['./workflow.breadcrumb.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowBreadCrumbComponent {
     _project: Project;

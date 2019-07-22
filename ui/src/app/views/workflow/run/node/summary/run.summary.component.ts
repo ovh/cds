@@ -1,19 +1,19 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {finalize, first} from 'rxjs/operators';
-import {PipelineStatus} from '../../../../../model/pipeline.model';
-import {Project} from '../../../../../model/project.model';
-import {WNode, Workflow} from '../../../../../model/workflow.model';
-import {WorkflowNodeRun, WorkflowRunRequest} from '../../../../../model/workflow.run.model';
-import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
-import {ToastService} from '../../../../../shared/toast/ToastService';
-import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node/run/node.run.param.component';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { finalize, first } from 'rxjs/operators';
+import { PipelineStatus } from '../../../../../model/pipeline.model';
+import { Project } from '../../../../../model/project.model';
+import { WNode, Workflow } from '../../../../../model/workflow.model';
+import { WorkflowNodeRun } from '../../../../../model/workflow.run.model';
+import { WorkflowRunService } from '../../../../../service/workflow/run/workflow.run.service';
+import { ToastService } from '../../../../../shared/toast/ToastService';
+import { WorkflowNodeRunParamComponent } from '../../../../../shared/workflow/node/run/node.run.param.component';
 
 @Component({
     selector: 'app-workflow-node-run-summary',
     templateUrl: './run.summary.html',
-    styleUrls: ['./run.summary.scss']
+    styleUrls: ['./run.summary.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowNodeRunSummaryComponent implements OnInit {
 
@@ -30,18 +30,12 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
 
     loading = false;
 
-    constructor(private _router: Router, private _wrService: WorkflowRunService, private _toast: ToastService,
-                private _translate: TranslateService) {
+    constructor(private _wrService: WorkflowRunService, private _toast: ToastService,
+                private _translate: TranslateService, private _cd: ChangeDetectorRef) {
     }
 
     ngOnInit(): void {
         this.node = Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflow);
-    }
-
-    getAuthor(): string {
-        if (this.nodeRun) {
-            return '';
-        }
     }
 
     stop(): void {
@@ -49,25 +43,13 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
         this._wrService.stopNodeRun(this.project.key, this.workflow.name, this.nodeRun.num, this.nodeRun.id)
             .pipe(
                 first(),
-                finalize(() => this.loading = false)
+                finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                })
             ).subscribe(() => {
             this._toast.success('', this._translate.instant('pipeline_stop'));
         });
-    }
-
-    runNew(): void {
-        let request = new WorkflowRunRequest();
-        request.from_nodes = [this.nodeRun.workflow_node_id];
-        request.number = this.nodeRun.num;
-        request.manual = this.nodeRun.manual;
-        request.hook = this.nodeRun.hook_event;
-
-        this.loading = true;
-        this._wrService.runWorkflow(this.project.key, this.workflow.name, request)
-          .pipe(finalize(() => this.loading = false))
-          .subscribe(wr => {
-              this._router.navigate(['project', this.project.key, 'workflow', this.workflow.name, 'run', this.nodeRun.num]);
-          });
     }
 
     runNewWithParameter(): void {

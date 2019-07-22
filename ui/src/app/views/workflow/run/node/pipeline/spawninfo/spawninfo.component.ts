@@ -1,4 +1,13 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input, NgZone,
+    OnDestroy,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import * as AU from 'ansi_up';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
@@ -14,7 +23,8 @@ import { WorkflowRunJobVariableComponent } from '../variables/job.variables.comp
 @Component({
     selector: 'app-workflow-run-job-spawn-info',
     templateUrl: './spawninfo.html',
-    styleUrls: ['./spawninfo.scss']
+    styleUrls: ['./spawninfo.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
 
@@ -58,6 +68,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
 
     worker: CDSWebWorker;
     workerSubscription: Subscription;
+    zone: NgZone;
 
     serviceSpawnInfos: Array<SpawnInfo>;
     loading = true;
@@ -71,7 +82,10 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
         this.stopWorker();
     }
 
-    constructor(private _authStore: AuthentificationStore, private _translate: TranslateService) { }
+    constructor(private _authStore: AuthentificationStore, private _translate: TranslateService,
+        private _cd: ChangeDetectorRef) {
+        this.zone = new NgZone({ enableLongStackTrace: false });
+    }
 
     refreshDisplayServiceLogsLink() {
         if (this.nodeJobRun.job && this.nodeJobRun.job.action && Array.isArray(this.nodeJobRun.job.action.requirements)) {
@@ -125,16 +139,19 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
             this.workerSubscription = this.worker.response().subscribe(msg => {
                 if (msg) {
                     let serviceSpawnInfos: Array<SpawnInfo> = JSON.parse(msg);
-                    if (serviceSpawnInfos && serviceSpawnInfos.length > 0) {
-                        this.spawnInfos = this.getSpawnInfos(serviceSpawnInfos);
-                    }
-                    if (this.jobStatus === PipelineStatus.SUCCESS || this.jobStatus === PipelineStatus.FAIL ||
-                        this.jobStatus === PipelineStatus.STOPPED) {
-                        this.stopWorker();
-                        if (this.nodeJobRun.spawninfos && this.nodeJobRun.spawninfos.length > 0) {
-                            this.spawnInfos = this.getSpawnInfos(this.nodeJobRun.spawninfos);
+                    this.zone.run(() => {
+                        if (serviceSpawnInfos && serviceSpawnInfos.length > 0) {
+                            this.spawnInfos = this.getSpawnInfos(serviceSpawnInfos);
                         }
-                    }
+                        if (this.jobStatus === PipelineStatus.SUCCESS || this.jobStatus === PipelineStatus.FAIL ||
+                            this.jobStatus === PipelineStatus.STOPPED) {
+                            this.stopWorker();
+                            if (this.nodeJobRun.spawninfos && this.nodeJobRun.spawninfos.length > 0) {
+                                this.spawnInfos = this.getSpawnInfos(this.nodeJobRun.spawninfos);
+                            }
+                        }
+                        this._cd.markForCheck();
+                    });
                 }
             });
         }

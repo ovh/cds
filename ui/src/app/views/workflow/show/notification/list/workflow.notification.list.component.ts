@@ -1,18 +1,23 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { Workflow, WorkflowNotification } from 'app/model/workflow.model';
 import { NotificationService } from 'app/service/notification/notification.service';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { AddNotificationWorkflow, DeleteNotificationWorkflow, UpdateNotificationWorkflow } from 'app/store/workflow.action';
+import {
+    AddNotificationWorkflow,
+    DeleteNotificationWorkflow,
+    UpdateNotificationWorkflow
+} from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-notification-list',
     templateUrl: './workflow.notification.list.html',
-    styleUrls: ['./workflow.notification.list.scss']
+    styleUrls: ['./workflow.notification.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowNotificationListComponent {
 
@@ -40,7 +45,8 @@ export class WorkflowNotificationListComponent {
         private store: Store,
         private _notificationService: NotificationService,
         private _translate: TranslateService,
-        private _toast: ToastService
+        private _toast: ToastService,
+        private _cd: ChangeDetectorRef
     ) { }
 
     createNotification(n: WorkflowNotification): void {
@@ -57,11 +63,13 @@ export class WorkflowNotificationListComponent {
             this.loading = false;
             delete this.selectedNotification;
             delete this.newNotification;
+            this._cd.markForCheck();
         })).subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
     }
 
     copy(index: number) {
         this.newNotification = cloneDeep(this.workflow.notifications[index]);
+        delete this.selectedNotification;
         delete this.newNotification.id;
     }
 
@@ -69,6 +77,8 @@ export class WorkflowNotificationListComponent {
         this.loadingNotifTemplate = true;
         this._notificationService.getNotificationTypes().pipe(first(), finalize(() => {
             this.loadingNotifTemplate = false;
+            this._cd.markForCheck();
+
         })).subscribe(data => {
             if (data && data[this.newNotification.type]) {
                 this.newNotification.settings = data[this.newNotification.type];
@@ -100,6 +110,7 @@ export class WorkflowNotificationListComponent {
             this.loading = false;
             delete this.selectedNotification;
             delete this.newNotification;
+            this._cd.markForCheck();
         })).subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
     }
 
@@ -113,6 +124,7 @@ export class WorkflowNotificationListComponent {
             this.loading = false;
             delete this.selectedNotification;
             delete this.newNotification;
+            this._cd.markForCheck();
         })).subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
     }
 
@@ -132,6 +144,4 @@ export class WorkflowNotificationListComponent {
             });
         }
     }
-
-
 }

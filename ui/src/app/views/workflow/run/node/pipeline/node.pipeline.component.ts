@@ -1,7 +1,7 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Job, StepStatus } from 'app/model/job.model';
-import { PipelineStatus, ServiceLog } from 'app/model/pipeline.model';
+import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
@@ -9,11 +9,13 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-node-run-pipeline',
     templateUrl: './pipeline.html',
-    styleUrls: ['./pipeline.scss']
+    styleUrls: ['./pipeline.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
@@ -45,8 +47,6 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
     previousStatus: string;
     manual = false;
-    serviceLogsLoading = true;
-    serviceLogs: Array<ServiceLog> = [];
     displayServiceLogs = false;
 
     durationIntervalID: number;
@@ -55,7 +55,8 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         private _durationService: DurationService,
         private _route: ActivatedRoute,
         private _router: Router,
-        private _workflowRunService: WorkflowRunService
+        private _workflowRunService: WorkflowRunService,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit() {
@@ -100,6 +101,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             this.selectedRunJobParameters[this.selectedRunJob.id] = this.selectedRunJob.parameters;
         }
         this._workflowRunService.getWorkflowNodeRun(this.project.key, this.workflowName, this.nodeRun.num, this.nodeRun.id)
+            .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(nr => {
                 if (nr.stages) {
                     nr.stages.forEach(s => {
