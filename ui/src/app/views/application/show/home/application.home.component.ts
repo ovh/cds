@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Subscription } from 'rxjs';
@@ -15,7 +15,8 @@ import { ApplicationsState } from '../../../../store/applications.state';
 @Component({
     selector: 'app-home',
     templateUrl: './application.home.html',
-    styleUrls: ['./application.home.scss']
+    styleUrls: ['./application.home.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class ApplicationHomeComponent implements OnInit {
@@ -28,7 +29,8 @@ export class ApplicationHomeComponent implements OnInit {
 
     constructor(
         private _translate: TranslateService,
-        private store: Store
+        private store: Store,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
@@ -38,6 +40,7 @@ export class ApplicationHomeComponent implements OnInit {
             .subscribe((o: Overview) => {
                 this.overview = o;
                 this.renderGraph();
+                this._cd.markForCheck();
             });
     }
 

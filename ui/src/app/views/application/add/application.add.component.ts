@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -17,7 +17,8 @@ import { finalize, first, flatMap } from 'rxjs/operators';
 @Component({
     selector: 'app-application-add',
     templateUrl: './application.add.html',
-    styleUrls: ['./application.add.scss']
+    styleUrls: ['./application.add.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class ApplicationAddComponent implements OnInit {
@@ -48,7 +49,8 @@ export class ApplicationAddComponent implements OnInit {
         private _translate: TranslateService,
         private _router: Router,
         private _varService: VariableService,
-        private store: Store
+        private store: Store,
+        private _cd: ChangeDetectorRef
     ) {
         this.dataSubscription = this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -58,6 +60,7 @@ export class ApplicationAddComponent implements OnInit {
     ngOnInit(): void {
         this._varService.getContextVariable(this.project.key).pipe(first()).subscribe(s => {
             this.suggestion = s;
+            this._cd.markForCheck();
         });
     }
 
@@ -90,6 +93,7 @@ export class ApplicationAddComponent implements OnInit {
                         }
                     });
                 }
+                this._cd.markForCheck();
             });
     }
 
@@ -120,7 +124,10 @@ export class ApplicationAddComponent implements OnInit {
                     projectKey: this.project.key,
                     newApplication,
                     clonedAppName: this.selectedApplication.name
-                })).pipe(finalize(() => this.loadingCreate = false))
+                })).pipe(finalize(() => {
+                    this.loadingCreate = false;
+                    this._cd.markForCheck();
+                }))
                     .subscribe(() => {
                         this._toast.success('', this._translate.instant('application_created'));
                         this._router.navigate(['/project', this.project.key, 'application', newApplication.name]);
@@ -129,7 +136,10 @@ export class ApplicationAddComponent implements OnInit {
 
             default:
                 this.store.dispatch(new AddApplication({ projectKey: this.project.key, application: newApplication }))
-                    .pipe(finalize(() => this.loadingCreate = false))
+                    .pipe(finalize(() => {
+                        this.loadingCreate = false;
+                        this._cd.markForCheck();
+                    }))
                     .subscribe(() => {
                         this._toast.success('', this._translate.instant('application_created'));
                         this._router.navigate(['/project', this.project.key, 'application', newApplication.name]);
