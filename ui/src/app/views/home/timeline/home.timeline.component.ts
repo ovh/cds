@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AppService } from 'app/app.service';
 import { AuthentificationStore } from 'app/service/services.module';
-import { finalize } from 'rxjs/operators';
+import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Event } from '../../../model/event.model';
 import { PipelineStatus } from '../../../model/pipeline.model';
@@ -14,7 +14,8 @@ import { ToastService } from '../../../shared/toast/ToastService';
 @Component({
     selector: 'app-home-timeline',
     templateUrl: './home.timeline.html',
-    styleUrls: ['./home.timeline.scss']
+    styleUrls: ['./home.timeline.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class HomeTimelineComponent implements OnInit {
@@ -35,7 +36,8 @@ export class HomeTimelineComponent implements OnInit {
         private _translate: TranslateService,
         private _toast: ToastService,
         private _appService: AppService,
-        private _authStore: AuthentificationStore) {
+        private _authStore: AuthentificationStore,
+        private _cd: ChangeDetectorRef) {
     }
 
     ngOnInit(): void {
@@ -50,7 +52,6 @@ export class HomeTimelineComponent implements OnInit {
             }
             if (f) {
                 this.timelineSub = this._timelineStore.alltimeline()
-                    .pipe(finalize(() => this.loading = false))
                     .subscribe(es => {
                         if (!es) {
                             return;
@@ -58,8 +59,10 @@ export class HomeTimelineComponent implements OnInit {
                         this.loading = false;
                         this.events = es.toArray();
                         this.currentItem = this.events.length;
+                        this._cd.markForCheck();
                     });
             }
+            this._cd.markForCheck();
         });
     }
 
@@ -85,7 +88,9 @@ export class HomeTimelineComponent implements OnInit {
         if (!wName) {
             pFilter.workflow_names.push(e.workflow_name);
         }
-        this._timelineStore.saveFilter(this.filter).subscribe(() => {
+        this._timelineStore.saveFilter(this.filter)
+            .pipe(first(), finalize(() => this._cd.markForCheck()))
+            .subscribe(() => {
             this._toast.success('', this._translate.instant('timeline_filter_updated'));
         });
     }

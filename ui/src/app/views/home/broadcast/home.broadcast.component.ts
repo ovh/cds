@@ -1,10 +1,11 @@
-import {Component, Input} from '@angular/core';
-import {Broadcast} from '../../../model/broadcast.model';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { Broadcast } from 'app/model/broadcast.model';
 
 @Component({
     selector: 'app-home-broadcast',
     templateUrl: './home.broadcast.html',
-    styleUrls: ['./home.broadcast.scss']
+    styleUrls: ['./home.broadcast.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HomeBroadcastComponent {
 
