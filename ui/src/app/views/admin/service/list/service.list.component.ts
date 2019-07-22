@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { MonitoringStatus, MonitoringStatusLine } from 'app/model/monitoring.model';
+import { finalize } from 'rxjs/operators';
 import { Global } from '../../../../model/service.model';
 import { MonitoringService } from '../../../../service/monitoring/monitoring.service';
 import { ServiceService } from '../../../../service/service/service.service';
@@ -8,7 +9,8 @@ import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 @Component({
     selector: 'app-service-list',
     templateUrl: './service.list.html',
-    styleUrls: ['./service.list.scss']
+    styleUrls: ['./service.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ServiceListComponent {
     loading = false;
@@ -16,20 +18,20 @@ export class ServiceListComponent {
     status: MonitoringStatus;
     filteredStatusLines: Array<MonitoringStatusLine>;
     globals: Array<Global> = [];
-    globalQueue: Array<Global> = [];
     globalStatus: Global;
     globalVersion: Global;
     path: Array<PathItem>;
 
     constructor(
         private _monitoringService: MonitoringService,
-        private _serviceService: ServiceService
+        private _serviceService: ServiceService,
+        private _cd: ChangeDetectorRef
     ) {
         this.loading = true;
-        this._monitoringService.getStatus().subscribe(r => {
+        this._monitoringService.getStatus().pipe(finalize(() => this._cd.markForCheck())).subscribe(r => {
             this.status = r;
             this.filterChange();
-            this._serviceService.getServices().subscribe(services => {
+            this._serviceService.getServices().pipe(finalize(() => this._cd.markForCheck())).subscribe(services => {
                 if (services) {
                     services.forEach(s => {
                         s.status = 'OK';

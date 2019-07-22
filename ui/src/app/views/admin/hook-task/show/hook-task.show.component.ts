@@ -1,5 +1,5 @@
 import { formatDate } from '@angular/common';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HookStatus, TaskExecution, WorkflowHookTask } from '../../../../model/workflow.hook.model';
@@ -10,7 +10,8 @@ import { Column, ColumnType } from '../../../../shared/table/data-table.componen
 @Component({
     selector: 'app-hook-task-show',
     templateUrl: './hook-task.show.html',
-    styleUrls: ['./hook-task.show.scss']
+    styleUrls: ['./hook-task.show.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HookTaskShowComponent {
     codeMirrorConfig: any;
@@ -25,7 +26,8 @@ export class HookTaskShowComponent {
     constructor(
         private _hookService: HookService,
         private _translate: TranslateService,
-        private _route: ActivatedRoute
+        private _route: ActivatedRoute,
+        private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
@@ -85,6 +87,7 @@ export class HookTaskShowComponent {
                     return exec;
                 });
                 this.updatePath();
+                this._cd.markForCheck();
             });
         });
     }
