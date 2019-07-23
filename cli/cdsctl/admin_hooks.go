@@ -65,6 +65,7 @@ func adminHooksTaskListRun(v cli.Values) (cli.ListResult, error) {
 		Stopped           bool   `cli:"Stopped"`
 		Project           string `cli:"Project"`
 		Workflow          string `cli:"Workflow"`
+		WorkflowID        string `cli:"Workflow_ID"`
 		VCSServer         string `cli:"VCSServer"`
 		RepoFullname      string `cli:"RepoFullname"`
 		Cron              string `cli:"Cron"`
@@ -80,6 +81,7 @@ func adminHooksTaskListRun(v cli.Values) (cli.ListResult, error) {
 			Stopped:           p.Stopped,
 			Project:           p.Config["project"].Value,
 			Workflow:          p.Config["workflow"].Value,
+			WorkflowID:        p.Config["workflow_id"].Value,
 			VCSServer:         p.Config["vcsServer"].Value,
 			RepoFullname:      p.Config["repoFullName"].Value,
 			Cron:              p.Config["cron"].Value,

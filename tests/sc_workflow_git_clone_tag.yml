@@ -10,6 +10,8 @@ testcases:
   - script: "{{.cds.build.cdsctl}} project remove --force ITSCWRKFLW6"
   - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW6"
   - script: "{{.cds.build.cdsctl}} project add ITSCWRKFLW6 ITSCWRKFLW6"
+    assertions:
+    - result.code ShouldEqual 0
 
 - name: import pipeline
   steps:
@@ -19,7 +21,7 @@ testcases:
 
 - name: import workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow import --force ITSCWRKFLW6 ./tests/fixtures/ITSCWRKFLW6/ITSCWRKFLW6.yml
+  - script: {{.cds.build.cdsctl}} workflow import --force ITSCWRKFLW6 ./tests/fixtures/ITSCWRKFLW6/ITSCWRKFLW6.yml
     assertions:
     - result.code ShouldEqual 0
 
