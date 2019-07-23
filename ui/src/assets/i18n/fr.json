@@ -637,6 +637,7 @@
   "integration_official_tooltip": "Intégration publique",
   "integration_hook": "hook",
   "integration_deployment": "déploiement",
+  "integration_event": "événement",
   "integration_storage": "stockage",
   "queue_monitoring": "Queue Monitoring",
   "repo_name": "Nom du dépôt",

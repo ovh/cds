@@ -708,18 +708,10 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	log.Info("Initializing event broker...")
-	kafkaOptions := event.KafkaConfig{
-		Enabled:         a.Config.Events.Kafka.Enabled,
-		BrokerAddresses: a.Config.Events.Kafka.Broker,
-		User:            a.Config.Events.Kafka.User,
-		Password:        a.Config.Events.Kafka.Password,
-		Topic:           a.Config.Events.Kafka.Topic,
-		MaxMessageByte:  a.Config.Events.Kafka.MaxMessageBytes,
-	}
-	if err := event.Initialize(kafkaOptions, a.Cache); err != nil {
+	if err := event.Initialize(a.mustDB(), a.Cache); err != nil {
 		log.Error("error while initializing event system: %s", err)
 	} else {
-		go event.DequeueEvent(ctx)
+		go event.DequeueEvent(ctx, a.mustDB())
 	}
 
 	a.warnChan = make(chan sdk.Event)
