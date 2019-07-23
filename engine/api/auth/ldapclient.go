@@ -225,6 +225,28 @@ func (c *LDAPClient) Bind(username, password string) error {
 	return nil
 }
 
+// BindDN
+func (c *LDAPClient) BindDN(dn, password string) error {
+  log.Debug("LDAP> Bind DN %s", dn)
+
+  if err := c.conn.Bind(dn, password); err != nil {
+    if shoudRetry(err) {
+      err = c.openLDAP(c.conf)
+      if err != nil {
+        return err
+      }
+      err = c.conn.Bind(dn, password)
+      if err != nil {
+        return err
+      }
+    } else {
+      return err
+    }
+  }
+
+  return nil
+}
+
 //Search search
 func (c *LDAPClient) Search(filter string, attributes ...string) ([]Entry, error) {
 	attr := append(attributes, "dn")
@@ -370,8 +392,14 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 
 //Authentify check username and password
 func (c *LDAPClient) Authentify(username, password string) (bool, error) {
+  // Search user
+	r, err := c.Search("(&(uid="+username+"))")
+	if err != nil {
+	  return false, nil
+  }
+  
 	//Bind user
-	if err := c.Bind(username, password); err != nil {
+	if err := c.BindDN(r[0].DN, password); err != nil {
 		log.Warning("LDAP> Bind error %s %s", username, err)
 
 		if !isCredentialError(err) {
