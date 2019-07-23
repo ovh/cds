@@ -12,10 +12,11 @@ import (
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, parentNodeRun []*sdk.WorkflowNodeRun, node *sdk.Node, subNumber int) (*ProcessorReport, bool, error) {
+func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, parentNodeRun []*sdk.WorkflowNodeRun, node *sdk.Node, subNumber int, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	ctx, end := observability.Span(ctx, "workflow.processNodeOutGoingHook")
 	defer end()
 
@@ -64,12 +65,6 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		return nil, false, sdk.WrapError(err, "Cannot get hooks service")
 	}
 
-	mapParams := map[string]string{}
-	for _, p := range parentNodeRun {
-		m := sdk.ParametersToMap(p.BuildParameters)
-		sdk.ParametersMapMerge(mapParams, m)
-	}
-
 	node.OutGoingHookContext.Config[sdk.HookConfigModelName] = sdk.WorkflowNodeHookConfigValue{
 		Value:        wr.Workflow.OutGoingHookModels[node.OutGoingHookContext.HookModelID].Name,
 		Configurable: false,
@@ -96,9 +91,47 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		Start:            time.Now(),
 		LastModified:     time.Now(),
 		SourceNodeRuns:   parentsIDs,
-		BuildParameters:  sdk.ParametersFromMap(mapParams),
 		UUID:             sdk.UUID(),
-		OutgoingHook:     node.OutGoingHookContext,
+	}
+
+	var errBP error
+	hookRun.BuildParameters, errBP = computeBuildParameters(wr, &hookRun, parentNodeRun, manual)
+	if errBP != nil {
+		return nil, false, errBP
+	}
+
+	// PARENT BUILD PARAMETER
+	if len(parentNodeRun) > 0 {
+		_, next := observability.Span(ctx, "workflow.getParentParameters")
+		parentsParams, errPP := getParentParameters(wr, parentNodeRun)
+		next()
+		if errPP != nil {
+			return nil, false, sdk.WrapError(errPP, "processNode> getParentParameters failed")
+		}
+		mapBuildParams := sdk.ParametersToMap(hookRun.BuildParameters)
+		mapParentParams := sdk.ParametersToMap(parentsParams)
+		hookRun.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams))
+	}
+
+	if node.OutGoingHookContext != nil {
+		hookRun.OutgoingHook = &sdk.NodeOutGoingHook{
+			HookModelName: node.OutGoingHookContext.HookModelName,
+			HookModelID:   node.OutGoingHookContext.HookModelID,
+			NodeID:        node.OutGoingHookContext.NodeID,
+			ID:            node.OutGoingHookContext.ID,
+			Config:        make(map[string]sdk.WorkflowNodeHookConfigValue, len(node.OutGoingHookContext.Config)),
+		}
+		for k, v := range node.OutGoingHookContext.Config {
+			// If payload run interpolate
+			if k == sdk.Payload {
+				result, err := interpolate.Do(v.Value, sdk.ParametersToMap(hookRun.BuildParameters))
+				if err != nil {
+					return nil, true, sdk.WrapError(err, "unable to interpolate payload %s", v.Value)
+				}
+				v.Value = result
+			}
+			hookRun.OutgoingHook.Config[k] = v
+		}
 	}
 
 	if !checkCondition(wr, node.Context.Conditions, hookRun.BuildParameters) {
