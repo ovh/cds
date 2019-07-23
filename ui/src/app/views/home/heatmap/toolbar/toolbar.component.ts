@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { Subject } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { HeatmapSearchCriterion } from '../../../../model/heatmap.model';
@@ -7,9 +7,10 @@ import { ProjectStore } from '../../../../service/project/project.store';
 import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 
 @Component({
-  selector: 'app-heatmap-toolbar',
-  templateUrl: './toolbar.component.html',
-  styleUrls: ['./toolbar.component.scss']
+    selector: 'app-heatmap-toolbar',
+    templateUrl: './toolbar.component.html',
+    styleUrls: ['./toolbar.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class ToolbarComponent {
@@ -22,10 +23,13 @@ export class ToolbarComponent {
   selectedProjectKeys: Project[];
   loading: boolean;
 
-  constructor(private _projectStore: ProjectStore) {
+  constructor(private _projectStore: ProjectStore, private _cd: ChangeDetectorRef) {
     this.loading = true;
     this._projectStore.getProjectsList()
-      .pipe(finalize(() => this.loading = false))
+      .pipe(finalize(() => {
+          this.loading = false;
+          this._cd.markForCheck();
+      }))
       .subscribe(ps => {
         if (ps) {
             this.projects = ps.toArray();

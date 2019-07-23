@@ -1,8 +1,7 @@
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AppService } from 'app/app.service';
 import { AuthentificationStore } from 'app/service/services.module';
-import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Event } from '../../../model/event.model';
 import { HeatmapSearchCriterion } from '../../../model/heatmap.model';
@@ -16,7 +15,8 @@ import { ToolbarComponent } from './toolbar/toolbar.component';
 @Component({
     selector: 'app-home-heatmap',
     templateUrl: './home.heatmap.html',
-    styleUrls: ['./home.heatmap.scss']
+    styleUrls: ['./home.heatmap.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class HomeHeatmapComponent implements AfterViewInit {
@@ -53,7 +53,8 @@ export class HomeHeatmapComponent implements AfterViewInit {
         private _toast: ToastService,
         public _translate: TranslateService,
         private _appService: AppService,
-        private _authStore: AuthentificationStore
+        private _authStore: AuthentificationStore,
+        private _cd: ChangeDetectorRef
     ) {
         this.filter = new TimelineFilter();
     }
@@ -75,9 +76,7 @@ export class HomeHeatmapComponent implements AfterViewInit {
                 this.timelineSub.unsubscribe();
             }
             if (f) {
-
                 this.timelineSub = this._timelineStore.alltimeline()
-                    .pipe(finalize(() => this.loading = false))
                     .subscribe(es => {
                         if (!es) {
                             return;
@@ -134,8 +133,10 @@ export class HomeHeatmapComponent implements AfterViewInit {
 
                         this.projects = Object.keys(this.unfilteredGroupedEvents).sort();
                         this.filterEvents();
+                        this._cd.markForCheck();
                     });
             }
+            this._cd.markForCheck();
         });
 
     }
