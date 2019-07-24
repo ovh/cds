@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
@@ -17,7 +17,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-pipeline-audit',
     templateUrl: './pipeline.audit.html',
-    styleUrls: ['./pipeline.audit.scss']
+    styleUrls: ['./pipeline.audit.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PipelineAuditComponent implements OnInit {
     @Input() project: Project;
@@ -34,7 +35,8 @@ export class PipelineAuditComponent implements OnInit {
     constructor(
         private store: Store,
         private _toast: ToastService,
-        private _translate: TranslateService
+        private _translate: TranslateService,
+        private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
@@ -51,7 +53,10 @@ export class PipelineAuditComponent implements OnInit {
         this.store.dispatch(new FetchPipelineAudits({
             projectKey: this.project.key,
             pipelineName: this.pipeline.name
-        })).pipe(finalize(() => this.loading = false))
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe();
 
         this.columns = [
@@ -351,7 +356,10 @@ export class PipelineAuditComponent implements OnInit {
             auditId
         })).pipe(
             first(),
-            finalize(() => this.loading = false)
+            finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            })
         ).subscribe(() => this._toast.success('', this._translate.instant('pipeline_updated')));
     }
 }

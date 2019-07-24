@@ -1,32 +1,38 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { AddPipelineParameter, DeletePipelineParameter, FetchPipeline, UpdatePipelineParameter } from 'app/store/pipelines.action';
+import { Application } from 'app/model/application.model';
+import { Environment } from 'app/model/environment.model';
+import { AllKeys } from 'app/model/keys.model';
+import { Pipeline } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { User } from 'app/model/user.model';
+import { Workflow } from 'app/model/workflow.model';
+import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { KeyService } from 'app/service/keys/keys.service';
+import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
+import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
+import { ToastService } from 'app/shared/toast/ToastService';
+import {
+    AddPipelineParameter,
+    DeletePipelineParameter,
+    FetchPipeline,
+    UpdatePipelineParameter
+} from 'app/store/pipelines.action';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first } from 'rxjs/operators';
-import { Application } from '../../../model/application.model';
-import { Environment } from '../../../model/environment.model';
-import { AllKeys } from '../../../model/keys.model';
-import { Pipeline } from '../../../model/pipeline.model';
-import { Project } from '../../../model/project.model';
-import { User } from '../../../model/user.model';
-import { Workflow } from '../../../model/workflow.model';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
-import { KeyService } from '../../../service/keys/keys.service';
-import { PipelineCoreService } from '../../../service/pipeline/pipeline.core.service';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { WarningModalComponent } from '../../../shared/modal/warning/warning.component';
-import { ParameterEvent } from '../../../shared/parameter/parameter.event.model';
-import { ToastService } from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-show',
     templateUrl: './pipeline.show.html',
-    styleUrls: ['./pipeline.show.scss']
+    styleUrls: ['./pipeline.show.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class PipelineShowComponent implements OnInit {
@@ -75,7 +81,8 @@ export class PipelineShowComponent implements OnInit {
         public _translate: TranslateService,
         private _authentificationStore: AuthentificationStore,
         private _keyService: KeyService,
-        private _pipCoreService: PipelineCoreService
+        private _pipCoreService: PipelineCoreService,
+        private _cd: ChangeDetectorRef
     ) {
         this.currentUser = this._authentificationStore.getUser();
         this.project = this._routeActivated.snapshot.data['project'];
@@ -89,7 +96,10 @@ export class PipelineShowComponent implements OnInit {
         this.remote = this.getQueryParam('remote');
 
         this.projectSubscription = this.store.select(ProjectState)
-            .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
+            .subscribe((projectState: ProjectStateModel) => {
+                this.project = projectState.project;
+                this._cd.markForCheck();
+            });
 
 
         this.asCodeEditorSubscription = this._pipCoreService.getAsCodeEditor()
@@ -101,6 +111,7 @@ export class PipelineShowComponent implements OnInit {
                     let pipName = this.pipeline.name;
                     this.refreshDatas(this.project.key, pipName);
                 }
+                this._cd.markForCheck();
             });
     }
 
@@ -131,6 +142,7 @@ export class PipelineShowComponent implements OnInit {
             this.projectKey = params['key'];
             this.pipName = params['pipName'];
             this.refreshDatas(this.projectKey, this.pipName);
+            this._cd.markForCheck();
         });
 
         this._routeActivated.queryParams.subscribe(params => {
@@ -139,10 +151,15 @@ export class PipelineShowComponent implements OnInit {
             if (tab) {
                 this.selectedTab = tab;
             }
+            this._cd.markForCheck();
         });
 
-        this._keyService.getAllKeys(this.project.key).pipe(first()).subscribe(k => {
+        this._keyService.getAllKeys(this.project.key).pipe(
+            first(),
+            finalize(() => this._cd.markForCheck()))
+            .subscribe(k => {
             this.keys = k;
+
         });
     }
 
@@ -153,7 +170,7 @@ export class PipelineShowComponent implements OnInit {
 
         this.pipelineSubscriber = this.store.select(PipelinesState.selectPipeline(this.projectKey, this.pipName))
             .pipe(
-                filter((pip) => pip != null)
+                filter((pip) => pip != null),
             )
             .subscribe((pip) => {
                 this.pipeline = cloneDeep(pip);
@@ -164,6 +181,7 @@ export class PipelineShowComponent implements OnInit {
                 }
 
                 this.usageCount = this.applications.length + this.environments.length + this.workflows.length;
+                this._cd.markForCheck();
             }, () => {
                 this._router.navigate(['/project', this.projectKey], { queryParams: { tab: 'pipelines' } });
             });
@@ -187,7 +205,10 @@ export class PipelineShowComponent implements OnInit {
                         projectKey: this.project.key,
                         pipelineName: this.pipeline.name,
                         parameter: event.parameter
-                    })).pipe(finalize(() => this.paramFormLoading = false))
+                    })).pipe(finalize(() => {
+                        this.paramFormLoading = false;
+                        this._cd.markForCheck();
+                    }))
                         .subscribe(() => this._toast.success('', this._translate.instant('parameter_added')));
                     break;
                 case 'update':
