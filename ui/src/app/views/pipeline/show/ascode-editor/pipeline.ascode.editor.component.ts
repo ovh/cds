@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Pipeline, PipelineStatus } from 'app/model/pipeline.model';
@@ -14,7 +14,8 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-pipeline-ascode-editor',
     templateUrl: './pipeline.ascode.editor.html',
-    styleUrls: ['./pipeline.ascode.editor.scss']
+    styleUrls: ['./pipeline.ascode.editor.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class PipelineAsCodeEditorComponent implements OnInit {
@@ -31,7 +32,10 @@ export class PipelineAsCodeEditorComponent implements OnInit {
             this.store.dispatch(new FetchAsCodePipeline({
                 projectKey: this.project.key,
                 pipelineName: this.pipeline.name
-            })).pipe(finalize(() => this.loadingGet = false))
+            })).pipe(finalize(() => {
+                this.loadingGet = false;
+                this._cd.markForCheck();
+            }))
                 .subscribe(() => this.exportedPip = this.pipeline.asCode);
         }
         this._open = data;
@@ -56,7 +60,8 @@ export class PipelineAsCodeEditorComponent implements OnInit {
         private _pipCoreService: PipelineCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = {
             mode: 'text/x-yaml',
@@ -78,6 +83,7 @@ export class PipelineAsCodeEditorComponent implements OnInit {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+                this._cd.markForCheck();
             }
         });
     }
@@ -96,6 +102,7 @@ export class PipelineAsCodeEditorComponent implements OnInit {
                 pipelineName: this.pipeline.name
             })).subscribe(() => this._pipCoreService.toggleAsCodeEditor({ open: false, save: false }));
             this.previewMode = false;
+            this._cd.markForCheck();
         } else {
             this._pipCoreService.toggleAsCodeEditor({ open: false, save: false });
         }
@@ -108,7 +115,10 @@ export class PipelineAsCodeEditorComponent implements OnInit {
             projectKey: this.project.key,
             pipelineName: this.pipeline.name,
             pipCode: this.exportedPip
-        })).pipe(finalize(() => this.loading = false))
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe();
     }
 
@@ -118,7 +128,10 @@ export class PipelineAsCodeEditorComponent implements OnInit {
             projectKey: this.project.key,
             pipName: this.pipeline.name,
             pipelineCode: this.exportedPip
-        })).pipe(finalize(() => this.loading = false))
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => {
                 this._pipCoreService.toggleAsCodeEditor({ open: false, save: false });
                 this._pipCoreService.setPipelinePreview(null);
