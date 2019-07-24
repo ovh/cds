@@ -87,7 +87,7 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		report.Merge(r1, nil) // nolint
 		return report, conditionOK, nil
 	case sdk.NodeTypeOutGoingHook:
-		r1, conditionOK, errO := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, parentNodeRuns, n, subNumber)
+		r1, conditionOK, errO := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, parentNodeRuns, n, subNumber, manual)
 		if errO != nil {
 			return nil, false, sdk.WrapError(errO, "Unable to processNodeOutGoingHook")
 		}
@@ -249,30 +249,9 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	// CONDITION
-	if hookEvent != nil {
-		hooks := wr.Workflow.WorkflowData.GetHooks()
-		hook, ok := hooks[hookEvent.WorkflowNodeHookUUID]
-		if !ok {
-			return nil, false, sdk.WrapError(sdk.ErrNoHook, "Unable to find hook %s", hookEvent.WorkflowNodeHookUUID)
-		}
-
-		// Check conditions
-		var params = run.BuildParameters
-		// Define specific destination parameters
-		dest := mapNodes[hook.NodeID]
-		if dest == nil {
-			return nil, false, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "Unable to find node %d", hook.NodeID)
-		}
-
-		if !checkCondition(wr, dest.Context.Conditions, params) {
-			log.Debug("Avoid trigger workflow from hook %s", hook.UUID)
-			return nil, false, nil
-		}
-	} else {
-		if !checkCondition(wr, n.Context.Conditions, run.BuildParameters) {
-			log.Debug("Condition failed %d/%d %+v", wr.ID, n.ID, run.BuildParameters)
-			return nil, false, nil
-		}
+	if !checkCondition(wr, n.Context.Conditions, run.BuildParameters) {
+		log.Debug("Condition failed %d/%d %+v", wr.ID, n.ID, run.BuildParameters)
+		return nil, false, nil
 	}
 
 	// Resync vcsInfos if we dont call func getVCSInfos
