@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { RepoManagerService } from 'app/service/services.module';
@@ -15,7 +15,8 @@ import { ToastService } from '../../../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-project-repomanager-list',
     templateUrl: './project.repomanager.list.html',
-    styleUrls: ['./project.repomanager.list.scss']
+    styleUrls: ['./project.repomanager.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectRepoManagerComponent extends Table<RepositoriesManager> {
 
@@ -37,7 +38,8 @@ export class ProjectRepoManagerComponent extends Table<RepositoriesManager> {
         private _toast: ToastService,
         public _translate: TranslateService,
         private repoManagerService: RepoManagerService,
-        private store: Store
+        private store: Store,
+        private _cd: ChangeDetectorRef
     ) {
         super();
     }
@@ -54,7 +56,10 @@ export class ProjectRepoManagerComponent extends Table<RepositoriesManager> {
             this.repoNameToDelete = repoName;
             this.confirmDeletionModal.show();
             this.repoManagerService.getDependencies(this.project.key, repoName)
-                .pipe(finalize(() => this.loadingDependencies = false))
+                .pipe(finalize(() => {
+                    this.loadingDependencies = false;
+                    this._cd.markForCheck();
+                }))
                 .subscribe((apps) => {
                     if (!apps) {
                         this.confirmationMessage = this._translate.instant('repoman_delete_confirm_message');
@@ -74,7 +79,10 @@ export class ProjectRepoManagerComponent extends Table<RepositoriesManager> {
         }
         this.deleteLoading = true;
         this.store.dispatch(new DisconnectRepositoryManagerInProject({ projectKey: this.project.key, repoManager: this.repoNameToDelete }))
-            .pipe(finalize(() => this.deleteLoading = false))
+            .pipe(finalize(() => {
+                this.deleteLoading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(() => this._toast.success('', this._translate.instant('repoman_delete_msg_ok')));
     }
 }
