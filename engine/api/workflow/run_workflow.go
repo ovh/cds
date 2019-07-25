@@ -47,7 +47,7 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 	}
 
 	if h == nil {
-		return report, sdk.WithStack(sdk.ErrNoHook)
+		return report, sdk.WrapError(sdk.ErrNoHook, "unable to find hook %s in %+v", e.WorkflowNodeHookUUID, wr.Workflow.WorkflowData.Node.Hooks)
 	}
 
 	//If the hook is on the root, it will trigger a new workflow run
