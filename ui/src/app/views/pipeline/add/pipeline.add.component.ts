@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -11,7 +11,8 @@ import { ToastService } from '../../../shared/toast/ToastService';
 @Component({
     selector: 'app-pipeline-add',
     templateUrl: './pipeline.add.html',
-    styleUrls: ['./pipeline.add.scss']
+    styleUrls: ['./pipeline.add.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PipelineAddComponent {
     loadingCreate = false;
@@ -40,7 +41,8 @@ jobs:
         private _translate: TranslateService,
         private _toast: ToastService,
         private _routeActivated: ActivatedRoute,
-        private _router: Router
+        private _router: Router,
+        private _cd: ChangeDetectorRef
     ) {
         this.project = this._routeActivated.snapshot.data['project'];
 
@@ -66,7 +68,10 @@ jobs:
         this.store.dispatch(new AddPipeline({
             projectKey: this.project.key,
             pipeline: this.newPipeline
-        })).pipe(finalize(() => this.loadingCreate = false))
+        })).pipe(finalize(() => {
+            this.loadingCreate = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('pipeline_added'));
                 this._router.navigate(['/project', this.project.key, 'pipeline', this.newPipeline.name]);
@@ -83,7 +88,10 @@ jobs:
         this.store.dispatch(new ImportPipeline({
             projectKey: this.project.key,
             pipelineCode: this.pipToImport
-        })).pipe(finalize(() => this.loadingCreate = false))
+        })).pipe(finalize(() => {
+            this.loadingCreate = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('pipeline_added'));
                 this.goToProject();

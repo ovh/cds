@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { finalize } from 'rxjs/operators';
@@ -10,7 +10,8 @@ import { Stage } from '../../../../../../model/stage.model';
 @Component({
     selector: 'app-pipeline-stage-form',
     templateUrl: './pipeline.stage.form.html',
-    styleUrls: ['./pipeline.stage.form.scss']
+    styleUrls: ['./pipeline.stage.form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PipelineStageFormComponent implements OnInit {
 
@@ -22,13 +23,16 @@ export class PipelineStageFormComponent implements OnInit {
     triggerConditions: WorkflowTriggerConditionCache;
     loading = true;
 
-    constructor(private pipelineService: PipelineService) {
+    constructor(private pipelineService: PipelineService, private _cd: ChangeDetectorRef) {
 
     }
 
     ngOnInit(): void {
         this.pipelineService.getStageConditionsName(this.project.key, this.pipeline.name)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe((conditions) => this.triggerConditions = conditions);
     }
 }
