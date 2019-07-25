@@ -27,6 +27,7 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 		return nil, sdk.WrapError(sdk.ErrNotFound, "Unable to find node run")
 	}
 
+	// Reload node run with build parameters
 	nodeRun, err := LoadNodeRunByID(db, nr.ID, LoadRunOptions{})
 	if err != nil {
 		return nil, err
