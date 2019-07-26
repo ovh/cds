@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
@@ -15,7 +15,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-workflow-template-add',
     templateUrl: './workflow-template.add.html',
-    styleUrls: ['./workflow-template.add.scss']
+    styleUrls: ['./workflow-template.add.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateAddComponent implements OnInit {
@@ -35,7 +36,8 @@ export class WorkflowTemplateAddComponent implements OnInit {
         private _router: Router,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _route: ActivatedRoute
+        private _route: ActivatedRoute,
+        private _cd: ChangeDetectorRef
     ) {
         this.path = [<PathItem>{
             translate: 'common_settings'
@@ -57,18 +59,20 @@ export class WorkflowTemplateAddComponent implements OnInit {
                 if (path.length === 2) {
                     this.initFromWorkflow(path[0], path[1]);
                 }
+                this._cd.markForCheck();
             }
         });
     }
 
     initFromWorkflow(projectKey: string, workflowName: string) {
-        this._workflowService.pullWorkflow(projectKey, workflowName).subscribe(w => {
+        this._workflowService.pullWorkflow(projectKey, workflowName)
+            .subscribe(w => {
             this.projectKey = projectKey;
             this.workflowName = workflowName;
             let wt = <WorkflowTemplate>{
                 editable: true,
                 value: w.workflow.value
-            }
+            };
             if (w.pipelines) {
                 wt.pipelines = w.pipelines.map(p => <PipelineTemplate>{ value: p.value });
             }
@@ -79,13 +83,17 @@ export class WorkflowTemplateAddComponent implements OnInit {
                 wt.environments = w.environments.map(e => <PipelineTemplate>{ value: e.value });
             }
             this.workflowTemplate = wt;
+            this._cd.markForCheck();
         });
     }
 
     getGroups() {
         this.loading = true;
         this._groupService.getGroups()
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(gs => {
                 this.groups = gs;
             });
@@ -94,7 +102,10 @@ export class WorkflowTemplateAddComponent implements OnInit {
     saveWorkflowTemplate(wt: WorkflowTemplate) {
         this.loading = true;
         this._workflowTemplateService.add(wt)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(res => {
                 this.workflowTemplate = res;
                 this.errors = [];

@@ -1,15 +1,20 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Group } from '../../../../model/group.model';
 import { User } from '../../../../model/user.model';
-import { WorkflowTemplate, WorkflowTemplateError, WorkflowTemplateParameter } from '../../../../model/workflow-template.model';
+import {
+    WorkflowTemplate,
+    WorkflowTemplateError,
+    WorkflowTemplateParameter
+} from '../../../../model/workflow-template.model';
 import { SharedService } from '../../../../shared/shared.service';
 import { Base64 } from './../../../../shared/base64.utils';
 
 @Component({
     selector: 'app-workflow-template-form',
     templateUrl: './workflow-template.form.html',
-    styleUrls: ['./workflow-template.form.scss']
+    styleUrls: ['./workflow-template.form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowTemplateFormComponent {
     @Input() mode: string;
@@ -20,7 +25,7 @@ export class WorkflowTemplateFormComponent {
 
     _workflowTemplate: WorkflowTemplate;
     @Input() set workflowTemplate(wt: WorkflowTemplate) {
-        this._workflowTemplate = { ...wt }
+        this._workflowTemplate = { ...wt };
 
         if (!this._workflowTemplate) {
             this._workflowTemplate = <WorkflowTemplate>{ editable: true };
@@ -125,9 +130,7 @@ export class WorkflowTemplateFormComponent {
     importFromURLControl = new FormControl();
     importFromURL: boolean;
 
-    constructor(
-        private _sharedService: SharedService
-    ) {
+    constructor(private _sharedService: SharedService) {
         this.templateParameterTypes = ['boolean', 'string', 'repository', 'json'];
 
         this.resetParameterValue();
