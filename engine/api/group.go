@@ -100,7 +100,7 @@ func (api *API) postGroupHandler() service.Handler {
 	}
 }
 
-func (api *API) updateGroupHandler() service.Handler {
+func (api *API) putGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		groupName := vars["permGroupName"]
@@ -193,7 +193,7 @@ func (api *API) deleteGroupHandler() service.Handler {
 			event.PublishDeleteProjectPermission(&pg.Project, groupPerm, u)
 		}
 
-		return nil
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

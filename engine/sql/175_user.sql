@@ -106,6 +106,8 @@ ALTER TABLE worker alter column model_id DROP NOT NULL;
 -- Update groups and dependencies tables
 ALTER TABLE project_group DROP CONSTRAINT IF EXISTS "fk_project_group_pipeline";
 SELECT create_foreign_key_idx_cascade('FK_PROJECT_GROUP_PIPELINE', 'project_group', 'project', 'project_id', 'id');
+ALTER TABLE group_user DROP CONSTRAINT IF EXISTS "fk_group_user_group";
+SELECT create_foreign_key_idx_cascade('FK_GROUP_USER_GROUP', 'group_user', 'group', 'group_id', 'id');
 ALTER TABLE group_user DROP CONSTRAINT IF EXISTS "fk_group_user_user";
 SELECT create_foreign_key_idx_cascade('FK_GROUP_USER_USER', 'group_user', 'user', 'user_id', 'id');
 ALTER TABLE workflow_template DROP CONSTRAINT IF EXISTS "fk_workflow_template_group";

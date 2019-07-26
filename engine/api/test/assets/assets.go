@@ -178,23 +178,25 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 		log.Fatalf(" user.LoadUserByID: %v", err)
 	}
 
-	for _, g := range groups {
-		existingGroup, _ := group.LoadByName(context.TODO(), db, g.Name)
+	for i := range groups {
+		existingGroup, _ := group.LoadByName(context.TODO(), db, groups[i].Name)
 		if existingGroup == nil {
-			if err := group.Insert(db, g); err != nil {
+			newGroup, err := group.Create(db, *groups[i], u.OldUserStruct.ID)
+			if err != nil {
 				log.Error("unable to insert group: %v", err)
 			}
+			*groups[i] = *newGroup
+		} else {
+			if err := group.InsertLinkGroupUser(db, &group.LinkGroupUser{
+				GroupID: groups[i].ID,
+				UserID:  u.OldUserStruct.ID,
+				Admin:   false,
+			}); err != nil {
+				log.Error("unable to insert user in group: %v", err)
+			}
 		}
-		if err := group.InsertLinkGroupUser(db, &group.LinkGroupUser{
-			GroupID: g.ID,
-			UserID:  u.OldUserStruct.ID,
-			Admin:   false,
-		}); err != nil {
-			log.Error("unable to insert user in group: %v", err)
-		}
-		u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, *g)
+		u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, *groups[i])
 	}
-
 	btes, _ := json.Marshal(u)
 
 	log.Debug("lambda user: %s", string(btes))
