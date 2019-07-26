@@ -106,10 +106,12 @@ export class ProjectAddComponent {
 
     loadGroups(selected: string) {
         this._groupService.getGroups(true)
-            .pipe(first(), finalize(() => this._cd.markForCheck()))
+            .pipe(first(), finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(groups => {
             this.groupList = groups;
-            this.loading = false;
             if (selected == null) {
                 return;
             }
