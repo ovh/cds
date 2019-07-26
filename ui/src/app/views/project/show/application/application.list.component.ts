@@ -1,11 +1,12 @@
-import { Component, Input } from '@angular/core';
-import {IdName, Project} from '../../../../model/project.model';
-import {Warning} from '../../../../model/warning.model';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { IdName, Project } from '../../../../model/project.model';
+import { Warning } from '../../../../model/warning.model';
 
 @Component({
     selector: 'app-project-applications',
     templateUrl: './application.list.html',
-    styleUrls: ['./application.list.scss']
+    styleUrls: ['./application.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectApplicationListComponent {
 

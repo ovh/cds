@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ProjectIntegration } from 'app/model/integration.model';
@@ -15,7 +15,8 @@ import { finalize, first } from 'rxjs/operators';
 @Component({
     selector: 'app-project-integration-list',
     templateUrl: './project.integration.list.html',
-    styleUrls: ['./project.integration.list.scss']
+    styleUrls: ['./project.integration.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class ProjectIntegrationListComponent extends Table<ProjectIntegration> implements OnInit {
@@ -32,7 +33,8 @@ export class ProjectIntegrationListComponent extends Table<ProjectIntegration> i
         private _translate: TranslateService,
         private _toast: ToastService,
         private store: Store,
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
     ) {
         super();
         this.codeMirrorConfig = {
@@ -49,6 +51,7 @@ export class ProjectIntegrationListComponent extends Table<ProjectIntegration> i
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
             }
+            this._cd.markForCheck();
         });
     }
 
@@ -61,7 +64,10 @@ export class ProjectIntegrationListComponent extends Table<ProjectIntegration> i
         this.store.dispatch(new DeleteIntegrationInProject({
             projectKey: this.project.key,
             integration: p
-        })).pipe(first(), finalize(() => this.loading = false))
+        })).pipe(first(), finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => this._toast.success('', this._translate.instant('project_updated')));
     }
 
@@ -71,7 +77,10 @@ export class ProjectIntegrationListComponent extends Table<ProjectIntegration> i
             projectKey: this.project.key,
             integrationName: p.name,
             changes: p
-        })).pipe(first(), finalize(() => this.loading = false))
+        })).pipe(first(), finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => this._toast.success('', this._translate.instant('project_updated')));
     }
 }

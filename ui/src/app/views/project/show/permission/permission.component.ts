@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AddGroupInProject, DeleteGroupInProject, UpdateGroupInProject } from 'app/store/project.action';
@@ -13,7 +13,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-permissions',
-    templateUrl: './permission.html'
+    templateUrl: './permission.html',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectPermissionsComponent {
 
@@ -33,7 +34,8 @@ export class ProjectPermissionsComponent {
     constructor(
         public _translate: TranslateService,
         private _toast: ToastService,
-        private store: Store
+        private store: Store,
+        private _cd: ChangeDetectorRef
     ) {
 
     }
@@ -65,7 +67,10 @@ export class ProjectPermissionsComponent {
             projectKey: this.project.key,
             group: this.currentPermEvent.gp,
             onlyProject: !propagate
-        })).pipe(finalize(() => this.permFormLoading = false))
+        })).pipe(finalize(() => {
+            this.permFormLoading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => this._toast.success('', this._translate.instant('permission_added')));
     }
 }
