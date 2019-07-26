@@ -48,6 +48,7 @@ type Workflow struct {
 	ToDelete                bool                         `json:"to_delete" db:"to_delete" cli:"-"`
 	Favorite                bool                         `json:"favorite" db:"-" cli:"favorite"`
 	WorkflowData            *WorkflowData                `json:"workflow_data" db:"-" cli:"-"`
+	EventIntegrations       []ProjectIntegration         `json:"event_integrations" db:"-" cli:"-"` //TODO: make schema update in database
 	AsCodeEvent             []AsCodeEvent                `json:"as_code_events" db:"-" cli:"-"`
 	// aggregates
 	Template         *WorkflowTemplate         `json:"-" db:"-" cli:"-"`

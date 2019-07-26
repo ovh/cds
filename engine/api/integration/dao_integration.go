@@ -257,3 +257,75 @@ func (pp *dbProjectIntegration) PostInsert(db gorp.SqlExecutor) error {
 	}
 	return nil
 }
+
+// LoadIntegrationsByWorkflowID load integration integrations by Workflow id
+func LoadIntegrationsByWorkflowID(db gorp.SqlExecutor, id int64, clearPassword bool) ([]sdk.ProjectIntegration, error) {
+	integrations := []sdk.ProjectIntegration{}
+	query := `SELECT project_integration.*
+	FROM project_integration
+		JOIN workflow_project_integration ON workflow_project_integration.project_integration_id = project_integration.id
+	WHERE workflow_project_integration.workflow_id = $1`
+	var res []dbProjectIntegration
+	if _, err := db.Select(&res, query, id); err != nil {
+		if err == sql.ErrNoRows {
+			return integrations, nil
+		}
+		return nil, err
+	}
+
+	integrations = make([]sdk.ProjectIntegration, len(res))
+	for i := range res {
+		pp := &res[i]
+		if err := pp.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "Cannot post get")
+		}
+
+		for k, v := range pp.Config {
+			if v.Type == sdk.IntegrationConfigTypePassword {
+				if clearPassword {
+					secret, errD := secret.DecryptValue(v.Value)
+					if errD != nil {
+						return nil, sdk.WrapError(errD, "LoadIntegrationByID> Cannot decrypt password")
+					}
+					v.Value = string(secret)
+					pp.Config[k] = v
+				} else {
+					v.Value = sdk.PasswordPlaceholder
+					pp.Config[k] = v
+				}
+			}
+		}
+		integrations[i] = sdk.ProjectIntegration(*pp)
+	}
+	return integrations, nil
+}
+
+// AddOnWorkflow link a project integration on a workflow
+func AddOnWorkflow(db gorp.SqlExecutor, workflowID int64, projectIntegrationID int64) error {
+	query := "INSERT INTO workflow_project_integration (workflow_id, project_integration_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+
+	if _, err := db.Exec(query, workflowID, projectIntegrationID); err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
+}
+
+// RemoveFromWorkflow remove a project integration on a workflow
+func RemoveFromWorkflow(db gorp.SqlExecutor, workflowID int64, projectIntegrationID int64) error {
+	query := "DELETE FROM workflow_project_integration WHERE workflow_id = $1 AND project_integration_id = $2"
+
+	if _, err := db.Exec(query, workflowID, projectIntegrationID); err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
+}
+
+// DeleteFromWorkflow remove a project integration on a workflow
+func DeleteFromWorkflow(db gorp.SqlExecutor, workflowID int64) error {
+	query := "DELETE FROM workflow_project_integration WHERE workflow_id = $1"
+
+	if _, err := db.Exec(query, workflowID); err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
+}

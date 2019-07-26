@@ -15,23 +15,24 @@ const (
 // Status is  "Waiting" "Building" "Success" "Fail" "Unknown", optional
 // DateEvent is a date (timestamp format)
 type Event struct {
-	Timestamp         time.Time              `json:"timestamp"`
-	Hostname          string                 `json:"hostname"`
-	CDSName           string                 `json:"cdsname"`
-	EventType         string                 `json:"type_event"` // go type of payload
-	Payload           map[string]interface{} `json:"payload"`
-	Attempts          int                    `json:"attempt"`
-	Username          string                 `json:"username,omitempty"`
-	UserMail          string                 `json:"user_mail,omitempty"`
-	ProjectKey        string                 `json:"project_key,omitempty"`
-	ApplicationName   string                 `json:"application_name,omitempty"`
-	PipelineName      string                 `json:"pipeline_name,omitempty"`
-	EnvironmentName   string                 `json:"environment_name,omitempty"`
-	WorkflowName      string                 `json:"workflow_name,omitempty"`
-	WorkflowRunNum    int64                  `json:"workflow_run_num,omitempty"`
-	WorkflowRunNumSub int64                  `json:"workflow_run_num_sub,omitempty"`
-	Status            string                 `json:"status,omitempty"`
-	Tags              []WorkflowRunTag       `json:"tag,omitempty"`
+	Timestamp           time.Time              `json:"timestamp"`
+	Hostname            string                 `json:"hostname"`
+	CDSName             string                 `json:"cdsname"`
+	EventType           string                 `json:"type_event"` // go type of payload
+	Payload             map[string]interface{} `json:"payload"`
+	Attempts            int                    `json:"attempt"`
+	Username            string                 `json:"username,omitempty"`
+	UserMail            string                 `json:"user_mail,omitempty"`
+	ProjectKey          string                 `json:"project_key,omitempty"`
+	ApplicationName     string                 `json:"application_name,omitempty"`
+	PipelineName        string                 `json:"pipeline_name,omitempty"`
+	EnvironmentName     string                 `json:"environment_name,omitempty"`
+	WorkflowName        string                 `json:"workflow_name,omitempty"`
+	WorkflowRunNum      int64                  `json:"workflow_run_num,omitempty"`
+	WorkflowRunNumSub   int64                  `json:"workflow_run_num_sub,omitempty"`
+	Status              string                 `json:"status,omitempty"`
+	Tags                []WorkflowRunTag       `json:"tag,omitempty"`
+	EventIntegrationsID []int64                `json:"event_integrations_id,omitempty"`
 }
 
 // EventFilter represents filters when getting events
@@ -81,6 +82,7 @@ type EventRunWorkflowNode struct {
 	HookLog               string                    `json:"log,omitempty"`
 	NodeType              string                    `json:"node_type,omitempty"`
 	GerritChange          *GerritChangeEvent        `json:"gerrit_change,omitempty"`
+	EventIntegrations     []int64                   `json:"event_integrations_id,omitempty"`
 }
 
 // GerritChangeEvent Gerrit information that are needed on event
