@@ -222,7 +222,7 @@ func (api *API) postGroupUserHandler() service.Handler {
 		}
 
 		var u *sdk.AuthentifiedUser
-		if data.ID == "" {
+		if data.ID != "" {
 			u, err = user.LoadByID(ctx, tx, data.ID, user.LoadOptions.WithDeprecatedUser)
 		} else {
 			u, err = user.LoadByUsername(ctx, tx, data.Username, user.LoadOptions.WithDeprecatedUser)
@@ -258,7 +258,7 @@ func (api *API) postGroupUserHandler() service.Handler {
 			return err
 		}
 
-		return service.WriteJSON(w, g, http.StatusOK)
+		return service.WriteJSON(w, g, http.StatusCreated)
 	}
 }
 
@@ -328,7 +328,7 @@ func (api *API) putGroupUserHandler() service.Handler {
 			return err
 		}
 
-		return service.WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, g, http.StatusOK)
 	}
 }
 
@@ -386,11 +386,16 @@ func (api *API) deleteGroupUserHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
+		// In case where the user remove himself from group, do not return it
+		if link.UserID == getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID {
+			return service.WriteJSON(w, nil, http.StatusOK)
+		}
+
 		// Load extra data for group
 		if err := group.LoadOptions.Default(ctx, api.mustDB(), g); err != nil {
 			return err
 		}
 
-		return service.WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, g, http.StatusOK)
 	}
 }

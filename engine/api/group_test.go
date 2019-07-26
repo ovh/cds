@@ -29,7 +29,7 @@ func Test_getGroupHandler(t *testing.T) {
 	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodGet, uri, nil)
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
+	require.Equal(t, http.StatusOK, rec.Code)
 
 	var result sdk.Group
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
@@ -52,7 +52,7 @@ func Test_getGroupsHandler(t *testing.T) {
 	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodGet, uri, nil)
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
+	require.Equal(t, http.StatusOK, rec.Code)
 
 	var results []sdk.Group
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &results))
@@ -85,7 +85,7 @@ func Test_postGroupHandler(t *testing.T) {
 	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodPost, uri, data)
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 201, rec.Code)
+	require.Equal(t, http.StatusCreated, rec.Code)
 
 	var created sdk.Group
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
@@ -111,7 +111,7 @@ func Test_putGroupHandler(t *testing.T) {
 	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodPut, uri, g1)
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 400, rec.Code)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
 
 	g1.Name = sdk.RandomString(10)
 	uri = api.Router.GetRoute(http.MethodPut, api.putGroupHandler, map[string]string{
@@ -121,7 +121,7 @@ func Test_putGroupHandler(t *testing.T) {
 	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodPut, uri, g1)
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
+	require.Equal(t, http.StatusOK, rec.Code)
 
 	result, err := group.LoadByName(context.TODO(), db, g1.Name)
 	require.NoError(t, err)
@@ -142,8 +142,157 @@ func Test_deleteGroupHandler(t *testing.T) {
 	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodDelete, uri, nil)
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
-	require.Equal(t, 200, rec.Code)
+	require.Equal(t, http.StatusOK, rec.Code)
 
 	_, err := group.LoadByName(context.TODO(), db, g.Name)
 	assert.Error(t, err)
+}
+
+func Test_postGroupUserHandler(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	g := &sdk.Group{Name: sdk.RandomString(10)}
+	_, jwtRaw1 := assets.InsertLambdaUser(db, g)
+	u2, jwtRaw2 := assets.InsertLambdaUser(db)
+	u3, _ := assets.InsertLambdaUser(db)
+
+	require.NoError(t, group.LoadOptions.WithMembers(context.TODO(), db, g))
+	assert.Equal(t, 1, len(g.Members))
+
+	// A group admin should be able to add a user
+	uri := api.Router.GetRoute(http.MethodPost, api.postGroupUserHandler, map[string]string{
+		"permGroupName": g.Name,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw1, http.MethodPost, uri, sdk.AuthentifiedUser{
+		ID:         u2.ID,
+		GroupAdmin: false,
+	})
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusCreated, rec.Code)
+
+	var result sdk.Group
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
+	assert.Equal(t, 2, len(result.Members))
+
+	// A group member should not be able to add a user
+	uri = api.Router.GetRoute(http.MethodPost, api.postGroupUserHandler, map[string]string{
+		"permGroupName": g.Name,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw2, http.MethodPost, uri, sdk.AuthentifiedUser{
+		ID:         u3.ID,
+		GroupAdmin: true,
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code)
+}
+
+func Test_putGroupUserHandler(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	g := &sdk.Group{Name: sdk.RandomString(10)}
+	_, jwtRaw1 := assets.InsertLambdaUser(db, g)
+	u2, jwtRaw2 := assets.InsertLambdaUser(db, g)
+
+	require.NoError(t, group.LoadOptions.WithMembers(context.TODO(), db, g))
+	assert.Equal(t, 2, len(g.Members))
+
+	// A group member should not be able to set himself as an admin
+	uri := api.Router.GetRoute(http.MethodPut, api.putGroupUserHandler, map[string]string{
+		"permGroupName": g.Name,
+		"username":      u2.Username,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw2, http.MethodPut, uri, sdk.AuthentifiedUser{
+		GroupAdmin: true,
+	})
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code)
+
+	// A group admin should be able to set another member as admin
+	uri = api.Router.GetRoute(http.MethodPut, api.putGroupUserHandler, map[string]string{
+		"permGroupName": g.Name,
+		"username":      u2.Username,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw1, http.MethodPut, uri, sdk.AuthentifiedUser{
+		GroupAdmin: true,
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	var result sdk.Group
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
+	assert.Equal(t, 2, len(result.Members))
+}
+
+func Test_deleteGroupUserHandler(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	g := &sdk.Group{Name: sdk.RandomString(10)}
+	u1, jwtRaw1 := assets.InsertLambdaUser(db, g)
+	u2, jwtRaw2 := assets.InsertLambdaUser(db, g)
+	u3, _ := assets.InsertLambdaUser(db, g)
+
+	require.NoError(t, group.LoadOptions.WithMembers(context.TODO(), db, g))
+	assert.Equal(t, 3, len(g.Members))
+
+	// A group member should not be able to remove someone from the group
+	uri := api.Router.GetRoute(http.MethodDelete, api.deleteGroupUserHandler, map[string]string{
+		"permGroupName": g.Name,
+		"username":      u3.Username,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw2, http.MethodDelete, uri, nil)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code)
+
+	// A group admin should be able to remove another member
+	uri = api.Router.GetRoute(http.MethodDelete, api.deleteGroupUserHandler, map[string]string{
+		"permGroupName": g.Name,
+		"username":      u3.Username,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw1, http.MethodDelete, uri, nil)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	var result sdk.Group
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
+	assert.Equal(t, 2, len(result.Members))
+
+	// A group admin should not be able to remove last admin
+	uri = api.Router.GetRoute(http.MethodDelete, api.deleteGroupUserHandler, map[string]string{
+		"permGroupName": g.Name,
+		"username":      u1.Username,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw1, http.MethodDelete, uri, nil)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+
+	assets.SetUserGroupAdmin(t, db, g.ID, u2.OldUserStruct.ID)
+
+	// A group admin should be able to remove himself if another admin exist
+	uri = api.Router.GetRoute(http.MethodDelete, api.deleteGroupUserHandler, map[string]string{
+		"permGroupName": g.Name,
+		"username":      u1.Username,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw1, http.MethodDelete, uri, nil)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "null", string(rec.Body.Bytes()))
 }
