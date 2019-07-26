@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { finalize, first } from 'rxjs/operators';
@@ -14,7 +14,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-user-edit',
     templateUrl: './user.edit.html',
-    styleUrls: ['./user.edit.scss']
+    styleUrls: ['./user.edit.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserEditComponent implements OnInit {
     loading = false;
@@ -35,7 +36,7 @@ export class UserEditComponent implements OnInit {
         private _toast: ToastService, private _translate: TranslateService,
         private _route: ActivatedRoute, private _router: Router,
         private _authentificationStore: AuthentificationStore,
-        private _groupService: GroupService
+        private _groupService: GroupService, private _cd: ChangeDetectorRef
     ) {
         this.currentUser = this._authentificationStore.getUser();
     }
@@ -47,7 +48,10 @@ export class UserEditComponent implements OnInit {
             if (this.username === this.currentUser.username) {
                 this.tokensLoading = true;
                 this._userService.getTokens()
-                    .pipe(finalize(() => this.tokensLoading = false))
+                    .pipe(finalize(() => {
+                        this.tokensLoading = false;
+                        this._cd.markForCheck();
+                    }))
                     .subscribe((tokens) => this.tokens = tokens);
             }
 
@@ -70,21 +74,25 @@ export class UserEditComponent implements OnInit {
                             this.groups.push(g.groups[i]);
                         }
                     }
+                    this._cd.markForCheck();
                 });
 
                 this.updatePath();
+                this._cd.markForCheck();
             });
         });
     }
 
     clickDeleteButton(): void {
         this.deleteLoading = true;
-        this._userService.deleteUser(this.user.username).subscribe(wm => {
-            this.deleteLoading = false;
+        this._userService.deleteUser(this.user.username)
+            .pipe(finalize(() => {
+                this.deleteLoading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(() => {
             this._toast.success('', this._translate.instant('user_deleted'));
             this._router.navigate(['../'], { relativeTo: this._route });
-        }, () => {
-            this.deleteLoading = false;
         });
     }
 
@@ -100,12 +108,14 @@ export class UserEditComponent implements OnInit {
 
         this.loading = true;
         if (this.user.id > 0) {
-            this._userService.updateUser(this.username, this.user).subscribe(wm => {
-                this.loading = false;
+            this._userService.updateUser(this.username, this.user)
+                .pipe(finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                }))
+                .subscribe(wm => {
                 this._toast.success('', this._translate.instant('user_saved'));
                 this._router.navigate(['/settings', 'user', this.user.username], { relativeTo: this._route });
-            }, () => {
-                this.loading = false;
             });
         }
 
@@ -120,7 +130,10 @@ export class UserEditComponent implements OnInit {
                 this._groupService.removeToken(event.token.group_name, event.token.id)
                     .pipe(
                         first(),
-                        finalize(() => event.token.updating = false)
+                        finalize(() => {
+                            event.token.updating = false;
+                            this._cd.markForCheck();
+                        })
                     )
                     .subscribe(() => {
                         this.tokens = this.tokens.filter((token) => token.id !== event.token.id);
@@ -135,6 +148,7 @@ export class UserEditComponent implements OnInit {
                             event.token.expirationString = null;
                             event.token.description = null;
                             event.token.updating = false;
+                            this._cd.markForCheck();
                         })
                     )
                     .subscribe((token) => {

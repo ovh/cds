@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { finalize } from 'rxjs/operators/finalize';
 import { User } from '../../../../model/user.model';
 import { UserService } from '../../../../service/user/user.service';
@@ -8,7 +8,8 @@ import { Column, ColumnType } from '../../../../shared/table/data-table.componen
 @Component({
     selector: 'app-user-list',
     templateUrl: './user.list.html',
-    styleUrls: ['./user.list.scss']
+    styleUrls: ['./user.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserListComponent {
     loading: boolean;
@@ -18,6 +19,7 @@ export class UserListComponent {
 
     constructor(
         private _userService: UserService,
+        private _cd: ChangeDetectorRef
     ) {
         this.columns = [
             <Column<User>>{
@@ -62,7 +64,10 @@ export class UserListComponent {
     getUsers(): void {
         this.loading = true;
         this._userService.getUsers()
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(us => { this.users = us; });
     }
 

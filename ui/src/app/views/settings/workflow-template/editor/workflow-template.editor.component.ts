@@ -1,4 +1,13 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy, ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnInit,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { Subscription } from 'rxjs';
 import { WorkflowTemplateError } from '../../../../model/workflow-template.model';
 import { ThemeStore } from '../../../../service/services.module';
@@ -7,7 +16,8 @@ import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 @Component({
     selector: 'app-workflow-template-editor',
     templateUrl: './workflow-template.editor.html',
-    styleUrls: ['./workflow-template.editor.scss']
+    styleUrls: ['./workflow-template.editor.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateEditorComponent implements OnInit, OnChanges {
@@ -23,9 +33,7 @@ export class WorkflowTemplateEditorComponent implements OnInit, OnChanges {
     codeMirrorConfig: any;
     themeSubscription: Subscription;
 
-    constructor(
-        private _theme: ThemeStore
-    ) {
+    constructor(private _theme: ThemeStore, private _cd: ChangeDetectorRef) {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -42,6 +50,7 @@ export class WorkflowTemplateEditorComponent implements OnInit, OnChanges {
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
             }
+            this._cd.markForCheck();
         });
     }
 
