@@ -79,9 +79,9 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"project_key":          proj.Key,
 			"last_modified":        strconv.FormatInt(time.Now().Unix(), 10),
 			"repositories_manager": rmName,
-			"url":           url,
-			"request_token": token,
-			"username":      deprecatedGetUser(ctx).Username,
+			"url":                  url,
+			"request_token":        token,
+			"username":             deprecatedGetUser(ctx).Username,
 		}
 
 		if token != "" {
@@ -568,7 +568,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 				}
 				wfDB.WorkflowData.Node.Context.DefaultPayload = defaultPayload
 
-				if err := workflow.Update(ctx, db, api.Cache, wfDB, proj, u, workflow.UpdateOptions{DisableHookManagement: true}); err != nil {
+				if err := workflow.Update(ctx, db, api.Cache, wfDB, proj, u, workflow.UpdateOptions{DisableHookManagement: true, OldWorkflow: wfOld}); err != nil {
 					return sdk.WrapError(err, "Cannot update node context %d", wf.WorkflowData.Node.Context.ID)
 				}
 
