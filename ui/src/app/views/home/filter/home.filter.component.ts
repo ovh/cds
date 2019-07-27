@@ -1,21 +1,22 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { IdName, LoadOpts, Project } from 'app/model/project.model';
+import { ProjectFilter, TimelineFilter } from 'app/model/timeline.model';
+import { ProjectStore } from 'app/service/project/project.store';
+import { TimelineStore } from 'app/service/timeline/timeline.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { ResyncProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, flatMap } from 'rxjs/operators';
-import { IdName, LoadOpts, Project } from '../../../model/project.model';
-import { ProjectFilter, TimelineFilter } from '../../../model/timeline.model';
-import { ProjectStore } from '../../../service/project/project.store';
-import { TimelineStore } from '../../../service/timeline/timeline.store';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { ToastService } from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-home-filter',
     templateUrl: './home.filter.html',
-    styleUrls: ['./home.filter.scss']
+    styleUrls: ['./home.filter.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class HomeFilterComponent {
@@ -38,7 +39,6 @@ export class HomeFilterComponent {
     projects: Array<Project>;
 
     selectedProjectKey: string;
-    selectedWorkflow: string;
 
     loading = false;
 
@@ -47,7 +47,8 @@ export class HomeFilterComponent {
         private _projectStore: ProjectStore,
         private _timelineStore: TimelineStore,
         private _translate: TranslateService,
-        private _toast: ToastService
+        private _toast: ToastService,
+        private _cd: ChangeDetectorRef
     ) {
         this._projectStore.getProjectsList().subscribe(ps => {
             if (ps) {
@@ -96,7 +97,10 @@ export class HomeFilterComponent {
             projectKey: projFilter.key,
             opts
         })).pipe(
-            finalize(() => projFilter.loading = false),
+            finalize(() => {
+                projFilter.loading = false;
+                this._cd.markForCheck();
+            }),
             flatMap(() => this.store.selectOnce(ProjectState))
         ).subscribe((proj: ProjectStateModel) => {
             projFilter.project = cloneDeep(proj.project);
@@ -142,7 +146,10 @@ export class HomeFilterComponent {
     saveFilter(): void {
         this.loading = true;
         this._timelineStore.saveFilter(this.filter)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('timeline_filter_updated'));
             });

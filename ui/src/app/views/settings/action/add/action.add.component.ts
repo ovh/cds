@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
@@ -18,7 +18,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-action-add',
     templateUrl: './action.add.html',
-    styleUrls: ['./action.add.scss']
+    styleUrls: ['./action.add.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class ActionAddComponent implements OnInit {
@@ -38,7 +39,8 @@ export class ActionAddComponent implements OnInit {
         private _toast: ToastService, private _translate: TranslateService,
         private _router: Router,
         private _groupService: GroupService,
-        private _route: ActivatedRoute
+        private _route: ActivatedRoute,
+        private _cd: ChangeDetectorRef
     ) {
         this.action = <Action>{ editable: true };
         this.getGroups();
@@ -60,13 +62,16 @@ export class ActionAddComponent implements OnInit {
                 if (path.length === 4) {
                     this.initFromJob(path[0], path[1], Number(path[2]), path[3]);
                 }
+                this._cd.markForCheck();
             }
         });
     }
 
     initFromJob(projectKey: string, pipelineName: string, stageID: number, jobName: string) {
         this.projectKey = projectKey;
-        this._pipelineService.getPipeline(projectKey, pipelineName).subscribe(p => {
+        this._pipelineService.getPipeline(projectKey, pipelineName)
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(p => {
             this.pipeline = p;
             this.stage = this.pipeline.stages.find((s: Stage) => { return s.id === stageID; });
             if (this.stage) {
@@ -86,7 +91,10 @@ export class ActionAddComponent implements OnInit {
     getGroups() {
         this.loading = true;
         this._groupService.getAll()
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(gs => {
                 this.groups = gs;
             });
@@ -94,7 +102,9 @@ export class ActionAddComponent implements OnInit {
 
     actionSave(action: Action): void {
         this.action.loading = true;
-        this._actionService.add(action).subscribe(a => {
+        this._actionService.add(action)
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(a => {
             this._toast.success('', this._translate.instant('action_saved'));
             // navigate to have action name in url
             this._router.navigate(['settings', 'action', a.group.name, a.name]);

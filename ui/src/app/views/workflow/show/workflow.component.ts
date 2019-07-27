@@ -1,27 +1,28 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { PermissionValue } from 'app/model/permission.model';
+import { Project } from 'app/model/project.model';
+import { Workflow } from 'app/model/workflow.model';
+import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
+import { WorkflowStore } from 'app/service/workflow/workflow.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
+import { PermissionEvent } from 'app/shared/permission/permission.event.model';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import * as actionsWorkflow from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { WorkflowGraphComponent } from 'app/views/workflow/graph/workflow.graph.component';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { PermissionValue } from '../../../model/permission.model';
-import { Project } from '../../../model/project.model';
-import { Workflow } from '../../../model/workflow.model';
-import { WorkflowCoreService } from '../../../service/workflow/workflow.core.service';
-import { WorkflowStore } from '../../../service/workflow/workflow.store';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { WarningModalComponent } from '../../../shared/modal/warning/warning.component';
-import { PermissionEvent } from '../../../shared/permission/permission.event.model';
-import { ToastService } from '../../../shared/toast/ToastService';
-import { WorkflowNodeRunParamComponent } from '../../../shared/workflow/node/run/node.run.param.component';
-import { WorkflowGraphComponent } from '../graph/workflow.graph.component';
 
 @Component({
     selector: 'app-workflow',
     templateUrl: './workflow.html',
-    styleUrls: ['./workflow.scss']
+    styleUrls: ['./workflow.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowShowComponent implements OnInit {
@@ -61,7 +62,8 @@ export class WorkflowShowComponent implements OnInit {
         private _router: Router,
         private _translate: TranslateService,
         private _toast: ToastService,
-        private _workflowCoreService: WorkflowCoreService
+        private _workflowCoreService: WorkflowCoreService,
+        private _cd: ChangeDetectorRef
     ) {
     }
 
@@ -72,6 +74,7 @@ export class WorkflowShowComponent implements OnInit {
         });
 
         this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+            this._cd.markForCheck();
             this.detailedWorkflow = s.workflow;
             if (this.detailedWorkflow) {
                 this.previewWorkflow = this.detailedWorkflow.preview;
@@ -104,6 +107,7 @@ export class WorkflowShowComponent implements OnInit {
             } else {
                 delete this.selectedHookRef;
             }
+            this._cd.markForCheck();
         });
 
         this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()

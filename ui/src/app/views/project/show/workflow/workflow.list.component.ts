@@ -1,13 +1,14 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {IdName, Label, Project} from '../../../../model/project.model';
-import {Warning} from '../../../../model/warning.model';
-import {ProjectStore} from '../../../../service/project/project.store';
-import {LabelsEditComponent} from '../../../../shared/labels/edit/labels.edit.component';
+import { ChangeDetectionStrategy, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { IdName, Label, Project } from '../../../../model/project.model';
+import { Warning } from '../../../../model/warning.model';
+import { ProjectStore } from '../../../../service/project/project.store';
+import { LabelsEditComponent } from '../../../../shared/labels/edit/labels.edit.component';
 
 @Component({
     selector: 'app-project-workflows',
     templateUrl: './workflow.list.html',
-    styleUrls: ['./workflow.list.scss']
+    styleUrls: ['./workflow.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectWorkflowListComponent implements OnInit {
 

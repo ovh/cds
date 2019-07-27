@@ -20,6 +20,7 @@ func workflowShowRun(v cli.Values) (interface{}, error) {
 	}
 	wrkflw := struct {
 		ProjectKey  string `cli:"project_key"`
+		ID          int64  `cli:"workflow_id,key"`
 		Name        string `cli:"name"`
 		Description string `cli:"description"`
 		From        string `cli:"from"`
@@ -27,6 +28,7 @@ func workflowShowRun(v cli.Values) (interface{}, error) {
 		API         string `cli:"api"`
 	}{
 		ProjectKey:  w.ProjectKey,
+		ID:          w.ID,
 		Name:        w.Name,
 		Description: w.Description,
 		From:        w.FromRepository,

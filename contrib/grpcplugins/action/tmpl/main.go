@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"os"
 	"strings"
+	"text/template"
 
 	"github.com/golang/protobuf/ptypes/empty"
 

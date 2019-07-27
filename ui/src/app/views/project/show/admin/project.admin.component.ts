@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -14,7 +14,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-project-admin',
     templateUrl: './project.admin.html',
-    styleUrls: ['./project.admin.scss']
+    styleUrls: ['./project.admin.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectAdminComponent implements OnInit {
 
@@ -36,7 +37,7 @@ export class ProjectAdminComponent implements OnInit {
     unusedWarning: Map<string, Warning>;
 
     @Input() project: Project;
-    @ViewChild('updateWarning', {static: false})
+    @ViewChild('updateWarning', { static: false })
     private warningUpdateModal: WarningModalComponent;
 
     loading = false;
@@ -47,7 +48,8 @@ export class ProjectAdminComponent implements OnInit {
         private _toast: ToastService,
         public _translate: TranslateService,
         private _router: Router,
-        private _store: Store
+        private _store: Store,
+        private _cd: ChangeDetectorRef
     ) { };
 
     ngOnInit(): void {
@@ -63,7 +65,10 @@ export class ProjectAdminComponent implements OnInit {
         } else {
             this.loading = true;
             this._store.dispatch(new UpdateProject(this.project))
-                .pipe(finalize(() => this.loading = false))
+                .pipe(finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                }))
                 .subscribe(() => this._toast.success('', this._translate.instant('project_update_msg_ok')));
         }
     };
@@ -71,7 +76,10 @@ export class ProjectAdminComponent implements OnInit {
     deleteProject(): void {
         this.loading = true;
         this._store.dispatch(new DeleteProject({ projectKey: this.project.key }))
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('project_deleted'));
                 this._router.navigate(['/home']);

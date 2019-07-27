@@ -35,10 +35,19 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 
 	report := new(ProcessorReport)
 
-	hooks := wr.Workflow.WorkflowData.GetHooks()
-	h, ok := hooks[e.WorkflowNodeHookUUID]
-	if !ok {
-		return report, sdk.WithStack(sdk.ErrNoHook)
+	var h *sdk.NodeHook
+	if sdk.IsValidUUID(e.WorkflowNodeHookUUID) {
+		hooks := wr.Workflow.WorkflowData.GetHooks()
+		h = hooks[e.WorkflowNodeHookUUID]
+	} else {
+		hooks := wr.Workflow.WorkflowData.GetHooksMapRef()
+		if ho, ok := hooks[e.WorkflowNodeHookUUID]; ok {
+			h = &ho
+		}
+	}
+
+	if h == nil {
+		return report, sdk.WrapError(sdk.ErrNoHook, "unable to find hook %s in %+v", e.WorkflowNodeHookUUID, wr.Workflow.WorkflowData.Node.Hooks)
 	}
 
 	//If the hook is on the root, it will trigger a new workflow run

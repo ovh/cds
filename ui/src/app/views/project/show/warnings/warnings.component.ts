@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
@@ -11,14 +11,16 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-project-warnings',
     templateUrl: './project.warnings.html',
-    styleUrls: ['./project.warnings.scss']
+    styleUrls: ['./project.warnings.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectWarningsComponent extends Table<Warning> {
 
     @Input() project: Project;
     @Input() warnings: Array<Warning>;
 
-    constructor(private _warningStore: WarningStore, private _translate: TranslateService, private _toastService: ToastService) {
+    constructor(private _warningStore: WarningStore, private _cd: ChangeDetectorRef,
+                private _translate: TranslateService, private _toastService: ToastService) {
         super();
     }
 
@@ -35,7 +37,10 @@ export class ProjectWarningsComponent extends Table<Warning> {
         w.loading = true;
         let warning = cloneDeep(w);
         warning.ignored = !warning.ignored;
-        this._warningStore.updateWarning(this.project.key, warning).pipe(finalize(() => w.loading = false)).subscribe(() => {
+        this._warningStore.updateWarning(this.project.key, warning).pipe(finalize(() => {
+            w.loading = false;
+            this._cd.markForCheck();
+        })).subscribe(() => {
             this._toastService.success('', this._translate.instant('warning_updated'));
         });
     }

@@ -43,6 +43,7 @@ export class ProjectForWorkflowResolver implements Resolve<Project> {
             new LoadOpts('withWorkflowNames', 'workflow_names'),
             new LoadOpts('withPipelineNames', 'pipeline_names'),
             new LoadOpts('withApplicationNames', 'application_names'),
+            new LoadOpts('withEnvironmentNames', 'environment_names'),
             new LoadOpts('withEnvironments', 'environments'),
             new LoadOpts('withIntegrations', 'integrations'),
             new LoadOpts('withLabels', 'labels'),

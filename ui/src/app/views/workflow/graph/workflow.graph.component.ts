@@ -1,5 +1,6 @@
 import {
     AfterViewInit,
+    ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
     ComponentFactoryResolver,
@@ -29,7 +30,8 @@ import { WorkflowWNodeComponent } from '../../../shared/workflow/wnode/wnode.com
     entryComponents: [
         WorkflowWNodeComponent,
         WorkflowNodeHookComponent
-    ]
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowGraphComponent implements AfterViewInit {
@@ -77,11 +79,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
     @ViewChild('svgGraph', { read: ViewContainerRef, static: false }) svgContainer: any;
     g: dagreD3.graphlib.Graph;
     render = new dagreD3.render();
-    svgWidth: number = window.innerWidth;
-    svgHeight: number = window.innerHeight;
 
     linkWithJoin = false;
-    nodeToLink: WNode;
     previousWorkflowRunId = 0;
 
     nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
@@ -94,13 +93,13 @@ export class WorkflowGraphComponent implements AfterViewInit {
         private componentFactoryResolver: ComponentFactoryResolver,
         private _cd: ChangeDetectorRef,
         private _workflowStore: WorkflowStore,
-        private _workflowCore: WorkflowCoreService
+        private _workflowCore: WorkflowCoreService,
     ) { }
 
     ngAfterViewInit(): void {
         this.ready = true;
         this.changeDisplay();
-        this._cd.detectChanges();
+        this._cd.markForCheck();
     }
 
     changeDisplay(): void {
@@ -145,6 +144,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.svg.call(this.zoom);
 
         this.clickOrigin();
+        this._cd.markForCheck();
     }
 
     clickOrigin() {

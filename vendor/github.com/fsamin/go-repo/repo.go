@@ -345,6 +345,27 @@ func (r Repo) CurrentBranch() (string, error) {
 	return b[:len(b)-1], nil
 }
 
+// FetchRemoteTag runs a git fetch then checkout the remote tag
+func (r Repo) FetchRemoteTag(remote, tag string) error {
+	// delete tag if exist
+	if _, err := r.runCmd("git", "rev-parse", "--verify", tag); err == nil {
+		if _, err := r.runCmd("git", "tag", "-d", tag); err != nil {
+			return fmt.Errorf("unable to git delete tag: %s", err)
+		}
+	}
+
+	// Get tag from remote
+	if _, err := r.runCmd("git", "fetch"); err != nil {
+		return fmt.Errorf("unable to git fetch tags: %s", err)
+	}
+
+	_, err := r.runCmd("git", "checkout", tag)
+	if err != nil {
+		return fmt.Errorf("unable to git checkout: %s", err)
+	}
+	return nil
+}
+
 // FetchRemoteBranch runs a git fetch then checkout the remote branch
 func (r Repo) FetchRemoteBranch(remote, branch string) error {
 	if _, err := r.runCmd("git", "fetch"); err != nil {
@@ -423,13 +444,19 @@ func (r Repo) ResetHard(hash string) error {
 
 // DefaultBranch returns the default branch of the remote origin
 func (r Repo) DefaultBranch() (string, error) {
-	s, err := r.runCmd("git", "symbolic-ref", "refs/remotes/origin/HEAD")
+	details, err := r.runCmd("git", "remote", "show", "origin")
 	if err != nil {
 		return "", err
 	}
-	s = strings.Replace(s, "\n", "", 1)
-	s = strings.Replace(s, "refs/remotes/origin/", "", 1)
-	return s, nil
+	var defaultBranch string
+	splitted := strings.Split(details, "\n")
+	for _, l := range splitted {
+		if strings.Contains(l, "HEAD branch:") {
+			defaultBranch = strings.TrimSpace(strings.Replace(l, "HEAD branch:", "", 1))
+			return defaultBranch, nil
+		}
+	}
+	return "", fmt.Errorf("no default branch found")
 }
 
 // Glob returns the matching files in the repo

@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { finalize } from 'rxjs/operators';
 import { WorkflowHookTask } from '../../../../model/workflow.hook.model';
 import { HookService } from '../../../../service/services.module';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
@@ -7,7 +8,8 @@ import { Column, ColumnType, Filter } from '../../../../shared/table/data-table.
 @Component({
     selector: 'app-hook-task-list',
     templateUrl: './hook-task.list.html',
-    styleUrls: ['./hook-task.list.scss']
+    styleUrls: ['./hook-task.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HookTaskListComponent {
     loading = false;
@@ -17,7 +19,7 @@ export class HookTaskListComponent {
     dataCount: number;
     path: Array<PathItem>;
 
-    constructor(private _hookService: HookService) {
+    constructor(private _hookService: HookService, private _cd: ChangeDetectorRef) {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
             return d => {
@@ -94,9 +96,12 @@ export class HookTaskListComponent {
 
     getAdminTasks(sort: string) {
         this.loading = true;
-        this._hookService.getAdminTasks(sort).subscribe(ts => {
-            this.tasks = ts;
+        this._hookService.getAdminTasks(sort).pipe(finalize(() => {
             this.loading = false;
+            this._cd.markForCheck();
+        })).subscribe(ts => {
+            this.tasks = ts;
+
         });
     }
 

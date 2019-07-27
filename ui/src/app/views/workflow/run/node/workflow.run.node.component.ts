@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
@@ -16,19 +16,19 @@ import { GetWorkflowNodeRun, GetWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
-import { filter, first } from 'rxjs/operators';
+import { filter, finalize, first } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-run-node',
     templateUrl: './node.html',
-    styleUrls: ['./node.scss']
+    styleUrls: ['./node.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowNodeRunComponent {
 
     node: WNode;
     nodeRun: WorkflowNodeRun;
-    subNodeRun: Subscription;
 
     // Context info
     project: Project;
@@ -58,9 +58,9 @@ export class WorkflowNodeRunComponent {
         private _routerService: RouterService,
         private _workflowRunService: WorkflowRunService,
         private _durationService: DurationService,
-        private _titleService: Title
+        private _titleService: Title,
+        private _cd: ChangeDetectorRef
     ) {
-
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
@@ -90,6 +90,7 @@ export class WorkflowNodeRunComponent {
             if (!s.workflow || this.workflowName !== s.workflow.name) {
                 return;
             }
+            this._cd.markForCheck();
             this.workflowRun = s.workflowRun;
             this.nodeRun = cloneDeep(s.workflowNodeRun);
             if (this.workflowRun && this.workflowRun.workflow && this.nodeRun) {
@@ -102,7 +103,9 @@ export class WorkflowNodeRunComponent {
                     this._workflowRunService.nodeRunHistory(
                         this.project.key, this.workflowName,
                         this.nodeRun.num, this.nodeRun.workflow_node_id)
-                        .pipe(first())
+                        .pipe(first(), finalize(() => {
+                            this._cd.markForCheck();
+                        }))
                         .subscribe(nrs => this.nodeRunsHistory = nrs);
                 }
                 this.initVulnerabilitySummary();
@@ -114,6 +117,7 @@ export class WorkflowNodeRunComponent {
         });
 
         this._activatedRoute.params.subscribe(params => {
+            this._cd.markForCheck();
             this.nodeRun = null;
             let number = params['number'];
             let nodeRunId = params['nodeId'];

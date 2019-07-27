@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
@@ -68,7 +68,8 @@ export class WorkflowTemplateEditComponent implements OnInit {
         private _route: ActivatedRoute,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _router: Router
+        private _router: Router,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit() {
@@ -169,6 +170,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
             this.groupName = params['groupName'];
             this.templateSlug = params['templateSlug'];
             this.getTemplate(this.groupName, this.templateSlug);
+            this._cd.markForCheck();
         });
 
         this.getGroups();
@@ -178,7 +180,8 @@ export class WorkflowTemplateEditComponent implements OnInit {
         this.loading = true;
         this._workflowTemplateService.get(groupName, templateSlug)
             .pipe(finalize(() => {
-                this.loading = false
+                this.loading = false;
+                this._cd.markForCheck();
             }))
             .subscribe(wt => {
                 this.oldWorkflowTemplate = { ...wt };
@@ -205,7 +208,10 @@ export class WorkflowTemplateEditComponent implements OnInit {
     getGroups() {
         this.loading = true;
         this._groupService.getAll()
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(gs => {
                 this.groups = gs;
             });
@@ -214,7 +220,10 @@ export class WorkflowTemplateEditComponent implements OnInit {
     getAudits() {
         this.loadingAudits = true;
         this._workflowTemplateService.getAudits(this.groupName, this.templateSlug)
-            .pipe(finalize(() => this.loadingAudits = false))
+            .pipe(finalize(() => {
+                this.loadingAudits = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(as => {
                 this.audits = as;
             });
@@ -223,7 +232,10 @@ export class WorkflowTemplateEditComponent implements OnInit {
     saveWorkflowTemplate(wt: WorkflowTemplate) {
         this.loading = true;
         this._workflowTemplateService.update(this.oldWorkflowTemplate, wt)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(res => {
                 this.oldWorkflowTemplate = { ...res };
                 this.workflowTemplate = res;
@@ -241,7 +253,10 @@ export class WorkflowTemplateEditComponent implements OnInit {
     deleteWorkflowTemplate() {
         this.loading = true;
         this._workflowTemplateService.delete(this.workflowTemplate)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('workflow_template_deleted'));
                 this._router.navigate(['settings', 'workflow-template']);
@@ -297,14 +312,20 @@ export class WorkflowTemplateEditComponent implements OnInit {
         this.loadingUsage = true;
         this._workflowTemplateService.getUsage(this.groupName, this.templateSlug)
             .pipe(first())
-            .pipe(finalize(() => this.loadingUsage = false))
+            .pipe(finalize(() => {
+                this.loadingUsage = false;
+                this._cd.markForCheck();
+            }))
             .subscribe((workflows) => this.usages = workflows);
     }
 
     getInstances() {
         this.loadingInstances = true;
         this._workflowTemplateService.getInstances(this.groupName, this.templateSlug)
-            .pipe(finalize(() => this.loadingInstances = false))
+            .pipe(finalize(() => {
+                this.loadingInstances = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(is => this.instances = is.sort((a, b) => a.key() < b.key() ? -1 : 1));
     }
 

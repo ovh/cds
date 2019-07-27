@@ -1,4 +1,12 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    Input,
+    OnDestroy,
+    OnInit,
+    ViewChild
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import * as pipelineActions from 'app/store/pipelines.action';
@@ -24,7 +32,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-pipeline-workflow',
     templateUrl: './pipeline.workflow.html',
-    styleUrls: ['./pipeline.workflow.scss']
+    styleUrls: ['./pipeline.workflow.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class PipelineWorkflowComponent implements OnInit, OnDestroy {
@@ -85,8 +94,6 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
 
     loadingStage = false;
 
-    pipelinePreviewSubscription: Subscription;
-    asCodeEditorSubscription: Subscription;
     dragulaSubscription: Subscription;
 
     constructor(
@@ -96,7 +103,8 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         private _translate: TranslateService,
         private _varService: VariableService,
         private _pipCoreService: PipelineCoreService,
-        private _keyService: KeyService
+        private _keyService: KeyService,
+        private _cd: ChangeDetectorRef
     ) {
         this._dragularService.createGroup('bag-stage', {
             moves: function (el, source, handle) {
@@ -124,7 +132,10 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     projectKey: this.project.key,
                     pipelineName: this.pipeline.name,
                     stage: stageMoved
-                })).subscribe(() => this._toast.success('', this._translate.instant('pipeline_stage_moved')));
+                })).pipe(finalize(() => {
+                    this._cd.markForCheck();
+                }))
+                    .subscribe(() => this._toast.success('', this._translate.instant('pipeline_stage_moved')));
             });
         });
     }
@@ -159,9 +170,10 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
 
         this._keyService.getAllKeys(this.project.key).subscribe(k => {
             this.keys = k;
-        })
+        });
 
-        this._varService.getContextVariable(this.project.key, this.pipeline.id).pipe(first()).subscribe(s => this.suggest = s);
+        this._varService.getContextVariable(this.project.key, this.pipeline.id)
+            .pipe(first(), finalize(() => this._cd.markForCheck())).subscribe(s => this.suggest = s);
 
     }
 
@@ -179,7 +191,10 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
             pipelineName: this.pipeline.name,
             stage: s
         })).pipe(
-            flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, this.pipeline.name)))
+            flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, this.pipeline.name))),
+            finalize(() => {
+                this._cd.markForCheck();
+            })
         ).subscribe((pip) => {
             this._toast.success('', this._translate.instant('stage_added'));
             this.selectedStage = pip.stages[pip.stages.length - 1];
@@ -198,7 +213,10 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
             stageId: s.id,
             job: jobToAdd
         })).pipe(
-            flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, this.pipeline.name)))
+            flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, this.pipeline.name))),
+            finalize(() => {
+                this._cd.markForCheck();
+            })
         )
             .subscribe((pip) => {
                 this._toast.success('', this._translate.instant('stage_job_added'));
@@ -221,7 +239,10 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     projectKey: this.project.key,
                     pipelineName: this.pipeline.name,
                     changes: this.selectedStage
-                })).pipe(finalize(() => this.loadingStage = false))
+                })).pipe(finalize(() => {
+                    this.loadingStage = false;
+                    this._cd.markForCheck();
+                }))
                     .subscribe(() => {
                         this._toast.success('', this._translate.instant('stage_updated'));
                         this.editStageModal.hide();
@@ -232,7 +253,10 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     projectKey: this.project.key,
                     pipelineName: this.pipeline.name,
                     stage: this.selectedStage
-                })).pipe(finalize(() => this.loadingStage = false))
+                })).pipe(finalize(() => {
+                    this.loadingStage = false;
+                    this._cd.markForCheck();
+                }))
                     .subscribe(() => {
                         this._toast.success('', this._translate.instant('stage_deleted'));
                         this.editStageModal.hide();
@@ -293,6 +317,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                 })).pipe(finalize(() => {
                     job.action.loading = false;
                     job.action.hasChanged = false;
+                    this._cd.markForCheck();
                 })).subscribe(() => {
                     this._toast.success('', this._translate.instant('stage_job_updated'));
                     this.selectedStage = this.pipeline.stages.find((s) => this.selectedStage.id === s.id) || this.selectedStage;
@@ -305,7 +330,10 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     pipelineName: this.pipeline.name,
                     stageId: this.selectedStage.id,
                     job
-                })).pipe(finalize(() => job.action.loading = false))
+                })).pipe(finalize(() => {
+                    job.action.loading = false;
+                    this._cd.markForCheck();
+                }))
                     .subscribe(() => {
                         this._toast.success('', this._translate.instant('stage_job_deleted'));
                         this.selectedJob = undefined;

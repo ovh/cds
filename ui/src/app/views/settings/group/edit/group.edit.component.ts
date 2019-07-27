@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -36,11 +36,13 @@ export class GroupEditComponent implements OnInit {
         private _translate: TranslateService,
         private _route: ActivatedRoute,
         private _router: Router,
-        private _store: Store
+        private _store: Store,
+        private _cd: ChangeDetectorRef
     ) {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
         this._userService.getUsers().subscribe(users => {
             this.users = users;
+            this._cd.markForCheck();
         });
     }
 
@@ -52,6 +54,7 @@ export class GroupEditComponent implements OnInit {
                 this.group = new Group();
                 this.updatePath();
             }
+            this._cd.markForCheck();
         });
     }
 
@@ -68,6 +71,7 @@ export class GroupEditComponent implements OnInit {
                 }
             }
             this.updatePath();
+            this._cd.markForCheck();
         });
     }
 
@@ -75,7 +79,10 @@ export class GroupEditComponent implements OnInit {
         this.deleteLoading = true;
         this._groupService.delete(this.group.name)
             .pipe(
-                finalize(() => this.deleteLoading = false)
+                finalize(() => {
+                    this.deleteLoading = false;
+                    this._cd.markForCheck();
+                })
             )
             .subscribe(wm => {
                 this._toast.success('', this._translate.instant('group_deleted'));
@@ -97,7 +104,10 @@ export class GroupEditComponent implements OnInit {
         if (this.group.id > 0) {
             this._groupService.update(this.groupname, this.group)
                 .pipe(
-                    finalize(() => this.loading = false)
+                    finalize(() => {
+                        this.loading = false;
+                        this._cd.markForCheck();
+                    })
                 )
                 .subscribe(wm => {
                     this._toast.success('', this._translate.instant('group_saved'));
@@ -106,7 +116,10 @@ export class GroupEditComponent implements OnInit {
         } else {
             this._groupService.create(this.group)
                 .pipe(
-                    finalize(() => this.loading = false)
+                    finalize(() => {
+                        this.loading = false;
+                        this._cd.markForCheck();
+                    })
                 )
                 .subscribe(wm => {
                     this._toast.success('', this._translate.instant('group_saved'));
@@ -119,7 +132,10 @@ export class GroupEditComponent implements OnInit {
         this.loading = true;
         this._groupService.addAdmin(this.group.name, username)
             .pipe(
-                finalize(() => this.loading = false)
+                finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                })
             )
             .subscribe(wm => {
                 this._toast.success('', this._translate.instant('group_add_admin_saved'));
@@ -131,7 +147,10 @@ export class GroupEditComponent implements OnInit {
         this.loading = true;
         this._groupService.removeAdmin(this.group.name, username)
             .pipe(
-                finalize(() => this.loading = false)
+                finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                })
             )
             .subscribe(wm => {
                 this._toast.success('', this._translate.instant('group_remove_admin_saved'));
@@ -143,7 +162,10 @@ export class GroupEditComponent implements OnInit {
         this.loading = true;
         this._groupService.removeMember(this.group.name, username)
             .pipe(
-                finalize(() => this.loading = false)
+                finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                })
             )
             .subscribe(wm => {
                 this._toast.success('', this._translate.instant('group_remove_user_saved'));
@@ -153,12 +175,14 @@ export class GroupEditComponent implements OnInit {
 
     clickAddUserButton(): void {
         this.loading = true;
-        this._groupService.addMember(this.group.name, this.addUserUsername).subscribe(() => {
-            this.loading = false;
+        this._groupService.addMember(this.group.name, this.addUserUsername)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(() => {
             this._toast.success('', this._translate.instant('group_add_user_saved'));
             this.reloadData(this.group.name);
-        }, () => {
-            this.loading = false;
         });
     }
 

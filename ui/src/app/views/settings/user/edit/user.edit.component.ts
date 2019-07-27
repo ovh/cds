@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -19,7 +19,8 @@ import { ConsumerDetailsModalComponent } from '../consumer-details-modal/consume
 @Component({
     selector: 'app-user-edit',
     templateUrl: './user.edit.html',
-    styleUrls: ['./user.edit.scss']
+    styleUrls: ['./user.edit.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserEditComponent implements OnInit {
     @ViewChild('consumerDetailsModal', { static: false })

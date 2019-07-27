@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AddKeyInProject, DeleteKeyInProject, FetchKeysInProject } from 'app/store/project.action';
@@ -12,7 +12,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-project-keys',
     templateUrl: './project.keys.html',
-    styleUrls: ['./project.keys.scss']
+    styleUrls: ['./project.keys.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectKeysComponent implements OnInit {
 
@@ -54,13 +55,17 @@ export class ProjectKeysComponent implements OnInit {
     constructor(
         private _toast: ToastService,
         private _translate: TranslateService,
-        private store: Store
+        private store: Store,
+        private _cd: ChangeDetectorRef
     ) {
     }
 
     ngOnInit(): void {
         this.store.dispatch(new FetchKeysInProject({ projectKey: this.project.key }))
-            .pipe(finalize(() => this.ready = true))
+            .pipe(finalize(() => {
+                this.ready = true;
+                this._cd.markForCheck();
+            }))
             .subscribe();
     }
 
@@ -69,13 +74,19 @@ export class ProjectKeysComponent implements OnInit {
             case 'add':
                 this.loading = true;
                 this.store.dispatch(new AddKeyInProject({ projectKey: this.project.key, key: event.key }))
-                    .pipe(finalize(() => this.loading = false))
+                    .pipe(finalize(() => {
+                        this.loading = false;
+                        this._cd.markForCheck();
+                    }))
                     .subscribe(() => this._toast.success('', this._translate.instant('keys_added')));
                 break;
             case 'delete':
                 this.loading = true;
                 this.store.dispatch(new DeleteKeyInProject({ projectKey: this.project.key, key: event.key }))
-                    .pipe(finalize(() => this.loading = false))
+                    .pipe(finalize(() => {
+                        this.loading = false;
+                        this._cd.markForCheck();
+                    }))
                     .subscribe(() => this._toast.success('', this._translate.instant('keys_removed')));
         }
     }

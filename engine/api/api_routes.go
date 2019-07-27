@@ -314,6 +314,7 @@ func (api *API) InitRouter() {
 	// RepositoriesManager
 	r.Handle("/repositories_manager", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRepositoriesManagerHandler))
 	r.Handle("/repositories_manager/oauth2/callback", Scope(sdk.AuthConsumerScopeProject), r.GET(api.repositoriesManagerOAuthCallbackHandler, Auth(false)))
+
 	// RepositoriesManager for projects
 	r.Handle("/project/{permProjectKey}/repositories_manager", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRepositoriesManagerForProjectHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize", Scope(sdk.AuthConsumerScopeProject), r.POST(api.repositoriesManagerAuthorizeHandler))
@@ -324,6 +325,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repos", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getReposFromRepositoriesManagerHandler))
 
 	// RepositoriesManager for applications
+	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/applications", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRepositoriesManagerLinkedApplicationsHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/application/{applicationName}/attach", Scope(sdk.AuthConsumerScopeProject), r.POST(api.attachRepositoriesManagerHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/application/{applicationName}/detach", Scope(sdk.AuthConsumerScopeProject), r.POST(api.detachRepositoriesManagerHandler))
 

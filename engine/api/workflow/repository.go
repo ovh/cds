@@ -101,7 +101,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		RepositoryStrategy: ope.RepositoryStrategy,
 		Branch:             ope.Setup.Checkout.Branch,
 		FromRepository:     ope.RepositoryInfo.FetchURL,
-		IsDefaultBranch:    ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
+		IsDefaultBranch:    ope.Setup.Checkout.Tag == "" && ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
 		HookUUID:           hookUUID,
 		OldWorkflow:        w,
 	}
@@ -287,8 +287,9 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 		},
 	}
 
-	var branch, commit string
+	var branch, commit, tag string
 	if opts.Hook != nil {
+		tag = opts.Hook.Payload[tagGitTag]
 		branch = opts.Hook.Payload[tagGitBranch]
 		commit = opts.Hook.Payload[tagGitHash]
 	}
@@ -303,15 +304,17 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 		if errm1 != nil {
 			return ope, sdk.WrapError(errm1, "CreateFromRepository> Unable to compute payload")
 		}
+		tag = m1[tagGitTag]
 		branch = m1[tagGitBranch]
 		commit = m1[tagGitHash]
 	}
+	ope.Setup.Checkout.Tag = tag
 	ope.Setup.Checkout.Commit = commit
 	ope.Setup.Checkout.Branch = branch
 
 	// This should not append because the hook must set a default payload with git.branch
-	if ope.Setup.Checkout.Branch == "" {
-		return ope, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("branch parameter is mandatory")), "createOperationRequest")
+	if ope.Setup.Checkout.Branch == "" && ope.Setup.Checkout.Tag == "" {
+		return ope, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("branch or tag parameter are mandatories")), "createOperationRequest")
 	}
 
 	return ope, nil

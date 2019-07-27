@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -20,7 +20,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-worker-model-edit',
     templateUrl: './worker-model.edit.html',
-    styleUrls: ['./worker-model.edit.scss']
+    styleUrls: ['./worker-model.edit.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkerModelEditComponent implements OnInit {
@@ -47,7 +48,8 @@ export class WorkerModelEditComponent implements OnInit {
         private _translate: TranslateService,
         private _route: ActivatedRoute,
         private _router: Router,
-        private _store: Store
+        private _store: Store,
+        private _cd: ChangeDetectorRef
     ) { }
 
     selectTab(tab: Tab): void {
@@ -83,13 +85,17 @@ export class WorkerModelEditComponent implements OnInit {
             this.groupName = params['groupName'];
             this.workerModelName = params['workerModelName'];
             this.getWorkerModel(this.groupName, this.workerModelName);
+            this._cd.markForCheck();
         });
     }
 
     getGroups() {
         this.loading = true;
         this._groupService.getAll()
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(gs => {
                 this.groups = gs;
             });
@@ -102,7 +108,10 @@ export class WorkerModelEditComponent implements OnInit {
             this._workerModelService.getTypes(),
             this._workerModelService.getCommunications()
         ])
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(results => {
                 this.patterns = results[0];
                 this.types = results[1];
@@ -113,7 +122,10 @@ export class WorkerModelEditComponent implements OnInit {
     getWorkerModel(groupName: string, modelName: string): void {
         this.loading = true;
         this._workerModelService.get(groupName, modelName)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(wm => {
                 this.workerModel = wm;
                 this.updatePath();
@@ -123,7 +135,10 @@ export class WorkerModelEditComponent implements OnInit {
     deleteWorkerModel(): void {
         this.loading = true;
         this._workerModelService.delete(this.groupName, this.workerModelName)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(wm => {
                 this._toast.success('', this._translate.instant('worker_model_deleted'));
                 this._router.navigate(['settings', 'worker-model']);
@@ -133,7 +148,10 @@ export class WorkerModelEditComponent implements OnInit {
     saveWorkerModel(workerModel: WorkerModel) {
         this.loading = true;
         this._workerModelService.update(this.workerModel, workerModel)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(wm => {
                 this.workerModel = wm;
                 this.updatePath();
@@ -145,7 +163,10 @@ export class WorkerModelEditComponent implements OnInit {
     saveWorkerModelAsCode(workerModel: string): void {
         this.loading = true;
         this._workerModelService.import(workerModel, true)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe((wm) => {
                 this.workerModel = wm;
                 this.updatePath();
@@ -157,7 +178,10 @@ export class WorkerModelEditComponent implements OnInit {
     loadUsage() {
         this.loadingUsage = true;
         this._workerModelService.getUsage(this.groupName, this.workerModelName)
-            .pipe(finalize(() => this.loadingUsage = false))
+            .pipe(finalize(() => {
+                this.loadingUsage = false;
+                this._cd.markForCheck();
+            }))
             .subscribe((usages) => {
                 this.usages = usages;
             });

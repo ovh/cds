@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -16,7 +16,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-worker-model-add',
     templateUrl: './worker-model.add.html',
-    styleUrls: ['./worker-model.add.scss']
+    styleUrls: ['./worker-model.add.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkerModelAddComponent implements OnInit {
     loading = false;
@@ -35,7 +36,8 @@ export class WorkerModelAddComponent implements OnInit {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _router: Router,
-        private _store: Store
+        private _store: Store,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit() {
@@ -58,7 +60,10 @@ export class WorkerModelAddComponent implements OnInit {
     getGroups() {
         this.loading = true;
         this._groupService.getAll()
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(gs => {
                 this.groups = gs;
             });
@@ -71,7 +76,10 @@ export class WorkerModelAddComponent implements OnInit {
             this._workerModelService.getTypes(),
             this._workerModelService.getCommunications()
         ])
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(results => {
                 this.patterns = results[0];
                 this.types = results[1];
@@ -82,7 +90,10 @@ export class WorkerModelAddComponent implements OnInit {
     saveWorkerModel(workerModel: WorkerModel): void {
         this.loading = true;
         this._workerModelService.add(workerModel)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(wm => {
                 this._toast.success('', this._translate.instant('worker_model_saved'));
                 this._router.navigate(['settings', 'worker-model', wm.group.name, wm.name]);
@@ -92,7 +103,10 @@ export class WorkerModelAddComponent implements OnInit {
     saveWorkerModelAsCode(workerModel: string): void {
         this.loading = true;
         this._workerModelService.import(workerModel, false)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe((wm) => {
                 this.workerModel = wm;
                 this._router.navigate(['settings', 'worker-model', this.workerModel.group.name, this.workerModel.name]);

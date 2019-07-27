@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -14,7 +14,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-worker-model-pattern-edit',
     templateUrl: './worker-model-pattern.edit.html',
-    styleUrls: ['./worker-model-pattern.edit.scss']
+    styleUrls: ['./worker-model-pattern.edit.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkerModelPatternEditComponent implements OnInit {
     loading = false;
@@ -29,14 +30,20 @@ export class WorkerModelPatternEditComponent implements OnInit {
 
     constructor(
         private _workerModelService: WorkerModelService,
-        private _toast: ToastService, private _translate: TranslateService,
-        private _route: ActivatedRoute, private _router: Router,
-        private _store: Store
+        private _toast: ToastService,
+        private _translate: TranslateService,
+        private _route: ActivatedRoute,
+        private _router: Router,
+        private _store: Store,
+        private _cd: ChangeDetectorRef
     ) {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
         this.loading = true;
         this._workerModelService.getTypes()
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(wmt => this.workerModelTypes = wmt);
         this.pattern = new ModelPattern();
     }
@@ -44,7 +51,10 @@ export class WorkerModelPatternEditComponent implements OnInit {
     ngOnInit() {
         this.loading = true;
         this._workerModelService.getPattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'])
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(
                 (pattern) => {
                     if (pattern.model.envs) {
@@ -65,7 +75,10 @@ export class WorkerModelPatternEditComponent implements OnInit {
         this.editLoading = true;
         this._workerModelService
             .updatePattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'], this.pattern)
-            .pipe(finalize(() => this.editLoading = false))
+            .pipe(finalize(() => {
+                this.editLoading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe((pattern) => {
                 this._toast.success('', this._translate.instant('worker_model_pattern_saved'));
                 this._router.navigate(['admin', 'worker-model-pattern', pattern.type, pattern.name]);
@@ -80,7 +93,10 @@ export class WorkerModelPatternEditComponent implements OnInit {
         this.editLoading = true;
         this._workerModelService
             .deletePattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'])
-            .pipe(finalize(() => this.editLoading = false))
+            .pipe(finalize(() => {
+                this.editLoading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('worker_model_pattern_deleted'));
                 this._router.navigate(['admin', 'worker-model-pattern']);

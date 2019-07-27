@@ -1,14 +1,15 @@
-import {Component} from '@angular/core';
-import {Broadcast} from 'app/model/broadcast.model';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
-import {BroadcastStore} from '../../../service/broadcast/broadcast.store';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { Broadcast } from 'app/model/broadcast.model';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { BroadcastStore } from '../../../service/broadcast/broadcast.store';
+import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-broadcast-list',
     templateUrl: './broadcast.list.component.html',
-    styleUrls: ['./broadcast.list.component.scss']
+    styleUrls: ['./broadcast.list.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class BroadcastListComponent {
@@ -30,16 +31,19 @@ export class BroadcastListComponent {
         });
     }
 
-    constructor(private _broadcastStore: BroadcastStore) {
+    constructor(private _broadcastStore: BroadcastStore, private _cd: ChangeDetectorRef) {
       this._broadcastSub = this._broadcastStore.getBroadcasts()
+          .pipe(finalize(() => {
+              this.loading = false;
+              this._cd.markForCheck();
+          }))
         .subscribe((broadcasts) => {
-            this.loading = false;
             this.recentBroadcasts = broadcasts.valueSeq().toArray().filter((br) => !br.read && !br.archived)
                 .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
             this.oldBroadcasts = broadcasts.valueSeq().toArray().filter((br) => br.read || br.archived)
                 .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
             this.filteredBroadcasts = this.recentBroadcasts;
-        }, () => this.loading = false);
+        });
     }
 
     switchToRecentView(recent: boolean) {
@@ -62,7 +66,10 @@ export class BroadcastListComponent {
     markAsRead(id: number) {
       this.loading = true;
       this._broadcastStore.markAsRead(id)
-        .pipe(finalize(() => this.loading = false))
+        .pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
         .subscribe();
     }
 }

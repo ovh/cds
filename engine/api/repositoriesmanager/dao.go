@@ -1,6 +1,8 @@
 package repositoriesmanager
 
 import (
+	"database/sql"
+
 	"github.com/go-gorp/gorp"
 	yaml "gopkg.in/yaml.v2"
 
@@ -166,4 +168,21 @@ func DeleteForApplication(db gorp.SqlExecutor, app *sdk.Application) error {
 		return err
 	}
 	return nil
+}
+
+//LoadLinkedApplicationNames loads applications which are linked with this repository manager name
+func LoadLinkedApplicationNames(db gorp.SqlExecutor, projectKey, rmName string) (sdk.IDNames, error) {
+	query := `SELECT application.id, application.name, application.description, '' AS icon
+	FROM application
+		JOIN project ON project.id = application.project_id
+	WHERE project.projectkey = $1 AND application.vcs_server = $2`
+	var idNames sdk.IDNames
+	if _, err := db.Select(&idNames, query, projectKey, rmName); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WithStack(err)
+	}
+
+	return idNames, nil
 }

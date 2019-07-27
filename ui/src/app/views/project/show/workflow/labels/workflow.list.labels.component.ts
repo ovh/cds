@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { IdName, Label, Project } from 'app/model/project.model';
 import { Warning } from 'app/model/warning.model';
@@ -8,9 +8,10 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-project-workflows-labels',
-  templateUrl: './workflow.list.labels.html',
-  styleUrls: ['./workflow.list.labels.scss']
+    selector: 'app-project-workflows-labels',
+    templateUrl: './workflow.list.labels.html',
+    styleUrls: ['./workflow.list.labels.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectWorkflowListLabelsComponent {
 
@@ -96,14 +97,17 @@ export class ProjectWorkflowListLabelsComponent {
   filteredLabels: Array<Label> = [];
   loadingLabel = false;
 
-  constructor(private store: Store, private _helpersService: HelpersService) { }
+  constructor(private store: Store, private _helpersService: HelpersService, private _cd: ChangeDetectorRef) { }
 
   linkLabelToWorkflow(wfName: string, label: Label) {
     this.loadingLabel = true;
     this.store.dispatch(new AddLabelWorkflowInProject({
       workflowName: wfName,
       label
-    })).pipe(finalize(() => this.loadingLabel = false))
+    })).pipe(finalize(() => {
+        this.loadingLabel = false;
+        this._cd.markForCheck();
+    }))
       .subscribe();
   }
 
@@ -112,7 +116,10 @@ export class ProjectWorkflowListLabelsComponent {
     this.store.dispatch(new DeleteLabelWorkflowInProject({
       workflowName: wfName,
       labelId: label.id
-    })).pipe(finalize(() => this.loadingLabel = false))
+    })).pipe(finalize(() => {
+        this.loadingLabel = false;
+        this._cd.markForCheck();
+    }))
       .subscribe();
   }
 
@@ -124,7 +131,10 @@ export class ProjectWorkflowListLabelsComponent {
     this.store.dispatch(new AddLabelWorkflowInProject({
       workflowName: wfName,
       label
-    })).pipe(finalize(() => this.loadingLabel = false))
+    })).pipe(finalize(() => {
+        this.loadingLabel = false;
+        this._cd.markForCheck();
+    }))
       .subscribe();
   }
 

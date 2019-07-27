@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnDestroy,
+    Output
+} from '@angular/core';
 import { Action } from 'app/model/action.model';
 import { Group } from 'app/model/group.model';
 import { AllKeys } from 'app/model/keys.model';
@@ -13,11 +21,13 @@ import { RequirementEvent } from 'app/shared/requirements/requirement.event.mode
 import { SharedService } from 'app/shared/shared.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { DragulaService } from 'ng2-dragula';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-action-form',
     templateUrl: './action.form.html',
-    styleUrls: ['./action.form.scss']
+    styleUrls: ['./action.form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActionFormComponent implements OnDestroy {
     @Input() keys: AllKeys;
@@ -61,7 +71,8 @@ export class ActionFormComponent implements OnDestroy {
         private sharedService: SharedService,
         private _actionService: ActionService,
         private dragulaService: DragulaService,
-        private _workerModelService: WorkerModelService
+        private _workerModelService: WorkerModelService,
+        private _cd: ChangeDetectorRef
     ) {
         dragulaService.createGroup('bag-nonfinal', {
             moves: (el, source, handle) => {
@@ -88,10 +99,14 @@ export class ActionFormComponent implements OnDestroy {
 
     refreshActions(): void {
         if (this.action.group_id) {
-            this._actionService.getAllForGroup(this.action.group_id).subscribe(as => {
+            this._actionService.getAllForGroup(this.action.group_id)
+                .pipe(finalize(() => this._cd.markForCheck()))
+                .subscribe(as => {
                 this.actions = as.filter(a => this.action.id !== a.id);
             });
-            this._workerModelService.getAllForGroup(this.action.group_id).subscribe(wms => {
+            this._workerModelService.getAllForGroup(this.action.group_id)
+                .pipe(finalize(() => this._cd.markForCheck()))
+                .subscribe(wms => {
                 this.workerModels = wms;
             });
         }

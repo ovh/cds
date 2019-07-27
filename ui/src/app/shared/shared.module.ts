@@ -9,6 +9,7 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
 import { GroupFormComponent } from 'app/shared/group/form/group.form.component';
+import { AutoFocusInputComponent } from 'app/shared/input/autofocus/autofocus.input.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
 import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
@@ -137,6 +138,7 @@ import { ZoneComponent } from './zone/zone.component';
         ActionStepFormComponent,
         ActionStepSummaryComponent,
         AuditListComponent,
+        AutoFocusInputComponent,
         BreadcrumbComponent,
         ChartComponentComponent,
         CommitListComponent,
@@ -330,7 +332,8 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowTemplateParamFormComponent,
         TabsComponent,
         MenuComponent,
-        ScrollviewComponent
+        ScrollviewComponent,
+        AutoFocusInputComponent
     ]
 })
 export class SharedModule {

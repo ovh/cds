@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { WorkflowTemplate } from 'app/model/workflow-template.model';
 import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
@@ -7,7 +7,8 @@ import { finalize } from 'rxjs/internal/operators/finalize';
 
 @Component({
     selector: 'app-workflow-template-list',
-    templateUrl: './workflow-template.list.html'
+    templateUrl: './workflow-template.list.html',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowTemplateListComponent {
     loading: boolean;
@@ -16,9 +17,7 @@ export class WorkflowTemplateListComponent {
     path: Array<PathItem>;
     filter: Filter<WorkflowTemplate>;
 
-    constructor(
-        private _workflowTemplateService: WorkflowTemplateService
-    ) {
+    constructor(private _workflowTemplateService: WorkflowTemplateService, private _cd: ChangeDetectorRef) {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
             return d => {
@@ -62,7 +61,10 @@ export class WorkflowTemplateListComponent {
     getTemplates() {
         this.loading = true;
         this._workflowTemplateService.getAll()
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(wts => { this.workflowTemplates = wts; });
     }
 }

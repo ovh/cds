@@ -1,4 +1,4 @@
-import { Component, NgZone, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthenticationState } from 'app/store/authentication.state';
@@ -16,7 +16,8 @@ import { CDSWebWorker } from '../../../shared/worker/web.worker';
 @Component({
     selector: 'app-queue',
     templateUrl: './queue.component.html',
-    styleUrls: ['./queue.component.scss']
+    styleUrls: ['./queue.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class QueueComponent implements OnDestroy {
@@ -37,7 +38,8 @@ export class QueueComponent implements OnDestroy {
         private _store: Store,
         private _wfRunService: WorkflowRunService,
         private _toast: ToastService,
-        private _translate: TranslateService
+        private _translate: TranslateService,
+        private _cd: ChangeDetectorRef
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this.loading = true;
@@ -118,6 +120,7 @@ export class QueueComponent implements OnDestroy {
                         }, {});
                     });
                 }
+                this._cd.markForCheck();
             });
         });
     }
@@ -130,7 +133,10 @@ export class QueueComponent implements OnDestroy {
             parameters['cds.workflow'],
             parseInt(parameters['cds.run.number'], 10),
             parseInt(parameters['cds.node.id'], 10)
-        ).pipe(finalize(() => this.nodeJobRuns[index].updating = false))
+        ).pipe(finalize(() => {
+            this.nodeJobRuns[index].updating = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => this._toast.success('', this._translate.instant('pipeline_stop')))
     }
 }

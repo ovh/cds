@@ -1,17 +1,18 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Pipeline } from 'app/model/pipeline.model';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { DeletePipeline, UpdatePipeline } from 'app/store/pipelines.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
-import { Pipeline } from '../../../../model/pipeline.model';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-admin',
     templateUrl: './pipeline.admin.html',
-    styleUrls: ['./pipeline.admin.scss']
+    styleUrls: ['./pipeline.admin.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PipelineAdminComponent implements OnInit {
 
@@ -32,7 +33,8 @@ export class PipelineAdminComponent implements OnInit {
         private store: Store,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _router: Router
+        private _router: Router,
+        private _cd: ChangeDetectorRef
     ) {
 
     }
@@ -54,7 +56,10 @@ export class PipelineAdminComponent implements OnInit {
             projectKey: this.project.key,
             pipelineName: this.oldName,
             changes: this.editablePipeline
-        })).pipe(finalize(() => this.loading = false))
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('pipeline_updated'));
                 if (this.oldName !== this.editablePipeline.name) {
@@ -71,7 +76,10 @@ export class PipelineAdminComponent implements OnInit {
         this.store.dispatch(new DeletePipeline({
             projectKey: this.project.key,
             pipelineName: this.editablePipeline.name
-        })).pipe(finalize(() => this.loading = false))
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('pipeline_deleted'));
                 this._router.navigate(

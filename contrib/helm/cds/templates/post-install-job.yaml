@@ -24,7 +24,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: {{ template "cds.fullname" . }}-migrate
-        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.cdstag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
         env:
         - name: ALLOW_EMPTY_PASSWORD

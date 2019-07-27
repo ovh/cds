@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { finalize, first } from 'rxjs/operators';
@@ -18,7 +18,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-action-edit',
     templateUrl: './action.edit.html',
-    styleUrls: ['./action.edit.scss']
+    styleUrls: ['./action.edit.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class ActionEditComponent implements OnInit {
@@ -42,7 +43,8 @@ export class ActionEditComponent implements OnInit {
         private _actionService: ActionService,
         private _toast: ToastService, private _translate: TranslateService,
         private _route: ActivatedRoute, private _router: Router,
-        private _groupService: GroupService
+        private _groupService: GroupService,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit() {
@@ -106,6 +108,7 @@ export class ActionEditComponent implements OnInit {
                     this.selectTab(this.selectedTab);
                 }
             }
+            this._cd.markForCheck();
         });
 
         this.getGroups();
@@ -126,7 +129,10 @@ export class ActionEditComponent implements OnInit {
     getAction(): void {
         this.loading = true;
         this._actionService.get(this.groupName, this.actionName)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .pipe(first()).subscribe(a => {
                 this.action = a;
                 this.columnsAudits[3].disabled = !this.action.editable;
@@ -137,7 +143,10 @@ export class ActionEditComponent implements OnInit {
     getUsage(): void {
         this.loadingUsage = true;
         this._actionService.getUsage(this.groupName, this.actionName)
-            .pipe(finalize(() => this.loadingUsage = false))
+            .pipe(finalize(() => {
+                this.loadingUsage = false;
+                this._cd.markForCheck();
+            }))
             .pipe(first()).subscribe(u => {
                 this.usage = u;
             });
@@ -146,7 +155,10 @@ export class ActionEditComponent implements OnInit {
     getAudits(): void {
         this.loadingAudits = true;
         this._actionService.getAudits(this.groupName, this.actionName)
-            .pipe(finalize(() => this.loadingAudits = false))
+            .pipe(finalize(() => {
+                this.loadingAudits = false;
+                this._cd.markForCheck();
+            }))
             .pipe(first()).subscribe(as => {
                 this.audits = as;
             });
@@ -164,7 +176,10 @@ export class ActionEditComponent implements OnInit {
 
     clickRollback(aa: AuditAction): void {
         this._actionService.rollbackAudit(this.action.group.name, this.action.name, aa.id)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(a => {
                 this._toast.success('', this._translate.instant('action_saved'));
                 this.action = a;
@@ -203,7 +218,10 @@ export class ActionEditComponent implements OnInit {
         }
 
         this._actionService.update(this.action, action)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(a => {
                 this._toast.success('', this._translate.instant('action_saved'));
                 this.action = a;
@@ -214,7 +232,10 @@ export class ActionEditComponent implements OnInit {
     actionDelete(): void {
         this.loading = true;
         this._actionService.delete(this.action.group.name, this.action.name)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('action_deleted'));
                 this._router.navigate(['settings', 'action']);
@@ -240,7 +261,10 @@ export class ActionEditComponent implements OnInit {
     getGroups(): void {
         this.loading = true;
         this._groupService.getAll()
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(gs => {
                 this.groups = gs;
             });

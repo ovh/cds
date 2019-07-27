@@ -1,5 +1,5 @@
 import {
-    ChangeDetectionStrategy,
+    ChangeDetectionStrategy, ChangeDetectorRef,
     Component,
     EventEmitter,
     Input,
@@ -115,7 +115,8 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     private _translate: TranslateService,
     private _toast: ToastService,
     private _appService: ApplicationService,
-    private store: Store
+    private store: Store,
+    private _cd: ChangeDetectorRef
   ) {
 
   }
@@ -179,6 +180,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     })).pipe(
       finalize(() => {
           this.loadingCreatePipeline = false;
+          this._cd.markForCheck();
       }),
       flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, this.newPipeline.name))),
       map((pip) => {
@@ -210,7 +212,10 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       projectKey: this.project.key,
       application: this.newApplication
     })).pipe(
-      finalize(() => this.loadingCreateApplication = false),
+      finalize(() => {
+          this.loadingCreateApplication = false;
+          this._cd.markForCheck();
+      }),
       flatMap(() => this.store.selectOnce(ApplicationsState.selectApplication(this.project.key, this.newApplication.name))),
       map((app) => {
         this._toast.success('', this._translate.instant('application_created'));
@@ -246,7 +251,10 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     // TODO: to update with store
     this._appService.getDeploymentStrategies(this.project.key, app.name).pipe(
       first(),
-      finalize(() => this.loadingIntegrations = false)
+      finalize(() => {
+          this.loadingIntegrations = false;
+          this._cd.markForCheck();
+      })
     ).subscribe(
       (data) => {
         this.integrations = [];
@@ -259,7 +267,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
             idName.name = pf.name;
             this.integrations.push(idName);
           }
-        })
+        });
         if (this.integrations.length) {
           this.integrations.unshift(new IdName());
         }
@@ -273,7 +281,10 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       projectKey: this.project.key,
       environment: this.newEnvironment
     })).pipe(
-      finalize(() => this.loadingCreateEnvironment = false),
+      finalize(() => {
+          this.loadingCreateEnvironment = false;
+          this._cd.markForCheck();
+      }),
       flatMap(() => this.store.selectOnce(ProjectState)),
       map((projState: ProjectStateModel) => {
         let proj = projState.project;

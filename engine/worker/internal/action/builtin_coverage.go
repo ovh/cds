@@ -43,6 +43,8 @@ func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime,
 		parserMode = coverage.COBERTURA
 	case string(coverage.LCOV):
 		parserMode = coverage.LCOV
+	case string(coverage.CLOVER):
+		parserMode = coverage.CLOVER
 	default:
 		return res, fmt.Errorf("coverage parser: unknown format %s", mode)
 	}

@@ -1,11 +1,12 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { WorkflowNodeRunArtifact, WorkflowNodeRunStaticFiles } from 'app/model/workflow.run.model';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 
 @Component({
     selector: 'app-workflow-artifact-list',
     templateUrl: './artifact.list.html',
-    styleUrls: ['./artifact.list.scss']
+    styleUrls: ['./artifact.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowRunArtifactListComponent {
     @Input() artifacts: Array<WorkflowNodeRunArtifact>;

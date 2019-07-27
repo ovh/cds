@@ -22,9 +22,15 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 
 	//Checking if the hook is still at status waiting or building
 	pendingOutgoingHooks := wr.PendingOutgoingHook()
-	nodeRun, ok := pendingOutgoingHooks[hookRunID]
+	nr, ok := pendingOutgoingHooks[hookRunID]
 	if !ok {
 		return nil, sdk.WrapError(sdk.ErrNotFound, "Unable to find node run")
+	}
+
+	// Reload node run with build parameters
+	nodeRun, err := LoadNodeRunByID(db, nr.ID, LoadRunOptions{})
+	if err != nil {
+		return nil, err
 	}
 
 	nodeRun.Status = callback.Status
@@ -43,7 +49,19 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 	mapNodes := wr.Workflow.WorkflowData.Maps()
 	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
 
-	report1, _, err := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, nil, node, int(nodeRun.SubNumber))
+loop:
+	for i := range wr.WorkflowNodeRuns {
+		nrs := wr.WorkflowNodeRuns[i]
+		for j := range nrs {
+			nr := nrs[j]
+			if nr.ID == nodeRun.ID {
+				nrs[j] = *nodeRun
+				break loop
+			}
+		}
+	}
+
+	report1, _, err := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, nil, node, int(nodeRun.SubNumber), nil)
 	report.Merge(report1, err) //nolint
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to processNodeOutGoingHook")

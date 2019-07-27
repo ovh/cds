@@ -1,7 +1,6 @@
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AppService } from 'app/app.service';
-import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Event } from '../../../model/event.model';
 import { HeatmapSearchCriterion } from '../../../model/heatmap.model';
@@ -15,7 +14,8 @@ import { ToolbarComponent } from './toolbar/toolbar.component';
 @Component({
     selector: 'app-home-heatmap',
     templateUrl: './home.heatmap.html',
-    styleUrls: ['./home.heatmap.scss']
+    styleUrls: ['./home.heatmap.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class HomeHeatmapComponent implements AfterViewInit {
@@ -51,7 +51,8 @@ export class HomeHeatmapComponent implements AfterViewInit {
         private _timelineStore: TimelineStore,
         private _toast: ToastService,
         public _translate: TranslateService,
-        private _appService: AppService
+        private _appService: AppService,
+        private _cd: ChangeDetectorRef
     ) {
         this.filter = new TimelineFilter();
     }
@@ -70,9 +71,7 @@ export class HomeHeatmapComponent implements AfterViewInit {
                 this.timelineSub.unsubscribe();
             }
             if (f) {
-
                 this.timelineSub = this._timelineStore.alltimeline()
-                    .pipe(finalize(() => this.loading = false))
                     .subscribe(es => {
                         if (!es) {
                             return;
@@ -129,8 +128,10 @@ export class HomeHeatmapComponent implements AfterViewInit {
 
                         this.projects = Object.keys(this.unfilteredGroupedEvents).sort();
                         this.filterEvents();
+                        this._cd.markForCheck();
                     });
             }
+            this._cd.markForCheck();
         });
 
     }
@@ -142,21 +143,21 @@ export class HomeHeatmapComponent implements AfterViewInit {
     filterEvents() {
         const ONE_HOUR = 60 * 60 * 1000;
         Object.keys(this.unfilteredGroupedEvents).forEach(proj => {
-          Object.keys(this.unfilteredGroupedEvents[proj]).forEach(workflow => {
-            this.unfilteredGroupedEvents[proj][workflow] = this.unfilteredGroupedEvents[proj][workflow].filter(event => {
-              let diffWithNow = new Date().getTime() - new Date(event.timestamp).getTime();
-              if (event.pipelineStatus === 'Building') {
-                return true;
-              }
-              return diffWithNow < ONE_HOUR;
+            Object.keys(this.unfilteredGroupedEvents[proj]).forEach(workflow => {
+                this.unfilteredGroupedEvents[proj][workflow] = this.unfilteredGroupedEvents[proj][workflow].filter(event => {
+                    let diffWithNow = new Date().getTime() - new Date(event.timestamp).getTime();
+                    if (event.pipelineStatus === 'Building') {
+                        return true;
+                    }
+                    return diffWithNow < ONE_HOUR;
+                });
+                if (this.unfilteredGroupedEvents[proj][workflow].length === 0) {
+                    delete this.unfilteredGroupedEvents[proj][workflow];
+                }
             });
-            if (this.unfilteredGroupedEvents[proj][workflow].length === 0) {
-              delete this.unfilteredGroupedEvents[proj][workflow];
+            if (Object.keys(this.unfilteredGroupedEvents[proj]).length === 0) {
+                delete this.unfilteredGroupedEvents[proj];
             }
-          });
-          if (Object.keys(this.unfilteredGroupedEvents[proj]).length === 0) {
-            delete this.unfilteredGroupedEvents[proj];
-          }
         });
         this.workflows = HomeHeatmapComponent.clone(this.unfilteredWorkflows);
         this.projects = Object.keys(this.unfilteredGroupedEvents).sort();

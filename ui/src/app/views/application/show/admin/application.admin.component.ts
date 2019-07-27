@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -15,10 +15,10 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-application-admin',
     templateUrl: './application.admin.html',
-    styleUrls: ['./application.admin.scss']
+    styleUrls: ['./application.admin.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ApplicationAdminComponent implements OnInit {
-
     @Input() application: Application;
     @Input() project: Project;
     @ViewChild('updateWarning', { static: false })
@@ -34,10 +34,9 @@ export class ApplicationAdminComponent implements OnInit {
         private _toast: ToastService,
         public _translate: TranslateService,
         private _router: Router,
-        private _store: Store
-    ) {
-
-    }
+        private _store: Store,
+        private _cd: ChangeDetectorRef
+    ) { }
 
     ngOnInit() {
         this.user = this._store.selectSnapshot(AuthenticationState.user);
@@ -60,7 +59,10 @@ export class ApplicationAdminComponent implements OnInit {
                 projectKey: this.project.key,
                 applicationName: this.application.name,
                 changes: app
-            })).pipe(finalize(() => this.loading = false))
+            })).pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
                 .subscribe(() => {
                     this._toast.success('', this._translate.instant('application_update_ok'));
                     if (nameUpdated) {
@@ -73,7 +75,10 @@ export class ApplicationAdminComponent implements OnInit {
     deleteApplication(): void {
         this.loading = true;
         this._store.dispatch(new DeleteApplication({ projectKey: this.project.key, applicationName: this.application.name }))
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('application_deleted'));
                 this._router.navigate(['/project', this.project.key], { queryParams: { 'tab': 'applications' } });

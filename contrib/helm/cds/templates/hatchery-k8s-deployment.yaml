@@ -31,7 +31,7 @@ spec:
       {{- end }}
       containers:
       - name: {{ template "cds.fullname" . }}-hatchery-k8s
-        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.cdstag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
         env:
         - name: CDS_HATCHERY_KUBERNETES_NAMESPACE

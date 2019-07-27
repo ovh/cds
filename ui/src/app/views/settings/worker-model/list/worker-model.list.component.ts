@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { WorkerModel } from 'app/model/worker-model.model';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
@@ -7,7 +7,8 @@ import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-worker-model-list',
-    templateUrl: './worker-model.list.html'
+    templateUrl: './worker-model.list.html',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkerModelListComponent {
     loading: boolean;
@@ -20,7 +21,8 @@ export class WorkerModelListComponent {
     binarySelected: boolean;
 
     constructor(
-        private _workerModelService: WorkerModelService
+        private _workerModelService: WorkerModelService,
+        private _cd: ChangeDetectorRef
     ) {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
@@ -109,7 +111,10 @@ export class WorkerModelListComponent {
     loadWorkerModels() {
         this.loading = true;
         this._workerModelService.getAll(this.selectedState, this.binaryValue)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(wms => {
                 this.workerModels = wms;
             });

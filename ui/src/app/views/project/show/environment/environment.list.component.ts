@@ -1,11 +1,12 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { IdName, Project } from 'app/model/project.model';
 import { Warning } from 'app/model/warning.model';
 
 @Component({
     selector: 'app-project-environments',
     templateUrl: './environment.list.html',
-    styleUrls: ['./environment.list.scss']
+    styleUrls: ['./environment.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectEnvironmentListComponent {
 

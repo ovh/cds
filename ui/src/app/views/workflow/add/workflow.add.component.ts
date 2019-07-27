@@ -1,4 +1,4 @@
-import { Component, NgZone, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -25,7 +25,8 @@ import { filter, finalize, first } from 'rxjs/operators';
 @Component({
     selector: 'app-workflow-add',
     templateUrl: './workflow.add.html',
-    styleUrls: ['./workflow.add.scss']
+    styleUrls: ['./workflow.add.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class WorkflowAddComponent implements OnInit {
@@ -79,7 +80,8 @@ workflow:
         private _repoManagerService: RepoManagerService,
         private _workflowTemplateService: WorkflowTemplateService,
         private _sharedService: SharedService,
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
     ) {
         this.workflow = new Workflow();
         this.selectedStrategy = new VCSStrategy();
@@ -96,7 +98,7 @@ workflow:
             this.project = datas['project'];
         });
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._theme.get().pipe(finalize(() => this._cd.markForCheck())).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
@@ -104,7 +106,7 @@ workflow:
         });
 
         this.projectSubscription = this._store.select(ProjectState)
-            .pipe(filter((projState) => projState.project && projState.project.key))
+            .pipe(filter((projState) => projState.project && projState.project.key), finalize(() => this._cd.markForCheck()))
             .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
 
         this.fetchTemplates();
@@ -158,7 +160,8 @@ workflow:
     fetchRepos(repoMan: string): void {
         this.loadingRepo = true;
         this._repoManagerService.getRepositories(this.project.key, repoMan, false).pipe(first(), finalize(() => {
-            this.loadingRepo = false
+            this.loadingRepo = false;
+            this._cd.markForCheck();
         })).subscribe(rs => {
             this.repos = rs;
         });
@@ -205,6 +208,7 @@ workflow:
         this.loading = true;
         this._import.import(this.project.key, operationRequest).pipe(first(), finalize(() => {
             this.loading = false;
+            this._cd.markForCheck();
         })).subscribe(res => {
             this.pollingImport = true;
             this.pollingResponse = res;
@@ -232,6 +236,7 @@ workflow:
                         this.pollingImport = false;
                         webworker.stop();
                     }
+                    this._cd.markForCheck();
                 });
             }
         });
@@ -241,6 +246,7 @@ workflow:
         this.loading = true;
         this._import.create(this.project.key, this.pollingResponse.uuid).pipe(first(), finalize(() => {
             this.loading = false;
+            this._cd.markForCheck();
         })).subscribe(res => {
             this.asCodeResult = res;
         });
@@ -260,7 +266,10 @@ workflow:
             this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager, true)
                 .pipe(
                     first(),
-                    finalize(() => this.loading = false)
+                    finalize(() => {
+                        this.loading = false;
+                        this._cd.markForCheck();
+                    })
                 )
                 .subscribe(repos => this.repos = repos);
         }
@@ -277,6 +286,7 @@ workflow:
     fetchTemplates() {
         this._workflowTemplateService.getAll().subscribe(ts => {
             this.templates = ts;
+            this._cd.markForCheck();
         });
     }
 

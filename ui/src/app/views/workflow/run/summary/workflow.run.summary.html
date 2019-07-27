@@ -86,7 +86,7 @@
                                     </button>
                                 </div>
                                 <div class="three wide column right aligned">
-                                    <app-delete-button [loading]="loadingDelete" (event)="delete()"></app-delete-button>
+                                    <app-delete-button [disabled]="loadingDelete" [loading]="loadingDelete" (event)="delete()"></app-delete-button>
                                 </div>
                             </div>
                         </div>
