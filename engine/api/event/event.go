@@ -123,13 +123,6 @@ func DequeueEvent(c context.Context, db *gorp.DbMap) {
 			}
 		}
 
-		// Project integration part
-		// if e.ProjectKey == "" {
-		// 	continue
-		// }
-
-		// key --> e.ProjectKey + "/" + e.IntegrationID --> Permet d'avoir une intégration par node
-
 		for _, eventIntegrationID := range e.EventIntegrationsID {
 			brokerConnectionKey := fmt.Sprintf("%d", eventIntegrationID)
 			brokerConnection, ok := brokersConnectionCache.Get(brokerConnectionKey)
