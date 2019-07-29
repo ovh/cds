@@ -161,10 +161,10 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		if !okID {
 			sdk.AddParameter(&hookRun.BuildParameters, "cds.node.id", sdk.StringParameter, fmt.Sprintf("%d", hookRun.ID))
 		}
+	}
 
-		if err := UpdateNodeRunBuildParameters(db, hookRun.ID, hookRun.BuildParameters); err != nil {
-			return nil, true, sdk.WrapError(err, "unable to update workflow node run build parameters")
-		}
+	if err := UpdateNodeRunBuildParameters(db, hookRun.ID, hookRun.BuildParameters); err != nil {
+		return nil, false, sdk.WrapError(err, "unable to update workflow node run build parameters")
 	}
 
 	report.Add(hookRun)

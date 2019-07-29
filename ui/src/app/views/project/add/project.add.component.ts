@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -14,7 +14,8 @@ import { ToastService } from '../../../shared/toast/ToastService';
 @Component({
     selector: 'app-project-add',
     templateUrl: './project.add.html',
-    styleUrls: ['./project.add.scss']
+    styleUrls: ['./project.add.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectAddComponent {
 
@@ -38,7 +39,8 @@ export class ProjectAddComponent {
         private _router: Router,
         private _groupService: GroupService,
         private _permissionService: PermissionService,
-        private store: Store
+        private store: Store,
+        private _cd: ChangeDetectorRef
     ) {
         this.project = new Project();
         this.loadGroups(null);
@@ -89,7 +91,10 @@ export class ProjectAddComponent {
         if (!this.nameError && !this.keyError) {
             this.loading = true;
             this.store.dispatch(new AddProject(this.project))
-                .pipe(finalize(() => this.loading = false))
+                .pipe(finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                }))
                 .subscribe(() => {
                     this._toast.success('', this._translate.instant('project_added'));
                     this._router.navigate(['/project', this.project.key]);
@@ -100,9 +105,13 @@ export class ProjectAddComponent {
     }
 
     loadGroups(selected: string) {
-        this._groupService.getGroups(true).pipe(first()).subscribe(groups => {
+        this._groupService.getGroups(true)
+            .pipe(first(), finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(groups => {
             this.groupList = groups;
-            this.loading = false;
             if (selected == null) {
                 return;
             }
@@ -122,14 +131,16 @@ export class ProjectAddComponent {
             return;
         }
         this.loading = true;
-        this._groupService.createGroup(this.newGroup).subscribe(() => {
+        this._groupService.createGroup(this.newGroup)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this.newGroup = new Group();
+                this._cd.markForCheck();
+            }))
+            .subscribe(() => {
             this._toast.success('', this._translate.instant('group_added'));
             this.loadGroups(this.newGroup.name);
             this.modalCreateGroup.hide();
-            this.loading = false;
-        }, () => {
-            this.loading = false;
-            this.newGroup = new Group();
         });
     }
 

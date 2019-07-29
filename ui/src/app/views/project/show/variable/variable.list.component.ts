@@ -1,7 +1,12 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { AddVariableInProject, DeleteVariableInProject, FetchVariablesInProject, UpdateVariableInProject } from 'app/store/project.action';
+import {
+    AddVariableInProject,
+    DeleteVariableInProject,
+    FetchVariablesInProject,
+    UpdateVariableInProject
+} from 'app/store/project.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
 import { PermissionValue } from '../../../../model/permission.model';
@@ -14,7 +19,8 @@ import { VariableEvent } from '../../../../shared/variable/variable.event.model'
 @Component({
     selector: 'app-project-variables',
     templateUrl: './variable.list.html',
-    styleUrls: ['./variable.list.scss']
+    styleUrls: ['./variable.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectVariablesComponent implements OnInit {
 
@@ -48,14 +54,18 @@ export class ProjectVariablesComponent implements OnInit {
     constructor(
         private _translate: TranslateService,
         private _toast: ToastService,
-        private store: Store
+        private store: Store,
+        private _cd: ChangeDetectorRef
     ) {
 
     }
 
     ngOnInit() {
         this.store.dispatch(new FetchVariablesInProject({ projectKey: this.project.key }))
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe();
     }
 
@@ -68,7 +78,10 @@ export class ProjectVariablesComponent implements OnInit {
                 case 'add':
                     this.varFormLoading = true;
                     this.store.dispatch(new AddVariableInProject(event.variable))
-                        .pipe(finalize(() => this.varFormLoading = false))
+                        .pipe(finalize(() => {
+                            this.varFormLoading = false;
+                            this._cd.markForCheck();
+                        }))
                         .subscribe(() => this._toast.success('', this._translate.instant('variable_added')));
                     break;
                 case 'update':

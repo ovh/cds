@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { AddLabelWorkflowInProject, DeleteLabelWorkflowInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
@@ -7,9 +7,10 @@ import { Warning } from '../../../../../model/warning.model';
 import { HelpersService } from '../../../../../service/helpers/helpers.service';
 
 @Component({
-  selector: 'app-project-workflows-lines',
-  templateUrl: './workflow.list.lines.html',
-  styleUrls: ['./workflow.list.lines.scss']
+    selector: 'app-project-workflows-lines',
+    templateUrl: './workflow.list.lines.html',
+    styleUrls: ['./workflow.list.lines.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectWorkflowListLinesComponent {
 
@@ -68,14 +69,17 @@ export class ProjectWorkflowListLinesComponent {
   filteredLabels: Array<Label> = [];
   loadingLabel = false;
 
-  constructor(private store: Store, private _helpersService: HelpersService) { }
+  constructor(private store: Store, private _helpersService: HelpersService, private _cd: ChangeDetectorRef) { }
 
   linkLabelToWorkflow(wfName: string, label: Label) {
     this.loadingLabel = true;
     this.store.dispatch(new AddLabelWorkflowInProject({
       workflowName: wfName,
       label
-    })).pipe(finalize(() => this.loadingLabel = false))
+    })).pipe(finalize(() => {
+        this.loadingLabel = false;
+        this._cd.markForCheck();
+    }))
       .subscribe();
   }
 
@@ -84,7 +88,10 @@ export class ProjectWorkflowListLinesComponent {
     this.store.dispatch(new DeleteLabelWorkflowInProject({
       workflowName: wfName,
       labelId: label.id
-    })).pipe(finalize(() => this.loadingLabel = false))
+    })).pipe(finalize(() => {
+        this.loadingLabel = false;
+        this._cd.markForCheck();
+    }))
       .subscribe();
   }
 
@@ -96,7 +103,10 @@ export class ProjectWorkflowListLinesComponent {
     this.store.dispatch(new AddLabelWorkflowInProject({
       workflowName: wfName,
       label
-    })).pipe(finalize(() => this.loadingLabel = false))
+    })).pipe(finalize(() => {
+        this.loadingLabel = false;
+        this._cd.markForCheck();
+    }))
       .subscribe(() => this.labelFilter = '');
   }
 

@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy, ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output,
+    ViewChild
+} from '@angular/core';
 import { Group } from 'app/model/group.model';
 import { User } from 'app/model/user.model';
 import { ModelPattern, WorkerModel } from 'app/model/worker-model.model';
@@ -13,10 +21,11 @@ import { Subscription } from 'rxjs/Subscription';
 @Component({
     selector: 'app-worker-model-form',
     templateUrl: './worker-model.form.html',
-    styleUrls: ['./worker-model.form.scss']
+    styleUrls: ['./worker-model.form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkerModelFormComponent implements OnInit, OnChanges {
+export class WorkerModelFormComponent implements OnInit {
     @ViewChild('codeMirror', {static: false}) codemirror: any;
 
     _workerModel: WorkerModel;
@@ -54,7 +63,7 @@ export class WorkerModelFormComponent implements OnInit, OnChanges {
     constructor(
         private _sharedService: SharedService,
         private _workerModelService: WorkerModelService,
-        private _theme: ThemeStore
+        private _theme: ThemeStore, private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = {
             mode: 'text/x-yaml',
@@ -70,10 +79,8 @@ export class WorkerModelFormComponent implements OnInit, OnChanges {
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
             }
+            this._cd.markForCheck();
         });
-    }
-
-    ngOnChanges(): void {
     }
 
     loadAsCode(): void {
@@ -94,9 +101,12 @@ pattern_name: basic_unix`;
             return;
         }
 
-        this.loadingAsCode = true
+        this.loadingAsCode = true;
         this._workerModelService.export(this.workerModel.group.name, this.workerModel.name)
-            .pipe(finalize(() => this.loadingAsCode = false))
+            .pipe(finalize(() => {
+                this.loadingAsCode = false;
+                this._cd.markForCheck();
+            }))
             .subscribe((wmStr) => this.workerModelAsCode = wmStr);
     }
 

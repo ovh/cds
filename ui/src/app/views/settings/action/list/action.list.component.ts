@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { finalize } from 'rxjs/internal/operators/finalize';
 import { Action } from '../../../../model/action.model';
 import { ActionService } from '../../../../service/action/action.service';
@@ -9,7 +9,8 @@ import { Tab } from '../../../../shared/tabs/tabs.component';
 @Component({
     selector: 'app-action-list',
     templateUrl: './action.list.html',
-    styleUrls: ['./action.list.scss']
+    styleUrls: ['./action.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActionListComponent {
     loading: boolean;
@@ -23,7 +24,8 @@ export class ActionListComponent {
     selectedTab: Tab;
 
     constructor(
-        private _actionService: ActionService
+        private _actionService: ActionService,
+        private _cd: ChangeDetectorRef
     ) {
         this.tabs = [<Tab>{
             translate: 'action_custom',
@@ -87,14 +89,20 @@ export class ActionListComponent {
     getActions() {
         this.loading = true;
         this._actionService.getAll()
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(as => { this.actions = as; });
     }
 
     getActionBuiltins() {
         this.loadingBuiltin = true;
         this._actionService.getAllBuiltin()
-            .pipe(finalize(() => this.loadingBuiltin = false))
+            .pipe(finalize(() => {
+                this.loadingBuiltin = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(as => { this.actionsBuiltin = as; });
     }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild, } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/model/user.model';
 import { AuthentificationStore } from 'app/service/auth/authentification.store';
@@ -12,7 +12,8 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-cdsctl',
     templateUrl: './cdsctl.html',
-    styleUrls: ['./cdsctl.scss']
+    styleUrls: ['./cdsctl.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class CdsctlComponent implements OnInit {
@@ -42,7 +43,8 @@ export class CdsctlComponent implements OnInit {
         private _authentificationStore: AuthentificationStore,
         private _configService: ConfigService,
         private _translate: TranslateService,
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
@@ -88,13 +90,17 @@ export class CdsctlComponent implements OnInit {
             if (this.codemirror8 && this.codemirror8.instance) {
                 this.codemirror8.instance.setOption('theme', this.codeMirrorConfig.theme);
             }
+            this._cd.markForCheck();
         });
 
         this.currentUser = this._authentificationStore.getUser();
 
         this.loading = true;
         this._configService.getConfig()
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(r => {
                 this.apiURL = r['url.api'];
                 this.loading = false;

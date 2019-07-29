@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
@@ -14,7 +14,8 @@ import { Subscription } from 'rxjs/Subscription';
 @Component({
     selector: 'app-project-integration-form',
     templateUrl: './project.integration.form.html',
-    styleUrls: ['./project.integration.form.scss']
+    styleUrls: ['./project.integration.form.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class ProjectIntegrationFormComponent implements OnInit {
@@ -33,7 +34,8 @@ export class ProjectIntegrationFormComponent implements OnInit {
         private _toast: ToastService,
         private _translate: TranslateService,
         private store: Store,
-        private _theme: ThemeStore
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
     ) {
         this.newIntegration = new ProjectIntegration();
         this.codeMirrorConfig = {
@@ -45,7 +47,9 @@ export class ProjectIntegrationFormComponent implements OnInit {
     }
 
     ngOnInit() {
-        this._integrationService.getIntegrationModels().pipe(first()).subscribe(platfs => {
+        this._integrationService.getIntegrationModels()
+            .pipe(first(), finalize(() => this._cd.markForCheck()))
+            .subscribe(platfs => {
             this.models = platfs.filter(pf => !pf.public);
         });
 
@@ -54,6 +58,7 @@ export class ProjectIntegrationFormComponent implements OnInit {
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
             }
+            this._cd.markForCheck();
         });
     }
 
@@ -64,7 +69,10 @@ export class ProjectIntegrationFormComponent implements OnInit {
     create(): void {
         this.loading = true;
         this.store.dispatch(new AddIntegrationInProject({ projectKey: this.project.key, integration: this.newIntegration }))
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(() => {
                 this.newIntegration = new ProjectIntegration();
                 this._toast.success('', this._translate.instant('project_updated'));

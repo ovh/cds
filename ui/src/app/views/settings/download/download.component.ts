@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { DownloadableResource } from 'app/model/download.model';
 import { environment } from '../../../../environments/environment';
 import { DownloadService } from '../../../service/download/download.service';
@@ -7,7 +7,8 @@ import { PathItem } from '../../../shared/breadcrumb/breadcrumb.component';
 @Component({
     selector: 'app-download',
     templateUrl: './download.html',
-    styleUrls: ['./download.scss']
+    styleUrls: ['./download.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DownloadComponent {
     resources: Array<DownloadableResource>;
@@ -15,13 +16,14 @@ export class DownloadComponent {
     apiURL: string;
     path: Array<PathItem>;
 
-    constructor(private _downloadService: DownloadService) {
+    constructor(private _downloadService: DownloadService, private _cd: ChangeDetectorRef) {
         this.loading = true;
 
         this._downloadService.getDownloads().subscribe(r => {
             this.resources = r;
             this.apiURL = environment.apiURL;
             this.loading = false;
+            this._cd.markForCheck();
         });
 
         this.path = [<PathItem>{

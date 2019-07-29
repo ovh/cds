@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { finalize } from 'rxjs/operators/finalize';
 import { Group } from '../../../../model/group.model';
 import { GroupService } from '../../../../service/group/group.service';
@@ -8,7 +8,8 @@ import { Column, ColumnType } from '../../../../shared/table/data-table.componen
 @Component({
     selector: 'app-group-list',
     templateUrl: './group.list.html',
-    styleUrls: ['./group.list.scss']
+    styleUrls: ['./group.list.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GroupListComponent {
     loading: boolean;
@@ -17,7 +18,8 @@ export class GroupListComponent {
     path: Array<PathItem>;
 
     constructor(
-        private _groupService: GroupService
+        private _groupService: GroupService,
+         private _cd: ChangeDetectorRef
     ) {
         this.columns = [
             <Column<Group>>{
@@ -44,7 +46,10 @@ export class GroupListComponent {
     getGroups(): void {
         this.loading = true;
         this._groupService.getGroups()
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(gs => { this.groups = gs; });
     }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
@@ -11,7 +11,8 @@ import { Tab } from '../../../../shared/tabs/tabs.component';
 @Component({
     selector: 'app-action-show',
     templateUrl: './action.show.html',
-    styleUrls: ['./action.show.scss']
+    styleUrls: ['./action.show.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
 export class ActionShowComponent implements OnInit {
@@ -28,7 +29,8 @@ export class ActionShowComponent implements OnInit {
 
     constructor(
         private _route: ActivatedRoute,
-        private _actionService: ActionService
+        private _actionService: ActionService,
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit() {
@@ -55,6 +57,7 @@ export class ActionShowComponent implements OnInit {
                     this.selectTab(this.selectedTab);
                 }
             }
+            this._cd.markForCheck();
         });
     }
 
@@ -70,7 +73,10 @@ export class ActionShowComponent implements OnInit {
     getAction(): void {
         this.loading = true;
         this._actionService.getBuiltin(this.actionName)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
             .pipe(first()).subscribe(a => {
                 this.action = a;
                 this.updatePath();
@@ -80,7 +86,10 @@ export class ActionShowComponent implements OnInit {
     getUsage(): void {
         this.loadingUsage = true;
         this._actionService.getBuiltinUsage(this.actionName)
-            .pipe(finalize(() => this.loadingUsage = false))
+            .pipe(finalize(() => {
+                this.loadingUsage = false;
+                this._cd.markForCheck();
+            }))
             .pipe(first()).subscribe(u => {
                 this.usage = u;
             });

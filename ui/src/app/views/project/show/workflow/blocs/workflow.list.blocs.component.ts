@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { AddLabelWorkflowInProject, DeleteLabelWorkflowInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
@@ -7,9 +7,10 @@ import { Warning } from '../../../../../model/warning.model';
 import { HelpersService } from '../../../../../service/helpers/helpers.service';
 
 @Component({
-  selector: 'app-project-workflows-blocs',
-  templateUrl: './workflow.list.blocs.html',
-  styleUrls: ['./workflow.list.blocs.scss']
+    selector: 'app-project-workflows-blocs',
+    templateUrl: './workflow.list.blocs.html',
+    styleUrls: ['./workflow.list.blocs.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectWorkflowListBlocsComponent {
 
@@ -67,7 +68,7 @@ export class ProjectWorkflowListBlocsComponent {
   loadingLabel = false;
 
   constructor(
-    private store: Store,
+    private store: Store, private _cd: ChangeDetectorRef,
     private _helpersService: HelpersService
   ) { }
 
@@ -76,7 +77,10 @@ export class ProjectWorkflowListBlocsComponent {
     this.store.dispatch(new AddLabelWorkflowInProject({
       workflowName: wfName,
       label
-    })).pipe(finalize(() => this.loadingLabel = false))
+    })).pipe(finalize(() => {
+        this.loadingLabel = false;
+        this._cd.markForCheck();
+    }))
       .subscribe();
   }
 
@@ -85,7 +89,10 @@ export class ProjectWorkflowListBlocsComponent {
     this.store.dispatch(new DeleteLabelWorkflowInProject({
       workflowName: wfName,
       labelId: label.id
-    })).pipe(finalize(() => this.loadingLabel = false))
+    })).pipe(finalize(() => {
+        this.loadingLabel = false;
+        this._cd.markForCheck();
+    }))
       .subscribe();
   }
 
@@ -97,7 +104,10 @@ export class ProjectWorkflowListBlocsComponent {
     this.store.dispatch(new AddLabelWorkflowInProject({
       workflowName: wfName,
       label
-    })).pipe(finalize(() => this.loadingLabel = false))
+    })).pipe(finalize(() => {
+        this.loadingLabel = false;
+        this._cd.markForCheck();
+    }))
       .subscribe();
   }
 

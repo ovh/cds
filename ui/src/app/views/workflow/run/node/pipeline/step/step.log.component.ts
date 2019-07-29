@@ -232,6 +232,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                 if (element) {
                     element.scrollIntoView(true);
                     this._force = true;
+                    this._cd.markForCheck();
                 }
             });
         }
@@ -287,6 +288,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             }
             this.splittedLogsToDisplay = this.splittedLogs;
             this.loadingMore = false;
+            this._cd.markForCheck();
         }, 0);
     }
 
