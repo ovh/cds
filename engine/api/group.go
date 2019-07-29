@@ -202,7 +202,7 @@ func (api *API) postGroupUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		groupName := vars["permGroupName"]
 
-		var data sdk.AuthentifiedUser
+		var data sdk.GroupMember
 		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
 		}
@@ -244,7 +244,7 @@ func (api *API) postGroupUserHandler() service.Handler {
 		if err := group.InsertLinkGroupUser(tx, &group.LinkGroupUser{
 			GroupID: g.ID,
 			UserID:  u.OldUserStruct.ID,
-			Admin:   data.GroupAdmin,
+			Admin:   data.Admin,
 		}); err != nil {
 			return sdk.WrapError(err, "cannot add user %s in group %s", u.Username, g.Name)
 		}
@@ -268,7 +268,7 @@ func (api *API) putGroupUserHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		username := vars["username"]
 
-		var data sdk.AuthentifiedUser
+		var data sdk.GroupMember
 		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
 		}
@@ -295,7 +295,7 @@ func (api *API) putGroupUserHandler() service.Handler {
 		}
 
 		// In case we are removing admin rights to user, we need to check that it's not the last admin
-		if link.Admin && !data.GroupAdmin {
+		if link.Admin && !data.Admin {
 			links, err := group.LoadLinksGroupUserForGroupIDs(ctx, tx, []int64{g.ID})
 			if err != nil {
 				return err
@@ -313,7 +313,7 @@ func (api *API) putGroupUserHandler() service.Handler {
 			}
 		}
 
-		link.Admin = data.GroupAdmin
+		link.Admin = data.Admin
 
 		if err := group.UpdateLinkGroupUser(tx, link); err != nil {
 			return err

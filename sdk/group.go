@@ -26,8 +26,8 @@ type Group struct {
 	ID   int64  `json:"id" yaml:"-" db:"id"`
 	Name string `json:"name" yaml:"name" cli:"name,key" db:"name"`
 	// aggregate
-	Members []AuthentifiedUser `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
-	Admin   bool               `json:"admin,omitempty" yaml:"admin,omitempty" db:"-"`
+	Members []GroupMember `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
+	Admin   bool          `json:"admin,omitempty" yaml:"admin,omitempty" db:"-"`
 }
 
 // IsValid returns an error if given group is not valid.
@@ -69,6 +69,14 @@ func (g Groups) ToMap() map[int64]Group {
 		mGroups[g[i].ID] = g[i]
 	}
 	return mGroups
+}
+
+// GroupMember struct.
+type GroupMember struct {
+	ID       string `json:"id" yaml:"id" cli:"id,key"`
+	Username string `json:"username" yaml:"username" cli:"username"`
+	Fullname string `json:"fullname" yaml:"fullname,omitempty" cli:"fullname"`
+	Admin    bool   `json:"admin,omitempty" yaml:"admin,omitempty" cli:"admin"`
 }
 
 // GroupPermission represent a group and his role in the project
@@ -124,7 +132,7 @@ func (g Group) IsMember(groupIDs []int64) bool {
 func (g Group) IsAdmin(u AuthentifiedUser) bool {
 	for _, member := range g.Members {
 		if member.ID == u.ID {
-			return member.GroupAdmin
+			return member.Admin
 		}
 	}
 	return false

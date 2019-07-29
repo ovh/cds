@@ -36,7 +36,8 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 			return err
 		}
 
-		magicToken, hasMagicToken := reqData["magic_token"]
+		initToken, hasInitToken := reqData["init_token"]
+		hasInitToken = hasInitToken && initToken != ""
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -61,11 +62,13 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 		}
 
 		// The first user is set as ADMIN
-		countUsers, err := user.Count(tx)
+		countAdmins, err := user.CountAdmin(tx)
 		if err != nil {
 			return err
 		}
-		if countUsers == 0 && hasMagicToken {
+
+		// If a magic token is given and there is no admin already registered, set new user as admin
+		if countAdmins == 0 && hasInitToken {
 			newUser.Ring = sdk.UserRingAdmin
 		}
 
@@ -93,14 +96,15 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 			return err
 		}
 
-		if hasMagicToken {
+		// Check if a magic init token was given for first signup
+		if countAdmins == 0 && hasInitToken {
 			// Deserialize the magic token to retrieve the startup configuration
 			var startupConfig StartupConfig
-			if err := authentication.VerifyJWS(magicToken, &startupConfig); err != nil {
+			if err := authentication.VerifyJWS(initToken, &startupConfig); err != nil {
 				return sdk.NewError(sdk.ErrUnauthorized, err)
 			}
 
-			log.Warning("Magic token detected !: %s", magicToken)
+			log.Warning("Magic token detected !: %s", initToken)
 
 			// Create the consumers provided by the startup configuration
 			for _, cfg := range startupConfig.Consumers {

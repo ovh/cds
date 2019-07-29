@@ -17,14 +17,14 @@ var groupCmd = cli.Command{
 
 func group() *cobra.Command {
 	return cli.NewCommand(groupCmd, nil, []*cobra.Command{
-		cli.NewListCommand(groupListCmd, groupListRun, nil),
-		cli.NewGetCommand(groupShowCmd, groupShowRun, nil),
-		cli.NewCommand(groupCreateCmd, groupCreateRun, nil),
-		cli.NewCommand(groupRenameCmd, groupRenameRun, nil),
-		cli.NewDeleteCommand(groupDeleteCmd, groupDeleteRun, nil),
-		cli.NewCommand(groupGrantCmd, groupGrantRun, nil),
-		cli.NewCommand(groupRevokeCmd, groupRevokeRun, nil),
-		groupUser(),
+		cli.NewListCommand(groupListCmd, groupListRun, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(groupShowCmd, groupShowRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(groupCreateCmd, groupCreateRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(groupRenameCmd, groupRenameRun, nil, withAllCommandModifiers()...),
+		cli.NewDeleteCommand(groupDeleteCmd, groupDeleteRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(groupGrantCmd, groupGrantRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(groupRevokeCmd, groupRevokeRun, nil, withAllCommandModifiers()...),
+		groupMember(),
 	})
 }
 
@@ -94,13 +94,10 @@ var groupDeleteCmd = cli.Command{
 
 func groupDeleteRun(v cli.Values) error {
 	err := client.GroupDelete(v.GetString("group-name"))
-	if err != nil {
-		if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNotFound) {
-			fmt.Println(err.Error())
-			return nil
-		}
+	if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNotFound) {
+		fmt.Println(err.Error())
+		return nil
 	}
-
 	return err
 }
 

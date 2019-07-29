@@ -24,14 +24,14 @@ export class AuthenticationService {
         return this._http.post('/auth/consumer/signout', null);
     }
 
-    localSignup(fullname: string, email: string, username: string, password: string, magic_token: string):
+    localSignup(fullname: string, email: string, username: string, password: string, init_token: string):
         Observable<AuthConsumerSigninResponse> {
         return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/local/signup', {
             fullname,
             email,
             username,
             password,
-            magic_token
+            init_token
         });
     }
 

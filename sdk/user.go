@@ -75,7 +75,6 @@ type AuthentifiedUser struct {
 	// aggregates
 	Contacts      UserContacts `json:"contacts" yaml:"contacts" db:"-"`
 	OldUserStruct *User        `json:"old_user_struct" yaml:"old_user_struct" db:"-"`
-	GroupAdmin    bool         `json:"group_admin,omitempty" yaml:"group_admin,omitempty" db:"-"`
 }
 
 // Value returns driver.Value from workflow template request.

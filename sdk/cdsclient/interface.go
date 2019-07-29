@@ -159,15 +159,14 @@ type ActionClient interface {
 
 // GroupClient exposes groups related functions
 type GroupClient interface {
-	GroupCreate(group *sdk.Group) error
-	GroupDelete(name string) error
-	GroupGet(name string, mods ...RequestModifier) (*sdk.Group, error)
 	GroupList() ([]sdk.Group, error)
-	GroupUserAdminSet(groupname string, username string) error
-	GroupUserAdminRemove(groupname, username string) error
-	GroupUserAdd(groupname string, users []string) error
-	GroupUserRemove(groupname, username string) error
-	GroupRename(oldGroupname, newGroupname string) error
+	GroupGet(name string, mods ...RequestModifier) (*sdk.Group, error)
+	GroupCreate(group *sdk.Group) error
+	GroupRename(oldName, newName string) error
+	GroupDelete(name string) error
+	GroupMemberAdd(groupName string, member *sdk.GroupMember) (sdk.Group, error)
+	GroupMemberEdit(groupName string, member *sdk.GroupMember) (sdk.Group, error)
+	GroupMemberRemove(groupName, username string) error
 }
 
 // BroadcastClient expose all function for CDS Broadcasts

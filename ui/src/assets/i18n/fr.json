@@ -26,6 +26,7 @@
   "account_signup_btn_create": "Créer le compte",
   "account_signup_title": "Création d'un nouvel utilisateur",
   "account_signup_waiting_text": "Vous aller recevoir un email afin d'activer votre compte.",
+  "account_signup_init_token": "Clé d'initialisation",
   "account_verify_title": "Information du compte",
   "account_verify_error": "Impossible d'activer le compte.",
   "action_step_title": "Étapes du job",

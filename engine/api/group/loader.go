@@ -62,8 +62,12 @@ func loadMembers(ctx context.Context, db gorp.SqlExecutor, gs ...*sdk.Group) err
 			for _, link := range mLinks[g.ID] {
 				if migration, ok := mMigrations[link.UserID]; ok {
 					if member, ok := mMembers[migration.AuthentifiedUserID]; ok {
-						member.GroupAdmin = link.Admin
-						g.Members = append(g.Members, member)
+						g.Members = append(g.Members, sdk.GroupMember{
+							ID:       member.ID,
+							Username: member.Username,
+							Fullname: member.Fullname,
+							Admin:    link.Admin,
+						})
 					}
 				}
 			}

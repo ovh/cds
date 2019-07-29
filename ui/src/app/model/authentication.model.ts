@@ -2,7 +2,7 @@ import { Group } from './group.model';
 import { User } from './user.model';
 
 export class AuthDriverManifests {
-    isFirstConnection: boolean;
+    is_first_connection: boolean;
     manifests: Array<AuthDriverManifest>;
 }
 

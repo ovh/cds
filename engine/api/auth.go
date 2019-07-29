@@ -21,16 +21,16 @@ func (api *API) getAuthDriversHandler() service.Handler {
 			drivers = append(drivers, d.GetManifest())
 		}
 
-		countUsers, err := user.Count(api.mustDB())
+		countAdmins, err := user.CountAdmin(api.mustDB())
 		if err != nil {
 			return err
 		}
 
 		var response = struct {
-			IsFirstConnection bool                     `json:"isFirstConnection"`
+			IsFirstConnection bool                     `json:"is_first_connection"`
 			Drivers           []sdk.AuthDriverManifest `json:"manifests"`
 		}{
-			IsFirstConnection: countUsers == 0,
+			IsFirstConnection: countAdmins == 0,
 			Drivers:           drivers,
 		}
 
@@ -150,11 +150,11 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			}
 
 			// The first user is set as ADMIN
-			countUsers, err := user.Count(tx)
+			countAdmins, err := user.CountAdmin(tx)
 			if err != nil {
 				return err
 			}
-			if countUsers == 0 {
+			if countAdmins == 0 {
 				newUser.Ring = sdk.UserRingAdmin
 			}
 

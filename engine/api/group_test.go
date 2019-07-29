@@ -36,7 +36,7 @@ func Test_getGroupHandler(t *testing.T) {
 	assert.Equal(t, g.Name, result.Name)
 	assert.Equal(t, 1, len(result.Members))
 	assert.Equal(t, u.ID, result.Members[0].ID)
-	assert.True(t, result.Members[0].GroupAdmin)
+	assert.True(t, result.Members[0].Admin)
 }
 
 func Test_getGroupsHandler(t *testing.T) {
@@ -92,7 +92,7 @@ func Test_postGroupHandler(t *testing.T) {
 	assert.Equal(t, data.Name, created.Name)
 	assert.Equal(t, 1, len(created.Members))
 	assert.Equal(t, u.ID, created.Members[0].ID)
-	assert.True(t, created.Members[0].GroupAdmin)
+	assert.True(t, created.Members[0].Admin)
 }
 
 func Test_putGroupHandler(t *testing.T) {
@@ -165,9 +165,9 @@ func Test_postGroupUserHandler(t *testing.T) {
 		"permGroupName": g.Name,
 	})
 	require.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw1, http.MethodPost, uri, sdk.AuthentifiedUser{
-		ID:         u2.ID,
-		GroupAdmin: false,
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw1, http.MethodPost, uri, sdk.GroupMember{
+		ID:    u2.ID,
+		Admin: false,
 	})
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
@@ -182,9 +182,9 @@ func Test_postGroupUserHandler(t *testing.T) {
 		"permGroupName": g.Name,
 	})
 	require.NotEmpty(t, uri)
-	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw2, http.MethodPost, uri, sdk.AuthentifiedUser{
-		ID:         u3.ID,
-		GroupAdmin: true,
+	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw2, http.MethodPost, uri, sdk.GroupMember{
+		ID:    u3.ID,
+		Admin: true,
 	})
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
@@ -208,8 +208,8 @@ func Test_putGroupUserHandler(t *testing.T) {
 		"username":      u2.Username,
 	})
 	require.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw2, http.MethodPut, uri, sdk.AuthentifiedUser{
-		GroupAdmin: true,
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw2, http.MethodPut, uri, sdk.GroupMember{
+		Admin: true,
 	})
 	rec := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
@@ -221,8 +221,8 @@ func Test_putGroupUserHandler(t *testing.T) {
 		"username":      u2.Username,
 	})
 	require.NotEmpty(t, uri)
-	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw1, http.MethodPut, uri, sdk.AuthentifiedUser{
-		GroupAdmin: true,
+	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw1, http.MethodPut, uri, sdk.GroupMember{
+		Admin: true,
 	})
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)

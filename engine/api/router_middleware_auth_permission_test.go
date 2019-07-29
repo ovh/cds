@@ -311,10 +311,10 @@ func Test_checkWorkerModelPermissionsByUser(t *testing.T) {
 					Groups: []sdk.Group{
 						{
 							ID: 1,
-							Members: []sdk.AuthentifiedUser{
+							Members: []sdk.GroupMember{
 								{
-									ID:         sdk.RandomString(10),
-									GroupAdmin: true,
+									ID:    sdk.RandomString(10),
+									Admin: true,
 								},
 							},
 						},

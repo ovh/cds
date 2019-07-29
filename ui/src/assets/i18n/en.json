@@ -26,6 +26,7 @@
   "account_signup_btn_create": "Create",
   "account_signup_title": "Create a new user",
   "account_signup_waiting_text": "You will receive an email to activate your account.",
+  "account_signup_init_token": "Initialization token",
   "account_verify_title": "Account information",
   "account_verify_error": "Unable to activate this account.",
   "action_step_title": "Job steps",

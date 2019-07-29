@@ -107,9 +107,9 @@ func LoadByUsername(ctx context.Context, db gorp.SqlExecutor, username string, o
 	return get(ctx, db, query, opts...)
 }
 
-// Count users in database.
-func Count(db gorp.SqlExecutor) (int64, error) {
-	count, err := db.SelectInt("SELECT COUNT(id) FROM authentified_user")
+// CountAdmin admin users in database.
+func CountAdmin(db gorp.SqlExecutor) (int64, error) {
+	count, err := db.SelectInt("SELECT COUNT(id) FROM authentified_user WHERE ring = 'ADMIN'")
 	if err != nil {
 		return 0, sdk.WithStack(err)
 	}
