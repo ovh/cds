@@ -113,21 +113,15 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		var ok = true
 		nodeRunIDs := []int64{}
 		sourcesParams := map[string]string{}
-		sourcesFail := 0
 		for _, nodeRun := range sources {
 			if nodeRun == nil {
 				ok = false
 				break
 			}
 
-			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusNeverBuilt.String() || nodeRun.Status == sdk.StatusFail.String() || nodeRun.Status == sdk.StatusStopped.String() {
-				//One of the sources have not been completed
+			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusNeverBuilt.String() || nodeRun.Status == sdk.StatusStopped.String() {
 				ok = false
 				break
-			}
-
-			if nodeRun.Status == sdk.StatusFail.String() {
-				sourcesFail++
 			}
 
 			nodeRunIDs = append(nodeRunIDs, nodeRun.ID)
