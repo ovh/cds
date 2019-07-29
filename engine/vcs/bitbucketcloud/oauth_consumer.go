@@ -25,6 +25,7 @@ func (consumer *bitbucketcloudConsumer) AuthorizeRedirect(ctx context.Context) (
 	val := url.Values{}
 	val.Add("client_id", consumer.ClientID)
 	val.Add("response_type", "code")
+	val.Add("state", requestToken)
 
 	authorizeURL := fmt.Sprintf("https://bitbucket.org/site/oauth2/authorize?%s", val.Encode())
 
