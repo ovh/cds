@@ -60,7 +60,7 @@ func TestExist(t *testing.T) {
 func TestLoadAllByRepo(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	event.Initialize(event.KafkaConfig{}, cache)
+	event.Initialize(db, cache)
 
 	app, _ := application.LoadByName(db, cache, "TestLoadAllByRepo", "TestLoadAllByRepo")
 	if app != nil {

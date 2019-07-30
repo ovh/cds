@@ -20,7 +20,7 @@ func TestUnusedProjectKeyWarningEventProjectKeyAdd(t *testing.T) {
 	// INIT
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	event.Initialize(event.KafkaConfig{}, cache)
+	event.Initialize(db, cache)
 
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
