@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
-import { List, Map } from 'immutable';
+import { NavbarRecentData } from 'app/model/navbar.model';
+import { Workflow } from 'app/model/workflow.model';
+import { List } from 'immutable';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { NavbarRecentData } from '../../model/navbar.model';
-import { Operation } from '../../model/operation.model';
-import { Workflow } from '../../model/workflow.model';
-import { WorkflowService } from './workflow.service';
 
 @Injectable()
 export class WorkflowStore {
@@ -12,14 +10,10 @@ export class WorkflowStore {
     static RECENT_WORKFLOWS_KEY = 'CDS-RECENT-WORKFLOWS';
     WORKFLOW_ORIENTATION_KEY = 'CDS-WORKFLOW-ORIENTATION';
 
-    // List of all workflows.
-    private _workflows: BehaviorSubject<Map<string, Workflow>> = new BehaviorSubject(Map<string, Workflow>());
-
     private _recentWorkflows: BehaviorSubject<List<NavbarRecentData>> = new BehaviorSubject(List<NavbarRecentData>());
 
 
     constructor(
-        private _workflowService: WorkflowService
     ) {
         this.loadRecentWorkflows();
     }
@@ -82,18 +76,5 @@ export class WorkflowStore {
         }
         j[key + '-' + name] = o;
         localStorage.setItem(this.WORKFLOW_ORIENTATION_KEY, JSON.stringify(j));
-    }
-
-    externalModification(wfKey: string) {
-        let cache = this._workflows.getValue();
-        let wfToUpdate = cache.get(wfKey);
-        if (wfToUpdate) {
-            wfToUpdate.externalChange = true;
-            this._workflows.next(cache.set(wfKey, wfToUpdate));
-        }
-    }
-
-    migrateAsCode(key: string, workflowName: string): Observable<Operation> {
-        return this._workflowService.migrateAsCode(key, workflowName);
     }
 }

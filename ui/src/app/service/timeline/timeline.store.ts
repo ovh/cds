@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
+import { Event } from 'app/model/event.model';
+import { TimelineFilter } from 'app/model/timeline.model';
 import { List } from 'immutable';
-import { BehaviorSubject, Observable } from 'rxjs/index';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Event } from '../../model/event.model';
-import { TimelineFilter } from '../../model/timeline.model';
 import { TimelineService } from './timeline.service';
 
 @Injectable()

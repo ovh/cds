@@ -3,7 +3,7 @@ import { Parameter } from './parameter.model';
 import { Stage } from './stage.model';
 import { Usage } from './usage.model';
 
-export const pipelineNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
+export const pipelineNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]+$');
 
 export class PipelineStatus {
     static BUILDING = 'Building';

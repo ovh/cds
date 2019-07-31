@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Action, Usage } from 'app/model/action.model';
+import { AuditAction } from 'app/model/audit.model';
 import { Observable } from 'rxjs';
-import { Action, Usage } from '../../model/action.model';
-import { AuditAction } from '../../model/audit.model';
 
 @Injectable()
 export class ActionService {

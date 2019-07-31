@@ -3,7 +3,7 @@ export class HeatmapSearchCriterion {
     searchCriteria: string;
 
     constructor(projects: Array<any>, searchCriteria: string) {
-        this.projects = projects
+        this.projects = projects;
         this.searchCriteria = searchCriteria;
     }
 }

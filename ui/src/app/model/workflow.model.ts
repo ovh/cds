@@ -229,7 +229,7 @@ export class Workflow {
         nodes = WNode.getMapNodes(nodes, data.workflow_data.node);
 
         if (data.workflow_data.joins) {
-            data.workflow_data.joins.forEach(j => {
+            data.workflow_data.joins.forEach(() => {
                 nodes = WNode.getMapNodes(nodes, data.workflow_data.node);
             });
         }
@@ -585,7 +585,7 @@ export class WNode {
         let res = n.hooks;
         if (n.triggers) {
             n.triggers.forEach(t => {
-                let hooks = WNode.getAllHooks(t.child_node)
+                let hooks = WNode.getAllHooks(t.child_node);
                 if (hooks) {
                     res = res.concat(hooks);
                 }
@@ -687,13 +687,13 @@ export class WNodeHook {
 }
 
 export class WorkflowPull {
-    workflow: WorkflowPullItem
-    pipelines: Array<WorkflowPullItem>
-    applications: Array<WorkflowPullItem>
-    environments: Array<WorkflowPullItem>
+    workflow: WorkflowPullItem;
+    pipelines: Array<WorkflowPullItem>;
+    applications: Array<WorkflowPullItem>;
+    environments: Array<WorkflowPullItem>;
 }
 
 export class WorkflowPullItem {
-    name: string
-    value: string
+    name: string;
+    value: string;
 }
