@@ -1,16 +1,16 @@
 
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { AuditWorkflowTemplate } from '../../model/audit.model';
+import { AuditWorkflowTemplate } from 'app/model/audit.model';
 import {
     WorkflowTemplate,
     WorkflowTemplateApplyResult,
     WorkflowTemplateBulk,
     WorkflowTemplateInstance,
     WorkflowTemplateRequest
-} from '../../model/workflow-template.model';
-import { Workflow } from '../../model/workflow.model';
+} from 'app/model/workflow-template.model';
+import { Workflow } from 'app/model/workflow.model';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class WorkflowTemplateService {

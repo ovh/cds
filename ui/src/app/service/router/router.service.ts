@@ -39,16 +39,4 @@ export class RouterService {
         }
         return params;
     }
-
-    getRouteSnapshotQueryParams(params: {}, activatedRoute: ActivatedRouteSnapshot): {} {
-        if (activatedRoute) {
-            params = Object.assign({}, params, activatedRoute.queryParams);
-            if (activatedRoute.children) {
-                activatedRoute.children.forEach(c => {
-                    params = this.getRouteSnapshotParams(params, c);
-                });
-            }
-        }
-        return params;
-    }
 }

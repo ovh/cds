@@ -1,7 +1,7 @@
 import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
 import {Injectable} from '@angular/core';
+import {environment} from 'environments/environment';
 import {Observable} from 'rxjs';
-import {environment} from '../../environments/environment';
 import {AuthentificationStore} from './auth/authentification.store';
 import {LanguageStore} from './language/language.store';
 
@@ -30,8 +30,7 @@ export class AuthentificationInterceptor implements  HttpInterceptor {
     addHeader(): any {
         let headers = {};
         if (this._authStore.isConnected()) {
-            let sessionToken = this._authStore.getSessionToken();
-            headers['Session-Token'] = sessionToken;
+            headers['Session-Token'] = this._authStore.getSessionToken();
         }
         headers['Accept-Language'] = this.languageHeader;
         return headers

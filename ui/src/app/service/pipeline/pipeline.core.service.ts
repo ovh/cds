@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
+import {Pipeline} from 'app/model/pipeline.model';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {Pipeline} from '../../model/pipeline.model';
 
 @Injectable()
 export class PipelineCoreService {
@@ -15,10 +15,6 @@ export class PipelineCoreService {
 
     toggleAsCodeEditor(o: {open: boolean, save: boolean}): void {
         this._asCodeEditorEvent.next(o);
-    }
-
-    getPipelinePreview(): Observable<Pipeline> {
-        return new Observable<Pipeline>(fn => this._previewPipeline.subscribe(fn));
     }
 
     setPipelinePreview(pip: Pipeline): void {

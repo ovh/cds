@@ -1,7 +1,7 @@
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
+import {Config} from 'app/model/config.model';
 import {Observable} from 'rxjs';
-import {Config} from '../../model/config.model';
 
 /**
  * Service to get config

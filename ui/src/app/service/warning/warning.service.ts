@@ -1,7 +1,7 @@
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
+import {Warning} from 'app/model/warning.model';
 import {Observable} from 'rxjs';
-import {Warning} from '../../model/warning.model';
 
 @Injectable()
 export class WarningService {

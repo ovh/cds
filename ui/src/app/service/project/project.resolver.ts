@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
 import { Store } from '@ngxs/store';
+import { LoadOpts, Project } from 'app/model/project.model';
+import { RouterService } from 'app/service/router/router.service';
 import { FetchProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { Observable } from 'rxjs';
 import { flatMap, map } from 'rxjs/operators';
-import { LoadOpts, Project } from '../../model/project.model';
-import { RouterService } from '../router/router.service';
 
 @Injectable()
 export class ProjectResolver implements Resolve<Project> {

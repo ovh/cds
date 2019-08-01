@@ -1,9 +1,9 @@
 
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
+import {Variable} from 'app/model/variable.model';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
-import {Variable} from '../../model/variable.model';
 
 /**
  * Service to access Variable commons.

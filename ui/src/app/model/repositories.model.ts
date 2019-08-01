@@ -10,7 +10,7 @@ export interface Repository {
     url: string;
     http_url: string;
     ssh_url: string;
-};
+}
 
 export class Branch {
     id: number;
@@ -22,12 +22,12 @@ export class Branch {
         this.default = false;
         this.display_id = ' ';
     }
-};
+}
 
 export class Remote {
     name: string;
     url: string;
-};
+}
 
 export class Tag {
     sha: string;
@@ -35,7 +35,7 @@ export class Tag {
     tagger: Author;
     tag: string;
     message: string;
-};
+}
 
 export interface Commit {
     id: string;
@@ -43,14 +43,14 @@ export interface Commit {
     authorTimestamp: number;
     message: string;
     url: string;
-};
+}
 
 export interface Author {
     name: string;
     displayName: string;
     email: string;
     avatar: string;
-};
+}
 
 export interface VCSInfos {
     branches: Branch[];

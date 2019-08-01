@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { MonitoringStatus } from 'app/model/monitoring.model';
 import { Observable } from 'rxjs';
-import { MonitoringStatus } from '../../model/monitoring.model';
 
 /**
  * Service about CDS Monitoring

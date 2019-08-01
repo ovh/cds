@@ -1,9 +1,9 @@
 
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import {Operation, PerformAsCodeResponse} from 'app/model/operation.model';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
-import {Operation, PerformAsCodeResponse} from '../../model/operation.model';
 
 @Injectable()
 export class ImportAsCodeService {

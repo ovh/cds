@@ -1,7 +1,7 @@
 import {HttpClient} from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import {IntegrationModel} from 'app/model/integration.model';
 import {Observable} from 'rxjs';
-import {IntegrationModel} from '../../model/integration.model';
 
 @Injectable()
 export class IntegrationService {
