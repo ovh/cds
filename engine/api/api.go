@@ -783,7 +783,7 @@ func (a *API) Serve(ctx context.Context) error {
 	migrate.Add(sdk.Migration{Name: "ActionModelRequirements", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.ActionModelRequirements(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
-	migrate.Add(sdk.Migration{Name: "AddPublicEventIntegration", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+	migrate.Add(sdk.Migration{Name: "AddPublicEventIntegration", Release: "0.40.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		kafkaCfg := migrate.KafkaConfig{
 			Enabled:         a.Config.Events.Kafka.Enabled,
 			Broker:          a.Config.Events.Kafka.Broker,

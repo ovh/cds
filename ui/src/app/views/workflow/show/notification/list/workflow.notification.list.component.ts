@@ -49,7 +49,7 @@ export class WorkflowNotificationListComponent {
     set project(proj: Project) {
         this._project = proj;
         if (proj && proj.integrations) {
-            this.eventIntegrations = proj.integrations.filter((integ) => integ.model.event);
+            this.eventIntegrations = proj.integrations.filter((integ) => integ.model.event && !integ.model.public);
         }
     }
     get project(): Project {

@@ -133,6 +133,10 @@ func DequeueEvent(c context.Context, db *gorp.DbMap) {
 					continue
 				}
 
+				if projInt.Model.Public {
+					continue
+				}
+
 				kafkaCfg := KafkaConfig{
 					Enabled:         true,
 					BrokerAddresses: projInt.Config["broker url"].Value,

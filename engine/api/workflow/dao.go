@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/api/integration"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -21,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
@@ -1092,6 +1091,9 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 		if err := checkProjectIntegration(proj, w, n); err != nil {
 			return err
 		}
+		if err := checkEventIntegration(proj, w); err != nil {
+			return err
+		}
 		if err := checkHooks(db, w, n); err != nil {
 			return err
 		}
@@ -1225,6 +1227,24 @@ func checkProjectIntegration(proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) er
 		w.ProjectIntegrations[ppProj.ID] = ppProj
 		n.Context.ProjectIntegrationID = ppProj.ID
 	}
+	return nil
+}
+
+// checkEventIntegration checks event integration data
+func checkEventIntegration(proj *sdk.Project, w *sdk.Workflow) error {
+	for _, eventIntegration := range w.EventIntegrations {
+		found := false
+		for _, projInt := range proj.Integrations {
+			if eventIntegration.ID == projInt.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return sdk.WrapError(sdk.ErrIntegrationtNotFound, "event integration %s with id %d not found in project %s", eventIntegration.Name, eventIntegration.ID, proj.Key)
+		}
+	}
+
 	return nil
 }
 

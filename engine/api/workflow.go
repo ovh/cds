@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ovh/cds/engine/api/integration"
-
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	yaml "gopkg.in/yaml.v2"
@@ -18,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
