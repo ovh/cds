@@ -1,13 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    Input,
-    OnInit,
-    Output,
-    ViewChild
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { PermissionValue } from 'app/model/permission.model';
@@ -41,7 +32,7 @@ import { Subscription } from 'rxjs/Subscription';
 })
 @AutoUnsubscribe()
 export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCondition> implements OnInit {
-    @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
+    @ViewChild('textareaCodeMirror', { static: false }) codemirror: any;
 
     @Input() project: Project;
     @Input() workflow: Workflow;
@@ -76,8 +67,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     codeMirrorConfig: any;
     suggest: Array<string> = [];
     loadingConditions = false;
-    operators: Array<any>;
-    conditionNames: Array<string>;
     permission = PermissionValue;
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
     loading = false;
@@ -131,13 +120,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                     this._cd.markForCheck();
                 })
             )
-            .subscribe(wtc => {
-                this.triggerConditions = wtc;
-                this.operators = Object.keys(wtc.operators).map(k => {
-                    return { key: k, value: wtc.operators[k] };
-                });
-                this.conditionNames = wtc.names;
-            });
+            .subscribe(wtc => this.triggerConditions = wtc);
     }
 
     updateWorkflow(): void {

@@ -1,4 +1,3 @@
-import { notificationTypes, UserNotificationSettings } from 'app/model/notification.model';
 import { Application } from './application.model';
 import { AuditWorkflow } from './audit.model';
 import { Environment } from './environment.model';
@@ -696,4 +695,49 @@ export class WorkflowPull {
 export class WorkflowPullItem {
     name: string;
     value: string;
+}
+
+export const notificationTypes = ['jabber', 'email'];
+export const notificationOnSuccess = ['always', 'change', 'never'];
+export const notificationOnFailure = ['always', 'change', 'never'];
+
+export class Notification {
+    application_pipeline_id: number;
+    pipeline: Pipeline;
+    environment: Environment;
+    notifications: any;
+
+    // UI attribute
+    updating = false;
+
+    constructor() {
+        this.notifications = {};
+    }
+}
+
+export class UserNotificationSettings {
+    on_success: string;
+    on_failure: string;
+    on_start: boolean;
+    send_to_groups: boolean;
+    send_to_author: boolean;
+    recipients: Array<string>;
+    template: UserNotificationTemplate;
+    notifications: WorkflowNodeConditions;
+
+    constructor() {
+        this.on_success = notificationOnSuccess[1];
+        this.on_failure = notificationOnFailure[0];
+        this.on_start = false;
+        this.send_to_author = true;
+        this.send_to_groups = false;
+        this.recipients = [];
+        this.template = new UserNotificationTemplate();
+        this.notifications = new WorkflowNodeConditions();
+    }
+}
+
+export class UserNotificationTemplate {
+    subject: string;
+    body: string;
 }

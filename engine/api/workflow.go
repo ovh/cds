@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -616,5 +617,82 @@ func (api *API) getWorkflowHookHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, task, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkflowNotificationsConditionsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		data := struct {
+			Operators      map[string]string `json:"operators"`
+			ConditionNames []string          `json:"names"`
+		}{
+			Operators: sdk.WorkflowConditionsOperators,
+		}
+
+		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name, workflow.LoadRunOptions{})
+		if errr != nil {
+			if !sdk.ErrorIs(errr, sdk.ErrWorkflowNotFound) {
+				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
+			}
+		}
+
+		params := []sdk.Parameter{}
+		var refNode *sdk.Node
+		if wr != nil {
+			refNode = &wr.Workflow.WorkflowData.Node
+			var errp error
+			params, errp = workflow.NodeBuildParametersFromRun(*wr, refNode.ID)
+			if errp != nil {
+				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters from workflow run")
+			}
+			if len(params) == 0 {
+				refNode = nil
+			}
+		} else {
+			data.ConditionNames = append(data.ConditionNames,
+				"cds.version",
+				"cds.application",
+				"cds.environment",
+				"cds.job",
+				"cds.manual",
+				"cds.pipeline",
+				"cds.project",
+				"cds.run",
+				"cds.run.number",
+				"cds.run.subnumber",
+				"cds.stage",
+				"cds.triggered_by.email",
+				"cds.triggered_by.fullname",
+				"cds.triggered_by.username",
+				"cds.ui.pipeline.run",
+				"cds.worker",
+				"cds.workflow",
+				"cds.workspace",
+				"payload",
+			)
+		}
+
+		if sdk.ParameterFind(&params, "git.repository") == nil {
+			data.ConditionNames = append(data.ConditionNames, "git.repository")
+			data.ConditionNames = append(data.ConditionNames, "git.branch")
+			data.ConditionNames = append(data.ConditionNames, "git.message")
+			data.ConditionNames = append(data.ConditionNames, "git.author")
+			data.ConditionNames = append(data.ConditionNames, "git.hash")
+			data.ConditionNames = append(data.ConditionNames, "git.hash.short")
+		}
+		if sdk.ParameterFind(&params, "git.tag") == nil {
+			data.ConditionNames = append(data.ConditionNames, "git.tag")
+		}
+
+		for _, p := range params {
+			data.ConditionNames = append(data.ConditionNames, p.Name)
+		}
+
+		sort.Strings(data.ConditionNames)
+		return service.WriteJSON(w, data, http.StatusOK)
 	}
 }

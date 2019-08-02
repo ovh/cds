@@ -19,7 +19,7 @@
         </div>
         <div class="field">
             <app-conditions *ngIf="!loading" [project]="project"
-                [readonly]="pipeline.permission < permissionEnum.READ_WRITE_EXECUTE" [pipelineId]="pipeline.id"
+                [readonly]="pipeline.permission < permissionEnum.READ_WRITE_EXECUTE"
                 [triggerConditions]="triggerConditions" [(conditions)]="stage.conditions">
             </app-conditions>
             <div class="ui active centered inline loader" *ngIf="loading"></div>

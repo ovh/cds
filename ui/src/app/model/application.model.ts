@@ -1,9 +1,9 @@
 import { Key } from './keys.model';
 import { Metric } from './metric.model';
-import { Notification } from './notification.model';
 import { Usage } from './usage.model';
 import { Variable } from './variable.model';
 import { VCSStrategy } from './vcs.model';
+import { Notification } from './workflow.model';
 import { WorkflowRun } from './workflow.run.model';
 
 export const applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]+$');
