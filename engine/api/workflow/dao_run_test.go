@@ -79,7 +79,7 @@ func TestCanBeRun(t *testing.T) {
 func TestPurgeWorkflowRun(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	event.Initialize(db, cache)
+	_ = event.Initialize(db, cache)
 
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
@@ -254,7 +254,7 @@ vcs_ssh_key: proj-blabla
 func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	event.Initialize(db, cache)
+	_ = event.Initialize(db, cache)
 
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
