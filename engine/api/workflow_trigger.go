@@ -86,12 +86,7 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 		}
 
 		if sdk.ParameterFind(&params, "git.repository") == nil {
-			data.ConditionNames = append(data.ConditionNames, "git.repository")
-			data.ConditionNames = append(data.ConditionNames, "git.branch")
-			data.ConditionNames = append(data.ConditionNames, "git.message")
-			data.ConditionNames = append(data.ConditionNames, "git.author")
-			data.ConditionNames = append(data.ConditionNames, "git.hash")
-			data.ConditionNames = append(data.ConditionNames, "git.hash.short")
+			data.ConditionNames = append(data.ConditionNames, sdk.BasicGitVariableNames...)
 		}
 		if sdk.ParameterFind(&params, "git.tag") == nil {
 			data.ConditionNames = append(data.ConditionNames, "git.tag")

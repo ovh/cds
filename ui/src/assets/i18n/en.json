@@ -1043,6 +1043,7 @@
   "workflow_notification_list": "Notifications list",
   "workflow_notification_form": "Add a notification",
   "workflow_notification_copy": "Copy",
+  "workflow_notification_conditions": "Conditions",
   "workflow_logs_all": "Show all logs",
   "workflow_logs_pretty_ansi": "Show pretty logs with ANSI interpreter",
   "workflow_logs_pretty_html": "Show pretty logs with HTML interpreter",
