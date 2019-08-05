@@ -68,14 +68,14 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(db, s)
+	test.NoError(t, pipeline.InsertStage(db, s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
+	test.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -90,14 +90,14 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(db, s)
+	test.NoError(t, pipeline.InsertStage(db, s))
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
+	test.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip2))
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
