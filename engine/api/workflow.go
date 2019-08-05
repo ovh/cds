@@ -649,40 +649,16 @@ func (api *API) getWorkflowNotificationsConditionsHandler() service.Handler {
 			if errp != nil {
 				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters from workflow run")
 			}
+
 			if len(params) == 0 {
 				refNode = nil
 			}
 		} else {
-			data.ConditionNames = append(data.ConditionNames,
-				"cds.version",
-				"cds.application",
-				"cds.environment",
-				"cds.job",
-				"cds.manual",
-				"cds.pipeline",
-				"cds.project",
-				"cds.run",
-				"cds.run.number",
-				"cds.run.subnumber",
-				"cds.stage",
-				"cds.triggered_by.email",
-				"cds.triggered_by.fullname",
-				"cds.triggered_by.username",
-				"cds.ui.pipeline.run",
-				"cds.worker",
-				"cds.workflow",
-				"cds.workspace",
-				"payload",
-			)
+			data.ConditionNames = append(data.ConditionNames, sdk.BasicVariableNames...)
 		}
 
 		if sdk.ParameterFind(&params, "git.repository") == nil {
-			data.ConditionNames = append(data.ConditionNames, "git.repository")
-			data.ConditionNames = append(data.ConditionNames, "git.branch")
-			data.ConditionNames = append(data.ConditionNames, "git.message")
-			data.ConditionNames = append(data.ConditionNames, "git.author")
-			data.ConditionNames = append(data.ConditionNames, "git.hash")
-			data.ConditionNames = append(data.ConditionNames, "git.hash.short")
+			data.ConditionNames = append(data.ConditionNames, sdk.BasicGitVariableNames...)
 		}
 		if sdk.ParameterFind(&params, "git.tag") == nil {
 			data.ConditionNames = append(data.ConditionNames, "git.tag")
