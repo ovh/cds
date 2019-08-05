@@ -231,12 +231,10 @@ func (c *LDAPClient) BindDN(dn, password string) error {
 
   if err := c.conn.Bind(dn, password); err != nil {
     if shoudRetry(err) {
-      err = c.openLDAP(c.conf)
-      if err != nil {
+      if err = c.openLDAP(c.conf); err != nil {
         return err
       }
-      err = c.conn.Bind(dn, password)
-      if err != nil {
+      if err = c.conn.Bind(dn, password); err !=nil {
         return err
       }
     } else {
@@ -399,15 +397,17 @@ func (c *LDAPClient) Authentify(username, password string) (bool, error) {
   }
   
 	//Bind user
-	if err := c.BindDN(r[0].DN, password); err != nil {
-		log.Warning("LDAP> Bind error %s %s", username, err)
+  if r != nil {
+	  if err := c.BindDN(r[0].DN, password); err != nil {
+		  log.Warning("LDAP> Bind error %s %s", username, err)
 
-		if !isCredentialError(err) {
-			return false, err
-		}
-		//Try local auth
-		return c.local.Authentify(username, password)
-	}
+		  if !isCredentialError(err) {
+			  return false, err
+		  }
+		  //Try local auth
+		  return c.local.Authentify(username, password)
+	  }
+  }
 
 	log.Debug("LDAP> Bind successful %s", username)
 
