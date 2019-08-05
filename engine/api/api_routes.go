@@ -203,6 +203,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/label", r.POST(api.postWorkflowLabelHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/label/{labelID}", r.DELETE(api.deleteWorkflowLabelHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/rollback/{auditID}", r.POST(api.postWorkflowRollbackHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/notifications/conditions", r.GET(api.getWorkflowNotificationsConditionsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups", r.POST(api.postWorkflowGroupHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups/{groupName}", r.PUT(api.putWorkflowGroupHandler), r.DELETE(api.deleteWorkflowGroupHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/hooks/{uuid}", r.GET(api.getWorkflowHookHandler))

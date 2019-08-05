@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
+import {WNode, Workflow} from 'app/model/workflow.model';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {WNode, Workflow} from '../../model/workflow.model';
 
 @Injectable()
 export class WorkflowCoreService {

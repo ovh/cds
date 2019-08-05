@@ -1,7 +1,7 @@
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
+import {DownloadableResource} from 'app/model/download.model';
 import {Observable} from 'rxjs';
-import {DownloadableResource} from '../../model/download.model';
 
 /**
  * Service to get downloads

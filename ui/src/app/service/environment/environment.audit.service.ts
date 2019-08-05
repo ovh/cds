@@ -1,7 +1,7 @@
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
+import {VariableAudit} from 'app/model/variable.model';
 import {Observable} from 'rxjs';
-import {VariableAudit} from '../../model/variable.model';
 /**
  * Service to access Environment Audit from API.
  */

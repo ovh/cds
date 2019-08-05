@@ -1,12 +1,12 @@
 
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Bookmark } from 'app/model/bookmark.model';
+import { Groups } from 'app/model/group.model';
+import { Token } from 'app/model/token.model';
+import { User, UserLoginRequest } from 'app/model/user.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Bookmark } from '../../model/bookmark.model';
-import { Groups } from '../../model/group.model';
-import { Token } from '../../model/token.model';
-import { User, UserLoginRequest } from '../../model/user.model';
 import { AuthentificationStore } from '../auth/authentification.store';
 
 @Injectable()

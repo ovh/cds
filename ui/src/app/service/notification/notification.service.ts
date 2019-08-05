@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import { UserNotificationSettings } from 'app/model/notification.model';
-import {Observable} from 'rxjs';
-import {NotificationOpts, Permission} from './notification.type';
+import { Injectable } from '@angular/core';
+import { UserNotificationSettings, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
+import { Observable } from 'rxjs';
+import { NotificationOpts, Permission } from './notification.type';
 
 declare const Notification: any;
 
@@ -12,7 +12,7 @@ export class NotificationService {
     permission: Permission;
 
     constructor(private _http: HttpClient) {
-        this.permission  = this.isSupported() ? Notification.permission : 'denied';
+        this.permission = this.isSupported() ? Notification.permission : 'denied';
     }
 
     requestPermission() {
@@ -47,7 +47,7 @@ export class NotificationService {
                 if (options.onshow && typeof options.onshow === 'function') {
                     options.onshow(e);
                 }
-                obs.next({notification: notif, event: e});
+                obs.next({ notification: notif, event: e });
                 setTimeout(() => {
                     if (notif && notif.close) {
                         notif.close();
@@ -62,14 +62,14 @@ export class NotificationService {
                     window.focus();
                     notif.close();
                 }
-                obs.next({notification: notif, event: e});
+                obs.next({ notification: notif, event: e });
             };
 
             notif.onerror = (e: any) => {
                 if (options.onerror && typeof options.onerror === 'function') {
                     options.onerror(e);
                 }
-                obs.error({notification: notif, event: e});
+                obs.error({ notification: notif, event: e });
             };
 
             notif.onclose = () => {
@@ -81,7 +81,12 @@ export class NotificationService {
         });
     }
 
-    getNotificationTypes(): Observable<{[key: string]: UserNotificationSettings }> {
-        return this._http.get<{[key: string]: UserNotificationSettings}>('/notification/type');
+    getNotificationTypes(): Observable<{ [key: string]: UserNotificationSettings }> {
+        return this._http.get<{ [key: string]: UserNotificationSettings }>('/notification/type');
+    }
+
+    getConditions(key: string, workflowName: string): Observable<WorkflowTriggerConditionCache> {
+        return this._http
+            .get<WorkflowTriggerConditionCache>(`/project/${key}/workflows/${workflowName}/notifications/conditions`);
     }
 }

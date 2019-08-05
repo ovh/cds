@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Project } from 'app/model/project.model';
+import { WorkflowHookModel, WorkflowHookTask } from 'app/model/workflow.hook.model';
+import {WNode, Workflow} from 'app/model/workflow.model';
 import { Observable } from 'rxjs';
-import { Project } from '../../model/project.model';
-import { WorkflowHookModel, WorkflowHookTask } from '../../model/workflow.hook.model';
-import {WNode, Workflow} from '../../model/workflow.model';
 
 @Injectable()
 export class HookService {

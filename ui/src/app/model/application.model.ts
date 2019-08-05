@@ -1,12 +1,12 @@
 import { Key } from './keys.model';
 import { Metric } from './metric.model';
-import { Notification } from './notification.model';
 import { Usage } from './usage.model';
 import { Variable } from './variable.model';
 import { VCSStrategy } from './vcs.model';
+import { Notification } from './workflow.model';
 import { WorkflowRun } from './workflow.run.model';
 
-export const applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
+export const applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]+$');
 
 export class Application {
     id: number;
@@ -30,19 +30,14 @@ export class Application {
     // true if someone has updated the application ( used for warnings )
     externalChange: boolean;
 
-    // workflow depth for horizontal tree view
-    horizontalDepth: number;
-
     // Return true if pattern is good
     public static checkName(name: string): boolean {
         if (!name) {
             return false;
         }
 
-        if (!applicationNamePattern.test(name)) {
-            return false;
-        }
-        return true;
+        return applicationNamePattern.test(name);
+
     }
 }
 

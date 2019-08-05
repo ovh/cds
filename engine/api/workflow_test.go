@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -46,6 +47,134 @@ func Test_getWorkflowsHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
+}
+
+func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
+	// Init database
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, pass := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	test.NoError(t, pipeline.InsertStage(db, s))
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	test.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip))
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	//Second pipeline
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip2, u))
+	s = sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip2.ID
+	test.NoError(t, pipeline.InsertStage(db, s))
+	j = &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	test.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip2))
+	s.Jobs = append(s.Jobs, *j)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "child",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj2, u))
+	w1, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, err)
+
+	wrCreate, err := workflow.CreateRun(db, w1, nil, u)
+	assert.NoError(t, err)
+	wrCreate.Workflow = *w1
+	_, errMR := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, proj, wrCreate, &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			User: *u,
+		},
+	}, u, nil)
+	if errMR != nil {
+		test.NoError(t, errMR)
+	}
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+	}
+	uri := router.GetRoute("GET", api.getWorkflowNotificationsConditionsHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
+
+	//Do the request
+	writer := httptest.NewRecorder()
+	router.Mux.ServeHTTP(writer, req)
+	assert.Equal(t, 200, writer.Code)
+
+	data := struct {
+		Operators      map[string]string `json:"operators"`
+		ConditionNames []string          `json:"names"`
+	}{}
+	test.NoError(t, json.Unmarshal(writer.Body.Bytes(), &data))
+
+	found := false
+	for _, conditionName := range data.ConditionNames {
+		if conditionName == "cds.ui.pipeline.run" {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Errorf("cannot find cds.ui.pipeline.run variable in response : %+v", data)
+	}
 }
 
 func Test_getWorkflowHandler(t *testing.T) {

@@ -309,18 +309,8 @@ func (api *API) getStageConditionsHandler() service.Handler {
 			Operators      map[string]string `json:"operators"`
 			ConditionNames []string          `json:"names"`
 		}{
-			Operators: sdk.WorkflowConditionsOperators,
-			ConditionNames: []string{
-				"git.hash",
-				"git.hash.short",
-				"git.branch",
-				"git.tag",
-				"git.author",
-				"git.repository",
-				"git.url",
-				"git.http_url",
-				"git.server",
-			},
+			Operators:      sdk.WorkflowConditionsOperators,
+			ConditionNames: append(sdk.BasicGitVariableNames, "git.tag"),
 		}
 
 		// Check if pipeline exist
@@ -339,27 +329,7 @@ func (api *API) getStageConditionsHandler() service.Handler {
 		}
 
 		// add cds variable
-		data.ConditionNames = append(data.ConditionNames,
-			"cds.version",
-			"cds.application",
-			"cds.environment",
-			"cds.job",
-			"cds.manual",
-			"cds.pipeline",
-			"cds.project",
-			"cds.run",
-			"cds.run.number",
-			"cds.run.subnumber",
-			"cds.stage",
-			"cds.triggered_by.email",
-			"cds.triggered_by.fullname",
-			"cds.triggered_by.username",
-			"cds.ui.pipeline.run",
-			"cds.worker",
-			"cds.workflow",
-			"cds.workspace",
-			"payload",
-		)
+		data.ConditionNames = append(data.ConditionNames, sdk.BasicVariableNames...)
 
 		return service.WriteJSON(w, data, http.StatusOK)
 	}
