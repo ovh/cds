@@ -792,7 +792,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	event.Initialize(db, cache)
+	_ = event.Initialize(db, cache)
 
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
