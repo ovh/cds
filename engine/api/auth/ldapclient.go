@@ -86,12 +86,12 @@ func (c *LDAPClient) openLDAP(options interface{}) error {
 			return sdk.ErrLDAPConn
 		}
 
-		// Reconnect with TLS
-		//err = c.conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
-		//if err != nil {
-		//	log.Error("Auth> Cannot start TLS %s : %s", address, err)
-		//	return sdk.ErrLDAPConn
-		//}
+		//Reconnect with TLS
+		err = c.conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
+		if err != nil {
+			log.Error("Auth> Cannot start TLS %s : %s", address, err)
+			return sdk.ErrLDAPConn
+		}
 	} else {
 		log.Info("Auth> Connecting to LDAP server")
 		c.conn, err = ldap.DialTLS("tcp", address, &tls.Config{
@@ -394,7 +394,7 @@ func (c *LDAPClient) Authentify(username, password string) (bool, error) {
 	}
 
 	//Bind user
-	if r != nil {
+	if r != nil && len(r) == 1 {
 		if err = c.BindDN(r[0].DN, password); err != nil {
 			log.Warning("LDAP> Bind error %s %s", username, err)
 
