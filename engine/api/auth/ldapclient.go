@@ -225,23 +225,6 @@ func (c *LDAPClient) Bind(username, password string) error {
 	return nil
 }
 
-// BindDN
-func (c *LDAPClient) BindDN(dn, password string) error {
-  log.Debug("LDAP> Bind DN %s", dn)
-  if err := c.conn.Bind(dn, password); err != nil {
-    if !shoudRetry(err) {
-      return err
-    }
-    if err = c.openLDAP(c.conf); err !=nil{
-      return err
-    }
-    if err = c.conn.Bind(dn, password); err !=nil {
-      return err
-    }
-  }
-  return nil
-}
-
 //Search search
 func (c *LDAPClient) Search(filter string, attributes ...string) ([]Entry, error) {
 	attr := append(attributes, "dn")
@@ -387,24 +370,16 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 
 //Authentify check username and password
 func (c *LDAPClient) Authentify(username, password string) (bool, error) {
-  // Search user
-	r, err := c.Search("(&(uid=" + username + "))")
-	if err != nil {
-	  return false, nil
-  }
-  
 	//Bind user
-  if r != nil {
-	  if err := c.BindDN(r[0].DN, password); err != nil {
-		  log.Warning("LDAP> Bind error %s %s", username, err)
+	if err := c.Bind(username, password); err != nil {
+		log.Warning("LDAP> Bind error %s %s", username, err)
 
-		  if !isCredentialError(err) {
-			  return false, err
-		  }
-		  //Try local auth
-		  return c.local.Authentify(username, password)
-	  }
-  }
+		if !isCredentialError(err) {
+			return false, err
+		}
+		//Try local auth
+		return c.local.Authentify(username, password)
+	}
 
 	log.Debug("LDAP> Bind successful %s", username)
 
