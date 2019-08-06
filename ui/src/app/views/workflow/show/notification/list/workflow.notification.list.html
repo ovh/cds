@@ -49,7 +49,7 @@
             <ng-container *ngIf="tab === 'newEvent'">
                 <div class="ui form">
                     <div class="field">
-                        <i class="book icon"></i><i>{{'workflow_event_explanation' | translate }}</i>
+                        <div markdown [data]="'workflow_event_explanation' | translate"></div>
                     </div>
                     <div class="fields">
                         <div class="fifteen wide field" *ngIf="eventIntegrations && eventIntegrations.length > 0">
