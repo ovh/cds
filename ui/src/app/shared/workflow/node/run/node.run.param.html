@@ -2,17 +2,13 @@
     <div class="header">
         {{'workflow_run_with_parameters' | translate}}
         <div class="extra" *ngIf="num">
-            <button
-              type="button"
-              class="ui small green button"
-              suiPopup
-              [popupText]="'workflow_run_resync_help' | translate"
-              [class.loading]="loading"
-              [disabled]="loading"
-              (click)="resync()">
-              {{ 'workflow_resync' | translate }}
+            <button type="button" class="ui small green button" suiPopup
+                [popupText]="'workflow_run_resync_help' | translate" [class.loading]="loading" [disabled]="loading"
+                (click)="resync()">
+                {{ 'workflow_resync' | translate }}
             </button>
-            <a href="https://ovh.github.io/cds/docs/concepts/workflow/" target="_blank"><i class="pointing help circle outline icon"></i></a>
+            <a href="https://ovh.github.io/cds/docs/concepts/workflow/" target="_blank"><i
+                    class="pointing help circle outline icon"></i></a>
         </div>
     </div>
     <div class="content">
@@ -20,19 +16,15 @@
             <ng-container *ngIf="_nodeToRun && _nodeToRun.type === nodeTypeEnum.PIPELINE && parameters?.length > 0 ">
                 <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
                 <app-parameter-list [project]="project" [parameters]="parameters"
-                                    [paramsRef]="workflow.pipelines[_nodeToRun.context.pipeline_id]?.parameters" mode="launcher"
-                                    [suggest]="[]"></app-parameter-list>
+                    [paramsRef]="workflow.pipelines[_nodeToRun.context.pipeline_id]?.parameters" mode="launcher"
+                    [suggest]="[]"></app-parameter-list>
             </ng-container>
             <h3 *ngIf="!readOnly">{{ 'workflow_node_context_payload' | translate}}</h3>
             <h3 *ngIf="readOnly">{{ 'workflow_node_context_payload_read_only' | translate}}</h3>
             <ng-container *ngIf="!loadingBranches">
-                <codemirror
-                  [class.invalid]="invalidJSON"
-                  [(ngModel)]="payloadString"
-                  [config]="codeMirrorConfig"
-                  (click)="changeCodeMirror($event)"
-                  (change)="changeCodeMirror($event)"
-                  #textareaCodeMirror>
+                <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig"
+                    (click)="changeCodeMirror(textareaCodeMirror, $event)"
+                    (change)="changeCodeMirror(textareaCodeMirror, $event)" #textareaCodeMirror>
                 </codemirror>
             </ng-container>
             <ng-container *ngIf="loadingBranches">
@@ -67,7 +59,9 @@
         </div>
     </div>
     <div class="actions">
-        <button class="ui button" [disabled]="loading" (click)="modal.approve(false)">{{'common_cancel' | translate}}</button>
-        <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="run()" autofocus>{{'common_run' | translate}}</button>
+        <button class="ui button" [disabled]="loading"
+            (click)="modal.approve(false)">{{'common_cancel' | translate}}</button>
+        <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="run()"
+            autofocus>{{'common_run' | translate}}</button>
     </div>
 </ng-template>
