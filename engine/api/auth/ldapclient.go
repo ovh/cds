@@ -394,7 +394,7 @@ func (c *LDAPClient) Authentify(username, password string) (bool, error) {
 	}
 
 	//Bind user
-	if r != nil && len(r) == 1 {
+	if r != nil {
 		if err = c.BindDN(r[0].DN, password); err != nil {
 			log.Warning("LDAP> Bind error %s %s", username, err)
 
