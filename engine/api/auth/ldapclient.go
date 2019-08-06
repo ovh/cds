@@ -228,20 +228,11 @@ func (c *LDAPClient) Bind(username, password string) error {
 // BindDN
 func (c *LDAPClient) BindDN(dn, password string) error {
   log.Debug("LDAP> Bind DN %s", dn)
-
   if err := c.conn.Bind(dn, password); err != nil {
     if shoudRetry(err) {
-      if err = c.openLDAP(c.conf); err != nil {
-        return err
-      }
-      if err = c.conn.Bind(dn, password); err !=nil {
-        return err
-      }
-    } else {
       return err
     }
   }
-
   return nil
 }
 
