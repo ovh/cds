@@ -86,7 +86,7 @@ func (c *LDAPClient) openLDAP(options interface{}) error {
 			return sdk.ErrLDAPConn
 		}
 
-		// Reconnect with TLS
+		//Reconnect with TLS
 		err = c.conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
 		if err != nil {
 			log.Error("Auth> Cannot start TLS %s : %s", address, err)
@@ -222,6 +222,23 @@ func (c *LDAPClient) Bind(username, password string) error {
 		}
 	}
 
+	return nil
+}
+
+//BindDN
+func (c *LDAPClient) BindDN(dn, password string) error {
+	log.Debug("LDAP> Bind DN %s", dn)
+	if err := c.conn.Bind(dn, password); err != nil {
+		if !shoudRetry(err) {
+			return err
+		}
+		if err = c.openLDAP(c.conf); err != nil {
+			return err
+		}
+		if err = c.conn.Bind(dn, password); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -370,15 +387,23 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 
 //Authentify check username and password
 func (c *LDAPClient) Authentify(username, password string) (bool, error) {
-	//Bind user
-	if err := c.Bind(username, password); err != nil {
-		log.Warning("LDAP> Bind error %s %s", username, err)
+	// Search user
+	r, err := c.Search("(&(uid=" + username + "))")
+	if err != nil {
+		return false, nil
+	}
 
-		if !isCredentialError(err) {
-			return false, err
+	//Bind user
+	if r != nil {
+		if err = c.BindDN(r[0].DN, password); err != nil {
+			log.Warning("LDAP> Bind error %s %s", username, err)
+
+			if !isCredentialError(err) {
+				return false, err
+			}
+			//Try local auth
+			return c.local.Authentify(username, password)
 		}
-		//Try local auth
-		return c.local.Authentify(username, password)
 	}
 
 	log.Debug("LDAP> Bind successful %s", username)
