@@ -208,16 +208,13 @@ func (c *LDAPClient) Bind(username, password string) error {
 	log.Debug("LDAP> Bind user %s", bindRequest)
 
 	if err := c.conn.Bind(bindRequest, password); err != nil {
-		if shoudRetry(err) {
-			err = c.openLDAP(c.conf)
-			if err != nil {
-				return err
-			}
-			err = c.conn.Bind(bindRequest, password)
-			if err != nil {
-				return err
-			}
-		} else {
+		if !shoudRetry(err) {
+			return err
+		}
+		if err := c.openLDAP(c.conf); err != nil {
+			return err
+		}
+		if err := c.conn.Bind(bindRequest, password); err != nil {
 			return err
 		}
 	}
@@ -232,10 +229,10 @@ func (c *LDAPClient) BindDN(dn, password string) error {
 		if !shoudRetry(err) {
 			return err
 		}
-		if err = c.openLDAP(c.conf); err != nil {
+		if err := c.openLDAP(c.conf); err != nil {
 			return err
 		}
-		if err = c.conn.Bind(dn, password); err != nil {
+		if err := c.conn.Bind(dn, password); err != nil {
 			return err
 		}
 	}
@@ -249,14 +246,13 @@ func (c *LDAPClient) Search(filter string, attributes ...string) ([]Entry, error
 	if c.conf.BindDN != "" {
 		log.Debug("LDAP> Bind user %s", c.conf.BindDN)
 		if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
-			if shoudRetry(err) {
-				if err := c.openLDAP(c.conf); err != nil {
-					return nil, err
-				}
-				if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
-					return nil, err
-				}
-			} else {
+			if !shoudRetry(err) {
+				return nil, err
+			}
+			if err := c.openLDAP(c.conf); err != nil {
+				return nil, err
+			}
+			if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
 				return nil, err
 			}
 		}
@@ -273,16 +269,14 @@ func (c *LDAPClient) Search(filter string, attributes ...string) ([]Entry, error
 
 	sr, err := c.conn.Search(searchRequest)
 	if err != nil {
-		if shoudRetry(err) {
-			err = c.openLDAP(c.conf)
-			if err != nil {
-				return nil, err
-			}
-			sr, err = c.conn.Search(searchRequest)
-			if err != nil {
-				return nil, err
-			}
-		} else {
+		if !shoudRetry(err) {
+			return nil, err
+		}
+		if err := c.openLDAP(c.conf); err != nil {
+			return nil, err
+		}
+		sr, err = c.conn.Search(searchRequest)
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -394,9 +388,9 @@ func (c *LDAPClient) Authentify(username, password string) (bool, error) {
 	}
 
 	//Bind user
-	if r != nil {
+	if len(r) == 1 {
 		if err = c.BindDN(r[0].DN, password); err != nil {
-			log.Warning("LDAP> Bind error %s %s", username, err)
+			log.Warning("LDAP> Bind error %s %s", r[0].DN, err)
 
 			if !isCredentialError(err) {
 				return false, err
