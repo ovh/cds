@@ -7,11 +7,6 @@
                         {{'workflow_notification_form' | translate }}
                     </div>
                 </div>
-                <div class="step pointing" [class.active]="tab === 'newEvent'" (click)="openNewEventArea()">
-                    <div class="title">
-                        {{'workflow_event_form' | translate }}
-                    </div>
-                </div>
                 <ng-container *ngFor="let n of workflow.notifications; let i = index">
                     <div class="step pointing" [class.active]="selectedNotification === i" (click)="openEditionArea(i)">
                         <div class="content full">
@@ -31,6 +26,13 @@
                         </div>
                     </div>
                 </ng-container>
+            </div>
+            <div class="ui fluid vertical steps">
+                <div class="step pointing" [class.active]="tab === 'newEvent'" (click)="openNewEventArea()">
+                    <div class="title">
+                        {{'workflow_event_form' | translate }}
+                    </div>
+                </div>
             </div>
         </div>
         <div class="twelve wide column">
@@ -59,7 +61,7 @@
                                 </sui-select-option>
                             </sui-select>
                         </div>
-                        <div class="fifteen wide field center"
+                        <div class="fifteen wide field center ui info message"
                             *ngIf="!eventIntegrations || eventIntegrations.length === 0">
                             {{'workflow_no_event_integration' | translate }} <a
                                 href="https://ovh.github.io/cds/docs/concepts/workflow/notifications/"

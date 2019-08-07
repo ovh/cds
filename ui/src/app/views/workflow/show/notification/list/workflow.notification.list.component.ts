@@ -103,14 +103,15 @@ export class WorkflowNotificationListComponent {
 
     openNewNotifArea() {
         this.tab = 'newNotification';
+        this.selectedNotification = null;
         this.newNotification = new WorkflowNotification();
         this.setNotificationTemplate();
-        delete this.selectedNotification;
     }
 
     openEditionArea(i: number) {
+        this.tab = null;
         this.selectedNotification = i;
-        delete this.newNotification;
+        this.newNotification = null;
     }
 
     updateNotification(n: WorkflowNotification): void {
@@ -163,6 +164,7 @@ export class WorkflowNotificationListComponent {
 
     openNewEventArea() {
         this.tab = 'newEvent';
+        this.selectedNotification = null;
     }
 
     addEvent(integration: ProjectIntegration) {

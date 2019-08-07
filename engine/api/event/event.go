@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -124,7 +125,7 @@ func DequeueEvent(c context.Context, db *gorp.DbMap) {
 		}
 
 		for _, eventIntegrationID := range e.EventIntegrationsID {
-			brokerConnectionKey := fmt.Sprintf("%d", eventIntegrationID)
+			brokerConnectionKey := strconv.FormatInt(eventIntegrationID, 10)
 			brokerConnection, ok := brokersConnectionCache.Get(brokerConnectionKey)
 			if !ok {
 				projInt, err := integration.LoadProjectIntegrationByID(db, eventIntegrationID, true)
