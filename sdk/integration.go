@@ -35,7 +35,7 @@ var (
 			},
 			"topic": IntegrationConfigValue{
 				Type:        IntegrationConfigTypeString,
-				Description: "Optional for hook",
+				Description: "This is mandatory only if you want to use Event Integration",
 			},
 		},
 		Disabled: false,
