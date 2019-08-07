@@ -1,4 +1,7 @@
 <div id="WorkflowAdmin">
+    <div class="ui warning message" *ngIf="workflow.from_repository && workflow.from_repository.length > 0">
+        {{'workflow_ascode_no_edit' | translate}}
+    </div>
     <app-zone header="{{ 'common_icon' | translate }}">
         <app-zone-content class="bottom">
             <div class="ui form">
@@ -33,6 +36,7 @@
                 <div class="field">
                     <label>{{'workflow_name' | translate}}</label>
                     <input type="text" name="formWorkflowUpdateName" placeholder="{{ 'workflow_name' | translate}}"
+                        [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
                         [(ngModel)]="workflow.name" [disabled]="loading" required #formWorkflowUpdateName="ngModel"
                         pattern="^[a-zA-Z0-9._-]{1,}$">
                     <div *ngIf="formWorkflowUpdateName && formWorkflowUpdateName.invalid && !formWorkflowUpdateName.pristine"
@@ -42,11 +46,13 @@
                 </div>
                 <div class="field">
                     <label>{{'common_description' | translate}}</label>
-                    <textarea name="description" class="ui" [(ngModel)]="_workflow.description"></textarea>
+                    <textarea name="description" class="ui" [(ngModel)]="_workflow.description"
+                        [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"></textarea>
                 </div>
                 <div class="field">
                     <label>{{ 'workflow_sidebar_tag_zone' | translate }}</label>
                     <sui-multi-select name="sidebartagzone" class="selection" *ngIf="existingTags.length > 0"
+                        [isDisabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
                         [(ngModel)]="selectedTags" [options]="existingTags" [isSearchable]="true"
                         (ngModelChange)="updateTagMetadata($event)" #multiSelect>
                         <sui-select-option *ngFor="let i of multiSelect.filteredOptions" [value]="i">
@@ -58,13 +64,14 @@
                     <div class="fields">
                         <div class="three wide field">
                             <input type="number" name="formWorkflowUpdateHistory"
-                                placeholder="{{ 'workflow_history_length' | translate}}"
-                                [(ngModel)]="_workflow.history_length" [disabled]="loading" required
+                                placeholder="{{ 'workflow_history_length' | translate}}" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length >
+                                0)" [(ngModel)]="_workflow.history_length" [disabled]="loading" required
                                 #formWorkflowUpdateHistory="ngModel" min="1" max="500">
                         </div>
                         <div class="thirteen wide field">
                             <sui-select name="sidebartagzonehistory" class="selection" *ngIf="existingTags.length > 0"
-                                [(ngModel)]="purgeTag" [options]="existingTags" [isSearchable]="true" #SelectPurge>
+                                [(ngModel)]="purgeTag" [options]="existingTags" [isSearchable]="true" [isDisabled]="loading || (workflow.from_repository && workflow.from_repository.length >
+                                0)" #SelectPurge>
                                 <sui-select-option *ngFor="let i of SelectPurge.filteredOptions" [value]="i">
                                 </sui-select-option>
                             </sui-select>
@@ -74,15 +81,14 @@
                 <div class="field">
                     <label>{{ 'workflow_runnumber_title' | translate }}</label>
                     <input type="number" name="formWorkflowRunNumUpdateNumber"
-                        placeholder="{{ 'common_loading' | translate}}" [(ngModel)]="runnumber" [disabled]="loading"
-                        required #formWorkflowRunNumUpdateNumber="ngModel">
+                        placeholder="{{ 'common_loading' | translate}}" [(ngModel)]="runnumber" required
+                        #formWorkflowRunNumUpdateNumber="ngModel">
                 </div>
                 <div class="submitbutton">
                     <ng-container *ngIf="workflow.from_repository && workflow.from_repository.length > 0">
-                        <div class="ui right floated" suiPopup [popupText]="'workflow_as_code_no_edit' | translate"
-                            popupPlacement="left">
-                            <button class="ui green button" type="submit" name="savebtn" [class.loading]="loading"
-                                [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)">
+                        <div class="ui right floated">
+                            <button class="ui green button" type="button" [class.loading]=" loading"
+                                (click)="updateRunNumber()">
                                 {{'btn_save' | translate}}
                             </button>
                         </div>

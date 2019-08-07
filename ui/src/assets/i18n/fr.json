@@ -1088,6 +1088,7 @@
   "workflow_template_help_edit_from": "Le modèle de workflow est synchronisé à partir d'une URL, vous ne pouvez pas modifier ses informations.",
   "workflow_template_import_from_url": "Importer depuis une URL",
   "workflow_template_imported_from_url": "Importé depuis une URL",
+  "workflow_ascode_no_edit": "Votre workflow est configuré en as-code, par conséquent certaines mises à jours des données de workflows sont impossible via l'interface.",
   "application_repository_help_line_1": "Votre application n'a pas été importée depuis votre code.",
   "pipeline_repository_help_line_1": "Votre pipeline n'a pas été importé depuis votre code.",
   "environment_repository_help_line_1": "Votre environnement n'a pas été importé depuis votre code.",
