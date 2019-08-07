@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
@@ -63,7 +64,13 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		if h.Ref != "" && h.UUID == "" {
 			if oldH, has := oldHooksByRef[h.Ref]; has {
 				if len(h.Config) == 0 {
-					h.Config = oldH.Config
+					h.Config = oldH.Config.Clone()
+					// the oldW can have a different name than the workflow to import
+					//we have to rename the workflow name in the hook config retrieve from old workflow
+					h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{
+						Value:        w.Name,
+						Configurable: false,
+					}
 				}
 				h.UUID = oldH.UUID
 				continue
