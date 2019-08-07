@@ -325,7 +325,7 @@ func (api *API) getStageConditionsHandler() service.Handler {
 		}
 
 		for _, pipParam := range pipParams {
-			data.ConditionNames = append(data.ConditionNames, pipParam.Name)
+			data.ConditionNames = append(data.ConditionNames, "cds.pip."+pipParam.Name)
 		}
 
 		// add cds variable
