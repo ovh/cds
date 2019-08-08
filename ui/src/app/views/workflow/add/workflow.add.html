@@ -35,7 +35,6 @@
                                                         <button class="ui button" type="button"
                                                             [class.active]="creationMode === 'graphical'"
                                                             [class.blue]="creationMode === 'graphical'"
-                                                            [class.disabled]="!project.application_names || !project.application_names.length"
                                                             (click)="creationMode = 'graphical'">
                                                             {{'common_create' | translate}}
                                                         </button>
