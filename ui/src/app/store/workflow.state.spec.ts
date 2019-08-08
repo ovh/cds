@@ -6,14 +6,16 @@ import { AuditWorkflow } from 'app/model/audit.model';
 import { Label, Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
+import { ProjectService } from 'app/service/project/project.service';
+import { ProjectStore } from 'app/service/services.module';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { ApplicationsState } from './applications.state';
 import { PipelinesState } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
 import * as workflowsActions from './workflow.action';
-import {WorkflowState, WorkflowStateModel} from './workflow.state';
-import { WorkflowService } from 'app/service/workflow/workflow.service';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowState, WorkflowStateModel } from './workflow.state';
 
 describe('Workflows', () => {
     let store: Store;
@@ -21,7 +23,7 @@ describe('Workflows', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            providers: [NavbarService, WorkflowService, WorkflowRunService],
+            providers: [NavbarService, WorkflowService, WorkflowRunService, ProjectStore, ProjectService],
             imports: [
                 NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowState]),
                 HttpClientTestingModule
