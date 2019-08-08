@@ -21,9 +21,9 @@ export class ProjectStore {
 
     }
 
-    getProjectsList(): Observable<List<Project>> {
+    getProjectsList(resync: boolean = false): Observable<List<Project>> {
         // If Store not empty, get from it
-        if (!this._projectNav.getValue() || this._projectNav.getValue().size === 0) {
+        if (resync || !this._projectNav.getValue() || this._projectNav.getValue().size === 0) {
             // Get from API
             this._projectService.getProjects().subscribe(res => {
                 this._projectNav.next(List(res));
