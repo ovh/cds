@@ -9,14 +9,16 @@ import { Pipeline, PipelineAudit } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Stage } from 'app/model/stage.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
+import { ProjectService } from 'app/service/project/project.service';
+import { ProjectStore } from 'app/service/services.module';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { ApplicationsState } from './applications.state';
 import * as pipelinesActions from './pipelines.action';
 import { PipelinesState, PipelinesStateModel } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
 import { WorkflowState } from './workflow.state';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
-import { WorkflowService } from 'app/service/workflow/workflow.service';
 
 describe('Pipelines', () => {
     let store: Store;
@@ -24,7 +26,7 @@ describe('Pipelines', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            providers: [NavbarService, WorkflowRunService, WorkflowService],
+            providers: [NavbarService, WorkflowRunService, WorkflowService, ProjectStore, ProjectService],
             imports: [
                 NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowState]),
                 HttpClientTestingModule

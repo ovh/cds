@@ -26,6 +26,7 @@ export class VariableValueComponent implements OnInit {
 
     valueChanged(): void {
         this.valueChange.emit(this.value);
+        this.valueUpdating.emit(true);
     }
 
     sendValueChanged(): void {
