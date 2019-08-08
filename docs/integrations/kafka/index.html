@@ -376,6 +376,7 @@ name: your-kafka-integration model: name: Kafka identifier: github.com/ovh/cds/i
 <ul>
 <li><a href="#import-a-kafka-integration-on-your-cds-project">Import a Kafka Integration on your CDS Project</a></li>
 <li><a href="#create-a-public-kafka-integration-for-whole-cds-projects">Create a Public Kafka Integration for whole CDS Projects</a></li>
+<li><a href="#add-kafka-to-handle-cds-events">Add Kafka to handle CDS events</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -455,6 +456,37 @@ public_configurations:
 </code></pre>
 
 <p>Then, as a standard user, you can add a <a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/kafka-hook/">Kafka Hook</a> on your workflow.</p>
+
+<h3 id="add-kafka-to-handle-cds-events">Add Kafka to handle CDS events</h3>
+
+<p>If you want to trigger something following an event in CDS you can add a kafka event integration. You have 2 options :</p>
+
+<ul>
+<li><p>If you are a CDS administrator, you can add a public kafka event integration with <code>event: true</code> in your yaml file. When an event integration is public then all CDS events are send to this kafka topic.</p></li>
+
+<li><p>You are a CDS user and want to plug your own kafka topic for one or several of your workflows. You just have to add your personal kafka event integration and add it to your workflow in the <code>notifications</code> tab on UI. An example of use case could be that you want to generate some svg badge for a specific workflow and not all. Then you can just add an event integration for your workflow and plug the <a href="https://github.com/ovh/cds/tree/master/contrib/uservices/badge">badge microservice</a> on this kafka topic.</p></li>
+</ul>
+
+<p>Example of yaml configuration:</p>
+
+<pre><code class="language-yml">name: your-kafka-integration
+hook: true
+event: true
+public_configurations:
+  name-of-integration:
+    &quot;broker url&quot;:
+      type: string
+      value: &quot;n1.o1.your-broker:9093,n2.o1.n1.o1.your-broker:9093,n3.o1.n1.o1.your-broker:9093&quot;
+    &quot;topic&quot;:
+      type: string
+      value: &quot;your-topic.events&quot;
+    &quot;username&quot;:
+      type: string
+      value: &quot;your-topic.cds-reader&quot;
+    &quot;password&quot;:
+      type: password
+      value: xxxxxxxx
+</code></pre>
 
 
 
