@@ -32,7 +32,7 @@ type Event struct {
 	WorkflowRunNumSub   int64                  `json:"workflow_run_num_sub,omitempty"`
 	Status              string                 `json:"status,omitempty"`
 	Tags                []WorkflowRunTag       `json:"tag,omitempty"`
-	EventIntegrationsID []int64                `json:"-"`
+	EventIntegrationsID []int64                `json:"event_integrations_id"`
 }
 
 // EventFilter represents filters when getting events
