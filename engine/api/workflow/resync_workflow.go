@@ -13,8 +13,9 @@ import (
 // Resync a workflow in the given workflow run
 func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, u *sdk.User) error {
 	options := LoadOptions{
-		DeepPipeline: true,
-		Base64Keys:   true,
+		DeepPipeline:     true,
+		Base64Keys:       true,
+		WithIntegrations: true,
 	}
 	wf, errW := LoadByID(db, store, proj, wr.Workflow.ID, u, options)
 	if errW != nil {
@@ -38,6 +39,7 @@ func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.W
 	wr.Workflow.Applications = wf.Applications
 	wr.Workflow.Environments = wf.Environments
 	wr.Workflow.ProjectIntegrations = wf.ProjectIntegrations
+	wr.Workflow.EventIntegrations = wf.EventIntegrations
 	wr.Workflow.HookModels = wf.HookModels
 	wr.Workflow.OutGoingHookModels = wf.OutGoingHookModels
 

@@ -79,7 +79,7 @@ func TestCanBeRun(t *testing.T) {
 func TestPurgeWorkflowRun(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	event.Initialize(event.KafkaConfig{}, cache)
+	_ = event.Initialize(db, cache)
 
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
@@ -254,7 +254,7 @@ vcs_ssh_key: proj-blabla
 func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	event.Initialize(event.KafkaConfig{}, cache)
+	_ = event.Initialize(db, cache)
 
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
@@ -350,7 +350,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	event.Initialize(event.KafkaConfig{}, cache)
+	_ = event.Initialize(db, cache)
 
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
@@ -540,7 +540,7 @@ vcs_ssh_key: proj-blabla
 func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	event.Initialize(event.KafkaConfig{}, cache)
+	_ = event.Initialize(db, cache)
 
 	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
 	test.NoError(t, services.Insert(db, mockVCSSservice))
@@ -708,7 +708,7 @@ vcs_ssh_key: proj-blabla
 func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	event.Initialize(event.KafkaConfig{}, cache)
+	_ = event.Initialize(db, cache)
 
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
@@ -792,7 +792,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	event.Initialize(event.KafkaConfig{}, cache)
+	_ = event.Initialize(db, cache)
 
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)

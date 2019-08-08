@@ -1,5 +1,8 @@
 <div class="WorkflowNotification" *ngIf="notification">
     <form class="ui form">
+        <div class="field">
+            <div markdown [data]="'workflow_notification_explanation' | translate"></div>
+        </div>
         <div class="two fields">
             <div class="six wide field">
                 <label> {{ 'workflow_notification_type' | translate}} </label>

@@ -3,11 +3,10 @@ package integration
 import (
 	"database/sql"
 
-	"github.com/ovh/cds/engine/api/secret"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -71,6 +70,64 @@ func LoadProjectIntegrationByName(db gorp.SqlExecutor, key string, name string, 
 	return p, nil
 }
 
+// LoadProjectIntegrationsByKeyAndType Load a integration by project key and its name
+func LoadProjectIntegrationsByKeyAndType(db gorp.SqlExecutor, key string, integrationType *sdk.IntegrationType, clearPwd bool) ([]sdk.ProjectIntegration, error) {
+	var pps []dbProjectIntegration
+	query := `
+		SELECT project_integration.*
+		FROM project_integration
+		JOIN project ON project.id = project_integration.project_id
+		JOIN integration_model ON integration_model.id = project_integration.integration_model_id
+		WHERE project.projectkey = $1
+	`
+	if integrationType != nil {
+		switch *integrationType {
+		case sdk.IntegrationTypeEvent:
+			query += " AND integration_model.event = true"
+		case sdk.IntegrationTypeCompute:
+			query += " AND integration_model.compute = true"
+		case sdk.IntegrationTypeStorage:
+			query += " AND integration_model.storage = true"
+		case sdk.IntegrationTypeHook:
+			query += " AND integration_model.hook = true"
+		case sdk.IntegrationTypeDeployment:
+			query += " AND integration_model.deployment = true"
+		}
+	}
+	if _, err := db.Select(&pps, query, key); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WithStack(err)
+	}
+
+	projectIntegrations := make([]sdk.ProjectIntegration, len(pps))
+	for i, projectIntDB := range pps {
+		if err := projectIntDB.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "cannot post get for project integration %s with id %d", projectIntDB.Name, projectIntDB.ID)
+		}
+		projectInt := sdk.ProjectIntegration(projectIntDB)
+		for k, v := range projectInt.Config {
+			if v.Type == sdk.IntegrationConfigTypePassword {
+				if clearPwd {
+					decryptedValue, errD := secret.DecryptValue(v.Value)
+					if errD != nil {
+						return projectIntegrations, sdk.WrapError(errD, "LoadProjectIntegrationByName> Cannot decrypt value")
+					}
+					v.Value = decryptedValue
+					projectInt.Config[k] = v
+				} else {
+					v.Value = sdk.PasswordPlaceholder
+					projectInt.Config[k] = v
+				}
+			}
+		}
+		projectIntegrations[i] = projectInt
+	}
+
+	return projectIntegrations, nil
+}
+
 // LoadProjectIntegrationByID returns integration, selecting by its id
 func LoadProjectIntegrationByID(db gorp.SqlExecutor, id int64, clearPassword bool) (*sdk.ProjectIntegration, error) {
 	var pp dbProjectIntegration
@@ -79,6 +136,9 @@ func LoadProjectIntegrationByID(db gorp.SqlExecutor, id int64, clearPassword boo
 			return nil, nil
 		}
 		return nil, err
+	}
+	if err := pp.PostGet(db); err != nil {
+		return nil, sdk.WrapError(err, "cannot post get for project integration with id %d", id)
 	}
 	for k, v := range pp.Config {
 		if v.Type == sdk.IntegrationConfigTypePassword {
@@ -194,6 +254,78 @@ func (pp *dbProjectIntegration) PostUpdate(db gorp.SqlExecutor) error {
 func (pp *dbProjectIntegration) PostInsert(db gorp.SqlExecutor) error {
 	if err := pp.PostUpdate(db); err != nil {
 		return sdk.WrapError(err, "Cannot update")
+	}
+	return nil
+}
+
+// LoadIntegrationsByWorkflowID load integration integrations by Workflow id
+func LoadIntegrationsByWorkflowID(db gorp.SqlExecutor, id int64, clearPassword bool) ([]sdk.ProjectIntegration, error) {
+	integrations := []sdk.ProjectIntegration{}
+	query := `SELECT project_integration.*
+	FROM project_integration
+		JOIN workflow_project_integration ON workflow_project_integration.project_integration_id = project_integration.id
+	WHERE workflow_project_integration.workflow_id = $1`
+	var res []dbProjectIntegration
+	if _, err := db.Select(&res, query, id); err != nil {
+		if err == sql.ErrNoRows {
+			return integrations, nil
+		}
+		return nil, err
+	}
+
+	integrations = make([]sdk.ProjectIntegration, len(res))
+	for i := range res {
+		pp := &res[i]
+		if err := pp.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "Cannot post get")
+		}
+
+		for k, v := range pp.Config {
+			if v.Type == sdk.IntegrationConfigTypePassword {
+				if clearPassword {
+					secret, errD := secret.DecryptValue(v.Value)
+					if errD != nil {
+						return nil, sdk.WrapError(errD, "LoadIntegrationByID> Cannot decrypt password")
+					}
+					v.Value = string(secret)
+					pp.Config[k] = v
+				} else {
+					v.Value = sdk.PasswordPlaceholder
+					pp.Config[k] = v
+				}
+			}
+		}
+		integrations[i] = sdk.ProjectIntegration(*pp)
+	}
+	return integrations, nil
+}
+
+// AddOnWorkflow link a project integration on a workflow
+func AddOnWorkflow(db gorp.SqlExecutor, workflowID int64, projectIntegrationID int64) error {
+	query := "INSERT INTO workflow_project_integration (workflow_id, project_integration_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+
+	if _, err := db.Exec(query, workflowID, projectIntegrationID); err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
+}
+
+// RemoveFromWorkflow remove a project integration on a workflow
+func RemoveFromWorkflow(db gorp.SqlExecutor, workflowID int64, projectIntegrationID int64) error {
+	query := "DELETE FROM workflow_project_integration WHERE workflow_id = $1 AND project_integration_id = $2"
+
+	if _, err := db.Exec(query, workflowID, projectIntegrationID); err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
+}
+
+// DeleteFromWorkflow remove a project integration on a workflow
+func DeleteFromWorkflow(db gorp.SqlExecutor, workflowID int64) error {
+	query := "DELETE FROM workflow_project_integration WHERE workflow_id = $1"
+
+	if _, err := db.Exec(query, workflowID); err != nil {
+		return sdk.WithStack(err)
 	}
 	return nil
 }

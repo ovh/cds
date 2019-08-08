@@ -33,9 +33,14 @@ var (
 			"password": IntegrationConfigValue{
 				Type: IntegrationConfigTypePassword,
 			},
+			"topic": IntegrationConfigValue{
+				Type:        IntegrationConfigTypeString,
+				Description: "This is mandatory only if you want to use Event Integration",
+			},
 		},
 		Disabled: false,
 		Hook:     true,
+		Event:    true,
 	}
 	// RabbitMQIntegration represents a kafka integration
 	RabbitMQIntegration = IntegrationModel{
@@ -122,6 +127,17 @@ var (
 	}
 )
 
+// IntegrationType represents all different type of integrations
+type IntegrationType string
+
+const (
+	IntegrationTypeEvent      = IntegrationType("event")
+	IntegrationTypeCompute    = IntegrationType("compute")
+	IntegrationTypeHook       = IntegrationType("hook")
+	IntegrationTypeStorage    = IntegrationType("storage")
+	IntegrationTypeDeployment = IntegrationType("deployment")
+)
+
 // DefaultIfEmptyStorage return sdk.DefaultStorageIntegrationName if integrationName is empty
 func DefaultIfEmptyStorage(integrationName string) string {
 	if integrationName == "" {
@@ -203,6 +219,7 @@ type IntegrationModel struct {
 	Storage                 bool                         `json:"storage" db:"storage" yaml:"storage" cli:"storage supported"`
 	Deployment              bool                         `json:"deployment" db:"deployment" yaml:"deployment" cli:"deployment_supported"`
 	Compute                 bool                         `json:"compute" db:"compute" yaml:"compute" cli:"compute_supported"`
+	Event                   bool                         `json:"event" db:"event" yaml:"event" cli:"event_supported"`
 	Public                  bool                         `json:"public,omitempty" db:"public" yaml:"public,omitempty"`
 }
 

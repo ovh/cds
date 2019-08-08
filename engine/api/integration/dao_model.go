@@ -27,6 +27,58 @@ func LoadModels(db gorp.SqlExecutor) ([]sdk.IntegrationModel, error) {
 	return integrations, nil
 }
 
+// LoadPublicModelsByType load integration models which are public
+func LoadPublicModelsByType(db gorp.SqlExecutor, integrationType *sdk.IntegrationType, clearPassword bool) ([]sdk.IntegrationModel, error) {
+	var pm []integrationModel
+	query := "SELECT * from integration_model WHERE public = true"
+	if integrationType != nil {
+		switch *integrationType {
+		case sdk.IntegrationTypeEvent:
+			query += " AND integration_model.event = true"
+		case sdk.IntegrationTypeCompute:
+			query += " AND integration_model.compute = true"
+		case sdk.IntegrationTypeStorage:
+			query += " AND integration_model.storage = true"
+		case sdk.IntegrationTypeHook:
+			query += " AND integration_model.hook = true"
+		case sdk.IntegrationTypeDeployment:
+			query += " AND integration_model.deployment = true"
+		}
+	}
+
+	if _, err := db.Select(&pm, query); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "Cannot select all public integration model")
+	}
+
+	var integrations = make([]sdk.IntegrationModel, len(pm))
+	for i, p := range pm {
+		if err := p.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "Cannot postGet integration model")
+		}
+		integration := sdk.IntegrationModel(p)
+		if clearPassword {
+			for pfName, pfCfg := range integration.PublicConfigurations {
+				newCfg := pfCfg.Clone()
+				if err := newCfg.DecryptSecrets(secret.DecryptValue); err != nil {
+					return nil, sdk.WrapError(err, "unable to encrypt config")
+				}
+				integration.PublicConfigurations[pfName] = newCfg
+			}
+		} else {
+			for pfName, pfCfg := range integration.PublicConfigurations {
+				newCfg := pfCfg.Clone()
+				newCfg.HideSecrets()
+				integration.PublicConfigurations[pfName] = newCfg
+			}
+		}
+		integrations[i] = integration
+	}
+	return integrations, nil
+}
+
 // LoadModel Load a integration model by its ID
 func LoadModel(db gorp.SqlExecutor, modelID int64, clearPassword bool) (sdk.IntegrationModel, error) {
 	var pm integrationModel

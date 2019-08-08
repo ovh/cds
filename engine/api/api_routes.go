@@ -195,6 +195,7 @@ func (api *API) InitRouter() {
 
 	r.Handle("/project/{permProjectKey}/workflows", r.POST(api.postWorkflowHandler, EnableTracing()), r.GET(api.getWorkflowsHandler, AllowProvider(true), EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}", r.GET(api.getWorkflowHandler, AllowProvider(true), EnableTracing()), r.PUT(api.putWorkflowHandler, EnableTracing()), r.DELETE(api.deleteWorkflowHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/eventsintegration/{integrationID}", r.DELETE(api.deleteWorkflowEventsIntegrationHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/icon", r.PUT(api.putWorkflowIconHandler), r.DELETE(api.deleteWorkflowIconHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode/{uuid}", r.GET(api.getWorkflowAsCodeHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/ascode", r.POST(api.postWorkflowAsCodeHandler, EnableTracing()))

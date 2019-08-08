@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
@@ -50,6 +51,7 @@ type LoadOptions struct {
 	WithLabels            bool
 	WithIcon              bool
 	WithAsCodeUpdateEvent bool
+	WithIntegrations      bool
 }
 
 // UpdateOptions is option to parse a workflow
@@ -217,6 +219,12 @@ func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
 	}
 	if _, err := db.Exec("update workflow set purge_tags = $1, workflow_data = $3 where id = $2", pt, w.ID, data); err != nil {
 		return err
+	}
+
+	for _, integ := range w.EventIntegrations {
+		if err := integration.AddOnWorkflow(db, w.ID, integ.ID); err != nil {
+			return sdk.WrapError(err, "cannot add project event integration on workflow")
+		}
 	}
 
 	return nil
@@ -592,6 +600,17 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		res.AsCodeEvent = asCodeEvents
 	}
 
+	if opts.WithIntegrations {
+		_, next = observability.Span(ctx, "workflow.load.AddIntegrations")
+		integrations, errInt := integration.LoadIntegrationsByWorkflowID(db, res.ID, false)
+		next()
+
+		if errInt != nil {
+			return nil, sdk.WrapError(errInt, "Load> unable to load workflow integrations")
+		}
+		res.EventIntegrations = integrations
+	}
+
 	_, next = observability.Span(ctx, "workflow.load.loadNotifications")
 	notifs, errN := loadNotifications(db, &res)
 	next()
@@ -889,6 +908,10 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 		return sdk.WrapError(err, "unable to delete all notifications on workflow(%d - %s)", w.ID, w.Name)
 	}
 
+	if err := integration.DeleteFromWorkflow(db, w.ID); err != nil {
+		return sdk.WrapError(err, "unable to delete all integrations on workflow(%d - %s)", w.ID, w.Name)
+	}
+
 	// Delete workflow data
 	if uptOption.OldWorkflow != nil {
 		if err := DeleteWorkflowData(db, *uptOption.OldWorkflow); err != nil {
@@ -1068,6 +1091,9 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 		if err := checkProjectIntegration(proj, w, n); err != nil {
 			return err
 		}
+		if err := checkEventIntegration(proj, w); err != nil {
+			return err
+		}
 		if err := checkHooks(db, w, n); err != nil {
 			return err
 		}
@@ -1201,6 +1227,24 @@ func checkProjectIntegration(proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) er
 		w.ProjectIntegrations[ppProj.ID] = ppProj
 		n.Context.ProjectIntegrationID = ppProj.ID
 	}
+	return nil
+}
+
+// checkEventIntegration checks event integration data
+func checkEventIntegration(proj *sdk.Project, w *sdk.Workflow) error {
+	for _, eventIntegration := range w.EventIntegrations {
+		found := false
+		for _, projInt := range proj.Integrations {
+			if eventIntegration.ID == projInt.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return sdk.WrapError(sdk.ErrIntegrationtNotFound, "event integration %s with id %d not found in project %s", eventIntegration.Name, eventIntegration.ID, proj.Key)
+		}
+	}
+
 	return nil
 }
 

@@ -42,6 +42,7 @@ export class Workflow {
     applications: { [key: number]: Application; };
     environments: { [key: number]: Environment; };
     project_integrations: { [key: number]: ProjectIntegration; };
+    event_integrations: ProjectIntegration[];
     hook_models: { [key: number]: WorkflowHookModel; };
     outgoing_hook_models: { [key: number]: WorkflowHookModel; };
     labels: Label[];

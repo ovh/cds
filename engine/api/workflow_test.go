@@ -519,6 +519,27 @@ func Test_putWorkflowHandler(t *testing.T) {
 	}
 	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, &app, u))
 
+	model := sdk.IntegrationModel{
+		Name:  sdk.RandomString(10),
+		Event: true,
+	}
+	test.NoError(t, integration.InsertModel(api.mustDB(), &model))
+
+	projInt := sdk.ProjectIntegration{
+		Config: sdk.IntegrationConfig{
+			"test": sdk.IntegrationConfigValue{
+				Description: "here is a test",
+				Type:        sdk.IntegrationConfigTypeString,
+				Value:       "test",
+			},
+		},
+		Name:               sdk.RandomString(10),
+		ProjectID:          proj.ID,
+		Model:              model,
+		IntegrationModelID: model.ID,
+	}
+	test.NoError(t, integration.InsertIntegration(db, &projInt))
+
 	var workflow1 = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description 2",
@@ -531,6 +552,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 				},
 			},
 		},
+		EventIntegrations: []sdk.ProjectIntegration{projInt},
 	}
 
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &workflow1)
@@ -547,11 +569,142 @@ func Test_putWorkflowHandler(t *testing.T) {
 
 	assert.NotEqual(t, 0, workflow1.WorkflowData.Node.Context.ApplicationID)
 	assert.NotNil(t, workflow1.WorkflowData.Node.Context.DefaultPayload)
+	assert.NotNil(t, workflow1.EventIntegrations)
 
 	payload, err := workflow1.WorkflowData.Node.Context.DefaultPayloadToMap()
 	test.NoError(t, err)
 
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
+}
+
+func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
+	// Init database
+	api, db, router, end := newTestAPI(t)
+	defer end()
+
+	// Init user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	// Init project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	// Init pipeline
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+
+	var wf = &sdk.Workflow{
+		Name:        "Name",
+		Description: "Description",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
+		},
+	}
+
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
+
+	//Prepare request
+	vars = map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": "Name",
+	}
+	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+
+	// Insert application
+	app := sdk.Application{
+		Name:               "app1",
+		RepositoryFullname: "test/app1",
+		VCSServer:          "github",
+	}
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, &app, u))
+
+	model := sdk.IntegrationModel{
+		Name:  sdk.RandomString(10),
+		Event: true,
+	}
+	test.NoError(t, integration.InsertModel(api.mustDB(), &model))
+
+	projInt := sdk.ProjectIntegration{
+		Config: sdk.IntegrationConfig{
+			"test": sdk.IntegrationConfigValue{
+				Description: "here is a test",
+				Type:        sdk.IntegrationConfigTypeString,
+				Value:       "test",
+			},
+		},
+		Name:               sdk.RandomString(10),
+		ProjectID:          proj.ID,
+		Model:              model,
+		IntegrationModelID: model.ID,
+	}
+	test.NoError(t, integration.InsertIntegration(db, &projInt))
+
+	var workflow1 = &sdk.Workflow{
+		Name:        "Name",
+		Description: "Description 2",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+				},
+			},
+		},
+		EventIntegrations: []sdk.ProjectIntegration{projInt},
+	}
+
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &workflow1)
+
+	//Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflow1))
+
+	assert.NotEqual(t, 0, workflow1.ID)
+	assert.Equal(t, "Description 2", workflow1.Description)
+
+	assert.NotEqual(t, 0, workflow1.WorkflowData.Node.Context.ApplicationID)
+	assert.NotNil(t, workflow1.WorkflowData.Node.Context.DefaultPayload)
+	assert.NotNil(t, workflow1.EventIntegrations)
+	assert.Equal(t, len(workflow1.EventIntegrations), 1)
+
+	vars["integrationID"] = fmt.Sprintf("%d", projInt.ID)
+	uri = router.GetRoute("DELETE", api.deleteWorkflowEventsIntegrationHandler, vars)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)
+
+	//Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	wfUpdated, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, wf.Name, u, workflow.LoadOptions{WithIntegrations: true})
+	test.NoError(t, err, "cannot load workflow")
+
+	test.Equal(t, 0, len(wfUpdated.EventIntegrations))
 }
 
 // TODO: to uncomment

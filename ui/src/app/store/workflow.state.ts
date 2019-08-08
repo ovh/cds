@@ -391,6 +391,43 @@ export class WorkflowState {
         }));
     }
 
+    //  ------- Event integration --------- //
+    @Action(actionWorkflow.UpdateEventIntegrationsWorkflow)
+    addEventIntegration(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UpdateEventIntegrationsWorkflow) {
+        const state = ctx.getState();
+        const workflow: Workflow = {
+            ...state.workflow,
+            event_integrations: action.payload.eventIntegrations
+        };
+
+        return ctx.dispatch(new actionWorkflow.UpdateWorkflow({
+            projectKey: action.payload.projectKey,
+            workflowName: action.payload.workflowName,
+            changes: workflow
+        }));
+    }
+
+    @Action(actionWorkflow.DeleteEventIntegrationWorkflow)
+    deleteEventIntegration(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.DeleteEventIntegrationWorkflow) {
+        const state = ctx.getState();
+
+        return this._http.delete<null>(
+            `/project/${action.payload.projectKey}/workflows/` +
+            `${action.payload.workflowName}/eventsintegration/${action.payload.integrationId}`
+        ).pipe(tap(() => {
+            const workflow: Workflow = {
+                ...state.workflow,
+                event_integrations: state.workflow.event_integrations.filter((integ) => integ.id !== action.payload.integrationId)
+            };
+
+            return ctx.dispatch(new actionWorkflow.UpdateWorkflow({
+                projectKey: action.payload.projectKey,
+                workflowName: action.payload.workflowName,
+                changes: workflow
+            }));
+        }));
+    }
+
     //  ------- Nodes --------- //
     @Action(actionWorkflow.AddNodeTriggerWorkflow)
     addNodeTrigger(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.AddNodeTriggerWorkflow) {
