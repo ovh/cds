@@ -51,7 +51,7 @@ steps:
   - ""
   - '# Install pylint'
   - pip install --upgrade pip
-  - pip install pylint==1.7.2
+  - pip install astroid==1.5.3 pylint==1.8.2
   - ""
   - ""
 - script:
