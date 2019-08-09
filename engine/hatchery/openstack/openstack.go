@@ -272,10 +272,10 @@ func (h *HatcheryOpenstack) killAwolServers() {
 		}
 
 		// Delete workers, if not identified by CDS API
-		// Wait for 6 minutes, to avoid killing worker babies
+		// Wait for 10 minutes, to avoid killing worker babies
 		log.Debug("killAwolServers> server %s status: %s last update: %s toDeleteKilled:%t inWorkersList:%t", s.Name, s.Status, time.Since(s.Updated), toDeleteKilled, inWorkersList)
 		if isWorker && (workerHatcheryName == "" || workerHatcheryName == h.Service().Name) &&
-			(s.Status == "SHUTOFF" || toDeleteKilled || (!inWorkersList && time.Since(s.Updated) > 6*time.Minute)) {
+			(s.Status == "SHUTOFF" || toDeleteKilled || (!inWorkersList && time.Since(s.Updated) > 10*time.Minute)) {
 
 			// if it's was a worker model for registration
 			// check if we need to create a new openstack image from it
