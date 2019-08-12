@@ -31,6 +31,7 @@ type UserNotificationSettings struct {
 	SendToAuthor *bool                     `json:"send_to_author,omitempty" yaml:"send_to_author,omitempty"` // default is true, nil is true
 	Recipients   []string                  `json:"recipients,omitempty" yaml:"recipients,omitempty"`
 	Template     *UserNotificationTemplate `json:"template,omitempty" yaml:"template,omitempty"`
+	Conditions   WorkflowNodeConditions    `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 }
 
 // UserNotificationTemplate is the notification content

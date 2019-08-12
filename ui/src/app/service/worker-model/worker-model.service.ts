@@ -1,9 +1,9 @@
 
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Pipeline } from 'app/model/pipeline.model';
+import { ModelPattern, WorkerModel } from 'app/model/worker-model.model';
 import { Observable } from 'rxjs';
-import { Pipeline } from '../../model/pipeline.model';
-import { ModelPattern, WorkerModel } from '../../model/worker-model.model';
 
 @Injectable()
 export class WorkerModelService {

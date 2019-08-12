@@ -1,8 +1,8 @@
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
+import {Event} from 'app/model/event.model';
+import {TimelineFilter} from 'app/model/timeline.model';
 import {Observable} from 'rxjs/Observable';
-import {Event} from '../../model/event.model';
-import {TimelineFilter} from '../../model/timeline.model';
 
 @Injectable()
 export class TimelineService {

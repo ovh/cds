@@ -1,8 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Operation } from 'app/model/operation.model';
+import { Workflow, WorkflowPull, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { Observable } from 'rxjs';
-import { Operation } from '../../model/operation.model';
-import { Workflow, WorkflowPull, WorkflowTriggerConditionCache } from '../../model/workflow.model';
 
 @Injectable()
 export class WorkflowService {
@@ -60,5 +60,12 @@ export class WorkflowService {
      */
     resyncPRAsCode(projectKey: string, workflowName: string) {
         return this._http.post(`/project/${projectKey}/workflows/${workflowName}/ascode/resync/pr`, null)
+    }
+
+    updateRunNumber(projectKey: string, workflowName: string, runNumber: number): Observable<null> {
+        return this._http.post<null>(
+            `/project/${projectKey}/workflows/${workflowName}/runs/num`,
+            { num: runNumber }
+        );
     }
 }

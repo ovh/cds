@@ -58,6 +58,40 @@ var (
 		BooleanVariable,
 		NumberVariable,
 	}
+
+	BasicVariableNames = []string{
+		"cds.version",
+		"cds.application",
+		"cds.environment",
+		"cds.job",
+		"cds.manual",
+		"cds.pipeline",
+		"cds.project",
+		"cds.run",
+		"cds.run.number",
+		"cds.run.subnumber",
+		"cds.stage",
+		"cds.triggered_by.email",
+		"cds.triggered_by.fullname",
+		"cds.triggered_by.username",
+		"cds.ui.pipeline.run",
+		"cds.worker",
+		"cds.workflow",
+		"cds.workspace",
+		"payload",
+	}
+
+	BasicGitVariableNames = []string{
+		"git.repository",
+		"git.branch",
+		"git.message",
+		"git.author",
+		"git.hash",
+		"git.hash.short",
+		"git.url",
+		"git.http_url",
+		"git.server",
+	}
 )
 
 // NeedPlaceholder returns true if variable type is either secret or key

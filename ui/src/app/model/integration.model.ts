@@ -11,6 +11,7 @@ export class IntegrationModel {
     storage: boolean;
     deployment: boolean;
     compute: boolean;
+    event: boolean;
     public: boolean;
 }
 
@@ -33,7 +34,7 @@ export class ProjectIntegration {
             config = {};
         }
         for (let k of Object.keys(config)) {
-            if (default_config[k] ==  null) {
+            if (default_config[k] == null) {
                 delete config[k];
             }
         }

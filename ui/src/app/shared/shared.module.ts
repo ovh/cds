@@ -42,7 +42,6 @@ import { MenuComponent } from './menu/menu.component';
 import { ConfirmModalComponent } from './modal/confirm/confirm.component';
 import { DeleteModalComponent } from './modal/delete/delete.component';
 import { WarningModalComponent } from './modal/warning/warning.component';
-import { ParameterDescriptionComponent } from './parameter/description-popup/description.popup.component';
 import { ParameterFormComponent } from './parameter/form/parameter.form';
 import { ParameterListComponent } from './parameter/list/parameter.component';
 import { ParameterValueComponent } from './parameter/value/parameter.value.component';
@@ -161,7 +160,6 @@ import { ZoneComponent } from './zone/zone.component';
         LabelsEditComponent,
         MenuComponent,
         NgForNumber,
-        ParameterDescriptionComponent,
         ParameterFormComponent,
         ParameterListComponent,
         ParameterValueComponent,
@@ -270,7 +268,6 @@ import { ZoneComponent } from './zone/zone.component';
         NgSemanticModule,
         NgxAutoScroll,
         ConditionsComponent,
-        ParameterDescriptionComponent,
         ParameterListComponent,
         ParameterFormComponent,
         ParameterValueComponent,

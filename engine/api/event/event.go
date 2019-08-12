@@ -4,14 +4,23 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"time"
+
+	"github.com/go-gorp/gorp"
+	gocache "github.com/patrickmn/go-cache"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
+// cache with go cache
+var brokersConnectionCache = gocache.New(10*time.Minute, 6*time.Hour)
+var publicBrokersConnectionCache = []Broker{}
 var hostname, cdsname string
 var kafkaBroker Broker
 var brokers []Broker
@@ -38,8 +47,38 @@ func getBroker(t string, option interface{}) (Broker, error) {
 	return nil, fmt.Errorf("Invalid Broker Type %s", t)
 }
 
+func ResetPublicIntegrations(db *gorp.DbMap) error {
+	filterType := sdk.IntegrationTypeEvent
+	integrations, err := integration.LoadPublicModelsByType(db, &filterType, true)
+	if err != nil {
+		return sdk.WrapError(err, "cannot load public models for event type")
+	}
+
+	for _, integration := range integrations {
+		for _, cfg := range integration.PublicConfigurations {
+			kafkaCfg := KafkaConfig{
+				Enabled:         true,
+				BrokerAddresses: cfg["broker url"].Value,
+				User:            cfg["username"].Value,
+				Password:        cfg["password"].Value,
+				Topic:           cfg["topic"].Value,
+				MaxMessageByte:  10000000,
+			}
+
+			kafkaBroker, errk := getBroker("kafka", kafkaCfg)
+			if errk != nil {
+				return sdk.WrapError(errk, "cannot get broker for %s and user %s", cfg["broker url"].Value, cfg["username"].Value)
+			}
+
+			publicBrokersConnectionCache = append(publicBrokersConnectionCache, kafkaBroker)
+		}
+	}
+
+	return nil
+}
+
 // Initialize initializes event system
-func Initialize(k KafkaConfig, cache cache.Store) error {
+func Initialize(db *gorp.DbMap, cache cache.Store) error {
 	store = cache
 	var err error
 	hostname, err = os.Hostname()
@@ -56,16 +95,7 @@ func Initialize(k KafkaConfig, cache cache.Store) error {
 		}
 	}
 
-	brokers = []Broker{}
-	if k.Enabled {
-		var errk error
-		kafkaBroker, errk = getBroker("kafka", k)
-		if errk != nil {
-			return errk
-		}
-		brokers = append(brokers, kafkaBroker)
-	}
-	return nil
+	return ResetPublicIntegrations(db)
 }
 
 // Subscribe to CDS events
@@ -74,7 +104,7 @@ func Subscribe(ch chan<- sdk.Event) {
 }
 
 // DequeueEvent runs in a goroutine and dequeue event from cache
-func DequeueEvent(c context.Context) {
+func DequeueEvent(c context.Context, db *gorp.DbMap) {
 	for {
 		e := sdk.Event{}
 		store.DequeueWithContext(c, "events", &e)
@@ -87,9 +117,55 @@ func DequeueEvent(c context.Context) {
 			s <- e
 		}
 
-		// Send into external brokers
-		for _, b := range brokers {
+		// Send into public brokers
+		for _, b := range publicBrokersConnectionCache {
 			if err := b.sendEvent(&e); err != nil {
+				log.Warning("Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
+			}
+		}
+
+		for _, eventIntegrationID := range e.EventIntegrationsID {
+			brokerConnectionKey := strconv.FormatInt(eventIntegrationID, 10)
+			brokerConnection, ok := brokersConnectionCache.Get(brokerConnectionKey)
+			if !ok {
+				projInt, err := integration.LoadProjectIntegrationByID(db, eventIntegrationID, true)
+				if err != nil {
+					log.Error("Event.DequeueEvent> Cannot load project integration for project %s and id %d and type event: %v", e.ProjectKey, eventIntegrationID, err)
+					continue
+				}
+
+				if projInt.Model.Public {
+					continue
+				}
+
+				kafkaCfg := KafkaConfig{
+					Enabled:         true,
+					BrokerAddresses: projInt.Config["broker url"].Value,
+					User:            projInt.Config["username"].Value,
+					Password:        projInt.Config["password"].Value,
+					Topic:           projInt.Config["topic"].Value,
+					MaxMessageByte:  10000000,
+				}
+				kafkaBroker, errk := getBroker("kafka", kafkaCfg)
+				if errk != nil {
+					log.Error("Event.DequeueEvent> cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, errk)
+					continue
+				}
+				if err := brokersConnectionCache.Add(brokerConnectionKey, kafkaBroker, gocache.DefaultExpiration); err != nil {
+					log.Error("Event.DequeueEvent> cannot add broker in cache for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
+					continue
+				}
+				brokerConnection = kafkaBroker
+			}
+
+			broker, ok := brokerConnection.(Broker)
+			if !ok {
+				log.Error("cannot make cast of brokers")
+				continue
+			}
+
+			// Send into external brokers
+			if err := broker.sendEvent(&e); err != nil {
 				log.Warning("Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
 			}
 		}

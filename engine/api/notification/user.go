@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/luascript"
 )
 
 var (
@@ -143,18 +144,40 @@ func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun 
 
 	switch nodeRun.Status {
 	case sdk.StatusSuccess:
-		if check(notif.Settings.OnSuccess) {
+		if check(notif.Settings.OnSuccess) && checkConditions(notif.Settings.Conditions, nodeRun.BuildParameters) {
 			return true
 		}
 	case sdk.StatusFail:
-		if check(notif.Settings.OnFailure) {
+		if check(notif.Settings.OnFailure) && checkConditions(notif.Settings.Conditions, nodeRun.BuildParameters) {
 			return true
 		}
 	case sdk.StatusWaiting:
-		return notif.Settings.OnStart != nil && *notif.Settings.OnStart
+		return notif.Settings.OnStart != nil && *notif.Settings.OnStart && checkConditions(notif.Settings.Conditions, nodeRun.BuildParameters)
 	}
 
 	return false
+}
+
+func checkConditions(conditions sdk.WorkflowNodeConditions, params []sdk.Parameter) bool {
+	var conditionsOK bool
+	var errc error
+	if conditions.LuaScript == "" {
+		conditionsOK, errc = sdk.WorkflowCheckConditions(conditions.PlainConditions, params)
+	} else {
+		luacheck, err := luascript.NewCheck()
+		if err != nil {
+			log.Error("notification check condition error: %s", err)
+			return false
+		}
+		luacheck.SetVariables(sdk.ParametersToMap(params))
+		errc = luacheck.Perform(conditions.LuaScript)
+		conditionsOK = luacheck.Result
+	}
+	if errc != nil {
+		log.Error("notification check condition error on execution: %s", errc)
+		return false
+	}
+	return conditionsOK
 }
 
 func getWorkflowEvent(notif *sdk.UserNotificationSettings, params map[string]string) (sdk.EventNotif, error) {

@@ -877,6 +877,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 				Base64Keys:            true,
 				WithAsCodeUpdateEvent: true,
 				WithIcon:              true,
+				WithIntegrations:      true,
 			})
 			if errWf != nil {
 				return sdk.WrapError(errWf, "unable to load workflow %s", name)

@@ -1,13 +1,16 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { ProjectIntegration } from 'app/model/integration.model';
 import { Project } from 'app/model/project.model';
 import { Workflow, WorkflowNotification } from 'app/model/workflow.model';
 import { NotificationService } from 'app/service/notification/notification.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import {
     AddNotificationWorkflow,
+    DeleteEventIntegrationWorkflow,
     DeleteNotificationWorkflow,
+    UpdateEventIntegrationsWorkflow,
     UpdateNotificationWorkflow
 } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -21,6 +24,7 @@ import { finalize, first } from 'rxjs/operators';
 })
 export class WorkflowNotificationListComponent {
 
+    tab: 'newNotification' | 'newEvent';
     newNotification: WorkflowNotification;
     loading = false;
     loadingNotifTemplate = false;
@@ -39,7 +43,18 @@ export class WorkflowNotificationListComponent {
         return this._workflow;
     }
 
-    @Input() project: Project;
+    eventIntegrations: ProjectIntegration[];
+    _project: Project;
+    @Input()
+    set project(proj: Project) {
+        this._project = proj;
+        if (proj && proj.integrations) {
+            this.eventIntegrations = proj.integrations.filter((integ) => integ.model.event && !integ.model.public);
+        }
+    }
+    get project(): Project {
+        return this._project;
+    }
 
     constructor(
         private store: Store,
@@ -87,14 +102,16 @@ export class WorkflowNotificationListComponent {
     }
 
     openNewNotifArea() {
+        this.tab = 'newNotification';
+        this.selectedNotification = null;
         this.newNotification = new WorkflowNotification();
         this.setNotificationTemplate();
-        delete this.selectedNotification;
     }
 
     openEditionArea(i: number) {
+        this.tab = null;
         this.selectedNotification = i;
-        delete this.newNotification;
+        this.newNotification = null;
     }
 
     updateNotification(n: WorkflowNotification): void {
@@ -143,5 +160,34 @@ export class WorkflowNotificationListComponent {
                 this.mapNodesNotif.set(n.id, listNodes);
             });
         }
+    }
+
+    openNewEventArea() {
+        this.tab = 'newEvent';
+        this.selectedNotification = null;
+    }
+
+    addEvent(integration: ProjectIntegration) {
+        this.loading = true;
+        this.store.dispatch(new UpdateEventIntegrationsWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            eventIntegrations: [integration].concat(this.workflow.event_integrations)
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        })).subscribe();
+    }
+
+    deleteEvent(integration: ProjectIntegration) {
+        this.loading = true;
+        this.store.dispatch(new DeleteEventIntegrationWorkflow({
+            projectKey: this.project.key,
+            workflowName: this.workflow.name,
+            integrationId: integration.id,
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        })).subscribe();
     }
 }

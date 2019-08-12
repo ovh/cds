@@ -8,6 +8,7 @@ import { IdName, Label, LoadOpts, Project } from 'app/model/project.model';
 import { Usage } from 'app/model/usage.model';
 import { Variable } from 'app/model/variable.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
+import { ProjectStore } from 'app/service/services.module';
 import { cloneDeep } from 'lodash-es';
 import { tap } from 'rxjs/operators';
 import * as ProjectAction from './project.action';
@@ -42,7 +43,11 @@ export class ProjectState {
         );
     }
 
-    constructor(private _http: HttpClient, private _navbarService: NavbarService) { }
+    constructor(
+        private _http: HttpClient,
+        private _navbarService: NavbarService,
+        private _projectStore: ProjectStore
+    ) { }
 
 
     @Action(ProjectAction.LoadProject)
@@ -202,7 +207,7 @@ export class ProjectState {
                 project,
                 loading: false,
             });
-            // TODO: dispatch action on global state to add project in list
+            return this._projectStore.getProjectsList(true);
         }));
     }
 
@@ -223,7 +228,7 @@ export class ProjectState {
                 project: Object.assign({}, state.project, project),
                 loading: false,
             });
-            // TODO: dispatch action on global state to update project in list
+            return this._projectStore.getProjectsList(true);
         }));
     }
 
@@ -243,7 +248,7 @@ export class ProjectState {
                 project: null,
                 loading: false,
             });
-            // TODO: dispatch action on global state to delete project in list
+            return this._projectStore.getProjectsList(true);
         }));
     }
 

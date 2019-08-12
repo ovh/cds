@@ -1,4 +1,5 @@
 import { GroupPermission } from 'app/model/group.model';
+import { ProjectIntegration } from 'app/model/integration.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow, WorkflowNotification } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 
@@ -179,6 +180,16 @@ export class UpdateNotificationWorkflow {
 export class DeleteNotificationWorkflow {
     static readonly type = '[Workflow] Delete Notification in Workflow';
     constructor(public payload: { projectKey: string, workflowName: string, notification: WorkflowNotification }) { }
+}
+
+//  ------- Event Integrations --------- //
+export class UpdateEventIntegrationsWorkflow {
+    static readonly type = '[Workflow] Update Event Integration in Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string, eventIntegrations: ProjectIntegration[] }) { }
+}
+export class DeleteEventIntegrationWorkflow {
+    static readonly type = '[Workflow] Delete Event Integration in Workflow';
+    constructor(public payload: { projectKey: string, workflowName: string, integrationId: number }) { }
 }
 
 //  ------- Misc --------- //

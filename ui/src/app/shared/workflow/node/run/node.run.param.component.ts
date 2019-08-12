@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
@@ -26,12 +26,12 @@ declare var CodeMirror: any;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowNodeRunParamComponent implements OnInit {
-    @ViewChild('runWithParamModal', {static: false})
+export class WorkflowNodeRunParamComponent implements OnInit, AfterViewInit {
+    @ViewChild('runWithParamModal', { static: false })
     runWithParamModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
 
-    @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
+    @ViewChild('textareaCodeMirror', { static: false }) codemirror: any;
 
     @Input() workflowRun: WorkflowRun;
     _nodeRun: WorkflowNodeRun;
@@ -114,15 +114,17 @@ export class WorkflowNodeRunParamComponent implements OnInit {
 
     ngOnInit(): void {
         this.linkedToRepo = WNode.linkedToRepo(this._nodeToRun, this.workflow);
+    }
 
+    ngAfterViewInit() {
         this.themeSubscription = this._theme.get()
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(t => {
-            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
-            if (this.codemirror && this.codemirror.instance) {
-                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
-            }
-        });
+                this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+                if (this.codemirror && this.codemirror.instance) {
+                    this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+            });
     }
 
     show(): void {
@@ -407,25 +409,25 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             });
     }
 
-    changeCodeMirror(eventRoot: Event): void {
+    changeCodeMirror(codemirror: any, eventRoot: Event): void {
         let num = this.num;
-        if (!this.codemirror || !this.codemirror.instance) {
-            return
+        if (!codemirror || !codemirror.instance) {
+            return;
         }
         if (eventRoot.type === 'click') {
-            this.showHint(this.codemirror.instance, null);
+            this.showHint(codemirror.instance);
         }
 
         if (!this._keyUpListener) {
-            this._keyUpListener = this.codemirror.instance.on('keyup', (cm, event) => {
+            this._keyUpListener = codemirror.instance.on('keyup', (cm, event) => {
                 if (!cm.state.completionActive && event.keyCode !== 32) {
-                    this.showHint(cm, event);
+                    this.showHint(cm);
                 }
             });
         }
 
         if (!this._completionListener) {
-            this._completionListener = this.codemirror.instance.on('endCompletion', (cm, event) => {
+            this._completionListener = codemirror.instance.on('endCompletion', () => {
                 if (!this.linkedToRepo) {
                     return;
                 }
@@ -453,8 +455,8 @@ export class WorkflowNodeRunParamComponent implements OnInit {
         }
     }
 
-    showHint(cm, event) {
-        CodeMirror.showHint(this.codemirror.instance, CodeMirror.hint.payload, {
+    showHint(cm) {
+        CodeMirror.showHint(cm, CodeMirror.hint.payload, {
             completeSingle: true,
             closeCharacters: / /,
             payloadCompletionList: {

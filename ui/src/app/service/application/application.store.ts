@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
+import { Application } from 'app/model/application.model';
+import { NavbarRecentData } from 'app/model/navbar.model';
 import * as immutable from 'immutable';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Application } from '../../model/application.model';
-import { NavbarRecentData } from '../../model/navbar.model';
 
 
 @Injectable()

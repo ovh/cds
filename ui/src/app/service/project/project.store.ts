@@ -1,10 +1,8 @@
 
 import { Injectable } from '@angular/core';
+import { LoadOpts, Project } from 'app/model/project.model';
 import { List, Map } from 'immutable';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { LoadOpts, Project } from '../../model/project.model';
-import { NavbarService } from '../navbar/navbar.service';
 import { ProjectService } from './project.service';
 
 
@@ -19,14 +17,13 @@ export class ProjectStore {
 
     constructor(
         private _projectService: ProjectService,
-        private _navbarService: NavbarService
     ) {
 
     }
 
-    getProjectsList(): Observable<List<Project>> {
+    getProjectsList(resync: boolean = false): Observable<List<Project>> {
         // If Store not empty, get from it
-        if (!this._projectNav.getValue() || this._projectNav.getValue().size === 0) {
+        if (resync || !this._projectNav.getValue() || this._projectNav.getValue().size === 0) {
             // Get from API
             this._projectService.getProjects().subscribe(res => {
                 this._projectNav.next(List(res));
@@ -73,24 +70,5 @@ export class ProjectStore {
             });
         }
         return new Observable<Map<string, Project>>(fn => this._projectCache.subscribe(fn));
-    }
-
-    /**
-     * Update a project favorite
-     * @param projectKey Project key to Update
-     * @returns {Project}
-     */
-    updateFavorite(projectKey: string): Observable<Project> {
-        return this._projectService.updateFavorite(projectKey).pipe(map(() => {
-            // update project cache
-            let cache = this._projectCache.getValue();
-            let project = cache.get(projectKey);
-            if (project) {
-                project.favorite = !project.favorite;
-                this._projectCache.next(cache.set(projectKey, project));
-            }
-            this._navbarService.getData();
-            return project;
-        }));
     }
 }

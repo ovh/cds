@@ -7,7 +7,6 @@ import {
 } from '@angular/core';
 import { ActionService } from './action/action.service';
 import { ApplicationAuditService } from './application/application.audit.service';
-import { ApplicationNoCacheService } from './application/application.nocache.service';
 import {
     ApplicationQueryParamResolver,
     ApplicationResolver
@@ -78,7 +77,6 @@ export class ServicesModule {
                 ActionService,
                 ApplicationWorkflowService,
                 ApplicationService,
-                ApplicationNoCacheService,
                 ApplicationStore,
                 AuthenticationService,
                 ConfigService,
@@ -153,7 +151,6 @@ export {
     ApplicationAuditService,
     ApplicationWorkflowService,
     ApplicationResolver,
-    ApplicationNoCacheService,
     ApplicationStore,
     AuthenticationService,
     ConfigService,

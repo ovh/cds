@@ -658,18 +658,10 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	log.Info("Initializing event broker...")
-	kafkaOptions := event.KafkaConfig{
-		Enabled:         a.Config.Events.Kafka.Enabled,
-		BrokerAddresses: a.Config.Events.Kafka.Broker,
-		User:            a.Config.Events.Kafka.User,
-		Password:        a.Config.Events.Kafka.Password,
-		Topic:           a.Config.Events.Kafka.Topic,
-		MaxMessageByte:  a.Config.Events.Kafka.MaxMessageBytes,
-	}
-	if err := event.Initialize(kafkaOptions, a.Cache); err != nil {
+	if err := event.Initialize(a.mustDB(), a.Cache); err != nil {
 		log.Error("error while initializing event system: %s", err)
 	} else {
-		go event.DequeueEvent(ctx)
+		go event.DequeueEvent(ctx, a.mustDB())
 	}
 
 	a.warnChan = make(chan sdk.Event)
@@ -738,6 +730,17 @@ func (a *API) Serve(ctx context.Context) error {
 	}})
 	migrate.Add(sdk.Migration{Name: "ActionModelRequirements", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.ActionModelRequirements(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
+	}})
+	migrate.Add(sdk.Migration{Name: "AddPublicEventIntegration", Release: "0.40.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+		kafkaCfg := migrate.KafkaConfig{
+			Enabled:         a.Config.Events.Kafka.Enabled,
+			Broker:          a.Config.Events.Kafka.Broker,
+			Topic:           a.Config.Events.Kafka.Topic,
+			User:            a.Config.Events.Kafka.User,
+			Password:        a.Config.Events.Kafka.Password,
+			MaxMessageBytes: a.Config.Events.Kafka.MaxMessageBytes,
+		}
+		return migrate.AddPublicEventIntegration(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, kafkaCfg)
 	}})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())

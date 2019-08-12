@@ -1,8 +1,8 @@
 
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
+import {Service} from 'app/model/service.model';
 import {Observable} from 'rxjs';
-import {Service} from '../../model/service.model';
 
 /**
  * Service to access Service from API.

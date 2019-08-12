@@ -102,44 +102,15 @@ func (api *API) getVariablesHandler() service.Handler {
 		}
 
 		// add cds variable
-		cdsVar := []string{
-			"{{.cds.version}}",
-			"{{.cds.application}}",
-			"{{.cds.environment}}",
-			"{{.cds.job}}",
-			"{{.cds.manual}}",
-			"{{.cds.node}}",
-			"{{.cds.node.id}}",
-			"{{.cds.pipeline}}",
-			"{{.cds.project}}",
-			"{{.cds.run}}",
-			"{{.cds.run.number}}",
-			"{{.cds.run.subnumber}}",
-			"{{.cds.stage}}",
-			"{{.cds.triggered_by.email}}",
-			"{{.cds.triggered_by.fullname}}",
-			"{{.cds.triggered_by.username}}",
-			"{{.cds.ui.pipeline.run}}",
-			"{{.cds.worker}}",
-			"{{.cds.workflow}}",
-			"{{.cds.workspace}}",
-			"{{.payload}}",
+		for i := range sdk.BasicVariableNames {
+			allVariables = append(allVariables, "{{."+sdk.BasicVariableNames[i]+"}}")
 		}
-		allVariables = append(allVariables, cdsVar...)
 
 		// add git variable
-		gitVar := []string{
-			"{{.git.hash}}",
-			"{{.git.hash.short}}",
-			"{{.git.branch}}",
-			"{{.git.tag}}",
-			"{{.git.author}}",
-			"{{.git.repository}}",
-			"{{.git.url}}",
-			"{{.git.http_url}}",
-			"{{.git.server}}",
+		for i := range sdk.BasicGitVariableNames {
+			allVariables = append(allVariables, "{{."+sdk.BasicGitVariableNames[i]+"}}")
 		}
-		allVariables = append(allVariables, gitVar...)
+		allVariables = append(allVariables, "{{.git.tag}}")
 
 		// Check permission on application
 		return service.WriteJSON(w, allVariables, http.StatusOK)

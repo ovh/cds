@@ -47,14 +47,13 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
     }
 
     @Input() project: Project;
-    @Input() pipelineId: number;
 
     _conditions: WorkflowNodeConditions;
     @Input() readonly = true;
 
     @Output() conditionsChange = new EventEmitter<WorkflowNodeConditions>();
 
-    @ViewChild('textareaCodeMirror', {static: false}) codemirror: CodemirrorComponent;
+    @ViewChild('textareaCodeMirror', { static: false }) codemirror: CodemirrorComponent;
     codeMirrorConfig: any;
     isAdvanced = false;
     suggest: Array<string> = [];
@@ -107,7 +106,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
         this.previousValue = this.conditions.lua_script;
         let condition = this.conditions.plain.find(cc => cc.variable === 'cds.manual');
         if (condition) {
-            condition.value = <any>(condition.value !== 'false');
+            condition.value = <any>(condition.value === 'true' || <any>condition.value === true);
         }
     }
 

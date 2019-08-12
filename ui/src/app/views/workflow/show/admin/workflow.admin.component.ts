@@ -5,6 +5,7 @@ import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteWorkflow, DeleteWorkflowIcon, UpdateWorkflow, UpdateWorkflowIcon } from 'app/store/workflow.action';
@@ -46,7 +47,7 @@ export class WorkflowAdminComponent implements OnInit {
     purgeTag: string;
     iconUpdated = false;
 
-    @ViewChild('updateWarning', {static: false})
+    @ViewChild('updateWarning', { static: false })
     private warningUpdateModal: WarningModalComponent;
 
     loading = false;
@@ -58,6 +59,7 @@ export class WorkflowAdminComponent implements OnInit {
         private _toast: ToastService,
         private _router: Router,
         private _workflowRunService: WorkflowRunService,
+        private _workflowService: WorkflowService,
         private _cd: ChangeDetectorRef
     ) { }
 
@@ -78,19 +80,19 @@ export class WorkflowAdminComponent implements OnInit {
         this._workflowRunService.getTags(this.project.key, this._workflow.name)
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(tags => {
-            let existingTags = [];
-            Object.keys(tags).forEach(k => {
-                if (tags.hasOwnProperty(k) && this.existingTags.indexOf(k) === -1) {
-                    existingTags.push(k);
-                }
+                let existingTags = [];
+                Object.keys(tags).forEach(k => {
+                    if (tags.hasOwnProperty(k) && this.existingTags.indexOf(k) === -1) {
+                        existingTags.push(k);
+                    }
+                });
+                this.existingTags = this.existingTags.concat(existingTags);
             });
-            this.existingTags = this.existingTags.concat(existingTags);
-        });
         this._workflowRunService.getRunNumber(this.project.key, this.workflow)
             .pipe(first(), finalize(() => this._cd.markForCheck())).subscribe(n => {
-            this.originalRunNumber = n.num;
-            this.runnumber = n.num;
-        });
+                this.originalRunNumber = n.num;
+                this.runnumber = n.num;
+            });
     }
 
     deleteIcon(): void {
@@ -151,7 +153,20 @@ export class WorkflowAdminComponent implements OnInit {
                     ], { queryParams: { tab: 'advanced' } });
                 });
         }
-    };
+    }
+
+    updateRunNumber() {
+        this._workflowService.updateRunNumber(this.project.key, this.workflow.name, this.runnumber)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            })).subscribe(() => {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+                this._router.navigate([
+                    '/project', this.project.key, 'workflow', this.workflow.name
+                ], { queryParams: { tab: 'advanced' } });
+            })
+    }
 
     deleteWorkflow(): void {
         this.store.dispatch(new DeleteWorkflow({

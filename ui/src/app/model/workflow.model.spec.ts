@@ -270,7 +270,7 @@ describe('CDS: Workflow Model', () => {
         j1.parents = new Array<WNodeJoin>();
 
         let j11 = new WNodeJoin();
-        j11.parent_id = 4,
+        j11.parent_id = 4;
 
         j1.parents.push(j11);
         workflow.workflow_data.joins.push(j1);

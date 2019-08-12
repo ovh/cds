@@ -131,6 +131,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
 
     valueChanged(): void {
         this.valueChange.emit(this.editableValue);
+        this.valueUpdating.emit(true);
     }
 
     sendValueChanged(): void {

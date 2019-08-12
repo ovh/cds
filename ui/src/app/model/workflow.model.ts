@@ -1,4 +1,3 @@
-import { notificationTypes, UserNotificationSettings } from 'app/model/notification.model';
 import { Permission } from 'app/model/permission.model';
 import { Application } from './application.model';
 import { AuditWorkflow } from './audit.model';
@@ -44,6 +43,7 @@ export class Workflow {
     applications: { [key: number]: Application; };
     environments: { [key: number]: Environment; };
     project_integrations: { [key: number]: ProjectIntegration; };
+    event_integrations: ProjectIntegration[];
     hook_models: { [key: number]: WorkflowHookModel; };
     outgoing_hook_models: { [key: number]: WorkflowHookModel; };
     labels: Label[];
@@ -230,7 +230,7 @@ export class Workflow {
         nodes = WNode.getMapNodes(nodes, data.workflow_data.node);
 
         if (data.workflow_data.joins) {
-            data.workflow_data.joins.forEach(j => {
+            data.workflow_data.joins.forEach(() => {
                 nodes = WNode.getMapNodes(nodes, data.workflow_data.node);
             });
         }
@@ -586,7 +586,7 @@ export class WNode {
         let res = n.hooks;
         if (n.triggers) {
             n.triggers.forEach(t => {
-                let hooks = WNode.getAllHooks(t.child_node)
+                let hooks = WNode.getAllHooks(t.child_node);
                 if (hooks) {
                     res = res.concat(hooks);
                 }
@@ -688,13 +688,58 @@ export class WNodeHook {
 }
 
 export class WorkflowPull {
-    workflow: WorkflowPullItem
-    pipelines: Array<WorkflowPullItem>
-    applications: Array<WorkflowPullItem>
-    environments: Array<WorkflowPullItem>
+    workflow: WorkflowPullItem;
+    pipelines: Array<WorkflowPullItem>;
+    applications: Array<WorkflowPullItem>;
+    environments: Array<WorkflowPullItem>;
 }
 
 export class WorkflowPullItem {
-    name: string
-    value: string
+    name: string;
+    value: string;
+}
+
+export const notificationTypes = ['jabber', 'email'];
+export const notificationOnSuccess = ['always', 'change', 'never'];
+export const notificationOnFailure = ['always', 'change', 'never'];
+
+export class Notification {
+    application_pipeline_id: number;
+    pipeline: Pipeline;
+    environment: Environment;
+    notifications: any;
+
+    // UI attribute
+    updating = false;
+
+    constructor() {
+        this.notifications = {};
+    }
+}
+
+export class UserNotificationSettings {
+    on_success: string;
+    on_failure: string;
+    on_start: boolean;
+    send_to_groups: boolean;
+    send_to_author: boolean;
+    recipients: Array<string>;
+    template: UserNotificationTemplate;
+    notifications: WorkflowNodeConditions;
+
+    constructor() {
+        this.on_success = notificationOnSuccess[1];
+        this.on_failure = notificationOnFailure[0];
+        this.on_start = false;
+        this.send_to_author = true;
+        this.send_to_groups = false;
+        this.recipients = [];
+        this.template = new UserNotificationTemplate();
+        this.notifications = new WorkflowNodeConditions();
+    }
+}
+
+export class UserNotificationTemplate {
+    subject: string;
+    body: string;
 }

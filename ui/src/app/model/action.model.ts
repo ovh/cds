@@ -21,7 +21,6 @@ export class Action {
     first_audit: AuditAction;
     last_audit: AuditAction;
     editable: boolean;
-    import_url: string;
 
     // UI parameter
     hasChanged: boolean;
@@ -40,10 +39,6 @@ export class UsagePipeline {
     project_name: string;
     pipeline_id: number;
     pipeline_name: string;
-    stage_id: number;
-    stage_name: string;
-    job_id: number;
-    job_name: string;
     action_id: number;
     action_name: string;
     warning: boolean;
@@ -52,10 +47,8 @@ export class UsagePipeline {
 export class UsageAction {
     group_id: number;
     group_name: string;
-    parent_action_id: number;
     parent_action_name: string;
     action_id: number;
-    action_name: string;
     warning: boolean;
 }
 

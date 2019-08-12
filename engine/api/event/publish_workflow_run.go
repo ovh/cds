@@ -13,22 +13,28 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, sub int64, status string, tags []sdk.WorkflowRunTag) {
+func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, sub int64, status string, tags []sdk.WorkflowRunTag, eventIntegrations []sdk.ProjectIntegration) {
+	eventIntegrationsID := make([]int64, len(eventIntegrations))
+	for i, eventIntegration := range eventIntegrations {
+		eventIntegrationsID[i] = eventIntegration.ID
+	}
+
 	event := sdk.Event{
-		Timestamp:         time.Now(),
-		Hostname:          hostname,
-		CDSName:           cdsname,
-		EventType:         fmt.Sprintf("%T", payload),
-		Payload:           structs.Map(payload),
-		ProjectKey:        key,
-		ApplicationName:   appName,
-		PipelineName:      pipName,
-		WorkflowName:      workflowName,
-		EnvironmentName:   envName,
-		WorkflowRunNum:    num,
-		WorkflowRunNumSub: sub,
-		Status:            status,
-		Tags:              tags,
+		Timestamp:           time.Now(),
+		Hostname:            hostname,
+		CDSName:             cdsname,
+		EventType:           fmt.Sprintf("%T", payload),
+		Payload:             structs.Map(payload),
+		ProjectKey:          key,
+		ApplicationName:     appName,
+		PipelineName:        pipName,
+		WorkflowName:        workflowName,
+		EnvironmentName:     envName,
+		WorkflowRunNum:      num,
+		WorkflowRunNumSub:   sub,
+		Status:              status,
+		Tags:                tags,
+		EventIntegrationsID: eventIntegrationsID,
 	}
 	publishEvent(event)
 }
@@ -45,7 +51,7 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 		LastModifiedNano: wr.LastModified.UnixNano(),
 		Tags:             wr.Tags,
 	}
-	publishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, wr.LastSubNumber, wr.Status, wr.Tags)
+	publishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, wr.LastSubNumber, wr.Status, wr.Tags, wr.Workflow.EventIntegrations)
 }
 
 // PublishWorkflowNodeRun publish event on a workflow node run
@@ -151,11 +157,11 @@ func PublishWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, nr sdk.Wor
 	if sdk.StatusIsTerminated(nr.Status) {
 		e.Done = nr.Done.Unix()
 	}
-	publishRunWorkflow(e, w.ProjectKey, w.Name, appName, pipName, envName, nr.Number, nr.SubNumber, nr.Status, nil)
+	publishRunWorkflow(e, w.ProjectKey, w.Name, appName, pipName, envName, nr.Number, nr.SubNumber, nr.Status, nil, w.EventIntegrations)
 }
 
 // PublishWorkflowNodeJobRun publish a WorkflowNodeJobRun
-func PublishWorkflowNodeJobRun(db gorp.SqlExecutor, pkey, wname string, jr sdk.WorkflowNodeJobRun) {
+func PublishWorkflowNodeJobRun(db gorp.SqlExecutor, pkey string, wr sdk.WorkflowRun, jr sdk.WorkflowNodeJobRun) {
 	e := sdk.EventRunWorkflowJob{
 		ID:     jr.ID,
 		Status: jr.Status,
@@ -165,5 +171,5 @@ func PublishWorkflowNodeJobRun(db gorp.SqlExecutor, pkey, wname string, jr sdk.W
 	if sdk.StatusIsTerminated(jr.Status) {
 		e.Done = jr.Done.Unix()
 	}
-	publishRunWorkflow(e, pkey, wname, "", "", "", 0, 0, jr.Status, nil)
+	publishRunWorkflow(e, pkey, wr.Workflow.Name, "", "", "", 0, 0, jr.Status, nil, wr.Workflow.EventIntegrations)
 }

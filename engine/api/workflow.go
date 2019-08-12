@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/ovh/cds/engine/api/permission"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -18,6 +17,8 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/integration"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
@@ -80,6 +81,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 			WithIcon:              true,
 			WithLabels:            withLabels,
 			WithAsCodeUpdateEvent: withAsCodeEvents,
+			WithIntegrations:      true,
 		}
 		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, opts)
 		if err != nil {
@@ -411,7 +413,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 			return sdk.WrapError(errP, "putWorkflowHandler> Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, workflow.LoadOptions{WithIcon: true})
+		oldW, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, workflow.LoadOptions{WithIcon: true, WithIntegrations: true})
 		if errW != nil {
 			return sdk.WrapError(errW, "putWorkflowHandler> Cannot load Workflow %s", key)
 		}
@@ -457,7 +459,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		wf1, errl := workflow.LoadByID(ctx, api.mustDB(), api.Cache, p, wf.ID, workflow.LoadOptions{})
+		wf1, errl := workflow.LoadByID(ctx, api.mustDB(), api.Cache, p, wf.ID, workflow.LoadOptions{WithIntegrations: true})
 		if errl != nil {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
@@ -544,7 +546,7 @@ func (api *API) deleteWorkflowIconHandler() service.Handler {
 	}
 }
 
-// putWorkflowHandler deletes a workflow
+// deleteWorkflowHandler deletes a workflow
 func (api *API) deleteWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -597,6 +599,38 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 	}
 }
 
+// deleteWorkflowEventsIntegrationHandler deletes a workflow event integration
+func (api *API) deleteWorkflowEventsIntegrationHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+		prjIntegrationIDStr := vars["integrationID"]
+		db := api.mustDB()
+
+		prjIntegrationID, err := strconv.ParseInt(prjIntegrationIDStr, 10, 64)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrInvalidID, "integration id is not correct (%s) : %v", prjIntegrationIDStr, err)
+		}
+
+		p, errP := project.Load(db, api.Cache, key, project.LoadOptions.WithIntegrations)
+		if errP != nil {
+			return sdk.WrapError(errP, "Cannot load Project %s", key)
+		}
+
+		wf, errW := workflow.Load(ctx, db, api.Cache, p, name, workflow.LoadOptions{WithIntegrations: true})
+		if errW != nil {
+			return sdk.WrapError(errW, "Cannot load Workflow %s", key)
+		}
+
+		if err := integration.RemoveFromWorkflow(db, wf.ID, prjIntegrationID); err != nil {
+			return sdk.WrapError(err, "cannot remove integration id %d from workflow %s (id: %d)", prjIntegrationID, wf.Name, wf.ID)
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkflowHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -638,5 +672,58 @@ func (api *API) getWorkflowHookHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, task, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkflowNotificationsConditionsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		data := struct {
+			Operators      map[string]string `json:"operators"`
+			ConditionNames []string          `json:"names"`
+		}{
+			Operators: sdk.WorkflowConditionsOperators,
+		}
+
+		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name, workflow.LoadRunOptions{})
+		if errr != nil {
+			if !sdk.ErrorIs(errr, sdk.ErrWorkflowNotFound) {
+				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
+			}
+		}
+
+		params := []sdk.Parameter{}
+		var refNode *sdk.Node
+		if wr != nil {
+			refNode = &wr.Workflow.WorkflowData.Node
+			var errp error
+			params, errp = workflow.NodeBuildParametersFromRun(*wr, refNode.ID)
+			if errp != nil {
+				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters from workflow run")
+			}
+
+			if len(params) == 0 {
+				refNode = nil
+			}
+		} else {
+			data.ConditionNames = append(data.ConditionNames, sdk.BasicVariableNames...)
+		}
+
+		if sdk.ParameterFind(params, "git.repository") == nil {
+			data.ConditionNames = append(data.ConditionNames, sdk.BasicGitVariableNames...)
+		}
+		if sdk.ParameterFind(params, "git.tag") == nil {
+			data.ConditionNames = append(data.ConditionNames, "git.tag")
+		}
+
+		for _, p := range params {
+			data.ConditionNames = append(data.ConditionNames, p.Name)
+		}
+
+		sort.Strings(data.ConditionNames)
+		return service.WriteJSON(w, data, http.StatusOK)
 	}
 }
