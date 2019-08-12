@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -66,7 +66,8 @@ export class UserEditComponent implements OnInit {
         private _translate: TranslateService,
         private _route: ActivatedRoute,
         private _router: Router,
-        private _store: Store
+        private _store: Store,
+        private _cd: ChangeDetectorRef
     ) {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
 
@@ -331,7 +332,10 @@ export class UserEditComponent implements OnInit {
     getUser(): void {
         this.loadingUser = true;
         this._userService.getUser(this.username)
-            .pipe(finalize(() => this.loadingUser = false))
+            .pipe(finalize(() => {
+                this.loadingUser = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(u => {
                 this.user = u;
                 this.updatePath();
@@ -341,7 +345,10 @@ export class UserEditComponent implements OnInit {
     getGroups(): void {
         this.loadingGroups = true;
         this._userService.getGroups(this.currentUser.username)
-            .pipe(finalize(() => this.loadingGroups = false))
+            .pipe(finalize(() => {
+                this.loadingGroups = false;
+                this._cd.markForCheck();
+            }))
             .subscribe((gs) => {
                 this.groups = gs;
             });
@@ -350,7 +357,10 @@ export class UserEditComponent implements OnInit {
     getContacts(): void {
         this.loadingContacts = true;
         this._userService.getContacts(this.currentUser.username)
-            .pipe(finalize(() => this.loadingContacts = false))
+            .pipe(finalize(() => {
+                this.loadingContacts = false;
+                this._cd.markForCheck();
+            }))
             .subscribe((cs) => {
                 this.contacts = cs;
             });
@@ -363,7 +373,10 @@ export class UserEditComponent implements OnInit {
             this._userService.getConsumers(this.currentUser.username),
             this._userService.getSessions(this.currentUser.username)
         )
-            .pipe(finalize(() => this.loadingAuthData = false))
+            .pipe(finalize(() => {
+                this.loadingAuthData = false;
+                this._cd.markForCheck();
+            }))
             .subscribe(res => {
                 this.drivers = res[0].manifests.filter(m => m.type !== 'builtin').sort((a, b) => {
                     if (a.type === 'local') {

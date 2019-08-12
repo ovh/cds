@@ -437,13 +437,18 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
 		GroupID:   newGr.ID,
 		ProjectID: proj.ID,
-		Role:      sdk.PermissionRead,
+		Role:      sdk.PermissionReadWriteExecute,
 	}))
 	require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
 		GroupID: newGr.ID,
 		UserID:  u.OldUserStruct.ID,
 		Admin:   true,
 	}))
+	oldLink, err := group.LoadLinkGroupProjectForGroupIDAndProjectID(context.TODO(), db, proj.ProjectGroups[0].Group.ID, proj.ID)
+	require.NoError(t, err)
+	newLink := *oldLink
+	newLink.Role = sdk.PermissionRead
+	require.NoError(t, group.UpdateLinkGroupProject(db, &newLink))
 
 	// First pipeline
 	pip := sdk.Pipeline{
@@ -597,19 +602,21 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 
 	// Add a new group on project to let us update the previous group permission to READ (because we must have at least one RW permission on project)
 	newGr := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	linkGroupProject := group.LinkGroupProject{
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
 		GroupID:   newGr.ID,
 		ProjectID: proj.ID,
 		Role:      sdk.PermissionReadWriteExecute,
-	}
-	require.NoError(t, group.InsertLinkGroupProject(db, &linkGroupProject))
+	}))
 	require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
 		GroupID: newGr.ID,
 		UserID:  u.OldUserStruct.ID,
 		Admin:   true,
 	}))
-	linkGroupProject.Role = sdk.PermissionRead
-	require.NoError(t, group.UpdateLinkGroupProject(db, &linkGroupProject))
+	oldLink, err := group.LoadLinkGroupProjectForGroupIDAndProjectID(context.TODO(), db, proj.ProjectGroups[0].Group.ID, proj.ID)
+	require.NoError(t, err)
+	newLink := *oldLink
+	newLink.Role = sdk.PermissionRead
+	require.NoError(t, group.UpdateLinkGroupProject(db, &newLink))
 
 	//First pipeline
 	pip := sdk.Pipeline{
