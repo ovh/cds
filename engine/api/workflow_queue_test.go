@@ -441,7 +441,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, logs)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
+	assert.Equal(t, 204, rec.Code)
 
 	//Send result
 	res := sdk.Result{

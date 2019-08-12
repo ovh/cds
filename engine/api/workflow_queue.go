@@ -494,6 +494,11 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 			return sdk.WrapError(errJob, "Cannot get job run %d", id)
 		}
 
+		_, ok := api.isWorker(ctx)
+		if !ok {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		// Checks that the token used by the worker cas access to one of the execgroups
 		grantedGroupIDs := append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID)
 		if !pbJob.ExecGroups.HasOneOf(grantedGroupIDs...) {
