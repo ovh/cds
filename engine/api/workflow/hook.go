@@ -138,7 +138,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		}
 		if h.HookModelName == sdk.RepositoryWebHookModelName || h.HookModelName == sdk.GitPollerModelName || h.HookModelName == sdk.GerritHookModelName {
 			if wf.WorkflowData.Node.Context.ApplicationID == 0 || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname == "" || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer == "" {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot create a git poller or repository webhook on an application without a repository")
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot create a git poller or repository webhook on an application without a repository: %+v", wf.Applications[wf.WorkflowData.Node.Context.ApplicationID])
 			}
 			h.Config[sdk.HookConfigVCSServer] = sdk.WorkflowNodeHookConfigValue{
 				Value:        wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer,

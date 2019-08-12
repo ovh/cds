@@ -101,10 +101,9 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	}
 
 	if w.FromRepository != "" {
-
 		// Get repowebhook from previous version of workflow
+		var oldRepoWebHook *sdk.NodeHook
 		if oldW != nil {
-			var oldRepoWebHook *sdk.NodeHook
 			for i := range oldW.WorkflowData.Node.Hooks {
 				h := &oldW.WorkflowData.Node.Hooks[i]
 				if h.HookModelName == sdk.RepositoryWebHookModel.Name {
@@ -113,33 +112,39 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				}
 			}
 
-			// Update current repo web hook if found
-			var currentRepoWebHook *sdk.NodeHook
-			// Get current webhook
-			for i := range w.WorkflowData.Node.Hooks {
-				h := &w.WorkflowData.Node.Hooks[i]
-				if h.HookModelName == sdk.RepositoryWebHookModel.Name {
-					h.UUID = oldRepoWebHook.UUID
-					h.Config = oldRepoWebHook.Config.Clone()
-					h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{Value: w.Name}
-					currentRepoWebHook = h
-					break
+			if oldRepoWebHook != nil {
+				// Update current repo web hook if found
+				var currentRepoWebHook *sdk.NodeHook
+				// Get current webhook
+				for i := range w.WorkflowData.Node.Hooks {
+					h := &w.WorkflowData.Node.Hooks[i]
+					if h.HookModelName == sdk.RepositoryWebHookModel.Name {
+						h.UUID = oldRepoWebHook.UUID
+						h.Config = oldRepoWebHook.Config.Clone()
+						h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{Value: w.Name}
+						currentRepoWebHook = h
+						break
+					}
 				}
-			}
 
-			// If not found
-			if currentRepoWebHook == nil {
-				h := sdk.NodeHook{
-					UUID:          oldRepoWebHook.UUID,
-					HookModelName: oldRepoWebHook.HookModelName,
-					Config:        oldRepoWebHook.Config.Clone(),
-					Ref:           oldRepoWebHook.Ref,
-					HookModelID:   oldRepoWebHook.HookModelID,
+				// If not found
+				if currentRepoWebHook == nil {
+					h := sdk.NodeHook{
+						UUID:          oldRepoWebHook.UUID,
+						HookModelName: oldRepoWebHook.HookModelName,
+						Config:        oldRepoWebHook.Config.Clone(),
+						Ref:           oldRepoWebHook.Ref,
+						HookModelID:   oldRepoWebHook.HookModelID,
+					}
+					h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{Value: w.Name}
+					w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, h)
 				}
-				h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{Value: w.Name}
-				w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, h)
 			}
-		} else {
+		}
+
+		// If there is no old workflow OR workflow existing on CDS does not have a repoWebhook,
+		// we have to create a new repo webhook
+		if oldW == nil || oldRepoWebHook == nil {
 			// Init new repo webhook
 			w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
 				HookModelName: sdk.RepositoryWebHookModel.Name,

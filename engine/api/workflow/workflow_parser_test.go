@@ -34,8 +34,11 @@ func TestParseAndImport(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 
 	//Application
+	repofullname := sdk.RandomString(10) + "/" + sdk.RandomString(10)
 	app := &sdk.Application{
-		Name: sdk.RandomString(10),
+		Name:               sdk.RandomString(10),
+		RepositoryFullname: repofullname,
+		VCSServer:          "github",
 	}
 	test.NoError(t, application.Insert(db, cache, proj, app, u))
 
@@ -61,7 +64,8 @@ func TestParseAndImport(t *testing.T) {
 				Name: "test-1",
 				Workflow: map[string]exportentities.NodeEntry{
 					"root": {
-						PipelineName: "pipeline",
+						PipelineName:    "pipeline",
+						ApplicationName: app.Name,
 					},
 					"first": {
 						PipelineName: "pipeline",
@@ -84,7 +88,7 @@ func TestParseAndImport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, tt.input, u, workflow.ImportOptions{Force: true})
+			_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, tt.input, u, workflow.ImportOptions{Force: true, FromRepository: repofullname})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseAndImport() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -96,7 +100,8 @@ func TestParseAndImport(t *testing.T) {
 				b, _ := json.Marshal(w)
 				t.Logf("Workflow = \n%s", string(b))
 
-				if tt.name == "test-1" {
+				if tt.input.Name == "test-1" {
+					assert.Equal(t, w.FromRepository, repofullname)
 					assert.Len(t, w.WorkflowData.Node.Triggers, 2)
 					if w.WorkflowData.Node.Triggers[0].ChildNode.Type == "fork" {
 						assert.Equal(t, w.WorkflowData.Node.Triggers[0].ChildNode.Name, "fork")
@@ -107,11 +112,8 @@ func TestParseAndImport(t *testing.T) {
 						assert.Len(t, w.WorkflowData.Node.Triggers[1].ChildNode.Triggers, 1)
 						assert.Equal(t, w.WorkflowData.Node.Triggers[1].ChildNode.Triggers[0].ChildNode.Name, "third")
 					}
-
 				}
-
 			}
-
 		})
 	}
 }
