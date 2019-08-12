@@ -35,6 +35,13 @@ var (
 							Enabled: true,
 							Action: sdk.Action{
 								Name: "MyPipeline t1_1",
+								Requirements: []sdk.Requirement{
+									{
+										Name:  sdk.OSArchRequirement,
+										Type:  sdk.OSArchRequirement,
+										Value: "freebsd/amd64",
+									},
+								},
 								Actions: []sdk.Action{
 									{
 										Type:    sdk.BuiltinAction,
@@ -534,6 +541,7 @@ jobs:
 - job: build
   requirements:
   - binary: git
+  - os-archicture: freebsd/amd64
   steps:
   - gitClone:
       branch: '{{.git.branch}}'
@@ -560,6 +568,7 @@ jobs:
 	test.NoError(t, err)
 
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions, 3)
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Requirements, 2)
 	assert.Equal(t, sdk.GitCloneAction, p.Stages[0].Jobs[0].Action.Actions[0].Name)
 	assert.Equal(t, sdk.ArtifactUpload, p.Stages[0].Jobs[0].Action.Actions[1].Name)
 	assert.Equal(t, sdk.ServeStaticFiles, p.Stages[0].Jobs[0].Action.Actions[2].Name)

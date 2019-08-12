@@ -55,13 +55,14 @@ type Job struct {
 
 // Requirement represents an exported sdk.Requirement
 type Requirement struct {
-	Binary   string             `json:"binary,omitempty" yaml:"binary,omitempty"`
-	Network  string             `json:"network,omitempty" yaml:"network,omitempty"`
-	Model    string             `json:"model,omitempty" yaml:"model,omitempty"`
-	Hostname string             `json:"hostname,omitempty" yaml:"hostname,omitempty"`
-	Plugin   string             `json:"plugin,omitempty" yaml:"plugin,omitempty"`
-	Service  ServiceRequirement `json:"service,omitempty" yaml:"service,omitempty"`
-	Memory   string             `json:"memory,omitempty" yaml:"memory,omitempty"`
+	Binary            string             `json:"binary,omitempty" yaml:"binary,omitempty"`
+	Network           string             `json:"network,omitempty" yaml:"network,omitempty"`
+	Model             string             `json:"model,omitempty" yaml:"model,omitempty"`
+	Hostname          string             `json:"hostname,omitempty" yaml:"hostname,omitempty"`
+	Plugin            string             `json:"plugin,omitempty" yaml:"plugin,omitempty"`
+	Service           ServiceRequirement `json:"service,omitempty" yaml:"service,omitempty"`
+	Memory            string             `json:"memory,omitempty" yaml:"memory,omitempty"`
+	OSArchRequirement string             `json:"os-architecture,omitempty" yaml:"os-architecture,omitempty"`
 }
 
 // ServiceRequirement represents an exported sdk.Requirement of type ServiceRequirement
@@ -151,6 +152,8 @@ func newRequirements(req []sdk.Requirement) []Requirement {
 			res = append(res, Requirement{Plugin: r.Value})
 		case sdk.ServiceRequirement:
 			res = append(res, Requirement{Service: ServiceRequirement{Name: r.Name, Value: r.Value}})
+		case sdk.OSArchRequirement:
+			res = append(res, Requirement{OSArchRequirement: r.Value})
 		case sdk.MemoryRequirement:
 			res = append(res, Requirement{Memory: r.Value})
 		}
@@ -218,6 +221,10 @@ func computeJobRequirements(req []Requirement) []sdk.Requirement {
 			name = "network"
 			val = r.Network
 			tpe = sdk.NetworkAccessRequirement
+		} else if r.OSArchRequirement != "" {
+			name = r.OSArchRequirement
+			val = r.OSArchRequirement
+			tpe = sdk.OSArchRequirement
 		} else if r.Plugin != "" {
 			name = r.Plugin
 			val = r.Plugin
