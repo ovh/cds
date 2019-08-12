@@ -87,10 +87,10 @@ test: clean
 test-coverage: $(GO_GOVERALLS) $(GO_COV_MERGE) $(TARGET_DIR)
 	@$(GO_COV_MERGE) ./*.coverprofile > $(TARGET_DIR)/cover.out
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
-ifneq ($(VERSION), snapshot)
-	echo "Pushing results to coveralls"
-	@$(GO_GOVERALLS) -coverprofile=$(TARGET_DIR)/cover.out -service=cds -repotoken ${CDS_PROJ_COVERALLS_TOKEN}
-endif
+	@if [ ! -z "${CDS_VERSION}" ]; then \
+		echo "Sending coverage report to CDS"; \
+		worker upload --tag "${CDS_VERSION}" $(abspath $(TARGET_DIR)/cover.html); \
+	fi;
 
 test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 	@for TST in `find . -name "tests.log"`; do \
