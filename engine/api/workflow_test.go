@@ -955,7 +955,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	pname := sdk.RandomString(10)
 	pp := sdk.ProjectIntegration{
 		Name:               pname,
-		Config:             sdk.KafkaIntegration.DefaultConfig,
+		Config:             sdk.KafkaIntegration.DefaultConfig.Clone(),
 		IntegrationModelID: integrationModel.ID,
 	}
 
