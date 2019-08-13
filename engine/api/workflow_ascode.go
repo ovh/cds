@@ -114,7 +114,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		}
 		if !found {
 			h := sdk.NodeHook{
-				Config:        sdk.RepositoryWebHookModel.DefaultConfig,
+				Config:        sdk.RepositoryWebHookModel.DefaultConfig.Clone(),
 				HookModelName: sdk.RepositoryWebHookModel.Name,
 			}
 			wf.WorkflowData.Node.Hooks = append(wf.WorkflowData.Node.Hooks, h)

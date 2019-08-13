@@ -158,7 +158,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 				},
 				Hooks: []sdk.NodeHook{
 					{
-						Config:        sdk.WebHookModel.DefaultConfig,
+						Config:        sdk.WebHookModel.DefaultConfig.Clone(),
 						HookModelName: sdk.WebHookModelName,
 						HookModelID:   webHookModel.ID,
 					},
@@ -321,7 +321,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 				},
 				Hooks: []sdk.NodeHook{
 					{
-						Config:        sdk.WebHookModel.DefaultConfig,
+						Config:        sdk.WebHookModel.DefaultConfig.Clone(),
 						HookModelName: sdk.WebHookModelName,
 						HookModelID:   webHookModel.ID,
 					},

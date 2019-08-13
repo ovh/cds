@@ -149,7 +149,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
 				HookModelName: sdk.RepositoryWebHookModel.Name,
 				HookModelID:   sdk.RepositoryWebHookModel.ID,
-				Config:        sdk.RepositoryWebHookModel.DefaultConfig,
+				Config:        sdk.RepositoryWebHookModel.DefaultConfig.Clone(),
 			})
 			var err error
 			if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
