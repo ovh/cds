@@ -594,7 +594,6 @@ func Test_putWorkflowHandler(t *testing.T) {
 }
 
 func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
-
 	api, db, router, end := newTestAPI(t)
 	defer end()
 

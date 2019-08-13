@@ -39,14 +39,13 @@ type CurrentWorker struct {
 		model       string
 	}
 	currentJob struct {
-		wJob             *sdk.WorkflowNodeJobRun
-		newVariables     []sdk.Variable
-		pkey             string
-		gitsshPath       string
-		params           []sdk.Parameter
-		secrets          []sdk.Variable
-		workingDirectory string
-		context          context.Context
+		wJob         *sdk.WorkflowNodeJobRun
+		newVariables []sdk.Variable
+		pkey         string
+		gitsshPath   string
+		params       []sdk.Parameter
+		secrets      []sdk.Variable
+		context      context.Context
 	}
 	status struct {
 		Name   string `json:"name"`

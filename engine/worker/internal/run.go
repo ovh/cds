@@ -308,9 +308,9 @@ func (w *CurrentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 }
 
 // creates a working directory in $HOME/PROJECT/APP/PIP/BN
-func setupBuildDirectory(fs afero.Fs, wd string) error {
+func setupWorkingDirectory(fs afero.Fs, wd string) (os.FileInfo, error) {
 	if err := fs.MkdirAll(wd, 0755); err != nil {
-		return err
+		return nil, err
 	}
 
 	u, err := user.Current()
@@ -321,12 +321,17 @@ func setupBuildDirectory(fs afero.Fs, wd string) error {
 			log.Error("Error while setting home_plugin %v", err)
 		}
 	}
-	return os.Setenv("HOME", wd)
+
+	if err := os.Setenv("HOME", wd); err != nil {
+		return nil, err
+	}
+
+	return fs.Stat(wd)
 }
 
-// remove the buildDirectory created by setupBuildDirectory
-func teardownBuildDirectory(wd string) error {
-	return os.RemoveAll(wd)
+// remove the buildDirectory created by setupWorkingDirectory
+func teardownWorkingDirectory(fs afero.Fs, wd string) error {
+	return fs.RemoveAll(wd)
 }
 
 func workingDirectory(fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes ...string) (string, error) {
@@ -366,17 +371,17 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		return sdk.Result{}, err
 	}
 
-	ctx = workerruntime.SetWorkingDirectory(ctx, wd)
-	log.Debug("processJob> Setup workspace - %s", wd)
-
-	if err := setupBuildDirectory(w.basedir, wd); err != nil {
-		log.Debug("processJob> setupBuildDirectory error:%s", err)
+	wdFileInfo, err := setupWorkingDirectory(w.basedir, wd)
+	if err != nil {
+		log.Debug("processJob> setupWorkingDirectory error:%s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
 		}, err
 	}
-	w.currentJob.workingDirectory = wd
+
+	ctx = workerruntime.SetWorkingDirectory(ctx, wdFileInfo)
+	log.Debug("processJob> Setup workspace - %s", wdFileInfo.Name())
 
 	var jobParameters = jobInfo.NodeJobRun.Parameters
 
@@ -421,7 +426,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		return sdk.Result{}, err
 	}
 	log.Debug("processJob> Setup user ssh keys - %s", keysDirectory)
-	if err := os.MkdirAll(keysDirectory, 0700); err != nil {
+	if err := w.basedir.MkdirAll(keysDirectory, 0700); err != nil {
 		log.Debug("processJob> call os.MkdirAll error:%s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail,
@@ -435,10 +440,10 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		log.Debug("processJob> new variables: %v", res.NewVariables)
 	}
 
-	if err := teardownBuildDirectory(wd); err != nil {
+	if err := teardownWorkingDirectory(w.basedir, wd); err != nil {
 		log.Error("Cannot remove build directory: %s", err)
 	}
-	if err := teardownBuildDirectory(keysDirectory); err != nil {
+	if err := teardownWorkingDirectory(w.basedir, keysDirectory); err != nil {
 		log.Error("Cannot remove keys directory: %s", err)
 	}
 	return res, err

@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 
@@ -140,7 +142,15 @@ var _ workerruntime.Runtime = new(TestWorker)
 
 func TestRunScriptAction(t *testing.T) {
 	wk := TestWorker{t}
-	ctx := workerruntime.SetWorkingDirectory(context.TODO(), os.TempDir())
+	wdFS := afero.NewOsFs()
+	wdName := sdk.RandomString(10)
+	require.NoError(t, wdFS.MkdirAll(wdName, os.FileMode(0755)))
+	defer wdFS.RemoveAll(wdName) // nolint
+
+	wdFileInfo, err := wdFS.Stat(wdName)
+	require.NoError(t, err)
+
+	ctx := workerruntime.SetWorkingDirectory(context.TODO(), wdFileInfo)
 	res, err := RunScriptAction(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{

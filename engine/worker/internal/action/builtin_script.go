@@ -10,11 +10,13 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 
-	"github.com/kardianos/osext"
 	"github.com/spf13/afero"
+
+	"github.com/kardianos/osext"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
@@ -22,6 +24,7 @@ import (
 )
 
 type script struct {
+	dir     string
 	shell   string
 	content []byte
 	opts    []string
@@ -68,7 +71,11 @@ func prepareScriptContent(parameters []sdk.Parameter) (*script, error) {
 	return &script, nil
 }
 
-func writeScriptContent(script *script, basedir afero.Fs) (func(), error) {
+func writeScriptContent(script *script, fs afero.Fs, basedir os.FileInfo) (func(), error) {
+	if !basedir.IsDir() {
+		panic("basedir is not a directory")
+	}
+
 	// Create a tmp file
 
 	// Generate a random string 16 chars length
@@ -77,8 +84,8 @@ func writeScriptContent(script *script, basedir afero.Fs) (func(), error) {
 		return nil, err
 	}
 	tmpFileName := hex.EncodeToString(bs)[0:16]
-
-	tmpscript, err := basedir.OpenFile(tmpFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
+	path := filepath.Join(basedir.Name(), tmpFileName)
+	tmpscript, err := fs.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
 	if err != nil {
 		log.Warning("Cannot create tmp file: %s", err)
 		return nil, fmt.Errorf("cannot create temporary file, aborting: %v", err)
@@ -96,7 +103,10 @@ func writeScriptContent(script *script, basedir afero.Fs) (func(), error) {
 		return nil, errors.New("cannot write script in temporary file, aborting")
 	}
 
-	tmpscript.Close()
+	if err := tmpscript.Close(); err != nil {
+		return nil, fmt.Errorf("unable to write script to %s", tmpscript)
+	}
+
 	if runtime.GOOS == "windows" {
 		//and add .PS1 extension
 		//newName := tmpFileName + ".PS1"
@@ -109,12 +119,13 @@ func writeScriptContent(script *script, basedir afero.Fs) (func(), error) {
 		//scriptPath = newPath
 		//script.opts = append(script.opts, psCommand)
 	} else {
-		script.opts = append(script.opts, tmpscript.Name())
+		script.opts = append(script.opts, tmpFileName)
+		script.dir = basedir.Name()
 	}
-	deferFunc := func() { basedir.Remove(tmpFileName) }
+	deferFunc := func() { fs.Remove(tmpFileName) }
 
 	// Chmod file
-	if err := basedir.Chmod(tmpFileName, 0755); err != nil {
+	if err := fs.Chmod(tmpscript.Name(), 0755); err != nil {
 		log.Warning("runScriptAction> cannot chmod script %s: %s", tmpscript.Name(), err)
 		return deferFunc, fmt.Errorf("cannot chmod script %s: %v, aborting", tmpscript.Name(), err)
 	}
@@ -138,7 +149,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			chanErr <- err
 		}
 
-		deferFunc, err := writeScriptContent(script, wk.Workspace())
+		deferFunc, err := writeScriptContent(script, wk.Workspace(), workdir)
 		if deferFunc != nil {
 			defer deferFunc()
 		}
@@ -149,7 +160,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		log.Info("runScriptAction> Running command %s %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"))
 		cmd := exec.CommandContext(ctx, script.shell, script.opts...)
 		res.Status = sdk.StatusUnknown
-		cmd.Dir = workdir
+		cmd.Dir = script.dir
 		cmd.Env = wk.Environ()
 
 		workerpath, err := osext.Executable()
@@ -205,13 +216,13 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		}()
 
 		if err := cmd.Start(); err != nil {
-			chanErr <- err
+			chanErr <- fmt.Errorf("unable to start command: %v", err)
 		}
 
 		<-outchan
 		<-errchan
 		if err := cmd.Wait(); err != nil {
-			chanErr <- err
+			chanErr <- fmt.Errorf("command failure: %v", err)
 		}
 
 		res.Status = sdk.StatusSuccess
