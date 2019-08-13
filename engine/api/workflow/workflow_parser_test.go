@@ -53,67 +53,50 @@ func TestParseAndImport(t *testing.T) {
 	//Reload project
 	proj, _ = project.Load(db, cache, proj.Key, u, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
-	tests := []struct {
-		name    string
-		input   *exportentities.Workflow
-		wantErr bool
-	}{
-		{
-			name: "Insert workflow with 2 children + 1 fork with 1 child",
-			input: &exportentities.Workflow{
-				Name: "test-1",
-				Workflow: map[string]exportentities.NodeEntry{
-					"root": {
-						PipelineName:    "pipeline",
-						ApplicationName: app.Name,
-					},
-					"first": {
-						PipelineName: "pipeline",
-						DependsOn:    []string{"root"},
-					},
-					"second": {
-						PipelineName: "pipeline",
-						DependsOn:    []string{"first"},
-					},
-					"fork": {
-						DependsOn: []string{"root"},
-					},
-					"third": {
-						PipelineName: "pipeline",
-						DependsOn:    []string{"fork"},
-					},
-				},
+	input := &exportentities.Workflow{
+		Name: "test-1",
+		Workflow: map[string]exportentities.NodeEntry{
+			"root": {
+				PipelineName:    "pipeline",
+				ApplicationName: app.Name,
+			},
+			"first": {
+				PipelineName: "pipeline",
+				DependsOn:    []string{"root"},
+			},
+			"second": {
+				PipelineName: "pipeline",
+				DependsOn:    []string{"first"},
+			},
+			"fork": {
+				DependsOn: []string{"root"},
+			},
+			"third": {
+				PipelineName: "pipeline",
+				DependsOn:    []string{"fork"},
 			},
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, tt.input, u, workflow.ImportOptions{Force: true, FromRepository: repofullname})
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseAndImport() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
 
-			if err == nil {
-				w, errW := workflow.Load(context.TODO(), db, cache, proj, tt.input.Name, u, workflow.LoadOptions{})
-				assert.NoError(t, errW)
-				b, _ := json.Marshal(w)
-				t.Logf("Workflow = \n%s", string(b))
+	_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, input, u, workflow.ImportOptions{Force: true, FromRepository: repofullname})
+	assert.NoError(t, err)
 
-				if tt.input.Name == "test-1" {
-					assert.Equal(t, w.FromRepository, repofullname)
-					assert.Len(t, w.WorkflowData.Node.Triggers, 2)
-					if w.WorkflowData.Node.Triggers[0].ChildNode.Type == "fork" {
-						assert.Equal(t, w.WorkflowData.Node.Triggers[0].ChildNode.Name, "fork")
-						assert.Len(t, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers, 1)
-						assert.Equal(t, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Name, "third")
-					} else {
-						assert.Equal(t, w.WorkflowData.Node.Triggers[1].ChildNode.Name, "fork")
-						assert.Len(t, w.WorkflowData.Node.Triggers[1].ChildNode.Triggers, 1)
-						assert.Equal(t, w.WorkflowData.Node.Triggers[1].ChildNode.Triggers[0].ChildNode.Name, "third")
-					}
-				}
-			}
-		})
+	w, errW := workflow.Load(context.TODO(), db, cache, proj, input.Name, u, workflow.LoadOptions{})
+	assert.NoError(t, errW)
+	assert.NotNil(t, w)
+
+	b, _ := json.Marshal(w)
+	t.Logf("Workflow = \n%s", string(b))
+
+	assert.Equal(t, w.FromRepository, repofullname)
+	assert.Len(t, w.WorkflowData.Node.Triggers, 2)
+	if w.WorkflowData.Node.Triggers[0].ChildNode.Type == "fork" {
+		assert.Equal(t, w.WorkflowData.Node.Triggers[0].ChildNode.Name, "fork")
+		assert.Len(t, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers, 1)
+		assert.Equal(t, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Name, "third")
+	} else {
+		assert.Equal(t, w.WorkflowData.Node.Triggers[1].ChildNode.Name, "fork")
+		assert.Len(t, w.WorkflowData.Node.Triggers[1].ChildNode.Triggers, 1)
+		assert.Equal(t, w.WorkflowData.Node.Triggers[1].ChildNode.Triggers[0].ChildNode.Name, "third")
 	}
 }
