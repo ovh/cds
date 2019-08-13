@@ -3,7 +3,6 @@ package workerruntime
 import (
 	"context"
 	"errors"
-	"os"
 
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -90,9 +89,9 @@ func SetStepOrder(ctx context.Context, i int) context.Context {
 	return context.WithValue(ctx, stepOrder, i)
 }
 
-func WorkingDirectory(ctx context.Context) (os.FileInfo, error) {
+func WorkingDirectory(ctx context.Context) (afero.File, error) {
 	wdi := ctx.Value(workDir)
-	wd, ok := wdi.(os.FileInfo)
+	wd, ok := wdi.(afero.File)
 	if !ok {
 		return nil, errors.New("unable to get working directory")
 	}
@@ -100,7 +99,7 @@ func WorkingDirectory(ctx context.Context) (os.FileInfo, error) {
 	return wd, nil
 }
 
-func SetWorkingDirectory(ctx context.Context, s os.FileInfo) context.Context {
-	log.Debug("SetWorkingDirectory> working directory is : %s", s.Name())
+func SetWorkingDirectory(ctx context.Context, s afero.File) context.Context {
+	log.Debug("SetWorkingDirectory> working directory is: %s", s.Name())
 	return context.WithValue(ctx, workDir, s)
 }

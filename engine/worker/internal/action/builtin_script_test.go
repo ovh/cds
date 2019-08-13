@@ -147,10 +147,10 @@ func TestRunScriptAction(t *testing.T) {
 	require.NoError(t, wdFS.MkdirAll(wdName, os.FileMode(0755)))
 	defer wdFS.RemoveAll(wdName) // nolint
 
-	wdFileInfo, err := wdFS.Stat(wdName)
+	wdFile, err := wdFS.Open(wdName)
 	require.NoError(t, err)
 
-	ctx := workerruntime.SetWorkingDirectory(context.TODO(), wdFileInfo)
+	ctx := workerruntime.SetWorkingDirectory(context.TODO(), wdFile)
 	res, err := RunScriptAction(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{

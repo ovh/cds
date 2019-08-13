@@ -71,8 +71,12 @@ func prepareScriptContent(parameters []sdk.Parameter) (*script, error) {
 	return &script, nil
 }
 
-func writeScriptContent(script *script, fs afero.Fs, basedir os.FileInfo) (func(), error) {
-	if !basedir.IsDir() {
+func writeScriptContent(script *script, fs afero.Fs, basedir afero.File) (func(), error) {
+	fi, err := basedir.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if !fi.IsDir() {
 		panic("basedir is not a directory")
 	}
 
@@ -157,7 +161,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			chanErr <- err
 		}
 
-		log.Info("runScriptAction> Running command %s %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"))
+		log.Info("runScriptAction> Running command %s %s", filepath.Join(script.dir, script.shell), strings.Trim(fmt.Sprint(script.opts), "[]"))
 		cmd := exec.CommandContext(ctx, script.shell, script.opts...)
 		res.Status = sdk.StatusUnknown
 		cmd.Dir = script.dir

@@ -308,7 +308,8 @@ func (w *CurrentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 }
 
 // creates a working directory in $HOME/PROJECT/APP/PIP/BN
-func setupWorkingDirectory(fs afero.Fs, wd string) (os.FileInfo, error) {
+func setupWorkingDirectory(fs afero.Fs, wd string) (afero.File, error) {
+	log.Debug("creating directory %s in Filesystem %s", wd, fs.Name())
 	if err := fs.MkdirAll(wd, 0755); err != nil {
 		return nil, err
 	}
@@ -326,7 +327,12 @@ func setupWorkingDirectory(fs afero.Fs, wd string) (os.FileInfo, error) {
 		return nil, err
 	}
 
-	return fs.Stat(wd)
+	fi, err := fs.Open(wd)
+	if err != nil {
+		return nil, err
+	}
+	log.Debug("working directory info: %s", fi.Name())
+	return fi, nil
 }
 
 // remove the buildDirectory created by setupWorkingDirectory
@@ -336,14 +342,15 @@ func teardownWorkingDirectory(fs afero.Fs, wd string) error {
 
 func workingDirectory(fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes ...string) (string, error) {
 	var encodedName = base64.RawStdEncoding.EncodeToString([]byte(jobInfo.NodeJobRun.Job.Job.Action.Name))
-	paths := append([]string{fs.Name(), encodedName}, suffixes...)
+	paths := append([]string{encodedName}, suffixes...)
 	dir := path.Join(paths...)
 
 	if _, err := fs.Stat(dir); os.IsExist(err) {
-		log.Info("workingDirectory> cleaning directory %s", dir)
+		log.Info("cleaning working directory %s", dir)
 		_ = os.RemoveAll(dir)
 	}
 	dir, err := filepath.Abs(dir)
+	log.Debug("defining working directory %s", dir)
 	return dir, sdk.WithStack(err)
 }
 
@@ -371,7 +378,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		return sdk.Result{}, err
 	}
 
-	wdFileInfo, err := setupWorkingDirectory(w.basedir, wd)
+	wdFile, err := setupWorkingDirectory(w.basedir, wd)
 	if err != nil {
 		log.Debug("processJob> setupWorkingDirectory error:%s", err)
 		return sdk.Result{
@@ -380,8 +387,8 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		}, err
 	}
 
-	ctx = workerruntime.SetWorkingDirectory(ctx, wdFileInfo)
-	log.Debug("processJob> Setup workspace - %s", wdFileInfo.Name())
+	ctx = workerruntime.SetWorkingDirectory(ctx, wdFile)
+	log.Debug("processJob> Setup workspace - %s", wdFile.Name())
 
 	var jobParameters = jobInfo.NodeJobRun.Parameters
 
