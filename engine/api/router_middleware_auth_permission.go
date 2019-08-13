@@ -289,9 +289,9 @@ func (api *API) checkUserPermissions(ctx context.Context, username string, permi
 
 	// Load user from database, returns an error if not exists
 	if username == "me" {
-		u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID, user.LoadOptions.Default)
+		u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID)
 	} else {
-		u, err = user.LoadByUsername(ctx, api.mustDB(), username, user.LoadOptions.Default)
+		u, err = user.LoadByUsername(ctx, api.mustDB(), username)
 	}
 	if err != nil {
 		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for user %s", username))
@@ -305,8 +305,13 @@ func (api *API) checkUserPermissions(ctx context.Context, username string, permi
 
 	// If the current user is a maintainer and we want a to read user
 	if permissionValue == sdk.PermissionRead && isMaintainer(ctx) {
-		// Valid if the user was found
 		log.Debug("checkUserPermissions> %s read access granted to %s because is maintainer", getAPIConsumer(ctx).ID, u.ID)
+		return nil
+	}
+
+	// If the current user is an admin
+	if isAdmin(ctx) {
+		log.Debug("checkUserPermissions> %s read/write access granted to %s because is admin", getAPIConsumer(ctx).ID, u.ID)
 		return nil
 	}
 

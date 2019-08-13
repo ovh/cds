@@ -173,7 +173,7 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 		log.Fatalf("user.Insert: %v", err)
 	}
 
-	u, err := user.LoadByID(context.Background(), db, u.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
+	u, err := user.LoadByID(context.Background(), db, u.ID, user.LoadOptions.WithDeprecatedUser)
 	if err != nil {
 		log.Fatalf("user.LoadUserByID: %v", err)
 	}

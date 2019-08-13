@@ -16,6 +16,15 @@ import { finalize } from 'rxjs/operators/finalize';
 import { ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
 import { ConsumerDetailsModalComponent } from '../consumer-details-modal/consumer-details-modal.component';
 
+const defaultMenuItems = [<Item>{
+    translate: 'user_profile_btn',
+    key: 'profile',
+    default: true
+}, <Item>{
+    translate: 'user_groups_btn',
+    key: 'groups'
+}];
+
 @Component({
     selector: 'app-user-edit',
     templateUrl: './user.edit.html',
@@ -37,8 +46,9 @@ export class UserEditComponent implements OnInit {
 
     username: string;
     currentUser: AuthentifiedUser;
+    editable: boolean;
     path: Array<PathItem>;
-    items: Array<Item>;
+    menuItems: Array<Item>;
     selectedItem: Item;
     loadingUser: boolean;
     user: AuthentifiedUser;
@@ -71,20 +81,7 @@ export class UserEditComponent implements OnInit {
     ) {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
 
-        this.items = [<Item>{
-            translate: 'user_profile_btn',
-            key: 'profile',
-            default: true
-        }, <Item>{
-            translate: 'user_groups_btn',
-            key: 'groups'
-        }, <Item>{
-            translate: 'user_contacts_btn',
-            key: 'contacts'
-        }, <Item>{
-            translate: 'user_authentication_btn',
-            key: 'authentication'
-        }];
+        this.menuItems = [].concat(defaultMenuItems);
 
         this.columnsGroups = [
             <Column<Group>>{
@@ -246,7 +243,6 @@ export class UserEditComponent implements OnInit {
     }
 
     clickConsumerSignin(consumerType: string): void {
-
     }
 
     clickConsumerDetach(c: AuthConsumer): void {
@@ -314,7 +310,7 @@ export class UserEditComponent implements OnInit {
         }];
     }
 
-    selectItem(item: Item): void {
+    selectMenuItem(item: Item): void {
         switch (item.key) {
             case 'groups':
                 this.getGroups();
@@ -331,6 +327,7 @@ export class UserEditComponent implements OnInit {
 
     getUser(): void {
         this.loadingUser = true;
+        this._cd.markForCheck();
         this._userService.getUser(this.username)
             .pipe(finalize(() => {
                 this.loadingUser = false;
@@ -338,13 +335,31 @@ export class UserEditComponent implements OnInit {
             }))
             .subscribe(u => {
                 this.user = u;
+                this.setDataFromUser();
                 this.updatePath();
             });
     }
 
+    setDataFromUser(): void {
+        this.editable = this.user.id === this.currentUser.id || this.currentUser.isAdmin();
+
+        if (this.user.id === this.currentUser.id || this.user.isMaintainer()) {
+            this.menuItems = defaultMenuItems.concat([<Item>{
+                translate: 'user_contacts_btn',
+                key: 'contacts'
+            }, <Item>{
+                translate: 'user_authentication_btn',
+                key: 'authentication'
+            }]);
+        } else {
+            this.menuItems = [].concat(defaultMenuItems);
+        }
+    }
+
     getGroups(): void {
         this.loadingGroups = true;
-        this._userService.getGroups(this.currentUser.username)
+        this._cd.markForCheck();
+        this._userService.getGroups(this.user.username)
             .pipe(finalize(() => {
                 this.loadingGroups = false;
                 this._cd.markForCheck();
@@ -356,7 +371,8 @@ export class UserEditComponent implements OnInit {
 
     getContacts(): void {
         this.loadingContacts = true;
-        this._userService.getContacts(this.currentUser.username)
+        this._cd.markForCheck();
+        this._userService.getContacts(this.user.username)
             .pipe(finalize(() => {
                 this.loadingContacts = false;
                 this._cd.markForCheck();
@@ -368,10 +384,11 @@ export class UserEditComponent implements OnInit {
 
     getAuthData(): void {
         this.loadingAuthData = true;
+        this._cd.markForCheck();
         forkJoin<AuthDriverManifests, Array<AuthConsumer>, Array<AuthSession>>(
             this._authenticationService.getDrivers(),
-            this._userService.getConsumers(this.currentUser.username),
-            this._userService.getSessions(this.currentUser.username)
+            this._userService.getConsumers(this.user.username),
+            this._userService.getSessions(this.user.username)
         )
             .pipe(finalize(() => {
                 this.loadingAuthData = false;

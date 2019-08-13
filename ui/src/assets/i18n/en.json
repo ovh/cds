@@ -779,7 +779,7 @@
   "user_label_new_password": "New password",
   "user_label_password": "Password",
   "user_label_email": "Mail address",
-  "user_label_admin": "CDS Administrator?",
+  "user_label_ring": "Ring",
   "user_load_users": "Loading users...",
   "user_load_user": "Loading user...",
   "user_is_admin": "This user is a CDS Administrator",

@@ -44,23 +44,6 @@ func TestAuthenticatedUserDAO(t *testing.T) {
 	test.NoError(t, user.DeleteByID(db, u.ID))
 }
 
-func TestLoadDeprecatedUser(t *testing.T) {
-	var u = sdk.AuthentifiedUser{
-		Username: sdk.RandomString(10),
-		Fullname: sdk.RandomString(10),
-		Ring:     sdk.UserRingAdmin,
-	}
-
-	db, _, _ := test.SetupPG(t)
-	test.NoError(t, user.Insert(db, &u))
-
-	u1, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithDeprecatedUser)
-	test.NoError(t, err)
-	test.NotNil(t, u1.OldUserStruct)
-
-	test.NoError(t, user.DeleteByID(db, u1.ID))
-}
-
 func TestLoadAll(t *testing.T) {
 	db, _, _ := test.SetupPG(t)
 	for i := 0; i < 10; i++ {
@@ -71,17 +54,9 @@ func TestLoadAll(t *testing.T) {
 		}
 
 		assert.NoError(t, user.Insert(db, &u))
-
-		var c = sdk.UserContact{
-			UserID:  u.ID,
-			Primary: true,
-			Type:    sdk.UserContactTypeEmail,
-			Value:   u.Username + "@lolcat.host",
-		}
-		assert.NoError(t, user.InsertContact(db, &c))
 	}
 
-	users, err := user.LoadAll(context.TODO(), db, user.LoadOptions.WithContacts)
+	users, err := user.LoadAll(context.TODO(), db)
 	test.NoError(t, err)
 
 	assert.True(t, len(users) >= 10)
