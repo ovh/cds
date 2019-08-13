@@ -6,7 +6,7 @@ import { Environment } from 'app/model/environment.model';
 import { PermissionValue } from 'app/model/permission.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { User } from 'app/model/user.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -57,7 +57,7 @@ export class EnvironmentShowComponent implements OnInit {
     pipelines: Array<Pipeline> = new Array<Pipeline>();
     workflows: Array<Workflow> = new Array<Workflow>();
     environments: Array<Environment> = new Array<Environment>();
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     usageCount = 0;
     perm = PermissionValue;
 

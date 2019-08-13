@@ -8,7 +8,7 @@ import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Group } from '../../../../model/group.model';
 import { Pipeline } from '../../../../model/pipeline.model';
-import { User } from '../../../../model/user.model';
+import { AuthentifiedUser } from '../../../../model/user.model';
 import { ModelPattern, WorkerModel } from '../../../../model/worker-model.model';
 import { GroupService } from '../../../../service/group/group.service';
 import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
@@ -32,7 +32,7 @@ export class WorkerModelEditComponent implements OnInit {
     communications: Array<string>;
     groups: Array<Group>;
     patterns: Array<ModelPattern>;
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     usages: Array<Pipeline>;
     path: Array<PathItem>;
     paramsSub: Subscription;

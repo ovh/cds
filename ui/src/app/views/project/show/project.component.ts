@@ -11,7 +11,7 @@ import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
 import { PermissionValue } from '../../../model/permission.model';
 import { LoadOpts, Project } from '../../../model/project.model';
-import { User } from '../../../model/user.model';
+import { AuthentifiedUser } from '../../../model/user.model';
 import { Warning } from '../../../model/warning.model';
 import { HelpersService } from '../../../service/helpers/helpers.service';
 import { WarningStore } from '../../../service/warning/warning.store';
@@ -27,7 +27,7 @@ import { ToastService } from '../../../shared/toast/ToastService';
 })
 @AutoUnsubscribe()
 export class ProjectShowComponent implements OnInit {
-    currentUser: User;
+    currentUser: AuthentifiedUser;
 
     project: Project;
     projectSubscriber: Subscription;

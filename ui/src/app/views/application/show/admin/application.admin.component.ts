@@ -8,7 +8,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
 import { Application } from '../../../../model/application.model';
 import { Project } from '../../../../model/project.model';
-import { User } from '../../../../model/user.model';
+import { AuthentifiedUser } from '../../../../model/user.model';
 import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
@@ -24,7 +24,7 @@ export class ApplicationAdminComponent implements OnInit {
     @ViewChild('updateWarning', { static: false })
     private updateWarningModal: WarningModalComponent;
 
-    user: User;
+    user: AuthentifiedUser;
 
     newName: string;
     fileTooLarge = false;

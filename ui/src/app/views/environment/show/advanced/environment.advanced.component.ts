@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
-import { User } from 'app/model/user.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
 import {
@@ -21,11 +21,10 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EnvironmentAdvancedComponent implements OnInit {
-
     @Input() environment: Environment;
     @Input() project: Project;
 
-    user: User;
+    user: AuthentifiedUser;
 
     oldName: string;
     fileTooLarge = false;

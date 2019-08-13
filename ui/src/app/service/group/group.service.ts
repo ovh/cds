@@ -1,8 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Group, GroupMember } from 'app/model/group.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Group } from '../../model/group.model';
 
 @Injectable()
 export class GroupService {
@@ -23,46 +23,29 @@ export class GroupService {
         return this._http.get<Group[]>('/group', { params: params });
     }
 
-    create(group: Group): Observable<boolean> {
-        return this._http.post('/group', group).pipe(map(() => {
-            return true;
-        }));
+    create(group: Group): Observable<Group> {
+        return this._http.post<Group>('/group', group);
     }
 
-    update(groupname: string, group: Group): Observable<boolean> {
-        return this._http.put('/group/' + groupname, group).pipe(map(() => {
-            return true;
-        }));
+    update(name: string, group: Group): Observable<Group> {
+        return this._http.put<Group>(`/group/${name}`, group);
     }
 
     delete(name: string): Observable<boolean> {
-        return this._http.delete('/group/' + name).pipe(map(() => {
+        return this._http.delete(`/group/${name}`).pipe(map(() => {
             return true;
         }));
     }
 
-    addMember(name: string, username: string): Observable<boolean> {
-        return this._http.post('/group/' + name + '/user', [username]).pipe(map(() => {
-            return true;
-        }));
+    addMember(name: string, member: GroupMember): Observable<Group> {
+        return this._http.post<Group>(`/group/${name}/user`, member);
     }
 
-    removeMember(name: string, username: string): Observable<boolean> {
-        return this._http.delete('/group/' + name + '/user/' + username).pipe(map(() => {
-            return true;
-        }));
+    updateMember(name: string, member: GroupMember): Observable<Group> {
+        return this._http.put<Group>(`/group/${name}/user/${member.username}`, member);
     }
 
-    addAdmin(name: string, username: string): Observable<boolean> {
-        return this._http.post('/group/' + name + '/user/' + username + '/admin', null).pipe(map(() => {
-            return true;
-        }));
+    removeMember(name: string, member: GroupMember): Observable<Group> {
+        return this._http.delete<Group>(`/group/${name}/user/${member.username}`);
     }
-
-    removeAdmin(name: string, username: string): Observable<boolean> {
-        return this._http.delete('/group/' + name + '/user/' + username + '/admin').pipe(map(() => {
-            return true;
-        }));
-    }
-
 }

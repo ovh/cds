@@ -14,7 +14,7 @@ import { Environment } from '../../../model/environment.model';
 import { PermissionValue } from '../../../model/permission.model';
 import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
-import { User } from '../../../model/user.model';
+import { AuthentifiedUser } from '../../../model/user.model';
 import { Workflow } from '../../../model/workflow.model';
 import { ApplicationStore } from '../../../service/application/application.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
@@ -64,7 +64,7 @@ export class ApplicationShowComponent implements OnInit {
     pipelines: Array<Pipeline> = new Array<Pipeline>();
     workflows: Array<Workflow> = new Array<Workflow>();
     environments: Array<Environment> = new Array<Environment>();
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     usageCount = 0;
     perm = PermissionValue;
 

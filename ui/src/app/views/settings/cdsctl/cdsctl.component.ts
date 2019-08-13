@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild, } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { User } from 'app/model/user.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { ConfigService } from 'app/service/config/config.service';
 import { ThemeStore } from 'app/service/services.module';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
@@ -27,7 +27,7 @@ export class CdsctlComponent implements OnInit {
     @ViewChild('codemirror7', {static: false}) codemirror7: any;
     @ViewChild('codemirror8', {static: false}) codemirror8: any;
 
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     apiURL: string;
     arch: Array<string>;
     os: Array<string>;

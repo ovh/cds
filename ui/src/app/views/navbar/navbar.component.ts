@@ -6,7 +6,7 @@ import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Broadcast } from 'app/model/broadcast.model';
 import { NavbarProjectData, NavbarRecentData, NavbarSearchItem } from 'app/model/navbar.model';
-import { User } from 'app/model/user.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { ApplicationStore } from 'app/service/application/application.store';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { LanguageStore } from 'app/service/language/language.store';
@@ -51,7 +51,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     broadcastSubscription: Subscription;
     currentRoute: {};
     recentView = true;
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     themeSubscription: Subscription;
     themeSwitch = new FormControl();
 

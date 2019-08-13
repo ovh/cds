@@ -5,22 +5,23 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var XSRFTokenDuration = 60 * 10 // 10 minutes
+// XSRFTokenDuration is set to 10 minutes.
+var XSRFTokenDuration = 60 * 10
 
 // NewSessionXSRFToken generate and store a XSRF token for a given session id.
 func NewSessionXSRFToken(store cache.Store, sessionID string) string {
-	var xsrfToken = sdk.UUID()
+	var XSRFToken = sdk.UUID()
 	var k = cache.Key("token", "xsrf", sessionID)
-	store.SetWithTTL(k, &xsrfToken, XSRFTokenDuration)
-	return xsrfToken
+	store.SetWithTTL(k, &XSRFToken, XSRFTokenDuration)
+	return XSRFToken
 }
 
-// CheckSessionXSRFToken checks a value "xsrfToken" against the session XSRF in cache for given session id.
-func CheckSessionXSRFToken(store cache.Store, sessionID, xsrfToken string) bool {
-	var expectedXSRFfToken string
+// GetSessionXSRFToken returns a XSRF token from cache if exists for given session.
+func GetSessionXSRFToken(store cache.Store, sessionID string) (string, bool) {
+	var XSRFToken string
 	var k = cache.Key("token", "xsrf", sessionID)
-	if store.Get(k, &expectedXSRFfToken) {
-		return expectedXSRFfToken == xsrfToken
+	if store.Get(k, &XSRFToken) {
+		return XSRFToken, true
 	}
-	return false
+	return "", false
 }

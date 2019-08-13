@@ -1,11 +1,11 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { finalize } from 'rxjs/operators';
-import { Group } from '../../../../model/group.model';
-import { User } from '../../../../model/user.model';
+import { Group, GroupMember } from '../../../../model/group.model';
+import { AuthentifiedUser } from '../../../../model/user.model';
 import { GroupService } from '../../../../service/group/group.service';
 import { UserService } from '../../../../service/user/user.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
@@ -14,17 +14,18 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @Component({
     selector: 'app-group-edit',
     templateUrl: './group.edit.html',
-    styleUrls: ['./group.edit.scss']
+    styleUrls: ['./group.edit.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GroupEditComponent implements OnInit {
     loading = false;
     deleteLoading = false;
+    groupName: string;
     group: Group;
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     currentUserIsAdminOnGroup: boolean;
     addUserUsername: string;
-    users: Array<User>;
-    private groupname: string;
+    users: Array<AuthentifiedUser>;
     private groupnamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     groupPatternError = false;
     path: Array<PathItem>;
@@ -40,77 +41,77 @@ export class GroupEditComponent implements OnInit {
         private _cd: ChangeDetectorRef
     ) {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
+    }
+
+    ngOnInit() {
+        this._route.params.subscribe(params => {
+            if (params['groupname'] !== 'add') {
+                this.groupName = params['groupname']
+                this.loadGroup();
+            } else {
+                this.group = new Group();
+                this.currentUserIsAdminOnGroup = true;
+                this.updatePath();
+                this._cd.markForCheck();
+            }
+        });
+
+        this.getUsers();
+    }
+
+    getUsers(): void {
         this._userService.getUsers().subscribe(users => {
             this.users = users;
             this._cd.markForCheck();
         });
     }
 
-    ngOnInit() {
-        this._route.params.subscribe(params => {
-            if (params['groupname'] !== 'add') {
-                this.reloadData(params['groupname']);
-            } else {
-                this.group = new Group();
-                this.updatePath();
-            }
-            this._cd.markForCheck();
-        });
-    }
-
-    reloadData(groupname: string): void {
-        this._groupService.getByName(groupname).subscribe(grp => {
+    loadGroup(): void {
+        this._groupService.getByName(this.groupName).subscribe(grp => {
             this.group = grp;
-            this.groupname = grp.name;
-            if (grp.members) {
-                for (let i = 0; i < grp.members.length; i++) {
-                    if (this.currentUser.username === grp.members[i].username) {
-                        this.currentUserIsAdminOnGroup = true;
-                        break;
-                    }
-                }
-            }
+            this.updateDataFromGroup();
             this.updatePath();
             this._cd.markForCheck();
         });
     }
 
-    clickDeleteButton(): void {
-        this.deleteLoading = true;
-        this._groupService.delete(this.group.name)
-            .pipe(
-                finalize(() => {
-                    this.deleteLoading = false;
-                    this._cd.markForCheck();
-                })
-            )
-            .subscribe(wm => {
-                this._toast.success('', this._translate.instant('group_deleted'));
-                this._router.navigate(['../'], { relativeTo: this._route });
-            });
+    updateDataFromGroup(): void {
+        if (this.group.members) {
+            for (let i = 0; i < this.group.members.length; i++) {
+                if (this.currentUser.username === this.group.members[i].username) {
+                    this.currentUserIsAdminOnGroup = this.group.members[i].admin;
+                    break;
+                }
+            }
+        }
     }
 
-    clickSaveButton(): void {
+    saveGroup(): void {
         if (!this.group.name) {
             return;
         }
 
         if (!this.groupnamePattern.test(this.group.name)) {
             this.groupPatternError = true;
+            this._cd.markForCheck();
             return;
         }
 
         this.loading = true;
+        this._cd.markForCheck();
         if (this.group.id > 0) {
-            this._groupService.update(this.groupname, this.group)
+            this._groupService.update(this.groupName, this.group)
                 .pipe(
                     finalize(() => {
                         this.loading = false;
                         this._cd.markForCheck();
                     })
                 )
-                .subscribe(wm => {
+                .subscribe(g => {
                     this._toast.success('', this._translate.instant('group_saved'));
+                    this.group = g;
+                    this.updateDataFromGroup();
+                    this._cd.markForCheck();
                     this._router.navigate(['settings', 'group', this.group.name]);
                 });
         } else {
@@ -121,68 +122,107 @@ export class GroupEditComponent implements OnInit {
                         this._cd.markForCheck();
                     })
                 )
-                .subscribe(wm => {
+                .subscribe(() => {
                     this._toast.success('', this._translate.instant('group_saved'));
                     this._router.navigate(['settings', 'group', this.group.name]);
                 });
         }
     }
 
-    clickAddAdminButton(username: string): void {
-        this.loading = true;
-        this._groupService.addAdmin(this.group.name, username)
+    clickDelete(): void {
+        this.deleteLoading = true;
+        this._cd.markForCheck();
+        this._groupService.delete(this.group.name)
             .pipe(
                 finalize(() => {
-                    this.loading = false;
+                    this.deleteLoading = false;
                     this._cd.markForCheck();
                 })
             )
-            .subscribe(wm => {
-                this._toast.success('', this._translate.instant('group_add_admin_saved'));
-                this.reloadData(this.group.name);
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('group_deleted'));
+                this._router.navigate(['settings', 'group']);
             });
     }
 
-    clickRemoveAdminButton(username: string): void {
+    clickAddMember(): void {
         this.loading = true;
-        this._groupService.removeAdmin(this.group.name, username)
-            .pipe(
-                finalize(() => {
-                    this.loading = false;
-                    this._cd.markForCheck();
-                })
-            )
-            .subscribe(wm => {
-                this._toast.success('', this._translate.instant('group_remove_admin_saved'));
-                this.reloadData(this.group.name);
-            });
-    }
-
-    clickRemoveUserButton(username: string): void {
-        this.loading = true;
-        this._groupService.removeMember(this.group.name, username)
-            .pipe(
-                finalize(() => {
-                    this.loading = false;
-                    this._cd.markForCheck();
-                })
-            )
-            .subscribe(wm => {
-                this._toast.success('', this._translate.instant('group_remove_user_saved'));
-                this.reloadData(this.group.name);
-            });
-    }
-
-    clickAddUserButton(): void {
-        this.loading = true;
-        this._groupService.addMember(this.group.name, this.addUserUsername)
+        this._cd.markForCheck();
+        this._groupService.addMember(this.group.name, <GroupMember>{
+            username: this.addUserUsername,
+            admin: false
+        })
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();
             }))
-            .subscribe(() => {
-            this._toast.success('', this._translate.instant('group_add_user_saved'));
-            this.reloadData(this.group.name);
+            .subscribe(g => {
+                this._toast.success('', this._translate.instant('group_add_user_saved'));
+                this.group = g;
+                this.updateDataFromGroup();
+                this._cd.markForCheck();
+            });
+    }
+
+    clickRemoveMember(username: string): void {
+        this.loading = true;
+        this._cd.markForCheck();
+        this._groupService.removeMember(this.group.name, <GroupMember>{
+            username
+        })
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(g => {
+                this._toast.success('', this._translate.instant('group_remove_user_saved'));
+                if (username === this.currentUser.username) {
+                    this._router.navigate(['settings', 'group']);
+                    return;
+                }
+                this.group = g;
+                this.updateDataFromGroup();
+                this._cd.markForCheck();
+            });
+    }
+
+    clickSetAdmin(username: string): void {
+        this.loading = true;
+        this._cd.markForCheck();
+        this._groupService.updateMember(this.groupName, <GroupMember>{
+            username,
+            admin: true
+        })
+            .pipe(
+                finalize(() => {
+                    this.loading = false;
+                    this._cd.markForCheck();
+                })
+            )
+            .subscribe(g => {
+                this.group = g;
+                this.updateDataFromGroup();
+                this._cd.markForCheck();
+                this._toast.success('', this._translate.instant('group_add_admin_saved'));
+            });
+    }
+
+    clickUnsetAdmin(username: string): void {
+        this.loading = true;
+        this._cd.markForCheck();
+        this._groupService.updateMember(this.groupName, <GroupMember>{
+            username,
+            admin: false
+        }).pipe(
+            finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            })
+        ).subscribe(g => {
+            this.group = g;
+            this.updateDataFromGroup();
+            this._cd.markForCheck();
+            this._toast.success('', this._translate.instant('group_remove_admin_saved'));
         });
     }
 

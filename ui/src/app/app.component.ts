@@ -161,8 +161,8 @@ export class AppComponent implements OnInit {
             // authKey = this._authStore.localStorageSessionKey;
             // authValue = sessionToken;
         } else if (user) {
-            authKey = 'Authorization';
-            authValue = 'Basic ' + user.token;
+            // authKey = 'Authorization';
+            // authValue = 'Basic ' + user.token;
         } else {
             return;
         }

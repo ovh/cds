@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, CanActivateChild, NavigationExtras, Router, RouterStateSnapshot } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { User } from 'app/model/user.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { FetchCurrentUser } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { Observable } from 'rxjs';
@@ -16,7 +16,7 @@ export class AuthenticationGuard implements CanActivate, CanActivateChild {
 
     getCurrentUser(state: RouterStateSnapshot): Observable<boolean> {
         return this._store.select(AuthenticationState.user)
-            .map((u: User): boolean => {
+            .map((u: AuthentifiedUser): boolean => {
                 if (!u) {
                     this._store.dispatch(new FetchCurrentUser()).subscribe(
                         () => { },

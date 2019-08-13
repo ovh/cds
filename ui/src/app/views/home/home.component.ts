@@ -5,7 +5,7 @@ import { NavbarProjectData } from 'app/model/navbar.model';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { Subscription } from 'rxjs';
 import { TimelineFilter } from '../../model/timeline.model';
-import { User } from '../../model/user.model';
+import { AuthentifiedUser } from '../../model/user.model';
 import { BroadcastStore } from '../../service/broadcast/broadcast.store';
 import { NavbarService } from '../../service/navbar/navbar.service';
 import { TimelineStore } from '../../service/timeline/timeline.store';
@@ -25,7 +25,7 @@ export class HomeComponent implements OnInit {
     broadcasts: Array<Broadcast> = [];
     loading = true;
     loadingBroadcasts = true;
-    user: User;
+    user: AuthentifiedUser;
 
     filter: TimelineFilter;
     filterSub: Subscription;

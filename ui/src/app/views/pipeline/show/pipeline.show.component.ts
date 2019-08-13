@@ -7,7 +7,7 @@ import { Environment } from 'app/model/environment.model';
 import { AllKeys } from 'app/model/keys.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { User } from 'app/model/user.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
 import { KeyService } from 'app/service/keys/keys.service';
 import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
@@ -49,7 +49,7 @@ export class PipelineShowComponent implements OnInit {
     applications: Array<Application> = new Array<Application>();
     workflows: Array<Workflow> = new Array<Workflow>();
     environments: Array<Environment> = new Array<Environment>();
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     usageCount = 0;
 
     // optional application data

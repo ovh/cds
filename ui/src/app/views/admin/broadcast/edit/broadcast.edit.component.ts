@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Broadcast } from 'app/model/broadcast.model';
 import { NavbarProjectData } from 'app/model/navbar.model';
-import { User } from 'app/model/user.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { BroadcastService } from 'app/service/broadcast/broadcast.service';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -28,7 +28,7 @@ export class BroadcastEditComponent {
     deleteLoading = false;
     broadcast: Broadcast;
     broadcastSub: Subscription;
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     canEdit = false;
     broadcastLevelsList: any;
     levels = Array<string>();
@@ -73,9 +73,7 @@ export class BroadcastEditComponent {
                 let broadcast = bcs.get(id)
                 if (broadcast) {
                     this.broadcast = broadcast;
-                    if (this.currentUser.admin) {
-                        this.canEdit = true;
-                    }
+                    this.canEdit = this.currentUser.isAdmin();
                     this.updatePath();
                 }
             });

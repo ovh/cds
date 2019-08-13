@@ -16,7 +16,6 @@ export class AuthConsumerSigninResponse {
     user: User;
 }
 
-
 export class AuthConsumer {
     id: string;
     name: string;

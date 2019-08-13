@@ -3,16 +3,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthConsumer, AuthDriverManifest, AuthDriverManifests, AuthSession } from 'app/model/authentication.model';
+import { Group } from 'app/model/group.model';
+import { AuthentifiedUser, UserContact } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/services.module';
+import { UserService } from 'app/service/user/user.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { forkJoin } from 'rxjs/internal/observable/forkJoin';
 import { finalize } from 'rxjs/operators/finalize';
-import { Group } from '../../../../model/group.model';
-import { User, UserContact } from '../../../../model/user.model';
-import { UserService } from '../../../../service/user/user.service';
-import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
 import { ConsumerDetailsModalComponent } from '../consumer-details-modal/consumer-details-modal.component';
 
@@ -36,12 +36,12 @@ export class UserEditComponent implements OnInit {
     userPatternError = false;
 
     username: string;
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     path: Array<PathItem>;
     items: Array<Item>;
     selectedItem: Item;
     loadingUser: boolean;
-    user: User;
+    user: AuthentifiedUser;
     columnsGroups: Array<Column<Group>>;
     loadingGroups = false;
     groups: Array<Group>;

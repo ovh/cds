@@ -14,6 +14,13 @@ export class Group {
     }
 }
 
+export class GroupMember {
+    id: string;
+    username: string;
+    fullname: string;
+    admin: boolean;
+}
+
 export class Groups {
     groups: Array<Group>;
     groups_admin: Array<Group>;

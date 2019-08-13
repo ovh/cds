@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, CanActivateChild, Router, RouterStateSnapshot } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { User } from 'app/model/user.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { Observable } from 'rxjs';
 
@@ -14,12 +14,11 @@ export class AdminGuard implements CanActivate, CanActivateChild {
     ) { }
 
     isAdmin(): Observable<boolean> {
-        return this._store.selectOnce(AuthenticationState.user).map((u: User): boolean => {
-            if (!u.admin) {
+        return this._store.selectOnce(AuthenticationState.user).map((u: AuthentifiedUser): boolean => {
+            if (!u.isAdmin()) {
                 this._router.navigate(['/']);
                 return false;
             }
-
             return true;
         });
     }

@@ -26,7 +26,6 @@ import { filter, finalize, first } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowNodeRunComponent {
-
     node: WNode;
     nodeRun: WorkflowNodeRun;
 
@@ -71,7 +70,7 @@ export class WorkflowNodeRunComponent {
                 this.project = projState.project;
             });
 
-        this.isAdmin = this._store.selectSnapshot(AuthenticationState.user).admin;
+        this.isAdmin = this._store.selectSnapshot(AuthenticationState.user).ring === 'ADMIN';
 
         // Tab selection
         this._activatedRoute.queryParams.subscribe(q => {

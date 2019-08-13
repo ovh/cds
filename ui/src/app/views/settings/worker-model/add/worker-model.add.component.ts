@@ -6,7 +6,7 @@ import { AuthenticationState } from 'app/store/authentication.state';
 import { forkJoin } from 'rxjs/internal/observable/forkJoin';
 import { finalize } from 'rxjs/operators';
 import { Group } from '../../../../model/group.model';
-import { User } from '../../../../model/user.model';
+import { AuthentifiedUser } from '../../../../model/user.model';
 import { ModelPattern, WorkerModel } from '../../../../model/worker-model.model';
 import { GroupService } from '../../../../service/group/group.service';
 import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
@@ -27,7 +27,7 @@ export class WorkerModelAddComponent implements OnInit {
     groups: Array<Group>;
     patterns: Array<ModelPattern>;
     patternSelected: ModelPattern;
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     path: Array<PathItem>;
 
     constructor(

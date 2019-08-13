@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { finalize } from 'rxjs/operators/finalize';
-import { User } from '../../../../model/user.model';
+import { AuthentifiedUser, User } from '../../../../model/user.model';
 import { UserService } from '../../../../service/user/user.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { Column, ColumnType } from '../../../../shared/table/data-table.component';
@@ -14,7 +14,7 @@ import { Column, ColumnType } from '../../../../shared/table/data-table.componen
 export class UserListComponent {
     loading: boolean;
     columns: Array<Column<User>>;
-    users: Array<User>;
+    users: Array<AuthentifiedUser>;
     path: Array<PathItem>;
 
     constructor(

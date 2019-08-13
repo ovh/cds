@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Broadcast } from 'app/model/broadcast.model';
 import { NavbarProjectData } from 'app/model/navbar.model';
-import { User } from 'app/model/user.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { BroadcastService } from 'app/service/broadcast/broadcast.service';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -27,7 +27,7 @@ export class BroadcastAddComponent {
     loading = false;
     deleteLoading = false;
     broadcast: Broadcast;
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     broadcastLevelsList: any;
     projects: Array<NavbarProjectData> = [];
     navbarSub: Subscription;

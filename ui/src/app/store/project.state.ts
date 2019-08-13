@@ -8,7 +8,7 @@ import { IdName, Label, LoadOpts, Project } from 'app/model/project.model';
 import { Usage } from 'app/model/usage.model';
 import { Variable } from 'app/model/variable.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
-import { ProjectStore } from 'app/service/services.module';
+import { ProjectStore } from 'app/service/project/project.store';
 import { cloneDeep } from 'lodash-es';
 import { tap } from 'rxjs/operators';
 import * as ProjectAction from './project.action';
