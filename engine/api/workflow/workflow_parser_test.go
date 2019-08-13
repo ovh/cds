@@ -25,11 +25,13 @@ func TestParseAndImport(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
+	pipelineName := sdk.RandomString(10)
+
 	//Pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Name:       "pipeline",
+		Name:       pipelineName,
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 
@@ -54,25 +56,25 @@ func TestParseAndImport(t *testing.T) {
 	proj, _ = project.Load(db, cache, proj.Key, u, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
 	input := &exportentities.Workflow{
-		Name: "test-1",
+		Name: sdk.RandomString(10),
 		Workflow: map[string]exportentities.NodeEntry{
 			"root": {
-				PipelineName:    "pipeline",
+				PipelineName:    pipelineName,
 				ApplicationName: app.Name,
 			},
 			"first": {
-				PipelineName: "pipeline",
+				PipelineName: pipelineName,
 				DependsOn:    []string{"root"},
 			},
 			"second": {
-				PipelineName: "pipeline",
+				PipelineName: pipelineName,
 				DependsOn:    []string{"first"},
 			},
 			"fork": {
 				DependsOn: []string{"root"},
 			},
 			"third": {
-				PipelineName: "pipeline",
+				PipelineName: pipelineName,
 				DependsOn:    []string{"fork"},
 			},
 		},
@@ -85,8 +87,9 @@ func TestParseAndImport(t *testing.T) {
 	assert.NoError(t, errW)
 	assert.NotNil(t, w)
 
-	b, _ := json.Marshal(w)
+	b, err := json.Marshal(w)
 	t.Logf("Workflow = \n%s", string(b))
+	assert.NoError(t, err)
 
 	assert.Equal(t, w.FromRepository, repofullname)
 	assert.Len(t, w.WorkflowData.Node.Triggers, 2)
