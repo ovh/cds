@@ -140,7 +140,6 @@ require (
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/keybase/go-crypto v0.0.0-20181017165231-e696c8039bba // indirect
-	github.com/kr/fs v0.0.0-20131111012553-2788f0dbd169 // indirect
 	github.com/lib/pq v0.0.0-20161014011634-ae8357db35d7
 	github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024 // indirect
 	github.com/magiconair/properties v0.0.0-20160908093658-0723e352fa35 // indirect
@@ -202,7 +201,6 @@ require (
 	github.com/pierrec/lz4 v0.0.0-20190222153722-062282ea0dcf // indirect
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.0.0-20171216070316-e881fd58d78e
-	github.com/pkg/sftp v0.0.0-20160930220758-4d0e916071f6 // indirect
 	github.com/prometheus/client_golang v0.0.0-20180827221046-3653aff4d509 // indirect
 	github.com/prometheus/client_model v0.0.0-20170216185247-6f3806018612 // indirect
 	github.com/prometheus/common v0.0.0-20170830190555-bc8b88226a12 // indirect
@@ -221,7 +219,7 @@ require (
 	github.com/smartystreets/assertions v0.0.0-20170213163019-15adfb6b24e2 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20180222194500-ef6db91d284a // indirect
 	github.com/soheilhy/cmux v0.1.4 // indirect
-	github.com/spf13/afero v0.0.0-20160919210114-52e4a6cfac46
+	github.com/spf13/afero v1.2.2
 	github.com/spf13/cast v0.0.0-20160926084249-2580bc98dc0e // indirect
 	github.com/spf13/cobra v0.0.0-20171231101556-b95ab734e27d
 	github.com/spf13/jwalterweatherman v0.0.0-20160311093646-33c24e77fb80 // indirect
@@ -255,11 +253,11 @@ require (
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.9.1 // indirect
-	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734
-	golang.org/x/net v0.0.0-20190503192946-f4e77d36d62c
+	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
+	golang.org/x/net v0.0.0-20190724013045-ca1201d0de80
 	golang.org/x/oauth2 v0.0.0-20181106182150-f42d05182288
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
-	golang.org/x/sys v0.0.0-20190502175342-a43fa875dd82 // indirect
+	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a // indirect
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	google.golang.org/api v0.0.0-20180517000435-aedc137bffca // indirect

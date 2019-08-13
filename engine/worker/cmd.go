@@ -159,13 +159,20 @@ func initFromFlags(cmd *cobra.Command, w *internal.CurrentWorker) {
 		os.Exit(4)
 	}
 
+	fs := afero.NewOsFs()
+	log.Debug("creating basedir %s", basedir)
+	if err := fs.MkdirAll(basedir, os.FileMode(0755)); err != nil {
+		log.Error("basedir error: %v", err)
+		os.Exit(5)
+	}
+
 	if err := w.Init(givenName,
 		hatcheryName,
 		apiEndpoint,
 		token,
 		FlagString(cmd, flagModel),
 		FlagBool(cmd, flagInsecure),
-		afero.NewBasePathFs(afero.NewOsFs(), basedir)); err != nil {
+		afero.NewBasePathFs(fs, basedir)); err != nil {
 		log.Error("Cannot init worker: %v", err)
 		os.Exit(1)
 	}

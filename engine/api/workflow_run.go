@@ -1252,6 +1252,8 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 			return sdk.WrapError(errNR, "cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
 		}
 
+		log.Debug("nodeRun: %+v", nodeRun)
+
 		var stepStatus string
 		// Find job/step in nodeRun
 	stageLoop:
@@ -1289,6 +1291,8 @@ func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 			Status:   stepStatus,
 			StepLogs: *ls,
 		}
+
+		log.Debug("logs: %+v", result)
 
 		return service.WriteJSON(w, result, http.StatusOK)
 	}

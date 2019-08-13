@@ -331,7 +331,6 @@ func setupWorkingDirectory(fs afero.Fs, wd string) (afero.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Debug("working directory info: %s", fi.Name())
 	return fi, nil
 }
 
@@ -349,9 +348,8 @@ func workingDirectory(fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes 
 		log.Info("cleaning working directory %s", dir)
 		_ = os.RemoveAll(dir)
 	}
-	dir, err := filepath.Abs(dir)
 	log.Debug("defining working directory %s", dir)
-	return dir, sdk.WithStack(err)
+	return dir, nil
 }
 
 func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Result, error) {
@@ -387,6 +385,35 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		}, err
 	}
 
+	wdAbs, err := filepath.Abs(wdFile.Name())
+	if err != nil {
+		log.Debug("processJob> setupWorkingDirectory error:%s", err)
+		return sdk.Result{
+			Status: sdk.StatusFail,
+			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
+		}, err
+	}
+
+	switch x := w.basedir.(type) {
+	case *afero.BasePathFs:
+		wdAbs, err = x.RealPath(wdFile.Name())
+		if err != nil {
+			return sdk.Result{
+				Status: sdk.StatusFail,
+				Reason: fmt.Sprintf("Error: cannot setup working directory: %v", err),
+			}, err
+		}
+
+		wdAbs, err = filepath.Abs(wdAbs)
+		if err != nil {
+			log.Debug("processJob> setupWorkingDirectory error:%s", err)
+			return sdk.Result{
+				Status: sdk.StatusFail,
+				Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
+			}, err
+		}
+	}
+
 	ctx = workerruntime.SetWorkingDirectory(ctx, wdFile)
 	log.Debug("processJob> Setup workspace - %s", wdFile.Name())
 
@@ -396,7 +423,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	jobParameters = append(jobParameters, sdk.Parameter{
 		Name:  "cds.workspace",
 		Type:  sdk.StringParameter,
-		Value: wd,
+		Value: wdAbs,
 	})
 
 	// add cds.worker on parameters available

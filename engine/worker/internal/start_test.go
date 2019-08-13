@@ -6,18 +6,19 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 	"gopkg.in/h2non/gock.v1"
 
 	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/stretchr/testify/assert"
 )
 
 func init() {
@@ -232,8 +233,12 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, int64(42), result.BuildID)
 				assert.Equal(t, sdk.StatusFail, result.Status)
-				assert.Equal(t, "cds.build.newvar", result.NewVariables[0].Name)
-				assert.Equal(t, "newval", result.NewVariables[0].Value)
+				if len(result.NewVariables) > 0 {
+					assert.Equal(t, "cds.build.newvar", result.NewVariables[0].Name)
+					assert.Equal(t, "newval", result.NewVariables[0].Value)
+				} else {
+					t.Error("missing new variables")
+				}
 			}
 		}
 	}
@@ -242,8 +247,14 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 
 	var w = new(internal.CurrentWorker)
 	fs := afero.NewOsFs()
+	basedir := "test-" + sdk.RandomString(10)
+	log.Debug("creating basedir %s", basedir)
+	if err := fs.MkdirAll(basedir, os.FileMode(0755)); err != nil {
+		log.Error("basedir error: %v", err)
+		os.Exit(5)
+	}
 
-	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, fs); err != nil {
+	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, afero.NewBasePathFs(fs, basedir)); err != nil {
 		t.Fatalf("worker init failed: %v", err)
 	}
 	gock.InterceptClient(w.Client().(cdsclient.Raw).HTTPClient())

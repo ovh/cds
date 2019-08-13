@@ -88,10 +88,14 @@ func writeScriptContent(script *script, fs afero.Fs, basedir afero.File) (func()
 		return nil, err
 	}
 	tmpFileName := hex.EncodeToString(bs)[0:16]
+	log.Debug("writeScriptContent> Basedir name is %s (%T)", basedir.Name(), basedir)
 	path := filepath.Join(basedir.Name(), tmpFileName)
+
+	log.Debug("writeScriptContent> Opening file %s", path)
+
 	tmpscript, err := fs.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
 	if err != nil {
-		log.Warning("Cannot create tmp file: %s", err)
+		log.Warning("writeScriptContent> Cannot create tmp file: %s", err)
 		return nil, fmt.Errorf("cannot create temporary file, aborting: %v", err)
 	}
 	log.Debug("runScriptAction> writeScriptContent> Writing script to %s", tmpscript.Name())
@@ -124,7 +128,15 @@ func writeScriptContent(script *script, fs afero.Fs, basedir afero.File) (func()
 		//script.opts = append(script.opts, psCommand)
 	} else {
 		script.opts = append(script.opts, tmpFileName)
-		script.dir = basedir.Name()
+		switch x := fs.(type) {
+		case *afero.BasePathFs:
+			script.dir, err = x.RealPath(basedir.Name())
+			if err != nil {
+				return nil, fmt.Errorf("unable to get script working dir: %v", err)
+			}
+		default:
+			script.dir = basedir.Name()
+		}
 	}
 	deferFunc := func() { fs.Remove(tmpFileName) }
 
@@ -161,7 +173,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			chanErr <- err
 		}
 
-		log.Info("runScriptAction> Running command %s %s", filepath.Join(script.dir, script.shell), strings.Trim(fmt.Sprint(script.opts), "[]"))
+		log.Info("runScriptAction> Running command %s %s in %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"), script.dir)
 		cmd := exec.CommandContext(ctx, script.shell, script.opts...)
 		res.Status = sdk.StatusUnknown
 		cmd.Dir = script.dir
