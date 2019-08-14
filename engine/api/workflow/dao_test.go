@@ -1707,7 +1707,7 @@ vcs_ssh_key: proj-blabla
 				},
 				Hooks: []sdk.NodeHook{
 					{
-						Config:      sdk.RepositoryWebHookModel.DefaultConfig,
+						Config:      sdk.RepositoryWebHookModel.DefaultConfig.Clone(),
 						HookModelID: repoWebHookID,
 					},
 				},
@@ -1734,7 +1734,7 @@ vcs_ssh_key: proj-blabla
 
 	// Add WEB HOOK
 	w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
-		Config:      sdk.WebHookModel.DefaultConfig,
+		Config:      sdk.WebHookModel.DefaultConfig.Clone(),
 		HookModelID: webHookID,
 	})
 
@@ -1759,7 +1759,7 @@ vcs_ssh_key: proj-blabla
 
 	// Add Scheduler
 	w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
-		Config:      sdk.SchedulerModel.DefaultConfig,
+		Config:      sdk.SchedulerModel.DefaultConfig.Clone(),
 		HookModelID: schedulerID,
 	})
 

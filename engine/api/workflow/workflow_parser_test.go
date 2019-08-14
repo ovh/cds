@@ -1,8 +1,11 @@
 package workflow_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,6 +14,8 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -22,14 +27,17 @@ func TestParseAndImport(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
 	u, _ := assets.InsertAdminUser(db)
-	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, pkey, pkey, u)
+
+	pipelineName := sdk.RandomString(10)
 
 	//Pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Name:       "pipeline",
+		Name:       pipelineName,
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 
@@ -50,68 +58,199 @@ func TestParseAndImport(t *testing.T) {
 	//Reload project
 	proj, _ = project.Load(db, cache, proj.Key, u, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
-	tests := []struct {
-		name    string
-		input   *exportentities.Workflow
-		wantErr bool
-	}{
-		{
-			name: "Insert workflow with 2 children + 1 fork with 1 child",
-			input: &exportentities.Workflow{
-				Name: "test-1",
-				Workflow: map[string]exportentities.NodeEntry{
-					"root": {
-						PipelineName: "pipeline",
-					},
-					"first": {
-						PipelineName: "pipeline",
-						DependsOn:    []string{"root"},
-					},
-					"second": {
-						PipelineName: "pipeline",
-						DependsOn:    []string{"first"},
-					},
-					"fork": {
-						DependsOn: []string{"root"},
-					},
-					"third": {
-						PipelineName: "pipeline",
-						DependsOn:    []string{"fork"},
-					},
-				},
+	input := &exportentities.Workflow{
+		Name: sdk.RandomString(10),
+		Workflow: map[string]exportentities.NodeEntry{
+			"root": {
+				PipelineName:    pipelineName,
+				ApplicationName: app.Name,
+			},
+			"first": {
+				PipelineName: pipelineName,
+				DependsOn:    []string{"root"},
+			},
+			"second": {
+				PipelineName: pipelineName,
+				DependsOn:    []string{"first"},
+			},
+			"fork": {
+				DependsOn: []string{"root"},
+			},
+			"third": {
+				PipelineName: pipelineName,
+				DependsOn:    []string{"fork"},
 			},
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, tt.input, u, workflow.ImportOptions{Force: true})
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseAndImport() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
 
-			if err == nil {
-				w, errW := workflow.Load(context.TODO(), db, cache, proj, tt.input.Name, u, workflow.LoadOptions{})
-				assert.NoError(t, errW)
-				b, _ := json.Marshal(w)
-				t.Logf("Workflow = \n%s", string(b))
+	_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, input, u, workflow.ImportOptions{Force: true})
+	assert.NoError(t, err)
 
-				if tt.name == "test-1" {
-					assert.Len(t, w.WorkflowData.Node.Triggers, 2)
-					if w.WorkflowData.Node.Triggers[0].ChildNode.Type == "fork" {
-						assert.Equal(t, w.WorkflowData.Node.Triggers[0].ChildNode.Name, "fork")
-						assert.Len(t, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers, 1)
-						assert.Equal(t, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Name, "third")
-					} else {
-						assert.Equal(t, w.WorkflowData.Node.Triggers[1].ChildNode.Name, "fork")
-						assert.Len(t, w.WorkflowData.Node.Triggers[1].ChildNode.Triggers, 1)
-						assert.Equal(t, w.WorkflowData.Node.Triggers[1].ChildNode.Triggers[0].ChildNode.Name, "third")
-					}
+	w, errW := workflow.Load(context.TODO(), db, cache, proj, input.Name, u, workflow.LoadOptions{})
+	assert.NoError(t, errW)
+	assert.NotNil(t, w)
 
-				}
+	b, err := json.Marshal(w)
+	t.Logf("Workflow = \n%s", string(b))
+	assert.NoError(t, err)
 
-			}
-
-		})
+	assert.Equal(t, w.FromRepository, "")
+	assert.Len(t, w.WorkflowData.Node.Triggers, 2)
+	if w.WorkflowData.Node.Triggers[0].ChildNode.Type == "fork" {
+		assert.Equal(t, w.WorkflowData.Node.Triggers[0].ChildNode.Name, "fork")
+		assert.Len(t, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers, 1)
+		assert.Equal(t, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Name, "third")
+	} else {
+		assert.Equal(t, w.WorkflowData.Node.Triggers[1].ChildNode.Name, "fork")
+		assert.Len(t, w.WorkflowData.Node.Triggers[1].ChildNode.Triggers, 1)
+		assert.Equal(t, w.WorkflowData.Node.Triggers[1].ChildNode.Triggers[0].ChildNode.Name, "third")
 	}
+}
+
+// TestParseAndImportFromRepository tests to import a workflow with FromRepository
+func TestParseAndImportFromRepository(t *testing.T) {
+	db, cache, end := test.SetupPG(t)
+	defer end()
+	u, _ := assets.InsertAdminUser(db)
+
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, pkey, pkey, u)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
+		Name: "github",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
+
+	UUID := sdk.UUID()
+
+	mockServiceVCS := &sdk.Service{Name: "Test_postWorkflowAsCodeHandlerVCS", Type: services.TypeVCS}
+	_ = services.Delete(db, mockServiceVCS)
+	test.NoError(t, services.Insert(db, mockServiceVCS))
+
+	mockServiceHook := &sdk.Service{Name: "Test_postWorkflowAsCodeHandlerHook", Type: services.TypeHooks}
+	_ = services.Delete(db, mockServiceHook)
+	test.NoError(t, services.Insert(db, mockServiceHook))
+
+	//This is a mock for the repositories service
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+			w.StatusCode = http.StatusOK
+			switch r.URL.String() {
+			case "/operations":
+				ope := new(sdk.Operation)
+				ope.UUID = UUID
+				ope.Status = sdk.OperationStatusDone
+				if err := enc.Encode(ope); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/foo/myrepo":
+				vcsRepo := sdk.VCSRepo{
+					Name:         "foo/myrepo",
+					SSHCloneURL:  "git:foo",
+					HTTPCloneURL: "https:foo",
+				}
+				if err := enc.Encode(vcsRepo); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/webhooks":
+				hookInfo := repositoriesmanager.WebhooksInfos{
+					WebhooksSupported: true,
+					WebhooksDisabled:  false,
+				}
+				if err := enc.Encode(hookInfo); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/foo/myrepo/hooks":
+				hook := sdk.VCSHook{
+					ID: "myod",
+				}
+				if err := enc.Encode(hook); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/foo/myrepo/branches":
+				vcsPR := []sdk.VCSBranch{{
+					ID:        "master",
+					DisplayID: "master",
+					Default:   true,
+				}}
+				if err := enc.Encode(vcsPR); err != nil {
+					return writeError(w, err)
+				}
+			case "/task/bulk":
+				var hooks map[string]sdk.NodeHook
+				bts, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
+				}
+				if err := json.Unmarshal(bts, &hooks); err != nil {
+					return writeError(w, err)
+				}
+				if err := enc.Encode(hooks); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				w.StatusCode = http.StatusNotFound
+			}
+
+			return w, nil
+		},
+	)
+
+	pipelineName := sdk.RandomString(10)
+
+	//Pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       pipelineName,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+
+	//Application
+	app := &sdk.Application{
+		Name:               sdk.RandomString(10),
+		RepositoryFullname: "foo/myrepo",
+		VCSServer:          "github",
+	}
+	test.NoError(t, application.Insert(db, cache, proj, app, u))
+
+	//Environment
+	envName := sdk.RandomString(10)
+	env := &sdk.Environment{
+		ProjectID: proj.ID,
+		Name:      envName,
+	}
+	test.NoError(t, environment.InsertEnvironment(db, env))
+
+	//Reload project
+	proj, _ = project.Load(db, cache, proj.Key, u, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
+
+	input := &exportentities.Workflow{
+		Name: sdk.RandomString(10),
+		Workflow: map[string]exportentities.NodeEntry{
+			"root": {
+				PipelineName:    pipelineName,
+				ApplicationName: app.Name,
+			},
+		},
+	}
+
+	_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, input, u, workflow.ImportOptions{Force: true, FromRepository: "foo/myrepo"})
+	assert.NoError(t, err)
+
+	w, errW := workflow.Load(context.TODO(), db, cache, proj, input.Name, u, workflow.LoadOptions{})
+	assert.NoError(t, errW)
+	assert.NotNil(t, w)
+
+	b, err := json.Marshal(w)
+	t.Logf("Workflow = \n%s", string(b))
+	assert.NoError(t, err)
+
+	assert.Equal(t, w.FromRepository, "foo/myrepo")
 }

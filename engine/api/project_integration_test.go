@@ -31,7 +31,7 @@ func TestAddUpdateAndDeleteProjectIntegration(t *testing.T) {
 
 	pp := sdk.ProjectIntegration{
 		Name:               "kafkaTest",
-		Config:             sdk.KafkaIntegration.DefaultConfig,
+		Config:             sdk.KafkaIntegration.DefaultConfig.Clone(),
 		IntegrationModelID: integrationModel.ID,
 	}
 
