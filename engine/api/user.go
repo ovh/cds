@@ -27,7 +27,7 @@ func (api *API) getUsersHandler() service.Handler {
 func (api *API) getUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		username := vars["permUsername"]
+		username := vars["permUsernamePublic"]
 
 		consumer := getAPIConsumer(ctx)
 
@@ -49,7 +49,7 @@ func (api *API) getUserHandler() service.Handler {
 func (api *API) putUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		username := vars["permUsername"]
+		username := vars["permUsernamePublic"]
 
 		var data sdk.AuthentifiedUser
 		if err := service.UnmarshalBody(r, &data); err != nil {
@@ -114,7 +114,7 @@ func (api *API) putUserHandler() service.Handler {
 func (api *API) deleteUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		username := vars["permUsername"]
+		username := vars["permUsernamePublic"]
 
 		consumer := getAPIConsumer(ctx)
 

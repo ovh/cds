@@ -31,6 +31,7 @@ func permissionFunc(api *API) map[string]PermCheckFunc {
 		"permActionName":        api.checkActionPermissions,
 		"permActionBuiltinName": api.checkActionBuiltinPermissions,
 		"permTemplateSlug":      api.checkTemplateSlugPermissions,
+		"permUsernamePublic":    api.checkUserPublicPermissions,
 		"permUsername":          api.checkUserPermissions,
 		"permConsumerID":        api.checkConsumerPermissions,
 		"permSessionID":         api.checkSessionPermissions,
@@ -277,6 +278,50 @@ func (api *API) checkTemplateSlugPermissions(ctx context.Context, templateSlug s
 	return nil
 }
 
+// checkUserPublicPermissions give user R to everyone, RW to itself and RW to admin.
+func (api *API) checkUserPublicPermissions(ctx context.Context, username string, permissionValue int, routeVars map[string]string) error {
+	if username == "" {
+		return sdk.WrapError(sdk.ErrWrongRequest, "invalid username")
+	}
+
+	consumer := getAPIConsumer(ctx)
+
+	var u *sdk.AuthentifiedUser
+	var err error
+
+	// Load user from database, returns an error if not exists
+	if username == "me" {
+		u, err = user.LoadByID(ctx, api.mustDB(), consumer.AuthentifiedUserID)
+	} else {
+		u, err = user.LoadByUsername(ctx, api.mustDB(), username)
+	}
+	if err != nil {
+		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for user %s", username))
+	}
+
+	// Valid if the current consumer match given username
+	if consumer.AuthentifiedUserID == u.ID {
+		log.Debug("checkUserPermissions> %s read/write access granted to %s because itself", getAPIConsumer(ctx).ID, u.ID)
+		return nil
+	}
+
+	// Everyone can read public user data
+	if permissionValue == sdk.PermissionRead {
+		log.Debug("checkUserPermissions> %s read access granted to %s on public user data", getAPIConsumer(ctx).ID, u.ID)
+		return nil
+	}
+
+	// If the current user is an admin
+	if isAdmin(ctx) {
+		log.Debug("checkUserPermissions> %s read/write access granted to %s because is admin", getAPIConsumer(ctx).ID, u.ID)
+		return nil
+	}
+
+	log.Debug("checkUserPermissions> %s is not authorized to %s", getAPIConsumer(ctx).ID, u.ID)
+	return sdk.WrapError(sdk.ErrForbidden, "not authorized for user %s", username)
+}
+
+// checkUserPermissions give user RW to itself, R to maintainer and RW to admin.
 func (api *API) checkUserPermissions(ctx context.Context, username string, permissionValue int, routeVars map[string]string) error {
 	if username == "" {
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid username")
@@ -299,7 +344,7 @@ func (api *API) checkUserPermissions(ctx context.Context, username string, permi
 
 	// Valid if the current consumer match given username
 	if consumer.AuthentifiedUserID == u.ID {
-		log.Debug("checkUserPermissions> %s access granted to %s because itself", getAPIConsumer(ctx).ID, u.ID)
+		log.Debug("checkUserPermissions> %s read/write access granted to %s because itself", getAPIConsumer(ctx).ID, u.ID)
 		return nil
 	}
 

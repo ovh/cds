@@ -17,7 +17,7 @@ func Test_postAuthSignoutHandler(t *testing.T) {
 	_, jwtRaw := assets.InsertLambdaUser(db)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getUserHandler, map[string]string{
-		"permUsername": "me",
+		"permUsernamePublic": "me",
 	})
 	require.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodGet, uri, nil)
@@ -33,7 +33,7 @@ func Test_postAuthSignoutHandler(t *testing.T) {
 	require.Equal(t, 200, rec.Code)
 
 	uri = api.Router.GetRoute(http.MethodGet, api.getUserHandler, map[string]string{
-		"permUsername": "me",
+		"permUsernamePublic": "me",
 	})
 	require.NotEmpty(t, uri)
 	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodGet, uri, nil)

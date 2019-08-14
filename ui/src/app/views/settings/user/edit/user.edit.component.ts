@@ -298,7 +298,7 @@ export class UserEditComponent implements OnInit {
         // }
     }
 
-    updatePath() {
+    updatePath(): void {
         this.path = [<PathItem>{
             translate: 'common_settings'
         }, <PathItem>{
@@ -343,7 +343,7 @@ export class UserEditComponent implements OnInit {
     setDataFromUser(): void {
         this.editable = this.user.id === this.currentUser.id || this.currentUser.isAdmin();
 
-        if (this.user.id === this.currentUser.id || this.user.isMaintainer()) {
+        if (this.user.id === this.currentUser.id || this.currentUser.isMaintainer()) {
             this.menuItems = defaultMenuItems.concat([<Item>{
                 translate: 'user_contacts_btn',
                 key: 'contacts'

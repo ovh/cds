@@ -24,7 +24,7 @@ func Test_getUserGroupsHandler(t *testing.T) {
 	assets.SetUserGroupAdmin(t, db, g2.ID, u.OldUserStruct.ID)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getUserGroupsHandler, map[string]string{
-		"permUsername": u.Username,
+		"permUsernamePublic": u.Username,
 	})
 	require.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodGet, uri, nil)

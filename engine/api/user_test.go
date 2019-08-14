@@ -48,7 +48,7 @@ func Test_getUser(t *testing.T) {
 	expected, jwtRaw := assets.InsertLambdaUser(db)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getUserHandler, map[string]string{
-		"permUsername": expected.Username,
+		"permUsernamePublic": expected.Username,
 	})
 	require.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodGet, uri, nil)

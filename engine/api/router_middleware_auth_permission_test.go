@@ -127,41 +127,163 @@ func TestAPI_checkUserPermissions(t *testing.T) {
 	defer end()
 
 	authUser, _ := assets.InsertLambdaUser(db)
+	authUserMaintainer, _ := assets.InsertMaintainerUser(t, db)
 	authUserAdmin, _ := assets.InsertAdminUser(db)
 
-	ctx := context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
-		AuthentifiedUserID: authUser.ID,
-		AuthentifiedUser:   authUser,
-	})
-	err := api.checkUserPermissions(ctx, authUser.Username, sdk.PermissionReadWriteExecute, nil)
-	assert.NoError(t, err, "should be granted")
+	cases := []struct {
+		Name                     string
+		ConsumerAuthentifiedUser *sdk.AuthentifiedUser
+		TargetAuthentifiedUser   *sdk.AuthentifiedUser
+		Permission               int
+		Granted                  bool
+	}{
+		{
+			Name:                     "RW on himself",
+			ConsumerAuthentifiedUser: authUser,
+			TargetAuthentifiedUser:   authUser,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  true,
+		},
+		{
+			Name:                     "R on other by lambda user",
+			ConsumerAuthentifiedUser: authUser,
+			TargetAuthentifiedUser:   authUserAdmin,
+			Permission:               sdk.PermissionRead,
+			Granted:                  false,
+		},
+		{
+			Name:                     "R on other by admin user",
+			ConsumerAuthentifiedUser: authUserAdmin,
+			TargetAuthentifiedUser:   authUser,
+			Permission:               sdk.PermissionRead,
+			Granted:                  true,
+		},
+		{
+			Name:                     "R on other by maintainer user",
+			ConsumerAuthentifiedUser: authUserMaintainer,
+			TargetAuthentifiedUser:   authUser,
+			Permission:               sdk.PermissionRead,
+			Granted:                  true,
+		},
+		{
+			Name:                     "RW on other by lambda user",
+			ConsumerAuthentifiedUser: authUser,
+			TargetAuthentifiedUser:   authUserAdmin,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  false,
+		},
+		{
+			Name:                     "RW on other by maintainer user",
+			ConsumerAuthentifiedUser: authUserMaintainer,
+			TargetAuthentifiedUser:   authUser,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  false,
+		},
+		{
+			Name:                     "RW on other by admin user",
+			ConsumerAuthentifiedUser: authUserAdmin,
+			TargetAuthentifiedUser:   authUser,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  true,
+		},
+	}
 
-	ctx = context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
-		AuthentifiedUser: authUser,
-	})
-	err = api.checkUserPermissions(ctx, authUserAdmin.Username, sdk.PermissionRead, nil)
-	assert.Error(t, err, "should not be granted")
+	for _, c := range cases {
+		t.Run(c.Name, func(t *testing.T) {
+			ctx := context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
+				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
+				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+			})
+			err := api.checkUserPermissions(ctx, c.TargetAuthentifiedUser.Username, c.Permission, nil)
+			if c.Granted {
+				assert.NoError(t, err, "should be granted")
+			} else {
+				assert.Error(t, err, "should not be granted")
+			}
+		})
+	}
+}
 
-	ctx = context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
-		AuthentifiedUserID: authUserAdmin.ID,
-		AuthentifiedUser:   authUserAdmin,
-	})
-	err = api.checkUserPermissions(ctx, authUser.Username, sdk.PermissionRead, nil)
-	assert.NoError(t, err, "should be granted")
+func TestAPI_checkUserPublicPermissions(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
 
-	ctx = context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
-		AuthentifiedUserID: authUserAdmin.ID,
-		AuthentifiedUser:   authUserAdmin,
-	})
-	err = api.checkUserPermissions(ctx, authUser.Username, sdk.PermissionReadWriteExecute, nil)
-	assert.Error(t, err, "should not be granted")
+	authUser, _ := assets.InsertLambdaUser(db)
+	authUserMaintainer, _ := assets.InsertMaintainerUser(t, db)
+	authUserAdmin, _ := assets.InsertAdminUser(db)
 
-	ctx = context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
-		AuthentifiedUserID: authUserAdmin.ID,
-		AuthentifiedUser:   authUserAdmin,
-	})
-	err = api.checkUserPermissions(ctx, authUserAdmin.Username, sdk.PermissionReadWriteExecute, nil)
-	assert.NoError(t, err, "should be granted")
+	cases := []struct {
+		Name                     string
+		ConsumerAuthentifiedUser *sdk.AuthentifiedUser
+		TargetAuthentifiedUser   *sdk.AuthentifiedUser
+		Permission               int
+		Granted                  bool
+	}{
+		{
+			Name:                     "RW on himself",
+			ConsumerAuthentifiedUser: authUser,
+			TargetAuthentifiedUser:   authUser,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  true,
+		},
+		{
+			Name:                     "R on other by lambda user",
+			ConsumerAuthentifiedUser: authUser,
+			TargetAuthentifiedUser:   authUserAdmin,
+			Permission:               sdk.PermissionRead,
+			Granted:                  true,
+		},
+		{
+			Name:                     "R on other by admin user",
+			ConsumerAuthentifiedUser: authUserAdmin,
+			TargetAuthentifiedUser:   authUser,
+			Permission:               sdk.PermissionRead,
+			Granted:                  true,
+		},
+		{
+			Name:                     "R on other by maintainer user",
+			ConsumerAuthentifiedUser: authUserMaintainer,
+			TargetAuthentifiedUser:   authUser,
+			Permission:               sdk.PermissionRead,
+			Granted:                  true,
+		},
+		{
+			Name:                     "RW on other by lambda user",
+			ConsumerAuthentifiedUser: authUser,
+			TargetAuthentifiedUser:   authUserAdmin,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  false,
+		},
+		{
+			Name:                     "RW on other by maintainer user",
+			ConsumerAuthentifiedUser: authUserMaintainer,
+			TargetAuthentifiedUser:   authUser,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  false,
+		},
+		{
+			Name:                     "RW on other by admin user",
+			ConsumerAuthentifiedUser: authUserAdmin,
+			TargetAuthentifiedUser:   authUser,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.Name, func(t *testing.T) {
+			ctx := context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
+				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
+				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+			})
+			err := api.checkUserPublicPermissions(ctx, c.TargetAuthentifiedUser.Username, c.Permission, nil)
+			if c.Granted {
+				assert.NoError(t, err, "should be granted")
+			} else {
+				assert.Error(t, err, "should not be granted")
+			}
+		})
+	}
 }
 
 func TestAPI_checkConsumerPermissions(t *testing.T) {
