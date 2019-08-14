@@ -855,6 +855,7 @@ const panicDumpTTL = 60 * 60 * 24 // 24 hours
 
 func (a *API) PanicDump() func(s string) (io.WriteCloser, error) {
 	return func(s string) (io.WriteCloser, error) {
+		log.Error("API Panic stacktrace: %s", s)
 		return cache.NewWriteCloser(a.Cache, cache.Key("api", "panic_dump", s), panicDumpTTL), nil
 	}
 }

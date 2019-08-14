@@ -105,7 +105,7 @@ func (a *API) isService(ctx context.Context) (*sdk.Service, bool) {
 
 	s, err := services.LoadByConsumerID(ctx, db, session.ConsumerID)
 	if err != nil {
-		log.Error("unable to get service from session %s: %v", session.ID, err)
+		log.Warning("unable to get service from session %s: %v", session.ID, err)
 		return nil, false
 	}
 	return s, true
@@ -122,7 +122,7 @@ func (a *API) isWorker(ctx context.Context) (*sdk.Worker, bool) {
 		return nil, false
 	}
 	if err != nil {
-		log.Error("unable to get worker from session %s: %v", s.ID, err)
+		log.Warning("unable to get worker from session %s: %v", s.ID, err)
 		return nil, false
 	}
 	if w == nil {
@@ -140,7 +140,7 @@ func (a *API) isHatchery(ctx context.Context) (*sdk.Service, bool) {
 
 	s, err := services.LoadByConsumerID(ctx, db, session.ConsumerID)
 	if err != nil {
-		log.Error("unable to get hatchery from session %s: %v", session.ID, err)
+		log.Warning("unable to get hatchery from session %s: %v", session.ID, err)
 		return nil, false
 	}
 	if s.Type != services.TypeHatchery {

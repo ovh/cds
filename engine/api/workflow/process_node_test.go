@@ -53,8 +53,12 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
-	_, err = db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
 
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithoutPayloadProcessNodeBuildParameter_VCS", services.TypeVCS)
 	defer func() {
@@ -232,8 +236,12 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
-	_, err = db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
 
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithHashOnlyProcessNodeBuildParameter_VCS", services.TypeVCS)
 	defer func() {
@@ -706,8 +714,13 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
@@ -947,8 +960,13 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
@@ -1128,8 +1146,13 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
@@ -1304,8 +1327,13 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
@@ -1500,8 +1528,13 @@ func TestGitParamWithJoin(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
@@ -1713,8 +1746,13 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) //nolint
@@ -1918,8 +1956,13 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunWithPayloadProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint

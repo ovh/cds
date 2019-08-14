@@ -1035,7 +1035,13 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	test.NoError(t, err)
 	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, p))
 
-	db.Exec("DELETE FROM SERVICES")
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
 	_, _ = assets.InsertService(t, db, "TestInsertNewCodeCoverageReport", services.TypeVCS)
 
 	//This is a mock for the repositories service

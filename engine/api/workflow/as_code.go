@@ -117,6 +117,7 @@ func CheckPullRequestStatus(ctx context.Context, client sdk.VCSAuthorizedClient,
 	pr, err := client.PullRequest(ctx, repoFullName, int(prID))
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			log.Debug("Pull request %s #%d not found", repoFullName, int(prID))
 			return false, true, nil
 		}
 		return false, false, sdk.WrapError(err, "unable to check pull request status")
@@ -169,6 +170,7 @@ func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		}
 	}
 	wf.AsCodeEvent = eventLeft
+	log.Debug("workflow.SyncAsCodeEvent> events left: %v", wf.AsCodeEvent)
 	event.PublishWorkflowUpdate(proj.Key, *wf, *wf, u)
 	return nil
 }

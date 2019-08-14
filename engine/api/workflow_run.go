@@ -939,6 +939,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 
 		// IF AS CODE - REBUILD Workflow
 		if wf.FromRepository != "" {
+			log.Debug("initWorkflowRun> rebuild workflow %s/%s from as code configuration", p.Key, wf.Name)
 			p1, errp := project.Load(db, cache, p.Key,
 				project.LoadOptions.WithVariables,
 				project.LoadOptions.WithGroups,

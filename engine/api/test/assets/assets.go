@@ -220,13 +220,13 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 }
 
 // AuthentifyRequest  have to be used only for tests
-func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.AuthentifiedUser, jwt string) {
+func AuthentifyRequest(t *testing.T, req *http.Request, _ *sdk.AuthentifiedUser, jwt string) {
 	auth := "Bearer " + jwt
 	req.Header.Add("Authorization", auth)
 }
 
 //NewAuthentifiedRequest prepare a request
-func NewAuthentifiedRequest(t *testing.T, u *sdk.AuthentifiedUser, pass, method, uri string, i interface{}) *http.Request {
+func NewAuthentifiedRequest(t *testing.T, _ *sdk.AuthentifiedUser, pass, method, uri string, i interface{}) *http.Request {
 	var btes []byte
 	var err error
 	if i != nil {
@@ -242,7 +242,7 @@ func NewAuthentifiedRequest(t *testing.T, u *sdk.AuthentifiedUser, pass, method,
 		t.Error(err)
 		t.FailNow()
 	}
-	AuthentifyRequest(t, req, u, pass)
+	AuthentifyRequest(t, req, nil, pass)
 	date := sdk.FormatDateRFC5322(time.Now())
 	req.Header.Set("Date", date)
 	req.Header.Set("X-CDS-RemoteTime", date)
@@ -462,7 +462,7 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 	return &srv, privateKey, hConsumer, jwt
 }
 
-func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) (*sdk.Service, *rsa.PrivateKey) {
+func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string, scopes ...sdk.AuthConsumerScope) (*sdk.Service, *rsa.PrivateKey) {
 	usr1, _ := InsertAdminUser(db)
 
 	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -470,7 +470,7 @@ func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string) 
 
 	sharedGroup, err := group.LoadByName(context.TODO(), db, sdk.SharedInfraGroupName)
 	require.NoError(t, err)
-	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", consumer, []int64{sharedGroup.ID}, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeProject})
+	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", consumer, []int64{sharedGroup.ID}, append(scopes, sdk.AuthConsumerScopeProject))
 	require.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()

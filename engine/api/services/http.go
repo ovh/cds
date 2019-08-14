@@ -261,7 +261,7 @@ func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, c
 		return nil, nil, 0, sdk.WrapError(err, "services.DoRequest> Request signature failed")
 	}
 
-	log.Debug("services.DoRequest> request %v (%s)", req.URL, req.Header.Get("Authorization"))
+	log.Debug("services.DoRequest> request %s %v (%s)", req.Method, req.URL, req.Header.Get("Authorization"))
 
 	//Do the request
 	resp, errDo := HTTPClient.Do(req)
@@ -276,7 +276,7 @@ func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, c
 		return nil, resp.Header, resp.StatusCode, sdk.WrapError(errBody, "services.DoRequest> Unable to read body")
 	}
 
-	log.Debug("services.DoRequest> response code:%d", resp.StatusCode)
+	log.Debug("services.DoRequest> response code:%d body:%s", resp.StatusCode, string(body))
 
 	// if everything is fine, return body
 	if resp.StatusCode < 400 {
