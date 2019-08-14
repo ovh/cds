@@ -371,6 +371,17 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 
 			switch r.URL.String() {
 			// NEED get REPO
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				branches := []sdk.VCSBranch{
+					{
+						ID:        "master",
+						DisplayID: "master",
+					},
+				}
+				if err := enc.Encode(branches); err != nil {
+					return writeError(w, err)
+				}
+			// NEED get REPO
 			case "/vcs/github/repos/sguiheux/demo":
 				repo := sdk.VCSRepo{
 					URL:          "https",
