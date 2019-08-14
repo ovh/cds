@@ -15,7 +15,7 @@ import (
 func (api *API) getUserGroupsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		username := vars["permUsername"]
+		username := vars["permUsernamePublic"]
 
 		u, err := user.LoadByUsername(ctx, api.mustDB(), username, user.LoadOptions.WithDeprecatedUser)
 		if err != nil {

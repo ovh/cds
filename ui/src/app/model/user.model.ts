@@ -4,12 +4,15 @@ export class AuthentifiedUser {
     username: string;
     fullname: string;
     ring: string;
-    old_user_struct: User;
 
     constructor() { }
 
     isAdmin(): boolean {
         return this.ring === 'ADMIN';
+    }
+
+    isMaintainer(): boolean {
+        return this.ring === 'MAINTAINER' || this.isAdmin();
     }
 }
 

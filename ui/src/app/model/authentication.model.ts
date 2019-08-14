@@ -1,5 +1,5 @@
 import { Group } from './group.model';
-import { User } from './user.model';
+import { AuthentifiedUser } from './user.model';
 
 export class AuthDriverManifests {
     is_first_connection: boolean;
@@ -13,7 +13,7 @@ export class AuthDriverManifest {
 
 export class AuthConsumerSigninResponse {
     token: string;
-    user: User;
+    user: AuthentifiedUser;
 }
 
 export class AuthConsumer {

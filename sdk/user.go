@@ -73,8 +73,24 @@ type AuthentifiedUser struct {
 	Fullname string    `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
 	Ring     string    `json:"ring" yaml:"ring,omitempty" cli:"ring" db:"ring"`
 	// aggregates
-	Contacts      UserContacts `json:"contacts" yaml:"contacts" db:"-"`
-	OldUserStruct *User        `json:"old_user_struct" yaml:"old_user_struct" db:"-"`
+	Contacts      UserContacts `json:"-" yaml:"-" db:"-"`
+	OldUserStruct *User        `json:"-" yaml:"-" db:"-"`
+}
+
+// IsValid returns an error if given user's infos are not valid.
+func (u AuthentifiedUser) IsValid() error {
+	if u.Username == "" || u.Username == "me" {
+		return NewErrorFrom(ErrWrongRequest, "invalid given username")
+	}
+	if u.Fullname == "" {
+		return NewErrorFrom(ErrWrongRequest, "invalid given fullname")
+	}
+
+	switch u.Ring {
+	case UserRingAdmin, UserRingMaintainer, UserRingUser:
+		return nil
+	}
+	return NewErrorFrom(ErrWrongRequest, "invalid given ring value")
 }
 
 // Value returns driver.Value from workflow template request.
@@ -95,6 +111,7 @@ func (u *AuthentifiedUser) Scan(src interface{}) error {
 	return WrapError(json.Unmarshal(source, u), "cannot unmarshal AuthentifiedUser")
 }
 
+// GetGroupIDs returns groups ids for user based on old user.
 func (u AuthentifiedUser) GetGroupIDs() []int64 {
 	if u.OldUserStruct == nil {
 		return nil

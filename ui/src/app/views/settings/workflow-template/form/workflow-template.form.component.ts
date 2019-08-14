@@ -1,14 +1,13 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { Group } from '../../../../model/group.model';
-import { User } from '../../../../model/user.model';
+import { Group } from 'app/model/group.model';
 import {
     WorkflowTemplate,
     WorkflowTemplateError,
     WorkflowTemplateParameter
-} from '../../../../model/workflow-template.model';
-import { SharedService } from '../../../../shared/shared.service';
-import { Base64 } from './../../../../shared/base64.utils';
+} from 'app/model/workflow-template.model';
+import { Base64 } from 'app/shared/base64.utils';
+import { SharedService } from 'app/shared/shared.service';
 
 @Component({
     selector: 'app-workflow-template-form',
@@ -125,7 +124,6 @@ export class WorkflowTemplateFormComponent {
     environmentValues: { [key: number]: string; };
     environmentErrors: { [key: number]: WorkflowTemplateError; };
     environmentKeys: Array<number>;
-    user: User;
     changeMessage: string;
     importFromURLControl = new FormControl();
     importFromURL: boolean;

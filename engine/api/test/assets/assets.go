@@ -126,7 +126,7 @@ func DeleteTestGroup(t *testing.T, db gorp.SqlExecutor, g *sdk.Group) error {
 	return group.Delete(context.TODO(), db, g)
 }
 
-// InsertAdminUser have to be used only for tests
+// InsertAdminUser have to be used only for tests.
 func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 	data := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
@@ -161,7 +161,32 @@ func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 	return u, jwt
 }
 
-// InsertLambdaUser have to be used only for tests
+// InsertMaintainerUser have to be used only for tests.
+func InsertMaintainerUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
+	data := sdk.AuthentifiedUser{
+		Username: sdk.RandomString(10),
+		Fullname: sdk.RandomString(10),
+		Ring:     sdk.UserRingMaintainer,
+	}
+
+	require.NoError(t, user.Insert(db, &data), "unable to insert user")
+
+	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
+	require.NoErrorf(t, err, "user cannot be load for id %s", data.ID)
+
+	consumer, err := local.NewConsumer(db, u.ID)
+	require.NoError(t, err, "cannot create auth consumer")
+
+	session, err := authentication.NewSession(db, consumer, 5*time.Minute)
+	require.NoError(t, err, "cannot create auth session")
+
+	jwt, err := authentication.NewSessionJWT(session)
+	require.NoError(t, err, "cannot create jwt")
+
+	return u, jwt
+}
+
+// InsertLambdaUser have to be used only for tests.
 func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
 	var u = &sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
@@ -173,7 +198,7 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.Authentif
 		log.Fatalf("user.Insert: %v", err)
 	}
 
-	u, err := user.LoadByID(context.Background(), db, u.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
+	u, err := user.LoadByID(context.Background(), db, u.ID, user.LoadOptions.WithDeprecatedUser)
 	if err != nil {
 		log.Fatalf("user.LoadUserByID: %v", err)
 	}

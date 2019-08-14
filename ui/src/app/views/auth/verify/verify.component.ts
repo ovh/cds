@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { User } from 'app/model/user.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/services.module';
 import { finalize } from 'rxjs/operators';
 
@@ -15,7 +15,7 @@ export class VerifyComponent implements OnInit {
     userVerifiedDisplay: any;
     showErrorMessage: boolean;
     loading: boolean;
-    user: User;
+    user: AuthentifiedUser;
 
     constructor(
         private _router: Router,
