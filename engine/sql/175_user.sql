@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS "authentified_user" (
   ring VARCHAR(25) NOT NULL,
   sig BYTEA
 );
+select create_unique_index('authentified_user','IDX_AUTHENTIFIED_USER_USERNAME','username');
 
 CREATE TABLE IF NOT EXISTS "authentified_user_migration" (
   id BIGSERIAL PRIMARY KEY,

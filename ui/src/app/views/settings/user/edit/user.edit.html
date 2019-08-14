@@ -32,11 +32,11 @@
                                             [ngModel]="user.ring" [readonly]="true">
                                     </div>
                                     <div class="field inline" *ngIf="editable || currentUser.isAdmin()">
-                                        <app-delete-button class="left floated" (event)="clickDeleteButton()"
+                                        <app-delete-button class="left floated" (event)="clickDelete()"
                                             [loading]="deleteLoading">
                                         </app-delete-button>
                                         <button class="ui green right floated button" [class.loading]="loading"
-                                            (click)="clickSaveButton()">
+                                            (click)="clickSave()">
                                             <i class="save icon"></i>{{ 'btn_save' | translate }}
                                         </button>
                                     </div>

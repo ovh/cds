@@ -161,6 +161,15 @@ func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 	return u, jwt
 }
 
+// DeleteAdmins delete all cds admins from database.
+func DeleteAdmins(t *testing.T, db gorp.SqlExecutor) {
+	us, err := user.LoadAllByRing(context.TODO(), db, sdk.UserRingAdmin)
+	require.NoError(t, err)
+	for i := range us {
+		require.NoError(t, user.DeleteByID(db, us[i].ID))
+	}
+}
+
 // InsertMaintainerUser have to be used only for tests.
 func InsertMaintainerUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 	data := sdk.AuthentifiedUser{

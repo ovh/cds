@@ -15,6 +15,7 @@ import { RouterService } from 'app/service/router/router.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { SignoutCurrentUser } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { List } from 'immutable';
 import { Subscription } from 'rxjs';
@@ -287,5 +288,11 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         event.stopPropagation();
         this._broadcastStore.markAsRead(id)
             .subscribe();
+    }
+
+    clickLogout(): void {
+        this._store.dispatch(new SignoutCurrentUser()).subscribe(
+            () => { this._router.navigate(['/auth/signin']); }
+        );
     }
 }

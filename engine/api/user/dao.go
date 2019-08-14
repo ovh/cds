@@ -85,6 +85,16 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor, opts ...LoadOptionFunc) (
 	return getAll(ctx, db, query, opts...)
 }
 
+// LoadAllByRing returns users from database for given ids.
+func LoadAllByRing(ctx context.Context, db gorp.SqlExecutor, ring string, opts ...LoadOptionFunc) (sdk.AuthentifiedUsers, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM authentified_user
+    WHERE ring = $1
+  `).Args(ring)
+	return getAll(ctx, db, query, opts...)
+}
+
 // LoadAllByIDs returns users from database for given ids.
 func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []string, opts ...LoadOptionFunc) (sdk.AuthentifiedUsers, error) {
 	query := gorpmapping.NewQuery(`

@@ -10,6 +10,7 @@ import { UserService } from 'app/service/user/user.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { forkJoin } from 'rxjs/internal/observable/forkJoin';
 import { finalize } from 'rxjs/operators/finalize';
@@ -24,6 +25,8 @@ const defaultMenuItems = [<Item>{
     translate: 'user_groups_btn',
     key: 'groups'
 }];
+
+const usernamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
 @Component({
     selector: 'app-user-edit',
@@ -41,7 +44,6 @@ export class UserEditComponent implements OnInit {
     loading = false;
     deleteLoading = false;
     groupsAdmin: Array<Group>;
-    // private usernamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     userPatternError = false;
 
     username: string;
@@ -77,6 +79,7 @@ export class UserEditComponent implements OnInit {
         private _route: ActivatedRoute,
         private _router: Router,
         private _store: Store,
+        private _toast: ToastService,
         private _cd: ChangeDetectorRef
     ) {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
@@ -265,37 +268,45 @@ export class UserEditComponent implements OnInit {
         }
     }
 
-    clickDeleteButton(): void {
-        // this.deleteLoading = true;
-        // this._userService.deleteUser(this.currentUser.username).subscribe(wm => {
-        //     this.deleteLoading = false;
-        //     this._toast.success('', this._translate.instant('user_deleted'));
-        //     this._router.navigate(['../'], { relativeTo: this._route });
-        // }, () => {
-        //     this.deleteLoading = false;
-        // });
+    clickDelete(): void {
+        this.deleteLoading = true;
+        this._cd.markForCheck();
+        this._userService.delete(this.user.username)
+            .pipe(finalize(() => {
+                this.deleteLoading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(_ => {
+                this._toast.success('', this._translate.instant('user_deleted'));
+                this._router.navigate(['../'], { relativeTo: this._route });
+            });
     }
 
-    clickSaveButton(): void {
-        // if (!this.user.username) {
-        //     return;
-        // }
-        //
-        // if (!this.usernamePattern.test(this.user.username)) {
-        //     this.userPatternError = true;
-        //     return;
-        // }
+    clickSave(): void {
+        this.userPatternError = false;
+        if (!this.user.username || !this.user.fullname) {
+            return;
+        }
+        if (!usernamePattern.test(this.user.username)) {
+            this.userPatternError = true;
+            this._cd.markForCheck();
+            return;
+        }
 
-        // this.loading = true;
-        // if (this.user.id > 0) {
-        //    this._userService.updateUser(this.username, this.user).subscribe(wm => {
-        //        this.loading = false;
-        //        this._toast.success('', this._translate.instant('user_saved'));
-        //        this._router.navigate(['/settings', 'user', this.user.username], { relativeTo: this._route });
-        //    }, () => {
-        //        this.loading = false;
-        //    });
-        // }
+        this.loading = true;
+        this._cd.markForCheck();
+        this._userService.update(this.username, this.user)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(u => {
+                this._toast.success('', this._translate.instant('user_saved'));
+                this.user = u;
+                this.setDataFromUser();
+                this.updatePath();
+                this._router.navigate(['/settings', 'user', this.user.username], { relativeTo: this._route });
+            });
     }
 
     updatePath(): void {
@@ -328,7 +339,7 @@ export class UserEditComponent implements OnInit {
     getUser(): void {
         this.loadingUser = true;
         this._cd.markForCheck();
-        this._userService.getUser(this.username)
+        this._userService.get(this.username)
             .pipe(finalize(() => {
                 this.loadingUser = false;
                 this._cd.markForCheck();

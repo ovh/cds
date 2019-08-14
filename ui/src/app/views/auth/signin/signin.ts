@@ -34,7 +34,9 @@ export class SigninComponent implements OnInit {
             this.isFirstConnection = data.is_first_connection;
             this.localDriver = data.manifests.find(d => d.type === 'local');
             this.ldapDriver = data.manifests.find(d => d.type === 'ldap');
-            this.externalDrivers = data.manifests.filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin');
+            this.externalDrivers = data.manifests
+                .filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin')
+                .sort((a, b) => a.type < b.type ? -1 : 1);
         });
     }
 

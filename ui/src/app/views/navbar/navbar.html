@@ -198,7 +198,7 @@
             <sm-checkbox class="theme-switch" name="switch-theme" [control]="themeSwitch" type="toggle"
                 label="{{'navbar_dark_mode' | translate}}" (change)="changeTheme()"></sm-checkbox>
             <div class="divider"></div>
-            <a sm-item href="#" [routerLink]="['account', 'login']">{{ 'navbar_disconnect' | translate }}</a>
+            <a sm-item (click)="clickLogout()">{{ 'navbar_disconnect' | translate }}</a>
         </sm-dropdown>
 
         <sm-dropdown icon="student" *ngIf="currentUser && currentUser.isMaintainer()">
