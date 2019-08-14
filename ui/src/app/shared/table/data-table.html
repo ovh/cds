@@ -11,7 +11,7 @@
 <table class="ui striped fixed table" [class.selectable]="withLineClick">
     <thead>
         <tr>
-            <th *ngIf="withSelect" class="wide one">
+            <th *ngIf="withSelect" class="wide">
                 <div class="ui checked checkbox">
                     <input type="checkbox" [ngModel]="selectedAll" (ngModelChange)="onSelectAllChange($event)">
                     <label></label>
@@ -45,7 +45,7 @@
     <tbody *ngIf="!loading && dataForCurrentPage.length > 0">
         <tr *ngFor="let d of dataForCurrentPage; let i = index" (click)="lineClick(i, d)"
             [class.pointing]="withLineClick" [class.active]="withLineClick && indexSelected === i">
-            <td *ngIf="withSelect" class="wide one">
+            <td *ngIf="withSelect" class="wide">
                 <div class="ui checked checkbox">
                     <input type="checkbox" [ngModel]="selected[d.key()]"
                         (ngModelChange)="onSelectChange($event, d.key())">

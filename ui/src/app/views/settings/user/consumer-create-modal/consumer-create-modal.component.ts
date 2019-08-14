@@ -1,12 +1,19 @@
 import {
     ChangeDetectionStrategy,
+    ChangeDetectorRef,
     Component,
     EventEmitter,
+    Input,
     Output,
     ViewChild
 } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { AuthConsumer } from 'app/model/authentication.model';
+import { Group } from 'app/model/group.model';
+import { AuthentifiedUser } from 'app/model/user.model';
+import { UserService } from 'app/service/user/user.service';
+import { Column, Select } from 'app/shared/table/data-table.component';
+import { finalize } from 'rxjs/operators/finalize';
 
 @Component({
     selector: 'app-consumer-create-modal',
@@ -19,13 +26,28 @@ export class ConsumerCreateModalComponent {
     modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 
+    @Input() user: AuthentifiedUser;
     @Output() close = new EventEmitter();
 
     newConsumer: AuthConsumer = new AuthConsumer();
+    loadingGroups: boolean;
+    groups: Array<Group>;
+    columnsGroups: Array<Column<Group>>;
+    selectedGroupKeys: Array<string>;
 
     constructor(
-        private _modalService: SuiModalService
-    ) { }
+        private _modalService: SuiModalService,
+        private _userService: UserService,
+        private _cd: ChangeDetectorRef,
+    ) {
+        this.columnsGroups = [
+            <Column<Group>>{
+                name: 'common_name',
+                class: 'fourteen',
+                selector: (g: Group) => g.name
+            }
+        ];
+    }
 
     show() {
         if (this.open) {
@@ -55,5 +77,27 @@ export class ConsumerCreateModalComponent {
 
     init(): void {
         this.newConsumer = new AuthConsumer();
+
+        this.loadingGroups = true;
+        this._cd.markForCheck();
+        this._userService.getGroups(this.user.username)
+            .pipe(finalize(() => {
+                this.loadingGroups = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe((gs) => {
+                this.groups = gs;
+            });
+    }
+
+    selectGroupFunc: Select<Group> = (g: Group): boolean => {
+        if (!this.selectedGroupKeys || this.selectedGroupKeys.length === 0) {
+            return false;
+        }
+        return !!this.selectedGroupKeys.find(id => id === g.key());
+    }
+
+    selectGroupChange(e: Array<string>) {
+        this.selectedGroupKeys = e;
     }
 }

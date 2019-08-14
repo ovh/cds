@@ -271,7 +271,7 @@ export class UserEditComponent implements OnInit {
     clickDelete(): void {
         this.deleteLoading = true;
         this._cd.markForCheck();
-        this._userService.delete(this.user.username)
+        this._userService.delete(this.username)
             .pipe(finalize(() => {
                 this.deleteLoading = false;
                 this._cd.markForCheck();
@@ -317,7 +317,7 @@ export class UserEditComponent implements OnInit {
             routerLink: ['/', 'settings', 'user']
         }, <PathItem>{
             text: this.user.username,
-            routerLink: ['/', 'settings', 'user', this.currentUser.username]
+            routerLink: ['/', 'settings', 'user', this.user.username]
         }];
     }
 
@@ -334,6 +334,7 @@ export class UserEditComponent implements OnInit {
                 break;
         }
         this.selectedItem = item;
+        this._cd.markForCheck();
     }
 
     getUser(): void {
@@ -370,7 +371,7 @@ export class UserEditComponent implements OnInit {
     getGroups(): void {
         this.loadingGroups = true;
         this._cd.markForCheck();
-        this._userService.getGroups(this.user.username)
+        this._userService.getGroups(this.username)
             .pipe(finalize(() => {
                 this.loadingGroups = false;
                 this._cd.markForCheck();
@@ -383,7 +384,7 @@ export class UserEditComponent implements OnInit {
     getContacts(): void {
         this.loadingContacts = true;
         this._cd.markForCheck();
-        this._userService.getContacts(this.user.username)
+        this._userService.getContacts(this.username)
             .pipe(finalize(() => {
                 this.loadingContacts = false;
                 this._cd.markForCheck();
@@ -398,8 +399,8 @@ export class UserEditComponent implements OnInit {
         this._cd.markForCheck();
         forkJoin<AuthDriverManifests, Array<AuthConsumer>, Array<AuthSession>>(
             this._authenticationService.getDrivers(),
-            this._userService.getConsumers(this.user.username),
-            this._userService.getSessions(this.user.username)
+            this._userService.getConsumers(this.username),
+            this._userService.getSessions(this.username)
         )
             .pipe(finalize(() => {
                 this.loadingAuthData = false;

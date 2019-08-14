@@ -16,6 +16,15 @@
                             <input class="ui input" type="text" name="group" [ngModel]="newConsumer.description">
                         </div>
                     </div>
+                    <div class="fields">
+                        <div class="eight wide field">
+                            <label>{{'common_groups' | translate}}</label>
+                            <app-data-table [withSelect]="selectGroupFunc" (selectChange)="selectGroupChange($event)"
+                                [withPagination]="10" [columns]="columnsGroups" [data]="groups"
+                                [loading]="loadingGroups">
+                            </app-data-table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -13,7 +13,7 @@ import (
 func Push(ctx context.Context, db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u sdk.Identifiable) ([]sdk.Message, error) {
 	// check if a template already exists for group with same slug
 	old, err := LoadBySlugAndGroupID(ctx, db, wt.Slug, wt.GroupID, LoadOptions.Default)
-	if err != nil {
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return nil, err
 	}
 	if old == nil {
