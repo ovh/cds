@@ -112,7 +112,7 @@ func (d AuthDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 
 	userInfo.Fullname = bufFullname.String()
 	userInfo.Email = entry[0].Attributes["mail"]
-	userInfo.ExternalID = entry[0].Attributes["dn"]
+	userInfo.ExternalID = entry[0].Attributes["uid"]
 	userInfo.Username = req["bind"]
 
 	return userInfo, nil
