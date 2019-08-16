@@ -8,7 +8,7 @@
                 <a *ngIf="ldapDriver" class="item" suiTabHeader="3">{{ 'account_btn_signin_ldap' | translate}}</a>
             </div>
             <div class="ui bottom attached segment" suiTabContent="1">
-                <form class="ui form" (ngSubmit)="localSignin(signinForm)" #signinForm="ngForm">
+                <form class="ui form" (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
                     <div class="field">
                         <label>{{ 'user_label_username' | translate }}</label>
                         <input type="text" name="username" ngModel required>
