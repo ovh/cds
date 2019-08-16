@@ -1,5 +1,6 @@
 import {
     ChangeDetectionStrategy,
+    ChangeDetectorRef,
     Component,
     EventEmitter,
     Input,
@@ -23,8 +24,12 @@ export class ConsumerDetailsModalComponent {
     @Input() consumer: AuthConsumer;
     @Output() close = new EventEmitter();
 
+    scopes: string;
+    groups: string;
+
     constructor(
-        private _modalService: SuiModalService
+        private _modalService: SuiModalService,
+        private _cd: ChangeDetectorRef
     ) { }
 
     show() {
@@ -45,6 +50,18 @@ export class ConsumerDetailsModalComponent {
             this.open = false;
             this.close.emit();
         });
+
+        this.init();
+    }
+
+    init(): void {
+        if (!this.consumer) {
+            return;
+        }
+
+        this.scopes = this.consumer.scopes ? this.consumer.scopes.join(', ') : '*';
+        this.groups = this.consumer.groups ? this.consumer.groups.map(g => g.name).join(', ') : '*';
+        this._cd.markForCheck();
     }
 
     clickClose() {

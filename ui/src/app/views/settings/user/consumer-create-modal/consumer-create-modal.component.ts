@@ -7,6 +7,7 @@ import {
     Output,
     ViewChild
 } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { AuthConsumer, AuthScope } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
@@ -14,6 +15,7 @@ import { AuthentifiedUser } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { UserService } from 'app/service/user/user.service';
 import { Column, Select } from 'app/shared/table/data-table.component';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { finalize } from 'rxjs/operators/finalize';
 
 export enum CloseEventType {
@@ -36,6 +38,7 @@ export class ConsumerCreateModalComponent {
     @Output() close = new EventEmitter<CloseEventType>();
 
     newConsumer: AuthConsumer = new AuthConsumer();
+    signinToken: string;
     loading: boolean;
     loadingGroups: boolean;
     groups: Array<Group>;
@@ -51,6 +54,8 @@ export class ConsumerCreateModalComponent {
         private _userService: UserService,
         private _authenticationService: AuthenticationService,
         private _cd: ChangeDetectorRef,
+        private _toast: ToastService,
+        private _translate: TranslateService
     ) {
         this.columnsGroups = [
             <Column<Group>>{
@@ -92,11 +97,16 @@ export class ConsumerCreateModalComponent {
     }
 
     clickClose() {
-        this.modal.deny();
+        if (this.newConsumer.id) {
+            this.modal.approve(true);
+        } else {
+            this.modal.deny();
+        }
     }
 
     init(): void {
         this.newConsumer = new AuthConsumer();
+        this.signinToken = null;
         this.selectedGroupKeys = null;
         this.selectedScopeKeys = null;
 
@@ -156,8 +166,13 @@ export class ConsumerCreateModalComponent {
                 this.loading = false;
                 this._cd.markForCheck();
             }))
-            .subscribe(_ => {
-                this.modal.approve(true);
+            .subscribe(res => {
+                this.newConsumer = res.consumer;
+                this.signinToken = res.token;
             });
+    }
+
+    confirmCopy() {
+        this._toast.success('', this._translate.instant('auth_value_copied'));
     }
 }

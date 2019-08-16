@@ -280,10 +280,12 @@ export class UserEditComponent implements OnInit {
 
     clickConsumerDetails(c: AuthConsumer): void {
         this.selectedConsumer = c;
+        this._cd.detectChanges(); // manually ask for detect changes to allow modal data to be set before opening
         this.consumerDetailsModal.show();
     }
 
     clickConsumerSignin(consumerType: string): void {
+
     }
 
     clickConsumerDetach(c: AuthConsumer): void {

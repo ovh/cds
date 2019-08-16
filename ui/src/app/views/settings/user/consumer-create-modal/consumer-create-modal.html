@@ -5,7 +5,7 @@
     <div class="content">
         <div class="ui grid">
             <div class="ui wide column">
-                <div class="ui form">
+                <div class="ui form" *ngIf="!newConsumer.id">
                     <div class="ui wide field">
                         <div class="fields">
                             <div class="eight wide field">
@@ -34,13 +34,31 @@
                             </div>
                         </div>
                         <div class="field inline">
-                            <button class="ui green right floated button" [class.loading]="loading"
-                                (click)="clickSave()">
-                                <i class="save icon"></i>{{ 'btn_create' | translate }}
-                            </button>
+                            <div class="eight wide column centered">
+                                <button class="ui green button" [class.loading]="loading" (click)="clickSave()">
+                                    <i class="save icon"></i>{{ 'btn_create' | translate }}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <ng-container *ngIf="newConsumer.id">
+                    <div class="ui info message">
+                        <p>{{ 'auth_message_copy_signin_token' | translate }}</p>
+                    </div>
+                    <form class="ui form">
+                        <div class="field">
+                            <label>Token</label>
+                            <div class="ui fluid action input">
+                                <input type="text" value="{{signinToken}}" [readonly]="true">
+                                <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
+                                    ngxClipboard [cbContent]="signinToken" (click)="confirmCopy()">
+                                    <i class="copy icon"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </ng-container>
             </div>
         </div>
     </div>

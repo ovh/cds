@@ -3,6 +3,7 @@
   "auth_button_signin_with": "Sign in with {{consumer}}",
   "auth_value_copied": "Value copied",
   "auth_message_copy": "You can now copy this parameters to your terminal then close this tab.",
+  "auth_message_copy_signin_token": "You can now use this token to signin with the new consumer.",
   "auth_callback_missing_param": "One or more params are missing to continue. You can try to sign in again.",
   "auth_callback_error": "A error occurred. You can try to sign in again.",
   "auth_ask_reset_error": "Invalid or unknown given email address.",
