@@ -17,7 +17,7 @@ import (
 
 var _ sdk.AuthDriver = new(AuthDriver)
 
-const errUserNotFound = "user not found"
+const errUserNotFound = "ldap::user not found"
 
 type AuthDriver struct {
 	signupDisabled bool
@@ -86,7 +86,7 @@ func (d AuthDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 		return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
 
-	entry, err := d.search(bind, "uid", "cn", "ou", "givenName", "sn", "mail")
+	entry, err := d.search(bind, "uid", "dn", "cn", "ou", "givenName", "sn", "mail", "memberOf")
 	if err != nil && err.Error() != errUserNotFound {
 		return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
@@ -174,7 +174,7 @@ func (d *AuthDriver) openLDAP(conf Config) error {
 
 // bind binds
 func (d *AuthDriver) bind(term, password string) error {
-	bindRequest := strings.Replace(d.conf.UserSearch, "{0}", term, 1) + "," + d.conf.UserSearchBase + "," + d.conf.RootDN
+	bindRequest := strings.Replace(d.conf.UserSearch, "{0}", ldap.EscapeFilter(term), 1) + "," + d.conf.UserSearchBase + "," + d.conf.RootDN
 	log.Debug("LDAP> bind user %s", bindRequest)
 
 	if err := d.conn.Bind(bindRequest, password); err != nil {
@@ -193,15 +193,20 @@ func (d *AuthDriver) bind(term, password string) error {
 
 //Search search
 func (d *AuthDriver) search(term string, attributes ...string) ([]Entry, error) {
-	filter := "(" + strings.Replace(d.conf.UserSearch, "{0}", term, 1) /*+ "," + d.conf.UserSearchBase + "," + d.conf.RootDN */ + ")"
+	userSearch := strings.Replace(d.conf.UserSearch, "{0}", ldap.EscapeFilter(term), 1)
+	filter := fmt.Sprintf("(%s)", userSearch)
+
 	log.Debug("LDAP> Search user %s", filter)
-	attr := append(attributes, "dn")
 	// Search for the given username
 	searchRequest := ldap.NewSearchRequest(
 		d.conf.RootDN,
-		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		ldap.ScopeWholeSubtree,
+		ldap.NeverDerefAliases,
+		1,
+		0,
+		false,
 		filter,
-		attr,
+		attributes,
 		nil,
 	)
 
@@ -229,7 +234,8 @@ func (d *AuthDriver) search(term string, attributes ...string) ([]Entry, error) 
 			DN:         e.DN,
 			Attributes: make(map[string]string),
 		}
-		for _, a := range attr {
+
+		for _, a := range attributes {
 			entry.Attributes[a] = e.GetAttributeValue(a)
 		}
 		entries = append(entries, entry)

@@ -212,7 +212,7 @@ func (api *API) initMetrics(ctx context.Context) error {
 	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_failed", api.Name)
 	api.Metrics.WorkflowRunFailed = stats.Int64(label, "number of failed workflow runs", stats.UnitDimensionless)
 
-	log.Info("api> Metrics initialized")
+	log.Info("Metrics initialized")
 
 	tagCDSInstance, _ := tag.NewKey("cds")
 	tags := []tag.Key{tagCDSInstance}

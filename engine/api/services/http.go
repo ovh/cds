@@ -276,7 +276,7 @@ func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, c
 		return nil, resp.Header, resp.StatusCode, sdk.WrapError(errBody, "services.DoRequest> Unable to read body")
 	}
 
-	log.Debug("services.DoRequest> response code:%d body:%s", resp.StatusCode, string(body))
+	log.Debug("services.DoRequest> response code:%d", resp.StatusCode)
 
 	// if everything is fine, return body
 	if resp.StatusCode < 400 {

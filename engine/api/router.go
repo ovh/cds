@@ -489,7 +489,7 @@ func (r *Router) InitMetrics(service, name string) error {
 	tagCDSInstance, _ := tag.NewKey("cds")
 	tags := []tag.Key{tagCDSInstance}
 
-	log.Info("api> Stats initialized")
+	log.Info("Stats initialized")
 
 	return observability.RegisterView(
 		observability.NewViewCount("router_errors", r.Stats.Errors, tags),
