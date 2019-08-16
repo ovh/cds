@@ -125,21 +125,14 @@ const (
 	ConsumerCorporateSSO AuthConsumerType = "corporate-sso"
 	ConsumerGithub       AuthConsumerType = "github"
 	ConsumerGitlab       AuthConsumerType = "gitlab"
+	ConsumerTest         AuthConsumerType = "futurama"
+	ConsumerTest2        AuthConsumerType = "planet-express"
 )
 
 // IsValid returns validity of given auth consumer type.
 func (t AuthConsumerType) IsValid() bool {
 	switch t {
-	case ConsumerBuiltin, ConsumerLocal, ConsumerLDAP, ConsumerCorporateSSO, ConsumerGithub, ConsumerGitlab:
-		return true
-	}
-	return false
-}
-
-// IsValidExternal returns validity of given auth consumer type.
-func (t AuthConsumerType) IsValidExternal() bool {
-	switch t {
-	case ConsumerLDAP, ConsumerCorporateSSO, ConsumerGithub, ConsumerGitlab:
+	case ConsumerBuiltin, ConsumerLocal, ConsumerLDAP, ConsumerCorporateSSO, ConsumerGithub, ConsumerGitlab, ConsumerTest, ConsumerTest2:
 		return true
 	}
 	return false

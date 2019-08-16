@@ -1,16 +1,25 @@
 package ldap
 
 import (
+	"bytes"
+	"crypto/tls"
+	"errors"
+	"fmt"
+	"strings"
+	"text/template"
 	"time"
 
 	ldap "gopkg.in/ldap.v2"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
-var _ sdk.AuthDriver = new(authDriver)
+var _ sdk.AuthDriver = new(AuthDriver)
 
-type authDriver struct {
+const errUserNotFound = "user not found"
+
+type AuthDriver struct {
 	signupDisabled bool
 	conf           Config
 	conn           *ldap.Conn
@@ -18,91 +27,49 @@ type authDriver struct {
 
 // Config handles all config to connect to the LDAP.
 type Config struct {
-	Host         string
-	Port         int
-	Base         string
-	DN           string
-	SSL          bool
-	UserFullname string
-	BindDN       string
-	BindPwd      string
+	Host            string // 192.168.1.32
+	Port            int    // 636
+	SSL             bool   // true
+	RootDN          string // dc=ejnserver,dc=fr
+	UserSearchBase  string // ou=people
+	UserSearch      string // uid={{.search}}
+	UserFullname    string // {{.givenName}} {{.sn}}
+	ManagerDN       string // cn=admin,dc=ejnserver,dc=fr
+	ManagerPassword string // SECRET_PASSWORD_MANAGER
 }
 
 // NewDriver returns a new ldap auth driver.
-func NewDriver(signupDisabled bool, cfg Config) sdk.AuthDriver {
-	return &authDriver{
+func NewDriver(signupDisabled bool, cfg Config) (sdk.AuthDriver, error) {
+	var d = AuthDriver{
 		signupDisabled: signupDisabled,
 		conf:           cfg,
 	}
+
+	if err := d.openLDAP(cfg); err != nil {
+		return nil, fmt.Errorf("unable to open LDAP connection to %s:%d : %v", cfg.Host, cfg.Port, err)
+	}
+
+	return d, nil
 }
 
-/*func (l *ldapDriver) CheckAuthentication(ctx context.Context, db gorp.SqlExecutor, r *http.Request) (*sdk.AuthentifiedUser, error) {
-	_, end := observability.Span(ctx, "ldapAuthentication.CheckAuthentication")
-	defer end()
-
-	vars := mux.Vars(r)
-	username := vars["username"]
-	password := vars["password"]
-
-	//Bind user
-	if err := l.Bind(username, password); err != nil {
-		return nil, sdk.WrapError(sdk.ErrUnauthorized, "LDAP bind failure: %v", err)
-	}
-
-	log.Debug("LDAP> Bind successful %s", username)
-
-	// Search user
-	search := fmt.Sprintf("(uid=%s)", username)
-	entry, errSearch := l.Search(search, "uid", "cn", "ou", "givenName", "sn", "mail")
-	if errSearch != nil && errSearch != errUserNotFound {
-		log.Warning("LDAP> Search error %s: %s", search, errSearch)
-		return nil, sdk.WrapError(sdk.ErrUnauthorized, "LDAP bind failure: %v", errSearch)
-	}
-
-	if len(entry) > 1 {
-		log.Error("LDAP> Search error %s: multiple values", search)
-		return nil, fmt.Errorf("LDAP Search error %s: multiple values", search)
-	}
-
-	u, err := user.LoadByUsername(ctx, db, username)
-	if err != nil {
-		return nil, err
-	}
-
-	//Execute template to compute fullname
-	//tmpl, err := template.New("userfullname").Parse(l.conf.UserFullname)
-	//if err != nil {
-	//	log.Error("LDAP> Error with user fullname template %s : %s", l.conf.UserFullname, err)
-	//	tmpl, _ = template.New("userfullname").Parse("{{.givenName}}")
-	//}
-	//bufFullname := new(bytes.Buffer)
-	//tmpl.Execute(bufFullname, entry[0].Attributes)
-	//
-	//u.Fullname = bufFullname.String()
-	//u.Email = entry[0].Attributes["mail"]
-
-	return u, nil
-}*/
-
-func (d authDriver) GetManifest() sdk.AuthDriverManifest {
+func (d AuthDriver) GetManifest() sdk.AuthDriverManifest {
 	return sdk.AuthDriverManifest{
 		Type:           sdk.ConsumerLDAP,
 		SignupDisabled: d.signupDisabled,
 	}
 }
 
-func (d authDriver) GetSigninURI(state string) string {
-	// TODO
-	return ""
+func (d AuthDriver) GetSigninURI(state string) string {
+	return "/"
 }
 
-func (d authDriver) GetSessionDuration() time.Duration {
+func (d AuthDriver) GetSessionDuration() time.Duration {
 	return time.Hour * 24 * 30 // 1 month session
 }
 
-func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
-	if email, ok := req["email"]; !ok || email == "" {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid email for ldap signin")
+func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
+	if bind, ok := req["bind"]; !ok || bind == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid bind term for ldap signin")
 	}
 	if password, ok := req["password"]; !ok || password == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid password for ldap signin")
@@ -110,47 +77,74 @@ func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 	return nil
 }
 
-/*
-//Open open a true LDAP connection
-func (c *LDAPClient) Open(options interface{}, store sessionstore.Store) error {
-	log.Info("Auth> Connecting to session store")
-	c.store = store
-	//LDAP Client needs a local client to check local users
-	c.local = &LocalClient{
-		dbFunc: c.dbFunc,
+func (d AuthDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
+	var userInfo sdk.AuthDriverUserInfo
+	var bind = req["bind"]
+	var password = req["password"]
+
+	if err := d.bind(bind, password); err != nil {
+		return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
-	c.local.Open(options, store)
-	return c.openLDAP(options)
+
+	entry, err := d.search(bind, "uid", "cn", "ou", "givenName", "sn", "mail")
+	if err != nil && err.Error() != errUserNotFound {
+		return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
+	}
+
+	if len(entry) > 1 {
+		return userInfo, fmt.Errorf("LDAP Search error multiple values")
+	}
+
+	//If user doesn't exist and search was'nt successful => exist
+	if err != nil {
+		log.Warning("LDAP> Search error %s", err)
+		return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
+	}
+
+	//Execute template to compute fullname
+	tmpl, err := template.New("userfullname").Parse(d.conf.UserFullname)
+	if err != nil {
+		log.Error("LDAP> Error with user fullname template %s : %s", d.conf.UserFullname, err)
+		tmpl, _ = template.New("userfullname").Parse("{{.givenName}}")
+	}
+	bufFullname := new(bytes.Buffer)
+	tmpl.Execute(bufFullname, entry[0].Attributes)
+
+	userInfo.Fullname = bufFullname.String()
+	userInfo.Email = entry[0].Attributes["mail"]
+	userInfo.ExternalID = entry[0].Attributes["dn"]
+	userInfo.Username = req["bind"]
+
+	return userInfo, nil
 }
 
-func (c *LDAPClient) openLDAP(options interface{}) error {
-	conf, ok := options.(LDAPConfig)
-	if !ok {
-		return sdk.ErrLDAPConn
+func (d *AuthDriver) openLDAP(conf Config) error {
+	if d.conn != nil {
+		d.conn.Close()
 	}
 	var err error
-	c.conf = conf
+	d.conf = conf
 
-	address := fmt.Sprintf("%s:%d", c.conf.Host, c.conf.Port)
+	address := fmt.Sprintf("%s:%d", d.conf.Host, d.conf.Port)
 
 	log.Info("Auth> Preparing connection to LDAP server: %s", address)
-	if !c.conf.SSL {
-		c.conn, err = ldap.Dial("tcp", address)
+	if !d.conf.SSL {
+		d.conn, err = ldap.Dial("tcp", address)
 		if err != nil {
 			log.Error("Auth> Cannot dial %s : %s", address, err)
 			return sdk.ErrLDAPConn
 		}
 
 		//Reconnect with TLS
-		err = c.conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
+		err = d.conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
 		if err != nil {
 			log.Error("Auth> Cannot start TLS %s : %s", address, err)
 			return sdk.ErrLDAPConn
 		}
 	} else {
 		log.Info("Auth> Connecting to LDAP server")
-		c.conn, err = ldap.DialTLS("tcp", address, &tls.Config{
-			ServerName:         c.conf.Host,
+		d.conn, err = ldap.DialTLS("tcp", address, &tls.Config{
+			ServerName:         d.conf.Host,
 			InsecureSkipVerify: false,
 		})
 		if err != nil {
@@ -159,14 +153,14 @@ func (c *LDAPClient) openLDAP(options interface{}) error {
 		}
 	}
 
-	if c.conf.BindDN != "" {
-		log.Info("LDAP> Bind user %s", c.conf.BindDN)
-		if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
+	if d.conf.ManagerDN != "" {
+		log.Info("LDAP> bind manager %s", d.conf.ManagerDN)
+		if err := d.conn.Bind(d.conf.ManagerDN, d.conf.ManagerPassword); err != nil {
 			if shoudRetry(err) {
-				if err := c.openLDAP(c.conf); err != nil {
+				if err := d.openLDAP(d.conf); err != nil {
 					return err
 				}
-				if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
+				if err := d.conn.Bind(d.conf.ManagerDN, d.conf.ManagerPassword); err != nil {
 					return err
 				}
 			} else {
@@ -178,116 +172,19 @@ func (c *LDAPClient) openLDAP(options interface{}) error {
 	return nil
 }
 
-func shoudRetry(err error) bool {
-	if err == nil {
-		return false
-	}
-	ldapErr, ok := err.(*ldap.Error)
-	if !ok {
-		return false
-	}
-	if ldapErr.ResultCode == ldap.ErrorNetwork {
-		log.Info("LDAP> Retry")
-		return true
-	}
-	return false
-}
+// bind binds
+func (d *AuthDriver) bind(term, password string) error {
+	bindRequest := strings.Replace(d.conf.UserSearch, "{0}", term, 1) + "," + d.conf.UserSearchBase + "," + d.conf.RootDN
+	log.Debug("LDAP> bind user %s", bindRequest)
 
-//isCredentialError check if err is LDAPResultInvalidCredentials
-func isCredentialError(err error) bool {
-	ldapErr, b := err.(*ldap.Error)
-	if !b {
-		return false
-	}
-	if ldapErr.ResultCode == ldap.LDAPResultInvalidCredentials {
-		return true
-	}
-	return false
-}
-
-//Close the specified client
-func (c *LDAPClient) Close() {
-	c.conn.Close()
-}
-
-//Store returns store
-func (c *LDAPClient) Store() sessionstore.Store {
-	return c.store
-}
-
-func (c *LDAPClient) DeprecatedSession(ctx context.Context, sessionToken, username string) (context.Context, error) {
-	return c.local.DeprecatedSession(ctx, sessionToken, username)
-}
-
-func (c *LDAPClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req *http.Request) (context.Context, error) {
-
-	//Check if its coming from CLI
-	if req.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
-		var ok bool
-		ctx, ok = getUserPersistentSession(ctx, c.dbFunc(), c.Store(), req.Header)
-		if ok {
-			return ctx, nil
-		}
-	}
-
-	//Get the session token
-	sessionToken := req.Header.Get(sdk.SessionTokenHeader)
-	if sessionToken == "" {
-		return ctx, fmt.Errorf("no session header")
-	}
-	exists, err := c.store.Exists(sessionstore.SessionKey(sessionToken))
-	if err != nil {
-		return ctx, err
-	}
-	username, err := GetUsername(c.store, sessionToken)
-	if err != nil {
-		return ctx, err
-	}
-	//Find the suer
-	u, err := c.searchAndInsertOrUpdateUser(c.dbFunc(), username)
-	if err != nil {
-		return ctx, err
-	}
-	ctx = context.WithValue(ctx, ContextUser, u)
-
-	if !exists {
-		return ctx, fmt.Errorf("invalid session")
-	}
-	return ctx, nil
-}
-
-//Bind binds
-func (c *LDAPClient) Bind(username, password string) error {
-	bindRequest := fmt.Sprintf(c.conf.DN, username)
-	bindRequest = strings.Replace(bindRequest, "{{.ldapBase}}", c.conf.Base, -1)
-	log.Debug("LDAP> Bind user %s", bindRequest)
-
-	if err := c.conn.Bind(bindRequest, password); err != nil {
+	if err := d.conn.Bind(bindRequest, password); err != nil {
 		if !shoudRetry(err) {
 			return err
 		}
-		if err := c.openLDAP(c.conf); err != nil {
+		if err := d.openLDAP(d.conf); err != nil {
 			return err
 		}
-		if err := c.conn.Bind(bindRequest, password); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-//BindDN
-func (c *LDAPClient) BindDN(dn, password string) error {
-	log.Debug("LDAP> Bind DN %s", dn)
-	if err := c.conn.Bind(dn, password); err != nil {
-		if !shoudRetry(err) {
-			return err
-		}
-		if err := c.openLDAP(c.conf); err != nil {
-			return err
-		}
-		if err := c.conn.Bind(dn, password); err != nil {
+		if err := d.conn.Bind(bindRequest, password); err != nil {
 			return err
 		}
 	}
@@ -295,42 +192,28 @@ func (c *LDAPClient) BindDN(dn, password string) error {
 }
 
 //Search search
-func (c *LDAPClient) Search(filter string, attributes ...string) ([]Entry, error) {
+func (d *AuthDriver) search(term string, attributes ...string) ([]Entry, error) {
+	filter := "(" + strings.Replace(d.conf.UserSearch, "{0}", term, 1) /*+ "," + d.conf.UserSearchBase + "," + d.conf.RootDN */ + ")"
+	log.Debug("LDAP> Search user %s", filter)
 	attr := append(attributes, "dn")
-
-	if c.conf.BindDN != "" {
-		log.Debug("LDAP> Bind user %s", c.conf.BindDN)
-		if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
-			if !shoudRetry(err) {
-				return nil, err
-			}
-			if err := c.openLDAP(c.conf); err != nil {
-				return nil, err
-			}
-			if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
-				return nil, err
-			}
-		}
-	}
-
 	// Search for the given username
 	searchRequest := ldap.NewSearchRequest(
-		c.conf.Base,
+		d.conf.RootDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		filter,
 		attr,
 		nil,
 	)
 
-	sr, err := c.conn.Search(searchRequest)
+	sr, err := d.conn.Search(searchRequest)
 	if err != nil {
 		if !shoudRetry(err) {
 			return nil, err
 		}
-		if err := c.openLDAP(c.conf); err != nil {
+		if err := d.openLDAP(d.conf); err != nil {
 			return nil, err
 		}
-		sr, err = c.conn.Search(searchRequest)
+		sr, err = d.conn.Search(searchRequest)
 		if err != nil {
 			return nil, err
 		}
@@ -353,119 +236,4 @@ func (c *LDAPClient) Search(filter string, attributes ...string) ([]Entry, error
 	}
 
 	return entries, nil
-}
-
-func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username string) (*sdk.User, error) {
-	// Search user
-	search := fmt.Sprintf("(uid=%s)", username)
-	entry, errSearch := c.Search(search, "uid", "cn", "ou", "givenName", "sn", "mail")
-	if errSearch != nil && errSearch.Error() != errUserNotFound {
-		log.Warning("LDAP> Search error %s: %s", search, errSearch)
-		return nil, errSearch
-	}
-
-	if len(entry) > 1 {
-		log.Error("LDAP> Search error %s: multiple values", search)
-		return nil, fmt.Errorf("LDAP Search error %s: multiple values", search)
-	}
-
-	u, err := user.LoadUserAndAuth(db, username)
-
-	//If user exists in database and is set as "local"
-	if u != nil && u.Origin == "local" {
-		return u, nil
-	}
-
-	//If user doesn't exist and search was'nt successful => exist
-	if errSearch != nil {
-		log.Warning("LDAP> Search error %s: %s", search, errSearch)
-		return nil, errSearch
-	}
-
-	//User
-	var newUser = false
-	if sdk.Cause(err) == sql.ErrNoRows {
-		newUser = true
-		u = &sdk.User{
-			Admin:    false,
-			Username: username,
-			Origin:   "ldap",
-		}
-	} else if err != nil {
-		log.Warning("Auth> User %s not found : %s", username, err)
-		return nil, err
-	}
-
-	//Execute template to compute fullname
-	tmpl, err := template.New("userfullname").Parse(c.conf.UserFullname)
-	if err != nil {
-		log.Error("LDAP> Error with user fullname template %s : %s", c.conf.UserFullname, err)
-		tmpl, _ = template.New("userfullname").Parse("{{.givenName}}")
-	}
-	bufFullname := new(bytes.Buffer)
-	tmpl.Execute(bufFullname, entry[0].Attributes)
-
-	u.Fullname = bufFullname.String()
-	u.Email = entry[0].Attributes["mail"]
-
-	if newUser {
-		a := &sdk.Auth{
-			EmailVerified: true,
-		}
-		// first user in db is a CDS Admin
-		nbUsers, errc := user.CountUser(db)
-		if errc != nil {
-			return nil, sdk.WrapError(errc, "searchAndInsertOrUpdateUser: Cannot count user")
-		}
-		if nbUsers == 0 {
-			u.Admin = true
-		}
-		if err := user.InsertUser(db, u, a); err != nil {
-			log.Error("LDAP> Error inserting user %s: %s", username, err)
-			return nil, err
-		}
-		u.Auth = *a
-	} else {
-		if err := user.UpdateUser(db, *u); err != nil {
-			log.Error("LDAP> Unable to update user %s : %s", username, err)
-			return nil, err
-		}
-	}
-	return u, nil
-}
-
-//Authentify check username and password
-func (c *LDAPClient) Authentify(username, password string) (bool, error) {
-	// Search user
-	r, err := c.Search("(&(uid=" + username + "))")
-	if err != nil {
-		return false, nil
-	}
-
-	//Bind user
-	if len(r) == 1 {
-		if err = c.BindDN(r[0].DN, password); err != nil {
-			log.Warning("LDAP> Bind error %s %s", r[0].DN, err)
-
-			if !isCredentialError(err) {
-				return false, err
-			}
-			//Try local auth
-			return c.local.Authentify(username, password)
-		}
-	}
-
-	log.Debug("LDAP> Bind successful %s", username)
-
-	//Search user, refresh data and update database
-	if _, err := c.searchAndInsertOrUpdateUser(c.dbFunc(), username); err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-*/
-
-func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
-	return sdk.AuthDriverUserInfo{}, sdk.WithStack(sdk.ErrNotImplemented)
 }

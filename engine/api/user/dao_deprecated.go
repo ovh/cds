@@ -98,3 +98,27 @@ func insertDeprecatedUser(db gorp.SqlExecutor, u *sdk.User) error {
 	}
 	return nil
 }
+
+// DeleteUserWithDependencies Delete user and all his dependencies
+func DeleteUserWithDependencies(db gorp.SqlExecutor, u *sdk.User) error {
+	if err := deleteUserFromUserGroup(db, u); err != nil {
+		return sdk.WrapError(err, "User cannot be removed from group_user table")
+	}
+
+	if err := deleteUser(db, u); err != nil {
+		return sdk.WrapError(err, "User cannot be removed from user table")
+	}
+	return nil
+}
+
+func deleteUserFromUserGroup(db gorp.SqlExecutor, u *sdk.User) error {
+	query := `DELETE FROM "group_user" WHERE user_id=$1`
+	_, err := db.Exec(query, u.ID)
+	return err
+}
+
+func deleteUser(db gorp.SqlExecutor, u *sdk.User) error {
+	query := `DELETE FROM "user" WHERE id=$1`
+	_, err := db.Exec(query, u.ID)
+	return err
+}

@@ -1,14 +1,10 @@
 package ldap
 
 import (
-	"errors"
-
 	"gopkg.in/ldap.v2"
 
 	"github.com/ovh/cds/sdk/log"
 )
-
-var errUserNotFound = errors.New("user not found")
 
 func shoudRetry(err error) bool {
 	if err == nil {

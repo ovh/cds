@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/services"
 
 	"github.com/ovh/cds/engine/api/group"
@@ -61,12 +62,10 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 			Fullname: reqData["fullname"],
 		}
 
-		// The first user is set as ADMIN
 		countAdmins, err := user.CountAdmin(tx)
 		if err != nil {
 			return err
 		}
-
 		// If a magic token is given and there is no admin already registered, set new user as admin
 		if countAdmins == 0 && hasInitToken {
 			newUser.Ring = sdk.UserRingAdmin
@@ -98,42 +97,8 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 
 		// Check if a magic init token was given for first signup
 		if countAdmins == 0 && hasInitToken {
-			// Deserialize the magic token to retrieve the startup configuration
-			var startupConfig StartupConfig
-			if err := authentication.VerifyJWS(initToken, &startupConfig); err != nil {
-				return sdk.NewError(sdk.ErrUnauthorized, err)
-			}
-
-			log.Warning("Magic token detected !: %s", initToken)
-
-			// Create the consumers provided by the startup configuration
-			for _, cfg := range startupConfig.Consumers {
-				var scopes sdk.AuthConsumerScopeSlice
-
-				switch cfg.ServiceType {
-				case services.TypeHatchery:
-					scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution}
-				case services.TypeHooks:
-					scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHooks, sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun}
-				default:
-					scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService}
-				}
-
-				var c = sdk.AuthConsumer{
-					ID:                 cfg.ID,
-					Name:               cfg.Name,
-					Description:        cfg.Description,
-					AuthentifiedUserID: consumer.AuthentifiedUserID,
-					ParentID:           &consumer.ID,
-					Type:               sdk.ConsumerBuiltin,
-					Data:               map[string]string{},
-					GroupIDs:           []int64{group.SharedInfraGroup.ID},
-					Scopes:             scopes,
-				}
-
-				if err := authentication.InsertConsumer(tx, &c); err != nil {
-					return err
-				}
+			if err := initBuiltinConsumersFromStartupConfig(tx, consumer, initToken); err != nil {
+				return err
 			}
 		}
 
@@ -155,6 +120,48 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 
 		return service.WriteJSON(w, nil, http.StatusCreated)
 	}
+}
+
+func initBuiltinConsumersFromStartupConfig(tx gorp.SqlExecutor, consumer *sdk.AuthConsumer, initToken string) error {
+	// Deserialize the magic token to retrieve the startup configuration
+	var startupConfig StartupConfig
+	if err := authentication.VerifyJWS(initToken, &startupConfig); err != nil {
+		return sdk.NewError(sdk.ErrUnauthorized, err)
+	}
+
+	log.Warning("Magic token detected !: %s", initToken)
+
+	// Create the consumers provided by the startup configuration
+	for _, cfg := range startupConfig.Consumers {
+		var scopes sdk.AuthConsumerScopeSlice
+
+		switch cfg.ServiceType {
+		case services.TypeHatchery:
+			scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution}
+		case services.TypeHooks:
+			scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHooks, sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun}
+		default:
+			scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService}
+		}
+
+		var c = sdk.AuthConsumer{
+			ID:                 cfg.ID,
+			Name:               cfg.Name,
+			Description:        cfg.Description,
+			AuthentifiedUserID: consumer.AuthentifiedUserID,
+			ParentID:           &consumer.ID,
+			Type:               sdk.ConsumerBuiltin,
+			Data:               map[string]string{},
+			GroupIDs:           []int64{group.SharedInfraGroup.ID},
+			Scopes:             scopes,
+		}
+
+		if err := authentication.InsertConsumer(tx, &c); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // postAuthLocalSigninHandler returns a new session for an existing local consumer.

@@ -66,6 +66,16 @@ export class SigninComponent implements OnInit {
         });
     }
 
+    ldapSignin(f: NgForm) {
+        this._authenticationService.ldapSignin(f.value.bind, f.value.password).subscribe(() => {
+            if (this.redirect) {
+                this._router.navigateByUrl(decodeURIComponent(this.redirect));
+            } else {
+                this._router.navigate(['home']);
+            }
+        });
+    }
+
     navigateToAskReset() {
         this._router.navigate(['/auth/ask-reset']);
     }

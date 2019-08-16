@@ -284,8 +284,7 @@ func NewAuthentifiedRequest(t *testing.T, _ *sdk.AuthentifiedUser, pass, method,
 	return req
 }
 
-// NewJWTAuthentifiedRequest prepare a request
-func NewJWTAuthentifiedRequest(t *testing.T, jwt string, method, uri string, i interface{}) *http.Request {
+func NewRequest(t *testing.T, method, uri string, i interface{}) *http.Request {
 	var btes []byte
 	var err error
 	if i != nil {
@@ -301,9 +300,6 @@ func NewJWTAuthentifiedRequest(t *testing.T, jwt string, method, uri string, i i
 		t.Error(err)
 		t.FailNow()
 	}
-
-	auth := "Bearer " + jwt
-	req.Header.Add("Authorization", auth)
 
 	date := sdk.FormatDateRFC5322(time.Now())
 	req.Header.Set("Date", date)
@@ -312,23 +308,19 @@ func NewJWTAuthentifiedRequest(t *testing.T, jwt string, method, uri string, i i
 	return req
 }
 
+// NewJWTAuthentifiedRequest prepare a request
+func NewJWTAuthentifiedRequest(t *testing.T, jwt string, method, uri string, i interface{}) *http.Request {
+	req := NewRequest(t, method, uri, i)
+
+	auth := "Bearer " + jwt
+	req.Header.Add("Authorization", auth)
+
+	return req
+}
+
 // NewXSRFJWTAuthentifiedRequest prepare a request
 func NewXSRFJWTAuthentifiedRequest(t *testing.T, jwt, xsrf string, method, uri string, i interface{}) *http.Request {
-	var btes []byte
-	var err error
-	if i != nil {
-		btes, err = json.Marshal(i)
-		if err != nil {
-			t.Error(err)
-			t.FailNow()
-		}
-	}
-
-	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
+	req := NewRequest(t, method, uri, i)
 
 	req.Header.Add("X-XSRF-TOKEN", xsrf)
 	c := http.Cookie{

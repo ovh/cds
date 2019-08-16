@@ -165,6 +165,21 @@ func Update(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
 
 // DeleteByID a user in database.
 func DeleteByID(db gorp.SqlExecutor, id string) error {
-	_, err := db.Exec("DELETE FROM authentified_user WHERE id = $1", id)
+	migrations, err := LoadMigrationUsersByUserIDs(context.Background(), db, []string{id})
+	if err != nil {
+		return err
+	}
+
+	for _, m := range migrations {
+		oldU, err := LoadDeprecatedUserWithoutAuthByID(context.Background(), db, m.UserID)
+		if err != nil {
+			return err
+		}
+		if err := DeleteUserWithDependencies(db, oldU); err != nil {
+			return err
+		}
+	}
+
+	_, err = db.Exec("DELETE FROM authentified_user WHERE id = $1", id)
 	return sdk.WithStack(err)
 }

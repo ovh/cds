@@ -48,6 +48,13 @@ export class AuthenticationService {
         });
     }
 
+    ldapSignin(bind: string, password: string): Observable<AuthConsumerSigninResponse> {
+        return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/ldap/signin', {
+            bind,
+            password
+        });
+    }
+
     localVerify(token: string): Observable<AuthConsumerSigninResponse> {
         return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/verify`, {
             token

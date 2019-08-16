@@ -1,13 +1,14 @@
 <div class="ui grid signin">
     <div class="column">
-        <sui-tabset *ngIf="localDriver">
+        <sui-tabset>
             <div class="ui top attached tabular menu">
-                <a class="item" suiTabHeader="1">{{ 'account_btn_signin' | translate}}</a>
+                <a *ngIf="localDriver" class="item" suiTabHeader="1">{{ 'account_btn_signin' | translate}}</a>
                 <a *ngIf="!localDriver.signup_disabled" class="item" suiTabHeader="2"
                     (activate)="resetSignup()">{{ 'account_btn_signup' | translate}}</a>
+                <a *ngIf="ldapDriver" class="item" suiTabHeader="3">{{ 'account_btn_signin_ldap' | translate}}</a>
             </div>
             <div class="ui bottom attached segment" suiTabContent="1">
-                <form class="ui form" (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
+                <form class="ui form" (ngSubmit)="localSignin(signinForm)" #signinForm="ngForm">
                     <div class="field">
                         <label>{{ 'user_label_username' | translate }}</label>
                         <input type="text" name="username" ngModel required>
@@ -54,6 +55,26 @@
                 <div *ngIf="showSuccessSignup" class="ui green message">
                     <p>{{ 'auth_signup_success' | translate }}</p>
                 </div>
+            </div>
+            <div *ngIf="ldapDriver" class="ui bottom attached segment" suiTabContent="3">
+                <form class="ui form" (ngSubmit)="ldapSignin(signinForm)" #signinForm="ngForm">
+                    <div class="field">
+                        <label>LDAP Bind</label>
+                        <input type="text" name="bind" ngModel required>
+                    </div>
+                    <div class="field">
+                        <label>{{ 'user_label_password' | translate }}</label>
+                        <input type="password" name="password" ngModel required>
+                    </div>
+                    <div class="field" *ngIf="isFirstConnection">
+                        <label>{{ 'account_signup_init_token' | translate }}</label>
+                        <input type="password" name="init_token" ngModel required>
+                    </div>
+                    <div class="field right aligned">
+                        <button class="ui green button"
+                            type="submit">{{ 'account_login_btn_connect' | translate }}</button>
+                    </div>
+                </form>
             </div>
         </sui-tabset>
         <div *ngIf="externalDrivers && externalDrivers.length > 0" class="ui bottom attached segment">

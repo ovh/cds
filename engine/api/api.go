@@ -83,16 +83,17 @@ type Configuration struct {
 		DefaultGroup  string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
 		RSAPrivateKey string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
 		LDAP          struct {
-			Enable         bool   `toml:"enable" default:"false" json:"enable"`
-			SignupDisabled bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
-			Host           string `toml:"host" json:"host"`
-			Port           int    `toml:"port" default:"636" json:"port"`
-			SSL            bool   `toml:"ssl" default:"true" json:"ssl"`
-			Base           string `toml:"base" default:"dc=myorganization,dc=com" json:"base"`
-			DN             string `toml:"dn" default:"uid=%s,ou=people,dc=myorganization,dc=com" json:"dn"`
-			Fullname       string `toml:"fullname" default:"{{.givenName}} {{.sn}}" json:"fullname"`
-			BindDN         string `toml:"bindDN" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"bindDN"`
-			BindPwd        string `toml:"bindPwd" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
+			Enabled         bool   `toml:"enabled" default:"false" json:"enabled"`
+			SignupDisabled  bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
+			Host            string `toml:"host" json:"host"`
+			Port            int    `toml:"port" default:"636" json:"port"`
+			SSL             bool   `toml:"ssl" default:"true" json:"ssl"`
+			RootDN          string `toml:"rootDN" default:"dc=myorganization,dc=com" json:"rootDN"`
+			UserSearchBase  string `toml:"userSearchBase" default:"ou=people" json:"userSearchBase"`
+			UserSearch      string `toml:"userSearch" default:"uid={0}" json:"userSearch"`
+			UserFullname    string `toml:"fullname" default:"{{.givenName}} {{.sn}}" json:"fullname"`
+			ManagerDN       string `toml:"ManagerDN" default:"cn=admin,dc=myorganization,dc=com" comment:"Define it if ldapsearch need to be authenticated" json:"ManagerDN"`
+			ManagerPassword string `toml:"ManagerPassword" default:"SECRET_PASSWORD_MANAGER" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
 		} `toml:"ldap" json:"ldap"`
 		Local struct {
 			Enable               bool   `toml:"enable" default:"true" json:"enable"`
@@ -100,7 +101,7 @@ type Configuration struct {
 			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true" json:"signupAllowedDomains"`
 		} `toml:"local" json:"local"`
 		CorporateSSO struct {
-			Enabled        bool   `json:"enabled" default:"false" toml:"enabled"`
+			Enabled        bool   `json:"enable" default:"false" toml:"enable"`
 			SignupDisabled bool   `json:"signupDisabled" default:"false" toml:"signupDisabled"`
 			RedirectMethod string `json:"redirect_method" toml:"redirectMethod"`
 			RedirectURL    string `json:"redirect_url" toml:"redirectURL"`
@@ -622,20 +623,24 @@ func (a *API) Serve(ctx context.Context) error {
 		)
 	}
 
-	if a.Config.Auth.LDAP.Enable {
-		a.AuthenticationDrivers[sdk.ConsumerLDAP] = ldap.NewDriver(
+	if a.Config.Auth.LDAP.Enabled {
+		a.AuthenticationDrivers[sdk.ConsumerLDAP], err = ldap.NewDriver(
 			a.Config.Auth.LDAP.SignupDisabled,
 			ldap.Config{
-				Host:         a.Config.Auth.LDAP.Host,
-				Port:         a.Config.Auth.LDAP.Port,
-				Base:         a.Config.Auth.LDAP.Base,
-				DN:           a.Config.Auth.LDAP.DN,
-				SSL:          a.Config.Auth.LDAP.SSL,
-				UserFullname: a.Config.Auth.LDAP.Fullname,
-				BindDN:       a.Config.Auth.LDAP.BindDN,
-				BindPwd:      a.Config.Auth.LDAP.BindPwd,
+				Host:            a.Config.Auth.LDAP.Host,
+				Port:            a.Config.Auth.LDAP.Port,
+				SSL:             a.Config.Auth.LDAP.SSL,
+				RootDN:          a.Config.Auth.LDAP.RootDN,
+				UserSearchBase:  a.Config.Auth.LDAP.UserSearchBase,
+				UserSearch:      a.Config.Auth.LDAP.UserSearch,
+				UserFullname:    a.Config.Auth.LDAP.UserFullname,
+				ManagerDN:       a.Config.Auth.LDAP.ManagerDN,
+				ManagerPassword: a.Config.Auth.LDAP.ManagerPassword,
 			},
 		)
+		if err != nil {
+			return err
+		}
 	}
 	if a.Config.Auth.Github.Enabled {
 		a.AuthenticationDrivers[sdk.ConsumerGithub] = github.NewDriver(
