@@ -14,7 +14,7 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { forkJoin } from 'rxjs/internal/observable/forkJoin';
 import { finalize } from 'rxjs/operators/finalize';
-import { ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
+import { CloseEventType, ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
 import { ConsumerDetailsModalComponent } from '../consumer-details-modal/consumer-details-modal.component';
 
 const defaultMenuItems = [<Item>{
@@ -130,7 +130,9 @@ export class UserEditComponent implements OnInit {
             return (c: AuthConsumer) => {
                 return c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    c.scopes.join(' ').toLowerCase().indexOf(lowerFilter) !== -1;
+                    c.scopes.join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
+                    (!c.groups && lowerFilter === '*');
             }
         };
 
@@ -189,8 +191,44 @@ export class UserEditComponent implements OnInit {
 
         this.columnsSessions = [
             <Column<AuthSession>>{
+                type: ColumnType.TEXT_ICONS,
                 name: 'user_auth_consumer',
-                selector: (s: AuthSession) => s.consumer.name + ' (' + s.consumer_id + ')'
+                selector: (s: AuthSession) => {
+                    let icons = [];
+
+                    if (this.mConsumers && this.mConsumers[s.consumer_id]) {
+                        let consumer = this.mConsumers[s.consumer_id];
+
+                        let icon = {
+                            label: `ID: ${s.consumer_id}`,
+                            title: `ID: ${s.consumer_id}`
+                        };
+                        switch (consumer.type) {
+                            case 'builtin':
+                                icon['class'] = ['info', 'circle', 'icon', 'link'];
+                                break;
+                            case 'local':
+                                icon['class'] = ['lock', 'icon'];
+                                break;
+                            case 'ldap':
+                                icon['class'] = ['address', 'book', 'icon'];
+                                break;
+                            case 'corporate-sso':
+                                icon['class'] = ['shield', 'alternate', 'icon'];
+                                break;
+                            default:
+                                icon['class'] = [consumer.type, 'icon'];
+                                break;
+                        }
+
+                        icons.push(icon);
+                    }
+
+                    return {
+                        value: s.consumer.name,
+                        icons
+                    };
+                }
             },
             <Column<AuthSession>>{
                 type: ColumnType.TEXT_LABELS,
@@ -438,8 +476,10 @@ export class UserEditComponent implements OnInit {
             });
     }
 
-    modalCreateClose() {
-        this.getAuthData();
+    modalCreateClose(event: CloseEventType) {
+        if (event === CloseEventType.CREATED) {
+            this.getAuthData();
+        }
     }
 
     modalDetailsClose() {

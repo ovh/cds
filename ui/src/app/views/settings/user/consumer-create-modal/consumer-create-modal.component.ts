@@ -16,6 +16,11 @@ import { UserService } from 'app/service/user/user.service';
 import { Column, Select } from 'app/shared/table/data-table.component';
 import { finalize } from 'rxjs/operators/finalize';
 
+export enum CloseEventType {
+    CREATED = 'CREATED',
+    CLOSED = 'CLOSED',
+}
+
 @Component({
     selector: 'app-consumer-create-modal',
     templateUrl: './consumer-create-modal.html',
@@ -28,7 +33,7 @@ export class ConsumerCreateModalComponent {
     open: boolean;
 
     @Input() user: AuthentifiedUser;
-    @Output() close = new EventEmitter();
+    @Output() close = new EventEmitter<CloseEventType>();
 
     newConsumer: AuthConsumer = new AuthConsumer();
     loading: boolean;
@@ -76,18 +81,18 @@ export class ConsumerCreateModalComponent {
         this.modal = this._modalService.open(config);
         this.modal.onApprove(() => {
             this.open = false;
-            this.close.emit();
+            this.close.emit(CloseEventType.CREATED);
         });
         this.modal.onDeny(() => {
             this.open = false;
-            this.close.emit();
+            this.close.emit(CloseEventType.CLOSED);
         });
 
         this.init();
     }
 
     clickClose() {
-        this.modal.approve(true);
+        this.modal.deny();
     }
 
     init(): void {

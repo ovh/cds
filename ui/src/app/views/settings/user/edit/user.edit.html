@@ -70,34 +70,50 @@
                         </div>
                     </h2>
                     <div class="ui four stackable centered cards">
-                        <ng-container *ngFor="let d of drivers" [ngSwitch]="d.type">
-                            <div class="ui card" *ngSwitchCase="'local'">
-                                <div class="content">
+                        <div class="ui card" *ngFor="let d of drivers">
+                            <div class="content" [ngSwitch]="d.type">
+                                <ng-container *ngSwitchCase="'local'">
                                     <div class="center aligned header">
                                         <i class="ui lock icon huge"></i>
                                     </div>
                                     <div class="center aligned description">
                                         Local
                                     </div>
-                                </div>
-                                <div class="extra content center aligned">
-                                    <button class="ui primary button small"
-                                        (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' | translate}}</button>
-                                    <button class="ui green button small"
-                                        (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
-                                </div>
-                            </div>
-                            <div class="ui card" *ngSwitchDefault>
-                                <div class="content">
+                                </ng-container>
+                                <ng-container *ngSwitchCase="'ldap'">
+                                    <div class="center aligned header">
+                                        <i class="ui address book icon huge"></i>
+                                    </div>
+                                    <div class="center aligned description">
+                                        LDAP
+                                    </div>
+                                </ng-container>
+                                <ng-container *ngSwitchCase="'corporate-sso'">
+                                    <div class="center aligned header">
+                                        <i class="ui shield alternate icon huge"></i>
+                                    </div>
+                                    <div class="center aligned description">
+                                        Corporate SSO
+                                    </div>
+                                </ng-container>
+                                <ng-container *ngSwitchDefault>
                                     <div class="center aligned header">
                                         <i class="ui {{d.type}} icon huge"></i>
                                     </div>
                                     <div class="center aligned description">
                                         {{d.type | titlecase}}
                                     </div>
-                                </div>
-                                <div class="extra content center aligned">
-                                    <ng-container *ngIf="mConsumers[d.type]">
+                                </ng-container>
+                            </div>
+                            <div class="extra content center aligned">
+                                <ng-container *ngIf="mConsumers[d.type]" [ngSwitch]="d.type">
+                                    <ng-container *ngSwitchCase="'local'">
+                                        <button class="ui primary button small"
+                                            (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' | translate}}</button>
+                                        <button class="ui green button small"
+                                            (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
+                                    </ng-container>
+                                    <ng-container *ngSwitchDefault>
                                         <button class="ui primary button small"
                                             (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' | translate}}</button>
                                         <app-confirm-button [class]="'small'" [color]="'red'"
@@ -105,13 +121,19 @@
                                             [title]="'user_auth_consumer_detach_btn'">
                                         </app-confirm-button>
                                     </ng-container>
-                                    <ng-container *ngIf="!mConsumers[d.type]">
+                                </ng-container>
+                                <ng-container *ngIf="!mConsumers[d.type]" [ngSwitch]="d.type">
+                                    <ng-container *ngSwitchCase="'local'">
+                                        <button class="ui green button small"
+                                            (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
+                                    </ng-container>
+                                    <ng-container *ngSwitchDefault>
                                         <button class="ui green button small"
                                             (click)="clickConsumerSignin(d.type)">{{'account_btn_signin' | translate}}</button>
                                     </ng-container>
-                                </div>
+                                </ng-container>
                             </div>
-                        </ng-container>
+                        </div>
                     </div>
                 </div>
                 <div class="sixteen wide column">
@@ -138,6 +160,7 @@
         </app-scrollview>
     </div>
 </div>
-<app-consumer-create-modal #consumerCreateModal [user]="user" (close)="modalCreateClose()"></app-consumer-create-modal>
+<app-consumer-create-modal #consumerCreateModal [user]="user" (close)="modalCreateClose($event)">
+</app-consumer-create-modal>
 <app-consumer-details-modal #consumerDetailsModal [consumer]="selectedConsumer" (close)="modalDetailsClose()">
 </app-consumer-details-modal>
