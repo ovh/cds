@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AuthConsumerSigninResponse, AuthDriverManifests } from 'app/model/authentication.model';
+import { AuthConsumerSigninResponse, AuthDriverManifests, AuthScope } from 'app/model/authentication.model';
 import { Observable } from 'rxjs';
 
 @Injectable()
@@ -11,6 +11,12 @@ export class AuthenticationService {
 
     getDrivers(): Observable<AuthDriverManifests> {
         return this._http.get<AuthDriverManifests>('/auth/driver');
+    }
+
+    getScopes(): Observable<Array<AuthScope>> {
+        return this._http.get<Array<string>>('/auth/scope').map(ss => {
+            return ss.map(s => new AuthScope(s));
+        });
     }
 
     signin(consumerType: string, code: string, state: string): Observable<AuthConsumerSigninResponse> {

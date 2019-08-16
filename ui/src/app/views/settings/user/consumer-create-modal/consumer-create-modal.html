@@ -3,26 +3,41 @@
         {{ 'auth_consumer_create_modal_title' | translate }}
     </div>
     <div class="content">
-        <div class="ui form">
-            <div class="ui grid">
-                <div class="ui wide sixteen field">
-                    <div class="fields">
-                        <div class="eight wide field">
-                            <label>{{'common_name' | translate}}</label>
-                            <input class="ui input" type="text" name="name" [ngModel]="newConsumer.name">
+        <div class="ui grid">
+            <div class="ui wide column">
+                <div class="ui form">
+                    <div class="ui wide field">
+                        <div class="fields">
+                            <div class="eight wide field">
+                                <label>{{'common_name' | translate}}</label>
+                                <input class="ui input" type="text" name="name" [(ngModel)]="newConsumer.name">
+                            </div>
+                            <div class="eight wide field">
+                                <label>{{'common_description' | translate}}</label>
+                                <input class="ui input" type="text" name="group" [(ngModel)]="newConsumer.description">
+                            </div>
                         </div>
-                        <div class="eight wide field">
-                            <label>{{'common_description' | translate}}</label>
-                            <input class="ui input" type="text" name="group" [ngModel]="newConsumer.description">
+                        <div class="fields">
+                            <div class="eight wide field">
+                                <label>{{'user_auth_groups' | translate}}</label>
+                                <app-data-table [withSelect]="selectGroupFunc"
+                                    (selectChange)="selectGroupChange($event)" [withPagination]="5"
+                                    [columns]="columnsGroups" [data]="groups" [loading]="loadingGroups">
+                                </app-data-table>
+                            </div>
+                            <div class="eight wide field">
+                                <label>{{'user_auth_scopes' | translate}}</label>
+                                <app-data-table [withSelect]="selectScopeFunc"
+                                    (selectChange)="selectScopeChange($event)" [withPagination]="5"
+                                    [columns]="columnsScopes" [data]="scopes" [loading]="loadingScopes">
+                                </app-data-table>
+                            </div>
                         </div>
-                    </div>
-                    <div class="fields">
-                        <div class="eight wide field">
-                            <label>{{'common_groups' | translate}}</label>
-                            <app-data-table [withSelect]="selectGroupFunc" (selectChange)="selectGroupChange($event)"
-                                [withPagination]="10" [columns]="columnsGroups" [data]="groups"
-                                [loading]="loadingGroups">
-                            </app-data-table>
+                        <div class="field inline">
+                            <button class="ui green right floated button" [class.loading]="loading"
+                                (click)="clickSave()">
+                                <i class="save icon"></i>{{ 'btn_create' | translate }}
+                            </button>
                         </div>
                     </div>
                 </div>

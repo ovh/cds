@@ -1,5 +1,18 @@
+import { WithKey } from 'app/shared/table/data-table.component';
 import { Group } from './group.model';
 import { AuthentifiedUser } from './user.model';
+
+export class AuthScope implements WithKey {
+    value: string;
+
+    constructor(value: string) {
+        this.value = value;
+    }
+
+    key(): string {
+        return this.value;
+    }
+};
 
 export class AuthDriverManifests {
     is_first_connection: boolean;

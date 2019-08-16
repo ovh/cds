@@ -438,7 +438,12 @@ export class UserEditComponent implements OnInit {
             });
     }
 
-    modalClose() {
+    modalCreateClose() {
+        this.getAuthData();
+    }
+
+    modalDetailsClose() {
         this.selectedConsumer = null;
+        this._cd.markForCheck();
     }
 }
