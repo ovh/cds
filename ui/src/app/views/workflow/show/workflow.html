@@ -60,6 +60,7 @@
                                                     </i>
                                                 </div>
                                                 <div *ngIf="previewWorkflow" class="ui green button" (click)="savePreview()"
+                                                    [class.disabled]="loading || (detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0) || detailedWorkflow.permission < permissionEnum.READ_WRITE_EXECUTE"
                                                     [class.loading]="loading">
                                                     <i class="save icon"></i> {{'btn_save' |
                                                     translate}}
