@@ -1,5 +1,9 @@
 -- +migrate Up
 
+-- Update foreign keys for deprecated user table
+ALTER TABLE user_key DROP CONSTRAINT IF EXISTS "fk_user_key_user";
+select create_foreign_key_idx_cascade('FK_USER_KEY_USER', 'user_key', 'user', 'user_id', 'id');
+
 -- Create auth tables
 CREATE TABLE IF NOT EXISTS "authentified_user" (
   id VARCHAR(36) PRIMARY KEY,
