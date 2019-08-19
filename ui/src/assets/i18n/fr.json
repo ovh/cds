@@ -14,6 +14,8 @@
   "auth_signup_success": "Votre demande d'inscription a été prise en compte, vous allez recevoir un email pour vérifier votre compte.",
   "auth_verify_error": "Impossible de vérifier le compte.",
   "auth_verify_success": "Le compte utilisateur '{{username}}' a été vérifié avec succès.",
+  "auth_consumer_details_parent": "Client parent",
+  "auth_consumer_details_children": "Clients enfants",
   "account_btn_password": "Mot de passe perdu",
   "account_btn_signup": "Créer un compte",
   "account_btn_signin": "Se connecter",

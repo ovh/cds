@@ -15,7 +15,11 @@ import { AuthenticationState } from 'app/store/authentication.state';
 import { forkJoin } from 'rxjs/internal/observable/forkJoin';
 import { finalize } from 'rxjs/operators/finalize';
 import { CloseEventType, ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
-import { ConsumerDetailsModalComponent } from '../consumer-details-modal/consumer-details-modal.component';
+import {
+    CloseEvent,
+    CloseEventType as DetailsCloseEventType,
+    ConsumerDetailsModalComponent
+} from '../consumer-details-modal/consumer-details-modal.component';
 
 const defaultMenuItems = [<Item>{
     translate: 'user_profile_btn',
@@ -278,8 +282,12 @@ export class UserEditComponent implements OnInit {
         });
     }
 
-    clickConsumerDetails(c: AuthConsumer): void {
-        this.selectedConsumer = c;
+    clickConsumerDetails(selected: AuthConsumer): void {
+        this.selectedConsumer = selected;
+
+        // calculate children for selected consumer
+        this.selectedConsumer.children = this.consumers.filter(c => c.parent_id === this.selectedConsumer.id);
+
         this._cd.detectChanges(); // manually ask for detect changes to allow modal data to be set before opening
         this.consumerDetailsModal.show();
     }
@@ -478,14 +486,18 @@ export class UserEditComponent implements OnInit {
             });
     }
 
-    modalCreateClose(event: CloseEventType) {
-        if (event === CloseEventType.CREATED) {
+    modalCreateClose(eventType: CloseEventType) {
+        if (eventType === CloseEventType.CREATED) {
             this.getAuthData();
         }
     }
 
-    modalDetailsClose() {
+    modalDetailsClose(event: CloseEvent) {
         this.selectedConsumer = null;
         this._cd.markForCheck();
+
+        if (event.type === DetailsCloseEventType.CHILD_DETAILS) {
+            this.clickConsumerDetails(event.payload);
+        }
     }
 }

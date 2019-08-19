@@ -20,6 +20,16 @@
                             {{groups}}
                         </div>
                     </div>
+                    <div class="field" *ngIf="consumer.parent">
+                        <label>{{'auth_consumer_details_parent' | translate}}</label>
+                        <app-data-table [columns]="columnsConsumer" [data]="[consumer.parent]"></app-data-table>
+                    </div>
+                    <div class="field" *ngIf="consumer.children && consumer.children.length > 0">
+                        <label>{{'auth_consumer_details_children' | translate}}</label>
+                        <app-data-table [withFilter]="filterChildren" [withPagination]="5" [columns]="columnsConsumer"
+                            [data]="consumer.children">
+                        </app-data-table>
+                    </div>
                 </div>
             </div>
         </div>

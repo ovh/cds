@@ -20,7 +20,7 @@ import { finalize } from 'rxjs/operators/finalize';
 
 export enum CloseEventType {
     CREATED = 'CREATED',
-    CLOSED = 'CLOSED',
+    CLOSED = 'CLOSED'
 }
 
 @Component({

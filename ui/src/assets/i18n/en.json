@@ -14,6 +14,8 @@
   "auth_signup_success": "You successfully sign up to CDS, check your emails to verify your account.",
   "auth_verify_error": "Unable to verify this account.",
   "auth_verify_success": "The account for user '{{username}}' was successfully verified.",
+  "auth_consumer_details_parent": "Parent consumer",
+  "auth_consumer_details_children": "Children consumers",
   "account_btn_password": "Forgotten password",
   "account_btn_signup": "Sign up",
   "account_btn_signin": "Sign in",
