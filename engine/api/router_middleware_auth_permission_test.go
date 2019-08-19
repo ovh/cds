@@ -318,13 +318,13 @@ func TestAPI_checkSessionPermissions(t *testing.T) {
 	authUser, _ := assets.InsertLambdaUser(db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
 	require.NoError(t, err)
-	localSession, err := authentication.NewSession(db, localConsumer, time.Second)
+	localSession, err := authentication.NewSession(db, localConsumer, time.Second, false)
 	require.NoError(t, err)
 
 	authUserAdmin, _ := assets.InsertAdminUser(db)
 	localConsumerAdmin, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserAdmin.ID)
 	require.NoError(t, err)
-	localSessionAdmin, err := authentication.NewSession(db, localConsumerAdmin, time.Second)
+	localSessionAdmin, err := authentication.NewSession(db, localConsumerAdmin, time.Second, false)
 	require.NoError(t, err)
 
 	ctx := context.WithValue(context.TODO(), contextAPIConsumer, localConsumer)

@@ -118,9 +118,9 @@ func Test_getSessionsByUserHandler(t *testing.T) {
 
 	consumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser})
 	require.NoError(t, err)
-	s2, err := authentication.NewSession(db, consumer, time.Second)
+	s2, err := authentication.NewSession(db, consumer, time.Second, false)
 	require.NoError(t, err)
-	s3, err := authentication.NewSession(db, consumer, time.Second)
+	s3, err := authentication.NewSession(db, consumer, time.Second, false)
 	require.NoError(t, err)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getSessionsByUserHandler, map[string]string{
@@ -151,7 +151,7 @@ func Test_deleteSessionByUserHandler(t *testing.T) {
 
 	consumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser})
 	require.NoError(t, err)
-	s2, err := authentication.NewSession(db, consumer, time.Second)
+	s2, err := authentication.NewSession(db, consumer, time.Second, false)
 	require.NoError(t, err)
 
 	ss, err := authentication.LoadSessionsByConsumerIDs(context.TODO(), db, []string{localConsumer.ID, consumer.ID})

@@ -13,9 +13,25 @@ import (
 type AuthDriver interface {
 	GetManifest() AuthDriverManifest
 	GetSessionDuration() time.Duration
-	GetSigninURI(state string) string
 	CheckSigninRequest(AuthConsumerSigninRequest) error
 	GetUserInfo(AuthConsumerSigninRequest) (AuthDriverUserInfo, error)
+}
+
+type AuthDriverWithRedirect interface {
+	AuthDriver
+	GetSigninURI(AuthSigninConsumerToken) (AuthDriverSigningRedirect, error)
+}
+
+type AuthDriverWithSigninStateToken interface {
+	AuthDriver
+	CheckSigninStateToken(AuthConsumerSigninRequest) error
+}
+
+type AuthDriverSigningRedirect struct {
+	Method      string            `json:"method"`
+	URL         string            `json:"url"`
+	Body        map[string]string `json:"body"`
+	ContentType string            `json:"content_type"`
 }
 
 // AuthDriverManifest struct discribe a auth driver.
@@ -112,6 +128,7 @@ type AuthDriverUserInfo struct {
 	Username   string
 	Fullname   string
 	Email      string
+	MFA        bool
 }
 
 // AuthConsumerType constant to identify what is the driver used to create a consumer.
@@ -234,6 +251,7 @@ type AuthSession struct {
 	Created    time.Time              `json:"created" cli:"created" db:"created"`
 	GroupIDs   Int64Slice             `json:"group_ids" cli:"group_ids" db:"group_ids"`
 	Scopes     AuthConsumerScopeSlice `json:"scopes" cli:"scopes" db:"scopes"`
+	MFA        bool                   `json:"mfa" cli:"mfa" db:"mfa"`
 	// aggregates
 	Consumer *AuthConsumer `json:"consumer,omitempty" db:"-"`
 	Groups   []Group       `json:"groups,omitempty" db:"-"`
@@ -286,4 +304,13 @@ type Token struct {
 	Creator     string     `json:"creator" cli:"creator"`
 	Expiration  Expiration `json:"expiration" cli:"expiration"`
 	Created     time.Time  `json:"created" cli:"created"`
+}
+
+const AuthSigninConsumerTokenDuration time.Duration = time.Minute * 5
+
+type AuthSigninConsumerToken struct {
+	Origin      string `json:"origin"`
+	RedirectURI string `json:"redirectURI"`
+	IssuedAt    int64  `json:"iat"`
+	RequireMFA  bool   `json:"requireMFA"`
 }

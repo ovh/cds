@@ -3,11 +3,11 @@ package api
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -58,21 +58,29 @@ func (api *API) getAuthAskSigninHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
+		driverRedirect, ok := driver.(sdk.AuthDriverWithRedirect)
+		if !ok {
+			return nil
+		}
+
+		var signinState = sdk.AuthSigninConsumerToken{
+			IssuedAt:    time.Now().Unix(),
+			RequireMFA:  FormBool(r, "require_mfa"),
+			RedirectURI: FormString(r, "redirect_uri"),
+		}
 		// Get the origin from request if set
-		origin := FormString(r, "origin")
-		if origin != "" && !(origin == "cdsctl" || origin == "ui") {
+		signinState.Origin = FormString(r, "origin")
+		if signinState.Origin != "" && !(signinState.Origin == "cdsctl" || signinState.Origin == "ui") {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given origin value")
 		}
 
-		// Generate a new state value for the auth signin request
-		state, err := authentication.NewSigninStateToken(origin)
+		// Redirect to the right signin page depending on the consumer type
+		redirect, err := driverRedirect.GetSigninURI(signinState)
 		if err != nil {
 			return err
 		}
 
-		// Redirect to the right signin page depending on the consumer type
-		http.Redirect(w, r, driver.GetSigninURI(state), http.StatusTemporaryRedirect)
-		return nil
+		return service.WriteJSON(w, redirect, http.StatusOK)
 	}
 }
 
@@ -99,21 +107,14 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			return err
 		}
 
-		initToken, hasInitToken := req["init_token"]
-		hasInitToken = hasInitToken && initToken != ""
-
-		// if consumerType is LDAP we must bind the requested user
-		switch consumerType {
-		case sdk.ConsumerLDAP, sdk.ConsumerTest, sdk.ConsumerTest2:
-		default:
-			// Check if state is given and if its valid
-			state, okState := req["state"]
-			if !okState {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing state value")
-			}
-			if err := authentication.CheckSigninStateToken(state); err != nil {
+		// Extract and validate signin state
+		switch x := driver.(type) {
+		case sdk.AuthDriverWithSigninStateToken:
+			if err := x.CheckSigninStateToken(req); err != nil {
 				return err
 			}
+		default:
+			// sdk.ConsumerLDAP, sdk.ConsumerTest, sdk.ConsumerTest2
 		}
 
 		// Convert code to external user info
@@ -135,8 +136,10 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		}
 
 		var signupDone bool
+		initToken, hasInitToken := req["init_token"]
+		hasInitToken = hasInitToken && initToken != ""
 
-		if u == nil {
+		if u == nil && userInfo.Email != "" {
 			// Check if a user already exists for external email
 			contact, err := user.LoadContactsByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, userInfo.Email)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -199,7 +202,6 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			if u.GetEmail() != userInfo.Email {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "a user already exists for user name %s", userInfo.Username)
 			}
-
 		}
 
 		// Check if a consumer exists for consumer type and external user identifier
@@ -214,12 +216,6 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			if err != nil {
 				return err
 			}
-
-			// For each account we want to create a local consumer too
-			consumer, err = local.NewConsumer(tx, u.ID)
-			if err != nil {
-				return err
-			}
 		}
 
 		// If a new user has been created and a first admin has been create,
@@ -231,7 +227,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(tx, consumer, driver.GetSessionDuration())
+		session, err := authentication.NewSession(tx, consumer, driver.GetSessionDuration(), userInfo.MFA)
 		if err != nil {
 			return err
 		}

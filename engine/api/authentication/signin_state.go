@@ -2,22 +2,18 @@ package authentication
 
 import (
 	"time"
+
+	"github.com/ovh/cds/sdk"
 )
 
-const signinConsumerTokenDuration time.Duration = time.Minute * 5
-
-type signinConsumerToken struct {
-	Origin string
+// NewDefaultSigninStateToken returns a jws used for signin request.
+func NewDefaultSigninStateToken(origin, redirectURI string) (string, error) {
+	payload := sdk.AuthSigninConsumerToken{Origin: origin, RedirectURI: redirectURI, IssuedAt: time.Now().Unix()}
+	return SignJWS(payload, sdk.AuthSigninConsumerTokenDuration)
 }
 
-// NewSigninStateToken returns a jws used for signin request.
-func NewSigninStateToken(origin string) (string, error) {
-	payload := signinConsumerToken{Origin: origin}
-	return SignJWS(payload, signinConsumerTokenDuration)
-}
-
-// CheckSigninStateToken checks if a given signature is a valid signin state.
-func CheckSigninStateToken(signature string) error {
-	var payload signinConsumerToken
+// CheckDefaultSigninStateToken checks if a given signature is a valid signin state.
+func CheckDefaultSigninStateToken(signature string) error {
+	var payload sdk.AuthSigninConsumerToken
 	return VerifyJWS(signature, &payload)
 }

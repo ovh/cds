@@ -26,10 +26,6 @@ func (d authDriver) GetManifest() sdk.AuthDriverManifest {
 	}
 }
 
-func (d authDriver) GetSigninURI(state string) string {
-	return "/"
-}
-
 func (d authDriver) GetSessionDuration() time.Duration {
 	return time.Hour * 24 * 30 // 1 month session
 }

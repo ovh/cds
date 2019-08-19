@@ -10,10 +10,12 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/sdk"
 )
 
-var _ sdk.AuthDriver = new(authDriver)
+var _ sdk.AuthDriverWithRedirect = new(authDriver)
+var _ sdk.AuthDriverWithSigninStateToken = new(authDriver)
 
 // NewDriver returns a new Gitlab auth driver for given config.
 func NewDriver(signupDisabled bool, cdsURL, url, applicationID, secret string) sdk.AuthDriver {
@@ -41,9 +43,19 @@ func (d authDriver) GetManifest() sdk.AuthDriverManifest {
 	}
 }
 
-func (d authDriver) GetSigninURI(state string) string {
-	return fmt.Sprintf("%s/oauth/authorize?client_id=%s&response_type=code&state=%s&redirect_uri=%s",
-		d.url, d.applicationID, state, d.cdsURL+"/auth/callback/gitlab")
+func (d authDriver) GetSigninURI(signinState sdk.AuthSigninConsumerToken) (sdk.AuthDriverSigningRedirect, error) {
+	// Generate a new state value for the auth signin request
+	jws, err := authentication.NewDefaultSigninStateToken(signinState.Origin, signinState.RedirectURI)
+	if err != nil {
+		return sdk.AuthDriverSigningRedirect{}, err
+	}
+
+	var result = sdk.AuthDriverSigningRedirect{
+		Method: http.MethodGet,
+		URL:    fmt.Sprintf("%s/oauth/authorize?client_id=%s&response_type=code&state=%s&redirect_uri=%s", d.url, d.applicationID, jws, d.cdsURL+"/auth/callback/gitlab"),
+	}
+
+	return result, nil
 }
 
 func (d authDriver) GetSessionDuration() time.Duration {
@@ -55,6 +67,15 @@ func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid gitlab code")
 	}
 	return nil
+}
+
+func (d authDriver) CheckSigninStateToken(req sdk.AuthConsumerSigninRequest) error {
+	// Check if state is given and if its valid
+	state, okState := req["state"]
+	if !okState {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing state value")
+	}
+	return authentication.CheckDefaultSigninStateToken(state)
 }
 
 func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
