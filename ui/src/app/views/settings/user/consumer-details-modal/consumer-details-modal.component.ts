@@ -8,8 +8,9 @@ import {
     ViewChild
 } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
-import { AuthConsumer } from 'app/model/authentication.model';
+import { AuthConsumer, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
+import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 
 export enum CloseEventType {
@@ -21,6 +22,12 @@ export class CloseEvent {
     type: CloseEventType;
     payload: any;
 }
+
+const defaultMenuItems = [<Item>{
+    translate: 'user_auth_sessions',
+    key: 'sessions',
+    default: true
+}];
 
 @Component({
     selector: 'app-consumer-details-modal',
@@ -38,14 +45,20 @@ export class ConsumerDetailsModalComponent {
 
     scopes: string;
     groups: string;
-    columnsConsumer: Array<Column<AuthConsumer>>;
+    columnsConsumers: Array<Column<AuthConsumer>>;
     filterChildren: Filter<AuthConsumer>;
     selectedChildDetails: AuthConsumer;
+    menuItems: Array<Item>;
+    selectedItem: Item;
+    columnsSessions: Array<Column<AuthSession>>;
+    filterSessions: Filter<AuthSession>;
 
     constructor(
         private _modalService: SuiModalService,
         private _cd: ChangeDetectorRef
     ) {
+        this.menuItems = [].concat(defaultMenuItems);
+
         this.filterChildren = f => {
             const lowerFilter = f.toLowerCase();
             return (c: AuthConsumer) => {
@@ -57,14 +70,10 @@ export class ConsumerDetailsModalComponent {
             }
         };
 
-        this.columnsConsumer = [
+        this.columnsConsumers = [
             <Column<AuthConsumer>>{
                 name: 'common_name',
                 selector: (c: AuthConsumer) => c.name
-            },
-            <Column<AuthConsumer>>{
-                name: 'common_description',
-                selector: (c: AuthConsumer) => c.description
             },
             <Column<AuthConsumer>>{
                 type: ColumnType.TEXT_ICONS,
@@ -95,6 +104,57 @@ export class ConsumerDetailsModalComponent {
                     return {
                         title: 'common_details',
                         click: () => { this.clickConsumerDetails(c) }
+                    };
+                }
+            }
+        ];
+
+        this.filterSessions = f => {
+            const lowerFilter = f.toLowerCase();
+            return (s: AuthSession) => {
+                return s.consumer.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    s.consumer_id.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    s.created.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1;
+            }
+        };
+
+        this.columnsSessions = [
+            <Column<AuthSession>>{
+                type: ColumnType.TEXT_LABELS,
+                name: 'common_id',
+                selector: (s: AuthSession) => {
+                    let labels = [];
+
+                    if (s.current) {
+                        labels.push({ color: 'blue', title: 'user_auth_session_current' });
+                    }
+
+                    return {
+                        value: s.id,
+                        labels
+                    }
+                }
+            },
+            <Column<AuthSession>>{
+                type: ColumnType.DATE,
+                name: 'common_created',
+                selector: (s: AuthSession) => s.created
+            },
+            <Column<AuthSession>>{
+                type: ColumnType.DATE,
+                name: 'user_auth_expire_at',
+                selector: (s: AuthSession) => s.expire_at
+            },
+            <Column<AuthSession>>{
+                type: ColumnType.CONFIRM_BUTTON,
+                name: 'common_action',
+                class: 'two right aligned',
+                selector: (s: AuthSession) => {
+                    return {
+                        title: 'user_auth_revoke_btn',
+                        color: 'red',
+                        click: () => { /*this.clickSessionRevoke(s)*/ }
                     };
                 }
             }
@@ -141,11 +201,46 @@ export class ConsumerDetailsModalComponent {
         this.selectedChildDetails = null;
         this.scopes = this.consumer.scopes ? this.consumer.scopes.join(', ') : '*';
         this.groups = this.consumer.groups ? this.consumer.groups.map(g => g.name).join(', ') : '*';
+
+        this.menuItems = [].concat(defaultMenuItems);
+        if (this.consumer.parent) {
+            this.menuItems.push(<Item>{
+                translate: 'auth_consumer_details_parent',
+                key: 'parent'
+            })
+        }
+        if (this.consumer.children.length > 0) {
+            this.menuItems.push(<Item>{
+                translate: 'auth_consumer_details_children',
+                key: 'children'
+            });
+        }
+        this._cd.markForCheck();
+    }
+
+    selectMenuItem(item: Item): void {
+        this.selectedItem = item;
         this._cd.markForCheck();
     }
 
     clickConsumerDetails(c: AuthConsumer): void {
         this.selectedChildDetails = c;
+        this.modal.approve(true);
+    }
+
+    clickResetPassword(): void {
+
+    }
+
+    clickDeletePassword(): void {
+
+    }
+
+    clickDetach(): void {
+
+    }
+
+    clickClose(): void {
         this.modal.approve(true);
     }
 }

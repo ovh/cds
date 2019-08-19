@@ -49,6 +49,7 @@ export class AuthConsumer {
     // UI fields
     parent: AuthConsumer;
     children: Array<AuthConsumer>;
+    sessions: Array<AuthSession>;
 }
 
 export class AuthSession {
