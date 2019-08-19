@@ -7,6 +7,7 @@ import {
     Output,
     ViewChild
 } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { AuthConsumer, AuthScope } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
@@ -14,11 +15,12 @@ import { AuthentifiedUser } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { UserService } from 'app/service/user/user.service';
 import { Column, Select } from 'app/shared/table/data-table.component';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { finalize } from 'rxjs/operators/finalize';
 
 export enum CloseEventType {
     CREATED = 'CREATED',
-    CLOSED = 'CLOSED',
+    CLOSED = 'CLOSED'
 }
 
 @Component({
@@ -36,6 +38,7 @@ export class ConsumerCreateModalComponent {
     @Output() close = new EventEmitter<CloseEventType>();
 
     newConsumer: AuthConsumer = new AuthConsumer();
+    signinToken: string;
     loading: boolean;
     loadingGroups: boolean;
     groups: Array<Group>;
@@ -51,6 +54,8 @@ export class ConsumerCreateModalComponent {
         private _userService: UserService,
         private _authenticationService: AuthenticationService,
         private _cd: ChangeDetectorRef,
+        private _toast: ToastService,
+        private _translate: TranslateService
     ) {
         this.columnsGroups = [
             <Column<Group>>{
@@ -79,24 +84,24 @@ export class ConsumerCreateModalComponent {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.consumerDetailsModal);
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
-        this.modal.onApprove(() => {
-            this.open = false;
-            this.close.emit(CloseEventType.CREATED);
-        });
-        this.modal.onDeny(() => {
-            this.open = false;
-            this.close.emit(CloseEventType.CLOSED);
-        });
+        this.modal.onApprove(_ => { this.closeCallback() });
+        this.modal.onDeny(_ => { this.closeCallback() });
 
         this.init();
     }
 
-    clickClose() {
-        this.modal.deny();
+    closeCallback(): void {
+        this.open = false;
+        if (this.newConsumer.id) {
+            this.close.emit(CloseEventType.CREATED);
+        } else {
+            this.close.emit(CloseEventType.CLOSED);
+        }
     }
 
     init(): void {
         this.newConsumer = new AuthConsumer();
+        this.signinToken = null;
         this.selectedGroupKeys = null;
         this.selectedScopeKeys = null;
 
@@ -156,8 +161,13 @@ export class ConsumerCreateModalComponent {
                 this.loading = false;
                 this._cd.markForCheck();
             }))
-            .subscribe(_ => {
-                this.modal.approve(true);
+            .subscribe(res => {
+                this.newConsumer = res.consumer;
+                this.signinToken = res.token;
             });
+    }
+
+    confirmCopy() {
+        this._toast.success('', this._translate.instant('auth_value_copied'));
     }
 }

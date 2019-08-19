@@ -3,6 +3,35 @@
         {{ 'auth_consumer_details_modal_title' | translate: { name: consumer.name } }}
     </div>
     <div class="content">
-
+        <div class="ui grid">
+            <div class="ui wide column">
+                <div class="ui form">
+                    <div class="three fields">
+                        <div class="field">
+                            <label>{{'common_description' | translate}}</label>
+                            {{consumer.description}}
+                        </div>
+                        <div class="field">
+                            <label>{{'user_auth_scopes' | translate}}</label>
+                            {{scopes}}
+                        </div>
+                        <div class="field">
+                            <label>{{'user_auth_groups' | translate}}</label>
+                            {{groups}}
+                        </div>
+                    </div>
+                    <div class="field" *ngIf="consumer.parent">
+                        <label>{{'auth_consumer_details_parent' | translate}}</label>
+                        <app-data-table [columns]="columnsConsumer" [data]="[consumer.parent]"></app-data-table>
+                    </div>
+                    <div class="field" *ngIf="consumer.children && consumer.children.length > 0">
+                        <label>{{'auth_consumer_details_children' | translate}}</label>
+                        <app-data-table [withFilter]="filterChildren" [withPagination]="5" [columns]="columnsConsumer"
+                            [data]="consumer.children">
+                        </app-data-table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </ng-template>

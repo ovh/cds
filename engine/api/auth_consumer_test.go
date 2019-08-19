@@ -51,6 +51,8 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 
 	g := assets.InsertGroup(t, db)
 	u, jwtRaw := assets.InsertLambdaUser(db, g)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
+	require.NoError(t, err)
 
 	data := sdk.AuthConsumer{
 		Name:     sdk.RandomString(10),
@@ -72,9 +74,10 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 	assert.NotEmpty(t, created.Token)
 	assert.Equal(t, data.Name, created.Consumer.Name)
 	require.Equal(t, 1, len(created.Consumer.GroupIDs))
-	require.Equal(t, g.ID, created.Consumer.GroupIDs[0])
+	assert.Equal(t, g.ID, created.Consumer.GroupIDs[0])
 	require.Equal(t, 1, len(created.Consumer.Scopes))
-	require.Equal(t, sdk.AuthConsumerScopeAccessToken, created.Consumer.Scopes[0])
+	assert.Equal(t, sdk.AuthConsumerScopeAccessToken, created.Consumer.Scopes[0])
+	assert.Equal(t, localConsumer.ID, *created.Consumer.ParentID)
 }
 
 func Test_deleteConsumerByUserHandler(t *testing.T) {

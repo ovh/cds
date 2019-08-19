@@ -102,6 +102,7 @@ func NewConsumer(db gorp.SqlExecutor, name, description string, parentConsumer *
 	c := sdk.AuthConsumer{
 		Name:               name,
 		Description:        description,
+		ParentID:           &parentConsumer.ID,
 		AuthentifiedUserID: parentConsumer.AuthentifiedUserID,
 		Type:               sdk.ConsumerBuiltin,
 		Data:               map[string]string{},

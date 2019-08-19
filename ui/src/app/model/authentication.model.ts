@@ -29,6 +29,11 @@ export class AuthConsumerSigninResponse {
     user: AuthentifiedUser;
 }
 
+export class AuthConsumerCreateResponse {
+    token: string;
+    consumer: AuthConsumer;
+}
+
 export class AuthConsumer {
     id: string;
     name: string;
@@ -43,6 +48,7 @@ export class AuthConsumer {
 
     // UI fields
     parent: AuthConsumer;
+    children: Array<AuthConsumer>;
 }
 
 export class AuthSession {

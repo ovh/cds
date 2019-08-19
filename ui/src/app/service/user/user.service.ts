@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AuthConsumer, AuthSession } from 'app/model/authentication.model';
+import { AuthConsumer, AuthConsumerCreateResponse, AuthSession } from 'app/model/authentication.model';
 import { Bookmark } from 'app/model/bookmark.model';
 import { Group } from 'app/model/group.model';
 import { AuthentifiedUser, UserContact } from 'app/model/user.model';
@@ -54,8 +54,8 @@ export class UserService {
         return this._http.get<Array<AuthConsumer>>(`/user/${username}/auth/consumer`);
     }
 
-    createConsumer(username: string, consumer: AuthConsumer): Observable<AuthConsumer> {
-        return this._http.post<AuthConsumer>(`/user/${username}/auth/consumer`, consumer);
+    createConsumer(username: string, consumer: AuthConsumer): Observable<AuthConsumerCreateResponse> {
+        return this._http.post<AuthConsumerCreateResponse>(`/user/${username}/auth/consumer`, consumer);
     }
 
     getSessions(username: string): Observable<Array<AuthSession>> {
