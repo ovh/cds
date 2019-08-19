@@ -84,23 +84,18 @@ export class ConsumerCreateModalComponent {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.consumerDetailsModal);
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
-        this.modal.onApprove(() => {
-            this.open = false;
-            this.close.emit(CloseEventType.CREATED);
-        });
-        this.modal.onDeny(() => {
-            this.open = false;
-            this.close.emit(CloseEventType.CLOSED);
-        });
+        this.modal.onApprove(_ => { this.closeCallback() });
+        this.modal.onDeny(_ => { this.closeCallback() });
 
         this.init();
     }
 
-    clickClose() {
+    closeCallback(): void {
+        this.open = false;
         if (this.newConsumer.id) {
-            this.modal.approve(true);
+            this.close.emit(CloseEventType.CREATED);
         } else {
-            this.modal.deny();
+            this.close.emit(CloseEventType.CLOSED);
         }
     }
 
