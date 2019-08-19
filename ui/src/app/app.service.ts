@@ -19,7 +19,7 @@ import { DeleteFromCachePipeline, ExternalChangePipeline, ResyncPipeline } from 
 import { PipelinesState, PipelinesStateModel } from './store/pipelines.state';
 import * as projectActions from './store/project.action';
 import { ProjectState, ProjectStateModel } from './store/project.state';
-import { ExternalChangeWorkflow, GetWorkflow, GetWorkflowRun, UpdateWorkflowRunList } from './store/workflow.action';
+import { ExternalChangeWorkflow, GetWorkflow, GetWorkflowNodeRun, GetWorkflowRun, UpdateWorkflowRunList } from './store/workflow.action';
 import { WorkflowState } from './store/workflow.state';
 
 @Injectable()
@@ -319,6 +319,15 @@ export class AppService {
                             projectKey: event.project_key, workflowName: event.workflow_name,
                             num: event.workflow_run_num
                         }));
+                        if (this.routeParams['nodeId']) {
+                            this._store.dispatch(
+                                new GetWorkflowNodeRun({
+                                    projectKey: event.project_key,
+                                    workflowName: event.workflow_name,
+                                    num: event.workflow_run_num,
+                                    nodeRunID: this.routeParams['nodeId']
+                                }));
+                        }
                 }
                 break;
         }
