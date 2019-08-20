@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
+	"github.com/ovh/cds/engine/api/authentication/corpsso"
 	"github.com/ovh/cds/engine/api/authentication/github"
 	"github.com/ovh/cds/engine/api/authentication/gitlab"
 	"github.com/ovh/cds/engine/api/authentication/ldap"
@@ -95,27 +96,24 @@ type Configuration struct {
 			ManagerPassword string `toml:"ManagerPassword" default:"SECRET_PASSWORD_MANAGER" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
 		} `toml:"ldap" json:"ldap"`
 		Local struct {
-			Enable               bool   `toml:"enable" default:"true" json:"enable"`
+			Enabled              bool   `toml:"enabled" default:"true" json:"enabled"`
 			SignupDisabled       bool   `toml:"signupDisabled" default:"false" json:"signupDisabled"`
 			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true" json:"signupAllowedDomains"`
 		} `toml:"local" json:"local"`
 		CorporateSSO struct {
-			Enabled        bool   `json:"enable" default:"false" toml:"enable"`
+			Enabled        bool   `json:"enabled" default:"false" toml:"enabled"`
 			SignupDisabled bool   `json:"signupDisabled" default:"false" toml:"signupDisabled"`
+			MailDomain     string `json:"mailDomain" toml:"mailDomain"`
 			RedirectMethod string `json:"redirect_method" toml:"redirectMethod"`
 			RedirectURL    string `json:"redirect_url" toml:"redirectURL"`
 			Keys           struct {
 				RequestSigningKey  string `json:"request_signing_key" toml:"requestSigningKey"`
 				TokenSigningKey    string `json:"token_signing_key" toml:"tokenSigningKey"`
-				TokenKeySigningKey *struct {
-					KeySigningKey   string `json:"public_signing_key" toml:"publicSigningKey"`
+				TokenKeySigningKey struct {
+					KeySigningKey   string `json:"public_signing_key" toml:"keySigningKey"`
 					SigningKeyClaim string `json:"signing_key_claim" toml:"signingKeyClaim"`
-				} `json:"key_signing_key" toml:"keySigningKey"`
+				} `json:"key_signing_key" toml:"tokenKeySigningKey"`
 			} `json:"keys" toml:"keys"`
-			Claims struct { // TODO
-				Username     string `json:"username"`
-				SessionLevel string `json:"session_level"`
-			} `json:"claims" toml:"claims"`
 		} `json:"corporate_sso" toml:"corporateSSO"`
 		Github struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
@@ -612,7 +610,7 @@ func (a *API) Serve(ctx context.Context) error {
 	a.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
 
 	a.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
-	if a.Config.Auth.Local.Enable {
+	if a.Config.Auth.Local.Enabled {
 		a.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(
 			a.Config.Auth.Local.SignupDisabled,
 			a.Config.URL.UI,
@@ -657,6 +655,20 @@ func (a *API) Serve(ctx context.Context) error {
 			a.Config.Auth.Gitlab.ApplicationID,
 			a.Config.Auth.Gitlab.Secret,
 		)
+	}
+
+	if a.Config.Auth.CorporateSSO.Enabled {
+		driverConfig := corpsso.Config{
+			MailDomain: a.Config.Auth.CorporateSSO.MailDomain,
+		}
+		driverConfig.Request.Keys.RequestSigningKey = a.Config.Auth.CorporateSSO.Keys.RequestSigningKey
+		driverConfig.Request.RedirectMethod = a.Config.Auth.CorporateSSO.RedirectMethod
+		driverConfig.Request.RedirectURL = a.Config.Auth.CorporateSSO.RedirectURL
+		driverConfig.Token.SigningKey = a.Config.Auth.CorporateSSO.Keys.TokenSigningKey
+		driverConfig.Token.KeySigningKey.KeySigningKey = a.Config.Auth.CorporateSSO.Keys.TokenKeySigningKey.KeySigningKey
+		driverConfig.Token.KeySigningKey.SigningKeyClaim = a.Config.Auth.CorporateSSO.Keys.TokenKeySigningKey.SigningKeyClaim
+
+		a.AuthenticationDrivers[sdk.ConsumerCorporateSSO] = corpsso.NewDriver(driverConfig)
 	}
 
 	log.Info("Initializing event broker...")

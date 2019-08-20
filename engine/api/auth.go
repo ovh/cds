@@ -65,11 +65,12 @@ func (api *API) getAuthAskSigninHandler() service.Handler {
 
 		var signinState = sdk.AuthSigninConsumerToken{
 			IssuedAt:    time.Now().Unix(),
-			RequireMFA:  FormBool(r, "require_mfa"),
-			RedirectURI: FormString(r, "redirect_uri"),
+			RequireMFA:  QueryBool(r, "require_mfa"),
+			RedirectURI: QueryString(r, "redirect_uri"),
 		}
 		// Get the origin from request if set
-		signinState.Origin = FormString(r, "origin")
+		signinState.Origin = QueryString(r, "origin")
+
 		if signinState.Origin != "" && !(signinState.Origin == "cdsctl" || signinState.Origin == "ui") {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given origin value")
 		}

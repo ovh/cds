@@ -1,6 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AuthConsumerSigninResponse, AuthDriverManifests, AuthScope } from 'app/model/authentication.model';
+import { AuthConsumerSigninResponse, AuthDriverManifests, AuthDriverSigningRedirect, AuthScope } from 'app/model/authentication.model';
 import { Observable } from 'rxjs';
 
 @Injectable()
@@ -8,6 +8,13 @@ export class AuthenticationService {
     constructor(
         private _http: HttpClient
     ) { }
+
+    askSignin(consumerType: string, redirectURI: string, requireMFA: boolean): Observable<AuthDriverSigningRedirect> {
+        let params = new HttpParams();
+        params = params.append('redirect_uri', redirectURI);
+        params = params.append('require_mfa', String(requireMFA));
+        return this._http.get<AuthDriverSigningRedirect>(`/auth/consumer/${consumerType}/askSignin`, {params: params});
+    }
 
     getDrivers(): Observable<AuthDriverManifests> {
         return this._http.get<AuthDriverManifests>('/auth/driver');

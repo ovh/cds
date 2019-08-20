@@ -19,6 +19,13 @@ export class AuthDriverManifests {
     manifests: Array<AuthDriverManifest>;
 }
 
+export class AuthDriverSigningRedirect {
+    method: string;
+    url: string;
+    body: any;
+    content_type: string;
+}
+
 export class AuthDriverManifest {
     type: string;
     signup_disabled: boolean;

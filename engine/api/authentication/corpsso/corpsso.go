@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk/gpg"
+	jose "gopkg.in/square/go-jose.v2"
 
 	"github.com/ovh/cds/sdk"
-	jose "gopkg.in/square/go-jose.v2"
+	"github.com/ovh/cds/sdk/gpg"
 )
 
 const (
@@ -38,8 +38,8 @@ type Config struct {
 		} `json:"keys"`
 	} `json:"request"`
 	Token struct {
-		TokenSigningKey    string `json:"token_signing_key"`
-		TokenKeySigningKey struct {
+		SigningKey    string `json:"token_signing_key"`
+		KeySigningKey struct {
 			KeySigningKey   string `json:"public_signing_key"`
 			SigningKeyClaim string `json:"signing_key_claim"`
 		} `json:"key_signing_key,omitempty"`
@@ -90,7 +90,11 @@ func (d authDriver) GetSessionDuration() time.Duration {
 }
 
 func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
-	if token, ok := req["token"]; !ok || token == "" {
+	token, ok := req["token"]
+	if !ok {
+		token = req["code"]
+	}
+	if token == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid token for corporate sso signin")
 	}
 	return nil
@@ -133,6 +137,9 @@ func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 	// Check if token is given and if its valid
 	token, okToken := req["token"]
 	if !okToken {
+		token = req["code"]
+	}
+	if token == "" {
 		return u, sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing token value")
 	}
 
@@ -145,8 +152,8 @@ func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 	// Define wich public Key we have to take care about to verify the token
 	var publicKey interface{}
 	switch {
-	case cfg.TokenKeySigningKey.KeySigningKey != "":
-		ksk, err := gpg.NewPublicKeyFromPem(cfg.TokenKeySigningKey.KeySigningKey)
+	case cfg.KeySigningKey.KeySigningKey != "":
+		ksk, err := gpg.NewPublicKeyFromPem(cfg.KeySigningKey.KeySigningKey)
 		if err != nil {
 			return u, sdk.WrapError(err, "unable to load public key")
 		}
@@ -155,7 +162,7 @@ func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 			return u, sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing jws signature in jwt")
 		}
 
-		rawSsoKeyBase64, ok := jws.Signatures[0].Protected.ExtraHeaders[jose.HeaderKey(cfg.TokenKeySigningKey.SigningKeyClaim)].(string)
+		rawSsoKeyBase64, ok := jws.Signatures[0].Protected.ExtraHeaders[jose.HeaderKey(cfg.KeySigningKey.SigningKeyClaim)].(string)
 		if !ok {
 			return u, sdk.NewErrorFrom(sdk.ErrUnauthorized, "missing signing key claim in jwt")
 		}
@@ -183,8 +190,8 @@ func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 
 		publicKey = ssoKey.GetKey()
 
-	case cfg.TokenSigningKey != "":
-		publicKey, err = gpg.NewPublicKeyFromData(strings.NewReader(cfg.TokenSigningKey))
+	case cfg.SigningKey != "":
+		publicKey, err = gpg.NewPublicKeyFromData(strings.NewReader(cfg.SigningKey))
 		if err != nil {
 			return u, sdk.WithStack(err)
 		}

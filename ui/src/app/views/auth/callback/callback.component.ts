@@ -39,8 +39,8 @@ export class CallbackComponent implements OnInit {
         this.paramsSub = this._route.params.subscribe(params => {
             let consumerType = params['consumerType'];
 
-            this.code = this._route.snapshot.queryParams.code;
-            this.state = this._route.snapshot.queryParams.state;
+            this.code = this._route.snapshot.queryParams.code || this._route.snapshot.queryParams.token;
+            this.state = this._route.snapshot.queryParams.state || this._route.snapshot.queryParams.request;
 
             if (!this.code || !this.state) {
                 this.loading = false;

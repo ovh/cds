@@ -10,7 +10,9 @@ import { AuthenticationService } from 'app/service/authentication/authentication
     styleUrls: ['./signin.scss']
 })
 export class SigninComponent implements OnInit {
+    loading: boolean;
     redirect: string;
+    mfa: boolean;
     apiURL: string;
 
     isFirstConnection: boolean;
@@ -24,8 +26,10 @@ export class SigninComponent implements OnInit {
         private _router: Router,
         private _route: ActivatedRoute
     ) {
+        this.loading = true;
         this._route.queryParams.subscribe(queryParams => {
             this.redirect = queryParams.redirect;
+            this.mfa = false;
         });
     }
 
@@ -37,6 +41,7 @@ export class SigninComponent implements OnInit {
             this.externalDrivers = data.manifests
                 .filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin')
                 .sort((a, b) => a.type < b.type ? -1 : 1);
+            this.loading = false;
         });
     }
 

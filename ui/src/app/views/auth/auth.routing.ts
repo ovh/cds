@@ -1,6 +1,7 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AskResetComponent } from './ask-reset/ask-reset';
+import { AskSigninComponent } from './ask-signin/ask-signin.component';
 import { AuthComponent } from './auth.component';
 import { CallbackComponent } from './callback/callback.component';
 import { ResetComponent } from './reset/reset';
@@ -37,6 +38,11 @@ const routes: Routes = [
                 path: 'callback/:consumerType',
                 component: CallbackComponent,
                 data: { title: 'CDS • Authentication callback' }
+            },
+            {
+                path: 'ask-signin/:consumerType',
+                component: AskSigninComponent,
+                data: { title: 'CDS • Authentication' }
             },
         ]
     }

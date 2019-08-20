@@ -1,9 +1,15 @@
 <div class="ui grid signin">
-    <div class="column">
+    <div *ngIf="loading" class="column">
+        <div class="loading">
+            <div class="ui active small inline loader"></div>
+            <div>{{ 'common_loading' | translate }}</div>
+        </div>
+    </div>
+    <div *ngIf="!loading" class="column">
         <sui-tabset>
             <div class="ui top attached tabular menu">
                 <a *ngIf="localDriver" class="item" suiTabHeader="1">{{ 'account_btn_signin' | translate}}</a>
-                <a *ngIf="!localDriver.signup_disabled" class="item" suiTabHeader="2"
+                <a *ngIf="localDriver && !localDriver.signup_disabled" class="item" suiTabHeader="2"
                     (activate)="resetSignup()">{{ 'account_btn_signup' | translate}}</a>
                 <a *ngIf="ldapDriver" class="item" suiTabHeader="3">{{ 'account_btn_signin_ldap' | translate}}</a>
             </div>
@@ -25,7 +31,7 @@
                     </div>
                 </form>
             </div>
-            <div *ngIf="!localDriver.signup_disabled" class="ui bottom attached segment" suiTabContent="2">
+            <div *ngIf="localDriver && !localDriver.signup_disabled" class="ui bottom attached segment" suiTabContent="2">
                 <form *ngIf="!showSuccessSignup" class="ui form" (ngSubmit)="signup(signupForm)" #signupForm="ngForm">
                     <div class="field">
                         <label>{{ 'user_label_username' | translate }}</label>
@@ -77,11 +83,12 @@
                 </form>
             </div>
         </sui-tabset>
-        <div *ngIf="externalDrivers && externalDrivers.length > 0" class="ui bottom attached segment">
+        <div *ngIf="!loading && externalDrivers && externalDrivers.length > 0" class="ui bottom attached segment">
             <form class="ui form">
                 <div *ngFor="let driver of externalDrivers" class="field">
-                    <a href="/cdsapi/auth/consumer/{{driver.type}}/askSignin"
-                        class="fluid ui {{driver.type}} button primary">
+                    <a  class="fluid ui {{driver.type}} button primary"
+                        [routerLink]="'/auth/ask-signin/'+driver.type"
+                        [queryParams]="{redirect_uri: redirect, require_mfa: mfa}">
                         <i class="{{driver.type}} icon"></i>
                         {{ 'auth_button_signin_with' | translate: {consumer: driver.type} }}
                     </a>

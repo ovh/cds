@@ -37,7 +37,7 @@ type AuthDriverSigningRedirect struct {
 // AuthDriverManifest struct discribe a auth driver.
 type AuthDriverManifest struct {
 	Type           AuthConsumerType `json:"type"`
-	SignupDisabled bool             `json:"signup_disabled,omitempty"`
+	SignupDisabled bool             `json:"signup_disabled"`
 }
 
 // AuthConsumerScope alias type for string.
