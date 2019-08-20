@@ -145,18 +145,6 @@ export class ConsumerDetailsModalComponent {
                 type: ColumnType.DATE,
                 name: 'user_auth_expire_at',
                 selector: (s: AuthSession) => s.expire_at
-            },
-            <Column<AuthSession>>{
-                type: ColumnType.CONFIRM_BUTTON,
-                name: 'common_action',
-                class: 'two right aligned',
-                selector: (s: AuthSession) => {
-                    return {
-                        title: 'user_auth_revoke_btn',
-                        color: 'red',
-                        click: () => { /*this.clickSessionRevoke(s)*/ }
-                    };
-                }
             }
         ];
     }
@@ -232,7 +220,7 @@ export class ConsumerDetailsModalComponent {
 
     }
 
-    clickDeletePassword(): void {
+    clickDelete(): void {
 
     }
 

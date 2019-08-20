@@ -91,8 +91,14 @@ export class UserEditComponent implements OnInit {
 
         this.columnsGroups = [
             <Column<Group>>{
+                type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
-                selector: (g: Group) => g.name
+                selector: (g: Group) => {
+                    return {
+                        link: '/settings/group/' + g.name,
+                        value: g.name
+                    };
+                }
             },
             <Column<Group>>{
                 name: 'user_group_role',
