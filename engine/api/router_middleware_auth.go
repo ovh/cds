@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -38,11 +39,11 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	// Check for a JWT in current request and add it to the context
 	// If a JWT is given, we also checks that there are a valid session and consumer for it
-	ctx, err = api.jwtMiddleware(ctx, w, req, rc)
+	ctxWithJWT, err := api.jwtMiddleware(ctx, w, req, rc)
 	if err != nil {
 		return ctx, err
 	}
-	jwt, ok := ctx.Value(contextJWT).(*jwt.Token)
+	jwt, ok := ctxWithJWT.Value(contextJWT).(*jwt.Token)
 	if ok {
 		claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
 		sessionID := claims.StandardClaims.Id
@@ -50,15 +51,19 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		// Check for session based on jwt from context
 		session, err := authentication.CheckSession(ctx, api.mustDB(), sessionID)
 		if err != nil {
-			return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+			log.Warning("cannot find a valid session for given JWT: %v", err)
+			return ctx, nil
 		}
-		ctx = context.WithValue(ctx, contextSession, session)
+		ctx = context.WithValue(ctxWithJWT, contextSession, session)
 
-		// Load auth consumer for current session in database
+		// Load auth consumer for current session in database with authentified user and contacts
 		consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
 			authentication.LoadConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+		}
+		if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), consumer.AuthentifiedUser); err != nil {
+			return ctx, err
 		}
 		ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 
@@ -87,7 +92,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		}
 	}
 
-	// If the route don't need auth return directly
+	// If we set Auth(false) on a handler, with should have a consumer in the context if a valid JWT is given
 	if rc.NeedAuth && getAPIConsumer(ctx) == nil {
 		return nil, sdk.WithStack(sdk.ErrUnauthorized)
 	}
@@ -137,23 +142,25 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 
 	jwt, err := authentication.CheckSessionJWT(jwtRaw)
 	if err != nil {
-		return ctx, err
+		// If the given JWT is not valid log the error and return
+		log.Warning("jwtMiddleware> invalid given jwt token: %v", err)
+		return ctx, nil
 	}
 	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
 	sessionID := claims.StandardClaims.Id
 
 	// Checking X-XSRF-TOKEN header if needed and permission level higher than read
 	if xsrfTokenNeeded {
-		log.Debug("authJWTMiddleware> searching for a xsrf token in header")
+		log.Debug("jwtMiddleware> searching for a xsrf token in header")
 		xsrfToken := req.Header.Get(xsrfHeaderName)
 
-		log.Debug("authJWTMiddleware> searching for a xsrf token in cache")
+		log.Debug("jwtMiddleware> searching for a xsrf token in cache")
 		existingXSRFToken, existXSRFTokenInCache := authentication.GetSessionXSRFToken(api.Cache, sessionID)
 
 		// If it's not a read request we want to check the xsrf token then generate a new one
 		// else if its a read request we want to reuse a cached XSRF token or generate one
 		if rc.PermissionLevel > sdk.PermissionRead {
-			log.Debug("authJWTMiddleware> checking xsrf token")
+			log.Debug("jwtMiddleware> checking xsrf token")
 
 			if !existXSRFTokenInCache || xsrfToken != existingXSRFToken {
 				return ctx, sdk.WithStack(sdk.ErrUnauthorized)

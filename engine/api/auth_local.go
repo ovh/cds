@@ -337,15 +337,21 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 
 		localDriver := driver.(*local.AuthDriver)
 
-    // If there is a consumer, send directly to the primary contact for the user.
-    // TODO
+		var email string
 
-		var reqData sdk.AuthConsumerSigninRequest
-		if err := service.UnmarshalBody(r, &reqData); err != nil {
-			return err
-		}
-		if err := localDriver.CheckAskResetRequest(reqData); err != nil {
-			return err
+		// If there is a consumer, send directly to the primary contact for the user.
+		consumer := getAPIConsumer(ctx)
+		if consumer != nil {
+			email = consumer.GetEmail()
+		} else {
+			var reqData sdk.AuthConsumerSigninRequest
+			if err := service.UnmarshalBody(r, &reqData); err != nil {
+				return err
+			}
+			if err := localDriver.CheckAskResetRequest(reqData); err != nil {
+				return err
+			}
+			email = reqData["email"]
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -354,11 +360,11 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		contact, err := user.LoadContactsByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, reqData["email"])
+		contact, err := user.LoadContactsByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, email)
 		if err != nil {
 			// If there is no contact for given email, return ok to prevent email exploration
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				log.Warning("api.postAuthLocalAskResetHandler> no contact found for email %s: %v", reqData["email"], err)
+				log.Warning("api.postAuthLocalAskResetHandler> no contact found for email %s: %v", email, err)
 				return service.WriteJSON(w, nil, http.StatusOK)
 			}
 			return err

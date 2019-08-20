@@ -89,7 +89,7 @@
                     <a  class="fluid ui {{driver.type}} button primary"
                         [routerLink]="'/auth/ask-signin/'+driver.type"
                         [queryParams]="{redirect_uri: redirect, require_mfa: mfa}">
-                        <i class="{{driver.type}} icon"></i>
+                        <i class="{{driver.icon}} icon"></i>
                         {{ 'auth_button_signin_with' | translate: {consumer: driver.type} }}
                     </a>
                 </div>

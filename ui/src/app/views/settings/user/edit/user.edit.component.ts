@@ -74,6 +74,7 @@ export class UserEditComponent implements OnInit {
     columnsSessions: Array<Column<AuthSession>>;
     filterSessions: Filter<AuthSession>;
     sessions: Array<AuthSession>;
+    loadingLocalReset: boolean;
 
     constructor(
         private _authenticationService: AuthenticationService,
@@ -296,6 +297,19 @@ export class UserEditComponent implements OnInit {
 
         this._cd.detectChanges(); // manually ask for detect changes to allow modal data to be set before opening
         this.consumerDetailsModal.show();
+    }
+
+    clickConsumerLocalReset(): void {
+        this.loadingLocalReset = true;
+        this._cd.markForCheck();
+        this._authenticationService.localAskReset()
+            .pipe(finalize(() => {
+                this.loadingLocalReset = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('auth_ask_reset_success'));
+            });
     }
 
     clickConsumerSignin(consumerType: string): void {

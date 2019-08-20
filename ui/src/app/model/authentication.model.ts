@@ -29,6 +29,9 @@ export class AuthDriverSigningRedirect {
 export class AuthDriverManifest {
     type: string;
     signup_disabled: boolean;
+
+    // ui fields
+    icon: string;
 }
 
 export class AuthConsumerSigninResponse {

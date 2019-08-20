@@ -40,7 +40,11 @@ export class SigninComponent implements OnInit {
             this.ldapDriver = data.manifests.find(d => d.type === 'ldap');
             this.externalDrivers = data.manifests
                 .filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin')
-                .sort((a, b) => a.type < b.type ? -1 : 1);
+                .sort((a, b) => a.type < b.type ? -1 : 1)
+                .map(d => {
+                    d.icon = d.type === 'corporate-sso' ? 'shield alternate' : d.type;
+                    return d;
+                });
             this.loading = false;
         });
     }

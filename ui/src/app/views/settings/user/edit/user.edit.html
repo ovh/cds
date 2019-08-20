@@ -126,7 +126,7 @@
                                 </ng-container>
                                 <ng-container *ngIf="!mConsumers[d.type]" [ngSwitch]="d.type">
                                     <ng-container *ngSwitchCase="'local'">
-                                        <button class="ui green button small"
+                                        <button class="ui green button small" [class.loading]="loadingLocalReset"
                                             (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
                                     </ng-container>
                                     <ng-container *ngSwitchDefault>

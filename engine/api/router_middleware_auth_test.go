@@ -6,13 +6,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ovh/cds/sdk"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
 )
 
 func Test_authMiddleware_WithAuth(t *testing.T) {
@@ -39,10 +38,9 @@ func Test_authMiddleware_WithAuth(t *testing.T) {
 	req = assets.NewJWTAuthentifiedRequest(t, sdk.RandomString(10), http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
 	ctx, err = api.authMiddleware(context.TODO(), w, req, config)
-	assert.Error(t, err, "an error should be returned because a jwt was given and is not valid")
+	assert.Error(t, err, "an error should be returned because a jwt was given but no valid session matching")
 }
 
-// If we set Auth(false) on a handler, with should have a consumer in the context if a valid JWT is given
 func Test_authMiddleware_WithoutAuth(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
@@ -68,7 +66,8 @@ func Test_authMiddleware_WithoutAuth(t *testing.T) {
 	req = assets.NewJWTAuthentifiedRequest(t, sdk.RandomString(10), http.MethodGet, "", nil)
 	w = httptest.NewRecorder()
 	ctx, err = api.authMiddleware(context.TODO(), w, req, config)
-	assert.Error(t, err, "an error should be returned because a jwt was given and is not valid")
+	assert.NoError(t, err, "no error should be returned for an invalid jwt when auth is not required")
+	assert.Nil(t, getAPIConsumer(ctx))
 }
 
 func Test_authMiddleware_NeedAdmin(t *testing.T) {

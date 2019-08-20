@@ -68,10 +68,9 @@ export class AuthenticationService {
         });
     }
 
-    localAskReset(email: string): Observable<AuthConsumerSigninResponse> {
-        return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/askReset`, {
-            email,
-        });
+    localAskReset(email?: string): Observable<AuthConsumerSigninResponse> {
+        let req = email ? { email } : {};
+        return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/askReset`, req);
     }
 
     localReset(token: string, password: string): Observable<AuthConsumerSigninResponse> {
