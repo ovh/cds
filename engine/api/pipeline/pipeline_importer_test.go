@@ -83,7 +83,7 @@ func TestImportUpdate(t *testing.T) {
 		t.FailNow()
 	}
 
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	//Define the testscases
 	var test1 = testcase{

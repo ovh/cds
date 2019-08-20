@@ -127,36 +127,25 @@ func DeleteTestGroup(t *testing.T, db gorp.SqlExecutor, g *sdk.Group) error {
 }
 
 // InsertAdminUser have to be used only for tests.
-func InsertAdminUser(db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
+func InsertAdminUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 	data := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 		Fullname: sdk.RandomString(10),
 		Ring:     sdk.UserRingAdmin,
 	}
-
-	if err := user.Insert(db, &data); err != nil {
-		log.Error("unable to insert user: %+v", err)
-	}
+	require.NoError(t, user.Insert(db, &data), "unable to insert user")
 
 	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
-	if err != nil {
-		log.Error("user cannot be load for id %s: %v", data.ID, err)
-	}
+	require.NoError(t, err, "user cannot be load for id %s", data.ID)
 
 	consumer, err := local.NewConsumer(db, u.ID)
-	if err != nil {
-		log.Error("cannot create auth consumer: %v", err)
-	}
+	require.NoError(t, err, "cannot create auth consumer")
 
 	session, err := authentication.NewSession(db, consumer, 5*time.Minute, false)
-	if err != nil {
-		log.Error("cannot create auth session: %v", err)
-	}
+	require.NoError(t, err, "cannot create auth session")
 
 	jwt, err := authentication.NewSessionJWT(session)
-	if err != nil {
-		log.Error("cannot create jwt: %v", err)
-	}
+	require.NoError(t, err, "cannot create jwt")
 
 	return u, jwt
 }
@@ -177,7 +166,6 @@ func InsertMaintainerUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedU
 		Fullname: sdk.RandomString(10),
 		Ring:     sdk.UserRingMaintainer,
 	}
-
 	require.NoError(t, user.Insert(db, &data), "unable to insert user")
 
 	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
@@ -196,59 +184,45 @@ func InsertMaintainerUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedU
 }
 
 // InsertLambdaUser have to be used only for tests.
-func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
-	var u = &sdk.AuthentifiedUser{
+func InsertLambdaUser(t *testing.T, db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
+	u := &sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 		Fullname: sdk.RandomString(10),
 		Ring:     sdk.UserRingUser,
 	}
-
-	if err := user.Insert(db, u); err != nil {
-		log.Fatalf("user.Insert: %v", err)
-	}
+	require.NoError(t, user.Insert(db, u))
 
 	u, err := user.LoadByID(context.Background(), db, u.ID, user.LoadOptions.WithDeprecatedUser)
-	if err != nil {
-		log.Fatalf("user.LoadUserByID: %v", err)
-	}
+	require.NoError(t, err)
 
 	for i := range groups {
 		existingGroup, _ := group.LoadByName(context.TODO(), db, groups[i].Name)
 		if existingGroup == nil {
 			newGroup, err := group.Create(db, *groups[i], u.OldUserStruct.ID)
-			if err != nil {
-				log.Error("unable to insert group: %v", err)
-			}
+			require.NoError(t, err)
 			*groups[i] = *newGroup
 		} else {
-			if err := group.InsertLinkGroupUser(db, &group.LinkGroupUser{
+			require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
 				GroupID: groups[i].ID,
 				UserID:  u.OldUserStruct.ID,
 				Admin:   false,
-			}); err != nil {
-				log.Error("unable to insert user in group: %v", err)
-			}
+			}), "unable to insert user in group")
 		}
 		u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, *groups[i])
 	}
-	btes, _ := json.Marshal(u)
 
+	btes, err := json.Marshal(u)
+	require.NoError(t, err)
 	log.Debug("lambda user: %s", string(btes))
 
 	consumer, err := local.NewConsumer(db, u.ID)
-	if err != nil {
-		log.Error("cannot create auth consumer: %v", err)
-	}
+	require.NoError(t, err, "cannot create auth consumer")
 
 	session, err := authentication.NewSession(db, consumer, 5*time.Minute, false)
-	if err != nil {
-		log.Error("cannot create auth session: %v", err)
-	}
+	require.NoError(t, err, "cannot create session")
 
 	jwt, err := authentication.NewSessionJWT(session)
-	if err != nil {
-		log.Error("cannot create jwt: %v", err)
-	}
+	require.NoError(t, err, "cannot create jwt")
 
 	return u, jwt
 }
@@ -454,7 +428,7 @@ func InsertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 }
 
 func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey, *sdk.AuthConsumer, string) {
-	usr1, _ := InsertLambdaUser(db, &grp)
+	usr1, _ := InsertLambdaUser(t, db, &grp)
 
 	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
@@ -489,7 +463,7 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 }
 
 func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string, scopes ...sdk.AuthConsumerScope) (*sdk.Service, *rsa.PrivateKey) {
-	usr1, _ := InsertAdminUser(db)
+	usr1, _ := InsertAdminUser(t, db)
 
 	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)

@@ -59,7 +59,7 @@ func TestAPI_getArtifactsStoreHandler(t *testing.T) {
 	test.NoError(t, errO)
 	api.SharedStorage = storage
 
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
 

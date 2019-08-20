@@ -337,6 +337,9 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 
 		localDriver := driver.(*local.AuthDriver)
 
+    // If there is a consumer, send directly to the primary contact for the user.
+    // TODO
+
 		var reqData sdk.AuthConsumerSigninRequest
 		if err := service.UnmarshalBody(r, &reqData); err != nil {
 			return err
@@ -361,24 +364,28 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 			return err
 		}
 
-		consumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, sdk.ConsumerLocal, contact.UserID,
-			authentication.LoadConsumerOptions.WithAuthentifiedUser)
-		if err != nil {
-			// If there is no local consumer for given email, return ok to prevent account exploration
-			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				log.Warning("api.postAuthLocalAskResetHandler> no local consumer found for contact with email %s: %v", reqData["email"], err)
-				return service.WriteJSON(w, nil, http.StatusOK)
+		existingLocalConsumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, sdk.ConsumerLocal, contact.UserID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		if existingLocalConsumer == nil {
+			// If a user exists for given email but has no local consumer we want to create it.
+			existingLocalConsumer, err = local.NewConsumer(tx, contact.UserID)
+			if err != nil {
+				return err
 			}
+		}
+		if err := authentication.LoadConsumerOptions.WithAuthentifiedUser(ctx, tx, existingLocalConsumer); err != nil {
 			return err
 		}
 
-		resetToken, err := local.NewResetConsumerToken(api.Cache, consumer.ID)
+		resetToken, err := local.NewResetConsumerToken(api.Cache, existingLocalConsumer.ID)
 		if err != nil {
 			return err
 		}
 
 		// Insert the authentication
-		if err := mail.SendMailAskResetToken(contact.Value, consumer.AuthentifiedUser.Username, resetToken,
+		if err := mail.SendMailAskResetToken(contact.Value, existingLocalConsumer.AuthentifiedUser.Username, resetToken,
 			api.Config.URL.UI+"/auth/reset?token=%s"); err != nil {
 			return sdk.WrapError(err, "cannot send reset token email at %s", contact.Value)
 		}

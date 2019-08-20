@@ -23,10 +23,8 @@ const (
 )
 
 func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	// If the route don't need auth return directly
-	if !rc.NeedAuth {
-		return ctx, nil
-	}
+	ctx, end := observability.Span(ctx, "router.authMiddleware")
+	defer end()
 
 	// Tokens (like izanamy)
 	ctx, ok, err := api.authStatusTokenMiddleware(ctx, w, req, rc)
@@ -39,61 +37,63 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	// Check for a JWT in current request and add it to the context
+	// If a JWT is given, we also checks that there are a valid session and consumer for it
 	ctx, err = api.jwtMiddleware(ctx, w, req, rc)
 	if err != nil {
 		return ctx, err
 	}
-
 	jwt, ok := ctx.Value(contextJWT).(*jwt.Token)
-	if !ok {
-		return nil, sdk.WithStack(sdk.ErrUnauthorized)
-	}
-	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
-	sessionID := claims.StandardClaims.Id
+	if ok {
+		claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
+		sessionID := claims.StandardClaims.Id
 
-	// Check for session based on jwt from context
-	session, err := authentication.CheckSession(ctx, api.mustDB(), sessionID)
-	if err != nil {
-		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
-	}
+		// Check for session based on jwt from context
+		session, err := authentication.CheckSession(ctx, api.mustDB(), sessionID)
+		if err != nil {
+			return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+		}
+		ctx = context.WithValue(ctx, contextSession, session)
 
-	ctx = context.WithValue(ctx, contextSession, session)
+		// Load auth consumer for current session in database
+		consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
+			authentication.LoadConsumerOptions.WithAuthentifiedUser)
+		if err != nil {
+			return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+		}
+		ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 
-	// Load auth consumer for current session in database
-	consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
-		authentication.LoadConsumerOptions.WithAuthentifiedUser)
-	if err != nil {
-		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
-	}
-
-	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
-
-	// Checks scopes, all expected scopes should be in actual scopes
-	expectedScopes, actualScopes := rc.AllowedScopes, consumer.Scopes
-
-	// Actual scope empty list means wildcard scope, we don't need to check scopes
-	if len(expectedScopes) > 0 && len(actualScopes) > 0 {
-		var found bool
-	findScope:
-		for i := range expectedScopes {
-			for j := range actualScopes {
-				if actualScopes[j] == expectedScopes[i] {
-					found = true
-					break findScope
+		// Checks scopes, all expected scopes should be in actual scopes
+		// Actual scope empty list means wildcard scope, we don't need to check scopes
+		expectedScopes, actualScopes := rc.AllowedScopes, consumer.Scopes
+		if len(expectedScopes) > 0 && len(actualScopes) > 0 {
+			var found bool
+		findScope:
+			for i := range expectedScopes {
+				for j := range actualScopes {
+					if actualScopes[j] == expectedScopes[i] {
+						found = true
+						break findScope
+					}
 				}
 			}
+			if !found {
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
+			}
 		}
-		if !found {
-			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
+
+		// Check that permission are valid for current route and consumer
+		if err := api.checkPermission(ctx, mux.Vars(req), rc.PermissionLevel); err != nil {
+			return ctx, err
 		}
+	}
+
+	// If the route don't need auth return directly
+	if rc.NeedAuth && getAPIConsumer(ctx) == nil {
+		return nil, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
 	if rc.NeedAdmin && !isAdmin(ctx) {
 		return ctx, sdk.WithStack(sdk.ErrForbidden)
-	}
-
-	if err := api.checkPermission(ctx, mux.Vars(req), rc.PermissionLevel); err != nil {
-		return ctx, err
 	}
 
 	return ctx, nil
@@ -116,7 +116,7 @@ func (api *API) authStatusTokenMiddleware(ctx context.Context, w http.ResponseWr
 }
 
 func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	ctx, end := observability.Span(ctx, "router.authJWTMiddleware")
+	ctx, end := observability.Span(ctx, "router.jwtMiddleware")
 	defer end()
 
 	var jwtRaw string
@@ -130,8 +130,9 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 	} else if strings.HasPrefix(req.Header.Get("Authorization"), "Bearer ") {
 		jwtRaw = strings.TrimPrefix(req.Header.Get("Authorization"), "Bearer ")
 	}
+	// If no jwt is given, simply return empty context without error
 	if jwtRaw == "" {
-		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+		return ctx, nil
 	}
 
 	jwt, err := authentication.CheckSessionJWT(jwtRaw)

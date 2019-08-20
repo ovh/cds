@@ -19,7 +19,7 @@ func Test_getUserContactsHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, jwtRaw := assets.InsertLambdaUser(db)
+	u, jwtRaw := assets.InsertLambdaUser(t, db)
 
 	seed := sdk.RandomString(20)
 	require.NoError(t, user.InsertContact(db, &sdk.UserContact{

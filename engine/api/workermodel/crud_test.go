@@ -20,7 +20,7 @@ func TestCreateModel(t *testing.T) {
 	defer end()
 
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	u, _ := assets.InsertLambdaUser(db)
+	u, _ := assets.InsertLambdaUser(t, db)
 
 	pattern := sdk.ModelPattern{
 		Name: sdk.RandomString(10),
@@ -56,7 +56,7 @@ func TestUpdateModel(t *testing.T) {
 	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
-	u, _ := assets.InsertLambdaUser(db)
+	u, _ := assets.InsertLambdaUser(t, db)
 
 	pattern := sdk.ModelPattern{
 		Name: sdk.RandomString(10),

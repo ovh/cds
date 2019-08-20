@@ -28,7 +28,7 @@ func TestDAO(t *testing.T) {
 		Name: "services-TestDAO-group",
 	}
 
-	u, _ := assets.InsertLambdaUser(db, &grp)
+	u, _ := assets.InsertLambdaUser(t, db, &grp)
 
 	privateKey, err := jws.NewRandomRSAKey()
 	test.NoError(t, err)

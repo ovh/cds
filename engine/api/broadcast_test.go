@@ -19,7 +19,7 @@ func Test_addBroadcastHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	_, jwt := assets.InsertAdminUser(db)
+	_, jwt := assets.InsertAdminUser(t, db)
 
 	br := sdk.Broadcast{
 		Title:   "maintenance swarm",
@@ -44,8 +44,8 @@ func Test_postMarkAsReadBroadcastHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	uLambda, passLambda := assets.InsertLambdaUser(db)
+	u, pass := assets.InsertAdminUser(t, db)
+	uLambda, passLambda := assets.InsertLambdaUser(t, db)
 
 	br := sdk.Broadcast{
 		Title:   "maintenance swarm",

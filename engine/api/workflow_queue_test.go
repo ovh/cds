@@ -52,7 +52,7 @@ type testRunWorkflowCtx struct {
 }
 
 func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx {
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
 	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
@@ -283,7 +283,7 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	api, _, router, end := newTestAPI(t)
 	defer end()
 
-	_, jwt := assets.InsertAdminUser(api.mustDB())
+	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 	t.Log("checkin as a user")
 
 	ctx := testRunWorkflow(t, api, router)
@@ -806,7 +806,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	defer end()
 
 	// Create user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	// Create project
@@ -947,7 +947,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	defer end()
 
 	// Create user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	// Create project
 	key := sdk.RandomString(10)

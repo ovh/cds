@@ -23,7 +23,7 @@ func Test_getActionExportHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	_, jwt := assets.InsertAdminUser(db)
+	_, jwt := assets.InsertAdminUser(t, db)
 
 	grp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
@@ -56,7 +56,7 @@ func Test_postActionImportHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	_, jwt := assets.InsertAdminUser(db)
+	_, jwt := assets.InsertAdminUser(t, db)
 
 	uri := api.Router.GetRoute("POST", api.importActionHandler, nil)
 	test.NotEmpty(t, uri)
@@ -102,7 +102,7 @@ func Test_postActionAuditRollbackHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	_, jwt := assets.InsertAdminUser(db)
+	_, jwt := assets.InsertAdminUser(t, db)
 
 	grp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 

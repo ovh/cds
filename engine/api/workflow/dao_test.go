@@ -1482,7 +1482,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 func TestInsertAndDeleteMultiHook(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 
 	hookModels, err := workflow.LoadHookModels(db)
