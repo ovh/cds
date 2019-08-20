@@ -427,7 +427,7 @@ github.com/opencontainers/runc/libcontainer/devices
 github.com/opencontainers/runtime-spec/specs-go
 # github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25 => ./sdk/interpolate
 github.com/ovh/cds/sdk/interpolate
-# github.com/ovh/cds/sdk/izanami v0.0.0-00010101000000-000000000000 => ./sdk/izanami
+# github.com/ovh/cds/sdk/izanami v0.0.0-20190703101657-683453b50b2a => ./sdk/izanami
 github.com/ovh/cds/sdk/izanami
 # github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
 github.com/ovh/go-ovh/ovh
