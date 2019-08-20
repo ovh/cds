@@ -22,7 +22,7 @@ func Test_postTemplateApplyHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	_, jwt := assets.InsertAdminUser(api.mustDB())
+	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	assert.NoError(t, err)
 
@@ -89,7 +89,7 @@ func Test_postTemplateBulkHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	_, jwt := assets.InsertAdminUser(api.mustDB())
+	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	assert.NoError(t, err)
 

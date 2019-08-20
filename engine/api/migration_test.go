@@ -19,7 +19,7 @@ func TestPostAdminMigrationCancelHandler(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	_, jwt := assets.InsertAdminUser(api.mustDB())
+	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 
 	//Load all migration
 	uri := router.GetRoute("GET", api.getAdminMigrationsHandler, nil)

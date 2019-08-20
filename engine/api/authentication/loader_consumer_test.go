@@ -21,7 +21,7 @@ func TestWithAuthentifiedUser(t *testing.T) {
 	defer end()
 
 	g := assets.InsertGroup(t, db)
-	u, _ := assets.InsertLambdaUser(db, g)
+	u, _ := assets.InsertLambdaUser(t, db, g)
 
 	res, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -40,7 +40,7 @@ func TestWithConsumerGroups(t *testing.T) {
 
 	g1 := assets.InsertGroup(t, db)
 	g2 := assets.InsertGroup(t, db)
-	u, _ := assets.InsertLambdaUser(db, g1, g2)
+	u, _ := assets.InsertLambdaUser(t, db, g1, g2)
 
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
 		authentication.LoadConsumerOptions.WithAuthentifiedUser, authentication.LoadConsumerOptions.WithConsumerGroups)

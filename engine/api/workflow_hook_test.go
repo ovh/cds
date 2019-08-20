@@ -26,7 +26,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	db := api.mustDB()
 	cache := api.Cache
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	u, passUser := assets.InsertLambdaUser(api.mustDB())
+	u, passUser := assets.InsertLambdaUser(t, api.mustDB())
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
@@ -94,7 +94,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	db := api.mustDB()
 	cache := api.Cache
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	admin, passAdmin := assets.InsertAdminUser(api.mustDB())
+	admin, passAdmin := assets.InsertAdminUser(t, api.mustDB())
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 
@@ -160,7 +160,7 @@ func Test_getWorkflowHookModelHandler(t *testing.T) {
 	api, _, _, end := newTestAPI(t)
 	defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	admin, passAdmin := assets.InsertAdminUser(api.mustDB())
+	admin, passAdmin := assets.InsertAdminUser(t, api.mustDB())
 
 	//Prepare request
 	vars := map[string]string{
@@ -188,7 +188,7 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 	api, _, _, end := newTestAPI(t)
 	defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	admin, passAdmin := assets.InsertAdminUser(api.mustDB())
+	admin, passAdmin := assets.InsertAdminUser(t, api.mustDB())
 
 	//Prepare request
 	vars := map[string]string{
@@ -231,7 +231,7 @@ func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
 	defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
-	u, pass := assets.InsertLambdaUser(api.mustDB())
+	u, pass := assets.InsertLambdaUser(t, api.mustDB())
 
 	//Prepare request
 	vars := map[string]string{

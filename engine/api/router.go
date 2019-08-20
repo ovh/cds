@@ -342,7 +342,7 @@ func (r *Router) Asynchronous(handler service.AsynchronousHandlerFunc, retry int
 
 // DEPRECATED marks the handler as deprecated
 var DEPRECATED = func(rc *service.HandlerConfig) {
-	//rc.Options["isDeprecated"] = "true"
+	rc.IsDeprecated = true
 }
 
 // GET will set given handler only for GET request

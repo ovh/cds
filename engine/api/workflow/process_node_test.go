@@ -37,7 +37,7 @@ type mockServiceClient struct {
 func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	webHookModel, err := workflow.LoadHookModelByName(db, sdk.WebHookModelName)
 	assert.NoError(t, err)
@@ -220,7 +220,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	webHookModel, err := workflow.LoadHookModelByName(db, sdk.WebHookModelName)
 	assert.NoError(t, err)
@@ -395,7 +395,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
@@ -548,7 +548,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
@@ -694,7 +694,7 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
@@ -940,7 +940,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
@@ -1126,7 +1126,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
@@ -1307,7 +1307,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
@@ -1508,7 +1508,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 func TestGitParamWithJoin(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
@@ -1726,7 +1726,7 @@ func TestGitParamWithJoin(t *testing.T) {
 func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
@@ -1943,7 +1943,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)

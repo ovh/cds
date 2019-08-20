@@ -1,7 +1,9 @@
 <div class="wrapper">
     <app-breadcrumb [path]="path"></app-breadcrumb>
     <div class="page-content">
-        <app-menu class="menu" [items]="menuItems" (onSelect)="selectMenuItem($event)"></app-menu>
+        <app-menu class="menu" [withRouting]="true" [orientation]="'VERTICAL'" [items]="menuItems"
+            (onSelect)="selectMenuItem($event)">
+        </app-menu>
         <app-scrollview class="scrollview" *ngIf="selectedItem" [ngSwitch]="selectedItem.key">
             <ng-container *ngSwitchCase="'profile'" class="ui grid">
                 <div *ngIf="user;then showUser;else loadUser"></div>
@@ -144,7 +146,8 @@
                         </div>
                     </h3>
                     <app-data-table [withFilter]="filterConsumers" [withPagination]="10" [columns]="columnsConsumers"
-                        [data]="myConsumers" [loading]="loadingAuthData"></app-data-table>
+                        [data]="myConsumers" [loading]="loadingAuthData">
+                    </app-data-table>
                 </div>
                 <div class="sixteen wide column">
                     <h2 class="ui header">

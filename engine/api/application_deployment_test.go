@@ -24,7 +24,7 @@ import (
 func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	app := &sdk.Application{
@@ -51,7 +51,7 @@ func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
 func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	app := &sdk.Application{
@@ -174,7 +174,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentIntegrations(t *testing.T) {
 	api, db, router, end := newTestAPI(t)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	app := &sdk.Application{
@@ -298,7 +298,7 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 	api, tsURL, tsClose := newTestServer(t)
 	defer tsClose()
 
-	u, _ := assets.InsertAdminUser(api.mustDB())
+	u, _ := assets.InsertAdminUser(t, api.mustDB())
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 

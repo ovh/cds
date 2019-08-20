@@ -49,7 +49,6 @@ export class UserEditComponent implements OnInit {
     deleteLoading = false;
     groupsAdmin: Array<Group>;
     userPatternError = false;
-
     username: string;
     currentUser: AuthentifiedUser;
     editable: boolean;
@@ -92,8 +91,14 @@ export class UserEditComponent implements OnInit {
 
         this.columnsGroups = [
             <Column<Group>>{
+                type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
-                selector: (g: Group) => g.name
+                selector: (g: Group) => {
+                    return {
+                        link: '/settings/group/' + g.name,
+                        value: g.name
+                    };
+                }
             },
             <Column<Group>>{
                 name: 'user_group_role',
@@ -287,6 +292,7 @@ export class UserEditComponent implements OnInit {
 
         // calculate children for selected consumer
         this.selectedConsumer.children = this.consumers.filter(c => c.parent_id === this.selectedConsumer.id);
+        this.selectedConsumer.sessions = this.sessions.filter(s => s.consumer_id === this.selectedConsumer.id);
 
         this._cd.detectChanges(); // manually ask for detect changes to allow modal data to be set before opening
         this.consumerDetailsModal.show();

@@ -20,7 +20,7 @@ func Test_getUserGroupsHandler(t *testing.T) {
 	g1 := assets.InsertGroup(t, db)
 	g2 := assets.InsertGroup(t, db)
 
-	u, jwtRaw := assets.InsertLambdaUser(db, g1, g2)
+	u, jwtRaw := assets.InsertLambdaUser(t, db, g1, g2)
 	assets.SetUserGroupAdmin(t, db, g2.ID, u.OldUserStruct.ID)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getUserGroupsHandler, map[string]string{

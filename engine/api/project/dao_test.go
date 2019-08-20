@@ -92,7 +92,7 @@ func TestLoadAllByRepo(t *testing.T) {
 	}))
 	test.NoError(t, group.LoadGroupByProject(db, &proj))
 
-	u, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
+	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
 	test.NoError(t, application.Insert(db, cache, &proj, app))
 

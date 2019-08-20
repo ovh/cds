@@ -21,7 +21,7 @@ func Test_getConsumersByUserHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, jwtRaw := assets.InsertLambdaUser(db)
+	u, jwtRaw := assets.InsertLambdaUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
@@ -50,7 +50,7 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 	defer end()
 
 	g := assets.InsertGroup(t, db)
-	u, jwtRaw := assets.InsertLambdaUser(db, g)
+	u, jwtRaw := assets.InsertLambdaUser(t, db, g)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
 	require.NoError(t, err)
 
@@ -84,7 +84,7 @@ func Test_deleteConsumerByUserHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, jwtRaw := assets.InsertLambdaUser(db)
+	u, jwtRaw := assets.InsertLambdaUser(t, db)
 
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -114,7 +114,7 @@ func Test_getSessionsByUserHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, jwtRaw := assets.InsertLambdaUser(db)
+	u, jwtRaw := assets.InsertLambdaUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
@@ -147,7 +147,7 @@ func Test_deleteSessionByUserHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, jwtRaw := assets.InsertLambdaUser(db)
+	u, jwtRaw := assets.InsertLambdaUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)

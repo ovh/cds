@@ -19,7 +19,7 @@ func TestServicesHandlers(t *testing.T) {
 	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	admin, jwtRaw := assets.InsertAdminUser(api.mustDB())
+	admin, jwtRaw := assets.InsertAdminUser(t, api.mustDB())
 
 	data := sdk.AuthConsumer{
 		Name:   sdk.RandomString(10),

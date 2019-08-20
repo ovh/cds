@@ -20,7 +20,7 @@ func Test_getGroupHandler(t *testing.T) {
 	defer end()
 
 	g := sdk.Group{Name: sdk.RandomString(10)}
-	u, jwtRaw := assets.InsertLambdaUser(db, &g)
+	u, jwtRaw := assets.InsertLambdaUser(t, db, &g)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getGroupHandler, map[string]string{
 		"permGroupName": g.Name,
@@ -45,7 +45,7 @@ func Test_getGroupsHandler(t *testing.T) {
 
 	g1 := &sdk.Group{Name: sdk.RandomString(10)}
 	g2 := &sdk.Group{Name: sdk.RandomString(10)}
-	_, jwtRaw := assets.InsertLambdaUser(db, g1, g2)
+	_, jwtRaw := assets.InsertLambdaUser(t, db, g1, g2)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getGroupsHandler, nil)
 	require.NotEmpty(t, uri)
@@ -74,7 +74,7 @@ func Test_postGroupHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, jwtRaw := assets.InsertLambdaUser(db)
+	u, jwtRaw := assets.InsertLambdaUser(t, db)
 
 	data := sdk.Group{
 		Name: sdk.RandomString(10),
@@ -101,7 +101,7 @@ func Test_putGroupHandler(t *testing.T) {
 
 	g1Name, g2Name := sdk.RandomString(10), sdk.RandomString(10)
 	g1, g2 := &sdk.Group{Name: g1Name}, &sdk.Group{Name: g2Name}
-	_, jwtRaw := assets.InsertLambdaUser(db, g1, g2)
+	_, jwtRaw := assets.InsertLambdaUser(t, db, g1, g2)
 
 	g1.Name = g2Name
 	uri := api.Router.GetRoute(http.MethodPut, api.putGroupHandler, map[string]string{
@@ -133,7 +133,7 @@ func Test_deleteGroupHandler(t *testing.T) {
 	defer end()
 
 	g := sdk.Group{Name: sdk.RandomString(10)}
-	_, jwtRaw := assets.InsertLambdaUser(db, &g)
+	_, jwtRaw := assets.InsertLambdaUser(t, db, &g)
 
 	uri := api.Router.GetRoute(http.MethodDelete, api.deleteGroupHandler, map[string]string{
 		"permGroupName": g.Name,
@@ -153,9 +153,9 @@ func Test_postGroupUserHandler(t *testing.T) {
 	defer end()
 
 	g := &sdk.Group{Name: sdk.RandomString(10)}
-	_, jwtRaw1 := assets.InsertLambdaUser(db, g)
-	u2, jwtRaw2 := assets.InsertLambdaUser(db)
-	u3, _ := assets.InsertLambdaUser(db)
+	_, jwtRaw1 := assets.InsertLambdaUser(t, db, g)
+	u2, jwtRaw2 := assets.InsertLambdaUser(t, db)
+	u3, _ := assets.InsertLambdaUser(t, db)
 
 	require.NoError(t, group.LoadOptions.WithMembers(context.TODO(), db, g))
 	assert.Equal(t, 1, len(g.Members))
@@ -196,8 +196,8 @@ func Test_putGroupUserHandler(t *testing.T) {
 	defer end()
 
 	g := &sdk.Group{Name: sdk.RandomString(10)}
-	_, jwtRaw1 := assets.InsertLambdaUser(db, g)
-	u2, jwtRaw2 := assets.InsertLambdaUser(db, g)
+	_, jwtRaw1 := assets.InsertLambdaUser(t, db, g)
+	u2, jwtRaw2 := assets.InsertLambdaUser(t, db, g)
 
 	require.NoError(t, group.LoadOptions.WithMembers(context.TODO(), db, g))
 	assert.Equal(t, 2, len(g.Members))
@@ -238,9 +238,9 @@ func Test_deleteGroupUserHandler(t *testing.T) {
 	defer end()
 
 	g := &sdk.Group{Name: sdk.RandomString(10)}
-	u1, jwtRaw1 := assets.InsertLambdaUser(db, g)
-	u2, jwtRaw2 := assets.InsertLambdaUser(db, g)
-	u3, _ := assets.InsertLambdaUser(db, g)
+	u1, jwtRaw1 := assets.InsertLambdaUser(t, db, g)
+	u2, jwtRaw2 := assets.InsertLambdaUser(t, db, g)
+	u3, _ := assets.InsertLambdaUser(t, db, g)
 
 	require.NoError(t, group.LoadOptions.WithMembers(context.TODO(), db, g))
 	assert.Equal(t, 3, len(g.Members))

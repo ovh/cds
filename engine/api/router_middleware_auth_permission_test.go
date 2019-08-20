@@ -74,7 +74,7 @@ func TestAPI_checkProjectPermissions(t *testing.T) {
 	defer end()
 
 	g := assets.InsertGroup(t, api.mustDB())
-	authUser, _ := assets.InsertLambdaUser(api.mustDB(), g)
+	authUser, _ := assets.InsertLambdaUser(t, api.mustDB(), g)
 
 	p := assets.InsertTestProject(t, api.mustDB(), api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
@@ -126,9 +126,9 @@ func TestAPI_checkUserPermissions(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	authUser, _ := assets.InsertLambdaUser(db)
+	authUser, _ := assets.InsertLambdaUser(t, db)
 	authUserMaintainer, _ := assets.InsertMaintainerUser(t, db)
-	authUserAdmin, _ := assets.InsertAdminUser(db)
+	authUserAdmin, _ := assets.InsertAdminUser(t, db)
 
 	cases := []struct {
 		Name                     string
@@ -208,9 +208,9 @@ func TestAPI_checkUserPublicPermissions(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	authUser, _ := assets.InsertLambdaUser(db)
+	authUser, _ := assets.InsertLambdaUser(t, db)
 	authUserMaintainer, _ := assets.InsertMaintainerUser(t, db)
-	authUserAdmin, _ := assets.InsertAdminUser(db)
+	authUserAdmin, _ := assets.InsertAdminUser(t, db)
 
 	cases := []struct {
 		Name                     string
@@ -290,11 +290,11 @@ func TestAPI_checkConsumerPermissions(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	authUser, _ := assets.InsertLambdaUser(db)
+	authUser, _ := assets.InsertLambdaUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
 	require.NoError(t, err)
 
-	authUserAdmin, _ := assets.InsertAdminUser(db)
+	authUserAdmin, _ := assets.InsertAdminUser(t, db)
 	localConsumerAdmin, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserAdmin.ID)
 	require.NoError(t, err)
 
@@ -315,13 +315,13 @@ func TestAPI_checkSessionPermissions(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	authUser, _ := assets.InsertLambdaUser(db)
+	authUser, _ := assets.InsertLambdaUser(t, db)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
 	require.NoError(t, err)
 	localSession, err := authentication.NewSession(db, localConsumer, time.Second, false)
 	require.NoError(t, err)
 
-	authUserAdmin, _ := assets.InsertAdminUser(db)
+	authUserAdmin, _ := assets.InsertAdminUser(t, db)
 	localConsumerAdmin, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserAdmin.ID)
 	require.NoError(t, err)
 	localSessionAdmin, err := authentication.NewSession(db, localConsumerAdmin, time.Second, false)
@@ -610,9 +610,9 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 		}
 		var usr *sdk.AuthentifiedUser
 		if tt.setup.UserAdmin {
-			usr, _ = assets.InsertAdminUser(api.mustDB())
+			usr, _ = assets.InsertAdminUser(t, api.mustDB())
 		} else {
-			usr, _ = assets.InsertLambdaUser(api.mustDB(), groups...)
+			usr, _ = assets.InsertLambdaUser(t, api.mustDB(), groups...)
 		}
 
 		proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, tt.args.pKey, tt.args.pKey)

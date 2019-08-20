@@ -15,28 +15,40 @@ import (
 )
 
 func isGroupAdmin(ctx context.Context, g *sdk.Group) bool {
-	consumer := getAPIConsumer(ctx)
-	member := g.IsMember(consumer.GetGroupIDs())
-	admin := g.IsAdmin(*consumer.AuthentifiedUser)
+	c := getAPIConsumer(ctx)
+	if c == nil {
+		return false
+	}
+	member := g.IsMember(c.GetGroupIDs())
+	admin := g.IsAdmin(*c.AuthentifiedUser)
 	log.Debug("api.isGroupAdmin> member: %t admin: %t", member, admin)
 	return member && admin
 }
 
 func isGroupMember(ctx context.Context, g *sdk.Group) bool {
-	consumer := getAPIConsumer(ctx)
-	return g.IsMember(consumer.GetGroupIDs()) || g.ID == group.SharedInfraGroup.ID
+	c := getAPIConsumer(ctx)
+	if c == nil {
+		return false
+	}
+	return g.IsMember(c.GetGroupIDs()) || g.ID == group.SharedInfraGroup.ID
 }
 
 func isMaintainer(ctx context.Context) bool {
-	consumer := getAPIConsumer(ctx)
-	maintainer := consumer.Maintainer()
-	admin := consumer.Admin()
+	c := getAPIConsumer(ctx)
+	if c == nil {
+		return false
+	}
+	maintainer := c.Maintainer()
+	admin := c.Admin()
 	return maintainer || admin
 }
 
 func isAdmin(ctx context.Context) bool {
-	u := getAPIConsumer(ctx)
-	return u.Admin()
+	c := getAPIConsumer(ctx)
+	if c == nil {
+		return false
+	}
+	return c.Admin()
 }
 
 func getAPIConsumer(c context.Context) *sdk.AuthConsumer {

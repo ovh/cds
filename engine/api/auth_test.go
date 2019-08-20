@@ -25,7 +25,7 @@ func Test_postAuthSignoutHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	_, jwtRaw := assets.InsertLambdaUser(db)
+	_, jwtRaw := assets.InsertLambdaUser(t, db)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getUserHandler, map[string]string{
 		"permUsernamePublic": "me",

@@ -94,9 +94,3 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		return service.WriteJSON(w, resp, http.StatusOK)
 	}
 }
-
-func (api *API) postAuthBuiltinSignoutHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return nil
-	}
-}

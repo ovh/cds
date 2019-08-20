@@ -17,7 +17,7 @@ func Test_getUsersHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	expected, jwtRaw := assets.InsertLambdaUser(db)
+	expected, jwtRaw := assets.InsertLambdaUser(t, db)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getUsersHandler, nil)
 	require.NotEmpty(t, uri)
@@ -45,7 +45,7 @@ func Test_getUserHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	expected, jwtRaw := assets.InsertLambdaUser(db)
+	expected, jwtRaw := assets.InsertLambdaUser(t, db)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getUserHandler, map[string]string{
 		"permUsernamePublic": expected.Username,
@@ -67,11 +67,11 @@ func Test_putUserHandler(t *testing.T) {
 
 	assets.DeleteAdmins(t, db)
 
-	initial, jwtInitialRaw := assets.InsertLambdaUser(db)
+	initial, jwtInitialRaw := assets.InsertLambdaUser(t, db)
 	initialNewUsername := sdk.RandomString(10)
 	initialNewFullname := sdk.RandomString(10)
-	admin1, jwtAdmin1Raw := assets.InsertAdminUser(db)
-	admin2, jwtAdmin2Raw := assets.InsertAdminUser(db)
+	admin1, jwtAdmin1Raw := assets.InsertAdminUser(t, db)
+	admin2, jwtAdmin2Raw := assets.InsertAdminUser(t, db)
 
 	cases := []struct {
 		Name           string
@@ -200,10 +200,10 @@ func Test_deleteUserHandler(t *testing.T) {
 
 	assets.DeleteAdmins(t, db)
 
-	initial1, jwtInitial1Raw := assets.InsertLambdaUser(db)
-	initial2, _ := assets.InsertLambdaUser(db)
-	admin1, jwtAdmin1Raw := assets.InsertAdminUser(db)
-	admin2, _ := assets.InsertAdminUser(db)
+	initial1, jwtInitial1Raw := assets.InsertLambdaUser(t, db)
+	initial2, _ := assets.InsertLambdaUser(t, db)
+	admin1, jwtAdmin1Raw := assets.InsertAdminUser(t, db)
+	admin2, _ := assets.InsertAdminUser(t, db)
 
 	cases := []struct {
 		Name           string

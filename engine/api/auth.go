@@ -114,8 +114,6 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			if err := x.CheckSigninStateToken(req); err != nil {
 				return err
 			}
-		default:
-			// sdk.ConsumerLDAP, sdk.ConsumerTest, sdk.ConsumerTest2
 		}
 
 		// Convert code to external user info
@@ -130,17 +128,23 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
+		var signupDone bool
+		initToken, hasInitToken := req["init_token"]
+		hasInitToken = hasInitToken && initToken != ""
+
 		// Check if a user already exists for external username
 		u, err := user.LoadByUsername(ctx, tx, userInfo.Username, user.LoadOptions.WithContacts)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 			return err
 		}
-
-		var signupDone bool
-		initToken, hasInitToken := req["init_token"]
-		hasInitToken = hasInitToken && initToken != ""
-
-		if u == nil && userInfo.Email != "" {
+		if u != nil {
+			// If the user exists with the same email address than in the userInfo,
+			// we will create a new consumer and continue the signin
+			// else we raise an error
+			if u.GetEmail() != userInfo.Email {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "a user already exists for username %s", userInfo.Username)
+			}
+		} else {
 			// Check if a user already exists for external email
 			contact, err := user.LoadContactsByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, userInfo.Email)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -153,7 +157,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 					return err
 				}
 			} else {
-				// We can't find any user with the same username of the same email address
+				// We can't find any user with the same email address
 				// So we will do signup for a new user from the data got from the auth driver
 				if driver.GetManifest().SignupDisabled {
 					return sdk.WithStack(sdk.ErrSignupDisabled)
@@ -196,13 +200,6 @@ func (api *API) postAuthSigninHandler() service.Handler {
 
 				signupDone = true
 			}
-		} else {
-			// If the user exists with the same email address than in the userInfo,
-			// we will create a new consumer and continue the signin
-			// else we raise an error
-			if u.GetEmail() != userInfo.Email {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "a user already exists for user name %s", userInfo.Username)
-			}
 		}
 
 		// Check if a consumer exists for consumer type and external user identifier
@@ -210,7 +207,6 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
-
 		if consumer == nil {
 			// Create a new consumer for the new user
 			consumer, err = authentication.NewConsumerExternal(tx, u.ID, consumerType, userInfo)

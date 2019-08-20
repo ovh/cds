@@ -18,6 +18,11 @@ export class Item {
     default: boolean;
 }
 
+export enum Orientation {
+    VERTICAL = 'VERTICAL',
+    HORIZONTAL = 'HORIZONTAL'
+}
+
 @Component({
     selector: 'app-menu',
     templateUrl: './menu.html',
@@ -27,10 +32,14 @@ export class Item {
 @AutoUnsubscribe()
 export class MenuComponent implements OnInit, OnChanges {
     @Input() items: Array<Item>;
+    @Input() orientation: Orientation;
+    @Input() withRouting: boolean;
     @Output() onSelect = new EventEmitter<Item>();
+
     selected: Item;
     queryParamsSub: Subscription;
     itemFromParam: string;
+    Orientation = Orientation;
 
     constructor(
         private _route: ActivatedRoute,
@@ -40,6 +49,12 @@ export class MenuComponent implements OnInit, OnChanges {
 
     ngOnInit() {
         this.select(this.items.find(t => t.default));
+        if (this.withRouting) {
+            this.initQueryParamsSub();
+        }
+    }
+
+    initQueryParamsSub(): void {
         this.queryParamsSub = this._route.queryParams.subscribe(params => {
             if (params['item']) {
                 this.itemFromParam = params['item'];
@@ -57,14 +72,22 @@ export class MenuComponent implements OnInit, OnChanges {
             newSelected = this.items[0];
         }
         this.select(newSelected);
+
+        if (this.withRouting) {
+            this.initQueryParamsSub();
+        }
     }
 
     clickSelect(item: Item) {
-        this._router.navigate([], {
-            relativeTo: this._route,
-            queryParams: { item: item.key },
-            queryParamsHandling: 'merge'
-        });
+        if (this.withRouting) {
+            this._router.navigate([], {
+                relativeTo: this._route,
+                queryParams: { item: item.key },
+                queryParamsHandling: 'merge'
+            });
+        } else {
+            this.select(item);
+        }
     }
 
     select(item: Item) {

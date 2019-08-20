@@ -22,7 +22,7 @@ func TestInsertStaticFiles(t *testing.T) {
 	defer end()
 	_ = event.Initialize(db, cache)
 
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	key := sdk.RandomString(10)

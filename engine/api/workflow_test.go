@@ -34,7 +34,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -56,7 +56,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -185,7 +185,7 @@ func Test_getWorkflowHandler(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -208,13 +208,13 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 	api, tsURL, tsClose := newTestServer(t)
 	defer tsClose()
 
-	admin, _ := assets.InsertAdminUser(api.mustDB())
+	admin, _ := assets.InsertAdminUser(t, api.mustDB())
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
 	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
 
-	u, _ := assets.InsertLambdaUser(api.mustDB())
+	u, _ := assets.InsertLambdaUser(t, api.mustDB())
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
@@ -273,7 +273,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -337,7 +337,7 @@ func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -362,7 +362,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -425,7 +425,7 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -479,7 +479,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -598,7 +598,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -727,7 +727,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 // 	defer end()
 
 // 	// Init user
-// 	u, pass := assets.InsertAdminUser(api.mustDB())
+// 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 // 	// Init project
 // 	key := sdk.RandomString(10)
 // 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -784,7 +784,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -941,7 +941,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -1083,7 +1083,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -1213,7 +1213,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// Init user
-	u, pass := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
+	u, pass := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
 	// Init pipeline
 	pip := sdk.Pipeline{
