@@ -145,7 +145,7 @@ func (k PrivateKey) GetKey() interface{} {
 	case *packet.EdDSAPrivateKey:
 		return go_ed25519.NewKeyFromSeed(v.Seed())
 	}
-	return fmt.Errorf("unsupported key type/format: %+T", pk)
+	return fmt.Errorf("unsupported key type/format: %T", pk)
 }
 
 func (k PrivateKey) GetPubKey() interface{} {
@@ -300,5 +300,5 @@ func (k PublicKey) GetKey() interface{} {
 	case ed25519.PublicKey:
 		return go_ed25519.PublicKey([]byte(v))
 	}
-	return fmt.Errorf("unsupported key type/format: %+T", pk)
+	return fmt.Errorf("unsupported key type/format: %T", pk)
 }
