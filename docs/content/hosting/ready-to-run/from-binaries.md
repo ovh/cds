@@ -82,6 +82,9 @@ cd dist/
 # BACKEND_HOST contains a URL to CDS Engine
 export BACKEND_HOST="http://localhost:8081"
 
+# BACKEND_HOOKS contains a URL to CDS Hooks
+export BACKEND_HOOKS="http://localhost:8083"
+
 # if you expose CDS on a domain as https://your-domain/your-cds, enter "/your-cds"
 BASE_URL="/"
 sed -i "s#base href=\"/\"#base href=\"${BASE_URL}\"#g" index.html

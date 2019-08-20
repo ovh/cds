@@ -15,6 +15,10 @@
         header_upstream Session-Token {>Session-Token}
     }
 
+    proxy /cdshooks {$BACKEND_HOOKS} {
+        without /cdshooks
+    }
+
     proxy /assets/worker/cdsapi {$BACKEND_HOST} {
         without /assets/worker/cdsapi
         header_upstream Authorization {>Authorization}

@@ -35,6 +35,8 @@ spec:
         env:
           - name: BACKEND_HOST
             value: {{ template "cds.fullname" . }}-api
+          - name: BACKEND_HOOKS
+            value: {{ template "cds.fullname" . }}-hooks
           - name: BASE_URL
             value: "{{ .Values.ui.baseUrl }}"
           - name: CDS_LOG_LEVEL
