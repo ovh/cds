@@ -324,6 +324,9 @@ tar xzf ui.tar.gz # this command generates a $HOME/cds/dist/ directory
 # BACKEND_HOST contains a URL to CDS Engine
 export BACKEND_HOST=&quot;http://localhost:8081&quot;
 
+# BACKEND_HOOKS contains a URL to CDS Hooks
+export BACKEND_HOOKS=&quot;http://localhost:8083&quot;
+
 # if you expose CDS on a domain as https://your-domain/your-cds, enter &quot;/your-cds&quot;
 BASE_URL=&quot;/&quot;
 sed -i &quot;s#base href=\&quot;/\&quot;#base href=\&quot;${BASE_URL}\&quot;#g&quot; index.html
