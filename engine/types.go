@@ -18,6 +18,7 @@ import (
 
 // Configuration contains CDS Configuration and toml description
 type Configuration struct {
+	// common
 	Log struct {
 		Level   string `toml:"level" default:"warning" comment:"Log Level: debug, info, warning, notice, critical" json:"level"`
 		Graylog struct {
@@ -28,7 +29,9 @@ type Configuration struct {
 			ExtraValue string `toml:"extraValue" comment:"value for extraKey field. For many keys: valueaaa,valuebbb" json:"extraValue"`
 		} `toml:"graylog"`
 	} `toml:"log" comment:"#####################\n CDS Logs Settings \n####################"`
-	Debug           *DebugConfiguration           `toml:"debug" comment:"#####################\n Debug with gops \n####################" json:"debug"`
+	Debug   DebugConfiguration          `toml:"debug" comment:"#####################\n Debug with gops \n####################" json:"debug"`
+	Tracing observability.Configuration `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################" json:"tracing"`
+	// services
 	API             *api.Configuration            `toml:"api" comment:"#####################\n API Configuration \n####################" json:"api"`
 	Hatchery        *HatcheryConfiguration        `toml:"hatchery" json:"hatchery"`
 	Hooks           *hooks.Configuration          `toml:"hooks" comment:"######################\n CDS Hooks Settings \n######################" json:"hooks"`
@@ -36,7 +39,6 @@ type Configuration struct {
 	Repositories    *repositories.Configuration   `toml:"repositories" comment:"######################\n CDS Repositories Settings \n######################" json:"repositories"`
 	ElasticSearch   *elasticsearch.Configuration  `toml:"elasticsearch" comment:"######################\n CDS ElasticSearch Settings \n This is use for CDS timeline and is optional\n######################" json:"elasticsearch"`
 	DatabaseMigrate *migrateservice.Configuration `toml:"databaseMigrate" comment:"######################\n CDS DB Migrate Service Settings \n######################" json:"databaseMigrate"`
-	Tracing         *observability.Configuration  `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################" json:"tracing"`
 }
 
 // DebugConfiguration contains debug configuration

@@ -119,7 +119,7 @@ See $ engine config command for more details.
 
 		// initialize context
 		instance := "cdsinstance"
-		if conf.Tracing != nil && conf.Tracing.Name != "" {
+		if conf.Tracing.Enable && conf.Tracing.Name != "" {
 			instance = conf.Tracing.Name
 		}
 		tagCDSInstance, _ := tag.NewKey("cds")
@@ -217,7 +217,7 @@ See $ engine config command for more details.
 			}
 
 			// Initialiaze tracing
-			if err := observability.Init(*conf.Tracing, "cds-"+s.arg); err != nil {
+			if err := observability.Init(conf.Tracing, "cds-"+s.arg); err != nil {
 				sdk.Exit("Unable to start tracing exporter: %v", err)
 			}
 		}
