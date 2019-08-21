@@ -14,10 +14,11 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 )
 
-func TestAPI_checkWorkflowPermissions(t *testing.T) {
+func Test_checkWorkflowPermissions(t *testing.T) {
 	api, _, _, end := newTestAPI(t)
 	defer end()
 
@@ -70,7 +71,7 @@ func TestAPI_checkWorkflowPermissions(t *testing.T) {
 	assert.Error(t, err, "should not be granted")
 }
 
-func TestAPI_checkProjectPermissions(t *testing.T) {
+func Test_checkProjectPermissions(t *testing.T) {
 	api, _, _, end := newTestAPI(t)
 	defer end()
 
@@ -123,7 +124,7 @@ func TestAPI_checkProjectPermissions(t *testing.T) {
 	assert.Error(t, err, "should not be granted")
 }
 
-func TestAPI_checkUserPermissions(t *testing.T) {
+func Test_checkUserPermissions(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
@@ -205,7 +206,7 @@ func TestAPI_checkUserPermissions(t *testing.T) {
 	}
 }
 
-func TestAPI_checkUserPublicPermissions(t *testing.T) {
+func Test_checkUserPublicPermissions(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
@@ -287,7 +288,7 @@ func TestAPI_checkUserPublicPermissions(t *testing.T) {
 	}
 }
 
-func TestAPI_checkConsumerPermissions(t *testing.T) {
+func Test_checkConsumerPermissions(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
@@ -312,7 +313,7 @@ func TestAPI_checkConsumerPermissions(t *testing.T) {
 	assert.Error(t, err, "should not be granted")
 }
 
-func TestAPI_checkSessionPermissions(t *testing.T) {
+func Test_checkSessionPermissions(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
@@ -899,4 +900,112 @@ func Test_checkGroupPermissions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_checkTemplateSlugPermissions(t *testing.T) {
+	api, _, _, end := newTestAPI(t)
+	defer end()
+
+	type setup struct {
+		groupName    string
+		templateSlug string
+	}
+	type args struct {
+		groupName    string
+		templateSlug string
+	}
+	tests := []struct {
+		name    string
+		setup   setup
+		args    args
+		wantErr bool
+	}{
+		{
+			name:    "invalid workflow template",
+			wantErr: true,
+		},
+		{
+			name:    "wrong group",
+			wantErr: true,
+			setup: setup{
+				groupName:    "group",
+				templateSlug: "template",
+			},
+			args: args{
+				groupName:    "wronggroup",
+				templateSlug: "template",
+			},
+		},
+		{
+			name:    "wrong template",
+			wantErr: true,
+			setup: setup{
+				groupName:    "group",
+				templateSlug: "template",
+			},
+			args: args{
+				groupName:    "group",
+				templateSlug: "wrongtemplate",
+			},
+		},
+		{
+			name:    "rignt group and template",
+			wantErr: false,
+			setup: setup{
+				groupName:    "group",
+				templateSlug: "template",
+			},
+			args: args{
+				groupName:    "group",
+				templateSlug: "template",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			prefix := sdk.RandomString(10) + "."
+
+			if tt.setup.groupName != "" {
+				groupAdmin := &sdk.AuthentifiedUser{
+					Username: prefix + "auto-group-admin",
+				}
+				require.NoError(t, user.Insert(api.mustDB(), groupAdmin))
+
+				var err error
+				groupAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), groupAdmin.ID, user.LoadOptions.WithDeprecatedUser)
+				require.NoError(t, err)
+				tt.setup.groupName = prefix + tt.setup.groupName
+				g := sdk.Group{
+					Name: tt.setup.groupName,
+				}
+				require.NoError(t, group.Create(api.mustDB(), &g, groupAdmin.OldUserStruct.ID))
+				t.Logf("group %s created", g.Name)
+
+				if tt.setup.templateSlug != "" {
+					tt.setup.templateSlug = prefix + tt.setup.templateSlug
+
+					template := sdk.WorkflowTemplate{
+						GroupID: g.ID,
+						Name:    tt.setup.templateSlug,
+						Slug:    tt.setup.templateSlug,
+					}
+					require.NoError(t, workflowtemplate.Insert(api.mustDB(), &template))
+					t.Logf("template %s created", template.Name)
+				}
+			}
+
+			ctx := context.TODO()
+			err := api.checkTemplateSlugPermissions(ctx, prefix+tt.args.templateSlug, sdk.PermissionRead, map[string]string{"permGroupName": prefix + tt.args.groupName})
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func Test_checkActionPermissions(t *testing.T) {
+
 }
