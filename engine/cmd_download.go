@@ -46,10 +46,8 @@ var downloadWorkersCmd = &cobra.Command{
 You can also indicate a specific os or architecture to not download all binaries available with flag --os and --arch`,
 	Example: "engine download workers",
 	Run: func(cmd *cobra.Command, args []string) {
-		//Initialize config
-		configBootstrap(args)
-		configSetDefaults()
-		config(args, flagDownloadWorkersConfigFile, flagDownloadWorkersRemoteConfig, flagDownloadWorkersRemoteConfigKey, "", "")
+		// Initialize config
+		conf := configImport(nil, flagDownloadWorkersConfigFile, flagDownloadWorkersRemoteConfig, flagDownloadWorkersRemoteConfigKey, "", "")
 
 		config := cdsclient.Config{Host: flagDownloadWorkersURLAPI}
 		client := cdsclient.New(config)
