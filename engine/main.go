@@ -29,6 +29,7 @@ import (
 	"github.com/ovh/cds/engine/migrateservice"
 	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/engine/ui"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/doc"
@@ -148,7 +149,7 @@ For advanced usage, Debug and Tracing section can be generated as:
 	$ engine config new debug tracing [µService(s)...]
 
 All options
-	$ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]
+	$ engine config new [debug] [tracing] [api] [ui] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]
 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -199,6 +200,10 @@ All options
 			if h.Marathon != nil {
 				conf.Hatchery.Marathon.API.Token = sharedInfraToken
 			}
+		}
+
+		if conf.UI != nil {
+			conf.UI.API.Token = sharedInfraToken
 		}
 
 		if conf.Hooks != nil {
@@ -319,6 +324,14 @@ var configCheckCmd = &cobra.Command{
 			}
 		}
 
+		if conf.UI != nil && conf.UI.API.HTTP.URL != "" {
+			fmt.Printf("checking UI configuration...\n")
+			if err := ui.New().CheckConfiguration(*conf.UI); err != nil {
+				fmt.Printf("ui Configuration: %v\n", err)
+				hasError = true
+			}
+		}
+
 		if conf.VCS != nil && conf.VCS.API.HTTP.URL != "" {
 			fmt.Printf("checking vcs configuration...\n")
 			if err := vcs.New().CheckConfiguration(*conf.VCS); err != nil {
@@ -351,6 +364,9 @@ Start CDS Engine Services
 
 This is the core component of CDS.
 
+#### UI
+
+This is the CDS Web UI.
 
 #### Hatcheries
 
@@ -373,7 +389,7 @@ This component operates CDS VCS connectivity
 
 Start all of this with a single command:
 
-	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]
+	$ engine start [api] [ui] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]
 
 All the services are using the same configuration file format.
 
@@ -444,6 +460,9 @@ See $ engine config command for more details.
 			switch a {
 			case "api":
 				services = append(services, serviceConf{arg: a, service: api.New(), cfg: *conf.API})
+				names = append(names, instance)
+			case "ui":
+				services = append(services, serviceConf{arg: a, service: ui.New(), cfg: *conf.UI})
 				names = append(names, instance)
 			case "migrate":
 				services = append(services, serviceConf{arg: a, service: migrateservice.New(), cfg: *conf.DatabaseMigrate})
