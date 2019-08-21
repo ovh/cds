@@ -29,6 +29,7 @@ test_results.xml
 *.csv
 .tmp
 contrib/**/dist
+config.*.toml
 
 # UI
 ui/node_modules
