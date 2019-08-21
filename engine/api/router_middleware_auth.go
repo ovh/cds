@@ -43,21 +43,27 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	if err != nil {
 		return ctx, err
 	}
+
+	var (
+		session  *sdk.AuthSession
+		consumer *sdk.AuthConsumer
+	)
+
 	jwt, ok := ctxWithJWT.Value(contextJWT).(*jwt.Token)
 	if ok {
 		claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
 		sessionID := claims.StandardClaims.Id
-
 		// Check for session based on jwt from context
-		session, err := authentication.CheckSession(ctx, api.mustDB(), sessionID)
+		session, err = authentication.CheckSession(ctx, api.mustDB(), sessionID)
 		if err != nil {
 			log.Warning("cannot find a valid session for given JWT: %v", err)
-			return ctx, nil
 		}
-		ctx = context.WithValue(ctxWithJWT, contextSession, session)
+	}
 
+	if session != nil {
+		ctx = context.WithValue(ctxWithJWT, contextSession, session)
 		// Load auth consumer for current session in database with authentified user and contacts
-		consumer, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
+		consumer, err = authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
 			authentication.LoadConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
@@ -65,6 +71,9 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), consumer.AuthentifiedUser); err != nil {
 			return ctx, err
 		}
+	}
+
+	if consumer != nil {
 		ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 
 		// Checks scopes, all expected scopes should be in actual scopes
