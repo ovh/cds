@@ -17,6 +17,8 @@ import (
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/jws"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func RegisterWorker(t *testing.T, api *API, groupID int64, existingWorkerModelName string) (*sdk.Worker, string) {
@@ -30,6 +32,13 @@ func RegisterWorker(t *testing.T, api *API, groupID int64, existingWorkerModelNa
 		t.Fatalf("RegisterWorker> Error getting group : %s", err)
 	}
 	hSrv, hPrivKey, hConsumer, _ := assets.InsertHatchery(t, api.mustDB(), *g)
+
+	hPubKey, err := jws.ExportPublicKey(hPrivKey)
+	if err != nil {
+		t.Fatalf("RegisterWorker> Error exporting public key : %s", err)
+	}
+	log.Debug("hatchery public key is %s", string(hPubKey))
+
 	session, jwt, err := hatchery.NewWorkerToken(hSrv.Name, hPrivKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
 		HatcheryName: hSrv.Name,
 		Model:        model,
