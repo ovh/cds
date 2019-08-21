@@ -7,15 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/symmecrypt/keyloader"
-
 	"github.com/fsamin/go-dump"
 	defaults "github.com/mcuadros/go-defaults"
+	"github.com/ovh/symmecrypt/keyloader"
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/elasticsearch"
@@ -30,6 +29,11 @@ import (
 	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
+)
+
+var (
+	vaultConfKey = "/secret/cds/conf"
+	conf         = &Configuration{}
 )
 
 func configSetDefaults() {
@@ -231,7 +235,7 @@ func asEnvVariables(o interface{}) map[string]string {
 	return envs
 }
 
-func config(args []string) {
+func config(args []string, cfgFile, remoteCfg, remoteCfgKey, vaultAddr, vaultToken string) {
 	if conf.Debug == nil {
 		conf.Debug = &DebugConfiguration{}
 	}

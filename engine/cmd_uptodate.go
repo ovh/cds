@@ -13,24 +13,34 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
+func init() {
+	uptodateCmd.Flags().BoolVar(&flagUpToDateFromGithub, "from-github", false, "Update binary from latest github release")
+	uptodateCmd.Flags().StringVar(&flagUpToDateURLAPI, "api", "", "Update binary from a CDS Engine API")
+}
+
+var (
+	flagUpToDateFromGithub bool
+	flagUpToDateURLAPI     string
+)
+
 var uptodateCmd = &cobra.Command{
 	Use:   "uptodate",
 	Short: "check if engine is uptodate",
-	Long: `check if engine is uptodate with latest release on github (--from-github) or from an existing API. 
+	Long: `check if engine is uptodate with latest release on github (--from-github) or from an existing API.
 
 This command exit 0 if current binary is uptodate.
 `,
 	Example: "engine uptodate --from-github",
 	Run: func(cmd *cobra.Command, args []string) {
-		if !updateFromGithub && updateURLAPI == "" {
+		if !flagUpToDateFromGithub && flagUpToDateURLAPI == "" {
 			sdk.Exit(`You have to use "./engine uptodate --from-github" or "./engine uptodate --api http://intance/of/your/cds/api"`)
 		}
 
-		conf := cdsclient.Config{Host: updateURLAPI}
+		conf := cdsclient.Config{Host: flagUpToDateURLAPI}
 		client := cdsclient.New(conf)
 
 		var versionTxt string
-		if updateFromGithub {
+		if flagUpToDateFromGithub {
 			urlVersionFile, errGH := client.DownloadURLFromGithub("VERSION")
 			if errGH != nil {
 				sdk.Exit("Error while getting URL from Github url:%s err:%s\n", urlVersionFile, errGH)
