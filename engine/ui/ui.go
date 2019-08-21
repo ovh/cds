@@ -86,13 +86,11 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	//Gracefully shutdown the http server
-	go func() {
-		select {
-		case <-c.Done():
-			log.Info("UI> Shutdown HTTP Server")
-			server.Shutdown(c)
-		}
-	}()
+	<-c.Done()
+	log.Info("UI> Shutdown HTTP Server")
+	if err := server.Shutdown(c); err != nil {
+		return fmt.Errorf("unable to shutdown server: %v", err)
+	}
 
 	return c.Err()
 }
