@@ -705,6 +705,9 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
 		a.serviceAPIHeartbeat(ctx)
 	}, a.PanicDump())
+	sdk.GoRoutine(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
+		authentication.SessionCleaner(ctx, a.mustDB)
+	}, a.PanicDump())
 
 	//Temporary migration code
 	migrate.Add(sdk.Migration{Name: "WorkflowNotification", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {

@@ -72,3 +72,31 @@ func CheckSessionJWT(jwtToken string) (*jwt.Token, error) {
 
 	return nil, sdk.WithStack(sdk.ErrUnauthorized)
 }
+
+// SessionCleaner must be run as a goroutine
+func SessionCleaner(c context.Context, dbFunc func() *gorp.DbMap) {
+	log.Info("Initializing session cleaner...")
+	db := dbFunc()
+	tick := time.NewTicker(10 * time.Second)
+
+	for {
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("SessionCleaner> Exiting clean session: %v", c.Err())
+				return
+			}
+		case <-tick.C:
+			sessions, err := LoadExpiredSessions(c, db)
+			if err != nil {
+				log.Error("SessionCleaner> unable to load expired sessions %v", err)
+			}
+			for _, s := range sessions {
+				if err := DeleteSessionByID(db, s.ID); err != nil {
+					log.Error("SessionCleaner> unable to delete session %s: %v", s.ID, err)
+				}
+				log.Debug("SessionCleaner> expired session %s deleted", s.ID)
+			}
+		}
+	}
+}
