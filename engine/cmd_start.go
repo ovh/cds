@@ -97,10 +97,8 @@ See $ engine config command for more details.
 			return
 		}
 
-		//Initialize config
-		configBootstrap(args)
-		configSetDefaults()
-		config(args, flagStartConfigFile, flagStartRemoteConfig, flagStartRemoteConfigKey, flagStartVaultAddr, flagStartVaultToken)
+		// Initialize config
+		conf := configImport(args, flagStartConfigFile, flagStartRemoteConfig, flagStartRemoteConfigKey, flagStartVaultAddr, flagStartVaultToken)
 
 		// gops debug
 		if conf.Debug.Enable {

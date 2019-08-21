@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -62,8 +63,7 @@ All options
 `,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		configBootstrap(args)
-		configSetDefaults()
+		conf := configBootstrap(args)
 
 		apiPrivateKey, err := jws.NewRandomRSAKey()
 		if err != nil {
@@ -370,16 +370,15 @@ All options
 			}
 			fmt.Println(string(btes))
 		} else {
-			m := asEnvVariables(conf)
-			keys := []string{}
-
+			m := configToEnvVariables(conf)
+			keys := make([]string, 0, len(m))
 			for k := range m {
 				keys = append(keys, k)
 			}
-
 			sort.Strings(keys)
 			for _, k := range keys {
-				fmt.Printf("export %s=\"%s\"\n", k, m[k])
+				// Print the export command and escape all \n in value (useful for keys)
+				fmt.Printf("export %s=\"%s\"\n", k, strings.ReplaceAll(m[k], "\n", "\\n"))
 			}
 		}
 
@@ -390,10 +389,6 @@ All options
 
 		fmt.Println("# On first login, you will be asked to enter the following token:")
 		fmt.Println("# " + magicToken)
-
-		pubKeyPEM, _ := jws.ExportPublicKey(apiPrivateKey)
-		fmt.Println("# Here the API public key")
-		fmt.Println("# " + string(pubKeyPEM))
 	},
 }
 
@@ -407,9 +402,8 @@ var configCheckCmd = &cobra.Command{
 			sdk.Exit("Wrong usage")
 		}
 
-		//Initialize config
-		configBootstrap(args)
-		config([]string{}, args[0], "", "", "", "")
+		// Initialize config from given path
+		conf := configImport(nil, args[0], "", "", "", "")
 
 		var hasError bool
 		if conf.API != nil && conf.API.URL.API != "" {
