@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
@@ -37,11 +36,8 @@ const (
 
 func configBootstrap(args []string) *Configuration {
 	conf := &Configuration{}
-
-	conf.Debug = &DebugConfiguration{}
-	defaults.SetDefaults(conf.Debug)
-	conf.Tracing = &observability.Configuration{}
-	defaults.SetDefaults(conf.Tracing)
+	defaults.SetDefaults(&conf.Debug)
+	defaults.SetDefaults(&conf.Tracing)
 
 	// Default config if nothing is given
 	if len(args) == 0 {
