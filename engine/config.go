@@ -13,9 +13,12 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/secret"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
@@ -28,6 +31,8 @@ import (
 	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/jws"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 const (
@@ -60,44 +65,53 @@ func configBootstrap(args []string) *Configuration {
 		case "api":
 			conf.API = &api.Configuration{}
 			defaults.SetDefaults(conf.API)
-
-			key, _ := keyloader.GenerateKey("hmac", gorpmapping.KeySignIdentifier, false, time.Now())
-			conf.API.Database.SignatureKey = database.RollingKeyConfig{Cipher: "hmac"}
-			conf.API.Database.SignatureKey.Keys = append(conf.API.Database.SignatureKey.Keys, database.KeyConfig{
-				Key:       key.Key,
-				Timestamp: key.Timestamp,
-			})
-
-			key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapping.KeyEcnryptionIdentifier, false, time.Now())
-			conf.API.Database.EncryptionKey = database.RollingKeyConfig{Cipher: "xchacha20-poly1305"}
-			conf.API.Database.EncryptionKey.Keys = append(conf.API.Database.EncryptionKey.Keys, database.KeyConfig{
-				Key:       key.Key,
-				Timestamp: key.Timestamp,
+			conf.API.Services = append(conf.API.Services, api.ServiceConfiguration{
+				Name:       "sample-service",
+				URL:        "https://ovh.github.io",
+				Port:       "443",
+				Path:       "/cds",
+				HealthPath: "/cds",
+				HealthPort: "443",
+				HealthURL:  "https://ovh.github.io",
+				Type:       "doc",
 			})
 		case "migrate":
 			conf.DatabaseMigrate = &migrateservice.Configuration{}
 			defaults.SetDefaults(conf.DatabaseMigrate)
+			conf.DatabaseMigrate.Name = "cds-migrate-" + namesgenerator.GetRandomNameCDS(0)
 		case "hatchery:local":
 			conf.Hatchery.Local = &local.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Local)
+			conf.Hatchery.Local.Name = "cds-hatchery-local-" + namesgenerator.GetRandomNameCDS(0)
 		case "hatchery:kubernetes":
 			conf.Hatchery.Kubernetes = &kubernetes.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Kubernetes)
+			conf.Hatchery.Kubernetes.Name = "cds-hatchery-kubernetes-" + namesgenerator.GetRandomNameCDS(0)
 		case "hatchery:marathon":
 			conf.Hatchery.Marathon = &marathon.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Marathon)
+			conf.Hatchery.Marathon.Name = "cds-hatchery-marathon-" + namesgenerator.GetRandomNameCDS(0)
 		case "hatchery:openstack":
 			conf.Hatchery.Openstack = &openstack.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Openstack)
+			conf.Hatchery.Openstack.Name = "cds-hatchery-openstack-" + namesgenerator.GetRandomNameCDS(0)
 		case "hatchery:swarm":
 			conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Swarm)
+			conf.Hatchery.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
+				"sample-docker-engine": {
+					Host: "///var/run/docker.sock",
+				},
+			}
+			conf.Hatchery.Swarm.Name = "cds-hatchery-swarm-" + namesgenerator.GetRandomNameCDS(0)
 		case "hatchery:vsphere":
 			conf.Hatchery.VSphere = &vsphere.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.VSphere)
+			conf.Hatchery.VSphere.Name = "cds-hatchery-vsphere-" + namesgenerator.GetRandomNameCDS(0)
 		case "hooks":
 			conf.Hooks = &hooks.Configuration{}
 			defaults.SetDefaults(conf.Hooks)
+			conf.Hooks.Name = "cds-hooks-" + namesgenerator.GetRandomNameCDS(0)
 		case "vcs":
 			conf.VCS = &vcs.Configuration{}
 			defaults.SetDefaults(conf.VCS)
@@ -118,9 +132,11 @@ func configBootstrap(args []string) *Configuration {
 				"Gitlab":         vcs.ServerConfiguration{URL: "https://gitlab.com", Gitlab: &gitlab},
 				"Gerrit":         vcs.ServerConfiguration{URL: "http://localhost:8080", Gerrit: &gerrit},
 			}
+			conf.VCS.Name = "cds-vcs-" + namesgenerator.GetRandomNameCDS(0)
 		case "repositories":
 			conf.Repositories = &repositories.Configuration{}
 			defaults.SetDefaults(conf.Repositories)
+			conf.Repositories.Name = "cds-repositories-" + namesgenerator.GetRandomNameCDS(0)
 		case "elasticsearch":
 			conf.ElasticSearch = &elasticsearch.Configuration{}
 			defaults.SetDefaults(conf.ElasticSearch)
@@ -147,7 +163,7 @@ func configToEnvVariables(o interface{}) map[string]string {
 }
 
 // Generates a config
-func configImport(args []string, cfgFile, remoteCfg, remoteCfgKey, vaultAddr, vaultToken string) Configuration {
+func configImport(args []string, cfgFile, remoteCfg, remoteCfgKey, vaultAddr, vaultToken string, silent bool) Configuration {
 	// Generate a default bootstraped config for given args to get ENV variables keys.
 	defaultConfig := configBootstrap(args)
 
@@ -156,7 +172,9 @@ func configImport(args []string, cfgFile, remoteCfg, remoteCfgKey, vaultAddr, va
 
 	switch {
 	case remoteCfg != "":
-		fmt.Println("Reading configuration from consul @", remoteCfg)
+		if !silent {
+			fmt.Println("Reading configuration from consul @", remoteCfg)
+		}
 
 		viper.AddRemoteProvider("consul", remoteCfg, remoteCfgKey)
 		viper.SetConfigType("toml")
@@ -165,7 +183,9 @@ func configImport(args []string, cfgFile, remoteCfg, remoteCfgKey, vaultAddr, va
 		}
 	case vaultAddr != "" && vaultToken != "":
 		// I hope one day vault will be a standard viper remote provider
-		fmt.Println("Reading configuration from vault @", vaultAddr)
+		if !silent {
+			fmt.Println("Reading configuration from vault @", vaultAddr)
+		}
 
 		s, err := secret.New(vaultToken, vaultAddr)
 		if err != nil {
@@ -184,7 +204,9 @@ func configImport(args []string, cfgFile, remoteCfg, remoteCfgKey, vaultAddr, va
 			sdk.Exit("Unable to read config: %v", err)
 		}
 	case cfgFile != "":
-		fmt.Println("Reading configuration file @", cfgFile)
+		if !silent {
+			fmt.Println("Reading configuration file @", cfgFile)
+		}
 
 		// If the config file doesn't exists, let's exit
 		if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
@@ -192,7 +214,6 @@ func configImport(args []string, cfgFile, remoteCfg, remoteCfgKey, vaultAddr, va
 		}
 
 		viper.SetConfigFile(cfgFile)
-		viper.SetConfigType("toml")
 		if err := viper.ReadInConfig(); err != nil {
 			sdk.Exit(err.Error())
 		}
@@ -203,4 +224,352 @@ func configImport(args []string, cfgFile, remoteCfg, remoteCfgKey, vaultAddr, va
 		sdk.Exit("Unable to parse config: %v", err.Error())
 	}
 	return conf
+}
+
+func configSetStartupData(conf *Configuration) (string, error) {
+	apiPrivateKey, err := jws.NewRandomRSAKey()
+	if err != nil {
+		return "", err
+	}
+
+	apiPrivateKeyPEM, err := jws.ExportPrivateKey(apiPrivateKey)
+	if err != nil {
+		return "", err
+	}
+
+	var startupCfg api.StartupConfig
+
+	if err := authentication.Init("cds-api", apiPrivateKeyPEM); err != nil {
+		return "", err
+	}
+
+	if conf.API != nil {
+		conf.API.Auth.RSAPrivateKey = string(apiPrivateKeyPEM)
+		conf.API.Secrets.Key = sdk.RandomString(32)
+
+		key, _ := keyloader.GenerateKey("hmac", gorpmapping.KeySignIdentifier, false, time.Now())
+		conf.API.Database.SignatureKey = database.RollingKeyConfig{Cipher: "hmac"}
+		conf.API.Database.SignatureKey.Keys = append(conf.API.Database.SignatureKey.Keys, database.KeyConfig{
+			Key:       key.Key,
+			Timestamp: key.Timestamp,
+		})
+
+		key, _ = keyloader.GenerateKey("xchacha20-poly1305", gorpmapping.KeyEcnryptionIdentifier, false, time.Now())
+		conf.API.Database.EncryptionKey = database.RollingKeyConfig{Cipher: "xchacha20-poly1305"}
+		conf.API.Database.EncryptionKey.Keys = append(conf.API.Database.EncryptionKey.Keys, database.KeyConfig{
+			Key:       key.Key,
+			Timestamp: key.Timestamp,
+		})
+	}
+
+	if h := conf.Hatchery; h != nil {
+		if h.Local != nil {
+			var cfg = api.StartupConfigService{
+				ID:          sdk.UUID(),
+				Name:        "hatchery:local",
+				Description: "Autogenerated configuration for local hatchery",
+				ServiceType: services.TypeHatchery,
+			}
+
+			var c = sdk.AuthConsumer{
+				ID:          cfg.ID,
+				Name:        cfg.Name,
+				Description: cfg.Description,
+
+				Type:     sdk.ConsumerBuiltin,
+				Data:     map[string]string{},
+				GroupIDs: []int64{},
+				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
+			}
+
+			h.Local.API.Token, err = builtin.NewSigninConsumerToken(&c)
+			if err != nil {
+				return "", err
+			}
+			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
+
+			privateKey, _ := jws.NewRandomRSAKey()
+			privateKeyPEM, _ := jws.ExportPrivateKey(privateKey)
+			h.Local.RSAPrivateKey = string(privateKeyPEM)
+		}
+		if h.Openstack != nil {
+			var cfg = api.StartupConfigService{
+				ID:          sdk.UUID(),
+				Name:        "hatchery:openstack",
+				Description: "Autogenerated configuration for openstack hatchery",
+				ServiceType: services.TypeHatchery,
+			}
+
+			var c = sdk.AuthConsumer{
+				ID:          cfg.ID,
+				Name:        cfg.Name,
+				Description: cfg.Description,
+				Type:        sdk.ConsumerBuiltin,
+				Data:        map[string]string{},
+				GroupIDs:    []int64{},
+				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
+			}
+
+			h.Openstack.API.Token, err = builtin.NewSigninConsumerToken(&c)
+			if err != nil {
+				return "", err
+			}
+
+			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
+			privateKey, _ := jws.NewRandomRSAKey()
+			privateKeyPEM, _ := jws.ExportPrivateKey(privateKey)
+			h.Openstack.RSAPrivateKey = string(privateKeyPEM)
+		}
+		if h.VSphere != nil {
+			var cfg = api.StartupConfigService{
+				ID:          sdk.UUID(),
+				Name:        "hatchery:vsphere",
+				Description: "Autogenerated configuration for vsphere hatchery",
+				ServiceType: services.TypeHatchery,
+			}
+
+			var c = sdk.AuthConsumer{
+				ID:          cfg.ID,
+				Name:        cfg.Name,
+				Description: cfg.Description,
+
+				Type:     sdk.ConsumerBuiltin,
+				Data:     map[string]string{},
+				GroupIDs: []int64{},
+				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
+			}
+
+			h.VSphere.API.Token, err = builtin.NewSigninConsumerToken(&c)
+			if err != nil {
+				return "", err
+			}
+
+			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
+			privateKey, _ := jws.NewRandomRSAKey()
+			privateKeyPEM, _ := jws.ExportPrivateKey(privateKey)
+			h.VSphere.RSAPrivateKey = string(privateKeyPEM)
+		}
+		if h.Swarm != nil {
+			var cfg = api.StartupConfigService{
+				ID:          sdk.UUID(),
+				Name:        "hatchery:swarm",
+				Description: "Autogenerated configuration for swarm hatchery",
+				ServiceType: services.TypeHatchery,
+			}
+
+			var c = sdk.AuthConsumer{
+				ID:          cfg.ID,
+				Name:        cfg.Name,
+				Description: cfg.Description,
+
+				Type:     sdk.ConsumerBuiltin,
+				Data:     map[string]string{},
+				GroupIDs: []int64{},
+				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
+			}
+
+			h.Swarm.API.Token, err = builtin.NewSigninConsumerToken(&c)
+			if err != nil {
+				return "", err
+			}
+
+			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
+			privateKey, _ := jws.NewRandomRSAKey()
+			privateKeyPEM, _ := jws.ExportPrivateKey(privateKey)
+			h.Swarm.RSAPrivateKey = string(privateKeyPEM)
+		}
+		if h.Marathon != nil {
+			var cfg = api.StartupConfigService{
+				ID:          sdk.UUID(),
+				Name:        "hatchery:marathon",
+				Description: "Autogenerated configuration for marathon hatchery",
+				ServiceType: services.TypeHatchery,
+			}
+
+			var c = sdk.AuthConsumer{
+				ID:          cfg.ID,
+				Name:        cfg.Name,
+				Description: cfg.Description,
+				Type:        sdk.ConsumerBuiltin,
+				Data:        map[string]string{},
+				GroupIDs:    []int64{},
+				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
+			}
+
+			conf.Hatchery.Marathon.API.Token, err = builtin.NewSigninConsumerToken(&c)
+			if err != nil {
+				return "", err
+			}
+
+			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
+			privateKey, _ := jws.NewRandomRSAKey()
+			privateKeyPEM, _ := jws.ExportPrivateKey(privateKey)
+			h.Marathon.RSAPrivateKey = string(privateKeyPEM)
+		}
+		if h.Kubernetes != nil {
+			var cfg = api.StartupConfigService{
+				ID:          sdk.UUID(),
+				Name:        "hatchery:kubernetes",
+				Description: "Autogenerated configuration for kubernetes hatchery",
+				ServiceType: services.TypeHatchery,
+			}
+
+			var c = sdk.AuthConsumer{
+				ID:          cfg.ID,
+				Name:        cfg.Name,
+				Description: cfg.Description,
+				Type:        sdk.ConsumerBuiltin,
+				Data:        map[string]string{},
+				GroupIDs:    []int64{},
+				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
+			}
+
+			conf.Hatchery.Kubernetes.API.Token, err = builtin.NewSigninConsumerToken(&c)
+			if err != nil {
+				return "", err
+			}
+
+			startupCfg.Consumers = append(startupCfg.Consumers, cfg)
+			privateKey, _ := jws.NewRandomRSAKey()
+			privateKeyPEM, _ := jws.ExportPrivateKey(privateKey)
+			h.Kubernetes.RSAPrivateKey = string(privateKeyPEM)
+		}
+	}
+
+	if conf.Hooks != nil {
+		var cfg = api.StartupConfigService{
+			ID:          sdk.UUID(),
+			Name:        "hooks",
+			Description: "Autogenerated configuration for hooks service",
+			ServiceType: services.TypeHooks,
+		}
+
+		var c = sdk.AuthConsumer{
+			ID:          cfg.ID,
+			Name:        cfg.Name,
+			Description: cfg.Description,
+			Type:        sdk.ConsumerBuiltin,
+			Data:        map[string]string{},
+			GroupIDs:    []int64{},
+			Scopes: []sdk.AuthConsumerScope{
+				sdk.AuthConsumerScopeService,
+				sdk.AuthConsumerScopeHooks,
+				sdk.AuthConsumerScopeProject,
+				sdk.AuthConsumerScopeRun,
+			},
+		}
+
+		conf.Hooks.API.Token, err = builtin.NewSigninConsumerToken(&c)
+		if err != nil {
+			return "", err
+		}
+
+		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
+	}
+
+	if conf.Repositories != nil {
+		var cfg = api.StartupConfigService{
+			ID:          sdk.UUID(),
+			Name:        "repositories",
+			Description: "Autogenerated configuration for repositories service",
+			ServiceType: services.TypeHooks,
+		}
+
+		var c = sdk.AuthConsumer{
+			ID:          cfg.ID,
+			Name:        cfg.Name,
+			Description: cfg.Description,
+			Type:        sdk.ConsumerBuiltin,
+			Data:        map[string]string{},
+			GroupIDs:    []int64{},
+			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
+		}
+
+		conf.Repositories.API.Token, err = builtin.NewSigninConsumerToken(&c)
+		if err != nil {
+			return "", err
+		}
+
+		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
+	}
+
+	if conf.DatabaseMigrate != nil {
+		var cfg = api.StartupConfigService{
+			ID:          sdk.UUID(),
+			Name:        "migrate",
+			Description: "Autogenerated configuration for migrate service",
+			ServiceType: services.TypeDBMigrate,
+		}
+
+		var c = sdk.AuthConsumer{
+			ID:          cfg.ID,
+			Name:        cfg.Name,
+			Description: cfg.Description,
+			Type:        sdk.ConsumerBuiltin,
+			Data:        map[string]string{},
+			GroupIDs:    []int64{},
+			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
+		}
+
+		conf.DatabaseMigrate.API.Token, err = builtin.NewSigninConsumerToken(&c)
+		if err != nil {
+			return "", err
+		}
+
+		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
+	}
+
+	if conf.VCS != nil {
+		var cfg = api.StartupConfigService{
+			ID:          sdk.UUID(),
+			Name:        "vcs",
+			Description: "Autogenerated configuration for vcs service",
+			ServiceType: services.TypeVCS,
+		}
+
+		var c = sdk.AuthConsumer{
+			ID:          cfg.ID,
+			Name:        cfg.Name,
+			Description: cfg.Description,
+			Type:        sdk.ConsumerBuiltin,
+			Data:        map[string]string{},
+			GroupIDs:    []int64{},
+			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
+		}
+
+		conf.VCS.API.Token, err = builtin.NewSigninConsumerToken(&c)
+		if err != nil {
+			return "", err
+		}
+
+		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
+	}
+
+	if conf.ElasticSearch != nil {
+		var cfg = api.StartupConfigService{
+			ID:          sdk.UUID(),
+			Name:        "elasticSearch",
+			Description: "Autogenerated configuration for elasticSearch service",
+			ServiceType: services.TypeElasticsearch,
+		}
+
+		var c = sdk.AuthConsumer{
+			ID:          cfg.ID,
+			Name:        cfg.Name,
+			Description: cfg.Description,
+			Type:        sdk.ConsumerBuiltin,
+			Data:        map[string]string{},
+			GroupIDs:    []int64{},
+			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
+		}
+
+		conf.ElasticSearch.API.Token, err = builtin.NewSigninConsumerToken(&c)
+		if err != nil {
+			return "", err
+		}
+
+		startupCfg.Consumers = append(startupCfg.Consumers, cfg)
+	}
+
+	return authentication.SignJWS(startupCfg, time.Hour)
 }

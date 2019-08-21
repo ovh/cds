@@ -126,7 +126,7 @@ func initBuiltinConsumersFromStartupConfig(tx gorp.SqlExecutor, consumer *sdk.Au
 	// Deserialize the magic token to retrieve the startup configuration
 	var startupConfig StartupConfig
 	if err := authentication.VerifyJWS(initToken, &startupConfig); err != nil {
-		return sdk.NewError(sdk.ErrUnauthorized, err)
+		return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given init token"))
 	}
 
 	log.Warning("Magic token detected !: %s", initToken)
@@ -190,13 +190,13 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		// Try to load a user in database for given username
 		usr, err := user.LoadByUsername(ctx, tx, reqData["username"])
 		if err != nil {
-			return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrUnauthorized))
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 
 		// Try to load a local consumer for user
 		consumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, sdk.ConsumerLocal, usr.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
-			return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrUnauthorized))
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 
 		// Check if local auth is active
@@ -208,7 +208,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		if hash, ok := consumer.Data["hash"]; !ok {
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		} else if err := local.CompareHashAndPassword([]byte(hash), reqData["password"]); err != nil {
-			return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrUnauthorized))
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 
 		// Generate a new session for consumer
@@ -276,10 +276,10 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		// Get the consumer from database and set it to verified
 		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
 		if err != nil {
-			return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrUnauthorized))
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 		if consumer.Type != sdk.ConsumerLocal {
-			return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrUnauthorized))
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 
 		consumer.Data["verified"] = sdk.TrueString
@@ -435,10 +435,10 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		// Get the consumer from database and set it to verified
 		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
 		if err != nil {
-			return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrUnauthorized))
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 		if consumer.Type != sdk.ConsumerLocal {
-			return sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrUnauthorized))
+			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 
 		// In case where the user was not verified already set it to verified

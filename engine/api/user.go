@@ -102,7 +102,7 @@ func (api *API) putUserHandler() service.Handler {
 
 		if err := user.Update(tx, &newUser); err != nil {
 			if e, ok := sdk.Cause(err).(*pq.Error); ok && e.Code == database.ViolateUniqueKeyPGCode {
-				return sdk.NewErrorWithStack(e, sdk.WithStack(sdk.ErrUsernamePresent))
+				return sdk.NewErrorWithStack(e, sdk.ErrUsernamePresent)
 			}
 			return sdk.WrapError(err, "cannot update user")
 		}

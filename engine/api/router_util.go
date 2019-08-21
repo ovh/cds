@@ -187,9 +187,9 @@ func requestVarInt(r *http.Request, s string) (int64, error) {
 	if err != nil {
 		err = sdk.WrapError(err, "%s is not an integer: %s", s, vars[s])
 		if s == "id" {
-			return 0, sdk.NewErrorWithStack(sdk.ErrInvalidID, err)
+			return 0, sdk.NewErrorWithStack(err, sdk.ErrInvalidID)
 		}
-		return 0, sdk.NewErrorWithStack(sdk.ErrWrongRequest, err)
+		return 0, sdk.NewErrorWithStack(err, sdk.ErrWrongRequest)
 	}
 
 	return id, nil

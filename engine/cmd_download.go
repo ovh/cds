@@ -47,7 +47,7 @@ You can also indicate a specific os or architecture to not download all binaries
 	Example: "engine download workers",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Initialize config
-		conf := configImport(nil, flagDownloadWorkersConfigFile, flagDownloadWorkersRemoteConfig, flagDownloadWorkersRemoteConfigKey, "", "")
+		conf := configImport(nil, flagDownloadWorkersConfigFile, flagDownloadWorkersRemoteConfig, flagDownloadWorkersRemoteConfigKey, "", "", false)
 
 		config := cdsclient.Config{Host: flagDownloadWorkersURLAPI}
 		client := cdsclient.New(config)

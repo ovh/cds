@@ -63,7 +63,7 @@ func NewSessionJWT(s *sdk.AuthSession) (string, error) {
 func CheckSessionJWT(jwtToken string) (*jwt.Token, error) {
 	token, err := jwt.ParseWithClaims(jwtToken, &sdk.AuthSessionJWTClaims{}, VerifyJWT)
 	if err != nil {
-		return nil, sdk.NewErrorWithStack(err, sdk.WithStack(sdk.ErrUnauthorized))
+		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 
 	if _, ok := token.Claims.(*sdk.AuthSessionJWTClaims); ok && token.Valid {

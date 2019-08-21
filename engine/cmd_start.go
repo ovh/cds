@@ -32,14 +32,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var (
-	flagStartConfigFile      string
-	flagStartRemoteConfig    string
-	flagStartRemoteConfigKey string
-	flagStartVaultAddr       string
-	flagStartVaultToken      string
-)
-
 func init() {
 	startCmd.Flags().StringVar(&flagStartConfigFile, "config", "", "config file")
 	startCmd.Flags().StringVar(&flagStartRemoteConfig, "remote-config", "", "(optional) consul configuration store")
@@ -47,6 +39,14 @@ func init() {
 	startCmd.Flags().StringVar(&flagStartVaultAddr, "vault-addr", "", "(optional) Vault address to fetch secrets from vault (example: https://vault.mydomain.net:8200)")
 	startCmd.Flags().StringVar(&flagStartVaultToken, "vault-token", "", "(optional) Vault token to fetch secrets from vault")
 }
+
+var (
+	flagStartConfigFile      string
+	flagStartRemoteConfig    string
+	flagStartRemoteConfigKey string
+	flagStartVaultAddr       string
+	flagStartVaultToken      string
+)
 
 var startCmd = &cobra.Command{
 	Use:   "start",
@@ -98,7 +98,7 @@ See $ engine config command for more details.
 		}
 
 		// Initialize config
-		conf := configImport(args, flagStartConfigFile, flagStartRemoteConfig, flagStartRemoteConfigKey, flagStartVaultAddr, flagStartVaultToken)
+		conf := configImport(args, flagStartConfigFile, flagStartRemoteConfig, flagStartRemoteConfigKey, flagStartVaultAddr, flagStartVaultToken, false)
 
 		// gops debug
 		if conf.Debug.Enable {
@@ -148,39 +148,75 @@ See $ engine config command for more details.
 			fmt.Printf("Starting service %s\n", a)
 			switch a {
 			case "api":
+				if conf.API == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
 				services = append(services, serviceConf{arg: a, service: api.New(), cfg: *conf.API})
 				names = append(names, instance)
 			case "migrate":
+				if conf.DatabaseMigrate == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
 				services = append(services, serviceConf{arg: a, service: migrateservice.New(), cfg: *conf.DatabaseMigrate})
 				names = append(names, conf.DatabaseMigrate.Name)
 			case "hatchery:local":
+				if conf.Hatchery.Local == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
 				services = append(services, serviceConf{arg: a, service: local.New(), cfg: *conf.Hatchery.Local})
 				names = append(names, conf.Hatchery.Local.Name)
 			case "hatchery:kubernetes":
+				if conf.Hatchery.Kubernetes == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
 				services = append(services, serviceConf{arg: a, service: kubernetes.New(), cfg: *conf.Hatchery.Kubernetes})
 				names = append(names, conf.Hatchery.Kubernetes.Name)
 			case "hatchery:marathon":
+				if conf.Hatchery.Marathon == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
 				services = append(services, serviceConf{arg: a, service: marathon.New(), cfg: *conf.Hatchery.Marathon})
 				names = append(names, conf.Hatchery.Marathon.Name)
 			case "hatchery:openstack":
+				if conf.Hatchery.Openstack == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
 				services = append(services, serviceConf{arg: a, service: openstack.New(), cfg: *conf.Hatchery.Openstack})
 				names = append(names, conf.Hatchery.Openstack.Name)
 			case "hatchery:swarm":
+				if conf.Hatchery.Swarm == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
 				services = append(services, serviceConf{arg: a, service: swarm.New(), cfg: *conf.Hatchery.Swarm})
 				names = append(names, conf.Hatchery.Swarm.Name)
 			case "hatchery:vsphere":
+				if conf.Hatchery.VSphere == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
 				services = append(services, serviceConf{arg: a, service: vsphere.New(), cfg: *conf.Hatchery.VSphere})
 				names = append(names, conf.Hatchery.VSphere.Name)
 			case "hooks":
+				if conf.Hooks == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
 				services = append(services, serviceConf{arg: a, service: hooks.New(), cfg: *conf.Hooks})
 				names = append(names, conf.Hooks.Name)
 			case "vcs":
+				if conf.VCS == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
 				services = append(services, serviceConf{arg: a, service: vcs.New(), cfg: *conf.VCS})
 				names = append(names, conf.VCS.Name)
 			case "repositories":
+				if conf.Repositories == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
 				services = append(services, serviceConf{arg: a, service: repositories.New(), cfg: *conf.Repositories})
 				names = append(names, conf.Repositories.Name)
 			case "elasticsearch":
+				if conf.ElasticSearch == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
 				services = append(services, serviceConf{arg: a, service: elasticsearch.New(), cfg: *conf.ElasticSearch})
 				names = append(names, conf.ElasticSearch.Name)
 			default:

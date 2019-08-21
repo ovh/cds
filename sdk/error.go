@@ -612,7 +612,17 @@ func (e Error) Translate(al string) string {
 // NewErrorWithStack returns an error with stack.
 func NewErrorWithStack(root error, err error) error {
 	errWithStack := WithStack(root).(errorWithStack)
-	errWithStack.httpError = ExtractHTTPError(err, "")
+
+	// try to recognize http error from source
+	switch e := err.(type) {
+	case errorWithStack:
+		errWithStack.httpError = e.httpError
+	case Error:
+		errWithStack.httpError = e
+	default:
+		errWithStack.httpError = ExtractHTTPError(err, "")
+	}
+
 	return errWithStack
 }
 
