@@ -15,9 +15,8 @@ notoc: true
 
 ```
   -f, --file string   set configuration file
-  -k, --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
-  -w, --no-warnings   do not display warnings
-  -v, --verbose       verbose output
+      --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
+      --verbose       verbose output
 ```
 
 ## SEE ALSO
@@ -30,6 +29,7 @@ notoc: true
 * [cdsctl admin hooks](/docs/components/cdsctl/admin/hooks/)	 - `Manage CDS Hooks tasks`
 * [cdsctl admin integration-model](/docs/components/cdsctl/admin/integration-model/)	 - `Manage CDS Integration models`
 * [cdsctl admin maintenance](/docs/components/cdsctl/admin/maintenance/)	 - `Manage CDS maintenance`
+* [cdsctl admin metadata](/docs/components/cdsctl/admin/metadata/)	 - `Manage CDS Metadata`
 * [cdsctl admin migration](/docs/components/cdsctl/admin/migration/)	 - `Manage CDS Migrations`
 * [cdsctl admin plugins](/docs/components/cdsctl/admin/plugins/)	 - `Manage CDS Plugins`
 * [cdsctl admin services](/docs/components/cdsctl/admin/services/)	 - `Manage CDS services`

@@ -32,7 +32,6 @@ worker [flags]
       --grpc-api string              CDS GRPC tcp address
       --grpc-insecure                Disable GRPC TLS encryption
       --hatchery-name string         Hatchery Name spawing worker
-  -h, --help                         help for worker
       --insecure                     (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
       --log-level string             Log Level: debug, info, notice, warning, critical (default "notice")
       --model int                    Model of worker

@@ -3,9 +3,9 @@ title = "template"
 +++
 
 
-## DELETE `/template/<group-name>/<templateSlug>/instance/<instanceID>`
+## DELETE `/template/<group-name>/<permTemplateSlug>/instance/<instanceID>`
 
-URL         | **`/template/<group-name>/<templateSlug>/instance/<instanceID>`**
+URL         | **`/template/<group-name>/<permTemplateSlug>/instance/<instanceID>`**
 ----------- |----------
 Method      | DELETE     
 Permissions |  Auth: true
@@ -20,9 +20,9 @@ Code        | [deleteTemplateInstanceHandler](https://github.com/ovh/cds/search?
 
 
 
-## DELETE `/template/<group-name>/<templateSlug>`
+## DELETE `/template/<group-name>/<permTemplateSlug>`
 
-URL         | **`/template/<group-name>/<templateSlug>`**
+URL         | **`/template/<group-name>/<permTemplateSlug>`**
 ----------- |----------
 Method      | DELETE     
 Permissions |  Auth: true
@@ -37,9 +37,9 @@ Code        | [deleteTemplateHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-## GET `/template/<group-name>/<templateSlug>/audit`
+## GET `/template/<group-name>/<permTemplateSlug>/audit`
 
-URL         | **`/template/<group-name>/<templateSlug>/audit`**
+URL         | **`/template/<group-name>/<permTemplateSlug>/audit`**
 ----------- |----------
 Method      | GET     
 Permissions |  Auth: true
@@ -54,9 +54,9 @@ Code        | [getTemplateAuditsHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-## GET `/template/<group-name>/<templateSlug>/bulk/<bulkID>`
+## GET `/template/<group-name>/<permTemplateSlug>/bulk/<bulkID>`
 
-URL         | **`/template/<group-name>/<templateSlug>/bulk/<bulkID>`**
+URL         | **`/template/<group-name>/<permTemplateSlug>/bulk/<bulkID>`**
 ----------- |----------
 Method      | GET     
 Permissions |  Auth: true
@@ -71,9 +71,9 @@ Code        | [getTemplateBulkHandler](https://github.com/ovh/cds/search?q=%22fu
 
 
 
-## GET `/template/<group-name>/<templateSlug>/instance`
+## GET `/template/<group-name>/<permTemplateSlug>/instance`
 
-URL         | **`/template/<group-name>/<templateSlug>/instance`**
+URL         | **`/template/<group-name>/<permTemplateSlug>/instance`**
 ----------- |----------
 Method      | GET     
 Permissions |  Auth: true
@@ -88,9 +88,9 @@ Code        | [getTemplateInstancesHandler](https://github.com/ovh/cds/search?q=
 
 
 
-## GET `/template/<group-name>/<templateSlug>/usage`
+## GET `/template/<group-name>/<permTemplateSlug>/usage`
 
-URL         | **`/template/<group-name>/<templateSlug>/usage`**
+URL         | **`/template/<group-name>/<permTemplateSlug>/usage`**
 ----------- |----------
 Method      | GET     
 Permissions |  Auth: true
@@ -105,9 +105,9 @@ Code        | [getTemplateUsageHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-## GET `/template/<group-name>/<templateSlug>`
+## GET `/template/<group-name>/<permTemplateSlug>`
 
-URL         | **`/template/<group-name>/<templateSlug>`**
+URL         | **`/template/<group-name>/<permTemplateSlug>`**
 ----------- |----------
 Method      | GET     
 Permissions |  Auth: true
@@ -139,9 +139,9 @@ Code        | [getTemplatesHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
-## POST `/template/<group-name>/<templateSlug>/apply`
+## POST `/template/<group-name>/<permTemplateSlug>/apply`
 
-URL         | **`/template/<group-name>/<templateSlug>/apply`**
+URL         | **`/template/<group-name>/<permTemplateSlug>/apply`**
 ----------- |----------
 Method      | POST     
 Permissions |  Auth: true
@@ -156,9 +156,9 @@ Code        | [postTemplateApplyHandler](https://github.com/ovh/cds/search?q=%22
 
 
 
-## POST `/template/<group-name>/<templateSlug>/bulk`
+## POST `/template/<group-name>/<permTemplateSlug>/bulk`
 
-URL         | **`/template/<group-name>/<templateSlug>/bulk`**
+URL         | **`/template/<group-name>/<permTemplateSlug>/bulk`**
 ----------- |----------
 Method      | POST     
 Permissions |  Auth: true
@@ -173,9 +173,9 @@ Code        | [postTemplateBulkHandler](https://github.com/ovh/cds/search?q=%22f
 
 
 
-## POST `/template/<group-name>/<templateSlug>/pull`
+## POST `/template/<group-name>/<permTemplateSlug>/pull`
 
-URL         | **`/template/<group-name>/<templateSlug>/pull`**
+URL         | **`/template/<group-name>/<permTemplateSlug>/pull`**
 ----------- |----------
 Method      | POST     
 Permissions |  Auth: true
@@ -224,9 +224,9 @@ Code        | [postTemplateHandler](https://github.com/ovh/cds/search?q=%22func+
 
 
 
-## PUT `/template/<group-name>/<templateSlug>`
+## PUT `/template/<group-name>/<permTemplateSlug>`
 
-URL         | **`/template/<group-name>/<templateSlug>`**
+URL         | **`/template/<group-name>/<permTemplateSlug>`**
 ----------- |----------
 Method      | PUT     
 Permissions |  Auth: true

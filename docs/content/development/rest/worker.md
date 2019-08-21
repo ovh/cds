@@ -3,9 +3,9 @@ title = "worker"
 +++
 
 
-## DELETE `/worker/model/<permModelID>`
+## DELETE `/worker/model/<group-name>/<permModelName>`
 
-URL         | **`/worker/model/<permModelID>`**
+URL         | **`/worker/model/<group-name>/<permModelName>`**
 ----------- |----------
 Method      | DELETE     
 Permissions |  Auth: true
@@ -37,9 +37,26 @@ Code        | [deleteWorkerModelPatternHandler](https://github.com/ovh/cds/searc
 
 
 
-## GET `/worker/model/<modelID>/usage`
+## GET `/worker/model/<group-name>/<permModelName>/export`
 
-URL         | **`/worker/model/<modelID>/usage`**
+URL         | **`/worker/model/<group-name>/<permModelName>/export`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkerModelExportHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelExportHandler%22)
+    
+
+
+
+
+
+
+
+
+
+## GET `/worker/model/<group-name>/<permModelName>/usage`
+
+URL         | **`/worker/model/<group-name>/<permModelName>/usage`**
 ----------- |----------
 Method      | GET     
 Permissions |  Auth: true
@@ -54,13 +71,13 @@ Code        | [getWorkerModelUsageHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-## GET `/worker/model/<permModelID>/export`
+## GET `/worker/model/<group-name>/<permModelName>`
 
-URL         | **`/worker/model/<permModelID>/export`**
+URL         | **`/worker/model/<group-name>/<permModelName>`**
 ----------- |----------
 Method      | GET     
 Permissions |  Auth: true
-Code        | [getWorkerModelExportHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelExportHandler%22)
+Code        | [getWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelHandler%22)
     
 
 
@@ -264,7 +281,7 @@ URL         | **`/worker/model`**
 ----------- |----------
 Method      | POST     
 Permissions |  Auth: true
-Code        | [addWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addWorkerModelHandler%22)
+Code        | [postWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkerModelHandler%22)
     
 
 
@@ -343,13 +360,13 @@ Code        | [registerWorkerHandler](https://github.com/ovh/cds/search?q=%22fun
 
 
 
-## PUT `/worker/model/<permModelID>`
+## PUT `/worker/model/<group-name>/<permModelName>`
 
-URL         | **`/worker/model/<permModelID>`**
+URL         | **`/worker/model/<group-name>/<permModelName>`**
 ----------- |----------
 Method      | PUT     
 Permissions |  Auth: true
-Code        | [updateWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateWorkerModelHandler%22)
+Code        | [putWorkerModelHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkerModelHandler%22)
     
 
 

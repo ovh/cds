@@ -19,9 +19,8 @@ cdsctl application keys add [ PROJECT-KEY APPLICATION-NAME ] KEY-NAME KEY-TYPE
 
 ```
   -f, --file string   set configuration file
-  -k, --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
-  -w, --no-warnings   do not display warnings
-  -v, --verbose       verbose output
+      --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
+      --verbose       verbose output
 ```
 
 ## SEE ALSO

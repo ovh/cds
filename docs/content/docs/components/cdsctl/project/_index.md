@@ -15,9 +15,8 @@ notoc: true
 
 ```
   -f, --file string   set configuration file
-  -k, --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
-  -w, --no-warnings   do not display warnings
-  -v, --verbose       verbose output
+      --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
+      --verbose       verbose output
 ```
 
 ## SEE ALSO
@@ -27,9 +26,10 @@ notoc: true
 * [cdsctl project delete](/docs/components/cdsctl/project/delete/)	 - `Delete a CDS project`
 * [cdsctl project favorite](/docs/components/cdsctl/project/favorite/)	 - `Add or delete a CDS project to your personal bookmarks`
 * [cdsctl project group](/docs/components/cdsctl/project/group/)	 - `Manage CDS group linked to a project`
-* [cdsctl project integration](/docs/components/cdsctl/project/integration/)	 - `Manage CDS integration integrations`
+* [cdsctl project integration](/docs/components/cdsctl/project/integration/)	 - `Manage CDS integrations`
 * [cdsctl project keys](/docs/components/cdsctl/project/keys/)	 - `Manage CDS project keys`
 * [cdsctl project list](/docs/components/cdsctl/project/list/)	 - `List CDS projects`
+* [cdsctl project repository-manager](/docs/components/cdsctl/project/repository-manager/)	 - `Manage CDS repository managers`
 * [cdsctl project show](/docs/components/cdsctl/project/show/)	 - `Show a CDS project`
 * [cdsctl project variable](/docs/components/cdsctl/project/variable/)	 - `Manage CDS project variables`
 

@@ -36,9 +36,8 @@ cdsctl template bulk group-name/template-slug -i PROJ1/workflow1 -i PROJ1/workfl
 
 ```
   -f, --file string   set configuration file
-  -k, --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
-  -w, --no-warnings   do not display warnings
-  -v, --verbose       verbose output
+      --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
+      --verbose       verbose output
 ```
 
 ## SEE ALSO

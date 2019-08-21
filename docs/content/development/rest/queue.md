@@ -71,23 +71,6 @@ Code        | [getWorkflowJobQueueHandler](https://github.com/ovh/cds/search?q=%
 
 
 
-## POST `/queue/workflows/<id>/attempt`
-
-URL         | **`/queue/workflows/<id>/attempt`**
------------ |----------
-Method      | POST     
-Permissions |  NeedHatchery:  -  Auth: true
-Code        | [postIncWorkflowJobAttemptHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postIncWorkflowJobAttemptHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ## POST `/queue/workflows/<id>/book`
 
 URL         | **`/queue/workflows/<id>/book`**

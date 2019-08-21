@@ -19,9 +19,8 @@ cdsctl environment variable update [ PROJECT-KEY ] ENV-NAME VARIABLE-OLDNAME VAR
 
 ```
   -f, --file string   set configuration file
-  -k, --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
-  -w, --no-warnings   do not display warnings
-  -v, --verbose       verbose output
+      --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
+      --verbose       verbose output
 ```
 
 ## SEE ALSO

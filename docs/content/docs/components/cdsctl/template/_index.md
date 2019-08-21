@@ -15,9 +15,8 @@ notoc: true
 
 ```
   -f, --file string   set configuration file
-  -k, --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
-  -w, --no-warnings   do not display warnings
-  -v, --verbose       verbose output
+      --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
+      --verbose       verbose output
 ```
 
 ## SEE ALSO
@@ -28,6 +27,7 @@ notoc: true
 * [cdsctl template delete](/docs/components/cdsctl/template/delete/)	 - `Delete a workflow template`
 * [cdsctl template detach](/docs/components/cdsctl/template/detach/)	 - `Detach a workflow from template`
 * [cdsctl template instances](/docs/components/cdsctl/template/instances/)	 - `Get instances for a CDS workflow template`
+* [cdsctl template list](/docs/components/cdsctl/template/list/)	 - `Get all available workflow template from CDS`
 * [cdsctl template pull](/docs/components/cdsctl/template/pull/)	 - `Pull CDS workflow template`
 * [cdsctl template push](/docs/components/cdsctl/template/push/)	 - `Push CDS workflow template`
 

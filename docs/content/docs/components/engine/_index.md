@@ -27,6 +27,7 @@ You will find lastest release of CDS `engine` on [Github Releases](https://githu
 
 * [engine config](/docs/components/engine/config/)	 - `Manage CDS Configuration`
 * [engine database](/docs/components/engine/database/)	 - `Manage CDS database`
+* [engine download](/docs/components/engine/download/)	 - `Download binaries`
 * [engine start](/docs/components/engine/start/)	 - `Start CDS`
 * [engine update](/docs/components/engine/update/)	 - `Update engine binary`
 * [engine uptodate](/docs/components/engine/uptodate/)	 - `check if engine is uptodate`

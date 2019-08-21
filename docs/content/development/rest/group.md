@@ -122,6 +122,23 @@ Code        | [getActionsForGroupHandler](https://github.com/ovh/cds/search?q=%2
 
 
 
+## GET `/group/<groupID>/worker/model`
+
+URL         | **`/group/<groupID>/worker/model`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkerModelsForGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelsForGroupHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ## GET `/group/public`
 
 URL         | **`/group/public`**

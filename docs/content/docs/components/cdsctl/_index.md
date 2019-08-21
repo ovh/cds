@@ -48,9 +48,8 @@ cdsctl [flags]
 
 ```
   -f, --file string   set configuration file
-  -k, --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
-  -w, --no-warnings   do not display warnings
-  -v, --verbose       verbose output
+      --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
+      --verbose       verbose output
 ```
 
 ## SEE ALSO
@@ -71,6 +70,7 @@ cdsctl [flags]
 * [cdsctl signup](/docs/components/cdsctl/signup/)	 - `Signup on CDS`
 * [cdsctl template](/docs/components/cdsctl/template/)	 - `Manage CDS workflow template`
 * [cdsctl token](/docs/components/cdsctl/token/)	 - `Manage CDS group token`
+* [cdsctl tools](/docs/components/cdsctl/tools/)	 - `Some tooling for CDS`
 * [cdsctl update](/docs/components/cdsctl/update/)	 - `Update cdsctl from CDS API or from CDS Release`
 * [cdsctl user](/docs/components/cdsctl/user/)	 - `Manage CDS user`
 * [cdsctl version](/docs/components/cdsctl/version/)	 - `show cdsctl version`

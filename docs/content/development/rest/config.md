@@ -20,3 +20,20 @@ Code        | [ConfigUserHandler](https://github.com/ovh/cds/search?q=%22func+%2
 
 
 
+## ConfigVCShandler return the configuration of vcs server
+
+URL         | **`/config/vcs`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [ConfigVCShandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+ConfigVCShandler%22)
+    
+
+
+
+
+
+
+
+
+

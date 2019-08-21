@@ -12,7 +12,7 @@ notoc: true
 
 Inside a project, you can fetch a cache from your worker with a tag
 
-	worker pull <tagValue>
+	worker cache pull <tagValue>
 
 If you push a cache with:
 

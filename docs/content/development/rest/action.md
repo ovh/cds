@@ -122,6 +122,23 @@ Code        | [getActionsHandler](https://github.com/ovh/cds/search?q=%22func+%2
 
 
 
+## POST `/action/<group-name>/<permActionName>/audit/<auditID>/rollback`
+
+URL         | **`/action/<group-name>/<permActionName>/audit/<auditID>/rollback`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [postActionAuditRollbackHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postActionAuditRollbackHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ## POST `/action`
 
 URL         | **`/action`**

@@ -275,6 +275,40 @@ Code        | [deleteVariableFromProjectHandler](https://github.com/ovh/cds/sear
 
 
 
+## DELETE `/project/<project-key>/workflows/<workflow-name>/runs/<number>`
+
+URL         | **`/project/<project-key>/workflows/<workflow-name>/runs/<number>`**
+----------- |----------
+Method      | DELETE     
+Permissions |  Auth: true
+Code        | [deleteWorkflowRunHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkflowRunHandler%22)
+    
+
+
+
+
+
+
+
+
+
+## DELETE `/project/<project-key>/workflows/<workflow-name>/runs/branch/<branch>`
+
+URL         | **`/project/<project-key>/workflows/<workflow-name>/runs/branch/<branch>`**
+----------- |----------
+Method      | DELETE     
+Permissions |  NeedService:  -  Auth: true
+Code        | [deleteWorkflowRunsBranchHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkflowRunsBranchHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ## DELETE `/project/<project-key>`
 
 URL         | **`/project/<project-key>`**
@@ -819,6 +853,23 @@ Code        | [getStageHandler](https://github.com/ovh/cds/search?q=%22func+%28a
 
 
 
+## GET `/project/<project-key>/pipeline/<pipelineKey>/stage/condition`
+
+URL         | **`/project/<project-key>/pipeline/<pipelineKey>/stage/condition`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getStageConditionsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getStageConditionsHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ## GET `/project/<project-key>/pipeline/<pipelineKey>`
 
 URL         | **`/project/<project-key>/pipeline/<pipelineKey>`**
@@ -843,6 +894,23 @@ URL         | **`/project/<project-key>/pipeline`**
 Method      | GET     
 Permissions |  Auth: true
 Code        | [getPipelinesHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPipelinesHandler%22)
+    
+
+
+
+
+
+
+
+
+
+## GET `/project/<project-key>/repositories_manager/<name>/applications`
+
+URL         | **`/project/<project-key>/repositories_manager/<name>/applications`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getRepositoriesManagerLinkedApplicationsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getRepositoriesManagerLinkedApplicationsHandler%22)
     
 
 
@@ -1040,6 +1108,23 @@ Code        | [getVariablesInProjectHandler](https://github.com/ovh/cds/search?q
 
 
 
+## GET `/project/<project-key>/worker/model`
+
+URL         | **`/project/<project-key>/worker/model`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkerModelsForProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelsForProjectHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ## GET `/project/<project-key>/workflow/<workflow-name>/node/<nodeID>/hook/model`
 
 URL         | **`/project/<project-key>/workflow/<workflow-name>/node/<nodeID>/hook/model`**
@@ -1115,6 +1200,23 @@ URL         | **`/project/<project-key>/workflows/<workflow-name>/node/<nodeID>/
 Method      | GET     
 Permissions |  Auth: true
 Code        | [getWorkflowTriggerConditionHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowTriggerConditionHandler%22)
+    
+
+
+
+
+
+
+
+
+
+## GET `/project/<project-key>/workflows/<workflow-name>/notifications/conditions`
+
+URL         | **`/project/<project-key>/workflows/<workflow-name>/notifications/conditions`**
+----------- |----------
+Method      | GET     
+Permissions |  Auth: true
+Code        | [getWorkflowNotificationsConditionsHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowNotificationsConditionsHandler%22)
     
 
 
@@ -1907,6 +2009,23 @@ Code        | [detachRepositoriesManagerHandler](https://github.com/ovh/cds/sear
 
 
 
+## POST `/project/<project-key>/repositories_manager/<name>/authorize/basicauth`
+
+URL         | **`/project/<project-key>/repositories_manager/<name>/authorize/basicauth`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [repositoriesManagerAuthorizeBasicHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+repositoriesManagerAuthorizeBasicHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ## POST `/project/<project-key>/repositories_manager/<name>/authorize/callback`
 
 URL         | **`/project/<project-key>/repositories_manager/<name>/authorize/callback`**
@@ -1948,6 +2067,23 @@ URL         | **`/project/<project-key>/variable/<name>`**
 Method      | POST     
 Permissions |  Auth: true
 Code        | [addVariableInProjectHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addVariableInProjectHandler%22)
+    
+
+
+
+
+
+
+
+
+
+## POST `/project/<project-key>/workflows/<workflow-name>/ascode/resync/pr`
+
+URL         | **`/project/<project-key>/workflows/<workflow-name>/ascode/resync/pr`**
+----------- |----------
+Method      | POST     
+Permissions |  Auth: true
+Code        | [postResyncPRWorkflowAsCodeHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postResyncPRWorkflowAsCodeHandler%22)
     
 
 
@@ -2485,6 +2621,40 @@ Code        | [getWorkflowCommitsHandler](https://github.com/ovh/cds/search?q=%2
 
 
 
+## deleteWorkflow deletes a workflow
+
+URL         | **`/project/<project-key>/workflows/<workflow-name>`**
+----------- |----------
+Method      | DELETE     
+Permissions |  Auth: true
+Code        | [deleteWorkflowHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkflowHandler%22)
+    
+
+
+
+
+
+
+
+
+
+## deleteWorkflowEventsIntegration deletes a workflow event integration
+
+URL         | **`/project/<project-key>/workflows/<workflow-name>/eventsintegration/<integrationID>`**
+----------- |----------
+Method      | DELETE     
+Permissions |  Auth: true
+Code        | [deleteWorkflowEventsIntegrationHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkflowEventsIntegrationHandler%22)
+    
+
+
+
+
+
+
+
+
+
 ## deleteWorkflowGroup delete permission for a group on the workflow
 
 URL         | **`/project/<project-key>/workflows/<workflow-name>/groups/<group-name>`**
@@ -2492,6 +2662,23 @@ URL         | **`/project/<project-key>/workflows/<workflow-name>/groups/<group-
 Method      | DELETE     
 Permissions |  Auth: true
 Code        | [deleteWorkflowGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkflowGroupHandler%22)
+    
+
+
+
+
+
+
+
+
+
+## deleteWorkflowIcon updates a workflow
+
+URL         | **`/project/<project-key>/workflows/<workflow-name>/icon`**
+----------- |----------
+Method      | DELETE     
+Permissions |  Auth: true
+Code        | [deleteWorkflowIconHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkflowIconHandler%22)
     
 
 
@@ -2674,23 +2861,6 @@ Code        | [postWorkflowRunNumHandler](https://github.com/ovh/cds/search?q=%2
 
 
 
-## putWorkflow deletes a workflow
-
-URL         | **`/project/<project-key>/workflows/<workflow-name>`**
------------ |----------
-Method      | DELETE     
-Permissions |  Auth: true
-Code        | [deleteWorkflowHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkflowHandler%22)
-    
-
-
-
-
-
-
-
-
-
 ## putWorkflow updates a workflow
 
 URL         | **`/project/<project-key>/workflows/<workflow-name>`**
@@ -2715,6 +2885,23 @@ URL         | **`/project/<project-key>/workflows/<workflow-name>/groups/<group-
 Method      | PUT     
 Permissions |  Auth: true
 Code        | [putWorkflowGroupHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkflowGroupHandler%22)
+    
+
+
+
+
+
+
+
+
+
+## putWorkflowIcon updates a workflow
+
+URL         | **`/project/<project-key>/workflows/<workflow-name>/icon`**
+----------- |----------
+Method      | PUT     
+Permissions |  Auth: true
+Code        | [putWorkflowIconHandler](https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkflowIconHandler%22)
     
 
 
