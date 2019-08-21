@@ -12,7 +12,7 @@ type Service struct {
 	Router *api.Router
 }
 
-// Configuration is the hooks configuration structure
+// Configuration is the ui configuration structure
 type Configuration struct {
 	Name      string `toml:"name" comment:"Name of this CDS UI Service\n Enter a name to enable this service" json:"name"`
 	Staticdir string `toml:"staticdir" default:"./" comment:"This directory must contains index.html file and other ui files (css, js...) from ui.tar.gz artifact." json:"staticdir"`
