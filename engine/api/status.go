@@ -66,20 +66,18 @@ func (api *API) statusHandler() service.Handler {
 }
 
 type computeGlobalNumbers struct {
-	nbSrv       int
-	nbOK        int
-	nbAlerts    int
-	nbWarn      int
-	minInstance int
+	nbSrv    int
+	nbOK     int
+	nbAlerts int
+	nbWarn   int
 }
 
 var (
-	tagRange                tag.Key
-	tagStatus               tag.Key
-	tagServiceName          tag.Key
-	tagService              tag.Key
-	tagsService             []tag.Key
-	tagsServiceAvailability []tag.Key
+	tagRange       tag.Key
+	tagStatus      tag.Key
+	tagServiceName tag.Key
+	tagService     tag.Key
+	tagsService    []tag.Key
 )
 
 // computeGlobalStatus returns global status
@@ -91,13 +89,13 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 	linesGlobal := []sdk.MonitoringStatusLine{}
 
 	resume := map[string]computeGlobalNumbers{
-		services.TypeAPI:           {minInstance: api.Config.Status.API.MinInstance},
-		services.TypeRepositories:  {minInstance: api.Config.Status.Repositories.MinInstance},
-		services.TypeVCS:           {minInstance: api.Config.Status.VCS.MinInstance},
-		services.TypeHooks:         {minInstance: api.Config.Status.Hooks.MinInstance},
-		services.TypeHatchery:      {minInstance: api.Config.Status.Hatchery.MinInstance},
-		services.TypeDBMigrate:     {minInstance: api.Config.Status.DBMigrate.MinInstance},
-		services.TypeElasticsearch: {minInstance: api.Config.Status.ElasticSearch.MinInstance},
+		services.TypeAPI:           {},
+		services.TypeRepositories:  {},
+		services.TypeVCS:           {},
+		services.TypeHooks:         {},
+		services.TypeHatchery:      {},
+		services.TypeDBMigrate:     {},
+		services.TypeElasticsearch: {},
 	}
 	var nbg computeGlobalNumbers
 	for _, s := range srvs {
@@ -152,26 +150,6 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 	}
 
 	for stype, r := range resume {
-		if r.minInstance == 0 {
-			continue
-		}
-		st := sdk.MonitoringStatusOK
-		if r.nbSrv < r.minInstance {
-			st = sdk.MonitoringStatusAlert
-			nbg.nbAlerts++
-		} else {
-			nbg.nbOK++
-		}
-		percent := float64(r.nbSrv / r.minInstance)
-		linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
-			Status:    st,
-			Component: fmt.Sprintf("Availability/%s", stype),
-			Value:     fmt.Sprintf("%f", percent),
-			Type:      stype,
-		})
-	}
-
-	for stype, r := range resume {
 		linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
 			Status:    api.computeGlobalStatusByNumbers(r),
 			Component: fmt.Sprintf("Global/%s", stype),
@@ -199,8 +177,6 @@ func (api *API) computeGlobalStatusByNumbers(s computeGlobalNumbers) string {
 		r = sdk.MonitoringStatusAlert
 	} else if s.nbWarn > 0 {
 		r = sdk.MonitoringStatusWarn
-	} else if s.nbSrv < s.minInstance {
-		r = sdk.MonitoringStatusAlert
 	}
 	return r
 }
@@ -243,7 +219,6 @@ func (api *API) initMetrics(ctx context.Context) error {
 
 	tagsRange := []tag.Key{tagCDSInstance, tagRange, tagStatus}
 	tagsService = []tag.Key{tagCDSInstance, tagServiceName, tagService}
-	tagsServiceAvailability = []tag.Key{tagCDSInstance, tagService}
 
 	api.computeMetrics(ctx)
 
@@ -314,7 +289,6 @@ func (api *API) computeMetrics(ctx context.Context) {
 				api.countMetricRange(ctx, "waiting", "70_more_10min", api.Metrics.queue, queryOld, now10min)
 
 				api.processStatusMetrics(ctx)
-
 			}
 		}
 	})
@@ -373,24 +347,6 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 			}
 		}
 		if found {
-			continue
-		}
-
-		if service == "Availability" {
-			number, err := strconv.ParseFloat(line.Value, 64)
-			if err != nil {
-				number = 0
-				log.Warning("metrics>Errors while parsing float %s: %v", line.Value, err)
-			}
-
-			item = "Availability"
-			ctx, _ = tag.New(ctx, tag.Upsert(tagService, line.Type))
-			v, err := observability.FindAndRegisterViewLastFloat64(item, tagsServiceAvailability)
-			if err != nil {
-				log.Warning("metrics>Errors while FindAndRegisterViewLastFloat64 %s: %v", item, err)
-				continue
-			}
-			observability.RecordFloat64(ctx, v.Measure, number)
 			continue
 		}
 

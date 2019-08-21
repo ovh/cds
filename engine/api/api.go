@@ -188,32 +188,9 @@ type Configuration struct {
 	Vault struct {
 		ConfigurationKey string `toml:"configurationKey" json:"-"`
 	} `toml:"vault" json:"vault"`
-	Services []ServiceConfiguration `toml:"services" comment:"###########################\n CDS Services Settings \n##########################" json:"services"`
-	Status   struct {
-		API struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of API is running, an alert will on Global/API be created on /mon/status" json:"minInstance"`
-		} `toml:"api" json:"api"`
-		DBMigrate struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of dbmigrate service is running, an alert on Global/dbmigrate will be created on /mon/status" json:"minInstance"`
-		} `toml:"dbmigrate" json:"dbmigrate"`
-		ElasticSearch struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of elasticsearch service is running, an alert on Global/elasticsearch will be created on /mon/status" json:"minIntance"`
-		} `toml:"elasticsearch" json:"elasticsearch"`
-		Hatchery struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hatchery service is running, an alert on Global/hatchery will be created on /mon/status" json:"minInstance"`
-		} `toml:"hatchery" json:"hatchery"`
-		Hooks struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hooks service is running, an alert on Global/hooks will be created on /mon/status" json:"minInstance"`
-		} `toml:"hooks" json:"hooks"`
-		Repositories struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of repositories service is running, an alert on Global/hooks will be created on /mon/status" json:"minInstance"`
-		} `toml:"repositories" json:"repositories"`
-		VCS struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of vcs service is running, an alert will on Global/vcs be created on /mon/status" json:"minInstance"`
-		} `toml:"vcs" json:"vcs"`
-	} `toml:"status" comment:"###########################\n CDS Status Settings \n Documentation: https://ovh.github.io/cds/hosting/monitoring/ \n##########################" json:"status"`
-	DefaultOS   string `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)" json:"defaultOS"`
-	DefaultArch string `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`
+	Services    []ServiceConfiguration `toml:"services" comment:"###########################\n CDS Services Settings \n##########################" json:"services"`
+	DefaultOS   string                 `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)" json:"defaultOS"`
+	DefaultArch string                 `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`
 	Graylog     struct {
 		AccessToken string `toml:"accessToken" json:"-"`
 		Stream      string `toml:"stream" json:"-"`
