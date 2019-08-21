@@ -107,6 +107,12 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot update integration")
 		}
 
+		if projectIntegration.Model.Event {
+			if err := event.ResetEventIntegration(tx, projectIntegration.ID); err != nil {
+				return sdk.WrapError(err, "cannot connect to event broker")
+			}
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
@@ -153,6 +159,9 @@ func (api *API) deleteProjectIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
+		if deletedIntegration.Model.Event {
+			event.DeleteEventIntegration(deletedIntegration.ID)
+		}
 		event.PublishDeleteProjectIntegration(p, deletedIntegration, deprecatedGetUser(ctx))
 		return nil
 	}
@@ -224,6 +233,12 @@ func (api *API) postProjectIntegrationHandler() service.Handler {
 
 		if err := integration.InsertIntegration(tx, &pp); err != nil {
 			return sdk.WrapError(err, "Cannot insert integration")
+		}
+
+		if pp.Model.Event {
+			if err := event.ResetEventIntegration(tx, pp.ID); err != nil {
+				return sdk.WrapError(err, "cannot connect to event broker")
+			}
 		}
 
 		if err := tx.Commit(); err != nil {

@@ -77,6 +77,39 @@ func ResetPublicIntegrations(db *gorp.DbMap) error {
 	return nil
 }
 
+// DeleteEventIntegration delete broker connection for this event integration
+func DeleteEventIntegration(eventIntegrationID int64) {
+	brokerConnectionKey := strconv.FormatInt(eventIntegrationID, 10)
+	brokersConnectionCache.Delete(brokerConnectionKey)
+}
+
+// ResetEventIntegration reset event integration in order to kill existing connection and add/check the new one
+func ResetEventIntegration(db gorp.SqlExecutor, eventIntegrationID int64) error {
+	brokerConnectionKey := strconv.FormatInt(eventIntegrationID, 10)
+	brokersConnectionCache.Delete(brokerConnectionKey)
+	projInt, err := integration.LoadProjectIntegrationByID(db, eventIntegrationID, true)
+	if err != nil {
+		return fmt.Errorf("cannot load project integration id %d and type event: %v", eventIntegrationID, err)
+	}
+
+	kafkaCfg := KafkaConfig{
+		Enabled:         true,
+		BrokerAddresses: projInt.Config["broker url"].Value,
+		User:            projInt.Config["username"].Value,
+		Password:        projInt.Config["password"].Value,
+		Topic:           projInt.Config["topic"].Value,
+		MaxMessageByte:  10000000,
+	}
+	kafkaBroker, errk := getBroker("kafka", kafkaCfg)
+	if errk != nil {
+		return sdk.WrapError(sdk.ErrBadBrokerConfiguration, "cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, errk)
+	}
+	if err := brokersConnectionCache.Add(brokerConnectionKey, kafkaBroker, gocache.DefaultExpiration); err != nil {
+		return sdk.WrapError(sdk.ErrBadBrokerConfiguration, "cannot add broker in cache for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
+	}
+	return nil
+}
+
 // Initialize initializes event system
 func Initialize(db *gorp.DbMap, cache cache.Store) error {
 	store = cache
