@@ -60,11 +60,11 @@ func (api *API) getGroupHandler() service.Handler {
 
 func (api *API) postGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var data sdk.Group
-		if err := service.UnmarshalBody(r, &data); err != nil {
+		var newGroup sdk.Group
+		if err := service.UnmarshalBody(r, &newGroup); err != nil {
 			return err
 		}
-		if err := data.IsValid(); err != nil {
+		if err := newGroup.IsValid(); err != nil {
 			return err
 		}
 
@@ -74,7 +74,7 @@ func (api *API) postGroupHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		existingGroup, err := group.LoadByName(ctx, tx, data.Name)
+		existingGroup, err := group.LoadByName(ctx, tx, newGroup.Name)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
@@ -83,8 +83,7 @@ func (api *API) postGroupHandler() service.Handler {
 		}
 
 		consumer := getAPIConsumer(ctx)
-		newGroup, err := group.Create(tx, data, consumer.AuthentifiedUser.OldUserStruct.ID)
-		if err != nil {
+		if err := group.Create(tx, &newGroup, consumer.AuthentifiedUser.OldUserStruct.ID); err != nil {
 			return err
 		}
 
@@ -92,11 +91,11 @@ func (api *API) postGroupHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit tx")
 		}
 
-		if err := group.LoadOptions.Default(ctx, api.mustDB(), newGroup); err != nil {
+		if err := group.LoadOptions.Default(ctx, api.mustDB(), &newGroup); err != nil {
 			return err
 		}
 
-		return service.WriteJSON(w, newGroup, http.StatusCreated)
+		return service.WriteJSON(w, &newGroup, http.StatusCreated)
 	}
 }
 

@@ -469,8 +469,8 @@ func (api *API) postProjectHandler() service.Handler {
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot create a new group for given project name")
 			}
 
-			newGroup, err := group.Create(tx, sdk.Group{Name: groupSlug}, consumer.AuthentifiedUser.OldUserStruct.ID)
-			if err != nil {
+			newGroup := sdk.Group{Name: groupSlug}
+			if err := group.Create(tx, &newGroup, consumer.AuthentifiedUser.OldUserStruct.ID); err != nil {
 				return err
 			}
 

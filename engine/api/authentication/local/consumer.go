@@ -42,7 +42,7 @@ func newConsumerWithData(db gorp.SqlExecutor, userID string, data map[string]str
 	}
 
 	if err := authentication.InsertConsumer(db, &c); err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "unable to insert consumer for user %s", userID)
 	}
 
 	return &c, nil

@@ -198,9 +198,8 @@ func InsertLambdaUser(t *testing.T, db gorp.SqlExecutor, groups ...*sdk.Group) (
 	for i := range groups {
 		existingGroup, _ := group.LoadByName(context.TODO(), db, groups[i].Name)
 		if existingGroup == nil {
-			newGroup, err := group.Create(db, *groups[i], u.OldUserStruct.ID)
+			err := group.Create(db, groups[i], u.OldUserStruct.ID)
 			require.NoError(t, err)
-			*groups[i] = *newGroup
 		} else {
 			require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
 				GroupID: groups[i].ID,

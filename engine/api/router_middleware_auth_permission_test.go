@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -656,4 +657,246 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 
 func Test_checkJobIDPermissions(t *testing.T) {
 	// TODO
+}
+
+func Test_checkGroupPermissions(t *testing.T) {
+	api, _, _, end := newTestAPI(t)
+	defer end()
+
+	type setup struct {
+		currentUser           string
+		currenUserIsAdmin     bool
+		currenUserIsMaitainer bool
+		groupAdmins           []string
+		groupMembers          []string
+	}
+	type args struct {
+		groupName       string
+		permissionLevel int
+	}
+	tests := []struct {
+		name    string
+		setup   setup
+		args    args
+		wantErr bool
+	}{
+		{
+			name:    "invalid group name",
+			wantErr: true,
+		},
+		{
+			name:    "group does not exist",
+			wantErr: true,
+		},
+		{
+			name:    "admin can get group",
+			wantErr: false,
+			setup: setup{
+				currentUser:       "admin",
+				currenUserIsAdmin: true,
+			},
+			args: args{
+				groupName:       "my_group",
+				permissionLevel: sdk.PermissionRead,
+			},
+		},
+		{
+			name:    "maintainer can get group",
+			wantErr: false,
+			setup: setup{
+				currentUser:           "maintainer",
+				currenUserIsMaitainer: true,
+			},
+			args: args{
+				groupName:       "my_group",
+				permissionLevel: sdk.PermissionRead,
+			},
+		},
+		{
+			name:    "admin can update group",
+			wantErr: false,
+			setup: setup{
+				currentUser:       "admin",
+				currenUserIsAdmin: true,
+			},
+			args: args{
+				groupName:       "my_group",
+				permissionLevel: sdk.PermissionReadWriteExecute,
+			},
+		},
+		{
+			name:    "maintainer can't update group",
+			wantErr: true,
+			setup: setup{
+				currentUser:           "maintainer",
+				currenUserIsMaitainer: true,
+			},
+			args: args{
+				groupName:       "my_group",
+				permissionLevel: sdk.PermissionReadWriteExecute,
+			},
+		},
+		{
+			name:    "group admin can read group",
+			wantErr: false,
+			setup: setup{
+				currentUser: "group_admin",
+				groupAdmins: []string{"group_admin"},
+			},
+			args: args{
+				groupName:       "my_group",
+				permissionLevel: sdk.PermissionRead,
+			},
+		},
+		{
+			name:    "group member can read group",
+			wantErr: false,
+			setup: setup{
+				currentUser:  "group_member",
+				groupMembers: []string{"group_member"},
+			},
+			args: args{
+				groupName:       "my_group",
+				permissionLevel: sdk.PermissionRead,
+			},
+		},
+		{
+			name:    "group admin can update group",
+			wantErr: false,
+			setup: setup{
+				currentUser: "group_admin",
+				groupAdmins: []string{"group_admin"},
+			},
+			args: args{
+				groupName:       "my_group",
+				permissionLevel: sdk.PermissionReadWriteExecute,
+			},
+		},
+		{
+			name:    "group member can't update group",
+			wantErr: true,
+			setup: setup{
+				currentUser:  "group_member",
+				groupMembers: []string{"group_member"},
+			},
+			args: args{
+				groupName:       "my_group",
+				permissionLevel: sdk.PermissionReadWriteExecute,
+			},
+		},
+		{
+			name:    "lambda user can't get group",
+			wantErr: true,
+			setup: setup{
+				currentUser: "user",
+			},
+			args: args{
+				groupName:       "my_group",
+				permissionLevel: sdk.PermissionRead,
+			},
+		},
+		{
+			name:    "lambda user can't update group",
+			wantErr: true,
+			setup: setup{
+				currentUser: "user",
+			},
+			args: args{
+				groupName:       "my_group",
+				permissionLevel: sdk.PermissionReadWriteExecute,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			prefix := sdk.RandomString(10) + "."
+			currentUser := sdk.AuthentifiedUser{
+				Username: prefix + tt.setup.currentUser,
+			}
+			if tt.setup.currenUserIsAdmin {
+				currentUser.Ring = sdk.UserRingAdmin
+			} else if tt.setup.currenUserIsMaitainer {
+				currentUser.Ring = sdk.UserRingMaintainer
+			} else {
+				currentUser.Ring = sdk.UserRingUser
+			}
+
+			require.NoError(t, user.Insert(api.mustDB(), &currentUser))
+
+			groupAdmin := &sdk.AuthentifiedUser{
+				Username: prefix + "auto-group-admin",
+			}
+			require.NoError(t, user.Insert(api.mustDB(), groupAdmin))
+
+			var err error
+			groupAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), groupAdmin.ID, user.LoadOptions.WithDeprecatedUser)
+			require.NoError(t, err)
+
+			tt.args.groupName = prefix + tt.args.groupName
+
+			g := sdk.Group{
+				Name: tt.args.groupName,
+			}
+
+			require.NoError(t, group.Create(api.mustDB(), &g, groupAdmin.OldUserStruct.ID))
+
+			for _, adm := range tt.setup.groupAdmins {
+				adm = prefix + adm
+				uAdm, _ := user.LoadByUsername(context.TODO(), api.mustDB(), adm)
+				if uAdm == nil {
+					uAdm = &sdk.AuthentifiedUser{
+						Username: adm,
+						Ring:     sdk.UserRingUser,
+					}
+					require.NoError(t, user.Insert(api.mustDB(), uAdm))
+					defer assert.NoError(t, user.DeleteByID(api.mustDB(), uAdm.ID))
+
+				}
+				uAdm, _ = user.LoadByID(context.TODO(), api.mustDB(), uAdm.ID, user.LoadOptions.WithDeprecatedUser)
+
+				require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+					Admin:   true,
+					GroupID: g.ID,
+					UserID:  uAdm.OldUserStruct.ID,
+				}))
+			}
+
+			for _, member := range tt.setup.groupMembers {
+				member = prefix + member
+				uMember, _ := user.LoadByUsername(context.TODO(), api.mustDB(), member)
+				if uMember == nil {
+					uMember = &sdk.AuthentifiedUser{
+						Username: member,
+						Ring:     sdk.UserRingUser,
+					}
+					require.NoError(t, user.Insert(api.mustDB(), uMember))
+					defer assert.NoError(t, user.DeleteByID(api.mustDB(), uMember.ID))
+
+				}
+				uMember, _ = user.LoadByID(context.TODO(), api.mustDB(), uMember.ID, user.LoadOptions.WithDeprecatedUser)
+
+				require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+					Admin:   false,
+					GroupID: g.ID,
+					UserID:  uMember.OldUserStruct.ID,
+				}))
+			}
+
+			consumer, err := local.NewConsumer(api.mustDB(), currentUser.ID)
+			require.NoError(t, err)
+			consumer, err = authentication.LoadConsumerByID(context.TODO(), api.mustDB(), consumer.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+			require.NoError(t, err)
+
+			ctx := context.TODO()
+			ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
+
+			err = api.checkGroupPermissions(ctx, tt.args.groupName, tt.args.permissionLevel, nil)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

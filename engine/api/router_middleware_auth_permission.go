@@ -199,11 +199,11 @@ func (api *API) checkGroupPermissions(ctx context.Context, groupName string, per
 	log.Debug("api.checkGroupPermissions> group %d has members %v", g.ID, g.Members)
 
 	if permissionValue > sdk.PermissionRead { // Only group administror or CDS administrator can update a group or its dependencies
-		if !isGroupAdmin(ctx, g) && !isMaintainer(ctx) {
+		if !isGroupAdmin(ctx, g) && !isAdmin(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 	} else {
-		if !isGroupMember(ctx, g) && !isMaintainer(ctx) { // Only group member of CDS administrator can get a group or its dependencies
+		if !isGroupMember(ctx, g) && !isGroupAdmin(ctx, g) && !isMaintainer(ctx) { // Only group member or CDS maintainer can get a group or its dependencies
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 	}

@@ -9,9 +9,9 @@ import (
 )
 
 // Create insert a new group in database and set user for given id as group admin.
-func Create(db gorp.SqlExecutor, grp sdk.Group, userID int64) (*sdk.Group, error) {
-	if err := Insert(db, &grp); err != nil {
-		return nil, err
+func Create(db gorp.SqlExecutor, grp *sdk.Group, userID int64) error {
+	if err := Insert(db, grp); err != nil {
+		return err
 	}
 
 	if err := InsertLinkGroupUser(db, &LinkGroupUser{
@@ -19,10 +19,10 @@ func Create(db gorp.SqlExecutor, grp sdk.Group, userID int64) (*sdk.Group, error
 		UserID:  userID,
 		Admin:   true,
 	}); err != nil {
-		return nil, err
+		return err
 	}
 
-	return &grp, nil
+	return nil
 }
 
 // Delete deletes group and dependencies.
