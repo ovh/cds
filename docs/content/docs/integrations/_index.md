@@ -24,5 +24,7 @@ cards:
 - name: repository-manager
   title: Repositories Managers
 - name: compute
-  title: Infrastructure used by CDS Workers  
+  title: Infrastructure used by CDS Workers
+- name: events
+  title: CDS Events
 ---
