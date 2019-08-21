@@ -12,8 +12,25 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-var flagDownloadOS string
-var flagDownloadArch string
+func init() {
+	downloadCmd.AddCommand(downloadWorkersCmd)
+
+	downloadWorkersCmd.Flags().StringVar(&flagDownloadWorkersURLAPI, "api", "", "Update binary from a CDS Engine API")
+	downloadWorkersCmd.Flags().StringVarP(&flagDownloadWorkersOS, "os", "", "", "Download only for this os")
+	downloadWorkersCmd.Flags().StringVarP(&flagDownloadWorkersArch, "arch", "", "", "Download only for this arch")
+	downloadWorkersCmd.Flags().StringVar(&flagDownloadWorkersConfigFile, "config", "", "config file")
+	downloadWorkersCmd.Flags().StringVar(&flagDownloadWorkersRemoteConfig, "remote-config", "", "(optional) consul configuration store")
+	downloadWorkersCmd.Flags().StringVar(&flagDownloadWorkersRemoteConfigKey, "remote-config-key", "cds/config.api.toml", "(optional) consul configuration store key")
+}
+
+var (
+	flagDownloadWorkersURLAPI          string
+	flagDownloadWorkersOS              string
+	flagDownloadWorkersArch            string
+	flagDownloadWorkersConfigFile      string
+	flagDownloadWorkersRemoteConfig    string
+	flagDownloadWorkersRemoteConfigKey string
+)
 
 var downloadCmd = &cobra.Command{
 	Use:   "download",
@@ -32,26 +49,26 @@ You can also indicate a specific os or architecture to not download all binaries
 		//Initialize config
 		configBootstrap(args)
 		configSetDefaults()
-		config(args)
+		config(args, flagDownloadWorkersConfigFile, flagDownloadWorkersRemoteConfig, flagDownloadWorkersRemoteConfigKey, "", "")
 
-		config := cdsclient.Config{Host: updateURLAPI}
+		config := cdsclient.Config{Host: flagDownloadWorkersURLAPI}
 		client := cdsclient.New(config)
 		resources := sdk.AllDownloadableResources()
 
 		var workersResources []sdk.DownloadableResource
 		for _, resource := range resources {
 			if resource.Name == "worker" {
-				goodArch := flagDownloadArch == resource.Arch
-				goodOS := flagDownloadOS == resource.OS
+				goodArch := flagDownloadWorkersArch == resource.Arch
+				goodOS := flagDownloadWorkersOS == resource.OS
 
 				switch {
-				case flagDownloadArch == "" && flagDownloadOS == "":
+				case flagDownloadWorkersArch == "" && flagDownloadWorkersOS == "":
 					workersResources = append(workersResources, resource)
-				case flagDownloadArch != "" && flagDownloadOS == "":
+				case flagDownloadWorkersArch != "" && flagDownloadWorkersOS == "":
 					if goodArch {
 						workersResources = append(workersResources, resource)
 					}
-				case flagDownloadArch == "" && flagDownloadOS != "":
+				case flagDownloadWorkersArch == "" && flagDownloadWorkersOS != "":
 					if goodOS {
 						workersResources = append(workersResources, resource)
 					}
@@ -68,7 +85,7 @@ You can also indicate a specific os or architecture to not download all binaries
 			// no need to have apiEndpoint here
 			urlBinary, errGH := client.DownloadURLFromGithub(filename)
 			if errGH != nil {
-				if flagDownloadArch != "" && flagDownloadOS != "" {
+				if flagDownloadWorkersArch != "" && flagDownloadWorkersOS != "" {
 					sdk.Exit("Error while getting URL from Github url:%s err:%s\nIf it's not available on Github release you should consider compile yourself\n", urlBinary, errGH)
 				}
 				continue
@@ -101,14 +118,4 @@ You can also indicate a specific os or architecture to not download all binaries
 
 		fmt.Println("Download workers binaries done.")
 	},
-}
-
-func init() {
-	downloadCmd.AddCommand(downloadWorkersCmd)
-
-	downloadWorkersCmd.Flags().StringVarP(&flagDownloadOS, "os", "", "", "Download only for this os")
-	downloadWorkersCmd.Flags().StringVarP(&flagDownloadArch, "arch", "", "", "Download only for this arch")
-	downloadWorkersCmd.Flags().StringVar(&cfgFile, "config", "", "config file")
-	downloadWorkersCmd.Flags().StringVar(&remoteCfg, "remote-config", "", "(optional) consul configuration store")
-	downloadWorkersCmd.Flags().StringVar(&remoteCfgKey, "remote-config-key", "cds/config.api.toml", "(optional) consul configuration store key")
 }

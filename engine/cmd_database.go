@@ -22,7 +22,45 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-//databaseCmd is the root command for database management
+func init() {
+	databaseCmd.AddCommand(databaseUpgradeCmd)
+	databaseCmd.AddCommand(databaseDowngradeCmd)
+	databaseCmd.AddCommand(databaseStatusCmd)
+
+	setCommonFlags := func(cmd *cobra.Command) {
+		pflags := cmd.Flags()
+		pflags.StringVarP(&connFactory.DBUser, "db-user", "", "cds", "DB User")
+		pflags.StringVarP(&connFactory.DBRole, "db-role", "", "", "DB Role")
+		pflags.StringVarP(&connFactory.DBPassword, "db-password", "", "", "DB Password")
+		pflags.StringVarP(&connFactory.DBName, "db-name", "", "cds", "DB Name")
+		pflags.StringVarP(&connFactory.DBHost, "db-host", "", "localhost", "DB Host")
+		pflags.IntVarP(&connFactory.DBPort, "db-port", "", 5432, "DB Port")
+		pflags.StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
+		pflags.StringVarP(&connFactory.DBSSLMode, "db-sslmode", "", "require", "DB SSL Mode: require (default), verify-full, or disable")
+		pflags.IntVarP(&connFactory.DBMaxConn, "db-maxconn", "", 20, "DB Max connection")
+		pflags.IntVarP(&connFactory.DBTimeout, "db-timeout", "", 3000, "Statement timeout value in milliseconds")
+		pflags.IntVarP(&connFactory.DBConnectTimeout, "db-connect-timeout", "", 10, "Maximum wait for connection, in seconds")
+	}
+
+	setCommonFlags(databaseUpgradeCmd)
+	databaseUpgradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run upgrade")
+	databaseUpgradeCmd.Flags().IntVarP(&sqlMigrateLimitUp, "limit", "", 0, "Max number of migrations to apply (0 = unlimited)")
+
+	setCommonFlags(databaseDowngradeCmd)
+	databaseDowngradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run downgrade")
+	databaseDowngradeCmd.Flags().IntVarP(&sqlMigrateLimitDown, "limit", "", 1, "Max number of migrations to apply (0 = unlimited)")
+
+	setCommonFlags(databaseStatusCmd)
+}
+
+var (
+	sqlMigrateDir       string
+	sqlMigrateDryRun    bool
+	sqlMigrateLimitUp   int
+	sqlMigrateLimitDown int
+	connFactory         = &database.DBConnectionFactory{}
+)
+
 var databaseCmd = &cobra.Command{
 	Use:   "database",
 	Short: "Manage CDS database",
@@ -52,44 +90,6 @@ var databaseStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show current migration status",
 	Run:   databaseStatusCmdFunc,
-}
-
-var (
-	sqlMigrateDir       string
-	sqlMigrateDryRun    bool
-	sqlMigrateLimitUp   int
-	sqlMigrateLimitDown int
-	connFactory         = &database.DBConnectionFactory{}
-)
-
-func setFlags(cmd *cobra.Command) {
-	pflags := cmd.Flags()
-	pflags.StringVarP(&connFactory.DBUser, "db-user", "", "cds", "DB User")
-	pflags.StringVarP(&connFactory.DBRole, "db-role", "", "", "DB Role")
-	pflags.StringVarP(&connFactory.DBPassword, "db-password", "", "", "DB Password")
-	pflags.StringVarP(&connFactory.DBName, "db-name", "", "cds", "DB Name")
-	pflags.StringVarP(&connFactory.DBHost, "db-host", "", "localhost", "DB Host")
-	pflags.IntVarP(&connFactory.DBPort, "db-port", "", 5432, "DB Port")
-	pflags.StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
-	pflags.StringVarP(&connFactory.DBSSLMode, "db-sslmode", "", "require", "DB SSL Mode: require (default), verify-full, or disable")
-	pflags.IntVarP(&connFactory.DBMaxConn, "db-maxconn", "", 20, "DB Max connection")
-	pflags.IntVarP(&connFactory.DBTimeout, "db-timeout", "", 3000, "Statement timeout value in milliseconds")
-	pflags.IntVarP(&connFactory.DBConnectTimeout, "db-connect-timeout", "", 10, "Maximum wait for connection, in seconds")
-}
-
-func init() {
-	setFlags(databaseUpgradeCmd)
-	setFlags(databaseDowngradeCmd)
-	setFlags(databaseStatusCmd)
-	databaseCmd.AddCommand(databaseUpgradeCmd)
-	databaseCmd.AddCommand(databaseDowngradeCmd)
-	databaseCmd.AddCommand(databaseStatusCmd)
-
-	databaseUpgradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run upgrade")
-	databaseUpgradeCmd.Flags().IntVarP(&sqlMigrateLimitUp, "limit", "", 0, "Max number of migrations to apply (0 = unlimited)")
-
-	databaseDowngradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run downgrade")
-	databaseDowngradeCmd.Flags().IntVarP(&sqlMigrateLimitDown, "limit", "", 1, "Max number of migrations to apply (0 = unlimited)")
 }
 
 type statusRow struct {

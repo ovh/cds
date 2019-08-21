@@ -133,5 +133,4 @@ func TestPostRegisterWorkerHandler(t *testing.T) {
 	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
-
 }
