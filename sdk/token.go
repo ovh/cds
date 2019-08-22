@@ -308,9 +308,11 @@ type Token struct {
 
 const AuthSigninConsumerTokenDuration time.Duration = time.Minute * 5
 
+// AuthSigninConsumerToken discribes the payload for a signin state token.
 type AuthSigninConsumerToken struct {
-	Origin      string `json:"origin"`
-	RedirectURI string `json:"redirectURI"`
-	IssuedAt    int64  `json:"iat"`
-	RequireMFA  bool   `json:"requireMFA"`
+	Origin            string `json:"origin"`
+	RedirectURI       string `json:"redirectURI"`
+	IssuedAt          int64  `json:"iat"`
+	RequireMFA        bool   `json:"requireMFA"`
+	IsFirstConnection bool   `json:"is_first_connection"`
 }

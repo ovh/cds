@@ -2,6 +2,7 @@
   "access_refused": "accès refusé",
   "auth_button_signin_with": "Se connecter avec {{consumer}}",
   "auth_value_copied": "La valeur a été copiée",
+  "auth_message_init_token": "Si vous venez de générer la configuration de CDS, vous pouvez fournir la clé d'initialisation falculatif.",
   "auth_message_copy": "Vous pouvez maintenant copier ces paramètres dans votre terminal puis fermer cet onglet.",
   "auth_message_copy_signin_token": "Vous pouvez maintenant utiliser ce token pour vous identifier avec le nouveau client.",
   "auth_callback_missing_param": "Un ou plusieurs paramètres sont manquants pour poursuivre. Vous pouvez essayer de vous connecter à nouveau.",

@@ -13,7 +13,7 @@ export class AuthenticationService {
         let params = new HttpParams();
         params = params.append('redirect_uri', redirectURI);
         params = params.append('require_mfa', String(requireMFA));
-        return this._http.get<AuthDriverSigningRedirect>(`/auth/consumer/${consumerType}/askSignin`, {params: params});
+        return this._http.get<AuthDriverSigningRedirect>(`/auth/consumer/${consumerType}/askSignin`, { params: params });
     }
 
     getDrivers(): Observable<AuthDriverManifests> {
@@ -26,10 +26,11 @@ export class AuthenticationService {
         });
     }
 
-    signin(consumerType: string, code: string, state: string): Observable<AuthConsumerSigninResponse> {
+    signin(consumerType: string, code: string, state: string, init_token: string): Observable<AuthConsumerSigninResponse> {
         return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/${consumerType}/signin`, {
             code,
-            state
+            state,
+            init_token
         });
     }
 
@@ -55,10 +56,11 @@ export class AuthenticationService {
         });
     }
 
-    ldapSignin(bind: string, password: string): Observable<AuthConsumerSigninResponse> {
+    ldapSignin(bind: string, password: string, init_token: string): Observable<AuthConsumerSigninResponse> {
         return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/ldap/signin', {
             bind,
-            password
+            password,
+            init_token
         });
     }
 

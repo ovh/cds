@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -39,8 +41,8 @@ const (
 	vaultConfKey = "/secret/cds/conf"
 )
 
-func configBootstrap(args []string) *Configuration {
-	conf := &Configuration{}
+func configBootstrap(args []string) Configuration {
+	var conf Configuration
 	defaults.SetDefaults(&conf.Debug)
 	defaults.SetDefaults(&conf.Tracing)
 
@@ -160,6 +162,19 @@ func configToEnvVariables(o interface{}) map[string]string {
 		_ = viper.BindEnv(dumper.ViperKey(key), key)
 	}
 	return envs
+}
+
+func configPrintToEnv(c Configuration, w io.Writer) {
+	m := configToEnvVariables(c)
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		// Print the export command and escape all \n in value (useful for keys)
+		fmt.Fprintf(w, "export %s=\"%s\"\n", k, strings.ReplaceAll(m[k], "\n", "\\n"))
+	}
 }
 
 // Generates a config

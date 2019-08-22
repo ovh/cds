@@ -26,6 +26,21 @@
                         </div>
                     </form>
                 </div>
+                <div *ngIf="showInitTokenForm" class="ui bottom attached segment">
+                    <div class="ui info message">
+                        <p>{{ 'auth_message_init_token' | translate }}</p>
+                    </div>
+                    <form class="ui form" (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
+                        <div class="field">
+                            <label>{{ 'account_signup_init_token' | translate }}</label>
+                            <input type="password" name="init_token" ngModel required>
+                        </div>
+                        <div class="field right aligned">
+                            <button class="ui green button"
+                                type="submit">{{ 'account_login_btn_connect' | translate }}</button>
+                        </div>
+                    </form>
+                </div>
                 <div *ngIf="missingParams || showErrorMessage" class="ui bottom attached segment">
                     <div *ngIf="missingParams" class="ui red message">
                         <p>{{ 'auth_callback_missing_param' | translate }}</p>

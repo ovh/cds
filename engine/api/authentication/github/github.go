@@ -47,7 +47,8 @@ func (d authDriver) GetManifest() sdk.AuthDriverManifest {
 
 func (d authDriver) GetSigninURI(signinState sdk.AuthSigninConsumerToken) (sdk.AuthDriverSigningRedirect, error) {
 	// Generate a new state value for the auth signin request
-	jws, err := authentication.NewDefaultSigninStateToken(signinState.Origin, signinState.RedirectURI)
+	jws, err := authentication.NewDefaultSigninStateToken(signinState.Origin,
+		signinState.RedirectURI, signinState.IsFirstConnection)
 	if err != nil {
 		return sdk.AuthDriverSigningRedirect{}, err
 	}

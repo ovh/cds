@@ -63,6 +63,8 @@ func (d authDriver) GetSigninURI(state sdk.AuthSigninConsumerToken) (sdk.AuthDri
 	var result sdk.AuthDriverSigningRedirect
 	var cfg = d.Config.Request
 
+	state.IssuedAt = time.Now().Unix()
+
 	jws, err := prepareRequest(cfg.Keys.RequestSigningKey, state)
 	if err != nil {
 		return result, sdk.WithStack(err)
