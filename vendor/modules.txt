@@ -401,11 +401,11 @@ github.com/mailru/easyjson
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
 github.com/mailru/easyjson/buffer
-# github.com/maruel/panicparse v0.0.0-20170227222818-25bcac0d793c
+# github.com/maruel/panicparse v1.3.0
 github.com/maruel/panicparse/stack
-# github.com/mattn/go-colorable v0.1.0
+# github.com/mattn/go-colorable v0.1.1
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.6
+# github.com/mattn/go-isatty v0.0.7
 github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.1
 github.com/mattn/go-runewidth
@@ -418,7 +418,7 @@ github.com/mattn/go-zglob/fastwalk
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
 github.com/mcuadros/go-defaults
-# github.com/mgutz/ansi v0.0.0-20150914162238-c286dcecd19f
+# github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 github.com/mgutz/ansi
 # github.com/mholt/archiver v3.1.1+incompatible
 github.com/mholt/archiver

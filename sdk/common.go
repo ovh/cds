@@ -3,7 +3,6 @@ package sdk
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"crypto/md5"
 	"crypto/sha512"
 	"database/sql/driver"
@@ -14,13 +13,9 @@ import (
 	"os"
 	"reflect"
 	"regexp"
-	"runtime"
-	"runtime/pprof"
 
 	"github.com/go-gorp/gorp"
 	"github.com/pkg/errors"
-
-	"github.com/ovh/cds/sdk/log"
 )
 
 // MaxIconSize is the maximum size of the icon in octet
@@ -159,43 +154,6 @@ func FileSHA512sum(filePath string) (string, error) {
 	hashInBytes := hash.Sum(nil)[:64]
 	sum := hex.EncodeToString(hashInBytes)
 	return sum, nil
-}
-
-// GoRoutine runs the function within a goroutine with a panic recovery
-func GoRoutine(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
-	hostname, _ := os.Hostname()
-	go func(ctx context.Context) {
-		labels := pprof.Labels("goroutine-name", name, "goroutine-hostname", hostname)
-		goroutineCtx := pprof.WithLabels(ctx, labels)
-		pprof.SetGoroutineLabels(goroutineCtx)
-
-		defer func() {
-			if r := recover(); r != nil {
-				buf := make([]byte, 1<<16)
-				runtime.Stack(buf, false)
-				uuid := UUID()
-				log.Error("[PANIC][%s] %s Failed (%s)", hostname, name, uuid)
-				log.Error("%s", string(buf))
-
-				for _, f := range writerFactories {
-					w, err := f(uuid)
-					if err != nil {
-						log.Error("unable open writer %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
-						continue
-					}
-					if _, err := io.Copy(w, bytes.NewReader(buf)); err != nil {
-						log.Error("unable to write %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
-						continue
-					}
-					if err := w.Close(); err != nil {
-						log.Error("unable to close %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
-					}
-				}
-			}
-		}()
-
-		fn(goroutineCtx)
-	}(c)
 }
 
 var rxURL = regexp.MustCompile(`http[s]?:\/\/(.*)`)

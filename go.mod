@@ -132,18 +132,15 @@ require (
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d
 	github.com/marstr/guid v1.1.0 // indirect
-	github.com/maruel/panicparse v0.0.0-20170227222818-25bcac0d793c // indirect
-	github.com/maruel/ut v1.0.0 // indirect
+	github.com/maruel/panicparse v1.3.0
 	github.com/mattbaird/elastigo v0.0.0-20170123220020-2fe47fd29e4b // indirect
-	github.com/mattn/go-colorable v0.1.0 // indirect
-	github.com/mattn/go-isatty v0.0.6 // indirect
 	github.com/mattn/go-oci8 v0.0.0-20181017025833-e3e58f4cc797 // indirect
 	github.com/mattn/go-runewidth v0.0.1 // indirect
 	github.com/mattn/go-shellwords v1.0.3 // indirect
 	github.com/mattn/go-sqlite3 v1.10.0 // indirect
 	github.com/mattn/go-zglob v0.0.0-20171230104132-4959821b4817
 	github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
-	github.com/mgutz/ansi v0.0.0-20150914162238-c286dcecd19f
+	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/mgutz/logxi v0.0.0-20161027140823-aebf8a7d67ab // indirect
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/miekg/dns v1.0.13 // indirect

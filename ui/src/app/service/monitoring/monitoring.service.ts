@@ -19,4 +19,20 @@ export class MonitoringService {
     getStatus(): Observable<MonitoringStatus> {
         return this._http.get<MonitoringStatus>('/mon/status');
     }
+
+    /**
+     * Get the CDS API Debug profiles
+     * @returns {Observable<any>}
+     */
+    getDebugProfiles(): Observable<any> {
+        return this._http.get<any>('/admin/debug/profiles');
+    }
+
+     /**
+     * Get the CDS API goroutines
+     * @returns {Observable<any>}
+     */
+    getGoroutines(): Observable<any> {
+        return this._http.get<any>('/admin/debug/goroutines');
+    }
 }

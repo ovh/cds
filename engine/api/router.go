@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"runtime"
 	"runtime/pprof"
 	"strings"
@@ -71,9 +72,22 @@ type HandlerConfigParam func(*service.HandlerConfig)
 // HandlerConfigFunc is a type used in the router configuration fonction "Handle"
 type HandlerConfigFunc func(service.Handler, ...HandlerConfigParam) *service.HandlerConfig
 
-func (r *Router) pprofLabel(fn http.HandlerFunc) http.HandlerFunc {
+func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		labels := pprof.Labels("http-path", r.URL.Path)
+		var name = sdk.RandomString(12)
+		rc := config[r.Method]
+		if rc != nil && rc.Handler != nil {
+			name = runtime.FuncForPC(reflect.ValueOf(rc.Handler).Pointer()).Name()
+			name = strings.Replace(name, ".func1", "", 1)
+		}
+		log.Debug("handler name= %s", name)
+		id := fmt.Sprintf("%d", sdk.GoroutineID())
+
+		labels := pprof.Labels(
+			"http-path", r.URL.Path,
+			"goroutine-id", id,
+			"goroutine-name", name+"-"+id,
+		)
 		ctx := pprof.WithLabels(r.Context(), labels)
 		pprof.SetGoroutineLabels(ctx)
 		r = r.WithContext(ctx)
@@ -261,7 +275,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 	}
 
 	// The chain is http -> mux -> f -> recover -> wrap -> pprof -> opencensus -> http
-	r.Mux.Handle(uri, r.pprofLabel(r.compress(r.recoverWrap(f))))
+	r.Mux.Handle(uri, r.pprofLabel(cfg.Config, r.compress(r.recoverWrap(f))))
 }
 
 type asynchronousRequest struct {

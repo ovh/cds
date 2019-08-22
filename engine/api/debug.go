@@ -8,7 +8,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"net/http"
 	"runtime"
 	"runtime/pprof"
@@ -16,71 +15,56 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ovh/cds/sdk"
+
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/service"
-	"github.com/ovh/cds/sdk/log"
 )
 
-// getProfileIndexHandler returns the profiles index
-func (api *API) getProfileIndexHandler() service.Handler {
+func (api *API) getDebugProfilesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var session string
-		//session := getUserSession(ctx) TODO: fix
-
-		if session == "" {
-			session = r.FormValue("Session-Token")
-		}
-
-		str := fmt.Sprintf(`<html>
-			<head>
-			<title>CDS Debug</title>
-			</head>
-			<body>
-			<h1>CDS debug pprof</h1>
-			<h2>Profiles</h2>
-			{{range .}}
-				<form action="debug/{{.Name}}" method="POST">
-					<input type="text" value="{{.Count}}" size="3" disabled></input>				
-					<input type="text" value="{{.Name}}" size="30" disabled></input>
-					<input type="hidden" name="session" value="%s"></input>
-					<input type="hidden" name="debug" value="1"></input>
-					<input type="submit" value="Go"></input>
-				</form>
-			{{end}}
-
-			<br>
-			<form action="debug/goroutine" method="POST">
-				Full goroutine stack dump
-				<input type="hidden" name="session" value="%s"></input>
-				<input type="hidden" name="debug" value="2"></input>
-				<input type="submit" value="Go"></input>
-			</form>
-			<br>
-			<form action="debug/trace" method="POST">
-				Trace
-				<input type="hidden" name="session" value="%s"></input>
-				<input type="text" name="seconds" value="5" size="3"></input> Seconds
-				<input type="submit" value="Go"></input>
-			</form>
-			<br>
-			<form action="debug/cpu" method="POST">
-				CPU Profile
-				<input type="hidden" name="session" value="%s"></input>
-				<input type="text" name="seconds" value="5" size="3"></input> Seconds
-				<input type="submit" value="Go"></input>
-			</form>
-			</body>
-			</html>
-			`, session, session, session, session)
-
-		var indexTmpl = template.Must(template.New("index").Parse(str))
-
 		profiles := pprof.Profiles()
-		if err := indexTmpl.Execute(w, profiles); err != nil {
-			log.Error("getProfileIndexHandler> %v", err)
+
+		profileCounters := map[string]int{}
+		for _, p := range profiles {
+			if p != nil {
+				profileCounters[p.Name()] = p.Count()
+			}
 		}
-		return nil
+
+		return service.WriteJSON(w, profileCounters, http.StatusOK)
+	}
+}
+
+func (api *API) getDebugGoroutinesHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		grs, err := sdk.ListGoroutines()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		type goroutineInfo struct {
+			State      string
+			CreatedBy  string
+			SourcePath string
+			Caller     string
+		}
+
+		var result = make(map[string][]goroutineInfo)
+
+		for _, goroutine := range grs {
+			slice := result[goroutine.State]
+			slice = append(slice, goroutineInfo{
+				State:      goroutine.State,
+				CreatedBy:  goroutine.CreatedBy.Func.Raw,
+				SourcePath: goroutine.CreatedBy.FullSourceLine(),
+				Caller:     goroutine.Stack.Calls[0].Func.Raw,
+			})
+			result[goroutine.State] = slice
+		}
+
+		return service.WriteJSON(w, result, http.StatusOK)
 	}
 }
 
