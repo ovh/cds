@@ -2,6 +2,7 @@
   "access_refused": "access refused",
   "auth_button_signin_with": "Sign in with {{consumer}}",
   "auth_value_copied": "Value copied",
+  "auth_message_init_token": "If you just generated the CDS configuration you can give an optional init token.",
   "auth_message_copy": "You can now copy this parameters to your terminal then close this tab.",
   "auth_message_copy_signin_token": "You can now use this token to signin with the new consumer.",
   "auth_callback_missing_param": "One or more params are missing to continue. You can try to sign in again.",

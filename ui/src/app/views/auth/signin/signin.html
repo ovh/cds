@@ -6,21 +6,21 @@
         </div>
     </div>
     <div *ngIf="!loading" class="column">
-        <sui-tabset>
+        <sui-tabset *ngIf="localDriver || ldapDriver">
             <div class="ui top attached tabular menu">
                 <a *ngIf="localDriver" class="item" suiTabHeader="1">{{ 'account_btn_signin' | translate}}</a>
                 <a *ngIf="localDriver && !localDriver.signup_disabled" class="item" suiTabHeader="2"
                     (activate)="resetSignup()">{{ 'account_btn_signup' | translate}}</a>
                 <a *ngIf="ldapDriver" class="item" suiTabHeader="3">{{ 'account_btn_signin_ldap' | translate}}</a>
             </div>
-            <div class="ui bottom attached segment" suiTabContent="1">
+            <div *ngIf="localDriver" class="ui bottom attached segment" suiTabContent="1">
                 <form class="ui form" (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
                     <div class="field">
-                        <label>{{ 'user_label_username' | translate }}</label>
+                        <label>{{ 'user_label_username' | translate }}*</label>
                         <input type="text" name="username" ngModel required>
                     </div>
                     <div class="field">
-                        <label>{{ 'user_label_password' | translate }}</label>
+                        <label>{{ 'user_label_password' | translate }}*</label>
                         <input type="password" name="password" ngModel required>
                     </div>
                     <div class="field right aligned">
@@ -31,22 +31,23 @@
                     </div>
                 </form>
             </div>
-            <div *ngIf="localDriver && !localDriver.signup_disabled" class="ui bottom attached segment" suiTabContent="2">
+            <div *ngIf="localDriver && !localDriver.signup_disabled" class="ui bottom attached segment"
+                suiTabContent="2">
                 <form *ngIf="!showSuccessSignup" class="ui form" (ngSubmit)="signup(signupForm)" #signupForm="ngForm">
                     <div class="field">
-                        <label>{{ 'user_label_username' | translate }}</label>
+                        <label>{{ 'user_label_username' | translate }}*</label>
                         <input type="text" name="username" ngModel required>
                     </div>
                     <div class="field">
-                        <label>{{ 'user_label_fullname' | translate }}</label>
+                        <label>{{ 'user_label_fullname' | translate }}*</label>
                         <input type="text" name="fullname" ngModel required>
                     </div>
                     <div class="field">
-                        <label>{{ 'user_label_email' | translate }}</label>
+                        <label>{{ 'user_label_email' | translate }}*</label>
                         <input type="email" name="email" ngModel required>
                     </div>
                     <div class="field">
-                        <label>{{ 'user_label_password' | translate }}</label>
+                        <label>{{ 'user_label_password' | translate }}*</label>
                         <input type="password" name="password" ngModel required>
                     </div>
                     <div class="field" *ngIf="isFirstConnection">
@@ -65,11 +66,11 @@
             <div *ngIf="ldapDriver" class="ui bottom attached segment" suiTabContent="3">
                 <form class="ui form" (ngSubmit)="ldapSignin(signinForm)" #signinForm="ngForm">
                     <div class="field">
-                        <label>LDAP Bind</label>
+                        <label>LDAP Bind*</label>
                         <input type="text" name="bind" ngModel required>
                     </div>
                     <div class="field">
-                        <label>{{ 'user_label_password' | translate }}</label>
+                        <label>{{ 'user_label_password' | translate }}*</label>
                         <input type="password" name="password" ngModel required>
                     </div>
                     <div class="field" *ngIf="isFirstConnection">
@@ -86,8 +87,7 @@
         <div *ngIf="!loading && externalDrivers && externalDrivers.length > 0" class="ui bottom attached segment">
             <form class="ui form">
                 <div *ngFor="let driver of externalDrivers" class="field">
-                    <a  class="fluid ui {{driver.type}} button primary"
-                        [routerLink]="'/auth/ask-signin/'+driver.type"
+                    <a class="fluid ui {{driver.type}} button primary" [routerLink]="'/auth/ask-signin/'+driver.type"
                         [queryParams]="{redirect_uri: redirect, require_mfa: mfa}">
                         <i class="{{driver.icon}} icon"></i>
                         {{ 'auth_button_signin_with' | translate: {consumer: driver.type} }}

@@ -2,8 +2,7 @@ package main
 
 import (
 	"fmt"
-	"sort"
-	"strings"
+	"os"
 
 	"github.com/spf13/cobra"
 	toml "github.com/yesnault/go-toml"
@@ -62,28 +61,19 @@ All options
 
 	Run: func(cmd *cobra.Command, args []string) {
 		conf := configBootstrap(args)
-		magicToken, err := configSetStartupData(conf)
+		magicToken, err := configSetStartupData(&conf)
 		if err != nil {
 			sdk.Exit("%v", err)
 		}
 
 		if !flagConfigNewAsEnv {
-			btes, err := toml.Marshal(*conf)
+			btes, err := toml.Marshal(conf)
 			if err != nil {
 				sdk.Exit("%v", err)
 			}
 			fmt.Println(string(btes))
 		} else {
-			m := configToEnvVariables(conf)
-			keys := make([]string, 0, len(m))
-			for k := range m {
-				keys = append(keys, k)
-			}
-			sort.Strings(keys)
-			for _, k := range keys {
-				// Print the export command and escape all \n in value (useful for keys)
-				fmt.Printf("export %s=\"%s\"\n", k, strings.ReplaceAll(m[k], "\n", "\\n"))
-			}
+			configPrintToEnv(conf, os.Stdout)
 		}
 
 		fmt.Println("# On first login, you will be asked to enter the following token:")
@@ -194,9 +184,9 @@ var configCheckCmd = &cobra.Command{
 var configRegenCmd = &cobra.Command{
 	Use:   "regen",
 	Short: "Regen tokens and keys for given CDS configuration file",
-	Long:  `$ engine config regen <path>`,
+	Long:  `$ engine config regen <input-path> <output-path>`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
+		if len(args) < 1 {
 			cmd.Help()
 			sdk.Exit("Wrong usage")
 		}
@@ -208,26 +198,32 @@ var configRegenCmd = &cobra.Command{
 			sdk.Exit("%v", err)
 		}
 
+		writer := os.Stdout
+		if len(args) == 2 {
+			output := args[1]
+			if _, err := os.Stat(output); err == nil {
+				if err := os.Remove(output); err != nil {
+					sdk.Exit("%v", err)
+				}
+			}
+			writer, err = os.Create(output)
+			if err != nil {
+				sdk.Exit("%v", err)
+			}
+		}
+		defer writer.Close()
+
 		if !flagConfigRegenAsEnv {
 			btes, err := toml.Marshal(oldConf)
 			if err != nil {
 				sdk.Exit("%v", err)
 			}
-			fmt.Println(string(btes))
+			fmt.Fprintln(writer, string(btes))
 		} else {
-			m := configToEnvVariables(oldConf)
-			keys := make([]string, 0, len(m))
-			for k := range m {
-				keys = append(keys, k)
-			}
-			sort.Strings(keys)
-			for _, k := range keys {
-				// Print the export command and escape all \n in value (useful for keys)
-				fmt.Printf("export %s=\"%s\"\n", k, strings.ReplaceAll(m[k], "\n", "\\n"))
-			}
+			configPrintToEnv(oldConf, writer)
 		}
 
-		fmt.Println("# On first login, you will be asked to enter the following token:")
-		fmt.Println("# " + magicToken)
+		fmt.Fprintln(writer, "# On first login, you will be asked to enter the following token:")
+		fmt.Fprintln(writer, "# "+magicToken)
 	},
 }

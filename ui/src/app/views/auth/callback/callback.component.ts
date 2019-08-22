@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthenticationService } from 'app/service/services.module';
@@ -23,6 +24,9 @@ export class CallbackComponent implements OnInit {
     state: string;
     loading: boolean;
     showErrorMessage: boolean;
+    showInitTokenForm: boolean;
+    consumerType: string;
+
 
     constructor(
         private _route: ActivatedRoute,
@@ -37,7 +41,7 @@ export class CallbackComponent implements OnInit {
 
     ngOnInit() {
         this.paramsSub = this._route.params.subscribe(params => {
-            let consumerType = params['consumerType'];
+            this.consumerType = params['consumerType'];
 
             this.code = this._route.snapshot.queryParams.code || this._route.snapshot.queryParams.token;
             this.state = this._route.snapshot.queryParams.state || this._route.snapshot.queryParams.request;
@@ -45,7 +49,7 @@ export class CallbackComponent implements OnInit {
             if (!this.code || !this.state) {
                 this.loading = false;
                 this.missingParams = true;
-                this._cd.detectChanges();
+                this._cd.markForCheck();
                 return;
             }
 
@@ -54,20 +58,19 @@ export class CallbackComponent implements OnInit {
             if (payload.data && payload.data.Origin === 'cdsctl') {
                 this.loading = false;
                 this.showCTL = true;
-                this._cd.detectChanges();
+                this._cd.markForCheck();
                 return;
             }
 
-            this._authenticationService.signin(consumerType, this.code, this.state)
-                .pipe(finalize(() => {
-                    this.loading = false;
-                    this._cd.detectChanges();
-                }))
-                .subscribe(_ => {
-                    this._router.navigate(['/']);
-                }, () => {
-                    this.showErrorMessage = true;
-                });
+            // If the first connection flag is set, show init token form
+            if (payload.data && payload.data.IsFirstConnection) {
+                this.loading = false;
+                this.showInitTokenForm = true;
+                this._cd.markForCheck();
+                return;
+            }
+
+            this.sendSigninRequest();
         });
     }
 
@@ -77,5 +80,22 @@ export class CallbackComponent implements OnInit {
 
     navigateToSignin() {
         this._router.navigate(['/auth/signin']);
+    }
+
+    signin(f: NgForm): void {
+        this.sendSigninRequest(f.value.init_token);
+    }
+
+    sendSigninRequest(initToken?: string): void {
+        this._authenticationService.signin(this.consumerType, this.code, this.state, initToken)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(_ => {
+                this._router.navigate(['/']);
+            }, () => {
+                this.showErrorMessage = true;
+            });
     }
 }

@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 
@@ -63,10 +62,15 @@ func (api *API) getAuthAskSigninHandler() service.Handler {
 			return nil
 		}
 
+		countAdmins, err := user.CountAdmin(api.mustDB())
+		if err != nil {
+			return err
+		}
+
 		var signinState = sdk.AuthSigninConsumerToken{
-			IssuedAt:    time.Now().Unix(),
-			RequireMFA:  QueryBool(r, "require_mfa"),
-			RedirectURI: QueryString(r, "redirect_uri"),
+			RequireMFA:        QueryBool(r, "require_mfa"),
+			RedirectURI:       QueryString(r, "redirect_uri"),
+			IsFirstConnection: countAdmins == 0,
 		}
 		// Get the origin from request if set
 		signinState.Origin = QueryString(r, "origin")
