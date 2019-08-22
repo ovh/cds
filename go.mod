@@ -170,8 +170,12 @@ require (
 	github.com/opencontainers/selinux v1.0.0-rc1 // indirect
 	github.com/ory-am/common v0.4.0 // indirect
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
+<<<<<<< HEAD
 	github.com/ovh/cds/sdk/izanami v0.0.0-00010101000000-000000000000
 	github.com/ovh/configstore v0.0.0-20190211110801-86dc25ae30bd
+=======
+	github.com/ovh/cds/sdk/izanami v0.0.0-20190703101657-683453b50b2a
+>>>>>>> origin/master
 	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 // indirect
 	github.com/ovh/symmecrypt v0.2.0
 	github.com/ovh/venom v0.25.0

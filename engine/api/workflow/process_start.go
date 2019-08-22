@@ -121,7 +121,7 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 				break
 			}
 
-			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusNeverBuilt || nodeRun.Status == sdk.StatusStopped {
+			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusFail || nodeRun.Status == sdk.StatusNeverBuilt || nodeRun.Status == sdk.StatusStopped {
 				ok = false
 				break
 			}

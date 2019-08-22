@@ -1162,7 +1162,7 @@ func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 		// Check that given config is valid according hook model
 		for k, d := range model.DefaultConfig {
 			if !d.Configurable && h.Config[k].Value != d.Value {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given hook config, '%s' is not configurable", k)
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given hook config, '%s' is not configurable. Value: %+v in model %+v", k, h.Config[k].Value, model)
 			}
 			if len(d.MultipleChoiceList) > 0 {
 				var found bool

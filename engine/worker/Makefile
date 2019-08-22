@@ -13,7 +13,6 @@ TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 GO_BUILD = go build 
 GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
-GO_GOVERALLS = ${GOPATH}/bin/goveralls
 GO_GO2XUNIT = ${GOPATH}/bin/go2xunit
 
 TEST_PKGS = $(shell go list ./... | grep -v vendor)
@@ -28,9 +27,6 @@ $(GO_LINT):
 
 $(GO_COV_MERGE):
 	go get -u github.com/wadey/gocovmerge
-
-$(GO_GOVERALLS):
-	go get -u github.com/mattn/goveralls
 
 $(GO_GO2XUNIT):
 	go get -u github.com/tebeka/go2xunit
@@ -65,7 +61,7 @@ test: clean
 	$(MAKE) test-coverage
 	$(MAKE) test-xunit-report
 
-test-coverage: $(GO_GOVERALLS) $(GO_COV_MERGE) $(TARGET_DIR)
+test-coverage: $(GO_COV_MERGE) $(TARGET_DIR)
 	@$(GO_COV_MERGE) ./*.coverprofile > $(TARGET_DIR)/cover.out
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
 	@if [ ! -z "${CDS_VERSION}" ]; then \

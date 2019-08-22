@@ -65,7 +65,7 @@ var (
 	MsgSpawnInfoHatcheryStartDockerPull    = &Message{"MsgSpawnInfoHatcheryStartDockerPull", trad{FR: "La Hatchery %s a démarré le docker pull de l'image %s...", EN: "Hatchery %s starts docker pull %s..."}, nil}
 	MsgSpawnInfoHatcheryEndDockerPull      = &Message{"MsgSpawnInfoHatcheryEndDockerPull", trad{FR: "La Hatchery %s a terminé le docker pull de l'image %s", EN: "Hatchery %s docker pull %s done"}, nil}
 	MsgSpawnInfoHatcheryEndDockerPullErr   = &Message{"MsgSpawnInfoHatcheryEndDockerPullErr", trad{FR: "⚠ La Hatchery %s a terminé le docker pull de l'image %s en erreur: %s", EN: "⚠ Hatchery %s - docker pull %s done with error: %v"}, nil}
-	MsgSpawnInfoDeprecatedModel            = &Message{"MsgSpawnInfoDeprecatedModel", trad{FR: "Attention vous utilisez un worker model (%s) déprécié", EN: "Pay attention you are using a deprecated worker model (%s)"}, nil}
+	MsgSpawnInfoDeprecatedModel            = &Message{"MsgSpawnInfoDeprecatedModel", trad{FR: "⚠ Attention vous utilisez un worker model (%s) déprécié", EN: "⚠ Pay attention you are using a deprecated worker model (%s)"}, nil}
 	MsgSpawnInfoWorkerEnd                  = &Message{"MsgSpawnInfoWorkerEnd", trad{FR: "✓ Le worker %s a terminé et a passé %s à travailler sur les étapes", EN: "✓ Worker %s finished working on this job and took %s to work on the steps"}, nil}
 	MsgSpawnInfoJobInQueue                 = &Message{"MsgSpawnInfoJobInQueue", trad{FR: "✓ Le job a été mis en file d'attente", EN: "✓ Job has been queued"}, nil}
 	MsgSpawnInfoJobTaken                   = &Message{"MsgSpawnInfoJobTaken", trad{FR: "Le job %s a été pris par le worker %s", EN: "Job %s was taken by worker %s"}, nil}

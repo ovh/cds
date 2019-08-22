@@ -157,7 +157,7 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 					{
 						HookModelName: sdk.RepositoryWebHookModelName,
 						UUID:          sdk.RandomString(10),
-						Config:        sdk.RepositoryWebHookModel.DefaultConfig,
+						Config:        sdk.RepositoryWebHookModel.DefaultConfig.Clone(),
 						HookModelID:   repoModel.ID,
 					},
 				},
