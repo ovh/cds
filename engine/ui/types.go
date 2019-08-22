@@ -8,14 +8,17 @@ import (
 // Service is the stuct representing a ui µService
 type Service struct {
 	service.Common
-	Cfg    Configuration
-	Router *api.Router
+	Cfg     Configuration
+	Router  *api.Router
+	HTMLDir string
 }
 
 // Configuration is the ui configuration structure
 type Configuration struct {
 	Name      string `toml:"name" comment:"Name of this CDS UI Service\n Enter a name to enable this service" json:"name"`
-	Staticdir string `toml:"staticdir" default:"./" comment:"This directory must contains index.html file and other ui files (css, js...) from ui.tar.gz artifact." json:"staticdir"`
+	Staticdir string `toml:"staticdir" default:"./ui_static_files" comment:"This directory must contains index.html file and other ui files (css, js...) from ui.tar.gz artifact." json:"staticdir"`
+	BaseURL   string `toml:"baseURL" default:"/" comment:"Base URL. If you expose CDS UI with https://your-domain.com/ui, enter the value '/ui'" json:"baseURL"`
+	SentryURL string `toml:"sentryURL" default:"" comment:"Sentry URL. Optional" json:"sentryURL"`
 	HTTP      struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
 		Port int    `toml:"port" default:"8080" json:"port"`
