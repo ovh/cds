@@ -58,7 +58,7 @@ func (api *API) getDebugGoroutinesHandler() service.Handler {
 			slice = append(slice, goroutineInfo{
 				State:      goroutine.State,
 				CreatedBy:  goroutine.CreatedBy.Func.Raw,
-				SourcePath: goroutine.CreatedBy.FullSourceLine(),
+				SourcePath: goroutine.CreatedBy.FullSrcLine(),
 				Caller:     goroutine.Stack.Calls[0].Func.Raw,
 			})
 			result[goroutine.State] = slice

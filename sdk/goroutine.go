@@ -89,7 +89,7 @@ func GoroutineID() uint64 {
 	return n
 }
 
-func ListGoroutines() ([]panicparsestack.Goroutine, error) {
+func ListGoroutines() ([]*panicparsestack.Goroutine, error) {
 	var w = new(bytes.Buffer)
 	err := WriteGoroutineStacks(w)
 	if err != nil {
@@ -214,18 +214,13 @@ func WriteGoroutineStacks(w io.Writer) error {
 	return WithStack(err)
 }
 
-func ParseGoRoutineStacks(r io.Reader, w io.Writer) ([]panicparsestack.Goroutine, error) {
+func ParseGoRoutineStacks(r io.Reader, w io.Writer) ([]*panicparsestack.Goroutine, error) {
 	if w == nil {
 		w = ioutil.Discard
 	}
-	goroutines, err := panicparsestack.ParseDump(r, w)
+	goroutines, err := panicparsestack.ParseDump(r, w, true)
 	if err != nil {
 		return nil, WithStack(err)
 	}
-
-	//for _, goroutine := range goroutines {
-	//	fmt.Println(goroutine.ID, goroutine.Signature.CreatedBy.Func.PkgDotName())
-	//}
-
-	return goroutines, nil
+	return goroutines.Goroutines, nil
 }

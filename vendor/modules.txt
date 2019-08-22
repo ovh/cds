@@ -258,7 +258,7 @@ github.com/gin-gonic/gin
 github.com/gin-gonic/gin/binding
 github.com/gin-gonic/gin/json
 github.com/gin-gonic/gin/render
-# github.com/gizak/termui v0.0.0-20170306115353-798ffb9cbbe4
+# github.com/gizak/termui v0.0.0-20190301062529-bf53c5cbea3f
 github.com/gizak/termui
 # github.com/go-gorp/gorp v2.0.0+incompatible => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f
 github.com/go-gorp/gorp
@@ -407,7 +407,7 @@ github.com/maruel/panicparse/stack
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.7
 github.com/mattn/go-isatty
-# github.com/mattn/go-runewidth v0.0.1
+# github.com/mattn/go-runewidth v0.0.4
 github.com/mattn/go-runewidth
 # github.com/mattn/go-shellwords v1.0.3
 github.com/mattn/go-shellwords
@@ -429,7 +429,7 @@ github.com/miscreant/miscreant-go/cmac
 github.com/miscreant/miscreant-go/pmac
 # github.com/mitchellh/go-homedir v0.0.0-20161203194507-b8bc1bf76747
 github.com/mitchellh/go-homedir
-# github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7
+# github.com/mitchellh/go-wordwrap v1.0.0
 github.com/mitchellh/go-wordwrap
 # github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
 github.com/mitchellh/hashstructure
@@ -453,7 +453,7 @@ github.com/nbutton23/zxcvbn-go/frequency
 github.com/nbutton23/zxcvbn-go/data
 # github.com/ncw/swift v0.0.0-20171019114456-c95c6e5c2d1a
 github.com/ncw/swift
-# github.com/nsf/termbox-go v0.0.0-20160913191650-b6acae516ace
+# github.com/nsf/termbox-go v0.0.0-20190817171036-93860e161317
 github.com/nsf/termbox-go
 # github.com/nwaples/rardecode v1.0.0
 github.com/nwaples/rardecode
