@@ -40,7 +40,7 @@ https://ovh.github.io/cds/
 
 ## Download
 
-You will find lastest release of CDS ` + "`engine`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
+You will find latest release of CDS ` + "`engine`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
 `,
 }
 

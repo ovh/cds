@@ -106,7 +106,7 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		//we have to check noderun for every sources
 		for _, nodeJoin := range j.JoinContext {
 			if _, okF := wr.WorkflowNodeRuns[nodeJoin.ParentID]; okF {
-				// Get lastest run on parent
+				// Get latest run on parent
 				sources = append(sources, &wr.WorkflowNodeRuns[nodeJoin.ParentID][0])
 			}
 		}

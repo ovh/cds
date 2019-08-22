@@ -210,7 +210,6 @@ func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 	var itk issuedToken
 	if err := json.Unmarshal(rawIssuedToken, &itk); err != nil {
 		return u, sdk.NewError(sdk.ErrUnauthorized, err)
-
 	}
 
 	// We consider that the token provided by the Corporate SSO provider is valid for 15 minutes

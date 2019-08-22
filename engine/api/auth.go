@@ -136,82 +136,85 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		initToken, hasInitToken := req["init_token"]
 		hasInitToken = hasInitToken && initToken != ""
 
-		// Check if a user already exists for external username
-		u, err := user.LoadByUsername(ctx, tx, userInfo.Username, user.LoadOptions.WithContacts)
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
-			return err
-		}
-		if u != nil {
-			// If the user exists with the same email address than in the userInfo,
-			// we will create a new consumer and continue the signin
-			// else we raise an error
-			if u.GetEmail() != userInfo.Email {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "a user already exists for username %s", userInfo.Username)
-			}
-		} else {
-			// Check if a user already exists for external email
-			contact, err := user.LoadContactsByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, userInfo.Email)
-			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return err
-			}
-			if contact != nil {
-				// A user already exists with an other username but the same email address
-				u, err = user.LoadByID(ctx, tx, contact.UserID, user.LoadOptions.WithContacts)
-				if err != nil {
-					return err
-				}
-			} else {
-				// We can't find any user with the same email address
-				// So we will do signup for a new user from the data got from the auth driver
-				if driver.GetManifest().SignupDisabled {
-					return sdk.WithStack(sdk.ErrSignupDisabled)
-				}
-
-				u = &sdk.AuthentifiedUser{
-					Ring:     sdk.UserRingUser,
-					Username: userInfo.Username,
-					Fullname: userInfo.Fullname,
-				}
-
-				// If a magic token is given and there is no admin already registered, set new user as admin
-				countAdmins, err := user.CountAdmin(tx)
-				if err != nil {
-					return err
-				}
-				if countAdmins == 0 && hasInitToken {
-					u.Ring = sdk.UserRingAdmin
-				} else {
-					hasInitToken = false
-				}
-
-				// Insert the new user in database
-				if err := user.Insert(tx, u); err != nil {
-					return err
-				}
-
-				userContact := sdk.UserContact{
-					Primary:  true,
-					Type:     sdk.UserContactTypeEmail,
-					UserID:   u.ID,
-					Value:    userInfo.Email,
-					Verified: true,
-				}
-
-				// Insert the primary contact for the new user in database
-				if err := user.InsertContact(tx, &userContact); err != nil {
-					return err
-				}
-
-				signupDone = true
-			}
-		}
-
 		// Check if a consumer exists for consumer type and external user identifier
 		consumer, err := authentication.LoadConsumerByTypeAndUserExternalID(ctx, tx, consumerType, userInfo.ExternalID)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
+
+		// If there is no existing consumer we should check if a user need to be created
+		// Then we want to create a new consumer for current type
 		if consumer == nil {
+			// Check if a user already exists for external username
+			u, err := user.LoadByUsername(ctx, tx, userInfo.Username, user.LoadOptions.WithContacts)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
+				return err
+			}
+			if u != nil {
+				// If the user exists with the same email address than in the userInfo,
+				// we will create a new consumer and continue the signin
+				// else we raise an error
+				if u.GetEmail() != userInfo.Email {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "a user already exists for username %s", userInfo.Username)
+				}
+			} else {
+				// Check if a user already exists for external email
+				contact, err := user.LoadContactsByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, userInfo.Email)
+				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+					return err
+				}
+				if contact != nil {
+					// A user already exists with an other username but the same email address
+					u, err = user.LoadByID(ctx, tx, contact.UserID, user.LoadOptions.WithContacts)
+					if err != nil {
+						return err
+					}
+				} else {
+					// We can't find any user with the same email address
+					// So we will do signup for a new user from the data got from the auth driver
+					if driver.GetManifest().SignupDisabled {
+						return sdk.WithStack(sdk.ErrSignupDisabled)
+					}
+
+					u = &sdk.AuthentifiedUser{
+						Ring:     sdk.UserRingUser,
+						Username: userInfo.Username,
+						Fullname: userInfo.Fullname,
+					}
+
+					// If a magic token is given and there is no admin already registered, set new user as admin
+					countAdmins, err := user.CountAdmin(tx)
+					if err != nil {
+						return err
+					}
+					if countAdmins == 0 && hasInitToken {
+						u.Ring = sdk.UserRingAdmin
+					} else {
+						hasInitToken = false
+					}
+
+					// Insert the new user in database
+					if err := user.Insert(tx, u); err != nil {
+						return err
+					}
+
+					userContact := sdk.UserContact{
+						Primary:  true,
+						Type:     sdk.UserContactTypeEmail,
+						UserID:   u.ID,
+						Value:    userInfo.Email,
+						Verified: true,
+					}
+
+					// Insert the primary contact for the new user in database
+					if err := user.InsertContact(tx, &userContact); err != nil {
+						return err
+					}
+
+					signupDone = true
+				}
+			}
+
 			// Create a new consumer for the new user
 			consumer, err = authentication.NewConsumerExternal(tx, u.ID, consumerType, userInfo)
 			if err != nil {
