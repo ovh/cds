@@ -6,7 +6,8 @@ resources
 content/docs/components/cdsctl
 content/docs/components/engine
 content/docs/components/worker
-content/development/rest
+content/development/rest/*.md
+!content/development/rest/_index.md
 content/docs/actions/builtin-*
 content/docs/actions/plugin-*
-contrib/actions/cds-*
+content/docs/actions/cds-*
