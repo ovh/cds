@@ -1007,5 +1007,5 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 }
 
 func Test_checkActionPermissions(t *testing.T) {
-
+	// TODO
 }

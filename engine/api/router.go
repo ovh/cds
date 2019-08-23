@@ -54,18 +54,6 @@ type Router struct {
 	}
 }
 
-func newRouter(m *mux.Router, p string) *Router {
-	r := &Router{
-		Mux:                    m,
-		Prefix:                 p,
-		URL:                    "",
-		mapRouterConfigs:       map[string]*service.RouterConfig{},
-		mapAsynchronousHandler: map[string]service.HandlerFunc{},
-		Background:             context.Background(),
-	}
-	return r
-}
-
 // HandlerConfigParam is a type used in handler configuration, to set specific config on a route given a method
 type HandlerConfigParam func(*service.HandlerConfig)
 

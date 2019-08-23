@@ -7,8 +7,7 @@ import (
 type contextKey int
 
 const (
-	contextUserAuthentified contextKey = iota
-	contextSession
+	contextSession contextKey = iota
 	contextAPIConsumer
 	contextJWT
 	contextJWTRaw

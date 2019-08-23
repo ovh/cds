@@ -15,6 +15,7 @@ import (
 	authdrivertest "github.com/ovh/cds/engine/api/authentication/test"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -43,6 +44,18 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 		end()
 	}
 	return api, db, router, f
+}
+
+func newRouter(m *mux.Router, p string) *Router {
+	r := &Router{
+		Mux:                    m,
+		Prefix:                 p,
+		URL:                    "",
+		mapRouterConfigs:       map[string]*service.RouterConfig{},
+		mapAsynchronousHandler: map[string]service.HandlerFunc{},
+		Background:             context.Background(),
+	}
+	return r
 }
 
 func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string, func()) {

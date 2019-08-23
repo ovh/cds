@@ -458,7 +458,7 @@ func isHTTPOperation(op string) bool {
 
 func setMiddleWare(callExpr *ast.CallExpr) {
 	switch fmt.Sprintf("%s", callExpr.Fun) {
-	case "NeedAdmin", "NeedUsernameOrAdmin", "Auth", "NeedHatchery", "NeedService", "NeedWorker", "AllowServices":
+	case "NeedAdmin", "NeedUsernameOrAdmin", "Auth", "NeedHatchery", "NeedService", "AllowServices":
 		m := Middleware{
 			Name:  fmt.Sprintf("%s", callExpr.Fun),
 			Value: make([]string, len(callExpr.Args)),

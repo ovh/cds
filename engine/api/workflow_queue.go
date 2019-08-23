@@ -28,6 +28,10 @@ import (
 
 func (api *API) postTakeWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
+		}
+
 		id, err := requestVarInt(r, "id")
 		if err != nil {
 			return err
@@ -214,10 +218,15 @@ func (api *API) getWorkflowJobHandler() service.Handler {
 
 func (api *API) postVulnerabilityReportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
+		}
+
 		id, errc := requestVarInt(r, "permID")
 		if errc != nil {
 			return sdk.WrapError(errc, "Invalid id")
 		}
+
 		nr, errNR := workflow.LoadNodeRunByNodeJobID(api.mustDB(), id, workflow.LoadRunOptions{
 			DisableDetailledNodeRun: true,
 		})
@@ -291,9 +300,9 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 
 func (api *API) postWorkflowJobResultHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, errc := requestVarInt(r, "permID")
-		if errc != nil {
-			return sdk.WrapError(errc, "invalid id")
+		id, err := requestVarInt(r, "permID")
+		if err != nil {
+			return err
 		}
 
 		wk, ok := api.isWorker(ctx)
@@ -564,9 +573,13 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 
 func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, errr := requestVarInt(r, "permID")
-		if errr != nil {
-			return sdk.WrapError(errr, "Invalid id")
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
+		}
+
+		id, err := requestVarInt(r, "permID")
+		if err != nil {
+			return err
 		}
 		dbWithCtx := api.mustDBWithCtx(ctx)
 
@@ -577,7 +590,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 
 		var step sdk.StepStatus
 		if err := service.UnmarshalBody(r, &step); err != nil {
-			return sdk.WrapError(err, "Error while unmarshal job")
+			return err
 		}
 
 		found := false
@@ -774,15 +787,19 @@ func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *htt
 
 func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
+		}
+
 		// Load and lock Existing workflow Run Job
-		id, errI := requestVarInt(r, "permID")
-		if errI != nil {
-			return sdk.WrapError(errI, "Invalid node job run ID")
+		id, err := requestVarInt(r, "permID")
+		if err != nil {
+			return err
 		}
 
 		var report coverage.Report
 		if err := service.UnmarshalBody(r, &report); err != nil {
-			return sdk.WrapError(err, "Cannot unmarshal request")
+			return err
 		}
 
 		wnr, errL := workflow.LoadNodeRunByNodeJobID(api.mustDB(), id, workflow.LoadRunOptions{})
@@ -821,16 +838,20 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 
 func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
+		}
+
 		// Unmarshal into results
 		var new venom.Tests
 		if err := service.UnmarshalBody(r, &new); err != nil {
-			return sdk.WrapError(err, "Cannot unmarshal request")
+			return err
 		}
 
 		// Load and lock Existing workflow Run Job
-		id, errI := requestVarInt(r, "permID")
-		if errI != nil {
-			return sdk.WrapError(errI, "postWorkflowJobTestsResultsHandler> Invalid node job run ID")
+		id, err := requestVarInt(r, "permID")
+		if err != nil {
+			return err
 		}
 
 		nodeRunJob, errJobRun := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
@@ -919,14 +940,18 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 
 func (api *API) postWorkflowJobTagsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, errr := requestVarInt(r, "permID")
-		if errr != nil {
-			return sdk.WrapError(errr, "postWorkflowJobTagsHandler> Invalid id")
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
 		}
 
-		var tags = []sdk.WorkflowRunTag{}
+		id, err := requestVarInt(r, "permID")
+		if err != nil {
+			return err
+		}
+
+		var tags []sdk.WorkflowRunTag
 		if err := service.UnmarshalBody(r, &tags); err != nil {
-			return sdk.WrapError(err, "Unable to unmarshal body")
+			return err
 		}
 
 		tx, errb := api.mustDB().Begin()
