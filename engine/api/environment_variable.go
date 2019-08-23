@@ -88,7 +88,7 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "deleteVariableFromEnvironmentHandler: Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		// clear passwordfor audit
 		varToDelete, errV := environment.GetVariable(tx, key, envName, varName, environment.WithClearPassword())
@@ -136,7 +136,7 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "updateVariableInEnvironmentHandler: Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		varBefore, errV := environment.GetVariableByID(api.mustDB(), env.ID, newVar.ID, environment.WithClearPassword())
 		if errV != nil {
@@ -189,7 +189,7 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "addVariableInEnvironmentHandler: cannot begin tx")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		var errInsert error
 		switch newVar.Type {

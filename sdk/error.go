@@ -553,11 +553,6 @@ var errorsFrench = map[int]string{
 	ErrSignupDisabled.ID:                                "La création de compte est désactivée pour ce mode d'authentification.",
 }
 
-var errorsLanguages = []map[int]string{
-	errorsAmericanEnglish,
-	errorsFrench,
-}
-
 // Error type.
 type Error struct {
 	ID         int         `json:"id"`

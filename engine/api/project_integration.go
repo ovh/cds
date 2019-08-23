@@ -80,7 +80,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "putProjectIntegrationHandler> Cannot strat transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		projectIntegration.ProjectID = p.ID
 		if projectIntegration.IntegrationModelID == 0 {
@@ -132,7 +132,7 @@ func (api *API) deleteProjectIntegrationHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "deleteProjectIntegrationHandler> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 		var deletedIntegration sdk.ProjectIntegration
 		for _, plat := range p.Integrations {
 			if plat.Name == integrationName {
@@ -220,7 +220,7 @@ func (api *API) postProjectIntegrationHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "postProjectIntegrationHandler> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := integration.InsertIntegration(tx, &pp); err != nil {
 			return sdk.WrapError(err, "Cannot insert integration")

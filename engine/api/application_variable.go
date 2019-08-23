@@ -109,7 +109,7 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		// Clear password for audit
 		varToDelete, errV := application.LoadVariable(api.mustDB(), app.ID, varName, application.WithClearPassword())
@@ -164,7 +164,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot create transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := application.UpdateVariable(tx, api.Cache, app, &newVar, variableBefore, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot update variable %s for application %s", varName, appName)
@@ -212,7 +212,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		switch newVar.Type {
 		case sdk.KeyVariable:

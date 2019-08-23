@@ -55,7 +55,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "v> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		var keyToDelete sdk.ApplicationKey
 		for _, k := range app.Keys {
@@ -132,7 +132,7 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "addKeyInApplicationHandler> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := application.InsertKey(tx, &newKey); err != nil {
 			return sdk.WrapError(err, "Cannot insert application key")

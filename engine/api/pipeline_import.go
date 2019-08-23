@@ -86,7 +86,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		_, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, proj, payload, getAPIConsumer(ctx),
 			pipeline.ImportOptions{Force: forceUpdate})

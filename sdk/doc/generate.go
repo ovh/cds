@@ -177,8 +177,6 @@ type Middleware struct {
 }
 
 type visitor struct {
-	processingNewRoute bool
-
 	allRoutes map[string]RouteInfo
 }
 

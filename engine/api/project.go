@@ -416,7 +416,7 @@ func (api *API) postProjectHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		// Check that project does not already exists
 		exist, errExist := project.Exist(tx, p.Key)
@@ -601,7 +601,7 @@ func (api *API) deleteProjectHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "deleteProject> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := project.Delete(tx, api.Cache, p.Key); err != nil {
 			return sdk.WrapError(err, "cannot delete project %s", key)

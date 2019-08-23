@@ -368,7 +368,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 		if errT != nil {
 			return sdk.WithStack(errT)
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := workflow.Insert(ctx, tx, api.Cache, &wf, p); err != nil {
 			return sdk.WrapError(err, "Cannot insert workflow")
@@ -439,7 +439,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "putWorkflowHandler> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := workflow.Update(ctx, tx, api.Cache, &wf, p, workflow.UpdateOptions{OldWorkflow: oldW}); err != nil {
 			return sdk.WrapError(err, "Cannot update workflow")

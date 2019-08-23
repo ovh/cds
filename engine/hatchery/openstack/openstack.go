@@ -23,8 +23,6 @@ import (
 )
 
 var (
-	hatcheryOpenStack *HatcheryOpenstack
-
 	workersAlive map[string]int64
 
 	ipsInfos = struct {

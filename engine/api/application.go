@@ -253,7 +253,7 @@ func (api *API) addApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
 
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := application.Insert(tx, api.Cache, proj, &app); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
@@ -297,7 +297,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot begin transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		err = application.DeleteApplication(tx, app.ID)
 		if err != nil {
@@ -347,7 +347,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "cloneApplicationHandler> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := cloneApplication(ctx, tx, api.Cache, proj, &newApp, appToClone); err != nil {
 			return sdk.WrapError(err, "Cannot insert new application %s", newApp.Name)
@@ -460,7 +460,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 		if err := application.Update(tx, api.Cache, app); err != nil {
 			return sdk.WrapError(err, "Cannot delete application %s", applicationName)
 		}

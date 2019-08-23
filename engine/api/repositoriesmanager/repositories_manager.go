@@ -52,7 +52,6 @@ type vcsConsumer struct {
 	name   string
 	proj   *sdk.Project
 	dbFunc func() *gorp.DbMap
-	cache  cache.Store
 }
 
 type vcsClient struct {

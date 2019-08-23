@@ -51,7 +51,7 @@ func CreateBuiltinWorkflowHookModels(db *gorp.DbMap) error {
 	if err != nil {
 		return sdk.WrapError(err, "Unable to start transaction")
 	}
-	defer tx.Rollback // nolint
+	defer tx.Rollback() // nolint
 
 	if _, err := tx.Exec("LOCK TABLE workflow_hook_model IN ACCESS EXCLUSIVE MODE"); err != nil {
 		return sdk.WrapError(err, "Unable to lock table")

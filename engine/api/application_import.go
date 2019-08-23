@@ -62,7 +62,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Unable to start tx")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		newApp, msgList, globalError := application.ParseAndImport(tx, api.Cache, proj, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
 		msgListString := translate(r, msgList)

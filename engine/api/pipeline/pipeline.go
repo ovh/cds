@@ -15,11 +15,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type structarg struct {
-	loadstages     bool
-	loadparameters bool
-}
-
 // LoadPipeline loads a pipeline from database
 func LoadPipeline(ctx context.Context, db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk.Pipeline, error) {
 	ctx, end := observability.Span(ctx, "pipeline.LoadPipeline",

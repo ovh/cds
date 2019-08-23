@@ -29,7 +29,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		proj, err := project.Load(tx, api.Cache, key)
 		if err != nil {
@@ -82,7 +82,7 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 		if errb != nil {
 			return sdk.WrapError(errb, "cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		proj, err := project.Load(tx, api.Cache, key)
 		if err != nil {
@@ -168,7 +168,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot open transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		proj, err := project.Load(tx, api.Cache, key)
 		if err != nil {
@@ -269,7 +269,7 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		// Check and set group on all given group permission
 		for i := range data {

@@ -52,7 +52,7 @@ func (api *API) deleteKeyInEnvironmentHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "v> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 		var envKey sdk.EnvironmentKey
 		for _, k := range env.Keys {
 			if k.Name == keyName {
@@ -125,7 +125,7 @@ func (api *API) addKeyInEnvironmentHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "addKeyInEnvironmentHandler> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := environment.InsertKey(tx, &newKey); err != nil {
 			return sdk.WrapError(err, "Cannot insert application key")

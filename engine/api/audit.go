@@ -41,7 +41,7 @@ func actionAuditCleaner(db *gorp.DbMap) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback // nolint
+	defer tx.Rollback() // nolint
 
 	// Load all action and the number of version in database
 	query := `SELECT action_id, COUNT(versionned) FROM action_audit GROUP BY action_id`

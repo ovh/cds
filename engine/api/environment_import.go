@@ -64,7 +64,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Unable to start tx")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		_, msgList, globalError := environment.ParseAndImport(tx, proj, eenv, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
 		msgListString := translate(r, msgList)
@@ -143,7 +143,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errBegin, "Cannot start transaction")
 		}
 
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := environment.Import(api.mustDB(), proj, env, msgChan, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Error on import")
@@ -180,7 +180,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errBegin, "Cannot start transaction")
 		}
 
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := environment.Lock(tx, key, envName); err != nil {
 			return sdk.WrapError(err, "cannot lock env %s/%s", key, envName)

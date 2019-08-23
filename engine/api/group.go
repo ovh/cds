@@ -72,7 +72,7 @@ func (api *API) postGroupHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot begin tx")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		existingGroup, err := group.LoadByName(ctx, tx, newGroup.Name)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -116,7 +116,7 @@ func (api *API) putGroupHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		oldGroup, err := group.LoadByName(ctx, tx, groupName)
 		if err != nil {
@@ -166,7 +166,7 @@ func (api *API) deleteGroupHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		g, err := group.LoadByName(ctx, tx, name)
 		if err != nil {
@@ -213,7 +213,7 @@ func (api *API) postGroupUserHandler() service.Handler {
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		g, err := group.LoadByName(ctx, tx, groupName)
 		if err != nil {
@@ -276,7 +276,7 @@ func (api *API) putGroupUserHandler() service.Handler {
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		g, err := group.LoadByName(ctx, tx, groupName)
 		if err != nil {
@@ -341,7 +341,7 @@ func (api *API) deleteGroupUserHandler() service.Handler {
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		g, err := group.LoadByName(ctx, tx, groupName)
 		if err != nil {

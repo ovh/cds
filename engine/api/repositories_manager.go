@@ -146,7 +146,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		vcsServerForProject := &sdk.ProjectVCSServer{
 			Name:     rmName,
@@ -281,7 +281,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		token, secret, err := vcsServer.AuthorizeToken(ctx, token, verifier)
 		if err != nil {
@@ -336,7 +336,7 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 		if errb != nil {
 			return sdk.WrapError(errb, "deleteRepositoriesManagerHandler> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if !force {
 			// Check that the VCS is not used by an application before removing it
@@ -511,7 +511,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "attachRepositoriesManager> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := repositoriesmanager.InsertForApplication(tx, app, projectKey); err != nil {
 			return sdk.WrapError(err, "Cannot insert for application")
@@ -608,7 +608,7 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "detachRepositoriesManager> Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := repositoriesmanager.DeleteForApplication(tx, app); err != nil {
 			return sdk.WrapError(err, "Cannot delete for application")

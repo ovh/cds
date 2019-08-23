@@ -76,15 +76,11 @@ func InsertStageConditions(db gorp.SqlExecutor, s *sdk.Stage) error {
 }
 
 // LoadPipelineStage loads pipeline stage
-func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) error {
+func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	_, end := observability.Span(ctx, "pipeline.LoadPipelineStage")
 	defer end()
 
 	p.Stages = []sdk.Stage{}
-	c := structarg{}
-	for _, f := range args {
-		f(&c)
-	}
 
 	query := `
 	SELECT pipeline_stage_R.id as stage_id, pipeline_stage_R.pipeline_id, pipeline_stage_R.name, pipeline_stage_R.last_modified,

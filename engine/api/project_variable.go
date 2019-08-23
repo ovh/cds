@@ -82,7 +82,7 @@ func (api *API) deleteVariableFromProjectHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		varToDelete, errV := project.GetVariableInProject(api.mustDB(), p.ID, varName)
 		if errV != nil {
@@ -129,7 +129,7 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "updateVariableInProject: cannot start transaction")
 
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		previousVar, err := project.GetVariableByID(tx, p.ID, newVar.ID, project.WithClearPassword())
 		if err := project.UpdateVariable(tx, p, &newVar, previousVar, getAPIConsumer(ctx)); err != nil {
@@ -185,7 +185,7 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "addVariableInProjectHandler: cannot begin tx")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		switch newVar.Type {
 		case sdk.KeyVariable:

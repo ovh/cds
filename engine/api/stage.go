@@ -42,7 +42,7 @@ func (api *API) addStageHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditAddStage, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create pipeline audit")
@@ -133,7 +133,7 @@ func (api *API) moveStageHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditMoveStage, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create pipeline audit")
@@ -211,7 +211,7 @@ func (api *API) updateStageHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateStage, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
@@ -271,7 +271,7 @@ func (api *API) deleteStageHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteStage, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")

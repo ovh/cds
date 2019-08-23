@@ -75,7 +75,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 			return sdk.WrapError(errtx, "Unable to start transaction")
 		}
 
-		defer tx.Rollback // nolint
+		defer tx.Rollback() // nolint
 
 		if bc.ID <= 0 || broadcastID != bc.ID {
 			return sdk.WrapError(sdk.ErrWrongRequest, "%d is not valid. id in path:%d", bc.ID, broadcastID)
