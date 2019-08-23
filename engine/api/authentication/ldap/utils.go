@@ -21,18 +21,6 @@ func shoudRetry(err error) bool {
 	return false
 }
 
-//isCredentialError check if err is LDAPResultInvalidCredentials
-func isCredentialError(err error) bool {
-	ldapErr, b := err.(*ldap.Error)
-	if !b {
-		return false
-	}
-	if ldapErr.ResultCode == ldap.LDAPResultInvalidCredentials {
-		return true
-	}
-	return false
-}
-
 //Entry represents a LDAP entity
 type Entry struct {
 	DN         string

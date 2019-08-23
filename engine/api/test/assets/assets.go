@@ -28,7 +28,6 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -433,12 +432,12 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 	require.NoError(t, err)
 
 	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", consumer, []int64{grp.ID}, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()
-	test.NoError(t, err)
+	require.NoError(t, err)
 	publicKey, err := jws.ExportPublicKey(privateKey)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	var srv = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
@@ -450,13 +449,13 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 		},
 	}
 
-	test.NoError(t, services.Insert(db, &srv))
+	require.NoError(t, services.Insert(db, &srv))
 
 	session, err := authentication.NewSession(db, hConsumer, 5*time.Minute, false)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	jwt, err := authentication.NewSessionJWT(session)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	return &srv, privateKey, hConsumer, jwt
 }
@@ -499,14 +498,14 @@ func InsertTestWorkflow(t *testing.T, db gorp.SqlExecutor, store cache.Store, pr
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, store, proj, &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, store, proj, &pip))
 
 	script := GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(db, s)
+	require.NoError(t, pipeline.InsertStage(db, s))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -516,7 +515,7 @@ func InsertTestWorkflow(t *testing.T, db gorp.SqlExecutor, store cache.Store, pr
 			},
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
+	require.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)

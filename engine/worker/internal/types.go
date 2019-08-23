@@ -31,9 +31,6 @@ type CurrentWorker struct {
 	}
 	httpPort int32
 	register struct {
-		hatchery struct {
-			name string
-		}
 		apiEndpoint string
 		token       string
 		model       string

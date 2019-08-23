@@ -169,15 +169,6 @@ func FormInt(r *http.Request, s string) (int, error) {
 	return i, nil
 }
 
-func requestVar(r *http.Request, s string) (string, error) {
-	vars := mux.Vars(r)
-	v, has := vars[s]
-	if !has {
-		return "", sdk.WithStack(sdk.ErrNotFound)
-	}
-	return v, nil
-}
-
 // requestVarInt return int value for a var in Request
 func requestVarInt(r *http.Request, s string) (int64, error) {
 	vars := mux.Vars(r)
