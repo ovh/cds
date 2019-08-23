@@ -140,7 +140,7 @@ func (s *Service) checkStaticFiles() error {
 }
 
 func (s *Service) indexHTMLReplaceVar() error {
-	indexHTML := s.HTMLDir + "/index.html"
+	indexHTML := filepath.Join(s.HTMLDir, "index.html")
 
 	read, err := ioutil.ReadFile(indexHTML)
 	if err != nil {
