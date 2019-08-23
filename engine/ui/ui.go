@@ -1,12 +1,9 @@
 package ui
 
 import (
-	"archive/tar"
 	"bufio"
-	"compress/gzip"
 	"context"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -267,74 +264,5 @@ func (s *Service) downloadStaticFilesFromGitHub(version string) error {
 
 	log.Info("ui> Download in success, we are decompressing the archive now...")
 
-	return untarGZ(s.Cfg.Staticdir, resp.Body)
-}
-
-// untarGZ takes a destination path and a reader; a tar reader loops over the tarfile
-// creating the file structure at 'dst' along the way, and writing any files
-func untarGZ(dst string, r io.Reader) error {
-
-	gzr, err := gzip.NewReader(r)
-	if err != nil {
-		return err
-	}
-	defer gzr.Close()
-
-	tr := tar.NewReader(gzr)
-
-	for {
-		header, err := tr.Next()
-
-		switch {
-
-		// if no more files are found return
-		case err == io.EOF:
-			return nil
-
-		// return any other error
-		case err != nil:
-			return err
-
-		// if the header is nil, just skip it (not sure how this happens)
-		case header == nil:
-			continue
-		}
-
-		// the target location where the dir/file should be created
-		target := filepath.Join(dst, header.Name)
-
-		// the following switch could also be done using fi.Mode(), not sure if there
-		// a benefit of using one vs. the other.
-		// fi := header.FileInfo()
-
-		// check the file type
-		switch header.Typeflag {
-
-		// if its a dir and it doesn't exist create it
-		case tar.TypeDir:
-			if _, err := os.Stat(target); err != nil {
-				if err := os.MkdirAll(target, 0755); err != nil {
-					return sdk.WrapError(err, "error on mkdir %s", target)
-				}
-			}
-
-		// if it's a file create it
-		case tar.TypeReg:
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
-			if err != nil {
-				return sdk.WrapError(err, "error while opening file %s", target)
-			}
-
-			// copy over contents
-			if _, err := io.Copy(f, tr); err != nil {
-				return sdk.WrapError(err, "error while writing file %s", target)
-			}
-
-			// manually close here after each file operation; defering would cause each file close
-			// to wait until all operations have completed.
-			if err := f.Close(); err != nil {
-				return sdk.WrapError(err, "error while closing file %s", target)
-			}
-		}
-	}
+	return sdk.UntarGz(s.Cfg.Staticdir, resp.Body)
 }
