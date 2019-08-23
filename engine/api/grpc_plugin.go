@@ -177,7 +177,7 @@ func (api *API) postGRPCluginBinaryHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "unable to start tx")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		name := mux.Vars(r)["name"]
 		p, err := plugin.LoadByName(tx, name)

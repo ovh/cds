@@ -45,7 +45,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 		if errtx != nil {
 			return errtx
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		proj, err := project.Load(tx, api.Cache, key, project.LoadOptions.WithIntegrations)
 		if err != nil {
@@ -114,7 +114,7 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 		if errtx != nil {
 			return errtx
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		proj, err := project.Load(tx, api.Cache, key, project.LoadOptions.WithIntegrations)
 		if err != nil {

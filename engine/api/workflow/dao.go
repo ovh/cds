@@ -1373,7 +1373,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	if err != nil {
 		return nil, nil, sdk.WrapError(err, "Unable to start tx")
 	}
-	defer tx.Rollback()
+	defer tx.Rollback // nolint
 
 	for filename, app := range data.apps {
 		log.Debug("Push> Parsing %s", filename)

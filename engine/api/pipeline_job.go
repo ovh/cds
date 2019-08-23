@@ -67,7 +67,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 		if errb != nil {
 			return errb
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		// check that action used by job can be used by pipeline's project
 		project, err := project.Load(tx, api.Cache, pip.ProjectKey, project.LoadOptions.WithGroups)
@@ -185,7 +185,7 @@ func (api *API) updateJobHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		// check that action used by job can be used by pipeline's project
 		project, err := project.Load(tx, api.Cache, pipelineData.ProjectKey, project.LoadOptions.WithGroups)
@@ -284,7 +284,7 @@ func (api *API) deleteJobHandler() service.Handler {
 		if errb != nil {
 			return sdk.WrapError(errb, "deleteJobHandler> Cannot begin transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteJob, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")

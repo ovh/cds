@@ -26,7 +26,7 @@ func (api *API) getEnvironmentsHandler() service.Handler {
 		if errTx != nil {
 			return sdk.WrapError(errTx, "getEnvironmentsHandler> Cannot start transaction from db")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		environments, errEnv := environment.LoadEnvironments(tx, projectKey)
 		if errEnv != nil {
@@ -127,7 +127,7 @@ func (api *API) addEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errBegin, "addEnvironmentHandler> Cannot start transaction")
 		}
 
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := environment.InsertEnvironment(tx, &env); err != nil {
 			return sdk.WrapError(err, "Cannot insert environment")
@@ -173,7 +173,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "deleteEnvironmentHandler> Cannot begin transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := environment.DeleteEnvironment(tx, env.ID); err != nil {
 			return err
@@ -227,7 +227,7 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "updateEnvironmentHandler> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := environment.UpdateEnvironment(tx, env); err != nil {
 			return sdk.WrapError(err, "Cannot update environment %s", environmentName)
@@ -291,7 +291,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to start a transaction")
 		}
 
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		//Insert environment
 		if err := environment.InsertEnvironment(tx, &envPost); err != nil {

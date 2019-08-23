@@ -53,7 +53,7 @@ func (api *API) postIntegrationModelHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to start tx")
 		}
 
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if exist, err := integration.ModelExists(tx, m.Name); err != nil {
 			return sdk.WrapError(err, "Unable to check if model %s exist", m.Name)
@@ -95,7 +95,7 @@ func (api *API) putIntegrationModelHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Unable to start tx")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		old, err := integration.LoadModelByName(tx, name, true)
 		if err != nil {
@@ -204,7 +204,7 @@ func (api *API) deleteIntegrationModelHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Unable to start tx")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		old, err := integration.LoadModelByName(tx, name, false)
 		if err != nil {

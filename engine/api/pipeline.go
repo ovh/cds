@@ -50,7 +50,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 		if errB != nil {
 			sdk.WrapError(errB, "updatePipelineHandler> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
@@ -176,7 +176,7 @@ func (api *API) addPipelineHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		p.ProjectID = proj.ID
 		if err := pipeline.InsertPipeline(tx, api.Cache, proj, &p); err != nil {
@@ -298,7 +298,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "Cannot begin transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := pipeline.DeleteAudit(tx, p.ID); err != nil {
 			return sdk.WrapError(err, "Cannot delete pipeline audit")

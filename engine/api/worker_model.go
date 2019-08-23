@@ -269,7 +269,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load worker model")
 		}
 
-		pips := []sdk.Pipeline{}
+		var pips []sdk.Pipeline
 		if isMaintainer(ctx) || isAdmin(ctx) {
 			pips, err = pipeline.LoadByWorkerModel(ctx, api.mustDB(), m)
 		} else {

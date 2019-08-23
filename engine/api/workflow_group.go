@@ -53,7 +53,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := group.DeleteWorkflowGroup(tx, wf, oldGp.Group.ID, groupIndex); err != nil {
 			return sdk.WrapError(err, "cannot delete group")
@@ -115,7 +115,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "putWorkflowGroupHandler> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := group.UpdateWorkflowGroup(ctx, tx, wf, gp); err != nil {
 			return sdk.WrapError(err, "Cannot add group")
@@ -172,7 +172,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := group.AddWorkflowGroup(ctx, tx, wf, gp); err != nil {
 			return sdk.WrapError(err, "cannot add group")

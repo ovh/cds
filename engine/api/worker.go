@@ -59,7 +59,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		var groupIDs []int64
 		if workerTokenFromHatchery.Worker.JobID != 0 {

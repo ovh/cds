@@ -93,7 +93,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	if errBegin != nil {
 		return nil, sdk.WrapError(errBegin, "Cannot start transaction")
 	}
-	defer tx.Rollback()
+	defer tx.Rollback // nolint
 
 	//Prepare spawn infos
 	infos := []sdk.SpawnInfo{
@@ -278,7 +278,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if _, err := workflow.LoadNodeJobRun(tx, api.Cache, id); err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
@@ -376,7 +376,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	if errb != nil {
 		return nil, sdk.WrapError(errb, "postJobResult> Cannot begin tx")
 	}
-	defer tx.Rollback()
+	defer tx.Rollback // nolint
 
 	//Load workflow node job run
 	job, errj := workflow.LoadAndLockNodeJobRunSkipLocked(ctx, tx, store, res.BuildID)
@@ -614,7 +614,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 		if errB != nil {
 			return sdk.WrapError(errB, "Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := workflow.UpdateNodeJobRun(ctx, tx, nodeJobRun); err != nil {
 			return sdk.WrapError(err, "Error while update job run. JobID on handler: %d", id)
@@ -863,7 +863,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 		if errB != nil {
 			return sdk.WrapError(errB, "postWorkflowJobTestsResultsHandler> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		nr, err := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeRunJob.WorkflowNodeRunID)
 		if err != nil {
@@ -958,7 +958,7 @@ func (api *API) postWorkflowJobTagsHandler() service.Handler {
 		if errb != nil {
 			return sdk.WrapError(errb, "postWorkflowJobTagsHandler> Unable to start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		workflowRun, errl := workflow.LoadAndLockRunByJobID(tx, id, workflow.LoadRunOptions{})
 		if errl != nil {

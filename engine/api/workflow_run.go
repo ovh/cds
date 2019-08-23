@@ -720,7 +720,7 @@ func (api *API) stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbM
 	if errTx != nil {
 		return nil, sdk.WrapError(errTx, "unable to create transaction")
 	}
-	defer tx.Rollback()
+	defer tx.Rollback // nolint
 
 	stopInfos := sdk.SpawnInfo{
 		APITime:    time.Now(),

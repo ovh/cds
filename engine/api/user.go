@@ -67,7 +67,7 @@ func (api *API) putUserHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		var oldUser *sdk.AuthentifiedUser
 		if username == "me" {
@@ -127,7 +127,7 @@ func (api *API) deleteUserHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		var u *sdk.AuthentifiedUser
 		if username == "me" {

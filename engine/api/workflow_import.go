@@ -135,7 +135,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		if errtx != nil {
 			return sdk.WrapError(errtx, "Unable to start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		u := getAPIConsumer(ctx)
 

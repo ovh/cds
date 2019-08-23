@@ -178,7 +178,7 @@ func (api *API) postWorkflowHookModelHandler() service.Handler {
 		if errtx != nil {
 			return sdk.WrapError(errtx, "postWorkflowHookModelHandler> Unable to start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := workflow.InsertHookModel(tx, m); err != nil {
 			return sdk.WrapError(err, "postWorkflowHookModelHandler")
@@ -204,7 +204,7 @@ func (api *API) putWorkflowHookModelHandler() service.Handler {
 			return sdk.WrapError(errtx, "putWorkflowHookModelHandler> Unable to start transaction")
 		}
 
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := workflow.UpdateHookModel(tx, m); err != nil {
 			return sdk.WrapError(err, "putWorkflowHookModelHandler")

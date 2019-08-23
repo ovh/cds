@@ -99,7 +99,7 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "deleteKeyInProjectHandler> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 		var deletedKey sdk.ProjectKey
 		for _, k := range p.Keys {
 			if k.Name == keyName {
@@ -168,7 +168,7 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "addKeyInProjectHandler> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := project.InsertKey(tx, &newKey); err != nil {
 			return sdk.WrapError(err, "Cannot insert project key")

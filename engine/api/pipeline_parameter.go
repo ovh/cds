@@ -51,7 +51,7 @@ func (api *API) deleteParameterFromPipelineHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := pipeline.DeleteParameterFromPipeline(tx, p.ID, paramName); err != nil {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot delete %s", paramName)
@@ -97,7 +97,7 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if err := pipeline.UpdateParameterInPipeline(tx, p.ID, paramName, newParam); err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot update parameter %s in pipeline %s", paramName, pipelineName)
@@ -148,7 +148,7 @@ func (api *API) addParameterInPipelineHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback // nolint
 
 		if !paramInProject {
 			if err := pipeline.InsertParameterInPipeline(tx, p.ID, &newParam); err != nil {
