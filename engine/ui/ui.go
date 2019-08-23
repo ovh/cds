@@ -241,7 +241,7 @@ func (s *Service) execCommand(command string) (string, error) {
 	if err := cmd.Run(); err != nil {
 		return "", sdk.WrapError(err, "could not run command")
 	}
-	if err != nil {
+	if err := cmd.Wait(); err != nil {
 		return "", sdk.WrapError(err, "could not wait for command")
 	}
 	return output, nil
