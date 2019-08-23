@@ -2,13 +2,18 @@ package corpsso
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/gpg"
 
 	jose "gopkg.in/square/go-jose.v2"
 )
+
+type ssoSigninToken struct {
+	IssuedAt   int64  `json:"iat"`
+	RequireMFA bool   `json:"requireMFA,omitempty"`
+	Data       string `json:"data"`
+}
 
 type nonceSource struct{}
 
@@ -18,10 +23,10 @@ func (n nonceSource) Nonce() (string, error) {
 
 var nonceSrc jose.NonceSource = nonceSource{}
 
-func prepareRequest(requestSigningKey string, request interface{}) (string, error) {
+func prepareRequest(requestSigningKey string, request sdk.AuthSigninConsumerToken) (string, error) {
 	pk, err := gpg.NewPrivateKeyFromPem(requestSigningKey, "")
 	if err != nil {
-		return "", fmt.Errorf("unable to load private key: %v", err)
+		return "", sdk.WrapError(err, "unable to load private key")
 	}
 
 	opts := jose.SignerOptions{NonceSource: nonceSrc}
@@ -33,22 +38,31 @@ func prepareRequest(requestSigningKey string, request interface{}) (string, erro
 		}},
 		&opts)
 	if err != nil {
-		return "", fmt.Errorf("unable to init signer: %v", err)
+		return "", sdk.WrapError(err, "unable to init signer")
 	}
 
-	data, err := json.Marshal(request)
+	requestJSON, err := json.Marshal(request)
 	if err != nil {
-		return "", err
+		return "", sdk.WithStack(err)
+	}
+
+	data, err := json.Marshal(ssoSigninToken{
+		Data:       string(requestJSON),
+		IssuedAt:   request.IssuedAt,
+		RequireMFA: request.RequireMFA,
+	})
+	if err != nil {
+		return "", sdk.WithStack(err)
 	}
 
 	signedData, err := signer.Sign(data)
 	if err != nil {
-		return "", fmt.Errorf("unable to signe payload: %v", err)
+		return "", sdk.WrapError(err, "unable to signe payload")
 	}
 
 	jws, err := signedData.CompactSerialize()
 	if err != nil {
-		return "", fmt.Errorf("unable to serialize payload: %v", err)
+		return "", sdk.WrapError(err, "unable to serialize payload")
 	}
 
 	return jws, nil

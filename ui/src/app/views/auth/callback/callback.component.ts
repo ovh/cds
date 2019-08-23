@@ -23,10 +23,11 @@ export class CallbackComponent implements OnInit {
     code: string;
     state: string;
     loading: boolean;
+    loadingSignin: boolean;
     showErrorMessage: boolean;
     showInitTokenForm: boolean;
     consumerType: string;
-    payload: any;
+    payloadData: any;
 
     constructor(
         private _route: ActivatedRoute,
@@ -54,8 +55,11 @@ export class CallbackComponent implements OnInit {
             }
 
             // If the origin is cdsctl, show the code and the state for copy
-            this.payload = jws.JWS.parse(this.state).payloadObj;
-            if (this.payload.data && this.payload.data.Origin === 'cdsctl') {
+            let payload = jws.JWS.parse(this.state).payloadObj;
+            if (payload.data) {
+                this.payloadData = JSON.parse(payload.data);
+            }
+            if (this.payloadData && this.payloadData.origin === 'cdsctl') {
                 this.loading = false;
                 this.showCTL = true;
                 this._cd.markForCheck();
@@ -63,7 +67,7 @@ export class CallbackComponent implements OnInit {
             }
 
             // If the first connection flag is set, show init token form
-            if (this.payload.data && this.payload.data.IsFirstConnection) {
+            if (this.payloadData && this.payloadData.is_first_connection) {
                 this.loading = false;
                 this.showInitTokenForm = true;
                 this._cd.markForCheck();
@@ -87,14 +91,17 @@ export class CallbackComponent implements OnInit {
     }
 
     sendSigninRequest(initToken?: string): void {
+        this.loadingSignin = true;
+        this._cd.markForCheck();
         this._authenticationService.signin(this.consumerType, this.code, this.state, initToken)
             .pipe(finalize(() => {
                 this.loading = false;
+                this.loadingSignin = false;
                 this._cd.markForCheck();
             }))
             .subscribe(_ => {
                 this._router.navigate([
-                    (this.payload && this.payload.data && this.payload.data.RedirectURI) ? this.payload.data.RedirectURI : '/home'
+                    (this.payloadData && this.payloadData.redirect_uri) ? this.payloadData.redirect_uri : '/home'
                 ]);
             }, () => {
                 this.showErrorMessage = true;

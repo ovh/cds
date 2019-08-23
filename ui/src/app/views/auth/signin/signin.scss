@@ -1,15 +1,19 @@
 @import "../../../../common";
 
 .signin {
-  .ui.tabular.menu .item {
-    color: white;
-
-    &.active {
-      color: black;
+    .loading {
+        text-align: center;
     }
 
-    :host-context(.night) & {
-      color: inherit;
+    .ui.tabular.menu .item {
+        color: white;
+
+        &.active {
+            color: black;
+        }
+
+        :host-context(.night) & {
+            color: inherit;
+        }
     }
-  }
 }

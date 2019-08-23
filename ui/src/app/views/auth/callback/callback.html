@@ -50,7 +50,7 @@
                     </div>
                     <form class="ui form">
                         <div class="field">
-                            <button class="fluid ui button primary" (click)="navigateToSignin()">
+                            <button class="fluid ui button primary" [class.loading]="loadingSignin" (click)="navigateToSignin()">
                                 {{ 'account_btn_signin' | translate }}
                             </button>
                         </div>

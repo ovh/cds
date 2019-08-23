@@ -2,11 +2,9 @@ package authentication
 
 import (
 	"crypto/rsa"
+	"encoding/json"
 	"reflect"
 	"time"
-
-	"github.com/fatih/structs"
-	"github.com/mitchellh/mapstructure"
 
 	jwt "github.com/dgrijalva/jwt-go"
 
@@ -60,16 +58,21 @@ func VerifyJWT(token *jwt.Token) (interface{}, error) {
 
 // signaturePayload contains fields for a jws signature payload.
 type signaturePayload struct {
-	Type   string                 `json:"type"`
-	Expire int64                  `json:"expire"`
-	Data   map[string]interface{} `json:"data"`
+	Type   string `json:"type"`
+	Expire int64  `json:"expire"`
+	Data   string `json:"data"`
 }
 
 // SignJWS returns a jws string using CDS signing key.
 func SignJWS(content interface{}, duration time.Duration) (string, error) {
+	buf, err := json.Marshal(content)
+	if err != nil {
+		return "", sdk.WithStack(err)
+	}
+
 	payload := signaturePayload{
 		Type: payloadDataType(content),
-		Data: structs.Map(content),
+		Data: string(buf),
 	}
 	if duration > 0 {
 		payload.Expire = time.Now().Add(duration).Unix()
@@ -97,7 +100,7 @@ func VerifyJWS(signature string, content interface{}) error {
 		return sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given jws token: %+v", payload)
 	}
 
-	if err := mapstructure.Decode(payload.Data, content); err != nil {
+	if err := json.Unmarshal([]byte(payload.Data), content); err != nil {
 		return sdk.WrapError(err, "unable to decode payload data")
 	}
 
