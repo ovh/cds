@@ -3,3 +3,11 @@
 service:
   prepare:
     - apt-get update && apt-get install -y libsecret-1-dev
+
+run:
+  skip-dirs:
+    - ui
+    - doc
+    - tests
+  skip-files:
+    - ".*_test.go$"
