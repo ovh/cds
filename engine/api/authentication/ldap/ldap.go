@@ -104,7 +104,9 @@ func (d AuthDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 		tmpl, _ = template.New("userfullname").Parse("{{.givenName}}")
 	}
 	bufFullname := new(bytes.Buffer)
-	tmpl.Execute(bufFullname, entry[0].Attributes)
+	if err := tmpl.Execute(bufFullname, entry[0].Attributes); err != nil {
+		return userInfo, sdk.WithStack(err)
+	}
 
 	userInfo.Fullname = bufFullname.String()
 	userInfo.Email = entry[0].Attributes["mail"]

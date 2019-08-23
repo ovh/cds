@@ -22,7 +22,7 @@ func (c *Common) CommonMonitoring() sdk.MonitoringStatus {
 			Status:    sdk.MonitoringStatusOK,
 		}, {
 			Component: "Uptime",
-			Value:     fmt.Sprintf("%s", time.Since(c.StartupTime)),
+			Value:     time.Since(c.StartupTime).String(),
 			Status:    sdk.MonitoringStatusOK,
 		}, {
 			Component: "Time",

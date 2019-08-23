@@ -87,9 +87,10 @@ func Create(ctx context.Context, h Interface) error {
 			return errwm
 		}
 
-		chanRegister = time.Tick(time.Duration(h.Configuration().Provision.RegisterFrequency) * time.Second)
-		chanGetModels = time.Tick(10 * time.Second)
-		chanProvision = time.Tick(time.Duration(h.Configuration().Provision.Frequency) * time.Second)
+		// using time.Tick leaks the underlying ticker but we don't care about it because it is an endless function
+		chanRegister = time.Tick(time.Duration(h.Configuration().Provision.RegisterFrequency) * time.Second) // nolint
+		chanGetModels = time.Tick(10 * time.Second)                                                          // nolint
+		chanProvision = time.Tick(time.Duration(h.Configuration().Provision.Frequency) * time.Second)        // nolint
 
 		modelType = hWithModels.ModelType()
 	}
