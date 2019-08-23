@@ -26,7 +26,7 @@ export class CallbackComponent implements OnInit {
     showErrorMessage: boolean;
     showInitTokenForm: boolean;
     consumerType: string;
-
+    payload: any;
 
     constructor(
         private _route: ActivatedRoute,
@@ -54,8 +54,8 @@ export class CallbackComponent implements OnInit {
             }
 
             // If the origin is cdsctl, show the code and the state for copy
-            let payload = jws.JWS.parse(this.state).payloadObj;
-            if (payload.data && payload.data.Origin === 'cdsctl') {
+            this.payload = jws.JWS.parse(this.state).payloadObj;
+            if (this.payload.data && this.payload.data.Origin === 'cdsctl') {
                 this.loading = false;
                 this.showCTL = true;
                 this._cd.markForCheck();
@@ -63,7 +63,7 @@ export class CallbackComponent implements OnInit {
             }
 
             // If the first connection flag is set, show init token form
-            if (payload.data && payload.data.IsFirstConnection) {
+            if (this.payload.data && this.payload.data.IsFirstConnection) {
                 this.loading = false;
                 this.showInitTokenForm = true;
                 this._cd.markForCheck();
@@ -93,7 +93,9 @@ export class CallbackComponent implements OnInit {
                 this._cd.markForCheck();
             }))
             .subscribe(_ => {
-                this._router.navigate(['/']);
+                this._router.navigate([
+                    (this.payload && this.payload.data && this.payload.data.RedirectURI) ? this.payload.data.RedirectURI : '/home'
+                ]);
             }, () => {
                 this.showErrorMessage = true;
             });

@@ -1,13 +1,12 @@
 <div id="AppComponent">
-    <div id="navbar" *ngIf="isConnected" [class.connected]="isConnected">
+    <div id="navbar connected" *ngIf="isConnected && !hideNavBar">
         <app-navbar></app-navbar>
     </div>
     <div id="banner" class="pointing" (click)="refresh()" *ngIf="showUIUpdatedBanner">
         {{ 'ui_updated' | translate }}
     </div>
-
-    <div class="page" [class.connected]="isConnected">
-        <div class="content" [class.connected]="isConnected">
+    <div class="page" [class.connected]="isConnected && !hideNavBar">
+        <div class="content" [class.connected]="isConnected && !hideNavBar">
             <div class="toast">
                 <toaster-container [toasterconfig]="toasterConfig"></toaster-container>
             </div>

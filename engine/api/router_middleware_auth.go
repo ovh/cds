@@ -63,13 +63,17 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	if session != nil {
 		ctx = context.WithValue(ctxWithJWT, contextSession, session)
 		// Load auth consumer for current session in database with authentified user and contacts
-		consumer, err = authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
+		c, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
 			authentication.LoadConsumerOptions.WithAuthentifiedUser)
 		if err != nil {
 			return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
-		if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), consumer.AuthentifiedUser); err != nil {
-			return ctx, err
+		// If the driver was disabled for the consumer that was found, ignore it
+		if _, ok := api.AuthenticationDrivers[c.Type]; ok {
+			if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), c.AuthentifiedUser); err != nil {
+				return ctx, err
+			}
+			consumer = c
 		}
 	}
 

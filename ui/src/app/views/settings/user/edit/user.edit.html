@@ -130,8 +130,11 @@
                                             (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
                                     </ng-container>
                                     <ng-container *ngSwitchDefault>
-                                        <button class="ui green button small"
-                                            (click)="clickConsumerSignin(d.type)">{{'account_btn_signin' | translate}}</button>
+                                        <a *ngIf="user.id === currentUser.id " class="ui green button small"
+                                            [routerLink]="'/auth/ask-signin/'+d.type"
+                                            [queryParams]="{redirect_uri: '/settings/user/'+user.username, require_mfa: false}">
+                                            {{'account_btn_signin' | translate}}
+                                        </a>
                                     </ng-container>
                                 </ng-container>
                             </div>

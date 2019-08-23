@@ -3,7 +3,7 @@ import localeEN from '@angular/common/locales/en';
 import localeFR from '@angular/common/locales/fr';
 import { Component, NgZone, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute, NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, NavigationStart, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
@@ -30,23 +30,25 @@ import { AuthenticationState } from './store/authentication.state';
 @AutoUnsubscribe()
 export class AppComponent implements OnInit {
     open: boolean;
-    isConnected = false;
+    isConnected: boolean;
+    hideNavBar: boolean;
     versionWorker: CDSWebWorker;
     sseWorker: CDSWorker;
     heartbeatToken: number;
     zone: NgZone;
     currentVersion = 0;
-    showUIUpdatedBanner = false;
+    showUIUpdatedBanner: boolean;
     languageSubscriber: Subscription;
     themeSubscriber: Subscription;
     versionWorkerSubscription: Subscription;
     _routerSubscription: Subscription;
     _routerNavEndSubscription: Subscription;
     _sseSubscription: Subscription;
-    displayResolver = false;
+    displayResolver: boolean;
     toasterConfig: any;
     lastPing: number;
     currentTheme: string;
+    eventsRouteSubscription: Subscription;
 
     constructor(
         _translate: TranslateService,
@@ -85,6 +87,12 @@ export class AppComponent implements OnInit {
         });
 
         this._notification.requestPermission();
+
+        this.eventsRouteSubscription = this._router.events.subscribe(e => {
+            if (e instanceof NavigationStart) {
+                this.hideNavBar = (e.url.indexOf('/auth') !== -1)
+            }
+        });
     }
 
     ngOnInit(): void {

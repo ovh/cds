@@ -62,7 +62,7 @@ func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 	case "zoidberg":
 		u.Fullname = "Dr. John A. Zoidberg"
 	default:
-		return u, sdk.ErrUnauthorized
+		return u, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
 	return u, nil
