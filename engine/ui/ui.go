@@ -56,7 +56,8 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 
 	// HTMLDir must contains the ui dist directory.
 	// ui.tar.gz contains the dist directory
-	s.HTMLDir = s.Cfg.Staticdir + "/dist"
+	s.HTMLDir = filepath.Join(s.Cfg.Staticdir, "dist")
+	s.Cfg.BaseURL = strings.TrimSpace(s.Cfg.BaseURL)
 
 	return nil
 }
@@ -87,7 +88,9 @@ func (s *Service) Serve(c context.Context) error {
 		return err
 	}
 
-	s.indexHTMLReplaceVar()
+	if err := s.indexHTMLReplaceVar(); err != nil {
+		return err
+	}
 
 	//Init the http server
 	s.initRouter(c)
@@ -129,11 +132,10 @@ func (s *Service) checkStaticFiles() error {
 		fs = http.Dir(s.HTMLDir)
 		// recheck file after user answer
 		if _, err := fs.Open("index.html"); os.IsNotExist(err) {
-			return fmt.Errorf("CDS UI static files were not found in directory %v", s.HTMLDir)
+			return fmt.Errorf("ui> CDS UI static files were not found in directory %v", s.HTMLDir)
 		}
 	}
 	log.Info("ui> CDS UI static files were found in directory %v", s.HTMLDir)
-
 	return nil
 }
 
@@ -146,8 +148,8 @@ func (s *Service) indexHTMLReplaceVar() error {
 	}
 
 	indexContent := strings.Replace(string(read), "<base href=\"/\">", "<base href=\""+s.Cfg.BaseURL+"\">", -1)
-	indexContent = strings.Replace(string(read), "window.cds_sentry_url = '';", "window.cds_sentry_url = '"+s.Cfg.SentryURL+"';", -1)
-	indexContent = strings.Replace(string(read), "window.cds_version = '';", "window.cds_version='"+sdk.VERSION+"';", -1)
+	indexContent = strings.Replace(indexContent, "window.cds_sentry_url = '';", "window.cds_sentry_url = '"+s.Cfg.SentryURL+"';", -1)
+	indexContent = strings.Replace(indexContent, "window.cds_version = '';", "window.cds_version='"+sdk.VERSION+"';", -1)
 
 	return ioutil.WriteFile(indexHTML, []byte(indexContent), 0)
 }
@@ -155,14 +157,14 @@ func (s *Service) indexHTMLReplaceVar() error {
 func (s *Service) askForGettingStaticFiles(version string) error {
 	answerLatestRelease := fmt.Sprintf("Download files into %s from the latest GitHub CDS Release", s.Cfg.Staticdir)
 	answerVersionRelease := fmt.Sprintf("Download files into %s from the GitHub CDS Release %s", s.Cfg.Staticdir, version)
-	answerBuildFromSource := "Build from source ../ui with node"
-	useExistingBuildFromSource := "Use existing ../ui/dist/"
+	answerBuildFromSource := fmt.Sprintf("Build from source %s with node", filepath.Join("..", "ui"))
+	useExistingBuildFromSource := fmt.Sprintf("Use existing %s", filepath.Join("..", "ui", "dist"))
 	answerDoNothing := "Do nothing - exit now"
 	opts := []string{}
 
 	if strings.Contains(version, "snapshot") {
 		opts = append(opts, answerBuildFromSource)
-		if _, err := os.Stat("../ui/dist/index.html"); err == nil {
+		if _, err := os.Stat(filepath.Join("..", "ui", "dist", "index.html")); err == nil {
 			opts = append(opts, useExistingBuildFromSource)
 		}
 		opts = append(opts, answerLatestRelease)
@@ -186,13 +188,13 @@ func (s *Service) askForGettingStaticFiles(version string) error {
 	case answerBuildFromSource:
 		return s.buildFromSource()
 	case useExistingBuildFromSource:
-		s.HTMLDir = "../ui/dist"
+		s.HTMLDir = filepath.Join("..", "ui", "dist")
 	}
 	return nil
 }
 
 func (s *Service) buildFromSource() error {
-	if _, err := os.Stat("../ui"); os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join("..", "ui")); os.IsNotExist(err) {
 		return fmt.Errorf("ui> You must have the directory ../ui with the ui source code")
 	}
 
@@ -202,7 +204,7 @@ func (s *Service) buildFromSource() error {
 	if err := s.execCommand("node --max_old_space_size=6000 node_modules/@angular/cli/bin/ng build --prod"); err != nil {
 		return err
 	}
-	s.HTMLDir = "../ui/dist"
+	s.HTMLDir = filepath.Join("..", "ui", "dist") // ../ui/dist
 	return nil
 }
 
@@ -210,10 +212,12 @@ func (s *Service) execCommand(command string) error {
 	log.Info("ui> running %s...", command)
 	parts := strings.Fields(command)
 	cmd := exec.Command(parts[0], parts[1:]...)
-	cmd.Dir = "../ui"
+	cmd.Dir = filepath.Join("..", "ui") // ../ui
 
 	stderr, _ := cmd.StderrPipe()
-	cmd.Start()
+	if err := cmd.Start(); err != nil {
+		return sdk.WrapError(err, "error on running %s", command)
+	}
 
 	scanner := bufio.NewScanner(stderr)
 	scanner.Split(bufio.ScanWords)
@@ -222,7 +226,9 @@ func (s *Service) execCommand(command string) error {
 		fmt.Print(m + " ")
 	}
 	fmt.Println()
-	cmd.Wait()
+	if err := cmd.Wait(); err != nil {
+		return sdk.WrapError(err, "error on running %s", command)
+	}
 	return nil
 }
 
@@ -252,7 +258,7 @@ func (s *Service) downloadStaticFilesFromGitHub(version string) error {
 	defer resp.Body.Close()
 
 	if err := sdk.CheckContentTypeBinary(resp); err != nil {
-		return fmt.Errorf(err.Error())
+		return sdk.WrapError(err, "Error while checking Content-Type of %s", urlFiles)
 	}
 
 	if resp.StatusCode != 200 {
@@ -308,7 +314,7 @@ func untarGZ(dst string, r io.Reader) error {
 		case tar.TypeDir:
 			if _, err := os.Stat(target); err != nil {
 				if err := os.MkdirAll(target, 0755); err != nil {
-					return err
+					return sdk.WrapError(err, "error on mkdir %s", target)
 				}
 			}
 
@@ -316,17 +322,19 @@ func untarGZ(dst string, r io.Reader) error {
 		case tar.TypeReg:
 			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
-				return err
+				return sdk.WrapError(err, "error while opening file %s", target)
 			}
 
 			// copy over contents
 			if _, err := io.Copy(f, tr); err != nil {
-				return err
+				return sdk.WrapError(err, "error while writing file %s", target)
 			}
 
 			// manually close here after each file operation; defering would cause each file close
 			// to wait until all operations have completed.
-			f.Close()
+			if err := f.Close(); err != nil {
+				return sdk.WrapError(err, "error while closing file %s", target)
+			}
 		}
 	}
 }
