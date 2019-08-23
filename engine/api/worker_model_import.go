@@ -8,6 +8,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -20,6 +21,8 @@ import (
 // @params force=true or false. If false and if the worker model already exists, raise an error
 func (api *API) postWorkerModelImportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		consumer := getAPIConsumer(ctx)
+
 		force := FormBool(r, "force")
 
 		body, errr := ioutil.ReadAll(r.Body)
@@ -53,22 +56,87 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 		}
 		defer tx.Rollback() //nolint
 
-		wm, err := workermodel.ParseAndImport(ctx, tx, api.Cache, &eWorkerModel, force, deprecatedGetUser(ctx))
+		data := eWorkerModel.GetWorkerModel()
+
+		// group name should be set
+		if data.Group == nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing group name")
+		}
+
+		// check that the user is admin on the given template's group
+		grp, err := group.LoadByName(ctx, api.mustDB(), data.Group.Name, group.LoadOptions.WithMembers)
 		if err != nil {
-			return sdk.WrapError(err, "cannot parse and import worker model")
+			return sdk.NewError(sdk.ErrWrongRequest, err)
+		}
+		data.GroupID = grp.ID
+		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "you should be admin of the group to import a worker model")
+		}
+
+		// validate worker model fields
+		if err := data.IsValid(); err != nil {
+			return err
+		}
+
+		if !isAdmin(ctx) {
+			// provision is allowed only for CDS Admin or by user with a restricted model
+			if !data.Restricted {
+				data.Provision = 0
+			}
+		}
+
+		var newModel *sdk.Model
+
+		// check if a model already exists for given info, if exists but not force update returns an error
+		old, err := workermodel.LoadByNameAndGroupIDWithClearPassword(api.mustDB(), data.Name, grp.ID)
+		if err != nil {
+			if !isAdmin(ctx) {
+				// if current user is not admin and model is not restricted, a pattern should be given
+				if !data.Restricted && data.PatternName == "" {
+					return sdk.NewErrorFrom(sdk.ErrWorkerModelNoPattern, "missing model pattern name")
+				}
+			}
+
+			// validate worker model type fields
+			if err := data.IsValidType(); err != nil {
+				return err
+			}
+
+			newModel, err = workermodel.Create(ctx, api.mustDB(), data, consumer)
+			if err != nil {
+				return err
+			}
+		} else if force {
+			if !isAdmin(ctx) {
+				if err := workermodel.CopyModelTypeData(old, &data); err != nil {
+					return err
+				}
+			}
+
+			// validate worker model type fields
+			if err := data.IsValidType(); err != nil {
+				return err
+			}
+
+			newModel, err = workermodel.Update(ctx, api.mustDB(), old, data)
+			if err != nil {
+				return err
+			}
+		} else {
+			return sdk.NewErrorFrom(sdk.ErrModelNameExist, "worker model already exists with name %s for group %s", data.Name, grp.Name)
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		new, err := workermodel.LoadByID(api.mustDB(), wm.ID)
+		newModel, err = workermodel.LoadByID(api.mustDB(), newModel.ID)
 		if err != nil {
 			return err
 		}
 
-		new.Editable = true
+		newModel.Editable = true
 
-		return service.WriteJSON(w, new, http.StatusOK)
+		return service.WriteJSON(w, newModel, http.StatusOK)
 	}
 }

@@ -26,7 +26,7 @@ func (api *API) addStageHandler() service.Handler {
 		}
 
 		// Check if pipeline exist
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, true)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineKey, true)
 		if err != nil {
 			return sdk.WrapError(err, "addStageHandler")
 		}
@@ -42,9 +42,9 @@ func (api *API) addStageHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditAddStage, deprecatedGetUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditAddStage, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create pipeline audit")
 		}
 
@@ -64,7 +64,7 @@ func (api *API) addStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load pipeline stages")
 		}
 
-		event.PublishPipelineStageAdd(projectKey, pipelineKey, *stageData, deprecatedGetUser(ctx))
+		event.PublishPipelineStageAdd(projectKey, pipelineKey, *stageData, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pipelineData, http.StatusCreated)
 	}
@@ -84,7 +84,7 @@ func (api *API) getStageHandler() service.Handler {
 		}
 
 		// Check if pipeline exist
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, false)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineKey, false)
 		if err != nil {
 			return sdk.WrapError(err, "error on pipeline load")
 		}
@@ -115,7 +115,7 @@ func (api *API) moveStageHandler() service.Handler {
 		}
 
 		// Check if pipeline exist
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, true)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineKey, true)
 		if err != nil {
 			return err
 		}
@@ -133,9 +133,9 @@ func (api *API) moveStageHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditMoveStage, deprecatedGetUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditMoveStage, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create pipeline audit")
 		}
 
@@ -165,7 +165,7 @@ func (api *API) moveStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineStageMove(projectKey, pipelineKey, *stageData, oldStage.BuildOrder, deprecatedGetUser(ctx))
+		event.PublishPipelineStageMove(projectKey, pipelineKey, *stageData, oldStage.BuildOrder, getAPIConsumer(ctx))
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
@@ -192,7 +192,7 @@ func (api *API) updateStageHandler() service.Handler {
 		}
 
 		// Check if pipeline exist
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, true)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineKey, true)
 		if err != nil {
 			return err
 		}
@@ -211,9 +211,9 @@ func (api *API) updateStageHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateStage, deprecatedGetUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateStage, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
@@ -234,7 +234,7 @@ func (api *API) updateStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
 
-		event.PublishPipelineStageUpdate(projectKey, pipelineKey, *s, *stageData, deprecatedGetUser(ctx))
+		event.PublishPipelineStageUpdate(projectKey, pipelineKey, *s, *stageData, getAPIConsumer(ctx))
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
@@ -248,7 +248,7 @@ func (api *API) deleteStageHandler() service.Handler {
 		stageIDString := vars["stageID"]
 
 		// Check if pipeline exist
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, true)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineKey, true)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineKey)
 		}
@@ -271,13 +271,13 @@ func (api *API) deleteStageHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteStage, deprecatedGetUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteStage, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
-		if err := pipeline.DeleteStageByID(ctx, tx, s, deprecatedGetUser(ctx).ID); err != nil {
+		if err := pipeline.DeleteStageByID(ctx, tx, s); err != nil {
 			return sdk.WrapError(err, "Cannot Delete stage")
 		}
 
@@ -293,7 +293,7 @@ func (api *API) deleteStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
 
-		event.PublishPipelineStageDelete(projectKey, pipelineKey, *s, deprecatedGetUser(ctx))
+		event.PublishPipelineStageDelete(projectKey, pipelineKey, *s, getAPIConsumer(ctx))
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
@@ -314,7 +314,7 @@ func (api *API) getStageConditionsHandler() service.Handler {
 		}
 
 		// Check if pipeline exist
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, false)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineKey, false)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineKey)
 		}

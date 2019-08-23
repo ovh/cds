@@ -7,7 +7,6 @@ import (
 
 	"github.com/ncw/swift"
 
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -240,8 +239,7 @@ func (s *SwiftStore) containerKey(container string) (string, error) {
 	key := headers["X-Container-Meta-Temp-Url-Key"]
 	if key == "" {
 		log.Debug("SwiftStore> Creating new session key for %s", container)
-		skey, _ := sessionstore.NewSessionKey()
-		key = string(skey)
+		key = sdk.UUID()
 
 		log.Debug("SwiftStore> Update container %s metadata", container)
 		if err := s.ContainerUpdate(container, swift.Headers{"X-Container-Meta-Temp-Url-Key": key}); err != nil {

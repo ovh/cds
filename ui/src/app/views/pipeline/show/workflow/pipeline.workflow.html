@@ -71,7 +71,7 @@
     </div>
     <div *ngIf="selectedJob && pipeline" class="mb130">
         <app-action [project]="project" [suggest]="suggest" [action]="selectedJob.action" [pipeline]="pipeline"
-            [stage]="selectedStage" [keys]="keys" [edit]="pipeline.permission === permissionValue.READ_WRITE_EXECUTE"
+            [stage]="selectedStage" [keys]="keys" [edit]="project.permissions.writable"
             (actionEvent)="jobEvent($event)">
         </app-action>
     </div>
@@ -89,7 +89,7 @@
             [class.loading]="loadingStage" (click)="stageEvent('update')">{{ 'btn_save' | translate }}
         </button>
         <app-delete-button (event)="stageEvent('delete')" [disabled]="pipeline.from_repository"
-            *ngIf="!selectedStage?.hasChanged && pipeline.permission === permissionValue.READ_WRITE_EXECUTE">
+            *ngIf="!selectedStage?.hasChanged && project.permissions.writable">
         </app-delete-button>
     </modal-actions>
 </sm-modal>

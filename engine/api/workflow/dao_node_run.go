@@ -293,7 +293,7 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 		s := &r.Stages[i]
 		for j := range s.RunJobs {
 			rj := &s.RunJobs[j]
-			if rj.Status == sdk.StatusWaiting.String() {
+			if rj.Status == sdk.StatusWaiting {
 				rj.QueuedSeconds = time.Now().Unix() - rj.Queued.Unix()
 			}
 		}
@@ -607,7 +607,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 		}
 		if br != nil {
 			if br.LatestCommit == "" {
-				return nil, cur, sdk.WrapError(sdk.ErrNoBranch, "GetNodeRunBuildCommits> Branch %s or lastest commit not found", cur.Branch)
+				return nil, cur, sdk.WrapError(sdk.ErrNoBranch, "GetNodeRunBuildCommits> Branch %s or latest commit not found", cur.Branch)
 			}
 
 			//and return the last commit of the branch

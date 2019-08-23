@@ -49,7 +49,9 @@ func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	return report, nil
 }
 
-func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parentNodeRuns []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun,
+	mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parentNodeRuns []*sdk.WorkflowNodeRun,
+	hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
 	exist, errN := nodeRunExist(db, wr.ID, n.ID, wr.Number, subNumber)
 	if errN != nil {
@@ -97,7 +99,9 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	return nil, false, nil
 }
 
-func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parents []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun,
+	mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parents []*sdk.WorkflowNodeRun,
+	hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
 
 	//TODO: Check user for manual done but check permission also for automatic trigger and hooks (with system to authenticate a webhook)
@@ -180,7 +184,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		currentRepo = app.RepositoryFullname
 	}
 
-	parentRepo := sdk.ParameterFind(&run.BuildParameters, tagGitRepository)
+	parentRepo := sdk.ParameterFind(run.BuildParameters, tagGitRepository)
 
 	// Compute git params for current job
 	// Get from parent when
@@ -203,7 +207,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		// Try to found a parent on the same repo
 		found := false
 		for _, parent := range wr.WorkflowNodeRuns {
-			repo := sdk.ParameterFind(&parent[0].BuildParameters, tagGitRepository)
+			repo := sdk.ParameterFind(parent[0].BuildParameters, tagGitRepository)
 			if repo != nil && repo.Value == currentRepo {
 				found = true
 				// copy git info from ancestors
@@ -218,7 +222,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 		// If we change repo and we dont find ancestor on the same repo, just keep the branch
 		if !found {
-			b := sdk.ParameterFind(&run.BuildParameters, tagGitBranch)
+			b := sdk.ParameterFind(run.BuildParameters, tagGitBranch)
 			if b != nil {
 				currentJobGitValues[tagGitBranch] = b.Value
 			}
@@ -385,14 +389,14 @@ func getParentsStatus(wr *sdk.WorkflowRun, parents []*sdk.WorkflowNodeRun) strin
 		for _, v := range wr.WorkflowNodeRuns {
 			for _, run := range v {
 				if p.ID == run.ID {
-					if run.Status == sdk.StatusFail.String() || run.Status == sdk.StatusStopped.String() {
+					if run.Status == sdk.StatusFail || run.Status == sdk.StatusStopped {
 						return run.Status
 					}
 				}
 			}
 		}
 	}
-	return sdk.StatusSuccess.String()
+	return sdk.StatusSuccess
 }
 
 func createWorkflowNodeRun(wr *sdk.WorkflowRun, n *sdk.Node, parents []*sdk.WorkflowNodeRun, subNumber int, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) *sdk.WorkflowNodeRun {
@@ -527,15 +531,15 @@ func computeBuildParameters(wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, paren
 		params = append(params, sdk.Parameter{
 			Name:  "cds.triggered_by.email",
 			Type:  sdk.StringParameter,
-			Value: manual.User.Email,
+			Value: manual.Email,
 		}, sdk.Parameter{
 			Name:  "cds.triggered_by.fullname",
 			Type:  sdk.StringParameter,
-			Value: manual.User.Fullname,
+			Value: manual.Fullname,
 		}, sdk.Parameter{
 			Name:  "cds.triggered_by.username",
 			Type:  sdk.StringParameter,
-			Value: manual.User.Username,
+			Value: manual.Username,
 		}, sdk.Parameter{
 			Name:  "cds.manual",
 			Type:  sdk.StringParameter,

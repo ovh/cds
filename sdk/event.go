@@ -132,7 +132,7 @@ type EventJob struct {
 	Version         int64  `json:"version,omitempty"`
 	JobName         string `json:"jobName,omitempty"`
 	JobID           int64  `json:"jobID,omitempty"`
-	Status          Status `json:"status,omitempty"`
+	Status          string `json:"status,omitempty"`
 	Queued          int64  `json:"queued,omitempty"`
 	Start           int64  `json:"start,omitempty"`
 	Done            int64  `json:"done,omitempty"`

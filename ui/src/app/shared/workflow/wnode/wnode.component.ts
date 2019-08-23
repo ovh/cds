@@ -3,7 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { IPopup, SuiActiveModal } from '@richardlt/ng2-semantic-ui';
-import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeHook, WNodeJoin, WNodeTrigger, WNodeType, Workflow } from 'app/model/workflow.model';
@@ -217,7 +216,7 @@ export class WorkflowWNodeComponent implements OnInit {
     }
 
     canEdit(): boolean {
-        return this.workflow.permission === PermissionValue.READ_WRITE_EXECUTE;
+        return this.workflow.permissions.writable;
     }
 
     openDeleteNodeModal(): void {

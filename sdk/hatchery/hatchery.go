@@ -17,13 +17,14 @@ import (
 
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 var (
 	// Client is a CDS Client
-	Client                 sdk.HTTPClient
+	Client                 cdsclient.HTTPClient
 	defaultMaxProvisioning = 10
 	models                 []sdk.Model
 
@@ -69,26 +70,30 @@ func Create(ctx context.Context, h Interface) error {
 	}()
 
 	// Init call hatchery.Register()
-	if err := h.Init(); err != nil {
+	if err := h.InitHatchery(); err != nil {
 		return fmt.Errorf("Create> Init error: %v", err)
 	}
 
-	// Call WorkerModel Enabled first
-	var errwm error
-	models, errwm = h.WorkerModelsEnabled()
-	if errwm != nil {
-		log.Error("error on h.WorkerModelsEnabled() (init call): %v", errwm)
+	var chanRegister, chanGetModels, chanProvision <-chan time.Time
+	var modelType string
+
+	hWithModels, isWithModels := h.(InterfaceWithModels)
+	if isWithModels {
+		// Call WorkerModel Enabled first
+		var errwm error
+		models, errwm = hWithModels.WorkerModelsEnabled()
+		if errwm != nil {
+			log.Error("error on h.WorkerModelsEnabled() (init call): %v", errwm)
+			return errwm
+		}
+
+		// using time.Tick leaks the underlying ticker but we don't care about it because it is an endless function
+		chanRegister = time.Tick(time.Duration(h.Configuration().Provision.RegisterFrequency) * time.Second) // nolint
+		chanGetModels = time.Tick(10 * time.Second)                                                          // nolint
+		chanProvision = time.Tick(time.Duration(h.Configuration().Provision.Frequency) * time.Second)        // nolint
+
+		modelType = hWithModels.ModelType()
 	}
-
-	tickerProvision := time.NewTicker(time.Duration(h.Configuration().Provision.Frequency) * time.Second)
-	tickerRegister := time.NewTicker(time.Duration(h.Configuration().Provision.RegisterFrequency) * time.Second)
-	tickerGetModels := time.NewTicker(10 * time.Second)
-
-	defer func() {
-		tickerProvision.Stop()
-		tickerRegister.Stop()
-		tickerGetModels.Stop()
-	}()
 
 	wjobs := make(chan sdk.WorkflowNodeJobRun, h.Configuration().Provision.MaxConcurrentProvisioning)
 	errs := make(chan error, 1)
@@ -97,12 +102,9 @@ func Create(ctx context.Context, h Interface) error {
 	// purges expired items every minute
 	spawnIDs := cache.New(10*time.Second, 60*time.Second)
 
-	// hatchery is now fully Initialized
-	h.SetInitialized()
-
 	sdk.GoRoutine(ctx, "queuePolling",
 		func(ctx context.Context) {
-			if err := h.CDSClient().QueuePolling(ctx, wjobs, errs, 20*time.Second, h.Configuration().Provision.GraceTimeQueued, h.ModelType(), h.Hatchery().RatioService, nil); err != nil {
+			if err := h.CDSClient().QueuePolling(ctx, wjobs, errs, 20*time.Second, modelType, h.Configuration().Provision.RatioService); err != nil {
 				log.Error("Queues polling stopped: %v", err)
 				cancel()
 			}
@@ -131,9 +133,9 @@ func Create(ctx context.Context, h Interface) error {
 		case <-ctx.Done():
 			return ctx.Err()
 
-		case <-tickerGetModels.C:
+		case <-chanGetModels:
 			var errwm error
-			models, errwm = h.WorkerModelsEnabled()
+			models, errwm = hWithModels.WorkerModelsEnabled()
 			if errwm != nil {
 				log.Error("error on h.WorkerModelsEnabled(): %v", errwm)
 			}
@@ -203,7 +205,7 @@ func Create(ctx context.Context, h Interface) error {
 
 			//Check bookedBy current hatchery
 			if j.BookedBy.ID != 0 {
-				log.Debug("hatchery> job %d is booked by someone (%d / %d)", j.ID, j.BookedBy.ID, h.ID())
+				log.Debug("hatchery> job %d is booked by someone", j.ID)
 				endTrace("booked by someone")
 				continue
 			}
@@ -228,56 +230,89 @@ func Create(ctx context.Context, h Interface) error {
 
 			// Check at least one worker model can match
 			var chosenModel *sdk.Model
-			for i := range models {
-				if canRunJob(h, workerRequest, models[i]) {
-					chosenModel = &models[i]
-					break
+			var canTakeJob bool
+			if isWithModels {
+				for i := range models {
+					if canRunJobWithModel(hWithModels, workerRequest, &models[i]) {
+						chosenModel = &models[i]
+						canTakeJob = true
+						break
+					}
+				}
+
+				// No model has been found, let's send a failing result
+				if chosenModel == nil {
+					log.Debug("hatchery> no model")
+					endTrace("no model")
+					continue
+				}
+			} else {
+				if canRunJob(h, workerRequest) {
+					log.Debug("hatchery %s can try to spawn a worker for job %d", h.ServiceName(), j.ID)
+					canTakeJob = true
 				}
 			}
 
-			// No model has been found, let's send a failing result
-			if chosenModel == nil {
-				log.Debug("hatchery> no model")
-				endTrace("no model")
+			if !canTakeJob {
+				log.Info("hatchery %s is not able to run the job %d", h.ServiceName(), j.ID)
+				endTrace("cannot run job")
 				continue
 			}
 
-			//We got a model, let's start a worker
-			workerRequest.model = *chosenModel
+			if chosenModel != nil {
+				//We got a model, let's start a worker
+				workerRequest.model = chosenModel
+			}
 
 			//Ask to start
 			log.Debug("hatchery> Request a worker for job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
 			workersStartChan <- workerRequest
 
-		case <-tickerProvision.C:
-			provisioning(h, models)
+		case <-chanProvision:
+			provisioning(hWithModels, models)
 
-		case <-tickerRegister.C:
-			if err := workerRegister(ctx, h, workersStartChan); err != nil {
+		case <-chanRegister:
+			if err := workerRegister(ctx, hWithModels, workersStartChan); err != nil {
 				log.Warning("Error on workerRegister: %s", err)
 			}
 		}
 	}
 }
 
+func canRunJob(h Interface, j workerStarterRequest) bool {
+	for _, r := range j.requirements {
+		// If requirement is an hostname requirement, it's for a specific worker
+		if r.Type == sdk.HostnameRequirement && r.Value != j.hostname {
+			log.Debug("canRunJob> %d - job %d - hostname requirement r.Value(%s) != hostname(%s)", j.timestamp, j.id, r.Value, j.hostname)
+			return false
+		}
+
+		// Skip network access requirement as we can't check it
+		if r.Type == sdk.NetworkAccessRequirement || r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
+			log.Debug("canRunJob> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't checkt it on hatchery routine", j.timestamp, j.id)
+			continue
+		}
+	}
+	return h.CanSpawn(nil, j.id, j.requirements)
+}
+
 // MemoryRegisterContainer is the RAM used for spawning
 // a docker container for register a worker model. 128 Mo
 const MemoryRegisterContainer int64 = 128
 
-func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
+func canRunJobWithModel(h InterfaceWithModels, j workerStarterRequest, model *sdk.Model) bool {
 	if model.Type != h.ModelType() {
 		log.Debug("canRunJob> model %s type:%s current hatchery modelType: %s", model.Name, model.Type, h.ModelType())
 		return false
 	}
 
 	// If the model needs registration, don't spawn for now
-	if h.NeedRegistration(&model) {
+	if h.NeedRegistration(model) {
 		log.Debug("canRunJob> model %s needs registration", model.Name)
 		return false
 	}
 
-	// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
-	if model.NbSpawnErr > 5 && *h.Service().GroupID != model.ID {
+	if model.NbSpawnErr > 5 {
 		log.Warning("canRunJob> Too many errors on spawn with model %s, please check this worker model", model.Name)
 		return false
 	}
@@ -327,22 +362,10 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 			}
 		}
 
-		// If requirement is an hostname requirement, it's for a specific worker
-		if r.Type == sdk.HostnameRequirement && r.Value != j.hostname {
-			log.Debug("canRunJob> %d - job %d - hostname requirement r.Value(%s) != hostname(%s)", j.timestamp, j.id, r.Value, j.hostname)
-			return false
-		}
-
 		// service and memory requirements are only supported by docker model
 		if model.Type != sdk.Docker && (r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement) {
 			log.Debug("canRunJob> %d - job %d - job with service requirement or memory requirement: only for model docker. current model:%s", j.timestamp, j.id, model.Type)
 			return false
-		}
-
-		// Skip network access requirement as we can't check it
-		if r.Type == sdk.NetworkAccessRequirement || r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			log.Debug("canRunJob> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't checkt it on hatchery routine", j.timestamp, j.id)
-			continue
 		}
 
 		if r.Type == sdk.OSArchRequirement && model.RegisteredOS != "" && model.RegisteredArch != "" && r.Value != (model.RegisteredOS+"/"+model.RegisteredArch) {
@@ -369,17 +392,20 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 		}
 	}
 
-	return h.CanSpawn(&model, j.id, j.requirements)
+	return h.CanSpawn(model, j.id, j.requirements)
 }
 
 // SendSpawnInfo sends a spawnInfo
 func SendSpawnInfo(ctx context.Context, h Interface, jobID int64, spawnMsg sdk.SpawnMsg) {
+	if h.CDSClient() == nil {
+		return
+	}
 	infos := []sdk.SpawnInfo{{RemoteTime: time.Now(), Message: spawnMsg}}
-	ctxc, cancel := context.WithTimeout(ctx, 10*time.Second)
-	if err := h.CDSClient().QueueJobSendSpawnInfo(ctxc, jobID, infos); err != nil {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	if err := h.CDSClient().QueueJobSendSpawnInfo(ctx, jobID, infos); err != nil {
 		log.Warning("spawnWorkerForJob> cannot client.sendSpawnInfo for job %d: %s", jobID, err)
 	}
-	cancel()
 }
 
 func logTime(h Interface, name string, then time.Time) {

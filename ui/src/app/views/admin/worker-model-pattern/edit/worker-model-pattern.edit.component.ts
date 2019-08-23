@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AuthentifiedUser } from 'app/model/user.model';
+import { ModelPattern } from 'app/model/worker-model.model';
+import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { AuthenticationState } from 'app/store/authentication.state';
 import omit from 'lodash-es/omit';
 import { finalize } from 'rxjs/operators';
-import { User } from '../../../../model/user.model';
-import { ModelPattern } from '../../../../model/worker-model.model';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
-import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
-import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-worker-model-pattern-edit',
@@ -21,7 +22,7 @@ export class WorkerModelPatternEditComponent implements OnInit {
     editLoading = false;
     pattern: ModelPattern;
     workerModelTypes: Array<string>;
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     envNames: Array<string> = [];
     newEnvName: string;
     newEnvValue: string;
@@ -29,12 +30,14 @@ export class WorkerModelPatternEditComponent implements OnInit {
 
     constructor(
         private _workerModelService: WorkerModelService,
-        private _toast: ToastService, private _translate: TranslateService,
-        private _route: ActivatedRoute, private _router: Router,
-        private _authentificationStore: AuthentificationStore,
+        private _toast: ToastService,
+        private _translate: TranslateService,
+        private _route: ActivatedRoute,
+        private _router: Router,
+        private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
-        this.currentUser = this._authentificationStore.getUser();
+        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
         this.loading = true;
         this._workerModelService.getTypes()
             .pipe(finalize(() => {

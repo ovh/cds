@@ -1,12 +1,12 @@
 package group
 
 import (
+	"context"
 	"database/sql"
 	"strings"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -68,45 +68,41 @@ func LoadRoleGroupInWorkflowNode(db gorp.SqlExecutor, nodeID, groupID int64) (in
 }
 
 // AddWorkflowGroup Add permission on the given workflow for the given group
-func AddWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
-	projectGroupID, projectRole, err := LoadRoleGroupInProject(db, w.ProjectID, gp.Group.ID)
+func AddWorkflowGroup(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
+	link, err := LoadLinkGroupProjectForGroupIDAndProjectID(ctx, db, gp.Group.ID, w.ProjectID)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrGroupNotFoundInProject, "Cannot load role for group %d in project %d : %v", gp.Group.ID, w.ProjectID, err)
+		return sdk.WrapError(err, "cannot load role for group %d in project %d", gp.Group.ID, w.ProjectID)
 	}
-	if projectRole == permission.PermissionReadWriteExecute && gp.Permission < projectRole {
-		return sdk.ErrWorkflowPermInsufficient
+	if link.Role == sdk.PermissionReadWriteExecute && gp.Permission < link.Role {
+		return sdk.WithStack(sdk.ErrWorkflowPermInsufficient)
 	}
 
-	query := `INSERT INTO workflow_perm (project_group_id, workflow_id, role)
-	VALUES (
-		$1,
-		$2,
-		$3
-	)`
-	if _, err := db.Exec(query, projectGroupID, w.ID, gp.Permission); err != nil {
-		return err
+	query := `INSERT INTO workflow_perm (project_group_id, workflow_id, role)	VALUES ($1,	$2,	$3)`
+	if _, err := db.Exec(query, link.ID, w.ID, gp.Permission); err != nil {
+		return sdk.WithStack(err)
 	}
 	w.Groups = append(w.Groups, gp)
 	return nil
 }
 
 // UpdateWorkflowGroup  update group permission for the given group on the current workflow
-func UpdateWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
-	_, projectRole, err := LoadRoleGroupInProject(db, w.ProjectID, gp.Group.ID)
+func UpdateWorkflowGroup(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
+	link, err := LoadLinkGroupProjectForGroupIDAndProjectID(ctx, db, gp.Group.ID, w.ProjectID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return sdk.WrapError(sdk.ErrGroupNotFoundInProject, "cannot update this group on workflow because there isn't in the project groups : %v", err)
-		}
-		return sdk.WrapError(err, "Cannot load role for group %d in project %d", gp.Group.ID, w.ProjectID)
+		return sdk.WrapError(err, "cannot load role for group %d in project %d", gp.Group.ID, w.ProjectID)
 	}
-	if projectRole == permission.PermissionReadWriteExecute && gp.Permission < projectRole {
-		return sdk.ErrWorkflowPermInsufficient
+	if link.Role == sdk.PermissionReadWriteExecute && gp.Permission < link.Role {
+		return sdk.WithStack(sdk.ErrWorkflowPermInsufficient)
 	}
 
-	query := `UPDATE workflow_perm
-	SET role = $1
-	FROM project_group
-	WHERE project_group.id = workflow_perm.project_group_id AND workflow_perm.workflow_id = $2 AND project_group.group_id = $3`
+	query := `
+    UPDATE workflow_perm
+	  SET role = $1
+	  FROM project_group
+    WHERE project_group.id = workflow_perm.project_group_id
+      AND workflow_perm.workflow_id = $2
+      AND project_group.group_id = $3
+  `
 	if _, err := db.Exec(query, gp.Permission, w.ID, gp.Group.ID); err != nil {
 		return sdk.WithStack(err)
 	}
@@ -123,7 +119,7 @@ func UpdateWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermi
 		return err
 	}
 	if !ok {
-		return sdk.ErrLastGroupWithWriteRole
+		return sdk.WithStack(sdk.ErrLastGroupWithWriteRole)
 	}
 	return nil
 }
@@ -148,7 +144,7 @@ func UpsertAllWorkflowGroups(db gorp.SqlExecutor, w *sdk.Workflow, gps []sdk.Gro
 
 // UpsertWorkflowGroup upsert a workflow group
 func UpsertWorkflowGroup(db gorp.SqlExecutor, projectID, workflowID int64, gp sdk.GroupPermission) error {
-	query := `INSERT INTO workflow_perm (project_group_id, workflow_id, role) 
+	query := `INSERT INTO workflow_perm (project_group_id, workflow_id, role)
 			VALUES (
 				(SELECT id FROM project_group WHERE project_group.project_id = $1 AND project_group.group_id = $2),
 				$3,
@@ -156,11 +152,10 @@ func UpsertWorkflowGroup(db gorp.SqlExecutor, projectID, workflowID int64, gp sd
 			) ON CONFLICT DO NOTHING`
 	if _, err := db.Exec(query, projectID, gp.Group.ID, workflowID, gp.Permission); err != nil {
 		if strings.Contains(err.Error(), `null value in column "project_group_id"`) {
-			return sdk.WrapError(sdk.ErrGroupNotFoundInProject, "cannot add this group on workflow because there isn't in the project groups : %v", err)
+			return sdk.WrapError(sdk.ErrNotFound, "cannot add this group on workflow because there isn't in the project groups : %v", err)
 		}
 		return sdk.WrapError(err, "unable to insert group_id=%d workflow_id=%d role=%d", gp.Group.ID, workflowID, gp.Permission)
 	}
-
 	return nil
 }
 

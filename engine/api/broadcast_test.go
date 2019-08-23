@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -20,19 +19,15 @@ func Test_addBroadcastHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	_, jwt := assets.InsertAdminUser(t, db)
 
 	br := sdk.Broadcast{
 		Title:   "maintenance swarm",
 		Content: "bad news",
 	}
-	jsonBody, _ := json.Marshal(br)
-	body := bytes.NewBuffer(jsonBody)
 
 	uri := api.Router.GetRoute("POST", api.addBroadcastHandler, nil)
-	req, err := http.NewRequest("POST", uri, body)
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, br)
 
 	// Do the request
 	w := httptest.NewRecorder()
@@ -49,8 +44,8 @@ func Test_postMarkAsReadBroadcastHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	uLambda, passLambda := assets.InsertLambdaUser(db)
+	u, pass := assets.InsertAdminUser(t, db)
+	uLambda, passLambda := assets.InsertLambdaUser(t, db)
 
 	br := sdk.Broadcast{
 		Title:   "maintenance swarm",

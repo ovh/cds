@@ -9,19 +9,30 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// NoError logs Fatal if there is an error
+// NoError logs Fatal if there is an error.
 func NoError(t *testing.T, err error, msg ...interface{}) {
-	assert.NoError(t, err)
-	if err != nil {
-		t.Error(err)
+	if !assert.NoError(t, err) {
 		t.Fatal(msg...)
 	}
 }
 
-// NotNil logs Fatal if there nil value
+// Error logs Fatal if there is no error.
+func Error(t *testing.T, err error, msg ...interface{}) {
+	if !assert.Error(t, err) {
+		t.Fatal(msg...)
+	}
+}
+
+// NotNil logs Fatal if there is nil value.
 func NotNil(t *testing.T, i interface{}, msg ...interface{}) {
-	assert.NotNil(t, i)
-	if i == nil {
+	if !assert.NotNil(t, i) {
+		t.Fatal(msg...)
+	}
+}
+
+// Nil logs Fatal if there is no nil value.
+func Nil(t *testing.T, i interface{}, msg ...interface{}) {
+	if !assert.Nil(t, i) {
 		t.Fatal(msg...)
 	}
 }
@@ -44,14 +55,21 @@ func ArrayContains(array interface{}, s interface{}) bool {
 	return false
 }
 
-// Equal checks 2 element Equality using github.com/fsamin/go-dump
+// Equal checks that two elements are equal.
 func Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) {
-	e := DeepEquals(expected, actual)
-
-	if !e {
+	if !DeepEquals(expected, actual) {
 		t.Log("Expected:" + dump.MustSdump(expected))
 		t.Log("Actual:" + dump.MustSdump(actual))
 		assert.FailNow(t, "Equal failed", msgAndArgs...)
+	}
+}
+
+// NotEqual checks that two elements are not equal.
+func NotEqual(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) {
+	if DeepEquals(expected, actual) {
+		t.Log("Expected:" + dump.MustSdump(expected))
+		t.Log("Actual:" + dump.MustSdump(actual))
+		assert.FailNow(t, "Not equal failed", msgAndArgs...)
 	}
 }
 

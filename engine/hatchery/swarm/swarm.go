@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/engine/service"
+
 	types "github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
@@ -37,8 +39,8 @@ func New() *HatcherySwarm {
 	return s
 }
 
-//Init connect the hatchery to the docker api
-func (h *HatcherySwarm) Init() error {
+// InitHatchery connect the hatchery to the docker api
+func (h *HatcherySwarm) InitHatchery() error {
 	h.dockerClients = map[string]*dockerClient{}
 
 	if len(h.Config.DockerEngines) == 0 {
@@ -175,7 +177,7 @@ func (h *HatcherySwarm) Init() error {
 // SpawnWorker start a new docker container
 // User can add option on prerequisite, as --port and --privileged
 // but only hatchery NOT 'shared.infra' can launch containers with options
-func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
+func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	ctx, end := observability.Span(ctx, "swarm.SpawnWorker")
 	defer end()
 
@@ -186,7 +188,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	}
 
 	observability.Current(ctx, observability.Tag(observability.TagWorker, name))
-	log.Debug("hatchery> swarm> SpawnWorker> Spawning worker %s - %s", name, spawnArgs.LogInfo)
+	log.Debug("hatchery> swarm> SpawnWorker> Spawning worker %s", name)
 
 	// Choose a dockerEngine
 	var dockerClient *dockerClient
@@ -228,7 +230,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	next()
 
 	if !foundDockerClient {
-		return "", fmt.Errorf("unable to found suitable docker engine")
+		return fmt.Errorf("unable to found suitable docker engine")
 	}
 
 	//Memory for the worker
@@ -248,7 +250,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
 				if err != nil {
 					log.Warning("hatchery> swarm> SpawnWorker>Unable to parse memory requirement %d :%v", memory, err)
-					return "", err
+					return err
 				}
 			} else if r.Type == sdk.ServiceRequirement {
 				//Create a network if not already created
@@ -258,7 +260,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					if err := h.createNetwork(ctx, dockerClient, network); err != nil {
 						log.Warning("hatchery> swarm> SpawnWorker> Unable to create network %s on %s for jobID %d : %v", network, dockerClient.name, spawnArgs.JobID, err)
 						next()
-						return "", err
+						return err
 					}
 				}
 				//name= <alias> => the name of the host put in /etc/hosts of the worker
@@ -319,7 +321,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 				if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
 					log.Warning("hatchery> swarm> SpawnWorker> Unable to start required container on %s: %s", dockerClient.name, err)
-					return "", err
+					return err
 				}
 				services = append(services, serviceName)
 			}
@@ -333,15 +335,16 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	//labels are used to make container cleanup easier
 	labels := map[string]string{
-		"worker_model":        strconv.FormatInt(spawnArgs.Model.ID, 10),
+		"worker_model_path":   spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		"worker_name":         name,
 		"worker_requirements": strings.Join(services, ","),
 		"hatchery":            h.Config.Name,
 	}
 
-	dockerOpts, errDockerOpts := h.computeDockerOpts(h.CDSClient().GetService().IsSharedInfra, spawnArgs.Requirements)
+	// TODO: Add new options on hatchery swarm to allow advanced docker option such as addHost, priviledge, port mapping and so one
+	dockerOpts, errDockerOpts := h.computeDockerOpts(spawnArgs.Requirements)
 	if errDockerOpts != nil {
-		return name, errDockerOpts
+		return errDockerOpts
 	}
 
 	udataParam := sdk.WorkerArgs{
@@ -349,26 +352,24 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		Token:             h.Configuration().API.Token,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              name,
-		Model:             spawnArgs.Model.ID,
+		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		TTL:               h.Config.WorkerTTL,
-		HatcheryName:      h.Service().Name,
+		HatcheryName:      h.Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
 		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-		GrpcAPI:           h.Configuration().API.GRPC.URL,
-		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
 	udataParam.WorkflowJobID = spawnArgs.JobID
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {
-		return "", errt
+		return errt
 	}
 	var buffer bytes.Buffer
 	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
-		return "", errTmpl
+		return errTmpl
 	}
 	cmds := strings.Fields(spawnArgs.Model.ModelDocker.Shell)
 	cmds = append(cmds, buffer.String())
@@ -385,7 +386,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name
-	envsWm["CDS_MODEL"] = fmt.Sprintf("%d", udataParam.Model)
+	envsWm["CDS_MODEL_PATH"] = udataParam.Model
 	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
 	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
@@ -394,14 +395,9 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
 	}
 
-	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
-		envsWm["CDS_GRPC_API"] = udataParam.GrpcAPI
-		envsWm["CDS_GRPC_INSECURE"] = fmt.Sprintf("%v", udataParam.GrpcInsecure)
-	}
-
 	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, modelEnvs)
 	if errEnv != nil {
-		return "", errEnv
+		return errEnv
 	}
 
 	for envName, envValue := range envTemplated {
@@ -431,10 +427,10 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	//start the worker
 	if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
 		log.Warning("hatchery> swarm> SpawnWorker> Unable to start container %s on %s with image %s err:%v", args.name, dockerClient.name, spawnArgs.Model.ModelDocker.Image, err)
-		return "", err
+		return err
 	}
 
-	return name, nil
+	return nil
 }
 
 // ModelType returns type of hatchery
@@ -488,14 +484,15 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		// hatcherySwarm.ratioService: Percent reserved for spawning worker with service requirement
 		// if no link -> we need to check ratioService
 		if len(links) == 0 {
-			if h.Config.RatioService >= 100 {
+			ratioService := h.Configuration().Provision.RatioService
+			if ratioService != nil && *ratioService >= 100 {
 				log.Debug("hatchery> swarm> CanSpawn> ratioService 100 by conf on %s - no spawn worker without CDS Service", dockerName)
 				return false
 			}
 			if nbContainersFromHatchery > 0 {
 				percentFree := 100 - (100 * len(ws) / h.Config.MaxContainers)
-				if percentFree <= h.Config.RatioService {
-					log.Debug("hatchery> swarm> CanSpawn> ratio reached on %s. percentFree:%d ratioService:%d", dockerName, percentFree, h.Config.RatioService)
+				if ratioService != nil && percentFree <= *ratioService {
+					log.Debug("hatchery> swarm> CanSpawn> ratio reached on %s. percentFree:%d ratioService:%d", dockerName, percentFree, *ratioService)
 					return false
 				}
 			}
@@ -574,32 +571,14 @@ func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
 	return len(list)
 }
 
-// Hatchery returns Hatchery instances
-func (h *HatcherySwarm) Hatchery() *sdk.Hatchery {
-	return h.hatch
-}
-
 // Serve start the hatchery server
 func (h *HatcherySwarm) Serve(ctx context.Context) error {
 	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration
-func (h *HatcherySwarm) Configuration() hatchery.CommonConfiguration {
-	return h.Config.CommonConfiguration
-}
-
-// ID returns ID of the Hatchery
-func (h *HatcherySwarm) ID() int64 {
-	if h.CDSClient().GetService() == nil {
-		return 0
-	}
-	return h.CDSClient().GetService().ID
-}
-
-//Service returns service instance
-func (h *HatcherySwarm) Service() *sdk.Service {
-	return h.CDSClient().GetService()
+func (h *HatcherySwarm) Configuration() service.HatcheryCommonConfiguration {
+	return h.Config.HatcheryCommonConfiguration
 }
 
 // WorkerModelsEnabled returns Worker model enabled

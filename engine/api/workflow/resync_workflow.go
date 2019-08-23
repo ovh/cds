@@ -11,13 +11,13 @@ import (
 )
 
 // Resync a workflow in the given workflow run
-func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, u *sdk.User) error {
+func Resync(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
 	options := LoadOptions{
 		DeepPipeline:     true,
 		Base64Keys:       true,
 		WithIntegrations: true,
 	}
-	wf, errW := LoadByID(db, store, proj, wr.Workflow.ID, u, options)
+	wf, errW := LoadByID(ctx, db, store, proj, wr.Workflow.ID, options)
 	if errW != nil {
 		return sdk.WrapError(errW, "Resync> Cannot load workflow")
 	}

@@ -8,7 +8,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -37,18 +36,12 @@ func (api *API) getAdminServicesHandler() service.Handler {
 
 		var err error
 		if r.FormValue("type") != "" {
-			srvs, err = services.FindByType(api.mustDB(), r.FormValue("type"))
+			srvs, err = services.LoadAllByType(ctx, api.mustDB(), r.FormValue("type"))
 		} else {
-			srvs, err = services.All(api.mustDB())
+			srvs, err = services.LoadAll(ctx, api.mustDB())
 		}
 		if err != nil {
 			return err
-		}
-
-		for i := range srvs {
-			srv := &srvs[i]
-			srv.Hash = ""
-			srv.Token = ""
 		}
 
 		return service.WriteJSON(w, srvs, http.StatusOK)
@@ -59,7 +52,7 @@ func (api *API) deleteAdminServiceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
-		srv, err := services.FindByName(api.mustDB(), name)
+		srv, err := services.LoadByName(ctx, api.mustDB(), name)
 		if err != nil {
 			return err
 		}
@@ -74,21 +67,9 @@ func (api *API) getAdminServiceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
-		srv, err := services.FindByName(api.mustDB(), name)
+		srv, err := services.LoadAllByType(ctx, api.mustDB(), name)
 		if err != nil {
 			return err
-		}
-		srv.Hash = ""
-		srv.Token = ""
-		if srv.GroupID != nil {
-			g, err := group.LoadGroupByID(api.mustDB(), *srv.GroupID)
-			if err != nil {
-				if !sdk.ErrorIs(err, sdk.ErrGroupNotFound) {
-					return sdk.WithStack(err)
-				}
-			} else {
-				srv.Group = g
-			}
 		}
 		return service.WriteJSON(w, srv, http.StatusOK)
 	}
@@ -114,7 +95,7 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handle
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var srvs []sdk.Service
 		if r.FormValue("name") != "" {
-			srv, err := services.FindByName(api.mustDB(), r.FormValue("name"))
+			srv, err := services.LoadByName(ctx, api.mustDB(), r.FormValue("name"))
 			if err != nil {
 				return err
 			}
@@ -123,7 +104,7 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handle
 			}
 		} else {
 			var errFind error
-			srvs, errFind = services.FindByType(api.mustDB(), r.FormValue("type"))
+			srvs, errFind = services.LoadAllByType(ctx, api.mustDB(), r.FormValue("type"))
 			if errFind != nil {
 				return errFind
 			}
@@ -134,7 +115,7 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handle
 		}
 
 		query := r.FormValue("query")
-		btes, _, code, err := services.DoRequest(ctx, srvs, method, query, nil)
+		btes, _, code, err := services.DoRequest(ctx, api.mustDB(), srvs, method, query, nil)
 		if err != nil {
 			return sdk.NewError(sdk.Error{
 				Status:  code,
@@ -153,7 +134,7 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handle
 
 func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		srvs, err := services.FindByType(api.mustDB(), r.FormValue("type"))
+		srvs, err := services.LoadAllByType(ctx, api.mustDB(), r.FormValue("type"))
 		if err != nil {
 			return err
 		}
@@ -165,7 +146,7 @@ func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 		}
 		defer r.Body.Close()
 
-		btes, _, code, err := services.DoRequest(ctx, srvs, method, query, body)
+		btes, _, code, err := services.DoRequest(ctx, api.mustDB(), srvs, method, query, body)
 		if err != nil {
 			return sdk.NewError(sdk.Error{
 				Status:  code,

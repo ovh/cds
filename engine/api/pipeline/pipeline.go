@@ -10,19 +10,20 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 )
 
-type structarg struct {
-	loadstages     bool
-	loadparameters bool
-}
-
 // LoadPipeline loads a pipeline from database
-func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk.Pipeline, error) {
+func LoadPipeline(ctx context.Context, db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk.Pipeline, error) {
+	ctx, end := observability.Span(ctx, "pipeline.LoadPipeline",
+		observability.Tag(observability.TagProjectKey, projectKey),
+		observability.Tag(observability.TagPipeline, name),
+		observability.Tag(observability.TagPipelineDeep, deep),
+	)
+	defer end()
+
 	var p Pipeline
 	query := `SELECT pipeline.id, pipeline.name, pipeline.description, pipeline.project_id, pipeline.last_modified, pipeline.from_repository
 			FROM pipeline
@@ -38,11 +39,11 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 
 	pip := sdk.Pipeline(p)
 	if deep {
-		if err := loadPipelineDependencies(context.TODO(), db, &pip); err != nil {
+		if err := loadPipelineDependencies(ctx, db, &pip); err != nil {
 			return nil, err
 		}
 	} else {
-		parameters, err := GetAllParametersInPipeline(context.TODO(), db, pip.ID)
+		parameters, err := GetAllParametersInPipeline(ctx, db, pip.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -88,16 +89,54 @@ func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64
 	return &pip, nil
 }
 
-// LoadByWorkerModel loads pipelines from database for a given worker model name
-func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, u *sdk.User, model *sdk.Model) ([]sdk.Pipeline, error) {
+// LoadByWorkerModel loads pipelines from database for a given worker model.
+func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, model *sdk.Model) ([]sdk.Pipeline, error) {
 	var query gorpmapping.Query
 
 	isSharedInfraModel := model.GroupID == group.SharedInfraGroup.ID
 	modelNamePattern := model.Group.Name + "/" + model.Name + "%"
 
-	if !u.Admin {
-		if isSharedInfraModel {
-			query = gorpmapping.NewQuery(`
+	if isSharedInfraModel {
+		query = gorpmapping.NewQuery(`
+      SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
+      FROM action_requirement
+        JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
+        JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
+        JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
+        JOIN project ON project.id = pipeline.project_id
+      WHERE action_requirement.type = 'model'
+        AND (action_requirement.value LIKE $1 OR action_requirement.value LIKE $2)
+    `).Args(model.Name+"%", modelNamePattern)
+	} else {
+		query = gorpmapping.NewQuery(`
+      SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
+      FROM action_requirement
+        JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
+        JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
+        JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
+        JOIN project ON project.id = pipeline.project_id
+      WHERE action_requirement.type = 'model'
+        AND action_requirement.value LIKE $1
+    `).Args(modelNamePattern)
+	}
+
+	var pips []sdk.Pipeline
+	if err := gorpmapping.GetAll(ctx, db, query, &pips); err != nil {
+		return nil, sdk.WrapError(err, "unable to load pipelines linked to worker model pattern %s", modelNamePattern)
+	}
+
+	return pips, nil
+}
+
+// LoadByWorkerModelAndGroupIDs loads pipelines from database for a given worker model and group ids.
+func LoadByWorkerModelAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, model *sdk.Model, groupIDs []int64) ([]sdk.Pipeline, error) {
+	var query gorpmapping.Query
+
+	isSharedInfraModel := model.GroupID == group.SharedInfraGroup.ID
+	modelNamePattern := model.Group.Name + "/" + model.Name + "%"
+
+	if isSharedInfraModel {
+		query = gorpmapping.NewQuery(`
       SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
       FROM action_requirement
         JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
@@ -109,56 +148,26 @@ func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, u *sdk.User, mo
         AND project.id IN (
           SELECT project_group.project_id
             FROM project_group
-          WHERE
-            project_group.group_id = ANY(string_to_array($3, ',')::int[])
-            OR
-            $4 = ANY(string_to_array($3, ',')::int[])
+          WHERE project_group.group_id = ANY(string_to_array($3, ',')::int[])
         )
-    `).Args(model.Name+"%", modelNamePattern, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID)
-		} else {
-			query = gorpmapping.NewQuery(`
-        SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
-        FROM action_requirement
-          JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
-          JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
-          JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
-          JOIN project ON project.id = pipeline.project_id
-        WHERE action_requirement.type = 'model'
-          AND action_requirement.value LIKE $1
-          AND project.id IN (
-            SELECT project_group.project_id
-              FROM project_group
-            WHERE
-              project_group.group_id = ANY(string_to_array($2, ',')::int[])
-              OR
-              $3 = ANY(string_to_array($2, ',')::int[])
-          )
-      `).Args(modelNamePattern, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID)
-		}
+    `).Args(model.Name+"%", modelNamePattern, gorpmapping.IDsToQueryString(groupIDs))
 	} else {
-		if isSharedInfraModel {
-			query = gorpmapping.NewQuery(`
-	      SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
-		    FROM action_requirement
-          JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
-          JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
-          JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
-          JOIN project ON project.id = pipeline.project_id
-        WHERE action_requirement.type = 'model'
-          AND (action_requirement.value LIKE $1 OR action_requirement.value LIKE $2)
-      `).Args(model.Name+"%", modelNamePattern)
-		} else {
-			query = gorpmapping.NewQuery(`
-	      SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
-		    FROM action_requirement
-          JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
-          JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
-          JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
-          JOIN project ON project.id = pipeline.project_id
-        WHERE action_requirement.type = 'model'
-          AND action_requirement.value LIKE $1
-      `).Args(modelNamePattern)
-		}
+		query = gorpmapping.NewQuery(`
+      SELECT DISTINCT pipeline.*, project.projectkey AS projectKey
+      FROM action_requirement
+        JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
+        JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
+        JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
+        JOIN project ON project.id = pipeline.project_id
+      WHERE action_requirement.type = 'model'
+        AND action_requirement.value LIKE $1
+        AND project.id IN (
+          SELECT project_group.project_id
+            FROM project_group
+          WHERE
+            project_group.group_id = ANY(string_to_array($2, ',')::int[])
+        )
+    `).Args(modelNamePattern, gorpmapping.IDsToQueryString(groupIDs))
 	}
 
 	var pips []sdk.Pipeline
@@ -207,8 +216,8 @@ func loadPipelineDependencies(ctx context.Context, db gorp.SqlExecutor, p *sdk.P
 }
 
 // DeletePipeline remove given pipeline and all history from database
-func DeletePipeline(ctx context.Context, db gorp.SqlExecutor, pipelineID int64, userID int64) error {
-	if err := DeleteAllStage(ctx, db, pipelineID, userID); err != nil {
+func DeletePipeline(ctx context.Context, db gorp.SqlExecutor, pipelineID int64) error {
+	if err := DeleteAllStage(ctx, db, pipelineID); err != nil {
 		return err
 	}
 
@@ -299,7 +308,7 @@ func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 }
 
 // InsertPipeline inserts pipeline informations in database
-func InsertPipeline(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p *sdk.Pipeline, u *sdk.User) error {
+func InsertPipeline(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p *sdk.Pipeline) error {
 	query := `INSERT INTO pipeline (name, description, project_id, last_modified, from_repository) VALUES ($1, $2, $3, current_timestamp, $4) RETURNING id`
 
 	rx := sdk.NamePatternRegex
@@ -320,8 +329,6 @@ func InsertPipeline(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p
 			return sdk.WithStack(err)
 		}
 	}
-
-	event.PublishPipelineAdd(proj.Key, *p, u)
 
 	return nil
 }

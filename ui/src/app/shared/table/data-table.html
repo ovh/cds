@@ -1,4 +1,4 @@
-<div *ngIf="filterFunc" class="ui grid">
+<div *ngIf="filterFunc && allData && allData.length > 1" class="ui grid">
     <div class="ui row">
         <div class="ui wide column">
             <div class="ui fluid input">
@@ -11,7 +11,7 @@
 <table class="ui striped fixed table" [class.selectable]="withLineClick">
     <thead>
         <tr>
-            <th *ngIf="withSelect" class="wide one">
+            <th *ngIf="withSelect" class="wide">
                 <div class="ui checked checkbox">
                     <input type="checkbox" [ngModel]="selectedAll" (ngModelChange)="onSelectAllChange($event)">
                     <label></label>
@@ -45,7 +45,7 @@
     <tbody *ngIf="!loading && dataForCurrentPage.length > 0">
         <tr *ngFor="let d of dataForCurrentPage; let i = index" (click)="lineClick(i, d)"
             [class.pointing]="withLineClick" [class.active]="withLineClick && indexSelected === i">
-            <td *ngIf="withSelect" class="wide one">
+            <td *ngIf="withSelect" class="wide">
                 <div class="ui checked checkbox">
                     <input type="checkbox" [ngModel]="selected[d.key()]"
                         (ngModelChange)="onSelectChange($event, d.key())">
@@ -68,7 +68,8 @@
                     <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
                     <button class="ui primary button small" *ngSwitchCase="'button'" (click)="c.selector.click()">{{c.selector.title
                         | translate}}</button>
-                    <app-confirm-button *ngSwitchCase="'confirm-button'" [class]="'small'" (event)="c.selector.click()"
+                    <app-confirm-button *ngSwitchCase="'confirm-button'" [class]="'small'"
+                        [color]="c.selector.color ? c.selector.color : 'primary'" (event)="c.selector.click()"
                         [title]="c.selector.title">
                     </app-confirm-button>
                     <span class="ui label {{c.selector.class}}" *ngSwitchCase="'label'">{{c.selector.value |
@@ -86,6 +87,18 @@
                             <i class="copy icon"></i>
                         </button>
                     </div>
+                    <span *ngSwitchCase="'text-labels'" class="text-labels">
+                        {{c.selector.value |
+                                translate}}
+                        <span *ngFor="let l of c.selector.labels"
+                            class="ui label {{l.color}}">{{l.title | translate}}</span>
+                    </span>
+                    <span *ngSwitchCase="'text-icons'">
+                        {{c.selector.value | translate}}
+                        <span *ngFor="let i of c.selector.icons" suiPopup [popupText]="i.label | translate" popupTrigger="{{i.trigger ? i.trigger : 'hover'}}">
+                            {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
+                        </span>
+                    </span>
                     <ng-container *ngSwitchDefault>
                         <ng-container *ngIf="c.selector && c.translate">
                             {{c.selector | translate}}

@@ -512,7 +512,7 @@ func CanBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun
 	for _, ancestorID := range ancestorsID {
 		nodeRuns, ok := workflowRun.WorkflowNodeRuns[ancestorID]
 		if ok && (len(nodeRuns) == 0 || !sdk.StatusIsTerminated(nodeRuns[0].Status) ||
-			nodeRuns[0].Status == "" || nodeRuns[0].Status == sdk.StatusNeverBuilt.String()) {
+			nodeRuns[0].Status == "" || nodeRuns[0].Status == sdk.StatusNeverBuilt) {
 			return false
 		}
 	}
@@ -593,7 +593,7 @@ func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 }
 
 // CreateRun creates a new workflow run and insert it
-func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User) (*sdk.WorkflowRun, error) {
+func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandlerOption, ident sdk.Identifiable) (*sdk.WorkflowRun, error) {
 	number, err := NextRunNumber(db, wf.ID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to get next run number")
@@ -605,7 +605,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 		Start:         time.Now(),
 		LastModified:  time.Now(),
 		ProjectID:     wf.ProjectID,
-		Status:        sdk.StatusPending.String(),
+		Status:        sdk.StatusPending,
 		LastExecution: time.Now(),
 		Tags:          make([]sdk.WorkflowRunTag, 0),
 		Workflow:      sdk.Workflow{Name: wf.Name},
@@ -618,7 +618,7 @@ func CreateRun(db *gorp.DbMap, wf *sdk.Workflow, opts *sdk.WorkflowRunPostHandle
 			wr.Tag(tagTriggeredBy, "cds.hook")
 		}
 	} else {
-		wr.Tag(tagTriggeredBy, u.Username)
+		wr.Tag(tagTriggeredBy, ident.GetUsername())
 	}
 
 	tags := wf.Metadata["default_tags"]
@@ -749,7 +749,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 		WHERE status = $3
 		LIMIT 1`
 
-		lastWfrID, errID := db.SelectInt(qLastSuccess, wf.ID, wf.HistoryLength, sdk.StatusSuccess.String())
+		lastWfrID, errID := db.SelectInt(qLastSuccess, wf.ID, wf.HistoryLength, sdk.StatusSuccess)
 		if errID != nil && errID != sql.ErrNoRows {
 			log.Warning("PurgeWorkflowRun> Unable to last success run for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, errID)
 			return errID
@@ -768,7 +768,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 				LIMIT 100
 			)
 		`
-		res, err := db.Exec(qDelete, wf.ID, lastWfrID, sdk.StatusBuilding.String(), sdk.StatusChecking.String(), sdk.StatusWaiting.String())
+		res, err := db.Exec(qDelete, wf.ID, lastWfrID, sdk.StatusBuilding, sdk.StatusChecking, sdk.StatusWaiting)
 		if err != nil {
 			log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
 			return err
@@ -806,10 +806,10 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 		wf.ID,
 		strings.Join(filteredPurgeTags, ","),
 		wf.HistoryLength,
-		sdk.StatusWaiting.String(),
-		sdk.StatusBuilding.String(),
-		sdk.StatusChecking.String(),
-		sdk.StatusPending.String(),
+		sdk.StatusWaiting,
+		sdk.StatusBuilding,
+		sdk.StatusChecking,
+		sdk.StatusPending,
 	)
 	if errS != nil {
 		log.Warning("PurgeWorkflowRun> Unable to get workflow run for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
@@ -836,7 +836,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 	successIDs := []struct {
 		ID string `db:"id"`
 	}{}
-	if _, errS := db.Select(&successIDs, querySuccessIds, wf.ID, strings.Join(filteredPurgeTags, ","), sdk.StatusSuccess.String()); errS != nil {
+	if _, errS := db.Select(&successIDs, querySuccessIds, wf.ID, strings.Join(filteredPurgeTags, ","), sdk.StatusSuccess); errS != nil {
 		log.Warning("PurgeWorkflowRun> Unable to get workflow run in success for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
 		return errS
 	}
@@ -974,7 +974,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 		ID int64 `db:"id"`
 	}{}
 
-	if _, err := db.Select(&ids, query, sdk.StatusWaiting.String(), sdk.StatusChecking.String(), sdk.StatusBuilding.String()); err != nil {
+	if _, err := db.Select(&ids, query, sdk.StatusWaiting, sdk.StatusChecking, sdk.StatusBuilding); err != nil {
 		if err == sql.ErrNoRows {
 			return nil
 		}
@@ -996,7 +996,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 		wfIds[i] = fmt.Sprintf("%d", ids[i].ID)
 	}
 	wfIdsJoined := strings.Join(wfIds, ",")
-	args := []interface{}{sdk.StatusStopped.String(), wfIdsJoined, sdk.StatusBuilding.String(), sdk.StatusChecking.String(), sdk.StatusWaiting.String()}
+	args := []interface{}{sdk.StatusStopped, wfIdsJoined, sdk.StatusBuilding, sdk.StatusChecking, sdk.StatusWaiting}
 	queryUpdateNodeJobRun := `DELETE FROM workflow_node_run_job
 	WHERE (workflow_node_run_job.workflow_node_run_id IN (
 			SELECT workflow_node_run.id
@@ -1009,7 +1009,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 				(workflow_node_run.status = $6 OR workflow_node_run.status = $1 OR workflow_node_run.status = $7)
 		)
 	)`
-	argsNodeJobRun := append(args, sdk.StatusFail.String(), sdk.StatusSuccess.String())
+	argsNodeJobRun := append(args, sdk.StatusFail, sdk.StatusSuccess)
 	if _, err := tx.Exec(queryUpdateNodeJobRun, argsNodeJobRun...); err != nil {
 		return sdk.WrapError(err, "Unable to stop workflow node job run history")
 	}
@@ -1022,7 +1022,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 	}
 
 	queryUpdateWf := `UPDATE workflow_run SET status = $1 WHERE id = ANY(string_to_array($2, ',')::bigint[])`
-	if _, err := tx.Exec(queryUpdateWf, sdk.StatusStopped.String(), wfIdsJoined); err != nil {
+	if _, err := tx.Exec(queryUpdateWf, sdk.StatusStopped, wfIdsJoined); err != nil {
 		return sdk.WrapError(err, "Unable to stop workflow run history")
 	}
 
@@ -1053,7 +1053,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 
 		stopWorkflowNodeRunStages(db, &nr)
 		if !sdk.StatusIsTerminated(resp[i].Status) {
-			nr.Status = sdk.StatusStopped.String()
+			nr.Status = sdk.StatusStopped
 			nr.Done = now
 		}
 

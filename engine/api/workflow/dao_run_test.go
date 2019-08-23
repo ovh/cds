@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/authentication"
+
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 
@@ -39,10 +41,10 @@ func TestCanBeRun(t *testing.T) {
 		},
 	}
 	wnrs[nodeRoot.ID] = []sdk.WorkflowNodeRun{
-		{ID: 3, WorkflowNodeID: nodeRoot.ID, Status: sdk.StatusBuilding.String()},
+		{ID: 3, WorkflowNodeID: nodeRoot.ID, Status: sdk.StatusBuilding},
 	}
 	wnrs[node1.ID] = []sdk.WorkflowNodeRun{
-		{ID: 3, WorkflowNodeID: node1.ID, Status: sdk.StatusFail.String()},
+		{ID: 3, WorkflowNodeID: node1.ID, Status: sdk.StatusFail},
 	}
 	wr := &sdk.WorkflowRun{
 		Workflow: sdk.Workflow{
@@ -65,9 +67,9 @@ func TestCanBeRun(t *testing.T) {
 		status   string
 		canBeRun bool
 	}{
-		{status: sdk.StatusBuilding.String(), canBeRun: false},
+		{status: sdk.StatusBuilding, canBeRun: false},
 		{status: "", canBeRun: false},
-		{status: sdk.StatusSuccess.String(), canBeRun: true},
+		{status: sdk.StatusSuccess, canBeRun: true},
 	}
 
 	for _, tc := range ts {
@@ -81,8 +83,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 	defer end()
 	_ = event.Initialize(db, cache)
 
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -151,9 +152,11 @@ func TestPurgeWorkflowRun(t *testing.T) {
 		},
 	)
 
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -168,7 +171,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -187,7 +190,7 @@ vcs_ssh_key: proj-blabla
 	app, _, globalError := application.ParseAndImport(db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_purge_1",
@@ -220,9 +223,9 @@ vcs_ssh_key: proj-blabla
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -233,13 +236,13 @@ vcs_ssh_key: proj-blabla
 		wr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
-				User: *u,
+				Username: u.Username,
 				Payload: map[string]string{
 					"git.branch": "master",
 					"git.author": "test",
 				},
 			},
-		}, u, nil)
+		}, consumer, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -256,9 +259,11 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 	defer end()
 	_ = event.Initialize(db, cache)
 
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -266,14 +271,14 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
 	test.NoError(t, pipeline.InsertStage(db, s))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_purge_1",
@@ -305,9 +310,9 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -318,15 +323,15 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 		wfr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
-				User: *u,
+				Username: u.Username,
 				Payload: map[string]string{
 					"git.branch": "master",
 					"git.author": "test",
 				},
 			},
-		}, u, nil)
+		}, consumer, nil)
 		test.NoError(t, errWr)
-		wfr.Status = sdk.StatusBuilding.String()
+		wfr.Status = sdk.StatusBuilding
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
 	}
 
@@ -352,8 +357,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 	defer end()
 	_ = event.Initialize(db, cache)
 
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -366,6 +370,17 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 			w.Body = ioutil.NopCloser(body)
 
 			switch r.URL.String() {
+			// NEED get REPO
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				branches := []sdk.VCSBranch{
+					{
+						ID:        "master",
+						DisplayID: "master",
+					},
+				}
+				if err := enc.Encode(branches); err != nil {
+					return writeError(w, err)
+				}
 			// NEED get REPO
 			case "/vcs/github/repos/sguiheux/demo":
 				repo := sdk.VCSRepo{
@@ -412,9 +427,11 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 		},
 	)
 
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -429,7 +446,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -448,7 +465,7 @@ vcs_ssh_key: proj-blabla
 	app, _, globalError := application.ParseAndImport(db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_purge_1",
@@ -481,9 +498,9 @@ vcs_ssh_key: proj-blabla
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -493,13 +510,13 @@ vcs_ssh_key: proj-blabla
 	wr.Workflow = *w1
 	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
-			User: *u,
+			Username: u.Username,
 			Payload: map[string]string{
 				"git.branch": "master",
 				"git.author": "test",
 			},
 		},
-	}, u, nil)
+	}, consumer, nil)
 	test.NoError(t, errWr)
 
 	for i := 0; i < 5; i++ {
@@ -508,16 +525,16 @@ vcs_ssh_key: proj-blabla
 		wfr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
-				User: *u,
+				Username: u.Username,
 				Payload: map[string]string{
 					"git.branch": "master",
 					"git.author": "test",
 				},
 			},
-		}, u, nil)
+		}, consumer, nil)
 		test.NoError(t, errWr)
 
-		wfr.Status = sdk.StatusFail.String()
+		wfr.Status = sdk.StatusFail
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
 	}
 
@@ -529,7 +546,7 @@ vcs_ssh_key: proj-blabla
 	test.Equal(t, 3, count, "Number of workflow runs isn't correct")
 	wfInSuccess := false
 	for _, wfRun := range wruns {
-		if wfRun.Status == sdk.StatusSuccess.String() {
+		if wfRun.Status == sdk.StatusSuccess {
 			wfInSuccess = true
 		}
 	}
@@ -542,8 +559,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 	defer end()
 	_ = event.Initialize(db, cache)
 
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -602,9 +618,11 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 		},
 	)
 
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -619,7 +637,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -638,7 +656,7 @@ vcs_ssh_key: proj-blabla
 	app, _, globalError := application.ParseAndImport(db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_purge_1",
@@ -671,9 +689,9 @@ vcs_ssh_key: proj-blabla
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -684,16 +702,16 @@ vcs_ssh_key: proj-blabla
 		wfr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
-				User: *u,
+				Username: u.Username,
 				Payload: map[string]string{
 					"git.branch": "master",
 					"git.author": "test",
 				},
 			},
-		}, u, nil)
+		}, consumer, nil)
 		test.NoError(t, errWr)
 
-		wfr.Status = sdk.StatusFail.String()
+		wfr.Status = sdk.StatusFail
 		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
 	}
 
@@ -710,9 +728,11 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 	defer end()
 	_ = event.Initialize(db, cache)
 
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -720,14 +740,14 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
 	test.NoError(t, pipeline.InsertStage(db, s))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_purge_1",
@@ -757,9 +777,9 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		},
 		HistoryLength: 2,
 	}
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -771,13 +791,13 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		wr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
-				User: *u,
+				Username: u.Username,
 				Payload: map[string]string{
 					"git.branch": branches[i],
 					"git.author": "test",
 				},
 			},
-		}, u, nil)
+		}, consumer, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -794,9 +814,11 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 	defer end()
 	_ = event.Initialize(db, cache)
 
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -804,14 +826,14 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
 	test.NoError(t, pipeline.InsertStage(db, s))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_purge_1",
@@ -841,9 +863,9 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 		},
 		HistoryLength: 20,
 	}
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -855,13 +877,13 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 		wr.Workflow = *w1
 		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
-				User: *u,
+				Username: u.Username,
 				Payload: map[string]string{
 					"git.branch": branches[i],
 					"git.author": "test",
 				},
 			},
-		}, u, nil)
+		}, consumer, nil)
 		test.NoError(t, errWr)
 	}
 

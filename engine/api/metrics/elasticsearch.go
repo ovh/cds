@@ -18,19 +18,19 @@ import (
 var metricsChan chan sdk.Metric
 
 // Init the metrics package which push to elasticSearch service
-func Init(c context.Context, DBFunc func() *gorp.DbMap) {
+func Init(ctx context.Context, DBFunc func() *gorp.DbMap) {
 	metricsChan = make(chan sdk.Metric, 50)
 
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("metrics.pushInElasticSearch> Exiting: %v", c.Err())
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error("metrics.pushInElasticSearch> Exiting: %v", ctx.Err())
 				return
 			}
 		case e := <-metricsChan:
 			db := DBFunc()
-			esServices, errS := services.FindByType(db, services.TypeElasticsearch)
+			esServices, errS := services.LoadAllByType(ctx, db, services.TypeElasticsearch)
 			if errS != nil {
 				log.Error("metrics.pushInElasticSearch> Unable to get elasticsearch service: %v", errS)
 				continue
@@ -40,7 +40,7 @@ func Init(c context.Context, DBFunc func() *gorp.DbMap) {
 				continue
 			}
 
-			_, code, errD := services.DoJSONRequest(context.Background(), esServices, "POST", "/metrics", e, nil)
+			_, code, errD := services.DoJSONRequest(context.Background(), DBFunc(), esServices, "POST", "/metrics", e, nil)
 			if code >= 400 || errD != nil {
 				log.Error("metrics.pushInElasticSearch> Unable to send metrics to elasticsearch [%d]: %v", code, errD)
 				continue
@@ -50,20 +50,20 @@ func Init(c context.Context, DBFunc func() *gorp.DbMap) {
 }
 
 // GetMetrics retrieves metrics from elasticsearch
-func GetMetrics(db gorp.SqlExecutor, key string, appID int64, metricName string) ([]json.RawMessage, error) {
+func GetMetrics(ctx context.Context, db gorp.SqlExecutor, key string, appID int64, metricName string) ([]json.RawMessage, error) {
 	metricsRequest := sdk.MetricRequest{
 		ProjectKey:    key,
 		ApplicationID: appID,
 		Key:           metricName,
 	}
 
-	srvs, err := services.FindByType(db, services.TypeElasticsearch)
+	srvs, err := services.LoadAllByType(ctx, db, services.TypeElasticsearch)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to get elasticsearch service")
 	}
 
 	var esMetrics []elastic.SearchHit
-	if _, _, err := services.DoJSONRequest(context.Background(), srvs, "GET", "/metrics", metricsRequest, &esMetrics); err != nil {
+	if _, _, err := services.DoJSONRequest(context.Background(), db, srvs, "GET", "/metrics", metricsRequest, &esMetrics); err != nil {
 		return nil, sdk.WrapError(err, "Unable to get metrics")
 	}
 

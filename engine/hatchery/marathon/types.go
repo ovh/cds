@@ -2,15 +2,14 @@ package marathon
 
 import (
 	"github.com/gambol99/go-marathon"
+	"github.com/ovh/cds/engine/service"
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/hatchery"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
 type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
+	service.HatcheryCommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
 
 	// MarathonURL "marathon-api"
 	MarathonURL string `mapstructure:"url" toml:"url" default:"http://1.1.1.1:8080,1.1.1.2:8080,1.1.1.3:8080" commented:"false" comment:"URL of your marathon" json:"url"`
@@ -41,7 +40,6 @@ type HatcheryConfiguration struct {
 type HatcheryMarathon struct {
 	hatcheryCommon.Common
 	Config         HatcheryConfiguration
-	hatch          *sdk.Hatchery
 	marathonClient marathon.Marathon
 	marathonLabels map[string]string
 }

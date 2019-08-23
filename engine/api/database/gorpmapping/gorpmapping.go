@@ -3,6 +3,9 @@ package gorpmapping
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"reflect"
+	"sync"
 )
 
 // TableMapping represents a table mapping with gorp
@@ -13,19 +16,41 @@ type TableMapping struct {
 	Keys          []string
 }
 
-// New initialize a TableMapping
+// SignedEntity struct for signed entity stored in database.
+type SignedEntity struct {
+	Signature []byte `json:"-" db:"sig"`
+}
+
+// New initialize a TableMapping.
 func New(target interface{}, name string, autoIncrement bool, keys ...string) TableMapping {
 	return TableMapping{Target: target, Name: name, AutoIncrement: autoIncrement, Keys: keys}
 }
 
 // Mapping is the global var for all registered mapping
-var Mapping []TableMapping
+var (
+	Mapping      = map[string]TableMapping{}
+	mappingMutex sync.Mutex
+)
 
 //Register intialiaze gorp mapping
 func Register(m ...TableMapping) {
+	mappingMutex.Lock()
+	defer mappingMutex.Unlock()
 	for _, t := range m {
-		Mapping = append(Mapping, t)
+		k := fmt.Sprintf("%T", t.Target)
+		Mapping[k] = t
 	}
+}
+
+func getTabbleMapping(i interface{}) (TableMapping, bool) {
+	if reflect.ValueOf(i).Kind() == reflect.Ptr {
+		i = reflect.ValueOf(i).Elem().Interface()
+	}
+	mappingMutex.Lock()
+	defer mappingMutex.Unlock()
+	k := fmt.Sprintf("%T", i)
+	mapping, has := Mapping[k]
+	return mapping, has
 }
 
 //JSONToNullString returns a valid sql.NullString with json-marshalled i

@@ -3,16 +3,17 @@ package workflowtemplate
 import (
 	"context"
 
+	"github.com/ovh/cds/engine/api/group"
+
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
 // LoadOptionFunc for workflow template.
 type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.WorkflowTemplate) error
 
-// LoadOptions provides all options on workflow template loads functions
+// LoadOptions provides all options to load workflow template.
 var LoadOptions = struct {
 	Default    LoadOptionFunc
 	WithAudits LoadOptionFunc
@@ -47,14 +48,9 @@ func loadAudits(ctx context.Context, db gorp.SqlExecutor, wts ...*sdk.WorkflowTe
 }
 
 func loadGroup(ctx context.Context, db gorp.SqlExecutor, wts ...*sdk.WorkflowTemplate) error {
-	gs := []sdk.Group{}
-
-	if err := gorpmapping.GetAll(ctx, db,
-		gorpmapping.NewQuery(`SELECT * FROM "group" WHERE id = ANY(string_to_array($1, ',')::int[])`).
-			Args(gorpmapping.IDsToQueryString(sdk.WorkflowTemplatesToGroupIDs(wts))),
-		&gs,
-	); err != nil {
-		return sdk.WrapError(err, "cannot get groups")
+	gs, err := group.LoadAllByIDs(ctx, db, sdk.WorkflowTemplatesToGroupIDs(wts))
+	if err != nil {
+		return err
 	}
 
 	m := make(map[int64]sdk.Group, len(gs))

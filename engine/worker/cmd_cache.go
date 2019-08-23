@@ -1,12 +1,10 @@
 package main
 
 import (
-	"archive/tar"
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -15,14 +13,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
-func cmdCache(w *currentWorker) *cobra.Command {
+func cmdCache() *cobra.Command {
 	cmdCacheRoot := &cobra.Command{
 		Use: "cache",
 		Long: `
@@ -61,14 +58,14 @@ Here, an example of a script inside a CDS Job using the cache feature:
 
     `,
 	}
-	cmdCacheRoot.AddCommand(cmdCachePush(w), cmdCachePull(w))
+	cmdCacheRoot.AddCommand(cmdCachePush(), cmdCachePull())
 
 	return cmdCacheRoot
 }
 
 var cmdStorageIntegrationName string
 
-func cmdCachePush(w *currentWorker) *cobra.Command {
+func cmdCachePush() *cobra.Command {
 	c := &cobra.Command{
 		Use:     "push",
 		Aliases: []string{"upload"},
@@ -81,17 +78,17 @@ You can use you storage integration:
 	worker cache push --destination=MyStorageIntegration  <tagValue> dir/file
 		`,
 		Example: "worker cache push {{.cds.workflow}}-{{.cds.version}} {{.cds.workspace}}/pathToUpload",
-		Run:     cachePushCmd(w),
+		Run:     cachePushCmd(),
 	}
 	c.Flags().StringVar(&cmdStorageIntegrationName, "destination", "", "optional. Your storage integration name")
 	return c
 }
 
-func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
+func cachePushCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(WorkerServerPort)
+		portS := os.Getenv(internal.WorkerServerPort)
 		if portS == "" {
-			sdk.Exit("worker cache push > %s not found, are you running inside a CDS worker job?", WorkerServerPort)
+			sdk.Exit("worker cache push > %s not found, are you running inside a CDS worker job?", internal.WorkerServerPort)
 		}
 
 		port, errPort := strconv.Atoi(portS)
@@ -161,71 +158,7 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	}
 }
 
-func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		errRead = sdk.Error{
-			Message: "worker cache push > Cannot read body : " + errRead.Error(),
-			Status:  http.StatusInternalServerError,
-		}
-		log.Error("%v", errRead)
-		writeError(w, r, errRead)
-		return
-	}
-
-	var c sdk.Cache
-	if err := json.Unmarshal(data, &c); err != nil {
-		err = sdk.Error{
-			Message: "worker cache push > Cannot unmarshall body : " + err.Error(),
-			Status:  http.StatusInternalServerError,
-		}
-		log.Error("%v", err)
-		writeError(w, r, err)
-		return
-	}
-
-	res, size, errTar := sdk.CreateTarFromPaths(c.WorkingDirectory, c.Files, nil)
-	if errTar != nil {
-		errTar = sdk.Error{
-			Message: "worker cache push > Cannot tar : " + errTar.Error(),
-			Status:  http.StatusBadRequest,
-		}
-		log.Error("%v", errTar)
-		writeError(w, r, errTar)
-		return
-	}
-	params := wk.currentJob.wJob.Parameters
-	projectKey := sdk.ParameterValue(params, "cds.project")
-	if projectKey == "" {
-		errP := sdk.Error{
-			Message: "worker cache push > Cannot find project",
-			Status:  http.StatusInternalServerError,
-		}
-		log.Error("%v", errP)
-		writeError(w, r, errP)
-		return
-	}
-
-	var errPush error
-	for i := 0; i < 10; i++ {
-		if errPush = wk.client.WorkflowCachePush(projectKey, sdk.DefaultIfEmptyStorage(c.IntegrationName), vars["ref"], res, size); errPush == nil {
-			return
-		}
-		time.Sleep(3 * time.Second)
-		log.Error("worker cache push > cannot push cache (retry x%d) : %v", i, errPush)
-	}
-
-	err := sdk.Error{
-		Message: "worker cache push > Cannot push cache: " + errPush.Error(),
-		Status:  http.StatusInternalServerError,
-	}
-	log.Error("%v", err)
-	writeError(w, r, err)
-}
-
-func cmdCachePull(w *currentWorker) *cobra.Command {
+func cmdCachePull() *cobra.Command {
 	c := &cobra.Command{
 		Use:     "pull",
 		Aliases: []string{"download"},
@@ -250,17 +183,17 @@ If you want to push a cache into a storage integration:
 	worker cache push latest --from=MyStorageIntegration {{.cds.workspace}}/pathToUpload
 
 		`,
-		Run: cachePullCmd(w),
+		Run: cachePullCmd(),
 	}
 	c.Flags().StringVar(&cmdStorageIntegrationName, "from", "", "optional. Your storage integration name")
 	return c
 }
 
-func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
+func cachePullCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(WorkerServerPort)
+		portS := os.Getenv(internal.WorkerServerPort)
 		if portS == "" {
-			sdk.Exit("worker cache pull > %s not found, are you running inside a CDS worker job?", WorkerServerPort)
+			sdk.Exit("worker cache pull > %s not found, are you running inside a CDS worker job?", internal.WorkerServerPort)
 		}
 
 		port, errPort := strconv.Atoi(portS)
@@ -305,108 +238,5 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		fmt.Printf("Worker cache pull with success (tag: %s)\n", args[0])
-	}
-}
-
-func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	path := r.FormValue("path")
-	integrationName := sdk.DefaultIfEmptyStorage(r.FormValue("integration"))
-	params := wk.currentJob.wJob.Parameters
-	projectKey := sdk.ParameterValue(params, "cds.project")
-	bts, err := wk.client.WorkflowCachePull(projectKey, integrationName, vars["ref"])
-	if err != nil {
-		err = sdk.Error{
-			Message: "worker cache pull > Cannot pull cache: " + err.Error(),
-			Status:  http.StatusNotFound,
-		}
-		writeError(w, r, err)
-		return
-	}
-
-	tr := tar.NewReader(bts)
-	for {
-		header, errH := tr.Next()
-		if errH == io.EOF {
-			break
-		}
-
-		if errH != nil {
-			errH = sdk.Error{
-				Message: "worker cache pull > Unable to read tar file: " + errH.Error(),
-				Status:  http.StatusBadRequest,
-			}
-			writeJSON(w, errH, http.StatusBadRequest)
-			return
-		}
-
-		if header == nil {
-			continue
-		}
-
-		// the target location where the dir/file should be created
-		target := filepath.Join(path, header.Name)
-
-		// check the file type
-		switch header.Typeflag {
-		// if its a dir and it doesn't exist create it
-		case tar.TypeDir:
-			if _, err := os.Stat(target); err != nil {
-				if err := os.MkdirAll(target, 0755); err != nil {
-					err = sdk.Error{
-						Message: "worker cache pull > Unable to mkdir all files : " + err.Error(),
-						Status:  http.StatusInternalServerError,
-					}
-					writeJSON(w, err, http.StatusInternalServerError)
-					return
-				}
-			}
-		case tar.TypeSymlink:
-			if err := os.Symlink(header.Linkname, target); err != nil {
-				err = sdk.Error{
-					Message: "worker cache pull > Unable to create symlink: " + err.Error(),
-					Status:  http.StatusInternalServerError,
-				}
-				writeJSON(w, err, http.StatusInternalServerError)
-				return
-			}
-
-			// if it's a file create it
-		case tar.TypeReg, tar.TypeLink:
-			// if directory of file does not exist, create it before
-			if _, err := os.Stat(filepath.Dir(target)); err != nil {
-				if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
-					err = sdk.Error{
-						Message: "worker cache pull > Unable to mkdir all files : " + err.Error(),
-						Status:  http.StatusInternalServerError,
-					}
-					writeJSON(w, err, http.StatusInternalServerError)
-					return
-				}
-			}
-
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, os.FileMode(header.Mode))
-			if err != nil {
-				sdkErr := sdk.Error{
-					Message: "worker cache pull > Unable to open file: " + err.Error(),
-					Status:  http.StatusInternalServerError,
-				}
-				writeJSON(w, sdkErr, sdkErr.Status)
-				return
-			}
-
-			// copy over contents
-			if _, err := io.Copy(f, tr); err != nil {
-				_ = f.Close()
-				sdkErr := sdk.Error{
-					Message: "worker cache pull > Cannot copy content file: " + err.Error(),
-					Status:  http.StatusInternalServerError,
-				}
-				writeJSON(w, sdkErr, sdkErr.Status)
-				return
-			}
-
-			_ = f.Close()
-		}
 	}
 }

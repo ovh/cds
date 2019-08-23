@@ -52,7 +52,7 @@ func (api *API) deleteKeyInEnvironmentHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "v> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 		var envKey sdk.EnvironmentKey
 		for _, k := range env.Keys {
 			if k.Name == keyName {
@@ -67,7 +67,7 @@ func (api *API) deleteKeyInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentKeyDelete(key, *env, envKey, deprecatedGetUser(ctx))
+		event.PublishEnvironmentKeyDelete(key, *env, envKey, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -125,7 +125,7 @@ func (api *API) addKeyInEnvironmentHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "addKeyInEnvironmentHandler> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		if err := environment.InsertKey(tx, &newKey); err != nil {
 			return sdk.WrapError(err, "Cannot insert application key")
@@ -135,7 +135,7 @@ func (api *API) addKeyInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentKeyAdd(key, *env, newKey, deprecatedGetUser(ctx))
+		event.PublishEnvironmentKeyAdd(key, *env, newKey, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

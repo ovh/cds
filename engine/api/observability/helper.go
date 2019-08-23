@@ -28,9 +28,11 @@ const (
 	TagJob                = "job"
 	TagWorkflowNode       = "workflow_node"
 	TagPipelineID         = "pipeline_id"
+	TagPipeline           = "pipeline"
 	TagPipelineDeep       = "pipeline_deep"
 	TagWorker             = "worker"
 	TagToken              = "token"
+	TagPermission         = "permission"
 )
 
 // LinkTo a traceID

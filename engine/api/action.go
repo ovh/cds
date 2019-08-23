@@ -23,11 +23,9 @@ import (
 
 func (api *API) getActionsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := deprecatedGetUser(ctx)
-
 		var as []sdk.Action
 		var err error
-		if u.Admin {
+		if isMaintainer(ctx) || isAdmin(ctx) {
 			as, err = action.LoadAllByTypes(ctx, api.mustDB(),
 				[]string{sdk.DefaultAction},
 				action.LoadOptions.WithRequirements,
@@ -37,7 +35,7 @@ func (api *API) getActionsHandler() service.Handler {
 			)
 		} else {
 			as, err = action.LoadAllTypeDefaultByGroupIDs(ctx, api.mustDB(),
-				append(sdk.GroupsToIDs(u.Groups), group.SharedInfraGroup.ID),
+				append(getAPIConsumer(ctx).GetGroupIDs(), group.SharedInfraGroup.ID),
 				action.LoadOptions.WithRequirements,
 				action.LoadOptions.WithParameters,
 				action.LoadOptions.WithGroup,
@@ -57,7 +55,7 @@ func (api *API) getActionsForProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet %s", key)
 		}
@@ -83,21 +81,24 @@ func (api *API) getActionsForProjectHandler() service.Handler {
 
 func (api *API) getActionsForGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// TODO move this in a permGroupID middleware
 		groupID, err := requestVarInt(r, "groupID")
 		if err != nil {
 			return err
 		}
 
-		// check that the group exists and user is part of the group
-		g, err := group.LoadGroupByID(api.mustDB(), groupID)
+		// check that the group exists
+		g, err := group.LoadByID(ctx, api.mustDB(), groupID)
 		if err != nil {
 			return err
 		}
+		if g == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
 
-		u := deprecatedGetUser(ctx)
-
-		if err := group.CheckUserIsGroupMember(g, u); err != nil {
-			return err
+		// and user is part of the group
+		if !isGroupMember(ctx, g) && !isMaintainer(ctx) && !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		as, err := action.LoadAllTypeBuiltInOrPluginOrDefaultForGroupIDs(ctx, api.mustDB(),
@@ -125,15 +126,16 @@ func (api *API) postActionHandler() service.Handler {
 		}
 
 		// check that the group exists and user is admin for group id
-		grp, err := group.LoadGroupByID(api.mustDB(), *data.GroupID)
+		grp, err := group.LoadByID(ctx, api.mustDB(), *data.GroupID)
 		if err != nil {
 			return err
 		}
+		if grp == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
 
-		u := deprecatedGetUser(ctx)
-
-		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
-			return err
+		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -173,7 +175,7 @@ func (api *API) postActionHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionAdd(*newAction, u)
+		event.PublishActionAdd(*newAction, getAPIConsumer(ctx))
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
@@ -190,10 +192,10 @@ func (api *API) getActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -209,8 +211,7 @@ func (api *API) getActionHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNoAction)
 		}
 
-		// aggregate extra data for ui
-		if err := group.CheckUserIsGroupAdmin(a.Group, deprecatedGetUser(ctx)); err == nil {
+		if isGroupAdmin(ctx, g) || isAdmin(ctx) {
 			a.Editable = true
 		}
 
@@ -222,10 +223,10 @@ func (api *API) putActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -252,17 +253,17 @@ func (api *API) putActionHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		u := deprecatedGetUser(ctx)
-
-		grp, err := group.LoadGroupByID(tx, *data.GroupID)
+		grp, err := group.LoadByID(ctx, tx, *data.GroupID)
 		if err != nil {
 			return err
 		}
+		if grp == nil {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
 
 		if *old.GroupID != *data.GroupID || old.Name != data.Name {
-			// check that the group exists and user is admin for group id
-			if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
-				return err
+			if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
 			}
 
 			// check that no action already exists for same group/name
@@ -297,7 +298,7 @@ func (api *API) putActionHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionUpdate(*old, *newAction, u)
+		event.PublishActionUpdate(*old, *newAction, getAPIConsumer(ctx))
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
@@ -314,10 +315,10 @@ func (api *API) deleteActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -360,10 +361,10 @@ func (api *API) getActionAuditHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -432,7 +433,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
 		auditID, err := requestVarInt(r, "auditID")
@@ -440,13 +441,12 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			return err
 		}
 
-		grp, err := group.LoadGroup(api.mustDB(), groupName)
+		grp, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
 
-		old, err := action.LoadTypeDefaultByNameAndGroupID(ctx, api.mustDB(), actionName, grp.ID,
-			action.LoadOptions.Default)
+		old, err := action.LoadTypeDefaultByNameAndGroupID(ctx, api.mustDB(), actionName, grp.ID, action.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
@@ -483,18 +483,15 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 		} else if ea.Group == grp.Name {
 			newGrp = grp
 		} else {
-			newGrp, err = group.LoadGroupByName(tx, ea.Group)
+			newGrp, err = group.LoadByName(ctx, tx, ea.Group)
 			if err != nil {
 				return err
 			}
 		}
 
-		u := deprecatedGetUser(ctx)
-
 		if grp.ID != newGrp.ID || old.Name != ea.Name {
-			// check that the group exists and user is admin for group id
-			if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
-				return err
+			if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
 			}
 
 			// check that no action already exists for same group/name
@@ -550,7 +547,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionUpdate(*old, *newAction, u)
+		event.PublishActionUpdate(*old, *newAction, getAPIConsumer(ctx))
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
@@ -567,10 +564,10 @@ func (api *API) getActionUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -596,10 +593,10 @@ func (api *API) getActionExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -670,16 +667,14 @@ func (api *API) importActionHandler() service.Handler {
 		if ea.Group == sdk.SharedInfraGroupName || ea.Group == "" {
 			grp = group.SharedInfraGroup
 		} else {
-			grp, err = group.LoadGroupByName(tx, ea.Group)
+			grp, err = group.LoadByName(ctx, tx, ea.Group)
 			if err != nil {
 				return err
 			}
 		}
 
-		u := deprecatedGetUser(ctx)
-
-		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
-			return err
+		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
 		}
 
 		data, err := ea.GetAction()
@@ -746,9 +741,9 @@ func (api *API) importActionHandler() service.Handler {
 		}
 
 		if exists {
-			event.PublishActionUpdate(*old, *newAction, u)
+			event.PublishActionUpdate(*old, *newAction, getAPIConsumer(ctx))
 		} else {
-			event.PublishActionAdd(*newAction, u)
+			event.PublishActionAdd(*newAction, getAPIConsumer(ctx))
 		}
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
@@ -853,10 +848,11 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return usage, err
 	}
 
-	u := deprecatedGetUser(ctx)
-	if !u.Admin {
+	consumer := getAPIConsumer(ctx)
+
+	if !isAdmin(ctx) && !isMaintainer(ctx) {
 		// filter usage in pipeline by user's projects
-		ps, err := project.LoadAll(ctx, db, store, u)
+		ps, err := project.LoadAllByGroupIDs(ctx, db, store, consumer.GetGroupIDs())
 		if err != nil {
 			return usage, err
 		}
@@ -874,7 +870,7 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		usage.Pipelines = filteredPipelines
 
 		// filter usage in action by user's groups
-		groupIDs := append(sdk.GroupsToIDs(u.Groups), group.SharedInfraGroup.ID)
+		groupIDs := consumer.GetGroupIDs()
 		mGroupIDs := make(map[int64]struct{}, len(groupIDs))
 		for i := range groupIDs {
 			mGroupIDs[groupIDs[i]] = struct{}{}

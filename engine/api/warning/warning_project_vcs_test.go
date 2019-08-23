@@ -16,9 +16,8 @@ import (
 func TestUnusedProjectVCSWarning(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	// Create add vcs event
 	ePayload := sdk.EventProjectVCSServerAdd{

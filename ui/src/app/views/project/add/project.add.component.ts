@@ -105,7 +105,7 @@ export class ProjectAddComponent {
     }
 
     loadGroups(selected: string) {
-        this._groupService.getGroups(true)
+        this._groupService.getAll(true)
             .pipe(first(), finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();
@@ -131,7 +131,7 @@ export class ProjectAddComponent {
             return;
         }
         this.loading = true;
-        this._groupService.createGroup(this.newGroup)
+        this._groupService.create(this.newGroup)
             .pipe(finalize(() => {
                 this.loading = false;
                 this.newGroup = new Group();

@@ -27,7 +27,7 @@ func (api *API) addBroadcastHandler() service.Handler {
 		bc.Updated = now
 
 		if bc.ProjectKey != "" {
-			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey, deprecatedGetUser(ctx))
+			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey)
 			if errProj != nil {
 				return sdk.WrapError(sdk.ErrNoProject, "Cannot load %s", bc.ProjectKey)
 			}
@@ -38,7 +38,7 @@ func (api *API) addBroadcastHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot add broadcast")
 		}
 
-		event.PublishBroadcastAdd(bc, deprecatedGetUser(ctx))
+		event.PublishBroadcastAdd(bc, getAPIConsumer(ctx))
 		return service.WriteJSON(w, bc, http.StatusCreated)
 	}
 }
@@ -50,8 +50,8 @@ func (api *API) updateBroadcastHandler() service.Handler {
 			return sdk.WrapError(errr, "Invalid id")
 		}
 
-		u := deprecatedGetUser(ctx)
-		oldBC, err := broadcast.LoadByID(api.mustDB(), broadcastID, u)
+		consumer := getAPIConsumer(ctx)
+		oldBC, err := broadcast.LoadByID(api.mustDB(), broadcastID, consumer.AuthentifiedUser.OldUserStruct)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load broadcast by id")
 		}
@@ -63,7 +63,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 		}
 
 		if bc.ProjectKey != "" {
-			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey, u)
+			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey)
 			if errProj != nil {
 				return sdk.WrapError(sdk.ErrNoProject, "Cannot load %s", bc.ProjectKey)
 			}
@@ -75,7 +75,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 			return sdk.WrapError(errtx, "Unable to start transaction")
 		}
 
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		if bc.ID <= 0 || broadcastID != bc.ID {
 			return sdk.WrapError(sdk.ErrWrongRequest, "%d is not valid. id in path:%d", bc.ID, broadcastID)
@@ -90,7 +90,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to commit transaction")
 		}
 
-		event.PublishBroadcastUpdate(*oldBC, bc, deprecatedGetUser(ctx))
+		event.PublishBroadcastUpdate(*oldBC, bc, getAPIConsumer(ctx))
 		return service.WriteJSON(w, bc, http.StatusOK)
 	}
 }
@@ -102,15 +102,15 @@ func (api *API) postMarkAsReadBroadcastHandler() service.Handler {
 			return sdk.WrapError(errr, "Invalid id")
 		}
 
-		u := deprecatedGetUser(ctx)
-		br, errL := broadcast.LoadByID(api.mustDB(), broadcastID, u)
+		consumer := getAPIConsumer(ctx)
+		br, errL := broadcast.LoadByID(api.mustDB(), broadcastID, consumer.AuthentifiedUser.OldUserStruct)
 		if errL != nil {
 			return sdk.WrapError(errL, "Cannot load broadcast by id")
 		}
 
 		if !br.Read {
-			if err := broadcast.MarkAsRead(api.mustDB(), broadcastID, u.ID); err != nil {
-				return sdk.WrapError(err, "Cannot mark as read broadcast id %d and user id %d", broadcastID, u.ID)
+			if err := broadcast.MarkAsRead(api.mustDB(), broadcastID, consumer.AuthentifiedUser.OldUserStruct.ID); err != nil {
+				return sdk.WrapError(err, "Cannot mark as read broadcast id %d and user id %d", broadcastID, broadcastID)
 			}
 		}
 
@@ -138,7 +138,7 @@ func (api *API) deleteBroadcastHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishBroadcastDelete(broadcastID, deprecatedGetUser(ctx))
+		event.PublishBroadcastDelete(broadcastID, getAPIConsumer(ctx))
 		return nil
 	}
 }
@@ -150,7 +150,8 @@ func (api *API) getBroadcastHandler() service.Handler {
 			return sdk.WrapError(errr, "Invalid id")
 		}
 
-		broadcast, err := broadcast.LoadByID(api.mustDB(), id, deprecatedGetUser(ctx))
+		consumer := getAPIConsumer(ctx)
+		broadcast, err := broadcast.LoadByID(api.mustDB(), id, consumer.AuthentifiedUser.OldUserStruct)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load broadcasts")
 		}
@@ -161,7 +162,8 @@ func (api *API) getBroadcastHandler() service.Handler {
 
 func (api *API) getBroadcastsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		broadcasts, err := broadcast.LoadAll(api.mustDB(), deprecatedGetUser(ctx))
+		consumer := getAPIConsumer(ctx)
+		broadcasts, err := broadcast.LoadAll(api.mustDB(), consumer.AuthentifiedUser.OldUserStruct)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load broadcasts")
 		}

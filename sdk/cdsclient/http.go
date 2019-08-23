@@ -3,7 +3,6 @@ package cdsclient
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,8 +10,12 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"regexp"
 	"runtime/pprof"
 	"strings"
+	"time"
+
+	"github.com/ovh/cds/cli"
 
 	"github.com/dgrijalva/jwt-go"
 
@@ -21,19 +24,8 @@ import (
 )
 
 const (
-	//SessionTokenHeader is user as HTTP header
-	SessionTokenHeader = "Session-Token"
-	// AuthHeader is used as HTTP header
-	AuthHeader = "X_AUTH_HEADER"
-	// RequestedWithHeader is used as HTTP header
-	RequestedWithHeader = "X-Requested-With"
-	// RequestedWithValue is used as HTTP header
-	RequestedWithValue = "X-CDS-SDK"
-	// RequestedNameHeader is used as HTTP header
-	RequestedNameHeader = "X-Requested-Name"
 	// RequestedIfModifiedSinceHeader is used as HTTP header
 	RequestedIfModifiedSinceHeader = "If-Modified-Since"
-
 	// ResponseAPITimeHeader is used as HTTP header
 	ResponseAPITimeHeader = "X-Api-Time"
 	// ResponseAPINanosecondsTimeHeader is used as HTTP header
@@ -161,9 +153,29 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 	return bodyBtes, respHeader, code, nil
 }
 
+// signin route pattern
+
+var signinRouteRegexp = regexp.MustCompile(`\/auth\/consumer\/.*\/signin`)
+
 // Stream makes an authenticated http request and return io.ReadCloser
 func (c *client) Stream(ctx context.Context, method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
-	labels := pprof.Labels("user-agent", c.config.userAgent, "path", path, "method", method)
+	// Checks that current session_token is still valid
+	// If not, challenge a new one against the authenticationToken
+	if path != "/auth/consumer/builtin/signin" && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+		if c.config.Verbose {
+			fmt.Printf("session token invalid: (%s). Relogin...\n", c.config.SessionToken)
+		}
+		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
+		if err != nil {
+			return nil, nil, -1, err
+		}
+		if c.config.Verbose {
+			fmt.Println("jwt: ", resp.Token[:12])
+		}
+		c.config.SessionToken = resp.Token
+	}
+
+	labels := pprof.Labels("path", path, "method", method)
 	ctx = pprof.WithLabels(ctx, labels)
 	pprof.SetGoroutineLabels(ctx)
 	var savederror error
@@ -190,14 +202,14 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 
 		req = req.WithContext(ctx)
+		date := sdk.FormatDateRFC5322(time.Now())
+		req.Header.Set("Date", date)
+		req.Header.Set("X-CDS-RemoteTime", date)
 
 		if c.config.Verbose {
 			log.Printf("Stream > context> %s\n", tracingutils.DumpContext(ctx))
 		}
 		spanCtx, ok := tracingutils.ContextToSpanContext(ctx)
-		if c.config.Verbose {
-			log.Printf("setup tracing = %v (%v) on request to %s\n", ok, spanCtx, req.URL.String())
-		}
 		if ok {
 			tracingutils.DefaultFormat.SpanContextToRequest(spanCtx, req)
 		}
@@ -212,59 +224,44 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			req.Header.Set("Content-Type", "application/json")
 		}
 
-		req.Header.Set("User-Agent", c.config.userAgent)
 		req.Header.Set("Connection", "close")
-		req.Header.Add(RequestedWithHeader, RequestedWithValue)
-		if c.name != "" {
-			req.Header.Add(RequestedNameHeader, c.name)
-		}
-		if c.isProvider {
-			req.Header.Add("X-Provider-Name", c.config.User)
-			req.Header.Add("X-Provider-Token", c.config.Token)
-		}
 
-		//No auth on /login route
-		if !strings.HasPrefix(path, "/login") {
-			if c.config.Hash != "" {
-				basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
-				req.Header.Set(AuthHeader, basedHash)
-			}
-
-			if _, _, err := new(jwt.Parser).ParseUnverified(c.config.AccessToken, &sdk.AccessTokenJWTClaims{}); err == nil {
+		//No auth on signing routes
+		if !signinRouteRegexp.MatchString(path) {
+			if _, _, err := new(jwt.Parser).ParseUnverified(c.config.SessionToken, &sdk.AuthSessionJWTClaims{}); err == nil {
 				if c.config.Verbose {
 					fmt.Println("JWT recognized")
 				}
-				auth := "Bearer " + c.config.AccessToken
+				auth := "Bearer " + c.config.SessionToken
 				req.Header.Add("Authorization", auth)
-			} else {
-				// TEMPORARY CODE TO HANDLE OLD TOKEN
-				if c.config.User != "" && c.config.Token != "" {
-					req.Header.Add(SessionTokenHeader, c.config.Token)
-					req.SetBasicAuth(c.config.User, c.config.Token)
-				}
-				// TEMPORARY CODE - END
 			}
 		}
 
 		if c.config.Verbose {
-			log.Println("********REQUEST**********")
+			log.Println(cli.Green("********REQUEST**********"))
 			dmp, _ := httputil.DumpRequestOut(req, true)
 			log.Printf("%s", string(dmp))
+			log.Println(cli.Green("**************************"))
+
 		}
 
 		var errDo error
 		var resp *http.Response
 		if noTimeout {
-			resp, errDo = c.HTTPSSEClient.Do(req)
+			resp, errDo = c.httpSSEClient.Do(req)
 		} else {
-			resp, errDo = c.HTTPClient.Do(req)
+			resp, errDo = c.httpClient.Do(req)
 		}
 
 		if errDo == nil && c.config.Verbose {
-			log.Println("********RESPONSE**********")
+			log.Println(cli.Yellow("********RESPONSE**********"))
 			dmp, _ := httputil.DumpResponse(resp, true)
 			log.Printf("%s", string(dmp))
-			log.Println("**************************")
+			log.Println(cli.Yellow("**************************"))
+		}
+
+		if resp.StatusCode == 401 {
+			c.config.SessionToken = ""
 		}
 
 		// if everything is fine, return body
@@ -317,6 +314,16 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 
 // UploadMultiPart upload multipart
 func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...RequestModifier) ([]byte, int, error) {
+	// Checks that current session_token is still valid
+	// If not, challenge a new one against the authenticationToken
+	if !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
+		if err != nil {
+			return nil, -1, err
+		}
+		c.config.SessionToken = resp.Token
+	}
+
 	var req *http.Request
 	req, errRequest := http.NewRequest(method, c.config.Host+path, body)
 	if errRequest != nil {
@@ -324,31 +331,24 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 	}
 
 	req.Header.Set("Content-Type", "application/octet-stream")
-	req.Header.Set("User-Agent", c.config.userAgent)
 	req.Header.Set("Connection", "close")
-	req.Header.Add(RequestedWithHeader, RequestedWithValue)
-	if c.isProvider {
-		req.Header.Add("X-Provider-Name", c.config.User)
-		req.Header.Add("X-Provider-Token", c.config.Token)
-	}
 
 	for i := range mods {
 		mods[i](req)
 	}
 
-	//No auth on /login route
-	if !strings.HasPrefix(path, "/login") {
-		if c.config.Hash != "" {
-			basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
-			req.Header.Set(AuthHeader, basedHash)
-		}
-		if !c.isProvider && c.config.User != "" && c.config.Token != "" {
-			req.Header.Add(SessionTokenHeader, c.config.Token)
-			req.SetBasicAuth(c.config.User, c.config.Token)
+	//No auth on signing routes
+	if !signinRouteRegexp.MatchString(path) {
+		if _, _, err := new(jwt.Parser).ParseUnverified(c.config.SessionToken, &sdk.AuthSessionJWTClaims{}); err == nil {
+			if c.config.Verbose {
+				fmt.Println("JWT recognized")
+			}
+			auth := "Bearer " + c.config.SessionToken
+			req.Header.Add("Authorization", auth)
 		}
 	}
 
-	resp, err := c.HTTPSSEClient.Do(req)
+	resp, err := c.httpSSEClient.Do(req)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -359,6 +359,10 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 		fmt.Printf("Request path: %s\n", c.config.Host+path)
 		fmt.Printf("Request Headers: %s\n", req.Header)
 		fmt.Printf("Response Headers: %s\n", resp.Header)
+	}
+
+	if resp.StatusCode == 401 {
+		c.config.SessionToken = ""
 	}
 
 	var respBody []byte

@@ -23,8 +23,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithoutSecret(t *testing.T)
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//Prepare request
@@ -92,8 +92,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//We will create an app, with a pgp key, export it then import as a new application(with a different name)
@@ -102,7 +102,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 	app := &sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, proj, app, u))
+	test.NoError(t, application.Insert(db, api.Cache, proj, app))
 
 	k := &sdk.ApplicationKey{
 		Key: sdk.Key{
@@ -121,7 +121,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 		t.Fatal(err)
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, &sdk.Variable{
+	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -206,14 +206,14 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	app := &sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, proj, app, u))
+	test.NoError(t, application.Insert(db, api.Cache, proj, app))
 
 	k := &sdk.ApplicationKey{
 		Key: sdk.Key{
@@ -232,7 +232,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 		t.Fatal(err)
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, &sdk.Variable{
+	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -372,14 +372,14 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	app := &sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, proj, app, u))
+	test.NoError(t, application.Insert(db, api.Cache, proj, app))
 
 	// create password, pgp and ssh keys
 	k1 := &sdk.ApplicationKey{
@@ -413,7 +413,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	k2.KeyID = kssh.KeyID
 	test.NoError(t, application.InsertKey(api.mustDB(), k2))
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, &sdk.Variable{
+	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -516,8 +516,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithEmptyKey(t *testing.T) 
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//Prepare request
@@ -580,14 +580,14 @@ func Test_postApplicationImportHandler_ExistingAppFromYAMLWithoutForce(t *testin
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	app := sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+	test.NoError(t, application.Insert(db, api.Cache, proj, &app))
 
 	//Prepare request
 	vars := map[string]string{
@@ -615,14 +615,14 @@ func Test_postApplicationImportHandler_ExistingAppFromYAMLInheritPermissions(t *
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	app := sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+	test.NoError(t, application.Insert(db, api.Cache, proj, &app))
 
 	//Prepare request
 	vars := map[string]string{
@@ -650,8 +650,8 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	pfname := sdk.RandomString(10)
@@ -683,7 +683,7 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	app := sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+	test.NoError(t, application.Insert(db, api.Cache, proj, &app))
 
 	test.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, pf.ID, pp.Name, sdk.IntegrationConfig{
 		"token": sdk.IntegrationConfigValue{
@@ -762,8 +762,8 @@ func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	pfname := sdk.RandomString(10)
@@ -795,7 +795,7 @@ func Test_postApplicationImportHandler_DontOverrideDeploymentPasswordIfNotGiven(
 	app := sdk.Application{
 		Name: "myNewApp",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+	test.NoError(t, application.Insert(db, api.Cache, proj, &app))
 
 	test.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, pf.ID, pp.Name, sdk.IntegrationConfig{
 		"token": sdk.IntegrationConfigValue{

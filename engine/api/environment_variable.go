@@ -88,7 +88,7 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "deleteVariableFromEnvironmentHandler: Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		// clear passwordfor audit
 		varToDelete, errV := environment.GetVariable(tx, key, envName, varName, environment.WithClearPassword())
@@ -96,14 +96,14 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errV, "deleteVariableFromEnvironmentHandler> Cannot load variable %s", varName)
 		}
 
-		if err := environment.DeleteVariable(tx, env.ID, varToDelete, deprecatedGetUser(ctx)); err != nil {
+		if err := environment.DeleteVariable(tx, env.ID, varToDelete, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot delete %s", varName)
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot commit transaction")
 		}
-		event.PublishEnvironmentVariableDelete(key, *env, *varToDelete, deprecatedGetUser(ctx))
+		event.PublishEnvironmentVariableDelete(key, *env, *varToDelete, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -136,14 +136,14 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "updateVariableInEnvironmentHandler: Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		varBefore, errV := environment.GetVariableByID(api.mustDB(), env.ID, newVar.ID, environment.WithClearPassword())
 		if errV != nil {
 			return sdk.WrapError(errV, "updateVariableInEnvironmentHandler> Cannot load variable %d", newVar.ID)
 		}
 
-		if err := environment.UpdateVariable(api.mustDB(), env.ID, &newVar, varBefore, deprecatedGetUser(ctx)); err != nil {
+		if err := environment.UpdateVariable(api.mustDB(), env.ID, &newVar, varBefore, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s", varName, envName)
 		}
 
@@ -151,7 +151,7 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentVariableUpdate(key, *env, newVar, varBefore, deprecatedGetUser(ctx))
+		event.PublishEnvironmentVariableUpdate(key, *env, newVar, varBefore, getAPIConsumer(ctx))
 
 		if sdk.NeedPlaceholder(newVar.Type) {
 			newVar.Value = sdk.PasswordPlaceholder
@@ -189,14 +189,14 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "addVariableInEnvironmentHandler: cannot begin tx")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		var errInsert error
 		switch newVar.Type {
 		case sdk.KeyVariable:
-			errInsert = environment.AddKeyPairToEnvironment(tx, env.ID, newVar.Name, deprecatedGetUser(ctx))
+			errInsert = environment.AddKeyPairToEnvironment(tx, env.ID, newVar.Name, getAPIConsumer(ctx))
 		default:
-			errInsert = environment.InsertVariable(tx, env.ID, &newVar, deprecatedGetUser(ctx))
+			errInsert = environment.InsertVariable(tx, env.ID, &newVar, getAPIConsumer(ctx))
 		}
 		if errInsert != nil {
 			return sdk.WrapError(errInsert, "addVariableInEnvironmentHandler: Cannot add variable %s in environment %s", varName, envName)
@@ -206,7 +206,7 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: cannot commit tx")
 		}
 
-		event.PublishEnvironmentVariableAdd(key, *env, newVar, deprecatedGetUser(ctx))
+		event.PublishEnvironmentVariableAdd(key, *env, newVar, getAPIConsumer(ctx))
 
 		if sdk.NeedPlaceholder(newVar.Type) {
 			newVar.Value = sdk.PasswordPlaceholder

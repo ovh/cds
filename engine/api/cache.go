@@ -14,6 +14,10 @@ import (
 
 func (api *API) postPushCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
+		}
+
 		vars := mux.Vars(r)
 		tag := vars["tag"]
 
@@ -49,6 +53,10 @@ func (api *API) postPushCacheHandler() service.Handler {
 
 func (api *API) getPullCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
+		}
+
 		vars := mux.Vars(r)
 		tag := vars["tag"]
 
@@ -99,6 +107,10 @@ func (api *API) getPullCacheHandler() service.Handler {
 
 func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
+		}
+
 		vars := mux.Vars(r)
 		tag := vars["tag"]
 
@@ -137,6 +149,10 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 
 func (api *API) getPullCacheWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
+		}
+
 		vars := mux.Vars(r)
 		tag := vars["tag"]
 

@@ -3,20 +3,24 @@ package repositories
 import (
 	"bytes"
 	"context"
+	"crypto/rsa"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"sync"
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -50,7 +54,12 @@ func newTestService(t *testing.T) (*Service, error) {
 		Prefix:     "/" + test.GetTestName(t),
 		Background: ctx,
 	}
+
 	service := new(Service)
+	if fakeAPIPrivateKey.key == nil {
+		fakeAPIPrivateKey.key, _ = jws.NewRandomRSAKey()
+	}
+	service.ParsedAPIPublicKey = &fakeAPIPrivateKey.key.PublicKey
 	service.Router = r
 	service.initRouter(ctx)
 	service.Cfg = cfg
@@ -70,15 +79,21 @@ func newTestService(t *testing.T) (*Service, error) {
 	return service, nil
 }
 
+var fakeAPIPrivateKey = struct {
+	sync.Mutex
+	key *rsa.PrivateKey
+}{}
+
 func newRequest(t *testing.T, s *Service, method, uri string, i interface{}) *http.Request {
+	fakeAPIPrivateKey.Lock()
+	defer fakeAPIPrivateKey.Unlock()
+
 	t.Logf("Request: %s %s", method, uri)
 	var btes []byte
 	var err error
 	if i != nil {
 		btes, err = json.Marshal(i)
-		if err != nil {
-			t.FailNow()
-		}
+		require.NoError(t, err)
 	}
 
 	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
@@ -86,7 +101,8 @@ func newRequest(t *testing.T, s *Service, method, uri string, i interface{}) *ht
 		t.FailNow()
 	}
 
-	assets.AuthentifyRequestFromService(t, req, s.Hash)
+	HTTPSigner := httpsig.NewRSASHA256Signer("test", fakeAPIPrivateKey.key, []string{"(request-target)", "host", "date"})
+	require.NoError(t, HTTPSigner.Sign(req))
 
 	return req
 }
@@ -131,7 +147,8 @@ func newMultiPartTarRequest(t *testing.T, s *Service, method, uri string, in int
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	assets.AuthentifyRequestFromService(t, req, s.Hash)
+	HTTPSigner := httpsig.NewRSASHA256Signer("test", fakeAPIPrivateKey.key, []string{"(request-target)", "host", "date"})
+	require.NoError(t, HTTPSigner.Sign(req))
 
 	return req
 }

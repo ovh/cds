@@ -39,7 +39,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return err
 		}
 
-		pip, errl := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, true)
+		pip, errl := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineName, true)
 		if errl != nil {
 			return sdk.WrapError(sdk.ErrPipelineNotFound, "addJobToStageHandler> Cannot load pipeline %s for project %s: %s", pipelineName, projectKey, errl)
 		}
@@ -67,10 +67,10 @@ func (api *API) addJobToStageHandler() service.Handler {
 		if errb != nil {
 			return errb
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		// check that action used by job can be used by pipeline's project
-		project, err := project.Load(tx, api.Cache, pip.ProjectKey, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
+		project, err := project.Load(tx, api.Cache, pip.ProjectKey, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -83,7 +83,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return err
 		}
 
-		if err := pipeline.CreateAudit(tx, pip, pipeline.AuditAddJob, deprecatedGetUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pip, pipeline.AuditAddJob, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "cannot create audit")
 		}
 
@@ -115,7 +115,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load stages")
 		}
 
-		event.PublishPipelineJobAdd(projectKey, pipelineName, stage, job, deprecatedGetUser(ctx))
+		event.PublishPipelineJobAdd(projectKey, pipelineName, stage, job, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pip, http.StatusOK)
 	}
@@ -152,7 +152,7 @@ func (api *API) updateJobHandler() service.Handler {
 		}
 
 		// load old pipeline
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), key, pipName, true)
+		pipelineData, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, pipName, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", pipName)
 		}
@@ -185,10 +185,10 @@ func (api *API) updateJobHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		// check that action used by job can be used by pipeline's project
-		project, err := project.Load(tx, api.Cache, pipelineData.ProjectKey, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
+		project, err := project.Load(tx, api.Cache, pipelineData.ProjectKey, project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -201,7 +201,7 @@ func (api *API) updateJobHandler() service.Handler {
 			return err
 		}
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateJob, deprecatedGetUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateJob, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "cannot create audit")
 		}
 
@@ -210,7 +210,7 @@ func (api *API) updateJobHandler() service.Handler {
 			return sdk.WrapError(errlb, "cannot load all binary requirements")
 		}
 
-		if err := pipeline.UpdateJob(ctx, tx, &job, deprecatedGetUser(ctx).ID); err != nil {
+		if err := pipeline.UpdateJob(ctx, tx, &job); err != nil {
 			return sdk.WrapError(err, "cannot update pipeline job in database")
 		}
 
@@ -230,7 +230,7 @@ func (api *API) updateJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load stages")
 		}
 
-		event.PublishPipelineJobUpdate(key, pipName, stage, oldJob, job, deprecatedGetUser(ctx))
+		event.PublishPipelineJobUpdate(key, pipName, stage, oldJob, job, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
@@ -248,7 +248,7 @@ func (api *API) deleteJobHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "deleteJobHandler>ID is not a int: %s", errp)
 		}
 
-		pipelineData, errl := pipeline.LoadPipeline(api.mustDB(), key, pipName, true)
+		pipelineData, errl := pipeline.LoadPipeline(ctx, api.mustDB(), key, pipName, true)
 		if errl != nil {
 			return sdk.WrapError(errl, "deleteJobHandler>Cannot load pipeline %s", pipName)
 		}
@@ -284,9 +284,9 @@ func (api *API) deleteJobHandler() service.Handler {
 		if errb != nil {
 			return sdk.WrapError(errb, "deleteJobHandler> Cannot begin transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteJob, deprecatedGetUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteJob, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
@@ -306,7 +306,7 @@ func (api *API) deleteJobHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
 
-		event.PublishPipelineJobDelete(key, pipName, stage, jobToDelete, deprecatedGetUser(ctx))
+		event.PublishPipelineJobDelete(key, pipName, stage, jobToDelete, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}

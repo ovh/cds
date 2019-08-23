@@ -8,7 +8,6 @@ import { Repository } from 'app/model/repositories.model';
 import { VCSStrategy } from 'app/model/vcs.model';
 import { WorkflowTemplate } from 'app/model/workflow-template.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
-import { AuthentificationStore } from 'app/service/auth/authentification.store';
 import { ImportAsCodeService } from 'app/service/import-as-code/import.service';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { ThemeStore } from 'app/service/services.module';
@@ -17,11 +16,11 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { CreateWorkflow, ImportWorkflow } from 'app/store/workflow.action';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first } from 'rxjs/operators';
-import { environment } from '../../../../environments/environment';
 
 @Component({
     selector: 'app-workflow-add',
@@ -72,9 +71,8 @@ workflow:
     themeSubscription: Subscription;
 
     constructor(
-        private store: Store,
+        private _store: Store,
         private _activatedRoute: ActivatedRoute,
-        private _authStore: AuthentificationStore,
         private _router: Router,
         private _import: ImportAsCodeService,
         private _translate: TranslateService,
@@ -107,7 +105,7 @@ workflow:
             }
         });
 
-        this.projectSubscription = this.store.select(ProjectState)
+        this.projectSubscription = this._store.select(ProjectState)
             .pipe(filter((projState) => projState.project && projState.project.key), finalize(() => this._cd.markForCheck()))
             .subscribe((projectState: ProjectStateModel) => this.project = projectState.project);
 
@@ -121,7 +119,7 @@ workflow:
     createWorkflow(node: WNode): void {
         this.loading = true;
         this.workflow.workflow_data.node = node;
-        this.store.dispatch(new CreateWorkflow({
+        this._store.dispatch(new CreateWorkflow({
             projectKey: this.project.key,
             workflow: this.workflow
         })).pipe(
@@ -148,7 +146,7 @@ workflow:
 
     importWorkflow() {
         this.loading = true;
-        this.store.dispatch(new ImportWorkflow({
+        this._store.dispatch(new ImportWorkflow({
             projectKey: this.project.key,
             wfName: null,
             workflowCode: this.wfToImport
@@ -225,9 +223,9 @@ workflow:
         let zone = new NgZone({ enableLongStackTrace: false });
         let webworker = new CDSWebWorker('./assets/worker/web/operation.js')
         webworker.start({
-            'user': this._authStore.getUser(),
-            'session': this._authStore.getSessionToken(),
-            'api': environment.apiURL,
+            'user': this._store.selectSnapshot(AuthenticationState.user),
+            // 'session': this._authStore.getSessionToken(),
+            'api': '/cdsapi',
             'path': '/import/' + this.project.key + '/' + uuid
         });
         this.webworkerSub = webworker.response().subscribe(ope => {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mholt/archiver"
@@ -41,21 +40,16 @@ func (actPlugin *archiveActionPlugin) Run(ctx context.Context, q *actionplugin.A
 	case "uncompress":
 		err = archiver.Unarchive(source, destination)
 	default:
-		return fail("Invalid action: %s", action)
+		return actionplugin.Fail("Invalid action: %s", action)
 	}
 
 	if err != nil {
-		return fail("Could not %s: %s", action, err)
+		return actionplugin.Fail("Could not %s: %s", action, err)
 	}
 
 	return &actionplugin.ActionResult{
-		Status: sdk.StatusSuccess.String(),
+		Status: sdk.StatusSuccess,
 	}, nil
-}
-
-func (actPlugin *archiveActionPlugin) WorkerHTTPPort(ctx context.Context, q *actionplugin.WorkerHTTPPortQuery) (*empty.Empty, error) {
-	actPlugin.HTTPPort = q.Port
-	return &empty.Empty{}, nil
 }
 
 func main() {
@@ -65,13 +59,4 @@ func main() {
 	}
 	return
 
-}
-
-func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error) {
-	msg := fmt.Sprintf(format, args...)
-	fmt.Println(msg)
-	return &actionplugin.ActionResult{
-		Details: msg,
-		Status:  sdk.StatusFail.String(),
-	}, nil
 }

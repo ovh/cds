@@ -184,8 +184,7 @@
                 [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'cdsctl']">{{ 'navbar_cdsctl' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a>
-            <a sm-item *ngIf="currentUser.admin" href="#"
-                [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a>
+            <a sm-item href="#" [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'group']">{{ 'navbar_groups' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'worker-model']">{{ 'navbar_worker_models' | translate }}</a>
             <a sm-item href="#"
@@ -199,10 +198,10 @@
             <sm-checkbox class="theme-switch" name="switch-theme" [control]="themeSwitch" type="toggle"
                 label="{{'navbar_dark_mode' | translate}}" (change)="changeTheme()"></sm-checkbox>
             <div class="divider"></div>
-            <a sm-item href="#" [routerLink]="['account', 'login']">{{ 'navbar_disconnect' | translate }}</a>
+            <a sm-item (click)="clickLogout()">{{ 'navbar_disconnect' | translate }}</a>
         </sm-dropdown>
 
-        <sm-dropdown icon="student" *ngIf="currentUser && currentUser.admin">
+        <sm-dropdown icon="student" *ngIf="currentUser && currentUser.isMaintainer()">
             <a sm-item href="#" [routerLink]="['admin', 'broadcast']">{{ 'navbar_admin_broadcast' | translate }}</a>
             <a sm-item href="#"
                 [routerLink]="['admin', 'worker-model-pattern']">{{ 'worker_model_pattern_title' | translate }}</a>

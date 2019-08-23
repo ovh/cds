@@ -14,19 +14,19 @@ import (
 )
 
 // PushInElasticSearch pushes event to an elasticsearch
-func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Store) {
+func PushInElasticSearch(ctx context.Context, db gorp.SqlExecutor, store cache.Store) {
 	eventChan := make(chan sdk.Event, 10)
 	Subscribe(eventChan)
 
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("PushInElasticSearch> Exiting: %v", c.Err())
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error("PushInElasticSearch> Exiting: %v", ctx.Err())
 				return
 			}
 		case e := <-eventChan:
-			esServices, errS := services.FindByType(db, services.TypeElasticsearch)
+			esServices, errS := services.LoadAllByType(ctx, db, services.TypeElasticsearch)
 			if errS != nil {
 				log.Error("PushInElasticSearch> Unable to get elasticsearch service: %v", errS)
 				continue
@@ -41,7 +41,7 @@ func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Sto
 				continue
 			}
 			e.Payload = nil
-			_, code, errD := services.DoJSONRequest(context.Background(), esServices, "POST", "/events", e, nil)
+			_, code, errD := services.DoJSONRequest(context.Background(), db, esServices, "POST", "/events", e, nil)
 			if code >= 400 || errD != nil {
 				log.Error("PushInElasticSearch> Unable to send event %s to elasticsearch [%d]: %v", e.EventType, code, errD)
 				continue
@@ -51,14 +51,14 @@ func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Sto
 }
 
 // GetEvents retrieves events from elasticsearch
-func GetEvents(db gorp.SqlExecutor, store cache.Store, filters sdk.EventFilter) ([]json.RawMessage, error) {
-	srvs, err := services.FindByType(db, services.TypeElasticsearch)
+func GetEvents(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filters sdk.EventFilter) ([]json.RawMessage, error) {
+	srvs, err := services.LoadAllByType(ctx, db, services.TypeElasticsearch)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to get elasticsearch service")
 	}
 
 	var esEvents []elastic.SearchHit
-	if _, _, err := services.DoJSONRequest(context.Background(), srvs, "GET", "/events", filters, &esEvents); err != nil {
+	if _, _, err := services.DoJSONRequest(context.Background(), db, srvs, "GET", "/events", filters, &esEvents); err != nil {
 		return nil, sdk.WrapError(err, "Unable to get events")
 	}
 

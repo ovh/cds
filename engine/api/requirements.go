@@ -4,9 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ovh/cds/engine/api/workermodel"
+
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 
 	"github.com/ovh/cds/sdk"
@@ -31,7 +32,14 @@ func (api *API) getRequirementTypeValuesHandler() service.Handler {
 			}
 			return service.WriteJSON(w, rs.Values(), http.StatusOK)
 		case sdk.ModelRequirement:
-			models, err := workermodel.LoadAllByUser(api.mustDB(), api.Cache, deprecatedGetUser(ctx), nil)
+			var models []sdk.Model
+			var err error
+			if isMaintainer(ctx) || isAdmin(ctx) {
+				models, err = workermodel.LoadAll(ctx, api.mustDB(), nil)
+			} else {
+				models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(),
+					getAPIConsumer(ctx).GetGroupIDs(), nil)
+			}
 			if err != nil {
 				return sdk.WrapError(err, "cannot load worker models")
 			}

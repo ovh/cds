@@ -1,14 +1,19 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -19,13 +24,13 @@ import (
 func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app))
 
 	vars := map[string]string{
 		"permProjectKey":  proj.Key,
@@ -46,13 +51,13 @@ func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
 func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app))
 
 	pf := sdk.IntegrationModel{
 		Name:       "test-deploy-post-2" + pkey,
@@ -169,13 +174,13 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentIntegrations(t *testing.T) {
 	api, db, router, end := newTestAPI(t)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app))
 
 	pf := sdk.IntegrationModel{
 		Name:       "test-deploy-TwoDifferentIntegrations-2" + pkey,
@@ -293,18 +298,18 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 	api, tsURL, tsClose := newTestServer(t)
 	defer tsClose()
 
-	api.Config.Providers = append(api.Config.Providers, ProviderConfiguration{
-		Name:  "test-provider",
-		Token: "my-token",
-	})
+	u, _ := assets.InsertAdminUser(t, api.mustDB())
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
 
-	u, _ := assets.InsertAdminUser(api.mustDB())
+	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, u.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
+
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app))
 
 	pf := sdk.IntegrationModel{
 		Name:       "test-deploy-3" + pkey,
@@ -333,11 +338,10 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,
-		Name:  "test-provider",
-		Token: "my-token",
+		Token: jws,
 	})
 
-	err := sdkclient.ApplicationDeploymentStrategyUpdate(proj.Key, app.Name, pf.Name, sdk.IntegrationConfig{
+	err = sdkclient.ApplicationDeploymentStrategyUpdate(proj.Key, app.Name, pf.Name, sdk.IntegrationConfig{
 		"token": sdk.IntegrationConfigValue{
 			Type:  sdk.IntegrationConfigTypePassword,
 			Value: "my-secret-token-2",

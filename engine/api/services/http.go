@@ -3,7 +3,6 @@ package services
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,7 +13,12 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/go-gorp/gorp"
+	"gopkg.in/spacemonkeygo/httpsig.v0"
+
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/tracingutils"
 )
@@ -26,11 +30,13 @@ type MultiPartData struct {
 }
 
 // HTTPClient will be set to a default httpclient if not set
-var HTTPClient sdk.HTTPClient
+var HTTPClient cdsclient.HTTPClient
+
+// HTTPSigner is used to sign requests based on the RFC draft specification https://tools.ietf.org/html/draft-cavage-http-signatures-06
+var HTTPSigner *httpsig.Signer
 
 // DoMultiPartRequest performs an http request on a service with multipart  tar file + json field
-func DoMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
-
+func DoMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -59,7 +65,7 @@ func DoMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path st
 		return 0, sdk.WrapError(err, "unable to close writer")
 	}
 
-	mods = append(mods, sdk.SetHeader("Content-Type", writer.FormDataContentType()))
+	mods = append(mods, cdsclient.SetHeader("Content-Type", writer.FormDataContentType()))
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -67,7 +73,7 @@ func DoMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path st
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			res, _, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, body.Bytes(), mods...)
+			res, _, code, err := doRequest(ctx, db, srv, method, path, body.Bytes(), mods...)
 			if err != nil {
 				return code, sdk.WrapError(err, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
 			}
@@ -90,7 +96,7 @@ func DoMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path st
 }
 
 // DoJSONRequest performs an http request on a service
-func DoJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (http.Header, int, error) {
+func DoJSONRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -98,7 +104,7 @@ func DoJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string,
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			headers, code, err := doJSONRequest(ctx, srv, method, path, in, out, mods...)
+			headers, code, err := doJSONRequest(ctx, db, srv, method, path, in, out, mods...)
 			if err == nil {
 				return headers, code, nil
 			}
@@ -113,7 +119,7 @@ func DoJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string,
 }
 
 // DoJSONRequest performs an http request on service
-func doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (http.Header, int, error) {
+func doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
 	var b = []byte{}
 	var err error
 
@@ -124,8 +130,8 @@ func doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, i
 		}
 	}
 
-	mods = append(mods, sdk.SetHeader("Content-Type", "application/json"))
-	res, headers, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, b, mods...)
+	mods = append(mods, cdsclient.SetHeader("Content-Type", "application/json"))
+	res, headers, code, err := doRequest(ctx, db, srv, method, path, b, mods...)
 	if err != nil {
 		return headers, code, sdk.ErrorWithFallback(err, sdk.ErrUnknownError, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
 	}
@@ -140,7 +146,7 @@ func doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, i
 }
 
 // PostMultipart post a file content through multipart upload
-func PostMultipart(ctx context.Context, srvs []sdk.Service, path string, filename string, fileContents []byte, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func PostMultipart(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, path string, filename string, fileContents []byte, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("file", filename)
@@ -152,7 +158,7 @@ func PostMultipart(ctx context.Context, srvs []sdk.Service, path string, filenam
 		return 0, err
 	}
 
-	mods = append(mods, sdk.SetHeader("Content-Type", "multipart/form-data"))
+	mods = append(mods, cdsclient.SetHeader("Content-Type", "multipart/form-data"))
 
 	var lastErr error
 	var lastCode int
@@ -161,7 +167,7 @@ func PostMultipart(ctx context.Context, srvs []sdk.Service, path string, filenam
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			res, _, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, "POST", path, body.Bytes(), mods...)
+			res, _, code, err := doRequest(ctx, db, srv, "POST", path, body.Bytes(), mods...)
 			lastCode = code
 			lastErr = err
 
@@ -183,7 +189,7 @@ func PostMultipart(ctx context.Context, srvs []sdk.Service, path string, filenam
 }
 
 // DoRequest performs an http request on a service
-func DoRequest(ctx context.Context, srvs []sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, http.Header, int, error) {
+func DoRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, args []byte, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -191,7 +197,7 @@ func DoRequest(ctx context.Context, srvs []sdk.Service, method, path string, arg
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			btes, headers, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, args, mods...)
+			btes, headers, code, err := doRequest(ctx, db, srv, method, path, args, mods...)
 			if err == nil {
 				return btes, headers, code, nil
 			}
@@ -206,16 +212,23 @@ func DoRequest(ctx context.Context, srvs []sdk.Service, method, path string, arg
 }
 
 // doRequest performs an http request on service
-func doRequest(ctx context.Context, httpURL string, hash string, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, http.Header, int, error) {
+func doRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, method, path string, args []byte, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
+	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+	return doRequestFromURL(ctx, db, method, callURL, args, mods...)
+}
+
+func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, callURL *url.URL, args []byte, mods ...cdsclient.RequestModifier) ([]byte, http.Header, int, error) {
 	if HTTPClient == nil {
 		HTTPClient = &http.Client{
 			Timeout: 60 * time.Second,
 		}
 	}
 
-	callURL, err := url.ParseRequestURI(httpURL + path)
-	if err != nil {
-		return nil, nil, 0, err
+	if HTTPSigner == nil {
+		HTTPSigner = httpsig.NewRSASHA256Signer(authentication.IssuerName, authentication.GetSigningKey(), []string{"(request-target)", "host", "date"})
 	}
 
 	var requestError error
@@ -237,20 +250,18 @@ func doRequest(ctx context.Context, httpURL string, hash string, method, path st
 	}
 
 	req.Header.Set("Connection", "close")
-	req.Header.Add(sdk.RequestedWithHeader, sdk.RequestedWithValue)
 	for i := range mods {
 		if mods[i] != nil {
 			mods[i](req)
 		}
 	}
 
-	// Authentify the request with the hash
-	if hash != "" {
-		basedHash := base64.StdEncoding.EncodeToString([]byte(hash))
-		req.Header.Set(sdk.AuthHeader, basedHash)
+	// Sign the http request with API private RSA Key
+	if err := HTTPSigner.Sign(req); err != nil {
+		return nil, nil, 0, sdk.WrapError(err, "services.DoRequest> Request signature failed")
 	}
 
-	log.Debug("services.DoRequest> request %v", req.URL)
+	log.Debug("services.DoRequest> request %s %v (%s)", req.Method, req.URL, req.Header.Get("Authorization"))
 
 	//Do the request
 	resp, errDo := HTTPClient.Do(req)
@@ -265,7 +276,7 @@ func doRequest(ctx context.Context, httpURL string, hash string, method, path st
 		return nil, resp.Header, resp.StatusCode, sdk.WrapError(errBody, "services.DoRequest> Unable to read body")
 	}
 
-	log.Debug("services.DoRequest> response code:%d body:%s", resp.StatusCode, string(body))
+	log.Debug("services.DoRequest> response code:%d", resp.StatusCode)
 
 	// if everything is fine, return body
 	if resp.StatusCode < 400 {
@@ -278,4 +289,5 @@ func doRequest(ctx context.Context, httpURL string, hash string, method, path st
 	}
 
 	return nil, resp.Header, resp.StatusCode, fmt.Errorf("Request Failed")
+
 }

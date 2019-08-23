@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ovh/cds/engine/service"
+
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/hatchery"
 
 	"k8s.io/client-go/kubernetes"
 )
@@ -26,8 +26,8 @@ var containerServiceNameRegexp = regexp.MustCompile(`service-([0-9]+)-(.*)`)
 
 // HatcheryConfiguration is the configuration for local hatchery
 type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
-	NbProvision                  int `mapstructure:"nbProvision" toml:"nbProvision" default:"1" comment:"Nb Workers to provision" json:"nbProvision"`
+	service.HatcheryCommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
+	NbProvision                         int `mapstructure:"nbProvision" toml:"nbProvision" default:"1" comment:"Nb Workers to provision" json:"nbProvision"`
 	// WorkerTTL Worker TTL (minutes)
 	WorkerTTL int `mapstructure:"workerTTL" toml:"workerTTL" default:"10" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
 	// DefaultMemory Worker default memory
@@ -57,7 +57,6 @@ type HatcheryKubernetes struct {
 	hatcheryCommon.Common
 	Config HatcheryConfiguration
 	sync.Mutex
-	hatch     *sdk.Hatchery
 	workers   map[string]workerCmd
 	client    cdsclient.Interface
 	os        string

@@ -14,176 +14,26 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getGroupHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get group name in URL
-		vars := mux.Vars(r)
-		name := vars["permGroupName"]
-
-		g, errl := group.LoadGroup(api.mustDB(), name)
-		if errl != nil {
-			return sdk.WrapError(errl, "Cannot load group from db")
-		}
-
-		if err := group.LoadUserGroup(api.mustDB(), g); err != nil {
-			return sdk.WrapError(err, "Cannot load user group from db")
-		}
-
-		isGroupAdmin := false
-		currentUser := deprecatedGetUser(ctx)
-		for _, grAdmin := range g.Admins {
-			if currentUser.ID == grAdmin.ID {
-				isGroupAdmin = true
-			}
-		}
-		if isGroupAdmin {
-			tokens, errT := group.LoadTokens(api.mustDB(), name)
-			if errT != nil {
-				return sdk.WrapError(errT, "Cannot load tokens group from db")
-			}
-			g.Tokens = tokens
-		}
-
-		return service.WriteJSON(w, g, http.StatusOK)
-	}
-}
-
-func (api *API) deleteGroupHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get group name in URL
-		vars := mux.Vars(r)
-		name := vars["permGroupName"]
-		u := deprecatedGetUser(ctx)
-
-		g, errl := group.LoadGroup(api.mustDB(), name)
-		if errl != nil {
-			return sdk.WrapError(errl, "Cannot load %s", name)
-		}
-
-		projPerms, err := project.LoadPermissions(api.mustDB(), g.ID)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load projects for group")
-		}
-
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return sdk.WrapError(errb, "Cannot start transaction")
-		}
-		defer tx.Rollback()
-
-		if err := group.DeleteGroupAndDependencies(tx, g); err != nil {
-			return sdk.WrapError(err, "Cannot delete group")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
-		}
-
-		groupPerm := sdk.GroupPermission{Group: *g}
-		for _, pg := range projPerms {
-			event.PublishDeleteProjectPermission(&pg.Project, groupPerm, u)
-		}
-
-		return nil
-	}
-}
-
-func (api *API) updateGroupHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get group name in URL
-		vars := mux.Vars(r)
-		oldName := vars["permGroupName"]
-
-		var updatedGroup sdk.Group
-		if err := service.UnmarshalBody(r, &updatedGroup); err != nil {
-			return sdk.WrapError(err, "Cannot unmarshal")
-		}
-
-		if len(updatedGroup.Admins) == 0 {
-			return sdk.WrapError(sdk.ErrGroupNeedAdmin, "Cannot Delete all admins for group %s", updatedGroup.Name)
-		}
-
-		g, errl := group.LoadGroup(api.mustDB(), oldName)
-		if errl != nil {
-			return sdk.WrapError(errl, "Cannot load %s", oldName)
-		}
-
-		updatedGroup.ID = g.ID
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return sdk.WrapError(errb, "Cannot start transaction")
-		}
-		defer tx.Rollback()
-
-		if err := group.UpdateGroup(tx, &updatedGroup, oldName); err != nil {
-			return sdk.WrapError(err, "Cannot update group %s", oldName)
-		}
-
-		if err := group.DeleteGroupUserByGroup(tx, &updatedGroup); err != nil {
-			return sdk.WrapError(err, "Cannot delete users in group %s", oldName)
-		}
-
-		for _, a := range updatedGroup.Admins {
-			u, errlu := user.LoadUserWithoutAuth(tx, a.Username)
-			if errlu != nil {
-				return sdk.WrapError(errlu, "Cannot load user(admins) %s", a.Username)
-			}
-
-			if err := group.InsertUserInGroup(tx, updatedGroup.ID, u.ID, true); err != nil {
-				return sdk.WrapError(err, "Cannot insert admin %s in group %s", a.Username, updatedGroup.Name)
-			}
-		}
-
-		for _, a := range updatedGroup.Users {
-			u, errlu := user.LoadUserWithoutAuth(tx, a.Username)
-			if errlu != nil {
-				return sdk.WrapError(errlu, "Cannot load user(members) %s", a.Username)
-			}
-
-			if err := group.InsertUserInGroup(tx, updatedGroup.ID, u.ID, false); err != nil {
-				return sdk.WrapError(err, "Cannot insert member %s in group %s", a.Username, updatedGroup.Name)
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
-		}
-
-		return service.WriteJSON(w, updatedGroup, http.StatusOK)
-	}
-}
-
 func (api *API) getGroupsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var groups []sdk.Group
 		var err error
 
-		public := FormBool(r, "withPublic")
 		withoutDefault := FormBool(r, "withoutDefault")
-		if deprecatedGetUser(ctx).Admin {
-			groups, err = group.LoadGroups(api.mustDB())
+		if isMaintainer(ctx) {
+			groups, err = group.LoadAll(ctx, api.mustDB())
 		} else {
-			groups, err = group.LoadGroupByUser(api.mustDB(), deprecatedGetUser(ctx).ID)
-			if public {
-				publicGroups, errl := group.LoadPublicGroups(api.mustDB())
-				if errl != nil {
-					return sdk.WrapError(errl, "Cannot load group from db")
-				}
-				groups = append(groups, publicGroups...)
-			}
+			groups, err = group.LoadAllByDeprecatedUserID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID)
 		}
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load group from db")
+			return err
 		}
 
-		// withoutDefault is use by project Add, to avoid
-		// user select the default group on project creation
+		// withoutDefault is use by project add, to avoid selecting the default group on project creation
 		if withoutDefault {
 			var filteredGroups []sdk.Group
 			for _, g := range groups {
-				if group.IsDefaultGroupID(g.ID) {
-					continue
-				} else {
+				if !group.IsDefaultGroupID(g.ID) {
 					filteredGroups = append(filteredGroups, g)
 				}
 			}
@@ -194,172 +44,357 @@ func (api *API) getGroupsHandler() service.Handler {
 	}
 }
 
-func (api *API) getPublicGroupsHandler() service.Handler {
+func (api *API) getGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		groups, err := group.LoadPublicGroups(api.mustDB())
+		vars := mux.Vars(r)
+		name := vars["permGroupName"]
+
+		g, err := group.LoadByName(ctx, api.mustDB(), name, group.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load group from db")
+			return err
 		}
-		return service.WriteJSON(w, groups, http.StatusOK)
+
+		return service.WriteJSON(w, g, http.StatusOK)
 	}
 }
 
-func (api *API) addGroupHandler() service.Handler {
+func (api *API) postGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		g := &sdk.Group{}
-		if err := service.UnmarshalBody(r, g); err != nil {
-			return sdk.WrapError(err, "Cannot unmarshal")
+		var newGroup sdk.Group
+		if err := service.UnmarshalBody(r, &newGroup); err != nil {
+			return err
+		}
+		if err := newGroup.IsValid(); err != nil {
+			return err
 		}
 
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return sdk.WrapError(errb, "Cannot begin tx")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot begin tx")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		if _, _, err := group.AddGroup(tx, g); err != nil {
-			return sdk.WrapError(err, "Cannot add group")
+		existingGroup, err := group.LoadByName(ctx, tx, newGroup.Name)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		if existingGroup != nil {
+			return sdk.WithStack(sdk.ErrGroupPresent)
 		}
 
-		// Add caller into group
-		if err := group.InsertUserInGroup(tx, g.ID, deprecatedGetUser(ctx).ID, false); err != nil {
-			return sdk.WrapError(err, "Cannot add user %s in group %s", deprecatedGetUser(ctx).Username, g.Name)
-		}
-		// and set it admin
-		if err := group.SetUserGroupAdmin(tx, g.ID, deprecatedGetUser(ctx).ID); err != nil {
-			return sdk.WrapError(err, "Cannot set user group admin")
+		consumer := getAPIConsumer(ctx)
+		if err := group.Create(tx, &newGroup, consumer.AuthentifiedUser.OldUserStruct.ID); err != nil {
+			return err
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit tx")
+			return sdk.WrapError(err, "cannot commit tx")
+		}
+
+		if err := group.LoadOptions.Default(ctx, api.mustDB(), &newGroup); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, &newGroup, http.StatusCreated)
+	}
+}
+
+func (api *API) putGroupHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		groupName := vars["permGroupName"]
+
+		var data sdk.Group
+		if err := service.UnmarshalBody(r, &data); err != nil {
+			return err
+		}
+		if err := data.IsValid(); err != nil {
+			return err
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
+		}
+		defer tx.Rollback() // nolint
+
+		oldGroup, err := group.LoadByName(ctx, tx, groupName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load group: %s", groupName)
+		}
+
+		// In case of rename, checks that new name is not already used
+		if data.Name != oldGroup.Name {
+			exstingGroup, err := group.LoadByName(ctx, tx, data.Name)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			if exstingGroup != nil {
+				return sdk.WithStack(sdk.ErrGroupPresent)
+			}
+		}
+
+		newGroup := *oldGroup
+		newGroup.Name = data.Name
+
+		if err := group.Update(tx, &newGroup); err != nil {
+			return sdk.WrapError(err, "cannot update group with id: %d", newGroup.ID)
+		}
+
+		// TODO Update all requirements that was using the group name
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "cannot commit transaction")
+		}
+
+		// Load extra data for group
+		if err := group.LoadOptions.Default(ctx, api.mustDB(), &newGroup); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, newGroup, http.StatusOK)
+	}
+}
+
+func (api *API) deleteGroupHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["permGroupName"]
+		u := getAPIConsumer(ctx)
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
+		}
+		defer tx.Rollback() // nolint
+
+		g, err := group.LoadByName(ctx, tx, name)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load %s", name)
+		}
+
+		projPerms, err := project.LoadPermissions(tx, g.ID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load projects for group")
+		}
+
+		if err := group.Delete(ctx, tx, g); err != nil {
+			return sdk.WrapError(err, "cannot delete group")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "cannot commit transaction")
+		}
+
+		// TODO refact events
+		groupPerm := sdk.GroupPermission{Group: *g}
+		for _, pg := range projPerms {
+			event.PublishDeleteProjectPermission(&pg.Project, groupPerm, u)
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
+func (api *API) postGroupUserHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		groupName := vars["permGroupName"]
+
+		var data sdk.GroupMember
+		if err := service.UnmarshalBody(r, &data); err != nil {
+			return err
+		}
+		if data.ID == "" && data.Username == "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given user id or username")
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		g, err := group.LoadByName(ctx, tx, groupName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load group with name: %s", groupName)
+		}
+
+		var u *sdk.AuthentifiedUser
+		if data.ID != "" {
+			u, err = user.LoadByID(ctx, tx, data.ID, user.LoadOptions.WithDeprecatedUser)
+		} else {
+			u, err = user.LoadByUsername(ctx, tx, data.Username, user.LoadOptions.WithDeprecatedUser)
+		}
+		if err != nil {
+			return err
+		}
+
+		// If the user is already in group return an error
+		link, err := group.LoadLinkGroupUserForGroupIDAndUserID(ctx, tx, g.ID, u.OldUserStruct.ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		if link != nil {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "given user is already in group")
+		}
+
+		// Create the link between group and user with admin flag from request
+		if err := group.InsertLinkGroupUser(tx, &group.LinkGroupUser{
+			GroupID: g.ID,
+			UserID:  u.OldUserStruct.ID,
+			Admin:   data.Admin,
+		}); err != nil {
+			return sdk.WrapError(err, "cannot add user %s in group %s", u.Username, g.Name)
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "cannot commit transaction")
+		}
+
+		// Load extra data for group
+		if err := group.LoadOptions.Default(ctx, api.mustDB(), g); err != nil {
+			return err
 		}
 
 		return service.WriteJSON(w, g, http.StatusCreated)
 	}
 }
 
-func (api *API) removeUserFromGroupHandler() service.Handler {
+func (api *API) putGroupUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get group name in URL
 		vars := mux.Vars(r)
-		name := vars["permGroupName"]
-		userName := vars["user"]
+		groupName := vars["permGroupName"]
+		username := vars["username"]
 
-		g, errl := group.LoadGroup(api.mustDB(), name)
-		if errl != nil {
-			return sdk.WrapError(errl, "Cannot load %s", name)
+		var data sdk.GroupMember
+		if err := service.UnmarshalBody(r, &data); err != nil {
+			return err
 		}
 
-		userID, err := user.FindUserIDByName(api.mustDB(), userName)
+		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Unknown user %s", userName)
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		g, err := group.LoadByName(ctx, tx, groupName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load group with name: %s", groupName)
 		}
 
-		userInGroup, errc := group.CheckUserInGroup(api.mustDB(), g.ID, userID)
-		if errc != nil {
-			return sdk.WrapError(errc, "Cannot check if user %s is already in the group %s", userName, g.Name)
+		u, err := user.LoadByUsername(ctx, tx, username, user.LoadOptions.WithDeprecatedUser)
+		if err != nil {
+			return err
 		}
 
-		if !userInGroup {
-			return sdk.WrapError(sdk.ErrWrongRequest, "User %s is not in group %s", userName, name)
+		link, err := group.LoadLinkGroupUserForGroupIDAndUserID(ctx, tx, g.ID, u.OldUserStruct.ID)
+		if err != nil {
+			return err
 		}
 
-		if err := group.DeleteUserFromGroup(api.mustDB(), g.ID, userID); err != nil {
-			return sdk.WrapError(err, "Cannot delete user %s from group %s", userName, g.Name)
-		}
-
-		return nil
-	}
-}
-
-func (api *API) addUserInGroupHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get group name in URL
-		vars := mux.Vars(r)
-		name := vars["permGroupName"]
-
-		var users []string
-		if err := service.UnmarshalBody(r, &users); err != nil {
-			return sdk.WrapError(err, "Cannot unmarshal")
-		}
-
-		g, errl := group.LoadGroup(api.mustDB(), name)
-		if errl != nil {
-			return sdk.WrapError(errl, "Cannot load group %s", name)
-		}
-
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return errb
-		}
-		defer tx.Rollback()
-
-		for _, u := range users {
-			userID, errf := user.FindUserIDByName(api.mustDB(), u)
-			if errf != nil {
-				return sdk.WrapError(errf, "Unknown user '%s'", u)
+		// In case we are removing admin rights to user, we need to check that it's not the last admin
+		if link.Admin && !data.Admin {
+			links, err := group.LoadLinksGroupUserForGroupIDs(ctx, tx, []int64{g.ID})
+			if err != nil {
+				return err
 			}
-			userInGroup, errc := group.CheckUserInGroup(api.mustDB(), g.ID, userID)
-			if errc != nil {
-				return sdk.WrapError(errc, "Cannot check if user %s is already in the group %s", u, g.Name)
-			}
-			if !userInGroup {
-				if err := group.InsertUserInGroup(api.mustDB(), g.ID, userID, false); err != nil {
-					return sdk.WrapError(err, "Cannot add user %s in group %s", u, g.Name)
+
+			var adminFound bool
+			for i := range links {
+				if links[i].UserID != u.OldUserStruct.ID && links[i].Admin {
+					adminFound = true
+					break
 				}
 			}
+			if !adminFound {
+				return sdk.NewErrorFrom(sdk.ErrGroupNeedAdmin, "cannot remove the last admin of the group")
+			}
 		}
 
-		return tx.Commit()
+		link.Admin = data.Admin
+
+		if err := group.UpdateLinkGroupUser(tx, link); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "cannot commit transaction")
+		}
+
+		// Load extra data for group
+		if err := group.LoadOptions.Default(ctx, api.mustDB(), g); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, g, http.StatusOK)
 	}
 }
 
-func (api *API) setUserGroupAdminHandler() service.Handler {
+func (api *API) deleteGroupUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get group name in URL
 		vars := mux.Vars(r)
-		name := vars["permGroupName"]
-		userName := vars["user"]
+		groupName := vars["permGroupName"]
+		username := vars["username"]
 
-		g, errl := group.LoadGroup(api.mustDB(), name)
-		if errl != nil {
-			return sdk.WrapError(errl, "Cannot load %s", name)
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		g, err := group.LoadByName(ctx, tx, groupName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load group with name: %s", groupName)
 		}
 
-		userID, errf := user.FindUserIDByName(api.mustDB(), userName)
-		if errf != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Unknown user %s: %s", userName, errf)
+		u, err := user.LoadByUsername(ctx, tx, username, user.LoadOptions.WithDeprecatedUser)
+		if err != nil {
+			return err
 		}
 
-		if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, userID); err != nil {
-			return sdk.WrapError(err, "Cannot set user group admin")
+		link, err := group.LoadLinkGroupUserForGroupIDAndUserID(ctx, tx, g.ID, u.OldUserStruct.ID)
+		if err != nil {
+			return err
 		}
 
-		return nil
-	}
-}
+		// In case we are removing an admin from the group, we need to check that it's not the last admin
+		if link.Admin {
+			links, err := group.LoadLinksGroupUserForGroupIDs(ctx, tx, []int64{g.ID})
+			if err != nil {
+				return err
+			}
 
-func (api *API) removeUserGroupAdminHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get group name in URL
-		vars := mux.Vars(r)
-		name := vars["permGroupName"]
-		userName := vars["user"]
-
-		g, errl := group.LoadGroup(api.mustDB(), name)
-		if errl != nil {
-			return sdk.WrapError(errl, "Cannot load group %s", name)
+			var adminFound bool
+			for i := range links {
+				if links[i].UserID != u.OldUserStruct.ID && links[i].Admin {
+					adminFound = true
+					break
+				}
+			}
+			if !adminFound {
+				return sdk.NewErrorFrom(sdk.ErrGroupNeedAdmin, "cannot remove the last admin of the group")
+			}
 		}
 
-		userID, errf := user.FindUserIDByName(api.mustDB(), userName)
-		if errf != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Unknown user %s: %s", userName, errf)
+		if err := group.DeleteLinkGroupUser(tx, link); err != nil {
+			return err
 		}
 
-		if err := group.RemoveUserGroupAdmin(api.mustDB(), g.ID, userID); err != nil {
-			return sdk.WrapError(err, "Cannot remove user group admin privilege")
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		return nil
+		// In case where the user remove himself from group, do not return it
+		if link.UserID == getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID {
+			return service.WriteJSON(w, nil, http.StatusOK)
+		}
+
+		// Load extra data for group
+		if err := group.LoadOptions.Default(ctx, api.mustDB(), g); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, g, http.StatusOK)
 	}
 }

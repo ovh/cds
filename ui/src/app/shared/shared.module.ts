@@ -6,6 +6,7 @@ import { NguiAutoCompleteModule } from '@ngui/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { SuiModule } from '@richardlt/ng2-semantic-ui';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
 import { GroupFormComponent } from 'app/shared/group/form/group.form.component';
 import { AutoFocusInputComponent } from 'app/shared/input/autofocus/autofocus.input.component';
@@ -37,6 +38,7 @@ import { FavoriteCardsComponent } from './favorite-cards/favorite-cards.componen
 import { KeysFormComponent } from './keys/form/keys.form.component';
 import { KeysListComponent } from './keys/list/keys.list.component';
 import { LabelsEditComponent } from './labels/edit/labels.edit.component';
+import { MenuComponent } from './menu/menu.component';
 import { ConfirmModalComponent } from './modal/confirm/confirm.component';
 import { DeleteModalComponent } from './modal/delete/delete.component';
 import { WarningModalComponent } from './modal/warning/warning.component';
@@ -62,7 +64,6 @@ import { StatusIconComponent } from './status/status.component';
 import { DataTableComponent, SelectorPipe, SelectPipe } from './table/data-table.component';
 import { TabsComponent } from './tabs/tabs.component';
 import { ToastService } from './toast/ToastService';
-import { TokenListComponent } from './token/list/token.list.component';
 import { UsageApplicationsComponent } from './usage/applications/usage.applications.component';
 import { UsageEnvironmentsComponent } from './usage/environments/usage.environments.component';
 import { UsagePipelinesComponent } from './usage/pipelines/usage.pipelines.component';
@@ -157,6 +158,7 @@ import { ZoneComponent } from './zone/zone.component';
         KeysListComponent,
         KeysPipe,
         LabelsEditComponent,
+        MenuComponent,
         NgForNumber,
         ParameterFormComponent,
         ParameterListComponent,
@@ -174,7 +176,6 @@ import { ZoneComponent } from './zone/zone.component';
         StageStepSummaryComponent,
         StatusIconComponent,
         TabsComponent,
-        TokenListComponent,
         TruncatePipe,
         UploadButtonComponent,
         UsageApplicationsComponent,
@@ -231,7 +232,8 @@ import { ZoneComponent } from './zone/zone.component';
         DurationService,
         PermissionService,
         SharedService,
-        ToastService
+        ToastService,
+        AuthenticationGuard
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA
@@ -263,7 +265,6 @@ import { ZoneComponent } from './zone/zone.component';
         MarkdownModule,
         MomentModule,
         NgForNumber,
-        TokenListComponent,
         NgSemanticModule,
         NgxAutoScroll,
         ConditionsComponent,
@@ -327,6 +328,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowTemplateBulkModalComponent,
         WorkflowTemplateParamFormComponent,
         TabsComponent,
+        MenuComponent,
         ScrollviewComponent,
         AutoFocusInputComponent
     ]

@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func publishBroadcastEvent(payload interface{}, key string, u *sdk.User) {
+func publishBroadcastEvent(payload interface{}, key string, u sdk.Identifiable) {
 	p := structs.Map(payload)
 
 	event := sdk.Event{
@@ -21,14 +21,14 @@ func publishBroadcastEvent(payload interface{}, key string, u *sdk.User) {
 		ProjectKey: key,
 	}
 	if u != nil {
-		event.Username = u.Username
-		event.UserMail = u.Email
+		event.Username = u.GetUsername()
+		event.UserMail = u.GetEmail()
 	}
 	publishEvent(event)
 }
 
 // PublishBroadcastAdd publish event when adding a broadcast
-func PublishBroadcastAdd(bc sdk.Broadcast, u *sdk.User) {
+func PublishBroadcastAdd(bc sdk.Broadcast, u sdk.Identifiable) {
 	e := sdk.EventBroadcastAdd{
 		Broadcast: bc,
 	}
@@ -36,7 +36,7 @@ func PublishBroadcastAdd(bc sdk.Broadcast, u *sdk.User) {
 }
 
 // PublishBroadcastUpdate publish event when updating a broadcast
-func PublishBroadcastUpdate(oldBc sdk.Broadcast, bc sdk.Broadcast, u *sdk.User) {
+func PublishBroadcastUpdate(oldBc sdk.Broadcast, bc sdk.Broadcast, u sdk.Identifiable) {
 	e := sdk.EventBroadcastUpdate{
 		NewBroadcast: bc,
 		OldBroadcast: oldBc,
@@ -45,7 +45,7 @@ func PublishBroadcastUpdate(oldBc sdk.Broadcast, bc sdk.Broadcast, u *sdk.User) 
 }
 
 // PublishBroadcastDelete publish event when deleting a broadcast
-func PublishBroadcastDelete(id int64, u *sdk.User) {
+func PublishBroadcastDelete(id int64, u sdk.Identifiable) {
 	e := sdk.EventBroadcastDelete{
 		BroadcastID: id,
 	}

@@ -1,0 +1,65 @@
+<ng-template let-context let-modal="modal" #consumerCreateModal>
+    <div class="header">
+        {{ 'auth_consumer_create_modal_title' | translate }}
+    </div>
+    <div class="content">
+        <div class="ui grid">
+            <div class="ui wide column">
+                <div class="ui form" *ngIf="!newConsumer.id">
+                    <div class="ui wide field">
+                        <div class="fields">
+                            <div class="eight wide field">
+                                <label>{{'common_name' | translate}}</label>
+                                <input class="ui input" type="text" name="name" [(ngModel)]="newConsumer.name">
+                            </div>
+                            <div class="eight wide field">
+                                <label>{{'common_description' | translate}}</label>
+                                <input class="ui input" type="text" name="group" [(ngModel)]="newConsumer.description">
+                            </div>
+                        </div>
+                        <div class="fields">
+                            <div class="eight wide field">
+                                <label>{{'user_auth_groups' | translate}}</label>
+                                <app-data-table [withSelect]="selectGroupFunc"
+                                    (selectChange)="selectGroupChange($event)" [withPagination]="5"
+                                    [columns]="columnsGroups" [data]="groups" [loading]="loadingGroups">
+                                </app-data-table>
+                            </div>
+                            <div class="eight wide field">
+                                <label>{{'user_auth_scopes' | translate}}</label>
+                                <app-data-table [withSelect]="selectScopeFunc"
+                                    (selectChange)="selectScopeChange($event)" [withPagination]="5"
+                                    [columns]="columnsScopes" [data]="scopes" [loading]="loadingScopes">
+                                </app-data-table>
+                            </div>
+                        </div>
+                        <div class="field inline">
+                            <div class="eight wide column centered">
+                                <button class="ui green button" [class.loading]="loading" (click)="clickSave()">
+                                    <i class="save icon"></i>{{ 'btn_create' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <ng-container *ngIf="newConsumer.id">
+                    <div class="ui info message">
+                        <p>{{ 'auth_message_copy_signin_token' | translate }}</p>
+                    </div>
+                    <form class="ui form">
+                        <div class="field">
+                            <label>Token</label>
+                            <div class="ui fluid action input">
+                                <input type="text" value="{{signinToken}}" [readonly]="true">
+                                <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
+                                    ngxClipboard [cbContent]="signinToken" (click)="confirmCopy()">
+                                    <i class="copy icon"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </ng-container>
+            </div>
+        </div>
+    </div>
+</ng-template>

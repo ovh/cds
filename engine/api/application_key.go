@@ -38,7 +38,6 @@ func (api *API) getKeysInApplicationHandler() service.Handler {
 
 func (api *API) deleteKeyInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := deprecatedGetUser(ctx)
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		appName := vars["applicationName"]
@@ -56,7 +55,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "v> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		var keyToDelete sdk.ApplicationKey
 		for _, k := range app.Keys {
@@ -75,7 +74,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
-		event.PublishApplicationKeyDelete(key, *app, keyToDelete, u)
+		event.PublishApplicationKeyDelete(key, *app, keyToDelete, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -133,7 +132,7 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "addKeyInApplicationHandler> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		if err := application.InsertKey(tx, &newKey); err != nil {
 			return sdk.WrapError(err, "Cannot insert application key")
@@ -143,7 +142,7 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishApplicationKeyAdd(key, *app, newKey, deprecatedGetUser(ctx))
+		event.PublishApplicationKeyAdd(key, *app, newKey, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

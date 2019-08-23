@@ -34,7 +34,7 @@ func InsertWithGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.
 }
 
 //UpdateGRPCPlugin creates action in database
-func UpdateGRPCPlugin(ctx context.Context, db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.Parameter, userID int64) (*sdk.Action, error) {
+func UpdateGRPCPlugin(ctx context.Context, db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.Parameter) (*sdk.Action, error) {
 	a := sdk.Action{
 		Name:        pl.Name,
 		Type:        sdk.PluginAction,

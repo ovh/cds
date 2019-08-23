@@ -53,7 +53,7 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 	//If the hook is on the root, it will trigger a new workflow run
 	//Else if will trigger a new subnumber of the last workflow run
 	if h.NodeID == wr.Workflow.WorkflowData.Node.ID {
-		if err := IsValid(ctx, store, db, &wr.Workflow, p, nil, LoadOptions{DeepPipeline: true}); err != nil {
+		if err := IsValid(ctx, store, db, &wr.Workflow, p, LoadOptions{DeepPipeline: true}); err != nil {
 			return nil, sdk.WrapError(err, "Unable to valid workflow")
 		}
 
@@ -68,7 +68,7 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 			return nil, sdk.WrapError(errWR, "RunFromHook> Unable to process workflow run")
 		}
 		if !hasRun {
-			wr.Status = sdk.StatusNeverBuilt.String()
+			wr.Status = sdk.StatusNeverBuilt
 			wr.LastExecution = time.Now()
 			report.Add(wr)
 			return report, sdk.WithStack(sdk.ErrConditionsNotOk)
@@ -93,7 +93,8 @@ func manualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	return report, nil
 }
 
-func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User, asCodeInfos []sdk.Message) (*ProcessorReport, error) {
+func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun,
+	opts *sdk.WorkflowRunPostHandlerOption, u *sdk.AuthConsumer, asCodeInfos []sdk.Message) (*ProcessorReport, error) {
 	ctx, end := observability.Span(ctx, "api.startWorkflowRun")
 	defer end()
 
@@ -101,7 +102,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 
 	tx, errb := db.Begin()
 	if errb != nil {
-		return nil, sdk.WrapError(errb, "Cannot start transaction")
+		return nil, sdk.WrapError(errb, "cannot start transaction")
 	}
 	defer tx.Rollback() // nolint
 
@@ -109,7 +110,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 		AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
 	}
 
-	wr.Status = sdk.StatusWaiting.String()
+	wr.Status = sdk.StatusWaiting
 	if err := UpdateWorkflowRun(ctx, tx, wr); err != nil {
 		return report, err
 	}
@@ -121,13 +122,14 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 			return nil, err
 		}
 		report.Merge(r1, nil) // nolint
-
 	} else {
 		// Manual RUN
 		if opts.Manual == nil {
 			opts.Manual = &sdk.WorkflowNodeRunManual{}
 		}
-		opts.Manual.User = *u
+		opts.Manual.Username = u.GetUsername()
+		opts.Manual.Email = u.GetEmail()
+		opts.Manual.Username = u.GetFullname()
 
 		if len(opts.FromNodeIDs) > 0 && len(wr.WorkflowNodeRuns) > 0 {
 			// MANUAL RUN FROM NODE
@@ -137,7 +139,8 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d", opts.FromNodeIDs[0])
 			}
 
-			if !permission.AccessToWorkflowNode(&wr.Workflow, fromNode, u, permission.PermissionReadExecute) {
+			// check permission fo workflow node on handler layer
+			if !permission.AccessToWorkflowNode(ctx, db, &wr.Workflow, fromNode, u, sdk.PermissionReadExecute) {
 				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on root node %d", wr.Workflow.WorkflowData.Node.ID)
 			}
 
@@ -147,10 +150,10 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 				return report, errmr
 			}
 			report.Merge(r1, nil) // nolint
-
 		} else {
+			// heck permission fo workflow node on handler layer
 			// MANUAL RUN FROM ROOT NODE
-			if !permission.AccessToWorkflowNode(&wr.Workflow, &wr.Workflow.WorkflowData.Node, u, permission.PermissionReadExecute) {
+			if !permission.AccessToWorkflowNode(ctx, db, &wr.Workflow, &wr.Workflow.WorkflowData.Node, u, sdk.PermissionReadExecute) {
 				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %d", wr.Workflow.WorkflowData.Node.ID)
 			}
 			// Start new workflow
@@ -159,13 +162,12 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 				return nil, errmr
 			}
 			report.Merge(r1, nil) // nolint
-
 		}
 	}
 
 	//Commit and return success
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "Unable to commit transaction")
+		return nil, sdk.WrapError(err, "unable to commit transaction")
 	}
 	return report, nil
 }
@@ -176,7 +178,7 @@ func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 	ctx, end := observability.Span(ctx, "workflow.ManualRun", observability.Tag(observability.TagWorkflowRun, wr.Number))
 	defer end()
 
-	if err := IsValid(ctx, store, db, &wr.Workflow, p, &e.User, LoadOptions{DeepPipeline: true}); err != nil {
+	if err := IsValid(ctx, store, db, &wr.Workflow, p, LoadOptions{DeepPipeline: true}); err != nil {
 		return nil, sdk.WrapError(err, "Unable to valid workflow")
 	}
 

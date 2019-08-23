@@ -12,7 +12,7 @@ import (
 )
 
 // Export an environment
-func Export(db gorp.SqlExecutor, cache cache.Store, key string, envName string, f exportentities.Format, u *sdk.User, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
+func Export(db gorp.SqlExecutor, cache cache.Store, key string, envName string, f exportentities.Format, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
 	// Load app
 	env, errload := LoadEnvironmentByName(db, key, envName)
 	if errload != nil {

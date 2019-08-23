@@ -106,11 +106,11 @@ func (b *bitbucketClient) ListStatuses(ctx context.Context, repo string, ref str
 func processBitbucketState(s Status) string {
 	switch s.State {
 	case successful:
-		return sdk.StatusSuccess.String()
+		return sdk.StatusSuccess
 	case failed:
-		return sdk.StatusFail.String()
+		return sdk.StatusFail
 	default:
-		return sdk.StatusBuilding.String()
+		return sdk.StatusDisabled
 	}
 }
 
@@ -147,13 +147,13 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 
 func getBitbucketStateFromStatus(status string) string {
 	switch status {
-	case sdk.StatusSuccess.String():
+	case sdk.StatusSuccess:
 		return successful
-	case sdk.StatusWaiting.String():
+	case sdk.StatusWaiting:
 		return inProgress
-	case sdk.StatusBuilding.String():
+	case sdk.StatusDisabled:
 		return inProgress
-	case sdk.StatusFail.String():
+	case sdk.StatusFail:
 		return failed
 	default:
 		return failed

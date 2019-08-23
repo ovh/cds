@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http/httptest"
@@ -21,8 +22,8 @@ func Test_postTemplateApplyHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(api.mustDB())
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	_, jwt := assets.InsertAdminUser(t, api.mustDB())
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	assert.NoError(t, err)
 
 	name := sdk.RandomString(10)
@@ -55,11 +56,11 @@ jobs:
 	}
 	assert.NoError(t, workflowtemplate.Insert(db, template))
 
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
 	// prepare the request
 	uri := api.Router.GetRoute("POST", api.postTemplateApplyHandler, map[string]string{
-		"groupName":        g.Name,
+		"permGroupName":    g.Name,
 		"permTemplateSlug": template.Slug,
 	})
 	test.NotEmpty(t, uri)
@@ -68,7 +69,7 @@ jobs:
 		ProjectKey:   proj.Key,
 		WorkflowName: sdk.RandomString(10),
 	}
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri+"?import=true", wtr)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri+"?import=true", wtr)
 
 	// execute the request
 	rec := httptest.NewRecorder()
@@ -88,8 +89,8 @@ func Test_postTemplateBulkHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(api.mustDB())
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	_, jwt := assets.InsertAdminUser(t, api.mustDB())
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	assert.NoError(t, err)
 
 	name := sdk.RandomString(10)
@@ -122,11 +123,11 @@ jobs:
 	}
 	assert.NoError(t, workflowtemplate.Insert(db, template))
 
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
 	// prepare the request
 	uri := api.Router.GetRoute("POST", api.postTemplateBulkHandler, map[string]string{
-		"groupName":        g.Name,
+		"permGroupName":    g.Name,
 		"permTemplateSlug": template.Slug,
 	})
 	test.NotEmpty(t, uri)
@@ -144,7 +145,7 @@ jobs:
 			},
 		}},
 	}
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, wtb)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, wtb)
 
 	// execute the request
 	rec := httptest.NewRecorder()

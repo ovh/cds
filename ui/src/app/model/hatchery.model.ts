@@ -1,5 +1,6 @@
-import {Requirement} from './requirement.model';
-import {User} from './user.model';
+import { Requirement } from './requirement.model';
+import { User } from './user.model';
+
 export class Hatchery {
     id: number;
     uid: string;

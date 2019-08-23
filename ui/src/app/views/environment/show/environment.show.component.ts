@@ -6,13 +6,13 @@ import { Environment } from 'app/model/environment.model';
 import { PermissionValue } from 'app/model/permission.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { User } from 'app/model/user.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
-import { AuthentificationStore } from 'app/service/auth/authentification.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
+import { AuthenticationState } from 'app/store/authentication.state';
 import * as projectActions from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { cloneDeep } from 'lodash-es';
@@ -57,20 +57,19 @@ export class EnvironmentShowComponent implements OnInit {
     pipelines: Array<Pipeline> = new Array<Pipeline>();
     workflows: Array<Workflow> = new Array<Workflow>();
     environments: Array<Environment> = new Array<Environment>();
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     usageCount = 0;
     perm = PermissionValue;
 
     constructor(
         private _route: ActivatedRoute,
         private _router: Router,
-        private _authStore: AuthentificationStore,
         private _toast: ToastService,
         public _translate: TranslateService,
         private store: Store,
         private _cd: ChangeDetectorRef
     ) {
-        this.currentUser = this._authStore.getUser();
+        this.currentUser = this.store.selectSnapshot(AuthenticationState.user);
         // Update data if route change
         this._routeDataSub = this._route.data.subscribe(datas => {
             this.project = datas['project'];

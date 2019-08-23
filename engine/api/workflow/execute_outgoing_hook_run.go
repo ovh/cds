@@ -132,7 +132,7 @@ func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 		return sdk.WrapError(err, "Unable to commit transaction")
 	}
 
-	go SendEvent(dbFunc(), parentProj.Key, report)
+	go SendEvent(context.Background(), dbFunc(), parentProj.Key, report)
 
 	return nil
 }

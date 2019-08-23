@@ -21,7 +21,6 @@ type Application struct {
 	ProjectID            int64                        `json:"-" db:"project_id"`
 	ProjectKey           string                       `json:"project_key" db:"-" cli:"project_key"`
 	Variable             []Variable                   `json:"variables,omitempty" db:"-"`
-	Permission           int                          `json:"permission" db:"-"`
 	Notifications        []UserNotification           `json:"notifications,omitempty" db:"-"`
 	LastModified         time.Time                    `json:"last_modified" db:"last_modified" mapstructure:"-"`
 	VCSServer            string                       `json:"vcs_server,omitempty" db:"vcs_server"`

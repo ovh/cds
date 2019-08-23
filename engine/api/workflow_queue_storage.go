@@ -20,6 +20,10 @@ import (
 
 func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
+		}
+
 		vars := mux.Vars(r)
 		name := vars["name"]
 
@@ -118,6 +122,10 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 
 func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
+		}
+
 		vars := mux.Vars(r)
 		ref := vars["ref"]
 
@@ -244,6 +252,10 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 
 func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
+		}
+
 		vars := mux.Vars(r)
 
 		storageDriver, err := api.getStorageDriver(vars["permProjectKey"], vars["integrationName"])
@@ -292,6 +304,10 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if _, isWorker := api.isWorker(ctx); !isWorker {
+			return sdk.ErrForbidden
+		}
+
 		vars := mux.Vars(r)
 		ref := vars["ref"]
 

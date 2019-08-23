@@ -8,39 +8,26 @@ import (
 
 // Worker represents instances of CDS workers living to serve.
 type Worker struct {
-	ID            string    `json:"id" cli:"-"`
-	Name          string    `json:"name" cli:"name,key"`
-	LastBeat      time.Time `json:"lastbeat" cli:"lastbeat"`
-	GroupID       int64     `json:"group_id" cli:"-"`
-	ModelID       int64     `json:"model_id" cli:"-"`
-	ActionBuildID int64     `json:"action_build_id" cli:"-"`
-	Model         *Model    `json:"model" cli:"-"`
-	HatcheryName  string    `json:"hatchery_name" cli:"-"`
-	JobType       string    `json:"job_type" cli:"-"`    // sdk.JobType...
-	Status        Status    `json:"status" cli:"status"` // Waiting, Building, Disabled, Unknown
-	Uptodate      bool      `json:"up_to_date" cli:"-"`
+	ID         string    `json:"id" cli:"-" db:"id"`
+	Name       string    `json:"name" cli:"name,key" db:"name"`
+	LastBeat   time.Time `json:"lastbeat" cli:"lastbeat" db:"last_beat"`
+	ModelID    *int64    `json:"model_id" cli:"-"  db:"model_id"`
+	JobRunID   *int64    `json:"job_run_id" cli:"-"  db:"job_run_id"`
+	Status     string    `json:"status" cli:"status" db:"status"` // Waiting, Building, Disabled, Unknown
+	HatcheryID int64     `json:"hatchery_id" cli:"-" db:"hatchery_id"`
+	Uptodate   bool      `json:"uptodate" cli:"-" db:"-"`
+	ConsumerID string    `json:"-" cli:"-"  db:"auth_consumer_id"`
+	Version    string    `json:"version" cli:"version"  db:"version"`
+	OS         string    `json:"os" cli:"os"  db:"os"`
+	Arch       string    `json:"arch" cli:"arch"  db:"arch"`
 }
 
 // WorkerRegistrationForm represents the arguments needed to register a worker
 type WorkerRegistrationForm struct {
-	RegistrationOnly   bool
-	Name               string
-	Token              string
-	ModelID            int64
-	HatcheryName       string
 	BinaryCapabilities []string
 	Version            string
 	OS                 string
 	Arch               string
-}
-
-// WorkerTakeForm contains booked JobID if exists
-type WorkerTakeForm struct {
-	BookedJobID int64
-	Time        time.Time
-	OS          string
-	Arch        string
-	Version     string
 }
 
 // SpawnErrorForm represents the arguments needed to add error registration on worker model
@@ -56,7 +43,7 @@ type WorkerArgs struct {
 	Name            string `json:"name"`
 	BaseDir         string `json:"base_dir"`
 	HTTPInsecure    bool   `json:"http_insecure"`
-	Model           int64  `json:"model"`
+	Model           string `json:"model"`
 	HatcheryName    string `json:"hatchery_name"`
 	WorkflowJobID   int64  `json:"workflow_job_id"`
 	TTL             int    `json:"ttl"`
@@ -66,9 +53,6 @@ type WorkerArgs struct {
 	GraylogPort       int    `json:"graylog_port"`
 	GraylogExtraKey   string `json:"graylog_extra_key"`
 	GraylogExtraValue string `json:"graylog_extra_value"`
-	//GRPC Params
-	GrpcAPI      string `json:"grpc_api"`
-	GrpcInsecure bool   `json:"grpc_insecure"`
 }
 
 // TemplateEnvs return envs interpolated with worker arguments

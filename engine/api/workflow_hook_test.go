@@ -1,12 +1,14 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
@@ -24,10 +26,14 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	db := api.mustDB()
 	cache := api.Cache
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	u, passUser := assets.InsertLambdaUser(api.mustDB())
+	u, passUser := assets.InsertLambdaUser(t, api.mustDB())
 
-	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10), u)
-	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.ID, true))
+	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
+	require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -35,11 +41,14 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		Name:       sdk.RandomString(10),
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
-	loadUserPermissions(db, cache, u)
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications,
-		project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID,
+		project.LoadOptions.WithApplications,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithEnvironments,
+		project.LoadOptions.WithGroups,
+	)
 
 	w := sdk.Workflow{
 		Name:       sdk.RandomString(10),
@@ -56,7 +65,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	//Prepare request
 	vars := map[string]string{}
@@ -85,9 +94,9 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	db := api.mustDB()
 	cache := api.Cache
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	admin, passAdmin := assets.InsertAdminUser(api.mustDB())
+	admin, passAdmin := assets.InsertAdminUser(t, api.mustDB())
 
-	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10), admin)
+	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -95,7 +104,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		Name:       sdk.RandomString(10),
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, admin))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	app := sdk.Application{
 		Name:               sdk.RandomString(10),
@@ -103,9 +112,9 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		ProjectID:          proj.ID,
 		RepositoryFullname: "ovh/cds",
 	}
-	test.NoError(t, application.Insert(db, cache, proj, &app, admin))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, admin, project.LoadOptions.WithApplications,
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications,
 		project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
@@ -124,7 +133,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, admin))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	//Prepare request
 	vars := map[string]string{}
@@ -151,7 +160,7 @@ func Test_getWorkflowHookModelHandler(t *testing.T) {
 	api, _, _, end := newTestAPI(t)
 	defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	admin, passAdmin := assets.InsertAdminUser(api.mustDB())
+	admin, passAdmin := assets.InsertAdminUser(t, api.mustDB())
 
 	//Prepare request
 	vars := map[string]string{
@@ -179,7 +188,7 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 	api, _, _, end := newTestAPI(t)
 	defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	admin, passAdmin := assets.InsertAdminUser(api.mustDB())
+	admin, passAdmin := assets.InsertAdminUser(t, api.mustDB())
 
 	//Prepare request
 	vars := map[string]string{
@@ -222,7 +231,7 @@ func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
 	defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
-	u, pass := assets.InsertLambdaUser(api.mustDB())
+	u, pass := assets.InsertLambdaUser(t, api.mustDB())
 
 	//Prepare request
 	vars := map[string]string{

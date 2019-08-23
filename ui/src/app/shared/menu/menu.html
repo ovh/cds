@@ -1,0 +1,5 @@
+<div class="ui pointing menu" [class.vertical]="orientation === Orientation.VERTICAL">
+    <a *ngFor="let i of items" class="item" [class.active]="selected.key === i.key" (click)="clickSelect(i)">
+        {{i.translate | translate}}
+    </a>
+</div>

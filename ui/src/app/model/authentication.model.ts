@@ -1,0 +1,77 @@
+import { WithKey } from 'app/shared/table/data-table.component';
+import { Group } from './group.model';
+import { AuthentifiedUser } from './user.model';
+
+export class AuthScope implements WithKey {
+    value: string;
+
+    constructor(value: string) {
+        this.value = value;
+    }
+
+    key(): string {
+        return this.value;
+    }
+};
+
+export class AuthDriverManifests {
+    is_first_connection: boolean;
+    manifests: Array<AuthDriverManifest>;
+}
+
+export class AuthDriverSigningRedirect {
+    method: string;
+    url: string;
+    body: any;
+    content_type: string;
+}
+
+export class AuthDriverManifest {
+    type: string;
+    signup_disabled: boolean;
+
+    // ui fields
+    icon: string;
+}
+
+export class AuthConsumerSigninResponse {
+    token: string;
+    user: AuthentifiedUser;
+}
+
+export class AuthConsumerCreateResponse {
+    token: string;
+    consumer: AuthConsumer;
+}
+
+export class AuthConsumer {
+    id: string;
+    name: string;
+    description: string;
+    parent_id: string;
+    authentified_user_id: string;
+    type: string;
+    created: string;
+    group_ids: Array<number>;
+    scopes: Array<string>;
+    groups: Array<Group>;
+
+    // UI fields
+    parent: AuthConsumer;
+    children: Array<AuthConsumer>;
+    sessions: Array<AuthSession>;
+}
+
+export class AuthSession {
+    id: string;
+    consumer_id: string;
+    expire_at: string;
+    created: string;
+    group_ids: Array<number>;
+    scopes: Array<string>;
+    current: boolean;
+
+    // UI fields
+    consumer: AuthConsumer;
+}
+

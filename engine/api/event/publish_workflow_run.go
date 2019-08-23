@@ -1,6 +1,7 @@
 package event
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -54,9 +55,9 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 }
 
 // PublishWorkflowNodeRun publish event on a workflow node run
-func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.Workflow, previousWR *sdk.WorkflowNodeRun) {
+func PublishWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.Workflow, previousWR *sdk.WorkflowNodeRun) {
 	// get and send all user notifications
-	for _, event := range notification.GetUserWorkflowEvents(db, w, previousWR, nr) {
+	for _, event := range notification.GetUserWorkflowEvents(ctx, db, w, previousWR, nr) {
 		Publish(event, nil)
 	}
 
@@ -112,23 +113,23 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 
 	// Try to get gerrit variable
 	var project, changeID, branch, revision, url string
-	projectParam := sdk.ParameterFind(&nr.BuildParameters, "git.repository")
+	projectParam := sdk.ParameterFind(nr.BuildParameters, "git.repository")
 	if projectParam != nil {
 		project = projectParam.Value
 	}
-	changeIDParam := sdk.ParameterFind(&nr.BuildParameters, "gerrit.change.id")
+	changeIDParam := sdk.ParameterFind(nr.BuildParameters, "gerrit.change.id")
 	if changeIDParam != nil {
 		changeID = changeIDParam.Value
 	}
-	branchParam := sdk.ParameterFind(&nr.BuildParameters, "gerrit.change.branch")
+	branchParam := sdk.ParameterFind(nr.BuildParameters, "gerrit.change.branch")
 	if branchParam != nil {
 		branch = branchParam.Value
 	}
-	revisionParams := sdk.ParameterFind(&nr.BuildParameters, "git.hash")
+	revisionParams := sdk.ParameterFind(nr.BuildParameters, "git.hash")
 	if revisionParams != nil {
 		revision = revisionParams.Value
 	}
-	urlParams := sdk.ParameterFind(&nr.BuildParameters, "cds.ui.pipeline.run")
+	urlParams := sdk.ParameterFind(nr.BuildParameters, "cds.ui.pipeline.run")
 	if urlParams != nil {
 		url = urlParams.Value
 	}

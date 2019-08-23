@@ -10,6 +10,7 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
@@ -26,8 +27,8 @@ func Test_postWorkflowImportHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -35,7 +36,7 @@ func Test_postWorkflowImportHandler(t *testing.T) {
 		Name:       "pip1",
 	}
 	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
 
 	//Prepare request
 	vars := map[string]string{
@@ -69,7 +70,7 @@ metadata:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	w, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	w, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.NotNil(t, w)
@@ -90,8 +91,8 @@ func Test_postWorkflowImportHandlerWithExistingIcon(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -99,7 +100,7 @@ func Test_postWorkflowImportHandlerWithExistingIcon(t *testing.T) {
 		Name:       "pip1",
 	}
 	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
 
 	//Prepare request
 	vars := map[string]string{
@@ -133,7 +134,7 @@ metadata:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	w, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	w, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.NotNil(t, w)
@@ -151,9 +152,9 @@ metadata:
 
 	w.Icon = "data:image/png;base64,example"
 
-	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, w, proj, u, workflow.UpdateOptions{}))
+	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, w, proj, workflow.UpdateOptions{}))
 
-	wfLoaded, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", u, workflow.LoadOptions{WithIcon: true})
+	wfLoaded, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", workflow.LoadOptions{WithIcon: true})
 	test.NoError(t, err)
 	test.NotEmpty(t, wfLoaded.Icon, "Workflow icon must be the same as before")
 }
@@ -162,8 +163,8 @@ func Test_putWorkflowImportHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	pip := &sdk.Pipeline{
@@ -172,7 +173,7 @@ func Test_putWorkflowImportHandler(t *testing.T) {
 		Name:       "pip1",
 	}
 	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
 
 	// create the workflow
 	uri := api.Router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
@@ -226,8 +227,8 @@ func Test_putWorkflowImportHandlerWithJoinAndCondition(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	pip := &sdk.Pipeline{
@@ -235,7 +236,7 @@ func Test_putWorkflowImportHandlerWithJoinAndCondition(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
 
 	// create the workflow
 	uri := api.Router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
@@ -353,8 +354,8 @@ func Test_putWorkflowImportHandlerWithJoinWithOrWithoutCondition(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	pip := &sdk.Pipeline{
@@ -362,7 +363,7 @@ func Test_putWorkflowImportHandlerWithJoinWithOrWithoutCondition(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
 
 	// create the workflow
 	uri := api.Router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
@@ -486,8 +487,8 @@ func Test_putWorkflowImportHandlerWithJoinWithoutCondition(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	pip := &sdk.Pipeline{
@@ -495,7 +496,7 @@ func Test_putWorkflowImportHandlerWithJoinWithoutCondition(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
 
 	// create the workflow
 	uri := api.Router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
@@ -624,11 +625,15 @@ metadata:
 func Test_getWorkflowPushHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
-	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
+	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
+	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -636,7 +641,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
 
@@ -662,7 +667,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -672,7 +677,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Type:  sdk.StringVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, &v1, u))
+	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, v1, u))
 
 	v2 := sdk.Variable{
 		Name:  "var2",
@@ -680,7 +685,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Type:  sdk.SecretVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, &v2, u))
+	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, v2, u))
 
 	//Insert ssh and gpg keys
 	k := &sdk.ApplicationKey{
@@ -741,10 +746,10 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{DeepPipeline: true})
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{DeepPipeline: true})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -790,8 +795,8 @@ func Test_putWorkflowImportHandlerMustNotHave2Joins(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	pip := &sdk.Pipeline{
@@ -799,7 +804,7 @@ func Test_putWorkflowImportHandlerMustNotHave2Joins(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
 
 	// create the workflow
 	uri := api.Router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
@@ -910,9 +915,9 @@ metadata:
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	p, errP := project.Load(db, api.Cache, proj.Key, u)
+	p, errP := project.Load(db, api.Cache, proj.Key)
 	assert.NoError(t, errP)
-	wUpdated, err := workflow.Load(context.TODO(), db, api.Cache, p, "test_1", u, workflow.LoadOptions{})
+	wUpdated, err := workflow.Load(context.TODO(), db, api.Cache, p, "test_1", workflow.LoadOptions{})
 	assert.NoError(t, err)
 
 	t.Logf("%+v", wUpdated.WorkflowData)

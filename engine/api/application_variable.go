@@ -109,7 +109,7 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		// Clear password for audit
 		varToDelete, errV := application.LoadVariable(api.mustDB(), app.ID, varName, application.WithClearPassword())
@@ -117,7 +117,7 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 			return sdk.WrapError(errV, "deleteVariableFromApplicationHandler> Cannot load variable %s", varName)
 		}
 
-		if err := application.DeleteVariable(tx, api.Cache, app, varToDelete, deprecatedGetUser(ctx)); err != nil {
+		if err := application.DeleteVariable(tx, api.Cache, app, varToDelete, getAPIConsumer(ctx)); err != nil {
 			log.Warning("deleteVariableFromApplicationHandler: Cannot delete %s: %s\n", varName, err)
 			return sdk.WrapError(err, "Cannot delete %s", varName)
 		}
@@ -126,7 +126,7 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteVariableApplication(key, *app, *varToDelete, deprecatedGetUser(ctx))
+		event.PublishDeleteVariableApplication(key, *app, *varToDelete, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -164,9 +164,9 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot create transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		if err := application.UpdateVariable(tx, api.Cache, app, &newVar, variableBefore, deprecatedGetUser(ctx)); err != nil {
+		if err := application.UpdateVariable(tx, api.Cache, app, &newVar, variableBefore, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot update variable %s for application %s", varName, appName)
 		}
 
@@ -174,7 +174,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishUpdateVariableApplication(key, *app, newVar, *variableBefore, deprecatedGetUser(ctx))
+		event.PublishUpdateVariableApplication(key, *app, newVar, *variableBefore, getAPIConsumer(ctx))
 
 		if sdk.NeedPlaceholder(newVar.Type) {
 			newVar.Value = sdk.PasswordPlaceholder
@@ -212,14 +212,14 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		switch newVar.Type {
 		case sdk.KeyVariable:
-			err = application.AddKeyPairToApplication(tx, api.Cache, app, newVar.Name, deprecatedGetUser(ctx))
+			err = application.AddKeyPairToApplication_DEPRECATED(tx, api.Cache, app, newVar.Name, getAPIConsumer(ctx))
 			break
 		default:
-			err = application.InsertVariable(tx, api.Cache, app, &newVar, deprecatedGetUser(ctx))
+			err = application.InsertVariable(tx, api.Cache, app, newVar, getAPIConsumer(ctx))
 			break
 		}
 		if err != nil {
@@ -230,7 +230,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishAddVariableApplication(key, *app, newVar, deprecatedGetUser(ctx))
+		event.PublishAddVariableApplication(key, *app, newVar, getAPIConsumer(ctx))
 
 		if sdk.NeedPlaceholder(newVar.Type) {
 			newVar.Value = sdk.PasswordPlaceholder

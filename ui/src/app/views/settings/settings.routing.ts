@@ -1,6 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { CanActivateAuthRoute } from '../../service/auth/authenRouteActivate';
+import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { ActionAddComponent } from './action/add/action.add.component';
 import { ActionEditComponent } from './action/edit/action.edit.component';
 import { ActionListComponent } from './action/list/action.list.component';
@@ -24,8 +24,8 @@ const routes: Routes = [
     {
         path: '',
         component: SettingsComponent,
-        canActivateChild: [CanActivateAuthRoute],
-        canActivate: [CanActivateAuthRoute],
+        canActivateChild: [AuthenticationGuard],
+        canActivate: [AuthenticationGuard],
         children: [
             { path: 'profile/:username', component: UserEditComponent, data: { title: 'Profile' } },
             { path: 'cdsctl', component: CdsctlComponent, data: { title: 'Cdsctl' } },

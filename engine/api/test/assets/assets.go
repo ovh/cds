@@ -3,7 +3,7 @@ package assets
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,40 +15,61 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
+	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/workermodel"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/jws"
+	"github.com/ovh/cds/sdk/log"
 )
 
-// InsertTestProject create a test project
-func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, name string, u *sdk.User) *sdk.Project {
-	proj := sdk.Project{
-		Key:  key,
-		Name: name,
+// InsertTestProject create a test project.
+func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, name string) *sdk.Project {
+	oldProj, _ := project.Load(db, store, key,
+		project.LoadOptions.WithApplications,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithWorkflows,
+	)
+	if oldProj != nil {
+		for _, w := range oldProj.Workflows {
+			require.NoError(t, workflow.Delete(context.TODO(), db, store, oldProj, &w))
+		}
+		for _, app := range oldProj.Applications {
+			require.NoError(t, application.DeleteApplication(db, app.ID))
+		}
+		for _, pip := range oldProj.Pipelines {
+			require.NoError(t, pipeline.DeletePipeline(context.TODO(), db, pip.ID))
+		}
+		require.NoError(t, project.Delete(db, store, key))
 	}
+
+	proj := sdk.Project{Key: key, Name: name}
 
 	g := InsertTestGroup(t, db, name+"-group")
 
-	if err := project.Insert(db, store, &proj, u); err != nil {
-		t.Fatalf("Cannot insert project : %s", err)
-		return nil
-	}
+	require.NoError(t, project.Insert(db, store, &proj))
 
-	if err := group.InsertGroupInProject(db, proj.ID, g.ID, permission.PermissionReadWriteExecute); err != nil {
-		t.Fatalf("Cannot insert permission : %s", err)
-		return nil
-	}
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   g.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}))
 
-	if err := group.LoadGroupByProject(db, &proj); err != nil {
-		t.Fatalf("Cannot load permission : %s", err)
-		return nil
-	}
+	require.NoError(t, group.LoadGroupByProject(db, &proj))
 
 	return &proj
 }
@@ -60,95 +81,183 @@ func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, store cache.Store, key
 }
 
 // InsertTestGroup create a test group
-func InsertTestGroup(t *testing.T, db *gorp.DbMap, name string) *sdk.Group {
+func InsertTestGroup(t *testing.T, db gorp.SqlExecutor, name string) *sdk.Group {
 	g := sdk.Group{
 		Name: name,
 	}
 
-	eg, _ := group.LoadGroup(db, g.Name)
+	eg, _ := group.LoadByName(context.TODO(), db, g.Name)
 	if eg != nil {
 		g = *eg
-	} else if err := group.InsertGroup(db, &g); err != nil {
-		t.Fatalf("Cannot insert group : %s", err)
+	} else if err := group.Insert(db, &g); err != nil {
+		t.Fatalf("cannot insert group: %s", err)
 		return nil
 	}
 
 	return &g
 }
 
+// SetUserGroupAdmin allows a user to perform operations on given group
+func SetUserGroupAdmin(t *testing.T, db gorp.SqlExecutor, groupID int64, userID int64) {
+	l, err := group.LoadLinkGroupUserForGroupIDAndUserID(context.TODO(), db, groupID, userID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		t.Fatalf("cannot load link between group %d and user %d", groupID, userID)
+		return
+	}
+	if l == nil {
+		t.Fatalf("given user %d is not member of group %d", userID, groupID)
+		return
+	}
+
+	if l.Admin {
+		return
+	}
+	l.Admin = true
+
+	if err := group.UpdateLinkGroupUser(db, l); err != nil {
+		t.Fatalf("cannot set user %d group admin of %d", userID, groupID)
+		return
+	}
+}
+
 // DeleteTestGroup delete a test group.
 func DeleteTestGroup(t *testing.T, db gorp.SqlExecutor, g *sdk.Group) error {
 	t.Logf("Delete Group %s", g.Name)
-	return group.DeleteGroupAndDependencies(db, g)
+	return group.Delete(context.TODO(), db, g)
 }
 
-// InsertAdminUser have to be used only for tests
-func InsertAdminUser(db *gorp.DbMap) (*sdk.User, string) {
-	s := sdk.RandomString(10)
-	_, hash, _ := user.GeneratePassword()
-	u := &sdk.User{
-		Admin:    true,
-		Email:    "no-reply-" + s + "@corp.ovh.com",
-		Username: s,
-		Origin:   "local",
-		Fullname: "Test " + s,
-		Auth: sdk.Auth{
-			EmailVerified:  true,
-			HashedPassword: hash,
-		},
+// InsertAdminUser have to be used only for tests.
+func InsertAdminUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
+	data := sdk.AuthentifiedUser{
+		Username: sdk.RandomString(10),
+		Fullname: sdk.RandomString(10),
+		Ring:     sdk.UserRingAdmin,
 	}
-	user.InsertUser(db, u, &u.Auth)
+	require.NoError(t, user.Insert(db, &data), "unable to insert user")
 
-	t, _ := user.NewPersistentSession(db, u)
-	return u, string(t)
+	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
+	require.NoError(t, err, "user cannot be load for id %s", data.ID)
+
+	consumer, err := local.NewConsumer(db, u.ID)
+	require.NoError(t, err, "cannot create auth consumer")
+
+	session, err := authentication.NewSession(db, consumer, 5*time.Minute, false)
+	require.NoError(t, err, "cannot create auth session")
+
+	jwt, err := authentication.NewSessionJWT(session)
+	require.NoError(t, err, "cannot create jwt")
+
+	return u, jwt
 }
 
-// InsertLambdaUser have to be used only for tests
-func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.User, string) {
-	s := sdk.RandomString(10)
-	_, hash, _ := user.GeneratePassword()
-	u := &sdk.User{
-		Admin:    false,
-		Email:    "no-reply-" + s + "@corp.ovh.com",
-		Username: s,
-		Origin:   "local",
-		Fullname: "Test " + s,
-		Auth: sdk.Auth{
-			EmailVerified:  true,
-			HashedPassword: hash,
-		},
+// DeleteAdmins delete all cds admins from database.
+func DeleteAdmins(t *testing.T, db gorp.SqlExecutor) {
+	us, err := user.LoadAllByRing(context.TODO(), db, sdk.UserRingAdmin)
+	require.NoError(t, err)
+	for i := range us {
+		require.NoError(t, user.DeleteByID(db, us[i].ID))
 	}
-	user.InsertUser(db, u, &u.Auth)
-	for _, g := range groups {
-		group.InsertGroup(db, g)
-		group.InsertUserInGroup(db, g.ID, u.ID, false)
-		u.Groups = append(u.Groups, *g)
+}
+
+// InsertMaintainerUser have to be used only for tests.
+func InsertMaintainerUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
+	data := sdk.AuthentifiedUser{
+		Username: sdk.RandomString(10),
+		Fullname: sdk.RandomString(10),
+		Ring:     sdk.UserRingMaintainer,
+	}
+	require.NoError(t, user.Insert(db, &data), "unable to insert user")
+
+	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
+	require.NoErrorf(t, err, "user cannot be load for id %s", data.ID)
+
+	consumer, err := local.NewConsumer(db, u.ID)
+	require.NoError(t, err, "cannot create auth consumer")
+
+	session, err := authentication.NewSession(db, consumer, 5*time.Minute, false)
+	require.NoError(t, err, "cannot create auth session")
+
+	jwt, err := authentication.NewSessionJWT(session)
+	require.NoError(t, err, "cannot create jwt")
+
+	return u, jwt
+}
+
+// InsertLambdaUser have to be used only for tests.
+func InsertLambdaUser(t *testing.T, db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.AuthentifiedUser, string) {
+	u := &sdk.AuthentifiedUser{
+		Username: sdk.RandomString(10),
+		Fullname: sdk.RandomString(10),
+		Ring:     sdk.UserRingUser,
+	}
+	require.NoError(t, user.Insert(db, u))
+
+	u, err := user.LoadByID(context.Background(), db, u.ID, user.LoadOptions.WithDeprecatedUser)
+	require.NoError(t, err)
+
+	for i := range groups {
+		existingGroup, _ := group.LoadByName(context.TODO(), db, groups[i].Name)
+		if existingGroup == nil {
+			err := group.Create(db, groups[i], u.OldUserStruct.ID)
+			require.NoError(t, err)
+		} else {
+			require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
+				GroupID: groups[i].ID,
+				UserID:  u.OldUserStruct.ID,
+				Admin:   false,
+			}), "unable to insert user in group")
+		}
+		u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, *groups[i])
 	}
 
-	t, _ := user.NewPersistentSession(db, u)
-	return u, string(t)
+	btes, err := json.Marshal(u)
+	require.NoError(t, err)
+	log.Debug("lambda user: %s", string(btes))
+
+	consumer, err := local.NewConsumer(db, u.ID)
+	require.NoError(t, err, "cannot create auth consumer")
+
+	session, err := authentication.NewSession(db, consumer, 5*time.Minute, false)
+	require.NoError(t, err, "cannot create session")
+
+	jwt, err := authentication.NewSessionJWT(session)
+	require.NoError(t, err, "cannot create jwt")
+
+	return u, jwt
 }
 
-// AuthentifyRequestFromWorker have to be used only for tests
-func AuthentifyRequestFromWorker(t *testing.T, req *http.Request, w *sdk.Worker) {
-	req.Header.Set("User-Agent", string(sdk.WorkerAgent))
-	req.Header.Add(sdk.AuthHeader, base64.StdEncoding.EncodeToString([]byte(w.ID)))
+// AuthentifyRequest  have to be used only for tests
+func AuthentifyRequest(t *testing.T, req *http.Request, _ *sdk.AuthentifiedUser, jwt string) {
+	auth := "Bearer " + jwt
+	req.Header.Add("Authorization", auth)
 }
 
-// AuthentifyRequestFromService have to be used only for tests
-func AuthentifyRequestFromService(t *testing.T, req *http.Request, hash string) {
-	req.Header.Add("User-Agent", string(sdk.ServiceAgent))
-	req.Header.Add(sdk.AuthHeader, base64.StdEncoding.EncodeToString([]byte(hash)))
+//NewAuthentifiedRequest prepare a request
+func NewAuthentifiedRequest(t *testing.T, _ *sdk.AuthentifiedUser, pass, method, uri string, i interface{}) *http.Request {
+	var btes []byte
+	var err error
+	if i != nil {
+		btes, err = json.Marshal(i)
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+	}
+
+	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	AuthentifyRequest(t, req, nil, pass)
+	date := sdk.FormatDateRFC5322(time.Now())
+	req.Header.Set("Date", date)
+	req.Header.Set("X-CDS-RemoteTime", date)
+
+	return req
 }
 
-// AuthentifyRequestFromProvider have to be used only for tests
-func AuthentifyRequestFromProvider(t *testing.T, req *http.Request, name, token string) {
-	req.Header.Add("X-Provider-Name", name)
-	req.Header.Add("X-Provider-Token", token)
-}
-
-// NewAuthentifiedRequestFromWorker prepare a request
-func NewAuthentifiedRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri string, i interface{}) *http.Request {
+func NewRequest(t *testing.T, method, uri string, i interface{}) *http.Request {
 	var btes []byte
 	var err error
 	if i != nil {
@@ -165,36 +274,56 @@ func NewAuthentifiedRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri s
 		t.FailNow()
 	}
 
-	AuthentifyRequestFromWorker(t, req, w)
+	date := sdk.FormatDateRFC5322(time.Now())
+	req.Header.Set("Date", date)
+	req.Header.Set("X-CDS-RemoteTime", date)
 
 	return req
 }
 
-// NewAuthentifiedRequestFromProvider prepare a request
-func NewAuthentifiedRequestFromProvider(t *testing.T, name, token, method, uri string, i interface{}) *http.Request {
-	var btes []byte
-	var err error
-	if i != nil {
-		btes, err = json.Marshal(i)
-		if err != nil {
-			t.Error(err)
-			t.FailNow()
-		}
+// NewJWTAuthentifiedRequest prepare a request
+func NewJWTAuthentifiedRequest(t *testing.T, jwt string, method, uri string, i interface{}) *http.Request {
+	req := NewRequest(t, method, uri, i)
+
+	auth := "Bearer " + jwt
+	req.Header.Add("Authorization", auth)
+
+	return req
+}
+
+// NewXSRFJWTAuthentifiedRequest prepare a request
+func NewXSRFJWTAuthentifiedRequest(t *testing.T, jwt, xsrf string, method, uri string, i interface{}) *http.Request {
+	req := NewRequest(t, method, uri, i)
+
+	req.Header.Add("X-XSRF-TOKEN", xsrf)
+	c := http.Cookie{
+		Name:  "jwt_token",
+		Value: jwt,
 	}
 
-	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
+	req.AddCookie(&c)
+	return req
+}
+
+// GetBuiltinOrPluginActionByName returns a builtin or plugin action for given name if exists.
+func GetBuiltinOrPluginActionByName(t *testing.T, db gorp.SqlExecutor, name string) *sdk.Action {
+	a, err := action.LoadByTypesAndName(context.TODO(), db, []string{sdk.BuiltinAction, sdk.PluginAction}, name,
+		action.LoadOptions.WithRequirements,
+		action.LoadOptions.WithParameters,
+		action.LoadOptions.WithGroup,
+	)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
 	}
-
-	AuthentifyRequestFromProvider(t, req, name, token)
-
-	return req
+	if a == nil {
+		t.Errorf("cannot find builtin or plugin action with name %s", name)
+		t.FailNow()
+	}
+	return a
 }
 
-// NewAuthentifiedMultipartRequestFromWorker  prepare multipart request with file to upload
-func NewAuthentifiedMultipartRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri string, path string, fileName string, params map[string]string) *http.Request {
+func NewJWTAuthentifiedMultipartRequest(t *testing.T, jwt string, method, uri string, path string, fileName string, params map[string]string) *http.Request {
 	file, err := os.Open(path)
 	if err != nil {
 		t.Fail()
@@ -228,154 +357,14 @@ func NewAuthentifiedMultipartRequestFromWorker(t *testing.T, w *sdk.Worker, meth
 	req.Header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
 	req.Header.Set("ARTIFACT-FILENAME", fileName)
 
-	AuthentifyRequestFromWorker(t, req, w)
-
-	return req
-}
-
-// NewAuthentifiedRequestFromHatchery prepare a request
-func NewAuthentifiedRequestFromHatchery(t *testing.T, h *sdk.Service, method, uri string, i interface{}) *http.Request {
-	var btes []byte
-	var err error
-	if i != nil {
-		btes, err = json.Marshal(i)
-		if err != nil {
-			t.FailNow()
-		}
-	}
-
-	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
-	if err != nil {
-		t.FailNow()
-	}
-
-	AuthentifyRequestFromService(t, req, h.Hash)
-	return req
-}
-
-// AuthentifyRequest  have to be used only for tests
-func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.User, token string) {
-	req.Header.Add(sdk.RequestedWithHeader, sdk.RequestedWithValue)
-	req.Header.Add(sdk.SessionTokenHeader, token)
-	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Username+":"+token))
-	req.Header.Add("Authorization", auth)
-}
-
-//NewAuthentifiedRequest prepare a request
-func NewAuthentifiedRequest(t *testing.T, u *sdk.User, pass, method, uri string, i interface{}) *http.Request {
-	var btes []byte
-	var err error
-	if i != nil {
-		btes, err = json.Marshal(i)
-		if err != nil {
-			t.Error(err)
-			t.FailNow()
-		}
-	}
-
-	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	AuthentifyRequest(t, req, u, pass)
-
-	return req
-}
-
-// NewJWTAuthentifiedRequest prepare a request
-func NewJWTAuthentifiedRequest(t *testing.T, jwt string, method, uri string, i interface{}) *http.Request {
-	var btes []byte
-	var err error
-	if i != nil {
-		btes, err = json.Marshal(i)
-		if err != nil {
-			t.Error(err)
-			t.FailNow()
-		}
-	}
-
-	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-
 	auth := "Bearer " + jwt
 	req.Header.Add("Authorization", auth)
 
+	date := sdk.FormatDateRFC5322(time.Now())
+	req.Header.Set("Date", date)
+	req.Header.Set("X-CDS-RemoteTime", date)
+
 	return req
-}
-
-// NewXSRFJWTAuthentifiedRequest prepare a request
-func NewXSRFJWTAuthentifiedRequest(t *testing.T, jwt, xsrf string, method, uri string, i interface{}) *http.Request {
-	var btes []byte
-	var err error
-	if i != nil {
-		btes, err = json.Marshal(i)
-		if err != nil {
-			t.Error(err)
-			t.FailNow()
-		}
-	}
-
-	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-
-	req.Header.Add("X-XSRF-TOKEN", xsrf)
-	c := http.Cookie{
-		Name:  "jwt_token",
-		Value: jwt,
-	}
-
-	req.AddCookie(&c)
-	return req
-}
-
-func NewJWTToken(t *testing.T, db gorp.SqlExecutor, u sdk.User, groups ...sdk.Group) (string, error) {
-	expiration := time.Now().Add(5 * time.Minute)
-	token, jwt, err := accesstoken.New(u, groups, "test", sdk.RandomString(5), expiration)
-	if err != nil {
-		return "", err
-	}
-	err = accesstoken.Insert(db, &token)
-	return jwt, err
-}
-
-func NewJWTTokenWithXSRF(t *testing.T, db gorp.SqlExecutor, store cache.Store, u sdk.User, groups ...sdk.Group) (string, string, error) {
-	expiration := time.Now().Add(5 * time.Minute)
-	token, jwt, err := accesstoken.New(u, groups, accesstoken.OriginUI, sdk.RandomString(5), expiration)
-	if err != nil {
-		return "", "", err
-	}
-	err = accesstoken.Insert(db, &token)
-	if err != nil {
-		return "", "", err
-	}
-
-	xsrf := accesstoken.StoreXSRFToken(store, token)
-	return jwt, xsrf, err
-}
-
-// GetBuiltinOrPluginActionByName returns a builtin or plugin action for given name if exists.
-func GetBuiltinOrPluginActionByName(t *testing.T, db gorp.SqlExecutor, name string) *sdk.Action {
-	a, err := action.LoadByTypesAndName(context.TODO(), db, []string{sdk.BuiltinAction, sdk.PluginAction}, name,
-		action.LoadOptions.WithRequirements,
-		action.LoadOptions.WithParameters,
-		action.LoadOptions.WithGroup,
-	)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	if a == nil {
-		t.Errorf("cannot find builtin or plugin action with name %s", name)
-		t.FailNow()
-	}
-	return a
 }
 
 // NewAction returns an enabled action.
@@ -385,4 +374,170 @@ func NewAction(id int64, ps ...sdk.Parameter) sdk.Action {
 		Enabled:    true,
 		Parameters: ps,
 	}
+}
+
+func InsertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
+	g := &sdk.Group{
+		Name: sdk.RandomString(10),
+	}
+
+	g1, _ := group.LoadByName(context.TODO(), db, g.Name)
+	if g1 != nil {
+		models, _ := workermodel.LoadAllByGroupIDs(context.Background(), db, []int64{g.ID}, nil)
+		for _, m := range models {
+			_ = workermodel.Delete(db, m.ID)
+		}
+
+		if err := group.Delete(context.TODO(), db, g1); err != nil {
+			t.Logf("unable to delete group: %v", err)
+		}
+	}
+
+	if err := group.Insert(db, g); err != nil {
+		t.Fatalf("Unable to create group %s", err)
+	}
+
+	return g
+}
+
+func InsertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID int64) *sdk.Model {
+	m := sdk.Model{
+		Name: name,
+		Type: sdk.Docker,
+		ModelDocker: sdk.ModelDocker{
+			Image: "foo/bar:3.4",
+		},
+		GroupID: groupID,
+		RegisteredCapabilities: sdk.RequirementList{
+			{
+				Name:  "capa_1",
+				Type:  sdk.BinaryRequirement,
+				Value: "capa_1",
+			},
+		},
+		UserLastModified: time.Now(),
+	}
+
+	if err := workermodel.Insert(db, &m); err != nil {
+		t.Fatalf("Cannot insert worker model: %s", err)
+	}
+
+	assert.NotEqual(t, 0, m.ID)
+	return &m
+}
+
+func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Service, *rsa.PrivateKey, *sdk.AuthConsumer, string) {
+	usr1, _ := InsertLambdaUser(t, db, &grp)
+
+	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", consumer, []int64{grp.ID}, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution})
+	test.NoError(t, err)
+
+	privateKey, err := jws.NewRandomRSAKey()
+	test.NoError(t, err)
+	publicKey, err := jws.ExportPublicKey(privateKey)
+	test.NoError(t, err)
+
+	var srv = sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:       hConsumer.Name,
+			Type:       services.TypeHatchery,
+			PublicKey:  publicKey,
+			Maintainer: *usr1,
+			ConsumerID: &hConsumer.ID,
+		},
+	}
+
+	test.NoError(t, services.Insert(db, &srv))
+
+	session, err := authentication.NewSession(db, hConsumer, 5*time.Minute, false)
+	test.NoError(t, err)
+
+	jwt, err := authentication.NewSessionJWT(session)
+	test.NoError(t, err)
+
+	return &srv, privateKey, hConsumer, jwt
+}
+
+func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string, scopes ...sdk.AuthConsumerScope) (*sdk.Service, *rsa.PrivateKey) {
+	usr1, _ := InsertAdminUser(t, db)
+
+	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	sharedGroup, err := group.LoadByName(context.TODO(), db, sdk.SharedInfraGroupName)
+	require.NoError(t, err)
+	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", consumer, []int64{sharedGroup.ID}, append(scopes, sdk.AuthConsumerScopeProject))
+	require.NoError(t, err)
+
+	privateKey, err := jws.NewRandomRSAKey()
+	require.NoError(t, err)
+	publicKey, err := jws.ExportPublicKey(privateKey)
+	require.NoError(t, err)
+
+	var srv = sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:       hConsumer.Name,
+			Type:       serviceType,
+			PublicKey:  publicKey,
+			Maintainer: *usr1,
+			ConsumerID: &hConsumer.ID,
+		},
+	}
+
+	require.NoError(t, services.Insert(db, &srv))
+
+	return &srv, privateKey
+}
+
+func InsertTestWorkflow(t *testing.T, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, name string) *sdk.Workflow {
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, store, proj, &pip))
+
+	script := GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	pipeline.InsertStage(db, s)
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+			Actions: []sdk.Action{
+				NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
+			},
+		},
+	}
+	pipeline.InsertJob(db, j, s.ID, &pip)
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	w := sdk.Workflow{
+		Name:       name,
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
+		},
+	}
+
+	require.NoError(t, workflow.Insert(context.TODO(), db, store, &w, proj))
+
+	return &w
 }

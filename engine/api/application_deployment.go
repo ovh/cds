@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getApplicationDeploymentStrategiesConfigHandler() service.Handler {
@@ -46,9 +45,9 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 		if errtx != nil {
 			return errtx
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(tx, api.Cache, key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}
@@ -100,11 +99,6 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 			return sdk.WrapError(err, "unable to commit tx")
 		}
 
-		if getProvider(ctx) != nil {
-			p := getProvider(ctx)
-			log.Info("postApplicationDeploymentStrategyConfigHandler> application %s configuration successfully updated by provider %s", appName, *p)
-		}
-
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
@@ -120,9 +114,9 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 		if errtx != nil {
 			return errtx
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(tx, api.Cache, key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}

@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -26,7 +26,7 @@ func projectPermissionUsers(db gorp.SqlExecutor, projectID int64, access int) ([
 			AND	"group".id <> $3
 		`
 
-	rows, err := db.Query(query, projectID, access, permission.DefaultGroupID)
+	rows, err := db.Query(query, projectID, access, group.SharedInfraGroup.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return users, nil

@@ -67,11 +67,11 @@ func (c *gerritClient) ListStatuses(ctx context.Context, repo string, ref string
 func (c *gerritClient) buildMessage(eventNR sdk.EventRunWorkflowNode) string {
 	var message string
 	switch eventNR.Status {
-	case sdk.StatusSuccess.String():
+	case sdk.StatusSuccess:
 		message += fmt.Sprintf("Build Success on %s\n%s", eventNR.NodeName, eventNR.GerritChange.URL)
-	case sdk.StatusFail.String(), sdk.StatusStopped.String():
+	case sdk.StatusFail, sdk.StatusStopped:
 		message += fmt.Sprintf("Build Failed on %s\n%s \n%s", eventNR.NodeName, eventNR.GerritChange.URL, eventNR.GerritChange.Report)
-	case sdk.StatusWaiting.String(), sdk.StatusBuilding.String():
+	case sdk.StatusWaiting, sdk.StatusDisabled:
 		message += fmt.Sprintf("CDS starts working on %s\n%s", eventNR.NodeName, eventNR.GerritChange.URL)
 	}
 	return message
@@ -80,9 +80,9 @@ func (c *gerritClient) buildMessage(eventNR sdk.EventRunWorkflowNode) string {
 func (c *gerritClient) buildLabel(eventNR sdk.EventRunWorkflowNode) map[string]string {
 	labels := make(map[string]string)
 	switch eventNR.Status {
-	case sdk.StatusSuccess.String():
+	case sdk.StatusSuccess:
 		labels["Verified"] = "1"
-	case sdk.StatusFail.String(), sdk.StatusStopped.String():
+	case sdk.StatusFail, sdk.StatusStopped:
 		labels["Verified"] = "-1"
 	default:
 		return nil

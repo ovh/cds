@@ -3,7 +3,9 @@ package gorpmapping
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -62,6 +64,11 @@ func IDsToQueryString(ids []int64) string {
 	return strings.Join(res, ",")
 }
 
+// IDStringsToQueryString returns a comma separated list of given string ids.
+func IDStringsToQueryString(ids []string) string {
+	return strings.Join(ids, ",")
+}
+
 // Insert value in given db.
 func Insert(db gorp.SqlExecutor, i interface{}) error {
 	err := db.Insert(i)
@@ -78,7 +85,7 @@ func Insert(db gorp.SqlExecutor, i interface{}) error {
 
 // Update value in given db.
 func Update(db gorp.SqlExecutor, i interface{}) error {
-	_, err := db.Update(i)
+	n, err := db.Update(i)
 	if e, ok := err.(*pq.Error); ok {
 		switch e.Code {
 		case ViolateUniqueKeyPGCode:
@@ -87,13 +94,58 @@ func Update(db gorp.SqlExecutor, i interface{}) error {
 			err = sdk.NewError(sdk.ErrInvalidData, e)
 		}
 	}
-	return sdk.WithStack(err)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	if n < 1 {
+		return sdk.WithStack(sdk.ErrNotFound)
+	}
+	return nil
 }
 
 // Delete value in given db.
 func Delete(db gorp.SqlExecutor, i interface{}) error {
 	_, err := db.Delete(i)
 	return sdk.WithStack(err)
+}
+
+func reflectFindValueByTag(i interface{}, tagKey, tagValue string) interface{} {
+	val := reflect.ValueOf(i)
+	if reflect.ValueOf(i).Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	var res interface{}
+	for i := 0; i < val.NumField(); i++ {
+		valueField := val.Field(i)
+		typeField := val.Type().Field(i)
+		if typeField.Anonymous {
+			res = reflectFindValueByTag(valueField.Interface(), tagKey, tagValue)
+			if res != nil {
+				return res
+			}
+		}
+		tag := typeField.Tag
+		column := tag.Get(tagKey)
+		if column == tagValue {
+			return valueField.Interface()
+		}
+	}
+	return res
+}
+
+func dbMappingPKey(i interface{}) (string, string, interface{}, error) {
+	mapping, has := getTabbleMapping(i)
+	if !has {
+		return "", "", nil, sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+	}
+
+	if len(mapping.Keys) > 1 {
+		return "", "", nil, sdk.WithStack(errors.New("multiple primary key not supported"))
+	}
+
+	id := reflectFindValueByTag(i, "db", mapping.Keys[0])
+
+	return mapping.Name, mapping.Keys[0], id, nil
 }
 
 // GetAll values from database.
@@ -115,4 +167,42 @@ func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}) (bool
 		return false, sdk.WithStack(err)
 	}
 	return true, nil
+}
+
+func GetInt(db gorp.SqlExecutor, q Query) (int64, error) {
+	res, err := db.SelectNullInt(q.query, q.arguments...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil
+		}
+		return 0, sdk.WithStack(err)
+	}
+	if !res.Valid {
+		return 0, nil
+	}
+	return res.Int64, nil
+}
+
+type IDs pq.Int64Array
+
+// And returns a new AND expression from given ones.
+func And(es ...string) string {
+	if len(es) == 0 {
+		return "true"
+	}
+	return "(" + strings.Join(es, " AND ") + ")"
+}
+
+// ArgsMap represents the map of named sql args.
+type ArgsMap map[string]interface{}
+
+// Merge returns a merged map from current and another.
+func (a ArgsMap) Merge(other ArgsMap) ArgsMap {
+	if a == nil {
+		a = make(ArgsMap)
+	}
+	for k, v := range other {
+		a[k] = v
+	}
+	return a
 }

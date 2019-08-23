@@ -40,7 +40,7 @@ func (actPlugin *clairActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 	fmt.Printf("Retrieve clair configuration...")
 	serv, err := grpcplugins.GetExternalServices(actPlugin.HTTPPort, "clair")
 	if err != nil {
-		return fail("Unable to get clair configuration: %s", err)
+		return actionplugin.Fail("Unable to get clair configuration: %s", err)
 	}
 	viper.Set("clair.uri", serv.URL)
 	viper.Set("clair.port", serv.Port)
@@ -54,13 +54,13 @@ func (actPlugin *clairActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 	fmt.Printf("Pushing image %s into clair\n", dockerImage)
 	image, manifest, err := pushImage(dockerImage)
 	if err != nil {
-		return fail("Unable to push image on Clair: %s", err)
+		return actionplugin.Fail("Unable to push image on Clair: %s", err)
 	}
 
 	fmt.Printf("Running analysis\n")
 	analysis, err := clair.Analyze(image, manifest)
 	if err != nil {
-		return fail("Error on running analysis with Clair: %v", err)
+		return actionplugin.Fail("Error on running analysis with Clair: %v", err)
 	}
 
 	fmt.Printf("Creating report")
@@ -95,16 +95,11 @@ func (actPlugin *clairActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 		Type:            "docker",
 	}
 	if err := grpcplugins.SendVulnerabilityReport(actPlugin.HTTPPort, report); err != nil {
-		return fail("Unable to send report: %s", err)
+		return actionplugin.Fail("Unable to send report: %s", err)
 	}
 	return &actionplugin.ActionResult{
-		Status: sdk.StatusSuccess.String(),
+		Status: sdk.StatusSuccess,
 	}, nil
-}
-
-func (actPlugin *clairActionPlugin) WorkerHTTPPort(ctx context.Context, q *actionplugin.WorkerHTTPPortQuery) (*empty.Empty, error) {
-	actPlugin.HTTPPort = q.Port
-	return &empty.Empty{}, nil
 }
 
 func main() {
@@ -114,15 +109,6 @@ func main() {
 	}
 	return
 
-}
-
-func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error) {
-	msg := fmt.Sprintf(format, args...)
-	fmt.Println(msg)
-	return &actionplugin.ActionResult{
-		Details: msg,
-		Status:  sdk.StatusFail.String(),
-	}, nil
 }
 
 func pushImage(dockerImage string) (reference.NamedTagged, distribution.Manifest, error) {

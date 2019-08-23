@@ -21,9 +21,9 @@ func init() {
 func main() {
 	flag.Parse()
 	cfg := cdsclient.Config{
-		Host:  host,
-		Token: token,
-		User:  username,
+		Host:         host,
+		SessionToken: token,
+		User:         username,
 	}
 	client := cdsclient.New(cfg)
 

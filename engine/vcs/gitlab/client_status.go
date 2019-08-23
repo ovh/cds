@@ -23,23 +23,21 @@ type statusData struct {
 
 func getGitlabStateFromStatus(s string) gitlab.BuildStateValue {
 	switch s {
-	case sdk.StatusWaiting.String():
+	case sdk.StatusWaiting:
 		return gitlab.Pending
-	case sdk.StatusChecking.String():
+	case sdk.StatusChecking:
 		return gitlab.Pending
-	case sdk.StatusBuilding.String():
-		return gitlab.Running
-	case sdk.StatusSuccess.String():
+	case sdk.StatusSuccess:
 		return gitlab.Success
-	case sdk.StatusFail.String():
+	case sdk.StatusFail:
 		return gitlab.Failed
-	case sdk.StatusDisabled.String():
+	case sdk.StatusDisabled:
 		return gitlab.Canceled
-	case sdk.StatusNeverBuilt.String():
+	case sdk.StatusNeverBuilt:
 		return gitlab.Canceled
-	case sdk.StatusUnknown.String():
+	case sdk.StatusUnknown:
 		return gitlab.Failed
-	case sdk.StatusSkipped.String():
+	case sdk.StatusSkipped:
 		return gitlab.Canceled
 	}
 
@@ -134,13 +132,13 @@ func (c *gitlabClient) ListStatuses(ctx context.Context, repo string, ref string
 func processGitlabState(s gitlab.CommitStatus) string {
 	switch s.Status {
 	case string(gitlab.Success):
-		return sdk.StatusSuccess.String()
+		return sdk.StatusSuccess
 	case string(gitlab.Failed):
-		return sdk.StatusFail.String()
+		return sdk.StatusFail
 	case string(gitlab.Canceled):
-		return sdk.StatusSkipped.String()
+		return sdk.StatusSkipped
 	default:
-		return sdk.StatusBuilding.String()
+		return sdk.StatusDisabled
 	}
 }
 

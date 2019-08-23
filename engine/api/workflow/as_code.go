@@ -21,7 +21,7 @@ import (
 var CacheOperationKey = cache.Key("repositories", "operation", "push")
 
 // UpdateAsCode does a workflow pull and start an operation to push cds files into the git repository
-func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, encryptFunc sdk.EncryptFunc, u *sdk.User) (*sdk.Operation, error) {
+func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u sdk.Identifiable, encryptFunc sdk.EncryptFunc) (*sdk.Operation, error) {
 	// Get repository
 	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
 		return nil, sdk.WithStack(sdk.ErrApplicationNotFound)
@@ -43,7 +43,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 	}
 
 	// Export workflow
-	pull, err := Pull(ctx, db, store, proj, wf.Name, exportentities.FormatYAML, encryptFunc, u, exportentities.WorkflowSkipIfOnlyOneRepoWebhook)
+	pull, err := Pull(ctx, db, store, proj, wf.Name, exportentities.FormatYAML, encryptFunc, exportentities.WorkflowSkipIfOnlyOneRepoWebhook)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot pull workflow")
 	}
@@ -81,8 +81,8 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 			},
 		},
 		User: sdk.User{
-			Username: u.Username,
-			Email:    u.Email,
+			Username: u.GetUsername(),
+			Email:    u.GetEmail(),
 		},
 	}
 
@@ -93,9 +93,9 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 	}
 
 	if wf.FromRepository == "" {
-		ope.Setup.Push.Message = fmt.Sprintf("feat: Enable workflow as code [@%s]", u.Username)
+		ope.Setup.Push.Message = fmt.Sprintf("feat: Enable workflow as code [@%s]", u.GetUsername())
 	} else {
-		ope.Setup.Push.Message = fmt.Sprintf("chore: Update workflow [@%s]", u.Username)
+		ope.Setup.Push.Message = fmt.Sprintf("chore: Update workflow [@%s]", u.GetUsername())
 	}
 
 	multipartData := &services.MultiPartData{
@@ -107,6 +107,8 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 	}
 	store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 
+	log.Debug("workflow.UpdateAsCode> ope: %+v", ope)
+
 	return &ope, nil
 }
 
@@ -115,6 +117,7 @@ func CheckPullRequestStatus(ctx context.Context, client sdk.VCSAuthorizedClient,
 	pr, err := client.PullRequest(ctx, repoFullName, int(prID))
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			log.Debug("Pull request %s #%d not found", repoFullName, int(prID))
 			return false, true, nil
 		}
 		return false, false, sdk.WrapError(err, "unable to check pull request status")
@@ -123,7 +126,7 @@ func CheckPullRequestStatus(ctx context.Context, client sdk.VCSAuthorizedClient,
 }
 
 // SyncAsCodeEvent checks if workflow as to become ascode
-func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u *sdk.User) error {
+func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u sdk.Identifiable) error {
 	if len(wf.AsCodeEvent) == 0 {
 		return nil
 	}
@@ -167,12 +170,13 @@ func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		}
 	}
 	wf.AsCodeEvent = eventLeft
+	log.Debug("workflow.SyncAsCodeEvent> events left: %v", wf.AsCodeEvent)
 	event.PublishWorkflowUpdate(proj.Key, *wf, *wf, u)
 	return nil
 }
 
 // UpdateWorkflowAsCodeResult pulls repositories operation and the create pullrequest + update workflow
-func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, ope *sdk.Operation, wf *sdk.Workflow, u *sdk.User) {
+func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, ope *sdk.Operation, wf *sdk.Workflow, u sdk.Identifiable) {
 	counter := 0
 	defer func() {
 		store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
@@ -232,11 +236,11 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				PullRequestID:  int64(pr.ID),
 				WorkflowID:     wf.ID,
 				PullRequestURL: pr.URL,
-				Username:       u.Username,
+				Username:       u.GetUsername(),
 				CreationDate:   time.Now(),
 			}
 
-			oldW, errOld := LoadByID(db, store, p, wf.ID, u, LoadOptions{})
+			oldW, errOld := LoadByID(ctx, db, store, p, wf.ID, LoadOptions{})
 			if errOld != nil {
 				log.Error("postWorkflowAsCodeHandler> unable to load workflow: %v", err)
 				ope.Status = sdk.OperationStatusError

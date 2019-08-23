@@ -2,12 +2,12 @@ import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, O
 import { FormControl } from '@angular/forms';
 import { NavigationEnd, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Broadcast } from 'app/model/broadcast.model';
 import { NavbarProjectData, NavbarRecentData, NavbarSearchItem } from 'app/model/navbar.model';
-import { User } from 'app/model/user.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { ApplicationStore } from 'app/service/application/application.store';
-import { AuthentificationStore } from 'app/service/auth/authentification.store';
 import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { LanguageStore } from 'app/service/language/language.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -15,6 +15,8 @@ import { RouterService } from 'app/service/router/router.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { SignoutCurrentUser } from 'app/store/authentication.action';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { List } from 'immutable';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -50,13 +52,13 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     broadcastSubscription: Subscription;
     currentRoute: {};
     recentView = true;
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     themeSubscription: Subscription;
     themeSwitch = new FormControl();
 
     constructor(
         private _navbarService: NavbarService,
-        private _authStore: AuthentificationStore,
+        private _store: Store,
         private _appStore: ApplicationStore,
         private _workflowStore: WorkflowStore,
         private _broadcastStore: BroadcastStore,
@@ -65,10 +67,9 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         private _theme: ThemeStore,
         private _routerService: RouterService,
         private _translate: TranslateService,
-        private _authentificationStore: AuthentificationStore,
         private _cd: ChangeDetectorRef
     ) {
-        this.userSubscription = this._authentificationStore.getUserlst().subscribe(u => {
+        this.userSubscription = this._store.select(AuthenticationState.user).subscribe(u => {
             this.currentUser = u;
             this._cd.markForCheck();
         });
@@ -108,7 +109,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
     ngOnInit() {
         // Listen list of nav project
-        this._authStore.getUserlst().subscribe(user => {
+        this._store.selectOnce(AuthenticationState.user).subscribe(user => {
             if (user) {
                 this.getData();
             }
@@ -287,5 +288,11 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         event.stopPropagation();
         this._broadcastStore.markAsRead(id)
             .subscribe();
+    }
+
+    clickLogout(): void {
+        this._store.dispatch(new SignoutCurrentUser()).subscribe(
+            () => { this._router.navigate(['/auth/signin']); }
+        );
     }
 }

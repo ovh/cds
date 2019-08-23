@@ -19,7 +19,7 @@ import (
 func deleteAll(t *testing.T, api *API, key string) error {
 	// Delete all apps
 	t.Logf("start deleted : %s", key)
-	proj, errl := project.Load(api.mustDB(), api.Cache, key, &sdk.User{Admin: true})
+	proj, errl := project.Load(api.mustDB(), api.Cache, key, nil)
 	if errl != nil {
 		return errl
 	}
@@ -45,7 +45,7 @@ func deleteAll(t *testing.T, api *API, key string) error {
 		return errload
 	}
 	for _, pip := range pips {
-		if err := pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1); err != nil {
+		if err := pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID); err != nil {
 			t.Logf("DeletePipeline: %s", err)
 			return err
 		}
@@ -56,7 +56,7 @@ func deleteAll(t *testing.T, api *API, key string) error {
 	}
 
 	for _, g := range proj.ProjectGroups {
-		if err := group.DeleteGroupAndDependencies(api.mustDB(), &g.Group); err != nil {
+		if err := group.Delete(context.TODO(), api.mustDB(), &g.Group); err != nil {
 			return err
 		}
 	}
@@ -76,7 +76,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T)
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -85,7 +85,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T)
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -101,7 +101,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T)
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(context.TODO(), api.mustDB(), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -114,7 +114,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T)
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -129,7 +129,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T)
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -138,7 +138,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T)
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -169,7 +169,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T)
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(context.TODO(), api.mustDB(), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -184,7 +184,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T)
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -199,7 +199,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -208,7 +208,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
 
 	//Insert Stage
 	stage0 := &sdk.Stage{
@@ -262,7 +262,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(context.TODO(), api.mustDB(), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -290,7 +290,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -305,7 +305,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -314,7 +314,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -383,7 +383,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(context.TODO(), api.mustDB(), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -426,7 +426,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -441,7 +441,7 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -450,7 +450,7 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -474,11 +474,11 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
 
 	t.Logf("Delete Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
-	test.NoError(t, pipeline.DeleteStageByID(context.TODO(), api.mustDB(), stage, 1))
+	test.NoError(t, pipeline.DeleteStageByID(context.TODO(), api.mustDB(), stage))
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(context.TODO(), api.mustDB(), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -487,7 +487,7 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -502,7 +502,7 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES")
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -511,7 +511,7 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -554,7 +554,7 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(context.TODO(), api.mustDB(), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -579,7 +579,7 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(context.TODO(), api.mustDB(), pip.ID)
 	test.NoError(t, err)
 
 	//Delete Project

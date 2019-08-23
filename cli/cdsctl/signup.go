@@ -5,7 +5,6 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/howeyc/gopass"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -80,9 +79,9 @@ func signupRun(v cli.Values) error {
 	}
 	client = cdsclient.New(conf)
 
-	if err := client.UserSignup(username, fullname, email, "your username:%s, your confirmation code:%s"); err != nil {
-		return err
-	}
+	//if err := client.UserSignup(username, fullname, email, "your username:%s, your confirmation code:%s"); err != nil {
+	//	return err
+	//}
 
 	fmt.Println("Please check your mail box to activate your account...")
 
@@ -90,23 +89,24 @@ func signupRun(v cli.Values) error {
 }
 
 func doConfirm(username string, insecureSkipVerifyTLS bool) error {
-	fmt.Printf("Enter your verification code: ")
-	b, err := gopass.GetPasswd()
-	if err != nil {
-		return err
-	}
-	token := string(b)
+	//fmt.Printf("Enter your verification code: ")
+	//b, err := gopass.GetPasswd()
+	//if err != nil {
+	//	return err
+	//}
+	//token := string(b)
 
-	ok, password, err := client.UserConfirm(username, token)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return fmt.Errorf("verification failed")
-	}
+	//ok, password, err := client.UserConfirm(username, token)
+	//if err != nil {
+	//	return err
+	//}
+	//if !ok {
+	//	return fmt.Errorf("verification failed")
+	//}
 
 	fmt.Println("All is fine. Here is your new password:")
-	fmt.Println(password)
+	//fmt.Println(password)
 
-	return doLogin(client.APIURL(), username, password, false, insecureSkipVerifyTLS)
+	//return doLogin(client.APIURL(), username, password, false, insecureSkipVerifyTLS)
+	return nil
 }

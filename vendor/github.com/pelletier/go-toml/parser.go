@@ -5,6 +5,7 @@ package toml
 import (
 	"errors"
 	"fmt"
+	"math"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -76,8 +77,10 @@ func (p *tomlParser) parseStart() tomlParserStateFn {
 		return p.parseAssign
 	case tokenEOF:
 		return nil
+	case tokenError:
+		p.raiseError(tok, "parsing error: %s", tok.String())
 	default:
-		p.raiseError(tok, "unexpected token")
+		p.raiseError(tok, "unexpected token %s", tok.typ)
 	}
 	return nil
 }
@@ -110,7 +113,7 @@ func (p *tomlParser) parseGroupArray() tomlParserStateFn {
 	newTree := newTree()
 	newTree.position = startToken.Position
 	array = append(array, newTree)
-	p.tree.SetPath(p.currentTable, "", false, array)
+	p.tree.SetPath(p.currentTable, array)
 
 	// remove all keys that were children of this table array
 	prefix := key.val + "."
@@ -164,6 +167,11 @@ func (p *tomlParser) parseAssign() tomlParserStateFn {
 	key := p.getToken()
 	p.assume(tokenEqual)
 
+	parsedKey, err := parseKey(key.val)
+	if err != nil {
+		p.raiseError(key, "invalid key: %s", err.Error())
+	}
+
 	value := p.parseRvalue()
 	var tableKey []string
 	if len(p.currentTable) > 0 {
@@ -172,6 +180,9 @@ func (p *tomlParser) parseAssign() tomlParserStateFn {
 		tableKey = []string{}
 	}
 
+	prefixKey := parsedKey[0 : len(parsedKey)-1]
+	tableKey = append(tableKey, prefixKey...)
+
 	// find the table to assign, looking out for arrays of tables
 	var targetNode *Tree
 	switch node := p.tree.GetPath(tableKey).(type) {
@@ -179,20 +190,19 @@ func (p *tomlParser) parseAssign() tomlParserStateFn {
 		targetNode = node[len(node)-1]
 	case *Tree:
 		targetNode = node
+	case nil:
+		// create intermediate
+		if err := p.tree.createSubTree(tableKey, key.Position); err != nil {
+			p.raiseError(key, "could not create intermediate group: %s", err)
+		}
+		targetNode = p.tree.GetPath(tableKey).(*Tree)
 	default:
 		p.raiseError(key, "Unknown table type for path: %s",
 			strings.Join(tableKey, "."))
 	}
 
 	// assign value to the found table
-	keyVals, err := parseKey(key.val)
-	if err != nil {
-		p.raiseError(key, "%s", err)
-	}
-	if len(keyVals) != 1 {
-		p.raiseError(key, "Invalid key")
-	}
-	keyVal := keyVals[0]
+	keyVal := parsedKey[len(parsedKey)-1]
 	localKey := []string{keyVal}
 	finalKey := append(tableKey, keyVal)
 	if targetNode.GetPath(localKey) != nil {
@@ -246,6 +256,13 @@ func (p *tomlParser) parseRvalue() interface{} {
 		return true
 	case tokenFalse:
 		return false
+	case tokenInf:
+		if tok.val[0] == '-' {
+			return math.Inf(-1)
+		}
+		return math.Inf(1)
+	case tokenNan:
+		return math.NaN()
 	case tokenInteger:
 		cleanedVal := cleanupNumberToken(tok.val)
 		var err error
@@ -333,14 +350,14 @@ Loop:
 		case tokenRightCurlyBrace:
 			p.getToken()
 			break Loop
-		case tokenKey:
+		case tokenKey, tokenInteger, tokenString:
 			if !tokenIsComma(previous) && previous != nil {
 				p.raiseError(follow, "comma expected between fields in inline table")
 			}
 			key := p.getToken()
 			p.assume(tokenEqual)
 			value := p.parseRvalue()
-			tree.Set(key.val, "", false, value)
+			tree.Set(key.val, value)
 		case tokenComma:
 			if previous == nil {
 				p.raiseError(follow, "inline table cannot start with a comma")
@@ -350,7 +367,7 @@ Loop:
 			}
 			p.getToken()
 		default:
-			p.raiseError(follow, "unexpected token type in inline table: %s", follow.typ.String())
+			p.raiseError(follow, "unexpected token type in inline table: %s", follow.String())
 		}
 		previous = follow
 	}

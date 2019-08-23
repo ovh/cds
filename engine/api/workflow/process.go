@@ -91,35 +91,35 @@ type statusCounter struct {
 func getRunStatus(counter statusCounter) string {
 	switch {
 	case counter.building > 0:
-		return sdk.StatusBuilding.String()
+		return sdk.StatusBuilding
 	case counter.failed > 0:
-		return sdk.StatusFail.String()
+		return sdk.StatusFail
 	case counter.stoppped > 0:
-		return sdk.StatusStopped.String()
+		return sdk.StatusStopped
 	case counter.success > 0:
-		return sdk.StatusSuccess.String()
+		return sdk.StatusSuccess
 	case counter.skipped > 0:
-		return sdk.StatusSkipped.String()
+		return sdk.StatusSkipped
 	case counter.disabled > 0:
-		return sdk.StatusDisabled.String()
+		return sdk.StatusDisabled
 	default:
-		return sdk.StatusNeverBuilt.String()
+		return sdk.StatusNeverBuilt
 	}
 }
 
 func computeRunStatus(status string, counter *statusCounter) {
 	switch status {
-	case sdk.StatusSuccess.String():
+	case sdk.StatusSuccess:
 		counter.success++
-	case sdk.StatusBuilding.String(), sdk.StatusWaiting.String():
+	case sdk.StatusBuilding, sdk.StatusWaiting:
 		counter.building++
-	case sdk.StatusFail.String():
+	case sdk.StatusFail:
 		counter.failed++
-	case sdk.StatusStopped.String():
+	case sdk.StatusStopped:
 		counter.stoppped++
-	case sdk.StatusSkipped.String():
+	case sdk.StatusSkipped:
 		counter.skipped++
-	case sdk.StatusDisabled.String():
+	case sdk.StatusDisabled:
 		counter.disabled++
 	}
 }

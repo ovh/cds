@@ -17,6 +17,11 @@ import (
 
 func (api *API) getWorkflowHooksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// This handler can only be called by a service managed by an admin
+		if _, isService := api.isService(ctx); !isService || isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		hooks, err := workflow.LoadAllHooks(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHooksHandler")
@@ -46,12 +51,12 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			return sdk.WrapError(errN, "getWorkflowHookModelsHandler")
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "getWorkflowHookModelsHandler > project.Load")
 		}
 
-		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, workflowName, deprecatedGetUser(ctx), workflow.LoadOptions{})
+		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, workflowName, workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "getWorkflowHookModelsHandler > workflow.Load")
 		}
@@ -173,7 +178,7 @@ func (api *API) postWorkflowHookModelHandler() service.Handler {
 		if errtx != nil {
 			return sdk.WrapError(errtx, "postWorkflowHookModelHandler> Unable to start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		if err := workflow.InsertHookModel(tx, m); err != nil {
 			return sdk.WrapError(err, "postWorkflowHookModelHandler")
@@ -199,7 +204,7 @@ func (api *API) putWorkflowHookModelHandler() service.Handler {
 			return sdk.WrapError(errtx, "putWorkflowHookModelHandler> Unable to start transaction")
 		}
 
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		if err := workflow.UpdateHookModel(tx, m); err != nil {
 			return sdk.WrapError(err, "putWorkflowHookModelHandler")
@@ -237,7 +242,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		_, next := observability.Span(ctx, "project.Load")
-		proj, errP := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx),
+		proj, errP := project.Load(tx, api.Cache, key,
 			project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFeatures,
 			project.LoadOptions.WithIntegrations,
@@ -279,7 +284,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return err
 		}
 
-		go workflow.SendEvent(api.mustDB(), key, report)
+		go workflow.SendEvent(context.Background(), api.mustDB(), key, report)
 
 		if err := updateParentWorkflowRun(ctx, api.mustDB, api.Cache, wr); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler")

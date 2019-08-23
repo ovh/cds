@@ -18,8 +18,8 @@ import (
 func Test_ProjectPerms(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
-	u, pass := assets.InsertLambdaUser(api.mustDB(), &proj.ProjectGroups[0].Group)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	u, pass := assets.InsertLambdaUser(t, api.mustDB(), &proj.ProjectGroups[0].Group)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -27,7 +27,7 @@ func Test_ProjectPerms(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	newWf := sdk.Workflow{
 		Name: sdk.RandomString(10),

@@ -2,14 +2,14 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, V
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Project } from 'app/model/project.model';
+import { AuthentifiedUser } from 'app/model/user.model';
+import { Warning } from 'app/model/warning.model';
+import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { DeleteProject, UpdateProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
-import { Project } from '../../../../model/project.model';
-import { User } from '../../../../model/user.model';
-import { Warning } from '../../../../model/warning.model';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
-import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-admin',
@@ -37,27 +37,26 @@ export class ProjectAdminComponent implements OnInit {
     unusedWarning: Map<string, Warning>;
 
     @Input() project: Project;
-    @ViewChild('updateWarning', {static: false})
+    @ViewChild('updateWarning', { static: false })
     private warningUpdateModal: WarningModalComponent;
 
     loading = false;
     fileTooLarge = false;
-    user: User;
+    user: AuthentifiedUser;
 
     constructor(
         private _toast: ToastService,
         public _translate: TranslateService,
         private _router: Router,
-        private _authStore: AuthentificationStore,
-        private store: Store,
+        private _store: Store,
         private _cd: ChangeDetectorRef
     ) { };
 
     ngOnInit(): void {
-        if (this.project.permission !== 7) {
+        if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
         }
-        this.user = this._authStore.getUser();
+        this.user = this._store.selectSnapshot(AuthenticationState.user);
     }
 
     onSubmitProjectUpdate(skip?: boolean) {
@@ -65,7 +64,7 @@ export class ProjectAdminComponent implements OnInit {
             this.warningUpdateModal.show();
         } else {
             this.loading = true;
-            this.store.dispatch(new UpdateProject(this.project))
+            this._store.dispatch(new UpdateProject(this.project))
                 .pipe(finalize(() => {
                     this.loading = false;
                     this._cd.markForCheck();
@@ -76,7 +75,7 @@ export class ProjectAdminComponent implements OnInit {
 
     deleteProject(): void {
         this.loading = true;
-        this.store.dispatch(new DeleteProject({ projectKey: this.project.key }))
+        this._store.dispatch(new DeleteProject({ projectKey: this.project.key }))
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();

@@ -2,52 +2,114 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/jws"
+	"github.com/ovh/cds/sdk/log"
 )
 
-// APIServiceConfiguration is an exposed type for CDS API
-type APIServiceConfiguration struct {
-	HTTP struct {
-		URL      string `toml:"url" default:"http://localhost:8081" json:"url"`
-		Insecure bool   `toml:"insecure" commented:"true" json:"insecure"`
-	} `toml:"http" json:"http"`
-	GRPC struct {
-		URL      string `toml:"url" default:"http://localhost:8082" json:"url"`
-		Insecure bool   `toml:"insecure" commented:"true" json:"insecure"`
-	} `toml:"grpc" json:"grpc"`
-	Token                string `toml:"token" default:"************" json:"-"`
-	RequestTimeout       int    `toml:"requestTimeout" default:"10" json:"requestTimeout"`
-	MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" json:"maxHeartbeatFailures"`
+// CommonMonitoring returns common part of MonitoringStatus
+func (c *Common) CommonMonitoring() sdk.MonitoringStatus {
+	t := time.Now()
+	return sdk.MonitoringStatus{
+		Now: t,
+		Lines: []sdk.MonitoringStatusLine{{
+			Component: "Version",
+			Value:     sdk.VERSION,
+			Status:    sdk.MonitoringStatusOK,
+		}, {
+			Component: "Uptime",
+			Value:     time.Since(c.StartupTime).String(),
+			Status:    sdk.MonitoringStatusOK,
+		}, {
+			Component: "Time",
+			Value:     fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()),
+			Status:    sdk.MonitoringStatusOK,
+		}},
+	}
 }
 
-// Common is the struct representing a CDS µService
-type Common struct {
-	Client               cdsclient.Interface
-	Hash                 string
-	StartupTime          time.Time
-	API                  string
-	Name                 string
-	HTTPURL              string
-	Token                string
-	Type                 string
-	MaxHeartbeatFailures int
-	ServiceName          string
+func (c *Common) Start(ctx context.Context, cfg cdsclient.ServiceConfig) error {
+	// no register for api
+	if c.Type == "api" {
+		return nil
+	}
+
+	var err error
+	c.Client, c.APIPublicKey, err = cdsclient.NewServiceClient(cfg)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	c.ParsedAPIPublicKey, err = jws.NewPublicKeyFromPEM(c.APIPublicKey)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
 }
 
-// Service is the interface for a engine service
-type Service interface {
-	ApplyConfiguration(cfg interface{}) error
-	Serve(ctx context.Context) error
-	CheckConfiguration(cfg interface{}) error
-	Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus, cfg interface{}) error
-	Register(status func() sdk.MonitoringStatus, cfg interface{}) error
-	Status() sdk.MonitoringStatus
+func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
+	// no register for api
+	if c.Type == "api" {
+		return nil
+	}
+
+	var srv = sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:    c.Name,
+			HTTPURL: c.HTTPURL,
+			Type:    c.Type,
+			Config:  cfg,
+		},
+		LastHeartbeat: time.Time{},
+		Version:       sdk.VERSION,
+	}
+
+	log.Debug("Registing service %T %s", c, c.Name)
+
+	if c.PrivateKey != nil {
+		pubKeyPEM, err := jws.ExportPublicKey(c.PrivateKey)
+		if err != nil {
+			return fmt.Errorf("unable get public key from private key: %v", err)
+		}
+		srv.PublicKey = pubKeyPEM
+	}
+
+	srv2, err := c.Client.ServiceRegister(srv)
+	if err != nil {
+		return sdk.WrapError(err, "Register>")
+	}
+	c.ServiceInstance = srv2
+	return nil
 }
 
-// BeforeStart has to be implemented if you want to run some code after the ApplyConfiguration and before the Serve of a Service
-type BeforeStart interface {
-	BeforeStart() error
+// Heartbeat have to be launch as a goroutine, call DoHeartBeat each 30s
+func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus) error {
+	// no heartbeat for api
+	if c.Type == "api" {
+		return nil
+	}
+
+	ticker := time.NewTicker(30 * time.Second)
+
+	var heartbeatFailures int
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			if err := c.Client.ServiceHeartbeat(status()); err != nil {
+				log.Warning("%s> Heartbeat failure: %v", c.Name, err)
+				heartbeatFailures++
+			}
+
+			// if register failed too many time, stop heartbeat
+			if heartbeatFailures > c.MaxHeartbeatFailures {
+				return fmt.Errorf("%s> Heartbeat> Register failed excedeed", c.Name)
+			}
+		}
+	}
+
 }

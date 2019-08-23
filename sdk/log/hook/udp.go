@@ -18,7 +18,6 @@ import (
 	"net"
 	"os"
 	"path"
-	"sync"
 	"time"
 )
 
@@ -52,7 +51,6 @@ func numChunks(b []byte) int {
 // messages to a graylog2 server, or data from a stream-oriented
 // interface (like the functions in log).
 type UDPWriter struct {
-	mu               sync.Mutex
 	conn             net.Conn
 	hostname         string
 	Facility         string // defaults to current process name

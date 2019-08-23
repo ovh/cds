@@ -121,15 +121,15 @@ checkImage:
 	if !imageFound {
 		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryStartDockerPull.ID,
-			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
+			Args: []interface{}{h.Name, cArgs.image},
 		})
 
 		_, next := observability.Span(ctx, "swarm.dockerClient.pullImage", observability.Tag("image", cArgs.image))
-		if err := h.pullImage(dockerClient, cArgs.image, timeoutPullImage, spawnArgs.Model); err != nil {
+		if err := h.pullImage(dockerClient, cArgs.image, timeoutPullImage, *spawnArgs.Model); err != nil {
 			next()
 			hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 				ID:   sdk.MsgSpawnInfoHatcheryEndDockerPullErr.ID,
-				Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image, err},
+				Args: []interface{}{h.Name, cArgs.image, err},
 			})
 			return sdk.WrapError(err, "Unable to pull image %s on %s", cArgs.image, dockerClient.name)
 		}
@@ -137,7 +137,7 @@ checkImage:
 
 		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryEndDockerPull.ID,
-			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
+			Args: []interface{}{h.Name, cArgs.image},
 		})
 	}
 
@@ -167,7 +167,7 @@ type dockerOpts struct {
 	extraHosts []string
 }
 
-func (h *HatcherySwarm) computeDockerOpts(isSharedInfra bool, requirements []sdk.Requirement) (*dockerOpts, error) {
+func (h *HatcherySwarm) computeDockerOpts(requirements []sdk.Requirement) (*dockerOpts, error) {
 	dockerOpts := &dockerOpts{}
 
 	// support for add-host on hatchery configuration
@@ -184,11 +184,11 @@ func (h *HatcherySwarm) computeDockerOpts(isSharedInfra bool, requirements []sdk
 	for _, r := range requirements {
 		switch r.Type {
 		case sdk.ModelRequirement:
-			if err := dockerOpts.computeDockerOptsOnModelRequirement(isSharedInfra, r); err != nil {
+			if err := dockerOpts.computeDockerOptsOnModelRequirement(r); err != nil {
 				return nil, err
 			}
 		case sdk.VolumeRequirement:
-			if err := dockerOpts.computeDockerOptsOnVolumeRequirement(isSharedInfra, r); err != nil {
+			if err := dockerOpts.computeDockerOptsOnVolumeRequirement(r); err != nil {
 				return nil, err
 			}
 		}
@@ -197,16 +197,17 @@ func (h *HatcherySwarm) computeDockerOpts(isSharedInfra bool, requirements []sdk
 	return dockerOpts, nil
 }
 
-func (d *dockerOpts) computeDockerOptsOnModelRequirement(isSharedInfra bool, req sdk.Requirement) error {
+func (d *dockerOpts) computeDockerOptsOnModelRequirement(req sdk.Requirement) error {
 	// args are separated by a space
 	// example: myGroup/golang:1.9.1 --port=8080:8080/tcp
 	for idx, opt := range strings.Split(req.Value, " ") {
 		if idx == 0 || strings.TrimSpace(opt) == "" {
 			continue // it's image name
 		}
-		if isSharedInfra {
-			return fmt.Errorf("you could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option", opt)
-		}
+		// TODO
+		//if isSharedInfra {
+		//	return fmt.Errorf("you could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option", opt)
+		//}
 		if strings.HasPrefix(opt, "--port=") {
 			if err := d.computeDockerOptsPorts(opt); err != nil {
 				return err
@@ -224,13 +225,14 @@ func (d *dockerOpts) computeDockerOptsOnModelRequirement(isSharedInfra bool, req
 	return nil
 }
 
-func (d *dockerOpts) computeDockerOptsOnVolumeRequirement(isSharedInfra bool, req sdk.Requirement) error {
+func (d *dockerOpts) computeDockerOptsOnVolumeRequirement(req sdk.Requirement) error {
 	// args are separated by a space
 	// example: type=bind,source=/hostDir/sourceDir,destination=/dirInJob
 	for idx, opt := range strings.Split(req.Value, " ") {
-		if isSharedInfra {
-			return fmt.Errorf("you could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option", opt)
-		}
+		// TODO
+		//if isSharedInfra {
+		//	return fmt.Errorf("you could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option", opt)
+		//}
 
 		if idx == 0 {
 			// it's --mount flag

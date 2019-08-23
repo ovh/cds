@@ -20,11 +20,10 @@ var (
 
 func main() {
 	root = rootFromSubCommands([]*cobra.Command{
-		doc(),         // hidden command
-		accesstoken(), // experimental command
+		doc(), // hidden command
+		consumer(),
 		action(),
-		login(),             // nearly deprecated
-		loginExperimental(), // experimental command to handle JWT
+		login(),
 		signup(),
 		application(),
 		environment(),
@@ -41,7 +40,6 @@ func main() {
 		monitoring(),
 		version(),
 		encrypt(),
-		token(), // nearly deprecated
 		template(),
 		admin(),
 		tools(),
@@ -87,7 +85,7 @@ var mainCmd = cli.Command{
 
 ## Download
 
-You will find lastest release of ` + "`cdsctl`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
+You will find latest release of ` + "`cdsctl`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
 
 
 ## Authentication

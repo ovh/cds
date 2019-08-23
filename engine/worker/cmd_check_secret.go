@@ -8,15 +8,18 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
+
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
+
+	"github.com/ovh/cds/engine/worker/internal"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
 )
 
-func cmdCheckSecret(w *currentWorker) *cobra.Command {
+func cmdCheckSecret() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "check-secret",
 		Short: "worker check-secret fileA fileB",
@@ -45,20 +48,16 @@ This command will exit 1 and a log is displayed, as:
 The command will exit 0 if no variable of type password or key is found.
 
 		`,
-		Run: tmplCheckSecretCmd(w),
+		Run: tmplCheckSecretCmd(),
 	}
 	return c
 }
 
-type filePath struct {
-	Path string `json:"path"`
-}
-
-func tmplCheckSecretCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
+func tmplCheckSecretCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(WorkerServerPort)
+		portS := os.Getenv(internal.WorkerServerPort)
 		if portS == "" {
-			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", WorkerServerPort)
+			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
 		}
 
 		port, errPort := strconv.Atoi(portS)
@@ -71,7 +70,7 @@ func tmplCheckSecretCmd(w *currentWorker) func(cmd *cobra.Command, args []string
 		}
 
 		for _, file := range args {
-			a := filePath{
+			a := workerruntime.FilePath{
 				Path: file,
 			}
 
@@ -106,44 +105,4 @@ func tmplCheckSecretCmd(w *currentWorker) func(cmd *cobra.Command, args []string
 			}
 		}
 	}
-}
-
-func (wk *currentWorker) checkSecretHandler(w http.ResponseWriter, r *http.Request) {
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	sendLog := getLogger(wk, wk.currentJob.wJob.ID, wk.currentJob.currentStep)
-
-	var a filePath
-	if err := json.Unmarshal(data, &a); err != nil {
-		sendLog(fmt.Sprintf("failed to unmarshal %s", data))
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	btes, err := ioutil.ReadFile(a.Path)
-	if err != nil {
-		sendLog(fmt.Sprintf("failed to read file %s", a.Path))
-		newError := sdk.NewError(sdk.ErrWrongRequest, err)
-		writeError(w, r, newError)
-		return
-	}
-	sbtes := string(btes)
-
-	var varFound string
-	for _, p := range wk.currentJob.params {
-		if (p.Type == sdk.SecretVariable || p.Type == sdk.KeyVariable) && len(p.Value) >= sdk.SecretMinLength && strings.Contains(sbtes, p.Value) {
-			varFound = p.Name
-			break
-		}
-	}
-
-	if varFound != "" {
-		writeByteArray(w, []byte(fmt.Sprintf("secret variable %s is used in file %s", varFound, a.Path)), http.StatusExpectationFailed)
-		return
-	}
-	sendLog(fmt.Sprintf("no secret found in file %s", a.Path))
 }

@@ -18,7 +18,6 @@ import 'rxjs/add/observable/of';
 import { Application } from '../../../model/application.model';
 import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
 import { EnvironmentService } from '../../../service/environment/environment.service';
 import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../service/pipeline/pipeline.service';
@@ -43,7 +42,6 @@ describe('CDS: Pipeline Add Component', () => {
             providers: [
                 MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
-                AuthentificationStore,
                 ProjectStore,
                 ProjectService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },

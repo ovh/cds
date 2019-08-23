@@ -3,9 +3,9 @@ package sdk
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"crypto/md5"
 	"crypto/sha512"
+	"database/sql/driver"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -13,12 +13,9 @@ import (
 	"os"
 	"reflect"
 	"regexp"
-	"runtime"
-	"runtime/pprof"
 
 	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/sdk/log"
+	"github.com/pkg/errors"
 )
 
 // MaxIconSize is the maximum size of the icon in octet
@@ -48,6 +45,30 @@ type IDName struct {
 }
 
 type IDNames []IDName
+
+type EntitiesPermissions map[string]Permissions
+
+func (e EntitiesPermissions) Level(s string) int {
+	if e == nil {
+		return 0
+	}
+	p, has := e[s]
+	if !has {
+		return 0
+	}
+	return p.Level()
+}
+
+func (e EntitiesPermissions) Permissions(s string) Permissions {
+	if e == nil {
+		return Permissions{}
+	}
+	p, has := e[s]
+	if !has {
+		return Permissions{}
+	}
+	return p
+}
 
 func (idNames IDNames) IDs() []int64 {
 	res := make([]int64, len(idNames))
@@ -135,45 +156,57 @@ func FileSHA512sum(filePath string) (string, error) {
 	return sum, nil
 }
 
-// GoRoutine runs the function within a goroutine with a panic recovery
-func GoRoutine(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
-	hostname, _ := os.Hostname()
-	go func(ctx context.Context) {
-		labels := pprof.Labels("goroutine-name", name, "goroutine-hostname", hostname)
-		goroutineCtx := pprof.WithLabels(ctx, labels)
-		pprof.SetGoroutineLabels(goroutineCtx)
-
-		defer func() {
-			if r := recover(); r != nil {
-				buf := make([]byte, 1<<16)
-				runtime.Stack(buf, false)
-				uuid := UUID()
-				log.Error("[PANIC][%s] %s Failed (%s)", hostname, name, uuid)
-
-				for _, f := range writerFactories {
-					w, err := f(uuid)
-					if err != nil {
-						log.Error("unable open writer %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
-						continue
-					}
-					if _, err := io.Copy(w, bytes.NewReader(buf)); err != nil {
-						log.Error("unable to write %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
-						continue
-					}
-					if err := w.Close(); err != nil {
-						log.Error("unable to close %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
-					}
-				}
-			}
-		}()
-
-		fn(goroutineCtx)
-	}(c)
-}
-
 var rxURL = regexp.MustCompile(`http[s]?:\/\/(.*)`)
 
 // IsURL returns if given path is a url according to the URL regex.
 func IsURL(path string) bool {
 	return rxURL.MatchString(path)
+}
+
+// DirectoryExists checks if the directory exists
+func DirectoryExists(path string) (bool, error) {
+	s, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return s.IsDir(), err
+}
+
+// StringSlice type used for database json storage.
+type StringSlice []string
+
+// Scan string slice.
+func (s *StringSlice) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, s), "cannot unmarshal StringSlice")
+}
+
+// Value returns driver.Value from string slice.
+func (s StringSlice) Value() (driver.Value, error) {
+	j, err := json.Marshal(s)
+	return j, WrapError(err, "cannot marshal StringSlice")
+}
+
+// Int64Slice type used for database json storage.
+type Int64Slice []int64
+
+// Scan int64 slice.
+func (s *Int64Slice) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, s), "cannot unmarshal Int64Slice")
+}
+
+// Value returns driver.Value from int64 slice.
+func (s Int64Slice) Value() (driver.Value, error) {
+	j, err := json.Marshal(s)
+	return j, WrapError(err, "cannot marshal Int64Slice")
 }

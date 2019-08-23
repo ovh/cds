@@ -16,9 +16,13 @@ type Redirect struct {
 }
 
 func (r Redirect) Render(w http.ResponseWriter) error {
+	// todo(thinkerou): go1.6 not support StatusPermanentRedirect(308)
+	// when we upgrade go version we can use http.StatusPermanentRedirect
 	if (r.Code < 300 || r.Code > 308) && r.Code != 201 {
 		panic(fmt.Sprintf("Cannot redirect with status code %d", r.Code))
 	}
 	http.Redirect(w, r.Request, r.Location, r.Code)
 	return nil
 }
+
+func (r Redirect) WriteContentType(http.ResponseWriter) {}

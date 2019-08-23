@@ -27,7 +27,7 @@ type ImportOptions struct {
 }
 
 // Parse parse an exportentities.workflow and return the parsed workflow
-func Parse(proj *sdk.Project, ew *exportentities.Workflow, u *sdk.User) (*sdk.Workflow, error) {
+func Parse(proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error) {
 	log.Info("Parse>> Parse workflow %s in project %s", ew.Name, proj.Key)
 	log.Debug("Parse>> Workflow: %+v", ew)
 
@@ -57,7 +57,7 @@ func Parse(proj *sdk.Project, ew *exportentities.Workflow, u *sdk.User) (*sdk.Wo
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW *sdk.Workflow, ew *exportentities.Workflow, u *sdk.User, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW *sdk.Workflow, ew *exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.ParseAndImport")
 	defer end()
 
@@ -65,14 +65,14 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	log.Debug("ParseAndImport>> Workflow: %+v", ew)
 
 	//Parse workflow
-	w, errW := Parse(proj, ew, u)
+	w, errW := Parse(proj, ew)
 	if errW != nil {
 		return nil, nil, errW
 	}
 
 	// Load deep pipelines if we come from workflow run ( so we have hook uuid ).
 	// We need deep pipelines to be able to run stages/jobs
-	if err := IsValid(ctx, store, db, w, proj, u, LoadOptions{DeepPipeline: opts.HookUUID != ""}); err != nil {
+	if err := IsValid(ctx, store, db, w, proj, LoadOptions{DeepPipeline: opts.HookUUID != ""}); err != nil {
 		// Get spawn infos from error
 		msg, ok := sdk.ErrorToMessage(err)
 		if ok {
@@ -81,7 +81,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return nil, nil, sdk.WrapError(err, "Workflow is not valid")
 	}
 
-	if err := RenameNode(db, w); err != nil {
+	if err := RenameNode(ctx, db, w); err != nil {
 		return nil, nil, sdk.WrapError(err, "Unable to rename node")
 	}
 

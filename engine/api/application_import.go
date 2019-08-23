@@ -27,7 +27,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		force := FormBool(r, "force")
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 		if errp != nil {
 			return sdk.WrapError(errp, "postApplicationImportHandler>> Unable load project")
 		}
@@ -62,9 +62,9 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Unable to start tx")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		newApp, msgList, globalError := application.ParseAndImport(tx, api.Cache, proj, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, deprecatedGetUser(ctx))
+		newApp, msgList, globalError := application.ParseAndImport(tx, api.Cache, proj, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import application %s", eapp.Name)
@@ -79,7 +79,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
-		event.PublishAddApplication(proj.Key, *newApp, deprecatedGetUser(ctx))
+		event.PublishAddApplication(proj.Key, *newApp, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}

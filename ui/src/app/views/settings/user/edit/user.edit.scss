@@ -1,14 +1,26 @@
 @import '../../../../../common';
-#UserEdit {
+
+.wrapper {
     display: flex;
     flex-direction: column;
-    align-content: stretch;
-    height: 100%;
-    padding: 20px;
-    h2 {
-        text-align: center;
-    }
-    h4.ui.header {
-        text-align: center;
+
+    .page-content {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+
+        .menu {
+            margin: 20px 0 0 20px;
+        }
+
+        .icon {
+            margin: 0;
+        }
+
+        .card {
+            .button {
+                margin: 2px;
+            }
+        }
     }
 }

@@ -2,8 +2,8 @@
     <app-warning-mark-list [warnings]="warnings"></app-warning-mark-list>
     {{ 'project_permission_list_title' | translate }}
 </h3>
-<app-permission-list [permissions]="project.groups" (event)="groupEvent($event)" [edit]="project.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
-<ng-container *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE">
+<app-permission-list [permissions]="project.groups" (event)="groupEvent($event)" [edit]="project.permissions.writable"></app-permission-list>
+<ng-container *ngIf="project.permissions.writable">
     <h3>{{ 'project_permission_form_title' | translate }}</h3>
     <app-permission-form (createGroupPermissionEvent)="groupEvent($event)" [loading]="permFormLoading"></app-permission-form>
 </ng-container>

@@ -1,0 +1,61 @@
+<ng-template let-context let-modal="modal" #consumerDetailsModal>
+    <div class="header">
+        {{ 'auth_consumer_details_modal_title' | translate: { name: consumer.name } }}
+    </div>
+    <div class="content">
+        <div class="ui grid">
+            <div class="ui wide column">
+                <div class="ui form">
+                    <div class="three fields">
+                        <div class="field">
+                            <label>{{'common_description' | translate}}</label>
+                            {{consumer.description}}
+                        </div>
+                        <div class="field">
+                            <label>{{'user_auth_scopes' | translate}}</label>
+                            {{scopes}}
+                        </div>
+                        <div class="field">
+                            <label>{{'user_auth_groups' | translate}}</label>
+                            {{groups}}
+                        </div>
+                    </div>
+                    <div class="field">
+                        <app-menu class="menu" [items]="menuItems" (onSelect)="selectMenuItem($event)"></app-menu>
+                    </div>
+                    <div class="field" [ngSwitch]="selectedItem.key">
+                        <app-data-table *ngSwitchCase="'sessions'" [withFilter]="filterSessions" [withPagination]="5"
+                            [columns]="columnsSessions" [data]="consumer.sessions">
+                        </app-data-table>
+                        <ng-container *ngSwitchCase="'parent'">
+                            <app-data-table *ngIf="consumer.parent" [columns]="columnsConsumers"
+                                [data]="[consumer.parent]">
+                            </app-data-table>
+                        </ng-container>
+                        <app-data-table *ngSwitchCase="'children'" [withFilter]="filterChildren" [withPagination]="5"
+                            [columns]="columnsConsumers" [data]="consumer.children">
+                        </app-data-table>
+                    </div>
+                    <div class="wide field">
+                        <div class="ui wide field">
+                            <ng-container [ngSwitch]="consumer.type">
+                                <button *ngSwitchCase="'local'" class="ui button green left floated"
+                                    (click)="clickResetPassword()">{{'account_password_btn_reset' | translate }}</button>
+                                <app-delete-button *ngSwitchCase="'builtin'" class="left floated"
+                                    (event)="clickDelete()" [title]="'user_auth_consumer_delete_btn'">
+                                </app-delete-button>
+                                <app-delete-button *ngSwitchDefault class="left floated" (event)="clickDetach()"
+                                    [loading]="loading" [title]="'user_auth_consumer_detach_btn'">
+                                </app-delete-button>
+                            </ng-container>
+                            <button *ngIf="consumer.type === 'builtin'" class="ui button green right floated"
+                                (click)="clickRegen()">{{'auth_consumer_regen' | translate }}</button>
+                            <button class="ui secondary button right floated"
+                                (click)="clickClose()">{{'btn_close' | translate }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>

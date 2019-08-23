@@ -6,8 +6,6 @@ import (
 	"io"
 	"strings"
 	"time"
-
-	"github.com/ovh/cds/sdk"
 )
 
 // PubSub represents a subscriber
@@ -25,6 +23,7 @@ type Store interface {
 	Get(key string, value interface{}) bool
 	Set(key string, value interface{})
 	SetWithTTL(key string, value interface{}, ttl int)
+	SetWithDuration(key string, value interface{}, duration time.Duration) error
 	UpdateTTL(key string, ttl int)
 	Delete(key string)
 	DeleteAll(key string)
@@ -36,7 +35,6 @@ type Store interface {
 	Publish(queueName string, value interface{})
 	Subscribe(queueName string) PubSub
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
-	Status() sdk.MonitoringStatusLine
 	SetAdd(rootKey string, memberKey string, member interface{})
 	SetRemove(rootKey string, memberKey string, member interface{})
 	SetCard(key string) int

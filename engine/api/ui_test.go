@@ -18,17 +18,17 @@ func Test_getNavbarHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	app1 := sdk.Application{
 		Name: "my-app-1",
 	}
 	app2 := sdk.Application{
 		Name: "my-app-2",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app1, u))
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app2, u))
+	test.NoError(t, application.Insert(db, api.Cache, proj, &app1))
+	test.NoError(t, application.Insert(db, api.Cache, proj, &app2))
 
 	//Prepare request
 	uri := api.Router.GetRoute("GET", api.getNavbarHandler, nil)
@@ -42,7 +42,6 @@ func Test_getNavbarHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	t.Logf("Body: %s", w.Body.String())
 	data := []sdk.NavbarProjectData{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &data))
 

@@ -12,6 +12,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
+	"github.com/ovh/cds/engine/service"
+
 	"github.com/gambol99/go-marathon"
 	"github.com/gorilla/mux"
 
@@ -34,6 +37,20 @@ func New() *HatcheryMarathon {
 	return s
 }
 
+func (s *HatcheryMarathon) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(HatcheryConfiguration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid marathon hatchery configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
+}
+
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
@@ -46,15 +63,18 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	h.hatch = &sdk.Hatchery{}
-	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
-	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
 	h.HTTPURL = h.Config.URL
-	h.Token = h.Config.API.Token
+
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = "cds-hatchery-marathon"
+
+	var err error
+	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
+	if err != nil {
+		return fmt.Errorf("unable to parse RSA private Key: %v", err)
+	}
 
 	return nil
 }
@@ -62,9 +82,8 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryMarathon) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
-	if h.IsInitialized() {
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
-	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+
 	return m
 }
 
@@ -127,32 +146,14 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
-// ID must returns hatchery id
-func (h *HatcheryMarathon) ID() int64 {
-	if h.CDSClient().GetService() == nil {
-		return 0
-	}
-	return h.CDSClient().GetService().ID
-}
-
-//Service returns service instance
-func (h *HatcheryMarathon) Service() *sdk.Service {
-	return h.CDSClient().GetService()
-}
-
-//Hatchery returns hatchery instance
-func (h *HatcheryMarathon) Hatchery() *sdk.Hatchery {
-	return h.hatch
-}
-
 // Serve start the hatchery server
 func (h *HatcheryMarathon) Serve(ctx context.Context) error {
 	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration
-func (h *HatcheryMarathon) Configuration() hatchery.CommonConfiguration {
-	return h.Config.CommonConfiguration
+func (h *HatcheryMarathon) Configuration() service.HatcheryCommonConfiguration {
+	return h.Config.HatcheryCommonConfiguration
 }
 
 // ModelType returns type of hatchery
@@ -207,14 +208,14 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
-func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
+func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	ctx, end := observability.Span(ctx, "hatcheryMarathon.SpawnWorker")
 	defer end()
 
 	if spawnArgs.JobID > 0 {
-		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) for job %d", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.JobID)
 	} else {
-		log.Debug("spawnWorker> spawning worker %s (%s) - %s", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s)", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image)
 	}
 
 	var logJob string
@@ -235,25 +236,23 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              workerName,
 		TTL:               h.Config.WorkerTTL,
-		Model:             spawnArgs.Model.ID,
-		HatcheryName:      h.Service().Name,
+		Model:             spawnArgs.Model.GetPath(spawnArgs.Model.Group.Name),
+		HatcheryName:      h.Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
 		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-		GrpcAPI:           h.Configuration().API.GRPC.URL,
-		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
 	udataParam.WorkflowJobID = spawnArgs.JobID
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {
-		return "", errt
+		return errt
 	}
 	var buffer bytes.Buffer
 	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
-		return "", errTmpl
+		return errTmpl
 	}
 
 	cmd := buffer.String()
@@ -271,7 +270,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
 				if err != nil {
 					log.Warning("spawnMarathonDockerWorker> %s unable to parse memory requirement %d: %v", logJob, memory, err)
-					return "", err
+					return err
 				}
 			}
 		}
@@ -289,7 +288,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name
-	envsWm["CDS_MODEL"] = fmt.Sprintf("%d", udataParam.Model)
+	envsWm["CDS_MODEL_PATH"] = udataParam.Model
 	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
 	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
@@ -298,14 +297,9 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
 	}
 
-	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
-		envsWm["CDS_GRPC_API"] = udataParam.GrpcAPI
-		envsWm["CDS_GRPC_INSECURE"] = fmt.Sprintf("%v", udataParam.GrpcInsecure)
-	}
-
 	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
 	if errEnv != nil {
-		return "", errEnv
+		return errEnv
 	}
 
 	for envName, envValue := range envTemplated {
@@ -333,7 +327,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	_, next := observability.Span(ctx, "marathonClient.CreateApplication")
 	if _, err := h.marathonClient.CreateApplication(application); err != nil {
 		next()
-		return "", err
+		return err
 	}
 	next()
 
@@ -364,12 +358,12 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	next()
 	if err != nil {
 		ticker.Stop()
-		return "", fmt.Errorf("spawnMarathonDockerWorker> %s failed to list deployments: %s", logJob, err.Error())
+		return fmt.Errorf("spawnMarathonDockerWorker> %s failed to list deployments: %s", logJob, err.Error())
 	}
 
 	if len(deployments) == 0 {
 		ticker.Stop()
-		return "", nil
+		return nil
 	}
 
 	_, next = observability.Span(ctx, "waitDeployment")
@@ -419,10 +413,10 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	done = true
 
 	if success {
-		return workerName, nil
+		return nil
 	}
 
-	return "", fmt.Errorf("spawnMarathonDockerWorker> %s error while deploying worker", logJob)
+	return fmt.Errorf("spawnMarathonDockerWorker> %s error while deploying worker", logJob)
 }
 
 func (h *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {
@@ -466,8 +460,8 @@ func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 	return x
 }
 
-// Init only starts killing routine of worker not registered
-func (h *HatcheryMarathon) Init() error {
+// InitHatchery only starts killing routine of worker not registered
+func (h *HatcheryMarathon) InitHatchery() error {
 	h.startKillAwolWorkerRoutine()
 	return nil
 }
@@ -574,17 +568,14 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 			log.Debug("killAwolWorkers> killing awol worker %s", app.ID)
 			// If its a worker "register", check registration before deleting it
 			if strings.Contains(app.ID, "register-") && app.Env != nil {
-				modelID, err := strconv.ParseInt((*app.Env)["CDS_MODEL"], 10, 64)
-				if err != nil {
-					log.Error("killAndRemove> unable to get model from registering container %s", app.ID)
-				} else {
-					if err := hatchery.CheckWorkerModelRegister(h, modelID); err != nil {
-						var spawnErr = sdk.SpawnErrorForm{
-							Error: err.Error(),
-						}
-						if err := h.CDSClient().WorkerModelSpawnError(modelID, spawnErr); err != nil {
-							log.Error("killAndRemove> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelID, err)
-						}
+				model := (*app.Env)["CDS_MODEL_PATH"]
+				if err := hatchery.CheckWorkerModelRegister(h, model); err != nil {
+					var spawnErr = sdk.SpawnErrorForm{
+						Error: err.Error(),
+					}
+					tuple := strings.SplitN(model, "/", 2)
+					if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
+						log.Error("killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", model, err)
 					}
 				}
 			}

@@ -2,18 +2,14 @@ package swarm
 
 import (
 	docker "github.com/docker/docker/client"
+	"github.com/ovh/cds/engine/service"
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/hatchery"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
 type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration"`
-
-	// RatioService Percent reserved for spawning worker with service requirement
-	RatioService int `mapstructure:"ratioService" toml:"ratioService" default:"75" commented:"false" comment:"Percent reserved for spawning worker with service requirement" json:"ratioService"`
+	service.HatcheryCommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration"`
 
 	// MaxContainers
 	MaxContainers int `mapstructure:"maxContainers" toml:"maxContainers" default:"10" commented:"false" comment:"Max Containers on Host managed by this Hatchery" json:"maxContainers"`
@@ -37,7 +33,6 @@ type HatcheryConfiguration struct {
 type HatcherySwarm struct {
 	hatcheryCommon.Common
 	Config        HatcheryConfiguration
-	hatch         *sdk.Hatchery
 	dockerClients map[string]*dockerClient
 }
 

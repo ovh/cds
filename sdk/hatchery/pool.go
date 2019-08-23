@@ -13,7 +13,7 @@ import (
 )
 
 // WorkerPool returns all the worker owned by the hatchery h, registered or not on the CDS API
-func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
+func WorkerPool(ctx context.Context, h Interface, status ...string) ([]sdk.Worker, error) {
 	ctx = WithTags(ctx, h)
 
 	// First: call API
@@ -49,7 +49,7 @@ func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.W
 			}
 		}
 		if !found && w.Status != sdk.StatusDisabled {
-			log.Error("Hatchery > WorkerPool> Worker %s (status = %s) inconsistency", w.Name, w.Status.String())
+			log.Error("Hatchery > WorkerPool> Worker %s (status = %s) inconsistency", w.Name, w.Status)
 			if err := h.CDSClient().WorkerDisable(ctx, w.ID); err != nil {
 				log.Error("Hatchery > WorkerPool> Unable to disable worker [%s]%s", w.ID, w.Name)
 			}
@@ -61,7 +61,7 @@ func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.W
 	// And add the other worker with status pending of registering
 	for _, w := range startedWorkers {
 		name := w
-		var status sdk.Status
+		var status string
 
 		var found bool
 		for _, wr := range registeredWorkers {
@@ -87,7 +87,7 @@ func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.W
 		})
 	}
 
-	nbPerStatus := map[sdk.Status]int{}
+	nbPerStatus := map[string]int{}
 	for _, w := range allWorkers {
 		nbPerStatus[w.Status] = nbPerStatus[w.Status] + 1
 	}

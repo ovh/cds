@@ -6,11 +6,11 @@ import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
-import { AuthentificationStore } from 'app/service/auth/authentification.store';
 import { RouterService } from 'app/service/router/router.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { GetWorkflowNodeRun, GetWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
@@ -26,7 +26,6 @@ import { filter, finalize, first } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowNodeRunComponent {
-
     node: WNode;
     nodeRun: WorkflowNodeRun;
 
@@ -58,11 +57,9 @@ export class WorkflowNodeRunComponent {
         private _routerService: RouterService,
         private _workflowRunService: WorkflowRunService,
         private _durationService: DurationService,
-        private _authStore: AuthentificationStore,
         private _titleService: Title,
         private _cd: ChangeDetectorRef
     ) {
-
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
@@ -73,7 +70,7 @@ export class WorkflowNodeRunComponent {
                 this.project = projState.project;
             });
 
-        this.isAdmin = this._authStore.getUser().admin;
+        this.isAdmin = this._store.selectSnapshot(AuthenticationState.user).ring === 'ADMIN';
 
         // Tab selection
         this._activatedRoute.queryParams.subscribe(q => {

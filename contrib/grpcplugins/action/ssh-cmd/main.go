@@ -44,18 +44,18 @@ func (actPlugin *sshCmdActionPlugin) Run(ctx context.Context, q *actionplugin.Ac
 
 	timeout, err := strconv.ParseFloat(timeoutS, 64)
 	if err != nil {
-		return fail("Error parsing timeout value %s : %s", timeoutS, err)
+		return actionplugin.Fail("Error parsing timeout value %s : %s", timeoutS, err)
 	}
 
 	cmdTimeout, err := strconv.ParseFloat(cmdTimeoutS, 64)
 	if err != nil {
-		return fail("Error parsing commandTimeout value %s : %s", cmdTimeoutS, err)
+		return actionplugin.Fail("Error parsing commandTimeout value %s : %s", cmdTimeoutS, err)
 	}
 
 	//Parsing key
 	key, err := ssh.ParsePrivateKey(buf)
 	if err != nil {
-		return fail("PLUGIN", "Error parsing private key : %s", err)
+		return actionplugin.Fail("PLUGIN", "Error parsing private key : %s", err)
 	}
 
 	//Prepare auth
@@ -152,18 +152,13 @@ func (actPlugin *sshCmdActionPlugin) Run(ctx context.Context, q *actionplugin.Ac
 	//Check errors
 	for _, e := range errs {
 		if e != nil {
-			return fail("")
+			return actionplugin.Fail("")
 		}
 	}
 
 	return &actionplugin.ActionResult{
-		Status: sdk.StatusSuccess.String(),
+		Status: sdk.StatusSuccess,
 	}, nil
-}
-
-func (actPlugin *sshCmdActionPlugin) WorkerHTTPPort(ctx context.Context, q *actionplugin.WorkerHTTPPortQuery) (*empty.Empty, error) {
-	actPlugin.HTTPPort = q.Port
-	return &empty.Empty{}, nil
 }
 
 func main() {
@@ -173,13 +168,4 @@ func main() {
 	}
 	return
 
-}
-
-func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error) {
-	msg := fmt.Sprintf(format, args...)
-	fmt.Println(msg)
-	return &actionplugin.ActionResult{
-		Details: msg,
-		Status:  sdk.StatusFail.String(),
-	}, nil
 }

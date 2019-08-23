@@ -8,11 +8,10 @@ import { IdName, Label, LoadOpts, Project } from 'app/model/project.model';
 import { Usage } from 'app/model/usage.model';
 import { Variable } from 'app/model/variable.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
-import { ProjectStore } from 'app/service/services.module';
+import { ProjectStore } from 'app/service/project/project.store';
 import { cloneDeep } from 'lodash-es';
 import { tap } from 'rxjs/operators';
 import * as ProjectAction from './project.action';
-import { AddGroupInAllWorkflows } from './workflow.action';
 
 export class ProjectStateModel {
     public project: Project;
@@ -657,19 +656,13 @@ export class ProjectState {
             params = params.append('onlyProject', 'true');
         }
 
-        return this._http.post<GroupPermission[]>('/project/' + action.payload.projectKey + '/group', action.payload.group,
+        return this._http.post<GroupPermission>('/project/' + action.payload.projectKey + '/group', action.payload.group,
             { params }
-        ).pipe(tap((groups: GroupPermission[]) => {
-            if (!action.payload.onlyProject) {
-                ctx.dispatch(new AddGroupInAllWorkflows({
-                    projectKey: action.payload.projectKey,
-                    group: action.payload.group
-                }));
-            }
-
+        ).pipe(tap((perm: GroupPermission) => {
+            let perms = state.project.groups ? state.project.groups : [];
             ctx.setState({
                 ...state,
-                project: Object.assign({}, state.project, <Project>{ groups }),
+                project: Object.assign({}, state.project, <Project>{ groups: perms.concat(perm) }),
             });
         }));
     }
@@ -695,18 +688,11 @@ export class ProjectState {
         return this._http.put<GroupPermission>(
             '/project/' + action.payload.projectKey + '/group/' + action.payload.group.group.name,
             action.payload.group
-        ).pipe(tap((group) => {
-            let groups = state.project.groups ? state.project.groups.concat([]) : [];
-            groups = groups.map((gr) => {
-                if (gr.group.name === group.group.name) {
-                    return group;
-                }
-                return gr;
-            });
-
+        ).pipe(tap((perm: GroupPermission) => {
+            let perms = state.project.groups ? state.project.groups.filter((g: GroupPermission) => g.group.id !== perm.group.id) : [];
             ctx.setState({
                 ...state,
-                project: Object.assign({}, state.project, <Project>{ groups }),
+                project: Object.assign({}, state.project, <Project>{ groups: perms.concat(perm) }),
             });
         }));
     }

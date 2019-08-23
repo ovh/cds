@@ -2,7 +2,7 @@ package hatchery
 
 import (
 	"context"
-	"encoding/base64"
+	"crypto/rsa"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -25,9 +25,8 @@ import (
 
 type Common struct {
 	service.Common
-	Router      *api.Router
-	initialized bool
-	metrics     hatchery.Metrics
+	Router  *api.Router
+	metrics hatchery.Metrics
 }
 
 const panicDumpDir = "panic_dumps"
@@ -95,40 +94,17 @@ func (c *Common) PanicDumpDirectory() (string, error) {
 	return path, os.MkdirAll(path, os.FileMode(0755))
 }
 
-func (c *Common) ServiceName() string {
-	return c.Common.ServiceName
+func (c *Common) Service() *sdk.Service {
+	return c.Common.ServiceInstance
 }
 
-func (c *Common) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	if rc.Options["auth"] != "true" {
-		return ctx, nil
-	}
-
-	hash, err := base64.StdEncoding.DecodeString(req.Header.Get(sdk.AuthHeader))
-	if err != nil {
-		return ctx, fmt.Errorf("bad header syntax: %s", err)
-	}
-
-	if c.Hash == string(hash) {
-		return ctx, nil
-	}
-
-	return ctx, sdk.ErrUnauthorized
+func (c *Common) ServiceName() string {
+	return c.Common.ServiceName
 }
 
 //CDSClient returns cdsclient instance
 func (c *Common) CDSClient() cdsclient.Interface {
 	return c.Client
-}
-
-// IsInitialized returns true if hatchery is fully initialized
-func (c *Common) IsInitialized() bool {
-	return c.initialized
-}
-
-// SetInitialized set initialized = true for this hatchery
-func (c *Common) SetInitialized() {
-	c.initialized = true
 }
 
 // CommonServe start the HatcheryLocal server
@@ -178,14 +154,14 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.Background = ctx
 	r.URL = h.Configuration().URL
 	r.SetHeaderFunc = api.DefaultHeaders
-	r.Middlewares = append(r.Middlewares, c.AuthMiddleware)
+	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(c.ParsedAPIPublicKey))
 
-	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle("/mon/status", r.GET(getStatusHandler(h), api.Auth(false)))
-	r.Handle("/mon/workers", r.GET(getWorkersPoolHandler(h), api.Auth(false)))
-	r.Handle("/mon/metrics", r.GET(observability.StatsHandler, api.Auth(false)))
-	r.Handle("/mon/errors", r.GET(c.getPanicDumpListHandler, api.Auth(false)))
-	r.Handle("/mon/errors/{id}", r.GET(c.getPanicDumpHandler, api.Auth(false)))
+	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
+	r.Handle("/mon/status", nil, r.GET(getStatusHandler(h), api.Auth(false)))
+	r.Handle("/mon/workers", nil, r.GET(getWorkersPoolHandler(h), api.Auth(false)))
+	r.Handle("/mon/metrics", nil, r.GET(observability.StatsHandler, api.Auth(false)))
+	r.Handle("/mon/errors", nil, r.GET(c.getPanicDumpListHandler, api.Auth(false)))
+	r.Handle("/mon/errors/{id}", nil, r.GET(c.getPanicDumpHandler, api.Auth(false)))
 
 	r.Mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	r.Mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
@@ -196,6 +172,10 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.Mux.HandleFunc("/debug/pprof/", pprof.Index)
 
 	r.Mux.NotFoundHandler = http.HandlerFunc(api.NotFoundHandler)
+}
+
+func (c *Common) GetPrivateKey() *rsa.PrivateKey {
+	return c.Common.PrivateKey
 }
 
 func (c *Common) getPanicDumpListHandler() service.Handler {

@@ -1,11 +1,11 @@
 package notification
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -23,7 +23,7 @@ func Init(uiurl string) {
 }
 
 // GetUserWorkflowEvents return events to send for the given workflow run
-func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.WorkflowNodeRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
+func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.WorkflowNodeRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
 	events := []sdk.EventNotif{}
 
 	//Compute notification
@@ -52,7 +52,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.
 				jn := &notif.Settings
 				//Get recipents from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
-					u, errPerm := projectPermissionUsers(db, w.ProjectID, permission.PermissionRead)
+					u, errPerm := projectPermissionUsers(db, w.ProjectID, sdk.PermissionRead)
 					if errPerm != nil {
 						log.Error("notification[Jabber]. error while loading permission:%s", errPerm.Error())
 					}
@@ -78,7 +78,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.
 				jn := &notif.Settings
 				//Get recipents from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
-					u, errPerm := projectPermissionUsers(db, w.ProjectID, permission.PermissionRead)
+					u, errPerm := projectPermissionUsers(db, w.ProjectID, sdk.PermissionRead)
 					if errPerm != nil {
 						log.Error("notification[Email].GetUserWorkflowEvents> error while loading permission:%s", errPerm.Error())
 						return nil
@@ -91,12 +91,14 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.
 					if email, ok := params["cds.author.email"]; ok {
 						jn.Recipients = append(jn.Recipients, email)
 					} else if author, okA := params["cds.author"]; okA && author != "" {
-						u, err := user.LoadUserWithoutAuth(db, author)
+						// Load the user
+						au, err := user.LoadByUsername(ctx, db, author, user.LoadOptions.WithDeprecatedUser)
 						if err != nil {
 							log.Warning("notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
 							continue
 						}
-						jn.Recipients = append(jn.Recipients, u.Email)
+						//TODO: fix email
+						jn.Recipients = append(jn.Recipients, au.OldUserStruct.Email)
 					}
 				}
 				//Finally deduplicate everyone
@@ -141,15 +143,15 @@ func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun 
 	}
 
 	switch nodeRun.Status {
-	case sdk.StatusSuccess.String():
+	case sdk.StatusSuccess:
 		if check(notif.Settings.OnSuccess) && checkConditions(notif.Settings.Conditions, nodeRun.BuildParameters) {
 			return true
 		}
-	case sdk.StatusFail.String():
+	case sdk.StatusFail:
 		if check(notif.Settings.OnFailure) && checkConditions(notif.Settings.Conditions, nodeRun.BuildParameters) {
 			return true
 		}
-	case sdk.StatusWaiting.String():
+	case sdk.StatusWaiting:
 		return notif.Settings.OnStart != nil && *notif.Settings.OnStart && checkConditions(notif.Settings.Conditions, nodeRun.BuildParameters)
 	}
 

@@ -24,12 +24,12 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			return errID
 		}
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithVariables, project.LoadOptions.WithIntegrations)
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithVariables, project.LoadOptions.WithIntegrations)
 		if errproj != nil {
 			return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
 		}
 
-		wf, errw := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, deprecatedGetUser(ctx), workflow.LoadOptions{})
+		wf, errw := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, workflow.LoadOptions{})
 		if errw != nil {
 			return sdk.WrapError(errw, "getWorkflowTriggerConditionHandler> Unable to load workflow")
 		}
@@ -85,10 +85,10 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
 		}
 
-		if sdk.ParameterFind(&params, "git.repository") == nil {
+		if sdk.ParameterFind(params, "git.repository") == nil {
 			data.ConditionNames = append(data.ConditionNames, sdk.BasicGitVariableNames...)
 		}
-		if sdk.ParameterFind(&params, "git.tag") == nil {
+		if sdk.ParameterFind(params, "git.tag") == nil {
 			data.ConditionNames = append(data.ConditionNames, "git.tag")
 		}
 

@@ -100,6 +100,24 @@
                     <ng-template #noglobalslist>
                         <span translate="service_no"></span>
                     </ng-template>
+
+                    <div>
+                        <h1>API Debug</h1>
+                        <ul>
+                            <li>
+                                <a href="/cdsapi/admin/debug/goroutine?debug=2" target="_blank">Full goroutine stack dump</a>
+                            </li>
+                            <li *ngFor="let profile of profiles | keys">
+                                <a  href="/cdsapi/admin/debug/{{profile}}?debug=1" target="_blank">{{profile}} ({{profiles[profile]}})</a>
+                            </li>
+                            <li>
+                                <a  href="/cdsapi/admin/debug/trace?seconds=30" target="_blank">Trace</a>
+                            </li>
+                            <li>
+                                <a  href="/cdsapi/admin/debug/cpu?seconds=30" target="_blank">CPU Profile</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </ng-template>

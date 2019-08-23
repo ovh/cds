@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 type mockHTTPClient struct {
@@ -29,7 +30,7 @@ func (m *mockHTTPClient) Do(r *http.Request) (*http.Response, error) {
 	return m.f(r)
 }
 
-func mock(f func(r *http.Request) (*http.Response, error)) sdk.HTTPClient {
+func mock(f func(r *http.Request) (*http.Response, error)) cdsclient.HTTPClient {
 	return &mockHTTPClient{f}
 }
 
@@ -47,9 +48,9 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(t, db)
 
-	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, p, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -58,12 +59,8 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 		},
 	}))
 
-	mockService := &sdk.Service{Name: "Test_postImportAsCodeHandler", Type: services.TypeRepositories}
-	_ = services.Delete(api.mustDB(), mockService)
-	test.NoError(t, services.Insert(api.mustDB(), mockService))
-
-	mockVCSservice := &sdk.Service{Name: "Test_VCSService", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(api.mustDB(), mockVCSservice))
+	_, _ = assets.InsertService(t, db, "Test_postImportAsCodeHandler", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, "Test_VCSService", services.TypeVCS)
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -127,11 +124,9 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(t, db)
 
-	mockService := &sdk.Service{Name: "Test_getImportAsCodeHandler", Type: services.TypeRepositories}
-	_ = services.Delete(db, mockService)
-	test.NoError(t, services.Insert(db, mockService))
+	_, _ = assets.InsertService(t, db, "Test_getImportAsCodeHandler", services.TypeRepositories)
 
 	UUID := sdk.UUID()
 
@@ -188,21 +183,16 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
-	mockService := &sdk.Service{Name: "Test_postPerformImportAsCodeHandler_Repo", Type: services.TypeRepositories}
-	_ = services.Delete(db, mockService)
-	test.NoError(t, services.Insert(db, mockService))
-
-	mockService = &sdk.Service{Name: "Test_postPerformImportAsCodeHandler_VCS", Type: services.TypeHooks}
-	services.Delete(db, mockService)
-	test.NoError(t, services.Insert(db, mockService))
+	_, _ = assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Repo", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_VCS", services.TypeHooks)
 
 	UUID := sdk.UUID()
 

@@ -4,9 +4,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
-import { User } from 'app/model/user.model';
-import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { AuthenticationState } from 'app/store/authentication.state';
 import {
     CloneEnvironmentInProject,
     DeleteEnvironmentInProject,
@@ -21,11 +21,10 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EnvironmentAdvancedComponent implements OnInit {
-
     @Input() environment: Environment;
     @Input() project: Project;
 
-    user: User;
+    user: AuthentifiedUser;
 
     oldName: string;
     fileTooLarge = false;
@@ -36,17 +35,14 @@ export class EnvironmentAdvancedComponent implements OnInit {
         private _toast: ToastService,
         public _translate: TranslateService,
         private _router: Router,
-        private _authStore: AuthentificationStore,
         private store: Store,
         private _cd: ChangeDetectorRef
-    ) {
-
-    }
+    ) { }
 
     ngOnInit() {
-        this.user = this._authStore.getUser();
+        this.user = this.store.selectSnapshot(AuthenticationState.user);
         this.oldName = this.environment.name;
-        if (this.environment.permission !== 7) {
+        if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key, 'environment', this.environment.name]);
         }
     }

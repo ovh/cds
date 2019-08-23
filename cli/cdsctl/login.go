@@ -1,49 +1,52 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/url"
 	"os"
 	"path"
 	"regexp"
 	"strings"
-	"time"
 
-	"github.com/howeyc/gopass"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
+	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/jws"
 )
 
 var loginCmd = cli.Command{
-	Name:  "login",
-	Short: "Login to CDS",
+	Name:    "login",
+	Short:   "Login to CDS",
+	Example: `Use it with 'eval' and 'env' flag to set environment variable: eval $(cds login -H API_URL -u USERNAME -p PASSWORD --env)`,
 	Flags: []cli.Flag{
 		{
 			Name:      "api-url",
 			ShortHand: "H",
-			Usage:     "CDS API URL",
+			Usage:     "Url to your CDS api.",
 			IsValid: func(s string) bool {
 				match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
 				return match
 			},
-		}, {
+		},
+		{
+			Name:  "consumer-type",
+			Usage: "CDS auth consumer type (default: local).",
+		},
+		{
+			Name:  "env",
+			Usage: "Display the commands to set up the environment for the cds client.",
+			Type:  cli.FlagBool,
+		},
+		{
 			Name:      "username",
 			ShortHand: "u",
-			Usage:     "CDS Username",
-		}, {
+		},
+		{
 			Name:      "password",
 			ShortHand: "p",
-			Usage:     "CDS Password",
-		}, {
-			Name:  "env",
-			Usage: "Display the commands to set up the environment for the cds client",
-			Type:  cli.FlagBool,
 		},
 	},
 }
@@ -52,17 +55,56 @@ func login() *cobra.Command {
 	return cli.NewCommand(loginCmd, loginRun, nil, cli.CommandWithoutExtraFlags)
 }
 
-func loginExperimental() *cobra.Command {
-	c := cli.NewCommand(loginCmd, loginJWTRun, nil, cli.CommandWithoutExtraFlags)
-	c.Use = "x" + c.Use
-	c.Short = c.Short + " [EXPERIMENTAL]"
-	return c
+func loginRun(v cli.Values) error {
+	env := v.GetBool("env")
+	if env && sdk.GOOS == "windows" {
+		return fmt.Errorf("Env option is not supported on windows yet")
+	}
+
+	apiURL := v.GetString("api-url")
+	if apiURL == "" {
+		return fmt.Errorf("Please set api url")
+	}
+	if strings.HasSuffix(apiURL, "/") {
+		return fmt.Errorf("Invalid given api url, remove trailing '/'")
+	}
+
+	consumerType := sdk.AuthConsumerType(v.GetString("consumer-type"))
+	if !consumerType.IsValid() {
+		return fmt.Errorf("Invalid given consumer type")
+	}
+
+	switch consumerType {
+	case sdk.ConsumerLocal:
+		return loginRunLocal(v)
+	case sdk.ConsumerBuiltin:
+		return loginRunBuiltin(v)
+	default:
+		return loginRunExternal(v)
+	}
 }
 
-func loginJWTRun(v cli.Values) error {
-	var apiURL = v.GetString("api-url")
-	if strings.HasSuffix(apiURL, "/") {
-		fmt.Fprintf(os.Stderr, "Invalid URL. Remove trailing '/'\n")
+func loginRunLocal(v cli.Values) error {
+	apiURL := v.GetString("api-url")
+
+	username := v.GetString("username")
+	password := v.GetString("password")
+	env := v.GetBool("env")
+	if env && (username == "" || password == "") {
+		return fmt.Errorf("Please set username and password flags to use --env option")
+	}
+
+	if username == "" {
+		username = cli.AskValueChoice("Username")
+	} else if !env {
+		fmt.Printf("Username: %s", username)
+	}
+	if password == "" {
+		if err := survey.AskOne(&survey.Password{Message: "Password"}, &password, nil); err != nil {
+			return err
+		}
+	} else if !env {
+		fmt.Println("Password: ********")
 	}
 
 	conf := cdsclient.Config{
@@ -71,175 +113,94 @@ func loginJWTRun(v cli.Values) error {
 	}
 
 	client = cdsclient.New(conf)
-	config, err := client.ConfigUser()
-	if err != nil {
-		return fmt.Errorf("unable get CDS UI URL: %v", err)
-	}
 
-	// prepare an accessTokenRequest with a short
-	var accessTokenRequest = sdk.AccessTokenRequest{
-		Description:           "cdsctl-login-" + time.Now().Format(time.RFC3339),
-		Origin:                "cdsctl",
-		ExpirationDelaySecond: 10 * 60, // ten minutes
-	}
-
-	privateKey, err := jws.NewRandomRSAKey()
-	if err != nil {
-		return fmt.Errorf("unable to prepare private key: %v", err)
-	}
-
-	pubKey, err := jws.ExportPublicKey(privateKey)
-	if err != nil {
-		return fmt.Errorf("unable to prepare publick key: %v", err)
-	}
-
-	signer, err := jws.NewSigner(privateKey)
-	if err != nil {
-		return fmt.Errorf("unable to prepare JWS signer: %v", err)
-	}
-
-	content, err := jws.Sign(signer, accessTokenRequest)
-	if err != nil {
-		return fmt.Errorf("unable to sign access token request: %v", err)
-	}
-
-	uiURL, err := url.Parse(config[sdk.ConfigURLUIKey])
-	if err != nil {
-		return fmt.Errorf("unable to parse UI URL %s: %v", config[sdk.ConfigURLUIKey], err)
-	}
-
-	uiURL.Path = "/account/login"
-	q := uiURL.Query()
-	q.Add("request", content)
-	uiURL.RawQuery = q.Encode()
-
-	fmt.Println("cdsctl: Opening the browser to login or control-c to abort")
-	fmt.Println(" >\tWarning: If browser does not open, vist")
-	fmt.Println(" >\t" + cli.Green("%s", uiURL.String()))
-	browser.OpenURL(uiURL.String()) // nolint
-	// wait for something
-	fmt.Println("cdsctl: Waiting for login...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-	accessToken, jwt, err := client.UserLoginCallback(ctx, content, pubKey)
-	if err != nil {
-		return fmt.Errorf("unable to get login data: %v", err)
-	}
-
-	// Now use the new JWT token to make the call
-	conf = cdsclient.Config{
-		Host:        apiURL,
-		Verbose:     os.Getenv("CDS_VERBOSE") == "true",
-		User:        accessToken.User.Username,
-		AccessToken: jwt,
-	}
-	client = cdsclient.New(conf)
-
-	u, err := client.UserGet(accessToken.User.Username)
-	if err != nil {
-		return fmt.Errorf("unable to get user %s: %v", accessToken.User.Username, err)
-	}
-
-	ids := sdk.GroupsToIDs(u.Groups)
-
-	// Create a new token with a long expiration delay
-	newAccessToken, jwt, err := client.AccessTokenCreate(sdk.AccessTokenRequest{
-		Description:           "cdsctl-login-" + time.Now().Format(time.RFC3339),
-		Origin:                "cdsctl",
-		ExpirationDelaySecond: 604800, // one week
-		GroupsIDs:             ids,
+	res, err := client.AuthConsumerSignin(sdk.ConsumerLocal, sdk.AuthConsumerSigninRequest{
+		"username": username,
+		"password": password,
 	})
 	if err != nil {
-		return fmt.Errorf("unable to create access token: %v", err)
+		return fmt.Errorf("cannot signin: %v", err)
 	}
 
-	// Delete the first token
-	if err := client.AccessTokenDelete(accessToken.ID); err != nil {
-		return fmt.Errorf("unable to delete login access token %s: %v", accessToken.Description, err)
-	}
-
-	fmt.Println("cdsctl: Login successful")
-	fmt.Println("cdsctl: Logged in as", newAccessToken.User.Username)
-
-	return doAfterLogin(apiURL, newAccessToken.User.Username, jwt, v.GetBool("env"), v.GetBool("insecure"))
+	return doAfterLogin(apiURL, res.User.Username, res.Token, env, v.GetBool("insecure"))
 }
 
-func loginRun(v cli.Values) error {
-	url := v.GetString("api-url")
-	username := v.GetString("username")
-	password := v.GetString("password")
+func loginRunBuiltin(v cli.Values) error {
+	apiURL := v.GetString("api-url")
+
+	signinToken := v.GetString("signin-token")
 	env := v.GetBool("env")
-	insecureSkipVerifyTLS := v.GetBool("insecure")
-
-	if env &&
-		(url == "" || username == "" || password == "") {
-		return fmt.Errorf("Please set flags to use --env option")
+	if env && signinToken == "" {
+		return fmt.Errorf("Please set signin-token flag to use --env option")
 	}
 
-	if !env {
-		fmt.Println("CDS API URL:", url)
-	}
-
-	//Take the user from flags or ask for on command line
-	if username == "" {
-		fmt.Printf("Username: ")
-		username = cli.ReadLine()
-	} else if !env {
-		fmt.Println("Username:", username)
-	}
-
-	//Take the password from flags or ask for on command line
-	if password == "" {
-		//Ask for the password
-		fmt.Printf("Password: ")
-		b, err := gopass.GetPasswd()
-		password = string(b)
-		if err != nil {
-			cli.ExitOnError(err)
+	if signinToken == "" {
+		if err := survey.AskOne(&survey.Password{Message: "Sign in token"}, &signinToken, nil); err != nil {
+			return err
 		}
 	} else if !env {
-		fmt.Println("Password: ********")
+		fmt.Println("Sign in token: ********")
 	}
 
-	return doLogin(url, username, password, env, insecureSkipVerifyTLS)
-}
-
-func doLogin(url, username, password string, env, insecureSkipVerifyTLS bool) error {
 	conf := cdsclient.Config{
-		Host:    url,
+		Host:    apiURL,
 		Verbose: os.Getenv("CDS_VERBOSE") == "true",
 	}
 
 	client = cdsclient.New(conf)
-	ok, token, err := client.UserLogin(username, password)
+
+	res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{
+		"token": signinToken,
+	})
 	if err != nil {
-		if conf.Verbose {
-			fmt.Fprintf(os.Stderr, "error:%s\n", err)
-		}
-		if strings.HasSuffix(url, "/") {
-			fmt.Fprintf(os.Stderr, "Invalid URL. Remove trailing '/'\n")
-		}
-		if sdk.ErrorIs(err, sdk.ErrInvalidUser) {
-			return fmt.Errorf(sdk.ErrInvalidUser.Error())
-		}
-		return fmt.Errorf("Please check CDS API URL")
-	}
-	if !ok {
-		return fmt.Errorf("login failed")
+		return fmt.Errorf("cannot signin: %s", err)
 	}
 
-	return doAfterLogin(url, username, token, env, insecureSkipVerifyTLS)
+	return doAfterLogin(apiURL, res.User.Username, res.Token, env, v.GetBool("insecure"))
+}
+
+func loginRunExternal(v cli.Values) error {
+	apiURL := v.GetString("api-url")
+	consumerType := sdk.AuthConsumerType(v.GetString("consumer-type"))
+
+	conf := cdsclient.Config{
+		Host:    apiURL,
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+	}
+
+	client = cdsclient.New(conf)
+
+	askSigninURI, err := url.Parse(apiURL + "/auth/consumer/" + string(consumerType) + "/askSignin?origin=cdsctl")
+	if err != nil {
+		return fmt.Errorf("cannot parse given api uri: %v", err)
+	}
+
+	fmt.Println("cdsctl: Opening the browser to login or control-c to abort")
+	fmt.Println(" >\tWarning: If browser does not open, visit")
+	fmt.Println(" >\t" + cli.Green("%s", askSigninURI.String()))
+	browser.OpenURL(askSigninURI.String()) // nolint
+
+	token := cli.AskValueChoice("Enter 'token' value:")
+	splittedToken := strings.Split(token, ":")
+	if len(splittedToken) != 2 {
+		return fmt.Errorf("invalid given 'token' value")
+	}
+	state, code := splittedToken[0], splittedToken[1]
+
+	res, err := client.AuthConsumerSignin(consumerType, sdk.AuthConsumerSigninRequest{
+		"state": state,
+		"code":  code,
+	})
+	if err != nil {
+		return fmt.Errorf("cannot signin: %v", err)
+	}
+
+	return doAfterLogin(apiURL, res.User.Username, res.Token, v.GetBool("env"), v.GetBool("insecure"))
 }
 
 func doAfterLogin(url, username, token string, env bool, insecureSkipVerifyTLS bool) error {
 	if insecureSkipVerifyTLS {
 		fmt.Println("Using insecure TLS connection...")
-	}
-
-	if env && sdk.GOOS == "windows" {
-		fmt.Println("env option is not supported on windows yet")
-		os.Exit(1)
 	}
 
 	if env {
@@ -249,6 +210,9 @@ func doAfterLogin(url, username, token string, env bool, insecureSkipVerifyTLS b
 		fmt.Println("# Run this command to configure your shell:")
 		fmt.Println(`# eval $(cds login -H API_URL -u USERNAME -p PASSWORD --env)`)
 		return nil
+	} else {
+		fmt.Println("cdsctl: Login successful")
+		fmt.Println("cdsctl: Logged in as", username)
 	}
 
 	if configFile == "" {

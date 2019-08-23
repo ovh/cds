@@ -21,17 +21,17 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	//Insert Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -80,17 +80,17 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	//Insert Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -135,17 +135,17 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	//Insert Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app); err != nil {
 		t.Fatal(err)
 	}
 

@@ -1,7 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
-import { GroupPermission } from 'app/model/group.model';
-import { PermissionValue } from 'app/model/permission.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -269,31 +267,6 @@ export class WorkflowState {
                 workflow: wfUpdated,
             });
         }));
-    }
-
-    //  ------- Group Permission --------- //
-    @Action(actionWorkflow.AddGroupInAllWorkflows)
-    propagateProjectPermission(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.AddGroupInAllWorkflows) {
-        const state = ctx.getState();
-        if (!state.workflow) {
-            return;
-        }
-        if (state.workflow.project_key !== action.payload.projectKey) {
-            ctx.setState({
-                ...state,
-                workflow: null
-            });
-            return
-        }
-        let group: GroupPermission = { ...action.payload.group, hasChanged: false, updating: false };
-        let wf = Object.assign({}, state.workflow, <Workflow>{
-            groups: [group].concat(state.workflow.groups)
-        });
-
-        ctx.setState({
-            ...state,
-            workflow: wf,
-        });
     }
 
     @Action(actionWorkflow.AddGroupInWorkflow)
@@ -652,7 +625,7 @@ export class WorkflowState {
         return this._workflowService.getWorkflow(action.payload.projectKey, action.payload.workflowName).pipe(first(),
             tap(wf => {
                 const state = ctx.getState();
-                let canEdit = wf.permission === PermissionValue.READ_WRITE_EXECUTE;
+                let canEdit = wf.permissions.writable;
                 ctx.setState({
                     ...state,
                     projectKey: action.payload.projectKey,
@@ -841,7 +814,7 @@ export class WorkflowState {
             ...state,
             workflowRun: null,
             workflowNodeRun: null,
-            canEdit: state.workflow.permission === PermissionValue.READ_WRITE_EXECUTE,
+            canEdit: state.workflow.permissions.writable,
             sidebar: WorkflowSidebarMode.RUNS
         });
 

@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Store } from '@ngxs/store';
 import { Broadcast } from 'app/model/broadcast.model';
 import { NavbarProjectData } from 'app/model/navbar.model';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { Subscription } from 'rxjs';
 import { TimelineFilter } from '../../model/timeline.model';
-import { User } from '../../model/user.model';
-import { AuthentificationStore } from '../../service/auth/authentification.store';
+import { AuthentifiedUser } from '../../model/user.model';
 import { BroadcastStore } from '../../service/broadcast/broadcast.store';
 import { NavbarService } from '../../service/navbar/navbar.service';
 import { TimelineStore } from '../../service/timeline/timeline.store';
@@ -24,7 +25,7 @@ export class HomeComponent implements OnInit {
     broadcasts: Array<Broadcast> = [];
     loading = true;
     loadingBroadcasts = true;
-    user: User;
+    user: AuthentifiedUser;
 
     filter: TimelineFilter;
     filterSub: Subscription;
@@ -33,13 +34,13 @@ export class HomeComponent implements OnInit {
     _broadcastSub: Subscription;
 
     constructor(
-      private _navbarService: NavbarService,
-      private _broadcastService: BroadcastStore,
-      private _authStore: AuthentificationStore,
-      private _timelineStore: TimelineStore,
-      private _cd: ChangeDetectorRef
+        private _navbarService: NavbarService,
+        private _broadcastService: BroadcastStore,
+        private _store: Store,
+        private _timelineStore: TimelineStore,
+        private _cd: ChangeDetectorRef
     ) {
-        this.user = this._authStore.getUser();
+        this.user = this._store.selectSnapshot(AuthenticationState.user);
         this.filter = new TimelineFilter();
         this._navbarSub = this._navbarService.getData(true)
             .subscribe((data) => {

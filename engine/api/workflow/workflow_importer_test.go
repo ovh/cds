@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"testing"
 
@@ -31,13 +32,18 @@ func (h *mockHTTPClient) Do(*http.Request) (*http.Response, error) {
 func TestImport(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
-	mockService := &sdk.Service{Name: "service_test", Type: "hooks"}
-	services.Delete(db, mockService)
-	test.NoError(t, services.Insert(db, mockService))
+	srvs, _ := services.LoadAll(context.TODO(), db)
+	for _, srv := range srvs {
+		if err := services.Delete(db, &srv); err != nil {
+			log.Fatalf("unable to delete service %s", srv.Name)
+		}
+	}
+
+	assets.InsertService(t, db, "service_test"+sdk.RandomString(5), services.TypeHooks)
 
 	//Mock HTTPClient from services package
 	services.HTTPClient = &mockHTTPClient{}
@@ -48,7 +54,7 @@ func TestImport(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pipeline",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	//Pipeline
 	pipparam := sdk.Pipeline{
@@ -58,12 +64,12 @@ func TestImport(t *testing.T) {
 	}
 	sdk.AddParameter(&pipparam.Parameter, "name", sdk.StringParameter, "value")
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pipparam, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pipparam))
 	//Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, cache, proj, app, u))
+	test.NoError(t, application.Insert(db, cache, proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
@@ -74,7 +80,7 @@ func TestImport(t *testing.T) {
 	test.NoError(t, environment.InsertEnvironment(db, env))
 
 	//Reload project
-	proj, _ = project.Load(db, cache, proj.Key, u, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
+	proj, _ = project.Load(db, cache, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 	hookModels, err := workflow.LoadHookModels(db)
@@ -471,7 +477,7 @@ func TestImport(t *testing.T) {
 			}
 			var wf *sdk.Workflow
 			if workflowExists {
-				wf, err = workflow.Load(context.TODO(), db, cache, proj, tt.args.w.Name, u, workflow.LoadOptions{WithIcon: true})
+				wf, err = workflow.Load(context.TODO(), db, cache, proj, tt.args.w.Name, workflow.LoadOptions{WithIcon: true})
 				if err != nil {
 					t.Errorf("%s", err)
 				}

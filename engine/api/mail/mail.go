@@ -13,19 +13,36 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-type emailParam struct {
-	URL string
-}
-
 var smtpUser, smtpPassword, smtpFrom, smtpHost, smtpPort string
 var smtpTLS, smtpEnable bool
 
-const templateSignedUP = `Welcome to CDS,
+const templateSignedup = `Welcome to CDS,
 
 You recently signed up for CDS.
 
-To verify your email address, follow this link :
+To verify your email address, follow this link:
 {{.URL}}
+
+Regards,
+--
+CDS Team
+`
+
+const templateAskReset = `Hi {{.Username}},
+
+You asked for a password reset.
+
+Follow this link to set a new password on your account:
+{{.URL}}
+
+Regards,
+--
+CDS Team
+`
+
+const templateReset = `Hi {{.Username}},
+
+Your password was successfully.
 
 Regards,
 --
@@ -108,39 +125,54 @@ func smtpClient() (*smtp.Client, error) {
 	return c, nil
 }
 
-// SendMailVerifyToken Send mail to verify user account
+// SendMailVerifyToken send mail to verify user account.
 func SendMailVerifyToken(userMail, username, token, callback string) error {
-	callbackURL := getCallbackURL(username, token, callback)
+	callbackURL := fmt.Sprintf(callback, token)
 
-	mailContent, err := createTemplate(templateSignedUP, callbackURL)
+	mailContent, err := createTemplate(templateSignedup, callbackURL, username)
 	if err != nil {
 		return err
 	}
-	return SendEmail("Welcome to CDS", &mailContent, userMail, false)
+
+	return SendEmail("[CDS] Welcome to CDS", &mailContent, userMail, false)
 }
 
-func getCallbackURL(username, token, callback string) string {
-	return fmt.Sprintf(callback, username, token)
+// SendMailAskResetToken send mail to ask reset a user account.
+func SendMailAskResetToken(userMail, username, token, callback string) error {
+	callbackURL := fmt.Sprintf(callback, token)
+
+	mailContent, err := createTemplate(templateAskReset, callbackURL, username)
+	if err != nil {
+		return err
+	}
+
+	return SendEmail("[CDS] Reset your password", &mailContent, userMail, false)
 }
 
-func createTemplate(templ, callbackURL string) (bytes.Buffer, error) {
+// SendMailResetToken send mail to reset a user account.
+func SendMailResetToken(userMail, username, token, callback string) error {
+	callbackURL := fmt.Sprintf(callback, token)
+
+	mailContent, err := createTemplate(templateReset, callbackURL, username)
+	if err != nil {
+		return err
+	}
+
+	return SendEmail("[CDS] Your password was reset", &mailContent, userMail, false)
+}
+
+func createTemplate(templ, callbackURL, username string) (bytes.Buffer, error) {
 	var b bytes.Buffer
 
 	// Create mail template
 	t := template.New("Email template")
 	t, err := t.Parse(templ)
 	if err != nil {
-		fmt.Printf("Error with parsing template:%s \n", err.Error())
-		return b, err
+		return b, sdk.WrapError(err, "error with parsing template")
 	}
 
-	param := emailParam{
-		URL: callbackURL,
-	}
-	err = t.Execute(&b, param)
-	if err != nil {
-		fmt.Printf("Error with Execute template:%s \n", err.Error())
-		return b, err
+	if err := t.Execute(&b, struct{ URL, Username string }{callbackURL, username}); err != nil {
+		return b, sdk.WrapError(err, "cannot execute template")
 	}
 
 	return b, nil

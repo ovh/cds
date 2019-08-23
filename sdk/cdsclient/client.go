@@ -1,7 +1,9 @@
 package cdsclient
 
 import (
+	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"io"
 	"net"
 	"net/http"
@@ -12,14 +14,10 @@ import (
 )
 
 type client struct {
-	isWorker      bool
-	isService     bool
-	isProvider    bool
-	HTTPClient    HTTPClient
-	HTTPSSEClient HTTPClient
+	httpClient    *http.Client
+	httpSSEClient *http.Client
 	config        Config
 	name          string
-	service       *sdk.Service
 }
 
 // NewHTTPClient returns a new HTTP Client
@@ -54,30 +52,14 @@ func NewHTTPClient(timeout time.Duration, insecureSkipVerifyTLS bool) *http.Clie
 func New(c Config) Interface {
 	cli := new(client)
 	cli.config = c
-	cli.HTTPClient = NewHTTPClient(time.Second*60, c.InsecureSkipVerifyTLS)
-	cli.HTTPSSEClient = NewHTTPClient(0, c.InsecureSkipVerifyTLS)
-	cli.init()
-	return cli
-}
-
-// NewService returns client for a service
-func NewService(endpoint string, timeout time.Duration, insecureSkipVerifyTLS bool) Interface {
-	conf := Config{
-		Host:                  endpoint,
-		Retry:                 2,
-		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
-	}
-	cli := new(client)
-	cli.config = conf
-	cli.HTTPClient = NewHTTPClient(timeout, conf.InsecureSkipVerifyTLS)
-	cli.HTTPSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
-	cli.isService = true
+	cli.httpClient = NewHTTPClient(time.Second*60, c.InsecureSkipVerifyTLS)
+	cli.httpSSEClient = NewHTTPClient(0, c.InsecureSkipVerifyTLS)
 	cli.init()
 	return cli
 }
 
 // NewWorker returns client for a worker
-func NewWorker(endpoint string, name string, c HTTPClient) Interface {
+func NewWorker(endpoint string, name string, c *http.Client) WorkerInterface {
 	conf := Config{
 		Host:  endpoint,
 		Retry: 10,
@@ -86,13 +68,12 @@ func NewWorker(endpoint string, name string, c HTTPClient) Interface {
 	cli.config = conf
 
 	if c == nil {
-		cli.HTTPClient = NewHTTPClient(time.Second*360, false)
+		cli.httpClient = NewHTTPClient(time.Second*360, false)
 	} else {
-		cli.HTTPClient = c
+		cli.httpClient = c
 	}
-	cli.HTTPSSEClient = NewHTTPClient(0, false)
+	cli.httpSSEClient = NewHTTPClient(0, false)
 
-	cli.isWorker = true
 	cli.name = name
 	cli.init()
 	return cli
@@ -111,10 +92,10 @@ func NewClientFromEnv() (Interface, error) {
 // NewProviderClient returns an implementation for ProviderClient interface
 func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	conf := Config{
-		Host:  cfg.Host,
-		Retry: 2,
-		Token: cfg.Token,
-		User:  cfg.Name,
+		Host:                              cfg.Host,
+		Retry:                             2,
+		BuitinConsumerAuthenticationToken: cfg.Token,
+		InsecureSkipVerifyTLS:             cfg.InsecureSkipVerifyTLS,
 	}
 
 	if cfg.RequestSecondsTimeout == 0 {
@@ -123,23 +104,61 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 
 	cli := new(client)
 	cli.config = conf
-	cli.HTTPClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
-	cli.HTTPSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
-	cli.isProvider = true
-	cli.name = cfg.Name
+	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
+	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.init()
 	return cli
 }
 
-func (c *client) init() {
-	if c.isWorker {
-		c.config.userAgent = sdk.WorkerAgent
-	} else if c.isService {
-		c.config.userAgent = sdk.ServiceAgent
-	} else {
-		c.config.userAgent = sdk.SDKAgent
+// NewServiceClient returns client for a service
+func NewServiceClient(cfg ServiceConfig) (Interface, []byte, error) {
+	conf := Config{
+		Host:                              cfg.Host,
+		Retry:                             2,
+		BuitinConsumerAuthenticationToken: cfg.Token,
+		InsecureSkipVerifyTLS:             cfg.InsecureSkipVerifyTLS,
 	}
 
+	if cfg.RequestSecondsTimeout == 0 {
+		cfg.RequestSecondsTimeout = 60
+	}
+
+	cli := new(client)
+	cli.config = conf
+	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
+	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
+	cli.config.Verbose = cfg.Verbose
+	cli.init()
+
+	if cfg.Hook != nil {
+		if err := cfg.Hook(cli); err != nil {
+			return nil, nil, sdk.WithStack(err)
+		}
+	}
+
+	var nbError int
+retry:
+	var res sdk.AuthConsumerSigninResponse
+	_, headers, code, err := cli.RequestJSON(context.Background(), "POST", "/auth/consumer/"+string(sdk.ConsumerBuiltin)+"/signin", sdk.AuthConsumerSigninRequest{"token": cfg.Token}, &res)
+	if err != nil {
+		if code == 401 {
+			nbError++
+			if nbError == 60 {
+				time.Sleep(time.Minute)
+				goto retry
+			}
+		}
+		return nil, nil, err
+	}
+	cli.config.SessionToken = res.Token
+
+	base64EncodedPubKey := headers.Get("X-Api-Pub-Signing-Key")
+	pubKey, err := base64.StdEncoding.DecodeString(base64EncodedPubKey)
+
+	return cli, pubKey, err
+}
+
+func (c *client) init() {
 	if os.Getenv("CDS_VERBOSE") == "true" {
 		c.config.Verbose = true
 	}
@@ -147,4 +166,11 @@ func (c *client) init() {
 
 func (c *client) APIURL() string {
 	return c.config.Host
+}
+
+func (c *client) HTTPClient() *http.Client {
+	return c.httpClient
+}
+func (c *client) HTTPSSEClient() *http.Client {
+	return c.httpSSEClient
 }

@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/base64"
 	"io"
 	"net/http"
 	"runtime/pprof"
 	"strings"
+
+	"github.com/ovh/cds/sdk"
 )
 
 const (
@@ -28,7 +29,17 @@ type SSEvent struct {
 // close the stream. This is blocking, and so you will likely want to call this
 // in a new goroutine (via `go c.RequestSSEGet(..)`)
 func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSEvent, mods ...RequestModifier) error {
-	labels := pprof.Labels("user-agent", c.config.userAgent, "path", path, "method", "GET")
+	// Checks that current session_token is still valid
+	// If not, challenge a new one against the authenticationToken
+	if !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
+		if err != nil {
+			return err
+		}
+		c.config.SessionToken = resp.Token
+	}
+
+	labels := pprof.Labels("path", path, "method", "GET")
 	ctx = pprof.WithLabels(ctx, labels)
 	pprof.SetGoroutineLabels(ctx)
 
@@ -49,30 +60,20 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 	}
 
 	req.Header.Set("Accept", "text/event-stream")
-	req.Header.Set("User-Agent", c.config.userAgent)
 	req.Header.Set("Connection", "close")
-	req.Header.Add(RequestedWithHeader, RequestedWithValue)
-	if c.name != "" {
-		req.Header.Add(RequestedNameHeader, c.name)
-	}
-	if c.isProvider {
-		req.Header.Add("X-Provider-Name", c.config.User)
-		req.Header.Add("X-Provider-Token", c.config.Token)
-	}
 
-	if c.config.Hash != "" {
-		basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
-		req.Header.Set(AuthHeader, basedHash)
-	}
-	if c.config.User != "" && c.config.Token != "" {
-		req.Header.Add(SessionTokenHeader, c.config.Token)
-		req.SetBasicAuth(c.config.User, c.config.Token)
-	}
+	auth := "Bearer " + c.config.SessionToken
+	req.Header.Add("Authorization", auth)
 
-	resp, err := c.HTTPSSEClient.Do(req)
+	resp, err := c.httpSSEClient.Do(req)
 	if err != nil {
 		return err
 	}
+
+	if resp.StatusCode == 401 {
+		c.config.SessionToken = ""
+	}
+
 	br := bufio.NewReader(resp.Body)
 	defer resp.Body.Close() // nolint
 

@@ -14,7 +14,7 @@ import (
 )
 
 //Import is able to create a new workflow and all its components
-func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW, w *sdk.Workflow, u *sdk.User, force bool, msgChan chan<- sdk.Message) error {
+func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW, w *sdk.Workflow, u sdk.Identifiable, force bool, msgChan chan<- sdk.Message) error {
 	ctx, end := observability.Span(ctx, "workflow.Import")
 	defer end()
 
@@ -34,7 +34,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 
 	// create the workflow if not exists
 	if oldW == nil {
-		if err := Insert(db, store, w, proj, u); err != nil {
+		if err := Insert(ctx, db, store, w, proj); err != nil {
 			return sdk.WrapError(err, "Unable to insert workflow")
 		}
 		if msgChan != nil {
@@ -87,7 +87,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		OldWorkflow:           oldW,
 	}
 
-	if err := Update(ctx, db, store, w, proj, u, uptOptions); err != nil {
+	if err := Update(ctx, db, store, w, proj, uptOptions); err != nil {
 		return sdk.WrapError(err, "Unable to update workflow")
 	}
 
@@ -106,18 +106,15 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	return nil
 }
 
-func setTemplateData(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sdk.User, wt *sdk.WorkflowTemplate) error {
+func setTemplateData(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u sdk.Identifiable, wt *sdk.WorkflowTemplate) error {
 	// set the workflow id on template instance if exist
 	if wt == nil {
 		return nil
 	}
 
 	// check that group exists
-	grp, err := group.LoadGroup(db, wt.Group.Name)
+	grp, err := group.LoadByName(ctx, db, wt.Group.Name)
 	if err != nil {
-		return err
-	}
-	if err := group.CheckUserIsGroupMember(grp, u); err != nil {
 		return err
 	}
 
@@ -158,7 +155,7 @@ func setTemplateData(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project, w
 func importWorkflowGroups(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	if len(w.Groups) > 0 {
 		for i := range w.Groups {
-			g, err := group.LoadGroup(db, w.Groups[i].Group.Name)
+			g, err := group.LoadByName(context.Background(), db, w.Groups[i].Group.Name)
 			if err != nil {
 				return sdk.WrapError(err, "Unable to load group %s", w.Groups[i].Group.Name)
 			}

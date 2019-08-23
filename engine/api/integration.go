@@ -53,7 +53,7 @@ func (api *API) postIntegrationModelHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to start tx")
 		}
 
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		if exist, err := integration.ModelExists(tx, m.Name); err != nil {
 			return sdk.WrapError(err, "Unable to check if model %s exist", m.Name)
@@ -70,7 +70,7 @@ func (api *API) postIntegrationModelHandler() service.Handler {
 		}
 
 		if m.Public {
-			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, deprecatedGetUser(ctx))
+			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
 		}
 
 		return service.WriteJSON(w, m, http.StatusCreated)
@@ -95,7 +95,7 @@ func (api *API) putIntegrationModelHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Unable to start tx")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		old, err := integration.LoadModelByName(tx, name, true)
 		if err != nil {
@@ -120,14 +120,14 @@ func (api *API) putIntegrationModelHandler() service.Handler {
 		}
 
 		if m.Public {
-			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, deprecatedGetUser(ctx))
+			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
 		}
 
 		return service.WriteJSON(w, m, http.StatusOK)
 	}
 }
 
-func propagatePublicIntegrationModel(db *gorp.DbMap, store cache.Store, m sdk.IntegrationModel, u *sdk.User) {
+func propagatePublicIntegrationModel(db *gorp.DbMap, store cache.Store, m sdk.IntegrationModel, u sdk.Identifiable) {
 	if !m.Public && len(m.PublicConfigurations) > 0 {
 		return
 	}
@@ -155,7 +155,7 @@ func propagatePublicIntegrationModel(db *gorp.DbMap, store cache.Store, m sdk.In
 	}
 }
 
-func propagatePublicIntegrationModelOnProject(db gorp.SqlExecutor, store cache.Store, m sdk.IntegrationModel, p sdk.Project, u *sdk.User) error {
+func propagatePublicIntegrationModelOnProject(db gorp.SqlExecutor, store cache.Store, m sdk.IntegrationModel, p sdk.Project, u sdk.Identifiable) error {
 	if !m.Public {
 		return nil
 	}
@@ -204,7 +204,7 @@ func (api *API) deleteIntegrationModelHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Unable to start tx")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		old, err := integration.LoadModelByName(tx, name, false)
 		if err != nil {

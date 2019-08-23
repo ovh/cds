@@ -135,6 +135,7 @@ func (lc *LineChart) renderBraille() Buffer {
 
 func (lc *LineChart) renderDot() Buffer {
 	buf := NewBuffer()
+	lasty := -1 // previous y val
 	for i := 0; i < len(lc.Data) && i < lc.axisXWidth; i++ {
 		c := Cell{
 			Ch: lc.DotStyle,
@@ -143,6 +144,22 @@ func (lc *LineChart) renderDot() Buffer {
 		}
 		x := lc.innerArea.Min.X + lc.labelYSpace + 1 + i
 		y := lc.innerArea.Min.Y + lc.innerArea.Dy() - 3 - int((lc.Data[i]-lc.bottomValue)/lc.scale+0.5)
+
+		if lasty != -1 && lasty != y {
+			u := 1 // direction
+			if lasty > y {
+				u = -1 // put dot below
+			}
+			for fy := lasty + u; fy != y; fy += u { // fy: filling point's y val
+				dx := -1 // lastx := x-1 = x+dx
+				if u*(fy-lasty) >= u*(y-lasty)/2 {
+					dx = 0 // cancel the horizontal backspace when getting close to (x,y)
+				}
+				buf.Set(x+dx, fy, c)
+			}
+		}
+		lasty = y
+
 		buf.Set(x, y, c)
 	}
 
@@ -224,6 +241,9 @@ func (lc *LineChart) calcLayout() {
 	// update bound Y when drawing is gonna overflow
 	lc.minY = lc.Data[0]
 	lc.maxY = lc.Data[0]
+
+	lc.bottomValue = lc.minY
+	lc.topValue = lc.maxY
 
 	// valid visible range
 	vrange := lc.innerArea.Dx()

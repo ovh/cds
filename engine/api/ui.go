@@ -18,7 +18,7 @@ import (
 
 func (api *API) getNavbarHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, deprecatedGetUser(ctx))
+		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, *getAPIConsumer(ctx).AuthentifiedUser)
 		if err != nil {
 			return sdk.WrapError(err, "getNavbarHandler")
 		}
@@ -33,7 +33,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 		appName := vars["applicationName"]
 		db := api.mustDB()
 
-		p, errP := project.Load(db, api.Cache, key, deprecatedGetUser(ctx))
+		p, errP := project.Load(db, api.Cache, key)
 		if errP != nil {
 			return sdk.WrapError(errP, "getApplicationOverviewHandler> unable to load project")
 		}
@@ -43,7 +43,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			return sdk.WrapError(errA, "getApplicationOverviewHandler> unable to load application")
 		}
 
-		usage, errU := loadApplicationUsage(db, key, appName)
+		usage, errU := loadApplicationUsage(ctx, db, key, appName)
 		if errU != nil {
 			return sdk.WrapError(errU, "getApplicationOverviewHandler> Cannot load application usage")
 		}
@@ -55,7 +55,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 		}
 
 		// GET METRICS
-		m1, errMV := metrics.GetMetrics(db, key, app.ID, sdk.MetricKeyVulnerability)
+		m1, errMV := metrics.GetMetrics(ctx, db, key, app.ID, sdk.MetricKeyVulnerability)
 		if errMV != nil {
 			return sdk.WrapError(errMV, "getApplicationOverviewHandler> Cannot list vulnerability metrics")
 		}
@@ -64,7 +64,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			Datas: m1,
 		})
 
-		m2, errUT := metrics.GetMetrics(db, key, app.ID, sdk.MetricKeyUnitTest)
+		m2, errUT := metrics.GetMetrics(ctx, db, key, app.ID, sdk.MetricKeyUnitTest)
 		if errUT != nil {
 			return sdk.WrapError(errUT, "getApplicationOverviewHandler> Cannot list Unit test metrics")
 		}
@@ -73,7 +73,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			Datas: m2,
 		})
 
-		mCov, errCov := metrics.GetMetrics(db, key, app.ID, sdk.MetricKeyCoverage)
+		mCov, errCov := metrics.GetMetrics(ctx, db, key, app.ID, sdk.MetricKeyCoverage)
 		if errCov != nil {
 			return sdk.WrapError(errCov, "getApplicationOverviewHandler> Cannot list coverage metrics")
 		}

@@ -30,16 +30,16 @@ $darkTheme_night_orange: #9e4607;
 a,
 .ui.breadcrumb a,
 .ui.list>a.item {
-    .night & {
-        color: #49a7ff;
-    }
+  .night & {
+    color: #49a7ff;
+  }
 }
 
 .ui.list .list>.disabled.item,
 .ui.list>.disabled.item {
-    .night & {
-        color: $darkTheme_grey_4 !important;
-    }
+  .night & {
+    color: $darkTheme_grey_4 !important;
+  }
 }
 
 .ui.list > .item > .content {
@@ -49,104 +49,104 @@ a,
 }
 
 .night {
-    color: $darkTheme_grey_6;
-    background-color: $darkTheme_grey_1;
+  color: $darkTheme_grey_6;
+  background-color: $darkTheme_grey_1;
 }
 
 .ui.card {
-    .meta {
-        .night & {
-            color: rgba(255, 255, 255, 0.4)
-        }
-    }
-
+  .meta {
     .night & {
-        background-color: $darkTheme_grey_0;
-        box-shadow: 0px 1px 3px 0px $darkTheme_grey_2, 0px 0px 0px 1px $darkTheme_grey_2;
+      color: rgba(255, 255, 255, 0.4)
     }
+  }
+
+  .night & {
+    background-color: $darkTheme_grey_0;
+    box-shadow: 0px 1px 3px 0px $darkTheme_grey_2, 0px 0px 0px 1px $darkTheme_grey_2;
+  }
 }
 
 .ui.cards>.card {
-    .night & {
-        background-color: $darkTheme_grey_0;
-        box-shadow: 0px 1px 3px 0px $darkTheme_grey_2, 0px 0px 0px 1px $darkTheme_grey_2;
-    }
+  .night & {
+    background-color: $darkTheme_grey_0;
+    box-shadow: 0px 1px 3px 0px $darkTheme_grey_2, 0px 0px 0px 1px $darkTheme_grey_2;
+  }
 }
 
 .ui.cards>.card>.content>.header {
-    .night & {
-        color: $darkTheme_grey_5;
-    }
+  .night & {
+    color: $darkTheme_grey_5;
+  }
 }
 
 .ui.cards>.card .meta,
 .ui.cards>.card>.content>.description {
-    .night & {
-        color: $darkTheme_grey_6;
-    }
+  .night & {
+    color: $darkTheme_grey_6;
+  }
 }
 
 .ui.cards a.card:hover,
 .ui.link.cards .card:hover,
 a.ui.card:hover,
 .ui.link.card:hover {
-    .night & {
-        background-color: $darkBackground;
-        box-shadow: 0px 1px 3px 0px $darkTheme_grey_2, 0px 0px 0px 1px $darkTheme_grey_2;
-    }
+  .night & {
+    background-color: $darkBackground;
+    box-shadow: 0px 1px 3px 0px $darkTheme_grey_2, 0px 0px 0px 1px $darkTheme_grey_2;
+  }
 }
 
 .ui.card>.content>.header {
-    .night & {
-        color: $darkTheme_grey_6;
-    }
+  .night & {
+    color: $darkTheme_grey_6;
+  }
 }
 
 .ui.selection.active.dropdown,
 .ui.selection.active.dropdown .menu {
-    .night & {
-        border-color: $darkTheme_grey_2;
-    }
+  .night & {
+    border-color: $darkTheme_grey_2;
+  }
 }
 
 .ui.selection.dropdown {
-    .night & {
-        background-color: $darkTheme_grey_0;
-        color: $darkTheme_grey_6;
-        border-color: $darkTheme_grey_2;
-    }
+  .night & {
+    background-color: $darkTheme_grey_0;
+    color: $darkTheme_grey_6;
+    border-color: $darkTheme_grey_2;
+  }
 }
 
 .ui.selection.dropdown .menu>.item {
-    .night & {
-        border-color: $darkTheme_grey_2;
-    }
+  .night & {
+    border-color: $darkTheme_grey_2;
+  }
 }
 
 .ui.menu {
-    .night & {
-        background-color: $darkTheme_grey_3;
-        box-shadow: none;
-    }
+  .night & {
+    background-color: $darkTheme_grey_3;
+    box-shadow: none;
+  }
 }
 
 .ui.menu .item {
-    .night & {
-        color: $darkTheme_grey_6;
-    }
+  .night & {
+    color: $darkTheme_grey_6;
+  }
 }
 
 .ui.link.menu .item:hover,
 .ui.menu .dropdown.item:hover,
 .ui.menu .link.item:hover,
 .ui.menu a.item:hover {
-    color: $darkTheme_grey_5;
+  color: $darkTheme_grey_5;
 }
 
 .ui.pagination.menu .active.item {
-    .night & {
-        color: $darkTheme_grey_5;
-    }
+  .night & {
+    color: $darkTheme_grey_5;
+  }
 }
 
 .ui.ui.menu .item.disabled {
@@ -156,276 +156,276 @@ a.ui.card:hover,
 }
 
 .ui.secondary.menu {
-    .night & {
-        background-color: $darkTheme_grey_1;
-    }
+  .night & {
+    background-color: $darkTheme_grey_1;
+  }
 }
 
 .ui.vertical.menu {
-    background-color: transparent !important;
+  background-color: transparent !important;
 }
 
 .ui.secondary.pointing.menu {
-    .night & {
-        border-color: $darkTheme_grey_4;
-    }
+  .night & {
+    border-color: $darkTheme_grey_4;
+  }
 }
 
 .ui.secondary.pointing.menu .active.item {
-    .night & {
-        color: $darkTheme_grey_6;
-        border-color: $darkTheme_grey_5;
-    }
+  .night & {
+    color: $darkTheme_grey_6;
+    border-color: $darkTheme_grey_5;
+  }
 }
 
 .ui.breadcrumb .divider {
-    .night & {
-        color: $darkTheme_grey_6;
-    }
+  .night & {
+    color: $darkTheme_grey_6;
+  }
 }
 
 .ui.segment {
-    .night & {
-        background-color: $darkTheme_grey_0;
-    }
+  .night & {
+    background-color: $darkTheme_grey_0;
+  }
 }
 
 .ui.form .field>label {
-    .night & {
-        color: $darkTheme_grey_6;
-    }
+  .night & {
+    color: $darkTheme_grey_6;
+  }
 }
 
 .ui.form .inline.fields .field>label {
-    .night & {
-        color: $darkTheme_grey_6;
-    }
+  .night & {
+    color: $darkTheme_grey_6;
+  }
 }
 
 .ui.input {
-    color: inherit;
+  color: inherit;
 }
 
 input:read-only {
-    opacity: 0.45
+  opacity: 0.45
 }
 
 .ui.form input,
 .ui.form textarea,
 .ui.input input {
-    .night & {
-        color: $darkTheme_grey_6;
-        background-color: $darkTheme_grey_0;
-        border-color: $darkTheme_grey_2;
-    }
+  .night & {
+    color: $darkTheme_grey_6;
+    background-color: $darkTheme_grey_0;
+    border-color: $darkTheme_grey_2;
+  }
 }
 
 .ui.form input:focus,
 .ui.form textarea:focus {
-    .night & {
-        color: $darkTheme_grey_6;
-        background-color: $darkBackground;
-        border-color: $darkTheme_grey_2;
-    }
+  .night & {
+    color: $darkTheme_grey_6;
+    background-color: $darkBackground;
+    border-color: $darkTheme_grey_2;
+  }
 }
 
 .ui.header {
-    .night & {
-        color: $darkTheme_grey_5;
-    }
+  .night & {
+    color: $darkTheme_grey_5;
+  }
 }
 
 .ui.header .sub.header {
-    .night & {
-        color: $darkTheme_grey_6;
-    }
+  .night & {
+    color: $darkTheme_grey_6;
+  }
 }
 
 .ui.attached.header,
 .ui.attached.block.header,
 .ui.attached.top.segment {
-    .night & {
-        color: $darkTheme_grey_6;
-        background-color: $darkTheme_grey_1;
-        border-color: $darkTheme_grey_1;
-    }
+  .night & {
+    color: $darkTheme_grey_6;
+    background-color: $darkTheme_grey_1;
+    border-color: $darkTheme_grey_1;
+  }
 }
 
 .ui.attached.segment {
-    .night & {
-        border-color: $darkTheme_grey_1;
-    }
+  .night & {
+    border-color: $darkTheme_grey_1;
+  }
 }
 
 .ui.label {
-    .night & {
-        color: $darkTheme_grey_6;
-        background-color: $darkTheme_grey_3;
-    }
+  .night & {
+    color: $darkTheme_grey_6;
+    background-color: $darkTheme_grey_3;
+  }
 }
 
 .ui.basic.label,
 .ui.basic.green.label,
 .ui.basic.orange.label,
 .ui.basic.grey.label {
-    background-color: transparent !important;
+  background-color: transparent !important;
 }
 
 .ui.basic.grey.label {
-    .night & {
-        color: $darkTheme_grey;
-        border-color: $darkTheme_grey;
-    }
+  .night & {
+    color: $darkTheme_grey;
+    border-color: $darkTheme_grey;
+  }
 }
 
 .ui.basic.green.label {
-    .night & {
-        color: $darkTheme_green;
-        border-color: $darkTheme_green;
-    }
+  .night & {
+    color: $darkTheme_green;
+    border-color: $darkTheme_green;
+  }
 }
 
 .ui.basic.orange.label {
-    .night & {
-        color: $darkTheme_orange;
-        border-color: $darkTheme_orange;
-    }
+  .night & {
+    color: $darkTheme_orange;
+    border-color: $darkTheme_orange;
+  }
 }
 
 .ui.basic.blue.label {
-    .night & {
-        color: $darkTheme_blue;
-        border-color: $darkTheme_blue;
-    }
+  .night & {
+    color: $darkTheme_blue;
+    border-color: $darkTheme_blue;
+  }
 }
 
 .ui.button {
-    .night & {
-        background-color: $darkTheme_grey;
-    }
+  .night & {
+    background-color: $darkTheme_grey;
+  }
 }
 
 .ui.positive.button,
 .ui.green.button,
 .ui.green.buttons .button {
-    .night & {
-        background-color: $darkTheme_green;
-    }
+  .night & {
+    background-color: $darkTheme_green;
+  }
 }
 
 .ui.basic.green.button {
-    .night & {
-        box-shadow: 0px 0px 0px 1px $darkTheme_green inset !important;
-        color: $darkTheme_green !important;
-    }
+  .night & {
+    box-shadow: 0px 0px 0px 1px $darkTheme_green inset !important;
+    color: $darkTheme_green !important;
+  }
 }
 
 .ui.basic.blue.button {
-    .night & {
-        box-shadow: 0px 0px 0px 1px $darkTheme_blue inset !important;
-        color: $darkTheme_blue !important;
-    }
+  .night & {
+    box-shadow: 0px 0px 0px 1px $darkTheme_blue inset !important;
+    color: $darkTheme_blue !important;
+  }
 }
 
 .ui.negative.button,
 .ui.red.button {
-    .night & {
-        background-color: $darkTheme_red !important;
-    }
+  .night & {
+    background-color: $darkTheme_red !important;
+  }
 }
 
 .ui.primary.button,
 .ui.blue.button {
-    .night & {
-        background-color: $darkTheme_blue !important;
-    }
+  .night & {
+    background-color: $darkTheme_blue !important;
+  }
 }
 
 .ui.grey.button {
-    .night & {
-        background-color: $darkTheme_grey !important;
-    }
+  .night & {
+    background-color: $darkTheme_grey !important;
+  }
 }
 
 a.ui.basic.green.label:hover,
 a.ui.basic.orange.label:hover,
 a.ui.basic.grey.label:hover {
-    background-color: transparent !important;
+  background-color: transparent !important;
 }
 
 .ui.steps,
 .ui.steps .step {
-    .night & {
-        background-color: $darkTheme_grey_2;
-        border-color: $darkTheme_grey_3;
-        color: $darkTheme_grey_6;
-    }
+  .night & {
+    background-color: $darkTheme_grey_2;
+    border-color: $darkTheme_grey_3;
+    color: $darkTheme_grey_6;
+  }
 }
 
 .ui.steps .step:after {
-    .night & {
-        background-color: $darkTheme_grey_2;
-        border-color: $darkTheme_grey_3;
-    }
+  .night & {
+    background-color: $darkTheme_grey_2;
+    border-color: $darkTheme_grey_3;
+  }
 }
 
 .ui.ordered.steps .step.active:before,
 .ui.steps .active.step .icon {
-    .night & {
-        color: inherit;
-    }
+  .night & {
+    color: inherit;
+  }
 }
 
 .ui.steps .step .description {
-    .night & {
-        color: inherit;
-    }
+  .night & {
+    color: inherit;
+  }
 }
 
 .ui.steps .disabled.step .title {
-    .night & {
-        color: inherit;
-    }
+  .night & {
+    color: inherit;
+  }
 }
 
 .ui.steps .disabled.step .description {
-    .night & {
-        color: inherit;
-    }
+  .night & {
+    color: inherit;
+  }
 }
 
 .ui.steps .step.active {
-    .night & {
-        background-color: $darkTheme_grey_4 !important;
-        color: $darkTheme_grey_6;
-    }
+  .night & {
+    background-color: $darkTheme_grey_4 !important;
+    color: $darkTheme_grey_6;
+  }
 }
 
 .ui.steps .step.active:after {
-    .night & {
-        background-color: $darkTheme_grey_4;
-        border-color: $darkTheme_grey_3;
-    }
+  .night & {
+    background-color: $darkTheme_grey_4;
+    border-color: $darkTheme_grey_3;
+  }
 }
 
 .table {
-    background-color: transparent !important;
+  background-color: transparent !important;
 
-    .night &,
-    :host-context(.night) & {
-        color: $darkTheme_grey_6;
-    }
+  .night &,
+  :host-context(.night) & {
+    color: $darkTheme_grey_6;
+  }
 }
 
 .table thead th,
 .ui.table thead th {
-    color: grey;
-    background-color: transparent !important;
+  color: grey;
+  background-color: transparent !important;
 
-    .night &,
-    :host-context(.night) & {
-        color: $darkTheme_grey_6;
-    }
+  .night &,
+  :host-context(.night) & {
+    color: $darkTheme_grey_6;
+  }
 }
 .ui.table tr.active {
     .night &,
@@ -437,40 +437,40 @@ a.ui.basic.grey.label:hover {
 
 .ui.popup {
 
-    .night &,
-    :host-context(.night) & {
-        background-color: $darkTheme_grey_1;
-        border-color: $darkTheme_grey_5;
-        color: $darkTheme_grey_6;
+  .night &,
+  :host-context(.night) & {
+    background-color: $darkTheme_grey_1;
+    border-color: $darkTheme_grey_5;
+    color: $darkTheme_grey_6;
 
-        .arrow {
-            background-color: $darkTheme_grey_1;
-        }
+    .arrow {
+      background-color: $darkTheme_grey_1;
     }
+  }
 }
 
 .ui.modal,
 .ui.modal>.content {
 
-    .night &,
-    :host-context(.night) & {
-        background-color: $darkTheme_grey_1;
-    }
+  .night &,
+  :host-context(.night) & {
+    background-color: $darkTheme_grey_1;
+  }
 }
 
 .ui.modal>.header,
 .ui.modal>.actions,
 .ui.dropdown .menu {
 
-    .night &,
-    :host-context(.night) & {
-        background-color: $darkTheme_grey_0;
-        color: $darkTheme_grey_5;
+  .night &,
+  :host-context(.night) & {
+    background-color: $darkTheme_grey_0;
+    color: $darkTheme_grey_5;
 
-        .item {
-            color: $darkTheme_grey_6;
-        }
+    .item {
+      color: $darkTheme_grey_6;
     }
+  }
 }
 
 .ui.modal>.close {
@@ -483,105 +483,119 @@ a.ui.basic.grey.label:hover {
 
 .ui.menu .dropdown.item .menu {
 
-    .night &,
-    :host-context(.night) & {
-        background-color: $darkTheme_grey_0;
-    }
+  .night &,
+  :host-context(.night) & {
+    background-color: $darkTheme_grey_0;
+  }
 }
 
 
 .ui.menu .dropdown.item .menu>.item {
-    .night & {
-        color: $darkTheme_grey_6 !important;
-    }
+  .night & {
+    color: $darkTheme_grey_6 !important;
+  }
 }
 
 .ui.toggle.checkbox input:checked~label,
 .ui.toggle.checkbox label,
 .ui.checkbox label {
-    .night & {
-        color: $darkTheme_grey_6 !important;
-    }
+  .night & {
+    color: $darkTheme_grey_6 !important;
+  }
 }
 
 .ui.message {
-    .night & {
-        color: $darkTheme_light_grey;
-        background-color: $darkTheme_night_grey;
-        box-shadow: 0px 0px 0px 1px $darkTheme_light_grey inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
-    }
+  .night & {
+    color: $darkTheme_light_grey;
+    background-color: $darkTheme_night_grey;
+    box-shadow: 0px 0px 0px 1px $darkTheme_light_grey inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
+  }
 }
 
 .ui.info.message,
 .ui.blue.message {
-    .night & {
-        color: $darkTheme_light_blue;
-        background-color: $darkTheme_night_blue;
-        box-shadow: 0px 0px 0px 1px $darkTheme_light_blue inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
-    }
+  .night & {
+    color: $darkTheme_light_blue;
+    background-color: $darkTheme_night_blue;
+    box-shadow: 0px 0px 0px 1px $darkTheme_light_blue inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
+  }
 }
 
 .ui.orange.message {
-    .night & {
-        color: $darkTheme_light_orange;
-        background-color: $darkTheme_night_orange;
-        box-shadow: 0px 0px 0px 1px $darkTheme_light_orange inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
-    }
+  .night & {
+    color: $darkTheme_light_orange;
+    background-color: $darkTheme_night_orange;
+    box-shadow: 0px 0px 0px 1px $darkTheme_light_orange inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
+  }
 }
 
 .ui.red.message {
-    .night & {
-        color: $darkTheme_light_red;
-        background-color: $darkTheme_night_red;
-        box-shadow: 0px 0px 0px 1px $darkTheme_light_red inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
-    }
+  .night & {
+    color: $darkTheme_light_red;
+    background-color: $darkTheme_night_red;
+    box-shadow: 0px 0px 0px 1px $darkTheme_light_red inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
+  }
 }
 
 .ui.success.message,
 .ui.green.message {
-    .night & {
-        color: $darkTheme_light_green;
-        background-color: $darkTheme_night_green;
-        box-shadow: 0px 0px 0px 1px $darkTheme_light_green inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
-    }
+  .night & {
+    color: $darkTheme_light_green;
+    background-color: $darkTheme_night_green;
+    box-shadow: 0px 0px 0px 1px $darkTheme_light_green inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
+  }
 }
 
 .ui.search>.results .result .title {
-    .night & {
-        color: $darkTheme_grey_5;
-    }
+  .night & {
+    color: $darkTheme_grey_5;
+  }
 }
 
 .ui.search>.results .result:hover {
-    .night & {
-        background-color: $darkBackground;
-    }
+  .night & {
+    background-color: $darkBackground;
+  }
 }
 
 .ui.search>.results {
-    .night & {
-        background-color: $darkTheme_grey_0;
-        border-color: $darkTheme_grey_1;
-    }
+  .night & {
+    background-color: $darkTheme_grey_0;
+    border-color: $darkTheme_grey_1;
+  }
 }
 
 .ui.inverted.red.segment {
-    .night & {
-        background-color: $darkTheme_red !important;
-    }
+  .night & {
+    background-color: $darkTheme_red !important;
+  }
 }
 
 .ui.styled.accordion {
-    background-color: transparent;
+  background-color: transparent;
 
-    .night & {
-        box-shadow: 0px 1px 2px 0 $darkTheme_grey_3, 0px 0px 0px 1px $darkTheme_grey_3;
-    }
+  .night & {
+    box-shadow: 0px 1px 2px 0 $darkTheme_grey_3, 0px 0px 0px 1px $darkTheme_grey_3;
+  }
 }
 
 .ui.styled.accordion .title {
-    .night & {
-        color: $darkTheme_grey_5;
-        border-color: $darkTheme_grey_3;
-    }
+  .night & {
+    color: $darkTheme_grey_5;
+    border-color: $darkTheme_grey_3;
+  }
+}
+
+.ui.tabular.menu {
+  .night & {
+    border-color: $darkTheme_grey_1;
+  }
+}
+
+.ui.tabular.menu .active.item {
+  .night & {
+    background-color: $darkTheme_grey_0;
+    border-color: $darkTheme_grey_1;
+    color: $darkTheme_grey_6;
+  }
 }

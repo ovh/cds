@@ -94,7 +94,7 @@ func (r *WorkflowRun) PendingOutgoingHook() map[string]*WorkflowNodeRun {
 		}
 		for j := range runs {
 			nr := &runs[j]
-			if nr.Status != StatusWaiting.String() && nr.Status != StatusBuilding.String() {
+			if nr.Status != StatusWaiting && nr.Status != StatusBuilding {
 				continue
 			}
 			nrs[nr.UUID] = nr
@@ -366,7 +366,7 @@ type WorkflowNodeJobRun struct {
 	ModelType                 string             `json:"model_type,omitempty"`
 	BookedBy                  Service            `json:"bookedby,omitempty"`
 	SpawnInfos                []SpawnInfo        `json:"spawninfos"`
-	ExecGroups                []Group            `json:"exec_groups"`
+	ExecGroups                Groups             `json:"exec_groups"`
 	IntegrationPluginBinaries []GRPCPluginBinary `json:"integration_plugin_binaries,omitempty"`
 	Header                    WorkflowRunHeaders `json:"header,omitempty"`
 	ContainsService           bool               `json:"contains_service,omitempty"`
@@ -434,7 +434,9 @@ type WorkflowNodeRunHookEvent struct {
 type WorkflowNodeRunManual struct {
 	Payload            interface{} `json:"payload" db:"-"`
 	PipelineParameters []Parameter `json:"pipeline_parameter" db:"-"`
-	User               User        `json:"user" db:"-"`
+	Username           string      `json:"username" db:"-"`
+	Fullname           string      `json:"fullname" db:"-"`
+	Email              string      `json:"email" db:"-"`
 }
 
 //GetName returns the name the artifact

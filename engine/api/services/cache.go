@@ -171,7 +171,7 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 
 			switch action {
 			case "UPDATE", "INSERT":
-				srv, err := FindByName(db, name)
+				srv, err := LoadByName(ctx, db, name)
 				if err != nil {
 					log.Error("unable to find service %s: %v", name, err)
 					continue
@@ -179,7 +179,9 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 				c.chanEvent <- event{c.updateCache, *srv}
 			case "DELETE":
 				c.chanEvent <- event{c.removeFromCache, sdk.Service{
-					Name: name,
+					CanonicalService: sdk.CanonicalService{
+						Name: name,
+					},
 				}}
 			}
 

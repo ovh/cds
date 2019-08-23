@@ -1,4 +1,4 @@
-<div *ngIf="pipeline;then showPipeline; else loadPipeline"></div>
+<div *ngIf="project && pipeline;then showPipeline; else loadPipeline"></div>
 <ng-template #showPipeline>
     <div id="PipelineShow">
         <app-project-breadcrumb [project]="project" [pipeline]="pipeline" [application]="application"
@@ -52,7 +52,7 @@
                     <i class="history icon"></i>{{'common_audit' | translate }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')"
-                    *ngIf="pipeline.permission === 7">
+                    *ngIf="project.permissions.writable">
                     <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
                 </a>
             </sm-menu>
@@ -69,8 +69,8 @@
                         <h3>{{ 'pipeline_parameters_list_title' | translate }}</h3>
                         <app-parameter-list (event)="parameterEvent($event)" [project]="project"
                             [parameters]="pipeline.parameters" [keys]="keys"
-                            [mode]="pipeline.permission === 7? 'edit': 'ro'"></app-parameter-list>
-                        <ng-container *ngIf="pipeline.permission === 7">
+                            [mode]="project.permissions.writable? 'edit': 'ro'"></app-parameter-list>
+                        <ng-container *ngIf="project.permissions.writable">
                             <h3>{{ 'pipeline_parameters_form_title' | translate }}</h3>
                             <app-parameter-form [project]="project" [loading]="paramFormLoading"
                                 (createParameterEvent)="parameterEvent($event)" [keys]="keys"></app-parameter-form>

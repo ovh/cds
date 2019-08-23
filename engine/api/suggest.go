@@ -10,7 +10,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
@@ -53,10 +52,6 @@ func (api *API) getVariablesHandler() service.Handler {
 			app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, application.LoadOptions.WithVariables)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot Load application")
-			}
-
-			if !permission.AccessToProject(projectKey, deprecatedGetUser(ctx), permission.PermissionRead) {
-				return sdk.WrapError(sdk.ErrForbidden, "getVariablesHandler> Not allow to access to this application: %s", appName)
 			}
 
 			for _, v := range app.Variable {

@@ -10,14 +10,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
+
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/interpolate"
-	"github.com/ovh/cds/sdk/log"
 )
 
-func cmdTmpl(w *currentWorker) *cobra.Command {
+func cmdTmpl() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "tmpl",
 		Short: "worker tmpl inputFile outputFile",
@@ -41,21 +42,16 @@ The file ` + "`outputFile`" + ` will contain the string:
 
 if it's the RUN n°2 of the current workflow.
 		`,
-		Run: tmplCmd(w),
+		Run: tmplCmd(),
 	}
 	return c
 }
 
-type tmplPath struct {
-	Path        string `json:"path"`
-	Destination string `json:"destination"`
-}
-
-func tmplCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
+func tmplCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(WorkerServerPort)
+		portS := os.Getenv(internal.WorkerServerPort)
 		if portS == "" {
-			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", WorkerServerPort)
+			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
 		}
 
 		port, errPort := strconv.Atoi(portS)
@@ -67,7 +63,7 @@ func tmplCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			sdk.Exit("Wrong usage: Example : worker tmpl filea fileb")
 		}
 
-		a := tmplPath{args[0], args[1]}
+		a := workerruntime.TmplPath{args[0], args[1]}
 
 		data, errMarshal := json.Marshal(a)
 		if errMarshal != nil {
@@ -95,50 +91,5 @@ func tmplCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			cdsError := sdk.DecodeError(body)
 			sdk.Exit("tmpl failed: %v\n", cdsError)
 		}
-	}
-}
-
-func (wk *currentWorker) tmplHandler(w http.ResponseWriter, r *http.Request) {
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		newError := sdk.NewError(sdk.ErrWrongRequest, errRead)
-		writeError(w, r, newError)
-		return
-	}
-
-	var a tmplPath
-	if err := json.Unmarshal(data, &a); err != nil {
-		newError := sdk.NewError(sdk.ErrWrongRequest, err)
-		writeError(w, r, newError)
-		return
-	}
-
-	btes, err := ioutil.ReadFile(a.Path)
-	if err != nil {
-		newError := sdk.NewError(sdk.ErrWrongRequest, err)
-		writeError(w, r, newError)
-		return
-	}
-
-	tmpvars := map[string]string{}
-	for _, v := range wk.currentJob.buildVariables {
-		tmpvars[v.Name] = v.Value
-	}
-	for _, v := range wk.currentJob.params {
-		tmpvars[v.Name] = v.Value
-	}
-
-	res, err := interpolate.Do(string(btes), tmpvars)
-	if err != nil {
-		log.Error("Unable to interpolate: %v", err)
-		newError := sdk.NewError(sdk.ErrWrongRequest, err)
-		writeError(w, r, newError)
-		return
-	}
-
-	if err := ioutil.WriteFile(a.Destination, []byte(res), os.FileMode(0644)); err != nil {
-		writeError(w, r, err)
-		return
 	}
 }

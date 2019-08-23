@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -21,9 +22,11 @@ func TestInsertStaticFiles(t *testing.T) {
 	defer end()
 	_ = event.Initialize(db, cache)
 
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -31,14 +34,14 @@ func TestInsertStaticFiles(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
 	test.NoError(t, pipeline.InsertStage(db, s))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_staticfiles_1",
@@ -71,9 +74,9 @@ func TestInsertStaticFiles(t *testing.T) {
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_staticfiles_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_staticfiles_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -82,8 +85,8 @@ func TestInsertStaticFiles(t *testing.T) {
 	assert.NoError(t, errWR)
 	wfr.Workflow = *w1
 	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{User: *u},
-	}, u, nil)
+		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
+	}, consumer, nil)
 	test.NoError(t, errWr)
 
 	var stFile sdk.StaticFiles

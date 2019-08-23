@@ -1,6 +1,7 @@
 package warning
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -21,9 +22,8 @@ import (
 func TestMissingProjectVariablePipelineJob(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	// get git clone action
 	gitClone := assets.GetBuiltinOrPluginActionByName(t, db, sdk.GitCloneAction)
@@ -38,7 +38,7 @@ func TestMissingProjectVariablePipelineJob(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.Stage{
 		PipelineID: pip.ID,
@@ -131,9 +131,8 @@ func TestMissingProjectVariablePipelineJob(t *testing.T) {
 func TestMissingProjectVariablePipelineParameter(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	v := sdk.Variable{
 		Name:  sdk.RandomString(10),
@@ -154,7 +153,7 @@ func TestMissingProjectVariablePipelineParameter(t *testing.T) {
 		pipParam,
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	// Create Delete var
 	ePayloadDelete := sdk.EventProjectVariableDelete{
@@ -221,16 +220,16 @@ func TestMissingProjectVariablePipelineParameter(t *testing.T) {
 func TestMissingProjectVariableApplication(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	app := sdk.Application{
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app, u))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
 	v := sdk.Variable{
 		Name:  sdk.RandomString(10),
@@ -243,7 +242,7 @@ func TestMissingProjectVariableApplication(t *testing.T) {
 		Type:  "string",
 		Value: "foo{{.cds.proj." + v.Name + "}}bar",
 	}
-	test.NoError(t, application.InsertVariable(db, cache, &app, &appV, u))
+	test.NoError(t, application.InsertVariable(db, cache, &app, appV, u))
 
 	// Create Delete var
 	ePayloadDelete := sdk.EventProjectVariableDelete{
@@ -310,9 +309,8 @@ func TestMissingProjectVariableApplication(t *testing.T) {
 func TestMissingProjectVariableWorkflow(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip := sdk.Pipeline{
 		Name:      sdk.RandomString(10),
@@ -327,7 +325,7 @@ func TestMissingProjectVariableWorkflow(t *testing.T) {
 		pipParam,
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	v := sdk.Variable{
 		Name:  sdk.RandomString(10),
@@ -358,9 +356,9 @@ func TestMissingProjectVariableWorkflow(t *testing.T) {
 		},
 	}
 
-	projUpdate, err := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	projUpdate, err := project.Load(db, cache, proj.Key, project.LoadOptions.WithPipelines)
 	assert.NoError(t, err)
-	test.NoError(t, workflow.Insert(db, cache, &w, projUpdate, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, projUpdate))
 
 	// Create Delete var
 	ePayloadDelete := sdk.EventProjectVariableDelete{
@@ -427,9 +425,9 @@ func TestMissingProjectVariableWorkflow(t *testing.T) {
 func TestMissingProjectVariableEnv(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	v := sdk.Variable{
 		Name:  sdk.RandomString(10),
@@ -515,9 +513,8 @@ func TestMissingProjectVariableEnv(t *testing.T) {
 func TestUnusedProjectVariableWarningOnApplicationEvent(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	v := sdk.Variable{
 		Name:  sdk.RandomString(10),
@@ -601,9 +598,8 @@ func TestUnusedProjectVariableWarningOnApplicationEvent(t *testing.T) {
 func TestUnusedProjectVariableWarning(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	v := sdk.Variable{
 		Name:  sdk.RandomString(10),

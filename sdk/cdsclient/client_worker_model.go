@@ -16,8 +16,8 @@ type WorkerModelFilter struct {
 }
 
 // WorkerModelBook books a worker model for register, used by hatcheries.
-func (c *client) WorkerModelBook(id int64) error {
-	code, err := c.PutJSON(context.Background(), fmt.Sprintf("/worker/model/book/%d", id), nil, nil)
+func (c *client) WorkerModelBook(groupName, name string) error {
+	code, err := c.PutJSON(context.Background(), fmt.Sprintf("/worker/model/%s/%s/book", groupName, name), nil, nil)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -61,8 +61,8 @@ func (c *client) WorkerModels(filter *WorkerModelFilter) ([]sdk.Model, error) {
 	return models, nil
 }
 
-func (c *client) WorkerModelSpawnError(id int64, data sdk.SpawnErrorForm) error {
-	code, err := c.PutJSON(context.Background(), fmt.Sprintf("/worker/model/error/%d", id), &data, nil)
+func (c *client) WorkerModelSpawnError(groupName, name string, data sdk.SpawnErrorForm) error {
+	code, err := c.PutJSON(context.Background(), fmt.Sprintf("/worker/model/%s/%s/error", groupName, name), &data, nil)
 	if code > 300 && err == nil {
 		return fmt.Errorf("WorkerModelSpawnError> HTTP %d", code)
 	} else if err != nil {
@@ -75,11 +75,10 @@ func (c *client) WorkerModelSpawnError(id int64, data sdk.SpawnErrorForm) error 
 func (c *client) WorkerModelAdd(name, modelType, patternName string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error) {
 	uri := "/worker/model"
 	model := sdk.Model{
-		Name:          name,
-		Type:          modelType,
-		GroupID:       groupID,
-		Communication: "http",
-		PatternName:   patternName,
+		Name:        name,
+		Type:        modelType,
+		GroupID:     groupID,
+		PatternName: patternName,
 	}
 
 	if dockerModel == nil && vmModel == nil {

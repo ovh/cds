@@ -16,7 +16,6 @@ import (
 )
 
 const (
-	tagDescription   = "description"
 	targetFolderName = ".cds-schema"
 	pluginVSCodeName = "redhat.vscode-yaml"
 )

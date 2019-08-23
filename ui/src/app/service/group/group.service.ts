@@ -1,137 +1,51 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Group, GroupMember } from 'app/model/group.model';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
-import {HttpClient, HttpParams} from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {Group} from 'app/model/group.model';
-import {Token} from 'app/model/token.model';
-import {Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
-
-/**
- * Service to access Group from API.
- * Only used by GroupStore
- */
 @Injectable()
 export class GroupService {
 
+    constructor(
+        private _http: HttpClient
+    ) { }
 
-    constructor(private _http: HttpClient) {
-    }
-
-    /**
-     * Get the list of groups
-     * @returns {Observable<Group>}
-     */
-    getGroupByName(name: string): Observable<Group> {
+    getByName(name: string): Observable<Group> {
         return this._http.get<Group>('/group/' + name);
     }
 
-    /**
-     * Get all groups that the user can access.
-     * @returns {Observable<Group[]>}
-     */
-    getGroups(withoutDefault?: boolean): Observable<Group[]> {
+    getAll(withoutDefault?: boolean): Observable<Group[]> {
         let params = new HttpParams();
         if (withoutDefault === true) {
             params = params.append('withoutDefault', 'true');
         }
-        return this._http.get<Group[]>('/group', {params: params});
+        return this._http.get<Group[]>('/group', { params: params });
     }
 
-    /**
-     * Remove a token linked to a specific group that the user can access.
-     * @returns {Observable<{}>}
-     */
-    removeToken(groupName: string, tokenId: number): Observable<{}> {
-        return this._http.delete<{}>(`/group/${groupName}/token/${tokenId}`);
+    create(group: Group): Observable<Group> {
+        return this._http.post<Group>('/group', group);
     }
 
-    /**
-     * Add a token linked to a specific group that the user can access.
-     * @returns {Observable<Token>}
-     */
-    addToken(groupName: string, expiration: string, description: string): Observable<Token> {
-        return this._http.post<Token>(`/group/${groupName}/token`, { expiration, description });
+    update(name: string, group: Group): Observable<Group> {
+        return this._http.put<Group>(`/group/${name}`, group);
     }
 
-    /**
-     * Create a new group
-     * @param group Group to create
-     * @returns {Observable<boolean>}
-     */
-    createGroup(group: Group): Observable<boolean> {
-        return this._http.post('/group', group).pipe(map(() => {
+    delete(name: string): Observable<boolean> {
+        return this._http.delete(`/group/${name}`).pipe(map(() => {
             return true;
         }));
     }
 
-    /**
-     * Update the given group.
-     * @param group Group updated
-     * @returns {Observable<boolean>}
-     */
-    updateGroup(groupname: string, group: Group): Observable<boolean> {
-        return this._http.put('/group/' + groupname, group).pipe(map(() => {
-            return true;
-        }));
+    addMember(name: string, member: GroupMember): Observable<Group> {
+        return this._http.post<Group>(`/group/${name}/user`, member);
     }
 
-    /**
-     * Delete the given group
-     * @param name Group name to delete
-     * @returns {Observable<boolean>}
-     */
-    deleteGroup(name: string): Observable<boolean> {
-        return this._http.delete('/group/' + name).pipe(map(() => {
-            return true;
-        }));
+    updateMember(name: string, member: GroupMember): Observable<Group> {
+        return this._http.put<Group>(`/group/${name}/user/${member.username}`, member);
     }
 
-    /**
-     * Add a user in a group
-     * @param name Group name
-     * @param user User to add into group
-     * @returns {Observable<boolean>}
-     */
-    addUser(name: string, username: string): Observable<boolean> {
-        return this._http.post('/group/' + name + '/user', [username]).pipe(map(() => {
-            return true;
-        }));
+    removeMember(name: string, member: GroupMember): Observable<Group> {
+        return this._http.delete<Group>(`/group/${name}/user/${member.username}`);
     }
-
-    /**
-     * Remove user from group
-     * @param name Group name
-     * @param user User to remove from gropu
-     * @returns {Observable<boolean>}
-     */
-    removeUser(name: string, username: string): Observable<boolean> {
-        return this._http.delete('/group/' + name + '/user/' + username).pipe(map(() => {
-            return true;
-        }));
-    }
-
-    /**
-     * Add admin in a group
-     * @param name Group name
-     * @param user User to add
-     * @returns {Observable<boolean>}
-     */
-    addUserAdmin(name: string, username: string): Observable<boolean> {
-        return this._http.post('/group/' + name + '/user/' + username + '/admin', null).pipe(map(() => {
-            return true;
-        }));
-    }
-
-    /**
-     * Remove an admin from a group
-     * @param name Group name
-     * @param user user to add into group
-     * @returns {Observable<boolean>}
-     */
-    removeUserAdmin(name: string, username: string): Observable<boolean> {
-        return this._http.delete('/group/' + name + '/user/' + username + '/admin').pipe(map(() => {
-            return true;
-        }));
-    }
-
 }

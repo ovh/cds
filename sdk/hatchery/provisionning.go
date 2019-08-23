@@ -3,11 +3,13 @@ package hatchery
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 var (
@@ -59,32 +61,44 @@ func checkCapacities(ctx context.Context, h Interface) bool {
 	return true
 }
 
-func provisioning(h Interface, models []sdk.Model) {
+func provisioning(h InterfaceWithModels, models []sdk.Model) {
 	if h.Configuration().Provision.Disabled {
 		log.Debug("provisioning> disabled on this hatchery")
 		return
 	}
 
 	for k := range models {
-		// for a shared.infra hatchery, all models are here (group shared.infra or not)
-		// but, a shared.infra hatchery can provision only a shared.infra model
-		// others hatcheries (not shared.infra): only worker models with same group are here
-		// DO NOT provision if hatchery group is not the same as model
-		if models[k].GroupID != *h.Service().GroupID {
-			continue
-		}
 		if models[k].Type == h.ModelType() {
 			existing := h.WorkersStartedByModel(&models[k])
 			for i := existing; i < int(models[k].Provision); i++ {
 				go func(m sdk.Model) {
-					if name, errSpawn := h.SpawnWorker(context.Background(), SpawnArguments{Model: m, JobID: 0, Requirements: nil, LogInfo: "spawn for provision"}); errSpawn != nil {
-						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
+					arg := SpawnArguments{
+						WorkerName:   fmt.Sprintf("%s-%s", strings.ToLower(m.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+						Model:        &m,
+						HatcheryName: h.ServiceName(),
+					}
+					// Get a JWT to authentified the worker
+					_, jwt, err := NewWorkerToken(h.ServiceName(), h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
+					if err != nil {
+						var spawnError = sdk.SpawnErrorForm{
+							Error: fmt.Sprintf("hatchery %s cannot spawn worker %s for provisioning", h.Service().Name, m.Name),
+							Logs:  []byte(err.Error()),
+						}
+						if err := h.CDSClient().WorkerModelSpawnError(m.Group.Name, m.Name, spawnError); err != nil {
+							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %v", arg.WorkerName, m.Name, err)
+						}
+						return
+					}
+					arg.WorkerToken = jwt
+
+					if errSpawn := h.SpawnWorker(context.Background(), arg); errSpawn != nil {
+						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %v", arg.WorkerName, m.Name, errSpawn)
 						var spawnError = sdk.SpawnErrorForm{
 							Error: fmt.Sprintf("hatchery %s cannot spawn worker %s for provisioning", h.Service().Name, m.Name),
 							Logs:  []byte(errSpawn.Error()),
 						}
-						if err := h.CDSClient().WorkerModelSpawnError(m.ID, spawnError); err != nil {
-							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
+						if err := h.CDSClient().WorkerModelSpawnError(m.Group.Name, m.Name, spawnError); err != nil {
+							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %v", arg.WorkerName, m.Name, errSpawn)
 						}
 					}
 				}(models[k])

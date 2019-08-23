@@ -76,15 +76,11 @@ func InsertStageConditions(db gorp.SqlExecutor, s *sdk.Stage) error {
 }
 
 // LoadPipelineStage loads pipeline stage
-func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) error {
+func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	_, end := observability.Span(ctx, "pipeline.LoadPipelineStage")
 	defer end()
 
 	p.Stages = []sdk.Stage{}
-	c := structarg{}
-	for _, f := range args {
-		f(&c)
-	}
 
 	query := `
 	SELECT pipeline_stage_R.id as stage_id, pipeline_stage_R.pipeline_id, pipeline_stage_R.name, pipeline_stage_R.last_modified,
@@ -241,7 +237,7 @@ func UpdateStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 }
 
 // DeleteStageByID Delete stage with associated pipeline action
-func DeleteStageByID(ctx context.Context, tx gorp.SqlExecutor, s *sdk.Stage, userID int64) error {
+func DeleteStageByID(ctx context.Context, tx gorp.SqlExecutor, s *sdk.Stage) error {
 	nbOfStages, err := CountStageByPipelineID(tx, s.PipelineID)
 	if err != nil {
 		return err
@@ -297,7 +293,7 @@ func seleteAllStageID(db gorp.SqlExecutor, pipelineID int64) ([]int64, error) {
 }
 
 // DeleteAllStage  Delete all stages from pipeline ID
-func DeleteAllStage(ctx context.Context, db gorp.SqlExecutor, pipelineID int64, userID int64) error {
+func DeleteAllStage(ctx context.Context, db gorp.SqlExecutor, pipelineID int64) error {
 	stageIDs, err := seleteAllStageID(db, pipelineID)
 	if err != nil {
 		return err

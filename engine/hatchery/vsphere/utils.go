@@ -23,10 +23,5 @@ func (h *HatcheryVSphere) getGraylogGrpcEnv(model sdk.Model) []string {
 		env = append(env, fmt.Sprintf("export CDS_GRAYLOG_EXTRA_VALUE=%s", h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue))
 	}
 
-	if h.Configuration().API.GRPC.URL != "" && model.Communication == sdk.GRPC {
-		env = append(env, fmt.Sprintf("export CDS_GRPC_API=%s", h.Configuration().API.GRPC.URL))
-		env = append(env, fmt.Sprintf("export CDS_GRPC_INSECURE=%t", h.Configuration().API.GRPC.Insecure))
-	}
-
 	return env
 }

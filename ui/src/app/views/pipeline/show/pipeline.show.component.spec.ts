@@ -15,7 +15,6 @@ import 'rxjs/add/observable/of';
 import { Parameter } from '../../../model/parameter.model';
 import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
 import { KeyService } from '../../../service/keys/keys.service';
 import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineCoreService } from '../../../service/pipeline/pipeline.core.service';
@@ -45,8 +44,7 @@ describe('CDS: Pipeline Show', () => {
                 TranslateLoader,
                 TranslateParser,
                 WorkflowService,
-                WorkflowRunService,
-                AuthentificationStore
+                WorkflowRunService
             ],
             imports: [
                 PipelineModule,

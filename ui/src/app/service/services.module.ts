@@ -14,10 +14,9 @@ import {
 import { ApplicationService } from './application/application.service';
 import { ApplicationStore } from './application/application.store';
 import { ApplicationWorkflowService } from './application/application.workflow.service';
-import { AuthentificationInterceptor } from './auth.interceptor.service';
-import { CanActivateAuthAdminRoute } from './auth/authenAdminRouteActivate';
-import { CanActivateAuthRoute } from './auth/authenRouteActivate';
-import { AuthentificationStore } from './auth/authentification.store';
+import { AuthenticationService } from './authentication/authentication.service';
+import { LogoutInterceptor } from './authentication/logout.interceptor';
+import { XSRFInterceptor } from './authentication/xsrf.interceptor';
 import { BroadcastService } from './broadcast/broadcast.service';
 import { BroadcastStore } from './broadcast/broadcast.store';
 import { ConfigService } from './config/config.service';
@@ -30,8 +29,8 @@ import { HookService } from './hook/hook.service';
 import { ImportAsCodeService } from './import-as-code/import.service';
 import { IntegrationService } from './integration/integration.service';
 import { KeyService } from './keys/keys.service';
+import { LanguageInterceptor } from './language/language.interceptor';
 import { LanguageStore } from './language/language.store';
-import { LogoutInterceptor } from './logout.interceptor.service';
 import { MonitoringService } from './monitoring/monitoring.service';
 import { NavbarService } from './navbar/navbar.service';
 import { NotificationService } from './notification/notification.service';
@@ -39,9 +38,11 @@ import { ParameterService } from './parameter/parameter.service';
 import { PipelineCoreService } from './pipeline/pipeline.core.service';
 import { PipelineService } from './pipeline/pipeline.service';
 import { ProjectAuditService } from './project/project.audit.service';
-import { ProjectForApplicationResolver,
+import {
+    ProjectForApplicationResolver,
     ProjectForWorkflowResolver,
-    ProjectResolver } from './project/project.resolver';
+    ProjectResolver
+} from './project/project.resolver';
 import { ProjectService } from './project/project.service';
 import { ProjectStore } from './project/project.store';
 import { RepoManagerService } from './repomanager/project.repomanager.service';
@@ -77,11 +78,9 @@ export class ServicesModule {
                 ApplicationWorkflowService,
                 ApplicationService,
                 ApplicationStore,
-                AuthentificationStore,
+                AuthenticationService,
                 ConfigService,
                 DownloadService,
-                CanActivateAuthRoute,
-                CanActivateAuthAdminRoute,
                 EnvironmentAuditService,
                 EnvironmentService,
                 GroupService,
@@ -123,7 +122,12 @@ export class ServicesModule {
                 WorkflowStore, WorkflowRunService, WorkflowCoreService,
                 {
                     provide: HTTP_INTERCEPTORS,
-                    useClass: AuthentificationInterceptor,
+                    useClass: XSRFInterceptor,
+                    multi: true
+                },
+                {
+                    provide: HTTP_INTERCEPTORS,
+                    useClass: LanguageInterceptor,
                     multi: true
                 },
                 {
@@ -148,9 +152,7 @@ export {
     ApplicationWorkflowService,
     ApplicationResolver,
     ApplicationStore,
-    AuthentificationStore,
-    CanActivateAuthRoute,
-    CanActivateAuthAdminRoute,
+    AuthenticationService,
     ConfigService,
     DownloadService,
     EnvironmentAuditService,
@@ -184,6 +186,5 @@ export {
     WorkflowStore,
     WorkflowRunService,
     WorkflowCoreService
-
 };
 

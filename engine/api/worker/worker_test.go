@@ -1,103 +1,98 @@
-package worker
+package worker_test
 
 import (
+	"context"
+	"runtime"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 )
 
-func TestInsertWorker(t *testing.T) {
+func TestDAO(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	workers, err := LoadWorkers(db, "")
+	workers, err := worker.LoadAll(context.TODO(), db)
 	test.NoError(t, err)
 	for _, w := range workers {
-		DeleteWorker(db, w.ID)
+		worker.Delete(db, w.ID)
 	}
+
+	g := assets.InsertGroup(t, db)
+	hSrv, _, hCons, _ := assets.InsertHatchery(t, db, *g)
+	m := assets.InsertWorkerModel(t, db, sdk.RandomString(5), g.ID)
 
 	w := &sdk.Worker{
-		ID:   "foofoo",
-		Name: "foo.bar.io",
+		ID:         "foofoo",
+		Name:       "foo.bar.io",
+		ModelID:    &m.ID,
+		HatcheryID: hSrv.ID,
+		ConsumerID: hCons.ID,
+		Status:     sdk.StatusWaiting,
 	}
 
-	if err := InsertWorker(db, w, 0); err != nil {
-		t.Fatalf("Cannot insert worker: %s", err)
+	if err := worker.Insert(db, w); err != nil {
+		t.Fatalf("Cannot insert worker %+v: %v", w, err)
 	}
+
+	wks, err := worker.LoadByHatcheryID(context.TODO(), db, hSrv.ID)
+	test.NoError(t, err)
+	assert.Len(t, wks, 1)
+
+	if len(wks) == 1 {
+		assert.Equal(t, "foofoo", wks[0].ID)
+	}
+
+	wk, err := worker.LoadByID(context.TODO(), db, "foofoo")
+	test.NoError(t, err)
+	assert.NotNil(t, wk)
+	if wk != nil {
+		assert.Equal(t, "foofoo", wk.ID)
+	}
+
+	test.NoError(t, worker.SetStatus(db, wk.ID, sdk.StatusBuilding))
+	test.NoError(t, worker.RefreshWorker(db, wk.ID))
 }
 
-func TestDeletetWorker(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+func TestDeadWorkers(t *testing.T) {
+	db, _, end := test.SetupPG(t)
 	defer end()
-
-	workers, errl := LoadWorkers(db, "")
-	test.NoError(t, errl)
-	for _, w := range workers {
-		DeleteWorker(db, w.ID)
-	}
-
-	w := &sdk.Worker{
-		ID:   "foofoo_to_delete",
-		Name: "foo.bar.io",
-	}
-
-	if err := InsertWorker(db, w, 0); err != nil {
-		t.Fatalf("Cannot insert worker: %s", err)
-	}
-
-	if err := DeleteWorker(db, w.ID); err != nil {
-		t.Fatalf("Cannot delete worker: %s", err)
-	}
+	test.NoError(t, worker.DisableDeadWorkers(context.TODO(), db))
+	test.NoError(t, worker.DeleteDeadWorkers(context.TODO(), db))
 }
 
-func TestLoadWorkers(t *testing.T) {
-	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+func TestRegister(t *testing.T) {
+	db, store, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	workers, errl := LoadWorkers(db, "")
-	test.NoError(t, errl)
-	for _, w := range workers {
-		DeleteWorker(db, w.ID)
-	}
+	g := assets.InsertGroup(t, db)
+	h, _, c, _ := assets.InsertHatchery(t, db, *g)
+	m := assets.InsertWorkerModel(t, db, sdk.RandomString(5), g.ID)
 
-	w := &sdk.Worker{ID: "foo1", Name: "aa.bar.io"}
-	if err := InsertWorker(db, w, 0); err != nil {
-		t.Fatalf("Cannot insert worker: %s", err)
-	}
-	w = &sdk.Worker{ID: "foo2", Name: "zz.bar.io"}
-	if err := InsertWorker(db, w, 0); err != nil {
-		t.Fatalf("Cannot insert worker: %s", err)
-	}
-	w = &sdk.Worker{ID: "foo3", Name: "bb.bar.io"}
-	if err := InsertWorker(db, w, 0); err != nil {
-		t.Fatalf("Cannot insert worker: %s", err)
-	}
-	w = &sdk.Worker{ID: "foo4", Name: "aa.car.io"}
-	if err := InsertWorker(db, w, 0); err != nil {
-		t.Fatalf("Cannot insert worker: %s", err)
-	}
+	w, err := worker.RegisterWorker(db, store, hatchery.SpawnArguments{
+		HatcheryName: h.Name,
+		Model:        m,
+		RegisterOnly: true,
+		WorkerName:   sdk.RandomString(10),
+	}, h.ID, c, sdk.WorkerRegistrationForm{
+		Arch:               runtime.GOARCH,
+		OS:                 runtime.GOOS,
+		BinaryCapabilities: []string{"bash"},
+	})
 
-	var errlw error
-	workers, errlw = LoadWorkers(db, "")
-	if errlw != nil {
-		t.Fatalf("Cannot load workers: %s", errlw)
-	}
+	test.NoError(t, err)
+	assert.NotNil(t, w)
 
-	if len(workers) != 4 {
-		t.Fatalf("Expected 4 workers, got %d", 4)
-	}
-
-	order := []string{
-		"aa.bar.io",
-		"aa.car.io",
-		"bb.bar.io",
-		"zz.bar.io",
-	}
-	for i := range order {
-		if order[i] != workers[i].Name {
-			t.Fatalf("Expected %s, got %s\n", order[i], workers[i].Name)
-		}
-	}
+	wk, err := worker.LoadByConsumerID(context.TODO(), db, w.ConsumerID)
+	test.NoError(t, err)
+	assert.Equal(t, w.ID, wk.ID)
+	assert.Equal(t, w.ModelID, wk.ModelID)
+	assert.Equal(t, w.HatcheryID, wk.HatcheryID)
 }

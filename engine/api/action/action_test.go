@@ -2,11 +2,11 @@ package action_test
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -92,7 +92,6 @@ func TestCRUD(t *testing.T) {
 	assert.Nil(t, result)
 	result, err = action.LoadByID(context.TODO(), db, acts[0].ID, action.LoadOptions.Default)
 	assert.Nil(t, err)
-	fmt.Println(result)
 	assert.Equal(t, acts[0].Name, result.Name)
 	assert.Equal(t, 3, len(result.Parameters))
 	assert.Equal(t, 1, len(result.Requirements))
@@ -161,32 +160,30 @@ func Test_RetrieveForGroupAndName(t *testing.T) {
 
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	defer func() {
-		assert.Nil(t, assets.DeleteTestGroup(t, db, grp1))
+		assert.NoError(t, assets.DeleteTestGroup(t, db, grp1))
 	}()
 
 	scriptAction := assets.GetBuiltinOrPluginActionByName(t, db, "Script")
 
+	// Insert new action
 	act := sdk.Action{
 		GroupID: &grp1.ID,
 		Type:    sdk.DefaultAction,
 		Name:    sdk.RandomString(10),
 	}
+	require.NoError(t, action.Insert(db, &act), "No err should be returned when inserting an action")
+	defer func() {
+		assert.NoError(t, action.Delete(db, &act))
+	}()
 
-	// Insert
-	if !assert.Nil(t, action.Insert(db, &act), "No err should be returned when inserting an action") {
-		t.FailNow()
-	}
-
-	// retrieve builtin action
+	// Retrieve builtin action
 	result, err := action.RetrieveForGroupAndName(context.TODO(), db, nil, "Script")
-	assert.Nil(t, err)
-	assert.NotNil(t, result)
+	require.NoError(t, err)
 	assert.Equal(t, scriptAction.ID, result.ID)
 
-	// retrieve default action
+	// Retrieve default action
 	result, err = action.RetrieveForGroupAndName(context.TODO(), db, grp1, act.Name)
-	assert.Nil(t, err)
-	assert.NotNil(t, result)
+	require.NoError(t, err)
 	assert.Equal(t, act.ID, result.ID)
 }
 
@@ -196,7 +193,7 @@ func Test_CheckChildrenForGroupIDsWithLoop(t *testing.T) {
 
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	defer func() {
-		assert.Nil(t, assets.DeleteTestGroup(t, db, grp1))
+		assert.NoError(t, assets.DeleteTestGroup(t, db, grp1))
 	}()
 
 	// Insert action with builtin child
@@ -205,9 +202,10 @@ func Test_CheckChildrenForGroupIDsWithLoop(t *testing.T) {
 		Type:    sdk.DefaultAction,
 		Name:    sdk.RandomString(10),
 	}
-	if !assert.Nil(t, action.Insert(db, &one), "No err should be returned when inserting an action") {
-		t.FailNow()
-	}
+	require.NoError(t, action.Insert(db, &one), "No err should be returned when inserting an action")
+	defer func() {
+		assert.NoError(t, action.Delete(db, &one))
+	}()
 
 	// Insert action with default child
 	two := sdk.Action{
@@ -220,20 +218,18 @@ func Test_CheckChildrenForGroupIDsWithLoop(t *testing.T) {
 			},
 		},
 	}
-	if !assert.Nil(t, action.Insert(db, &two), "No err should be returned when inserting an action") {
-		t.FailNow()
-	}
+	require.NoError(t, action.Insert(db, &two), "No err should be returned when inserting an action")
 	defer func() {
-		assert.Nil(t, action.Delete(db, &two))
+		assert.NoError(t, action.Delete(db, &two))
 	}()
 
 	// test valid use case
-	assert.Nil(t, action.CheckChildrenForGroupIDsWithLoop(context.TODO(), db, &two, []int64{grp1.ID}))
+	assert.NoError(t, action.CheckChildrenForGroupIDsWithLoop(context.TODO(), db, &two, []int64{grp1.ID}))
 
 	// test invalid recusive
 	one.Actions = append(one.Actions, sdk.Action{
 		ID: two.ID,
 	})
-	assert.Nil(t, action.CheckChildrenForGroupIDs(context.TODO(), db, &one, []int64{grp1.ID}))
-	assert.NotNil(t, action.CheckChildrenForGroupIDsWithLoop(context.TODO(), db, &one, []int64{grp1.ID}))
+	assert.NoError(t, action.CheckChildrenForGroupIDs(context.TODO(), db, &one, []int64{grp1.ID}))
+	assert.Error(t, action.CheckChildrenForGroupIDsWithLoop(context.TODO(), db, &one, []int64{grp1.ID}))
 }

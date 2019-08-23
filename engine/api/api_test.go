@@ -10,16 +10,19 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/authentication/builtin"
+	"github.com/ovh/cds/engine/api/authentication/local"
+	authdrivertest "github.com/ovh/cds/engine/api/authentication/test"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
 )
 
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router, context.CancelFunc) {
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
 	db, cache, end := test.SetupPG(t, bootstrapFunc...)
-	router := newRouter(auth.TestLocalAuth(t, db, sessionstore.Options{Cache: cache, TTL: 30}), mux.NewRouter(), "/"+test.GetTestName(t))
+	router := newRouter(mux.NewRouter(), "/"+test.GetTestName(t))
 	var cancel context.CancelFunc
 	router.Background, cancel = context.WithCancel(context.Background())
 	api := &API{
@@ -29,6 +32,12 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 		Config:              Configuration{},
 		Cache:               cache,
 	}
+	api.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
+	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(false, "http://localhost:4200", "")
+	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
+	api.AuthenticationDrivers[sdk.ConsumerTest] = authdrivertest.NewDriver(t)
+	api.AuthenticationDrivers[sdk.ConsumerTest2] = authdrivertest.NewDriver(t)
+
 	api.InitRouter()
 	f := func() {
 		cancel()
@@ -37,10 +46,22 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 	return api, db, router, f
 }
 
+func newRouter(m *mux.Router, p string) *Router {
+	r := &Router{
+		Mux:                    m,
+		Prefix:                 p,
+		URL:                    "",
+		mapRouterConfigs:       map[string]*service.RouterConfig{},
+		mapAsynchronousHandler: map[string]service.HandlerFunc{},
+		Background:             context.Background(),
+	}
+	return r
+}
+
 func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string, func()) {
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
-	db, cache, end := test.SetupPG(t, bootstrapFunc...)
-	router := newRouter(auth.TestLocalAuth(t, db, sessionstore.Options{Cache: cache, TTL: 30}), mux.NewRouter(), "")
+	_, cache, end := test.SetupPG(t, bootstrapFunc...)
+	router := newRouter(mux.NewRouter(), "")
 	var cancel context.CancelFunc
 	router.Background, cancel = context.WithCancel(context.Background())
 	api := &API{
@@ -50,6 +71,10 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string
 		Config:              Configuration{},
 		Cache:               cache,
 	}
+	api.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
+	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(false, "http://localhost:4200", "")
+	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
+
 	api.InitRouter()
 	ts := httptest.NewServer(router.Mux)
 	url, _ := url.Parse(ts.URL)

@@ -18,7 +18,7 @@ TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X githu
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 
-GO_BUILD = go build -v
+GO_BUILD = go build
 DIRS = `ls -d */ | cut -f1 -d'/'`
 
 default: build-all

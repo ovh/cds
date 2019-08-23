@@ -7,7 +7,7 @@
     </ng-container>
     <ng-container *ngIf="environment.keys && environment.keys.length > 0">
         <app-keys-list [keys]="environment.keys" [loading]="loading"
-            [edit]="!environment.from_repository?environment.permission:4" (deleteEvent)="manageKeyEvent($event)">
+            [edit]="!environment.from_repository?project.permissions.writable:false" (deleteEvent)="manageKeyEvent($event)">
         </app-keys-list>
     </ng-container>
     <ng-container *ngIf="!environment.from_repository">

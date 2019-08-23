@@ -3,10 +3,12 @@ package openstack
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/ovh/cds/engine/service"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
@@ -21,8 +23,6 @@ import (
 )
 
 var (
-	hatcheryOpenStack *HatcheryOpenstack
-
 	workersAlive map[string]int64
 
 	ipsInfos = struct {
@@ -43,6 +43,20 @@ func New() *HatcheryOpenstack {
 	return s
 }
 
+func (s *HatcheryOpenstack) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(HatcheryConfiguration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid openstack hatchery configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
+}
+
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
@@ -55,15 +69,17 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	h.hatch = &sdk.Hatchery{}
-	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
-	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
 	h.HTTPURL = h.Config.URL
-	h.Token = h.Config.API.Token
+
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = "cds-hatchery-openstack"
+	var err error
+	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
+	if err != nil {
+		return fmt.Errorf("unable to parse RSA private Key: %v", err)
+	}
 
 	return nil
 }
@@ -71,10 +87,7 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryOpenstack) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
-	if h.IsInitialized() {
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
-
-	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 
@@ -130,32 +143,14 @@ func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
-// ID returns hatchery id
-func (h *HatcheryOpenstack) ID() int64 {
-	if h.CDSClient().GetService() == nil {
-		return 0
-	}
-	return h.CDSClient().GetService().ID
-}
-
-//Service returns service instance
-func (h *HatcheryOpenstack) Service() *sdk.Service {
-	return h.CDSClient().GetService()
-}
-
-//Hatchery returns hatchery instance
-func (h *HatcheryOpenstack) Hatchery() *sdk.Hatchery {
-	return h.hatch
-}
-
 // Serve start the hatchery server
 func (h *HatcheryOpenstack) Serve(ctx context.Context) error {
 	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration
-func (h *HatcheryOpenstack) Configuration() hatchery.CommonConfiguration {
-	return h.Config.CommonConfiguration
+func (h *HatcheryOpenstack) Configuration() service.HatcheryCommonConfiguration {
+	return h.Config.HatcheryCommonConfiguration
 }
 
 // ModelType returns type of hatchery
@@ -274,7 +269,7 @@ func (h *HatcheryOpenstack) killAwolServers() {
 		// Delete workers, if not identified by CDS API
 		// Wait for 10 minutes, to avoid killing worker babies
 		log.Debug("killAwolServers> server %s status: %s last update: %s toDeleteKilled:%t inWorkersList:%t", s.Name, s.Status, time.Since(s.Updated), toDeleteKilled, inWorkersList)
-		if isWorker && (workerHatcheryName == "" || workerHatcheryName == h.Service().Name) &&
+		if isWorker && (workerHatcheryName == "" || workerHatcheryName == h.Name) &&
 			(s.Status == "SHUTOFF" || toDeleteKilled || (!inWorkersList && time.Since(s.Updated) > 10*time.Minute)) {
 
 			// if it's was a worker model for registration
@@ -320,7 +315,7 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(workerModelName, workerM
 			"worker_model_name":          workerModelName,
 			"model":                      model,
 			"flavor":                     flavor,
-			"created_by":                 "cdsHatchery_" + h.Service().Name,
+			"created_by":                 "cdsHatchery_" + h.Name,
 			"worker_model_last_modified": workerModelNameLastModified,
 		},
 	}).ExtractImageID()
@@ -409,25 +404,23 @@ func (h *HatcheryOpenstack) deleteServer(s servers.Server) error {
 
 	// If its a worker "register", check registration before deleting it
 	if strings.Contains(s.Name, "register-") {
-		modelID, err := strconv.ParseInt(s.Metadata["worker_model_id"], 10, 64)
+		modelPath := s.Metadata["worker_model_path"]
+		//Send registering logs....
+		consoleLog, err := h.getConsoleLog(s)
 		if err != nil {
-			log.Error("killAndRemove> unable to get model from registering server %s", s.Name)
-		} else {
-			//Send registering logs....
-			consoleLog, err := h.getConsoleLog(s)
-			if err != nil {
-				log.Error("killAndRemove> unable to get console log from registering server %s: %v", s.Name, err)
+			log.Error("killAndRemove> unable to get console log from registering server %s: %v", s.Name, err)
+		}
+		if err := hatchery.CheckWorkerModelRegister(h, modelPath); err != nil {
+			var spawnErr = sdk.SpawnErrorForm{
+				Error: err.Error(),
+				Logs:  []byte(consoleLog),
 			}
-			if err := hatchery.CheckWorkerModelRegister(h, modelID); err != nil {
-				var spawnErr = sdk.SpawnErrorForm{
-					Error: err.Error(),
-					Logs:  []byte(consoleLog),
-				}
-				if err := h.CDSClient().WorkerModelSpawnError(modelID, spawnErr); err != nil {
-					log.Error("CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelID, spawnErr)
-				}
+			tuple := strings.SplitN(modelPath, "/", 2)
+			if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
+				log.Error("CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", modelPath, spawnErr)
 			}
 		}
+
 	}
 
 	r := servers.Delete(h.openstackClient, s.ID)

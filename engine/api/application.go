@@ -8,6 +8,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/user"
+
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
@@ -16,10 +19,8 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -30,46 +31,62 @@ func (api *API) getApplicationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
-		withPermissions := r.FormValue("permission")
 		withUsage := FormBool(r, "withUsage")
 		withIcon := FormBool(r, "withIcon")
+		withPermissions := r.FormValue("permission")
 
-		var u = deprecatedGetUser(ctx)
-		requestedUserName := r.Header.Get("X-Cds-Username")
-
-		//A provider can make a call for a specific user
-		if getProvider(ctx) != nil && requestedUserName != "" {
-			var err error
-			//Load the specific user
-			u, err = user.LoadUserWithoutAuth(api.mustDB(), requestedUserName)
-			if err != nil {
-				if sdk.Cause(err) == sql.ErrNoRows {
-					return sdk.ErrUserNotFound
-				}
-				return sdk.WrapError(err, "unable to load user '%s'", requestedUserName)
-			}
-			if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
-				return sdk.WrapError(err, "unable to load user '%s' permissions", requestedUserName)
-			}
-		}
 		loadOpts := []application.LoadOptionFunc{}
 		if withIcon {
 			loadOpts = append(loadOpts, application.LoadOptions.WithIcon)
 		}
+
+		requestedUserName := r.Header.Get("X-Cds-Username")
+		var requestedUser *sdk.AuthentifiedUser
+		if requestedUserName != "" && isMaintainer(ctx) {
+			var err error
+			requestedUser, err = user.LoadByUsername(ctx, api.mustDB(), requestedUserName, user.LoadOptions.WithDeprecatedUser)
+			if err != nil {
+				if sdk.Cause(err) == sql.ErrNoRows {
+					return sdk.ErrUserNotFound
+				}
+				return err
+			}
+
+			groups, err := group.LoadAllByDeprecatedUserID(context.TODO(), api.mustDB(), requestedUser.OldUserStruct.ID)
+			if err != nil {
+				return sdk.WrapError(err, "unable to load user '%s' groups", requestedUserName)
+			}
+			requestedUser.OldUserStruct.Groups = groups
+
+			projPerms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, requestedUser.GetGroupIDs())
+			if err != nil {
+				return err
+			}
+			if projPerms.Level(projectKey) < sdk.PermissionRead {
+				return nil
+			}
+		}
+
 		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, loadOpts...)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load applications from db")
 		}
 
-		projectPerm := permission.ProjectPermission(projectKey, u)
-		for i := range applications {
-			applications[i].Permission = projectPerm
-		}
-
 		if strings.ToUpper(withPermissions) == "W" {
+			var groupIDs []int64
+			if requestedUser != nil {
+				groupIDs = requestedUser.GetGroupIDs()
+			} else {
+				groupIDs = getAPIConsumer(ctx).GetGroupIDs()
+			}
+
+			projectPerms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, groupIDs)
+			if err != nil {
+				return err
+			}
 			res := make([]sdk.Application, 0, len(applications))
 			for _, a := range applications {
-				if a.Permission >= permission.PermissionReadWriteExecute {
+				if projectPerms.Permissions(projectKey).Writable {
 					res = append(res, a)
 				}
 			}
@@ -78,7 +95,7 @@ func (api *API) getApplicationsHandler() service.Handler {
 
 		if withUsage {
 			for i := range applications {
-				usage, errU := loadApplicationUsage(api.mustDB(), projectKey, applications[i].Name)
+				usage, errU := loadApplicationUsage(ctx, api.mustDB(), projectKey, applications[i].Name)
 				if errU != nil {
 					return sdk.WrapError(errU, "getApplicationHandler> Cannot load application usage")
 				}
@@ -122,10 +139,9 @@ func (api *API) getApplicationHandler() service.Handler {
 		if errApp != nil {
 			return sdk.WrapError(errApp, "getApplicationHandler: Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
-		app.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
 
 		if withUsage {
-			usage, errU := loadApplicationUsage(api.mustDB(), projectKey, applicationName)
+			usage, errU := loadApplicationUsage(ctx, api.mustDB(), projectKey, applicationName)
 			if errU != nil {
 				return sdk.WrapError(errU, "getApplicationHandler> Cannot load application usage")
 			}
@@ -137,10 +153,10 @@ func (api *API) getApplicationHandler() service.Handler {
 }
 
 // loadApplicationUsage return usage of application
-func loadApplicationUsage(db gorp.SqlExecutor, projKey, appName string) (sdk.Usage, error) {
+func loadApplicationUsage(ctx context.Context, db gorp.SqlExecutor, projKey, appName string) (sdk.Usage, error) {
 	usage := sdk.Usage{}
 
-	wf, errW := workflow.LoadByApplicationName(db, projKey, appName)
+	wf, errW := workflow.LoadByApplicationName(ctx, db, projKey, appName)
 	if errW != nil {
 		return usage, sdk.WrapError(errW, "loadApplicationUsage> Cannot load workflows linked to application %s in project %s", appName, projKey)
 	}
@@ -158,7 +174,7 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		applicationName := vars["applicationName"]
 		remote := r.FormValue("remote")
 
-		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
+		proj, err := project.Load(api.mustDB(), api.Cache, projectKey)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load project %s from db", projectKey)
 		}
@@ -216,7 +232,7 @@ func (api *API) addApplicationHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, errl := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
+		proj, errl := project.Load(api.mustDB(), api.Cache, key)
 		if errl != nil {
 			return sdk.WrapError(errl, "addApplicationHandler> Cannot load %s", key)
 		}
@@ -237,12 +253,11 @@ func (api *API) addApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
 
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		if err := application.Insert(tx, api.Cache, proj, &app, deprecatedGetUser(ctx)); err != nil {
+		if err := application.Insert(tx, api.Cache, proj, &app); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
-		app.Permission = permission.ProjectPermission(key, deprecatedGetUser(ctx))
 
 		if err := group.LoadGroupByProject(tx, proj); err != nil {
 			return sdk.WrapError(err, "Cannot load group from project")
@@ -251,6 +266,8 @@ func (api *API) addApplicationHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
+
+		event.PublishAddApplication(proj.Key, app, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
@@ -263,7 +280,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		applicationName := vars["applicationName"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey)
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteApplicationHandler> Cannot laod project")
 		}
@@ -280,7 +297,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot begin transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		err = application.DeleteApplication(tx, app.ID)
 		if err != nil {
@@ -291,7 +308,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteApplication(proj.Key, *app, deprecatedGetUser(ctx))
+		event.PublishDeleteApplication(proj.Key, *app, getAPIConsumer(ctx))
 
 		return nil
 	}
@@ -304,12 +321,12 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		applicationName := vars["applicationName"]
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
+		proj, errProj := project.Load(api.mustDB(), api.Cache, projectKey)
 		if errProj != nil {
 			return sdk.WrapError(sdk.ErrNoProject, "cloneApplicationHandler> Cannot load %s", projectKey)
 		}
 
-		envs, errE := environment.LoadEnvironments(api.mustDB(), projectKey, true, deprecatedGetUser(ctx))
+		envs, errE := environment.LoadEnvironments(api.mustDB(), projectKey)
 		if errE != nil {
 			return sdk.WrapError(errE, "cloneApplicationHandler> Cannot load Environments %s", projectKey)
 
@@ -330,12 +347,11 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "cloneApplicationHandler> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		if err := cloneApplication(tx, api.Cache, proj, &newApp, appToClone, deprecatedGetUser(ctx)); err != nil {
+		if err := cloneApplication(ctx, tx, api.Cache, proj, &newApp, appToClone); err != nil {
 			return sdk.WrapError(err, "Cannot insert new application %s", newApp.Name)
 		}
-		newApp.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
@@ -346,9 +362,9 @@ func (api *API) cloneApplicationHandler() service.Handler {
 }
 
 // cloneApplication Clone an application with all her dependencies: pipelines, permissions, triggers
-func cloneApplication(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application, u *sdk.User) error {
+func cloneApplication(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
 	// Create Application
-	if err := application.Insert(db, store, proj, newApp, u); err != nil {
+	if err := application.Insert(db, store, proj, newApp); err != nil {
 		return err
 	}
 
@@ -373,14 +389,16 @@ func cloneApplication(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project,
 		var errVar error
 		// If variable is a key variable, generate a new one for this application
 		if v.Type == sdk.KeyVariable {
-			errVar = application.AddKeyPairToApplication(db, store, newApp, v.Name, u)
+			errVar = application.AddKeyPairToApplication_DEPRECATED(db, store, newApp, v.Name, getAPIConsumer(ctx))
 		} else {
-			errVar = application.InsertVariable(db, store, newApp, &v, u)
+			errVar = application.InsertVariable(db, store, newApp, v, getAPIConsumer(ctx))
 		}
 		if errVar != nil {
 			return errVar
 		}
 	}
+
+	event.PublishAddApplication(proj.Key, *newApp, getAPIConsumer(ctx))
 
 	return nil
 }
@@ -392,7 +410,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		applicationName := vars["applicationName"]
 
-		p, errload := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.Default)
+		p, errload := project.Load(api.mustDB(), api.Cache, projectKey, project.LoadOptions.Default)
 		if errload != nil {
 			return sdk.WrapError(errload, "updateApplicationHandler> Cannot load project %s", projectKey)
 		}
@@ -442,7 +460,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 		if err := application.Update(tx, api.Cache, app); err != nil {
 			return sdk.WrapError(err, "Cannot delete application %s", applicationName)
 		}
@@ -450,9 +468,8 @@ func (api *API) updateApplicationHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
-		app.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
 
-		event.PublishUpdateApplication(p.Key, *app, old, deprecatedGetUser(ctx))
+		event.PublishUpdateApplication(p.Key, *app, old, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 
@@ -497,7 +514,7 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 			return sdk.WrapError(err, "unable to commit tx")
 		}
 
-		event.PublishUpdateApplication(projectKey, *app, oldApp, deprecatedGetUser(ctx))
+		event.PublishUpdateApplication(projectKey, *app, oldApp, getAPIConsumer(ctx))
 
 		return nil
 	}

@@ -8,11 +8,14 @@ import "net/http"
 
 type Render interface {
 	Render(http.ResponseWriter) error
+	WriteContentType(w http.ResponseWriter)
 }
 
 var (
 	_ Render     = JSON{}
 	_ Render     = IndentedJSON{}
+	_ Render     = SecureJSON{}
+	_ Render     = JsonpJSON{}
 	_ Render     = XML{}
 	_ Render     = String{}
 	_ Render     = Redirect{}
@@ -21,6 +24,9 @@ var (
 	_ HTMLRender = HTMLDebug{}
 	_ HTMLRender = HTMLProduction{}
 	_ Render     = YAML{}
+	_ Render     = MsgPack{}
+	_ Render     = Reader{}
+	_ Render     = AsciiJSON{}
 )
 
 func writeContentType(w http.ResponseWriter, value []string) {

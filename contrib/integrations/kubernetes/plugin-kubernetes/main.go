@@ -145,14 +145,14 @@ current-context: default-context`, k8sToken, certb64, k8sAPIURL)
 	}
 
 	return &integrationplugin.DeployResult{
-		Status: sdk.StatusSuccess.String(),
+		Status: sdk.StatusSuccess,
 	}, nil
 }
 
 func (k8sPlugin *kubernetesDeploymentPlugin) DeployStatus(ctx context.Context, q *integrationplugin.DeployStatusQuery) (*integrationplugin.DeployResult, error) {
 	// I use the flag --wait to let kubectl wait until all deployments are done. Then it's not required
 	return &integrationplugin.DeployResult{
-		Status: sdk.StatusSuccess.String(),
+		Status: sdk.StatusSuccess,
 	}, nil
 }
 
@@ -168,7 +168,7 @@ func fail(format string, args ...interface{}) (*integrationplugin.DeployResult, 
 	fmt.Println(msg)
 	return &integrationplugin.DeployResult{
 		Details: msg,
-		Status:  sdk.StatusFail.String(),
+		Status:  sdk.StatusFail,
 	}, nil
 }
 

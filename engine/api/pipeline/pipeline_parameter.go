@@ -12,9 +12,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// FuncArg defines the base type for functional argument of pipeline funcs
-type FuncArg func(args *structarg)
-
 // CheckParameterInPipeline check if the parameter is already in the pipeline or not
 func CheckParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, paramName string) (bool, error) {
 	query := `SELECT COUNT(id) FROM pipeline_parameter WHERE pipeline_id = $1 AND name = $2`

@@ -7,7 +7,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/sguiheux/go-coverage"
+
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/venom"
 )
 
 type Filter struct {
@@ -156,18 +159,14 @@ type ActionClient interface {
 
 // GroupClient exposes groups related functions
 type GroupClient interface {
-	GroupCreate(group *sdk.Group) error
-	GroupDelete(name string) error
-	GroupGenerateToken(groupName, expiration, description string) (*sdk.Token, error)
-	GroupListToken(groupName string) ([]sdk.Token, error)
-	GroupDeleteToken(groupName string, tokenID int64) error
-	GroupGet(name string, mods ...RequestModifier) (*sdk.Group, error)
 	GroupList() ([]sdk.Group, error)
-	GroupUserAdminSet(groupname string, username string) error
-	GroupUserAdminRemove(groupname, username string) error
-	GroupUserAdd(groupname string, users []string) error
-	GroupUserRemove(groupname, username string) error
-	GroupRename(oldGroupname, newGroupname string) error
+	GroupGet(name string, mods ...RequestModifier) (*sdk.Group, error)
+	GroupCreate(group *sdk.Group) error
+	GroupRename(oldName, newName string) error
+	GroupDelete(name string) error
+	GroupMemberAdd(groupName string, member *sdk.GroupMember) (sdk.Group, error)
+	GroupMemberEdit(groupName string, member *sdk.GroupMember) (sdk.Group, error)
+	GroupMemberRemove(groupName, username string) error
 }
 
 // BroadcastClient expose all function for CDS Broadcasts
@@ -192,7 +191,7 @@ type MaintenanceClient interface {
 
 // ProjectClient exposes project related functions
 type ProjectClient interface {
-	ProjectCreate(proj *sdk.Project, groupName string) error
+	ProjectCreate(proj *sdk.Project) error
 	ProjectDelete(projectKey string) error
 	ProjectGroupAdd(projectKey, groupName string, permission int, projectOnly bool) error
 	ProjectGroupDelete(projectKey, groupName string) error
@@ -229,14 +228,19 @@ type ProjectVariablesClient interface {
 
 // QueueClient exposes queue related functions
 type QueueClient interface {
-	QueueWorkflowNodeJobRun(status ...sdk.Status) ([]sdk.WorkflowNodeJobRun, error)
+	QueueWorkflowNodeJobRun(status ...string) ([]sdk.WorkflowNodeJobRun, error)
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error)
-	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error
-	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun, isBooked bool) (*sdk.WorkflowNodeJobRunData, error)
+	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error
+	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (*sdk.WorkflowNodeJobRunData, error)
 	QueueJobBook(ctx context.Context, id int64) error
-	QueueJobRelease(id int64) error
-	QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error)
+	QueueJobRelease(ctx context.Context, id int64) error
+	QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error)
 	QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error
+	QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error
+	QueueSendUnitTests(ctx context.Context, id int64, report venom.Tests) error
+	QueueSendLogs(ctx context.Context, id int64, log sdk.Log) error
+	QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error
+	QueueSendStepResult(ctx context.Context, id int64, res sdk.StepStatus) error
 	QueueSendResult(ctx context.Context, id int64, res sdk.Result) error
 	QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) (bool, time.Duration, error)
 	QueueStaticFilesUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, name, entrypoint, staticKey string, tarContent io.Reader) (string, bool, time.Duration, error)
@@ -246,33 +250,28 @@ type QueueClient interface {
 
 // UserClient exposes users functions
 type UserClient interface {
-	UserConfirm(username, token string) (bool, string, error)
-	UserList() ([]sdk.User, error)
-	UserGet(username string) (*sdk.User, error)
+	UserList() ([]sdk.AuthentifiedUser, error)
+	UserGet(username string) (*sdk.AuthentifiedUser, error)
+	UserGetMe() (*sdk.AuthentifiedUser, error)
 	UserGetGroups(username string) (map[string][]sdk.Group, error)
-	UserLogin(username, password string) (bool, string, error)
-	UserLoginCallback(ctx context.Context, request string, publicKey []byte) (sdk.AccessToken, string, error)
-	UserReset(username, email, callback string) error
-	UserSignup(username, fullname, email, callback string) error
-	ListAllTokens() ([]sdk.Token, error)
-	FindToken(token string) (sdk.Token, error)
 	UpdateFavorite(params sdk.FavoriteParams) (interface{}, error)
 }
 
 // WorkerClient exposes workers functions
 type WorkerClient interface {
-	WorkerModelBook(id int64) error
+	WorkerModelBook(groupName, name string) error
 	WorkerList(ctx context.Context) ([]sdk.Worker, error)
 	WorkerRefresh(ctx context.Context) error
+	WorkerUnregister(ctx context.Context) error
 	WorkerDisable(ctx context.Context, id string) error
 	WorkerModelAdd(name, modelType, patternName string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModel(groupName, name string) (sdk.Model, error)
 	WorkerModelDelete(groupName, name string) error
-	WorkerModelSpawnError(id int64, info sdk.SpawnErrorForm) error
+	WorkerModelSpawnError(groupName, name string, info sdk.SpawnErrorForm) error
 	WorkerModels(*WorkerModelFilter) ([]sdk.Model, error)
 	WorkerModelsEnabled() ([]sdk.Model, error)
-	WorkerRegister(ctx context.Context, form sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)
-	WorkerSetStatus(ctx context.Context, status sdk.Status) error
+	WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)
+	WorkerSetStatus(ctx context.Context, status string) error
 }
 
 // HookClient exposes functions used for hooks services
@@ -332,7 +331,8 @@ type IntegrationClient interface {
 
 // Interface is the main interface for cdsclient package
 type Interface interface {
-	AccessTokenClient
+	Raw
+	AuthClient
 	ActionClient
 	AdminService
 	APIURL() string
@@ -353,8 +353,8 @@ type Interface interface {
 	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)
 	RepositoriesManagerInterface
-	GetService() *sdk.Service
-	ServiceRegister(sdk.Service) (string, error)
+	ServiceRegister(sdk.Service) (*sdk.Service, error)
+	ServiceHeartbeat(sdk.MonitoringStatus) error
 	UserClient
 	WorkerClient
 	WorkflowClient
@@ -364,13 +364,30 @@ type Interface interface {
 	TemplateClient
 }
 
+type WorkerInterface interface {
+	GRPCPluginsClient
+	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
+	QueueClient
+	Requirements() ([]sdk.Requirement, error)
+	WorkerClient
+	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.WorkflowNodeRunArtifact, error)
+	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader, size int) error
+	WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error)
+	WorkflowRunSearch(projectKey string, offset, limit int64, filter ...Filter) ([]sdk.WorkflowRun, error)
+	WorkflowNodeRunArtifactDownload(projectKey string, name string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error
+	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
+}
+
 // Raw is a low-level interface exposing HTTP functions
 type Raw interface {
 	PostJSON(ctx context.Context, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
 	PutJSON(ctx context.Context, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
 	GetJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error)
 	DeleteJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error)
+	RequestJSON(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...RequestModifier) ([]byte, http.Header, int, error)
 	Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
+	HTTPClient() *http.Client
+	HTTPSSEClient() *http.Client
 }
 
 // GRPCPluginsClient exposes plugins API
@@ -433,11 +450,10 @@ func WithUsage() RequestModifier {
 	}
 }
 
-// AccessTokenClient is the interface for access token management
-type AccessTokenClient interface {
-	AccessTokenListByUser(username string) ([]sdk.AccessToken, error)
-	AccessTokenListByGroup(groups ...string) ([]sdk.AccessToken, error)
-	AccessTokenDelete(id string) error
-	AccessTokenCreate(request sdk.AccessTokenRequest) (sdk.AccessToken, string, error)
-	AccessTokenRegen(id string) (sdk.AccessToken, string, error)
+// AuthClient is the interface for authentication management.
+type AuthClient interface {
+	AuthConsumerSignin(sdk.AuthConsumerType, sdk.AuthConsumerSigninRequest) (*sdk.AuthConsumerSigninResponse, error)
+	AuthConsumerListByUser(username string) ([]sdk.AuthConsumer, error)
+	AuthConsumerDelete(username, id string) error
+	AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error)
 }

@@ -10,7 +10,7 @@ import (
 )
 
 // PublishPipelineEvent publish pipeline event
-func publishPipelineEvent(payload interface{}, key string, pipName string, u *sdk.User) {
+func publishPipelineEvent(payload interface{}, key string, pipName string, u sdk.Identifiable) {
 	event := sdk.Event{
 		Timestamp:    time.Now(),
 		Hostname:     hostname,
@@ -21,14 +21,14 @@ func publishPipelineEvent(payload interface{}, key string, pipName string, u *sd
 		PipelineName: pipName,
 	}
 	if u != nil {
-		event.UserMail = u.Email
-		event.Username = u.Username
+		event.UserMail = u.GetEmail()
+		event.Username = u.GetUsername()
 	}
 	publishEvent(event)
 }
 
 // PublishPipelineAdd publishes an event for the creation of the given pipeline
-func PublishPipelineAdd(key string, pip sdk.Pipeline, u *sdk.User) {
+func PublishPipelineAdd(key string, pip sdk.Pipeline, u sdk.Identifiable) {
 	e := sdk.EventPipelineAdd{
 		Pipeline: pip,
 	}
@@ -36,7 +36,7 @@ func PublishPipelineAdd(key string, pip sdk.Pipeline, u *sdk.User) {
 }
 
 // PublishPipelineUpdate publishes an event for the modification of the pipeline
-func PublishPipelineUpdate(key string, newName string, oldName string, u *sdk.User) {
+func PublishPipelineUpdate(key string, newName string, oldName string, u sdk.Identifiable) {
 	e := sdk.EventPipelineUpdate{
 		NewName: newName,
 		OldName: oldName,
@@ -45,13 +45,13 @@ func PublishPipelineUpdate(key string, newName string, oldName string, u *sdk.Us
 }
 
 // PublishPipelineDelete publishes an event for the deletion of the pipeline
-func PublishPipelineDelete(key string, pip sdk.Pipeline, u *sdk.User) {
+func PublishPipelineDelete(key string, pip sdk.Pipeline, u sdk.Identifiable) {
 	e := sdk.EventPipelineDelete{}
 	publishPipelineEvent(e, key, pip.Name, u)
 }
 
 // PublishPipelineParameterAdd publishes an event on adding a pipeline parameter
-func PublishPipelineParameterAdd(key string, pipName string, p sdk.Parameter, u *sdk.User) {
+func PublishPipelineParameterAdd(key string, pipName string, p sdk.Parameter, u sdk.Identifiable) {
 	e := sdk.EventPipelineParameterAdd{
 		Parameter: p,
 	}
@@ -59,7 +59,7 @@ func PublishPipelineParameterAdd(key string, pipName string, p sdk.Parameter, u 
 }
 
 // PublishPipelineParameterUpdate publishes an event on editing a pipeline parameter
-func PublishPipelineParameterUpdate(key string, pipName string, oldP sdk.Parameter, p sdk.Parameter, u *sdk.User) {
+func PublishPipelineParameterUpdate(key string, pipName string, oldP sdk.Parameter, p sdk.Parameter, u sdk.Identifiable) {
 	e := sdk.EventPipelineParameterUpdate{
 		OldParameter: oldP,
 		NewParameter: p,
@@ -68,7 +68,7 @@ func PublishPipelineParameterUpdate(key string, pipName string, oldP sdk.Paramet
 }
 
 // PublishPipelineParameterDelete publishes an event on deleting a pipeline parameter
-func PublishPipelineParameterDelete(key string, pipName string, p sdk.Parameter, u *sdk.User) {
+func PublishPipelineParameterDelete(key string, pipName string, p sdk.Parameter, u sdk.Identifiable) {
 	e := sdk.EventPipelineParameterDelete{
 		Parameter: p,
 	}
@@ -76,7 +76,7 @@ func PublishPipelineParameterDelete(key string, pipName string, p sdk.Parameter,
 }
 
 // PublishPipelineStageAdd publishes an event on adding a stage
-func PublishPipelineStageAdd(key string, pipName string, s sdk.Stage, u *sdk.User) {
+func PublishPipelineStageAdd(key string, pipName string, s sdk.Stage, u sdk.Identifiable) {
 	e := sdk.EventPipelineStageAdd{
 		Name:         s.Name,
 		BuildOrder:   s.BuildOrder,
@@ -88,7 +88,7 @@ func PublishPipelineStageAdd(key string, pipName string, s sdk.Stage, u *sdk.Use
 }
 
 // PublishPipelineStageMove publishes an event on moving a stage
-func PublishPipelineStageMove(key string, pipName string, s sdk.Stage, oldBuildOrder int, u *sdk.User) {
+func PublishPipelineStageMove(key string, pipName string, s sdk.Stage, oldBuildOrder int, u sdk.Identifiable) {
 	e := sdk.EventPipelineStageMove{
 		StageName:          s.Name,
 		StageID:            s.ID,
@@ -99,7 +99,7 @@ func PublishPipelineStageMove(key string, pipName string, s sdk.Stage, oldBuildO
 }
 
 // PublishPipelineStageUpdate publishes an event on updating a stage
-func PublishPipelineStageUpdate(key string, pipName string, oldStage sdk.Stage, newStage sdk.Stage, u *sdk.User) {
+func PublishPipelineStageUpdate(key string, pipName string, oldStage sdk.Stage, newStage sdk.Stage, u sdk.Identifiable) {
 	e := sdk.EventPipelineStageUpdate{
 		OldName:         oldStage.Name,
 		OldBuildOrder:   oldStage.BuildOrder,
@@ -114,7 +114,7 @@ func PublishPipelineStageUpdate(key string, pipName string, oldStage sdk.Stage, 
 }
 
 // PublishPipelineStageDelete publishes an event on deleting a stage
-func PublishPipelineStageDelete(key string, pipName string, s sdk.Stage, u *sdk.User) {
+func PublishPipelineStageDelete(key string, pipName string, s sdk.Stage, u sdk.Identifiable) {
 	e := sdk.EventPipelineStageDelete{
 		ID:         s.ID,
 		Name:       s.Name,
@@ -124,7 +124,7 @@ func PublishPipelineStageDelete(key string, pipName string, s sdk.Stage, u *sdk.
 }
 
 // PublishPipelineJobAdd publishes an event on adding a job
-func PublishPipelineJobAdd(key string, pipName string, s sdk.Stage, j sdk.Job, u *sdk.User) {
+func PublishPipelineJobAdd(key string, pipName string, s sdk.Stage, j sdk.Job, u sdk.Identifiable) {
 	e := sdk.EventPipelineJobAdd{
 		StageID:         s.ID,
 		StageName:       s.Name,
@@ -135,7 +135,7 @@ func PublishPipelineJobAdd(key string, pipName string, s sdk.Stage, j sdk.Job, u
 }
 
 // PublishPipelineJobUpdate publishes an event on updating a job
-func PublishPipelineJobUpdate(key string, pipName string, s sdk.Stage, oldJob sdk.Job, newJob sdk.Job, u *sdk.User) {
+func PublishPipelineJobUpdate(key string, pipName string, s sdk.Stage, oldJob sdk.Job, newJob sdk.Job, u sdk.Identifiable) {
 	e := sdk.EventPipelineJobUpdate{
 		StageID:         s.ID,
 		StageName:       s.Name,
@@ -147,7 +147,7 @@ func PublishPipelineJobUpdate(key string, pipName string, s sdk.Stage, oldJob sd
 }
 
 // PublishPipelineJobDelete publishes an event on deleting a job
-func PublishPipelineJobDelete(key string, pipName string, s sdk.Stage, j sdk.Job, u *sdk.User) {
+func PublishPipelineJobDelete(key string, pipName string, s sdk.Stage, j sdk.Job, u sdk.Identifiable) {
 	e := sdk.EventPipelineJobDelete{
 		StageID:         s.ID,
 		StageName:       s.Name,

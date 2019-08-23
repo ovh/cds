@@ -5,7 +5,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type service sdk.Service
+type service struct {
+	sdk.Service
+	gorpmapping.SignedEntity
+}
 
 func init() {
 	gorpmapping.Register(

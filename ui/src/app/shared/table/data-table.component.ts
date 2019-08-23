@@ -26,7 +26,9 @@ export enum ColumnType {
     BUTTON = 'button',
     CONFIRM_BUTTON = 'confirm-button',
     LABEL = 'label',
-    TEXT_COPY = 'text-copy'
+    TEXT_COPY = 'text-copy',
+    TEXT_LABELS = 'text-labels',
+    TEXT_ICONS = 'text-icons'
 }
 
 export type SelectorType<T> = (d: T) => ColumnType;

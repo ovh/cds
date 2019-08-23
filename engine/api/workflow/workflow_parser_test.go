@@ -9,8 +9,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -26,10 +28,12 @@ import (
 func TestParseAndImport(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
 
 	pipelineName := sdk.RandomString(10)
 
@@ -39,13 +43,13 @@ func TestParseAndImport(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       pipelineName,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	//Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, cache, proj, app, u))
+	test.NoError(t, application.Insert(db, cache, proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
@@ -56,7 +60,7 @@ func TestParseAndImport(t *testing.T) {
 	test.NoError(t, environment.InsertEnvironment(db, env))
 
 	//Reload project
-	proj, _ = project.Load(db, cache, proj.Key, u, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
+	proj, _ = project.Load(db, cache, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
 	input := &exportentities.Workflow{
 		Name: sdk.RandomString(10),
@@ -83,10 +87,10 @@ func TestParseAndImport(t *testing.T) {
 		},
 	}
 
-	_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, input, u, workflow.ImportOptions{Force: true})
+	_, _, err = workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, input, localConsumer, workflow.ImportOptions{Force: true})
 	assert.NoError(t, err)
 
-	w, errW := workflow.Load(context.TODO(), db, cache, proj, input.Name, u, workflow.LoadOptions{})
+	w, errW := workflow.Load(context.TODO(), db, cache, proj, input.Name, workflow.LoadOptions{})
 	assert.NoError(t, errW)
 	assert.NotNil(t, w)
 
@@ -111,10 +115,10 @@ func TestParseAndImport(t *testing.T) {
 func TestParseAndImportFromRepository(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -125,13 +129,15 @@ func TestParseAndImportFromRepository(t *testing.T) {
 
 	UUID := sdk.UUID()
 
-	mockServiceVCS := &sdk.Service{Name: "Test_postWorkflowAsCodeHandlerVCS", Type: services.TypeVCS}
-	_ = services.Delete(db, mockServiceVCS)
-	test.NoError(t, services.Insert(db, mockServiceVCS))
+	mockServiceVCS, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
+	defer func() {
+		_ = services.Delete(db, mockServiceVCS) // nolint
+	}()
 
-	mockServiceHook := &sdk.Service{Name: "Test_postWorkflowAsCodeHandlerHook", Type: services.TypeHooks}
-	_ = services.Delete(db, mockServiceHook)
-	test.NoError(t, services.Insert(db, mockServiceHook))
+	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
+	defer func() {
+		_ = services.Delete(db, mockServiceHook) // nolint
+	}()
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -210,7 +216,7 @@ func TestParseAndImportFromRepository(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       pipelineName,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	//Application
 	app := &sdk.Application{
@@ -218,7 +224,7 @@ func TestParseAndImportFromRepository(t *testing.T) {
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(db, cache, proj, app, u))
+	test.NoError(t, application.Insert(db, cache, proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
@@ -229,7 +235,7 @@ func TestParseAndImportFromRepository(t *testing.T) {
 	test.NoError(t, environment.InsertEnvironment(db, env))
 
 	//Reload project
-	proj, _ = project.Load(db, cache, proj.Key, u, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
+	proj, _ = project.Load(db, cache, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
 	input := &exportentities.Workflow{
 		Name: sdk.RandomString(10),
@@ -244,7 +250,7 @@ func TestParseAndImportFromRepository(t *testing.T) {
 	_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, input, u, workflow.ImportOptions{Force: true, FromRepository: "foo/myrepo"})
 	assert.NoError(t, err)
 
-	w, errW := workflow.Load(context.TODO(), db, cache, proj, input.Name, u, workflow.LoadOptions{})
+	w, errW := workflow.Load(context.TODO(), db, cache, proj, input.Name, workflow.LoadOptions{})
 	assert.NoError(t, errW)
 	assert.NotNil(t, w)
 

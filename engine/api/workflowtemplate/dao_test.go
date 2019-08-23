@@ -67,7 +67,7 @@ func TestCRUD(t *testing.T) {
 
 	// LoadByID
 	result, err := workflowtemplate.LoadByID(context.TODO(), db, 0)
-	assert.Nil(t, err)
+	assert.NotNil(t, err) // should return "not foud error"
 	assert.Nil(t, result)
 	result, err = workflowtemplate.LoadByID(context.TODO(), db, tmpls[0].ID)
 	assert.Nil(t, err)

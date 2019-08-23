@@ -2,15 +2,18 @@ package service
 
 import (
 	"context"
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/pborman/uuid"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -42,11 +45,18 @@ type RouterConfig struct {
 
 // HandlerConfig is the configuration for one handler
 type HandlerConfig struct {
-	Name         string
-	Method       string
-	Handler      Handler
-	IsDeprecated bool
-	Options      map[string]string
+	Name             string
+	Method           string
+	Handler          Handler
+	IsDeprecated     bool
+	NeedAuth         bool
+	NeedAdmin        bool
+	MaintenanceAware bool
+	EnableTracing    bool
+	AllowProvider    bool
+	AllowedTokens    []string
+	AllowedScopes    []sdk.AuthConsumerScope
+	PermissionLevel  int
 }
 
 // Accepted is a helper function used by asynchronous handlers
@@ -131,4 +141,48 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 		return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "unable to unmarshal %s", string(data)))
 	}
 	return nil
+}
+
+type httpVerifier struct {
+	sync.Mutex
+	pubKey *rsa.PublicKey
+}
+
+func (v *httpVerifier) SetKey(pubKey *rsa.PublicKey) {
+	v.Lock()
+	defer v.Unlock()
+	v.pubKey = pubKey
+}
+
+func (v *httpVerifier) GetKey(id string) interface{} {
+	v.Lock()
+	defer v.Unlock()
+	return v.pubKey
+}
+
+var (
+	_                  httpsig.KeyGetter = new(httpVerifier)
+	globalHTTPVerifier *httpVerifier
+)
+
+func CheckRequestSignatureMiddleware(pubKey *rsa.PublicKey) Middleware {
+	globalHTTPVerifier = new(httpVerifier)
+	globalHTTPVerifier.SetKey(pubKey)
+
+	verifier := httpsig.NewVerifier(globalHTTPVerifier)
+	verifier.SetRequiredHeaders([]string{"(request-target)", "host", "date"})
+
+	return func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
+		if !rc.NeedAuth {
+			return ctx, nil
+		}
+
+		if err := verifier.Verify(req); err != nil {
+			return ctx, sdk.NewError(sdk.ErrUnauthorized, err)
+		}
+
+		log.Debug("Request has been successfully verified")
+
+		return ctx, nil
+	}
 }

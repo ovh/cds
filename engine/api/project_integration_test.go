@@ -16,8 +16,8 @@ import (
 func TestAddUpdateAndDeleteProjectIntegration(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	integrationModel, err := integration.LoadModelByName(db, sdk.KafkaIntegration.Name, false)
 	if err != nil {

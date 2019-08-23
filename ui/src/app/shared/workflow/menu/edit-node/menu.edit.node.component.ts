@@ -77,13 +77,7 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
             return;
         }
 
-        // Get Env permission
-        let envForbid = this.node && this.node.context && this.node.context.environment_id > 1
-            && this.workflow.environments && this.workflow.environments[this.node.context.environment_id]
-            && this.workflow.environments[this.node.context.environment_id].permission
-            && this.workflow.environments[this.node.context.environment_id].permission < PermissionValue.READ_EXECUTE;
-
-        if (this.workflow && this.workflow.permission < PermissionValue.READ_EXECUTE || envForbid) {
+        if (this.workflow && !this.workflow.permissions.executable) {
             return false;
         }
 

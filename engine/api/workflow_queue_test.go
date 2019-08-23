@@ -15,10 +15,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
+	"github.com/ovh/cds/engine/api/authentication"
+
 	"github.com/ovh/venom"
+
 	"github.com/sguiheux/go-coverage"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
@@ -27,10 +30,8 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -38,23 +39,28 @@ import (
 )
 
 type testRunWorkflowCtx struct {
-	user        *sdk.User
-	password    string
-	project     *sdk.Project
-	workflow    *sdk.Workflow
-	run         *sdk.WorkflowRun
-	job         *sdk.WorkflowNodeJobRun
-	worker      *sdk.Worker
-	workerToken string
-	hatchery    *sdk.Service
+	user          *sdk.AuthentifiedUser
+	password      string
+	project       *sdk.Project
+	workflow      *sdk.Workflow
+	run           *sdk.WorkflowRun
+	job           *sdk.WorkflowNodeJobRun
+	worker        *sdk.Worker
+	workerToken   string
+	hatchery      *sdk.Service
+	hatcheryToken string
 }
 
 func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx {
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
-	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
+	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
+	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -62,7 +68,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	script := assets.GetBuiltinOrPluginActionByName(t, api.mustDB(), sdk.ScriptAction)
 
@@ -100,11 +106,11 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	log.Debug("workflow %d groups: %+v", w1.ID, w1.Groups)
@@ -152,7 +158,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 
 		wrGet := &sdk.WorkflowRun{}
 		test.NoError(t, json.Unmarshal(recGet.Body.Bytes(), wrGet))
-		if wrGet.Status != sdk.StatusPending.String() {
+		if wrGet.Status != sdk.StatusPending {
 			wr = wrGet
 			break
 		}
@@ -191,11 +197,11 @@ func testCountGetWorkflowJob(t *testing.T, api *API, router *Router, ctx *testRu
 	}
 }
 
-func testGetWorkflowJobAsRegularUser(t *testing.T, api *API, router *Router, u *sdk.User, password string, ctx *testRunWorkflowCtx) {
+func testGetWorkflowJobAsRegularUser(t *testing.T, api *API, router *Router, jwt string, ctx *testRunWorkflowCtx) {
 	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, password, "GET", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -218,7 +224,7 @@ func testGetWorkflowJobAsWorker(t *testing.T, api *API, router *Router, ctx *tes
 	//Register the worker
 	testRegisterWorker(t, api, router, ctx)
 
-	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "GET", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -240,7 +246,7 @@ func testGetWorkflowJobAsHatchery(t *testing.T, api *API, router *Router, ctx *t
 
 	//Register the worker
 	testRegisterHatchery(t, api, router, ctx)
-	req := assets.NewAuthentifiedRequestFromHatchery(t, ctx.hatchery, "GET", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.hatcheryToken, "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -257,57 +263,31 @@ func testGetWorkflowJobAsHatchery(t *testing.T, api *API, router *Router, ctx *t
 }
 
 func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
-	var err error
-	//Generate token
-	ctx.workerToken, err = token.GenerateToken()
-	test.NoError(t, err)
-	//Insert token
-	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, ctx.workerToken, sdk.Persistent, "", ""))
-	//Register the worker
-	params := &sdk.WorkerRegistrationForm{
-		Name:  sdk.RandomString(10),
-		Token: ctx.workerToken,
-		OS:    "linux",
-		Arch:  "amd64",
+	g, err := group.LoadByID(context.TODO(), api.mustDB(), ctx.user.OldUserStruct.Groups[0].ID)
+	if err != nil {
+		t.Fatalf("Error getting group : %s", err)
 	}
-	ctx.worker, err = worker.RegisterWorker(api.mustDB(), api.Cache, params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities, params.OS, params.Arch)
-	test.NoError(t, err)
+	model := LoadOrCreateWorkerModel(t, api, g.ID, "Test1")
+	w, workerJWT := RegisterWorker(t, api, g.ID, model.Name)
+	ctx.workerToken = workerJWT
+	ctx.worker = w
 }
 
 func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
-	//Generate token
-	tk, err := token.GenerateToken()
-	test.NoError(t, err)
-	//Insert token
-	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, tk, sdk.Persistent, "", ""))
-
-	//Generate a hash
-	hash, errsession := sessionstore.NewSessionKey()
-	if errsession != nil {
-		t.Fatal(errsession)
-	}
-
-	ctx.hatchery = &sdk.Service{
-		Name:    sdk.RandomString(10),
-		GroupID: &ctx.user.Groups[0].ID,
-		Type:    services.TypeHatchery,
-		Token:   tk,
-		Hash:    string(hash),
-	}
-
-	err = services.Insert(api.mustDB(), ctx.hatchery)
-	test.NoError(t, err)
+	h, _, _, jwt := assets.InsertHatchery(t, api.mustDB(), ctx.user.OldUserStruct.Groups[0])
+	ctx.hatchery = h
+	ctx.hatcheryToken = jwt
 }
 
 func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	api, _, router, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 	t.Log("checkin as a user")
 
 	ctx := testRunWorkflow(t, api, router)
-	testGetWorkflowJobAsRegularUser(t, api, router, u, pass, &ctx)
+	testGetWorkflowJobAsRegularUser(t, api, router, jwt, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	t.Log("checkin as a worker")
@@ -352,7 +332,7 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 
 	uri = router.GetRoute("GET", api.getWorkflowRunNumHandler, vars)
 	test.NotEmpty(t, uri)
-	req = assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.password, "GET", uri, nil)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -368,11 +348,6 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
-	takeForm := sdk.WorkerTakeForm{
-		BookedJobID: ctx.job.ID,
-		Time:        time.Now(),
-	}
-
 	//Prepare request
 	vars := map[string]string{
 		"key":              ctx.project.Key,
@@ -387,13 +362,13 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	//This will check the needWorker() auth
-	req := assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "POST", uri, takeForm)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.password, "POST", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 403, rec.Code)
 
 	//This call must work
-	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -401,8 +376,8 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	run, err := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, ctx.job.ID)
 	test.NoError(t, err)
 	assert.Equal(t, "Building", run.Status)
-
 }
+
 func Test_postBookWorkflowJobHandler(t *testing.T) {
 	api, _, router, end := newTestAPI(t)
 	defer end()
@@ -424,11 +399,10 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postBookWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequestFromHatchery(t, ctx.hatchery, "POST", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.hatcheryToken, "POST", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
-
 }
 
 func Test_postWorkflowJobResultHandler(t *testing.T) {
@@ -452,12 +426,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := sdk.WorkerTakeForm{
-		BookedJobID: ctx.job.ID,
-		Time:        time.Now(),
-	}
-
-	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -469,19 +438,23 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 
 	uri = router.Prefix + fmt.Sprintf("/queue/workflows/%d/log", ctx.job.ID)
 
-	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, logs)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, logs)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
-
-	now, _ := ptypes.TimestampProto(time.Now())
+	assert.Equal(t, 204, rec.Code)
 
 	//Send result
 	res := sdk.Result{
 		Duration:   "10",
-		Status:     sdk.StatusSuccess.String(),
-		RemoteTime: now,
+		Status:     sdk.StatusSuccess,
+		RemoteTime: time.Now(),
 		BuildID:    ctx.job.ID,
+		NewVariables: []sdk.Variable{
+			{
+				Name:  "cds.build.newVar",
+				Value: "newVal",
+			},
+		},
 	}
 
 	vars = map[string]string{
@@ -493,10 +466,44 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	uri = router.GetRoute("POST", api.postWorkflowJobResultHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, res)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, res)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
+
+	vars = map[string]string{
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"number":           fmt.Sprintf("%d", ctx.run.Number),
+	}
+
+	uri = router.GetRoute("GET", api.getWorkflowRunHandler, vars)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.password, "GET", uri, res)
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	btes := rec.Body.Bytes()
+	test.NoError(t, json.Unmarshal(btes, ctx.run))
+	assert.Contains(t, ctx.run.RootRun().BuildParameters, sdk.Parameter{Name: "cds.build.newVar", Type: sdk.StringParameter, Value: "newVal"})
+
+	vars = map[string]string{
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"number":           fmt.Sprintf("%d", ctx.run.Number),
+		"nodeRunID":        fmt.Sprintf("%d", ctx.run.RootRun().ID),
+	}
+	uri = router.GetRoute("GET", api.getWorkflowNodeRunHandler, vars)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.password, "GET", uri, res)
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+	btes = rec.Body.Bytes()
+	var rootRun sdk.WorkflowNodeRun
+	test.NoError(t, json.Unmarshal(btes, &rootRun))
+
+	assert.Contains(t, rootRun.Stages[0].RunJobs[0].Parameters, sdk.Parameter{Name: "cds.build.newVar", Type: sdk.StringParameter, Value: "newVal"})
+	assert.Contains(t, rootRun.BuildParameters, sdk.Parameter{Name: "cds.build.newVar", Type: sdk.StringParameter, Value: "newVal"})
 }
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
@@ -523,7 +530,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	uri := router.Prefix + fmt.Sprintf("/queue/workflows/%d/spawn/infos", ctx.job.ID)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequestFromHatchery(t, ctx.hatchery, "POST", uri, info)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.hatcheryToken, "POST", uri, info)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 202, rec.Code)
@@ -532,12 +539,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	uri = router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := sdk.WorkerTakeForm{
-		BookedJobID: ctx.job.ID,
-		Time:        time.Now(),
-	}
-
-	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -585,20 +587,20 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	uri = router.GetRoute("POST", api.postWorkflowJobTestsResultsHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, tests)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, tests)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
 
 	step := sdk.StepStatus{
-		Status:    sdk.StatusSuccess.String(),
+		Status:    sdk.StatusSuccess,
 		StepOrder: 0,
 	}
 
 	uri = router.GetRoute("POST", api.postWorkflowJobStepStatusHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, step)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, step)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
@@ -610,58 +612,6 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 
 	assert.NotNil(t, nodeRun.Tests)
 	assert.Equal(t, 2, nodeRun.Tests.Total)
-}
-
-func Test_postWorkflowJobVariableHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
-	defer end()
-	ctx := testRunWorkflow(t, api, router)
-	testGetWorkflowJobAsWorker(t, api, router, &ctx)
-	assert.NotNil(t, ctx.job)
-
-	//Prepare request
-	vars := map[string]string{
-		"key":              ctx.project.Key,
-		"permWorkflowName": ctx.workflow.Name,
-		"id":               fmt.Sprintf("%d", ctx.job.ID),
-	}
-
-	//Register the worker
-	testRegisterWorker(t, api, router, &ctx)
-
-	//Take
-	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
-	test.NotEmpty(t, uri)
-
-	takeForm := sdk.WorkerTakeForm{
-		BookedJobID: ctx.job.ID,
-		Time:        time.Now(),
-	}
-
-	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
-
-	vars = map[string]string{
-		"key":              ctx.project.Key,
-		"permWorkflowName": ctx.workflow.Name,
-		"permID":           fmt.Sprintf("%d", ctx.job.ID),
-	}
-
-	//Send result
-	v := sdk.Variable{
-		Name:  "var",
-		Value: "value",
-	}
-
-	uri = router.GetRoute("POST", api.postWorkflowJobVariableHandler, vars)
-	test.NotEmpty(t, uri)
-
-	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, v)
-	rec = httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 204, rec.Code)
 }
 
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
@@ -700,12 +650,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := sdk.WorkerTakeForm{
-		BookedJobID: ctx.job.ID,
-		Time:        time.Now(),
-	}
-
-	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -734,7 +679,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	params["md5sum"] = "123"
 	params["sha512sum"] = "1234"
 	params["nodeJobRunID"] = fmt.Sprintf("%d", ctx.job.ID)
-	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "myartifact"), "myartifact", params)
+	req = assets.NewJWTAuthentifiedMultipartRequest(t, ctx.workerToken, "POST", uri, path.Join(os.TempDir(), "myartifact"), "myartifact", params)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
@@ -758,7 +703,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	}
 	uri = router.GetRoute("GET", api.getWorkflowRunArtifactsHandler, vars)
 	test.NotEmpty(t, uri)
-	req = assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.password, "GET", uri, nil)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -777,7 +722,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	}
 	uri = router.GetRoute("GET", api.getDownloadArtifactHandler, vars)
 	test.NotEmpty(t, uri)
-	req = assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, ctx.password, "GET", uri, nil)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 
@@ -823,12 +768,7 @@ func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := sdk.WorkerTakeForm{
-		BookedJobID: ctx.job.ID,
-		Time:        time.Now(),
-	}
-
-	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -855,7 +795,7 @@ func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 		"entrypoint":   "index.html",
 		"nodeJobRunID": fmt.Sprintf("%d", ctx.job.ID),
 	}
-	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "mystaticfile"), "mystaticfile", params)
+	req = assets.NewJWTAuthentifiedMultipartRequest(t, ctx.workerToken, "POST", uri, path.Join(os.TempDir(), "mystaticfile"), "mystaticfile", params)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, http.StatusNotImplemented, rec.Code)
@@ -866,22 +806,27 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	defer end()
 
 	// Create user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// add group
-	assert.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
-	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
+	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
 
 	// Create pipeline
 	pip := &sdk.Pipeline{
 		ProjectID: proj.ID,
 		Name:      sdk.RandomString(10),
 	}
-	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
+	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
 
 	s := sdk.Stage{
 		PipelineID: pip.ID,
@@ -915,7 +860,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      sdk.RandomString(10),
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
 
 	// Create workflow
 	w := sdk.Workflow{
@@ -935,20 +880,22 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		},
 	}
 
-	p, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	p, err := project.Load(db, api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	assert.NoError(t, err)
-	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, p))
 
-	workflowDeepPipeline, err := workflow.LoadByID(db, api.Cache, p, w.ID, u, workflow.LoadOptions{DeepPipeline: true})
+	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, p, w.ID, workflow.LoadOptions{DeepPipeline: true})
 	assert.NoError(t, err)
 
 	wrDB, errwr := workflow.CreateRun(db, workflowDeepPipeline, nil, u)
 	assert.NoError(t, errwr)
 	wrDB.Workflow = *workflowDeepPipeline
 
-	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{User: *u},
-	}, u, nil)
+	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB,
+		&sdk.WorkflowRunPostHandlerOption{
+			Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
+		},
+		consumer, nil)
 	assert.NoError(t, errmr)
 
 	log.Debug("%+v", wrDB.WorkflowNodeRuns)
@@ -967,8 +914,8 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		run:      wrDB,
 	}
 	testRegisterWorker(t, api, router, &ctx)
-	ctx.worker.ActionBuildID = wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
-	assert.NoError(t, worker.SetToBuilding(db, api.Cache, ctx.worker.ID, wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID, sdk.JobTypeWorkflowNode))
+	ctx.worker.JobRunID = &wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
+	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, *ctx.worker.JobRunID))
 
 	request := sdk.VulnerabilityWorkerReport{
 		Vulnerabilities: []sdk.Vulnerability{
@@ -989,7 +936,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 
 	uri := router.GetRoute("POST", api.postVulnerabilityReportHandler, vars)
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, request)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, request)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
@@ -1000,15 +947,19 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	defer end()
 
 	// Create user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// add group
-	assert.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
-	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
+	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
 
 	// Add repo manager
 	proj.VCSServers = make([]sdk.ProjectVCSServer, 0, 1)
@@ -1023,7 +974,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      sdk.RandomString(10),
 	}
-	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
+	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
 
 	s := sdk.Stage{
 		PipelineID: pip.ID,
@@ -1059,7 +1010,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		RepositoryFullname: "foo/bar",
 		VCSServer:          "repoManServ",
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	// Create workflow
@@ -1080,13 +1031,18 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		},
 	}
 
-	p, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
-	assert.NoError(t, err)
-	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
+	p, err := project.Load(db, api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	test.NoError(t, err)
+	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, p))
 
-	db.Exec("DELETE FROM SERVICES")
-	mockVCSservice := &sdk.Service{Name: "TestInsertNewCodeCoverageReport", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSservice))
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
+	_, _ = assets.InsertService(t, db, "TestInsertNewCodeCoverageReport", services.TypeVCS)
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -1161,18 +1117,20 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	wrDB, errwr := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr)
 
-	workflowWithDeepPipeline, err := workflow.LoadByID(db, api.Cache, proj, w.ID, u, workflow.LoadOptions{DeepPipeline: true})
+	workflowWithDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, proj, w.ID, workflow.LoadOptions{DeepPipeline: true})
 	assert.NoError(t, err)
+
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	wrDB.Workflow = *workflowWithDeepPipeline
 	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
-			User: *u,
+			Username: u.Username,
 			Payload: map[string]string{
 				"git.branch": "master",
 			},
 		},
-	}, u, nil)
+	}, consumer, nil)
 
 	assert.NoError(t, errmr)
 
@@ -1182,12 +1140,12 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	wrCB.Workflow = w
 	_, errmr = workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrCB, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
-			User: *u,
+			Username: u.Username,
 			Payload: map[string]string{
 				"git.branch": "my-branch",
 			},
 		},
-	}, u, nil)
+	}, consumer, nil)
 	assert.NoError(t, errmr)
 
 	// Add a coverage report on default branch node run
@@ -1236,14 +1194,15 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	wrToTest, errwr3 := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr3)
 	wrToTest.Workflow = *workflowWithDeepPipeline
+
 	_, errT := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrToTest, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
-			User: *u,
+			Username: u.Username,
 			Payload: map[string]string{
 				"git.branch": "my-branch",
 			},
 		},
-	}, u, nil)
+	}, consumer, nil)
 	assert.NoError(t, errT)
 
 	wrr, err := workflow.LoadRunByID(db, wrToTest.ID, workflow.LoadRunOptions{})
@@ -1273,12 +1232,12 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		run:      wrr,
 	}
 	testRegisterWorker(t, api, router, &ctx)
-	ctx.worker.ActionBuildID = wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
-	assert.NoError(t, worker.SetToBuilding(db, api.Cache, ctx.worker.ID, wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID, sdk.JobTypeWorkflowNode))
+	ctx.worker.JobRunID = &wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
+	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, *ctx.worker.JobRunID))
 
 	uri := router.GetRoute("POST", api.postWorkflowJobCoverageResultsHandler, vars)
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, request)
+	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, request)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)

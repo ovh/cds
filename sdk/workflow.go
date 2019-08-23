@@ -27,7 +27,7 @@ type Workflow struct {
 	ProjectID               int64                        `json:"project_id,omitempty" db:"project_id" cli:"-"`
 	ProjectKey              string                       `json:"project_key" db:"-" cli:"-"`
 	Groups                  []GroupPermission            `json:"groups,omitempty" db:"-" cli:"-"`
-	Permission              int                          `json:"permission,omitempty" db:"-" cli:"-"`
+	Permissions             Permissions                  `json:"permissions" db:"-" cli:"-"`
 	Metadata                Metadata                     `json:"metadata" yaml:"metadata" db:"-"`
 	Usage                   *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
 	HistoryLength           int64                        `json:"history_length" db:"history_length" cli:"-"`
@@ -56,6 +56,16 @@ type Workflow struct {
 	FromTemplate     string                    `json:"from_template,omitempty" db:"-" cli:"-"`
 	TemplateUpToDate bool                      `json:"template_up_to_date,omitempty" db:"-" cli:"-"`
 	URLs             URL                       `json:"urls" yaml:"-" db:"-" cli:"-"`
+}
+
+type Workflows []Workflow
+
+func (workflows Workflows) Names() []string {
+	var res = make([]string, len(workflows))
+	for i := range workflows {
+		res[i] = workflows[i].Name
+	}
+	return res
 }
 
 // AsCodeEvent represents all pending modifications on a workflow

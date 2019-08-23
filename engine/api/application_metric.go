@@ -24,7 +24,7 @@ func (api *API) getApplicationMetricHandler() service.Handler {
 			return sdk.WrapError(errA, "getApplicationMetricHandler> unable to load application")
 		}
 
-		result, err := metrics.GetMetrics(api.mustDB(), key, app.ID, metricName)
+		result, err := metrics.GetMetrics(ctx, api.mustDB(), key, app.ID, metricName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot get metrics")
 

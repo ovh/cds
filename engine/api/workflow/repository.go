@@ -41,29 +41,31 @@ type PushOption struct {
 }
 
 // CreateFromRepository a workflow from a repository
-func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, opts sdk.WorkflowRunPostHandlerOption, u *sdk.User, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
+func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow,
+	opts sdk.WorkflowRunPostHandlerOption, u sdk.Identifiable, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
 	ope, err := createOperationRequest(*w, opts)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to create operation request")
+		return nil, sdk.WrapError(err, "unable to create operation request")
 	}
 
-	// update user permission if  we come from hook
-	if opts.Hook != nil {
-		u.Groups = make([]sdk.Group, len(p.ProjectGroups))
+	// update user permission if we come from hook
+	// TODO groups should be in identifiable before calling this func
+	/*if opts.Hook != nil {
+		u.OldUserStruct.Groups = make([]sdk.Group, len(p.ProjectGroups))
 		for i, gp := range p.ProjectGroups {
-			u.Groups[i] = gp.Group
+			u.OldUserStruct.Groups[i] = gp.Group
 		}
-	}
+	}*/
 
 	if err := PostRepositoryOperation(ctx, db, *p, &ope, nil); err != nil {
-		return nil, sdk.WrapError(err, "Unable to post repository operation")
+		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 
 	if err := pollRepositoryOperation(ctx, db, store, &ope); err != nil {
-		return nil, sdk.WrapError(err, "Cannot analyse repository")
+		return nil, sdk.WrapError(err, "cannot analyse repository")
 	}
 
 	var uuid string
@@ -81,7 +83,8 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 	return extractWorkflow(ctx, db, store, p, w, ope, u, decryptFunc, uuid)
 }
 
-func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, ope sdk.Operation, u *sdk.User, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
+func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow,
+	ope sdk.Operation, ident sdk.Identifiable, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.extractWorkflow")
 	defer end()
 	var allMsgs []sdk.Message
@@ -89,7 +92,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	tr, err := ReadCDSFiles(ope.LoadFiles.Results)
 	if err != nil {
 		allMsgs = append(allMsgs, sdk.NewMessage(sdk.MsgWorkflowErrorBadCdsDir))
-		return allMsgs, sdk.WrapError(err, "Unable to read cds files")
+		return allMsgs, sdk.WrapError(err, "unable to read cds files")
 	}
 	ope.RepositoryStrategy.SSHKeyContent = ""
 	opt := &PushOption{
@@ -103,9 +106,9 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		OldWorkflow:        w,
 	}
 
-	allMsg, workflowPushed, errP := Push(ctx, db, store, p, tr, opt, u, decryptFunc)
+	allMsg, workflowPushed, errP := Push(ctx, db, store, p, tr, opt, ident, decryptFunc)
 	if errP != nil {
-		return allMsg, sdk.WrapError(errP, "extractWorkflow> Unable to get workflow from file")
+		return allMsg, sdk.WrapError(errP, "unable to get workflow from file")
 	}
 	*w = *workflowPushed
 
@@ -319,7 +322,7 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 
 // PostRepositoryOperation creates a new repository operation
 func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.Project, ope *sdk.Operation, multipartData *services.MultiPartData) error {
-	srvs, err := services.FindByType(db, services.TypeRepositories)
+	srvs, err := services.LoadAllByType(ctx, db, services.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to found repositories service")
 	}
@@ -339,12 +342,12 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 	}
 
 	if multipartData == nil {
-		if _, _, err := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/operations", ope, ope); err != nil {
+		if _, _, err := services.DoJSONRequest(ctx, db, srvs, http.MethodPost, "/operations", ope, ope); err != nil {
 			return sdk.WrapError(err, "Unable to perform operation")
 		}
 		return nil
 	}
-	if _, err := services.DoMultiPartRequest(ctx, srvs, http.MethodPost, "/operations", multipartData, ope, ope); err != nil {
+	if _, err := services.DoMultiPartRequest(ctx, db, srvs, http.MethodPost, "/operations", multipartData, ope, ope); err != nil {
 		return sdk.WrapError(err, "Unable to perform multipart operation")
 	}
 	return nil
@@ -352,12 +355,12 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 
 // GetRepositoryOperation get repository operation status
 func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, ope *sdk.Operation) error {
-	srvs, err := services.FindByType(db, services.TypeRepositories)
+	srvs, err := services.LoadAllByType(ctx, db, services.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to found repositories service")
 	}
 
-	if _, _, err := services.DoJSONRequest(ctx, srvs, http.MethodGet, "/operations/"+ope.UUID, nil, ope); err != nil {
+	if _, _, err := services.DoJSONRequest(ctx, db, srvs, http.MethodGet, "/operations/"+ope.UUID, nil, ope); err != nil {
 		return sdk.WrapError(err, "Unable to get operation")
 	}
 	return nil

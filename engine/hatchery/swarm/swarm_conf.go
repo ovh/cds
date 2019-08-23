@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	types "github.com/docker/docker/api/types"
 
 	"github.com/ovh/cds/engine/api/services"
@@ -12,6 +13,20 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
+
+func (s *HatcherySwarm) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(HatcheryConfiguration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid swarm hatchery configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
+}
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
@@ -25,18 +40,16 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	h.hatch = &sdk.Hatchery{
-		RatioService: &h.Config.RatioService,
-	}
-
-	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
-	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
 	h.HTTPURL = h.Config.URL
-	h.Token = h.Config.API.Token
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = "cds-hatchery-swarm"
+	var err error
+	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
+	if err != nil {
+		return fmt.Errorf("unable to parse RSA private Key: %v", err)
+	}
 
 	return nil
 }
@@ -44,29 +57,26 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcherySwarm) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
-	if h.IsInitialized() {
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
-		for dockerName, dockerClient := range h.dockerClients {
-			//Check images
-			status := sdk.MonitoringStatusOK
-			ctxList, cancelList := context.WithTimeout(context.Background(), 20*time.Second)
-			defer cancelList()
-			images, err := dockerClient.ImageList(ctxList, types.ImageListOptions{All: true})
-			if err != nil {
-				log.Warning("hatchery> swarm> %s> Status> Unable to list images on %s: %s", h.Name, dockerName, err)
-				status = sdk.MonitoringStatusAlert
-			}
-			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Images-" + dockerName, Value: fmt.Sprintf("%d", len(images)), Status: status})
-			//Check containers
-			status = sdk.MonitoringStatusOK
-			cs, err := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
-			if err != nil {
-				log.Warning("hatchery> swarm> %s> Status> Unable to list containers on %s: %s", h.Name, dockerName, err)
-				status = sdk.MonitoringStatusAlert
-			}
-			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Containers-" + dockerName, Value: fmt.Sprintf("%d", len(cs)), Status: status})
-
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	for dockerName, dockerClient := range h.dockerClients {
+		//Check images
+		status := sdk.MonitoringStatusOK
+		ctxList, cancelList := context.WithTimeout(context.Background(), 20*time.Second)
+		defer cancelList()
+		images, err := dockerClient.ImageList(ctxList, types.ImageListOptions{All: true})
+		if err != nil {
+			log.Warning("hatchery> swarm> %s> Status> Unable to list images on %s: %s", h.Name, dockerName, err)
+			status = sdk.MonitoringStatusAlert
 		}
+		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Images-" + dockerName, Value: fmt.Sprintf("%d", len(images)), Status: status})
+		//Check containers
+		status = sdk.MonitoringStatusOK
+		cs, err := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
+		if err != nil {
+			log.Warning("hatchery> swarm> %s> Status> Unable to list containers on %s: %s", h.Name, dockerName, err)
+			status = sdk.MonitoringStatusAlert
+		}
+		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Containers-" + dockerName, Value: fmt.Sprintf("%d", len(cs)), Status: status})
 	}
 
 	return m

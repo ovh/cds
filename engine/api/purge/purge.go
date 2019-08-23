@@ -88,7 +88,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 
 		proj, has := projects[r.ProjectID]
 		if !has {
-			p, err := project.LoadByID(db, store, r.ProjectID, nil)
+			p, err := project.LoadByID(db, store, r.ProjectID)
 			if err != nil {
 				log.Error("purge.Workflows> unable to load project %d: %v", r.ProjectID, err)
 				continue
@@ -97,7 +97,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 			proj = *p
 		}
 
-		w, err := workflow.LoadByID(db, store, &proj, r.ID, nil, workflow.LoadOptions{})
+		w, err := workflow.LoadByID(ctx, db, store, &proj, r.ID, workflow.LoadOptions{})
 		if err != nil {
 			log.Warning("unable to load workflow %d due to error %v, we try to delete it", r.ID, err)
 			if _, err := db.Exec("delete from w_node_trigger where child_node_id IN (SELECT id from w_node where workflow_id = $1)", r.ID); err != nil {

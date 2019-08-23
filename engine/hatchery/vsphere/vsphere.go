@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
+	"github.com/ovh/cds/engine/service"
+
 	"github.com/gorilla/mux"
 	"github.com/vmware/govmomi/vim25/types"
 
@@ -27,6 +30,20 @@ func New() *HatcheryVSphere {
 	return s
 }
 
+func (s *HatcheryVSphere) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(HatcheryConfiguration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid vsphere hatchery configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
+}
+
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
@@ -39,15 +56,16 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	h.hatch = &sdk.Hatchery{}
-	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
-	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
 	h.HTTPURL = h.Config.URL
-	h.Token = h.Config.API.Token
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = "cds-hatchery-vsphere"
+	var err error
+	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
+	if err != nil {
+		return fmt.Errorf("unable to parse RSA private Key: %v", err)
+	}
 
 	return nil
 }
@@ -55,10 +73,7 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryVSphere) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
-
-	if h.IsInitialized() {
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
-	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 
@@ -117,8 +132,8 @@ func (h *HatcheryVSphere) Serve(ctx context.Context) error {
 }
 
 //Configuration returns Hatchery CommonConfiguration
-func (h *HatcheryVSphere) Configuration() hatchery.CommonConfiguration {
-	return h.Config.CommonConfiguration
+func (h *HatcheryVSphere) Configuration() service.HatcheryCommonConfiguration {
+	return h.Config.HatcheryCommonConfiguration
 }
 
 // NeedRegistration return true if worker model need regsitration
@@ -168,27 +183,9 @@ func (h *HatcheryVSphere) WorkersStarted() []string {
 	return res
 }
 
-//Hatchery returns hatchery instance
-func (h *HatcheryVSphere) Hatchery() *sdk.Hatchery {
-	return h.hatch
-}
-
 // ModelType returns type of hatchery
 func (*HatcheryVSphere) ModelType() string {
 	return sdk.VSphere
-}
-
-// ID returns hatchery id
-func (h *HatcheryVSphere) ID() int64 {
-	if h.CDSClient().GetService() == nil {
-		return 0
-	}
-	return h.CDSClient().GetService().ID
-}
-
-//Service returns service instance
-func (h *HatcheryVSphere) Service() *sdk.Service {
-	return h.CDSClient().GetService()
 }
 
 func (h *HatcheryVSphere) main() {

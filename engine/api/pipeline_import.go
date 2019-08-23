@@ -10,7 +10,6 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
@@ -51,7 +50,6 @@ func (api *API) postPipelinePreviewHandler() service.Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "Unable to parse pipeline")
 		}
-		pip.Permission = permission.PermissionReadWriteExecute
 
 		return service.WriteJSON(w, pip, http.StatusOK)
 	}
@@ -65,7 +63,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		forceUpdate := FormBool(r, "forceUpdate")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key,
 			project.LoadOptions.Default,
 			project.LoadOptions.WithGroups,
 		)
@@ -88,9 +86,9 @@ func (api *API) importPipelineHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		_, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, proj, payload, deprecatedGetUser(ctx),
+		_, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, proj, payload, getAPIConsumer(ctx),
 			pipeline.ImportOptions{Force: forceUpdate})
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
@@ -119,7 +117,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		format := r.FormValue("format")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key,
 			project.LoadOptions.Default,
 			project.LoadOptions.WithGroups,
 		)
@@ -151,7 +149,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 			_ = tx.Rollback()
 		}()
 
-		_, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, proj, payload, deprecatedGetUser(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
+		_, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, proj, payload, getAPIConsumer(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
 			return sdk.WrapError(sdk.NewError(sdk.ErrInvalidPipeline, globalError), "unable to parse and import pipeline")

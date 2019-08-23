@@ -9,21 +9,21 @@ import (
 
 func TestComputeRunStatus(t *testing.T) {
 	runStatus := &statusCounter{}
-	computeRunStatus(sdk.StatusSuccess.String(), runStatus)
+	computeRunStatus(sdk.StatusSuccess, runStatus)
 
 	assert.Equal(t, 1, runStatus.success)
 	assert.Equal(t, 0, runStatus.building)
 	assert.Equal(t, 0, runStatus.failed)
 	assert.Equal(t, 0, runStatus.stoppped)
 
-	computeRunStatus(sdk.StatusBuilding.String(), runStatus)
+	computeRunStatus(sdk.StatusBuilding, runStatus)
 
 	assert.Equal(t, 1, runStatus.success)
 	assert.Equal(t, 1, runStatus.building)
 	assert.Equal(t, 0, runStatus.failed)
 	assert.Equal(t, 0, runStatus.stoppped)
 
-	computeRunStatus(sdk.StatusWaiting.String(), runStatus)
+	computeRunStatus(sdk.StatusWaiting, runStatus)
 
 	assert.Equal(t, 1, runStatus.success)
 	assert.Equal(t, 2, runStatus.building)
@@ -36,18 +36,18 @@ func TestGetWorkflowRunStatus(t *testing.T) {
 		runStatus statusCounter
 		status    string
 	}{
-		{runStatus: statusCounter{success: 1, building: 0, failed: 0, stoppped: 0}, status: sdk.StatusSuccess.String()},
-		{runStatus: statusCounter{success: 1, building: 1, failed: 0, stoppped: 0}, status: sdk.StatusBuilding.String()},
-		{runStatus: statusCounter{success: 1, building: 1, failed: 1, stoppped: 0}, status: sdk.StatusBuilding.String()},
-		{runStatus: statusCounter{success: 1, building: 0, failed: 1, stoppped: 1}, status: sdk.StatusFail.String()},
-		{runStatus: statusCounter{success: 1, building: 0, failed: 0, stoppped: 1}, status: sdk.StatusStopped.String()},
-		{runStatus: statusCounter{success: 1, building: 1, failed: 1, stoppped: 1}, status: sdk.StatusBuilding.String()},
-		{runStatus: statusCounter{success: 1, building: 1, failed: 1, stoppped: 1, skipped: 1}, status: sdk.StatusBuilding.String()},
-		{runStatus: statusCounter{success: 0, building: 0, failed: 1, stoppped: 0, skipped: 1}, status: sdk.StatusFail.String()},
-		{runStatus: statusCounter{success: 0, building: 0, failed: 0, stoppped: 0, skipped: 1}, status: sdk.StatusSkipped.String()},
-		{runStatus: statusCounter{success: 0, building: 0, failed: 0, stoppped: 0, skipped: 1, disabled: 1}, status: sdk.StatusSkipped.String()},
-		{runStatus: statusCounter{success: 0, building: 0, failed: 0, stoppped: 0, skipped: 0, disabled: 1}, status: sdk.StatusDisabled.String()},
-		{status: sdk.StatusNeverBuilt.String()},
+		{runStatus: statusCounter{success: 1, building: 0, failed: 0, stoppped: 0}, status: sdk.StatusSuccess},
+		{runStatus: statusCounter{success: 1, building: 1, failed: 0, stoppped: 0}, status: sdk.StatusBuilding},
+		{runStatus: statusCounter{success: 1, building: 1, failed: 1, stoppped: 0}, status: sdk.StatusBuilding},
+		{runStatus: statusCounter{success: 1, building: 0, failed: 1, stoppped: 1}, status: sdk.StatusFail},
+		{runStatus: statusCounter{success: 1, building: 0, failed: 0, stoppped: 1}, status: sdk.StatusStopped},
+		{runStatus: statusCounter{success: 1, building: 1, failed: 1, stoppped: 1}, status: sdk.StatusBuilding},
+		{runStatus: statusCounter{success: 1, building: 1, failed: 1, stoppped: 1, skipped: 1}, status: sdk.StatusBuilding},
+		{runStatus: statusCounter{success: 0, building: 0, failed: 1, stoppped: 0, skipped: 1}, status: sdk.StatusFail},
+		{runStatus: statusCounter{success: 0, building: 0, failed: 0, stoppped: 0, skipped: 1}, status: sdk.StatusSkipped},
+		{runStatus: statusCounter{success: 0, building: 0, failed: 0, stoppped: 0, skipped: 1, disabled: 1}, status: sdk.StatusSkipped},
+		{runStatus: statusCounter{success: 0, building: 0, failed: 0, stoppped: 0, skipped: 0, disabled: 1}, status: sdk.StatusDisabled},
+		{status: sdk.StatusNeverBuilt},
 	}
 
 	for _, tc := range testCases {

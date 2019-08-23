@@ -8,7 +8,7 @@ import {
     ViewChild
 } from '@angular/core';
 import { Group } from 'app/model/group.model';
-import { User } from 'app/model/user.model';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { ModelPattern, WorkerModel } from 'app/model/worker-model.model';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
@@ -38,7 +38,7 @@ export class WorkerModelFormComponent implements OnInit {
         }
     }
     get workerModel(): WorkerModel { return this._workerModel; }
-    @Input() currentUser: User;
+    @Input() currentUser: AuthentifiedUser;
     @Input() loading: boolean;
     @Input() types: Array<string>;
     @Input() communications: Array<string>;

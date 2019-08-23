@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ovh/cds/sdk/cdsclient"
+
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
@@ -13,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -46,6 +47,20 @@ func New() service.Service {
 	return &dbmigservice{}
 }
 
+func (s *dbmigservice) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(Configuration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid migrate service configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
+}
+
 func (s *dbmigservice) CheckConfiguration(cfg interface{}) error {
 	_, ok := cfg.(Configuration)
 	if !ok {
@@ -63,12 +78,9 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 
 	s.cfg = dbCfg
 	log.Debug("%+v", s.cfg)
-
-	s.Client = cdsclient.NewService(s.cfg.API.HTTP.URL, 60*time.Second, s.cfg.API.HTTP.Insecure)
-	s.API = s.cfg.API.HTTP.URL
 	s.Name = s.cfg.Name
 	s.HTTPURL = s.cfg.URL
-	s.Token = s.cfg.API.Token
+
 	s.Type = services.TypeDBMigrate
 	s.ServiceName = "cds-migrate"
 	s.MaxHeartbeatFailures = s.cfg.API.MaxHeartbeatFailures
@@ -175,8 +187,9 @@ func (s *dbmigservice) initRouter(ctx context.Context) {
 	log.Debug("DBMigrate> Router initialized")
 	r := s.Router
 	r.SetHeaderFunc = api.DefaultHeaders
+	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey))
 
-	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle("/mon/status", r.GET(s.statusHandler, api.Auth(false)))
-	r.Handle("/", r.GET(s.getMigrationHandler, api.Auth(false)))
+	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
+	r.Handle("/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
+	r.Handle("/", nil, r.GET(s.getMigrationHandler, api.Auth(false)))
 }

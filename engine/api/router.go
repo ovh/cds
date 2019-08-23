@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"runtime"
 	"runtime/pprof"
 	"strings"
@@ -20,7 +21,6 @@ import (
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -33,8 +33,8 @@ const nbPanicsBeforeFail = 50
 
 // Router is a wrapper around mux.Router
 type Router struct {
-	Background             context.Context
-	AuthDriver             auth.Driver
+	Background context.Context
+	//	AuthDriver             auth.Driver
 	Mux                    *mux.Router
 	SetHeaderFunc          func() map[string]string
 	Prefix                 string
@@ -54,35 +54,28 @@ type Router struct {
 	}
 }
 
-// NewHandlerConfig returns a new HandlerConfig pointer
-func NewHandlerConfig() *service.HandlerConfig {
-	return &service.HandlerConfig{
-		Options: map[string]string{},
-	}
-}
-
-func newRouter(a auth.Driver, m *mux.Router, p string) *Router {
-	r := &Router{
-		AuthDriver:             a,
-		Mux:                    m,
-		Prefix:                 p,
-		URL:                    "",
-		mapRouterConfigs:       map[string]*service.RouterConfig{},
-		mapAsynchronousHandler: map[string]service.HandlerFunc{},
-		Background:             context.Background(),
-	}
-	return r
-}
-
 // HandlerConfigParam is a type used in handler configuration, to set specific config on a route given a method
 type HandlerConfigParam func(*service.HandlerConfig)
 
 // HandlerConfigFunc is a type used in the router configuration fonction "Handle"
 type HandlerConfigFunc func(service.Handler, ...HandlerConfigParam) *service.HandlerConfig
 
-func (r *Router) pprofLabel(fn http.HandlerFunc) http.HandlerFunc {
+func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		labels := pprof.Labels("http-path", r.URL.Path)
+		var name = sdk.RandomString(12)
+		rc := config[r.Method]
+		if rc != nil && rc.Handler != nil {
+			name = runtime.FuncForPC(reflect.ValueOf(rc.Handler).Pointer()).Name()
+			name = strings.Replace(name, ".func1", "", 1)
+		}
+		log.Debug("handler name= %s", name)
+		id := fmt.Sprintf("%d", sdk.GoroutineID())
+
+		labels := pprof.Labels(
+			"http-path", r.URL.Path,
+			"goroutine-id", id,
+			"goroutine-name", name+"-"+id,
+		)
 		ctx := pprof.WithLabels(r.Context(), labels)
 		pprof.SetGoroutineLabels(ctx)
 		r = r.WithContext(ctx)
@@ -177,7 +170,7 @@ func DefaultHeaders() map[string]string {
 }
 
 // Handle adds all handler for their specific verb in gorilla router for given uri
-func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
+func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) {
 	uri = r.Prefix + uri
 	cfg := &service.RouterConfig{
 		Config: map[string]*service.HandlerConfig{},
@@ -188,11 +181,18 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 	r.mapRouterConfigs[uri] = cfg
 
 	for i := range handlers {
+		handlers[i].AllowedScopes = scope
 		cfg.Config[handlers[i].Method] = handlers[i]
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
+
+		dateRFC5322 := req.Header.Get("Date")
+		dateReq, err := sdk.ParseDateRFC5322(dateRFC5322)
+		if err == nil {
+			ctx = context.WithValue(ctx, contextDate, dateReq)
+		}
 
 		// Close indicates  to close the connection after replying to this request
 		req.Close = true
@@ -263,7 +263,7 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 	}
 
 	// The chain is http -> mux -> f -> recover -> wrap -> pprof -> opencensus -> http
-	r.Mux.Handle(uri, r.pprofLabel(r.compress(r.recoverWrap(f))))
+	r.Mux.Handle(uri, r.pprofLabel(cfg.Config, r.compress(r.recoverWrap(f))))
 }
 
 type asynchronousRequest struct {
@@ -322,12 +322,13 @@ func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequ
 // Asynchronous handles an AsynchronousHandlerFunc
 func (r *Router) Asynchronous(handler service.AsynchronousHandlerFunc, retry int) service.HandlerFunc {
 	chanRequest := make(chan asynchronousRequest, 1000)
-	go processAsyncRequests(r.Background, chanRequest, handler, retry)
-
+	sdk.GoRoutine(r.Background, "", func(ctx context.Context) {
+		processAsyncRequests(ctx, chanRequest, handler, retry)
+	})
 	return func() service.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			async := asynchronousRequest{
-				contextValues: auth.ContextValues(ctx),
+				contextValues: ContextValues(ctx),
 				request:       *r,
 				vars:          mux.Vars(r),
 			}
@@ -343,89 +344,78 @@ func (r *Router) Asynchronous(handler service.AsynchronousHandlerFunc, retry int
 
 // DEPRECATED marks the handler as deprecated
 var DEPRECATED = func(rc *service.HandlerConfig) {
-	rc.Options["isDeprecated"] = "true"
+	rc.IsDeprecated = true
 }
 
 // GET will set given handler only for GET request
 func (r *Router) GET(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
-	rc := NewHandlerConfig()
+	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.Options["auth"] = "true"
+	rc.NeedAuth = true
 	rc.Method = "GET"
-	rc.Options["allowServices"] = "false"
-	rc.Options["allowProvider"] = "false"
-
+	rc.PermissionLevel = sdk.PermissionRead
 	for _, c := range cfg {
-		c(rc)
+		c(&rc)
 	}
-	return rc
+	return &rc
 }
 
 // POST will set given handler only for POST request
 func (r *Router) POST(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
-	rc := NewHandlerConfig()
+	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.Options["auth"] = "true"
-	rc.Options["allowServices"] = "false"
-	rc.Options["allowProvider"] = "false"
-
+	rc.NeedAuth = true
 	rc.Method = "POST"
+	rc.PermissionLevel = sdk.PermissionReadWriteExecute
 	for _, c := range cfg {
-		c(rc)
+		c(&rc)
 	}
-	return rc
+	return &rc
 }
 
 // POSTEXECUTE will set given handler only for POST request and add a flag for execution permission
 func (r *Router) POSTEXECUTE(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
-	rc := NewHandlerConfig()
+	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.Options["auth"] = "true"
-	rc.Options["allowServices"] = "false"
+	rc.NeedAuth = true
 	rc.Method = "POST"
-	rc.Options["isExecution"] = "true"
-	rc.Options["allowProvider"] = "false"
-
+	rc.PermissionLevel = sdk.PermissionReadExecute
 	for _, c := range cfg {
-		c(rc)
+		c(&rc)
 	}
-	return rc
+	return &rc
 }
 
 // PUT will set given handler only for PUT request
 func (r *Router) PUT(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
-	rc := NewHandlerConfig()
+	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.Options["allowServices"] = "false"
-	rc.Options["auth"] = "true"
-	rc.Options["allowProvider"] = "false"
-
+	rc.NeedAuth = true
 	rc.Method = "PUT"
+	rc.PermissionLevel = sdk.PermissionReadWriteExecute
 	for _, c := range cfg {
-		c(rc)
+		c(&rc)
 	}
-	return rc
+	return &rc
 }
 
 // DELETE will set given handler only for DELETE request
 func (r *Router) DELETE(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
-	rc := NewHandlerConfig()
+	var rc service.HandlerConfig
 	rc.Handler = h()
-	rc.Options["allowServices"] = "false"
-	rc.Options["auth"] = "true"
-	rc.Options["allowProvider"] = "false"
-
+	rc.NeedAuth = true
 	rc.Method = "DELETE"
+	rc.PermissionLevel = sdk.PermissionReadWriteExecute
 	for _, c := range cfg {
-		c(rc)
+		c(&rc)
 	}
-	return rc
+	return &rc
 }
 
 // NeedAdmin set the route for cds admin only (or not)
 func NeedAdmin(admin bool) HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
-		rc.Options["needAdmin"] = fmt.Sprintf("%v", admin)
+		rc.NeedAdmin = admin
 	}
 	return f
 }
@@ -433,7 +423,7 @@ func NeedAdmin(admin bool) HandlerConfigParam {
 // AllowProvider set the route for external providers
 func AllowProvider(need bool) HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
-		rc.Options["allowProvider"] = fmt.Sprintf("%v", need)
+		rc.AllowProvider = need
 	}
 	return f
 }
@@ -441,47 +431,7 @@ func AllowProvider(need bool) HandlerConfigParam {
 // NeedToken set the route for requests that have the given header
 func NeedToken(k, v string) HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
-		rc.Options["token"] = fmt.Sprintf("%s:%s", k, v)
-	}
-	return f
-}
-
-// NeedUsernameOrAdmin set the route for cds admin or current user = username called on route
-func NeedUsernameOrAdmin(need bool) HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.Options["needUsernameOrAdmin"] = fmt.Sprintf("%v", need)
-	}
-	return f
-}
-
-// NeedHatchery set the route for hatchery only
-func NeedHatchery() HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.Options["needHatchery"] = "true"
-	}
-	return f
-}
-
-// NeedService set the route for hatchery only
-func NeedService() HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.Options["needService"] = "true"
-	}
-	return f
-}
-
-// NeedWorker set the route for worker only
-func NeedWorker() HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.Options["needWorker"] = "true"
-	}
-	return f
-}
-
-// AllowServices allows CDS service to use this route
-func AllowServices(s bool) HandlerConfigParam {
-	f := func(rc *service.HandlerConfig) {
-		rc.Options["allowServices"] = fmt.Sprintf("%v", s)
+		rc.AllowedTokens = append(rc.AllowedTokens, fmt.Sprintf("%s:%s", k, v))
 	}
 	return f
 }
@@ -490,7 +440,7 @@ func AllowServices(s bool) HandlerConfigParam {
 // Authorization is enabled by default
 func Auth(v bool) HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
-		rc.Options["auth"] = fmt.Sprintf("%v", v)
+		rc.NeedAuth = v
 	}
 	return f
 }
@@ -498,7 +448,7 @@ func Auth(v bool) HandlerConfigParam {
 // MaintenanceAware route need CDS maintenance off
 func MaintenanceAware() HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
-		rc.Options["maintenance_aware"] = "true"
+		rc.MaintenanceAware = true
 	}
 	return f
 }
@@ -506,7 +456,7 @@ func MaintenanceAware() HandlerConfigParam {
 // EnableTracing on a route
 func EnableTracing() HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
-		rc.Options["trace_enable"] = "true"
+		rc.EnableTracing = true
 	}
 	return f
 }
@@ -541,7 +491,7 @@ func (r *Router) InitMetrics(service, name string) error {
 	tagCDSInstance, _ := tag.NewKey("cds")
 	tags := []tag.Key{tagCDSInstance}
 
-	log.Info("api> Stats initialized")
+	log.Info("Stats initialized")
 
 	return observability.RegisterView(
 		observability.NewViewCount("router_errors", r.Stats.Errors, tags),

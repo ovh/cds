@@ -18,7 +18,7 @@ func (api *API) getParametersInPipelineHandler() service.Handler {
 		key := vars[permProjectKey]
 		pipelineName := vars["pipelineKey"]
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "getParametersInPipelineHandler: Cannot load %s", pipelineName)
 		}
@@ -39,7 +39,7 @@ func (api *API) deleteParameterFromPipelineHandler() service.Handler {
 		pipelineName := vars["pipelineKey"]
 		paramName := vars["name"]
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot load %s", pipelineName)
 		}
@@ -51,7 +51,7 @@ func (api *API) deleteParameterFromPipelineHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		if err := pipeline.DeleteParameterFromPipeline(tx, p.ID, paramName); err != nil {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot delete %s", paramName)
@@ -61,7 +61,7 @@ func (api *API) deleteParameterFromPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot commit transaction")
 		}
 
-		event.PublishPipelineParameterDelete(key, pipelineName, sdk.Parameter{Name: paramName}, deprecatedGetUser(ctx))
+		event.PublishPipelineParameterDelete(key, pipelineName, sdk.Parameter{Name: paramName}, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -79,7 +79,7 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 			return err
 		}
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load %s", pipelineName)
 		}
@@ -87,7 +87,7 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		oldParam := sdk.ParameterFind(&p.Parameter, paramName)
+		oldParam := sdk.ParameterFind(p.Parameter, paramName)
 
 		if oldParam == nil {
 			return sdk.WrapError(sdk.ErrParameterNotExists, "updateParameterInPipelineHandler> unable to find parameter %s", paramName)
@@ -97,7 +97,7 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		if err := pipeline.UpdateParameterInPipeline(tx, p.ID, paramName, newParam); err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot update parameter %s in pipeline %s", paramName, pipelineName)
@@ -107,7 +107,7 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot commit transaction")
 		}
 
-		event.PublishPipelineParameterUpdate(key, pipelineName, *oldParam, newParam, deprecatedGetUser(ctx))
+		event.PublishPipelineParameterUpdate(key, pipelineName, *oldParam, newParam, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, newParam, http.StatusOK)
 	}
@@ -128,7 +128,7 @@ func (api *API) addParameterInPipelineHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "addParameterInPipelineHandler> Wrong param name got %s instead of %s", newParam.Name, paramName)
 		}
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot load %s", pipelineName)
 		}
@@ -148,7 +148,7 @@ func (api *API) addParameterInPipelineHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		if !paramInProject {
 			if err := pipeline.InsertParameterInPipeline(tx, p.ID, &newParam); err != nil {
@@ -160,7 +160,7 @@ func (api *API) addParameterInPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot commit transaction")
 		}
 
-		event.PublishPipelineParameterAdd(key, pipelineName, newParam, deprecatedGetUser(ctx))
+		event.PublishPipelineParameterAdd(key, pipelineName, newParam, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, newParam, http.StatusOK)
 	}

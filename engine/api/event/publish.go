@@ -26,7 +26,7 @@ func publishEvent(e sdk.Event) {
 	// the StatusWaiting is not useful to be sent on repomanager.
 	// the building status (or success / failed) is already sent just after
 	if e.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
-		if e.Payload["Status"] == sdk.StatusWaiting.String() {
+		if e.Payload["Status"] == sdk.StatusWaiting {
 			toSkipSendReposManager = true
 		}
 	}
@@ -44,7 +44,7 @@ func publishEvent(e sdk.Event) {
 
 // Publish sends a event to a queue
 //func Publish(event sdk.Event, eventType string) {
-func Publish(payload interface{}, u *sdk.User) {
+func Publish(payload interface{}, u sdk.Identifiable) {
 	p := structs.Map(payload)
 	var projectKey, applicationName, pipelineName, environmentName, workflowName string
 	if v, ok := p["ProjectKey"]; ok {
@@ -76,8 +76,8 @@ func Publish(payload interface{}, u *sdk.User) {
 		WorkflowName:    workflowName,
 	}
 	if u != nil {
-		event.Username = u.Username
-		event.UserMail = u.Email
+		event.Username = u.GetUsername()
+		event.UserMail = u.GetEmail()
 	}
 	publishEvent(event)
 }

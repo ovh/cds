@@ -6,14 +6,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ovh/cds/engine/api/group"
+
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -35,28 +34,82 @@ func (api *API) getExternalServiceHandler() service.Handler {
 
 func (api *API) postServiceRegisterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		srv := &sdk.Service{}
-		if err := service.UnmarshalBody(r, srv); err != nil {
+		var srv sdk.Service
+		if err := service.UnmarshalBody(r, &srv); err != nil {
 			return sdk.WithStack(err)
-		}
-
-		// Load token
-		t, errL := token.LoadToken(api.mustDB(), srv.Token)
-		if errL != nil {
-			return sdk.NewError(sdk.ErrUnauthorized, sdk.WrapError(errL, "Cannot register service"))
 		}
 
 		//Service must be with a sharedinfra group token
 		// except for hatchery: users can start hatchery with their group
-		if t.GroupID != group.SharedInfraGroup.ID && srv.Type != services.TypeHatchery {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Cannot register service for group %d with service %s", t.GroupID, srv.Type)
+		if !isGroupMember(ctx, group.SharedInfraGroup) && srv.Type != services.TypeHatchery {
+			return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", getAPIConsumer(ctx).ID, srv.Type)
 		}
 
-		srv.GroupID = &t.GroupID
-		srv.IsSharedInfra = srv.GroupID == &group.SharedInfraGroup.ID
+		// For hatcheries, the user who created the used token must be admin of all groups in the token
+		if srv.Type == services.TypeHatchery && !isAdmin(ctx) {
+			links, err := group.LoadLinksGroupUserForUserIDs(ctx, api.mustDB(), []int64{getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID})
+			if err != nil {
+				return err
+			}
+			groupsAdminIDs := links.ToGroupIDs()
+			for _, gID := range getAPIConsumer(ctx).GetGroupIDs() {
+				if !sdk.IsInInt64Array(gID, groupsAdminIDs) {
+					return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", getAPIConsumer(ctx).ID, srv.Type)
+				}
+			}
+		}
+
 		srv.Uptodate = srv.Version == sdk.VERSION
-		for i := range srv.MonitoringStatus.Lines {
-			s := &srv.MonitoringStatus.Lines[i]
+		srv.ConsumerID = &getAPIConsumer(ctx).ID
+		srv.LastHeartbeat = time.Now()
+
+		//Insert or update the service
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "Cannot start transaction")
+		}
+		defer tx.Rollback() // nolint
+
+		//Try to find the service, and keep; else generate a new one
+		oldSrv, errOldSrv := services.LoadByName(ctx, tx, srv.Name)
+		if oldSrv != nil {
+			srv.ID = oldSrv.ID
+			if err := services.Update(tx, &srv); err != nil {
+				return sdk.WithStack(err)
+			}
+			log.Debug("postServiceRegisterHandler> service %s(%d) registered for consumer %v", srv.Name, srv.ID, *srv.ConsumerID)
+		} else if !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
+			log.Error("postServiceRegisterHandler> unable to find service by name %s: %v", srv.Name, errOldSrv)
+			return sdk.WithStack(errOldSrv)
+		} else {
+			srv.Maintainer = *getAPIConsumer(ctx).AuthentifiedUser
+			if err := services.Insert(tx, &srv); err != nil {
+				return sdk.WithStack(err)
+			}
+			log.Debug("postServiceRegisterHandler> new service %s(%d) registered for consumer %v", srv.Name, srv.ID, *srv.ConsumerID)
+		}
+
+		if len(srv.PublicKey) > 0 {
+			log.Debug("postServiceRegisterHandler> service %s registered with public key: %s", srv.Name, string(srv.PublicKey))
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		return service.WriteJSON(w, srv, http.StatusOK)
+	}
+}
+
+func (api *API) postServiceHearbeatHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var mon sdk.MonitoringStatus
+		if err := service.UnmarshalBody(r, &mon); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		for i := range mon.Lines {
+			s := &mon.Lines[i]
 			if s.Component == "Version" {
 				if sdk.VERSION != s.Value {
 					s.Status = sdk.MonitoringStatusWarn
@@ -67,76 +120,52 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			}
 		}
 
-		//Insert or update the service
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
-		//Try to find the service, and keep; else generate a new one
-		oldSrv, errOldSrv := services.FindByName(tx, srv.Name)
-		if oldSrv != nil {
-			srv.Hash = oldSrv.Hash
-			srv.ID = oldSrv.ID
-		} else if sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
-			//Generate a hash
-			hash, errsession := sessionstore.NewSessionKey()
-			if errsession != nil {
-				return sdk.WrapError(errsession, "Unable to create session")
-			}
-			srv.Hash = string(hash)
-		} else {
-			return sdk.WithStack(errOldSrv)
+		srv, ok := api.isService(ctx)
+		if !ok {
+			return sdk.ErrForbidden
 		}
 
 		srv.LastHeartbeat = time.Now()
-		srv.Token = ""
+		srv.MonitoringStatus = mon
 
-		if oldSrv != nil {
-			if err := services.Update(tx, srv); err != nil {
-				return sdk.WrapError(err, "Unable to update service %s", srv.Name)
-			}
-		} else {
-			if err := services.Insert(tx, srv); err != nil {
-				return sdk.WrapError(err, "Unable to insert service %s", srv.Name)
-			}
+		if err := services.Update(tx, srv); err != nil {
+			return err
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WithStack(err)
 		}
 
-		return service.WriteJSON(w, srv, http.StatusOK)
+		return nil
 	}
 }
 
-func (api *API) serviceAPIHeartbeat(c context.Context) {
+func (api *API) serviceAPIHeartbeat(ctx context.Context) {
 	tick := time.NewTicker(30 * time.Second).C
 
-	hash, errsession := sessionstore.NewSessionKey()
-	if errsession != nil {
-		log.Error("serviceAPIHeartbeat> Unable to create session:%v", errsession)
-		return
-	}
-
 	// first call
-	api.serviceAPIHeartbeatUpdate(c, api.mustDB(), hash)
+	api.serviceAPIHeartbeatUpdate(ctx, api.mustDB())
 
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("Exiting serviceAPIHeartbeat: %v", c.Err())
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error("Exiting serviceAPIHeartbeat: %v", ctx.Err())
 				return
 			}
 		case <-tick:
-			api.serviceAPIHeartbeatUpdate(c, api.mustDB(), hash)
+			api.serviceAPIHeartbeatUpdate(ctx, api.mustDB())
 		}
 	}
 }
 
-func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, hash sessionstore.SessionKey) {
+func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 	tx, err := db.Begin()
 	if err != nil {
 		log.Error("serviceAPIHeartbeat> error on repo.Begin:%v", err)
@@ -149,19 +178,17 @@ func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, has
 	json.Unmarshal(b, &srvConfig) // nolint
 
 	srv := &sdk.Service{
-		Name:             event.GetCDSName(),
+		CanonicalService: sdk.CanonicalService{
+			Name:   event.GetCDSName(),
+			Type:   services.TypeAPI,
+			Config: srvConfig,
+		},
 		MonitoringStatus: api.Status(),
-		Hash:             string(hash),
 		LastHeartbeat:    time.Now(),
-		Type:             services.TypeAPI,
-		Config:           srvConfig,
-	}
-	if group.SharedInfraGroup != nil {
-		srv.GroupID = &group.SharedInfraGroup.ID
 	}
 
 	//Try to find the service, and keep; else generate a new one
-	oldSrv, errOldSrv := services.FindByName(tx, srv.Name)
+	oldSrv, errOldSrv := services.LoadByName(ctx, tx, srv.Name)
 	if errOldSrv != nil && !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
 		log.Error("serviceAPIHeartbeat> Unable to find by name:%v", errOldSrv)
 		return

@@ -3,16 +3,23 @@ package vcs
 import (
 	"bytes"
 	"context"
+	"crypto/rsa"
 	"encoding/json"
 	"net/http"
+	"sync"
 	"testing"
+
+	"github.com/ovh/cds/sdk/cdsclient"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -26,6 +33,8 @@ func init() {
 }
 
 func newTestService(t *testing.T) (*Service, error) {
+	fakeAPIPrivateKey.Lock()
+	defer fakeAPIPrivateKey.Unlock()
 	//Read the test config file
 	if RedisHost == "" {
 		cfg := test.LoadTestingConf(t)
@@ -46,7 +55,12 @@ func newTestService(t *testing.T) (*Service, error) {
 		Prefix:     "/" + test.GetTestName(t),
 		Background: ctx,
 	}
+
 	service := new(Service)
+	if fakeAPIPrivateKey.key == nil {
+		fakeAPIPrivateKey.key, _ = jws.NewRandomRSAKey()
+	}
+	service.ParsedAPIPublicKey = &fakeAPIPrivateKey.key.PublicKey
 	service.Router = r
 	service.initRouter(ctx)
 	service.Cfg = cfg
@@ -62,7 +76,10 @@ func newTestService(t *testing.T) (*Service, error) {
 	return service, nil
 }
 
-func newRequest(t *testing.T, s *Service, method, uri string, i interface{}) *http.Request {
+func newRequest(t *testing.T, s *Service, method, uri string, i interface{}, opts ...cdsclient.RequestModifier) *http.Request {
+	fakeAPIPrivateKey.Lock()
+	defer fakeAPIPrivateKey.Unlock()
+
 	t.Logf("Request: %s %s", method, uri)
 	var btes []byte
 	var err error
@@ -78,7 +95,17 @@ func newRequest(t *testing.T, s *Service, method, uri string, i interface{}) *ht
 		t.FailNow()
 	}
 
-	assets.AuthentifyRequestFromService(t, req, s.Hash)
+	for _, opt := range opts {
+		opt(req)
+	}
+
+	HTTPSigner := httpsig.NewRSASHA256Signer("test", fakeAPIPrivateKey.key, []string{"(request-target)", "host", "date"})
+	require.NoError(t, HTTPSigner.Sign(req))
 
 	return req
 }
+
+var fakeAPIPrivateKey = struct {
+	sync.Mutex
+	key *rsa.PrivateKey
+}{}

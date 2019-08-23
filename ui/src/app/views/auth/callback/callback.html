@@ -1,0 +1,62 @@
+<div class="ui centered grid callback">
+    <div class="row">
+        <div class="column">
+            <div *ngIf="loading;then load;else loaded"></div>
+            <ng-template #load>
+                <div class="loading">
+                    <div class="ui active small inline loader"></div>
+                    <div>{{ 'common_loading' | translate }}</div>
+                </div>
+            </ng-template>
+            <ng-template #loaded>
+                <div *ngIf="showCTL" class="ui bottom attached segment">
+                    <div class="ui info message">
+                        <p>{{ 'auth_message_copy' | translate }}</p>
+                    </div>
+                    <form class="ui form">
+                        <div class="field">
+                            <label>Token</label>
+                            <div class="ui fluid action input">
+                                <input type="text" value="{{state + ':' + code}}" [readonly]="true">
+                                <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
+                                    ngxClipboard [cbContent]="state + ':' + code" (click)="confirmCopy()">
+                                    <i class="copy icon"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div *ngIf="showInitTokenForm" class="ui bottom attached segment">
+                    <div class="ui info message">
+                        <p>{{ 'auth_message_init_token' | translate }}</p>
+                    </div>
+                    <form class="ui form" (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
+                        <div class="field">
+                            <label>{{ 'account_signup_init_token' | translate }}</label>
+                            <input type="password" name="init_token" ngModel required>
+                        </div>
+                        <div class="field right aligned">
+                            <button class="ui green button"
+                                type="submit">{{ 'account_login_btn_connect' | translate }}</button>
+                        </div>
+                    </form>
+                </div>
+                <div *ngIf="missingParams || showErrorMessage" class="ui bottom attached segment">
+                    <div *ngIf="missingParams" class="ui red message">
+                        <p>{{ 'auth_callback_missing_param' | translate }}</p>
+                    </div>
+                    <div *ngIf="showErrorMessage" class="ui red message">
+                        <p>{{ 'auth_callback_error' | translate }}</p>
+                    </div>
+                    <form class="ui form">
+                        <div class="field">
+                            <button class="fluid ui button primary" (click)="navigateToSignin()">
+                                {{ 'account_btn_signin' | translate }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </ng-template>
+        </div>
+    </div>
+</div>

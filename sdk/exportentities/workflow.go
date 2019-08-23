@@ -140,7 +140,7 @@ func craftNodeEntry(w sdk.Workflow, n sdk.Node) (NodeEntry, error) {
 		conditions := []sdk.WorkflowNodeCondition{}
 		for _, c := range n.Context.Conditions.PlainConditions {
 			if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
-				c.Value == sdk.StatusSuccess.String() &&
+				c.Value == sdk.StatusSuccess &&
 				c.Variable == "cds.status" {
 				entry.When = append(entry.When, "success")
 			} else if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
@@ -630,7 +630,7 @@ func (e *NodeEntry) getNode(name string, w *sdk.Workflow) (*sdk.Node, error) {
 		case "success":
 			node.Context.Conditions.PlainConditions = append(node.Context.Conditions.PlainConditions, sdk.WorkflowNodeCondition{
 				Operator: sdk.WorkflowConditionsOperatorEquals,
-				Value:    sdk.StatusSuccess.String(),
+				Value:    sdk.StatusSuccess,
 				Variable: "cds.status",
 			})
 		case "manual":

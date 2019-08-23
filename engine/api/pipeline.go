@@ -12,7 +12,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -38,7 +37,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updatePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
 		}
 
-		pipelineDB, err := pipeline.LoadPipeline(api.mustDB(), key, name, true)
+		pipelineDB, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, name, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", name)
 		}
@@ -51,9 +50,9 @@ func (api *API) updatePipelineHandler() service.Handler {
 		if errB != nil {
 			sdk.WrapError(errB, "updatePipelineHandler> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
-		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, deprecatedGetUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
@@ -69,8 +68,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineUpdate(key, p.Name, oldName, deprecatedGetUser(ctx))
-		pipelineDB.Permission = permission.PermissionReadWriteExecute
+		event.PublishPipelineUpdate(key, p.Name, oldName, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pipelineDB, http.StatusOK)
 	}
@@ -88,9 +86,9 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		}
 
 		db := api.mustDB()
-		u := deprecatedGetUser(ctx)
+		u := getAPIConsumer(ctx)
 
-		pipDB, err := pipeline.LoadPipeline(db, key, name, false)
+		pipDB, err := pipeline.LoadPipeline(ctx, db, key, name, false)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline")
 		}
@@ -98,7 +96,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		proj, errP := project.Load(db, api.Cache, key, u, project.LoadOptions.WithGroups)
+		proj, errP := project.Load(db, api.Cache, key, project.LoadOptions.WithGroups)
 		if errP != nil {
 			return sdk.WrapError(errP, "postPipelineRollbackHandler> Cannot load project")
 		}
@@ -137,7 +135,6 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
-		audit.Pipeline.Permission = permission.PermissionReadWriteExecute
 
 		event.PublishPipelineUpdate(key, audit.Pipeline.Name, name, u)
 
@@ -151,7 +148,7 @@ func (api *API) addPipelineHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, errl := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
+		proj, errl := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
 		if errl != nil {
 			return sdk.WrapError(errl, "AddPipeline: Cannot load %s", key)
 		}
@@ -179,10 +176,10 @@ func (api *API) addPipelineHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		p.ProjectID = proj.ID
-		if err := pipeline.InsertPipeline(tx, api.Cache, proj, &p, deprecatedGetUser(ctx)); err != nil {
+		if err := pipeline.InsertPipeline(tx, api.Cache, proj, &p); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
 
@@ -194,9 +191,7 @@ func (api *API) addPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineAdd(key, p, deprecatedGetUser(ctx))
-
-		p.Permission = permission.PermissionReadWriteExecute
+		event.PublishPipelineAdd(key, p, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -226,19 +221,17 @@ func (api *API) getPipelineHandler() service.Handler {
 		withWorkflows := FormBool(r, "withWorkflows")
 		withEnvironments := FormBool(r, "withEnvironments")
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, true)
+		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", pipelineName)
 		}
-
-		p.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
 
 		if withApp || withWorkflows || withEnvironments {
 			p.Usage = &sdk.Usage{}
 		}
 
 		if withWorkflows {
-			wf, errW := workflow.LoadByPipelineName(api.mustDB(), projectKey, pipelineName)
+			wf, errW := workflow.LoadByPipelineName(ctx, api.mustDB(), projectKey, pipelineName)
 			if errW != nil {
 				return sdk.WrapError(errW, "getPipelineHandler> Cannot load workflows using pipeline %s", p.Name)
 			}
@@ -255,7 +248,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		project, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
+		project, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNoProject) {
 				log.Warning("getPipelinesHandler: Cannot load %s: %s\n", key, err)
@@ -282,12 +275,12 @@ func (api *API) deletePipelineHandler() service.Handler {
 		key := vars[permProjectKey]
 		pipelineName := vars["pipelineKey"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, key)
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load project")
 		}
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), proj.Key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
 		}
@@ -305,13 +298,13 @@ func (api *API) deletePipelineHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "Cannot begin transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		if err := pipeline.DeleteAudit(tx, p.ID); err != nil {
 			return sdk.WrapError(err, "Cannot delete pipeline audit")
 		}
 
-		if err := pipeline.DeletePipeline(ctx, tx, p.ID, deprecatedGetUser(ctx).ID); err != nil {
+		if err := pipeline.DeletePipeline(ctx, tx, p.ID); err != nil {
 			return sdk.WrapError(err, "Cannot delete pipeline %s", pipelineName)
 		}
 
@@ -319,7 +312,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineDelete(key, *p, deprecatedGetUser(ctx))
+		event.PublishPipelineDelete(key, *p, getAPIConsumer(ctx))
 		return nil
 	}
 }

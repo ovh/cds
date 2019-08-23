@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild, } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { User } from 'app/model/user.model';
-import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { Store } from '@ngxs/store';
+import { AuthentifiedUser } from 'app/model/user.model';
 import { ConfigService } from 'app/service/config/config.service';
 import { ThemeStore } from 'app/service/services.module';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
@@ -26,7 +27,7 @@ export class CdsctlComponent implements OnInit {
     @ViewChild('codemirror7', {static: false}) codemirror7: any;
     @ViewChild('codemirror8', {static: false}) codemirror8: any;
 
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     apiURL: string;
     arch: Array<string>;
     os: Array<string>;
@@ -40,7 +41,7 @@ export class CdsctlComponent implements OnInit {
     themeSubscription: Subscription;
 
     constructor(
-        private _authentificationStore: AuthentificationStore,
+        private _store: Store,
         private _configService: ConfigService,
         private _translate: TranslateService,
         private _theme: ThemeStore,
@@ -93,7 +94,7 @@ export class CdsctlComponent implements OnInit {
             this._cd.markForCheck();
         });
 
-        this.currentUser = this._authentificationStore.getUser();
+        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
 
         this.loading = true;
         this._configService.getConfig()

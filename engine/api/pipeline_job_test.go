@@ -22,10 +22,10 @@ func TestAddJobHandler(t *testing.T) {
 	defer end()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -35,7 +35,7 @@ func TestAddJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -88,10 +88,10 @@ func TestUpdateJobHandler(t *testing.T) {
 	defer end()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -101,7 +101,7 @@ func TestUpdateJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -169,10 +169,10 @@ func TestDeleteJobHandler(t *testing.T) {
 	defer end()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -182,7 +182,7 @@ func TestDeleteJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
 
 	//4. Add Stage
 	stage := &sdk.Stage{

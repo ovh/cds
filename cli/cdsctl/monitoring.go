@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"sort"
 	"strings"
 	"time"
 
@@ -100,11 +99,11 @@ type Termui struct {
 	baseURL          string
 	selected         int
 	queueTabSelected int
-	statusSelected   []sdk.Status
+	statusSelected   []string
 	currentJobURL    string
 	msg              string
 
-	me                             *sdk.User
+	me                             *sdk.AuthentifiedUser
 	status                         *sdk.MonitoringStatus
 	elapsedStatus                  time.Duration
 	workers                        []sdk.Worker
@@ -145,7 +144,7 @@ func (ui *Termui) execLoadData() error {
 	}
 	ui.elapsedWorkers = time.Since(start)
 
-	if ui.me.Admin {
+	if ui.me.Maintainer() || ui.me.Admin() {
 		ui.services, err = client.ServicesByType("hatchery")
 		if err != nil {
 			return err
@@ -284,10 +283,10 @@ const (
 )
 
 func (ui *Termui) staticRender() {
-	checking, checkingColor := statusShort(sdk.StatusChecking.String())
-	waiting, waitingColor := statusShort(sdk.StatusWaiting.String())
-	building, buildingColor := statusShort(sdk.StatusBuilding.String())
-	disabled, disabledColor := statusShort(sdk.StatusDisabled.String())
+	checking, checkingColor := statusShort(sdk.StatusChecking)
+	waiting, waitingColor := statusShort(sdk.StatusWaiting)
+	building, buildingColor := statusShort(sdk.StatusDisabled)
+	disabled, disabledColor := statusShort(sdk.StatusDisabled)
 	ui.header.Text = fmt.Sprintf("[CDS | (h)elp | (q)uit | Legend:](fg-cyan) [Checking:%s](%s) [Waiting:%s](%s) [Building:%s](%s) [Disabled:%s](%s)",
 		checking, checkingColor,
 		waiting, waitingColor,
@@ -375,7 +374,7 @@ func (ui *Termui) enter() {
 		}
 	case servicesSelected:
 		item := ui.statusServices.GetItems()[ui.statusServices.GetCursor()]
-		if ui.me != nil && ui.me.Admin && strings.Contains(item, "Global/hooks") {
+		if ui.me != nil && (ui.me.Maintainer() || ui.me.Admin()) && strings.Contains(item, "Global/hooks") {
 			if err := open.Run(fmt.Sprintf("%s/admin/hooks-tasks", ui.baseURL)); err != nil {
 				ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 				ui.render()
@@ -410,11 +409,11 @@ func (ui *Termui) decrementQueueFilter() {
 func (ui *Termui) updateSelectStatus() {
 	switch ui.queueTabSelected {
 	case 0:
-		ui.statusSelected = []sdk.Status{sdk.StatusWaiting}
+		ui.statusSelected = []string{sdk.StatusWaiting}
 	case 1:
-		ui.statusSelected = []sdk.Status{sdk.StatusBuilding}
+		ui.statusSelected = []string{sdk.StatusBuilding}
 	case 2:
-		ui.statusSelected = []sdk.Status{sdk.StatusBuilding, sdk.StatusWaiting}
+		ui.statusSelected = []string{sdk.StatusBuilding, sdk.StatusWaiting}
 	}
 }
 
@@ -460,92 +459,22 @@ func (ui *Termui) updateStatus() {
 }
 
 func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
-	hatcheryNames, statusTitle := []string{}, []string{}
-	hatcheries := make(map[string]map[string]int64)
-	status := make(map[string]int)
-
-	if ui.me != nil && ui.me.Admin {
-		for _, s := range ui.services {
-			if _, ok := hatcheries[s.Name]; !ok {
-				hatcheries[s.Name] = make(map[string]int64)
-				hatcheryNames = append(hatcheryNames, s.Name)
-			}
-		}
-	}
-
-	without := "Without hatchery"
-	hatcheries[without] = make(map[string]int64)
-	hatcheryNames = append(hatcheryNames, without)
-
-	for _, w := range workers {
-		var name string
-		if w.HatcheryName == "" {
-			name = "Without hatchery"
-		} else {
-			name = w.HatcheryName
-		}
-		if _, ok := hatcheries[name]; !ok {
-			hatcheries[name] = make(map[string]int64)
-			hatcheryNames = append(hatcheryNames, name)
-		}
-		hatcheries[name][w.Status.String()] = hatcheries[name][w.Status.String()] + 1
-		if _, ok := status[w.Status.String()]; !ok {
-			statusTitle = append(statusTitle, w.Status.String())
-		}
-		status[w.Status.String()] = status[w.Status.String()] + 1
-	}
-
-	sort.Slice(statusTitle, func(i, j int) bool {
-		return statusWeight(statusTitle[i]) < statusWeight(statusTitle[j])
-	})
-
-	var items []string
-	sort.Strings(hatcheryNames)
-	for _, name := range hatcheryNames {
-		v := hatcheries[name]
-		var t string
-		var statusText []string
-		for _, status := range statusTitle {
-			if v[status] > 0 {
-				icon, color := statusShort(status)
-				statusText = append(statusText, fmt.Sprintf("[%d%s](%s)", v[status], icon, color))
-			}
-		}
-		if len(statusText) == 0 {
-			t = fmt.Sprintf(" [_ %s](fg-white)", name)
-		} else {
-			t = fmt.Sprintf(" %s [%s](fg-white)", strings.Join(statusText, " "), name)
-		}
-		items = append(items, t)
-	}
-	ui.statusHatcheriesWorkers.SetItems(items...)
-
-	var titleStatusText []string
-	for _, s := range statusTitle {
-		if status[s] > 0 {
-			icon, color := statusShort(s)
-			titleStatusText = append(titleStatusText, fmt.Sprintf("[%d%s](%s)", status[s], icon, color))
-		}
-	}
 	title := " Hatcheries "
-	if len(titleStatusText) > 0 {
-		title = fmt.Sprintf("%s%s ", title, strings.Join(titleStatusText, " "))
-	}
 	ui.statusHatcheriesWorkers.BorderLabel = title
 }
 
 func (ui *Termui) updateQueue(baseURL string) {
-	mapLines := map[sdk.Status][]string{}
+	mapLines := map[string][]string{}
 	var lineCount int
 	var maxWaiting, maxBuilding time.Duration
 	for _, job := range ui.workflowNodeJobRun {
 		duration := time.Since(job.Queued)
-		s := sdk.Status(job.Status)
+		s := job.Status
 
-		if (maxWaiting == 0 || maxWaiting < duration) && job.Status == sdk.StatusWaiting.String() {
+		if (maxWaiting == 0 || maxWaiting < duration) && job.Status == sdk.StatusWaiting {
 			maxWaiting = duration
 		}
-		if (maxBuilding == 0 || maxBuilding < duration) && job.Status == sdk.StatusBuilding.String() {
+		if (maxBuilding == 0 || maxBuilding < duration) && job.Status == sdk.StatusDisabled {
 			maxBuilding = duration
 		}
 
@@ -573,7 +502,7 @@ func (ui *Termui) updateQueue(baseURL string) {
 	ui.queue.SetItems(items...)
 
 	ui.queue.BorderLabel = fmt.Sprintf(" Queue(%s):%d ",
-		strings.Join(sdk.StatusToStrings(ui.statusSelected), ","), len(items))
+		strings.Join(ui.statusSelected, ","), len(items))
 
 	for _, s := range ui.statusSelected {
 		switch s {
@@ -611,7 +540,7 @@ func (ui *Termui) generateQueueJobLine(idx int, id int64, parameters []sdk.Param
 	row[2] = pad(run, 7)
 	row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+workflow, 30), pad(node, 20))
 
-	if status == sdk.StatusBuilding.String() {
+	if status == sdk.StatusDisabled {
 		row[1] = pad(fmt.Sprintf(" %s.%s ", executedJob.WorkerName, executedJob.WorkerID), 27)
 	} else if bookedBy.ID != 0 {
 		row[1] = pad(fmt.Sprintf(" %s.%d ", bookedBy.Name, bookedBy.ID), 27)
@@ -626,7 +555,7 @@ func (ui *Termui) generateQueueJobLine(idx int, id int64, parameters []sdk.Param
 	color = strings.Replace(color, "fg", "bg", 1)
 
 	var c string
-	if status == sdk.StatusWaiting.String() {
+	if status == sdk.StatusWaiting {
 		if duration > 60*time.Second {
 			c = "fg-black,bg-red"
 		} else if duration > 15*time.Second {
@@ -640,13 +569,13 @@ func (ui *Termui) generateQueueJobLine(idx int, id int64, parameters []sdk.Param
 
 func statusShort(status string) (string, string) {
 	switch status {
-	case sdk.StatusWaiting.String():
+	case sdk.StatusWaiting:
 		return "w", "fg-cyan"
-	case sdk.StatusBuilding.String():
+	case sdk.StatusDisabled:
 		return "b", "fg-blue"
-	case sdk.StatusDisabled.String():
-		return "d", "fg-white"
-	case sdk.StatusChecking.String():
+	//case sdk.StatusDisabled:
+	//	return "d", "fg-white"
+	case sdk.StatusChecking:
 		return "c", "fg-yellow"
 	}
 	return status, "fg-default"
@@ -654,13 +583,13 @@ func statusShort(status string) (string, string) {
 
 func statusWeight(status string) int {
 	switch status {
-	case sdk.StatusDisabled.String():
+	case sdk.StatusDisabled:
 		return 4
-	case sdk.StatusBuilding.String():
-		return 3
-	case sdk.StatusWaiting.String():
+	//case sdk.StatusDisabled:
+	//	return 3
+	case sdk.StatusWaiting:
 		return 2
-	case sdk.StatusChecking.String():
+	case sdk.StatusChecking:
 		return 1
 	}
 	return 0

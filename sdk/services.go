@@ -2,25 +2,43 @@ package sdk
 
 import (
 	"database/sql/driver"
-	json "encoding/json"
+	"encoding/json"
 	"fmt"
 	"time"
 )
 
+type CanonicalService struct {
+	ID         int64         `json:"id" db:"id"`
+	Name       string        `json:"name" db:"name" cli:"name,key"`
+	ConsumerID *string       `json:"-" db:"auth_consumer_id"`
+	Type       string        `json:"type" db:"type" cli:"type"`
+	HTTPURL    string        `json:"http_url" db:"http_url" cli:"url"`
+	Config     ServiceConfig `json:"config" db:"config" cli:"-"`
+	PublicKey  []byte        `json:"public_key" db:"public_key"`
+	// aggregates
+	Maintainer AuthentifiedUser `json:"maintainer" db:"maintainer"` // TODO maintainer should be loaded from consumer
+}
+
+func (s CanonicalService) Canonical() ([]byte, error) {
+	var canonical string
+	canonical += fmt.Sprintf("%d", s.ID)
+	canonical += s.Name
+	if s.ConsumerID == nil {
+		canonical += "----"
+	} else {
+		canonical += *s.ConsumerID
+	}
+	canonical += s.Type
+	md5PubKey, _ := FileMd5sum(string(s.PublicKey))
+	canonical += string(md5PubKey)
+	return []byte(canonical), nil
+}
+
 // Service is a µService registered on CDS API
 type Service struct {
-	ID               int64            `json:"id" db:"id"`
-	Name             string           `json:"name" db:"name" cli:"name,key"`
-	Type             string           `json:"type" db:"type" cli:"type"`
-	HTTPURL          string           `json:"http_url" db:"http_url" cli:"url"`
+	CanonicalService
 	LastHeartbeat    time.Time        `json:"last_heartbeat" db:"last_heartbeat" cli:"heartbeat"`
-	Hash             string           `json:"hash" db:"hash"`
-	Token            string           `json:"token" db:"-"`
-	GroupID          *int64           `json:"group_id" db:"group_id"`
-	Group            *Group           `json:"group" db:"-"`
 	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"monitoring_status" cli:"-"`
-	Config           ServiceConfig    `json:"config" db:"config" cli:"-"`
-	IsSharedInfra    bool             `json:"is_shared_infra" db:"-"`
 	Version          string           `json:"version" db:"-" cli:"version"`
 	Uptodate         bool             `json:"up_to_date" db:"-"`
 }

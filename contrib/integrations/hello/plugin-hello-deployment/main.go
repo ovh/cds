@@ -167,13 +167,13 @@ func (e *helloDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin
 	}
 
 	return &integrationplugin.DeployResult{
-		Status: sdk.StatusSuccess.String(),
+		Status: sdk.StatusSuccess,
 	}, nil
 }
 
 func (e *helloDeploymentPlugin) DeployStatus(ctx context.Context, q *integrationplugin.DeployStatusQuery) (*integrationplugin.DeployResult, error) {
 	return &integrationplugin.DeployResult{
-		Status: sdk.StatusSuccess.String(),
+		Status: sdk.StatusSuccess,
 	}, nil
 }
 
@@ -190,7 +190,7 @@ func fail(format string, args ...interface{}) (*integrationplugin.DeployResult, 
 	fmt.Println(msg)
 	return &integrationplugin.DeployResult{
 		Details: msg,
-		Status:  sdk.StatusFail.String(),
+		Status:  sdk.StatusFail,
 	}, nil
 }
 

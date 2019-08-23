@@ -121,13 +121,13 @@ func (client *bitbucketcloudClient) ListStatuses(ctx context.Context, repo strin
 func processBbitbucketState(s Status) string {
 	switch s.State {
 	case "SUCCESSFUL":
-		return sdk.StatusSuccess.String()
+		return sdk.StatusSuccess
 	case "FAILED":
-		return sdk.StatusFail.String()
+		return sdk.StatusFail
 	case "STOPPED":
-		return sdk.StatusStopped.String()
+		return sdk.StatusStopped
 	default:
-		return sdk.StatusBuilding.String()
+		return sdk.StatusBuilding
 	}
 }
 
@@ -138,21 +138,21 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatu
 		return data, sdk.WrapError(err, "Error durring consumption")
 	}
 	//We only manage status Success, Failure and Stopped
-	if eventNR.Status == sdk.StatusChecking.String() ||
-		eventNR.Status == sdk.StatusDisabled.String() ||
-		eventNR.Status == sdk.StatusNeverBuilt.String() ||
-		eventNR.Status == sdk.StatusSkipped.String() ||
-		eventNR.Status == sdk.StatusUnknown.String() ||
-		eventNR.Status == sdk.StatusWaiting.String() {
+	if eventNR.Status == sdk.StatusChecking ||
+		eventNR.Status == sdk.StatusDisabled ||
+		eventNR.Status == sdk.StatusNeverBuilt ||
+		eventNR.Status == sdk.StatusSkipped ||
+		eventNR.Status == sdk.StatusUnknown ||
+		eventNR.Status == sdk.StatusWaiting {
 		return data, nil
 	}
 
 	switch eventNR.Status {
-	case sdk.StatusFail.String():
+	case sdk.StatusFail:
 		data.status = "FAILED"
-	case sdk.StatusSuccess.String():
+	case sdk.StatusSuccess:
 		data.status = "SUCCESSFUL"
-	case sdk.StatusStopped.String():
+	case sdk.StatusStopped:
 		data.status = "STOPPED"
 	default:
 		data.status = "INPROGRESS"
