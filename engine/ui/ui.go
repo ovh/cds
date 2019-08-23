@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -129,7 +130,7 @@ func (s *Service) checkStaticFiles() error {
 		fs = http.Dir(s.HTMLDir)
 		// recheck file after user answer
 		if _, err := fs.Open("index.html"); os.IsNotExist(err) {
-			return fmt.Errorf("ui> CDS UI static files were not found in directory %v", s.HTMLDir)
+			return fmt.Errorf("CDS UI static files were not found in directory %v", s.HTMLDir)
 		}
 	}
 	log.Info("ui> CDS UI static files were found in directory %v", s.HTMLDir)
@@ -141,7 +142,7 @@ func (s *Service) indexHTMLReplaceVar() error {
 
 	read, err := ioutil.ReadFile(indexHTML)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "error while reading %s file", indexHTML)
 	}
 
 	indexContent := strings.Replace(string(read), "<base href=\"/\">", "<base href=\""+s.Cfg.BaseURL+"\">", -1)
@@ -192,41 +193,58 @@ func (s *Service) askForGettingStaticFiles(version string) error {
 
 func (s *Service) buildFromSource() error {
 	if _, err := os.Stat(filepath.Join("..", "ui")); os.IsNotExist(err) {
-		return fmt.Errorf("ui> You must have the directory ../ui with the ui source code")
+		return fmt.Errorf("You must have the directory ../ui with the ui source code")
 	}
 
-	if err := s.execCommand("npm install --no-audit"); err != nil {
+	log.Info("ui> checking node version")
+	if output, err := s.execCommand("node --version"); err != nil {
+		return err
+	} else if !strings.HasPrefix(output, "v12.4.") {
+		return fmt.Errorf("You must have node version > v12.4.0 to build CDS UI. Your version: %s", output)
+	}
+
+	if _, err := s.execCommand("npm install --no-audit"); err != nil {
 		return err
 	}
-	if err := s.execCommand("node --max_old_space_size=6000 node_modules/@angular/cli/bin/ng build --prod"); err != nil {
+	if _, err := s.execCommand("node --max_old_space_size=6000 node_modules/@angular/cli/bin/ng build --prod"); err != nil {
 		return err
 	}
 	s.HTMLDir = filepath.Join("..", "ui", "dist") // ../ui/dist
 	return nil
 }
 
-func (s *Service) execCommand(command string) error {
+func (s *Service) execCommand(command string) (string, error) {
 	log.Info("ui> running %s...", command)
+
 	parts := strings.Fields(command)
 	cmd := exec.Command(parts[0], parts[1:]...)
 	cmd.Dir = filepath.Join("..", "ui") // ../ui
 
-	stderr, _ := cmd.StderrPipe()
-	if err := cmd.Start(); err != nil {
-		return sdk.WrapError(err, "error on running %s", command)
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return "", sdk.WrapError(err, "could not get stderr")
 	}
-
-	scanner := bufio.NewScanner(stderr)
-	scanner.Split(bufio.ScanWords)
-	for scanner.Scan() {
-		m := scanner.Text()
-		fmt.Print(m + " ")
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return "", sdk.WrapError(err, "could not get stdout")
 	}
-	fmt.Println()
-	if err := cmd.Wait(); err != nil {
-		return sdk.WrapError(err, "error on running %s", command)
+	var output string
+	go func() {
+		merged := io.MultiReader(stderr, stdout)
+		scanner := bufio.NewScanner(merged)
+		for scanner.Scan() {
+			msg := scanner.Text()
+			output = output + msg + "\n"
+			fmt.Println(msg)
+		}
+	}()
+	if err := cmd.Run(); err != nil {
+		return "", sdk.WrapError(err, "could not run command")
 	}
-	return nil
+	if err != nil {
+		return "", sdk.WrapError(err, "could not wait for command")
+	}
+	return output, nil
 }
 
 func (s *Service) downloadStaticFilesFromGitHub(version string) error {
@@ -242,7 +260,7 @@ func (s *Service) downloadStaticFilesFromGitHub(version string) error {
 		var err error
 		urlFiles, err = s.Client.DownloadURLFromGithub("ui.tar.gz")
 		if err != nil {
-			return fmt.Errorf("ui> Error while getting ui.tar.gz from Github err:%s", err)
+			return fmt.Errorf("Error while getting ui.tar.gz from Github err:%s", err)
 		}
 	}
 
