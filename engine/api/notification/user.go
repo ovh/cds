@@ -97,8 +97,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 							log.Warning("notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
 							continue
 						}
-						//TODO: fix email
-						jn.Recipients = append(jn.Recipients, au.OldUserStruct.Email)
+						jn.Recipients = append(jn.Recipients, au.GetEmail())
 					}
 				}
 				//Finally deduplicate everyone
