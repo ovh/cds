@@ -11,9 +11,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type unusedProjectKeyWarning struct {
-	commonWarn
-}
+type unusedProjectKeyWarning struct{}
 
 func (warn unusedProjectKeyWarning) events() []string {
 	return []string{
@@ -62,9 +60,7 @@ func (warn unusedProjectKeyWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 	return nil
 }
 
-type missingProjectKeyPipelineParameterWarning struct {
-	commonWarn
-}
+type missingProjectKeyPipelineParameterWarning struct{}
 
 func (warn missingProjectKeyPipelineParameterWarning) events() []string {
 	return []string{
@@ -117,9 +113,7 @@ func (warn missingProjectKeyPipelineParameterWarning) compute(db gorp.SqlExecuto
 	return nil
 }
 
-type missingProjectKeyPipelineJobWarning struct {
-	commonWarn
-}
+type missingProjectKeyPipelineJobWarning struct{}
 
 func (warn missingProjectKeyPipelineJobWarning) events() []string {
 	return []string{
@@ -174,9 +168,7 @@ func (warn missingProjectKeyPipelineJobWarning) compute(db gorp.SqlExecutor, e s
 	return nil
 }
 
-type missingProjectKeyApplicationWarning struct {
-	commonWarn
-}
+type missingProjectKeyApplicationWarning struct{}
 
 func (warn missingProjectKeyApplicationWarning) events() []string {
 	return []string{

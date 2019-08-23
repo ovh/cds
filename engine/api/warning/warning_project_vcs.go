@@ -10,9 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type unusedProjectVCSWarning struct {
-	commonWarn
-}
+type unusedProjectVCSWarning struct{}
 
 func (warn unusedProjectVCSWarning) events() []string {
 	return []string{
@@ -98,9 +96,7 @@ func (warn unusedProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 	return nil
 }
 
-type missingProjectVCSWarning struct {
-	commonWarn
-}
+type missingProjectVCSWarning struct{}
 
 func (warn missingProjectVCSWarning) events() []string {
 	return []string{

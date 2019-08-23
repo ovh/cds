@@ -13,9 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type unusedProjectVariableWarning struct {
-	commonWarn
-}
+type unusedProjectVariableWarning struct{}
 
 func (warn unusedProjectVariableWarning) events() []string {
 	return []string{
@@ -136,9 +134,7 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 	return nil
 }
 
-type missingProjectVariableEnv struct {
-	commonWarn
-}
+type missingProjectVariableEnv struct{}
 
 func (warn missingProjectVariableEnv) events() []string {
 	return []string{
@@ -201,9 +197,7 @@ func (warn missingProjectVariableEnv) compute(db gorp.SqlExecutor, e sdk.Event) 
 	return nil
 }
 
-type missingProjectVariableWorkflow struct {
-	commonWarn
-}
+type missingProjectVariableWorkflow struct{}
 
 func (warn missingProjectVariableWorkflow) events() []string {
 	return []string{
@@ -267,9 +261,7 @@ func (warn missingProjectVariableWorkflow) compute(db gorp.SqlExecutor, e sdk.Ev
 	return nil
 }
 
-type missingProjectVariableApplication struct {
-	commonWarn
-}
+type missingProjectVariableApplication struct{}
 
 func (warn missingProjectVariableApplication) events() []string {
 	return []string{
@@ -332,9 +324,7 @@ func (warn missingProjectVariableApplication) compute(db gorp.SqlExecutor, e sdk
 	return nil
 }
 
-type missingProjectVariablePipelineParameter struct {
-	commonWarn
-}
+type missingProjectVariablePipelineParameter struct{}
 
 func (warn missingProjectVariablePipelineParameter) events() []string {
 	return []string{
@@ -397,9 +387,7 @@ func (warn missingProjectVariablePipelineParameter) compute(db gorp.SqlExecutor,
 	return nil
 }
 
-type missingProjectVariablePipelineJob struct {
-	commonWarn
-}
+type missingProjectVariablePipelineJob struct{}
 
 func (warn missingProjectVariablePipelineJob) events() []string {
 	return []string{

@@ -9,9 +9,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-type commonWarn struct {
-}
-
 type warn interface {
 	name() string
 	events() []string

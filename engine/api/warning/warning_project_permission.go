@@ -11,9 +11,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type missingProjectPermissionEnvWarning struct {
-	commonWarn
-}
+type missingProjectPermissionEnvWarning struct{}
 
 func (warn missingProjectPermissionEnvWarning) events() []string {
 	return []string{
@@ -78,9 +76,7 @@ func (warn missingProjectPermissionEnvWarning) compute(db gorp.SqlExecutor, e sd
 	return nil
 }
 
-type missingProjectPermissionWorkflowWarning struct {
-	commonWarn
-}
+type missingProjectPermissionWorkflowWarning struct{}
 
 func (warn missingProjectPermissionWorkflowWarning) events() []string {
 	return []string{

@@ -177,6 +177,12 @@ func (s ServerConfiguration) check() error {
 		}
 	}
 
+	if s.BitbucketCloud != nil {
+		if err := s.BitbucketCloud.check(); err != nil {
+			return err
+		}
+	}
+
 	if s.Github != nil {
 		if err := s.Github.check(); err != nil {
 			return err
