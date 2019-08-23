@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"regexp"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -79,8 +80,16 @@ func LoadContactsByTypeAndValue(ctx context.Context, db gorp.SqlExecutor, contac
 	return getContact(ctx, db, query)
 }
 
+var emailRegexp = regexp.MustCompile(`\w[+-._\w]*\w@\w[-._\w]*\w\.\w*`)
+
 // InsertContact in database.
 func InsertContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
+	if c.Type == sdk.UserContactTypeEmail {
+		if !emailRegexp.MatchString(c.Value) {
+			return sdk.WithStack(sdk.ErrInvalidEmail)
+		}
+	}
+
 	c.Created = time.Now()
 	dbc := userContact{UserContact: *c}
 	if err := gorpmapping.InsertAndSign(db, &dbc); err != nil {
