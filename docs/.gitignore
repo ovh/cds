@@ -2,3 +2,11 @@ public
 .DS_Store
 resources
 
+# generated documentation
+content/docs/components/cdsctl
+content/docs/components/engine
+content/docs/components/worker
+content/development/rest
+content/docs/actions/builtin-*
+content/docs/actions/plugin-*
+contrib/actions/cds-*
