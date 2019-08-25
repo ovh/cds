@@ -1,9 +1,7 @@
 package ui
 
 import (
-	"archive/tar"
 	"bufio"
-	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
@@ -56,7 +54,8 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 
 	// HTMLDir must contains the ui dist directory.
 	// ui.tar.gz contains the dist directory
-	s.HTMLDir = s.Cfg.Staticdir + "/dist"
+	s.HTMLDir = filepath.Join(s.Cfg.Staticdir, "dist")
+	s.Cfg.BaseURL = strings.TrimSpace(s.Cfg.BaseURL)
 
 	return nil
 }
@@ -200,11 +199,12 @@ func (s *Service) indexHTMLReplaceVar() error {
 
 	read, err := ioutil.ReadFile(indexHTML)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "error while reading %s file", indexHTML)
 	}
 
 	indexContent := strings.Replace(string(read), "<base href=\"/\">", "<base href=\""+s.Cfg.BaseURL+"\">", -1)
-	indexContent = strings.Replace(string(read), "window.cds_sentry_url = '';", "window.cds_sentry_url = '"+s.Cfg.SentryURL+"';", -1)
+	indexContent = strings.Replace(indexContent, "window.cds_sentry_url = '';", "window.cds_sentry_url = '"+s.Cfg.SentryURL+"';", -1)
+	indexContent = strings.Replace(indexContent, "window.cds_version = '';", "window.cds_version='"+sdk.VERSION+"';", -1)
 
 	return ioutil.WriteFile(indexHTML, []byte(indexContent), 0)
 }
@@ -212,8 +212,8 @@ func (s *Service) indexHTMLReplaceVar() error {
 func (s *Service) askForGettingStaticFiles(version string) error {
 	answerLatestRelease := fmt.Sprintf("Download files into %s from the latest GitHub CDS Release", s.Cfg.Staticdir)
 	answerVersionRelease := fmt.Sprintf("Download files into %s from the GitHub CDS Release %s", s.Cfg.Staticdir, version)
-	answerBuildFromSource := "Build from source ../ui with node"
-	useExistingBuildFromSource := "Use existing ../ui/dist/"
+	answerBuildFromSource := fmt.Sprintf("Build from source %s with node", filepath.Join("..", "ui"))
+	useExistingBuildFromSource := fmt.Sprintf("Use existing %s", filepath.Join("..", "ui", "dist"))
 	answerDoNothing := "Do nothing - exit now"
 	opts := []string{}
 
@@ -250,37 +250,58 @@ func (s *Service) askForGettingStaticFiles(version string) error {
 
 func (s *Service) buildFromSource() error {
 	if _, err := os.Stat(filepath.Join("..", "ui")); os.IsNotExist(err) {
-		return fmt.Errorf("ui> You must have the directory ../ui with the ui source code")
+		return fmt.Errorf("You must have the directory ../ui with the ui source code")
 	}
 
-	if err := s.execCommand("npm install --no-audit"); err != nil {
+	log.Info("ui> checking node version")
+	if output, err := s.execCommand("node --version"); err != nil {
+		return err
+	} else if !strings.HasPrefix(output, "v12.4.") {
+		return fmt.Errorf("You must have node version > v12.4.0 to build CDS UI. Your version: %s", output)
+	}
+
+	if _, err := s.execCommand("npm install --no-audit"); err != nil {
 		return err
 	}
-	if err := s.execCommand("node --max_old_space_size=6000 node_modules/@angular/cli/bin/ng build --prod"); err != nil {
+	if _, err := s.execCommand("node --max_old_space_size=6000 node_modules/@angular/cli/bin/ng build --prod"); err != nil {
 		return err
 	}
-	s.HTMLDir = filepath.Join("..", "ui", "dist")
+	s.HTMLDir = filepath.Join("..", "ui", "dist") // ../ui/dist
 	return nil
 }
 
-func (s *Service) execCommand(command string) error {
+func (s *Service) execCommand(command string) (string, error) {
 	log.Info("ui> running %s...", command)
+
 	parts := strings.Fields(command)
 	cmd := exec.Command(parts[0], parts[1:]...)
-	cmd.Dir = filepath.Join("..", "ui")
+	cmd.Dir = filepath.Join("..", "ui") // ../ui
 
-	stderr, _ := cmd.StderrPipe()
-	cmd.Start()
-
-	scanner := bufio.NewScanner(stderr)
-	scanner.Split(bufio.ScanWords)
-	for scanner.Scan() {
-		m := scanner.Text()
-		fmt.Print(m + " ")
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return "", sdk.WrapError(err, "could not get stderr")
 	}
-	fmt.Println()
-	cmd.Wait()
-	return nil
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return "", sdk.WrapError(err, "could not get stdout")
+	}
+	var output string
+	go func() {
+		merged := io.MultiReader(stderr, stdout)
+		scanner := bufio.NewScanner(merged)
+		for scanner.Scan() {
+			msg := scanner.Text()
+			output = output + msg + "\n"
+			fmt.Println(msg)
+		}
+	}()
+	if err := cmd.Run(); err != nil {
+		return "", sdk.WrapError(err, "could not run command")
+	}
+	if err := cmd.Wait(); err != nil {
+		return "", sdk.WrapError(err, "could not wait for command")
+	}
+	return output, nil
 }
 
 func (s *Service) downloadStaticFilesFromGitHub(version string) error {
@@ -296,7 +317,7 @@ func (s *Service) downloadStaticFilesFromGitHub(version string) error {
 		var err error
 		urlFiles, err = s.Client.DownloadURLFromGithub("ui.tar.gz")
 		if err != nil {
-			return fmt.Errorf("ui> Error while getting ui.tar.gz from Github err:%s", err)
+			return fmt.Errorf("Error while getting ui.tar.gz from Github err:%s", err)
 		}
 	}
 
@@ -309,7 +330,7 @@ func (s *Service) downloadStaticFilesFromGitHub(version string) error {
 	defer resp.Body.Close()
 
 	if err := sdk.CheckContentTypeBinary(resp); err != nil {
-		return fmt.Errorf(err.Error())
+		return sdk.WrapError(err, "Error while checking Content-Type of %s", urlFiles)
 	}
 
 	if resp.StatusCode != 200 {
@@ -318,72 +339,5 @@ func (s *Service) downloadStaticFilesFromGitHub(version string) error {
 
 	log.Info("ui> Download in success, we are decompressing the archive now...")
 
-	return untarGZ(s.Cfg.Staticdir, resp.Body)
-}
-
-// untarGZ takes a destination path and a reader; a tar reader loops over the tarfile
-// creating the file structure at 'dst' along the way, and writing any files
-func untarGZ(dst string, r io.Reader) error {
-
-	gzr, err := gzip.NewReader(r)
-	if err != nil {
-		return err
-	}
-	defer gzr.Close()
-
-	tr := tar.NewReader(gzr)
-
-	for {
-		header, err := tr.Next()
-
-		switch {
-
-		// if no more files are found return
-		case err == io.EOF:
-			return nil
-
-		// return any other error
-		case err != nil:
-			return err
-
-		// if the header is nil, just skip it (not sure how this happens)
-		case header == nil:
-			continue
-		}
-
-		// the target location where the dir/file should be created
-		target := filepath.Join(dst, header.Name)
-
-		// the following switch could also be done using fi.Mode(), not sure if there
-		// a benefit of using one vs. the other.
-		// fi := header.FileInfo()
-
-		// check the file type
-		switch header.Typeflag {
-
-		// if its a dir and it doesn't exist create it
-		case tar.TypeDir:
-			if _, err := os.Stat(target); err != nil {
-				if err := os.MkdirAll(target, 0755); err != nil {
-					return err
-				}
-			}
-
-		// if it's a file create it
-		case tar.TypeReg:
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
-			if err != nil {
-				return err
-			}
-
-			// copy over contents
-			if _, err := io.Copy(f, tr); err != nil {
-				return err
-			}
-
-			// manually close here after each file operation; defering would cause each file close
-			// to wait until all operations have completed.
-			f.Close()
-		}
-	}
+	return sdk.UntarGz(s.Cfg.Staticdir, resp.Body)
 }

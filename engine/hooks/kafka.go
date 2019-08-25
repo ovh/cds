@@ -19,14 +19,13 @@ var nbKafkaConsumers int64
 
 func (s *Service) saveKafkaExecution(t *sdk.Task, error string, nbError int64) {
 	exec := &sdk.TaskExecution{
-		Timestamp:           time.Now().UnixNano(),
-		Type:                t.Type,
-		UUID:                t.UUID,
-		Config:              t.Config,
-		Status:              TaskExecutionDone,
-		LastError:           error,
-		NbErrors:            nbError,
-		ProcessingTimestamp: time.Now().UnixNano(),
+		Timestamp: time.Now().UnixNano(),
+		Type:      t.Type,
+		UUID:      t.UUID,
+		Config:    t.Config,
+		Status:    TaskExecutionDone,
+		LastError: error,
+		NbErrors:  nbError,
 	}
 	s.Dao.SaveTaskExecution(exec)
 }
@@ -105,13 +104,12 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 		defer atomic.AddInt64(&nbKafkaConsumers, -1)
 		for msg := range consumer.Messages() {
 			exec := sdk.TaskExecution{
-				ProcessingTimestamp: time.Now().UnixNano(),
-				Status:              TaskExecutionDoing,
-				Config:              t.Config,
-				Type:                TypeKafka,
-				UUID:                t.UUID,
-				Timestamp:           time.Now().UnixNano(),
-				Kafka:               &sdk.KafkaTaskExecution{Message: msg.Value},
+				Status:    TaskExecutionDoing,
+				Config:    t.Config,
+				Type:      TypeKafka,
+				UUID:      t.UUID,
+				Timestamp: time.Now().UnixNano(),
+				Kafka:     &sdk.KafkaTaskExecution{Message: msg.Value},
 			}
 			s.Dao.SaveTaskExecution(&exec)
 			s.Dao.EnqueueTaskExecution(&exec)

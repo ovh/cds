@@ -7,6 +7,10 @@ import (
 	"net/url"
 	"os"
 	"path"
+<<<<<<< HEAD
+=======
+	"path/filepath"
+>>>>>>> 21d319561ff684fb3763ac99f9d183659dcac8d6
 	"strings"
 
 	"github.com/ovh/cds/engine/api"
@@ -49,7 +53,11 @@ func (s *Service) uiServe(fs http.FileSystem) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := fs.Open(path.Clean(r.URL.Path))
 		if os.IsNotExist(err) {
+<<<<<<< HEAD
 			http.ServeFile(w, r, s.HTMLDir+"/index.html")
+=======
+			http.ServeFile(w, r, filepath.Join(s.HTMLDir, "index.html"))
+>>>>>>> 21d319561ff684fb3763ac99f9d183659dcac8d6
 			return
 		}
 		fsh.ServeHTTP(w, r)
