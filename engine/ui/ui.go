@@ -86,8 +86,15 @@ func (s *Service) Serve(c context.Context) error {
 	if err := s.checkStaticFiles(); err != nil {
 		return err
 	}
-
-	s.indexHTMLReplaceVar()
+	if err := s.checkChecksumFiles(); err != nil {
+		return err
+	}
+	if err := s.prepareIndexHTML(); err != nil {
+		return err
+	}
+	if err := s.indexHTMLReplaceVar(); err != nil {
+		return err
+	}
 
 	//Init the http server
 	s.initRouter(c)
@@ -115,6 +122,34 @@ func (s *Service) Serve(c context.Context) error {
 	return c.Err()
 }
 
+// checkChecksumFiles checks the sha512 values.
+// a ui.tar.gz contains a FILES_UI, with a lines as:
+// filename;shar512values
+// for each line, we check that the files in dist have the same sha512
+func (s *Service) checkChecksumFiles() error {
+	filesUI := filepath.Join(s.HTMLDir, "FILES_UI")
+	if _, err := os.Open(filesUI); os.IsNotExist(err) {
+		return nil
+	}
+	content, err := ioutil.ReadFile(filesUI)
+	if err != nil {
+		return sdk.WrapError(err, "error while reading file %s", filesUI)
+	}
+	lines := strings.Split(string(content), "\n")
+
+	for _, lineValues := range lines {
+		line := strings.Split(lineValues, ";")
+		sha512sum, err512 := sdk.FileSHA512sum(filepath.Join(s.HTMLDir, line[0]))
+		if err512 != nil {
+			return sdk.WrapError(err512, "error while compute sha512 on %s", line[0])
+		}
+		if line[1] != sha512sum {
+			return fmt.Errorf("file %s sha512:%s computed:%s", line[0], line[1], sha512sum)
+		}
+	}
+	return nil
+}
+
 func (s *Service) checkStaticFiles() error {
 	fs := http.Dir(s.HTMLDir)
 
@@ -137,8 +172,31 @@ func (s *Service) checkStaticFiles() error {
 	return nil
 }
 
+// prepareIndexHTML writes index.html file if index.tmpl exists
+// index.tmpl is created at build time (ui.tar.gz). It's the copy of index.html file
+// with the value version
+// from a release: index.tmpl exists. This func copy it with the value sentryURL and baseURL rewritted.
+// from source: index.tmpl does not exist. this func do nothing
+func (s *Service) prepareIndexHTML() error {
+	indexTMPL := filepath.Join(s.HTMLDir, "index.tmpl")
+	indexTMPLFile, err := os.Open(indexTMPL)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	defer indexTMPLFile.Close()
+
+	indexHTML := filepath.Join(s.HTMLDir, "index.html")
+	indexHTMLFile, err := os.Create(indexHTML)
+	if err != nil {
+		return sdk.WrapError(err, "error while creating %s file", indexHTML)
+	}
+	defer indexHTMLFile.Close()
+	_, err = io.Copy(indexHTMLFile, indexTMPLFile)
+	return sdk.WrapError(err, "error while copy index.tmpl to index.html file")
+}
+
 func (s *Service) indexHTMLReplaceVar() error {
-	indexHTML := s.HTMLDir + "/index.html"
+	indexHTML := filepath.Join(s.HTMLDir, "index.html")
 
 	read, err := ioutil.ReadFile(indexHTML)
 	if err != nil {
@@ -147,7 +205,6 @@ func (s *Service) indexHTMLReplaceVar() error {
 
 	indexContent := strings.Replace(string(read), "<base href=\"/\">", "<base href=\""+s.Cfg.BaseURL+"\">", -1)
 	indexContent = strings.Replace(string(read), "window.cds_sentry_url = '';", "window.cds_sentry_url = '"+s.Cfg.SentryURL+"';", -1)
-	indexContent = strings.Replace(string(read), "window.cds_version = '';", "window.cds_version='"+sdk.VERSION+"';", -1)
 
 	return ioutil.WriteFile(indexHTML, []byte(indexContent), 0)
 }
@@ -162,7 +219,7 @@ func (s *Service) askForGettingStaticFiles(version string) error {
 
 	if strings.Contains(version, "snapshot") {
 		opts = append(opts, answerBuildFromSource)
-		if _, err := os.Stat("../ui/dist/index.html"); err == nil {
+		if _, err := os.Stat(filepath.Join("..", "ui", "dist", "index.html")); err == nil {
 			opts = append(opts, useExistingBuildFromSource)
 		}
 		opts = append(opts, answerLatestRelease)
@@ -186,13 +243,13 @@ func (s *Service) askForGettingStaticFiles(version string) error {
 	case answerBuildFromSource:
 		return s.buildFromSource()
 	case useExistingBuildFromSource:
-		s.HTMLDir = "../ui/dist"
+		s.HTMLDir = filepath.Join("..", "ui", "dist")
 	}
 	return nil
 }
 
 func (s *Service) buildFromSource() error {
-	if _, err := os.Stat("../ui"); os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join("..", "ui")); os.IsNotExist(err) {
 		return fmt.Errorf("ui> You must have the directory ../ui with the ui source code")
 	}
 
@@ -202,7 +259,7 @@ func (s *Service) buildFromSource() error {
 	if err := s.execCommand("node --max_old_space_size=6000 node_modules/@angular/cli/bin/ng build --prod"); err != nil {
 		return err
 	}
-	s.HTMLDir = "../ui/dist"
+	s.HTMLDir = filepath.Join("..", "ui", "dist")
 	return nil
 }
 
@@ -210,7 +267,7 @@ func (s *Service) execCommand(command string) error {
 	log.Info("ui> running %s...", command)
 	parts := strings.Fields(command)
 	cmd := exec.Command(parts[0], parts[1:]...)
-	cmd.Dir = "../ui"
+	cmd.Dir = filepath.Join("..", "ui")
 
 	stderr, _ := cmd.StderrPipe()
 	cmd.Start()
