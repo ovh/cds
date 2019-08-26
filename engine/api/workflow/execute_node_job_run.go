@@ -579,12 +579,12 @@ func FreeNodeJobRun(store cache.Store, id int64) error {
 //AddLog adds a build log
 func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log, maxLogSize int64) error {
 	if job != nil {
-		logs.PipelineBuildJobID = job.ID
-		logs.PipelineBuildID = job.WorkflowNodeRunID
+		logs.JobID = job.ID
+		logs.NodeRunID = job.WorkflowNodeRunID
 	}
 
 	// check if log exists without loading data but with log size
-	exists, size, err := ExistsStepLog(db, logs.PipelineBuildJobID, logs.StepOrder)
+	exists, size, err := ExistsStepLog(db, logs.JobID, logs.StepOrder)
 	if err != nil {
 		return sdk.WrapError(err, "cannot check if log exists")
 	}
@@ -598,7 +598,7 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log, max
 		return sdk.WrapError(insertLog(db, logs), "cannot insert log")
 	}
 
-	existingLogs, err := LoadStepLogs(db, logs.PipelineBuildJobID, logs.StepOrder)
+	existingLogs, err := LoadStepLogs(db, logs.JobID, logs.StepOrder)
 	if err != nil {
 		return sdk.WrapError(err, "cannot load existing logs")
 	}

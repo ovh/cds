@@ -82,7 +82,7 @@ func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.A
 		return sdk.Result{}, fmt.Errorf("unable to retrieve retrieve plugin manifest: %v", err)
 	}
 
-	wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
+	wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
 
 	query := integrationplugin.DeployQuery{
 		Options: sdk.ParametersToMap(params),
@@ -94,8 +94,8 @@ func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.A
 		return sdk.Result{}, fmt.Errorf("Error deploying application: %v", err)
 	}
 
-	wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("# Details: %s", res.Details))
-	wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("# Status: %s", res.Status))
+	wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("# Details: %s", res.Details))
+	wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("# Status: %s", res.Status))
 
 	if strings.ToUpper(res.Status) == strings.ToUpper(sdk.StatusSuccess) {
 		integrationPluginClientStop(ctx, integrationPluginClient, done, stopLogs)

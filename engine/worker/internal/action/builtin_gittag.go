@@ -148,10 +148,10 @@ func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, para
 
 	//Send the logs
 	if len(stdOut.Bytes()) > 0 {
-		wk.SendLog(workerruntime.LevelInfo, stdOut.String())
+		wk.SendLog(ctx,workerruntime.LevelInfo, stdOut.String())
 	}
 	if len(stdErr.Bytes()) > 0 {
-		wk.SendLog(workerruntime.LevelWarn, stdErr.String())
+		wk.SendLog(ctx,workerruntime.LevelWarn, stdErr.String())
 	}
 
 	if err != nil {

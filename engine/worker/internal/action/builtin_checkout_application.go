@@ -42,7 +42,7 @@ func RunCheckoutApplication(ctx context.Context, wk workerruntime.Runtime, a sdk
 	if (opts.Branch == "" || opts.Branch == "{{.git.branch}}") && defaultBranch != "" && tag == "" {
 		opts.Branch = defaultBranch
 		opts.SingleBranch = false
-		wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("branch is empty, using the default branch %s", defaultBranch))
+		wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("branch is empty, using the default branch %s", defaultBranch))
 	}
 
 	r := regexp.MustCompile("{{.*}}")

@@ -61,7 +61,7 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 		entrypoint.Value = "index.html"
 	}
 
-	wk.SendLog(workerruntime.LevelInfo, "Fetching files in progress...")
+	wk.SendLog(ctx,workerruntime.LevelInfo, "Fetching files in progress...")
 	file, _, err := sdk.CreateTarFromPaths(wk.Workspace(), path, filesPath, &sdk.TarOptions{TrimDirName: filepath.Dir(path)})
 	if err != nil {
 		return res, fmt.Errorf("cannot tar files: %v", err)
@@ -70,14 +70,14 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	integrationName := sdk.DefaultIfEmptyStorage(strings.TrimSpace(sdk.ParameterValue(a.Parameters, "destination")))
 	projectKey := sdk.ParameterValue(params, "cds.project")
 
-	wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf(`Upload and serving files in progress... with entrypoint "%s"`, entrypoint.Value))
+	wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf(`Upload and serving files in progress... with entrypoint "%s"`, entrypoint.Value))
 	publicURL, _, _, err := wk.Client().QueueStaticFilesUpload(ctx, projectKey, integrationName, jobID, name.Value, entrypoint.Value, staticKey, file)
 	if err != nil {
 		return res, fmt.Errorf("Cannot upload static files: %v", err)
 	}
 
-	wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("Your files are serving at this URL: %s", publicURL))
-	wk.SendLog(workerruntime.LevelInfo, "If you are in the CDS UI you can find all your static files in the artifact tab")
+	wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("Your files are serving at this URL: %s", publicURL))
+	wk.SendLog(ctx,workerruntime.LevelInfo, "If you are in the CDS UI you can find all your static files in the artifact tab")
 
 	return res, nil
 }

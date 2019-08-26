@@ -9,41 +9,19 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// SetupSSHKey writes all the keys in the path, or just the specified key it not nil
-func SetupSSHKey(vars []sdk.Variable, path string, key *sdk.Variable) error {
-	if key == nil {
-		for _, v := range vars {
-			if v.Type != sdk.KeyVariable && v.Type != sdk.KeySSHParameter {
-				continue
-			}
-			if err := write(path, v.Name, v.Value); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-	return write(path, key.Name, key.Value)
+// SetupSSHKey write the key in the specific path
+func SetupSSHKey(path string, key sdk.Variable) error {
+	path = filepath.Join(path, key.Name)
+	return WriteKey(path, key.Value)
 }
 
-// CleanSSHKeys erase all the keys in the path, or just the specified key it not nil
-func CleanSSHKeys(path string, key *sdk.Variable) error {
-	if key == nil {
-		dirRead, errO := os.Open(path)
-		if errO != nil {
-			return sdk.WrapError(errO, "CleanSSHKeys> Cannot open path %s", path)
-		}
-		dirFiles, errR := dirRead.Readdir(0)
-		if errR != nil {
-			return sdk.WrapError(errR, "CleanSSHKeys> Cannot read path %s", path)
-		}
+// CleanAllSSHKeys erase all the keys in the path
+func CleanAllSSHKeys(path string) error {
+	return os.RemoveAll(path)
+}
 
-		for i := range dirFiles {
-			if err := os.RemoveAll(path + dirFiles[i].Name()); err != nil {
-				return sdk.WrapError(err, "Cannot remote file %s", path+dirFiles[i].Name())
-			}
-		}
-		return nil
-	}
+// CleanSSHKey erase the specified key
+func CleanSSHKey(path string, key sdk.Variable) error {
 	return os.RemoveAll(filepath.Join(path, "cds.key."+key.Name+".priv"))
 }
 
@@ -100,12 +78,9 @@ func GetSSHKey(vars []sdk.Variable, path string, key *sdk.Variable) (*SSHKey, er
 	return &SSHKey{Filename: p, Content: b}, nil
 }
 
-func write(path, name, content string) error {
-	path = filepath.Join(path, name)
-
+func WriteKey(path, content string) error {
 	if err := ioutil.WriteFile(path, []byte(content), os.FileMode(0600)); err != nil {
 		return err
 	}
-
 	return nil
 }

@@ -15,6 +15,15 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func returnHTTPError(w http.ResponseWriter, code int, e error) {
+	err := sdk.Error{
+		Message: e.Error(),
+		Status:  code,
+	}
+	log.Error("%v", err)
+	writeJSON(w, err, err.Status)
+}
+
 func LogMiddleware(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Debug("[Worker HTTP Server] %s %s", r.Method, r.URL.String())

@@ -36,7 +36,7 @@ func enablePluginLogger(ctx context.Context, done chan struct{}, c *pluginClient
 	var shouldExit bool
 	defer func() {
 		if accumulator != "" {
-			w.SendLog(workerruntime.LevelInfo, accumulator)
+			w.SendLog(ctx,workerruntime.LevelInfo, accumulator)
 		}
 		close(done)
 	}()
@@ -63,7 +63,7 @@ func enablePluginLogger(ctx context.Context, done chan struct{}, c *pluginClient
 			continue
 		case "\n":
 			accumulator += content
-			w.SendLog(workerruntime.LevelInfo, accumulator)
+			w.SendLog(ctx,workerruntime.LevelInfo, accumulator)
 			accumulator = ""
 			continue
 		default:
@@ -135,7 +135,7 @@ func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Paramete
 	}
 	log.Debug("plugin successfully initialized: %#v", manifest)
 
-	w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s version %s is ready", manifest.Name, manifest.Version))
+	w.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s version %s is ready", manifest.Name, manifest.Version))
 
 	jobID, err := workerruntime.JobID(ctx)
 	if err != nil {
@@ -250,7 +250,7 @@ func pluginFail(ctx context.Context, w workerruntime.Runtime, chanRes chan<- sdk
 		Reason: reason,
 		Status: sdk.StatusFail,
 	}
-	w.SendLog(workerruntime.LevelError, res.Reason)
+	w.SendLog(ctx,workerruntime.LevelError, res.Reason)
 	chanRes <- res
 }
 

@@ -34,7 +34,7 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, params []s
 			Reason: fmt.Sprintf("unknown builtin step: %s", a.Name),
 		}
 		log.Error("worker.runBuiltin> %v", res.Reason)
-		w.SendLog(workerruntime.LevelError, res.Reason)
+		w.SendLog(ctx,workerruntime.LevelError, res.Reason)
 		return res
 	}
 
@@ -44,7 +44,7 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, params []s
 		res.Status = sdk.StatusFail
 		res.Reason = err.Error()
 		log.Error("worker.runBuiltin> %v", err)
-		w.SendLog(workerruntime.LevelError, res.Reason)
+		w.SendLog(ctx,workerruntime.LevelError, res.Reason)
 	}
 	return res
 }

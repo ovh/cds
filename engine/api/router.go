@@ -68,7 +68,6 @@ func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.Ha
 			name = runtime.FuncForPC(reflect.ValueOf(rc.Handler).Pointer()).Name()
 			name = strings.Replace(name, ".func1", "", 1)
 		}
-		log.Debug("handler name= %s", name)
 		id := fmt.Sprintf("%d", sdk.GoroutineID())
 
 		labels := pprof.Labels(

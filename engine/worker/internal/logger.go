@@ -5,8 +5,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -15,12 +13,10 @@ func (wk *CurrentWorker) sendLog(buildID int64, value string, stepOrder int, fin
 	if err := wk.Blur(&value); err != nil {
 		return err
 	}
-
-	l := sdk.NewLog(buildID, value, wk.currentJob.wJob.WorkflowNodeRunID, stepOrder)
+	now := time.Now()
+	l := sdk.NewLog(buildID, wk.currentJob.wJob.WorkflowNodeRunID, value, stepOrder)
 	if final {
-		l.Done, _ = ptypes.TimestampProto(time.Now())
-	} else {
-		l.Done, _ = ptypes.TimestampProto(time.Time{})
+		l.Done = &now
 	}
 	wk.logger.logChan <- *l
 	return nil

@@ -214,7 +214,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 					close(outchan)
 					return
 				}
-				wk.SendLog(workerruntime.LevelInfo, line)
+				wk.SendLog(ctx,workerruntime.LevelInfo, line)
 			}
 		}()
 
@@ -227,7 +227,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 					close(errchan)
 					return
 				}
-				wk.SendLog(workerruntime.LevelWarn, line)
+				wk.SendLog(ctx,workerruntime.LevelWarn, line)
 			}
 		}()
 

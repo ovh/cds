@@ -3,6 +3,7 @@ package workerruntime
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -54,7 +55,7 @@ type Runtime interface {
 	Register(ctx context.Context) error
 	Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error
 	ProcessJob(job sdk.WorkflowNodeJobRunData) (sdk.Result, error)
-	SendLog(level Level, format string)
+	SendLog(ctx context.Context, level Level, format string)
 	Unregister() error
 	Client() cdsclient.WorkerInterface
 	Workspace() afero.Fs
@@ -77,12 +78,12 @@ func SetJobID(ctx context.Context, i int64) context.Context {
 }
 
 func StepOrder(ctx context.Context) (int, error) {
-	stepOrderStr := ctx.Value(jobID)
-	jobID, ok := stepOrderStr.(int)
+	stepOrderStr := ctx.Value(stepOrder)
+	stepOrder, ok := stepOrderStr.(int)
 	if !ok {
-		return -1, errors.New("unable to get step order")
+		return -1, fmt.Errorf("unable to get step order: got %v", stepOrder)
 	}
-	return jobID, nil
+	return stepOrder, nil
 }
 
 func SetStepOrder(ctx context.Context, i int) context.Context {

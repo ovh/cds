@@ -33,7 +33,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 
 	// TODO: we should remove this
 	if !enabled {
-		wk.SendLog(workerruntime.LevelDebug, "Artifact Download is disabled")
+		wk.SendLog(ctx, workerruntime.LevelDebug, "Artifact Download is disabled")
 		return res, nil
 	}
 
@@ -41,7 +41,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 		return res, fmt.Errorf("Unable to create %s: %v", destPath, err)
 	}
 
-	wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("Downloading artifacts from workflow into '%s'...", destPath))
+	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Downloading artifacts from workflow into '%s'...", destPath))
 
 	n, err := strconv.ParseInt(number, 10, 64)
 	if err != nil {
@@ -57,7 +57,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Reason = fmt.Sprintf("Invalid pattern %s, must be a regex : %v", pattern, err)
-		wk.SendLog(workerruntime.LevelInfo, res.Reason)
+		wk.SendLog(ctx, workerruntime.LevelInfo, res.Reason)
 		return res, err
 	}
 
@@ -68,13 +68,13 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 		a := &artifacts[i]
 
 		if pattern != "" && !regexp.MatchString(a.Name) {
-			wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, pattern))
+			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, pattern))
 			wg.Done()
 			continue
 		}
 
 		if tag != "" && a.Tag != tag {
-			wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("%s does not match tag %s - skipped", a.Name, tag))
+			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("%s does not match tag %s - skipped", a.Name, tag))
 			wg.Done()
 			continue
 		}
@@ -88,22 +88,22 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 				res.Status = sdk.StatusFail
 				res.Reason = err.Error()
 				log.Warning("Cannot download artifact (OpenFile) %s: %s", destFile, err)
-				wk.SendLog(workerruntime.LevelError, res.Reason)
+				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
 				return
 			}
-			wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("downloading artifact %s from workflow %s/%s on run %d...", destFile, project, workflow, n))
+			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("downloading artifact %s from workflow %s/%s on run %d...", destFile, project, workflow, n))
 			if err := wk.Client().WorkflowNodeRunArtifactDownload(project, workflow, *a, f); err != nil {
 				res.Status = sdk.StatusFail
 				res.Reason = err.Error()
 				log.Warning("Cannot download artifact %s: %s", destFile, err)
-				wk.SendLog(workerruntime.LevelError, res.Reason)
+				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
 				return
 			}
 			if err := f.Close(); err != nil {
 				res.Status = sdk.StatusFail
 				res.Reason = err.Error()
 				log.Warning("Cannot download artifact %s: %s", destFile, err)
-				wk.SendLog(workerruntime.LevelError, res.Reason)
+				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
 				return
 			}
 		}(a)

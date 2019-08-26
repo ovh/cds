@@ -73,7 +73,7 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, pa
 	// if not auth setted in GitClone action, we try to use VCS Strategy
 	// if failed with VCS Strategy: warn only user (user can use GitClone without auth, with a git url valid)
 	if gitURL == "" && (auth == nil || (auth.Username == "" && auth.Password == "" && len(auth.PrivateKey.Content) == 0)) {
-		wk.SendLog(workerruntime.LevelInfo, "no url and auth parameters, trying to use VCS Strategy from application")
+		wk.SendLog(ctx, workerruntime.LevelInfo, "no url and auth parameters, trying to use VCS Strategy from application")
 		var err error
 		gitURL, auth, err = vcsStrategy(params, secrets)
 		if err != nil {
@@ -123,7 +123,7 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, pa
 	if (opts.Branch == "" || opts.Branch == "{{.git.branch}}") && defaultBranch != "" && tag == "" {
 		opts.Branch = defaultBranch
 		opts.SingleBranch = false
-		wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("branch is empty, using the default branch %s", defaultBranch))
+		wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("branch is empty, using the default branch %s", defaultBranch))
 	}
 
 	r, _ := regexp.Compile("{{.*}}")
@@ -154,14 +154,14 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 	//Perform the git clone
 	userLogCommand, err := git.Clone(url, dir, auth, clone, output)
 
-	w.SendLog(workerruntime.LevelInfo, userLogCommand)
+	w.SendLog(ctx, workerruntime.LevelInfo, userLogCommand)
 
 	//Send the logs
 	if len(stdOut.Bytes()) > 0 {
-		w.SendLog(workerruntime.LevelInfo, stdOut.String())
+		w.SendLog(ctx, workerruntime.LevelInfo, stdOut.String())
 	}
 	if len(stdErr.Bytes()) > 0 {
-		w.SendLog(workerruntime.LevelWarn, stdErr.String())
+		w.SendLog(ctx, workerruntime.LevelWarn, stdErr.String())
 	}
 
 	if err != nil {
@@ -186,7 +186,7 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 	errTag := git.TagList(url, dir, auth, outputGitTag)
 
 	if len(stdTaglistErr.Bytes()) > 0 {
-		w.SendLog(workerruntime.LevelInfo, stdTaglistErr.String())
+		w.SendLog(ctx, workerruntime.LevelInfo, stdTaglistErr.String())
 	}
 
 	if errTag != nil {
@@ -220,7 +220,7 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, dir string, param
 
 		smver, err := semver.ParseTolerant(info.GitDescribe)
 		if err != nil {
-			w.SendLog(workerruntime.LevelError, fmt.Sprintf("!! WARNING !! git describe %s is not semver compatible, we can't create cds.semver variable", info.GitDescribe))
+			w.SendLog(ctx, workerruntime.LevelError, fmt.Sprintf("!! WARNING !! git describe %s is not semver compatible, we can't create cds.semver variable", info.GitDescribe))
 		} else {
 			// Prerelease versions
 			// for 0.31.1-4-g595de235a, smver.Pre = 4-g595de235a
@@ -270,7 +270,7 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, dir string, param
 	}
 
 	if tag != "" && tag != sdk.DefaultGitCloneParameterTagValue {
-		w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("git.tag: %s", tag))
+		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.tag: %s", tag))
 	} else {
 		if branch == "" || branch == "{{.git.branch}}" {
 			if info.Branch != "" {
@@ -281,12 +281,12 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, dir string, param
 				}
 				res = append(res, gitBranch)
 
-				w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("git.branch: %s", info.Branch))
+				w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.branch: %s", info.Branch))
 			} else {
-				w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("git.branch: [empty]"))
+				w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.branch: [empty]"))
 			}
 		} else if branch != "" && branch != "{{.git.branch}}" {
-			w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("git.branch: %s", branch))
+			w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.branch: %s", branch))
 		}
 
 		if commit == "" || commit == "{{.git.hash}}" {
@@ -307,12 +307,12 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, dir string, param
 					Value: hashShort,
 				})
 
-				w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("git.hash: %s", info.Hash))
+				w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.hash: %s", info.Hash))
 			} else {
-				w.SendLog(workerruntime.LevelInfo, "git.hash: [empty]")
+				w.SendLog(ctx, workerruntime.LevelInfo, "git.hash: [empty]")
 			}
 		} else {
-			w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("git.hash: %s", commit))
+			w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.hash: %s", commit))
 		}
 	}
 
@@ -325,12 +325,12 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, dir string, param
 			}
 			res = append(res, gitMessage)
 
-			w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("git.message: %s", info.Message))
+			w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.message: %s", info.Message))
 		} else {
-			w.SendLog(workerruntime.LevelInfo, "git.message: [empty]")
+			w.SendLog(ctx, workerruntime.LevelInfo, "git.message: [empty]")
 		}
 	} else {
-		w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("git.message: %s", message))
+		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.message: %s", message))
 	}
 
 	if author == "" {
@@ -342,12 +342,12 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, dir string, param
 			}
 
 			res = append(res, gitAuthor)
-			w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("git.author: %s", info.Author))
+			w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.author: %s", info.Author))
 		} else {
-			w.SendLog(workerruntime.LevelInfo, "git.author: [empty]")
+			w.SendLog(ctx, workerruntime.LevelInfo, "git.author: [empty]")
 		}
 	} else {
-		w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("git.author: %s", author))
+		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.author: %s", author))
 	}
 
 	if authorEmail == "" {
@@ -359,12 +359,12 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, dir string, param
 			}
 
 			res = append(res, gitAuthorEmail)
-			w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("git.author.email: %s", info.AuthorEmail))
+			w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.author.email: %s", info.AuthorEmail))
 		} else {
-			w.SendLog(workerruntime.LevelInfo, "git.author.email: [empty]")
+			w.SendLog(ctx, workerruntime.LevelInfo, "git.author.email: [empty]")
 		}
 	} else {
-		w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("git.author.email: %s", authorEmail))
+		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.author.email: %s", authorEmail))
 	}
 	return res, nil
 }

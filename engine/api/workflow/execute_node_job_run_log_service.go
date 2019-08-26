@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/golang/protobuf/ptypes"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -23,25 +23,18 @@ func updateServiceLog(db gorp.SqlExecutor, log *sdk.ServiceLog) error {
 		WHERE id = $1
 	`
 
+	var now = time.Now()
+
 	if log.Start == nil {
-		log.Start, _ = ptypes.TimestampProto(time.Now())
+		log.Start = &now
 	}
 	if log.LastModified == nil {
-		log.LastModified, _ = ptypes.TimestampProto(time.Now())
+		log.LastModified = &now
 	}
 
-	start, errs := ptypes.Timestamp(log.Start)
-	if errs != nil {
-		return errs
-	}
-	lastModified, errm := ptypes.Timestamp(log.LastModified)
-	if errm != nil {
-		return errm
-	}
+	_, errU := db.Exec(query, log.ID, log.WorkflowNodeJobRunID, log.WorkflowNodeRunID, log.ServiceRequirementName, log.Start, log.LastModified, log.Val)
 
-	_, errU := db.Exec(query, log.Id, log.WorkflowNodeJobRunID, log.WorkflowNodeRunID, log.ServiceRequirementName, start, lastModified, log.Val)
-
-	return errU
+	return sdk.WithStack(errU)
 }
 
 // insertServiceLog insert service log into database
@@ -53,23 +46,15 @@ func insertServiceLog(db gorp.SqlExecutor, log *sdk.ServiceLog) error {
 	RETURNING id
 	`
 
+	var now = time.Now()
 	if log.Start == nil {
-		log.Start, _ = ptypes.TimestampProto(time.Now())
+		log.Start = &now
 	}
 	if log.LastModified == nil {
-		log.LastModified, _ = ptypes.TimestampProto(time.Now())
+		log.LastModified = &now
 	}
 
-	start, errs := ptypes.Timestamp(log.Start)
-	if errs != nil {
-		return errs
-	}
-	lastModified, errm := ptypes.Timestamp(log.LastModified)
-	if errm != nil {
-		return errm
-	}
-
-	return db.QueryRow(query, log.WorkflowNodeJobRunID, log.WorkflowNodeRunID, log.ServiceRequirementName, start, lastModified, log.Val).Scan(&log.Id)
+	return db.QueryRow(query, log.WorkflowNodeJobRunID, log.WorkflowNodeRunID, log.ServiceRequirementName, log.Start, log.LastModified, log.Val).Scan(&log.ID)
 }
 
 // ExistsServiceLog returns the size of service log if exists.
@@ -98,20 +83,18 @@ func LoadServiceLog(db gorp.SqlExecutor, nodeRunJobID int64, serviceName string)
 			FROM requirement_service_logs
 		WHERE workflow_node_run_job_id = $1 AND requirement_service_name = $2
 	`
-	var start, lastModified time.Time
 	var log sdk.ServiceLog
-	err := db.QueryRow(query, nodeRunJobID, serviceName).Scan(&log.Id, &log.WorkflowNodeJobRunID, &log.WorkflowNodeRunID, &log.ServiceRequirementName, &start, &lastModified, &log.Val)
+	var s, m pq.NullTime
+	err := db.QueryRow(query, nodeRunJobID, serviceName).Scan(&log.ID, &log.WorkflowNodeJobRunID, &log.WorkflowNodeRunID, &log.ServiceRequirementName, &s, &m, &log.Val)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
-	var errT error
-	log.Start, errT = ptypes.TimestampProto(start)
-	if errT != nil {
-		return nil, errT
+
+	if s.Valid {
+		log.Start = &s.Time
 	}
-	log.LastModified, errT = ptypes.TimestampProto(lastModified)
-	if errT != nil {
-		return nil, errT
+	if m.Valid {
+		log.LastModified = &m.Time
 	}
 
 	return &log, nil
@@ -131,21 +114,19 @@ func LoadServicesLogsByJob(db gorp.SqlExecutor, nodeJobRunID int64) ([]sdk.Servi
 
 	var logs []sdk.ServiceLog
 	for rows.Next() {
-		var start, lastModified time.Time
 		var log sdk.ServiceLog
-		errS := rows.Scan(&log.Id, &log.WorkflowNodeJobRunID, &log.WorkflowNodeRunID, &log.ServiceRequirementName, &start, &lastModified, &log.Val)
+		var s, m pq.NullTime
+
+		errS := rows.Scan(&log.ID, &log.WorkflowNodeJobRunID, &log.WorkflowNodeRunID, &log.ServiceRequirementName, &s, &m, &log.Val)
 		if errS != nil {
-			return nil, errS
+			return nil, sdk.WithStack(errS)
 		}
 
-		var errT error
-		log.Start, errT = ptypes.TimestampProto(start)
-		if errT != nil {
-			return nil, errT
+		if s.Valid {
+			log.Start = &s.Time
 		}
-		log.LastModified, errT = ptypes.TimestampProto(lastModified)
-		if errT != nil {
-			return nil, errT
+		if m.Valid {
+			log.LastModified = &m.Time
 		}
 
 		logs = append(logs, log)

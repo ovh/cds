@@ -33,7 +33,7 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 	}
 
 	var tests venom.Tests
-	wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("%d", len(files))+" file(s) to analyze")
+	wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("%d", len(files))+" file(s) to analyze")
 
 	for _, f := range files {
 		var ftests venom.Tests
@@ -55,10 +55,10 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 		}
 	}
 
-	wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("%d", len(tests.TestSuites))+" Total Testsuite(s)")
+	wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("%d", len(tests.TestSuites))+" Total Testsuite(s)")
 	reasons := computeStats(&res, &tests)
 	for _, r := range reasons {
-		wk.SendLog(workerruntime.LevelInfo, r)
+		wk.SendLog(ctx,workerruntime.LevelInfo, r)
 	}
 
 	if err := wk.Blur(tests); err != nil {

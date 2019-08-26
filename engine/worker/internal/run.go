@@ -169,10 +169,10 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	log.Info("runAction> start action %s %s %d", a.StepName, actionName, jobID)
 	defer func() { log.Info("runAction> end action %s %s run %d", a.StepName, actionName, jobID) }()
 
-	w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("Starting step \"%s\"", actionName))
+	w.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("Starting step \"%s\"", actionName))
 	var t0 = time.Now()
 	defer func() {
-		w.SendLog(workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\" (%s)", actionName, sdk.Round(time.Since(t0), time.Second).String()))
+		w.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\" (%s)", actionName, sdk.Round(time.Since(t0), time.Second).String()))
 	}()
 
 	//If the action is disabled; skip it

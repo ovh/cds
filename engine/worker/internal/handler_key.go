@@ -16,6 +16,8 @@ import (
 	"github.com/ovh/cds/sdk/vcs"
 )
 
+var keysDirectory string
+
 func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -50,11 +52,13 @@ func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
+		var installedKeyPath string
+
 		switch key.Type {
 		case sdk.KeyTypeSSH:
 			if fileName == "" {
-				wk.currentJob.pkey = path.Join(keysDirectory, key.Name)
-				if err := vcs.CleanSSHKeys(keysDirectory, nil); err != nil {
+				installedKeyPath = path.Join(keysDirectory, key.Name)
+				if err := vcs.CleanAllSSHKeys(keysDirectory); err != nil {
 					errClean := sdk.Error{
 						Message: fmt.Sprintf("Cannot clean ssh keys : %v", err),
 						Status:  http.StatusInternalServerError,
@@ -64,7 +68,7 @@ func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
 					return
 				}
 
-				if err := vcs.SetupSSHKey(wk.currentJob.secrets, keysDirectory, key); err != nil {
+				if err := vcs.SetupSSHKey(keysDirectory, *key); err != nil {
 					errSetup := sdk.Error{
 						Message: fmt.Sprintf("Cannot setup ssh key %s : %v", keyName, err),
 						Status:  http.StatusInternalServerError,
@@ -74,7 +78,7 @@ func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
 					return
 				}
 			} else {
-				if err := ioutil.WriteFile(fileName, []byte(key.Value), os.FileMode(0600)); err != nil {
+				if err := vcs.WriteKey(fileName, key.Value); err != nil {
 					errSetup := sdk.Error{
 						Message: fmt.Sprintf("Cannot setup ssh key %s : %v", keyName, err),
 						Status:  http.StatusInternalServerError,
@@ -83,9 +87,13 @@ func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
 					writeJSON(w, errSetup, errSetup.Status)
 					return
 				}
+				installedKeyPath = fileName
 			}
 
-			writeJSON(w, workerruntime.KeyResponse{PKey: wk.currentJob.pkey, Type: sdk.KeyTypeSSH}, http.StatusOK)
+			writeJSON(w, workerruntime.KeyResponse{
+				PKey: installedKeyPath,
+				Type: sdk.KeyTypeSSH,
+			}, http.StatusOK)
 
 		case sdk.KeyTypePGP:
 			gpg2Found := false

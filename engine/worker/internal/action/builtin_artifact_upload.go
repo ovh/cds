@@ -50,7 +50,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 
 	go func() {
 		for err := range chanError {
-			wk.SendLog(workerruntime.LevelInfo, err.Error())
+			wk.SendLog(ctx,workerruntime.LevelInfo, err.Error())
 			globalError.Append(err)
 			wgErrors.Done()
 		}
@@ -72,9 +72,9 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 				return
 			}
 			if throughTempURL {
-				wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to object store", filename, duration.Seconds()))
+				wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to object store", filename, duration.Seconds()))
 			} else {
-				wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS API", filename, duration.Seconds()))
+				wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS API", filename, duration.Seconds()))
 			}
 		}(p)
 		if len(filesPath) > 1 {

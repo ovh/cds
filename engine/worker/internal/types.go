@@ -15,6 +15,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // WorkerServerPort is name of environment variable set to local worker HTTP server port
@@ -38,7 +39,6 @@ type CurrentWorker struct {
 	currentJob struct {
 		wJob         *sdk.WorkflowNodeJobRun
 		newVariables []sdk.Variable
-		pkey         string
 		gitsshPath   string
 		params       []sdk.Parameter
 		secrets      []sdk.Variable
@@ -64,12 +64,14 @@ func (wk *CurrentWorker) Init(name, hatcheryName, apiEndpoint, token string, mod
 	return nil
 }
 
-func (wk *CurrentWorker) SendLog(level workerruntime.Level, s string) {
-	ctx := wk.currentJob.context
+func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level, s string) {
 	jobID, _ := workerruntime.JobID(ctx)
-	stepOrder, _ := workerruntime.StepOrder(ctx)
+	stepOrder, err := workerruntime.StepOrder(ctx)
 	if !strings.HasSuffix(s, "\n") {
 		s += "\n"
+	}
+	if err != nil {
+		log.Error("SendLog> %v", err)
 	}
 	wk.sendLog(jobID, fmt.Sprintf("[%s] ", level)+s, stepOrder, false)
 }
@@ -102,14 +104,6 @@ func (w *CurrentWorker) Environ() []string {
 
 	// worker export http port
 	newEnv = append(newEnv, fmt.Sprintf("%s=%d", WorkerServerPort, w.HTTPPort()))
-
-	//DEPRECATED - BEGIN
-	// manage keys
-	if w.currentJob.pkey != "" && w.currentJob.gitsshPath != "" {
-		newEnv = append(newEnv, fmt.Sprintf("PKEY=%s", w.currentJob.pkey))
-		newEnv = append(newEnv, fmt.Sprintf("GIT_SSH=%s", w.currentJob.gitsshPath))
-	}
-	//DEPRECATED - END
 
 	//set up environment variables from pipeline build job parameters
 	for _, p := range w.currentJob.params {

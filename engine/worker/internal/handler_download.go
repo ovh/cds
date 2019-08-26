@@ -88,20 +88,20 @@ func downloadHandler(wk *CurrentWorker) http.HandlerFunc {
 		wg := new(sync.WaitGroup)
 		wg.Add(len(artifacts))
 
-		wk.SendLog(workerruntime.LevelInfo, "Downloading artifacts from into current directory")
+		//wk.SendLog(ctx,workerruntime.LevelInfo, "Downloading artifacts from into current directory")
 
 		var isInError bool
 		for i := range artifacts {
 			a := &artifacts[i]
 
 			if reqArgs.Pattern != "" && !regexp.MatchString(a.Name) {
-				wk.SendLog(workerruntime.LevelError, fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, reqArgs.Pattern))
+				//wk.SendLog(ctx,workerruntime.LevelError, fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, reqArgs.Pattern))
 				wg.Done()
 				continue
 			}
 
 			if reqArgs.Tag != "" && a.Tag != reqArgs.Tag {
-				wk.SendLog(workerruntime.LevelError, fmt.Sprintf("%s does not match tag %s - skipped", a.Name, reqArgs.Tag))
+				//wk.SendLog(ctx,workerruntime.LevelError, fmt.Sprintf("%s does not match tag %s - skipped", a.Name, reqArgs.Tag))
 				wg.Done()
 				continue
 			}
@@ -112,18 +112,18 @@ func downloadHandler(wk *CurrentWorker) http.HandlerFunc {
 				path := path.Join(reqArgs.Destination, a.Name)
 				f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(a.Perm))
 				if err != nil {
-					wk.SendLog(workerruntime.LevelError, fmt.Sprintf("Cannot download artifact (OpenFile) %s: %s", a.Name, err))
+					//wk.SendLog(ctx,workerruntime.LevelError, fmt.Sprintf("Cannot download artifact (OpenFile) %s: %s", a.Name, err))
 					isInError = true
 					return
 				}
-				wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("downloading artifact %s with tag %s from workflow %s/%s on run %d (%s)...", a.Name, a.Tag, projectKey, reqArgs.Workflow, reqArgs.Number, path))
+				//wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("downloading artifact %s with tag %s from workflow %s/%s on run %d (%s)...", a.Name, a.Tag, projectKey, reqArgs.Workflow, reqArgs.Number, path))
 				if err := wk.client.WorkflowNodeRunArtifactDownload(projectKey, reqArgs.Workflow, *a, f); err != nil {
-					wk.SendLog(workerruntime.LevelInfo, fmt.Sprintf("Cannot download artifact %s: %s", a.Name, err))
+					//wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("Cannot download artifact %s: %s", a.Name, err))
 					isInError = true
 					return
 				}
 				if err := f.Close(); err != nil {
-					wk.SendLog(workerruntime.LevelError, fmt.Sprintf("Cannot download artifact %s: %s", a.Name, err))
+					//wk.SendLog(ctx,workerruntime.LevelError, fmt.Sprintf("Cannot download artifact %s: %s", a.Name, err))
 					isInError = true
 					return
 				}
