@@ -56,6 +56,9 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	// ui.tar.gz contains the dist directory
 	s.HTMLDir = filepath.Join(s.Cfg.Staticdir, "dist")
 	s.Cfg.BaseURL = strings.TrimSpace(s.Cfg.BaseURL)
+	if s.Cfg.BaseURL == "" { // s.Cfg.BaseURL could not be empty
+		s.Cfg.BaseURL = "/"
+	}
 
 	return nil
 }
@@ -82,15 +85,23 @@ func (s *Service) Serve(c context.Context) error {
 	log.Info("ui> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
 	s.StartupTime = time.Now()
 
+	fromTmpl, err := s.prepareIndexHTML()
+	if err != nil {
+		return err
+	}
+
 	if err := s.checkStaticFiles(); err != nil {
 		return err
 	}
-	if err := s.checkChecksumFiles(); err != nil {
-		return err
+
+	if fromTmpl {
+		// if we have a index.tmpl, it's from a ui.tar.gz
+		// we can check the checksum or files based on FILES_UI
+		if err := s.checkChecksumFiles(); err != nil {
+			return err
+		}
 	}
-	if err := s.prepareIndexHTML(); err != nil {
-		return err
-	}
+
 	if err := s.indexHTMLReplaceVar(); err != nil {
 		return err
 	}
@@ -126,10 +137,9 @@ func (s *Service) Serve(c context.Context) error {
 // filename;shar512values
 // for each line, we check that the files in dist have the same sha512
 func (s *Service) checkChecksumFiles() error {
+	log.Debug("ui> checking checksum files...")
+
 	filesUI := filepath.Join(s.HTMLDir, "FILES_UI")
-	if _, err := os.Open(filesUI); os.IsNotExist(err) {
-		return nil
-	}
 	content, err := ioutil.ReadFile(filesUI)
 	if err != nil {
 		return sdk.WrapError(err, "error while reading file %s", filesUI)
@@ -138,6 +148,9 @@ func (s *Service) checkChecksumFiles() error {
 
 	for _, lineValues := range lines {
 		line := strings.Split(lineValues, ";")
+		if len(line) != 2 {
+			continue
+		}
 		sha512sum, err512 := sdk.FileSHA512sum(filepath.Join(s.HTMLDir, line[0]))
 		if err512 != nil {
 			return sdk.WrapError(err512, "error while compute sha512 on %s", line[0])
@@ -146,6 +159,7 @@ func (s *Service) checkChecksumFiles() error {
 			return fmt.Errorf("file %s sha512:%s computed:%s", line[0], line[1], sha512sum)
 		}
 	}
+	log.Debug("ui> checking checksum files OK")
 	return nil
 }
 
@@ -176,22 +190,22 @@ func (s *Service) checkStaticFiles() error {
 // with the value version
 // from a release: index.tmpl exists. This func copy it with the value sentryURL and baseURL rewritted.
 // from source: index.tmpl does not exist. this func do nothing
-func (s *Service) prepareIndexHTML() error {
+func (s *Service) prepareIndexHTML() (bool, error) {
 	indexTMPL := filepath.Join(s.HTMLDir, "index.tmpl")
 	indexTMPLFile, err := os.Open(indexTMPL)
 	if os.IsNotExist(err) {
-		return nil
+		return false, nil
 	}
 	defer indexTMPLFile.Close()
 
 	indexHTML := filepath.Join(s.HTMLDir, "index.html")
 	indexHTMLFile, err := os.Create(indexHTML)
 	if err != nil {
-		return sdk.WrapError(err, "error while creating %s file", indexHTML)
+		return true, sdk.WrapError(err, "error while creating %s file", indexHTML)
 	}
 	defer indexHTMLFile.Close()
 	_, err = io.Copy(indexHTMLFile, indexTMPLFile)
-	return sdk.WrapError(err, "error while copy index.tmpl to index.html file")
+	return true, sdk.WrapError(err, "error while copy index.tmpl to index.html file")
 }
 
 func (s *Service) indexHTMLReplaceVar() error {
