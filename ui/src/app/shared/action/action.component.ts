@@ -48,16 +48,18 @@ export class ActionComponent implements OnDestroy, OnInit {
 
     @Input()
     set action(data: Action) {
-        this.editableAction = cloneDeep(data);
-        this.editableAction.showAddStep = false;
-        if (!this.editableAction.requirements) {
-            this.editableAction.requirements = new Array<Requirement>();
-        } else {
-            this.prepareEditRequirements();
-        }
-        this.steps = new Array<Action>();
-        if (this.editableAction.actions) {
-            this.steps = cloneDeep(this.editableAction.actions);
+        if (data) {
+            this.editableAction = cloneDeep(data);
+            this.editableAction.showAddStep = false;
+            if (!this.editableAction.requirements) {
+                this.editableAction.requirements = new Array<Requirement>();
+            } else {
+                this.prepareEditRequirements();
+            }
+            this.steps = new Array<Action>();
+            if (this.editableAction.actions) {
+                this.steps = cloneDeep(this.editableAction.actions);
+            }
         }
     }
 
@@ -99,12 +101,14 @@ export class ActionComponent implements OnDestroy, OnInit {
     }
 
     ngOnInit() {
-        this._actionService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(as => {
-            this.publicActions = as;
-        });
-        this._workerModelService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(wms => {
-            this.workerModels = wms;
-        });
+        if (this.project) {
+            this._actionService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(as => {
+                this.publicActions = as;
+            });
+            this._workerModelService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(wms => {
+                this.workerModels = wms;
+            });
+        }
     }
 
     ngOnDestroy() {

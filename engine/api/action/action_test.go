@@ -22,8 +22,8 @@ func TestCRUD(t *testing.T) {
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	grp2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	defer func() {
-		assert.Nil(t, assets.DeleteTestGroup(t, db, grp1))
-		assert.Nil(t, assets.DeleteTestGroup(t, db, grp2))
+		assets.DeleteTestGroup(t, db, grp1)
+		assets.DeleteTestGroup(t, db, grp2)
 	}()
 
 	scriptAction := assets.GetBuiltinOrPluginActionByName(t, db, "Script")
@@ -160,7 +160,7 @@ func Test_RetrieveForGroupAndName(t *testing.T) {
 
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	defer func() {
-		assert.NoError(t, assets.DeleteTestGroup(t, db, grp1))
+		assets.DeleteTestGroup(t, db, grp1)
 	}()
 
 	scriptAction := assets.GetBuiltinOrPluginActionByName(t, db, "Script")
@@ -193,7 +193,7 @@ func Test_CheckChildrenForGroupIDsWithLoop(t *testing.T) {
 
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	defer func() {
-		assert.NoError(t, assets.DeleteTestGroup(t, db, grp1))
+		assets.DeleteTestGroup(t, db, grp1)
 	}()
 
 	// Insert action with builtin child

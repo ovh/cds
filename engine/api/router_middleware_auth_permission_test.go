@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/group"
@@ -578,7 +579,6 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 				},
 			},
 			args: args{
-
 				wName:           "workflow1",
 				pKey:            "key1",
 				permissionLevel: 5,
@@ -1007,5 +1007,41 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 }
 
 func Test_checkActionPermissions(t *testing.T) {
-	// TODO
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	defer func() {
+		assets.DeleteTestGroup(t, db, g)
+	}()
+
+	a := sdk.Action{
+		GroupID: &g.ID,
+		Type:    sdk.DefaultAction,
+		Name:    sdk.RandomString(10),
+	}
+	require.NoError(t, action.Insert(db, &a))
+	defer func() {
+		require.NoError(t, action.Delete(db, &a))
+	}()
+
+	assert.Error(t, api.checkActionPermissions(context.TODO(), a.Name, sdk.PermissionRead, map[string]string{
+		"permGroupName": sdk.RandomString(10),
+	}), "error should be returned for random group name")
+	assert.Error(t, api.checkActionPermissions(context.TODO(), sdk.RandomString(10), sdk.PermissionRead, map[string]string{
+		"permGroupName": g.Name,
+	}), "error should be returned for random action name")
+	assert.NoError(t, api.checkActionPermissions(context.TODO(), a.Name, sdk.PermissionRead, map[string]string{
+		"permGroupName": g.Name,
+	}), "no error should be returned for the right group an action names")
+}
+
+func Test_checkActionBuiltinPermissions(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	scriptAction := assets.GetBuiltinOrPluginActionByName(t, db, "Script")
+
+	assert.Error(t, api.checkActionBuiltinPermissions(context.TODO(), sdk.RandomString(10), sdk.PermissionRead, nil), "error should be returned for random action name")
+	assert.NoError(t, api.checkActionBuiltinPermissions(context.TODO(), scriptAction.Name, sdk.PermissionRead, nil), "no error should be returned for valid action name")
 }

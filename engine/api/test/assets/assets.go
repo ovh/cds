@@ -120,9 +120,9 @@ func SetUserGroupAdmin(t *testing.T, db gorp.SqlExecutor, groupID int64, userID 
 }
 
 // DeleteTestGroup delete a test group.
-func DeleteTestGroup(t *testing.T, db gorp.SqlExecutor, g *sdk.Group) error {
+func DeleteTestGroup(t *testing.T, db gorp.SqlExecutor, g *sdk.Group) {
 	t.Logf("Delete Group %s", g.Name)
-	return group.Delete(context.TODO(), db, g)
+	require.NoError(t, group.Delete(context.TODO(), db, g))
 }
 
 // InsertAdminUser have to be used only for tests.
