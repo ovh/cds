@@ -199,6 +199,21 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	if !node.IsLinkedToRepo(&wr.Workflow) {
 		return nil
 	}
+
+	notif, errN := loadVCSNotificationWithNodeID(db, wr.WorkflowID, node.ID)
+	if errN != nil {
+		return sdk.WrapError(errN, "cannot load notification")
+	}
+
+	// vcs notification not enabled
+	if notif.ID == 0 {
+		return nil
+	}
+
+	if nodeRun.VCSReport == "" {
+		nodeRun.VCSReport = notif.Settings.Template.Body
+	}
+
 	app = wr.Workflow.Applications[node.Context.ApplicationID]
 	if node.Context.PipelineID > 0 {
 		pip = wr.Workflow.Pipelines[node.Context.PipelineID]

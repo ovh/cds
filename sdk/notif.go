@@ -1,9 +1,17 @@
 package sdk
 
+import (
+	"bytes"
+	"text/template"
+
+	"github.com/ovh/cds/sdk/interpolate"
+)
+
 //const
 const (
 	EmailUserNotification  = "email"
 	JabberUserNotification = "jabber"
+	VCSUserNotification    = "vcs"
 )
 
 //const
@@ -69,5 +77,53 @@ Branch : {{.git.branch | default "n/a"}}`,
 	UserNotificationTemplateMap = map[string]UserNotificationTemplate{
 		EmailUserNotification:  UserNotificationTemplateEmail,
 		JabberUserNotification: UserNotificationTemplateJabber,
+		VCSUserNotification: UserNotificationTemplate{
+			Body: DefaultWorkflowNodeRunReport,
+		},
 	}
 )
+
+const DefaultWorkflowNodeRunReport = `[[- if .Stages ]]
+CDS Report [[.WorkflowNodeName]]#[[.Number]].[[.SubNumber]] [[ if eq .Status "Success" -]] ✔ [[ else ]][[ if eq .Status "Fail" -]] ✘ [[ else ]][[ if eq .Status "Stopped" -]] ■ [[ else ]]- [[ end ]] [[ end ]] [[ end ]]
+[[- range $s := .Stages]]
+[[- if $s.RunJobs ]]
+* [[$s.Name]]
+[[- range $j := $s.RunJobs]]
+  * [[$j.Job.Action.Name]] [[ if eq $j.Status "Success" -]] ✔ [[ else ]][[ if eq $j.Status "Fail" -]] ✘ [[ else ]][[ if eq $j.Status "Stopped" -]] ■ [[ else ]]- [[ end ]] [[ end ]] [[ end ]]
+[[- end]]
+[[- end]]
+[[- end]]
+[[- end]]
+
+[[- if .Tests ]]
+[[- if gt .Tests.TotalKO 0]]
+Unit Tests Report
+
+[[- range $ts := .Tests.TestSuites]]
+* [[ $ts.Name ]]
+[[range $tc := $ts.TestCases]]
+  [[- if or ($tc.Errors) ($tc.Failures) ]]  * [[ $tc.Name ]] ✘ [[- end]]
+[[end]]
+[[- end]]
+[[- end]]
+[[- end]]
+`
+
+func (nr WorkflowNodeRun) Report() (string, error) {
+	reportStr := DefaultWorkflowNodeRunReport
+	if nr.VCSReport != "" {
+		reportStr = nr.VCSReport
+	}
+
+	tmpl, err := template.New("vcsreport").Delims("[[", "]]").Funcs(interpolate.InterpolateHelperFuncs).Parse(reportStr)
+	if err != nil {
+		return "", WrapError(err, "cannot create new template for first part")
+	}
+
+	outFirst := new(bytes.Buffer)
+	if err := tmpl.Execute(outFirst, nr); err != nil {
+		return "", WrapError(err, "cannot execute template for first part")
+	}
+
+	return interpolate.Do(outFirst.String(), ParametersToMap(nr.BuildParameters))
+}

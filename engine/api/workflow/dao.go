@@ -715,11 +715,35 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		return sdk.WrapError(err, "Insert> Unable to insert Workflow Data")
 	}
 
+	customVcsNotif := false
 	// Insert notifications
 	for i := range w.Notifications {
 		n := &w.Notifications[i]
+		if n.Type == sdk.VCSUserNotification {
+			customVcsNotif = true
+		}
 		if err := InsertNotification(db, w, n); err != nil {
 			return sdk.WrapError(err, "Unable to insert update workflow(%d) notification (%#v)", w.ID, n)
+		}
+	}
+
+	if !customVcsNotif {
+		notif := sdk.WorkflowNotification{
+			Settings: sdk.UserNotificationSettings{
+				Template: &sdk.UserNotificationTemplate{
+					Body: sdk.DefaultWorkflowNodeRunReport,
+				},
+			},
+			WorkflowID: w.ID,
+			Type:       sdk.VCSUserNotification,
+		}
+		for _, node := range w.WorkflowData.Array() {
+			if node.IsLinkedToRepo(w) {
+				notif.SourceNodeRefs = append(notif.SourceNodeRefs, node.Ref)
+			}
+		}
+		if err := InsertNotification(db, w, &notif); err != nil {
+			return sdk.WrapError(err, "Unable to insert VCS workflow(%d) notification (%#v)", w.ID, notif)
 		}
 	}
 
