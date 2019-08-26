@@ -72,19 +72,6 @@ This integration enables some features:
     </item>
     
     <item>
-      <title>Kafka</title>
-      <link>https://ovh.github.io/cds/docs/integrations/kafka/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/integrations/kafka/</guid>
-      <description>The Kafka Integration is a Self-Service integration that can be configured on a CDS Project.
-This integration enables the Kafka Hook feature:
-Configure with WebUI You can add a Kafka Integration on your CDS Project.
-Configure with cdsctl Import a Kafka Integration on your CDS Project Create a file project-configuration.yml:
-name: your-kafka-integration model: name: Kafka identifier: github.com/ovh/cds/integration/builtin/kafka hook: true config: broker url: value: n1.o1.your-broker:9093,n2.o1.n1.o1.your-broker:9093,n3.o1.n1.o1.your-broker:9093 type: string password: value: &#39;**********&#39; type: password username: value: kafka-username type: string  Import the integration on your CDS Project with:</description>
-    </item>
-    
-    <item>
       <title>Mesos/Marathon</title>
       <link>https://ovh.github.io/cds/docs/integrations/marathon/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

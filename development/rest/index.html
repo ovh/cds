@@ -20,17 +20,17 @@
     content=" How to request CDS API? You need two HTTP Headers to request CDS API:
  Session-Token: your-cds-token X-Requested-With: X-CDS-SDK  # List CDS Project curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-CDS-SDK&quot; https://your-cds-api/project  About CDS Token The CDS UI uses a non-persistent token. If you want to play with CDS API, you probably need a persistent token.
 You can generate it with:
- cdsctl login Code it with the Go SDK Call CDS API: POST /login with body {&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;} and header -H &quot;X-Requested-With: X-CDS-SDK&quot;  CDS HTTP Routes  accesstoken action actionBuiltin admin artifact auth bookmarks broadcast build config download group hatchery hook import integration login mon notification parameter pipeline platform plugin project queue repositories_manager requirement services staticfiles suggest template ui user variable warning worker workflow  ">
+ cdsctl login Code it with the Go SDK Call CDS API: POST /login with body {&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;} and header -H &quot;X-Requested-With: X-CDS-SDK&quot;  CDS HTTP Routes  accesstoken action actionBuiltin admin auth bookmarks broadcast config download group hook import integration login mon notification parameter project queue repositories_manager requirement services suggest template ui user variable warning worker workflow  ">
 <meta property="og:description"
     content=" How to request CDS API? You need two HTTP Headers to request CDS API:
  Session-Token: your-cds-token X-Requested-With: X-CDS-SDK  # List CDS Project curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-CDS-SDK&quot; https://your-cds-api/project  About CDS Token The CDS UI uses a non-persistent token. If you want to play with CDS API, you probably need a persistent token.
 You can generate it with:
- cdsctl login Code it with the Go SDK Call CDS API: POST /login with body {&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;} and header -H &quot;X-Requested-With: X-CDS-SDK&quot;  CDS HTTP Routes  accesstoken action actionBuiltin admin artifact auth bookmarks broadcast build config download group hatchery hook import integration login mon notification parameter pipeline platform plugin project queue repositories_manager requirement services staticfiles suggest template ui user variable warning worker workflow  ">
+ cdsctl login Code it with the Go SDK Call CDS API: POST /login with body {&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;} and header -H &quot;X-Requested-With: X-CDS-SDK&quot;  CDS HTTP Routes  accesstoken action actionBuiltin admin auth bookmarks broadcast config download group hook import integration login mon notification parameter project queue repositories_manager requirement services suggest template ui user variable warning worker workflow  ">
 <meta name="twitter:description"
     content=" How to request CDS API? You need two HTTP Headers to request CDS API:
  Session-Token: your-cds-token X-Requested-With: X-CDS-SDK  # List CDS Project curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-CDS-SDK&quot; https://your-cds-api/project  About CDS Token The CDS UI uses a non-persistent token. If you want to play with CDS API, you probably need a persistent token.
 You can generate it with:
- cdsctl login Code it with the Go SDK Call CDS API: POST /login with body {&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;} and header -H &quot;X-Requested-With: X-CDS-SDK&quot;  CDS HTTP Routes  accesstoken action actionBuiltin admin artifact auth bookmarks broadcast build config download group hatchery hook import integration login mon notification parameter pipeline platform plugin project queue repositories_manager requirement services staticfiles suggest template ui user variable warning worker workflow  ">
+ cdsctl login Code it with the Go SDK Call CDS API: POST /login with body {&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;} and header -H &quot;X-Requested-With: X-CDS-SDK&quot;  CDS HTTP Routes  accesstoken action actionBuiltin admin auth bookmarks broadcast config download group hook import integration login mon notification parameter project queue repositories_manager requirement services suggest template ui user variable warning worker workflow  ">
 <meta property="og:url" content="https://ovh.github.io/cds/development/rest/">
 <meta property="og:title" content="REST API">
 <meta name="twitter:title" content="REST API">
@@ -240,12 +240,6 @@ You can generate it with:
 	
 		
 			
-<a class="item" data-title="artifact" href="https://ovh.github.io/cds/development/rest/artifact/"></a>
-
-		
-	
-		
-			
 <a class="item" data-title="auth" href="https://ovh.github.io/cds/development/rest/auth/"></a>
 
 		
@@ -264,12 +258,6 @@ You can generate it with:
 	
 		
 			
-<a class="item" data-title="build" href="https://ovh.github.io/cds/development/rest/build/"></a>
-
-		
-	
-		
-			
 <a class="item" data-title="config" href="https://ovh.github.io/cds/development/rest/config/"></a>
 
 		
@@ -283,12 +271,6 @@ You can generate it with:
 		
 			
 <a class="item" data-title="group" href="https://ovh.github.io/cds/development/rest/group/"></a>
-
-		
-	
-		
-			
-<a class="item" data-title="hatchery" href="https://ovh.github.io/cds/development/rest/hatchery/"></a>
 
 		
 	
@@ -336,24 +318,6 @@ You can generate it with:
 	
 		
 			
-<a class="item" data-title="pipeline" href="https://ovh.github.io/cds/development/rest/pipeline/"></a>
-
-		
-	
-		
-			
-<a class="item" data-title="platform" href="https://ovh.github.io/cds/development/rest/platform/"></a>
-
-		
-	
-		
-			
-<a class="item" data-title="plugin" href="https://ovh.github.io/cds/development/rest/plugin/"></a>
-
-		
-	
-		
-			
 <a class="item" data-title="project" href="https://ovh.github.io/cds/development/rest/project/"></a>
 
 		
@@ -379,12 +343,6 @@ You can generate it with:
 		
 			
 <a class="item" data-title="services" href="https://ovh.github.io/cds/development/rest/services/"></a>
-
-		
-	
-		
-			
-<a class="item" data-title="staticfiles" href="https://ovh.github.io/cds/development/rest/staticfiles/"></a>
 
 		
 	
@@ -500,15 +458,12 @@ curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-C
 	<a href="https://ovh.github.io/cds/development/rest/action/" >action</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/actionbuiltin/" >actionBuiltin</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/admin/" >admin</a></ul><ul>
-	<a href="https://ovh.github.io/cds/development/rest/artifact/" >artifact</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/auth/" >auth</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/bookmarks/" >bookmarks</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/broadcast/" >broadcast</a></ul><ul>
-	<a href="https://ovh.github.io/cds/development/rest/build/" >build</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/config/" >config</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/download/" >download</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/group/" >group</a></ul><ul>
-	<a href="https://ovh.github.io/cds/development/rest/hatchery/" >hatchery</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/hook/" >hook</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/import/" >import</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/integration/" >integration</a></ul><ul>
@@ -516,15 +471,11 @@ curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-C
 	<a href="https://ovh.github.io/cds/development/rest/mon/" >mon</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/notification/" >notification</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/parameter/" >parameter</a></ul><ul>
-	<a href="https://ovh.github.io/cds/development/rest/pipeline/" >pipeline</a></ul><ul>
-	<a href="https://ovh.github.io/cds/development/rest/platform/" >platform</a></ul><ul>
-	<a href="https://ovh.github.io/cds/development/rest/plugin/" >plugin</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/project/" >project</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/queue/" >queue</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/repositories_manager/" >repositories_manager</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/requirement/" >requirement</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/services/" >services</a></ul><ul>
-	<a href="https://ovh.github.io/cds/development/rest/staticfiles/" >staticfiles</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/suggest/" >suggest</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/template/" >template</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/ui/" >ui</a></ul><ul>

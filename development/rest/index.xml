@@ -47,15 +47,6 @@
     </item>
     
     <item>
-      <title>artifact</title>
-      <link>https://ovh.github.io/cds/development/rest/artifact/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/artifact/</guid>
-      <description> GET /artifact/&amp;lt;hash&amp;gt;    URL /artifact/&amp;lt;hash&amp;gt;     Method GET   Permissions Auth: false   Code downloadArtifactDirectHandler    GET /artifact/store    URL /artifact/store     Method GET   Permissions Auth: false   Code getArtifactsStoreHandler    </description>
-    </item>
-    
-    <item>
       <title>auth</title>
       <link>https://ovh.github.io/cds/development/rest/auth/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -83,15 +74,6 @@
     </item>
     
     <item>
-      <title>build</title>
-      <link>https://ovh.github.io/cds/development/rest/build/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/build/</guid>
-      <description> POST /build/&amp;lt;id&amp;gt;/log    URL /build/&amp;lt;id&amp;gt;/log     Method POST   Permissions Auth: true   Code addBuildLogHandler    POST /build/&amp;lt;id&amp;gt;/step    URL /build/&amp;lt;id&amp;gt;/step     Method POST   Permissions Auth: true   Code updateStepStatusHandler    </description>
-    </item>
-    
-    <item>
       <title>config</title>
       <link>https://ovh.github.io/cds/development/rest/config/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -116,15 +98,6 @@
       
       <guid>https://ovh.github.io/cds/development/rest/group/</guid>
       <description> DELETE /group/&amp;lt;group-name&amp;gt;/token/&amp;lt;tokenid&amp;gt;    URL /group/&amp;lt;group-name&amp;gt;/token/&amp;lt;tokenid&amp;gt;     Method DELETE   Permissions Auth: true   Code deleteTokenHandler    DELETE /group/&amp;lt;group-name&amp;gt;/user/&amp;lt;user-name&amp;gt;/admin    URL /group/&amp;lt;group-name&amp;gt;/user/&amp;lt;user-name&amp;gt;/admin     Method DELETE   Permissions Auth: true   Code removeUserGroupAdminHandler    DELETE /group/&amp;lt;group-name&amp;gt;/user/&amp;lt;user-name&amp;gt;    URL /group/&amp;lt;group-name&amp;gt;/user/&amp;lt;user-name&amp;gt;     Method DELETE   Permissions Auth: true   Code removeUserFromGroupHandler    DELETE /group/&amp;lt;group-name&amp;gt;    URL /group/&amp;lt;group-name&amp;gt;     Method DELETE   Permissions Auth: true   Code deleteGroupHandler    GET /group/&amp;lt;group-name&amp;gt;/token    URL /group/&amp;lt;group-name&amp;gt;/token     Method GET   Permissions Auth: true   Code getGroupTokenListHandler    GET /group/&amp;lt;group-name&amp;gt;    URL /group/&amp;lt;group-name&amp;gt;     Method GET   Permissions Auth: true   Code getGroupHandler    GET /group/&amp;lt;groupID&amp;gt;/action    URL /group/&amp;lt;groupID&amp;gt;/action     Method GET   Permissions Auth: true   Code getActionsForGroupHandler    GET /group/&amp;lt;groupID&amp;gt;/worker/model    URL /group/&amp;lt;groupID&amp;gt;/worker/model     Method GET   Permissions Auth: true   Code getWorkerModelsForGroupHandler    GET /group/public    URL /group/public     Method GET   Permissions Auth: true   Code getPublicGroupsHandler    GET /group    URL /group     Method GET   Permissions Auth: true   Code getGroupsHandler    POST /group/&amp;lt;group-name&amp;gt;/user/&amp;lt;user-name&amp;gt;/admin    URL /group/&amp;lt;group-name&amp;gt;/user/&amp;lt;user-name&amp;gt;/admin     Method POST   Permissions Auth: true   Code setUserGroupAdminHandler    POST /group/&amp;lt;group-name&amp;gt;/user    URL /group/&amp;lt;group-name&amp;gt;/user     Method POST   Permissions Auth: true   Code addUserInGroupHandler    POST /group    URL /group     Method POST   Permissions Auth: true   Code addGroupHandler    PUT /group/&amp;lt;group-name&amp;gt;    URL /group/&amp;lt;group-name&amp;gt;     Method PUT   Permissions Auth: true   Code updateGroupHandler    generateToken allows a user to generate a token associated to a group permission    URL /group/&amp;lt;group-name&amp;gt;/token     Method POST   Permissions Auth: true   Code generateTokenHandler    </description>
-    </item>
-    
-    <item>
-      <title>hatchery</title>
-      <link>https://ovh.github.io/cds/development/rest/hatchery/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/hatchery/</guid>
-      <description> GET /hatchery/count/&amp;lt;workflowNodeRunID&amp;gt;    URL /hatchery/count/&amp;lt;workflowNodeRunID&amp;gt;     Method GET   Permissions Auth: true   Code hatcheryCountHandler    </description>
     </item>
     
     <item>
@@ -192,33 +165,6 @@ Request Body None  Response Body {&amp;quot;uuid&amp;quot;:&amp;quot;ee3946ac-3a
     </item>
     
     <item>
-      <title>pipeline</title>
-      <link>https://ovh.github.io/cds/development/rest/pipeline/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/pipeline/</guid>
-      <description> GET /pipeline/type    URL /pipeline/type     Method GET   Permissions Auth: true   Code getPipelineTypeHandler    </description>
-    </item>
-    
-    <item>
-      <title>platform</title>
-      <link>https://ovh.github.io/cds/development/rest/platform/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/platform/</guid>
-      <description> GET /platform/models    URL /platform/models     Method GET   Permissions Auth: true   Code getPlatformModelsHandler    POST /platform/models    URL /platform/models     Method POST   Permissions NeedAdmin: true - Auth: true   Code postPlatformModelHandler    GET /platform/models/&amp;lt;name&amp;gt;    URL /platform/models/&amp;lt;name&amp;gt;     Method GET   Permissions Auth: true   Code getPlatformModelHandler    PUT /platform/models/&amp;lt;name&amp;gt;    URL /platform/models/&amp;lt;name&amp;gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Code putPlatformModelHandler    DELETE /platform/models/&amp;lt;name&amp;gt;    URL /platform/models/&amp;lt;name&amp;gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Code deletePlatformModelHandler    </description>
-    </item>
-    
-    <item>
-      <title>plugin</title>
-      <link>https://ovh.github.io/cds/development/rest/plugin/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/plugin/</guid>
-      <description> PUT /plugin    URL /plugin     Method PUT   Permissions NeedAdmin: true - Auth: true   Code updatePluginHandler    POST /plugin    URL /plugin     Method POST   Permissions NeedAdmin: true - Auth: true   Code addPluginHandler    DELETE /plugin/&amp;lt;name&amp;gt;    URL /plugin/&amp;lt;name&amp;gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Code deletePluginHandler    GET /plugin/download/&amp;lt;name&amp;gt;    URL /plugin/download/&amp;lt;name&amp;gt;     Method GET   Permissions Auth: true   Code downloadPluginHandler    </description>
-    </item>
-    
-    <item>
       <title>project</title>
       <link>https://ovh.github.io/cds/development/rest/project/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -261,15 +207,6 @@ Request Body None  Response Body {&amp;quot;uuid&amp;quot;:&amp;quot;ee3946ac-3a
       
       <guid>https://ovh.github.io/cds/development/rest/services/</guid>
       <description> GET /services/&amp;lt;type&amp;gt;    URL /services/&amp;lt;type&amp;gt;     Method GET   Permissions NeedWorker: - Auth: true   Code getExternalServiceHandler    POST /services/register    URL /services/register     Method POST   Permissions Auth: false   Code postServiceRegisterHandler    </description>
-    </item>
-    
-    <item>
-      <title>staticfiles</title>
-      <link>https://ovh.github.io/cds/development/rest/staticfiles/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/staticfiles/</guid>
-      <description> GET /staticfiles/store    URL /staticfiles/store     Method GET   Permissions Auth: false   Code getStaticFilesStoreHandler    </description>
     </item>
     
     <item>

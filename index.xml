@@ -881,16 +881,27 @@ version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 s
     </item>
     
     <item>
-      <title>Kafka</title>
-      <link>https://ovh.github.io/cds/docs/integrations/kafka/</link>
+      <title>Kafka CDS Events</title>
+      <link>https://ovh.github.io/cds/docs/integrations/kafka/kafka_events/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/kafka/</guid>
-      <description>The Kafka Integration is a Self-Service integration that can be configured on a CDS Project.
+      <guid>https://ovh.github.io/cds/docs/integrations/kafka/kafka_events/</guid>
+      <description>The Kafka Integration is a Self-Service integration that can be configured on a CDS Project. If you are a CDS Administrator, you can configue this integration to be available on all CDS Projects.
+An example of use case could be that you want to generate some svg badge. Then you can just add an event integration for your workflow and plug the badge microservice on this kafka topic.
+Configure with WebUI You can add a Kafka Integration on your CDS Project.</description>
+    </item>
+    
+    <item>
+      <title>Kafka Hooks</title>
+      <link>https://ovh.github.io/cds/docs/integrations/kafka/kafka_hooks/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/kafka/kafka_hooks/</guid>
+      <description>The Kafka Integration is a Self-Service integration that can be configured on a CDS Project. If you are a CDS Administrator, you can configue this integration to be available on all CDS Projects.
 This integration enables the Kafka Hook feature:
 Configure with WebUI You can add a Kafka Integration on your CDS Project.
 Configure with cdsctl Import a Kafka Integration on your CDS Project Create a file project-configuration.yml:
-name: your-kafka-integration model: name: Kafka identifier: github.com/ovh/cds/integration/builtin/kafka hook: true config: broker url: value: n1.o1.your-broker:9093,n2.o1.n1.o1.your-broker:9093,n3.o1.n1.o1.your-broker:9093 type: string password: value: &#39;**********&#39; type: password username: value: kafka-username type: string  Import the integration on your CDS Project with:</description>
+name: your-kafka-integration model: name: Kafka identifier: github.</description>
     </item>
     
     <item>
@@ -1146,15 +1157,6 @@ cdsctl workflow applyTemplate [ PROJECT-KEY WORKFLOW-NAME ] [TEMPLATE-PATH] [fla
     </item>
     
     <item>
-      <title>artifact</title>
-      <link>https://ovh.github.io/cds/development/rest/artifact/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/artifact/</guid>
-      <description> GET /artifact/&amp;lt;hash&amp;gt;    URL /artifact/&amp;lt;hash&amp;gt;     Method GET   Permissions Auth: false   Code downloadArtifactDirectHandler    GET /artifact/store    URL /artifact/store     Method GET   Permissions Auth: false   Code getArtifactsStoreHandler    </description>
-    </item>
-    
-    <item>
       <title>artifacts</title>
       <link>https://ovh.github.io/cds/docs/components/worker/artifacts/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -1187,17 +1189,6 @@ cdsctl workflow ascode [ PROJECT-KEY WORKFLOW-NAME ] [flags]  Options  --fields 
     
     <item>
       <title>binary-add</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins-action/binary-add/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins-action/binary-add/</guid>
-      <description> cdsctl admin plugins-action binary-add Add a binary
-Synopsis Add a binary
-cdsctl admin plugins-action binary-add FILENAME [flags]  Options  -h, --help help for binary-add  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl admin plugins-action - Manage CDS Plugins  </description>
-    </item>
-    
-    <item>
-      <title>binary-add</title>
       <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins/binary-add/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
@@ -1205,17 +1196,6 @@ cdsctl admin plugins-action binary-add FILENAME [flags]  Options  -h, --help hel
       <description> cdsctl admin plugins binary-add Add a binary
 Synopsis Add a binary
 cdsctl admin plugins binary-add NAME DESCRIPTOR FILENAME  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl admin plugins - Manage CDS Plugins  </description>
-    </item>
-    
-    <item>
-      <title>binary-update</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins-action/binary-update/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins-action/binary-update/</guid>
-      <description> cdsctl admin plugins-action binary-update Update a binary
-Synopsis Update a binary
-cdsctl admin plugins-action binary-update FILENAME [flags]  Options  -h, --help help for binary-update  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl admin plugins-action - Manage CDS Plugins  </description>
     </item>
     
     <item>
@@ -1234,15 +1214,6 @@ cdsctl admin plugins-action binary-update FILENAME [flags]  Options  -h, --help 
       
       <guid>https://ovh.github.io/cds/development/rest/broadcast/</guid>
       <description> DELETE /broadcast/&amp;lt;id&amp;gt;    URL /broadcast/&amp;lt;id&amp;gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Code deleteBroadcastHandler    GET /broadcast/&amp;lt;id&amp;gt;    URL /broadcast/&amp;lt;id&amp;gt;     Method GET   Permissions Auth: true   Code getBroadcastHandler    GET /broadcast    URL /broadcast     Method GET   Permissions Auth: true   Code getBroadcastsHandler    POST /broadcast/&amp;lt;id&amp;gt;/mark    URL /broadcast/&amp;lt;id&amp;gt;/mark     Method POST   Permissions Auth: true   Code postMarkAsReadBroadcastHandler    POST /broadcast    URL /broadcast     Method POST   Permissions NeedAdmin: true - Auth: true   Code addBroadcastHandler    PUT /broadcast/&amp;lt;id&amp;gt;    URL /broadcast/&amp;lt;id&amp;gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Code updateBroadcastHandler    </description>
-    </item>
-    
-    <item>
-      <title>build</title>
-      <link>https://ovh.github.io/cds/development/rest/build/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/build/</guid>
-      <description> POST /build/&amp;lt;id&amp;gt;/log    URL /build/&amp;lt;id&amp;gt;/log     Method POST   Permissions Auth: true   Code addBuildLogHandler    POST /build/&amp;lt;id&amp;gt;/step    URL /build/&amp;lt;id&amp;gt;/step     Method POST   Permissions Auth: true   Code updateStepStatusHandler    </description>
     </item>
     
     <item>
@@ -1521,17 +1492,6 @@ cdsctl admin integration-model delete NAME [flags]  Options  --force Force delet
     
     <item>
       <title>delete</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/platform-model/delete/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/platform-model/delete/</guid>
-      <description>cdsctl admin platform-model delete Delete a CDS Platform model
-Synopsis Delete a CDS Platform model
-cdsctl admin platform-model delete NAME [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
-    </item>
-    
-    <item>
-      <title>delete</title>
       <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins/delete/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
@@ -1682,17 +1642,6 @@ cdsctl project integration delete [ PROJECT-KEY ] NAME [flags]  Options  --force
       <description> cdsctl project keys delete Delete CDS project key
 Synopsis Delete CDS project key
 cdsctl project keys delete [ PROJECT-KEY ] KEY-NAME  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl project keys - Manage CDS project keys  </description>
-    </item>
-    
-    <item>
-      <title>delete</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/project/platform/delete/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/project/platform/delete/</guid>
-      <description>cdsctl project platform delete Delete a platform configuration on a project
-Synopsis Delete a platform configuration on a project
-cdsctl project platform delete [ PROJECT-KEY ] NAME [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -2001,17 +1950,6 @@ cdsctl admin metadata workflow export [flags]  Options  --export-file string Fil
     
     <item>
       <title>export</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/platform-model/export/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/platform-model/export/</guid>
-      <description> cdsctl admin platform-model export Export a CDS Platform model
-Synopsis Export a CDS Platform model
-cdsctl admin platform-model export NAME [flags]  Options  -h, --help help for export  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl admin platform-model - Manage CDS Platform models  </description>
-    </item>
-    
-    <item>
-      <title>export</title>
       <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins/export/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
@@ -2063,17 +2001,6 @@ cdsctl pipeline export [ PROJECT-KEY ] PIPELINE-NAME [flags]  Options  --format 
       <description> cdsctl project integration export Export a integration configuration from a project to stdout
 Synopsis Export a integration configuration from a project to stdout
 cdsctl project integration export [ PROJECT-KEY ] NAME  Examples cdsctl integration export MY-PROJECT MY-INTEGRATION-NAME &amp;gt; file.yaml  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl project integration - Manage CDS integrations  </description>
-    </item>
-    
-    <item>
-      <title>export</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/project/platform/export/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/project/platform/export/</guid>
-      <description>cdsctl project platform export Export a platform configuration from a project to stdout
-Synopsis Export a platform configuration from a project to stdout
-cdsctl project platform export [ PROJECT-KEY ] NAME [flags]  Examples cdsctl project platform export MY-PROJECT MY-PLATFORM-NAME &amp;gt; file.yaml  Options  -h, --help help for export  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -2202,15 +2129,6 @@ cdsctl group grant [ PROJECT-KEY ] GROUP-NAME PERMISSION [flags]  Options  -p, -
     </item>
     
     <item>
-      <title>hatchery</title>
-      <link>https://ovh.github.io/cds/development/rest/hatchery/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/hatchery/</guid>
-      <description> GET /hatchery/count/&amp;lt;workflowNodeRunID&amp;gt;    URL /hatchery/count/&amp;lt;workflowNodeRunID&amp;gt;     Method GET   Permissions Auth: true   Code hatcheryCountHandler    </description>
-    </item>
-    
-    <item>
       <title>history</title>
       <link>https://ovh.github.io/cds/docs/components/cdsctl/workflow/history/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -2290,17 +2208,6 @@ cdsctl admin metadata project import PATH  Options inherited from parent command
     
     <item>
       <title>import</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/platform-model/import/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/platform-model/import/</guid>
-      <description> cdsctl admin platform-model import Import a CDS Platform model from a yaml file
-Synopsis Import a CDS Platform model from a yaml file
-cdsctl admin platform-model import FILE [flags]  Options  -h, --help help for import  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl admin platform-model - Manage CDS Platform models  </description>
-    </item>
-    
-    <item>
-      <title>import</title>
       <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/plugins/import/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
@@ -2308,17 +2215,6 @@ cdsctl admin platform-model import FILE [flags]  Options  -h, --help help for im
       <description> cdsctl admin plugins import Import a CDS Plugin
 Synopsis Import a CDS Plugin
 cdsctl admin plugins import FILE  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl admin plugins - Manage CDS Plugins  </description>
-    </item>
-    
-    <item>
-      <title>import</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/application/group/import/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/application/group/import/</guid>
-      <description>cdsctl application group import Import group linked to a CDS application
-Synopsis Import group linked to a CDS application
-cdsctl application group import [ PROJECT-KEY APPLICATION-NAME ] PATH [flags]  Options  --force Use force flag to replace groups in your application -h, --help help for import  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -2334,17 +2230,6 @@ cdsctl application import [ PROJECT-KEY ] PATH [flags]  Options  --force Overrid
     
     <item>
       <title>import</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/environment/group/import/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/environment/group/import/</guid>
-      <description>cdsctl environment group import Import group linked to a CDS environment
-Synopsis Import group linked to a CDS environment
-cdsctl environment group import [ PROJECT-KEY ] ENVIRONMENT-NAME PATH [flags]  Options  --force Use force flag to replace groups in your environment -h, --help help for import  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
-    </item>
-    
-    <item>
-      <title>import</title>
       <link>https://ovh.github.io/cds/docs/components/cdsctl/environment/import/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
@@ -2352,17 +2237,6 @@ cdsctl environment group import [ PROJECT-KEY ] ENVIRONMENT-NAME PATH [flags]  O
       <description> cdsctl environment import Import an environment with local filepath or URL
 Synopsis Import an environment with local filepath or URL
 cdsctl environment import [ PROJECT-KEY ] PATH [flags]  Options  --force Override environment if exists  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl environment - Manage CDS environment  </description>
-    </item>
-    
-    <item>
-      <title>import</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/pipeline/group/import/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/pipeline/group/import/</guid>
-      <description>cdsctl pipeline group import Import group linked to a CDS pipeline
-Synopsis Import group linked to a CDS pipeline
-cdsctl pipeline group import [ PROJECT-KEY ] PIPELINE-NAME PATH [flags]  Options  --force Use force flag to replace groups in your pipeline -h, --help help for import  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -2396,17 +2270,6 @@ cdsctl project group import [ PROJECT-KEY ] PATH [flags]  Options  --force Use f
       <description>cdsctl project integration import Import a integration configuration on a project from a yaml file
 Synopsis Import a integration configuration on a project from a yaml file
 cdsctl project integration import [ PROJECT-KEY ] FILENAME [flags]  Examples cdsctl integration import MY-PROJECT file.yml  Options  --force  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
-    </item>
-    
-    <item>
-      <title>import</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/project/platform/import/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/project/platform/import/</guid>
-      <description>cdsctl project platform import Import a platform configuration on a project from a yaml file
-Synopsis Import a platform configuration on a project from a yaml file
-cdsctl project platform import [ PROJECT-KEY ] FILENAME [flags]  Examples cdsctl project platform import MY-PROJECT file.yml  Options  --force -h, --help help for import  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -2550,17 +2413,6 @@ cdsctl admin integration-model list [flags]  Options  --fields string Only displ
       <description>cdsctl admin migration list List all CDS migrations and their states
 Synopsis List all CDS migrations and their states
 cdsctl admin migration list [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
-    </item>
-    
-    <item>
-      <title>list</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/platform-model/list/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/platform-model/list/</guid>
-      <description>cdsctl admin platform-model list List CDS Platform models
-Synopsis List CDS Platform models
-cdsctl admin platform-model list [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -2715,17 +2567,6 @@ cdsctl project keys list [ PROJECT-KEY ] [flags]  Options  --fields string Only 
       <description>cdsctl project list List CDS projects
 Synopsis List CDS projects
 cdsctl project list [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
-    </item>
-    
-    <item>
-      <title>list</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/project/platform/list/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/project/platform/list/</guid>
-      <description>cdsctl project platform list List platforms available on a project
-Synopsis List platforms available on a project
-cdsctl project platform list [ PROJECT-KEY ] [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -2952,33 +2793,6 @@ All options $ engine config new [debug] [tracing] [api] [hatchery:local] [hatche
       
       <guid>https://ovh.github.io/cds/development/rest/parameter/</guid>
       <description> GET /parameter/type    URL /parameter/type     Method GET   Permissions Auth: true   Code getParameterTypeHandler    </description>
-    </item>
-    
-    <item>
-      <title>pipeline</title>
-      <link>https://ovh.github.io/cds/development/rest/pipeline/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/pipeline/</guid>
-      <description> GET /pipeline/type    URL /pipeline/type     Method GET   Permissions Auth: true   Code getPipelineTypeHandler    </description>
-    </item>
-    
-    <item>
-      <title>platform</title>
-      <link>https://ovh.github.io/cds/development/rest/platform/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/platform/</guid>
-      <description> GET /platform/models    URL /platform/models     Method GET   Permissions Auth: true   Code getPlatformModelsHandler    POST /platform/models    URL /platform/models     Method POST   Permissions NeedAdmin: true - Auth: true   Code postPlatformModelHandler    GET /platform/models/&amp;lt;name&amp;gt;    URL /platform/models/&amp;lt;name&amp;gt;     Method GET   Permissions Auth: true   Code getPlatformModelHandler    PUT /platform/models/&amp;lt;name&amp;gt;    URL /platform/models/&amp;lt;name&amp;gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Code putPlatformModelHandler    DELETE /platform/models/&amp;lt;name&amp;gt;    URL /platform/models/&amp;lt;name&amp;gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Code deletePlatformModelHandler    </description>
-    </item>
-    
-    <item>
-      <title>plugin</title>
-      <link>https://ovh.github.io/cds/development/rest/plugin/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/plugin/</guid>
-      <description> PUT /plugin    URL /plugin     Method PUT   Permissions NeedAdmin: true - Auth: true   Code updatePluginHandler    POST /plugin    URL /plugin     Method POST   Permissions NeedAdmin: true - Auth: true   Code addPluginHandler    DELETE /plugin/&amp;lt;name&amp;gt;    URL /plugin/&amp;lt;name&amp;gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Code deletePluginHandler    GET /plugin/download/&amp;lt;name&amp;gt;    URL /plugin/download/&amp;lt;name&amp;gt;     Method GET   Permissions Auth: true   Code downloadPluginHandler    </description>
     </item>
     
     <item>
@@ -3380,17 +3194,6 @@ cdsctl admin integration-model show NAME [flags]  Options  --fields string Only 
     
     <item>
       <title>show</title>
-      <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/platform-model/show/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/platform-model/show/</guid>
-      <description> cdsctl admin platform-model show Show details of a CDS Platform model
-Synopsis Show details of a CDS Platform model
-cdsctl admin platform-model show NAME [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -h, --help help for show  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl admin platform-model - Manage CDS Platform models  </description>
-    </item>
-    
-    <item>
-      <title>show</title>
       <link>https://ovh.github.io/cds/docs/components/cdsctl/application/show/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
@@ -3547,15 +3350,6 @@ $ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [
       <description> cdsctl admin hooks startall Start all tasks
 Synopsis Start all tasks
 cdsctl admin hooks startall  Examples cdsctl admin hooks startall  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl admin hooks - Manage CDS Hooks tasks  </description>
-    </item>
-    
-    <item>
-      <title>staticfiles</title>
-      <link>https://ovh.github.io/cds/development/rest/staticfiles/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/development/rest/staticfiles/</guid>
-      <description> GET /staticfiles/store    URL /staticfiles/store     Method GET   Permissions Auth: false   Code getStaticFilesStoreHandler    </description>
     </item>
     
     <item>
