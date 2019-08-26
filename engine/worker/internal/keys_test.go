@@ -9,11 +9,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/magiconair/properties/assert"
-
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
