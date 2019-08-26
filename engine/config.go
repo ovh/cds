@@ -322,7 +322,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Type:        sdk.ConsumerBuiltin,
 				Data:        map[string]string{},
 				GroupIDs:    []int64{},
-				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
+				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 			}
 
 			h.Openstack.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -351,7 +351,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Type:     sdk.ConsumerBuiltin,
 				Data:     map[string]string{},
 				GroupIDs: []int64{},
-				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
+				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 			}
 
 			h.VSphere.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -380,7 +380,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Type:     sdk.ConsumerBuiltin,
 				Data:     map[string]string{},
 				GroupIDs: []int64{},
-				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
+				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 			}
 
 			h.Swarm.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -408,7 +408,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Type:        sdk.ConsumerBuiltin,
 				Data:        map[string]string{},
 				GroupIDs:    []int64{},
-				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
+				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 			}
 
 			conf.Hatchery.Marathon.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -436,7 +436,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Type:        sdk.ConsumerBuiltin,
 				Data:        map[string]string{},
 				GroupIDs:    []int64{},
-				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
+				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 			}
 
 			conf.Hatchery.Kubernetes.API.Token, err = builtin.NewSigninConsumerToken(&c)
