@@ -169,10 +169,10 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	log.Info("runAction> start action %s %s %d", a.StepName, actionName, jobID)
 	defer func() { log.Info("runAction> end action %s %s run %d", a.StepName, actionName, jobID) }()
 
-	w.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("Starting step \"%s\"", actionName))
+	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step \"%s\"", actionName))
 	var t0 = time.Now()
 	defer func() {
-		w.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\" (%s)", actionName, sdk.Round(time.Since(t0), time.Second).String()))
+		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\" (%s)", actionName, sdk.Round(time.Since(t0), time.Second).String()))
 	}()
 
 	//If the action is disabled; skip it
@@ -334,8 +334,7 @@ func setupWorkingDirectory(fs afero.Fs, wd string) (afero.File, error) {
 	return fi, nil
 }
 
-// remove the buildDirectory created by setupWorkingDirectory
-func teardownWorkingDirectory(fs afero.Fs, wd string) error {
+func teardownDirectory(fs afero.Fs, wd string) error {
 	return fs.RemoveAll(wd)
 }
 
@@ -350,6 +349,78 @@ func workingDirectory(fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes 
 	}
 	log.Debug("defining working directory %s", dir)
 	return dir, nil
+}
+
+func (w *CurrentWorker) setupWorkingDirectory(jobInfo sdk.WorkflowNodeJobRunData) (afero.File, string, error) {
+	wd, err := workingDirectory(w.basedir, jobInfo, "run")
+	if err != nil {
+		return nil, "", err
+	}
+
+	wdFile, err := setupWorkingDirectory(w.basedir, wd)
+	if err != nil {
+		log.Debug("processJob> setupWorkingDirectory error:%s", err)
+		return nil, "", err
+	}
+
+	wdAbs, err := filepath.Abs(wdFile.Name())
+	if err != nil {
+		log.Debug("processJob> setupWorkingDirectory error:%s", err)
+		return nil, "", err
+	}
+
+	switch x := w.basedir.(type) {
+	case *afero.BasePathFs:
+		wdAbs, err = x.RealPath(wdFile.Name())
+		if err != nil {
+			return nil, "", err
+		}
+
+		wdAbs, err = filepath.Abs(wdAbs)
+		if err != nil {
+			log.Debug("processJob> setupWorkingDirectory error:%s", err)
+			return nil, "", err
+		}
+	}
+
+	return wdFile, wdAbs, nil
+}
+
+func (w *CurrentWorker) setupKeysDirectory(jobInfo sdk.WorkflowNodeJobRunData) (afero.File, string, error) {
+	keysDirectory, err := workingDirectory(w.basedir, jobInfo, "keys")
+	if err != nil {
+		return nil, "", err
+	}
+
+	fs := w.basedir
+	if err := fs.MkdirAll(keysDirectory, 0700); err != nil {
+		return nil, "", err
+	}
+
+	kdFile, err := w.basedir.Open(keysDirectory)
+	if err != nil {
+		return nil, "", err
+	}
+
+	kdAbs, err := filepath.Abs(kdFile.Name())
+	if err != nil {
+		return nil, "", err
+	}
+
+	switch x := w.basedir.(type) {
+	case *afero.BasePathFs:
+		kdAbs, err = x.RealPath(kdFile.Name())
+		if err != nil {
+			return nil, "", err
+		}
+
+		kdAbs, err = filepath.Abs(kdAbs)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	return kdFile, kdAbs, nil
 }
 
 func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Result, error) {
@@ -370,52 +441,26 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	go w.logProcessor(ctx, jobInfo.NodeJobRun.ID)
 	defer w.drainLogsAndCloseLogger(ctx)
 
-	// Setup working directory
-	wd, err := workingDirectory(w.basedir, jobInfo, "run")
+	wdFile, wdAbs, err := w.setupWorkingDirectory(jobInfo)
 	if err != nil {
-		return sdk.Result{}, err
-	}
-
-	wdFile, err := setupWorkingDirectory(w.basedir, wd)
-	if err != nil {
-		log.Debug("processJob> setupWorkingDirectory error:%s", err)
 		return sdk.Result{
 			Status: sdk.StatusFail,
-			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
+			Reason: fmt.Sprintf("Error: unable to setup workfing directory: %v", err),
 		}, err
 	}
-
-	wdAbs, err := filepath.Abs(wdFile.Name())
-	if err != nil {
-		log.Debug("processJob> setupWorkingDirectory error:%s", err)
-		return sdk.Result{
-			Status: sdk.StatusFail,
-			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
-		}, err
-	}
-
-	switch x := w.basedir.(type) {
-	case *afero.BasePathFs:
-		wdAbs, err = x.RealPath(wdFile.Name())
-		if err != nil {
-			return sdk.Result{
-				Status: sdk.StatusFail,
-				Reason: fmt.Sprintf("Error: cannot setup working directory: %v", err),
-			}, err
-		}
-
-		wdAbs, err = filepath.Abs(wdAbs)
-		if err != nil {
-			log.Debug("processJob> setupWorkingDirectory error:%s", err)
-			return sdk.Result{
-				Status: sdk.StatusFail,
-				Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
-			}, err
-		}
-	}
-
 	ctx = workerruntime.SetWorkingDirectory(ctx, wdFile)
 	log.Debug("processJob> Setup workspace - %s", wdFile.Name())
+
+	w.currentJob.context = ctx
+
+	kdFile, _, err := w.setupKeysDirectory(jobInfo)
+	if err != nil {
+		return sdk.Result{
+			Status: sdk.StatusFail,
+			Reason: fmt.Sprintf("Error: unable to setup keys directory: %v", err),
+		}, err
+	}
+	ctx = workerruntime.SetKeysDirectory(ctx, kdFile)
 
 	var jobParameters = jobInfo.NodeJobRun.Parameters
 
@@ -454,30 +499,16 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		jobParameters = append(jobParameters, p)
 	}
 
-	// Setup user ssh keys
-	keysDirectory, err = workingDirectory(w.basedir, jobInfo, "keys")
-	if err != nil {
-		return sdk.Result{}, err
-	}
-	log.Debug("processJob> Setup user ssh keys - %s", keysDirectory)
-	if err := w.basedir.MkdirAll(keysDirectory, 0700); err != nil {
-		log.Debug("processJob> call os.MkdirAll error:%s", err)
-		return sdk.Result{
-			Status: sdk.StatusFail,
-			Reason: fmt.Sprintf("Error: cannot setup workingDirectory (%s)", err),
-		}, err
-	}
-
 	res, err := w.runJob(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobParameters, jobInfo.Secrets)
 
 	if len(res.NewVariables) > 0 {
 		log.Debug("processJob> new variables: %v", res.NewVariables)
 	}
 
-	if err := teardownWorkingDirectory(w.basedir, wd); err != nil {
+	if err := teardownDirectory(w.basedir, wdFile.Name()); err != nil {
 		log.Error("Cannot remove build directory: %s", err)
 	}
-	if err := teardownWorkingDirectory(w.basedir, keysDirectory); err != nil {
+	if err := teardownDirectory(w.basedir, wdFile.Name()); err != nil {
 		log.Error("Cannot remove keys directory: %s", err)
 	}
 	return res, err

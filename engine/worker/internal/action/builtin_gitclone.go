@@ -75,7 +75,7 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, pa
 	if gitURL == "" && (auth == nil || (auth.Username == "" && auth.Password == "" && len(auth.PrivateKey.Content) == 0)) {
 		wk.SendLog(ctx, workerruntime.LevelInfo, "no url and auth parameters, trying to use VCS Strategy from application")
 		var err error
-		gitURL, auth, err = vcsStrategy(params, secrets)
+		gitURL, auth, err = vcsStrategy(ctx, wk, params, secrets)
 		if err != nil {
 			return sdk.Result{}, fmt.Errorf("Could not use VCS Auth Strategy from application: %v", err)
 		}

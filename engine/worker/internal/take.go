@@ -20,7 +20,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	t := ""
 	log.Info("takeWorkflowJob> Job %d taken%s", job.ID, t)
 
-	ctx = workerruntime.SetJobID(ctx, job.ID)
+	w.currentJob.context = workerruntime.SetJobID(ctx, job.ID)
 	w.currentJob.context = ctx
 
 	// Set build variables

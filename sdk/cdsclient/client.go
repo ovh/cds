@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -52,6 +53,7 @@ func NewHTTPClient(timeout time.Duration, insecureSkipVerifyTLS bool) *http.Clie
 func New(c Config) Interface {
 	cli := new(client)
 	cli.config = c
+	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Second*60, c.InsecureSkipVerifyTLS)
 	cli.httpSSEClient = NewHTTPClient(0, c.InsecureSkipVerifyTLS)
 	cli.init()
@@ -66,6 +68,7 @@ func NewWorker(endpoint string, name string, c *http.Client) WorkerInterface {
 	}
 	cli := new(client)
 	cli.config = conf
+	cli.config.Mutex = new(sync.Mutex)
 
 	if c == nil {
 		cli.httpClient = NewHTTPClient(time.Second*360, false)
@@ -104,6 +107,7 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 
 	cli := new(client)
 	cli.config = conf
+	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
 	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.init()
@@ -125,6 +129,7 @@ func NewServiceClient(cfg ServiceConfig) (Interface, []byte, error) {
 
 	cli := new(client)
 	cli.config = conf
+	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
 	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.config.Verbose = cfg.Verbose

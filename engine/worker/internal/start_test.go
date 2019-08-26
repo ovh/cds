@@ -13,6 +13,7 @@ import (
 
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 
 	"github.com/ovh/cds/engine/worker/internal"
@@ -177,7 +178,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		Reply(200).
 		JSON(nil)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(2).
+	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(4).
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(nil)
@@ -193,7 +194,6 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		JSON(nil)
 
 	var logBuffer = new(bytes.Buffer)
-
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
 		bodyContent, err := ioutil.ReadAll(request.Body)
 		assert.NoError(t, err)
@@ -226,7 +226,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 				var log sdk.Log
 				err := json.Unmarshal(bodyContent, &log)
 				assert.NoError(t, err)
-				logBuffer.WriteString(log.GetVal()) // nolint
+				logBuffer.WriteString(log.Val) // nolint
 			case "http://lolcat.host/queue/workflows/42/result":
 				var result sdk.Result
 				err := json.Unmarshal(bodyContent, &result)
@@ -249,10 +249,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	fs := afero.NewOsFs()
 	basedir := "test-" + sdk.RandomString(10)
 	log.Debug("creating basedir %s", basedir)
-	if err := fs.MkdirAll(basedir, os.FileMode(0755)); err != nil {
-		log.Error("basedir error: %v", err)
-		os.Exit(5)
-	}
+	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
 
 	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, afero.NewBasePathFs(fs, basedir)); err != nil {
 		t.Fatalf("worker init failed: %v", err)

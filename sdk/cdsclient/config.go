@@ -17,7 +17,7 @@ type Config struct {
 	Verbose                           bool
 	Retry                             int
 	InsecureSkipVerifyTLS             bool
-	Mutex                             sync.Mutex
+	Mutex                             *sync.Mutex
 }
 
 //ProviderConfig is the configuration data used by the cdsclient ProviderClient interface implementation

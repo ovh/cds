@@ -1,14 +1,17 @@
 package action
 
 import (
+	"context"
 	"fmt"
+	"path/filepath"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/vcs"
 	"github.com/ovh/cds/sdk/vcs/git"
 )
 
-func vcsStrategy(params []sdk.Parameter, secrets []sdk.Variable) (string, *git.AuthOpts, error) {
+func vcsStrategy(ctx context.Context, wk workerruntime.Runtime, params []sdk.Parameter, secrets []sdk.Variable) (string, *git.AuthOpts, error) {
 	var gitURL string
 	var auth *git.AuthOpts
 
@@ -28,31 +31,39 @@ func vcsStrategy(params []sdk.Parameter, secrets []sdk.Variable) (string, *git.A
 		if privateKey == nil || privateKey.Value == "" {
 			return gitURL, nil, fmt.Errorf("ssh key not found. Nothing to perform")
 		}
-		//		privateKeyVar := sdk.Variable{
-		//			Name:  "cds.key." + keyName.Value + ".priv",
-		//			Type:  "string",
-		//			Value: privateKey.Value,
-		//		}
-		// if err := vcs.SetupSSHKey(nil, keysDirectory, &privateKeyVar); err != nil {
-		// 	return gitURL, nil, fmt.Errorf("unable to setup ssh key. %s", err)
-		// }
-		// key, errK := vcs.GetSSHKey(secrets, keysDirectory, &privateKeyVar)
-		// if errK != nil && !sdk.ErrorIs(errK, sdk.ErrKeyNotFound) {
-		// 	return gitURL, nil, fmt.Errorf("unable to setup ssh key. %s", errK)
-		// }
-		var key = vcs.SSHKey{
-			Content: []byte(privateKey.Value),
+		privateKeyVar := sdk.Variable{
+			Name:  "cds.key." + keyName.Value + ".priv",
+			Type:  "string",
+			Value: privateKey.Value,
 		}
+
+		installedKey, err := wk.InstallKey(privateKeyVar, "")
+		if err != nil {
+			return gitURL, nil, err
+		}
+
+		keysDirectory := filepath.Dir(installedKey.PKey)
+
+		if err := vcs.SetupSSHKey(nil, keysDirectory, privateKeyVar); err != nil {
+			return gitURL, nil, fmt.Errorf("unable to setup ssh key. %s", err)
+		}
+
+		key, errK := vcs.GetSSHKey(secrets, keysDirectory, &privateKeyVar)
+		if errK != nil && !sdk.ErrorIs(errK, sdk.ErrKeyNotFound) {
+			return gitURL, nil, fmt.Errorf("unable to setup ssh key. %s", errK)
+		}
+
 		if auth == nil {
 			auth = new(git.AuthOpts)
 		}
-		auth.PrivateKey = key
+		auth.PrivateKey = *key
 
 		url := sdk.ParameterFind(params, "git.url")
 		if url == nil || url.Value == "" {
 			return gitURL, nil, fmt.Errorf("SSH Url (git.url) not found. Nothing to perform")
 		}
 		gitURL = url.Value
+
 	case "https":
 		user := sdk.ParameterFind(params, "git.http.user")
 		password := sdk.ParameterFind(params, "git.http.password")

@@ -253,7 +253,11 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			resp, errDo = c.httpClient.Do(req)
 		}
 
-		if errDo == nil && c.config.Verbose {
+		if errDo != nil {
+			return nil, nil, 0, errDo
+		}
+
+		if c.config.Verbose {
 			log.Println(cli.Yellow("********RESPONSE**********"))
 			dmp, _ := httputil.DumpResponse(resp, true)
 			log.Printf("%s", string(dmp))
@@ -265,13 +269,13 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 
 		// if everything is fine, return body
-		if errDo == nil && resp.StatusCode < 500 {
+		if resp.StatusCode < 500 {
 			return resp.Body, resp.Header, resp.StatusCode, nil
 		}
 
 		// if no request error by status > 500, check CDS error
 		// if there is a CDS errors, return it
-		if errDo == nil && resp.StatusCode == 500 {
+		if resp.StatusCode == 500 {
 			var body []byte
 			var errRead error
 			body, errRead = ioutil.ReadAll(resp.Body)

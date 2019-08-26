@@ -7,22 +7,37 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/spf13/afero"
 )
 
 // SetupSSHKey write the key in the specific path
-func SetupSSHKey(path string, key sdk.Variable) error {
+func SetupSSHKey(fs afero.Fs, path string, key sdk.Variable) error {
 	path = filepath.Join(path, key.Name)
-	return WriteKey(path, key.Value)
+	return WriteKey(fs, path, key.Value)
 }
 
 // CleanAllSSHKeys erase all the keys in the path
-func CleanAllSSHKeys(path string) error {
-	return os.RemoveAll(path)
+func CleanAllSSHKeys(fs afero.Fs, path string) error {
+	dir, err := fs.Open(path)
+	if err != nil {
+		return err
+	}
+	names, err := dir.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+	for _, name := range names {
+		err = fs.RemoveAll(filepath.Join(dir.Name(), name))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // CleanSSHKey erase the specified key
-func CleanSSHKey(path string, key sdk.Variable) error {
-	return os.RemoveAll(filepath.Join(path, "cds.key."+key.Name+".priv"))
+func CleanSSHKey(fs afero.Fs, path string, key sdk.Variable) error {
+	return fs.RemoveAll(filepath.Join(path, "cds.key."+key.Name+".priv"))
 }
 
 // SSHKey is a type for a ssh key
@@ -78,8 +93,8 @@ func GetSSHKey(vars []sdk.Variable, path string, key *sdk.Variable) (*SSHKey, er
 	return &SSHKey{Filename: p, Content: b}, nil
 }
 
-func WriteKey(path, content string) error {
-	if err := ioutil.WriteFile(path, []byte(content), os.FileMode(0600)); err != nil {
+func WriteKey(fs afero.Fs, path, content string) error {
+	if err := afero.WriteFile(fs, path, []byte(content), os.FileMode(0600)); err != nil {
 		return err
 	}
 	return nil

@@ -36,7 +36,7 @@ func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, para
 		return sdk.Result{}, errors.New("tag level is mandatory. It must be: 'major' or 'minor' or 'patch'")
 	}
 
-	gitURL, auth, err := vcsStrategy(params, secrets)
+	gitURL, auth, err := vcsStrategy(ctx, wk, params, secrets)
 	if err != nil {
 		return sdk.Result{}, err
 	}
@@ -148,10 +148,10 @@ func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, para
 
 	//Send the logs
 	if len(stdOut.Bytes()) > 0 {
-		wk.SendLog(ctx,workerruntime.LevelInfo, stdOut.String())
+		wk.SendLog(ctx, workerruntime.LevelInfo, stdOut.String())
 	}
 	if len(stdErr.Bytes()) > 0 {
-		wk.SendLog(ctx,workerruntime.LevelWarn, stdErr.String())
+		wk.SendLog(ctx, workerruntime.LevelWarn, stdErr.String())
 	}
 
 	if err != nil {

@@ -130,12 +130,16 @@ func (_ TestWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error 
 func (_ TestWorker) ProcessJob(job sdk.WorkflowNodeJobRunData) (sdk.Result, error) {
 	return sdk.Result{}, nil
 }
-func (w TestWorker) SendLog(level workerruntime.Level, format string) {
+func (w TestWorker) SendLog(ctx context.Context, level workerruntime.Level, format string) {
 	w.t.Log("SendLog> [" + string(level) + "] " + format)
 
 }
 func (_ TestWorker) Unregister() error {
 	return nil
+}
+
+func (_ TestWorker) InstallKey(key sdk.Variable, destinationPath string) (*workerruntime.KeyResponse, error) {
+	return nil, nil
 }
 
 var _ workerruntime.Runtime = new(TestWorker)
