@@ -58,6 +58,10 @@ export class UserService {
         return this._http.post<AuthConsumerCreateResponse>(`/user/${username}/auth/consumer`, consumer);
     }
 
+    deleteConsumer(username: string, consumer: AuthConsumer): Observable<any> {
+        return this._http.delete(`/user/${username}/auth/consumer/${consumer.id}`);
+    }
+
     getSessions(username: string): Observable<Array<AuthSession>> {
         return this._http.get<Array<AuthSession>>(`/user/${username}/auth/session`);
     }

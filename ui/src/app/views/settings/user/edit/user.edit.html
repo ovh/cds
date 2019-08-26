@@ -152,7 +152,7 @@
                                     <ng-container *ngSwitchDefault>
                                         <a *ngIf="user.id === currentUser.id" class="ui green button small"
                                             [routerLink]="'/auth/ask-signin/'+d.type"
-                                            [queryParams]="{redirect_uri: '/settings/user/'+user.username, require_mfa: false}">
+                                            [queryParams]="{redirect_uri: '/settings/user/'+user.username+'?item=authentication', require_mfa: false}">
                                             {{'account_btn_signin' | translate}}
                                         </a>
                                     </ng-container>
@@ -188,5 +188,6 @@
 </div>
 <app-consumer-create-modal #consumerCreateModal [user]="user" (close)="modalCreateClose($event)">
 </app-consumer-create-modal>
-<app-consumer-details-modal #consumerDetailsModal [consumer]="selectedConsumer" (close)="modalDetailsClose($event)">
+<app-consumer-details-modal #consumerDetailsModal [user]="user" [consumer]="selectedConsumer"
+    (close)="modalDetailsClose($event)">
 </app-consumer-details-modal>

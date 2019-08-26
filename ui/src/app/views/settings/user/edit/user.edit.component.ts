@@ -556,6 +556,17 @@ export class UserEditComponent implements OnInit {
 
         if (event.type === DetailsCloseEventType.CHILD_DETAILS) {
             this.clickConsumerDetails(event.payload);
+            return;
+        }
+
+        if (event.type === DetailsCloseEventType.DELETE_OR_DETACH) {
+            let currentSession = this.sessions.find(s => s.current);
+            if (currentSession && currentSession.consumer_id === event.payload) {
+                this._router.navigate(['/auth/signin']);
+            } else {
+                this.getAuthData();
+            }
+            return;
         }
     }
 }

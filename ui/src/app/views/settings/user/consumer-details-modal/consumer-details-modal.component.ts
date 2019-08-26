@@ -7,14 +7,20 @@ import {
     Output,
     ViewChild
 } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { AuthConsumer, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
+import { AuthentifiedUser } from 'app/model/user.model';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { UserService } from 'app/service/services.module';
 import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
+import { ToastService } from 'app/shared/toast/ToastService';
 
 export enum CloseEventType {
     CHILD_DETAILS = 'CHILD_DETAILS',
+    DELETE_OR_DETACH = 'DELETE_OR_DETACH',
     CLOSED = 'CLOSED'
 }
 
@@ -40,6 +46,7 @@ export class ConsumerDetailsModalComponent {
     modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 
+    @Input() user: AuthentifiedUser;
     @Input() consumer: AuthConsumer;
     @Output() close = new EventEmitter<CloseEvent>();
 
@@ -52,10 +59,15 @@ export class ConsumerDetailsModalComponent {
     selectedItem: Item;
     columnsSessions: Array<Column<AuthSession>>;
     filterSessions: Filter<AuthSession>;
+    consumerDeletedOrDetached: boolean;
 
     constructor(
         private _modalService: SuiModalService,
-        private _cd: ChangeDetectorRef
+        private _authenticationService: AuthenticationService,
+        private _userService: UserService,
+        private _cd: ChangeDetectorRef,
+        private _toast: ToastService,
+        private _translate: TranslateService
     ) {
         this.menuItems = [].concat(defaultMenuItems);
 
@@ -168,6 +180,14 @@ export class ConsumerDetailsModalComponent {
     closeCallback(): void {
         this.open = false;
 
+        if (this.consumerDeletedOrDetached) {
+            this.close.emit(<CloseEvent>{
+                type: CloseEventType.DELETE_OR_DETACH,
+                payload: this.consumer.id
+            });
+            return;
+        }
+
         if (this.selectedChildDetails) {
             this.close.emit(<CloseEvent>{
                 type: CloseEventType.CHILD_DETAILS,
@@ -187,6 +207,7 @@ export class ConsumerDetailsModalComponent {
         }
 
         this.selectedChildDetails = null;
+        this.consumerDeletedOrDetached = false;
         this.scopes = this.consumer.scopes ? this.consumer.scopes.join(', ') : '*';
         this.groups = this.consumer.groups ? this.consumer.groups.map(g => g.name).join(', ') : '*';
 
@@ -217,15 +238,24 @@ export class ConsumerDetailsModalComponent {
     }
 
     clickResetPassword(): void {
-
+        this._authenticationService.localAskReset()
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('auth_ask_reset_success'));
+            });
     }
 
     clickDelete(): void {
-
+        this._userService.deleteConsumer(this.user.username, this.consumer).subscribe(() => {
+            this.consumerDeletedOrDetached = true;
+            this.modal.approve(true);
+        });
     }
 
     clickDetach(): void {
-
+        this._authenticationService.detach(this.consumer.type).subscribe(() => {
+            this.consumerDeletedOrDetached = true;
+            this.modal.approve(true);
+        });
     }
 
     clickClose(): void {

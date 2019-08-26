@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, DefaultUrlSerializer, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthenticationService } from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -100,9 +100,12 @@ export class CallbackComponent implements OnInit {
                 this._cd.markForCheck();
             }))
             .subscribe(_ => {
-                this._router.navigate([
-                    (this.payloadData && this.payloadData.redirect_uri) ? this.payloadData.redirect_uri : '/home'
-                ]);
+                if (this.payloadData && this.payloadData.redirect_uri) {
+                    let dus = new DefaultUrlSerializer();
+                    this._router.navigateByUrl(dus.parse(this.payloadData.redirect_uri));
+                } else {
+                    this._router.navigate(['/home']);
+                }
             }, () => {
                 this.showErrorMessage = true;
             });
