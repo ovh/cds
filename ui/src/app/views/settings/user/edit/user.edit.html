@@ -83,11 +83,27 @@
                                     </div>
                                 </ng-container>
                                 <ng-container *ngSwitchCase="'ldap'">
-                                    <div class="center aligned header">
-                                        <i class="ui address book icon huge"></i>
-                                    </div>
-                                    <div class="center aligned description">
-                                        LDAP
+                                    <div [suiTransition]="transitionController">
+                                        <ng-container *ngIf="!showLDAPSigninForm">
+                                            <div class="center aligned header">
+                                                <i class="ui address book icon huge"></i>
+                                            </div>
+                                            <div class="center aligned description">
+                                                LDAP
+                                            </div>
+                                        </ng-container>
+                                        <ng-container *ngIf="showLDAPSigninForm">
+                                            <form class="ui form" #ldapSigninForm="ngForm">
+                                                <div class="field">
+                                                    <label>LDAP Bind*</label>
+                                                    <input type="text" name="bind" ngModel required>
+                                                </div>
+                                                <div class="field">
+                                                    <label>{{ 'user_label_password' | translate }}*</label>
+                                                    <input type="password" name="password" ngModel required>
+                                                </div>
+                                            </form>
+                                        </ng-container>
                                     </div>
                                 </ng-container>
                                 <ng-container *ngSwitchCase="'corporate-sso'">
@@ -129,8 +145,12 @@
                                         <button class="ui green button small" [class.loading]="loadingLocalReset"
                                             (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
                                     </ng-container>
+                                    <ng-container *ngSwitchCase="'ldap'">
+                                        <button *ngIf="user.id === currentUser.id" class="ui green button small"
+                                            (click)="clickConsumerLDAPSignin()">{{(showLDAPSigninForm ? 'account_btn_submit' : 'account_btn_signin') | translate}}</button>
+                                    </ng-container>
                                     <ng-container *ngSwitchDefault>
-                                        <a *ngIf="user.id === currentUser.id " class="ui green button small"
+                                        <a *ngIf="user.id === currentUser.id" class="ui green button small"
                                             [routerLink]="'/auth/ask-signin/'+d.type"
                                             [queryParams]="{redirect_uri: '/settings/user/'+user.username, require_mfa: false}">
                                             {{'account_btn_signin' | translate}}

@@ -313,3 +313,52 @@ func (api *API) postAuthSignoutHandler() service.Handler {
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
+
+func (api *API) postAuthDetachHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		// Extract consumer type from request, is invalid or not in api drivers list return an error
+		consumerType := sdk.AuthConsumerType(vars["consumerType"])
+		if !consumerType.IsValidExternal() {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
+		_, ok := api.AuthenticationDrivers[consumerType]
+		if !ok {
+			return sdk.WithStack(sdk.ErrNotFound)
+		}
+
+		currentConsumer := getAPIConsumer(ctx)
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
+		consumer, err := authentication.LoadConsumerByTypeAndUserID(ctx, tx, consumerType, currentConsumer.AuthentifiedUserID)
+		if err != nil {
+			return err
+		}
+
+		if err := authentication.DeleteConsumerByID(tx, consumer.ID); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		// If we just removed the current consumer, clean http cookie.
+		if consumer.ID == currentConsumer.ID {
+			http.SetCookie(w, &http.Cookie{
+				Name:   jwtCookieName,
+				Value:  "",
+				MaxAge: -1,
+				Path:   "/",
+			})
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}

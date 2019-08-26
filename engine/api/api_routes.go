@@ -52,7 +52,8 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/consumer/worker/signin", ScopeNone(), r.POST(api.postRegisterWorkerHandler, Auth(false)))
 	r.Handle("/auth/consumer/worker/signout", ScopeNone(), r.POST(api.postUnregisterWorkerHandler))
 	r.Handle("/auth/consumer/{consumerType}/askSignin", ScopeNone(), r.GET(api.getAuthAskSigninHandler, Auth(false)))
-	r.Handle("/auth/consumer/{consumerType}/signin", ScopeNone(), r.POST(api.postAuthSigninHandler, Auth(false)))
+	r.Handle("/auth/consumer/{consumerType}/signin", Scope(sdk.AuthConsumerScopeAction), r.POST(api.postAuthSigninHandler, Auth(false)))
+	r.Handle("/auth/consumer/{consumerType}/detach", Scope(sdk.AuthConsumerScopeAction), r.POST(api.postAuthDetachHandler))
 	r.Handle("/auth/consumer/signout", ScopeNone(), r.POST(api.postAuthSignoutHandler))
 
 	// Action

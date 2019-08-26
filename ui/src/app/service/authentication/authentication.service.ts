@@ -42,6 +42,10 @@ export class AuthenticationService {
         return this._http.post('/auth/consumer/signout', null);
     }
 
+    detach(consumerType: string): Observable<any> {
+        return this._http.post(`/auth/consumer/${consumerType}/detach`, null);
+    }
+
     localSignup(fullname: string, email: string, username: string, password: string, init_token: string):
         Observable<AuthConsumerSigninResponse> {
         return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/local/signup', {
@@ -60,7 +64,7 @@ export class AuthenticationService {
         });
     }
 
-    ldapSignin(bind: string, password: string, init_token: string): Observable<AuthConsumerSigninResponse> {
+    ldapSignin(bind: string, password: string, init_token?: string): Observable<AuthConsumerSigninResponse> {
         return this._http.post<AuthConsumerSigninResponse>('/auth/consumer/ldap/signin', {
             bind,
             password,

@@ -149,7 +149,16 @@ const (
 // IsValid returns validity of given auth consumer type.
 func (t AuthConsumerType) IsValid() bool {
 	switch t {
-	case ConsumerBuiltin, ConsumerLocal, ConsumerLDAP, ConsumerCorporateSSO, ConsumerGithub, ConsumerGitlab, ConsumerTest, ConsumerTest2:
+	case ConsumerBuiltin, ConsumerLocal:
+		return true
+	}
+	return t.IsValidExternal()
+}
+
+// IsValidExternal returns validity of given auth consumer type.
+func (t AuthConsumerType) IsValidExternal() bool {
+	switch t {
+	case ConsumerLDAP, ConsumerCorporateSSO, ConsumerGithub, ConsumerGitlab, ConsumerTest, ConsumerTest2:
 		return true
 	}
 	return false

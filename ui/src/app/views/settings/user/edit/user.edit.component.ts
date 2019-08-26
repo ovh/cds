@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Transition, TransitionController, TransitionDirection } from '@richardlt/ng2-semantic-ui';
 import { AuthConsumer, AuthDriverManifest, AuthDriverManifests, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
 import { AuthentifiedUser, UserContact } from 'app/model/user.model';
@@ -39,11 +41,16 @@ const usernamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserEditComponent implements OnInit {
+    transitionController = new TransitionController();
+
     @ViewChild('consumerDetailsModal', { static: false })
     consumerDetailsModal: ConsumerDetailsModalComponent;
 
     @ViewChild('consumerCreateModal', { static: false })
     consumerCreateModal: ConsumerCreateModalComponent;
+
+    @ViewChild('ldapSigninForm', { static: false })
+    ldapSigninForm: NgForm;
 
     loading = false;
     deleteLoading = false;
@@ -75,6 +82,7 @@ export class UserEditComponent implements OnInit {
     filterSessions: Filter<AuthSession>;
     sessions: Array<AuthSession>;
     loadingLocalReset: boolean;
+    showLDAPSigninForm: boolean;
 
     constructor(
         private _authenticationService: AuthenticationService,
@@ -312,12 +320,42 @@ export class UserEditComponent implements OnInit {
             });
     }
 
-    clickConsumerSignin(consumerType: string): void {
+    clickConsumerLDAPSignin(): void {
+        if (this.showLDAPSigninForm) {
+            this._authenticationService.ldapSignin(this.ldapSigninForm.value.bind, this.ldapSigninForm.value.password).subscribe(() => {
+                this.showLDAPSigninForm = false;
+                this._cd.markForCheck();
+                this.getAuthData();
+            });
+            return;
+        }
 
+        this.transitionController.animate(
+            new Transition('scale', 150, TransitionDirection.Out, () => {
+                this.showLDAPSigninForm = true;
+                this._cd.detectChanges();
+                this.transitionController.animate(
+                    new Transition('scale', 150, TransitionDirection.In, () => { })
+                );
+            })
+        );
     }
 
     clickConsumerDetach(c: AuthConsumer): void {
+        let callback: () => any;
 
+        let currentSession = this.sessions.find(s => s.current);
+        if (currentSession && currentSession.consumer_id === c.id) {
+            callback = () => {
+                this._router.navigate(['/auth/signin']);
+            };
+        } else {
+            callback = () => {
+                this.getAuthData();
+            };
+        }
+
+        this._authenticationService.detach(c.type).subscribe(callback);
     }
 
     clickConsumerCreate(): void {
@@ -327,7 +365,7 @@ export class UserEditComponent implements OnInit {
     clickSessionRevoke(s: AuthSession): void {
         if (s.current) {
             this._authenticationService.signout().subscribe(() => {
-                this._router.navigate(['/auth/signin']);
+
             });
         } else {
             this._userService.deleteSession(this.currentUser.username, s.id).subscribe(() => {
@@ -484,7 +522,7 @@ export class UserEditComponent implements OnInit {
                     }
                     return a.type < b.type ? -1 : 1;
                 });
-                this.consumers = res[1];
+                this.consumers = res[1] ? res[1] : [];
 
                 this.mConsumers = {};
                 this.consumers.forEach((c: AuthConsumer) => {
