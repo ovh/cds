@@ -98,6 +98,8 @@ Per default, the command line ` + "`cdsctl`" + ` uses your keychain on your os:
 * Linux System: Secret-tool (libsecret)
 * Windows: Windows Credentials service
 
+If you don't want to use the keychain, you can select the version ` + "`-nokeychain`" + `.
+
 You can bypass keychain tools by using environment variables:
 
 	CDS_API_URL="https://instance.cds.api" CDS_USER="username" CDS_TOKEN="yourtoken" cdsctl [command]

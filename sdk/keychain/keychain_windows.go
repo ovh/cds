@@ -1,6 +1,8 @@
 package keychain
 
 import (
+	"fmt"
+
 	"github.com/docker/docker-credential-helpers/credentials"
 	"github.com/docker/docker-credential-helpers/wincred"
 )
@@ -10,7 +12,7 @@ func StoreSecret(url, username, secret string) error {
 	var nativeStore = wincred.Wincred{}
 
 	c := &credentials.Credentials{
-		ServerURL: url,
+		ServerURL: getServerURL(url, username),
 		Username:  username,
 		Secret:    secret,
 	}
@@ -19,8 +21,20 @@ func StoreSecret(url, username, secret string) error {
 }
 
 //GetSecret rerieves a credential through wincred
-func GetSecret(url string) (username string, secret string, err error) {
+func GetSecret(url, username string) (string, error) {
 	var nativeStore = secretservice.Wincred{}
-	username, secret, err = nativeStore.Get(url)
-	return
+
+	var err error
+	var usernameFind, secret string
+	usernameFind, secret, err = nativeStore.Get(getServerURL(url, username))
+
+	// if http://url#username not found, try http://url
+	if usernameFind != username {
+		if usernameFind, secret, err = nativeStore.Get(url); err != nil {
+			return "", err
+		} else if usernameFind != username {
+			return "", fmt.Errorf("username %s not found in your keychain", username)
+		}
+	}
+	return secret, err
 }

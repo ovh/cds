@@ -26,12 +26,11 @@ func loadSecret(configFile io.Reader, c *config) error {
 		return err
 	}
 
-	username, token, err := keychain.GetSecret(c.Host)
+	token, err := keychain.GetSecret(c.Host, c.User)
 	if err != nil {
 		return err
 	}
 
 	c.Token = token
-	c.User = username
 	return nil
 }

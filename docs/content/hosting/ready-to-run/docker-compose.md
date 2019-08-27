@@ -59,8 +59,8 @@ After registration on UI, keep the password displayed, we will use it in next st
 
 - Login with cdsctl
 
-Please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
-If you don't want to use the keychain, you can select the version i386.
+*please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
+If you don't want to use the keychain, you can select the version `-nokeychain`
 
 See: [cdsctl documentation]({{< relref "/docs/components/cdsctl/_index.md" >}})
 

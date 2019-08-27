@@ -181,7 +181,7 @@ $ chmod +x cdsctl
 ```
 
 *please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
-If you don't want to use the keychain, you can select the version i386*
+If you don't want to use the keychain, you can select the version `-nokeychain`
 
 + Login with cdsctl
 
