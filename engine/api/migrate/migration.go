@@ -19,7 +19,7 @@ const MinCompatibleRelease = "0.41.0"
 
 var migrations = []sdk.Migration{}
 
-// Add usefull to add new migrations
+// Add adds a migration to the list of migrations to run at API start time
 // example of usage:
 // migrate.Add(sdk.Migration{Name: "MyMigration", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 //	return migrate.MyMigration(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
