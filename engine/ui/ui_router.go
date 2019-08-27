@@ -38,11 +38,17 @@ func (s *Service) initRouter(ctx context.Context) {
 func (s *Service) getReverseProxy(path, urlRemote string) *httputil.ReverseProxy {
 	origin, _ := url.Parse(urlRemote)
 	director := func(req *http.Request) {
-		req.Header.Add("X-Forwarded-Host", req.Host)
-		req.Header.Add("X-Origin-Host", origin.Host)
-		req.URL.Scheme = "http"
-		req.URL.Host = origin.Host
-		req.URL.Path = strings.TrimPrefix(req.URL.Path, path)
+		reqPath := strings.TrimPrefix(req.URL.Path, path)
+		// on proxypass /cdshooks, allow only request on /webhooks/ path
+		if path == "/cdshooks" && !strings.HasPrefix(reqPath, "/webhook/") {
+			req = &http.Request{} // return 502 bad gateway
+		} else {
+			req.Header.Add("X-Forwarded-Host", req.Host)
+			req.Header.Add("X-Origin-Host", origin.Host)
+			req.URL.Scheme = "http"
+			req.URL.Host = origin.Host
+			req.URL.Path = reqPath
+		}
 	}
 	return &httputil.ReverseProxy{Director: director}
 }
