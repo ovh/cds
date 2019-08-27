@@ -20,17 +20,17 @@
     content="Purpose The goal of CDS is to start a worker when you need it, which should match all your requirements exactly. In order to scale automatically on demand, it is possible to register a worker model.
 The goal of a worker model is to describe the capabilities of a given Docker/ISO image in terms of architecture, pre-installed binaries or libraries.
 Types There are 4 types of worker models:
- Docker images, see how to create a worker model Docker OpenStack images, see how to create a worker model OpenStack vSphere images, see how to create a worker model vSphere Host worker models, which is a worker launched on the same host than the hatchery, we don&rsquo;t recommend to use this in production.">
+ Docker images, see how to create a worker model Docker OpenStack images, see how to create a worker model OpenStack vSphere images, see how to create a worker model vSphere Host worker model, which means workers launched on the same host as the hatchery.">
 <meta property="og:description"
     content="Purpose The goal of CDS is to start a worker when you need it, which should match all your requirements exactly. In order to scale automatically on demand, it is possible to register a worker model.
 The goal of a worker model is to describe the capabilities of a given Docker/ISO image in terms of architecture, pre-installed binaries or libraries.
 Types There are 4 types of worker models:
- Docker images, see how to create a worker model Docker OpenStack images, see how to create a worker model OpenStack vSphere images, see how to create a worker model vSphere Host worker models, which is a worker launched on the same host than the hatchery, we don&rsquo;t recommend to use this in production.">
+ Docker images, see how to create a worker model Docker OpenStack images, see how to create a worker model OpenStack vSphere images, see how to create a worker model vSphere Host worker model, which means workers launched on the same host as the hatchery.">
 <meta name="twitter:description"
     content="Purpose The goal of CDS is to start a worker when you need it, which should match all your requirements exactly. In order to scale automatically on demand, it is possible to register a worker model.
 The goal of a worker model is to describe the capabilities of a given Docker/ISO image in terms of architecture, pre-installed binaries or libraries.
 Types There are 4 types of worker models:
- Docker images, see how to create a worker model Docker OpenStack images, see how to create a worker model OpenStack vSphere images, see how to create a worker model vSphere Host worker models, which is a worker launched on the same host than the hatchery, we don&rsquo;t recommend to use this in production.">
+ Docker images, see how to create a worker model Docker OpenStack images, see how to create a worker model OpenStack vSphere images, see how to create a worker model vSphere Host worker model, which means workers launched on the same host as the hatchery.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/worker-model/">
 <meta property="og:title" content="Worker Model">
 <meta name="twitter:title" content="Worker Model">
@@ -541,7 +541,7 @@ In order to scale automatically on demand, it is possible to register a worker m
 <li>Docker images, see <a href="https://ovh.github.io/cds/docs/tutorials/worker_model-docker/">how to create a worker model Docker</a></li>
 <li>OpenStack images, see <a href="https://ovh.github.io/cds/docs/tutorials/worker_model-openstack/">how to create a worker model OpenStack</a></li>
 <li>vSphere images, see <a href="https://ovh.github.io/cds/docs/tutorials/worker_model-vsphere/">how to create a worker model vSphere</a></li>
-<li>Host worker models, which is a worker launched on the same host than the hatchery, we don&rsquo;t recommend to use this in production.</li>
+<li>Host worker model, which means workers launched on the same host as the hatchery. The security implication of such setup is lack of isolation between worker processes. They will share host resources like CPU, RAM, file system etc. For this reason, we don&rsquo;t recommend using this model in production.</li>
 </ul>
 
 <h2 id="behavior">Behavior</h2>
