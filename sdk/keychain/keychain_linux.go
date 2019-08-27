@@ -53,7 +53,7 @@ func StoreSecret(url, username, secret string) error {
 func GetSecret(url, username string) (string, error) {
 	ok, err := checkLibSecretAvailable()
 	if err != nil || !ok {
-		return
+		return "", fmt.Errorf("libsecret is not available: %v", err)
 	}
 	var nativeStore = secretservice.Secretservice{}
 
