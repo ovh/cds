@@ -107,6 +107,11 @@ func (s AuthConsumerScopeSlice) Value() (driver.Value, error) {
 	return j, WrapError(err, "cannot marshal AuthConsumerScopeSlice")
 }
 
+type AuthConsumerRegenRequest struct {
+	ConsumerID     string
+	RevokeSessions bool
+}
+
 // AuthConsumerSigninRequest struct for auth consumer signin request.
 type AuthConsumerSigninRequest map[string]string
 
@@ -194,6 +199,7 @@ type AuthConsumer struct {
 	Created            time.Time              `json:"created" cli:"created" db:"created"`
 	GroupIDs           Int64Slice             `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
 	Scopes             AuthConsumerScopeSlice `json:"scopes,omitempty" cli:"scopes" db:"scopes"`
+	IssuedAt           time.Time              `json:"issued_at" cli:"issued_at" db:"issued_at"`
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
 	Groups           Groups            `json:"groups,omitempty" db:"-"`

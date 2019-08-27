@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/services"
@@ -154,6 +155,7 @@ func initBuiltinConsumersFromStartupConfig(tx gorp.SqlExecutor, consumer *sdk.Au
 			Data:               map[string]string{},
 			GroupIDs:           []int64{group.SharedInfraGroup.ID},
 			Scopes:             scopes,
+			IssuedAt:           time.Now(),
 		}
 
 		if err := authentication.InsertConsumer(tx, &c); err != nil {

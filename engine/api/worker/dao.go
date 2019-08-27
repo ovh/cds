@@ -31,9 +31,6 @@ func Delete(db gorp.SqlExecutor, id string) error {
 	}
 
 	if accessTokenID.Valid {
-		if err := authentication.DeleteSessionByID(db, accessTokenID.String); err != nil {
-			return err
-		}
 		if err := authentication.DeleteConsumerByID(db, accessTokenID.String); err != nil {
 			return err
 		}

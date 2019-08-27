@@ -1,6 +1,8 @@
 package local
 
 import (
+	"time"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -33,6 +35,7 @@ func newConsumerWithData(db gorp.SqlExecutor, userID string, data map[string]str
 		Data: map[string]string{
 			"verified": sdk.FalseString,
 		},
+		IssuedAt: time.Now(),
 	}
 
 	for k, v := range data {

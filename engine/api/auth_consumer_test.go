@@ -58,6 +58,7 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 		Name:     sdk.RandomString(10),
 		GroupIDs: []int64{g.ID},
 		Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAccessToken},
+		IssuedAt: time.Now(),
 	}
 
 	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{

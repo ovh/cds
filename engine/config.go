@@ -295,6 +295,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Data:     map[string]string{},
 				GroupIDs: []int64{},
 				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
+				IssuedAt: time.Now(),
 			}
 
 			h.Local.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -323,6 +324,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Data:        map[string]string{},
 				GroupIDs:    []int64{},
 				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
+				IssuedAt:    time.Now(),
 			}
 
 			h.Openstack.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -352,6 +354,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Data:     map[string]string{},
 				GroupIDs: []int64{},
 				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
+				IssuedAt: time.Now(),
 			}
 
 			h.VSphere.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -381,6 +384,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Data:     map[string]string{},
 				GroupIDs: []int64{},
 				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
+				IssuedAt: time.Now(),
 			}
 
 			h.Swarm.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -409,6 +413,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Data:        map[string]string{},
 				GroupIDs:    []int64{},
 				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
+				IssuedAt:    time.Now(),
 			}
 
 			conf.Hatchery.Marathon.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -437,6 +442,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Data:        map[string]string{},
 				GroupIDs:    []int64{},
 				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
+				IssuedAt:    time.Now(),
 			}
 
 			conf.Hatchery.Kubernetes.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -472,6 +478,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				sdk.AuthConsumerScopeProject,
 				sdk.AuthConsumerScopeRun,
 			},
+			IssuedAt: time.Now(),
 		}
 
 		conf.Hooks.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -498,6 +505,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Data:        map[string]string{},
 			GroupIDs:    []int64{},
 			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
+			IssuedAt:    time.Now(),
 		}
 
 		conf.Repositories.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -524,6 +532,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Data:        map[string]string{},
 			GroupIDs:    []int64{},
 			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
+			IssuedAt:    time.Now(),
 		}
 
 		conf.DatabaseMigrate.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -550,6 +559,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Data:        map[string]string{},
 			GroupIDs:    []int64{},
 			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
+			IssuedAt:    time.Now(),
 		}
 
 		conf.VCS.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -576,6 +586,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Data:        map[string]string{},
 			GroupIDs:    []int64{},
 			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
+			IssuedAt:    time.Now(),
 		}
 
 		conf.ElasticSearch.API.Token, err = builtin.NewSigninConsumerToken(&c)

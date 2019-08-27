@@ -53,7 +53,8 @@ CREATE TABLE "auth_consumer" (
   created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
   group_ids JSONB,
   scopes JSONB,
-  sig BYTEA
+  sig BYTEA,
+  issued_at TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP
 );
 
 SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_USER', 'auth_consumer', 'authentified_user', 'user_id', 'id');

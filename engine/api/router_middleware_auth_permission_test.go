@@ -196,6 +196,7 @@ func Test_checkUserPermissions(t *testing.T) {
 			ctx := context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
 				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
 				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+				IssuedAt:           time.Now(),
 			})
 			err := api.checkUserPermissions(ctx, c.TargetAuthentifiedUser.Username, c.Permission, nil)
 			if c.Granted {
@@ -278,6 +279,7 @@ func Test_checkUserPublicPermissions(t *testing.T) {
 			ctx := context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
 				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
 				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+				IssuedAt:           time.Now(),
 			})
 			err := api.checkUserPublicPermissions(ctx, c.TargetAuthentifiedUser.Username, c.Permission, nil)
 			if c.Granted {

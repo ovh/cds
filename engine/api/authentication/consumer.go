@@ -1,6 +1,8 @@
 package authentication
 
 import (
+	"time"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -20,6 +22,7 @@ func NewConsumerWorker(db gorp.SqlExecutor, name string, hatcherySrv *sdk.Servic
 			sdk.AuthConsumerScopeRun,
 			sdk.AuthConsumerScopeRunExecution,
 		},
+		IssuedAt: time.Now(),
 	}
 
 	if err := InsertConsumer(db, &c); err != nil {
@@ -41,6 +44,7 @@ func NewConsumerExternal(db gorp.SqlExecutor, userID string, consumerType sdk.Au
 			"username":    userInfo.Username,
 			"email":       userInfo.Email,
 		},
+		IssuedAt: time.Now(),
 	}
 
 	if err := InsertConsumer(db, &c); err != nil {

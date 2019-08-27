@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -22,8 +23,9 @@ func TestServicesHandlers(t *testing.T) {
 	admin, jwtRaw := assets.InsertAdminUser(t, api.mustDB())
 
 	data := sdk.AuthConsumer{
-		Name:   sdk.RandomString(10),
-		Scopes: []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
+		Name:     sdk.RandomString(10),
+		Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
+		IssuedAt: time.Now(),
 	}
 
 	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{

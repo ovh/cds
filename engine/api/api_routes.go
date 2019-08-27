@@ -49,11 +49,12 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/consumer/local/askReset", ScopeNone(), r.POST(api.postAuthLocalAskResetHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/reset", ScopeNone(), r.POST(api.postAuthLocalResetHandler, Auth(false)))
 	r.Handle("/auth/consumer/builtin/signin", ScopeNone(), r.POST(api.postAuthBuiltinSigninHandler, Auth(false)))
+	r.Handle("/auth/consumer/builtin/regen", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postAuthBuiltinRegenHandler))
 	r.Handle("/auth/consumer/worker/signin", ScopeNone(), r.POST(api.postRegisterWorkerHandler, Auth(false)))
 	r.Handle("/auth/consumer/worker/signout", ScopeNone(), r.POST(api.postUnregisterWorkerHandler))
 	r.Handle("/auth/consumer/{consumerType}/askSignin", ScopeNone(), r.GET(api.getAuthAskSigninHandler, Auth(false)))
-	r.Handle("/auth/consumer/{consumerType}/signin", Scope(sdk.AuthConsumerScopeAction), r.POST(api.postAuthSigninHandler, Auth(false)))
-	r.Handle("/auth/consumer/{consumerType}/detach", Scope(sdk.AuthConsumerScopeAction), r.POST(api.postAuthDetachHandler))
+	r.Handle("/auth/consumer/{consumerType}/signin", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postAuthSigninHandler, Auth(false)))
+	r.Handle("/auth/consumer/{consumerType}/detach", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postAuthDetachHandler))
 	r.Handle("/auth/consumer/signout", ScopeNone(), r.POST(api.postAuthSignoutHandler))
 
 	// Action

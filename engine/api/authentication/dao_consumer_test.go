@@ -3,6 +3,7 @@ package authentication_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,6 +30,7 @@ func TestLoadConsumer(t *testing.T) {
 		Type:               sdk.ConsumerLocal,
 		Scopes:             []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAdmin},
 		AuthentifiedUserID: u.ID,
+		IssuedAt:           time.Now(),
 	}
 	require.NoError(t, authentication.InsertConsumer(db, &c1))
 
@@ -38,6 +40,7 @@ func TestLoadConsumer(t *testing.T) {
 		Type:               sdk.ConsumerBuiltin,
 		Scopes:             []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAdmin},
 		AuthentifiedUserID: u.ID,
+		IssuedAt:           time.Now(),
 	}
 	require.NoError(t, authentication.InsertConsumer(db, &c2))
 
@@ -78,6 +81,7 @@ func TestInsertConsumer(t *testing.T) {
 	c := sdk.AuthConsumer{
 		Name:               sdk.RandomString(10),
 		AuthentifiedUserID: u.ID,
+		IssuedAt:           time.Now(),
 	}
 	require.NoError(t, authentication.InsertConsumer(db, &c))
 
@@ -99,6 +103,7 @@ func TestUpdateConsumer(t *testing.T) {
 	c := sdk.AuthConsumer{
 		Name:               sdk.RandomString(10),
 		AuthentifiedUserID: u.ID,
+		IssuedAt:           time.Now(),
 	}
 	require.NoError(t, authentication.InsertConsumer(db, &c))
 
@@ -122,6 +127,7 @@ func TestDeleteConsumer(t *testing.T) {
 	c := sdk.AuthConsumer{
 		Name:               sdk.RandomString(10),
 		AuthentifiedUserID: u.ID,
+		IssuedAt:           time.Now(),
 	}
 	require.NoError(t, authentication.InsertConsumer(db, &c))
 

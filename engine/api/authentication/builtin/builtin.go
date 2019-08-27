@@ -108,6 +108,7 @@ func NewConsumer(db gorp.SqlExecutor, name, description string, parentConsumer *
 		Data:               map[string]string{},
 		GroupIDs:           groupIDs,
 		Scopes:             scopes,
+		IssuedAt:           time.Now(),
 	}
 
 	if err := authentication.InsertConsumer(db, &c); err != nil {
