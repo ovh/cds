@@ -753,12 +753,6 @@ func (a *API) Serve(ctx context.Context) error {
 		a.serviceAPIHeartbeat(ctx)
 	}, a.PanicDump())
 
-	//Temporary migration code
-	// example of migration:
-	//migrate.Add(sdk.Migration{Name: "MyMigration", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-	//	return migrate.MyMigration(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
-	//}})
-
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {
 		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")

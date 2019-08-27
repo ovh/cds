@@ -20,6 +20,10 @@ const MinCompatibleRelease = "0.41.0"
 var migrations = []sdk.Migration{}
 
 // Add usefull to add new migrations
+// example of usage:
+// migrate.Add(sdk.Migration{Name: "MyMigration", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+//	return migrate.MyMigration(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
+// }})
 func Add(migration sdk.Migration) {
 	if migration.Major == 0 && migration.Minor == 0 && migration.Patch == 0 && migration.Release != "" && !strings.HasPrefix(migration.Release, "snapshot") {
 		v, err := semver.Parse(migration.Release)
