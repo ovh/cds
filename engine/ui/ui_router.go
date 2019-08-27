@@ -41,7 +41,8 @@ func (s *Service) getReverseProxy(path, urlRemote string) *httputil.ReverseProxy
 		reqPath := strings.TrimPrefix(req.URL.Path, path)
 		// on proxypass /cdshooks, allow only request on /webhooks/ path
 		if path == "/cdshooks" && !strings.HasPrefix(reqPath, "/webhook/") {
-			req = &http.Request{} // return 502 bad gateway
+			// return 502 bad gateway
+			req = &http.Request{} // nolint
 		} else {
 			req.Header.Add("X-Forwarded-Host", req.Host)
 			req.Header.Add("X-Origin-Host", origin.Host)
