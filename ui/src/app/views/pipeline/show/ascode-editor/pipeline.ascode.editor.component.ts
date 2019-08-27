@@ -4,7 +4,7 @@ import { Store } from '@ngxs/store';
 import { Pipeline, PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
-import { ThemeStore } from 'app/service/services.module';
+import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchAsCodePipeline, ImportPipeline, PreviewPipeline, ResyncPipeline } from 'app/store/pipelines.action';

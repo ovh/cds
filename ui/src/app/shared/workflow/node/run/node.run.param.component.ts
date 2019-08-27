@@ -9,7 +9,7 @@ import { Commit } from 'app/model/repositories.model';
 import { WNode, WNodeContext, WNodeType, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest } from 'app/model/workflow.run.model';
 import { ApplicationWorkflowService } from 'app/service/application/application.workflow.service';
-import { ThemeStore } from 'app/service/services.module';
+import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';

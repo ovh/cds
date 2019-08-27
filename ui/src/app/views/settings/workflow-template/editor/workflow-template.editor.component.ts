@@ -8,10 +8,10 @@ import {
     Output,
     ViewChild
 } from '@angular/core';
+import { WorkflowTemplateError } from 'app/model/workflow-template.model';
+import { ThemeStore } from 'app/service/theme/theme.store';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs';
-import { WorkflowTemplateError } from '../../../../model/workflow-template.model';
-import { ThemeStore } from '../../../../service/services.module';
-import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-template-editor',
@@ -21,7 +21,7 @@ import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateEditorComponent implements OnInit, OnChanges {
-    @ViewChild('code', {static: false}) codemirror: any;
+    @ViewChild('code', { static: false }) codemirror: any;
 
     @Input() editable: boolean;
     @Input() removable: boolean;
@@ -33,7 +33,10 @@ export class WorkflowTemplateEditorComponent implements OnInit, OnChanges {
     codeMirrorConfig: any;
     themeSubscription: Subscription;
 
-    constructor(private _theme: ThemeStore, private _cd: ChangeDetectorRef) {
+    constructor(
+        private _theme: ThemeStore,
+        private _cd: ChangeDetectorRef
+    ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,

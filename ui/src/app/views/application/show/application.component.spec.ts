@@ -7,6 +7,11 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Variable } from 'app/model/variable.model';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { ServicesModule } from 'app/service/services.module';
+import { UserService } from 'app/service/user/user.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { AddApplicationVariable, DeleteApplicationVariable, UpdateApplicationVariable } from 'app/store/applications.action';
 import { NgxsStoreModule } from 'app/store/store.module';
@@ -23,13 +28,6 @@ import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../service/pipeline/pipeline.service';
 import { ProjectService } from '../../../service/project/project.service';
 import { ProjectStore } from '../../../service/project/project.store';
-import {
-    AuthenticationService,
-    ServicesModule,
-    UserService,
-    WorkflowRunService,
-    WorkflowStore
-} from '../../../service/services.module';
 import { VariableService } from '../../../service/variable/variable.service';
 import { WorkflowService } from '../../../service/workflow/workflow.service';
 import { SharedModule } from '../../../shared/shared.module';

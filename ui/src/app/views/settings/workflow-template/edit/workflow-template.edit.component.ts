@@ -1,32 +1,30 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/internal/operators/finalize';
-import { first } from 'rxjs/operators';
-import { AuditWorkflowTemplate } from '../../../../model/audit.model';
-import { Group } from '../../../../model/group.model';
+import { AuditWorkflowTemplate } from 'app/model/audit.model';
+import { Group } from 'app/model/group.model';
 import {
     InstanceStatus,
     InstanceStatusUtil,
     WorkflowTemplate,
     WorkflowTemplateError,
     WorkflowTemplateInstance
-} from '../../../../model/workflow-template.model';
-import { Workflow } from '../../../../model/workflow.model';
-import { GroupService } from '../../../../service/services.module';
-import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
-import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
-import { calculateWorkflowTemplateDiff } from '../../../../shared/diff/diff';
-import { Item } from '../../../../shared/diff/list/diff.list.component';
-import { Column, ColumnType } from '../../../../shared/table/data-table.component';
-import { Tab } from '../../../../shared/tabs/tabs.component';
-import { ToastService } from '../../../../shared/toast/ToastService';
-import {
-    WorkflowTemplateApplyModalComponent
-} from '../../../../shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
-import { WorkflowTemplateBulkModalComponent } from '../../../../shared/workflow-template/bulk-modal/workflow-template.bulk-modal.component';
+} from 'app/model/workflow-template.model';
+import { Workflow } from 'app/model/workflow.model';
+import { GroupService } from 'app/service/group/group.service';
+import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { calculateWorkflowTemplateDiff } from 'app/shared/diff/diff';
+import { Item } from 'app/shared/diff/list/diff.list.component';
+import { Column, ColumnType } from 'app/shared/table/data-table.component';
+import { Tab } from 'app/shared/tabs/tabs.component';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { WorkflowTemplateApplyModalComponent } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
+import { WorkflowTemplateBulkModalComponent } from 'app/shared/workflow-template/bulk-modal/workflow-template.bulk-modal.component';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/internal/operators/finalize';
+import { first } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-template-edit',
@@ -35,9 +33,9 @@ import { WorkflowTemplateBulkModalComponent } from '../../../../shared/workflow-
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateEditComponent implements OnInit {
-    @ViewChild('templateApplyModal', {static: false})
+    @ViewChild('templateApplyModal', { static: false })
     templateApplyModal: WorkflowTemplateApplyModalComponent;
-    @ViewChild('templateBulkModal', {static: false})
+    @ViewChild('templateBulkModal', { static: false })
     templateBulkModal: WorkflowTemplateBulkModalComponent;
 
     oldWorkflowTemplate: WorkflowTemplate;

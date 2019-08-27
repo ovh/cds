@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { Bookmark } from 'app/model/bookmark.model';
 import { NavbarProjectData } from 'app/model/navbar.model';
-import { UserService } from 'app/service/services.module';
+import { UserService } from 'app/service/user/user.service';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { NavbarService } from '../../service/navbar/navbar.service';

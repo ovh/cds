@@ -15,7 +15,7 @@ import { IdName, Project } from 'app/model/project.model';
 import { WorkflowHookModel } from 'app/model/workflow.hook.model';
 import { WNode, WNodeHook, WNodeOutgoingHook, WNodeType, Workflow } from 'app/model/workflow.model';
 import { HookService } from 'app/service/hook/hook.service';
-import { ThemeStore } from 'app/service/services.module';
+import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';

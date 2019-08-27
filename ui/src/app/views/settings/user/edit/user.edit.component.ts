@@ -7,7 +7,7 @@ import { Transition, TransitionController, TransitionDirection } from '@richardl
 import { AuthConsumer, AuthDriverManifest, AuthDriverManifests, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
 import { AuthentifiedUser, UserContact } from 'app/model/user.model';
-import { AuthenticationService } from 'app/service/services.module';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { UserService } from 'app/service/user/user.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { Item } from 'app/shared/menu/menu.component';

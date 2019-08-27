@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthentifiedUser } from 'app/model/user.model';
-import { AuthenticationService } from 'app/service/services.module';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { finalize } from 'rxjs/operators';
 
 @Component({

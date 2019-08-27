@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { RepoManagerService } from 'app/service/services.module';
+import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { ConfirmModalComponent } from 'app/shared/modal/confirm/confirm.component';
 import { DisconnectRepositoryManagerInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';

@@ -10,7 +10,7 @@ import { WorkflowTemplate } from 'app/model/workflow-template.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { ImportAsCodeService } from 'app/service/import-as-code/import.service';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { ThemeStore } from 'app/service/services.module';
+import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';

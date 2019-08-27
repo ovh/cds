@@ -6,6 +6,11 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { ServicesModule } from 'app/service/services.module';
+import { UserService } from 'app/service/user/user.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { Application } from '../../../../model/application.model';
 import { Pipeline } from '../../../../model/pipeline.model';
@@ -19,13 +24,6 @@ import { PipelineService } from '../../../../service/pipeline/pipeline.service';
 import { ProjectService } from '../../../../service/project/project.service';
 import { ProjectStore } from '../../../../service/project/project.store';
 import { RepoManagerService } from '../../../../service/repomanager/project.repomanager.service';
-import {
-    AuthenticationService,
-    ServicesModule,
-    UserService,
-    WorkflowRunService,
-    WorkflowStore
-} from '../../../../service/services.module';
 import { VariableService } from '../../../../service/variable/variable.service';
 import { WorkflowService } from '../../../../service/workflow/workflow.service';
 import { SharedModule } from '../../../../shared/shared.module';

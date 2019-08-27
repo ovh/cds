@@ -18,7 +18,7 @@ import { Requirement } from 'app/model/requirement.model';
 import { Stage } from 'app/model/stage.model';
 import { WorkerModel } from 'app/model/worker-model.model';
 import { ActionService } from 'app/service/action/action.service';
-import { WorkerModelService } from 'app/service/services.module';
+import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
 import { ActionEvent } from 'app/shared/action/action.event.model';
 import { StepEvent } from 'app/shared/action/step/step.event';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';

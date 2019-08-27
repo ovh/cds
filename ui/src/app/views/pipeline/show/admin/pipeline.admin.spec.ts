@@ -7,8 +7,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { NavbarService } from 'app/service/navbar/navbar.service';
-import { AuthenticationService, UserService } from 'app/service/services.module';
+import { ProjectService } from 'app/service/project/project.service';
+import { ProjectStore } from 'app/service/project/project.store';
+import { UserService } from 'app/service/user/user.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { NgxsStoreModule } from 'app/store/store.module';
@@ -44,7 +47,9 @@ describe('CDS: Pipeline Admin Component', () => {
                 WorkflowRunService,
                 TranslateParser,
                 UserService,
-                AuthenticationService
+                AuthenticationService,
+                ProjectStore,
+                ProjectService
             ],
             imports: [
                 PipelineModule,
@@ -73,6 +78,11 @@ describe('CDS: Pipeline Admin Component', () => {
 
         let p: Project = new Project();
         p.key = 'key1';
+        p.permissions = {
+            readable : true,
+            writable: true,
+            executable: true
+        }
         fixture.componentInstance.project = p;
 
         let pip: Pipeline = new Pipeline();

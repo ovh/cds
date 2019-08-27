@@ -90,14 +90,17 @@ describe('CDS: Project RepoManager List Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        let p: Project = new Project();
-        p.key = 'key1';
-        fixture.componentInstance.project = p;
-
-        let reposMans = new Array<RepositoriesManager>();
-        let r: RepositoriesManager = { name: 'stash' };
-        reposMans.push(r);
-        fixture.componentInstance.reposmanagers = reposMans;
+        fixture.componentInstance.project = <Project>{
+            key: 'key1',
+            permissions: {
+                readable: true,
+                writable: true,
+                executable: true
+            }
+        };
+        fixture.componentInstance.reposmanagers = [
+            <RepositoriesManager>{ name: 'stash' }
+        ];
 
         fixture.detectChanges(true);
 

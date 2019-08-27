@@ -4,7 +4,7 @@ import { Store } from '@ngxs/store';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
 import { Project } from 'app/model/project.model';
 import { IntegrationService } from 'app/service/integration/integration.service';
-import { ThemeStore } from 'app/service/services.module';
+import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AddIntegrationInProject } from 'app/store/project.action';

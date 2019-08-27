@@ -1,4 +1,3 @@
-/* tslint:disable:no-unused-variable */
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed } from '@angular/core/testing';
@@ -6,6 +5,8 @@ import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { UserService } from 'app/service/user/user.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AddPipelineParameter, DeletePipelineParameter, FetchPipeline, UpdatePipelineParameter } from 'app/store/pipelines.action';
@@ -26,6 +27,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineShowComponent } from './pipeline.show.component';
+
 describe('CDS: Pipeline Show', () => {
 
     beforeEach(() => {
@@ -44,7 +46,9 @@ describe('CDS: Pipeline Show', () => {
                 TranslateLoader,
                 TranslateParser,
                 WorkflowService,
-                WorkflowRunService
+                WorkflowRunService,
+                UserService,
+                AuthenticationService
             ],
             imports: [
                 PipelineModule,

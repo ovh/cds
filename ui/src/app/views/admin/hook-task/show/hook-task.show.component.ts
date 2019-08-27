@@ -2,10 +2,10 @@ import { formatDate } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { HookStatus, TaskExecution, WorkflowHookTask } from '../../../../model/workflow.hook.model';
-import { HookService } from '../../../../service/services.module';
-import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { Column, ColumnType } from '../../../../shared/table/data-table.component';
+import { HookStatus, TaskExecution, WorkflowHookTask } from 'app/model/workflow.hook.model';
+import { HookService } from 'app/service/hook/hook.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { Column, ColumnType } from 'app/shared/table/data-table.component';
 
 @Component({
     selector: 'app-hook-task-show',
