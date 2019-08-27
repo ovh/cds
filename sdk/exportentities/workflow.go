@@ -439,9 +439,6 @@ func (w Workflow) CheckValidity() error {
 		if len(w.DependsOn) != 0 {
 			mError.Append(fmt.Errorf("Error: wrong usage: depends_on not allowed here"))
 		}
-		if w.OneAtATime != nil && *w.OneAtATime != true && *w.OneAtATime != false {
-			mError.Append(fmt.Errorf("Error: wrong usage: one_at_a_time should be true, false or non-existent"))
-		}
 		if len(w.PipelineHooks) != 0 {
 			mError.Append(fmt.Errorf("Error: wrong usage: pipeline_hooks not allowed here"))
 		}
@@ -585,7 +582,7 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 
 func (e *NodeEntry) getNode(name string, w *sdk.Workflow) (*sdk.Node, error) {
 	var mutex bool
-	if e.OneAtATime != nil && *e.OneAtATime == true {
+	if e.OneAtATime != nil && *e.OneAtATime {
 		mutex = true
 	}
 	node := &sdk.Node{
