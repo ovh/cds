@@ -17,6 +17,7 @@ import { SettingsComponent } from './settings.component';
 import { SettingsRouting } from './settings.routing';
 import { ConsumerCreateModalComponent } from './user/consumer-create-modal/consumer-create-modal.component';
 import { ConsumerDetailsModalComponent } from './user/consumer-details-modal/consumer-details-modal.component';
+import { ConsumerDisplaySigninTokenComponent } from './user/consumer-display-signin-token/consumer-display-signin-token-component';
 import { UserEditComponent } from './user/edit/user.edit.component';
 import { UserListComponent } from './user/list/user.list.component';
 import { WorkerModelAddComponent } from './worker-model/add/worker-model.add.component';
@@ -44,6 +45,7 @@ import { WorkflowTemplateListComponent } from './workflow-template/list/workflow
         CdsctlComponent,
         ConsumerDetailsModalComponent,
         ConsumerCreateModalComponent,
+        ConsumerDisplaySigninTokenComponent,
         DownloadComponent,
         GroupEditComponent,
         GroupListComponent,

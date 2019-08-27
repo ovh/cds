@@ -1,6 +1,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AuthConsumerSigninResponse, AuthDriverManifests, AuthDriverSigningRedirect, AuthScope } from 'app/model/authentication.model';
+import {
+    AuthConsumerCreateResponse,
+    AuthConsumerSigninResponse,
+    AuthDriverManifests,
+    AuthDriverSigningRedirect,
+    AuthScope } from 'app/model/authentication.model';
 import { Observable } from 'rxjs';
 
 @Injectable()
@@ -87,6 +92,14 @@ export class AuthenticationService {
         return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/reset`, {
             token,
             password
+        });
+    }
+
+    builtinRegen(consumer_id: string, revoke_sessions: boolean):
+        Observable<AuthConsumerCreateResponse> {
+        return this._http.post<AuthConsumerCreateResponse>('/auth/consumer/builtin/regen', {
+            consumer_id,
+            revoke_sessions,
         });
     }
 }

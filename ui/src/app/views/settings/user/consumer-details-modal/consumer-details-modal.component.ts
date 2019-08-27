@@ -60,6 +60,8 @@ export class ConsumerDetailsModalComponent {
     columnsSessions: Array<Column<AuthSession>>;
     filterSessions: Filter<AuthSession>;
     consumerDeletedOrDetached: boolean;
+    regenConsumer: AuthConsumer;
+    regenConsumerSigninToken: string;
 
     constructor(
         private _modalService: SuiModalService,
@@ -167,7 +169,8 @@ export class ConsumerDetailsModalComponent {
         }
 
         this.open = true;
-
+        this.regenConsumer = undefined;
+        this.regenConsumerSigninToken = undefined;
         const config = new TemplateModalConfig<boolean, boolean, void>(this.consumerDetailsModal);
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
@@ -260,5 +263,14 @@ export class ConsumerDetailsModalComponent {
 
     clickClose(): void {
         this.modal.approve(true);
+    }
+
+    clickRegen(revokeSession: boolean): void {
+        this.regenConsumer = undefined;
+        this.regenConsumerSigninToken = undefined;
+        this._authenticationService.builtinRegen(this.consumer.id, revokeSession).subscribe(response => {
+            this.regenConsumerSigninToken = response.token;
+            this.regenConsumer = response.consumer;
+        });
     }
 }

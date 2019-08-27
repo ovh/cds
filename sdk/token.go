@@ -108,8 +108,8 @@ func (s AuthConsumerScopeSlice) Value() (driver.Value, error) {
 }
 
 type AuthConsumerRegenRequest struct {
-	ConsumerID     string
-	RevokeSessions bool
+	ConsumerID     string `json:"consumer_id"`
+	RevokeSessions bool   `json:"revoke_sessions"`
 }
 
 // AuthConsumerSigninRequest struct for auth consumer signin request.

@@ -48,10 +48,26 @@
                                     [loading]="loading" [title]="'user_auth_consumer_detach_btn'">
                                 </app-delete-button>
                             </ng-container>
-                            <button *ngIf="consumer.type === 'builtin'" class="ui button green right floated"
-                                (click)="clickRegen()">{{'auth_consumer_regen' | translate }}</button>
+                            <div *ngIf="consumer.type === 'builtin'"  class="ui green right floated buttons">
+                                <div class="ui button" (click)="clickRegen(false)">{{'auth_consumer_regen' | translate }}</div>
+                                <div class="ui floating icon dropdown button" suiDropdown>
+                                    <i class="dropdown icon"></i>
+                                    <div class="menu" suiDropdownMenu>
+                                        <div class="ui item" (click)="clickRegen(true)">{{'auth_consumer_regen_revoke' | translate }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button class="ui secondary button right floated"
                                 (click)="clickClose()">{{'btn_close' | translate }}</button>
+                        </div>
+                    </div>
+                    <div class="wide field">
+                        <div class="ui wide field">
+                            <ng-container *ngIf="regenConsumer && regenConsumer.id">
+                                <app-consumer-display-signin-token [consumer]="regenConsumer" [signinToken]="regenConsumerSigninToken">
+                                </app-consumer-display-signin-token>
+                            </ng-container>
                         </div>
                     </div>
                 </div>

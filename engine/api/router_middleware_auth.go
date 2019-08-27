@@ -164,17 +164,12 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 
 	// Checking X-XSRF-TOKEN header if needed and permission level higher than read
 	if xsrfTokenNeeded {
-		log.Debug("jwtMiddleware> searching for a xsrf token in header")
 		xsrfToken := req.Header.Get(xsrfHeaderName)
-
-		log.Debug("jwtMiddleware> searching for a xsrf token in cache")
 		existingXSRFToken, existXSRFTokenInCache := authentication.GetSessionXSRFToken(api.Cache, sessionID)
 
 		// If it's not a read request we want to check the xsrf token then generate a new one
 		// else if its a read request we want to reuse a cached XSRF token or generate one
 		if rc.PermissionLevel > sdk.PermissionRead {
-			log.Debug("jwtMiddleware> checking xsrf token")
-
 			if !existXSRFTokenInCache || xsrfToken != existingXSRFToken {
 				return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 			}
