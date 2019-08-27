@@ -1,18 +1,16 @@
-/* tslint:disable:no-unused-variable */
-
-import {TestBed, tick, fakeAsync, inject} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
-import {GroupService} from '../../../service/group/group.service';
-import {PermissionFormComponent} from './permission.form.component';
-import {Group, GroupPermission} from '../../../model/group.model';
-import {PermissionService} from '../permission.service';
-import {PermissionEvent} from '../permission.event.model';
-import {SharedModule} from '../../shared.module';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
+import { HttpRequest } from '@angular/common/http';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { XHRBackend } from '@angular/http';
+import { MockBackend } from '@angular/http/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Group, GroupPermission } from '../../../model/group.model';
+import { GroupService } from '../../../service/group/group.service';
+import { SharedModule } from '../../shared.module';
+import { PermissionEvent } from '../permission.event.model';
+import { PermissionService } from '../permission.service';
+import { PermissionFormComponent } from './permission.form.component';
 
 describe('CDS: Permission From Component', () => {
 
@@ -28,7 +26,7 @@ describe('CDS: Permission From Component', () => {
                 TranslateLoader,
                 TranslateParser
             ],
-            imports : [
+            imports: [
                 SharedModule,
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
@@ -39,7 +37,7 @@ describe('CDS: Permission From Component', () => {
     });
 
 
-    it('should create new permission', fakeAsync( inject([XHRBackend], (backend: MockBackend) => {
+    it('should create new permission', fakeAsync(inject([XHRBackend], (backend: MockBackend) => {
         const http = TestBed.get(HttpTestingController);
 
         let groupsMock = new Array<Group>();
@@ -47,8 +45,7 @@ describe('CDS: Permission From Component', () => {
         let groupMock = new Group();
         groupMock.id = 1;
         groupMock.name = 'grp1';
-        groupMock.admins = [];
-        groupMock.users = [];
+        groupMock.members = [];
 
         groupsMock.push(groupMock);
 

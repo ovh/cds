@@ -9,6 +9,7 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router'
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AuthenticationService, UserService } from 'app/service/services.module';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AddPipeline } from 'app/store/pipelines.action';
@@ -55,7 +56,9 @@ describe('CDS: Pipeline Add Component', () => {
                 EnvironmentService,
                 VariableService,
                 WorkflowService,
-                WorkflowRunService
+                WorkflowRunService,
+                UserService,
+                AuthenticationService
             ],
             imports: [
                 PipelineModule,

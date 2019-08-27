@@ -1,5 +1,3 @@
-/* tslint:disable:no-unused-variable */
-
 import { APP_BASE_HREF } from '@angular/common';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Component, Injector } from '@angular/core';
@@ -21,7 +19,13 @@ import { PipelineService } from '../../../../service/pipeline/pipeline.service';
 import { ProjectService } from '../../../../service/project/project.service';
 import { ProjectStore } from '../../../../service/project/project.store';
 import { RepoManagerService } from '../../../../service/repomanager/project.repomanager.service';
-import { ServicesModule, WorkflowRunService, WorkflowStore } from '../../../../service/services.module';
+import {
+    AuthenticationService,
+    ServicesModule,
+    UserService,
+    WorkflowRunService,
+    WorkflowStore
+} from '../../../../service/services.module';
 import { VariableService } from '../../../../service/variable/variable.service';
 import { WorkflowService } from '../../../../service/workflow/workflow.service';
 import { SharedModule } from '../../../../shared/shared.module';
@@ -64,7 +68,9 @@ describe('CDS: Application Admin Component', () => {
                 WorkflowService,
                 WorkflowRunService,
                 { provide: APP_BASE_HREF, useValue: '/' },
-                Store
+                Store,
+                UserService,
+                AuthenticationService
             ],
             imports: [
                 RouterTestingModule.withRoutes([

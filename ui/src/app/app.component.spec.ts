@@ -49,12 +49,10 @@ describe('App: CDS', () => {
         });
 
         injector = getTestBed();
-        authStore = injector.get(AuthentificationStore);
     });
 
     afterEach(() => {
         injector = undefined;
-        authStore = undefined;
     });
 
 
@@ -73,12 +71,12 @@ describe('App: CDS', () => {
         expect(compiled.querySelector('#navbar.connected')).toBeFalsy('Nav bar must not have the css class "connected"');
 
         fixture.componentInstance.ngOnInit();
-        authStore.addUser(new User(), false);
 
         expect(fixture.componentInstance.isConnected).toBeTruthy('IsConnected flag must be true');
         expect(compiled.querySelector('#navbar.connected')).toBeFalsy('Nav bar must have connected css class');
     });
 });
+
 class MockActivatedRoutes {
 
     snapshot: {

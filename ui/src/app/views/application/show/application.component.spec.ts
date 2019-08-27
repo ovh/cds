@@ -1,5 +1,3 @@
-/* tslint:disable:no-unused-variable */
-
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Injector } from '@angular/core';
@@ -25,7 +23,13 @@ import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../service/pipeline/pipeline.service';
 import { ProjectService } from '../../../service/project/project.service';
 import { ProjectStore } from '../../../service/project/project.store';
-import { ServicesModule, WorkflowRunService, WorkflowStore } from '../../../service/services.module';
+import {
+    AuthenticationService,
+    ServicesModule,
+    UserService,
+    WorkflowRunService,
+    WorkflowStore
+} from '../../../service/services.module';
 import { VariableService } from '../../../service/variable/variable.service';
 import { WorkflowService } from '../../../service/workflow/workflow.service';
 import { SharedModule } from '../../../shared/shared.module';
@@ -64,7 +68,9 @@ describe('CDS: Application', () => {
                 WorkflowStore,
                 WorkflowService,
                 WorkflowRunService,
-                Store
+                Store,
+                UserService,
+                AuthenticationService
             ],
             imports: [
                 ApplicationModule,

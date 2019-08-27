@@ -18,7 +18,7 @@ import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { ThemeStore } from 'app/service/services.module';
+import { AuthenticationService, ThemeStore, UserService } from 'app/service/services.module';
 import { VariableService } from 'app/service/variable/variable.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -65,7 +65,9 @@ describe('CDS: Application Repo Component', () => {
                 { provide: APP_BASE_HREF, useValue: '/' },
                 ThemeStore,
                 WorkflowRunService,
-                WorkflowService
+                WorkflowService,
+                UserService,
+                AuthenticationService
             ],
             imports: [
                 RouterTestingModule.withRoutes([
@@ -107,7 +109,6 @@ describe('CDS: Application Repo Component', () => {
 
         let app: Application = new Application();
         app.name = 'app';
-        app.permission = 7;
         let p: Project = new Project();
         p.key = 'key1';
         p.name = 'proj1';
