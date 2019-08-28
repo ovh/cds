@@ -117,7 +117,7 @@ export class WorkflowNotificationFormComponent implements OnInit {
 
         this.loading = true;
 
-        if (this.selectedUsers) {
+        if (this.selectedUsers != null) {
             this.notification.settings.recipients = this.selectedUsers.split(',');
         }
         this.updatedNotification.emit(this.notification);
