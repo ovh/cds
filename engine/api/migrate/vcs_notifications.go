@@ -2,15 +2,13 @@ package migrate
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func AddDefaultVCSNotifications(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap) error {
@@ -68,7 +66,7 @@ func AddDefaultVCSNotifications(ctx context.Context, store cache.Store, DBFunc f
 
 		//Insert the notification
 		if err := tx.Insert(&dbNotif); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			log.Error("migrate.AddDefaultVCSNotifications> Unable to insert workflow notification : %v", err)
 			continue
 		}
@@ -76,9 +74,9 @@ func AddDefaultVCSNotifications(ctx context.Context, store cache.Store, DBFunc f
 
 		//Insert associations with sources
 		query := "INSERT INTO workflow_notification_source(workflow_notification_id, node_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
-		fmt.Println("insert ---> ", notif.NodeIDs)
 		for i := range notif.NodeIDs {
 			if _, err := tx.Exec(query, notif.ID, notif.NodeIDs[i]); err != nil {
+				_ = tx.Rollback()
 				log.Error("migrate.AddDefaultVCSNotifications> Unable to insert associations between node %d and notification %d : %v", notif.NodeIDs[i], notif.ID, err)
 				continue
 			}

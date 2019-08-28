@@ -741,4 +741,5 @@ export class UserNotificationSettings {
 export class UserNotificationTemplate {
     subject: string;
     body: string;
+    disable_comment: boolean;
 }
