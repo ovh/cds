@@ -329,7 +329,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		return fmt.Errorf("sendEvent> err:%s", err)
 	}
 
-	if vcsConf.Type != "gerrit" {
+	if vcsConf.Type != "gerrit" && (notif.Settings.Template.DisableComment == nil || !*notif.Settings.Template.DisableComment) {
 		//Check if this branch and this commit is a pullrequest
 		prs, err := client.PullRequests(ctx, app.RepositoryFullname)
 		if err != nil {

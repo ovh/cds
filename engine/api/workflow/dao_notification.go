@@ -140,5 +140,6 @@ func (no *Notification) PostGet(db gorp.SqlExecutor) error {
 	if err := gorpmapping.JSONNullString(res, &no.Settings); err != nil {
 		return sdk.WrapError(err, "cannot parse user notification")
 	}
+
 	return nil
 }

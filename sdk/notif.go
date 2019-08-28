@@ -46,6 +46,8 @@ type UserNotificationSettings struct {
 type UserNotificationTemplate struct {
 	Subject string `json:"subject,omitempty" yaml:"subject,omitempty"`
 	Body    string `json:"body,omitempty" yaml:"body,omitempty"`
+	// For VCS
+	DisableComment *bool `json:"disable_comment" yaml:"disable_comment"`
 }
 
 //userNotificationInput is a way to parse notification
