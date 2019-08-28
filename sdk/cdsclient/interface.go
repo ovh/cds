@@ -337,7 +337,7 @@ type Interface interface {
 	AdminService
 	APIURL() string
 	ApplicationClient
-	ConfigUser() (map[string]string, error)
+	ConfigUser() (sdk.ConfigUser, error)
 	DownloadClient
 	EnvironmentClient
 	EventsClient

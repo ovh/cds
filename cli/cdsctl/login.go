@@ -10,7 +10,6 @@ import (
 
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
-	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -106,7 +105,7 @@ func loginRun(v cli.Values) error {
 	case sdk.ConsumerBuiltin:
 		return loginRunBuiltin(v)
 	default:
-		return loginRunExternal(v)
+		return loginRunExternal(v, consumerType)
 	}
 }
 
@@ -126,9 +125,7 @@ func loginRunLocal(v cli.Values) error {
 		fmt.Printf("Username: %s", username)
 	}
 	if password == "" {
-		if err := survey.AskOne(&survey.Password{Message: "Password"}, &password, nil); err != nil {
-			return err
-		}
+		password = cli.AskPassword("Password")
 	} else if !env {
 		fmt.Println("Password: ********")
 	}
@@ -161,9 +158,7 @@ func loginRunBuiltin(v cli.Values) error {
 	}
 
 	if signinToken == "" {
-		if err := survey.AskOne(&survey.Password{Message: "Sign in token"}, &signinToken, nil); err != nil {
-			return err
-		}
+		signinToken = cli.AskPassword("Sign in token")
 	} else if !env {
 		fmt.Println("Sign in token: ********")
 	}
@@ -185,18 +180,19 @@ func loginRunBuiltin(v cli.Values) error {
 	return doAfterLogin(apiURL, res.User.Username, res.Token, env, v.GetBool("insecure"))
 }
 
-func loginRunExternal(v cli.Values) error {
+func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType) error {
 	apiURL := v.GetString("api-url")
-	consumerType := sdk.AuthConsumerType(v.GetString("consumer-type"))
 
-	conf := cdsclient.Config{
+	client := cdsclient.New(cdsclient.Config{
 		Host:    apiURL,
-		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+		Verbose: v.GetBool("verbose"),
+	})
+	config, err := client.ConfigUser()
+	if err != nil {
+		return err
 	}
 
-	client = cdsclient.New(conf)
-
-	askSigninURI, err := url.Parse(apiURL + "/auth/consumer/" + string(consumerType) + "/askSignin?origin=cdsctl")
+	askSigninURI, err := url.Parse(config.URLUI + "/auth/ask-signin/" + string(consumerType) + "?origin=cdsctl")
 	if err != nil {
 		return fmt.Errorf("cannot parse given api uri: %v", err)
 	}
@@ -206,7 +202,7 @@ func loginRunExternal(v cli.Values) error {
 	fmt.Println(" >\t" + cli.Green("%s", askSigninURI.String()))
 	browser.OpenURL(askSigninURI.String()) // nolint
 
-	token := cli.AskValue("Enter 'token' value:")
+	token := cli.AskPassword("Enter 'token' value:")
 	splittedToken := strings.Split(token, ":")
 	if len(splittedToken) != 2 {
 		return fmt.Errorf("invalid given 'token' value")

@@ -35,6 +35,19 @@ func AskValue(s string) string {
 	return strings.TrimSpace(result)
 }
 
+// AskPassword ask for a password string and returns it.
+func AskPassword(s string) string {
+	var result string
+
+	if err := survey.AskOne(&survey.Password{
+		Message: s,
+	}, &result, nil); err != nil {
+		log.Fatal(err)
+	}
+
+	return strings.TrimSpace(result)
+}
+
 // AskChoice for a choice in given options, returns the selected option index.
 func AskChoice(s string, opts ...string) int {
 	var result string

@@ -171,23 +171,17 @@ func workflowRunManualRun(v cli.Values) error {
 
 	fmt.Printf("Workflow %s #%d has been launched\n", v.GetString(_WorkflowName), w.Number)
 
-	var baseURL string
 	configUser, err := client.ConfigUser()
 	if err != nil {
 		return err
 	}
-
-	if b, ok := configUser[sdk.ConfigURLUIKey]; ok {
-		baseURL = b
-	}
-
-	if baseURL == "" {
+	if configUser.URLUI == "" {
 		fmt.Println("Unable to retrieve workflow URI")
 		return nil
 	}
 
 	if !v.GetBool("interactive") {
-		url := fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", baseURL, v.GetString(_ProjectKey), v.GetString(_WorkflowName), w.Number)
+		url := fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", configUser.URLUI, v.GetString(_ProjectKey), v.GetString(_WorkflowName), w.Number)
 		fmt.Println(url)
 
 		if v.GetBool("open-web-browser") {
@@ -197,5 +191,5 @@ func workflowRunManualRun(v cli.Values) error {
 		return nil
 	}
 
-	return workflowRunInteractive(v, w, baseURL)
+	return workflowRunInteractive(v, w, configUser.URLUI)
 }

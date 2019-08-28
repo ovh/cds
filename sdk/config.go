@@ -5,8 +5,8 @@ type DefaultValues struct {
 	DefaultGroupName string
 }
 
-// ConfigURLUIKey is the configuration key for UI URL
-var ConfigURLUIKey = "url.ui"
-
-// ConfigURLAPIKey is the configuration key for API URL
-var ConfigURLAPIKey = "url.api"
+// ConfigUser struct.
+type ConfigUser struct {
+	URLUI  string `json:"url.ui"`
+	URLAPI string `json:"url.api"`
+}

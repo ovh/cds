@@ -14,7 +14,7 @@ import (
 
 func (api *API) getAuthDriversHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		drivers := make(sdk.AuthDriverManifests, len(api.AuthenticationDrivers))
+		drivers := make(sdk.AuthDriverManifests, 0, len(api.AuthenticationDrivers))
 
 		for _, d := range api.AuthenticationDrivers {
 			drivers = append(drivers, d.GetManifest())

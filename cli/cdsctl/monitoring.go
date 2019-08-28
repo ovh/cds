@@ -72,13 +72,11 @@ func monitoringRun(v cli.Values) (interface{}, error) {
 		}
 	}()
 
-	urlUI, err := client.ConfigUser()
+	config, err := client.ConfigUser()
 	if err != nil {
 		return nil, err
 	}
-	if b, ok := urlUI[sdk.ConfigURLUIKey]; ok {
-		ui.baseURL = b
-	}
+	ui.baseURL = config.URLUI
 
 	ui.me, err = client.UserGet(cfg.User)
 	if err != nil {

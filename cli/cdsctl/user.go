@@ -82,11 +82,10 @@ var userFavoriteCmd = cli.Command{
 }
 
 func userFavoriteRun(v cli.Values) error {
-	urlUI, err := client.ConfigUser()
+	config, err := client.ConfigUser()
 	if err != nil {
 		return nil
 	}
-	uiURL := urlUI[sdk.ConfigURLUIKey]
 
 	navbarInfos, err := client.Navbar()
 	if err != nil {
@@ -108,12 +107,12 @@ func userFavoriteRun(v cli.Values) error {
 
 	fmt.Println(" -=-=-=-=- Projects bookmarked -=-=-=-=-")
 	for _, prj := range projFavs {
-		fmt.Printf("- %s %s\n", prj.Name, uiURL+"/project/"+prj.Key)
+		fmt.Printf("- %s %s\n", prj.Name, config.URLUI+"/project/"+prj.Key)
 	}
 
 	fmt.Println("\n -=-=-=-=- Workflows bookmarked -=-=-=-=-")
 	for _, wf := range wfFavs {
-		fmt.Printf("- %s %s\n", wf.WorkflowName, uiURL+"/project/"+wf.Key+"/workflow/"+wf.WorkflowName)
+		fmt.Printf("- %s %s\n", wf.WorkflowName, config.URLUI+"/project/"+wf.Key+"/workflow/"+wf.WorkflowName)
 	}
 
 	return nil
