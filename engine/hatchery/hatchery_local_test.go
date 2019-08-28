@@ -23,7 +23,7 @@ type TestRunner struct {
 	t *testing.T
 }
 
-func (r *TestRunner) NewCmd(command string, args ...string) *exec.Cmd {
+func (r *TestRunner) NewCmd(ctx context.Context, command string, args ...string) *exec.Cmd {
 	cs := []string{"-test.run=TestHelperProcess", "--"}
 	cs = append(cs, args...)
 	cmd := exec.Command(os.Args[0], cs...)
