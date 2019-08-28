@@ -231,8 +231,10 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 		}
 
 		vals := argsToVal(args)
+		n, _ := cmd.Flags().GetBool("no-interactive")
 		b, _ := cmd.Flags().GetBool("insecure")
 		v, _ := cmd.Flags().GetBool("verbose")
+		vals["no-interactive"] = append(vals["no-interactive"], fmt.Sprintf("%v", n))
 		vals["insecure"] = append(vals["insecure"], fmt.Sprintf("%v", b))
 		vals["verbose"] = append(vals["verbose"], fmt.Sprintf("%v", v))
 
@@ -414,7 +416,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 
 			force, _ := cmd.Flags().GetBool("force")
 
-			if !force && !AskForConfirmation("Are you sure to delete?") {
+			if !force && !AskConfirm("Are you sure to delete?") {
 				fmt.Println("Deletion aborted")
 				OSExit(0)
 			}

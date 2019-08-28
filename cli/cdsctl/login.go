@@ -56,11 +56,12 @@ func login() *cobra.Command {
 }
 
 func loginRun(v cli.Values) error {
-	env := v.GetBool("env")
-	if env && sdk.GOOS == "windows" {
+	// Env param is not valid for windows users
+	if v.GetBool("env") && sdk.GOOS == "windows" {
 		return fmt.Errorf("Env option is not supported on windows yet")
 	}
 
+	// Checks that an URL is given
 	apiURL := v.GetString("api-url")
 	if apiURL == "" {
 		return fmt.Errorf("Please set api url")
@@ -69,14 +70,39 @@ func loginRun(v cli.Values) error {
 		return fmt.Errorf("Invalid given api url, remove trailing '/'")
 	}
 
+	// Load all drivers from given CDS instance
+	client := cdsclient.New(cdsclient.Config{
+		Host:    apiURL,
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+	})
+	res, err := client.AuthDriverList()
+	if err != nil {
+		return fmt.Errorf("Cannot list auth drivers: %v", err)
+	}
+	if len(res.Drivers) == 0 {
+		return fmt.Errorf("No authentication driver configured")
+	}
+
+	// Check consumer type validity or ask for one
 	consumerType := sdk.AuthConsumerType(v.GetString("consumer-type"))
-	if !consumerType.IsValid() {
+	if consumerType == "" && !v.GetBool("no-interactive") {
+		opts := make([]string, len(res.Drivers))
+		for i, d := range res.Drivers {
+			opts[i] = string(d.Type)
+		}
+		selected := cli.AskChoice("Select the type of driver that will be used to login", opts...)
+		consumerType = res.Drivers[selected].Type
+	}
+	if !consumerType.IsValid() || !res.Drivers.ExistsConsumerType(consumerType) {
 		return fmt.Errorf("Invalid given consumer type")
 	}
 
 	switch consumerType {
 	case sdk.ConsumerLocal:
 		return loginRunLocal(v)
+	case sdk.ConsumerLDAP:
+		// TODO
+		return nil
 	case sdk.ConsumerBuiltin:
 		return loginRunBuiltin(v)
 	default:
@@ -95,7 +121,7 @@ func loginRunLocal(v cli.Values) error {
 	}
 
 	if username == "" {
-		username = cli.AskValueChoice("Username")
+		username = cli.AskValue("Username")
 	} else if !env {
 		fmt.Printf("Username: %s", username)
 	}
@@ -180,7 +206,7 @@ func loginRunExternal(v cli.Values) error {
 	fmt.Println(" >\t" + cli.Green("%s", askSigninURI.String()))
 	browser.OpenURL(askSigninURI.String()) // nolint
 
-	token := cli.AskValueChoice("Enter 'token' value:")
+	token := cli.AskValue("Enter 'token' value:")
 	splittedToken := strings.Split(token, ":")
 	if len(splittedToken) != 2 {
 		return fmt.Errorf("invalid given 'token' value")
@@ -210,10 +236,10 @@ func doAfterLogin(url, username, token string, env bool, insecureSkipVerifyTLS b
 		fmt.Println("# Run this command to configure your shell:")
 		fmt.Println(`# eval $(cds login -H API_URL -u USERNAME -p PASSWORD --env)`)
 		return nil
-	} else {
-		fmt.Println("cdsctl: Login successful")
-		fmt.Println("cdsctl: Logged in as", username)
 	}
+
+	fmt.Println("cdsctl: Login successful")
+	fmt.Println("cdsctl: Logged in as", username)
 
 	if configFile == "" {
 		homedir := userHomeDir()
@@ -226,7 +252,7 @@ func doAfterLogin(url, username, token string, env bool, insecureSkipVerifyTLS b
 
 	//Check if file exists
 	if _, err := os.Stat(configFile); err == nil {
-		if !cli.AskForConfirmation(fmt.Sprintf("File %s exists, do you want to overwrite?", configFile)) {
+		if !cli.AskConfirm(fmt.Sprintf("File %s exists, do you want to overwrite?", configFile)) {
 			return fmt.Errorf("aborted")
 		}
 		if errre := os.Remove(configFile); errre != nil {

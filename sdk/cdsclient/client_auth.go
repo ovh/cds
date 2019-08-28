@@ -6,17 +6,25 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) AuthConsumerSignin(consumerType sdk.AuthConsumerType, request sdk.AuthConsumerSigninRequest) (*sdk.AuthConsumerSigninResponse, error) {
+func (c *client) AuthDriverList() (sdk.AuthDriverResponse, error) {
+	var response sdk.AuthDriverResponse
+	if _, err := c.GetJSON(context.Background(), "/auth/driver", &response); err != nil {
+		return response, err
+	}
+	return response, nil
+}
+
+func (c *client) AuthConsumerSignin(consumerType sdk.AuthConsumerType, request sdk.AuthConsumerSigninRequest) (sdk.AuthConsumerSigninResponse, error) {
 	var res sdk.AuthConsumerSigninResponse
 	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/auth/consumer/"+string(consumerType)+"/signin", request, &res)
 	if err != nil {
-		return nil, err
+		return res, err
 	}
-	return &res, nil
+	return res, nil
 }
 
-func (c *client) AuthConsumerListByUser(username string) ([]sdk.AuthConsumer, error) {
-	var consumers []sdk.AuthConsumer
+func (c *client) AuthConsumerListByUser(username string) (sdk.AuthConsumers, error) {
+	var consumers sdk.AuthConsumers
 	if _, err := c.GetJSON(context.Background(), "/user/"+username+"/auth/consumer", &consumers); err != nil {
 		return nil, err
 	}

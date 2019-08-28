@@ -97,7 +97,7 @@ func VerifyJWS(signature string, content interface{}) error {
 	}
 
 	if payload.Type != payloadDataType(content) || (payload.Expire > 0 && payload.Expire < time.Now().Unix()) {
-		return sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given jws token: %+v", payload)
+		return sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given jws token or expired: %+v", payload)
 	}
 
 	if err := json.Unmarshal([]byte(payload.Data), content); err != nil {

@@ -34,7 +34,32 @@ type AuthDriverSigningRedirect struct {
 	ContentType string            `json:"content_type"`
 }
 
-// AuthDriverManifest struct discribe a auth driver.
+// AuthDriverResponse struct contains drivers manifest and some info about auth config.
+type AuthDriverResponse struct {
+	IsFirstConnection bool                `json:"is_first_connection"`
+	Drivers           AuthDriverManifests `json:"manifests"`
+}
+
+// AuthDriverManifests gives functions on driver manifest slice.
+type AuthDriverManifests []AuthDriverManifest
+
+// FindByConsumerType returns a manifest for given consumer type if exists.
+func (a AuthDriverManifests) FindByConsumerType(consumerType AuthConsumerType) (AuthDriverManifest, bool) {
+	for _, m := range a {
+		if m.Type == consumerType {
+			return m, true
+		}
+	}
+	return AuthDriverManifest{}, false
+}
+
+// ExistsConsumerType returns if a driver exists for given consumer type.
+func (a AuthDriverManifests) ExistsConsumerType(consumerType AuthConsumerType) bool {
+	_, found := a.FindByConsumerType(consumerType)
+	return found
+}
+
+// AuthDriverManifest struct describe a auth driver.
 type AuthDriverManifest struct {
 	Type           AuthConsumerType `json:"type"`
 	SignupDisabled bool             `json:"signup_disabled"`
@@ -186,6 +211,9 @@ func (d AuthConsumerData) Value() (driver.Value, error) {
 	j, err := json.Marshal(d)
 	return j, WrapError(err, "cannot marshal AuthConsumerData")
 }
+
+// AuthConsumers gives functions for auth consumer slice.
+type AuthConsumers []AuthConsumer
 
 // AuthConsumer issues session linked to an authentified user.
 type AuthConsumer struct {

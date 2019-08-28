@@ -84,12 +84,12 @@ var authConsumerNewCmd = cli.Command{
 func authConsumerNewRun(v cli.Values) error {
 	name := v.GetString("name")
 	if name == "" {
-		name = cli.AskValueChoice("Name")
+		name = cli.AskValue("Name")
 	}
 
 	description := v.GetString("description")
 	if description == "" {
-		description = cli.AskValueChoice("Description")
+		description = cli.AskValue("Description")
 	}
 
 	allGroups, err := client.GroupList()
@@ -115,7 +115,7 @@ func authConsumerNewRun(v cli.Values) error {
 		for i := range allGroups {
 			opts[i] = allGroups[i].Name
 		}
-		choices := cli.MultiSelect("Select groups availables for the new consumer", opts...)
+		choices := cli.AskSelect("Select groups availables for the new consumer", opts...)
 		for _, choice := range choices {
 			groupIDs = append(groupIDs, allGroups[choice].ID)
 		}
@@ -134,7 +134,7 @@ func authConsumerNewRun(v cli.Values) error {
 		for i := range sdk.AuthConsumerScopes {
 			opts[i] = string(sdk.AuthConsumerScopes[i])
 		}
-		choices := cli.MultiSelect("Select groups availables for the new consumer", opts...)
+		choices := cli.AskSelect("Select groups availables for the new consumer", opts...)
 		for _, choice := range choices {
 			scopes = append(scopes, sdk.AuthConsumerScopes[choice])
 		}

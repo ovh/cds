@@ -53,7 +53,8 @@ func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 	root := cli.NewCommand(mainCmd, mainRun, cmds)
 
 	root.PersistentFlags().StringVarP(&configFile, "file", "f", "", "set configuration file")
-	root.PersistentFlags().BoolP("verbose", "", false, "verbose output")
+	root.PersistentFlags().BoolP("no-interactive", "n", false, "Set to disable interaction with ctl")
+	root.PersistentFlags().BoolP("verbose", "", false, "Enable verbose output")
 	root.PersistentFlags().BoolP("insecure", "", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 
 	root.PersistentPreRun = func(cmd *cobra.Command, args []string) {
@@ -64,7 +65,7 @@ func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 			client = cdsclient.New(*cfg)
 		}
 
-		//Do not load config on login
+		// Do not load config on login
 		if cmd.Name() == "login" ||
 			cmd.Name() == "signup" ||
 			cmd.Name() == "version" ||

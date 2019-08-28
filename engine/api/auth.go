@@ -14,7 +14,7 @@ import (
 
 func (api *API) getAuthDriversHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		drivers := []sdk.AuthDriverManifest{}
+		drivers := make(sdk.AuthDriverManifests, len(api.AuthenticationDrivers))
 
 		for _, d := range api.AuthenticationDrivers {
 			drivers = append(drivers, d.GetManifest())
@@ -25,10 +25,7 @@ func (api *API) getAuthDriversHandler() service.Handler {
 			return err
 		}
 
-		var response = struct {
-			IsFirstConnection bool                     `json:"is_first_connection"`
-			Drivers           []sdk.AuthDriverManifest `json:"manifests"`
-		}{
+		var response = sdk.AuthDriverResponse{
 			IsFirstConnection: countAdmins == 0,
 			Drivers:           drivers,
 		}

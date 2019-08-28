@@ -452,8 +452,9 @@ func WithUsage() RequestModifier {
 
 // AuthClient is the interface for authentication management.
 type AuthClient interface {
-	AuthConsumerSignin(sdk.AuthConsumerType, sdk.AuthConsumerSigninRequest) (*sdk.AuthConsumerSigninResponse, error)
-	AuthConsumerListByUser(username string) ([]sdk.AuthConsumer, error)
+	AuthDriverList() (sdk.AuthDriverResponse, error)
+	AuthConsumerSignin(sdk.AuthConsumerType, sdk.AuthConsumerSigninRequest) (sdk.AuthConsumerSigninResponse, error)
+	AuthConsumerListByUser(username string) (sdk.AuthConsumers, error)
 	AuthConsumerDelete(username, id string) error
 	AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error)
 }

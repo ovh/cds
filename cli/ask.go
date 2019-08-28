@@ -8,8 +8,8 @@ import (
 	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
-// AskForConfirmation ask for yes/no confirmation on command line.
-func AskForConfirmation(s string) bool {
+// AskConfirm for confirmation on command line.
+func AskConfirm(s string) bool {
 	var result bool
 
 	if err := survey.AskOne(&survey.Confirm{
@@ -22,8 +22,21 @@ func AskForConfirmation(s string) bool {
 	return result
 }
 
-// MultiChoice for multiple choices question. It returns the selected option
-func MultiChoice(s string, opts ...string) int {
+// AskValue ask for a string and returns it.
+func AskValue(s string) string {
+	var result string
+
+	if err := survey.AskOne(&survey.Input{
+		Message: s,
+	}, &result, nil); err != nil {
+		log.Fatal(err)
+	}
+
+	return strings.TrimSpace(result)
+}
+
+// AskChoice for a choice in given options, returns the selected option index.
+func AskChoice(s string, opts ...string) int {
 	var result string
 
 	if err := survey.AskOne(&survey.Select{
@@ -43,22 +56,22 @@ func MultiChoice(s string, opts ...string) int {
 	return 0
 }
 
-// MultiSelect for multiple choices question. It returns the selected options
-func MultiSelect(s string, opts ...string) []int {
-	var result []string
+// AskSelect for multiple choices in given options, returns indexes of selected options.
+func AskSelect(s string, opts ...string) []int {
+	var results []string
 
 	if err := survey.AskOne(&survey.MultiSelect{
 		Message:  s,
 		Options:  opts,
 		PageSize: 10,
-	}, &result, nil); err != nil {
+	}, &results, nil); err != nil {
 		log.Fatal(err)
 	}
 
 	var choices []int
 	for i := range opts {
-		for j := range result {
-			if opts[i] == result[j] {
+		for j := range results {
+			if opts[i] == results[j] {
 				choices = append(choices, i)
 			}
 		}
@@ -67,30 +80,13 @@ func MultiSelect(s string, opts ...string) []int {
 	return choices
 }
 
-// AskValueChoice ask for a string and returns it.
-func AskValueChoice(s string) string {
-	var result string
-
-	if err := survey.AskOne(&survey.Input{
-		Message: s,
-	}, &result, nil); err != nil {
-		log.Fatal(err)
+// NewCustomMultiSelect custom survey multi select from options.
+func NewCustomMultiSelect(message string, opts ...CustomMultiSelectOption) *CustomMultiSelect {
+	c := &CustomMultiSelect{
+		Message: message,
+		Options: opts,
 	}
 
-	return strings.TrimSpace(result)
-}
-
-// CustomMultiSelect is a custom multi select over survey multi select
-// that allows to add extra info on items.
-type CustomMultiSelect struct {
-	survey.MultiSelect
-	optionsMap map[string]CustomMultiSelectOption
-	Message    string
-	Options    []CustomMultiSelectOption
-}
-
-// Init survey multi select from options.
-func (c *CustomMultiSelect) Init() {
 	c.optionsMap = make(map[string]CustomMultiSelectOption, len(c.Options))
 
 	allOptions := make([]string, len(c.Options))
@@ -107,6 +103,17 @@ func (c *CustomMultiSelect) Init() {
 		Options: allOptions,
 		Default: defaultOptions,
 	}
+
+	return c
+}
+
+// CustomMultiSelect is a custom multi select over survey multi select
+// that allows to add extra info on items.
+type CustomMultiSelect struct {
+	survey.MultiSelect
+	optionsMap map[string]CustomMultiSelectOption
+	Message    string
+	Options    []CustomMultiSelectOption
 }
 
 // Prompt override to extract option values.

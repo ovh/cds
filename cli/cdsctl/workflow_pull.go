@@ -96,7 +96,7 @@ func workflowTarReaderToFiles(v cli.Values, dir string, tr *tar.Reader) error {
 		fname := filepath.Join(dir, hdr.Name)
 		if _, err = os.Stat(fname); err == nil || os.IsExist(err) {
 			if !force && !yes {
-				if !cli.AskForConfirmation(fmt.Sprintf("This will override %s. Do you want to continue?", fname)) {
+				if v.GetBool("no-interactive") || !cli.AskConfirm(fmt.Sprintf("This will override %s. Do you want to continue?", fname)) {
 					os.Exit(0)
 				}
 			}
