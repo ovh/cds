@@ -12,6 +12,8 @@ import (
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/vcs"
+
+	"github.com/spf13/afero"
 )
 
 func (wk *CurrentWorker) InstallKey(key sdk.Variable, destinationPath string) (*workerruntime.KeyResponse, error) {
@@ -40,6 +42,10 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable, destinationPath string) (*
 				return nil, sdk.WithStack(errSetup)
 			}
 
+			if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+				installedKeyPath, _ = x.RealPath(installedKeyPath)
+			}
+
 			return &workerruntime.KeyResponse{
 				PKey: installedKeyPath,
 				Type: sdk.KeyTypeSSH,
@@ -53,6 +59,10 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable, destinationPath string) (*
 				Status:  http.StatusInternalServerError,
 			}
 			return nil, sdk.WithStack(errSetup)
+		}
+
+		if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+			destinationPath, _ = x.RealPath(destinationPath)
 		}
 
 		return &workerruntime.KeyResponse{

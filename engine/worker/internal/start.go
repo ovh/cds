@@ -16,7 +16,9 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 	defer cancel()
 	httpServerCtx, stopHTTPServer := context.WithCancel(ctx)
 	defer stopHTTPServer()
-	w.Serve(httpServerCtx)
+	if err := w.Serve(httpServerCtx); err != nil {
+		return err
+	}
 
 	//Register
 	if err := w.Register(ctx); err != nil {

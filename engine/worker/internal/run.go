@@ -345,8 +345,13 @@ func workingDirectory(fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes 
 
 	if _, err := fs.Stat(dir); os.IsExist(err) {
 		log.Info("cleaning working directory %s", dir)
-		_ = os.RemoveAll(dir)
+		_ = fs.RemoveAll(dir)
 	}
+
+	if err := fs.MkdirAll(dir, os.FileMode(0700)); err != nil {
+		return dir, sdk.WithStack(err)
+	}
+
 	log.Debug("defining working directory %s", dir)
 	return dir, nil
 }
@@ -451,8 +456,6 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	ctx = workerruntime.SetWorkingDirectory(ctx, wdFile)
 	log.Debug("processJob> Setup workspace - %s", wdFile.Name())
 
-	w.currentJob.context = ctx
-
 	kdFile, _, err := w.setupKeysDirectory(jobInfo)
 	if err != nil {
 		return sdk.Result{
@@ -461,6 +464,9 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		}, err
 	}
 	ctx = workerruntime.SetKeysDirectory(ctx, kdFile)
+	log.Debug("processJob> Setup key directory - %s", kdFile.Name())
+
+	w.currentJob.context = ctx
 
 	var jobParameters = jobInfo.NodeJobRun.Parameters
 

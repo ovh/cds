@@ -1,15 +1,9 @@
 package local
 
 import (
-	"bytes"
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
-	"html/template"
-	"os"
 	"os/exec"
-	"path"
 	"runtime"
 	"strings"
 	"time"
@@ -23,7 +17,6 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -164,102 +157,6 @@ func (h *HatcheryLocal) killWorker(name string, workerCmd workerCmd) error {
 	return workerCmd.cmd.Process.Kill()
 }
 
-type localWorkerRunner struct{}
-
-func (localWorkerRunner) NewCmd(command string, args ...string) *exec.Cmd {
-	var cmd = exec.Command(command, args...)
-	cmd.Env = []string{}
-	return cmd
-}
-
-const workerCmdTmpl = "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}}"
-
-// SpawnWorker starts a new worker process
-func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
-	log.Debug("HatcheryLocal.SpawnWorker> %s want to spawn a worker named %s (jobID = %d)", spawnArgs.HatcheryName, spawnArgs.WorkerName, spawnArgs.JobID)
-
-	// Generate a random string 16 chars length
-	bs := make([]byte, 16)
-	if _, err := rand.Read(bs); err != nil {
-		return err
-	}
-	rndstr := hex.EncodeToString(bs)[0:16]
-	basedir := path.Join(h.Config.Basedir, rndstr)
-	// Create the directory
-	if err := os.MkdirAll(basedir, os.FileMode(0755)); err != nil {
-		return err
-	}
-
-	log.Info("HatcheryLocal.SpawnWorker> basedir: %s", basedir)
-
-	udataParam := sdk.WorkerArgs{
-		API:               h.Configuration().API.HTTP.URL,
-		Token:             spawnArgs.WorkerToken,
-		BaseDir:           basedir,
-		HTTPInsecure:      h.Config.API.HTTP.Insecure,
-		Name:              spawnArgs.WorkerName,
-		Model:             spawnArgs.ModelName(),
-		HatcheryName:      h.Name,
-		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
-		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
-		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
-		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-	}
-
-	udataParam.WorkflowJobID = spawnArgs.JobID
-
-	tmpl, errt := template.New("cmd").Parse(workerCmdTmpl)
-	if errt != nil {
-		return errt
-	}
-	var buffer bytes.Buffer
-	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
-		return errTmpl
-	}
-
-	cmdSplitted := strings.Split(buffer.String(), " -")
-	for i := range cmdSplitted[1:] {
-		cmdSplitted[i+1] = "-" + strings.Trim(cmdSplitted[i+1], " ")
-	}
-
-	binCmd := cmdSplitted[0]
-	log.Debug("Command exec: %v", cmdSplitted)
-	var cmd *exec.Cmd
-	if spawnArgs.RegisterOnly {
-		cmdSplitted[0] = "register"
-		cmd = h.LocalWorkerRunner.NewCmd(binCmd, cmdSplitted...)
-	} else {
-		cmd = h.LocalWorkerRunner.NewCmd(binCmd, cmdSplitted[1:]...)
-	}
-
-	// Clearenv
-	env := os.Environ()
-	for _, e := range env {
-		if !strings.HasPrefix(e, "CDS") && !strings.HasPrefix(e, "HATCHERY") {
-			cmd.Env = append(cmd.Env, e)
-		}
-	}
-
-	if err := cmd.Start(); err != nil {
-		log.Error("hatchery> local> %v", err)
-		return err
-	}
-
-	log.Debug("worker %s has been spawned by %s", spawnArgs.WorkerName, h.Name)
-
-	h.Lock()
-	h.workers[spawnArgs.WorkerName] = workerCmd{cmd: cmd, created: time.Now()}
-	h.Unlock()
-	// Wait in a goroutine so that when process exits, Wait() update cmd.ProcessState
-	go func() {
-		if err := cmd.Wait(); err != nil {
-			log.Error("hatchery> local> %v", err)
-		}
-	}()
-
-	return nil
-}
-
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcheryLocal) WorkersStarted() []string {
@@ -309,7 +206,6 @@ func (h *HatcheryLocal) startKillAwolWorkerRoutine(ctx context.Context) {
 }
 
 func (h *HatcheryLocal) killAwolWorkers() error {
-	log.Debug("hatchery> local> killAwolWorkers")
 	h.localWorkerIndexCleanup()
 
 	h.Lock()

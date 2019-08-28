@@ -26,7 +26,7 @@ func returnHTTPError(w http.ResponseWriter, code int, e error) {
 
 func LogMiddleware(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Debug("[Worker HTTP Server] %s %s", r.Method, r.URL.String())
+		log.Debug("[Worker HTTP Server] " + r.Method + " " + r.URL.String())
 		h(w, r)
 	}
 }

@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"os/exec"
 	"sync"
 	"time"
@@ -30,5 +31,5 @@ type workerCmd struct {
 }
 
 type LocalWorkerRunner interface {
-	NewCmd(command string, args ...string) *exec.Cmd
+	NewCmd(ctx context.Context, command string, args ...string) *exec.Cmd
 }

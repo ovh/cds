@@ -420,8 +420,6 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		return nil, sdk.WrapError(err, "Unable to update node job run %d", res.BuildID)
 	}
 
-	log.Debug("postJobResult> job build parameters: %+v", job.Parameters)
-
 	node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
 	if errn != nil {
 		return nil, sdk.WrapError(errn, "postJobResult> Unable to load node %d", job.WorkflowNodeRunID)

@@ -1,10 +1,15 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"runtime"
+	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -16,7 +21,27 @@ func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		keyName := vars["key"]
-		fileName := r.FormValue("file")
+
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			sdkerr := sdk.NewError(sdk.ErrWrongRequest, err).(sdk.Error)
+			writeJSON(w, sdkerr, sdkerr.Status)
+			return
+		}
+
+		defer r.Body.Close() // nolint
+
+		var mapBody = make(map[string]string)
+		if len(body) > 0 {
+			if err := json.Unmarshal(body, &mapBody); err != nil {
+				sdkerr := sdk.Error{
+					Status:  sdk.ErrWrongRequest.Status,
+					Message: err.Error()}
+				writeJSON(w, sdkerr, sdkerr.Status)
+				return
+			}
+		}
+
 		var key *sdk.Variable
 
 		if wk.currentJob.secrets == nil {
@@ -46,11 +71,22 @@ func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		response, err := wk.InstallKey(*key, fileName)
+		filename := mapBody["file"]
+
+		basePath, isBasePathFS := wk.Workspace().(*afero.BasePathFs)
+		if isBasePathFS {
+			realPath, _ := basePath.RealPath("/")
+			filename = strings.TrimPrefix(filename, realPath)
+			if runtime.GOOS == "darwin" {
+				filename = strings.TrimPrefix(filename, "/private"+realPath)
+			}
+		}
+
+		response, err := wk.InstallKey(*key, filename)
 		if err != nil {
 			log.Error("Unable to install key %s: %v", key.Name, err)
-			if err, ok := err.(*sdk.Error); ok {
-				writeJSON(w, err, err.Status)
+			if sdkerr, ok := err.(*sdk.Error); ok {
+				writeJSON(w, sdkerr, sdkerr.Status)
 			} else {
 				err := sdk.Error{
 					Message: err.Error(),
@@ -60,6 +96,7 @@ func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
 			}
 			return
 		}
+		log.Debug("key %s installed to %s", key.Name, response.PKey)
 		writeJSON(w, response, 200)
 	}
 }

@@ -125,7 +125,11 @@ func Debug(format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[DEBUG]    "+format, values...)
 	} else {
-		log.Debugf(format, values...)
+		if len(values) == 0 {
+			log.Debug(format)
+		} else {
+			log.Debugf(format, values...)
+		}
 	}
 }
 
@@ -134,7 +138,11 @@ func Info(format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[INFO]    "+format, values...)
 	} else {
-		log.Infof(format, values...)
+		if len(values) == 0 {
+			log.Info(format)
+		} else {
+			log.Infof(format, values...)
+		}
 	}
 }
 
@@ -143,7 +151,11 @@ func Warning(format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[WARN]    "+format, values...)
 	} else {
-		log.Warnf(format, values...)
+		if len(values) == 0 {
+			log.Warn(format)
+		} else {
+			log.Warnf(format, values...)
+		}
 	}
 }
 
@@ -152,7 +164,11 @@ func Error(format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[ERROR]    "+format, values...)
 	} else {
-		log.Errorf(format, values...)
+		if len(values) == 0 {
+			log.Errorf(format)
+		} else {
+			log.Errorf(format, values...)
+		}
 	}
 }
 
@@ -161,6 +177,10 @@ func Fatalf(format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[FATAL]    "+format, values...)
 	} else {
-		log.Fatalf(format, values...)
+		if len(values) == 0 {
+			log.Fatalf(format)
+		} else {
+			log.Fatalf(format, values...)
+		}
 	}
 }

@@ -111,7 +111,7 @@ func KeysDirectory(ctx context.Context) (afero.File, error) {
 	wdi := ctx.Value(keysDir)
 	wd, ok := wdi.(afero.File)
 	if !ok {
-		return nil, errors.New("unable to get working directory")
+		return nil, fmt.Errorf("unable to get key directory (%T) %v", wdi, wdi)
 	}
 	log.Debug("KeysDirectory> working directory is : %s", wd.Name())
 	return wd, nil

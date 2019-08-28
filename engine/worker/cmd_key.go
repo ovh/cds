@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -94,27 +95,29 @@ func keyInstallCmd() func(cmd *cobra.Command, args []string) {
 			sdk.Exit("Error: worker key install > Cannot parse '%s' as a port number : %s\n", portS, errPort)
 		}
 
-		if len(args) < 1 {
+		if len(args) < 1 || len(args) > 1 {
 			sdk.Exit("Error: worker key install > Wrong usage: Example : worker key install proj-key\n")
 		}
 
-		req, errRequest := http.NewRequest(
-			"POST",
-			fmt.Sprintf("http://127.0.0.1:%d/key/%s/install", port, url.PathEscape(args[0])),
-			bytes.NewReader(nil),
-		)
-		if errRequest != nil {
-			sdk.Exit("Error: worker key install > cannot post worker key install (Request): %s\n", errRequest)
-		}
+		var method = "POST"
+		var uri = fmt.Sprintf("http://127.0.0.1:%d/key/%s/install", port, url.PathEscape(args[0]))
+		var body io.Reader
 
 		if cmdInstallToFile != "" {
 			filename, err := filepath.Abs(cmdInstallToFile)
 			if err != nil {
-				sdk.Exit("Error: worker key install > cannot post worker key install (Request): %s\n", errRequest)
+				sdk.Exit("Error: worker key install > cannot post worker key install (Request): %s\n", err)
 			}
-			q := req.URL.Query()
-			q.Add("file", filename)
-			req.URL.RawQuery = q.Encode()
+			var mapBody = map[string]string{
+				"file": filename,
+			}
+			buffer, _ := json.Marshal(mapBody)
+			body = bytes.NewReader(buffer)
+		}
+
+		req, errRequest := http.NewRequest(method, uri, body)
+		if errRequest != nil {
+			sdk.Exit("Error: worker key install > cannot post worker key install (Request): %s\n", errRequest)
 		}
 
 		client := http.DefaultClient
@@ -139,14 +142,16 @@ func keyInstallCmd() func(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		body, err := ioutil.ReadAll(resp.Body)
+		bodyBtes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			sdk.Exit("Error: worker key install> HTTP body read error %v\n", err)
 		}
 
+		defer resp.Body.Close() // nolint
+
 		var keyResp workerruntime.KeyResponse
-		if err := json.Unmarshal(body, &keyResp); err != nil {
-			sdk.Exit("Error: worker key install> cannot unmarshall key response")
+		if err := json.Unmarshal(bodyBtes, &keyResp); err != nil {
+			sdk.Exit("Error: worker key install> cannot unmarshall key response: %s", string(bodyBtes))
 		}
 
 		switch keyResp.Type {
