@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -74,7 +75,7 @@ func TestInstallKey_SSHKeyWithoutDesination(t *testing.T) {
 	resp, err := w.InstallKey(priKeyVar, "")
 	require.NoError(t, err)
 
-	content, err := afero.ReadFile(w.Workspace(), resp.PKey)
+	content, err := ioutil.ReadFile(resp.PKey)
 	require.NoError(t, err)
 	assert.Equal(t, string(priKeyPEM), string(content))
 }
@@ -106,7 +107,7 @@ func TestInstallKey_SSHKeyWithDesination(t *testing.T) {
 	resp, err := w.InstallKey(priKeyVar, "id_rsa")
 	require.NoError(t, err)
 
-	content, err := afero.ReadFile(w.Workspace(), resp.PKey)
+	content, err := ioutil.ReadFile(resp.PKey)
 	require.NoError(t, err)
 	assert.Equal(t, string(priKeyPEM), string(content))
 }
