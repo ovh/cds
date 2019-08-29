@@ -23,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/hooks"
 	"github.com/ovh/cds/engine/migrateservice"
 	"github.com/ovh/cds/engine/repositories"
+	"github.com/ovh/cds/engine/ui"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
 )
@@ -36,6 +37,9 @@ func configSetDefaults() {
 	}
 	if conf.API != nil {
 		defaults.SetDefaults(conf.API)
+	}
+	if conf.UI != nil {
+		defaults.SetDefaults(conf.UI)
 	}
 	if conf.DatabaseMigrate != nil {
 		defaults.SetDefaults(conf.DatabaseMigrate)
@@ -107,6 +111,10 @@ func configBootstrap(args []string) {
 			if conf.API == nil {
 				conf.API = &api.Configuration{}
 			}
+		case "ui":
+			if conf.UI == nil {
+				conf.UI = &ui.Configuration{}
+			}
 		case "migrate":
 			if conf.DatabaseMigrate == nil {
 				conf.DatabaseMigrate = &migrateservice.Configuration{}
@@ -161,6 +169,7 @@ func configBootstrap(args []string) {
 		conf.Debug = &DebugConfiguration{}
 		conf.Tracing = &observability.Configuration{}
 		conf.API = &api.Configuration{}
+		conf.UI = &ui.Configuration{}
 		conf.DatabaseMigrate = &migrateservice.Configuration{}
 		conf.Hatchery = &HatcheryConfiguration{}
 		conf.Hatchery.Local = &local.HatcheryConfiguration{}
