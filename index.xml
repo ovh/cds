@@ -2774,7 +2774,7 @@ cdsctl xtoken new [flags]  Options  -d, --description string what is the purpose
 Synopsis Generate the whole configuration file $ engine config new &amp;gt; conf.toml
 you can compose your file configuration this will generate a file configuration containing api and hatchery:local µService $ engine config new api hatchery:local
 For advanced usage, Debug and Tracing section can be generated as: $ engine config new debug tracing [µService(s)&amp;hellip;]
-All options $ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]</description>
+All options $ engine config new [debug] [tracing] [api] [ui] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]</description>
     </item>
     
     <item>
@@ -3333,12 +3333,12 @@ cdsctl admin hooks start UUID  Examples cdsctl admin hooks start 5178ce1f-2f76-4
       <description>engine start Start CDS
 Synopsis Start CDS Engine Services
 API This is the core component of CDS.
+UI This is the CDS Web UI.
 Hatcheries They are the components responsible for spawning workers. Supported integrations/orchestrators are:
  Local machine Openstack Docker Swarm Openstack Vsphere  Hooks This component operates CDS workflow hooks
 Repositories This component operates CDS workflow repositories
 VCS This component operates CDS VCS connectivity
-Start all of this with a single command:
-$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]  All the services are using the same configuration file format.</description>
+Start all of this with a single command:</description>
     </item>
     
     <item>
