@@ -739,6 +739,9 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		}
 		for _, node := range w.WorkflowData.Array() {
 			if node.IsLinkedToRepo(w) {
+				if node.Ref == "" {
+					node.Ref = node.Name
+				}
 				notif.SourceNodeRefs = append(notif.SourceNodeRefs, node.Ref)
 			}
 		}
