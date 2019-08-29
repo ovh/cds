@@ -38,7 +38,11 @@ func userHomeDir() string {
 	return os.Getenv(env)
 }
 
-func loadConfig(cmd *cobra.Command, configFile string) (*cdsclient.Config, error) {
+func loadConfig(cmd *cobra.Command) (*cdsclient.Config, error) {
+	var configFile, _ = cmd.Flags().GetString("file")
+	if configFile == "" {
+		configFile = os.Getenv("CDS_FILE")
+	}
 	var verbose, _ = cmd.Flags().GetBool("verbose")
 	verbose = verbose || os.Getenv("CDS_VERBOSE") == "true"
 	var insecureSkipVerifyTLS, _ = cmd.Flags().GetBool("insecure")

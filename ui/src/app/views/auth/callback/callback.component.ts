@@ -54,11 +54,11 @@ export class CallbackComponent implements OnInit {
                 return;
             }
 
-            // If the origin is cdsctl, show the code and the state for copy
+            // Parse JWS state
             let payload = jws.JWS.parse(this.state).payloadObj;
-            if (payload.data) {
-                this.payloadData = JSON.parse(payload.data);
-            }
+            this.payloadData = payload.data;
+
+            // If the origin is cdsctl, show the code and the state for copy
             if (this.payloadData && this.payloadData.origin === 'cdsctl') {
                 this.loading = false;
                 this.showCTL = true;

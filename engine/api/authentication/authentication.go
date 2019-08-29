@@ -58,9 +58,9 @@ func VerifyJWT(token *jwt.Token) (interface{}, error) {
 
 // signaturePayload contains fields for a jws signature payload.
 type signaturePayload struct {
-	Type   string `json:"type"`
-	Expire int64  `json:"expire"`
-	Data   string `json:"data"`
+	Type   string                 `json:"type"`
+	Expire int64                  `json:"expire"`
+	Data   map[string]interface{} `json:"data"`
 }
 
 // SignJWS returns a jws string using CDS signing key.
@@ -69,10 +69,14 @@ func SignJWS(content interface{}, duration time.Duration) (string, error) {
 	if err != nil {
 		return "", sdk.WithStack(err)
 	}
+	var jsonData map[string]interface{}
+	if err := json.Unmarshal(buf, &jsonData); err != nil {
+		return "", sdk.WithStack(err)
+	}
 
 	payload := signaturePayload{
 		Type: payloadDataType(content),
-		Data: string(buf),
+		Data: jsonData,
 	}
 	if duration > 0 {
 		payload.Expire = time.Now().Add(duration).Unix()
@@ -100,7 +104,11 @@ func VerifyJWS(signature string, content interface{}) error {
 		return sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given jws token or expired: %+v", payload)
 	}
 
-	if err := json.Unmarshal([]byte(payload.Data), content); err != nil {
+	buf, err := json.Marshal(payload.Data)
+	if err != nil {
+		return sdk.WrapError(err, "unable to decode payload data")
+	}
+	if err := json.Unmarshal(buf, content); err != nil {
 		return sdk.WrapError(err, "unable to decode payload data")
 	}
 
