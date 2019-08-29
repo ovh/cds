@@ -742,8 +742,10 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 				notif.SourceNodeRefs = append(notif.SourceNodeRefs, node.Ref)
 			}
 		}
-		if err := InsertNotification(db, w, &notif); err != nil {
-			return sdk.WrapError(err, "Unable to insert VCS workflow(%d) notification (%#v)", w.ID, notif)
+		if len(notif.SourceNodeRefs) > 0 {
+			if err := InsertNotification(db, w, &notif); err != nil {
+				return sdk.WrapError(err, "Unable to insert VCS workflow(%d) notification (%#v)", w.ID, notif)
+			}
 		}
 	}
 
