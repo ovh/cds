@@ -7,6 +7,8 @@ import (
 	"path"
 	"strings"
 
+	"github.com/ovh/cds/cli/cdsctl/internal"
+
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 
@@ -233,7 +235,7 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 	if env {
 		fmt.Printf("export CDS_API_URL=%s\n", apiURL)
 		fmt.Printf("export CDS_USER=%s\n", res.User.Username)
-		fmt.Printf("export CDS_TOKEN=%s\n", res.Token)
+		fmt.Printf("export CDS_SESSION_TOKEN=%s\n", res.Token)
 		return nil
 	}
 
@@ -248,34 +250,71 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 		fmt.Printf("cdsctl: You didn't specify config file location; %s will be used.\n", configFile)
 	}
 
-	// Check if target config file exists, if true ask for override
-	if _, err := os.Stat(configFile); err == nil {
-		if !cli.AskConfirm(fmt.Sprintf("File %s exists, do you want to overwrite?", configFile)) {
-			return fmt.Errorf("aborted")
+	var contextName string
+	// create file if not exists
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+		fi, err := os.Create(configFile)
+		if err != nil {
+			return fmt.Errorf("Error while creating file %s: %v", configFile, err)
 		}
-		if err := os.Remove(configFile); err != nil {
-			return fmt.Errorf("Error while removing old file %s: %s", configFile, err)
+		fi.Close()
+		contextName = cli.AskValue("Enter a context name for this login (default):")
+	} else {
+		fi, err := os.Open(configFile)
+		cdsConfigFile, err := internal.GetConfigFile(fi)
+		if err != nil {
+			fmt.Printf("Error while reading config file %s: %v\n", configFile, err)
+		} else {
+			opts := []string{}
+			for _, c := range cdsConfigFile.Contexts {
+				line := fmt.Sprintf("%s", c.Context)
+				if c.Context == cdsConfigFile.Current {
+					line = fmt.Sprintf("%s - current", line)
+				}
+				opts = append(opts, line)
+			}
+			other := "Enter another name"
+			opts = append(opts, other)
+
+			selected := cli.AskChoice("Choose a context for this login", opts...)
+			if opts[selected] == other {
+				contextName = cli.AskValue("Enter a context name for this login (default):")
+			} else {
+				contextName = strings.TrimRight(opts[selected], " - current")
+			}
 		}
+		fi.Close()
 	}
 
-	// Create new config file a store secret
-	fi, err := os.Create(configFile)
+	fi, err := os.OpenFile(configFile, os.O_RDONLY, 0600)
 	if err != nil {
-		return fmt.Errorf("Error while creating file %s: %s", configFile, err)
+		return fmt.Errorf("Error while opening file %s: %v", configFile, err)
 	}
 	defer fi.Close()
+	fiWrite, err := os.OpenFile(configFile, os.O_WRONLY, 0600)
+	if err != nil {
+		return fmt.Errorf("Error while opening file %s: %v", configFile, err)
+	}
+	defer fiWrite.Close()
 
-	if err := storeSecret(fi, &config{
+	if contextName == "" {
+		contextName = "default"
+	}
+
+	cdsContext := internal.CDSContext{
+		Context:               contextName,
 		Host:                  apiURL,
 		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
 		User:                  res.User.Username,
-		Token:                 res.Token,
-	}); err != nil {
+		SessionToken:          res.Token,
+	}
+
+	if err := internal.StoreContext(fi, fiWrite, cdsContext); err != nil {
 		return err
 	}
 
 	if err := fi.Chmod(os.FileMode(0600)); err != nil {
-		return fmt.Errorf("Error while chmod 600 file %s: %s", configFile, err)
+		return fmt.Errorf("Error while chmod 600 file %s: %v", configFile, err)
 	}
 
 	return nil

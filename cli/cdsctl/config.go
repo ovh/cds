@@ -5,12 +5,12 @@ import (
 	"os"
 	"path"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/fsamin/go-repo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/cli/cdsctl/internal"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -20,13 +20,6 @@ var (
 	_ApplicationName = "application-name"
 	_WorkflowName    = "workflow-name"
 )
-
-type config struct {
-	Host                  string
-	User                  string
-	Token                 string
-	InsecureSkipVerifyTLS bool
-}
 
 func userHomeDir() string {
 	env := "HOME"
@@ -38,7 +31,7 @@ func userHomeDir() string {
 	return os.Getenv(env)
 }
 
-func loadConfig(cmd *cobra.Command) (*cdsclient.Config, error) {
+func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 	var configFile, _ = cmd.Flags().GetString("file")
 	if configFile == "" {
 		configFile = os.Getenv("CDS_FILE")
@@ -47,11 +40,16 @@ func loadConfig(cmd *cobra.Command) (*cdsclient.Config, error) {
 	verbose = verbose || os.Getenv("CDS_VERBOSE") == "true"
 	var insecureSkipVerifyTLS, _ = cmd.Flags().GetBool("insecure")
 	insecureSkipVerifyTLS = insecureSkipVerifyTLS || os.Getenv("CDS_INSECURE") == "true"
+	var contextName, _ = cmd.Flags().GetString("context")
+	if contextName == "" {
+		contextName = os.Getenv("CDS_CONTEXT")
+	}
 
-	c := &config{}
+	c := &internal.CDSContext{}
 	c.Host = os.Getenv("CDS_API_URL")
 	c.User = os.Getenv("CDS_USER")
-	c.Token = os.Getenv("CDS_TOKEN")
+	c.SessionToken = os.Getenv("CDS_SESSION_TOKEN")
+	buitinConsumerAuthenticationToken := os.Getenv("CDS_SIGNING_TOKEN")
 	c.InsecureSkipVerifyTLS = insecureSkipVerifyTLS
 
 	if c.Host != "" && c.User != "" {
@@ -60,74 +58,87 @@ func loadConfig(cmd *cobra.Command) (*cdsclient.Config, error) {
 		}
 	}
 
-	dir, err := os.Getwd()
-	if err != nil {
-		return nil, err
+	if configFile == "" {
+		configFile = path.Join(userHomeDir(), ".cdsrc")
 	}
 
-	homedir := userHomeDir()
-
-	var configFiles []string
-	if configFile != "" {
-		configFiles = []string{configFile}
-	} else {
-		configFiles = []string{
-			path.Join(dir, ".cdsrc"),
-			path.Join(homedir, ".cdsrc"),
-		}
+	if verbose {
+		fmt.Println("Configuration loaded from", configFile)
 	}
 
-	var i int
-	for c.Host == "" && i < len(configFiles) {
-		if _, err := os.Stat(configFiles[i]); err == nil {
-			f, err := os.Open(configFiles[i])
-			if err != nil {
-				if verbose {
-					fmt.Printf("Unable to read %s \n", configFiles[i])
-				}
-				return nil, err
-			}
-			defer f.Close()
-
-			if err := loadSecret(f, c); err != nil {
-				if verbose {
-					fmt.Printf("Unable to load configuration %s \n", configFiles[i])
-				}
-				return nil, err
-			}
-
+	cdsContext := &internal.CDSContext{}
+	if _, err := os.Stat(configFile); err == nil {
+		f, err := os.Open(configFile)
+		if err != nil {
 			if verbose {
-				fmt.Println("Configuration loaded from", configFiles[i])
+				fmt.Printf("Unable to read %s \n", configFile)
 			}
+			return "", nil, err
 		}
-		i++
-	}
+		defer f.Close()
 
-	if c.Host == "" {
-		return nil, fmt.Errorf("unable to load configuration, you should try to login first")
-	}
+		if contextName != "" {
+			if cdsContext, err = internal.GetContext(f, contextName); err != nil {
+				if verbose {
+					fmt.Printf("Unable to load the current context from %s \n", contextName)
+				}
+				return "", nil, err
+			}
+		} else if cdsContext, err = internal.GetCurrentContext(f); err != nil {
+			if verbose {
+				fmt.Printf("Unable to load the current context from %s \n", configFile)
+			}
+			return "", nil, err
+		}
 
-	conf := &cdsclient.Config{
-		Host:                  c.Host,
-		User:                  c.User,
-		Verbose:               verbose,
-		InsecureSkipVerifyTLS: c.InsecureSkipVerifyTLS,
-	}
-
-	// TEMPORARY CODE
-	// Try to parse the token as JWT and set it as access token
-	if _, _, err := new(jwt.Parser).ParseUnverified(c.Token, &sdk.AuthSessionJWTClaims{}); err == nil {
-		conf.SessionToken = c.Token
-		//conf.Token = ""
 		if verbose {
-			fmt.Println("JWT recognized")
+			fmt.Printf("Configuration loaded from %s with context %s\n", configFile, contextName)
 		}
-	} else {
-		//conf.Token = c.Token
 	}
-	// TEMPORARY CODE - END
 
-	return conf, nil
+	if c.Host != "" {
+		cdsContext.Host = c.Host
+	}
+	if c.User != "" {
+		cdsContext.User = c.User
+	}
+	if c.SessionToken != "" {
+		cdsContext.SessionToken = c.SessionToken
+	}
+	if buitinConsumerAuthenticationToken != "" {
+		req := sdk.AuthConsumerSigninRequest{
+			"token": buitinConsumerAuthenticationToken,
+		}
+		client := cdsclient.New(cdsclient.Config{
+			Host:    cdsContext.Host,
+			Verbose: os.Getenv("CDS_VERBOSE") == "true",
+		})
+		res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, req)
+		if err != nil {
+			return "", nil, fmt.Errorf("cannot signin: %v", err)
+		}
+		if res.Token == "" || res.User == nil {
+			return "", nil, fmt.Errorf("invalid username or token returned by sign in token")
+		}
+		cdsContext.SessionToken = res.Token
+		cdsContext.User = res.User.Username
+	}
+	if c.InsecureSkipVerifyTLS {
+		cdsContext.InsecureSkipVerifyTLS = c.InsecureSkipVerifyTLS
+	}
+
+	cdsContext.Verbose = verbose
+
+	config := &cdsclient.Config{
+		Host:                              cdsContext.Host,
+		User:                              cdsContext.User,
+		SessionToken:                      cdsContext.SessionToken,
+		BuitinConsumerAuthenticationToken: buitinConsumerAuthenticationToken,
+		Verbose:                           verbose,
+		InsecureSkipVerifyTLS:             insecureSkipVerifyTLS,
+	}
+
+	return configFile, config, nil
 }
 
 func withAllCommandModifiers() []cli.CommandModifier {

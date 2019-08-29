@@ -123,6 +123,7 @@ require (
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/keybase/go-crypto v0.0.0-20181127160227-255a5089e85a
+	github.com/keybase/go-keychain v0.0.0-20190828020956-aa639f275ae1
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lib/pq v1.0.0
@@ -273,3 +274,5 @@ replace github.com/ovh/cds/sdk/izanami => ./sdk/izanami
 replace github.com/keybase/go-crypto => github.com/Alkorin/crypto v0.0.0-20190124155437-5ea49ae
 
 replace github.com/ovh/cds/tools/smtpmock => ./tools/smtpmock
+
+replace github.com/keybase/go-keychain => github.com/yesnault/go-keychain v0.0.0-20190829105400-f78f7ae

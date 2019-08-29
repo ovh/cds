@@ -17,10 +17,12 @@ func (c *client) AuthDriverList() (sdk.AuthDriverResponse, error) {
 func (c *client) AuthConsumerSignin(consumerType sdk.AuthConsumerType, request sdk.AuthConsumerSigninRequest) (sdk.AuthConsumerSigninResponse, error) {
 	var res sdk.AuthConsumerSigninResponse
 	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/auth/consumer/"+string(consumerType)+"/signin", request, &res)
-	if err != nil {
-		return res, err
-	}
-	return res, nil
+	return res, err
+}
+
+func (c *client) AuthConsumerSignout() error {
+	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/auth/consumer/signout", nil, nil)
+	return err
 }
 
 func (c *client) AuthConsumerLocalSignup(request sdk.AuthConsumerSigninRequest) error {

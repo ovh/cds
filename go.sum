@@ -667,6 +667,8 @@ github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 h1:ESFSdwY
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b h1:mvFk4C4VehqptP44jpYKCokoptnqgRg6TU3hNTtd134=
 github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b/go.mod h1:LH8s5iF2nb4JFQ1A9fAcvsdqzUGZttifagNxO5TOiPQ=
+github.com/yesnault/go-keychain v0.0.0-20190829105400-f78f7ae h1:zCVbLQGe9/4TyKeSScCQgJ4YXUSzKP6J1UL3909wahM=
+github.com/yesnault/go-keychain v0.0.0-20190829105400-f78f7ae/go.mod h1:EzotOW21xnO2Lld4dB8qr2bSnzi3nGtE9FG33n/y2Q8=
 github.com/yesnault/go-toml v0.0.0-20170920144045-9a5282f85277 h1:5wm+TddKWEVUnNGFEYYThIVBAdJkZjNCnco5SJYo99Q=
 github.com/yesnault/go-toml v0.0.0-20170920144045-9a5282f85277/go.mod h1:SsMrIuedaKvK8GekjwjVv8gMnHNAuvoINpKCARzdsEQ=
 github.com/yesnault/gorp v0.0.0-20190906150006-6210446a0d92 h1:NI7JOFhbvqPAk0y88x/bkbsN2R5ExG83dIujLtC9GtE=

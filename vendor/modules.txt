@@ -383,6 +383,8 @@ github.com/keybase/go-crypto/cast5
 github.com/keybase/go-crypto/curve25519
 github.com/keybase/go-crypto/openpgp/ecdh
 github.com/keybase/go-crypto/openpgp/elgamal
+# github.com/keybase/go-keychain v0.0.0-20190828020956-aa639f275ae1 => github.com/yesnault/go-keychain v0.0.0-20190829105400-f78f7ae
+github.com/keybase/go-keychain
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/lib/pq v1.0.0
