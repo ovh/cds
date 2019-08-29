@@ -28,7 +28,7 @@ Let’s look at a  a real use case. This is the workflow that builds, tests and 
 ![CDS Workflow](./images/workflow_cds.png?width=1000px)
 
 1. For each Git commit, the workflow is triggered 
-1. The UI is packaged, all binaries are prepared, and the docker images are built. The “UT” job launches the unit tests. The job “IT” job installs CDS in an ephemeral environment and launches the integration tests on it. Part 2 is automatically triggered on all Git commits.  
+1. The UI is packaged, all binaries are prepared, and the docker images are built. The “UT” job launches the unit tests. The “IT” job installs CDS in an ephemeral environment and launches the integration tests on it. Part 2 is automatically triggered on all Git commits.
 1. Part 3 deploys CDS on our preproduction environment, then launches the integration tests on it. It is started automatically when the current branch is the master branch. 
 1. Last but not least, part 4 deploys CDS on our production environment. 
 
