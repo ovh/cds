@@ -301,7 +301,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		},
 		// root(pipeline-root) -> child(pipeline-child)
 		{
-			name: "Complexe workflow without joins should not raise an error",
+			name: "Complexe workflow without joins and mutex should not raise an error",
 			fields: fields{
 				Workflow: map[string]exportentities.NodeEntry{
 					"root": {
