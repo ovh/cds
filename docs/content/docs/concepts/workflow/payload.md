@@ -44,6 +44,6 @@ and
 
 ## Choose a git branch in the payload
 
-On a `git.branch` attribute, you can choose a git branch **if you attach on the pipeline context an application linked to a Git Repository**.
+**If an application attached to the pipeline context is linked to a Git repository**, you can set `git.branch` attribute to a branch of your choice.
 
 ![Payload](/images/workflows.design.payload.gif)
