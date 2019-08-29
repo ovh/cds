@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
@@ -18,9 +19,16 @@ func (api *API) getConsumersByUserHandler() service.Handler {
 		vars := mux.Vars(r)
 
 		username := vars["permUsername"]
-		u, err := user.LoadByUsername(ctx, api.mustDB(), username)
+
+		var u *sdk.AuthentifiedUser
+		var err error
+		if username == "me" {
+			u, err = user.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthentifiedUserID)
+		} else {
+			u, err = user.LoadByUsername(ctx, api.mustDB(), username)
+		}
 		if err != nil {
-			return nil
+			return err
 		}
 
 		cs, err := authentication.LoadConsumersByUserID(ctx, api.mustDB(), u.ID,
@@ -75,7 +83,12 @@ func (api *API) deleteConsumerByUserHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		u, err := user.LoadByUsername(ctx, api.mustDB(), username)
+		var u *sdk.AuthentifiedUser
+		if username == "me" {
+			u, err = user.LoadByID(ctx, tx, getAPIConsumer(ctx).AuthentifiedUserID)
+		} else {
+			u, err = user.LoadByUsername(ctx, tx, username)
+		}
 		if err != nil {
 			return err
 		}
@@ -97,6 +110,59 @@ func (api *API) deleteConsumerByUserHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
+func (api *API) postConsumerRegenByUserHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		consumerID := vars["permConsumerID"]
+
+		var req sdk.AuthConsumerRegenRequest
+		if err := service.UnmarshalBody(r, &req); err != nil {
+			return err
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback()
+
+		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID) // Load the consumer from the input
+		if err != nil {
+			return err
+		}
+		consumer.IssuedAt = time.Now()                                      // Update the IAT attribute
+		if err := authentication.UpdateConsumer(tx, consumer); err != nil { // Update the updated value in database
+			return err
+		}
+		jws, err := builtin.NewSigninConsumerToken(consumer) // Regen a new jws (signin token)
+		if err != nil {
+			return err
+		}
+
+		if req.RevokeSessions {
+			sessions, err := authentication.LoadSessionsByConsumerIDs(ctx, tx, []string{consumer.ID}) // Find all the sessions
+			if err != nil {
+				return err
+			}
+			for _, s := range sessions { // Now remove all current sessions for the consumer
+				if err := authentication.DeleteSessionByID(tx, s.ID); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		return service.WriteJSON(w, sdk.AuthConsumerCreateResponse{
+			Token:    jws,
+			Consumer: consumer,
+		}, http.StatusOK)
 	}
 }
 

@@ -23,7 +23,6 @@ func main() {
 		consumer(),
 		action(),
 		login(),
-		signup(),
 		application(),
 		environment(),
 		events(),

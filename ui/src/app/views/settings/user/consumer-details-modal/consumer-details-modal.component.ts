@@ -8,6 +8,7 @@ import {
     ViewChild
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { AuthConsumer, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
@@ -17,6 +18,7 @@ import { UserService } from 'app/service/user/user.service';
 import { Item } from 'app/shared/menu/menu.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { AuthenticationState } from 'app/store/authentication.state';
 
 export enum CloseEventType {
     CHILD_DETAILS = 'CHILD_DETAILS',
@@ -50,6 +52,7 @@ export class ConsumerDetailsModalComponent {
     @Input() consumer: AuthConsumer;
     @Output() close = new EventEmitter<CloseEvent>();
 
+    currentUser: AuthentifiedUser;
     scopes: string;
     groups: string;
     columnsConsumers: Array<Column<AuthConsumer>>;
@@ -69,8 +72,11 @@ export class ConsumerDetailsModalComponent {
         private _userService: UserService,
         private _cd: ChangeDetectorRef,
         private _toast: ToastService,
+        private _store: Store,
         private _translate: TranslateService
     ) {
+        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
+
         this.menuItems = [].concat(defaultMenuItems);
 
         this.filterChildren = f => {
@@ -268,7 +274,7 @@ export class ConsumerDetailsModalComponent {
     clickRegen(revokeSession: boolean): void {
         this.regenConsumer = undefined;
         this.regenConsumerSigninToken = undefined;
-        this._authenticationService.builtinRegen(this.consumer.id, revokeSession).subscribe(response => {
+        this._userService.regenConsumer(this.user.username, this.consumer, revokeSession).subscribe(response => {
             this.regenConsumerSigninToken = response.token;
             this.regenConsumer = response.consumer;
         });

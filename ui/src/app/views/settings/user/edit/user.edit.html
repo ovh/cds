@@ -72,93 +72,94 @@
                         </div>
                     </h2>
                     <div class="ui four stackable centered cards">
-                        <div class="ui card" *ngFor="let d of drivers">
-                            <div class="content" [ngSwitch]="d.type">
-                                <ng-container *ngSwitchCase="'local'">
-                                    <div class="center aligned header">
-                                        <i class="ui lock icon huge"></i>
-                                    </div>
-                                    <div class="center aligned description">
-                                        Local
-                                    </div>
-                                </ng-container>
-                                <ng-container *ngSwitchCase="'ldap'">
-                                    <div [suiTransition]="transitionController">
-                                        <ng-container *ngIf="!showLDAPSigninForm">
-                                            <div class="center aligned header">
-                                                <i class="ui address book icon huge"></i>
-                                            </div>
-                                            <div class="center aligned description">
-                                                LDAP
-                                            </div>
-                                        </ng-container>
-                                        <ng-container *ngIf="showLDAPSigninForm">
-                                            <form class="ui form" #ldapSigninForm="ngForm">
-                                                <div class="field">
-                                                    <label>LDAP Bind*</label>
-                                                    <input type="text" name="bind" ngModel required>
-                                                </div>
-                                                <div class="field">
-                                                    <label>{{ 'user_label_password' | translate }}*</label>
-                                                    <input type="password" name="password" ngModel required>
-                                                </div>
-                                            </form>
-                                        </ng-container>
-                                    </div>
-                                </ng-container>
-                                <ng-container *ngSwitchCase="'corporate-sso'">
-                                    <div class="center aligned header">
-                                        <i class="ui shield alternate icon huge"></i>
-                                    </div>
-                                    <div class="center aligned description">
-                                        Corporate SSO
-                                    </div>
-                                </ng-container>
-                                <ng-container *ngSwitchDefault>
-                                    <div class="center aligned header">
-                                        <i class="ui {{d.type}} icon huge"></i>
-                                    </div>
-                                    <div class="center aligned description">
-                                        {{d.type | titlecase}}
-                                    </div>
-                                </ng-container>
-                            </div>
-                            <div class="extra content center aligned">
-                                <ng-container *ngIf="mConsumers[d.type]" [ngSwitch]="d.type">
+                        <ng-container *ngFor="let d of drivers">
+                            <div class="ui card" *ngIf="mConsumers[d.type] || user.id === currentUser.id">
+                                <div class="content" [ngSwitch]="d.type">
                                     <ng-container *ngSwitchCase="'local'">
-                                        <button class="ui primary button small"
-                                            (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' | translate}}</button>
-                                        <button class="ui green button small"
-                                            (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
-                                    </ng-container>
-                                    <ng-container *ngSwitchDefault>
-                                        <button class="ui primary button small"
-                                            (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' | translate}}</button>
-                                        <app-confirm-button [class]="'small'" [color]="'red'"
-                                            (event)="clickConsumerDetach(mConsumers[d.type])"
-                                            [title]="'user_auth_consumer_detach_btn'">
-                                        </app-confirm-button>
-                                    </ng-container>
-                                </ng-container>
-                                <ng-container *ngIf="!mConsumers[d.type]" [ngSwitch]="d.type">
-                                    <ng-container *ngSwitchCase="'local'">
-                                        <button class="ui green button small" [class.loading]="loadingLocalReset"
-                                            (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
+                                        <div class="center aligned header">
+                                            <i class="ui lock icon huge"></i>
+                                        </div>
+                                        <div class="center aligned description">
+                                            Local
+                                        </div>
                                     </ng-container>
                                     <ng-container *ngSwitchCase="'ldap'">
-                                        <button *ngIf="user.id === currentUser.id" class="ui green button small"
-                                            (click)="clickConsumerLDAPSignin()">{{(showLDAPSigninForm ? 'account_btn_submit' : 'account_btn_signin') | translate}}</button>
+                                        <div [suiTransition]="transitionController">
+                                            <ng-container *ngIf="!showLDAPSigninForm">
+                                                <div class="center aligned header">
+                                                    <i class="ui address book icon huge"></i>
+                                                </div>
+                                                <div class="center aligned description">
+                                                    LDAP
+                                                </div>
+                                            </ng-container>
+                                            <ng-container *ngIf="showLDAPSigninForm">
+                                                <form class="ui form" #ldapSigninForm="ngForm">
+                                                    <div class="field">
+                                                        <label>LDAP Bind*</label>
+                                                        <input type="text" name="bind" ngModel required>
+                                                    </div>
+                                                    <div class="field">
+                                                        <label>{{ 'user_label_password' | translate }}*</label>
+                                                        <input type="password" name="password" ngModel required>
+                                                    </div>
+                                                </form>
+                                            </ng-container>
+                                        </div>
+                                    </ng-container>
+                                    <ng-container *ngSwitchCase="'corporate-sso'">
+                                        <div class="center aligned header">
+                                            <i class="ui shield alternate icon huge"></i>
+                                        </div>
+                                        <div class="center aligned description">
+                                            Corporate SSO
+                                        </div>
                                     </ng-container>
                                     <ng-container *ngSwitchDefault>
-                                        <a *ngIf="user.id === currentUser.id" class="ui green button small"
-                                            [routerLink]="'/auth/ask-signin/'+d.type"
-                                            [queryParams]="{redirect_uri: '/settings/user/'+user.username+'?item=authentication', require_mfa: false}">
-                                            {{'account_btn_signin' | translate}}
-                                        </a>
+                                        <div class="center aligned header">
+                                            <i class="ui {{d.type}} icon huge"></i>
+                                        </div>
+                                        <div class="center aligned description">
+                                            {{d.type | titlecase}}
+                                        </div>
                                     </ng-container>
-                                </ng-container>
+                                </div>
+                                <div class="extra content center aligned">
+                                    <ng-container *ngIf="mConsumers[d.type]" [ngSwitch]="d.type">
+                                        <ng-container *ngSwitchCase="'local'">
+                                            <button class="ui primary button small"
+                                                (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' | translate}}</button>
+                                            <button class="ui green button small" *ngIf="user.id === currentUser.id"
+                                                (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
+                                        </ng-container>
+                                        <ng-container *ngSwitchDefault>
+                                            <button class="ui primary button small"
+                                                (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' | translate}}</button>
+                                            <app-confirm-button [class]="'small'" [color]="'red'"
+                                                (event)="clickConsumerDetach(mConsumers[d.type])"
+                                                [title]="'user_auth_consumer_detach_btn'">
+                                            </app-confirm-button>
+                                        </ng-container>
+                                    </ng-container>
+                                    <ng-container *ngIf="!mConsumers[d.type]" [ngSwitch]="d.type">
+                                        <ng-container *ngSwitchCase="'local'">
+                                            <button class="ui green button small" [class.loading]="loadingLocalReset"
+                                                (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
+                                        </ng-container>
+                                        <ng-container *ngSwitchCase="'ldap'">
+                                            <button class="ui green button small"
+                                                (click)="clickConsumerLDAPSignin()">{{(showLDAPSigninForm ? 'account_btn_submit' : 'account_btn_signin') | translate}}</button>
+                                        </ng-container>
+                                        <ng-container *ngSwitchDefault>
+                                            <a class="ui green button small" [routerLink]="'/auth/ask-signin/'+d.type"
+                                                [queryParams]="{redirect_uri: '/settings/user/'+user.username+'?item=authentication', require_mfa: false}">
+                                                {{'account_btn_signin' | translate}}
+                                            </a>
+                                        </ng-container>
+                                    </ng-container>
+                                </div>
                             </div>
-                        </div>
+                        </ng-container>
                     </div>
                 </div>
                 <div class="sixteen wide column">
