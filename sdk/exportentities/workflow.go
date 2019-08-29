@@ -31,6 +31,7 @@ type Workflow struct {
 	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty" jsonschema_description:"Workflow hooks list."`
 	// this will be filled for simple workflows
 	DependsOn              []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty" jsonschema_description:"Names of the parent nodes, can be pipelines, forks or joins."`
+	OneAtATime             *bool                       `json:"one_at_a_time,omitempty" yaml:"one_at_a_time,omitempty" jsonschema_description:"Set to true if you want to limit the execution of this node to one at a time."`
 	Conditions             *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty" jsonschema_description:"Conditions to run this node.\nhttps://ovh.github.io/cds/docs/concepts/workflow/run-conditions."`
 	When                   []string                    `json:"when,omitempty" yaml:"when,omitempty" jsonschema_description:"Set manual and status condition (ex: 'success')."` //This is used only for manual and success condition
 	PipelineName           string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty" jsonschema_description:"The name of a pipeline used for pipeline node."`
@@ -317,6 +318,7 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 		exportedWorkflow.EnvironmentName = entry.EnvironmentName
 		exportedWorkflow.ProjectIntegrationName = entry.ProjectIntegrationName
 		exportedWorkflow.DependsOn = entry.DependsOn
+		exportedWorkflow.OneAtATime = entry.OneAtATime
 		if entry.Conditions != nil && (len(entry.Conditions.PlainConditions) > 0 || entry.Conditions.LuaScript != "") {
 			exportedWorkflow.When = entry.When
 			exportedWorkflow.Conditions = entry.Conditions
@@ -405,6 +407,7 @@ func (w Workflow) Entries() map[string]NodeEntry {
 		When:                   w.When,
 		Payload:                w.Payload,
 		Parameters:             w.Parameters,
+		OneAtATime:             w.OneAtATime,
 	}
 	return map[string]NodeEntry{
 		w.PipelineName: singleEntry,
@@ -578,6 +581,10 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 }
 
 func (e *NodeEntry) getNode(name string, w *sdk.Workflow) (*sdk.Node, error) {
+	var mutex bool
+	if e.OneAtATime != nil && *e.OneAtATime {
+		mutex = true
+	}
 	node := &sdk.Node{
 		Name: name,
 		Ref:  name,
@@ -587,6 +594,7 @@ func (e *NodeEntry) getNode(name string, w *sdk.Workflow) (*sdk.Node, error) {
 			ApplicationName:        e.ApplicationName,
 			EnvironmentName:        e.EnvironmentName,
 			ProjectIntegrationName: e.ProjectIntegrationName,
+			Mutex:                  mutex,
 		},
 	}
 
