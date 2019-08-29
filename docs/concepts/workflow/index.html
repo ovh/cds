@@ -533,7 +533,7 @@ Let’s take an example. One workflow for building and deploying three micro-ser
 
 <ol>
 <li>For each Git commit, the workflow is triggered</li>
-<li>The UI is packaged, all binaries are prepared, and the docker images are built. The “UT” job launches the unit tests. The job “IT” job installs CDS in an ephemeral environment and launches the integration tests on it. Part 2 is automatically triggered on all Git commits.<br /></li>
+<li>The UI is packaged, all binaries are prepared, and the docker images are built. The “UT” job launches the unit tests. The “IT” job installs CDS in an ephemeral environment and launches the integration tests on it. Part 2 is automatically triggered on all Git commits.</li>
 <li>Part 3 deploys CDS on our preproduction environment, then launches the integration tests on it. It is started automatically when the current branch is the master branch.</li>
 <li>Last but not least, part 4 deploys CDS on our production environment.</li>
 </ol>
