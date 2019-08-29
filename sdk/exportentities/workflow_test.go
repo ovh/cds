@@ -1066,7 +1066,7 @@ workflow:
 `,
 		},
 		{
-			name: "Join with condition",
+			name: "Workflow with mutex on root",
 			yaml: `name: mymutex
 version: v1.0
 one_at_a_time: true
@@ -1074,7 +1074,7 @@ pipeline: env
 `,
 		},
 		{
-			name: "Join with condition",
+			name: "Workflow with mutex pipeline child",
 			yaml: `name: mymutex
 version: v1.0
 workflow:
