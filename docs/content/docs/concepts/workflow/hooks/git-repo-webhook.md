@@ -3,7 +3,7 @@ title: "Git Repository Webhook"
 weight: 3
 ---
 
-You want to run a workflow after a git push on a repository? This kind of hook is for you.
+Do you want to run a workflow after a git push on a repository? This kind of hook is for you.
 
 You have to:
 

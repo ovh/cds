@@ -61,7 +61,13 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			return *res
 		}
 
-		regexp := regexp.MustCompile(pattern)
+		regexp, err := regexp.Compile(pattern)
+		if err != nil {
+			res.Status = sdk.StatusFail.String()
+			res.Reason = fmt.Sprintf("Invalid pattern %s, must be a regex : %v", pattern, err)
+			sendLog(res.Reason)
+			return *res
+		}
 		wg := new(sync.WaitGroup)
 		wg.Add(len(artifacts))
 

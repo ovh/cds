@@ -190,5 +190,5 @@ You can use many helpers:
 
 ### Deep in code
 
-You're a Go developer? See all helpers on https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23
+Are you a Go developer? See all helpers on https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23
 and some unit tests on https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_test.go#L72 

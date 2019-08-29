@@ -74,13 +74,12 @@ func (s *Service) startRabbitMQHook(t *sdk.Task) error {
 		for d := range deliveries {
 			_ = d.Ack(false)
 			exec := sdk.TaskExecution{
-				ProcessingTimestamp: time.Now().UnixNano(),
-				Status:              TaskExecutionDoing,
-				Config:              t.Config,
-				Type:                TypeRabbitMQ,
-				UUID:                t.UUID,
-				Timestamp:           time.Now().UnixNano(),
-				RabbitMQ:            &sdk.RabbitMQTaskExecution{Message: d.Body},
+				Status:    TaskExecutionDoing,
+				Config:    t.Config,
+				Type:      TypeRabbitMQ,
+				UUID:      t.UUID,
+				Timestamp: time.Now().UnixNano(),
+				RabbitMQ:  &sdk.RabbitMQTaskExecution{Message: d.Body},
 			}
 			s.Dao.SaveTaskExecution(&exec)
 			s.Dao.EnqueueTaskExecution(&exec)

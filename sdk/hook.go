@@ -199,7 +199,7 @@ var (
 		DefaultConfig: WorkflowNodeHookConfig{
 			HookConfigEventFilter: {
 				Value:        "",
-				Configurable: false,
+				Configurable: true,
 				Type:         HookConfigTypeMultiChoice,
 			},
 		},
