@@ -351,7 +351,7 @@ func (s *Service) downloadStaticFilesFromGitHub(version string) error {
 		return fmt.Errorf("Error while getting ui.tar.gz from GitHub - HTTP code: %d", resp.StatusCode)
 	}
 
-	log.Info("ui> Download in success, we are decompressing the archive now...")
+	log.Info("ui> Download successful, decompressing the archive file...")
 
 	return sdk.UntarGz(s.Cfg.Staticdir, resp.Body)
 }
