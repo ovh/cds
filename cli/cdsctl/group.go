@@ -129,7 +129,7 @@ var groupGrantCmd = cli.Command{
 	Flags: []cli.Flag{
 		{
 			Name:      "workflow",
-			ShortHand: "n",
+			ShortHand: "w",
 			Usage:     "Workflow name",
 		},
 		{
@@ -176,7 +176,7 @@ var groupRevokeCmd = cli.Command{
 	Flags: []cli.Flag{
 		{
 			Name:      "workflow",
-			ShortHand: "n",
+			ShortHand: "w",
 			Usage:     "Workflow name",
 		},
 	},
