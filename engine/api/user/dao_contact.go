@@ -107,4 +107,4 @@ func UpdateContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
 	}
 	*c = dbc.UserContact
 	return nil
-}
+} 

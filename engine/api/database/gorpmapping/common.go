@@ -206,3 +206,41 @@ func (a ArgsMap) Merge(other ArgsMap) ArgsMap {
 	}
 	return a
 }
+
+func LoadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}) (interface{}, error) {
+	e, ok := Mapping[entity]
+	if !ok {
+		return nil, sdk.WithStack(errors.New("unknown entity"))
+	}
+
+	newTargetPtr := reflect.New(reflect.TypeOf(e.Target))
+
+	query := NewQuery(fmt.Sprintf("select * from %s where %s::text = $1::text", e.Name, e.Keys[0])).Args(pk)
+	found, err := Get(context.Background(), db, query, newTargetPtr.Interface())
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	val := newTargetPtr.Interface()
+
+	if e.SignedEntity {
+
+		s, ok := val.(Signed)
+		if !ok {
+			return nil, sdk.WithStack(errors.New("invalid signed entity"))
+		}
+
+		isValid, err := CheckSignature(val.(Canonicaller), s.GetSignature())
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			return nil, sdk.WithStack(errors.New("corrupted signed entity"))
+		}
+	}
+
+	return val, nil
+}

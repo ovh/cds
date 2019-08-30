@@ -62,6 +62,13 @@ export class UserService {
         return this._http.delete(`/user/${username}/auth/consumer/${consumer.id}`);
     }
 
+    regenConsumer(username: string, consumer: AuthConsumer, revoke_sessions: boolean):
+        Observable<AuthConsumerCreateResponse> {
+        return this._http.post<AuthConsumerCreateResponse>(`/user/${username}/auth/consumer/${consumer.id}/regen`, {
+            revoke_sessions,
+        });
+    }
+
     getSessions(username: string): Observable<Array<AuthSession>> {
         return this._http.get<Array<AuthSession>>(`/user/${username}/auth/session`);
     }

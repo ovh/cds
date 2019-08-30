@@ -296,24 +296,86 @@ func Test_checkConsumerPermissions(t *testing.T) {
 	defer end()
 
 	authUser, _ := assets.InsertLambdaUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
+	authUserConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
 	require.NoError(t, err)
-
+	authUserMaintainer, _ := assets.InsertMaintainerUser(t, db)
+	authUserMaintainerConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserMaintainer.ID)
+	require.NoError(t, err)
 	authUserAdmin, _ := assets.InsertAdminUser(t, db)
-	localConsumerAdmin, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserAdmin.ID)
-	require.NoError(t, err)
 
-	ctx := context.WithValue(context.TODO(), contextAPIConsumer, localConsumer)
-	err = api.checkConsumerPermissions(ctx, localConsumer.ID, sdk.PermissionReadWriteExecute, nil)
-	assert.NoError(t, err, "should be granted")
+	cases := []struct {
+		Name                     string
+		ConsumerAuthentifiedUser *sdk.AuthentifiedUser
+		TargetConsumer           *sdk.AuthConsumer
+		Permission               int
+		Granted                  bool
+	}{
+		{
+			Name:                     "RW on himself",
+			ConsumerAuthentifiedUser: authUser,
+			TargetConsumer:           authUserConsumer,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  true,
+		},
+		{
+			Name:                     "R on other by lambda user",
+			ConsumerAuthentifiedUser: authUser,
+			TargetConsumer:           authUserMaintainerConsumer,
+			Permission:               sdk.PermissionRead,
+			Granted:                  false,
+		},
+		{
+			Name:                     "R on other by admin user",
+			ConsumerAuthentifiedUser: authUserAdmin,
+			TargetConsumer:           authUserConsumer,
+			Permission:               sdk.PermissionRead,
+			Granted:                  true,
+		},
+		{
+			Name:                     "R on other by maintainer user",
+			ConsumerAuthentifiedUser: authUserMaintainer,
+			TargetConsumer:           authUserConsumer,
+			Permission:               sdk.PermissionRead,
+			Granted:                  true,
+		},
+		{
+			Name:                     "RW on other by lambda user",
+			ConsumerAuthentifiedUser: authUser,
+			TargetConsumer:           authUserMaintainerConsumer,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  false,
+		},
+		{
+			Name:                     "RW on other by maintainer user",
+			ConsumerAuthentifiedUser: authUserMaintainer,
+			TargetConsumer:           authUserConsumer,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  false,
+		},
+		{
+			Name:                     "RW on other by admin user",
+			ConsumerAuthentifiedUser: authUserAdmin,
+			TargetConsumer:           authUserConsumer,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  true,
+		},
+	}
 
-	ctx = context.WithValue(context.TODO(), contextAPIConsumer, localConsumer)
-	err = api.checkConsumerPermissions(ctx, authUserAdmin.ID, sdk.PermissionRead, nil)
-	assert.Error(t, err, "should not be granted")
-
-	ctx = context.WithValue(context.TODO(), contextAPIConsumer, localConsumerAdmin)
-	err = api.checkConsumerPermissions(ctx, localConsumer.ID, sdk.PermissionRead, nil)
-	assert.Error(t, err, "should not be granted")
+	for _, c := range cases {
+		t.Run(c.Name, func(t *testing.T) {
+			ctx := context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
+				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
+				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+				IssuedAt:           time.Now(),
+			})
+			err := api.checkConsumerPermissions(ctx, c.TargetConsumer.ID, c.Permission, nil)
+			if c.Granted {
+				assert.NoError(t, err, "should be granted")
+			} else {
+				assert.Error(t, err, "should not be granted")
+			}
+		})
+	}
 }
 
 func Test_checkSessionPermissions(t *testing.T) {
@@ -321,28 +383,90 @@ func Test_checkSessionPermissions(t *testing.T) {
 	defer end()
 
 	authUser, _ := assets.InsertLambdaUser(t, db)
-	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
+	authUserConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
 	require.NoError(t, err)
-	localSession, err := authentication.NewSession(db, localConsumer, time.Second, false)
+	authUserSession, err := authentication.NewSession(db, authUserConsumer, 10*time.Second, false)
 	require.NoError(t, err)
-
+	authUserMaintainer, _ := assets.InsertMaintainerUser(t, db)
+	authUserMaintainerConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserMaintainer.ID)
+	require.NoError(t, err)
+	authUserMaintainerSession, err := authentication.NewSession(db, authUserMaintainerConsumer, 10*time.Second, false)
+	require.NoError(t, err)
 	authUserAdmin, _ := assets.InsertAdminUser(t, db)
-	localConsumerAdmin, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserAdmin.ID)
-	require.NoError(t, err)
-	localSessionAdmin, err := authentication.NewSession(db, localConsumerAdmin, time.Second, false)
-	require.NoError(t, err)
 
-	ctx := context.WithValue(context.TODO(), contextAPIConsumer, localConsumer)
-	err = api.checkSessionPermissions(ctx, localSession.ID, sdk.PermissionReadWriteExecute, nil)
-	assert.NoError(t, err, "should be granted")
+	cases := []struct {
+		Name                     string
+		ConsumerAuthentifiedUser *sdk.AuthentifiedUser
+		TargetSession            *sdk.AuthSession
+		Permission               int
+		Granted                  bool
+	}{
+		{
+			Name:                     "RW on himself",
+			ConsumerAuthentifiedUser: authUser,
+			TargetSession:            authUserSession,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  true,
+		},
+		{
+			Name:                     "R on other by lambda user",
+			ConsumerAuthentifiedUser: authUser,
+			TargetSession:            authUserMaintainerSession,
+			Permission:               sdk.PermissionRead,
+			Granted:                  false,
+		},
+		{
+			Name:                     "R on other by admin user",
+			ConsumerAuthentifiedUser: authUserAdmin,
+			TargetSession:            authUserSession,
+			Permission:               sdk.PermissionRead,
+			Granted:                  true,
+		},
+		{
+			Name:                     "R on other by maintainer user",
+			ConsumerAuthentifiedUser: authUserMaintainer,
+			TargetSession:            authUserSession,
+			Permission:               sdk.PermissionRead,
+			Granted:                  true,
+		},
+		{
+			Name:                     "RW on other by lambda user",
+			ConsumerAuthentifiedUser: authUser,
+			TargetSession:            authUserMaintainerSession,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  false,
+		},
+		{
+			Name:                     "RW on other by maintainer user",
+			ConsumerAuthentifiedUser: authUserMaintainer,
+			TargetSession:            authUserSession,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  false,
+		},
+		{
+			Name:                     "RW on other by admin user",
+			ConsumerAuthentifiedUser: authUserAdmin,
+			TargetSession:            authUserSession,
+			Permission:               sdk.PermissionReadWriteExecute,
+			Granted:                  true,
+		},
+	}
 
-	ctx = context.WithValue(context.TODO(), contextAPIConsumer, localConsumer)
-	err = api.checkSessionPermissions(ctx, localSessionAdmin.ID, sdk.PermissionRead, nil)
-	assert.Error(t, err, "should not be granted")
-
-	ctx = context.WithValue(context.TODO(), contextAPIConsumer, localConsumerAdmin)
-	err = api.checkSessionPermissions(ctx, localSession.ID, sdk.PermissionRead, nil)
-	assert.Error(t, err, "should not be granted")
+	for _, c := range cases {
+		t.Run(c.Name, func(t *testing.T) {
+			ctx := context.WithValue(context.TODO(), contextAPIConsumer, &sdk.AuthConsumer{
+				AuthentifiedUserID: c.ConsumerAuthentifiedUser.ID,
+				AuthentifiedUser:   c.ConsumerAuthentifiedUser,
+				IssuedAt:           time.Now(),
+			})
+			err := api.checkSessionPermissions(ctx, c.TargetSession.ID, c.Permission, nil)
+			if c.Granted {
+				assert.NoError(t, err, "should be granted")
+			} else {
+				assert.Error(t, err, "should not be granted")
+			}
+		})
+	}
 }
 
 func Test_checkWorkerModelPermissionsByUser(t *testing.T) {

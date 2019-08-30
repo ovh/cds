@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
@@ -18,9 +19,16 @@ func (api *API) getConsumersByUserHandler() service.Handler {
 		vars := mux.Vars(r)
 
 		username := vars["permUsername"]
-		u, err := user.LoadByUsername(ctx, api.mustDB(), username)
+
+		var u *sdk.AuthentifiedUser
+		var err error
+		if username == "me" {
+			u, err = user.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthentifiedUserID)
+		} else {
+			u, err = user.LoadByUsername(ctx, api.mustDB(), username)
+		}
 		if err != nil {
-			return nil
+			return err
 		}
 
 		cs, err := authentication.LoadConsumersByUserID(ctx, api.mustDB(), u.ID,
@@ -35,6 +43,28 @@ func (api *API) getConsumersByUserHandler() service.Handler {
 
 func (api *API) postConsumerByUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		username := vars["permUsername"]
+
+		consumer := getAPIConsumer(ctx)
+
+		// Only a user can create a consumer for itself, an admin can't create one for an other user
+		var u *sdk.AuthentifiedUser
+		var err error
+		if username == "me" {
+			u, err = user.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthentifiedUserID)
+		} else {
+			u, err = user.LoadByUsername(ctx, api.mustDB(), username)
+		}
+		if err != nil {
+			return err
+		}
+		if u.ID != consumer.AuthentifiedUserID {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "a user can't create a consumer for someone else")
+		}
+
+		// Check request data
 		var reqData sdk.AuthConsumer
 		if err := service.UnmarshalBody(r, &reqData); err != nil {
 			return err
@@ -42,8 +72,6 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		if err := reqData.IsValid(); err != nil {
 			return err
 		}
-
-		consumer := getAPIConsumer(ctx)
 
 		// Create the new built in consumer from request data
 		newConsumer, token, err := builtin.NewConsumer(api.mustDB(), reqData.Name, reqData.Description,
@@ -66,7 +94,6 @@ func (api *API) deleteConsumerByUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		username := vars["permUsername"]
 		consumerID := vars["permConsumerID"]
 
 		tx, err := api.mustDB().Begin()
@@ -75,17 +102,12 @@ func (api *API) deleteConsumerByUserHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		u, err := user.LoadByUsername(ctx, api.mustDB(), username)
-		if err != nil {
-			return err
-		}
-
 		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
 		if err != nil {
 			return err
 		}
-		if consumer.Type != sdk.ConsumerBuiltin || consumer.AuthentifiedUserID != u.ID {
-			return sdk.WithStack(sdk.ErrForbidden)
+		if consumer.Type != sdk.ConsumerBuiltin {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "can't delete a no builtin consumer")
 		}
 
 		if err := authentication.DeleteConsumerByID(tx, consumer.ID); err != nil {
@@ -100,14 +122,78 @@ func (api *API) deleteConsumerByUserHandler() service.Handler {
 	}
 }
 
+func (api *API) postConsumerRegenByUserHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		consumerID := vars["permConsumerID"]
+
+		var req sdk.AuthConsumerRegenRequest
+		if err := service.UnmarshalBody(r, &req); err != nil {
+			return err
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback()
+
+		// Load the consumer from the input
+		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
+		if err != nil {
+			return err
+		}
+		if consumer.Type != sdk.ConsumerBuiltin {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "can't regen a no builtin consumer")
+		}
+
+		// Update the IAT attribute in database
+		consumer.IssuedAt = time.Now()
+		if err := authentication.UpdateConsumer(tx, consumer); err != nil {
+			return err
+		}
+		jws, err := builtin.NewSigninConsumerToken(consumer) // Regen a new jws (signin token)
+		if err != nil {
+			return err
+		}
+
+		if req.RevokeSessions {
+			sessions, err := authentication.LoadSessionsByConsumerIDs(ctx, tx, []string{consumer.ID}) // Find all the sessions
+			if err != nil {
+				return err
+			}
+			for _, s := range sessions { // Now remove all current sessions for the consumer
+				if err := authentication.DeleteSessionByID(tx, s.ID); err != nil {
+					return err
+				}
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		return service.WriteJSON(w, sdk.AuthConsumerCreateResponse{
+			Token:    jws,
+			Consumer: consumer,
+		}, http.StatusOK)
+	}
+}
+
 func (api *API) getSessionsByUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		session := getAuthSession(ctx)
-
 		vars := mux.Vars(r)
 
 		username := vars["permUsername"]
-		u, err := user.LoadByUsername(ctx, api.mustDB(), username)
+
+		var u *sdk.AuthentifiedUser
+		var err error
+		if username == "me" {
+			u, err = user.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).AuthentifiedUserID)
+		} else {
+			u, err = user.LoadByUsername(ctx, api.mustDB(), username)
+		}
 		if err != nil {
 			return err
 		}
@@ -123,8 +209,9 @@ func (api *API) getSessionsByUserHandler() service.Handler {
 		}
 
 		// Set extra data on sessions
+		currentSession := getAuthSession(ctx)
 		for i := range ss {
-			if ss[i].ID == session.ID {
+			if ss[i].ID == currentSession.ID {
 				ss[i].Current = true
 			}
 		}
@@ -137,7 +224,6 @@ func (api *API) deleteSessionByUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		username := vars["permUsername"]
 		sessionID := vars["permSessionID"]
 
 		tx, err := api.mustDB().Begin()
@@ -146,29 +232,9 @@ func (api *API) deleteSessionByUserHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		u, err := user.LoadByUsername(ctx, api.mustDB(), username)
-		if err != nil {
-			return err
-		}
-
-		cs, err := authentication.LoadConsumersByUserID(ctx, api.mustDB(), u.ID)
-		if err != nil {
-			return err
-		}
-
 		session, err := authentication.LoadSessionByID(ctx, tx, sessionID)
 		if err != nil {
 			return err
-		}
-		var found bool
-		for i := range cs {
-			if cs[i].ID == session.ConsumerID {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		if err := authentication.DeleteSessionByID(tx, session.ID); err != nil {

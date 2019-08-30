@@ -31,11 +31,14 @@ type TemplateClient interface {
 	TemplateDeleteInstance(groupName, templateSlug string, id int64) error
 }
 
-// AdminService expose all function to CDS services
-type AdminService interface {
+// Admin expose all function to CDS administration
+type Admin interface {
 	AdminDatabaseMigrationDelete(id string) error
 	AdminDatabaseMigrationUnlock(id string) error
 	AdminDatabaseMigrationsList() ([]sdk.DatabaseMigrationStatus, error)
+	AdminDatabaseSignaturesResume() (sdk.CanonicalFormUsageResume, error)
+	AdminDatabaseSignaturesRollEntity(e string) error
+	AdminDatabaseSignaturesRollAllEntities() error
 	AdminCDSMigrationList() ([]sdk.Migration, error)
 	AdminCDSMigrationCancel(id int64) error
 	AdminCDSMigrationReset(id int64) error
@@ -334,7 +337,7 @@ type Interface interface {
 	Raw
 	AuthClient
 	ActionClient
-	AdminService
+	Admin
 	APIURL() string
 	ApplicationClient
 	ConfigUser() (sdk.ConfigUser, error)
@@ -457,4 +460,6 @@ type AuthClient interface {
 	AuthConsumerListByUser(username string) (sdk.AuthConsumers, error)
 	AuthConsumerDelete(username, id string) error
 	AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error)
+	AuthSessionListByUser(username string) (sdk.AuthSessions, error)
+	AuthSessionDelete(username, id string) error
 }

@@ -4,74 +4,14 @@ import (
 	"context"
 	"encoding/base64"
 	"net/http"
-	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/sdk/jws"
-
-	"github.com/ovh/cds/sdk"
-
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/jws"
 )
-
-func (api *API) postAuthBuiltinRegenHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		_, ok := api.AuthenticationDrivers[sdk.ConsumerBuiltin]
-		if !ok {
-			return sdk.WithStack(sdk.ErrNotFound)
-		}
-
-		var req sdk.AuthConsumerRegenRequest
-		if err := service.UnmarshalBody(r, &req); err != nil {
-			return err
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-
-		defer tx.Rollback()
-
-		consumer, err := authentication.LoadConsumerByID(ctx, tx, req.ConsumerID) // Load the consumer from the input
-		if err != nil {
-			return err
-		}
-		consumer.IssuedAt = time.Now()                                      // Update the IAT attribute
-		if err := authentication.UpdateConsumer(tx, consumer); err != nil { // Update the updated value in database
-			return err
-		}
-		jws, err := builtin.NewSigninConsumerToken(consumer) // Regen a new jws (signin token)
-		if err != nil {
-			return err
-		}
-
-		if req.RevokeSessions {
-			sessions, err := authentication.LoadSessionsByConsumerIDs(ctx, tx, []string{consumer.ID}) // Find all the sessions
-			if err != nil {
-				return err
-			}
-			for _, s := range sessions { // Now remove all current sessions for the consumer
-				if err := authentication.DeleteSessionByID(tx, s.ID); err != nil {
-					return err
-				}
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		var response = sdk.AuthConsumerCreateResponse{
-			Consumer: consumer,
-			Token:    jws,
-		}
-
-		return service.WriteJSON(w, response, http.StatusOK)
-	}
-}
 
 func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {

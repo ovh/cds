@@ -28,7 +28,7 @@ func consumer() *cobra.Command {
 var authConsumerListCmd = cli.Command{
 	Name:  "list",
 	Short: "List your auth consumers for given user",
-	Args: []cli.Arg{
+	OptionalArgs: []cli.Arg{
 		{
 			Name: "username",
 		},
@@ -44,7 +44,12 @@ var authConsumerListCmd = cli.Command{
 }
 
 func authConsumerListRun(v cli.Values) (cli.ListResult, error) {
-	consumers, err := client.AuthConsumerListByUser(v.GetString("username"))
+	username := v.GetString("username")
+	if username == "" {
+		username = "me"
+	}
+
+	consumers, err := client.AuthConsumerListByUser(username)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +59,7 @@ func authConsumerListRun(v cli.Values) (cli.ListResult, error) {
 var authConsumerNewCmd = cli.Command{
 	Name:  "new",
 	Short: "Create a new auth consumer for current user",
-	Args: []cli.Arg{
+	OptionalArgs: []cli.Arg{
 		{
 			Name: "username",
 		},
@@ -82,6 +87,11 @@ var authConsumerNewCmd = cli.Command{
 }
 
 func authConsumerNewRun(v cli.Values) error {
+	username := v.GetString("username")
+	if username == "" {
+		username = "me"
+	}
+
 	name := v.GetString("name")
 	if name == "" {
 		name = cli.AskValue("Name")
@@ -140,7 +150,7 @@ func authConsumerNewRun(v cli.Values) error {
 		}
 	}
 
-	res, err := client.AuthConsumerCreateForUser(v.GetString("username"), sdk.AuthConsumer{
+	res, err := client.AuthConsumerCreateForUser(username, sdk.AuthConsumer{
 		Name:        name,
 		Description: description,
 		GroupIDs:    groupIDs,
@@ -159,24 +169,29 @@ func authConsumerNewRun(v cli.Values) error {
 var authConsumerDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete an auth consumer",
-	Args: []cli.Arg{
+	OptionalArgs: []cli.Arg{
 		{
 			Name: "username",
 		},
 	},
-	VariadicArgs: cli.Arg{
-		Name:       "consumer-id",
-		AllowEmpty: true,
+	Args: []cli.Arg{
+		{
+			Name: "consumer-id",
+		},
 	},
 }
 
 func authConsumerDeleteRun(v cli.Values) error {
-	consumerIDs := v.GetStringSlice("consumer-id")
-	for i := range consumerIDs {
-		if err := client.AuthConsumerDelete(v.GetString("username"), consumerIDs[i]); err != nil {
-			return err
-		}
-		fmt.Printf("Consumer '%s' successfully deleted.\n", consumerIDs[i])
+	username := v.GetString("username")
+	if username == "" {
+		username = "me"
 	}
+
+	consumerID := v.GetString("consumer-id")
+	if err := client.AuthConsumerDelete(username, consumerID); err != nil {
+		return err
+	}
+	fmt.Printf("Consumer '%s' successfully deleted.\n", consumerID)
+
 	return nil
 }

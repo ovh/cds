@@ -49,7 +49,6 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/consumer/local/askReset", ScopeNone(), r.POST(api.postAuthLocalAskResetHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/reset", ScopeNone(), r.POST(api.postAuthLocalResetHandler, Auth(false)))
 	r.Handle("/auth/consumer/builtin/signin", ScopeNone(), r.POST(api.postAuthBuiltinSigninHandler, Auth(false)))
-	r.Handle("/auth/consumer/builtin/regen", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postAuthBuiltinRegenHandler))
 	r.Handle("/auth/consumer/worker/signin", ScopeNone(), r.POST(api.postRegisterWorkerHandler, Auth(false)))
 	r.Handle("/auth/consumer/worker/signout", ScopeNone(), r.POST(api.postUnregisterWorkerHandler))
 	r.Handle("/auth/consumer/{consumerType}/askSignin", ScopeNone(), r.GET(api.getAuthAskSigninHandler, Auth(false)))
@@ -98,6 +97,11 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/service/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServiceHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceHandler, NeedAdmin(true)))
 	r.Handle("/admin/services", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServicesHandler, NeedAdmin(true)))
 	r.Handle("/admin/services/call", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServiceCallHandler, NeedAdmin(true)), r.POST(api.postAdminServiceCallHandler, NeedAdmin(true)), r.PUT(api.putAdminServiceCallHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceCallHandler, NeedAdmin(true)))
+
+	// Admin database
+	r.Handle("/admin/database/signature", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseSignatureResume, NeedAdmin(true)))
+	r.Handle("/admin/database/signature/{entity}/roll/{pk}", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminDatabaseSignatureRollEntityByPrimaryKey, NeedAdmin(true)))
+	r.Handle("/admin/database/signature/{entity}/{signer}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseSignatureTuplesBySigner, NeedAdmin(true)))
 
 	// Download file
 	r.Handle("/download", ScopeNone(), r.GET(api.downloadsHandler))
@@ -357,6 +361,7 @@ func (api *API) InitRouter() {
 	r.Handle("/user/{permUsername}/contacts", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserContactsHandler))
 	r.Handle("/user/{permUsername}/auth/consumer", Scope(sdk.AuthConsumerScopeAccessToken), r.GET(api.getConsumersByUserHandler), r.POST(api.postConsumerByUserHandler))
 	r.Handle("/user/{permUsername}/auth/consumer/{permConsumerID}", Scope(sdk.AuthConsumerScopeAccessToken), r.DELETE(api.deleteConsumerByUserHandler))
+	r.Handle("/user/{permUsername}/auth/consumer/{permConsumerID}/regen", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postConsumerRegenByUserHandler))
 	r.Handle("/user/{permUsername}/auth/session", Scope(sdk.AuthConsumerScopeAccessToken), r.GET(api.getSessionsByUserHandler))
 	r.Handle("/user/{permUsername}/auth/session/{permSessionID}", Scope(sdk.AuthConsumerScopeAccessToken), r.DELETE(api.deleteSessionByUserHandler))
 

@@ -76,6 +76,9 @@
                                             <td>
                                                 <ng-container
                                                     *ngIf="currentUser.isAdmin() || currentUserIsAdminOnGroup">
+                                                    <app-delete-button *ngIf="v?.username" class="ui right floated"
+                                                        (event)="clickRemoveMember(v.username)"
+                                                        [loading]="deleteLoading"></app-delete-button>
                                                     <button *ngIf="!v.admin" class="ui right floated button"
                                                         [class.loading]="loading" (click)="clickSetAdmin(v.username)">
                                                         <i class="add icon"></i>
@@ -86,9 +89,6 @@
                                                         <i class="minus icon"></i>
                                                         {{ 'group_btn_unset_admin' | translate }}
                                                     </button>
-                                                    <app-delete-button *ngIf="v?.username" class="ui right floated"
-                                                        (event)="clickRemoveMember(v.username)"
-                                                        [loading]="deleteLoading"></app-delete-button>
                                                 </ng-container>
                                             </td>
                                         </tr>

@@ -43,6 +43,20 @@ func Test_getConsumersByUserHandler(t *testing.T) {
 	require.Equal(t, 2, len(cs))
 	assert.Equal(t, localConsumer.ID, cs[0].ID)
 	assert.Equal(t, consumer.ID, cs[1].ID)
+
+	uri = api.Router.GetRoute(http.MethodGet, api.getConsumersByUserHandler, map[string]string{
+		"permUsername": "me",
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodGet, uri, nil)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &cs))
+	require.Equal(t, 2, len(cs))
+	assert.Equal(t, localConsumer.ID, cs[0].ID)
+	assert.Equal(t, consumer.ID, cs[1].ID)
 }
 
 func Test_postConsumerByUserHandler(t *testing.T) {
@@ -53,6 +67,7 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 	u, jwtRaw := assets.InsertLambdaUser(t, db, g)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
 	require.NoError(t, err)
+	_, jwtRawAdmin := assets.InsertAdminUser(t, db)
 
 	data := sdk.AuthConsumer{
 		Name:     sdk.RandomString(10),
@@ -65,8 +80,17 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 		"permUsername": u.Username,
 	})
 	require.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodPost, uri, data)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRawAdmin, http.MethodPost, uri, data)
 	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 403, rec.Code)
+
+	uri = api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{
+		"permUsername": u.Username,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodPost, uri, data)
+	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 201, rec.Code)
 
@@ -109,6 +133,105 @@ func Test_deleteConsumerByUserHandler(t *testing.T) {
 	cs, err = authentication.LoadConsumersByUserID(context.TODO(), db, u.ID)
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(cs))
+}
+
+func Test_postConsumerRegenByUserHandler(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	u, jwtRaw := assets.InsertLambdaUser(t, db)
+	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	// Test that we can't regen a no builtin consumer
+	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerRegenByUserHandler, map[string]string{
+		"permUsername":   u.Username,
+		"permConsumerID": localConsumer.ID,
+	})
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodPost, uri, sdk.AuthConsumerRegenRequest{})
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code)
+
+	builtinConsumer, signinToken1, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser, sdk.AuthConsumerScopeAccessToken})
+	require.NoError(t, err)
+	session, err := authentication.NewSession(db, builtinConsumer, 5*time.Minute, false)
+	require.NoError(t, err, "cannot create session")
+	jwt2, err := authentication.NewSessionJWT(session)
+	require.NoError(t, err, "cannot create jwt")
+
+	uri = api.Router.GetRoute(http.MethodGet, api.getUserHandler, map[string]string{
+		"permUsernamePublic": "me",
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodGet, uri, nil)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	req = assets.NewJWTAuthentifiedRequest(t, jwt2, http.MethodGet, uri, nil)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	// Wait 2 seconds before regen
+	time.Sleep(2 * time.Second)
+
+	uri = api.Router.GetRoute(http.MethodPost, api.postConsumerRegenByUserHandler, map[string]string{
+		"permUsername":   u.Username,
+		"permConsumerID": builtinConsumer.ID,
+	})
+	req = assets.NewJWTAuthentifiedRequest(t, jwt2, http.MethodPost, uri, sdk.AuthConsumerRegenRequest{
+		RevokeSessions: true,
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	var response sdk.AuthConsumerCreateResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
+
+	t.Logf("%+v", response)
+
+	session, err = authentication.NewSession(db, builtinConsumer, 5*time.Minute, false)
+	require.NoError(t, err)
+	jwt3, err := authentication.NewSessionJWT(session)
+	require.NoError(t, err)
+
+	uri = api.Router.GetRoute(http.MethodGet, api.getUserHandler, map[string]string{
+		"permUsernamePublic": "me",
+	})
+
+	// The new token should be ok
+	req = assets.NewJWTAuthentifiedRequest(t, jwt3, http.MethodGet, uri, nil)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	// After the regen the old token should be invalidated because we choose to drop the sessions
+	req = assets.NewJWTAuthentifiedRequest(t, jwt2, http.MethodGet, uri, nil)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusUnauthorized, rec.Code)
+
+	// the old signing token from the builtin consumer should be invalidated
+	uri = api.Router.GetRoute(http.MethodPost, api.postAuthBuiltinSigninHandler, nil)
+	req = assets.NewRequest(t, "POST", uri, sdk.AuthConsumerSigninRequest{
+		"token": signinToken1,
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+
+	// the new signing token from the builtin consumer should be fine
+	uri = api.Router.GetRoute(http.MethodPost, api.postAuthBuiltinSigninHandler, nil)
+	req = assets.NewRequest(t, "POST", uri, sdk.AuthConsumerSigninRequest{
+		"token": response.Token,
+	})
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
 }
 
 func Test_getSessionsByUserHandler(t *testing.T) {

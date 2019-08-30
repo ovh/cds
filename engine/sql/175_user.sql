@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS "authentified_user" (
   username TEXT NOT NULL,
   fullname TEXT NOT NULL,
   ring VARCHAR(25) NOT NULL,
-  sig BYTEA
+  sig BYTEA,
+  signer TEXT
 );
 select create_unique_index('authentified_user','IDX_AUTHENTIFIED_USER_USERNAME','username');
 
@@ -19,7 +20,8 @@ CREATE TABLE IF NOT EXISTS "authentified_user_migration" (
   id BIGSERIAL PRIMARY KEY,
   authentified_user_id VARCHAR(36),
   user_id BIGINT,
-  sig BYTEA
+  sig BYTEA,
+  signer TEXT
 );
 
 SELECT create_unique_index('authentified_user_migration', 'IDX_AUTHENTIFIED_USER_MIGRATION_LINK', 'authentified_user_id,user_id');
@@ -34,7 +36,8 @@ CREATE TABLE IF NOT EXISTS "user_contact" (
   value TEXT NOT NULL,
   primary_contact BOOLEAN NOT NULL DEFAULT FALSE,
   verified BOOLEAN NOT NULL DEFAULT FALSE,
-  sig BYTEA
+  sig BYTEA,
+  signer TEXT
 );
 
 SELECT create_unique_index('user_contact', 'IDX_USER_CONTACT_VALUE', 'type,value');
@@ -54,7 +57,8 @@ CREATE TABLE "auth_consumer" (
   group_ids JSONB,
   scopes JSONB,
   sig BYTEA,
-  issued_at TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP
+  issued_at TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
+  signer TEXT
 );
 
 SELECT create_foreign_key_idx_cascade('FK_AUTH_CONSUMER_USER', 'auth_consumer', 'authentified_user', 'user_id', 'id');
@@ -70,7 +74,8 @@ CREATE TABLE "auth_session" (
   group_ids JSONB,
   scopes JSONB,
   sig BYTEA,
-  mfa BOOLEAN NOT NULL DEFAULT FALSE
+  mfa BOOLEAN NOT NULL DEFAULT FALSE,
+  signer TEXT
 );
 
 SELECT create_foreign_key_idx_cascade('FK_AUTH_SESSION_CONSUMER', 'auth_session', 'auth_consumer', 'consumer_id', 'id');
@@ -80,6 +85,7 @@ ALTER TABLE services ADD COLUMN IF NOT EXISTS auth_consumer_id VARCHAR(36);
 ALTER TABLE services ADD COLUMN IF NOT EXISTS maintainer JSONB;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS public_key BYTEA;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS sig BYTEA;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS signer TEXT;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS encrypted_jwt BYTEA;
 ALTER TABLE services ALTER COLUMN hash DROP NOT NULL;
 SELECT create_unique_index('services', 'IDX_SERVICES_AUTH_CONSUMER_ID', 'auth_consumer_id');

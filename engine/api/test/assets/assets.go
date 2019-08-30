@@ -200,6 +200,7 @@ func InsertLambdaUser(t *testing.T, db gorp.SqlExecutor, groups ...*sdk.Group) (
 			err := group.Create(db, groups[i], u.OldUserStruct.ID)
 			require.NoError(t, err)
 		} else {
+			groups[i].ID = existingGroup.ID
 			require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
 				GroupID: groups[i].ID,
 				UserID:  u.OldUserStruct.ID,
