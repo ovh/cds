@@ -445,6 +445,11 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 		s = reflect.ValueOf(i)
 	}
 
+	if s.Kind() == reflect.Map {
+		m, _ := dump.ToStringMap(i)
+		return m
+	}
+
 	if s.Kind() != reflect.Struct {
 		return nil
 	}

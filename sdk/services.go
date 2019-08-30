@@ -19,21 +19,6 @@ type CanonicalService struct {
 	Maintainer AuthentifiedUser `json:"maintainer" db:"maintainer"` // TODO maintainer should be loaded from consumer
 }
 
-func (s CanonicalService) Canonical() ([]byte, error) {
-	var canonical string
-	canonical += fmt.Sprintf("%d", s.ID)
-	canonical += s.Name
-	if s.ConsumerID == nil {
-		canonical += "----"
-	} else {
-		canonical += *s.ConsumerID
-	}
-	canonical += s.Type
-	md5PubKey, _ := FileMd5sum(string(s.PublicKey))
-	canonical += string(md5PubKey)
-	return []byte(canonical), nil
-}
-
 // Service is a µService registered on CDS API
 type Service struct {
 	CanonicalService

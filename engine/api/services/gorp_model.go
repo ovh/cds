@@ -10,6 +10,12 @@ type service struct {
 	gorpmapping.SignedEntity
 }
 
+func (s service) Canonical() gorpmapping.CanonicalForms {
+	return []gorpmapping.CanonicalForm{
+		"{{.ID}}{{.Name}}{{.Type}}",
+	}
+}
+
 func init() {
 	gorpmapping.Register(
 		gorpmapping.New(service{}, "services", true, "id"),

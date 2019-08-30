@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -155,5 +156,51 @@ func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 		}
 
 		return service.Write(w, btes, code, "application/json")
+	}
+}
+
+func (api *API) getAdminDatabaseSignatureResume() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var entities = gorpmapping.ListSignedEntities()
+		var resume = make(sdk.CanonicalFormUsageResume, len(entities))
+
+		for _, e := range entities {
+			data, err := gorpmapping.ListCanonicalFormsByEntity(api.mustDB(), e)
+			if err != nil {
+				return err
+			}
+			resume[e] = data
+		}
+
+		return service.WriteJSON(w, resume, http.StatusOK)
+	}
+}
+
+func (api *API) getAdminDatabaseSignatureTuplesBySigner() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		entity := vars["entity"]
+		signer := vars["signer"]
+
+		pks, err := gorpmapping.ListTupleByCanonicalForm(api.mustDB(), entity, signer)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, pks, http.StatusOK)
+	}
+}
+
+func (api *API) postAdminDatabaseSignatureRollEntityByPrimaryKey() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		entity := vars["entity"]
+		pk := vars["pk"]
+
+		if err := gorpmapping.RollSignedTupleByPrimaryKey(api.mustDB(), entity, pk); err != nil {
+			return err
+		}
+
+		return nil
 	}
 }

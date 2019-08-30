@@ -60,6 +60,7 @@ func TestLoadAll(t *testing.T) {
 	test.NoError(t, err)
 
 	assert.True(t, len(users) >= 10)
+	t.Logf("%d users loaded", len(users))
 }
 
 func TestLoadAllByIDs(t *testing.T) {

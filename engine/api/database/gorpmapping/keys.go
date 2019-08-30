@@ -2,22 +2,11 @@ package gorpmapping
 
 import (
 	"encoding/json"
-	"errors"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/configstore"
 	"github.com/ovh/symmecrypt/keyloader"
 )
-
-type testData map[string]string
-
-func (d testData) Canonical() ([]byte, error) {
-	buf, err := json.Marshal(d)
-	if err != nil {
-		return nil, sdk.WithStack(err)
-	}
-	return buf, nil
-}
 
 func ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyConfig) error {
 	// Marshal the keys
@@ -49,33 +38,6 @@ func ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyConfig) error {
 		return list, nil
 	}
 	configstore.RegisterProvider("fakeConfigstoreProvider", provider)
-
-	// Test signature and its verification
-	data := testData{"data": "data"}
-	sig, err := sign(data)
-	if err != nil {
-		return err
-	}
-	ok, err := CheckSignature(data, sig)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return errors.New("signature process invalid")
-	}
-
-	// Test encryption
-	var encryptedData []byte
-	if err := Encrypt(data, &encryptedData); err != nil {
-		return err
-	}
-	var decryptedData = map[string]string{}
-	if err := Decrypt(encryptedData, &decryptedData); err != nil {
-		return err
-	}
-	if data["data"] != decryptedData["data"] {
-		return errors.New("encryption process invalid")
-	}
 
 	return nil
 }

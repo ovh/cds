@@ -1,9 +1,6 @@
 package user
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
@@ -13,14 +10,10 @@ type authentifiedUser struct {
 	gorpmapping.SignedEntity
 }
 
-func (u authentifiedUser) Canonical() ([]byte, error) {
-	var canonical string
-	canonical += u.ID
-	canonical += u.Username
-	canonical += u.Fullname
-	canonical += u.Ring
-	canonical += u.Created.In(time.UTC).Format(time.RFC3339)
-	return []byte(canonical), nil
+func (u authentifiedUser) Canonical() gorpmapping.CanonicalForms {
+	return []gorpmapping.CanonicalForm{
+		"{{.ID}}{{.Username}}{{.Fullname}}{{.Ring}}{{printDate .Created}}",
+	}
 }
 
 type userContact struct {
@@ -28,15 +21,10 @@ type userContact struct {
 	gorpmapping.SignedEntity
 }
 
-func (c userContact) Canonical() ([]byte, error) {
-	var canonical string
-	canonical += fmt.Sprintf("%d", c.ID)
-	canonical += c.UserID
-	canonical += c.Type
-	canonical += c.Value
-	canonical += fmt.Sprintf("%t", c.Primary)
-	canonical += fmt.Sprintf("%t", c.Verified)
-	return []byte(canonical), nil
+func (c userContact) Canonical() gorpmapping.CanonicalForms {
+	return []gorpmapping.CanonicalForm{
+		"{{.ID}}{{.UserID}}{{.Type}}{{.Value}}{{.Primary}}{{.Verified}}",
+	}
 }
 
 // MigrationUser is the temporary link between a deprecated user and an authentified user.
@@ -51,11 +39,10 @@ type migrationUser struct {
 	gorpmapping.SignedEntity
 }
 
-func (m migrationUser) Canonical() ([]byte, error) {
-	var canonical string
-	canonical += m.AuthentifiedUserID
-	canonical += fmt.Sprintf("%d", m.UserID)
-	return []byte(canonical), nil
+func (m migrationUser) Canonical() gorpmapping.CanonicalForms {
+	return []gorpmapping.CanonicalForm{
+		"{{.AuthentifiedUserID}}{{.UserID}}",
+	}
 }
 
 // MigrationUsers provides func for MigrationUser list.

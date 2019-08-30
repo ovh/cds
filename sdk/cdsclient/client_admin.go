@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -99,4 +100,51 @@ func (c *client) ServiceCallPUT(stype string, query string, body []byte) ([]byte
 func (c *client) ServiceCallDELETE(stype string, query string) error {
 	_, _, _, err := c.Request(context.Background(), "DELETE", "/admin/services/call?type="+stype+"&query="+url.QueryEscape(query), nil)
 	return err
+}
+
+func (c *client) AdminDatabaseSignaturesResume() (sdk.CanonicalFormUsageResume, error) {
+	var res = sdk.CanonicalFormUsageResume{}
+	_, err := c.GetJSON(context.Background(), "/admin/database/signature", &res)
+	return res, err
+}
+
+func (c *client) AdminDatabaseSignaturesRollEntity(e string) error {
+	resume, err := c.AdminDatabaseSignaturesResume()
+	if err != nil {
+		return err
+	}
+
+	if _, has := resume[e]; !has {
+		return errors.New("unkown entity")
+	}
+
+	for _, s := range resume[e] {
+		url := fmt.Sprintf("/admin/database/signature/%s/%s", e, s.Signer)
+		var pks []string
+		if _, err := c.GetJSON(context.Background(), url, &pks); err != nil {
+			return err
+		}
+
+		for _, pk := range pks {
+			url := fmt.Sprintf("/admin/database/signature/%s/roll/%s", e, pk)
+			if _, err := c.PostJSON(context.Background(), url, nil, nil); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (c *client) AdminDatabaseSignaturesRollAllEntities() error {
+	resume, err := c.AdminDatabaseSignaturesResume()
+	if err != nil {
+		return err
+	}
+
+	for e := range resume {
+		if err := c.AdminDatabaseSignaturesRollEntity(e); err != nil {
+			return err
+		}
+	}
+	return nil
 }
