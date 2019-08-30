@@ -44,3 +44,16 @@ func (c *client) AuthConsumerCreateForUser(username string, request sdk.AuthCons
 	}
 	return consumer, nil
 }
+
+func (c *client) AuthSessionListByUser(username string) (sdk.AuthSessions, error) {
+	var sessions sdk.AuthSessions
+	if _, err := c.GetJSON(context.Background(), "/user/"+username+"/auth/session", &sessions); err != nil {
+		return nil, err
+	}
+	return sessions, nil
+}
+
+func (c *client) AuthSessionDelete(username, id string) error {
+	_, err := c.DeleteJSON(context.Background(), "/user/"+username+"/auth/session/"+id, nil)
+	return err
+}

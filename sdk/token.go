@@ -286,6 +286,9 @@ func (c AuthConsumer) GetDEPRECATEDUserStruct() *User {
 	return c.AuthentifiedUser.OldUserStruct
 }
 
+// AuthSessions gives functions for auth session slice.
+type AuthSessions []AuthSession
+
 // AuthSession struct.
 type AuthSession struct {
 	ID         string                 `json:"id" cli:"id,key" db:"id"`
@@ -298,7 +301,7 @@ type AuthSession struct {
 	// aggregates
 	Consumer *AuthConsumer `json:"consumer,omitempty" db:"-"`
 	Groups   []Group       `json:"groups,omitempty" db:"-"`
-	Current  bool          `json:"current,omitempty" db:"-"`
+	Current  bool          `json:"current,omitempty" cli:"current" db:"-"`
 }
 
 // AuthSessionJWTClaims is the specific claims format for JWT session.

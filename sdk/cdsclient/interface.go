@@ -460,4 +460,6 @@ type AuthClient interface {
 	AuthConsumerListByUser(username string) (sdk.AuthConsumers, error)
 	AuthConsumerDelete(username, id string) error
 	AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error)
+	AuthSessionListByUser(username string) (sdk.AuthSessions, error)
+	AuthSessionDelete(username, id string) error
 }

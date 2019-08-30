@@ -25,10 +25,6 @@ var loginCmd = cli.Command{
 			Name:      "api-url",
 			ShortHand: "H",
 			Usage:     "Url to your CDS api.",
-			IsValid: func(s string) bool {
-				match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
-				return match
-			},
 		},
 		{
 			Name:      "driver",
@@ -71,12 +67,17 @@ func loginRun(v cli.Values) error {
 
 	// Checks that an URL is given
 	apiURL := v.GetString("api-url")
+	if apiURL == "" && !noInteractive {
+		apiURL = cli.AskValue("api-url")
+	}
 	if apiURL == "" {
 		return fmt.Errorf("Please set api url")
 	}
-	if strings.HasSuffix(apiURL, "/") {
-		return fmt.Errorf("Invalid given api url, remove trailing '/'")
+	match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, apiURL)
+	if !match {
+		return fmt.Errorf("Invalid given api url")
 	}
+	apiURL = strings.TrimSuffix(apiURL, "/")
 
 	// Load all drivers from given CDS instance
 	client := cdsclient.New(cdsclient.Config{
@@ -137,7 +138,7 @@ func loginRun(v cli.Values) error {
 		return fmt.Errorf("cannot signin: %v", err)
 	}
 
-	return doAfterLogin(v, res)
+	return doAfterLogin(v, apiURL, res)
 }
 
 func loginRunLocal(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
@@ -231,9 +232,7 @@ func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType) (sdk.Auth
 	return req, nil
 }
 
-func doAfterLogin(v cli.Values, res sdk.AuthConsumerSigninResponse) error {
-	apiURL := v.GetString("api-url")
-
+func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninResponse) error {
 	insecureSkipVerifyTLS := v.GetBool("insecure")
 	if insecureSkipVerifyTLS {
 		fmt.Println("Using insecure TLS connection...")
