@@ -67,6 +67,7 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 	u, jwtRaw := assets.InsertLambdaUser(t, db, g)
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID)
 	require.NoError(t, err)
+	_, jwtRawAdmin := assets.InsertAdminUser(t, db)
 
 	data := sdk.AuthConsumer{
 		Name:     sdk.RandomString(10),
@@ -79,8 +80,17 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 		"permUsername": u.Username,
 	})
 	require.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodPost, uri, data)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRawAdmin, http.MethodPost, uri, data)
 	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 403, rec.Code)
+
+	uri = api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{
+		"permUsername": u.Username,
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodPost, uri, data)
+	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 201, rec.Code)
 
@@ -134,6 +144,16 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
+	// Test that we can't regen a no builtin consumer
+	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerRegenByUserHandler, map[string]string{
+		"permUsername":   u.Username,
+		"permConsumerID": localConsumer.ID,
+	})
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodPost, uri, sdk.AuthConsumerRegenRequest{})
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code)
+
 	builtinConsumer, signinToken1, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser, sdk.AuthConsumerScopeAccessToken})
 	require.NoError(t, err)
 	session, err := authentication.NewSession(db, builtinConsumer, 5*time.Minute, false)
@@ -141,12 +161,12 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 	jwt2, err := authentication.NewSessionJWT(session)
 	require.NoError(t, err, "cannot create jwt")
 
-	uri := api.Router.GetRoute(http.MethodGet, api.getUserHandler, map[string]string{
+	uri = api.Router.GetRoute(http.MethodGet, api.getUserHandler, map[string]string{
 		"permUsernamePublic": "me",
 	})
 	require.NotEmpty(t, uri)
-	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodGet, uri, nil)
-	rec := httptest.NewRecorder()
+	req = assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodGet, uri, nil)
+	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code)
 

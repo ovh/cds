@@ -278,6 +278,7 @@ export class UserEditComponent implements OnInit {
                 type: ColumnType.CONFIRM_BUTTON,
                 name: 'common_action',
                 class: 'two right aligned',
+                disabled: true,
                 selector: (s: AuthSession) => {
                     return {
                         title: 'user_auth_revoke_btn',
@@ -472,6 +473,9 @@ export class UserEditComponent implements OnInit {
         } else {
             this.menuItems = [].concat(defaultMenuItems);
         }
+
+        // Enable revoke session button only if editable
+        this.columnsSessions[4].disabled = !this.editable;
     }
 
     getGroups(): void {

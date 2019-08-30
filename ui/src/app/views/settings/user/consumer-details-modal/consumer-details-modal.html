@@ -38,30 +38,35 @@
                     </div>
                     <div class="wide field">
                         <div class="ui wide field">
-                            <ng-container [ngSwitch]="consumer.type">
+                            <ng-container *ngIf="user.id === currentUser.id || currentUser.isAdmin()"
+                                [ngSwitch]="consumer.type">
                                 <ng-container *ngSwitchCase="'local'">
                                     <button *ngIf="user.id === currentUser.id" class="ui button green left floated"
                                         (click)="clickResetPassword()">{{'account_password_btn_reset' | translate }}</button>
                                 </ng-container>
-                                <app-delete-button *ngSwitchCase="'builtin'" class="left floated"
-                                    (event)="clickDelete()" [title]="'user_auth_consumer_delete_btn'">
-                                </app-delete-button>
-                                <app-delete-button *ngSwitchDefault class="left floated" (event)="clickDetach()"
-                                    [loading]="loading" [title]="'user_auth_consumer_detach_btn'">
-                                </app-delete-button>
-                            </ng-container>
-                            <div *ngIf="consumer.type === 'builtin'" class="ui green right floated buttons">
-                                <div class="ui button" (click)="clickRegen(false)">
-                                    {{'auth_consumer_regen' | translate }}</div>
-                                <div class="ui floating icon dropdown button" suiDropdown>
-                                    <i class="dropdown icon"></i>
-                                    <div class="menu" suiDropdownMenu>
-                                        <div class="ui item" (click)="clickRegen(true)">
-                                            {{'auth_consumer_regen_revoke' | translate }}</div>
+                                <ng-container *ngSwitchCase="'builtin'">
+                                    <app-delete-button class="left floated" (event)="clickDelete()"
+                                        [title]="'user_auth_consumer_delete_btn'">
+                                    </app-delete-button>
+                                    <div class="ui green right floated buttons">
+                                        <div class="ui button" (click)="clickRegen(false)">
+                                            {{'auth_consumer_regen' | translate }}</div>
+                                        <div class="ui floating icon dropdown button" suiDropdown>
+                                            <i class="dropdown icon"></i>
+                                            <div class="menu" suiDropdownMenu>
+                                                <div class="ui item" (click)="clickRegen(true)">
+                                                    {{'auth_consumer_regen_revoke' | translate }}</div>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-
+                                </ng-container>
+                                <ng-container *ngSwitchDefault>
+                                    <app-delete-button *ngIf="user.id === currentUser.id" class="left floated"
+                                        (event)="clickDetach()" [loading]="loading"
+                                        [title]="'user_auth_consumer_detach_btn'">
+                                    </app-delete-button>
+                                </ng-container>
+                            </ng-container>
                             <button class="ui secondary button right floated"
                                 (click)="clickClose()">{{'btn_close' | translate }}</button>
                         </div>

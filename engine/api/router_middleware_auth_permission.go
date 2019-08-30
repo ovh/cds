@@ -360,13 +360,13 @@ func (api *API) checkUserPermissions(ctx context.Context, username string, permi
 		return nil
 	}
 
-	// If the current user is a maintainer and we want a to read user
+	// If the current user is a maintainer and we want to read a user
 	if permissionValue == sdk.PermissionRead && isMaintainer(ctx) {
 		log.Debug("checkUserPermissions> %s read access granted to %s because is maintainer", getAPIConsumer(ctx).ID, u.ID)
 		return nil
 	}
 
-	// If the current user is an admin
+	// If the current user is an admin, gives RW on the user
 	if isAdmin(ctx) {
 		log.Debug("checkUserPermissions> %s read/write access granted to %s because is admin", getAPIConsumer(ctx).ID, u.ID)
 		return nil
@@ -386,12 +386,27 @@ func (api *API) checkConsumerPermissions(ctx context.Context, consumerID string,
 	if err != nil {
 		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for consumer %s", consumerID))
 	}
+
+	// If current consumer's authentified user match given one
 	if consumer.AuthentifiedUserID == authConsumer.AuthentifiedUserID {
+		log.Debug("checkConsumerPermissions> %s access granted to %s because is owner", authConsumer.ID, consumer.ID)
+		return nil
+	}
+
+	// If the current user is a maintainer and we want to read a consumer
+	if permissionValue == sdk.PermissionRead && isMaintainer(ctx) {
+		log.Debug("checkConsumerPermissions> %s read access granted to %s because is maintainer", authConsumer.ID, consumer.ID)
+		return nil
+	}
+
+	// If the current user is an admin, gives RW on the consumer
+	if isAdmin(ctx) {
+		log.Debug("checkConsumerPermissions> %s read/write access granted to %s because is admin", authConsumer.ID, consumer.ID)
 		return nil
 	}
 
 	log.Debug("checkConsumerPermissions> %s is not authorized to %s", authConsumer.ID, consumer.ID)
-	return sdk.WrapError(sdk.ErrForbidden, "not authorized for consumer %s", authConsumer.ID)
+	return sdk.WrapError(sdk.ErrForbidden, "not authorized for consumer %s", consumerID)
 }
 
 func (api *API) checkSessionPermissions(ctx context.Context, sessionID string, permissionValue int, routeVars map[string]string) error {
@@ -408,10 +423,25 @@ func (api *API) checkSessionPermissions(ctx context.Context, sessionID string, p
 	if err != nil {
 		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for session %s", sessionID))
 	}
+
+	// If current consumer's authentified user match session's consumer
 	if consumer.AuthentifiedUserID == authConsumer.AuthentifiedUserID {
+		log.Debug("checkSessionPermissions> %s access granted to %s because is owner", authConsumer.ID, session.ID)
 		return nil
 	}
 
-	log.Debug("checkConsumerPermissions> %s is not authorized to %s", authConsumer.ID, consumer.ID)
-	return sdk.WrapError(sdk.ErrForbidden, "not authorized for consumer %s", authConsumer.ID)
+	// If the current user is a maintainer and we want to read a session
+	if permissionValue == sdk.PermissionRead && isMaintainer(ctx) {
+		log.Debug("checkSessionPermissions> %s read access granted to %s because is maintainer", authConsumer.ID, session.ID)
+		return nil
+	}
+
+	// If the current user is an admin, gives RW on the session
+	if isAdmin(ctx) {
+		log.Debug("checkSessionPermissions> %s read/write access granted to %s because is admin", authConsumer.ID, session.ID)
+		return nil
+	}
+
+	log.Debug("checkSessionPermissions> %s is not authorized to %s", authConsumer.ID, session.ID)
+	return sdk.WrapError(sdk.ErrForbidden, "not authorized for session %s", sessionID)
 }

@@ -129,14 +129,14 @@
                                         <ng-container *ngSwitchCase="'local'">
                                             <button class="ui primary button small"
                                                 (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' | translate}}</button>
-                                            <button class="ui green button small" *ngIf="user.id === currentUser.id"
+                                            <button *ngIf="user.id === currentUser.id" class="ui green button small"
                                                 (click)="clickConsumerLocalReset()">{{'account_password_btn_reset' | translate}}</button>
                                         </ng-container>
                                         <ng-container *ngSwitchDefault>
                                             <button class="ui primary button small"
                                                 (click)="clickConsumerDetails(mConsumers[d.type])">{{'common_details' | translate}}</button>
-                                            <app-confirm-button [class]="'small'" [color]="'red'"
-                                                (event)="clickConsumerDetach(mConsumers[d.type])"
+                                            <app-confirm-button *ngIf="user.id === currentUser.id" [class]="'small'"
+                                                [color]="'red'" (event)="clickConsumerDetach(mConsumers[d.type])"
                                                 [title]="'user_auth_consumer_detach_btn'">
                                             </app-confirm-button>
                                         </ng-container>
@@ -166,7 +166,8 @@
                     <h3 class="ui header">
                         <div class="content">
                             {{ 'user_auth_my_consumers' | translate }}
-                            <i *ngIf="editable" class="add circle link icon green" (click)="clickConsumerCreate()"></i>
+                            <i *ngIf="user.id === currentUser.id" class="add circle link icon green"
+                                (click)="clickConsumerCreate()"></i>
                         </div>
                     </h3>
                     <app-data-table [withFilter]="filterConsumers" [withPagination]="10" [columns]="columnsConsumers"
