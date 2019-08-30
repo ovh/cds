@@ -28,7 +28,7 @@ export class ResetComponent implements OnInit {
             let token = queryParams['token'];
             if (!token) {
                 this.showErrorMessage = true;
-                this._cd.detectChanges();
+                this._cd.markForCheck();
                 return;
             }
 
@@ -43,7 +43,7 @@ export class ResetComponent implements OnInit {
         this._authenticationService.localReset(this.token, f.value.password)
             .pipe(finalize(() => {
                 this.loading = false;
-                this._cd.detectChanges();
+                this._cd.markForCheck();
             }))
             .subscribe(res => {
                 this.showSuccessMessage = true;

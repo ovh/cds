@@ -32,14 +32,14 @@ export class VerifyComponent implements OnInit {
             if (!token) {
                 this.showErrorMessage = true;
                 this.loading = false;
-                this._cd.detectChanges();
+                this._cd.markForCheck();
                 return;
             }
 
             this._authenticationService.localVerify(token)
                 .pipe(finalize(() => {
                     this.loading = false;
-                    this._cd.detectChanges();
+                    this._cd.markForCheck();
                 }))
                 .subscribe(res => {
                     this.user = res.user;
