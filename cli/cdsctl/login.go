@@ -115,7 +115,7 @@ func loginRun(v cli.Values) error {
 		req, err = loginRunBuiltin(v)
 	default:
 		if noInteractive {
-			return fmt.Errorf("Cannot signin with %s driver in no interactive mode")
+			return fmt.Errorf("Cannot signin with %s driver in no interactive mode", driverType)
 		}
 		req, err = loginRunExternal(v, driverType)
 	}
