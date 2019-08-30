@@ -24,14 +24,22 @@ const errUserNotFound = "user not found"
 
 //LDAPConfig handles all config to connect to the LDAP
 type LDAPConfig struct {
-	Host         string
-	Port         int
-	Base         string
-	DN           string
-	SSL          bool
-	UserFullname string
-	BindDN       string
-	BindPwd      string
+	Host             string
+	Port             int
+	Base             string
+	DN               string
+	SSL              bool
+	UserFullname     string
+	BindDN           string
+	BindPwd          string
+	SearchAttributes struct {
+		UserId     string
+		CommonName string
+		OrgUnit    string
+		FirstName  string
+		LastName   string
+		Email      string
+	}
 }
 
 //LDAPDriver is the LDAP client interface
@@ -302,8 +310,8 @@ func (c *LDAPClient) Search(filter string, attributes ...string) ([]Entry, error
 
 func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username string) (*sdk.User, error) {
 	// Search user
-	search := fmt.Sprintf("(uid=%s)", username)
-	entry, errSearch := c.Search(search, "uid", "cn", "ou", "givenName", "sn", "mail")
+	search := fmt.Sprintf("(%s=%s)", c.conf.SearchAttributes.UserId, username)
+	entry, errSearch := c.Search(search, c.conf.SearchAttributes.UserId, c.conf.SearchAttributes.CommonName, c.conf.SearchAttributes.OrgUnit, c.conf.SearchAttributes.FirstName, c.conf.SearchAttributes.LastName, c.conf.SearchAttributes.Email)
 	if errSearch != nil && errSearch.Error() != errUserNotFound {
 		log.Warning("LDAP> Search error %s: %s", search, errSearch)
 		return nil, errSearch
@@ -351,7 +359,7 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 	tmpl.Execute(bufFullname, entry[0].Attributes)
 
 	u.Fullname = bufFullname.String()
-	u.Email = entry[0].Attributes["mail"]
+	u.Email = entry[0].Attributes[c.conf.SearchAttributes.Email]
 
 	if newUser {
 		a := &sdk.Auth{
@@ -382,7 +390,7 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 //Authentify check username and password
 func (c *LDAPClient) Authentify(username, password string) (bool, error) {
 	// Search user
-	r, err := c.Search("(&(uid=" + username + "))")
+	r, err := c.Search("(&(" + c.conf.SearchAttributes.UserId + "=" + username + "))")
 	if err != nil {
 		return false, nil
 	}

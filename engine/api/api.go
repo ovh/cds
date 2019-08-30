@@ -83,15 +83,23 @@ type Configuration struct {
 		SharedInfraToken string `toml:"sharedInfraToken" default:"" comment:"Token for shared.infra group. This value will be used when shared.infra will be created\nat first CDS launch. This token can be used by CDS CLI, Hatchery, etc...\nThis is mandatory." json:"-"`
 		RSAPrivateKey    string `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used to sign and verify the JWT Tokens issued by the API \nThis is mandatory." json:"-"`
 		LDAP             struct {
-			Enable   bool   `toml:"enable" default:"false" json:"enable"`
-			Host     string `toml:"host" json:"host"`
-			Port     int    `toml:"port" default:"636" json:"port"`
-			SSL      bool   `toml:"ssl" default:"true" json:"ssl"`
-			Base     string `toml:"base" default:"dc=myorganization,dc=com" json:"base"`
-			DN       string `toml:"dn" default:"uid=%s,ou=people,dc=myorganization,dc=com" json:"dn"`
-			Fullname string `toml:"fullname" default:"{{.givenName}} {{.sn}}" json:"fullname"`
-			BindDN   string `toml:"bindDN" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"bindDN"`
-			BindPwd  string `toml:"bindPwd" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
+			Enable           bool   `toml:"enable" default:"false" json:"enable"`
+			Host             string `toml:"host" json:"host"`
+			Port             int    `toml:"port" default:"636" json:"port"`
+			SSL              bool   `toml:"ssl" default:"true" json:"ssl"`
+			Base             string `toml:"base" default:"dc=myorganization,dc=com" json:"base"`
+			DN               string `toml:"dn" default:"uid=%s,ou=people,dc=myorganization,dc=com" json:"dn"`
+			Fullname         string `toml:"fullname" default:"{{.givenName}} {{.sn}}" json:"fullname"`
+			BindDN           string `toml:"bindDN" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"bindDN"`
+			BindPwd          string `toml:"bindPwd" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
+			SearchAttributes struct {
+				UserId     string `toml:"userId" default:"uid" comment:"User identifier attribute name" json:"userId"`
+				CommonName string `toml:"commonName" default:"cn" comment:"Common name attribute name" json:"commonName"`
+				OrgUnit    string `toml:"orgUnit" default:"ou" comment:"Organizational unit attribute name" json:"orgUnit"`
+				FirstName  string `toml:"firstName" default:"givenName" comment:"First name attribute name" json:"firstName"`
+				LastName   string `toml:"lastName" default:"sn" comment:"Last name attribute name" json:"lastName"`
+				Email      string `toml:"email" default:"mail" comment:"E-mail attribute name" json:"email"`
+			} `toml:"searchattributes" json:"searchAttributes"`
 		} `toml:"ldap" json:"ldap"`
 		Local struct {
 			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true" json:"signupAllowedDomains"`
@@ -681,6 +689,21 @@ func (a *API) Serve(ctx context.Context) error {
 			UserFullname: a.Config.Auth.LDAP.Fullname,
 			BindDN:       a.Config.Auth.LDAP.BindDN,
 			BindPwd:      a.Config.Auth.LDAP.BindPwd,
+			SearchAttributes: struct {
+				UserId     string
+				CommonName string
+				OrgUnit    string
+				FirstName  string
+				LastName   string
+				Email      string
+			}{
+				UserId:     a.Config.Auth.LDAP.SearchAttributes.UserId,
+				CommonName: a.Config.Auth.LDAP.SearchAttributes.CommonName,
+				OrgUnit:    a.Config.Auth.LDAP.SearchAttributes.OrgUnit,
+				FirstName:  a.Config.Auth.LDAP.SearchAttributes.FirstName,
+				LastName:   a.Config.Auth.LDAP.SearchAttributes.LastName,
+				Email:      a.Config.Auth.LDAP.SearchAttributes.Email,
+			},
 		}
 	default:
 		authMode = "local"

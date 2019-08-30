@@ -73,6 +73,14 @@
       port = 636
       ssl = true
 
+      [api.auth.ldap.searchattributes]
+        userId = "uid"
+        commonName = "cn"
+        orgUnit = "ou"
+        firstName = "givenName"
+        lastName = "sn"
+        email = "mail"
+
     [api.auth.local]
 
       # Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com
