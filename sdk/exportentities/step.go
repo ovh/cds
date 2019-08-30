@@ -204,6 +204,13 @@ func newStep(act sdk.Action) Step {
 				step = StepCheckout(directory.Value)
 			}
 			s.Checkout = &step
+		case sdk.InstallKeyAction:
+			var step StepInstallKey
+			key := sdk.ParameterFind(act.Parameters, "key")
+			if key != nil {
+				step = StepInstallKey(key.Value)
+			}
+			s.InstallKey = &step
 		case sdk.DeployApplicationAction:
 			step := StepDeploy("{{.cds.application}}")
 			s.Deploy = &step
@@ -305,6 +312,9 @@ type StepJUnitReport string
 // StepCheckout represents exported checkout step.
 type StepCheckout string
 
+// StepInstallKey represents exported installKey step.
+type StepInstallKey string
+
 // StepDeploy represents exported deploy step.
 type StepDeploy string
 
@@ -327,6 +337,7 @@ type Step struct {
 	Release          *StepRelease          `json:"release,omitempty" yaml:"release,omitempty" jsonschema_description:"Release an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-release"`
 	JUnitReport      *StepJUnitReport      `json:"jUnitReport,omitempty" yaml:"jUnitReport,omitempty" jsonschema_description:"Parse JUnit report.\nhttps://ovh.github.io/cds/docs/actions/builtin-junit"`
 	Checkout         *StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty" jsonschema_description:"Checkout repository for an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-checkoutapplication"`
+	InstallKey       *StepInstallKey       `json:"installKey,omitempty" yaml:"installKey,omitempty" jsonschema_description:"Install a key (GPG, SSH) in your current workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-installkey"`
 	Deploy           *StepDeploy           `json:"deploy,omitempty" yaml:"deploy,omitempty" jsonschema_description:"Deploy an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-deployapplication"`
 }
 
@@ -435,6 +446,9 @@ func (s Step) IsValid() bool {
 	if s.isCheckout() {
 		count++
 	}
+	if s.isInstallKey() {
+		count++
+	}
 	if s.isDeploy() {
 		count++
 	}
@@ -472,6 +486,8 @@ func (s Step) toAction() (*sdk.Action, error) {
 		a, err = s.asRelease()
 	} else if s.isCheckout() {
 		a = s.asCheckoutApplication()
+	} else if s.isInstallKey() {
+		a = s.asInstallKey()
 	} else if s.isDeploy() {
 		a = s.asDeployApplication()
 	} else if s.isCoverage() {
@@ -563,6 +579,22 @@ func (s Step) asCheckoutApplication() sdk.Action {
 		},
 	}
 }
+
+func (s Step) asInstallKey() sdk.Action {
+	return sdk.Action{
+		Name: sdk.InstallKeyAction,
+		Type: sdk.BuiltinAction,
+		Parameters: []sdk.Parameter{
+			{
+				Name:  "key",
+				Value: string(*s.InstallKey),
+				Type:  sdk.KeyParameter,
+			},
+		},
+	}
+}
+
+func (s Step) isInstallKey() bool { return s.InstallKey != nil }
 
 func (s Step) isCoverage() bool { return s.Coverage != nil }
 

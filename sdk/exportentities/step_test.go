@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
+var testInstallKey = exportentities.StepInstallKey("proj-mykey")
 var tests = []struct {
 	Name string
 	Step exportentities.Step
@@ -38,6 +39,14 @@ var tests = []struct {
 		},
 		Json: `{"artifactDownload":{"path":"{{.cds.workspace}}"}}`,
 		Yaml: "artifactDownload:\n  path: '{{.cds.workspace}}'\n",
+	},
+	{
+		Name: "Step with typed action install key",
+		Step: exportentities.Step{
+			InstallKey: &testInstallKey,
+		},
+		Json: `{"installKey":"proj-mykey"}`,
+		Yaml: "installKey: proj-mykey\n",
 	},
 	{
 		Name: "Step with not typed action",

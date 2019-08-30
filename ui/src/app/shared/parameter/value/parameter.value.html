@@ -35,6 +35,16 @@
             </sui-select>
         </ng-container>
     </div>
+    <div *ngSwitchCase="'key'">
+        <ng-container *ngIf="keys">
+            <sui-select class="selection" name="type" [(ngModel)]="editableValue"
+                (ngModelChange)="valueChanged();sendValueChanged()" [options]="allKeys" labelField="name"
+                valueField="name" [isSearchable]="true" #allkeys>
+                <sui-select-option *ngFor="let t of allkeys.filteredOptions" [value]="t">
+                </sui-select-option>
+            </sui-select>
+        </ng-container>
+    </div>
     <div *ngSwitchCase="'list'">
         <div class="ui fluid input" *ngIf="editList">
             <input type="text" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()"

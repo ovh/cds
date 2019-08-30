@@ -25,6 +25,7 @@ const (
 	ReleaseAction             = "Release"
 	CheckoutApplicationAction = "CheckoutApplication"
 	DeployApplicationAction   = "DeployApplication"
+	InstallKeyAction          = "InstallKey"
 
 	DefaultGitCloneParameterTagValue = "{{.git.tag}}"
 )
