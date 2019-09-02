@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/url"
 	"os"
@@ -50,6 +51,10 @@ var loginCmd = cli.Command{
 			Name:      "init-token",
 			Usage:     "A CDS init token that can be used for first connection",
 			ShortHand: "i",
+		},
+		{
+			Name:  "context-name",
+			Usage: "A cdsctl context name",
 		},
 	},
 }
@@ -226,6 +231,7 @@ func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType) (sdk.Auth
 }
 
 func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninResponse) error {
+	noInteractive := v.GetBool("no-interactive")
 	insecureSkipVerifyTLS := v.GetBool("insecure")
 	if insecureSkipVerifyTLS {
 		fmt.Println("Using insecure TLS connection...")
@@ -250,7 +256,7 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 		fmt.Printf("cdsctl: You didn't specify config file location; %s will be used.\n", configFile)
 	}
 
-	var contextName string
+	contextName := v.GetString("context-name")
 	// create file if not exists
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		fi, err := os.Create(configFile)
@@ -258,13 +264,15 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 			return fmt.Errorf("Error while creating file %s: %v", configFile, err)
 		}
 		fi.Close()
-		contextName = cli.AskValue("Enter a context name for this login (default):")
+		if !noInteractive {
+			contextName = cli.AskValue("Enter a context name for this login (default):")
+		}
 	} else {
 		fi, err := os.Open(configFile)
 		cdsConfigFile, err := internal.GetConfigFile(fi)
 		if err != nil {
 			fmt.Printf("Error while reading config file %s: %v\n", configFile, err)
-		} else {
+		} else if !noInteractive {
 			opts := []string{}
 			for _, c := range cdsConfigFile.Contexts {
 				line := fmt.Sprintf("%s", c.Context)
@@ -291,11 +299,6 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 		return fmt.Errorf("Error while opening file %s: %v", configFile, err)
 	}
 	defer fi.Close()
-	fiWrite, err := os.OpenFile(configFile, os.O_WRONLY, 0600)
-	if err != nil {
-		return fmt.Errorf("Error while opening file %s: %v", configFile, err)
-	}
-	defer fiWrite.Close()
 
 	if contextName == "" {
 		contextName = "default"
@@ -309,13 +312,31 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 		SessionToken:          res.Token,
 	}
 
-	if err := internal.StoreContext(fi, fiWrite, cdsContext); err != nil {
+	wdata := &bytes.Buffer{}
+	if err := internal.StoreContext(fi, wdata, cdsContext); err != nil {
 		return err
 	}
 
-	if err := fi.Chmod(os.FileMode(0600)); err != nil {
-		return fmt.Errorf("Error while chmod 600 file %s: %v", configFile, err)
+	if err := fi.Close(); err != nil {
+		return fmt.Errorf("Error while closing file %s: %v", configFile, err)
 	}
+	if err := writeConfigFile(configFile, wdata); err != nil {
+		return err
+	}
+	return nil
+}
 
+func writeConfigFile(configFile string, content *bytes.Buffer) error {
+	if errre := os.Remove(configFile); errre != nil {
+		return fmt.Errorf("Error while removing old file %s: %s", configFile, errre)
+	}
+	fi, err := os.OpenFile(configFile, os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		return fmt.Errorf("Error while opening file %s: %v", configFile, err)
+	}
+	defer fi.Close()
+	if _, err := fi.Write(content.Bytes()); err != nil {
+		return fmt.Errorf("Error while writing file %s: %v", configFile, err)
+	}
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ovh/cds/sdk"
 	toml "github.com/pelletier/go-toml"
 )
 
@@ -145,6 +146,9 @@ func writeToml(writer io.Writer, cdsConfigFile *CDSConfigFile) error {
 	}
 
 	t, err := toml.TreeFromMap(values)
+	if err != nil {
+		return fmt.Errorf("error while decoding file content: %v", err)
+	}
 
 	_, err = t.WriteTo(writer)
 	return err
@@ -195,7 +199,7 @@ func getBoolValue(in interface{}) bool {
 	if v, ok := in.(bool); ok {
 		return v
 	} else if v, ok := in.(string); ok {
-		return v == "true"
+		return v == sdk.TrueString
 	}
 	return false
 }

@@ -49,7 +49,7 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 	c.Host = os.Getenv("CDS_API_URL")
 	c.User = os.Getenv("CDS_USER")
 	c.SessionToken = os.Getenv("CDS_SESSION_TOKEN")
-	buitinConsumerAuthenticationToken := os.Getenv("CDS_SIGNING_TOKEN")
+	buitinConsumerAuthenticationToken := os.Getenv("CDS_TOKEN")
 	c.InsecureSkipVerifyTLS = insecureSkipVerifyTLS
 
 	if c.Host != "" && c.User != "" {

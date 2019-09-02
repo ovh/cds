@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 
@@ -14,6 +15,12 @@ var contextCmd = cli.Command{
 	Name:    "context",
 	Aliases: []string{"ctx"},
 	Short:   "cdsctl context",
+	Flags: []cli.Flag{
+		{
+			Name:  "context-name",
+			Usage: "A cdsctl context name",
+		},
+	},
 }
 
 func contexts() *cobra.Command {
@@ -72,6 +79,24 @@ func contextRun(v cli.Values) error {
 		return fmt.Errorf("error while reading config file %s: %v", configFilePath, err)
 	}
 
+	if v.GetBool("no-interactive") {
+		if v.GetString("context-name") == "" {
+			return fmt.Errorf("you must use a context name with no-interactive flag. Example: cdsctl context --context-name my-context")
+		}
+		wdata := &bytes.Buffer{}
+		if err := internal.SetCurrentContext(fi, wdata, v.GetString("context-name")); err != nil {
+			return err
+		}
+		if err := fi.Close(); err != nil {
+			return fmt.Errorf("Error while closing file %s: %v", configFilePath, err)
+		}
+		if err := writeConfigFile(configFilePath, wdata); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// interactive: let user choose the context
 	if len(cdsConfigFile.Contexts) > 0 {
 		opts := make([]string, len(cdsConfigFile.Contexts))
 		var i int
@@ -85,12 +110,15 @@ func contextRun(v cli.Values) error {
 			return fmt.Errorf("Error while opening file %s: %v", configFilePath, err)
 		}
 		defer fi.Close()
-		fiWrite, err := os.OpenFile(configFilePath, os.O_WRONLY, 0600)
-		if err != nil {
-			return fmt.Errorf("Error while opening file %s: %v", configFilePath, err)
+
+		wdata := &bytes.Buffer{}
+		if err := internal.SetCurrentContext(fi, wdata, opts[selected]); err != nil {
+			return err
 		}
-		defer fiWrite.Close()
-		if err := internal.SetCurrentContext(fi, fiWrite, opts[selected]); err != nil {
+		if err := fi.Close(); err != nil {
+			return fmt.Errorf("Error while closing file %s: %v", configFilePath, err)
+		}
+		if err := writeConfigFile(configFilePath, wdata); err != nil {
 			return err
 		}
 	} else {
