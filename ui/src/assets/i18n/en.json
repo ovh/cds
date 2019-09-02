@@ -1020,6 +1020,8 @@
   "workflow_run_with_parameters": "Run workflow",
   "workflow_sidebar_tag_zone": "Tags to display in the sidebar (order by priority)",
   "workflow_updated": "Workflow updated",
+  "workfow_tag_no": "No tag",
+  "workflow_tag_dragdrop": "Drag & drop to modify tags order",
   "workflow_resync": "Resynchronize workflow",
   "workflow_stopped": "Workflow stopped",
   "workflow_relaunched": "Workflow relaunched",
