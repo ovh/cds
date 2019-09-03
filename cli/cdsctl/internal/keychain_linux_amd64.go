@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/keybase/go-keychain/secretservice"
+	dbus "github.com/keybase/go.dbus"
 )
 
 var keychainEnabled = true
@@ -34,10 +35,9 @@ func storeToken(contextName, token string) error {
 		return fmt.Errorf("failed to prepare secret: %v", err)
 	}
 
-	if err = srv.Unlock([]dbus.ObjectPath{collection}); err !nil {
+	if err = srv.Unlock([]dbus.ObjectPath{collection}); err != nil {
 		return fmt.Errorf("failed to unlock secret service")
 	}
-
 
 	_, err = srv.CreateItem(collection, NewSecretProperties(fmt.Sprintf("CDS-cdsctl/%s", contextName), map[string]string{"context-name": contextName}), secret, secretservice.ReplaceBehaviorReplace)
 	if err != nil {
