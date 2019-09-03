@@ -12,5 +12,5 @@ func storeToken(contextName, token string) error {
 
 //getToken rerieves a CDS Context from CDSContext
 func (c CDSContext) getToken(contextName string) (string, error) {
-	return c.Token, nil
+	return c.SessionToken, nil
 }
