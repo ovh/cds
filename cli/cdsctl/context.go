@@ -14,7 +14,7 @@ import (
 var contextCmd = cli.Command{
 	Name:    "context",
 	Aliases: []string{"ctx"},
-	Short:   "cdsctl context",
+	Short:   "Manage cdsctl config file",
 	Flags: []cli.Flag{
 		{
 			Name:  "context-name",
@@ -37,7 +37,7 @@ var contextListCmd = cli.Command{
 
 var contextCurrentCmd = cli.Command{
 	Name:  "current",
-	Short: "show the current context",
+	Short: "Show the current context",
 }
 
 func contextListRun(v cli.Values) (cli.ListResult, error) {

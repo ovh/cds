@@ -17,7 +17,6 @@ type CDSContext struct {
 	InsecureSkipVerifyTLS bool   `json:"-" cli:"-"`
 	Verbose               bool   `json:"-" cli:"-"`
 	SessionToken          string `json:"-" cli:"-"`
-	User                  string `json:"user" cli:"user"`
 }
 
 // CDSConfigFile represents a CDS Config File
@@ -141,7 +140,6 @@ func writeToml(writer io.Writer, cdsConfigFile *CDSConfigFile) error {
 		if !keychainEnabled {
 			cv["Token"] = c.SessionToken
 		}
-		cv["User"] = c.User
 		values[c.Context] = cv
 	}
 
@@ -183,8 +181,6 @@ func read(reader io.Reader) (*CDSConfigFile, error) {
 					cdsContext.InsecureSkipVerifyTLS = getBoolValue(v)
 				case "verbose":
 					cdsContext.Verbose = getBoolValue(v)
-				case "user":
-					cdsContext.User = getStringValue(v.(string))
 				case "sessionToken":
 					cdsContext.SessionToken = getStringValue(v.(string))
 				}

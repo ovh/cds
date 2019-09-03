@@ -47,12 +47,11 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 
 	c := &internal.CDSContext{}
 	c.Host = os.Getenv("CDS_API_URL")
-	c.User = os.Getenv("CDS_USER")
 	c.SessionToken = os.Getenv("CDS_SESSION_TOKEN")
 	buitinConsumerAuthenticationToken := os.Getenv("CDS_TOKEN")
 	c.InsecureSkipVerifyTLS = insecureSkipVerifyTLS
 
-	if c.Host != "" && c.User != "" {
+	if c.Host != "" {
 		if verbose {
 			fmt.Println("Configuration loaded from environment variables")
 		}
@@ -67,28 +66,19 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 	}
 
 	cdsContext := &internal.CDSContext{}
-	if _, err := os.Stat(configFile); err == nil {
+	if _, err := os.Stat(configFile); !os.IsNotExist(err) {
 		f, err := os.Open(configFile)
 		if err != nil {
-			if verbose {
-				fmt.Printf("Unable to read %s \n", configFile)
-			}
-			return "", nil, err
+			return "", nil, fmt.Errorf("unable to read file %s: %v", configFile, err)
 		}
 		defer f.Close()
 
 		if contextName != "" {
 			if cdsContext, err = internal.GetContext(f, contextName); err != nil {
-				if verbose {
-					fmt.Printf("Unable to load the current context from %s \n", contextName)
-				}
-				return "", nil, err
+				return "", nil, fmt.Errorf("unable to load the current context from %s", contextName)
 			}
 		} else if cdsContext, err = internal.GetCurrentContext(f); err != nil {
-			if verbose {
-				fmt.Printf("Unable to load the current context from %s \n", configFile)
-			}
-			return "", nil, err
+			return "", nil, fmt.Errorf("unable to load the current context from %s", configFile)
 		}
 
 		if verbose {
@@ -98,9 +88,6 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 
 	if c.Host != "" {
 		cdsContext.Host = c.Host
-	}
-	if c.User != "" {
-		cdsContext.User = c.User
 	}
 	if c.SessionToken != "" {
 		cdsContext.SessionToken = c.SessionToken
@@ -121,7 +108,6 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 			return "", nil, fmt.Errorf("invalid username or token returned by sign in token")
 		}
 		cdsContext.SessionToken = res.Token
-		cdsContext.User = res.User.Username
 	}
 	if c.InsecureSkipVerifyTLS {
 		cdsContext.InsecureSkipVerifyTLS = c.InsecureSkipVerifyTLS
@@ -131,7 +117,6 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 
 	config := &cdsclient.Config{
 		Host:                              cdsContext.Host,
-		User:                              cdsContext.User,
 		SessionToken:                      cdsContext.SessionToken,
 		BuitinConsumerAuthenticationToken: buitinConsumerAuthenticationToken,
 		Verbose:                           verbose,
