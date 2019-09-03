@@ -3,8 +3,10 @@ package sdk
 import (
 	"bytes"
 	"text/template"
+	"time"
 
 	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/ovh/venom"
 )
 
 //const
@@ -122,8 +124,28 @@ func (nr WorkflowNodeRun) Report() (string, error) {
 		return "", WrapError(err, "cannot create new template for first part")
 	}
 
+	nrData := struct {
+		WorkflowNodeName string
+		Status           string
+		Number           int64
+		SubNumber        int64
+		Stages           []Stage
+		Start            time.Time
+		Done             time.Time
+		Tests            *venom.Tests
+	}{
+		WorkflowNodeName: nr.WorkflowNodeName,
+		Status:           nr.Status,
+		Number:           nr.Number,
+		SubNumber:        nr.SubNumber,
+		Stages:           nr.Stages,
+		Start:            nr.Start,
+		Done:             nr.Done,
+		Tests:            nr.Tests,
+	}
+
 	outFirst := new(bytes.Buffer)
-	if err := tmpl.Execute(outFirst, nr); err != nil {
+	if err := tmpl.Execute(outFirst, nrData); err != nil {
 		return "", WrapError(err, "cannot execute template for first part")
 	}
 
