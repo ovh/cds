@@ -269,13 +269,16 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 		}
 	} else {
 		fi, err := os.Open(configFile)
+		if err != nil {
+			return fmt.Errorf("Error while opening file %s: %v", configFile, err)
+		}
 		cdsConfigFile, err := internal.GetConfigFile(fi)
 		if err != nil {
 			fmt.Printf("Error while reading config file %s: %v\n", configFile, err)
 		} else if !noInteractive {
 			opts := []string{}
 			for _, c := range cdsConfigFile.Contexts {
-				line := fmt.Sprintf("%s", c.Context)
+				line := c.Context
 				if c.Context == cdsConfigFile.Current {
 					line = fmt.Sprintf("%s - current", line)
 				}
@@ -288,7 +291,7 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 			if opts[selected] == other {
 				contextName = cli.AskValue("Enter a context name for this login (default):")
 			} else {
-				contextName = strings.TrimRight(opts[selected], " - current")
+				contextName = strings.TrimPrefix(opts[selected], " - current")
 			}
 		}
 		fi.Close()

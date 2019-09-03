@@ -42,7 +42,10 @@ var contextCurrentCmd = cli.Command{
 
 func contextListRun(v cli.Values) (cli.ListResult, error) {
 	fi, err := os.Open(configFilePath)
-	defer fi.Close()
+	if err != nil {
+		return nil, fmt.Errorf("error while opening config file %s: %v", configFilePath, err)
+	}
+	defer fi.Close() // nolint
 	cdsConfigFile, err := internal.GetConfigFile(fi)
 	if err != nil {
 		return nil, fmt.Errorf("error while reading config file %s: %v", configFilePath, err)
@@ -59,7 +62,10 @@ func contextListRun(v cli.Values) (cli.ListResult, error) {
 
 func contextCurrentRun(v cli.Values) error {
 	fi, err := os.Open(configFilePath)
-	defer fi.Close()
+	if err != nil {
+		return fmt.Errorf("error while opening config file %s: %v", configFilePath, err)
+	}
+	defer fi.Close() // nolint
 	if err != nil {
 		return fmt.Errorf("error while reading config file %s: %v", configFilePath, err)
 	}
@@ -73,7 +79,10 @@ func contextCurrentRun(v cli.Values) error {
 
 func contextRun(v cli.Values) error {
 	fi, err := os.Open(configFilePath)
-	defer fi.Close()
+	if err != nil {
+		return fmt.Errorf("error while opening config file %s: %v", configFilePath, err)
+	}
+	defer fi.Close() // nolint
 	cdsConfigFile, err := internal.GetConfigFile(fi)
 	if err != nil {
 		return fmt.Errorf("error while reading config file %s: %v", configFilePath, err)
@@ -109,7 +118,7 @@ func contextRun(v cli.Values) error {
 		if err != nil {
 			return fmt.Errorf("Error while opening file %s: %v", configFilePath, err)
 		}
-		defer fi.Close()
+		defer fi.Close() // nolint
 
 		wdata := &bytes.Buffer{}
 		if err := internal.SetCurrentContext(fi, wdata, opts[selected]); err != nil {
