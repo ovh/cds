@@ -16,15 +16,15 @@
                     {{ 'workflow_node_parent' | translate }}
             </a>
             <a class="item" (click)="sendEvent('fork')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
-            || readonly || node.type !== 'pipeline'">
+            || readonly">
                     {{ 'workflow_node_fork_add' | translate }}
             </a>
             <a class="item" (click)="sendEvent('join')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
-           || readonly || node.type !== 'pipeline'">
+           || readonly">
                     {{ 'workflow_node_join_add' | translate }}
             </a>
             <a class="item" (click)="sendEvent('join_link')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
-           || readonly || node.type !== 'pipeline'">
+           || readonly">
                 {{ 'workflow_node_join_link' | translate }}
             </a>
             <hr>
@@ -33,7 +33,7 @@
                 {{ 'workflow_node_hook_add' | translate }}
             </a>
             <a class="item" (click)="sendEvent('outgoinghook')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
-           || readonly || node.type !== 'pipeline'">
+           || readonly">
                     {{ 'workflow_node_outgoing_hook' | translate }}
             </a>
             <hr>

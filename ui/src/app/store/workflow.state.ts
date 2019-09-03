@@ -443,7 +443,8 @@ export class WorkflowState {
             ...state.workflow,
             workflow_data: {
                 ...state.workflow.workflow_data,
-                node: currentWorkflow.workflow_data.node
+                node: currentWorkflow.workflow_data.node,
+                joins: currentWorkflow.workflow_data.joins
             }
         };
 
