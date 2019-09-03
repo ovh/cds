@@ -79,14 +79,6 @@ func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 		cli.ExitOnError(err, login().Help)
 	}
 
-	root.PersistentPostRun = func(cmd *cobra.Command, args []string) {
-		if cfg.BuitinConsumerAuthenticationToken != "" {
-			if err := client.AuthConsumerSignout(); err != nil {
-				cli.ExitOnError(fmt.Errorf("error on signout:%v", err))
-			}
-		}
-	}
-
 	return root
 }
 

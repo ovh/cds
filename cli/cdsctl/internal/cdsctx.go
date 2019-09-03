@@ -21,9 +21,10 @@ type CDSContext struct {
 }
 
 // ContextTokens contains a Session Token and a Sign in token
+// this struct is use to store secret in keychain
 type ContextTokens struct {
-	Session string `json:"-" cli:"-"` // Session Token
-	Token   string `json:"-" cli:"-"` // BuitinConsumerAuthenticationToken
+	Session string `json:"session" cli:"-"` // Session Token
+	Token   string `json:"token" cli:"-"`   // BuitinConsumerAuthenticationToken
 }
 
 // CDSConfigFile represents a CDS Config File

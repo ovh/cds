@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path"
+
+	"github.com/dgrijalva/jwt-go"
 
 	"github.com/fsamin/go-repo"
 	"github.com/pkg/errors"
@@ -92,23 +95,21 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 	if c.Session != "" {
 		cdsContext.Session = c.Session
 	}
-	if c.Token != "" {
-		req := sdk.AuthConsumerSigninRequest{
-			"token": c.Token,
-		}
-		client := cdsclient.New(cdsclient.Config{
-			Host:    cdsContext.Host,
-			Verbose: os.Getenv("CDS_VERBOSE") == "true",
-		})
-		res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, req)
-		if err != nil {
-			return "", nil, fmt.Errorf("cannot signin: %v", err)
-		}
-		if res.Token == "" || res.User == nil {
-			return "", nil, fmt.Errorf("invalid username or token returned by sign in token")
-		}
-		cdsContext.Session = res.Token
+
+	// check if we can use the session token
+	canUseSessionToken, err := canUseSessionToken(cdsContext)
+	if err != nil {
+		return "", nil, err
 	}
+
+	// if we can't use session token, but if we have a sign in token, recreate a session token
+	if !canUseSessionToken && c.Token != "" {
+		cdsContext, err = recreateSessionToken(configFile, *cdsContext, contextName)
+		if err != nil {
+			return "", nil, err
+		}
+	}
+
 	if c.InsecureSkipVerifyTLS {
 		cdsContext.InsecureSkipVerifyTLS = c.InsecureSkipVerifyTLS
 	}
@@ -124,6 +125,69 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 	}
 
 	return configFile, config, nil
+}
+
+// regenerate a session token from a singin token if needed
+func recreateSessionToken(configFile string, cdsContext internal.CDSContext, contextName string) (*internal.CDSContext, error) {
+	req := sdk.AuthConsumerSigninRequest{
+		"token": cdsContext.Token,
+	}
+	client := cdsclient.New(cdsclient.Config{
+		Host:    cdsContext.Host,
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+	})
+	res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot signin: %v", err)
+	}
+	if res.Token == "" || res.User == nil {
+		return nil, fmt.Errorf("invalid username or token returned by sign in token")
+	}
+	cdsContext.Session = res.Token
+
+	// resave session token
+	if res.Token == cdsContext.Session {
+		return &cdsContext, nil
+	}
+
+	fi, err := os.OpenFile(configFile, os.O_RDONLY, 0600)
+	if err != nil {
+		return nil, fmt.Errorf("Error while opening file %s: %v", configFile, err)
+	}
+	defer fi.Close()
+
+	wdata := &bytes.Buffer{}
+	if err := internal.StoreContext(fi, wdata, cdsContext); err != nil {
+		return nil, err
+	}
+
+	if err := fi.Close(); err != nil {
+		return nil, fmt.Errorf("Error while closing file %s: %v", configFile, err)
+	}
+	if err := writeConfigFile(configFile, wdata); err != nil {
+		return nil, err
+	}
+
+	return &cdsContext, nil
+}
+
+func canUseSessionToken(c *internal.CDSContext) (bool, error) {
+	if c.Session == "" {
+		return false, nil
+	}
+	unsafeToken, _, err := new(jwt.Parser).ParseUnverified(c.Session, &jwt.StandardClaims{})
+	if err != nil {
+		return false, fmt.Errorf("cdsctl: error while parse session token: %v", err)
+	}
+
+	claims, ok := unsafeToken.Claims.(*jwt.StandardClaims)
+	if c.Verbose {
+		fmt.Printf("cdsctl: token ok:%t issuer:%v expireAt:%v\n", ok, claims.Issuer, claims.ExpiresAt)
+	}
+	if !ok { // session token is not valid anymore
+		return false, nil
+	}
+	return unsafeToken.Valid, err
 }
 
 func withAllCommandModifiers() []cli.CommandModifier {

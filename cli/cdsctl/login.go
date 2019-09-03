@@ -237,11 +237,31 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 		fmt.Println("Using insecure TLS connection...")
 	}
 
+	hostname, err := os.Hostname()
+	if err != nil {
+		return fmt.Errorf("cdsctl: cannot retrieve hostname: %s", err)
+	}
+
+	client := cdsclient.New(cdsclient.Config{
+		Host:         apiURL,
+		Verbose:      os.Getenv("CDS_VERBOSE") == "true",
+		SessionToken: res.Token,
+	})
+
+	resCreate, err := client.AuthConsumerCreateForUser(res.User.Username, sdk.AuthConsumer{
+		Name:        fmt.Sprintf("cdsctl/%s", hostname),
+		Description: "Consumer created with cdsctl login",
+		Scopes:      sdk.AuthConsumerScopes,
+	})
+	if err != nil {
+		return fmt.Errorf("cdsctl: failed to create consumer: %v", err)
+	}
+
 	env := v.GetBool("env")
 	if env {
 		fmt.Printf("export CDS_API_URL=%s\n", apiURL)
-		fmt.Printf("export CDS_USER=%s\n", res.User.Username)
-		fmt.Printf("export CDS_SESSION_TOKEN=%s\n", res.Token)
+		// TODO KEEP IT ? fmt.Printf("export CDS_SESSION_TOKEN=%s\n", res.Token)
+		fmt.Printf("export CDS_TOKEN=%s\n", resCreate.Token)
 		return nil
 	}
 
@@ -312,7 +332,7 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 		Host:                  apiURL,
 		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
 		Session:               res.Token,
-		// TODO yesnault: add builtin token
+		Token:                 resCreate.Token,
 	}
 
 	wdata := &bytes.Buffer{}
