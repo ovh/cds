@@ -185,7 +185,6 @@ func LoadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}) (
 	val := newTargetPtr.Interface()
 
 	if e.SignedEntity {
-
 		s, ok := val.(Signed)
 		if !ok {
 			return nil, sdk.WithStack(errors.New("invalid signed entity"))
