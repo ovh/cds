@@ -25,11 +25,6 @@ func storeToken(contextName, token string) error {
 
 	collection := secretservice.DefaultCollection
 
-	items, err := srv.SearchCollection(collection, map[string]string{"context-name": contextName})
-	if err != nil {
-		return fmt.Errorf("failed to search secret from secret service: %v", err)
-	}
-
 	secret, err := session.NewSecret([]byte(token))
 	if err != nil {
 		return fmt.Errorf("failed to prepare secret: %v", err)
