@@ -218,6 +218,7 @@ func getContext(tomlConf *CDSConfigFile, contextName string) (*CDSContext, error
 	for _, c := range tomlConf.Contexts {
 		if c.Context == contextName {
 			cdsContext = c
+			break
 		}
 	}
 
