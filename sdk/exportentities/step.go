@@ -205,12 +205,20 @@ func newStep(act sdk.Action) Step {
 			}
 			s.Checkout = &step
 		case sdk.InstallKeyAction:
-			var step StepInstallKey
 			key := sdk.ParameterFind(act.Parameters, "key")
-			if key != nil {
-				step = StepInstallKey(key.Value)
+			file := sdk.ParameterFind(act.Parameters, "file")
+			switch {
+			case key != nil && file != nil && file.Value != "":
+				step := StepInstallKey(map[string]string{
+					"name": key.Value,
+					"file": file.Value,
+				})
+				s.InstallKey = &step
+
+			case key != nil:
+				step := StepInstallKey(string(key.Value))
+				s.InstallKey = &step
 			}
-			s.InstallKey = &step
 		case sdk.DeployApplicationAction:
 			step := StepDeploy("{{.cds.application}}")
 			s.Deploy = &step
@@ -313,7 +321,7 @@ type StepJUnitReport string
 type StepCheckout string
 
 // StepInstallKey represents exported installKey step.
-type StepInstallKey string
+type StepInstallKey interface{}
 
 // StepDeploy represents exported deploy step.
 type StepDeploy string
@@ -581,16 +589,43 @@ func (s Step) asCheckoutApplication() sdk.Action {
 }
 
 func (s Step) asInstallKey() sdk.Action {
+	switch v := (*s.InstallKey).(type) {
+	case string:
+		return sdk.Action{
+			Name: sdk.InstallKeyAction,
+			Type: sdk.BuiltinAction,
+			Parameters: []sdk.Parameter{
+				{
+					Name:  "key",
+					Value: v,
+					Type:  sdk.KeyParameter,
+				},
+			},
+		}
+	case map[string]string:
+		params := make([]sdk.Parameter, 0, len(v))
+
+		for paramName, paramValue := range v {
+			paramType := sdk.StringParameter
+			if paramName == "name" {
+				paramType = sdk.KeyParameter
+			}
+			params = append(params, sdk.Parameter{
+				Name:  paramName,
+				Value: paramValue,
+				Type:  paramType,
+			})
+		}
+		return sdk.Action{
+			Name:       sdk.InstallKeyAction,
+			Type:       sdk.BuiltinAction,
+			Parameters: params,
+		}
+	}
+
 	return sdk.Action{
 		Name: sdk.InstallKeyAction,
 		Type: sdk.BuiltinAction,
-		Parameters: []sdk.Parameter{
-			{
-				Name:  "key",
-				Value: string(*s.InstallKey),
-				Type:  sdk.KeyParameter,
-			},
-		},
 	}
 }
 

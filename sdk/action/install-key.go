@@ -24,6 +24,13 @@ For example to use with 'ssh -i $PKEY'
 				Description: `Set the key to install in your workspace`,
 				Type:        sdk.KeyParameter,
 			},
+			{
+				Name:        "file",
+				Value:       "",
+				Description: `Write key to destination file`,
+				Type:        sdk.StringParameter,
+				Advanced:    true,
+			},
 		},
 	},
 	Example: exportentities.PipelineV1{

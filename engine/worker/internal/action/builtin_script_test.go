@@ -138,7 +138,10 @@ func (_ TestWorker) Unregister() error {
 }
 
 func (_ TestWorker) InstallKey(key sdk.Variable, destinationPath string) (*workerruntime.KeyResponse, error) {
-	return nil, nil
+	return &workerruntime.KeyResponse{
+		PKey: destinationPath,
+		Type: sdk.KeyTypeSSH,
+	}, nil
 }
 
 var _ workerruntime.Runtime = new(TestWorker)

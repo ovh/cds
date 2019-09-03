@@ -11,11 +11,13 @@ import (
 )
 
 var testInstallKey = exportentities.StepInstallKey("proj-mykey")
+var testAdvancedInstallKey = exportentities.StepInstallKey(map[string]string{"name": "proj-mykey", "file": "myfile"})
 var tests = []struct {
-	Name string
-	Step exportentities.Step
-	Json string
-	Yaml string
+	Name           string
+	Step           exportentities.Step
+	SkipUnmarshall bool
+	Json           string
+	Yaml           string
 }{
 	{
 		Name: "Step with custom action",
@@ -49,6 +51,15 @@ var tests = []struct {
 		Yaml: "installKey: proj-mykey\n",
 	},
 	{
+		Name: "Step with typed action install key advanced parameters",
+		Step: exportentities.Step{
+			InstallKey: &testAdvancedInstallKey,
+		},
+		SkipUnmarshall: true,
+		Json:           `{"installKey":{"file":"myfile","name":"proj-mykey"}}`,
+		Yaml:           "installKey:\n  file: myfile\n  name: proj-mykey\n",
+	},
+	{
 		Name: "Step with not typed action",
 		Step: exportentities.Step{
 			Script: []interface{}{
@@ -77,6 +88,9 @@ func TestMarshal(t *testing.T) {
 
 func TestUnMarshal(t *testing.T) {
 	for _, test := range tests {
+		if test.SkipUnmarshall {
+			continue
+		}
 		t.Run(test.Name, func(t *testing.T) {
 			var step exportentities.Step
 
