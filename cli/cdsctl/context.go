@@ -66,9 +66,6 @@ func contextCurrentRun(v cli.Values) error {
 		return fmt.Errorf("error while opening config file %s: %v", configFilePath, err)
 	}
 	defer fi.Close() // nolint
-	if err != nil {
-		return fmt.Errorf("error while reading config file %s: %v", configFilePath, err)
-	}
 	current, err := internal.GetCurrentContextName(fi)
 	if err != nil {
 		return fmt.Errorf("error while getting current context: %v", err)
