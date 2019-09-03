@@ -20,6 +20,19 @@ const (
 	KeySignIdentifier = "db-sign"
 )
 
+// SignedEntity struct for signed entity stored in database.
+type SignedEntity struct {
+	Signature []byte `json:"-" db:"sig"`
+}
+
+func (s SignedEntity) GetSignature() []byte {
+	return s.Signature
+}
+
+type Signed interface {
+	GetSignature() []byte
+}
+
 // Canonicaller returns a byte array that represent its data.
 type Canonicaller interface {
 	Canonical() CanonicalForms

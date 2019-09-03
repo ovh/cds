@@ -2,14 +2,11 @@ package gorpmapping
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
-
-	"github.com/ovh/cds/engine/api/observability"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -55,6 +52,22 @@ func (q Query) String() string {
 	return fmt.Sprintf("query: %s - args: %v", q.query, q.arguments)
 }
 
+// ToQueryString returns a comma separated list of given ids.
+func ToQueryString(target interface{}) string {
+
+	val := reflect.ValueOf(target)
+	if reflect.ValueOf(target).Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	res := make([]string, val.Len())
+	for i := 0; i < val.Len(); i++ {
+		res[i] = fmt.Sprintf("%v", val.Index(i).Interface())
+	}
+
+	return strings.Join(res, ",")
+}
+
 // IDsToQueryString returns a comma separated list of given ids.
 func IDsToQueryString(ids []int64) string {
 	res := make([]string, len(ids))
@@ -69,44 +82,23 @@ func IDStringsToQueryString(ids []string) string {
 	return strings.Join(ids, ",")
 }
 
-// Insert value in given db.
-func Insert(db gorp.SqlExecutor, i interface{}) error {
-	err := db.Insert(i)
-	if e, ok := err.(*pq.Error); ok {
-		switch e.Code {
-		case ViolateUniqueKeyPGCode:
-			err = sdk.NewError(sdk.ErrInvalidData, e)
-		case StringDataRightTruncation:
-			err = sdk.NewError(sdk.ErrConflict, e)
+func reflectFindFieldTagValue(i interface{}, field, tagKey string) string {
+	val := reflect.ValueOf(i)
+	if reflect.ValueOf(i).Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	valueField := val.FieldByName(field)
+	typeField, _ := val.Type().FieldByName(field)
+	if typeField.Anonymous {
+		res := reflectFindFieldTagValue(valueField.Interface(), field, tagKey)
+		if res != "" {
+			return res
 		}
 	}
-	return sdk.WithStack(err)
-}
+	tag := typeField.Tag
+	column := tag.Get(tagKey)
+	return column
 
-// Update value in given db.
-func Update(db gorp.SqlExecutor, i interface{}) error {
-	n, err := db.Update(i)
-	if e, ok := err.(*pq.Error); ok {
-		switch e.Code {
-		case ViolateUniqueKeyPGCode:
-			err = sdk.NewError(sdk.ErrInvalidData, e)
-		case StringDataRightTruncation:
-			err = sdk.NewError(sdk.ErrInvalidData, e)
-		}
-	}
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	if n < 1 {
-		return sdk.WithStack(sdk.ErrNotFound)
-	}
-	return nil
-}
-
-// Delete value in given db.
-func Delete(db gorp.SqlExecutor, i interface{}) error {
-	_, err := db.Delete(i)
-	return sdk.WithStack(err)
 }
 
 func reflectFindValueByTag(i interface{}, tagKey, tagValue string) interface{} {
@@ -126,6 +118,7 @@ func reflectFindValueByTag(i interface{}, tagKey, tagValue string) interface{} {
 		}
 		tag := typeField.Tag
 		column := tag.Get(tagKey)
+		column = strings.SplitN(column, ",", 2)[0]
 		if column == tagValue {
 			return valueField.Interface()
 		}
@@ -146,41 +139,6 @@ func dbMappingPKey(i interface{}) (string, string, interface{}, error) {
 	id := reflectFindValueByTag(i, "db", mapping.Keys[0])
 
 	return mapping.Name, mapping.Keys[0], id, nil
-}
-
-// GetAll values from database.
-func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}) error {
-	_, end := observability.Span(ctx, fmt.Sprintf("database.GetAll(%T)", i), observability.Tag("query", q.String()))
-	defer end()
-	_, err := db.Select(i, q.query, q.arguments...)
-	return sdk.WithStack(err)
-}
-
-// Get a value from database.
-func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}) (bool, error) {
-	_, end := observability.Span(ctx, fmt.Sprintf("database.Get(%T)", i), observability.Tag("query", q.String()))
-	defer end()
-	if err := db.SelectOne(i, q.query, q.arguments...); err != nil {
-		if err == sql.ErrNoRows {
-			return false, nil
-		}
-		return false, sdk.WithStack(err)
-	}
-	return true, nil
-}
-
-func GetInt(db gorp.SqlExecutor, q Query) (int64, error) {
-	res, err := db.SelectNullInt(q.query, q.arguments...)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return 0, nil
-		}
-		return 0, sdk.WithStack(err)
-	}
-	if !res.Valid {
-		return 0, nil
-	}
-	return res.Int64, nil
 }
 
 type IDs pq.Int64Array

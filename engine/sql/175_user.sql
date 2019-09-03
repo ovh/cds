@@ -130,6 +130,16 @@ SELECT create_foreign_key('FK_ACTION_GROUP', 'action', 'group', 'group_id', 'id'
 
 -- TODO DELETE CASCADE access_token when worker is removed
 
+
+CREATE TABLE "test_encrypted_data" (
+  id BIGSERIAL PRIMARY KEY,
+  data TEXT,
+  sensitive_data BYTEA,
+  another_sensitive_data BYTEA,
+  sig BYTEA,
+  signer TEXT
+)
+
 -- +migrate Down
 DROP TABLE "authentified_user_migration";
 DROP TABLE "user_contact";
@@ -137,4 +147,5 @@ DROP TABLE "worker";
 DROP TABLE "auth_session";
 DROP TABLE "auth_consumer";
 DROP TABLE "authentified_user";
+DROP TABLE "test_encrypted_data";
 ALTER TABLE old_worker RENAME TO worker;

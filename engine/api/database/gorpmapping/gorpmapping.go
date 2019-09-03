@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
@@ -15,24 +16,13 @@ import (
 
 // TableMapping represents a table mapping with gorp
 type TableMapping struct {
-	Target        interface{}
-	Name          string
-	AutoIncrement bool
-	SignedEntity  bool
-	Keys          []string
-}
-
-// SignedEntity struct for signed entity stored in database.
-type SignedEntity struct {
-	Signature []byte `json:"-" db:"sig"`
-}
-
-func (s SignedEntity) GetSignature() []byte {
-	return s.Signature
-}
-
-type Signed interface {
-	GetSignature() []byte
+	Target          interface{}
+	Name            string
+	AutoIncrement   bool
+	SignedEntity    bool
+	Keys            []string
+	EncryptedEntity bool
+	EncryptedFields []string
 }
 
 // New initialize a TableMapping.
@@ -44,11 +34,22 @@ func New(target interface{}, name string, autoIncrement bool, keys ...string) Ta
 		panic(err)
 	}
 
+	var (
+		encryptedEntity bool
+		encryptedFields []string
+	)
 	var signedEntity bool
 	for i := 0; i < v.NumField(); i++ {
+		dbTag, ok := v.Type().Field(i).Tag.Lookup("gorpmapping")
+		if ok {
+			if sdk.IsInArray("encrypted", strings.Split(dbTag, ",")) {
+				encryptedEntity = true
+				encryptedFields = append(encryptedFields, v.Type().Field(i).Name)
+			}
+		}
+
 		if v.Type().Field(i).Name == reflect.TypeOf(SignedEntity{}).Name() {
 			signedEntity = true
-			break
 		}
 	}
 
@@ -95,7 +96,17 @@ func New(target interface{}, name string, autoIncrement bool, keys ...string) Ta
 
 	}
 
-	return TableMapping{Target: target, Name: name, AutoIncrement: autoIncrement, Keys: keys, SignedEntity: signedEntity}
+	var m = TableMapping{
+		Target:          target,
+		Name:            name,
+		AutoIncrement:   autoIncrement,
+		Keys:            keys,
+		SignedEntity:    signedEntity,
+		EncryptedEntity: encryptedEntity,
+		EncryptedFields: encryptedFields,
+	}
+
+	return m
 }
 
 // Mapping is the global var for all registered mapping
