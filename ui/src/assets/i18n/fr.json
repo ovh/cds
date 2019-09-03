@@ -1020,6 +1020,8 @@
   "workflow_run_resync_help": "Resynchronisez ce run par rapport aux derniers changements sur vos pipelines. Ne resynchronise pas les variables de projet.",
   "workflow_run_with_parameters": "Lancer le workflow",
   "workflow_sidebar_tag_zone": "Tags à afficher dans la sidebar (ordonnés par priorité)",
+  "workfow_tag_no": "Aucun tag",
+  "workflow_tag_dragdrop": "Drag & drop sur les tags pour modifier l'ordre",
   "workflow_updated": "Workflow mis à jour",
   "workflow_resync": "Resynchroniser le workflow",
   "workflow_stopped": "Workflow arrêté",
