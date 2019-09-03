@@ -138,7 +138,7 @@ CREATE TABLE "test_encrypted_data" (
   another_sensitive_data BYTEA,
   sig BYTEA,
   signer TEXT
-)
+);
 
 -- +migrate Down
 DROP TABLE "authentified_user_migration";
