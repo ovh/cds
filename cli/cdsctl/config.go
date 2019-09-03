@@ -47,8 +47,8 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 
 	c := &internal.CDSContext{}
 	c.Host = os.Getenv("CDS_API_URL")
-	c.SessionToken = os.Getenv("CDS_SESSION_TOKEN")
-	buitinConsumerAuthenticationToken := os.Getenv("CDS_TOKEN")
+	c.Session = os.Getenv("CDS_SESSION_TOKEN")
+	c.Token = os.Getenv("CDS_TOKEN")
 	c.InsecureSkipVerifyTLS = insecureSkipVerifyTLS
 
 	if c.Host != "" {
@@ -89,12 +89,12 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 	if c.Host != "" {
 		cdsContext.Host = c.Host
 	}
-	if c.SessionToken != "" {
-		cdsContext.SessionToken = c.SessionToken
+	if c.Session != "" {
+		cdsContext.Session = c.Session
 	}
-	if buitinConsumerAuthenticationToken != "" {
+	if c.Token != "" {
 		req := sdk.AuthConsumerSigninRequest{
-			"token": buitinConsumerAuthenticationToken,
+			"token": c.Token,
 		}
 		client := cdsclient.New(cdsclient.Config{
 			Host:    cdsContext.Host,
@@ -107,7 +107,7 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 		if res.Token == "" || res.User == nil {
 			return "", nil, fmt.Errorf("invalid username or token returned by sign in token")
 		}
-		cdsContext.SessionToken = res.Token
+		cdsContext.Session = res.Token
 	}
 	if c.InsecureSkipVerifyTLS {
 		cdsContext.InsecureSkipVerifyTLS = c.InsecureSkipVerifyTLS
@@ -117,8 +117,8 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 
 	config := &cdsclient.Config{
 		Host:                              cdsContext.Host,
-		SessionToken:                      cdsContext.SessionToken,
-		BuitinConsumerAuthenticationToken: buitinConsumerAuthenticationToken,
+		SessionToken:                      cdsContext.Session,
+		BuitinConsumerAuthenticationToken: cdsContext.Token,
 		Verbose:                           verbose,
 		InsecureSkipVerifyTLS:             insecureSkipVerifyTLS,
 	}

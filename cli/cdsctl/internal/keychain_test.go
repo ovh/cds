@@ -11,24 +11,26 @@ func TestStoreToken(t *testing.T) {
 		Context:               "My Context Name2",
 		Host:                  "http://localhost:8080/test",
 		InsecureSkipVerifyTLS: false,
-		SessionToken:          "the-token-test",
-		User:                  "the-username-test",
+		Session:               "the-token-test",
+		Token:                 "the-token-consumer-test",
 	}
-	err := storeToken(cdsContext.Context, cdsContext.SessionToken)
+	err := storeTokens(cdsContext.Context, ContextTokens{Session: cdsContext.Session, Token: cdsContext.Token})
 	assert.NoError(t, err)
 
-	token, err := cdsContext.getToken(cdsContext.Context)
+	tokens, err := cdsContext.getTokens(cdsContext.Context)
 	assert.NoError(t, err)
-	assert.Equal(t, cdsContext.SessionToken, token)
+	assert.Equal(t, cdsContext.Session, tokens.Session)
+	assert.Equal(t, cdsContext.Token, tokens.Token)
 
 	// store another user for the same context -> we rewrite the entry in keychain
-	cdsContext.SessionToken = "the-token-test2"
-	cdsContext.User = "the-username-test2"
-	err = storeToken(cdsContext.Context, cdsContext.SessionToken)
+	cdsContext.Session = "the-token-test2"
+	cdsContext.Token = "the-token-consumer-test2"
+	err = storeTokens(cdsContext.Context, ContextTokens{Session: cdsContext.Session, Token: cdsContext.Token})
 	assert.NoError(t, err)
 
-	token, err = cdsContext.getToken(cdsContext.Context)
+	tokens, err = cdsContext.getTokens(cdsContext.Context)
 	assert.NoError(t, err)
-	assert.Equal(t, cdsContext.SessionToken, token)
+	assert.Equal(t, cdsContext.Session, tokens.Session)
+	assert.Equal(t, cdsContext.Token, tokens.Token)
 
 }

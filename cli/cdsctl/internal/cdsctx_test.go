@@ -14,8 +14,8 @@ func TestStoreContextWithNoContent(t *testing.T) {
 		Context:               "TestStoreContext",
 		Host:                  "http://localhost:8080/test",
 		InsecureSkipVerifyTLS: true,
-		SessionToken:          "the-token-test",
-		User:                  "the-username-test",
+		Session:               "the-token-test",
+		Token:                 "the-token",
 	}
 
 	wdata := &bytes.Buffer{}
@@ -28,8 +28,8 @@ func TestStoreContextWithNoContent(t *testing.T) {
 	cdsContextRead, err := GetContext(rdata2, cdsContext.Context)
 	assert.NoError(t, err)
 	assert.NotNil(t, cdsContextRead)
-	assert.Equal(t, cdsContext.User, cdsContextRead.User)
-	assert.Equal(t, cdsContext.SessionToken, cdsContextRead.SessionToken)
+	assert.Equal(t, cdsContext.Token, cdsContextRead.Token)
+	assert.Equal(t, cdsContext.Session, cdsContextRead.Session)
 	assert.Equal(t, cdsContext.InsecureSkipVerifyTLS, cdsContextRead.InsecureSkipVerifyTLS)
 }
 
@@ -39,15 +39,15 @@ func TestStoreContextWithExistingContent(t *testing.T) {
 [TestStoreContext]
 host = "http://localhost:8080/test"
 InsecureSkipVerifyTLS = "false"
-SessionToken = "the-token-test"
-User = "the-username-test"`))
+Session = "the-token-test"
+Token = "the-token"`))
 
 	cdsContext := CDSContext{
 		Context:               "TestStoreContext",
 		Host:                  "http://localhost:8080/test",
 		InsecureSkipVerifyTLS: false,
-		SessionToken:          "the-token-test",
-		User:                  "the-username-test",
+		Session:               "the-token-test",
+		Token:                 "the-token",
 	}
 
 	wdata := &bytes.Buffer{}
@@ -60,8 +60,8 @@ User = "the-username-test"`))
 	cdsContextRead, err := GetContext(rdata2, cdsContext.Context)
 	assert.NoError(t, err)
 	assert.NotNil(t, cdsContextRead)
-	assert.Equal(t, cdsContext.User, cdsContextRead.User)
-	assert.Equal(t, cdsContext.SessionToken, cdsContextRead.SessionToken)
+	assert.Equal(t, cdsContext.Token, cdsContextRead.Token)
+	assert.Equal(t, cdsContext.Session, cdsContextRead.Session)
 }
 
 func TestStoreContextWithTwoContexts(t *testing.T) {
@@ -70,15 +70,15 @@ func TestStoreContextWithTwoContexts(t *testing.T) {
 [TestStoreContext]
 host = "http://localhost:8080/test"
 InsecureSkipVerifyTLS = false
-SessionToken = "the-token-test"
-User = "the-username-test"`))
+Session = "the-token-test"
+Token = "the-token"`))
 
 	cdsContext2 := CDSContext{
 		Context:               "TestStoreContext2",
 		Host:                  "http://localhost:8080/test2",
 		InsecureSkipVerifyTLS: false,
-		SessionToken:          "the-token-test2",
-		User:                  "the-username-test2",
+		Session:               "the-token-test2",
+		Token:                 "the-token",
 	}
 
 	wdata := &bytes.Buffer{}
@@ -96,8 +96,8 @@ User = "the-username-test"`))
 	cdsContextRead2, err := GetContext(wdata3, cdsContext2.Context)
 	assert.NoError(t, err)
 	assert.NotNil(t, cdsContextRead2)
-	assert.Equal(t, cdsContext2.User, cdsContextRead2.User)
-	assert.Equal(t, cdsContext2.SessionToken, cdsContextRead2.SessionToken)
+	assert.Equal(t, cdsContext2.Token, cdsContextRead2.Token)
+	assert.Equal(t, cdsContext2.Session, cdsContextRead2.Session)
 	assert.Equal(t, cdsContext2.InsecureSkipVerifyTLS, cdsContextRead2.InsecureSkipVerifyTLS)
 
 	wdata4 := &bytes.Buffer{}

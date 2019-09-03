@@ -16,7 +16,14 @@ type CDSContext struct {
 	Host                  string `json:"host" cli:"host"`
 	InsecureSkipVerifyTLS bool   `json:"-" cli:"-"`
 	Verbose               bool   `json:"-" cli:"-"`
-	SessionToken          string `json:"-" cli:"-"`
+	Session               string `json:"-" cli:"-"` // Session Token
+	Token                 string `json:"-" cli:"-"` // BuitinConsumerAuthenticationToken
+}
+
+// ContextTokens contains a Session Token and a Sign in token
+type ContextTokens struct {
+	Session string `json:"-" cli:"-"` // Session Token
+	Token   string `json:"-" cli:"-"` // BuitinConsumerAuthenticationToken
 }
 
 // CDSConfigFile represents a CDS Config File
@@ -94,7 +101,7 @@ func GetContext(reader io.Reader, contextName string) (*CDSContext, error) {
 }
 
 // StoreContext writes the .cdsrc file
-func StoreContext(reader io.Reader, writer io.Writer, cdsContext CDSContext) error {
+func StoreContext(reader io.Reader, writer io.Writer, cdsctx CDSContext) error {
 	tomlConf, err := read(reader)
 	if err != nil {
 		return err
@@ -102,21 +109,22 @@ func StoreContext(reader io.Reader, writer io.Writer, cdsContext CDSContext) err
 
 	var found bool
 	for i := range tomlConf.Contexts {
-		if tomlConf.Contexts[i].Context == cdsContext.Context {
-			tomlConf.Contexts[i] = cdsContext
+		if tomlConf.Contexts[i].Context == cdsctx.Context {
+			tomlConf.Contexts[i] = cdsctx
 			found = true
 			break
 		}
 	}
-	tomlConf.Current = cdsContext.Context
+	tomlConf.Current = cdsctx.Context
 	if tomlConf.Contexts == nil {
 		tomlConf.Contexts = make(map[string]CDSContext, 1)
 	}
 	if !found {
-		tomlConf.Contexts[cdsContext.Context] = cdsContext
+		tomlConf.Contexts[cdsctx.Context] = cdsctx
 	}
 
-	if err := storeToken(cdsContext.Context, cdsContext.SessionToken); err != nil {
+	tokens := ContextTokens{Session: cdsctx.Session, Token: cdsctx.Token}
+	if err := storeTokens(cdsctx.Context, tokens); err != nil {
 		return err
 	}
 
@@ -138,7 +146,8 @@ func writeToml(writer io.Writer, cdsConfigFile *CDSConfigFile) error {
 		}
 		// if keychainEnabled, we don't put the token in the file
 		if !keychainEnabled {
-			cv["Token"] = c.SessionToken
+			cv["Session"] = c.Session
+			cv["Token"] = c.Token
 		}
 		values[c.Context] = cv
 	}
@@ -181,8 +190,10 @@ func read(reader io.Reader) (*CDSConfigFile, error) {
 					cdsContext.InsecureSkipVerifyTLS = getBoolValue(v)
 				case "verbose":
 					cdsContext.Verbose = getBoolValue(v)
-				case "sessionToken":
-					cdsContext.SessionToken = getStringValue(v.(string))
+				case "session":
+					cdsContext.Session = getStringValue(v.(string))
+				case "token":
+					cdsContext.Token = getStringValue(v.(string))
 				}
 			}
 			tomlConf.Contexts[i] = cdsContext
@@ -219,11 +230,12 @@ func getContext(tomlConf *CDSConfigFile, contextName string) (*CDSContext, error
 	}
 
 	if keychainEnabled {
-		token, err := cdsContext.getToken(contextName)
+		tokens, err := cdsContext.getTokens(contextName)
 		if err != nil {
 			return nil, err
 		}
-		cdsContext.SessionToken = token
+		cdsContext.Session = tokens.Session
+		cdsContext.Token = tokens.Token
 	}
 	return &cdsContext, nil
 }

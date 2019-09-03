@@ -4,13 +4,13 @@ package internal
 
 var keychainEnabled = false
 
-//storeToken store a context into keychain
-func storeToken(contextName, token string) error {
+//storeTokens store tokens into keychain
+func storeTokens(contextName string, tokens ContextTokens) error {
 	//nothing to do here, token is already in cdsrc file
 	return nil
 }
 
-//getToken rerieves a CDS Context from CDSContext
-func (c CDSContext) getToken(contextName string) (string, error) {
-	return c.SessionToken, nil
+//getContextTokens rerieves a CDS Context from CDSContext
+func (c CDSContext) getContextTokens(contextName string) (*ContextTokens, error) {
+	return &ContextTokens{Session: c.Session, Token: c.Token}, nil
 }

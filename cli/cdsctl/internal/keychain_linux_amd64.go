@@ -3,6 +3,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/keybase/go-keychain/secretservice"
@@ -11,8 +12,8 @@ import (
 
 var keychainEnabled = true
 
-//storeToken store a context into keychain
-func storeToken(contextName, token string) error {
+//storeTokens store tokens into keychain
+func storeTokens(contextName string, tokens ContextTokens) error {
 	srv, err := secretservice.NewService()
 	if err != nil {
 		return fmt.Errorf("error while getting secret service: %v", err)
@@ -25,7 +26,12 @@ func storeToken(contextName, token string) error {
 
 	collection := secretservice.DefaultCollection
 
-	secret, err := session.NewSecret([]byte(token))
+	b, err := json.Marshal(tokens)
+	if err != nil {
+		return fmt.Errorf("error while encoding tokens into keychain: %v", err)
+	}
+
+	secret, err := session.NewSecret(b)
 	if err != nil {
 		return fmt.Errorf("failed to prepare secret: %v", err)
 	}
@@ -41,34 +47,40 @@ func storeToken(contextName, token string) error {
 	return nil
 }
 
-//getToken rerieves a CDS Context from keychain
+//getTokens rerieves Context tokens from keychain
 // return true as it use the OS Keychain.
-func (c CDSContext) getToken(contextName string) (string, error) {
+func (c CDSContext) getTokens(contextName string) (*ContextTokens, error) {
 	srv, err := secretservice.NewService()
 	if err != nil {
-		return "", fmt.Errorf("error while getting secret service: %v", err)
+		return nil, fmt.Errorf("error while getting secret service: %v", err)
 	}
 
 	session, err := srv.OpenSession(secretservice.AuthenticationDHAES)
 	if err != nil {
-		return "", fmt.Errorf("error while opening session to secret service: %v", err)
+		return nil, fmt.Errorf("error while opening session to secret service: %v", err)
 	}
 
 	collection := secretservice.DefaultCollection
 
 	items, err := srv.SearchCollection(collection, map[string]string{"context-name": contextName})
 	if err != nil {
-		return "", fmt.Errorf("failed to search secret from secret service: %v", err)
+		return nil, fmt.Errorf("failed to search secret from secret service: %v", err)
 	}
 
 	if len(items) != 1 {
-		return "", fmt.Errorf("context not found in keychain")
+		return nil, fmt.Errorf("context not found in keychain")
 	}
 
 	gotItem := items[0]
-	secretPlaintext, err := srv.GetSecret(gotItem, *session)
+	content, err := srv.GetSecret(gotItem, *session)
 	if err != nil {
-		return "", fmt.Errorf("failed to get secret from secret service: %v", err)
+		return nil, fmt.Errorf("failed to get secret from secret service: %v", err)
 	}
-	return string(secretPlaintext), nil
+
+	tokens := &ContextTokens{}
+	if err := json.Unmarshal(content, &tokens); err != nil {
+		return nil, fmt.Errorf("error while unmarshal tokens from keychain: %v", err)
+	}
+
+	return tokens, nil
 }
