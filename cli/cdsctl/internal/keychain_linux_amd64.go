@@ -23,7 +23,7 @@ func storeToken(contextName, token string) error {
 		return fmt.Errorf("error while opening session to secret service: %v", err)
 	}
 
-	collection := session.DefaultCollection
+	collection := secretservice.DefaultCollection
 
 	items, err := srv.SearchCollection(collection, map[string]string{"context-name": contextName})
 	if err != nil {
@@ -49,7 +49,6 @@ func storeToken(contextName, token string) error {
 //getToken rerieves a CDS Context from keychain
 // return true as it use the OS Keychain.
 func (c CDSContext) getToken(contextName string) (string, error) {
-
 	srv, err := secretservice.NewService()
 	if err != nil {
 		return "", fmt.Errorf("error while getting secret service: %v", err)
@@ -60,14 +59,14 @@ func (c CDSContext) getToken(contextName string) (string, error) {
 		return "", fmt.Errorf("error while opening session to secret service: %v", err)
 	}
 
-	collection := session.DefaultCollection
+	collection := secretservice.DefaultCollection
 
 	items, err := srv.SearchCollection(collection, map[string]string{"context-name": contextName})
 	if err != nil {
 		return "", fmt.Errorf("failed to search secret from secret service: %v", err)
 	}
 
-	if len(item) != 1 {
+	if len(items) != 1 {
 		return "", fmt.Errorf("context not found in keychain")
 	}
 
@@ -76,5 +75,5 @@ func (c CDSContext) getToken(contextName string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get secret from secret service: %v", err)
 	}
-	return secretPlaintext, nil
+	return string(secretPlaintext), nil
 }
