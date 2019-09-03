@@ -18,10 +18,49 @@ func (client *bitbucketcloudClient) Repos(ctx context.Context) ([]sdk.VCSRepo, e
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot load user info")
 	}
-	path := fmt.Sprintf("/repositories/%s", user.Username)
+	reposForUser, err := client.reposForUser(ctx, user.Username)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot load repositories for user %s", user.Username)
+	}
+	repos = append(repos, reposForUser...)
+
+	teams, err := client.Teams(ctx)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot teams info")
+	}
+
+	for _, team := range teams.Values {
+		reposForTeam, err := client.reposForUser(ctx, team.Username)
+		if err != nil {
+			return nil, sdk.WrapError(err, "cannot load repositories for team %s", team.Username)
+		}
+		repos = append(repos, reposForTeam...)
+	}
+
+	responseRepos := make([]sdk.VCSRepo, 0, len(repos))
+	for _, repo := range repos {
+		r := sdk.VCSRepo{
+			ID:           repo.UUID,
+			Name:         repo.Name,
+			Slug:         repo.Slug,
+			Fullname:     repo.FullName,
+			URL:          repo.Links.HTML.Href,
+			HTTPCloneURL: repo.Links.Clone[0].Href,
+			SSHCloneURL:  repo.Links.Clone[1].Href,
+		}
+		responseRepos = append(responseRepos, r)
+	}
+
+	return responseRepos, nil
+}
+
+// reposForUser list repositories that are accessible for an user
+func (client *bitbucketcloudClient) reposForUser(ctx context.Context, username string) ([]Repository, error) {
+	var repos []Repository
+	path := fmt.Sprintf("/repositories/%s", username)
 	params := url.Values{}
 	params.Set("pagelen", "100")
-	params.Set("role", "contributor")
+	params.Set("role", "member")
 	nextPage := 1
 	for {
 		if nextPage != 1 {
@@ -45,21 +84,7 @@ func (client *bitbucketcloudClient) Repos(ctx context.Context) ([]sdk.VCSRepo, e
 		}
 	}
 
-	responseRepos := make([]sdk.VCSRepo, 0, len(repos))
-	for _, repo := range repos {
-		r := sdk.VCSRepo{
-			ID:           repo.UUID,
-			Name:         repo.Name,
-			Slug:         repo.Slug,
-			Fullname:     repo.FullName,
-			URL:          repo.Links.HTML.Href,
-			HTTPCloneURL: repo.Links.Clone[0].Href,
-			SSHCloneURL:  repo.Links.Clone[1].Href,
-		}
-		responseRepos = append(responseRepos, r)
-	}
-
-	return responseRepos, nil
+	return repos, nil
 }
 
 // RepoByFullname Get only one repo
