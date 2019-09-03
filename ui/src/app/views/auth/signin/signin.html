@@ -9,15 +9,17 @@
                 </div>
             </ng-template>
             <ng-template #loaded>
-                <sui-tabset *ngIf="localDriver || ldapDriver">
+                <ng-container *ngIf="localDriver || ldapDriver">
                     <div class="ui top attached tabular menu">
-                        <a *ngIf="localDriver" class="item" suiTabHeader="1">{{ 'account_btn_signin' | translate}}</a>
-                        <a *ngIf="localDriver && !localDriver.signup_disabled" class="item" suiTabHeader="2"
-                            (activate)="resetSignup()">{{ 'account_btn_signup' | translate}}</a>
-                        <a *ngIf="ldapDriver" class="item"
-                            suiTabHeader="3">{{ 'account_btn_signin_ldap' | translate}}</a>
+                        <a *ngIf="localDriver" class="item" [class.active]="localSigninActive"
+                            (click)="clickShowLocalSignin()">{{ 'account_btn_signin' | translate}}</a>
+                        <a *ngIf="localDriver && !localDriver.signup_disabled" class="item"
+                            [class.active]="localSignupActive"
+                            (click)="clickShowLocalSignup()">{{ 'account_btn_signup' | translate}}</a>
+                        <a *ngIf="ldapDriver" class="item" [class.active]="ldapSigninActive"
+                            (click)="clickShowLDAPSignin()">{{ 'account_btn_signin_ldap' | translate}}</a>
                     </div>
-                    <div *ngIf="localDriver" class="ui bottom attached segment" suiTabContent="1">
+                    <div *ngIf="localDriver" class="ui bottom attached tab segment" [class.active]="localSigninActive">
                         <form class="ui form" (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
                             <div class="field">
                                 <label>{{ 'user_label_username' | translate }}*</label>
@@ -36,8 +38,8 @@
                             </div>
                         </form>
                     </div>
-                    <div *ngIf="localDriver && !localDriver.signup_disabled" class="ui bottom attached segment"
-                        suiTabContent="2">
+                    <div *ngIf="localDriver && !localDriver.signup_disabled" class="ui bottom attached tab segment"
+                        [class.active]="localSignupActive">
                         <form *ngIf="!showSuccessSignup" class="ui form" (ngSubmit)="signup(signupForm)"
                             #signupForm="ngForm">
                             <div class="field">
@@ -52,9 +54,16 @@
                                 <label>{{ 'user_label_email' | translate }}*</label>
                                 <input type="email" name="email" ngModel required>
                             </div>
-                            <div class="field">
+                            <div class="field" [class.error]="passwordShowError">
                                 <label>{{ 'user_label_password' | translate }}*</label>
-                                <input type="password" name="password" ngModel required>
+                                <input type="password" name="password" (keyup)="onChangeSignupPassword($event)" ngModel
+                                    required>
+                                <sui-progress *ngIf="!passwordShowError && passwordLevel !== null"
+                                    class="bottom attached indicating active" [maximum]="5" [value]="passwordLevel + 1">
+                                </sui-progress>
+                            </div>
+                            <div *ngIf="passwordShowError" class="ui error message">
+                                <p>{{ 'auth_password_too_weak' | translate }}</p>
                             </div>
                             <div class="field" *ngIf="isFirstConnection">
                                 <label>{{ 'account_signup_init_token' | translate }}</label>
@@ -69,7 +78,7 @@
                             <p>{{ 'auth_signup_success' | translate }}</p>
                         </div>
                     </div>
-                    <div *ngIf="ldapDriver" class="ui bottom attached segment" suiTabContent="3">
+                    <div *ngIf="ldapDriver" class="ui bottom attached tab segment" [class.active]="ldapSigninActive">
                         <form class="ui form" (ngSubmit)="ldapSignin(signinForm)" #signinForm="ngForm">
                             <div class="field">
                                 <label>LDAP Bind*</label>
@@ -89,7 +98,7 @@
                             </div>
                         </form>
                     </div>
-                </sui-tabset>
+                </ng-container>
                 <div *ngIf="!loading && externalDrivers && externalDrivers.length > 0"
                     class="ui bottom attached segment">
                     <form class="ui form">

@@ -39,7 +39,7 @@ export class AskSigninComponent implements OnInit {
             this._authenticationService.askSignin(consumerType, origin, redirectURI, requireMFA)
                 .pipe(finalize(() => {
                     this.loading = false;
-                    this._cd.detectChanges();
+                    this._cd.markForCheck();
                 }))
                 .subscribe(redirect => {
                     if (redirect.method.toLowerCase() === ('get')) {

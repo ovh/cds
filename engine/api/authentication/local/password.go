@@ -10,7 +10,7 @@ import (
 func isPasswordValid(password string) error {
 	passwordStrength := zxcvbn.PasswordStrength(password, nil).Score
 	if passwordStrength < 3 {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "given password is not strong enough")
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "given password is not strong enough, level should be >= 3")
 	}
 	return nil
 }

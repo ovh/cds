@@ -1,5 +1,6 @@
 {
   "access_refused": "access refused",
+  "auth_password_too_weak": "Password is too weak. Try to add special characters, upper and lower case letters or numbers.",
   "auth_button_signin_with": "Sign in with {{consumer}}",
   "auth_value_copied": "Value copied",
   "auth_message_init_token": "If you just generated the CDS configuration you can give an optional init token.",
