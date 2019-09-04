@@ -146,10 +146,9 @@ func recreateSessionToken(configFile string, cdsctx internal.CDSContext, context
 	if err != nil {
 		return nil, fmt.Errorf("Error while opening file %s: %v", configFile, err)
 	}
-	defer fi.Close()
-
 	wdata := &bytes.Buffer{}
 	if err := internal.StoreContext(fi, wdata, cdsctx); err != nil {
+		fi.Close() // nolint
 		return nil, err
 	}
 

@@ -79,7 +79,6 @@ func contextRun(v cli.Values) error {
 	if err != nil {
 		return fmt.Errorf("error while opening config file %s: %v", configFilePath, err)
 	}
-	defer fi.Close() // nolint
 	cdsConfigFile, err := internal.GetConfigFile(fi)
 	if err != nil {
 		return fmt.Errorf("error while reading config file %s: %v", configFilePath, err)
@@ -87,10 +86,12 @@ func contextRun(v cli.Values) error {
 
 	if v.GetBool("no-interactive") {
 		if v.GetString("context-name") == "" {
+			fi.Close() // nolint
 			return fmt.Errorf("you must use a context name with no-interactive flag. Example: cdsctl context --context-name my-context")
 		}
 		wdata := &bytes.Buffer{}
 		if err := internal.SetCurrentContext(fi, wdata, v.GetString("context-name")); err != nil {
+			fi.Close() // nolint
 			return err
 		}
 		if err := fi.Close(); err != nil {
@@ -101,6 +102,7 @@ func contextRun(v cli.Values) error {
 		}
 		return nil
 	}
+	fi.Close() // nolint
 
 	// interactive: let user choose the context
 	if len(cdsConfigFile.Contexts) > 0 {
@@ -115,10 +117,10 @@ func contextRun(v cli.Values) error {
 		if err != nil {
 			return fmt.Errorf("Error while opening file %s: %v", configFilePath, err)
 		}
-		defer fi.Close() // nolint
 
 		wdata := &bytes.Buffer{}
 		if err := internal.SetCurrentContext(fi, wdata, opts[selected]); err != nil {
+			fi.Close() // nolint
 			return err
 		}
 		if err := fi.Close(); err != nil {
