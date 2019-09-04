@@ -10,7 +10,7 @@ func storeTokens(contextName string, tokens ContextTokens) error {
 	return nil
 }
 
-//getContextTokens rerieves a CDS Context from CDSContext
-func (c CDSContext) getContextTokens(contextName string) (*ContextTokens, error) {
+//getTokens rerieves a CDS Context from CDSContext
+func (c CDSContext) getTokens(contextName string) (*ContextTokens, error) {
 	return &ContextTokens{Session: c.Session, Token: c.Token}, nil
 }
