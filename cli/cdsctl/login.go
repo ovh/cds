@@ -237,31 +237,16 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 		fmt.Println("Using insecure TLS connection...")
 	}
 
-	hostname, err := os.Hostname()
+	signinToken, sessionToken, err := createOrRegenConsumer(apiURL, res.User.Username, res.Token)
 	if err != nil {
-		return fmt.Errorf("cdsctl: cannot retrieve hostname: %s", err)
-	}
-
-	client := cdsclient.New(cdsclient.Config{
-		Host:         apiURL,
-		Verbose:      os.Getenv("CDS_VERBOSE") == "true",
-		SessionToken: res.Token,
-	})
-
-	resCreate, err := client.AuthConsumerCreateForUser(res.User.Username, sdk.AuthConsumer{
-		Name:        fmt.Sprintf("cdsctl/%s", hostname),
-		Description: "Consumer created with cdsctl login",
-		Scopes:      sdk.AuthConsumerScopes,
-	})
-	if err != nil {
-		return fmt.Errorf("cdsctl: failed to create consumer: %v", err)
+		return err
 	}
 
 	env := v.GetBool("env")
 	if env {
 		fmt.Printf("export CDS_API_URL=%s\n", apiURL)
-		// TODO KEEP IT ? fmt.Printf("export CDS_SESSION_TOKEN=%s\n", res.Token)
-		fmt.Printf("export CDS_TOKEN=%s\n", resCreate.Token)
+		fmt.Printf("export CDS_SESSION=%s\n", sessionToken)
+		fmt.Printf("export CDS_TOKEN=%s\n", signinToken)
 		return nil
 	}
 
@@ -294,7 +279,7 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 		}
 		cdsConfigFile, err := internal.GetConfigFile(fi)
 		if err != nil {
-			fmt.Printf("Error while reading config file %s: %v\n", configFile, err)
+			return fmt.Errorf("Error while reading config file %s: %v", configFile, err)
 		} else if !noInteractive {
 			opts := []string{}
 			for _, c := range cdsConfigFile.Contexts {
@@ -311,7 +296,7 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 			if opts[selected] == other {
 				contextName = cli.AskValue("Enter a context name for this login (default):")
 			} else {
-				contextName = strings.TrimPrefix(opts[selected], " - current")
+				contextName = strings.TrimSuffix(opts[selected], " - current")
 			}
 		}
 		fi.Close()
@@ -327,19 +312,18 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 		contextName = "default"
 	}
 
-	cdsContext := internal.CDSContext{
+	cdsctx := internal.CDSContext{
 		Context:               contextName,
 		Host:                  apiURL,
 		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
-		Session:               res.Token,
-		Token:                 resCreate.Token,
+		Session:               sessionToken,
+		Token:                 signinToken,
 	}
 
 	wdata := &bytes.Buffer{}
-	if err := internal.StoreContext(fi, wdata, cdsContext); err != nil {
+	if err := internal.StoreContext(fi, wdata, cdsctx); err != nil {
 		return err
 	}
-
 	if err := fi.Close(); err != nil {
 		return fmt.Errorf("Error while closing file %s: %v", configFile, err)
 	}
@@ -347,6 +331,74 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 		return err
 	}
 	return nil
+}
+
+// return signin-token, session-token
+func createOrRegenConsumer(apiURL, username, sessionToken string) (string, string, error) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return "", "", fmt.Errorf("cdsctl: cannot retrieve hostname: %s", err)
+	}
+
+	client := cdsclient.New(cdsclient.Config{
+		Host:         apiURL,
+		Verbose:      os.Getenv("CDS_VERBOSE") == "true",
+		SessionToken: sessionToken,
+	})
+
+	consumers, err := client.AuthConsumerListByUser(username)
+	if err != nil {
+		return "", "", fmt.Errorf("cdsctl: cannot retreive consumer list")
+	}
+
+	consumerName := fmt.Sprintf("cdsctl/%s", hostname)
+
+	var signinToken string
+	if len(consumers) > 0 {
+		var consumerID string
+		for _, c := range consumers {
+			if c.Name == consumerName {
+				consumerID = c.ID
+				break
+			}
+		}
+		if consumerID != "" {
+			consumer, err := client.AuthConsumerRegen(username, consumerID)
+			if err != nil {
+				return "", "", fmt.Errorf("cdsctl: cannot regenerate consumer: %v", err)
+			}
+			signinToken = consumer.Token
+		}
+	}
+
+	// consumer not found, create it
+	if signinToken == "" {
+		resCreate, err := client.AuthConsumerCreateForUser(username, sdk.AuthConsumer{
+			Name:        consumerName,
+			Description: "Consumer created with cdsctl login",
+			Scopes:      sdk.AuthConsumerScopes,
+		})
+		if err != nil {
+			return "", "", fmt.Errorf("cdsctl: failed to create consumer: %v", err)
+		}
+
+		signinToken = resCreate.Token
+	}
+
+	// Send signin request
+	req := sdk.AuthConsumerSigninRequest{
+		"token": signinToken,
+	}
+	res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, req)
+	if err != nil {
+		return "", "", fmt.Errorf("cannot signin: %v", err)
+	}
+
+	// then logout sessionToken from "local" consumer
+	if err := client.AuthConsumerSignout(); err != nil {
+		return "", "", fmt.Errorf("cdsctl: error while signout local session: %v", err)
+	}
+	return signinToken, res.Token, nil
 }
 
 func writeConfigFile(configFile string, content *bytes.Buffer) error {
