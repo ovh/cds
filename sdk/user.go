@@ -238,9 +238,9 @@ type UserLoginRequest struct {
 	Password     string `json:"password"`
 }
 
+var emailPattern = regexp.MustCompile(`\w[+-._\w]*\w@\w[-._\w]*\w\.\w*`)
+
 // IsValidEmail  Check if user email address is ok
 func IsValidEmail(email string) bool {
-	pattern := "(\\w[-._\\w]*\\w@\\w[-._\\w]*\\w\\.\\w{2,3})"
-	regexp := regexp.MustCompile(pattern)
-	return regexp.MatchString(email)
+	return emailPattern.MatchString(email)
 }

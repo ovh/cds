@@ -103,6 +103,11 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		if err := api.checkPermission(ctx, mux.Vars(req), rc.PermissionLevel); err != nil {
 			return ctx, err
 		}
+
+		ctx, err = api.xsrfMiddleware(ctx, w, req, rc)
+		if err != nil {
+			return ctx, err
+		}
 	}
 
 	// If we set Auth(false) on a handler, with should have a consumer in the context if a valid JWT is given
@@ -138,13 +143,11 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 	defer end()
 
 	var jwtRaw string
-	var xsrfTokenNeeded bool
 
 	// Try to get the jwt from the cookie firstly then from the authorization bearer header, a XSRF token with cookie
 	jwtCookie, _ := req.Cookie(jwtCookieName)
 	if jwtCookie != nil {
 		jwtRaw = jwtCookie.Value
-		xsrfTokenNeeded = true
 	} else if strings.HasPrefix(req.Header.Get("Authorization"), "Bearer ") {
 		jwtRaw = strings.TrimPrefix(req.Header.Get("Authorization"), "Bearer ")
 	}
@@ -159,46 +162,61 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 		log.Warning("jwtMiddleware> invalid given jwt token: %v", err)
 		return ctx, nil
 	}
-	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
-	sessionID := claims.StandardClaims.Id
-
-	// Checking X-XSRF-TOKEN header if needed and permission level higher than read
-	if xsrfTokenNeeded {
-		xsrfToken := req.Header.Get(xsrfHeaderName)
-		existingXSRFToken, existXSRFTokenInCache := authentication.GetSessionXSRFToken(api.Cache, sessionID)
-
-		// If it's not a read request we want to check the xsrf token then generate a new one
-		// else if its a read request we want to reuse a cached XSRF token or generate one
-		if rc.PermissionLevel > sdk.PermissionRead {
-			if !existXSRFTokenInCache || xsrfToken != existingXSRFToken {
-				return ctx, sdk.WithStack(sdk.ErrUnauthorized)
-			}
-
-			newXSRFToken := authentication.NewSessionXSRFToken(api.Cache, sessionID)
-			// Set a cookie with the jwt token
-			http.SetCookie(w, &http.Cookie{
-				Name:    xsrfCookieName,
-				Value:   newXSRFToken,
-				Expires: time.Now().Add(time.Duration(authentication.XSRFTokenDuration) * time.Second),
-				Path:    "/",
-			})
-		} else {
-			if !existXSRFTokenInCache {
-				existingXSRFToken = authentication.NewSessionXSRFToken(api.Cache, sessionID)
-			}
-
-			// Set a cookie with the jwt token
-			http.SetCookie(w, &http.Cookie{
-				Name:    xsrfCookieName,
-				Value:   existingXSRFToken,
-				Expires: time.Now().Add(time.Duration(authentication.XSRFTokenDuration) * time.Second),
-				Path:    "/",
-			})
-		}
-	}
 
 	ctx = context.WithValue(ctx, contextJWTRaw, jwt)
 	ctx = context.WithValue(ctx, contextJWT, jwt)
+
+	return ctx, nil
+}
+
+func (api *API) xsrfMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
+	ctx, end := observability.Span(ctx, "router.xsrfMiddleware")
+	defer end()
+
+	jwtValue := ctx.Value(contextJWT)
+	if jwtValue == nil {
+		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+	}
+
+	jwt, ok := jwtValue.(*jwt.Token)
+	if !ok {
+		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+	}
+
+	claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
+	sessionID := claims.StandardClaims.Id
+
+	xsrfToken := req.Header.Get(xsrfHeaderName)
+	existingXSRFToken, existXSRFTokenInCache := authentication.GetSessionXSRFToken(api.Cache, sessionID)
+
+	// If it's not a read request we want to check the xsrf token then generate a new one
+	// else if its a read request we want to reuse a cached XSRF token or generate one
+	if rc.PermissionLevel > sdk.PermissionRead {
+		if !existXSRFTokenInCache || xsrfToken != existingXSRFToken {
+			return ctx, sdk.WithStack(sdk.ErrUnauthorized)
+		}
+
+		newXSRFToken := authentication.NewSessionXSRFToken(api.Cache, sessionID)
+		// Set a cookie with the jwt token
+		http.SetCookie(w, &http.Cookie{
+			Name:    xsrfCookieName,
+			Value:   newXSRFToken,
+			Expires: time.Now().Add(time.Duration(authentication.XSRFTokenDuration) * time.Second),
+			Path:    "/",
+		})
+	} else {
+		if !existXSRFTokenInCache {
+			existingXSRFToken = authentication.NewSessionXSRFToken(api.Cache, sessionID)
+		}
+
+		// Set a cookie with the jwt token
+		http.SetCookie(w, &http.Cookie{
+			Name:    xsrfCookieName,
+			Value:   existingXSRFToken,
+			Expires: time.Now().Add(time.Duration(authentication.XSRFTokenDuration) * time.Second),
+			Path:    "/",
+		})
+	}
 
 	return ctx, nil
 }
