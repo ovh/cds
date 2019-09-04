@@ -41,14 +41,14 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, g *sdk.Group) error {
 	}
 	mapLinks := linksForProjects.ToMapByProjectID()
 	for projectID, linksForProject := range mapLinks {
-		var permssionOK bool
+		var permissionOK bool
 		for i := range linksForProject {
 			if linksForProject[i].GroupID != g.ID && linksForProject[i].Role == sdk.PermissionReadWriteExecute {
-				permssionOK = true
+				permissionOK = true
 				break
 			}
 		}
-		if !permssionOK {
+		if !permissionOK {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot remove project as it's the last group with write permission on project %d", projectID)
 		}
 	}

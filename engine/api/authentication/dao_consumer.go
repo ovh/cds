@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getConsumers(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadConsumerOptionFunc) ([]sdk.AuthConsumer, error) {
+func getConsumers(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadConsumerOptionFunc) (sdk.AuthConsumers, error) {
 	cs := []authConsumer{}
 
 	if err := gorpmapping.GetAll(ctx, db, q, &cs); err != nil {
@@ -80,8 +80,14 @@ func getConsumer(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, 
 }
 
 // LoadConsumersByUserID returns auth consumers from database for given user id.
-func LoadConsumersByUserID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...LoadConsumerOptionFunc) ([]sdk.AuthConsumer, error) {
+func LoadConsumersByUserID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...LoadConsumerOptionFunc) (sdk.AuthConsumers, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE user_id = $1 ORDER BY created ASC").Args(id)
+	return getConsumers(ctx, db, query, opts...)
+}
+
+// LoadConsumersByGroupID returns all consumers from database that refer to given group id.
+func LoadConsumersByGroupID(ctx context.Context, db gorp.SqlExecutor, groupID int64, opts ...LoadConsumerOptionFunc) (sdk.AuthConsumers, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE group_ids @> $1 OR invalid_group_ids @> $1 ORDER BY created ASC").Args(groupID)
 	return getConsumers(ctx, db, query, opts...)
 }
 

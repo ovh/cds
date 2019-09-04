@@ -11,8 +11,9 @@ type authConsumer struct {
 }
 
 func (c authConsumer) Canonical() gorpmapping.CanonicalForms {
+	_ = []interface{}{c.ID, c.AuthentifiedUserID, c.Type, c.Data, c.Created, c.GroupIDs, c.Scopes, c.Disabled} // Checks that fields exists at compilation
 	return []gorpmapping.CanonicalForm{
-		"{{.ID}}{{.AuthentifiedUserID}}{{print .Type}}{{print .Data}}{{printDate .Created}}{{print .GroupIDs}}{{print .Scopes}}",
+		"{{.ID}}{{.AuthentifiedUserID}}{{print .Type}}{{print .Data}}{{printDate .Created}}{{print .GroupIDs}}{{print .Scopes}}", //{{print .Disabled}}
 	}
 }
 
@@ -22,8 +23,9 @@ type authSession struct {
 }
 
 func (s authSession) Canonical() gorpmapping.CanonicalForms {
+	_ = []interface{}{s.ID, s.ConsumerID, s.ExpireAt, s.Created} // Checks that fields exists at compilation
 	return []gorpmapping.CanonicalForm{
-		"{{.ID}}{{.ConsumerID}}{{printDate .ExpireAt}}{{printDate .Created}}{{print .GroupIDs}}{{print .Scopes}}",
+		"{{.ID}}{{.ConsumerID}}{{printDate .ExpireAt}}{{printDate .Created}}",
 	}
 }
 

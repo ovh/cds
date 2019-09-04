@@ -55,9 +55,12 @@ CREATE TABLE "auth_consumer" (
   data JSONB,
   created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
   group_ids JSONB,
+  invalid_group_ids JSONB,
   scopes JSONB,
   sig BYTEA,
   issued_at TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
+  disabled BOOLEAN NOT NULL DEFAULT FALSE,
+  warnings JSONB,
   signer TEXT
 );
 
@@ -71,8 +74,6 @@ CREATE TABLE "auth_session" (
   consumer_id VARCHAR(36),
   expire_at TIMESTAMP WITH TIME ZONE,
   created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
-  group_ids JSONB,
-  scopes JSONB,
   sig BYTEA,
   mfa BOOLEAN NOT NULL DEFAULT FALSE,
   signer TEXT

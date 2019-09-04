@@ -14,24 +14,24 @@ func DeleteUserFromGroup(db gorp.SqlExecutor, groupID, userID int64) error {
 	var isAdm bool
 	err := db.QueryRow(`SELECT group_admin FROM "group_user" WHERE group_id = $1 AND user_id = $2`, groupID, userID).Scan(&isAdm)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	if isAdm {
 		var nbAdm int
 		err = db.QueryRow(`SELECT COUNT(id) FROM "group_user" WHERE group_id = $1 AND group_admin = true`, groupID).Scan(&nbAdm)
 		if err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 
 		if nbAdm <= 1 {
-			return sdk.ErrNotEnoughAdmin
+			return sdk.WithStack(sdk.ErrNotEnoughAdmin)
 		}
 	}
 
 	query := `DELETE FROM group_user WHERE group_id=$1 AND user_id=$2`
 	_, err = db.Exec(query, groupID, userID)
-	return err
+	return sdk.WithStack(err)
 }
 
 // CheckUserInDefaultGroup insert user in default group

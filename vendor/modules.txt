@@ -484,8 +484,8 @@ github.com/ovh/configstore
 github.com/ovh/go-ovh/ovh
 # github.com/ovh/symmecrypt v0.2.0
 github.com/ovh/symmecrypt/keyloader
-github.com/ovh/symmecrypt/ciphers/hmac
 github.com/ovh/symmecrypt
+github.com/ovh/symmecrypt/ciphers/hmac
 github.com/ovh/symmecrypt/ciphers/aesgcm
 github.com/ovh/symmecrypt/ciphers/aespmacsiv
 github.com/ovh/symmecrypt/ciphers/chacha20poly1305

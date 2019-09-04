@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
@@ -18,6 +19,8 @@ import (
 func TestLoadConsumer(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
+
+	assets.DeleteConsumers(t, db)
 
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
@@ -29,6 +32,7 @@ func TestLoadConsumer(t *testing.T) {
 		Description:        sdk.RandomString(10),
 		Type:               sdk.ConsumerLocal,
 		Scopes:             []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAdmin},
+		GroupIDs:           []int64{5, 10},
 		AuthentifiedUserID: u.ID,
 		IssuedAt:           time.Now(),
 	}
@@ -39,6 +43,7 @@ func TestLoadConsumer(t *testing.T) {
 		Description:        sdk.RandomString(10),
 		Type:               sdk.ConsumerBuiltin,
 		Scopes:             []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAdmin},
+		GroupIDs:           []int64{10, 15},
 		AuthentifiedUserID: u.ID,
 		IssuedAt:           time.Now(),
 	}
@@ -61,12 +66,26 @@ func TestLoadConsumer(t *testing.T) {
 	// LoadConsumersByUserID
 	cs, err := authentication.LoadConsumersByUserID(context.TODO(), db, sdk.RandomString(10))
 	assert.NoError(t, err)
-	assert.Equal(t, 0, len(cs))
+	assert.Len(t, cs, 0)
 	cs, err = authentication.LoadConsumersByUserID(context.TODO(), db, u.ID)
 	assert.NoError(t, err)
-	require.Equal(t, 2, len(cs))
+	require.Len(t, cs, 2)
 	test.Equal(t, c1, cs[0])
 	test.Equal(t, c2, cs[1])
+
+	// LoadConsumersByGroupID
+	cs, err = authentication.LoadConsumersByGroupID(context.TODO(), db, 10)
+	require.NoError(t, err)
+	require.Len(t, cs, 2)
+	assert.Equal(t, c1.ID, cs[0].ID)
+	assert.Equal(t, c2.ID, cs[1].ID)
+	cs, err = authentication.LoadConsumersByGroupID(context.TODO(), db, 5)
+	require.NoError(t, err)
+	require.Len(t, cs, 1)
+	assert.Equal(t, c1.ID, cs[0].ID)
+	cs, err = authentication.LoadConsumersByGroupID(context.TODO(), db, 0)
+	require.NoError(t, err)
+	require.Len(t, cs, 0)
 }
 
 func TestInsertConsumer(t *testing.T) {

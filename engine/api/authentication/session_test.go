@@ -23,8 +23,6 @@ func Test_CheckSessionJWT(t *testing.T) {
 
 	session := &sdk.AuthSession{
 		ID:         sdk.UUID(),
-		GroupIDs:   []int64{0, 1, 3},
-		Scopes:     []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAdmin},
 		ConsumerID: sdk.UUID(),
 		Created:    now,
 		ExpireAt:   now.Add(3 * time.Second),

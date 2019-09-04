@@ -158,6 +158,12 @@ func DeleteAdmins(t *testing.T, db gorp.SqlExecutor) {
 	}
 }
 
+// DeleteConsumers delete all cds consumers from database.
+func DeleteConsumers(t *testing.T, db gorp.SqlExecutor) {
+	_, err := db.Exec("DELETE FROM auth_consumer")
+	require.NoError(t, err, "can't to delete all auth consumer")
+}
+
 // InsertMaintainerUser have to be used only for tests.
 func InsertMaintainerUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedUser, string) {
 	data := sdk.AuthentifiedUser{

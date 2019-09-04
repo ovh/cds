@@ -82,7 +82,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			}
 
 			// Get a JWT to authentified the worker
-			_, jwt, err := NewWorkerToken(h.ServiceName(), h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
+			jwt, err := NewWorkerToken(h.ServiceName(), h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
 			if err != nil {
 				var spawnError = sdk.SpawnErrorForm{
 					Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
@@ -177,7 +177,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 	}
 
 	// Get a JWT to authentified the worker
-	_, jwt, err := NewWorkerToken(h.ServiceName(), h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
+	jwt, err := NewWorkerToken(h.ServiceName(), h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
 	if err != nil {
 		var spawnError = sdk.SpawnErrorForm{
 			Error: fmt.Sprintf("cannot spawn worker for register: %v", err),

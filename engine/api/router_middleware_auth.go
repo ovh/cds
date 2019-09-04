@@ -68,6 +68,10 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		if err != nil {
 			return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
+		// If the consumer is disabled, return an error
+		if c.Disabled {
+      return ctx, sdk.WrapError(sdk.ErrUnauthorized, "consumer (%s) is disabled", c.ID)
+		}
 		// If the driver was disabled for the consumer that was found, ignore it
 		if _, ok := api.AuthenticationDrivers[c.Type]; ok {
 			if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), c.AuthentifiedUser); err != nil {

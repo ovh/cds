@@ -15,6 +15,7 @@ func isPasswordValid(password string) error {
 	return nil
 }
 
+// HashPassword return a hash from given password.
 func HashPassword(password string) ([]byte, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -23,6 +24,7 @@ func HashPassword(password string) ([]byte, error) {
 	return hash, nil
 }
 
+// CompareHashAndPassword returns an error if given password don't match given hash.
 func CompareHashAndPassword(hash []byte, password string) error {
 	if err := bcrypt.CompareHashAndPassword(hash, []byte(password)); err != nil {
 		return sdk.WithStack(err)

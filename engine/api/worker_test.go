@@ -39,14 +39,13 @@ func RegisterWorker(t *testing.T, api *API, groupID int64, existingWorkerModelNa
 	}
 	log.Debug("hatchery public key is %s", string(hPubKey))
 
-	session, jwt, err := hatchery.NewWorkerToken(hSrv.Name, hPrivKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
+	jwt, err := hatchery.NewWorkerToken(hSrv.Name, hPrivKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
 		HatcheryName: hSrv.Name,
 		Model:        model,
 		WorkerName:   hSrv.Name + "-worker",
 	})
 	test.NoError(t, err)
 	assert.NotNil(t, hConsumer)
-	assert.NotNil(t, session)
 
 	uri := api.Router.GetRoute("POST", api.postRegisterWorkerHandler, nil)
 	test.NotEmpty(t, uri)
