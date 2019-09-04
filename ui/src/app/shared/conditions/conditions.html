@@ -35,10 +35,11 @@
                     <tr *ngFor="let c of conditions?.plain; let i = index">
                         <td class="middle-aligned">
                             <div class="field">
-                                <ng-container *ngIf="conditionNames">
+                                <ng-container *ngIf="conditionNames && !c.unknownVariable">
                                     <sui-select class="fluid selection" [(ngModel)]="c.variable"
                                         (ngModelChange)="pushChange('name')" [options]="conditionNames"
-                                        [isSearchable]="true" [isDisabled]="readonly" #selectName>
+                                        [optionsFilter]="filterConditionVariables" [isSearchable]="true"
+                                        [isDisabled]="readonly" #selectName>
                                         <sui-select-option *ngFor="let option of selectName.filteredOptions"
                                             [value]="option">
                                         </sui-select-option>
