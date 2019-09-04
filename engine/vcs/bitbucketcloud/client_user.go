@@ -54,3 +54,28 @@ func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, erro
 
 	return user, nil
 }
+
+// User Get a current user
+func (client *bitbucketcloudClient) Teams(ctx context.Context) (Teams, error) {
+	var teams Teams
+	url := "/teams?role=member"
+	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", "teams", client.OAuthToken, url)
+
+	if !client.Cache.Get(cacheKey, &teams) {
+		status, body, _, err := client.get(url)
+		if err != nil {
+			log.Warning("bitbucketcloudClient.Teams> Error %s", err)
+			return teams, sdk.WithStack(err)
+		}
+		if status >= 400 {
+			return teams, sdk.NewError(sdk.ErrNotFound, errorAPI(body))
+		}
+		if err := json.Unmarshal(body, &teams); err != nil {
+			return teams, sdk.WithStack(err)
+		}
+		//Put the body on cache for 1 hour
+		client.Cache.SetWithTTL(cacheKey, teams, 60*60)
+	}
+
+	return teams, nil
+}
