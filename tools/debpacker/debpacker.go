@@ -75,6 +75,7 @@ type Config struct {
 	Maintainer           string               `yaml:"maintainer"`
 	Dependencies         []string             `yaml:"dependencies,omitempty"`
 	SystemdServiceConfig SystemdServiceConfig `yaml:"systemd-configuration"`
+	NeedsService         bool                 `yaml:"-"`
 }
 
 // SystemdServiceConfig will generate a .service file which will be located in /lib/systemd/system/.
@@ -89,6 +90,7 @@ type SystemdServiceConfig struct {
 	Environments     map[string]string `yaml:"environments"`
 	WorkingDirectory string            `yaml:"working-directory,omitempty"`
 	PostInstallCmd   string            `yaml:"post-install-cmd,omitempty"`
+	AutoStart        bool              `yaml:"auto-start,omitempty"`
 }
 
 // Prepare the debian package config file.
@@ -103,6 +105,7 @@ func (p Packer) Prepare() error {
 	}
 
 	if p.config.BinaryFile != "" {
+		p.config.NeedsService = true
 		if err := p.copyBinaryFile(); err != nil {
 			return err
 		}
@@ -120,7 +123,13 @@ func (p Packer) Prepare() error {
 		return err
 	}
 
-	if err := p.writeSystemdServiceFile(); err != nil {
+	if p.config.NeedsService {
+		if err := p.writeSystemdServiceFile(); err != nil {
+			return err
+		}
+	}
+
+	if err := p.writePrermFile(); err != nil {
 		return err
 	}
 
@@ -156,12 +165,12 @@ func (p Packer) buildControlFile() error {
 }
 
 func (p Packer) copyBinaryFile() error {
-	path := filepath.Join(p.outputDirectory, "usr", "bin")
-	if err := p.writer.CreateDirectory(path, os.FileMode(0755)); err != nil {
+	path := filepath.Join("usr", "bin")
+	if err := p.writer.CreateDirectory(filepath.Join(p.outputDirectory, path), os.FileMode(0755)); err != nil {
 		return err
 	}
 
-	return p.writer.CopyFiles(path, os.FileMode(0644), p.config.BinaryFile)
+	return p.writer.CopyFiles(p.outputDirectory, path, os.FileMode(0644), p.config.BinaryFile)
 }
 
 func (p Packer) copyConfigurationFiles() error {
@@ -169,12 +178,12 @@ func (p Packer) copyConfigurationFiles() error {
 		return nil
 	}
 
-	path := filepath.Join(p.outputDirectory, "etc", p.config.PackageName)
-	if err := p.writer.CreateDirectory(path, os.FileMode(0755)); err != nil {
+	path := filepath.Join("etc", p.config.PackageName)
+	if err := p.writer.CreateDirectory(filepath.Join(p.outputDirectory, path), os.FileMode(0755)); err != nil {
 		return err
 	}
 
-	return p.writer.CopyFiles(path, os.FileMode(0644), p.config.ConfigurationFiles...)
+	return p.writer.CopyFiles(p.outputDirectory, path, os.FileMode(0644), p.config.ConfigurationFiles...)
 }
 
 func (p Packer) mkDirs() error {
@@ -184,7 +193,10 @@ func (p Packer) mkDirs() error {
 	}
 
 	for _, d := range p.config.Mkdirs {
-		path := filepath.Join(p.outputDirectory, "var", "lib", p.config.PackageName, d)
+		path := filepath.Join(p.outputDirectory, d)
+		if !strings.HasPrefix(d, "/") {
+			path = filepath.Join(p.outputDirectory, "var", "lib", p.config.PackageName, d)
+		}
 		if err := p.writer.CreateDirectory(path, os.FileMode(0755)); err != nil {
 			return err
 		}
@@ -198,12 +210,12 @@ func (p Packer) copyOtherFiles() error {
 		return nil
 	}
 
-	path := filepath.Join(p.outputDirectory, "var", "lib", p.config.PackageName)
-	if err := p.writer.CreateDirectory(path, os.FileMode(0755)); err != nil {
+	path := filepath.Join("var", "lib", p.config.PackageName)
+	if err := p.writer.CreateDirectory(filepath.Join(p.outputDirectory, path), os.FileMode(0755)); err != nil {
 		return err
 	}
 
-	return p.writer.CopyFiles(path, os.FileMode(0644), p.config.CopyFiles...)
+	return p.writer.CopyFiles(p.outputDirectory, path, os.FileMode(0644), p.config.CopyFiles...)
 }
 
 func (p Packer) writeSystemdServiceFile() error {
@@ -218,6 +230,11 @@ func (p Packer) writeSystemdServiceFile() error {
 func (p Packer) writePostinstFile() error {
 	path := filepath.Join(p.outputDirectory, "DEBIAN", "postinst")
 	return p.render(postinstTmpl, path, os.FileMode(0755))
+}
+
+func (p Packer) writePrermFile() error {
+	path := filepath.Join(p.outputDirectory, "DEBIAN", "prerm")
+	return p.render(prermTmpl, path, os.FileMode(0755))
 }
 
 func (p Packer) render(tmpl string, path string, perm os.FileMode) error {

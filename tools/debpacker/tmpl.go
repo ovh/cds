@@ -51,9 +51,24 @@ echo "Service initialization"
 chmod +x {{.SystemdServiceConfig.ExecStart}}
 
 set +e
+{{if  (.NeedsService) -}}
 echo "Service installed"
+systemctl daemon-reload
 systemctl enable {{.PackageName}}
-systemctl status {{.PackageName}}
+{{if  (.SystemdServiceConfig.AutoStart) -}}
+systemctl start {{.PackageName}}
+{{end -}}
+systemctl --no-pager status {{.PackageName}}
 echo "run systemctl start {{.PackageName}} to start"
+{{end -}}
+`
+
+	prermTmpl = `#!/bin/bash
+set +e
+{{if  (.NeedsService) -}}
+systemctl stop {{.PackageName}}
+systemctl disable {{.PackageName}}
+systemctl daemon-reload
+{{end -}}
 `
 )
