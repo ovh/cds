@@ -44,6 +44,12 @@ export class AuthConsumerCreateResponse {
     consumer: AuthConsumer;
 }
 
+export class AuthConsumerWarning {
+    type: string;
+    group_id: number;
+    group_name: string;
+}
+
 export class AuthConsumer {
     id: string;
     name: string;
@@ -55,6 +61,8 @@ export class AuthConsumer {
     group_ids: Array<number>;
     scopes: Array<string>;
     groups: Array<Group>;
+    disabled: boolean;
+    warnings: Array<AuthConsumerWarning>;
 
     // UI fields
     parent: AuthConsumer;

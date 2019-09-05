@@ -1,6 +1,7 @@
 <ng-template let-context let-modal="modal" #consumerDetailsModal>
     <div class="header">
-        {{ 'auth_consumer_details_modal_title' | translate: { name: consumer.name } }}
+        {{ 'auth_consumer_details_modal_title' | translate: { name: consumer.name } }} <div *ngIf="consumer.disabled" class="ui red label">
+            {{'user_auth_consumer_disabled' | translate}}</div>
     </div>
     <div class="content">
         <div class="ui grid">
@@ -48,7 +49,7 @@
                                     <app-delete-button class="left floated" (event)="clickDelete()"
                                         [title]="'user_auth_consumer_delete_btn'">
                                     </app-delete-button>
-                                    <div class="ui green right floated buttons">
+                                    <div *ngIf="!consumer.disabled" class="ui green right floated buttons">
                                         <div class="ui button" (click)="clickRegen(false)">
                                             {{'auth_consumer_regen' | translate }}</div>
                                         <div class="ui floating icon dropdown button" suiDropdown>

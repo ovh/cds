@@ -92,8 +92,20 @@ export class ConsumerDetailsModalComponent {
 
         this.columnsConsumers = [
             <Column<AuthConsumer>>{
+                type: ColumnType.TEXT_LABELS,
                 name: 'common_name',
-                selector: (c: AuthConsumer) => c.name
+                selector: (c: AuthConsumer) => {
+                    let labels = [];
+
+                    if (c.disabled) {
+                        labels.push({ color: 'red', title: 'user_auth_consumer_disabled' });
+                    }
+
+                    return {
+                        value: c.name,
+                        labels
+                    }
+                }
             },
             <Column<AuthConsumer>>{
                 type: ColumnType.TEXT_ICONS,

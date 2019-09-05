@@ -816,6 +816,7 @@
   "user_auth_info_scopes": "Plus d'information concernant les 'scopes'.",
   "user_auth_consumer_detach_btn": "Détacher",
   "user_auth_consumer_delete_btn": "Supprimer",
+  "user_auth_consumer_disabled": "Désactivé",
   "auth_consumer_details_modal_title": "Détails pour le client '{{name}}'",
   "auth_consumer_create_modal_title": "Créer un nouveau client",
   "vcs_connection": "Connexion : ",
