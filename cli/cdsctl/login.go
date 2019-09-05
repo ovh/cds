@@ -52,10 +52,6 @@ var loginCmd = cli.Command{
 			Usage:     "A CDS init token that can be used for first connection",
 			ShortHand: "i",
 		},
-		{
-			Name:  "context-name",
-			Usage: "A cdsctl context name",
-		},
 	},
 }
 
@@ -237,6 +233,11 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 		fmt.Println("Using insecure TLS connection...")
 	}
 
+	contextName := v.GetString("context")
+	if contextName == "" {
+		contextName = os.Getenv("CDS_CONTEXT")
+	}
+
 	signinToken, sessionToken, err := createOrRegenConsumer(apiURL, res.User.Username, res.Token)
 	if err != nil {
 		return err
@@ -261,7 +262,6 @@ func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninRespons
 		fmt.Printf("cdsctl: You didn't specify config file location; %s will be used.\n", configFile)
 	}
 
-	contextName := v.GetString("context-name")
 	// create file if not exists
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		fi, err := os.Create(configFile)
