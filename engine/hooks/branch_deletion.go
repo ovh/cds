@@ -15,3 +15,21 @@ func (s *Service) doBranchDeletionTaskExecution(t *sdk.TaskExecution) (*sdk.Work
 
 	return nil, sdk.WrapError(err, "cannot mark to delete workflow runs")
 }
+
+func (s *Service) stopBranchDeletionTask(branch string) error {
+	keys, err := s.Dao.FindAllKeysMatchingPattern(branch + "*")
+	if err != nil {
+		return sdk.WrapError(err, "cannot find keys matching pattern %s", branch+"*")
+	}
+	for _, key := range keys {
+		t := s.Dao.FindTask(key)
+		if t == nil || t.Type != TypeBranchDeletion {
+			continue
+		}
+		if err := s.stopTask(t); err != nil {
+			log.Error("cannot stop task %s : %v", t.UUID, err)
+		}
+	}
+
+	return nil
+}

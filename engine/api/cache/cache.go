@@ -41,6 +41,7 @@ type Store interface {
 	SetRemove(rootKey string, memberKey string, member interface{})
 	SetCard(key string) int
 	SetScan(key string, members ...interface{}) error
+	ZScan(key, pattern string) ([]string, error)
 	Lock(key string, expiration time.Duration, retryWaitDurationMillisecond int, retryCount int) bool
 	Unlock(key string)
 }
