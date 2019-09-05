@@ -17,6 +17,9 @@ func (s *Service) doBranchDeletionTaskExecution(t *sdk.TaskExecution) (*sdk.Work
 }
 
 func (s *Service) stopBranchDeletionTask(branch string) error {
+	if branch == "" {
+		return nil
+	}
 	keys, err := s.Dao.FindAllKeysMatchingPattern(branch + "*")
 	if err != nil {
 		return sdk.WrapError(err, "cannot find keys matching pattern %s", branch+"*")
