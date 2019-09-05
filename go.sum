@@ -476,12 +476,12 @@ github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFSt
 github.com/openzipkin/zipkin-go v0.1.6/go.mod h1:QgAqvLzwWbR/WpD4A3cGpPtJrZXNIiJc5AZX7/PBEpw=
 github.com/ory-am/common v0.4.0 h1:edGPoxYX4hno0IJHXh9TCMUPR6ZcJp+y6aClFYxeuUE=
 github.com/ory-am/common v0.4.0/go.mod h1:oCYGuwwM8FyYMKqh9vrhBaeUoyz/edx0bgJN6uS6/+k=
-github.com/ovh/configstore v0.0.0-20190211110801-86dc25ae30bd h1:1kKD4cOYQfPLc7eo/Z5yryK9e52r27Nj45biiIherWo=
-github.com/ovh/configstore v0.0.0-20190211110801-86dc25ae30bd/go.mod h1:bBc7U++7HXgf9lrtmmJb31DK3Tp+Zv8GaIn0Bjolv/o=
+github.com/ovh/configstore v0.3.2 h1:/kr1B27JVzW4Eiz20muZSnQ5UyizFjLy5+2CVfp/mKs=
+github.com/ovh/configstore v0.3.2/go.mod h1:bBc7U++7HXgf9lrtmmJb31DK3Tp+Zv8GaIn0Bjolv/o=
 github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 h1:x9UmLJfoTojbsVpUh0sOpU42p7FqhlzaHKWj6Kcf6ew=
 github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689/go.mod h1:joRatxRJaZBsY3JAOEMcoOp05CnZzsx4scTxi95DHyQ=
-github.com/ovh/symmecrypt v0.2.0 h1:2uAwM8XEUwrwd489ubMohEKTQu1EPrLpk/0EcH6P2Fs=
-github.com/ovh/symmecrypt v0.2.0/go.mod h1:39tehz0mgJfrpQOGUMf5J29rK1GzPiTxLFiVuk9XPO0=
+github.com/ovh/symmecrypt v0.4.0 h1:y7vBTTuLgcIHP7xG8ATbsR/npPVDOEINHWU97hbXb4E=
+github.com/ovh/symmecrypt v0.4.0/go.mod h1:39tehz0mgJfrpQOGUMf5J29rK1GzPiTxLFiVuk9XPO0=
 github.com/ovh/venom v0.25.0 h1:q0NC8KHuG1UoWNYXqhZUM/VbOnS8ciQJr6Afn230OIw=
 github.com/ovh/venom v0.25.0/go.mod h1:vf+2wztk/hOPS9AU32/B9XhwVPxKZ97wBJLu+AGXhYQ=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c h1:Lgl0gzECD8GnQ5QCWA8o6BtfL6mDH5rQgM4/fX3avOs=

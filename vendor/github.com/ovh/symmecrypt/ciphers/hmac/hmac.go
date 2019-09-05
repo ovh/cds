@@ -53,16 +53,25 @@ func (f hmacFactory) NewRandomKey() (symmecrypt.Key, error) {
 // Key is a simple key which uses plain data + HMAC-sha512 for authentication
 type Key []byte
 
-func tag(h hash.Hash, data, s []byte) []byte {
+func tag(h hash.Hash, data, s []byte) ([]byte, error) {
 	al := make([]byte, dataLenSize)
 	binary.BigEndian.PutUint64(al, uint64(len(data)*8)) // in bits
-	h.Write(data)
-	h.Write(s)
-	h.Write(al)
+	_, err := h.Write(data)
+	if err != nil {
+		return nil, err
+	}
+	_, err = h.Write(s)
+	if err != nil {
+		return nil, err
+	}
+	_, err = h.Write(al)
+	if err != nil {
+		return nil, err
+	}
 	sum := h.Sum(nil)[:rawTagSize]
 	ret := make([]byte, tagSize)
 	base64.URLEncoding.Encode(ret, sum)
-	return ret
+	return ret, nil
 }
 
 // Encrypt appends a base64 HMAC-sha512 (with fully printable characters) calculated from the plaintext + extra data, to the plaintext.
@@ -73,7 +82,10 @@ func (k Key) Encrypt(plain []byte, extra ...[]byte) ([]byte, error) {
 		extraData = append(extraData, e...)
 	}
 
-	t := tag(hmac.New(sha512.New, []byte(k)), extraData, plain)
+	t, err := tag(hmac.New(sha512.New, []byte(k)), extraData, plain)
+	if err != nil {
+		return nil, err
+	}
 
 	return append(plain, t...), nil
 }
@@ -93,7 +105,10 @@ func (k Key) Decrypt(data []byte, extra ...[]byte) ([]byte, error) {
 		extraData = append(extraData, e...)
 	}
 
-	t2 := tag(hmac.New(sha512.New, []byte(k)), extraData, plain)
+	t2, err := tag(hmac.New(sha512.New, []byte(k)), extraData, plain)
+	if err != nil {
+		return nil, err
+	}
 
 	if !hmac.Equal(t, t2) {
 		return nil, errors.New("message authentication failed")

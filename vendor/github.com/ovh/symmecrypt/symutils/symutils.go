@@ -1,8 +1,10 @@
 package symutils
 
 import (
+	"bytes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -25,12 +27,20 @@ func RawKey(b []byte, keyLen int) ([]byte, error) {
 	}
 	if len(b) == hex.EncodedLen(keyLen) {
 		// Hex representation? decode it
-		b2 := make([]byte, keyLen)
+		b2 := make([]byte, hex.DecodedLen(len(b)))
 		_, err := hex.Decode(b2, b)
 		if err != nil {
-			return nil, fmt.Errorf("encryption key is too long, but is not a valid hex encode: %s", err)
+			return nil, fmt.Errorf("encryption key is too long, but is not a valid hex encoded string: %s", err)
 		}
 		b = b2
+	} else if len(b) == base64.StdEncoding.EncodedLen(keyLen) {
+		// base64 representation? decode it!
+		b2 := make([]byte, base64.StdEncoding.DecodedLen(len(b)))
+		n, err := base64.StdEncoding.Decode(b2, b)
+		if err != nil {
+			return nil, fmt.Errorf("encryption key is too long, but is not a valid base64 encoded string: %s", err)
+		}
+		b = b2[:n] // n may be smaller than DecodedLen(len(b)) because of base64 padding
 	}
 	if len(b) != keyLen {
 		return nil, fmt.Errorf("encryption key: incorrect length: expected %d, got %d", keyLen, len(b))
@@ -193,7 +203,9 @@ func (b KeyAEAD) DecryptMarshal(s string, target interface{}, extra ...[]byte) e
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(unciphered, target)
+	dec := json.NewDecoder(bytes.NewReader(unciphered))
+	dec.UseNumber()
+	return dec.Decode(target)
 }
 
 // Wait is a noop for regular implementations: the key is always ready

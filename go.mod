@@ -171,9 +171,9 @@ require (
 	github.com/ory-am/common v0.4.0 // indirect
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
 	github.com/ovh/cds/sdk/izanami v0.0.0-20190703101657-683453b50b2a
-	github.com/ovh/configstore v0.0.0-20190211110801-86dc25ae30bd
+	github.com/ovh/configstore v0.3.2
 	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 // indirect
-	github.com/ovh/symmecrypt v0.2.0
+	github.com/ovh/symmecrypt v0.4.0
 	github.com/ovh/venom v0.25.0
 	github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -270,3 +270,5 @@ replace github.com/ovh/cds/sdk/interpolate => ./sdk/interpolate
 replace github.com/ovh/cds/sdk/izanami => ./sdk/izanami
 
 replace github.com/keybase/go-crypto => github.com/Alkorin/crypto v0.0.0-20190124155437-5ea49ae
+
+replace github.com/ovh/cds/tools/smtpmock => ./tools/smtpmock

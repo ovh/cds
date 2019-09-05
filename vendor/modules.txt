@@ -478,17 +478,17 @@ github.com/opencontainers/runtime-spec/specs-go
 github.com/ovh/cds/sdk/interpolate
 # github.com/ovh/cds/sdk/izanami v0.0.0-20190703101657-683453b50b2a => ./sdk/izanami
 github.com/ovh/cds/sdk/izanami
-# github.com/ovh/configstore v0.0.0-20190211110801-86dc25ae30bd
+# github.com/ovh/configstore v0.3.2
 github.com/ovh/configstore
 # github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
 github.com/ovh/go-ovh/ovh
-# github.com/ovh/symmecrypt v0.2.0
+# github.com/ovh/symmecrypt v0.4.0
 github.com/ovh/symmecrypt/keyloader
 github.com/ovh/symmecrypt
-github.com/ovh/symmecrypt/ciphers/hmac
 github.com/ovh/symmecrypt/ciphers/aesgcm
 github.com/ovh/symmecrypt/ciphers/aespmacsiv
 github.com/ovh/symmecrypt/ciphers/chacha20poly1305
+github.com/ovh/symmecrypt/ciphers/hmac
 github.com/ovh/symmecrypt/ciphers/xchacha20poly1305
 github.com/ovh/symmecrypt/seal
 github.com/ovh/symmecrypt/symutils
@@ -680,13 +680,13 @@ golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/blowfish
+golang.org/x/crypto/chacha20poly1305
 golang.org/x/crypto/openpgp/errors
 golang.org/x/crypto/openpgp/s2k
 golang.org/x/crypto/cast5
 golang.org/x/crypto/openpgp/elgamal
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/internal/subtle
-golang.org/x/crypto/chacha20poly1305
 # golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp

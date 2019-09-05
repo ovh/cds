@@ -3,6 +3,7 @@ package configstore
 import (
 	"encoding/base64"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -25,10 +26,16 @@ type jsonItem struct {
 	Priority int64  `json:"priority"`
 }
 
+func transformKey(k string) string {
+	k = strings.ToLower(k)
+	k = strings.Replace(k, "_", "-", -1)
+	return k
+}
+
 // NewItem creates a item object from key / value / priority values.
 // It is meant to be used by provider implementations.
 func NewItem(key, value string, priority int64) Item {
-	return Item{key: key, value: value, priority: priority}
+	return Item{key: transformKey(key), value: value, priority: priority}
 }
 
 // UnmarshalJSON respects json.Unmarshaler
@@ -38,7 +45,7 @@ func (s *Item) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	s.key = j.Key
+	s.key = transformKey(j.Key)
 	s.value = j.Value
 	s.priority = j.Priority
 	return nil
