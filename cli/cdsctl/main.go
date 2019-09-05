@@ -30,6 +30,7 @@ func main() {
 		group(),
 		health(),
 		login(),
+		signup(),
 		monitoring(),
 		pipeline(),
 		project(),

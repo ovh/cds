@@ -142,8 +142,9 @@ type AuthConsumerSigninRequest map[string]string
 
 // AuthConsumerSigninResponse response for a auth consumer signin.
 type AuthConsumerSigninResponse struct {
-	Token string            `json:"token"`
-	User  *AuthentifiedUser `json:"user"`
+	APIURL string            `json:"api_url,omitempty"`
+	Token  string            `json:"token"`
+	User   *AuthentifiedUser `json:"user"`
 }
 
 // AuthConsumerCreateResponse response for a auth consumer creation.

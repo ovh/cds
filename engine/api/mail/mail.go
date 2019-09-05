@@ -23,6 +23,10 @@ You recently signed up for CDS.
 To verify your email address, follow this link:
 {{.URL}}
 
+If you are using the command line, you can run:
+
+$ cdsctl signup verify {{.APIURL}}
+
 Regards,
 --
 CDS Team
@@ -42,7 +46,7 @@ CDS Team
 
 const templateReset = `Hi {{.Username}},
 
-Your password was successfully.
+Your password was successfully reset.
 
 Regards,
 --
@@ -126,10 +130,11 @@ func smtpClient() (*smtp.Client, error) {
 }
 
 // SendMailVerifyToken send mail to verify user account.
-func SendMailVerifyToken(userMail, username, token, callback string) error {
-	callbackURL := fmt.Sprintf(callback, token)
+func SendMailVerifyToken(userMail, username, token, callbackUI, callbackAPI string) error {
+	callbackURL := fmt.Sprintf(callbackUI, token)
+	callbackAPIURL := fmt.Sprintf(callbackAPI, token)
 
-	mailContent, err := createTemplate(templateSignedup, callbackURL, username)
+	mailContent, err := createTemplate(templateSignedup, callbackURL, callbackAPIURL, username)
 	if err != nil {
 		return err
 	}
@@ -141,7 +146,7 @@ func SendMailVerifyToken(userMail, username, token, callback string) error {
 func SendMailAskResetToken(userMail, username, token, callback string) error {
 	callbackURL := fmt.Sprintf(callback, token)
 
-	mailContent, err := createTemplate(templateAskReset, callbackURL, username)
+	mailContent, err := createTemplate(templateAskReset, callbackURL, "", username)
 	if err != nil {
 		return err
 	}
@@ -153,7 +158,7 @@ func SendMailAskResetToken(userMail, username, token, callback string) error {
 func SendMailResetToken(userMail, username, token, callback string) error {
 	callbackURL := fmt.Sprintf(callback, token)
 
-	mailContent, err := createTemplate(templateReset, callbackURL, username)
+	mailContent, err := createTemplate(templateReset, callbackURL, "", username)
 	if err != nil {
 		return err
 	}
@@ -161,7 +166,7 @@ func SendMailResetToken(userMail, username, token, callback string) error {
 	return SendEmail("[CDS] Your password was reset", &mailContent, userMail, false)
 }
 
-func createTemplate(templ, callbackURL, username string) (bytes.Buffer, error) {
+func createTemplate(templ, callbackURL, callbackAPIURL, username string) (bytes.Buffer, error) {
 	var b bytes.Buffer
 
 	// Create mail template
@@ -171,7 +176,7 @@ func createTemplate(templ, callbackURL, username string) (bytes.Buffer, error) {
 		return b, sdk.WrapError(err, "error with parsing template")
 	}
 
-	if err := t.Execute(&b, struct{ URL, Username string }{callbackURL, username}); err != nil {
+	if err := t.Execute(&b, struct{ URL, APIURL, Username string }{callbackURL, callbackAPIURL, username}); err != nil {
 		return b, sdk.WrapError(err, "cannot execute template")
 	}
 

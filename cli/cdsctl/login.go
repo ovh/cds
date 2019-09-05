@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"regexp"
 	"strings"
 
 	"github.com/pkg/browser"
@@ -66,18 +65,10 @@ func loginRun(v cli.Values) error {
 	}
 
 	// Checks that an URL is given
-	apiURL := v.GetString("api-url")
-	if apiURL == "" && !noInteractive {
-		apiURL = cli.AskValue("api-url")
+	apiURL, err := getAPIURL(v)
+	if err != nil {
+		return err
 	}
-	if apiURL == "" {
-		return fmt.Errorf("Please set api url")
-	}
-	match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, apiURL)
-	if !match {
-		return fmt.Errorf("Invalid given api url")
-	}
-	apiURL = strings.TrimSuffix(apiURL, "/")
 
 	// Load all drivers from given CDS instance
 	client := cdsclient.New(cdsclient.Config{

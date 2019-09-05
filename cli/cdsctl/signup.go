@@ -1,0 +1,172 @@
+package main
+
+import (
+	"fmt"
+	"net/url"
+	"os"
+	"regexp"
+	"strings"
+
+	"github.com/ovh/cds/sdk"
+
+	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/spf13/cobra"
+)
+
+func signup() *cobra.Command {
+	return cli.NewCommand(signupCmd, signupFunc, cli.SubCommands{signupVerify()}, cli.CommandWithoutExtraFlags)
+}
+
+func signupVerify() *cobra.Command {
+	return cli.NewCommand(signupVerifyCmd, signupVerifyFunc, nil, cli.CommandWithoutExtraFlags)
+}
+
+var signupCmd = cli.Command{
+	Name:  "signup",
+	Short: "Signup on CDS",
+	Flags: []cli.Flag{
+		{
+			Name:      "api-url",
+			ShortHand: "H",
+			Usage:     "Url to your CDS api.",
+		},
+		{
+			Name: "username",
+		},
+		{
+			Name: "fullname",
+		},
+		{
+			Name: "email",
+		},
+		{
+			Name: "password",
+		},
+		{
+			Name: "init-token",
+		},
+	},
+}
+
+func getAPIURL(v cli.Values) (string, error) {
+	noInteractive := v.GetBool("no-interactive")
+
+	// Checks that an URL is given
+	apiURL := v.GetString("api-url")
+	if apiURL == "" && !noInteractive {
+		apiURL = cli.AskValue("api-url")
+	}
+	if apiURL == "" {
+		return "", fmt.Errorf("Please set api url")
+	}
+	match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, apiURL)
+	if !match {
+		return "", fmt.Errorf("Invalid given api url")
+	}
+	apiURL = strings.TrimSuffix(apiURL, "/")
+	return apiURL, nil
+}
+
+func signupFunc(v cli.Values) error {
+	noInteractive := v.GetBool("no-interactive")
+
+	apiURL, err := getAPIURL(v)
+	if err != nil {
+		return err
+	}
+
+	// Load all drivers from given CDS instance
+	client := cdsclient.New(cdsclient.Config{
+		Host:    apiURL,
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+	})
+	drivers, err := client.AuthDriverList()
+	if err != nil {
+		return fmt.Errorf("Cannot list auth drivers: %v", err)
+	}
+	if len(drivers.Drivers) == 0 {
+		return fmt.Errorf("No authentication driver configured")
+	}
+
+	var localConsumerDriverEnable bool
+	for _, d := range drivers.Drivers {
+		if d.Type == sdk.ConsumerLocal {
+			localConsumerDriverEnable = true
+			break
+		}
+	}
+
+	if !localConsumerDriverEnable {
+		return fmt.Errorf("No authentication driver configured")
+	}
+
+	signupRequest, err := loginRunLocal(v)
+	if err != nil {
+		return err
+	}
+
+	fullname := v.GetString("fullname")
+	if fullname == "" && !noInteractive {
+		fullname = cli.AskValue("Fullname")
+	}
+
+	email := v.GetString("email")
+	if email == "" && !noInteractive {
+		email = cli.AskValue("Email")
+	}
+
+	var initToken string
+	if drivers.IsFirstConnection {
+		initToken = v.GetString("init-token")
+	}
+
+	signupRequest["email"] = email
+	signupRequest["fullname"] = fullname
+	signupRequest["init_token"] = initToken
+
+	if err := client.AuthConsumerLocalSignup(signupRequest); err != nil {
+		return err
+	}
+
+	fmt.Println("Signup successful. Instuctions have been sent to your email address.")
+	return nil
+}
+
+var signupVerifyCmd = cli.Command{
+	Name:  "verify",
+	Short: "Verify local CDS signup",
+	Args: []cli.Arg{
+		{
+			Name:       "callback-url",
+			AllowEmpty: false,
+			IsValid: func(s string) bool {
+				_, err := url.Parse(s)
+				return err == nil
+			},
+		},
+	},
+	Flags: []cli.Flag{
+		{
+			Name:  "env",
+			Usage: "Display the commands to set up the environment for the cds client.",
+			Type:  cli.FlagBool,
+		},
+	},
+}
+
+func signupVerifyFunc(v cli.Values) error {
+	uri := v.GetString("callback-url")
+
+	// Load all drivers from given CDS instance
+	client := cdsclient.New(cdsclient.Config{
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+	})
+
+	signupresponse, err := client.AuthConsumerLocalSignupVerify(uri)
+	if err != nil {
+		return err
+	}
+
+	return doAfterLogin(v, signupresponse.APIURL, signupresponse)
+}

@@ -111,7 +111,9 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 
 		// Insert the authentication
 		if err := mail.SendMailVerifyToken(reqData["email"], newUser.Username, verifyToken,
-			api.Config.URL.UI+"/auth/verify?token=%s"); err != nil {
+			api.Config.URL.UI+"/auth/verify?token=%s",
+			api.Config.URL.API+"/auth/consumer/local/verify?token=%s",
+		); err != nil {
 			return sdk.WrapError(err, "cannot send verify token email for user %s", newUser.Username)
 		}
 
@@ -256,10 +258,16 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 
 		localDriver := driver.(*local.AuthDriver)
 
-		var reqData sdk.AuthConsumerSigninRequest
-		if err := service.UnmarshalBody(r, &reqData); err != nil {
-			return err
+		var reqData = sdk.AuthConsumerSigninRequest{}
+		var tokenInQueryString = QueryString(r, "token")
+		if tokenInQueryString != "" {
+			reqData["token"] = tokenInQueryString
+		} else {
+			if err := service.UnmarshalBody(r, &reqData); err != nil {
+				return err
+			}
 		}
+
 		if err := localDriver.CheckVerifyRequest(reqData); err != nil {
 			return err
 		}
@@ -322,8 +330,9 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
-			Token: jwt,
-			User:  usr,
+			APIURL: api.Config.URL.API,
+			Token:  jwt,
+			User:   usr,
 		}
 
 		return service.WriteJSON(w, resp, http.StatusOK)

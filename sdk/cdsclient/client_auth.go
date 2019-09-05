@@ -23,6 +23,23 @@ func (c *client) AuthConsumerSignin(consumerType sdk.AuthConsumerType, request s
 	return res, nil
 }
 
+func (c *client) AuthConsumerLocalSignup(request sdk.AuthConsumerSigninRequest) error {
+	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/auth/consumer/local/signup", request, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) AuthConsumerLocalSignupVerify(uri string) (sdk.AuthConsumerSigninResponse, error) {
+	var res sdk.AuthConsumerSigninResponse
+	_, _, _, err := c.RequestJSON(context.Background(), "POST", uri, nil, &res)
+	if err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
 func (c *client) AuthConsumerListByUser(username string) (sdk.AuthConsumers, error) {
 	var consumers sdk.AuthConsumers
 	if _, err := c.GetJSON(context.Background(), "/user/"+username+"/auth/consumer", &consumers); err != nil {

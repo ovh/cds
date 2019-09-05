@@ -161,7 +161,12 @@ var signinRouteRegexp = regexp.MustCompile(`\/auth\/consumer\/.*\/signin`)
 func (c *client) Stream(ctx context.Context, method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
 	// Checks that current session_token is still valid
 	// If not, challenge a new one against the authenticationToken
-	if path != "/auth/consumer/builtin/signin" && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+	var checkToken = strings.Contains(path, "/auth/consumer/builtin/signin") ||
+		strings.Contains(path, "/auth/consumer/local/signin") ||
+		strings.Contains(path, "/auth/consumer/local/signup") ||
+		strings.Contains(path, "/auth/consumer/local/verify")
+
+	if checkToken && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
 		if c.config.Verbose {
 			fmt.Printf("session token invalid: (%s). Relogin...\n", c.config.SessionToken)
 		}
@@ -189,9 +194,11 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 	}
 
-	url := c.config.Host + path
+	var url string
 	if strings.HasPrefix(path, "http") {
 		url = path
+	} else {
+		url = c.config.Host + path
 	}
 
 	for i := 0; i <= c.config.Retry; i++ {
