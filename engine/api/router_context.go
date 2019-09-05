@@ -12,6 +12,7 @@ const (
 	contextJWT
 	contextJWTRaw
 	contextDate
+	contextJWTFromCookie
 )
 
 // ContextValues retuns auth values of a context

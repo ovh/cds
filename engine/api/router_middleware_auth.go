@@ -70,7 +70,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		}
 		// If the consumer is disabled, return an error
 		if c.Disabled {
-      return ctx, sdk.WrapError(sdk.ErrUnauthorized, "consumer (%s) is disabled", c.ID)
+			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "consumer (%s) is disabled", c.ID)
 		}
 		// If the driver was disabled for the consumer that was found, ignore it
 		if _, ok := api.AuthenticationDrivers[c.Type]; ok {
@@ -108,9 +108,13 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			return ctx, err
 		}
 
-		ctx, err = api.xsrfMiddleware(ctx, w, req, rc)
-		if err != nil {
-			return ctx, err
+		jwtFromCookieVal := ctx.Value(contextJWTFromCookie)
+		jwtFromCookie, _ := jwtFromCookieVal.(bool)
+		if jwtFromCookie {
+			ctx, err = api.xsrfMiddleware(ctx, w, req, rc)
+			if err != nil {
+				return ctx, err
+			}
 		}
 	}
 
@@ -147,11 +151,12 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 	defer end()
 
 	var jwtRaw string
-
+	var jwtFromCookie bool
 	// Try to get the jwt from the cookie firstly then from the authorization bearer header, a XSRF token with cookie
 	jwtCookie, _ := req.Cookie(jwtCookieName)
 	if jwtCookie != nil {
 		jwtRaw = jwtCookie.Value
+		jwtFromCookie = true
 	} else if strings.HasPrefix(req.Header.Get("Authorization"), "Bearer ") {
 		jwtRaw = strings.TrimPrefix(req.Header.Get("Authorization"), "Bearer ")
 	}
@@ -169,6 +174,7 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 
 	ctx = context.WithValue(ctx, contextJWTRaw, jwt)
 	ctx = context.WithValue(ctx, contextJWT, jwt)
+	ctx = context.WithValue(ctx, contextJWTFromCookie, jwtFromCookie)
 
 	return ctx, nil
 }
