@@ -2,7 +2,11 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"reflect"
+	"strconv"
+	"unsafe"
 
 	"github.com/spf13/cobra"
 	toml "github.com/yesnault/go-toml"
@@ -24,10 +28,12 @@ func init() {
 	configCmd.AddCommand(configNewCmd)
 	configCmd.AddCommand(configCheckCmd)
 	configCmd.AddCommand(configRegenCmd)
+	configCmd.AddCommand(configSetCmd)
 
 	configNewCmd.Flags().BoolVar(&flagConfigNewAsEnv, "env", false, "Print configuration as environment variable")
-
 	configRegenCmd.Flags().BoolVar(&flagConfigRegenAsEnv, "env", false, "Print configuration as environment variable")
+	configSetCmd.Flags().BoolVar(&flagConfigRegenAsEnv, "env", false, "Print configuration as environment variable")
+
 }
 
 var (
@@ -234,5 +240,79 @@ var configRegenCmd = &cobra.Command{
 
 		fmt.Fprintln(writer, "# On first login, you will be asked to enter the following token:")
 		fmt.Fprintln(writer, "# "+magicToken)
+	},
+}
+
+var configSetCmd = &cobra.Command{
+	Use:   "set",
+	Short: "set value in a given CDS configuration file",
+	Long:  `$ engine config set <path> [key value]... `,
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 3 || len(args)%2 == 0 {
+			cmd.Help()
+			sdk.Exit("Wrong usage")
+		}
+
+		oldConf := configImport(nil, args[0], "", "", "", "", true)
+		for i := 1; i < len(args)-1; i = i + 2 {
+			field := sdk.ReflectFieldByTag(&oldConf, "toml", args[i])
+			if field == nil {
+				sdk.Exit("unable to found %s in configuration", args[i])
+			}
+
+			// Try to parse teh value as: Bool, Int, Uint, Float, String
+			var newValue interface{}
+			if x, err := strconv.ParseBool(args[i+1]); err == nil {
+				newValue = x
+				goto next
+			}
+
+			if x, err := strconv.ParseInt(args[i+1], 10, 64); err == nil {
+				newValue = x
+				goto next
+			}
+
+			if x, err := strconv.ParseUint(args[i+1], 10, 64); err == nil {
+				newValue = x
+				goto next
+			}
+
+			if x, err := strconv.ParseFloat(args[i+1], 64); err == nil {
+				newValue = x
+				goto next
+			}
+
+			newValue = args[i+1]
+
+		next:
+			// We need to create a new reflect.Value at exact same memory adress (pointer) of the element pointer returned by ReflectFieldByTag
+			// Create a unsafe.Pointer from the pointer - so, it's not unsafe
+			ptr := unsafe.Pointer(reflect.ValueOf(field).Pointer())
+			// Create a new reflect.Value at this pointer
+			val := reflect.NewAt(reflect.ValueOf(field).Elem().Type(), ptr)
+
+			if val.Elem().Type() == reflect.TypeOf(int(0)) && reflect.TypeOf(newValue) == reflect.TypeOf(int64(0)) {
+				newValue = int(newValue.(int64))
+			}
+
+			// Set the value pointed by this pointer to the new value
+			val.Elem().Set(reflect.ValueOf(newValue))
+
+		}
+
+		btes, err := toml.Marshal(oldConf)
+		if err != nil {
+			sdk.Exit("%v", err)
+		}
+
+		if flagConfigRegenAsEnv {
+			fmt.Fprintln(os.Stdout, string(btes))
+			return
+		}
+
+		if err := ioutil.WriteFile(args[0], btes, os.FileMode(0644)); err != nil {
+			sdk.Exit("%v", err)
+		}
+
 	},
 }
