@@ -162,9 +162,9 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 	// Checks that current session_token is still valid
 	// If not, challenge a new one against the authenticationToken
 	var checkToken = !strings.Contains(path, "/auth/consumer/builtin/signin") &&
-		strings.Contains(path, "/auth/consumer/local/signin") &&
-		strings.Contains(path, "/auth/consumer/local/signup") &&
-		strings.Contains(path, "/auth/consumer/local/verify")
+		!strings.Contains(path, "/auth/consumer/local/signin") &&
+		!strings.Contains(path, "/auth/consumer/local/signup") &&
+		!strings.Contains(path, "/auth/consumer/local/verify")
 
 	if checkToken && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
 		if c.config.Verbose {
@@ -300,7 +300,7 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 				resp.Body.Close()
 			}
 			continue
-    }
+		}
 
 		if resp != nil && resp.Body != nil {
 			resp.Body.Close()
