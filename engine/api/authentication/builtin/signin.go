@@ -8,8 +8,8 @@ import (
 )
 
 type signinBuiltinConsumerToken struct {
-	ConsumerID string
-	IAT        int64
+	ConsumerID string `json:"consumer_id"`
+	IAT        int64  `json:"iat"`
 }
 
 // NewSigninConsumerToken returns a token to signin with built in consumer.

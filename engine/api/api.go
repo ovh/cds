@@ -370,13 +370,14 @@ func (a *API) CheckConfiguration(config interface{}) error {
 }
 
 type StartupConfig struct {
-	Consumers []StartupConfigService
+	Consumers []StartupConfigService `json:"consumers"`
+	IAT       int64                  `json:"iat"`
 }
 type StartupConfigService struct {
-	ID          string
-	Name        string
-	Description string
-	ServiceType string
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	ServiceType string `json:"service_type"`
 }
 
 // Serve will start the http api server

@@ -132,7 +132,11 @@ func initBuiltinConsumersFromStartupConfig(tx gorp.SqlExecutor, consumer *sdk.Au
 		return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given init token"))
 	}
 
-	log.Warning("Magic token detected !: %s", initToken)
+  log.Warning("Magic token detected !: %s", initToken)
+
+  if startupConfig.IAT == 0||startupConfig.IAT > time.Now().Unix() {
+    return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given init token, issued at value should be set and can not be in the future")
+  }
 
 	// Create the consumers provided by the startup configuration
 	for _, cfg := range startupConfig.Consumers {
@@ -157,7 +161,7 @@ func initBuiltinConsumersFromStartupConfig(tx gorp.SqlExecutor, consumer *sdk.Au
 			Data:               map[string]string{},
 			GroupIDs:           []int64{group.SharedInfraGroup.ID},
 			Scopes:             scopes,
-			IssuedAt:           time.Now(),
+			IssuedAt:           time.Unix(startupConfig.IAT, 0),
 		}
 
 		if err := authentication.InsertConsumer(tx, &c); err != nil {

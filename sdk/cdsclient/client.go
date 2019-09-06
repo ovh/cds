@@ -153,14 +153,14 @@ retry:
 				goto retry
 			}
 		}
-		return nil, nil, err
+		return nil, nil, sdk.WithStack(err)
 	}
 	cli.config.SessionToken = res.Token
 
 	base64EncodedPubKey := headers.Get("X-Api-Pub-Signing-Key")
 	pubKey, err := base64.StdEncoding.DecodeString(base64EncodedPubKey)
 
-	return cli, pubKey, err
+	return cli, pubKey, sdk.WithStack(err)
 }
 
 func (c *client) init() {
