@@ -260,7 +260,7 @@ github.com/gin-gonic/gin/json
 github.com/gin-gonic/gin/render
 # github.com/gizak/termui v0.0.0-20190301062529-bf53c5cbea3f
 github.com/gizak/termui
-# github.com/go-gorp/gorp v2.0.0+incompatible => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f
+# github.com/go-gorp/gorp v2.0.0+incompatible => github.com/yesnault/gorp v0.0.0-20190906150006-6210446a0d92
 github.com/go-gorp/gorp
 # github.com/go-redis/redis v6.15.2+incompatible
 github.com/go-redis/redis
@@ -291,10 +291,6 @@ github.com/google/btree
 github.com/google/go-querystring/query
 # github.com/google/gofuzz v1.0.0
 github.com/google/gofuzz
-# github.com/google/gops v0.0.0-20170728214508-806455e841dc
-github.com/google/gops/agent
-github.com/google/gops/internal
-github.com/google/gops/signal
 # github.com/googleapis/gnostic v0.1.0
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
@@ -784,7 +780,7 @@ gopkg.in/asn1-ber.v1
 gopkg.in/bsm/sarama-cluster.v2
 # gopkg.in/go-playground/validator.v8 v8.18.2
 gopkg.in/go-playground/validator.v8
-# gopkg.in/gorp.v1 v1.7.1
+# gopkg.in/gorp.v1 v1.7.1 => github.com/yesnault/gorp v0.0.0-20190906150006-6210446a0d92
 gopkg.in/gorp.v1
 # gopkg.in/h2non/gock.v1 v1.0.14
 gopkg.in/h2non/gock.v1

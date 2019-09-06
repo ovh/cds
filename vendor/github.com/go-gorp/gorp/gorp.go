@@ -127,16 +127,26 @@ type DynamicTable interface {
 // interface.
 var _, _ SqlExecutor = &DbMap{}, &Transaction{}
 
+func argValue(a interface{}) interface{} {
+	v, ok := a.(driver.Valuer)
+	if !ok {
+		return a
+	}
+	vV := reflect.ValueOf(v)
+	if vV.Kind() == reflect.Ptr && vV.IsNil() {
+		return nil
+	}
+	ret, err := v.Value()
+	if err != nil {
+		return a
+	}
+	return ret
+}
+
 func argsString(args ...interface{}) string {
 	var margs string
 	for i, a := range args {
-		var v interface{} = a
-		if x, ok := v.(driver.Valuer); ok {
-			y, err := x.Value()
-			if err == nil {
-				v = y
-			}
-		}
+		v := argValue(a)
 		switch v.(type) {
 		case string:
 			v = fmt.Sprintf("%q", v)
