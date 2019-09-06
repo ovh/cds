@@ -133,6 +133,14 @@ func (p Packer) Prepare() error {
 		return err
 	}
 
+	if err := p.writePostrmFile(); err != nil {
+		return err
+	}
+
+	if err := p.writePreinstFile(); err != nil {
+		return err
+	}
+
 	return p.writePostinstFile()
 }
 
@@ -227,6 +235,11 @@ func (p Packer) writeSystemdServiceFile() error {
 	return p.render(systemdServiceTmpl, filepath.Join(path, p.config.PackageName+".service"), os.FileMode(0644))
 }
 
+func (p Packer) writePreinstFile() error {
+	path := filepath.Join(p.outputDirectory, "DEBIAN", "preinst")
+	return p.render(preinstTmpl, path, os.FileMode(0755))
+}
+
 func (p Packer) writePostinstFile() error {
 	path := filepath.Join(p.outputDirectory, "DEBIAN", "postinst")
 	return p.render(postinstTmpl, path, os.FileMode(0755))
@@ -235,6 +248,11 @@ func (p Packer) writePostinstFile() error {
 func (p Packer) writePrermFile() error {
 	path := filepath.Join(p.outputDirectory, "DEBIAN", "prerm")
 	return p.render(prermTmpl, path, os.FileMode(0755))
+}
+
+func (p Packer) writePostrmFile() error {
+	path := filepath.Join(p.outputDirectory, "DEBIAN", "postrm")
+	return p.render(postrmTmpl, path, os.FileMode(0755))
 }
 
 func (p Packer) render(tmpl string, path string, perm os.FileMode) error {

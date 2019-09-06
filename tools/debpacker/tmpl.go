@@ -35,6 +35,17 @@ Environment="{{$key}}={{$value}}"
 WantedBy={{.SystemdServiceConfig.WantedBy}}
 `
 
+	preinstTmpl = `#!/bin/bash
+set +e
+{{if  (.NeedsService) -}}
+if  [ -f "/lib/systemd/system/{{.PackageName}}.service" ];then
+	systemctl stop {{.PackageName}}
+	systemctl disable {{.PackageName}}
+fi
+systemctl daemon-reload
+{{end -}}
+`
+
 	postinstTmpl = `#!/bin/bash
 set -e
 echo "Create the {{.SystemdServiceConfig.User}} User, Group and Directories"
@@ -68,6 +79,13 @@ set +e
 {{if  (.NeedsService) -}}
 systemctl stop {{.PackageName}}
 systemctl disable {{.PackageName}}
+systemctl daemon-reload
+{{end -}}
+`
+
+	postrmTmpl = `#!/bin/bash
+set +e
+{{if  (.NeedsService) -}}
 systemctl daemon-reload
 {{end -}}
 `
