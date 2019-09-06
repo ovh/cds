@@ -194,8 +194,9 @@ var (
 	ErrResourceNotInProject                          = Error{ID: 178, Status: http.StatusForbidden}
 	ErrEnvironmentNotFound                           = Error{ID: 179, Status: http.StatusBadRequest}
 	ErrIntegrationtNotFound                          = Error{ID: 180, Status: http.StatusBadRequest}
-	ErrSignupDisabled                                = Error{ID: 181, Status: http.StatusForbidden}
-	ErrUsernamePresent                               = Error{ID: 182, Status: http.StatusBadRequest}
+	ErrBadBrokerConfiguration                        = Error{ID: 181, Status: http.StatusBadRequest}
+	ErrSignupDisabled                                = Error{ID: 182, Status: http.StatusForbidden}
+	ErrUsernamePresent                               = Error{ID: 183, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -374,6 +375,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrEnvironmentNotFound.ID:                           "environment not found",
 	ErrIntegrationtNotFound.ID:                          "integration not found",
 	ErrSignupDisabled.ID:                                "Sign up is disabled for target consumer type",
+	ErrBadBrokerConfiguration.ID:                        "Cannot connect to the broker of your event integration. Check your configuration",
 }
 
 var errorsFrench = map[int]string{
@@ -551,6 +553,12 @@ var errorsFrench = map[int]string{
 	ErrResourceNotInProject.ID:                          "La ressource n'est pas lié au projet",
 	ErrEnvironmentNotFound.ID:                           "l'environnement n'existe pas",
 	ErrSignupDisabled.ID:                                "La création de compte est désactivée pour ce mode d'authentification.",
+	ErrBadBrokerConfiguration.ID:                        "Impossible de se connecter à votre intégration de type évènement. Veuillez vérifier votre configuration",
+}
+
+var errorsLanguages = []map[int]string{
+	errorsAmericanEnglish,
+	errorsFrench,
 }
 
 // Error type.

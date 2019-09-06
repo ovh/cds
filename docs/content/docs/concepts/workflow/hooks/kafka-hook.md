@@ -3,7 +3,7 @@ title: "Kafka hook"
 weight: 5
 ---
 
-You want to run a workflow from a Kafka message? This kind of hook is for you.
+Do you want to run a workflow from a Kafka message? This kind of hook is for you.
 
 This kind of hook will connect to a Kafka topic and consume message. For each message, it will trigger your workflow.
 

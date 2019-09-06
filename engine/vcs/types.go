@@ -48,7 +48,7 @@ type ServerConfiguration struct {
 	Github         *GithubServerConfiguration    `toml:"github" json:"github,omitempty"`
 	Gitlab         *GitlabServerConfiguration    `toml:"gitlab" json:"gitlab,omitempty"`
 	Bitbucket      *BitbucketServerConfiguration `toml:"bitbucket" json:"bitbucket,omitempty"`
-	BitbucketCloud *BitbucketCloudConfiguration  `toml:"bitbucket_cloud" json:"bitbucket_cloud,omitempty"`
+	BitbucketCloud *BitbucketCloudConfiguration  `toml:"bitbucketcloud" json:"bitbucketcloud,omitempty"`
 	Gerrit         *GerritServerConfiguration    `toml:"gerrit" json:"gerrit,omitempty"`
 }
 
@@ -167,7 +167,7 @@ func (s ServerConfiguration) check() error {
 		return fmt.Errorf("Invalid VCS server URL")
 	}
 
-	if s.Bitbucket != nil && s.Github != nil && s.Gitlab != nil {
+	if s.Bitbucket != nil && s.BitbucketCloud != nil && s.Github != nil && s.Gitlab != nil {
 		return fmt.Errorf("Invalid VCS server configuration")
 	}
 

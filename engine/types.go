@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/hooks"
 	"github.com/ovh/cds/engine/migrateservice"
 	"github.com/ovh/cds/engine/repositories"
+	"github.com/ovh/cds/engine/ui"
 	"github.com/ovh/cds/engine/vcs"
 )
 
@@ -36,6 +37,7 @@ type Configuration struct {
 	Tracing observability.Configuration `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################" json:"tracing"`
 	// services
 	API             *api.Configuration            `toml:"api" comment:"#####################\n API Configuration \n####################" json:"api"`
+	UI              *ui.Configuration             `toml:"ui" comment:"#####################\n UI Configuration \n####################" json:"ui"`
 	Hatchery        *HatcheryConfiguration        `toml:"hatchery" json:"hatchery"`
 	Hooks           *hooks.Configuration          `toml:"hooks" comment:"######################\n CDS Hooks Settings \n######################" json:"hooks"`
 	VCS             *vcs.Configuration            `toml:"vcs" comment:"######################\n CDS VCS Settings \n######################" json:"vcs"`

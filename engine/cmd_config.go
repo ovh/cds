@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/engine/hooks"
+	"github.com/ovh/cds/engine/ui"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
 )
@@ -99,6 +100,14 @@ var configCheckCmd = &cobra.Command{
 			fmt.Printf("checking api configuration...\n")
 			if err := api.New().CheckConfiguration(*conf.API); err != nil {
 				fmt.Printf("api Configuration: %v\n", err)
+				hasError = true
+			}
+		}
+
+		if conf.UI != nil && conf.UI.API.HTTP.URL != "" {
+			fmt.Printf("checking UI configuration...\n")
+			if err := ui.New().CheckConfiguration(*conf.UI); err != nil {
+				fmt.Printf("ui Configuration: %v\n", err)
 				hasError = true
 			}
 		}

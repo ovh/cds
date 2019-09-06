@@ -13,10 +13,9 @@ There are 3 types of permissions:
 
 These permissions can be attached to different objects:
 
-+ On project
-+ On workflow
-+ On workflow node
-
++ Project
++ Workflow
++ Workflow node
 
 |                                                                                       | Project | Workflow | Workflow node                               |
 |---------------------------------------------------------------------------------------|---------|----------|---------------------------------------------|
@@ -49,4 +48,4 @@ Click on the `Groups` entry in the menu
 And then in the group edition view, you can manage all your generated tokens for this group and generate new ones.
 ![Job](/images/group_view.png)
 
-If you want to list all the tokens that you can use go to your profile page and you will find a list of all the tokens associated to your groups.
+If you want to list all the tokens that you can use, go to your profile page and you will find a list of all the tokens associated to your groups.

@@ -68,7 +68,7 @@
                 <div class="inline fields" *ngIf="availableHooks">
                     <div class="four wide field"><label>hook</label></div>
                     <div class="twelve wide field">
-                        <sui-select class="selection" placeholder="{{'hook' | translate}}"
+                        <sui-select class="selection" placeholder="Hook"
                             [(ngModel)]="hook.outgoing_hook.config['target_hook'].value"
                             (ngModelChange)="updateWorkflowOutgoingHook()" [options]="availableHooks"
                             [isSearchable]="true" [isDisabled]="mode === 'ro'" labelField="uuid" valueField="uuid"

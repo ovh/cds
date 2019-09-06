@@ -27,6 +27,7 @@ import (
 	"github.com/ovh/cds/engine/migrateservice"
 	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/engine/ui"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -80,7 +81,7 @@ This component operates CDS VCS connectivity
 
 Start all of this with a single command:
 
-	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]
+	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate] [ui]
 
 All the services are using the same configuration file format.
 
@@ -152,6 +153,12 @@ See $ engine config command for more details.
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
 				services = append(services, serviceConf{arg: a, service: api.New(), cfg: *conf.API})
+				names = append(names, instance)
+			case "ui":
+				if conf.UI == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
+				services = append(services, serviceConf{arg: a, service: ui.New(), cfg: *conf.UI})
 				names = append(names, instance)
 			case "migrate":
 				if conf.DatabaseMigrate == nil {

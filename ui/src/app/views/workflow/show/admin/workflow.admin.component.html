@@ -50,14 +50,42 @@
                         [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"></textarea>
                 </div>
                 <div class="field">
-                    <label>{{ 'workflow_sidebar_tag_zone' | translate }}</label>
-                    <sui-multi-select name="sidebartagzone" class="selection" *ngIf="existingTags.length > 0"
-                        [isDisabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
-                        [(ngModel)]="selectedTags" [options]="existingTags" [isSearchable]="true"
-                        (ngModelChange)="updateTagMetadata($event)" #multiSelect>
-                        <sui-select-option *ngFor="let i of multiSelect.filteredOptions" [value]="i">
-                        </sui-select-option>
-                    </sui-multi-select>
+                    <label>
+                        {{ 'workflow_sidebar_tag_zone' | translate }}
+                        <i class="circle outline question icon" suiPopup [popupText]="'workflow_tag_dragdrop' | translate"></i>
+                    </label>
+                    <ng-container *ngIf="selectedTags && selectedTags.length > 0">
+                        <div class="ui horizontal list dragula-container" [dragula]="'bag-tag'" [(dragulaModel)]="selectedTags">
+                            <div class="item" *ngFor="let t of selectedTags; let i = index">
+                                <div class="ui label">
+                                    {{t + '  '}}
+                                    <i class="close icon" *ngIf="!workflow.from_repository && workflow.permission === 7" (click)="removeFromSelectedTags(i)"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </ng-container>
+                    <ng-container *ngIf="!selectedTags || selectedTags.length === 0">
+                        <div class="ui info message">
+                            {{ 'workfow_tag_no' | translate }}
+                        </div>
+                    </ng-container>
+                    <div class="ui inline fields" *ngIf="existingTags.length > 0">
+                        <div class="ui twelve wide field">
+                            <sui-multi-select name="sidebartagzone" class="fluid selection"
+                                        [isDisabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
+                                        [options]="existingTags" [isSearchable]="true"
+                                        [(ngModel)]="tagsToAdd"
+                                         #tagSelect>
+                                <sui-select-option *ngFor="let i of tagSelect.filteredOptions" [value]="i">
+                                </sui-select-option>
+                            </sui-multi-select>
+                        </div>
+                        <div class="ui four wide field">
+                            <div class="ui icon blue button" [class.disabled]="!tagsToAdd" (click)="updateTagMetadata()">
+                                <i class="plus icon"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="field">
                     <label>{{ 'workflow_history_length_title' | translate }}</label>

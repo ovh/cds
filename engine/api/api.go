@@ -167,16 +167,6 @@ type Configuration struct {
 			SessionToken        string `toml:"sessionToken" json:"-" comment:"A static AWS session token"`
 		} `toml:"awss3" json:"awss3"`
 	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported" json:"artifact"`
-	Events struct {
-		Kafka struct {
-			Enabled         bool   `toml:"enabled" json:"enabled"`
-			Broker          string `toml:"broker" json:"broker"`
-			Topic           string `toml:"topic" json:"topic"`
-			User            string `toml:"user" json:"user"`
-			Password        string `toml:"password" json:"-"`
-			MaxMessageBytes int    `toml:"maxmessagebytes" default:"10000000" json:"maxmessagebytes"`
-		} `toml:"kafka" json:"kafka"`
-	} `toml:"events" comment:"#######################\n CDS Events Settings \n######################" json:"events"`
 	Features struct {
 		Izanami struct {
 			APIURL       string `toml:"apiurl" json:"apiurl"`
@@ -708,34 +698,6 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
 		authentication.SessionCleaner(ctx, a.mustDB)
 	}, a.PanicDump())
-
-	//Temporary migration code
-	migrate.Add(sdk.Migration{Name: "WorkflowNotification", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.WorkflowNotifications(a.Cache, a.DBConnectionFactory.GetDBMap)
-	}})
-	migrate.Add(sdk.Migration{Name: "CleanArtifactBuiltinActions", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.CleanArtifactBuiltinActions(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
-	}})
-	migrate.Add(sdk.Migration{Name: "StageConditions", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.StageConditions(a.Cache, a.DBConnectionFactory.GetDBMap())
-	}})
-	migrate.Add(sdk.Migration{Name: "GitClonePrivateKeyParameter", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.GitClonePrivateKeyParameter(a.mustDB(), a.Cache)
-	}})
-	migrate.Add(sdk.Migration{Name: "ActionModelRequirements", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.ActionModelRequirements(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
-	}})
-	migrate.Add(sdk.Migration{Name: "AddPublicEventIntegration", Release: "0.40.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		kafkaCfg := migrate.KafkaConfig{
-			Enabled:         a.Config.Events.Kafka.Enabled,
-			Broker:          a.Config.Events.Kafka.Broker,
-			Topic:           a.Config.Events.Kafka.Topic,
-			User:            a.Config.Events.Kafka.User,
-			Password:        a.Config.Events.Kafka.Password,
-			MaxMessageBytes: a.Config.Events.Kafka.MaxMessageBytes,
-		}
-		return migrate.AddPublicEventIntegration(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, kafkaCfg)
-	}})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {

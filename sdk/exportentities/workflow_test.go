@@ -132,6 +132,7 @@ func TestWorkflow_checkValidity(t *testing.T) {
 		ProjectIntegrationName string
 		PipelineHooks          []exportentities.HookEntry
 		Permissions            map[string]int
+		OneAtATime             *bool
 	}
 	tests := []struct {
 		name    string
@@ -193,6 +194,7 @@ func TestWorkflow_checkValidity(t *testing.T) {
 				ProjectIntegrationName: tt.fields.ProjectIntegrationName,
 				PipelineHooks:          tt.fields.PipelineHooks,
 				Permissions:            tt.fields.Permissions,
+				OneAtATime:             tt.fields.OneAtATime,
 			}
 			if err := w.CheckValidity(); (err != nil) != tt.wantErr {
 				t.Errorf("Workflow.checkValidity() error = %v, wantErr %v", err, tt.wantErr)
@@ -202,6 +204,7 @@ func TestWorkflow_checkValidity(t *testing.T) {
 }
 
 func TestWorkflow_GetWorkflow(t *testing.T) {
+	strue := true
 	type fields struct {
 		Name                   string
 		Description            string
@@ -218,6 +221,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		PipelineHooks          []exportentities.HookEntry
 		Permissions            map[string]int
 		HistoryLength          int64
+		OneAtATime             *bool
 	}
 	tsts := []struct {
 		name    string
@@ -225,6 +229,28 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		want    sdk.Workflow
 		wantErr bool
 	}{
+		// pipeline
+		{
+			name: "Simple workflow with mutex should not raise an error",
+			fields: fields{
+				PipelineName: "pipeline",
+				OneAtATime:   &strue,
+			},
+			wantErr: false,
+			want: sdk.Workflow{
+				HistoryLength: sdk.DefaultHistoryLength,
+				WorkflowData: &sdk.WorkflowData{
+					Node: sdk.Node{
+						Name: "pipeline",
+						Type: "pipeline",
+						Context: &sdk.NodeContext{
+							PipelineName: "pipeline",
+							Mutex:        true,
+						},
+					},
+				},
+			},
+		},
 		// pipeline
 		{
 			name: "Simple workflow should not raise an error",
@@ -275,7 +301,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		},
 		// root(pipeline-root) -> child(pipeline-child)
 		{
-			name: "Complexe workflow without joins should not raise an error",
+			name: "Complexe workflow without joins and mutex should not raise an error",
 			fields: fields{
 				Workflow: map[string]exportentities.NodeEntry{
 					"root": {
@@ -694,6 +720,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				PipelineHooks:          tt.fields.PipelineHooks,
 				Permissions:            tt.fields.Permissions,
 				HistoryLength:          &tt.fields.HistoryLength,
+				OneAtATime:             tt.fields.OneAtATime,
 			}
 			got, err := w.GetWorkflow()
 			if (err != nil) != tt.wantErr {
@@ -1036,6 +1063,31 @@ workflow:
     - aa_2
     when:
     - manual
+`,
+		},
+		{
+			name: "Workflow with mutex on root",
+			yaml: `name: mymutex
+version: v1.0
+one_at_a_time: true
+pipeline: env
+`,
+		},
+		{
+			name: "Workflow with mutex pipeline child",
+			yaml: `name: mymutex
+version: v1.0
+workflow:
+  env:
+    pipeline: env
+    one_at_a_time: true
+  env_2:
+    depends_on:
+    - env
+    when:
+    - success
+    pipeline: env
+    one_at_a_time: true
 `,
 		},
 	}
