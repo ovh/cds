@@ -1,6 +1,7 @@
 <ng-template let-context let-modal="modal" #consumerDetailsModal>
     <div class="header">
-        {{ 'auth_consumer_details_modal_title' | translate: { name: consumer.name } }} <div *ngIf="consumer.disabled" class="ui red label">
+        {{ 'auth_consumer_details_modal_title' | translate: { name: consumer.name } }} <div *ngIf="consumer.disabled"
+            class="ui red label">
             {{'user_auth_consumer_disabled' | translate}}</div>
     </div>
     <div class="content">
@@ -19,6 +20,10 @@
                         <div class="field">
                             <label>{{'user_auth_groups' | translate}}</label>
                             {{groups}}
+                            <span *ngIf="consumer.warnings" suiPopup [popupText]="warningText">
+                                {{' '}}<i class="info exclamation triangle icon yellow link"
+                                    title="{{warningText}}"></i>
+                            </span>
                         </div>
                     </div>
                     <div class="field">
@@ -72,13 +77,11 @@
                                 (click)="clickClose()">{{'btn_close' | translate }}</button>
                         </div>
                     </div>
-                    <div class="wide field">
+                    <div *ngIf="regenConsumerSigninToken" class="wide field">
                         <div class="ui wide field">
-                            <ng-container *ngIf="regenConsumer && regenConsumer.id">
-                                <app-consumer-display-signin-token [consumer]="regenConsumer"
-                                    [signinToken]="regenConsumerSigninToken">
-                                </app-consumer-display-signin-token>
-                            </ng-container>
+                            <app-consumer-display-signin-token [consumer]="consumer"
+                                [signinToken]="regenConsumerSigninToken">
+                            </app-consumer-display-signin-token>
                         </div>
                     </div>
                 </div>

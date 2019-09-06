@@ -23,7 +23,8 @@ import { AuthenticationState } from 'app/store/authentication.state';
 export enum CloseEventType {
     CHILD_DETAILS = 'CHILD_DETAILS',
     DELETE_OR_DETACH = 'DELETE_OR_DETACH',
-    CLOSED = 'CLOSED'
+    CLOSED = 'CLOSED',
+    REGEN = 'REGEN'
 }
 
 export class CloseEvent {
@@ -63,8 +64,8 @@ export class ConsumerDetailsModalComponent {
     columnsSessions: Array<Column<AuthSession>>;
     filterSessions: Filter<AuthSession>;
     consumerDeletedOrDetached: boolean;
-    regenConsumer: AuthConsumer;
     regenConsumerSigninToken: string;
+    warningText: string;
 
     constructor(
         private _modalService: SuiModalService,
@@ -117,8 +118,7 @@ export class ConsumerDetailsModalComponent {
                             {
                                 label: 'user_auth_info_scopes',
                                 class: ['info', 'circle', 'icon', 'primary', 'link'],
-                                title: 'user_auth_info_scopes',
-                                trigger: 'outsideClick'
+                                title: 'user_auth_info_scopes'
                             }
                         ]
                     }
@@ -187,8 +187,7 @@ export class ConsumerDetailsModalComponent {
         }
 
         this.open = true;
-        this.regenConsumer = undefined;
-        this.regenConsumerSigninToken = undefined;
+        this.regenConsumerSigninToken = null;
         const config = new TemplateModalConfig<boolean, boolean, void>(this.consumerDetailsModal);
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
@@ -217,6 +216,14 @@ export class ConsumerDetailsModalComponent {
             return;
         }
 
+        if (this.regenConsumerSigninToken) {
+            this.close.emit(<CloseEvent>{
+                type: CloseEventType.REGEN,
+                payload: this.consumer.id
+            });
+            return;
+        }
+
         this.close.emit(<CloseEvent>{
             type: CloseEventType.CLOSED
         });
@@ -231,6 +238,20 @@ export class ConsumerDetailsModalComponent {
         this.consumerDeletedOrDetached = false;
         this.scopes = this.consumer.scopes ? this.consumer.scopes.join(', ') : '*';
         this.groups = this.consumer.groups ? this.consumer.groups.map(g => g.name).join(', ') : '*';
+
+        if (this.consumer.warnings && this.consumer.warnings.length > 0) {
+            this.warningText = this.consumer.warnings.map(w => {
+                switch (w.type) {
+                    case 'last-group-removed':
+                        return this._translate.instant('user_auth_consumer_warning_last_group_removed', { name: w.group_name });
+                    case 'group-invalid':
+                        return this._translate.instant('user_auth_consumer_warning_group_invalid', { name: w.group_name });
+                    case 'group-removed':
+                        return this._translate.instant('user_auth_consumer_warning_group_removed', { name: w.group_name });
+                }
+                return w.type;
+            }).join(' ');
+        }
 
         this.menuItems = [].concat(defaultMenuItems);
         if (this.consumer.parent) {
@@ -284,11 +305,10 @@ export class ConsumerDetailsModalComponent {
     }
 
     clickRegen(revokeSession: boolean): void {
-        this.regenConsumer = undefined;
-        this.regenConsumerSigninToken = undefined;
-        this._userService.regenConsumer(this.user.username, this.consumer, revokeSession).subscribe(response => {
-            this.regenConsumerSigninToken = response.token;
-            this.regenConsumer = response.consumer;
+        this.regenConsumerSigninToken = null;
+        this._userService.regenConsumer(this.user.username, this.consumer, revokeSession).subscribe(res => {
+            this.consumer = res.consumer;
+            this.regenConsumerSigninToken = res.token;
         });
     }
 }

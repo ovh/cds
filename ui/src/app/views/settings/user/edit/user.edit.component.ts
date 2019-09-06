@@ -185,8 +185,7 @@ export class UserEditComponent implements OnInit {
                             {
                                 label: 'user_auth_info_scopes',
                                 class: ['info', 'circle', 'icon', 'primary', 'link'],
-                                title: 'user_auth_info_scopes',
-                                trigger: 'outsideClick'
+                                title: 'user_auth_info_scopes'
                             }
                         ]
                     }
@@ -197,6 +196,26 @@ export class UserEditComponent implements OnInit {
                 name: 'user_auth_groups',
                 selector: (c: AuthConsumer) => {
                     let icons = [];
+
+                    if (c.warnings && c.warnings.length > 0) {
+                        let text = c.warnings.map(w => {
+                            switch (w.type) {
+                                case 'last-group-removed':
+                                    return this._translate.instant('user_auth_consumer_warning_last_group_removed', { name: w.group_name });
+                                case 'group-invalid':
+                                    return this._translate.instant('user_auth_consumer_warning_group_invalid', { name: w.group_name });
+                                case 'group-removed':
+                                    return this._translate.instant('user_auth_consumer_warning_group_removed', { name: w.group_name });
+                            }
+                            return w.type;
+                        }).join(' ');
+
+                        icons.push({
+                            label: text,
+                            class: ['info', 'exclamation', 'triangle', 'icon', 'yellow', 'link'],
+                            title: text
+                        });
+                    }
 
                     return {
                         value: c.groups ? c.groups.map((g: Group) => g.name).join(', ') : '*',
@@ -590,6 +609,11 @@ export class UserEditComponent implements OnInit {
             } else {
                 this.getAuthData();
             }
+            return;
+        }
+
+        if (event.type === DetailsCloseEventType.REGEN) {
+            this.getAuthData();
             return;
         }
     }
