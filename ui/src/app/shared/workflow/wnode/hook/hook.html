@@ -2,10 +2,10 @@
      suiPopup [popupTemplate]="popupHook"
      popupPlacement="right" popupTrigger="outsideClick" #popup="suiPopup">
     <ng-container *ngIf="nodeRun && nodeRun.hook_event && nodeRun.hook_event.parent_workflow && !nodeRun.hook_event.parent_workflow.name">
-        <i class="ui icon {{icon}}"></i>
+        <i class="ui icon {{icon}}" [class.green]="nodeRun.hook_event.uuid === hook.uuid"></i>
     </ng-container>
     <ng-container *ngIf="nodeRun && nodeRun.hook_event && nodeRun.hook_event.parent_workflow && nodeRun.hook_event.parent_workflow.name">
-        <i class="ui icon {{icon}}" suiPopup popupHeader="Workflow" popupText="{{nodeRun.hook_event.parent_workflow.key}}/{{nodeRun.hook_event.parent_workflow.name}} #{{nodeRun.hook_event.parent_workflow.run}}"></i>
+        <i class="ui icon {{icon}}" [class.green]="nodeRun.hook_event.uuid === hook.uuid" suiPopup popupHeader="Workflow" popupText="{{nodeRun.hook_event.parent_workflow.key}}/{{nodeRun.hook_event.parent_workflow.name}} #{{nodeRun.hook_event.parent_workflow.run}}"></i>
     </ng-container>
     <ng-container *ngIf="!nodeRun || !nodeRun.hook_event || !nodeRun.hook_event.parent_workflow">
         <i class="ui icon {{icon}}"></i>
