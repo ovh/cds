@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"runtime"
 	"runtime/pprof"
 	"strings"
@@ -18,7 +19,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/observability"
@@ -47,10 +47,14 @@ type Router struct {
 	nbPanic                int
 	lastPanic              *time.Time
 	Stats                  struct {
-		Errors     *stats.Int64Measure
-		Hits       *stats.Int64Measure
-		SSEClients *stats.Int64Measure
-		SSEEvents  *stats.Int64Measure
+		Errors              *stats.Int64Measure
+		Hits                *stats.Int64Measure
+		SSEClients          *stats.Int64Measure
+		SSEEvents           *stats.Int64Measure
+		ServerRequestCount  *stats.Int64Measure
+		ServerRequestBytes  *stats.Int64Measure
+		ServerResponseBytes *stats.Int64Measure
+		ServerLatency       *stats.Float64Measure
 	}
 }
 
@@ -189,10 +193,24 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 
 	for i := range handlers {
 		cfg.Config[handlers[i].Method] = handlers[i]
+		name := runtime.FuncForPC(reflect.ValueOf(handlers[i].Handler).Pointer()).Name()
+		name = strings.Replace(name, ".func1", "", 1)
+		name = strings.Replace(name, "github.com/ovh/cds/engine/", "", 1)
+		log.Info("Registering handler %s on %s %s", name, handlers[i].Method, uri)
+		handlers[i].Name = name
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
+
+		responseWriter := &trackingResponseWriter{
+			writer: w,
+		}
+		if req.Body == nil {
+			responseWriter.reqSize = -1
+		} else if req.ContentLength > 0 {
+			responseWriter.reqSize = req.ContentLength
+		}
 
 		// Close indicates  to close the connection after replying to this request
 		req.Close = true
@@ -210,31 +228,49 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		observability.Record(r.Background, r.Stats.Hits, 1)
+		observability.Record(ctx, r.Stats.Hits, 1)
 
 		//Get route configuration
 		rc := cfg.Config[req.Method]
 		if rc == nil || rc.Handler == nil {
-			observability.Record(r.Background, r.Stats.Errors, 1)
+			observability.Record(ctx, r.Stats.Errors, 1)
 			service.WriteError(w, req, sdk.ErrNotFound)
 			return
 		}
 
+		ctx = observability.ContextWithTag(ctx,
+			observability.Handler, rc.Name,
+			observability.Host, req.Host,
+			observability.Path, req.URL.Path,
+			observability.Method, req.Method)
+
 		//Log request
 		start := time.Now()
 		defer func() {
+			if responseWriter.statusCode == 0 {
+				responseWriter.statusCode = 200
+			}
+			ctx = observability.ContextWithTag(ctx, observability.StatusCode, responseWriter.statusCode)
+
 			end := time.Now()
 			latency := end.Sub(start)
 			if rc.IsDeprecated {
-				log.Error("%-7s | %13v | DEPRECATED ROUTE | %v", req.Method, latency, req.URL)
+				log.Error("[%-3d] | %-7s | %13v | DEPRECATED ROUTE | %v [%s]", responseWriter.statusCode, req.Method, latency, req.URL, rc.Name)
 			} else {
-				log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
+				log.Info("[%-3d] | %-7s | %13v | %v [%s]", responseWriter.statusCode, req.Method, latency, req.URL, rc.Name)
 			}
+
+			observability.RecordFloat64(ctx, r.Stats.ServerLatency, float64(latency)/float64(time.Millisecond))
+			observability.Record(ctx, r.Stats.ServerRequestBytes, responseWriter.reqSize)
+			observability.Record(ctx, r.Stats.ServerResponseBytes, responseWriter.respSize)
+
 		}()
+
+		observability.Record(ctx, r.Stats.ServerRequestCount, 1)
 
 		for _, m := range r.Middlewares {
 			var err error
-			ctx, err = m(ctx, w, req, rc)
+			ctx, err = m(ctx, responseWriter, req, rc)
 			if err != nil {
 				observability.Record(r.Background, r.Stats.Errors, 1)
 				service.WriteError(w, req, err)
@@ -242,20 +278,20 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 			}
 		}
 
-		if err := rc.Handler(ctx, w, req); err != nil {
+		if err := rc.Handler(ctx, responseWriter.wrappedResponseWriter(), req); err != nil {
 			observability.Record(r.Background, r.Stats.Errors, 1)
-			observability.End(ctx, w, req)
-			service.WriteError(w, req, err)
+			observability.End(ctx, responseWriter, req)
+			service.WriteError(responseWriter, req, err)
 			return
 		}
 
 		// writeNoContentPostMiddleware is compliant Middleware Interface
 		// but no need to check ct, err in return
-		writeNoContentPostMiddleware(ctx, w, req, rc)
+		writeNoContentPostMiddleware(ctx, responseWriter, req, rc)
 
 		for _, m := range r.PostMiddlewares {
 			var err error
-			ctx, err = m(ctx, w, req, rc)
+			ctx, err = m(ctx, responseWriter, req, rc)
 			if err != nil {
 				log.Error("PostMiddlewares > %s", err)
 			}
@@ -525,28 +561,4 @@ func (r *Router) StatusPanic() sdk.MonitoringStatusLine {
 		statusPanic = sdk.MonitoringStatusWarn
 	}
 	return sdk.MonitoringStatusLine{Component: "Nb of Panics", Value: fmt.Sprintf("%d", r.nbPanic), Status: statusPanic}
-}
-
-// InitMetrics initialize prometheus metrics
-func (r *Router) InitMetrics(service, name string) error {
-	label := fmt.Sprintf("cds/%s/%s/router_errors", service, name)
-	r.Stats.Errors = stats.Int64(label, "number of errors", stats.UnitDimensionless)
-	label = fmt.Sprintf("cds/%s/%s/router_hits", service, name)
-	r.Stats.Hits = stats.Int64(label, "number of hits", stats.UnitDimensionless)
-	label = fmt.Sprintf("cds/%s/%s/sse_clients", service, name)
-	r.Stats.SSEClients = stats.Int64(label, "number of sse clients", stats.UnitDimensionless)
-	label = fmt.Sprintf("cds/%s/%s/sse_events", service, name)
-	r.Stats.SSEEvents = stats.Int64(label, "number of sse events", stats.UnitDimensionless)
-
-	tagCDSInstance, _ := tag.NewKey("cds")
-	tags := []tag.Key{tagCDSInstance}
-
-	log.Info("api> Stats initialized")
-
-	return observability.RegisterView(
-		observability.NewViewCount("router_errors", r.Stats.Errors, tags),
-		observability.NewViewCount("router_hits", r.Stats.Hits, tags),
-		observability.NewViewLast("sse_clients", r.Stats.SSEClients, tags),
-		observability.NewViewCount("sse_events", r.Stats.SSEEvents, tags),
-	)
 }

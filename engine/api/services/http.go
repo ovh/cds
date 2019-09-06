@@ -265,7 +265,7 @@ func doRequest(ctx context.Context, httpURL string, hash string, method, path st
 		return nil, resp.Header, resp.StatusCode, sdk.WrapError(errBody, "services.DoRequest> Unable to read body")
 	}
 
-	log.Debug("services.DoRequest> response code:%d body:%s", resp.StatusCode, string(body))
+	log.Debug("services.DoRequest> response code:%d", resp.StatusCode)
 
 	// if everything is fine, return body
 	if resp.StatusCode < 400 {
