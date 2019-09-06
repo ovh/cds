@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/google/gops/agent"
 	"github.com/spf13/cobra"
 	"go.opencensus.io/tag"
 
@@ -100,28 +99,12 @@ See $ engine config command for more details.
 
 		// Initialize config
 		conf := configImport(args, flagStartConfigFile, flagStartRemoteConfig, flagStartRemoteConfigKey, flagStartVaultAddr, flagStartVaultToken, false)
-
-		// gops debug
-		if conf.Debug.Enable {
-			if conf.Debug.RemoteDebugURL != "" {
-				log.Info("Starting gops agent on %s", conf.Debug.RemoteDebugURL)
-				if err := agent.Listen(&agent.Options{Addr: conf.Debug.RemoteDebugURL}); err != nil {
-					log.Error("Error on starting gops agent: %v", err)
-				}
-			} else {
-				log.Info("Starting gops agent locally")
-				if err := agent.Listen(nil); err != nil {
-					log.Error("Error on starting gops agent locally: %v", err)
-				}
-			}
-		}
-
 		ctx, cancel := context.WithCancel(context.Background())
 
 		// initialize context
 		instance := "cdsinstance"
-		if conf.Tracing.Enable && conf.Tracing.Name != "" {
-			instance = conf.Tracing.Name
+		if conf.Telemetry.Name != "" {
+			instance = conf.Telemetry.Name
 		}
 		tagCDSInstance, _ := tag.NewKey("cds")
 		ctx, _ = tag.New(ctx, tag.Upsert(tagCDSInstance, instance))
@@ -260,7 +243,7 @@ See $ engine config command for more details.
 			}
 
 			// Initialiaze tracing
-			if err := observability.Init(conf.Tracing, "cds-"+s.arg); err != nil {
+			if err := observability.Init(conf.Telemetry, "cds-"+s.arg); err != nil {
 				sdk.Exit("Unable to start tracing exporter: %v", err)
 			}
 		}

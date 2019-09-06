@@ -44,8 +44,7 @@ const (
 
 func configBootstrap(args []string) Configuration {
 	var conf Configuration
-	defaults.SetDefaults(&conf.Debug)
-	defaults.SetDefaults(&conf.Tracing)
+	defaults.SetDefaults(&conf.Telemetry)
 
 	// Default config if nothing is given
 	if len(args) == 0 {
