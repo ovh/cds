@@ -1,3 +1,4 @@
+<ng-container *ngIf="node">
 <div class="node workflowHook pointing" [class.active]="selected" [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
     [class.success]="noderun?.status === pipelineStatus.SUCCESS" [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED">
     <div class="title">
@@ -44,3 +45,4 @@
         </div>
     </div>
 </div>
+</ng-container>

@@ -120,7 +120,9 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
         }
         this._outgoingHook.outgoing_hook.hook_model_id = this.selectedOutgoingHookModel.id;
         this._outgoingHook.outgoing_hook.config = cloneDeep(this.selectedOutgoingHookModel.default_config);
+        this._outgoingHook.outgoing_hook.model = this.selectedOutgoingHookModel;
         this.displayConfig = Object.keys(this._outgoingHook.outgoing_hook.config).length !== 0;
+
 
         // Specific behavior for the 'workflow' hooks
         if (this.selectedOutgoingHookModel.name === 'Workflow') {
