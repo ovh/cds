@@ -663,6 +663,8 @@ export class WNodeOutgoingHook {
     hook_model_id: number;
     uuid: string;
     config: Map<string, WorkflowNodeHookConfigValue>;
+
+    model: WorkflowHookModel;
 }
 
 export class WNodeJoin {

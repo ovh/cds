@@ -71,8 +71,10 @@ export class WorkflowNodeHookComponent implements OnInit {
         if (this._hook) {
             if (this._hook.config['hookIcon']) {
                 this.icon = (<WorkflowNodeHookConfigValue>this._hook.config['hookIcon']).value.toLowerCase();
-            } else {
+            } else if (this.workflow.hook_models && this.workflow.hook_models[this.hook.hook_model_id]) {
                 this.icon = this.workflow.hook_models[this.hook.hook_model_id].icon.toLowerCase();
+            } else {
+                this.icon = this._hook.model.icon;
             }
         }
     }

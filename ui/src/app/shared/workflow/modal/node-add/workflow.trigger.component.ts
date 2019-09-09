@@ -70,10 +70,29 @@ export class WorkflowTriggerComponent {
         c.value = PipelineStatus.SUCCESS;
         c.operator = 'eq';
         this.destNode.context.conditions.plain.push(c);
+        if (!this.destNode.name) {
+            switch (this.destNode.type) {
+                case 'pipeline':
+                    this.destNode.name = this.project.pipeline_names.find(p => p.id === this.destNode.context.pipeline_id).name;
+                    break;
+                case 'outgoinghook':
+                    this.destNode.name = 'Outgoing';
+                    break;
+            }
+
+        }
+        if (!this.destNode.ref) {
+            this.destNode.ref = new Date().getTime().toString();
+        }
 
         let clonedWorkflow = cloneDeep(this.workflow);
         if (this.source && !this.isParent) {
-            let sourceNode = Workflow.getNodeByID(this.source.id, clonedWorkflow);
+            let sourceNode: WNode;
+            if (!clonedWorkflow.from_repository) {
+                sourceNode = Workflow.getNodeByID(this.source.id, clonedWorkflow);
+            } else {
+                sourceNode = Workflow.getNodeByRef(this.source.ref, clonedWorkflow);
+            }
             if (!sourceNode.triggers) {
                 sourceNode.triggers = new Array<WNodeTrigger>();
             }
