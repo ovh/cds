@@ -28,12 +28,17 @@ export class WorkflowStateModel {
     workflowRun: WorkflowRun;
     workflowNodeRun: WorkflowNodeRun;
     listRuns: Array<WorkflowRun>;
+
+    asCodeWorkflow: Workflow;
+    canSaveAsCode: boolean;
 }
 
 export function getInitialWorkflowState(): WorkflowStateModel {
     return {
         projectKey: null,
         workflow: null,
+        asCodeWorkflow: null,
+        canSaveAsCode: false,
         node: null,
         hook: null,
         editModal: false,
@@ -158,6 +163,17 @@ export class WorkflowState {
 
     @Action(actionWorkflow.UpdateWorkflow)
     update(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UpdateWorkflow) {
+        // As code Update Cache
+        if (action.payload.changes.from_repository) {
+            const state = ctx.getState();
+            ctx.setState({
+                ...state,
+                asCodeWorkflow: action.payload.changes,
+            });
+            return;
+        }
+
+        // Update Non as code workflow
         return this._http.put<Workflow>(
             `/project/${action.payload.projectKey}/workflows/${action.payload.workflowName}`,
             action.payload.changes
@@ -314,6 +330,22 @@ export class WorkflowState {
     @Action(actionWorkflow.AddNotificationWorkflow)
     addNotification(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.AddNotificationWorkflow) {
         const state = ctx.getState();
+
+        // As code Update Cache
+        if (state.workflow && state.workflow.from_repository) {
+            const notificationsAsCode = state.asCodeWorkflow.notifications || [];
+            const asCodeWorkflow: Workflow = {
+                ...state.asCodeWorkflow,
+                notifications: notificationsAsCode.concat([action.payload.notification])
+            };
+            ctx.setState({
+                ...state,
+                asCodeWorkflow: asCodeWorkflow
+            });
+            return;
+        }
+
+
         const notifications = state.workflow.notifications || [];
         const workflow: Workflow = {
             ...state.workflow,
@@ -330,6 +362,25 @@ export class WorkflowState {
     @Action(actionWorkflow.UpdateNotificationWorkflow)
     updateNotification(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UpdateNotificationWorkflow) {
         const state = ctx.getState();
+
+        // As code Update Cache
+        if (state.workflow && state.workflow.from_repository) {
+            const asCodeWorkflow: Workflow = {
+                ...state.asCodeWorkflow,
+                notifications: state.asCodeWorkflow.notifications.map((no) => {
+                    if (no.id === action.payload.notification.id) {
+                        return action.payload.notification;
+                    }
+                    return no;
+                })
+            };
+            ctx.setState({
+                ...state,
+                asCodeWorkflow: asCodeWorkflow
+            });
+            return;
+        }
+
         const workflow: Workflow = {
             ...state.workflow,
             notifications: state.workflow.notifications.map((no) => {
@@ -350,6 +401,22 @@ export class WorkflowState {
     @Action(actionWorkflow.DeleteNotificationWorkflow)
     deleteNotification(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.DeleteNotificationWorkflow) {
         const state = ctx.getState();
+
+        // As code Update Cache
+        if (state.workflow && state.workflow.from_repository) {
+            const asCodeWorkflow: Workflow = {
+                ...state.asCodeWorkflow,
+                notifications: state.asCodeWorkflow.notifications.filter(no => {
+                    return action.payload.notification.id !== no.id;
+                })
+            };
+            ctx.setState({
+                ...state,
+                asCodeWorkflow: asCodeWorkflow,
+            });
+            return;
+        }
+
         const workflow: Workflow = {
             ...state.workflow,
             notifications: state.workflow.notifications.filter(no => {
@@ -368,6 +435,19 @@ export class WorkflowState {
     @Action(actionWorkflow.UpdateEventIntegrationsWorkflow)
     addEventIntegration(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UpdateEventIntegrationsWorkflow) {
         const state = ctx.getState();
+        // As code Update Cache
+        if (state.workflow && state.workflow.from_repository) {
+            const asCodeWorkflow: Workflow = {
+                ...state.asCodeWorkflow,
+                event_integrations: action.payload.eventIntegrations
+            };
+            ctx.setState({
+                ...state,
+                asCodeWorkflow: asCodeWorkflow,
+            });
+            return;
+        }
+
         const workflow: Workflow = {
             ...state.workflow,
             event_integrations: action.payload.eventIntegrations
@@ -383,6 +463,19 @@ export class WorkflowState {
     @Action(actionWorkflow.DeleteEventIntegrationWorkflow)
     deleteEventIntegration(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.DeleteEventIntegrationWorkflow) {
         const state = ctx.getState();
+        // As code Update Cache
+        if (state.workflow && state.workflow.from_repository) {
+            const asCodeWorkflow: Workflow = {
+                ...state.asCodeWorkflow,
+                event_integrations: state.asCodeWorkflow.event_integrations.filter((integ) => integ.id !== action.payload.integrationId)
+            };
+            ctx.setState({
+                ...state,
+                asCodeWorkflow: asCodeWorkflow,
+            });
+            return;
+        }
+
 
         return this._http.delete<null>(
             `/project/${action.payload.projectKey}/workflows/` +
@@ -405,12 +498,29 @@ export class WorkflowState {
     @Action(actionWorkflow.AddNodeTriggerWorkflow)
     addNodeTrigger(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.AddNodeTriggerWorkflow) {
         const state = ctx.getState();
-        let currentWorkflow = cloneDeep(state.workflow);
+
+        let currentWorkflow: Workflow;
+
+        // As code Update Cache
+        if (state.workflow && state.workflow.from_repository) {
+            currentWorkflow = cloneDeep(state.asCodeWorkflow);
+        } else {
+            currentWorkflow = cloneDeep(state.workflow);
+        }
         let node = Workflow.getNodeByID(action.payload.parentId, currentWorkflow);
         if (!node.triggers) {
             node.triggers = new Array<WNodeTrigger>();
         }
         node.triggers.push(action.payload.trigger);
+
+        // As code Update Cache
+        if (state.workflow && state.workflow.from_repository) {
+            ctx.setState({
+                ...state,
+                asCodeWorkflow: currentWorkflow
+            });
+            return;
+        }
 
         const workflow: Workflow = {
             ...state.workflow,
@@ -432,6 +542,25 @@ export class WorkflowState {
     @Action(actionWorkflow.AddJoinWorkflow)
     addJoinTrigger(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.AddJoinWorkflow) {
         const state = ctx.getState();
+
+        // As code Update Cache
+        if (state.workflow && state.workflow.from_repository) {
+            let joinsAsCode = state.asCodeWorkflow.workflow_data.joins ? [...state.asCodeWorkflow.workflow_data.joins] : [];
+            joinsAsCode.push(action.payload.join);
+            const wasc: Workflow = {
+                ...state.asCodeWorkflow,
+                workflow_data: {
+                    ...state.asCodeWorkflow.workflow_data,
+                    joins: joinsAsCode
+                }
+            };
+            ctx.setState({
+                ...state,
+                asCodeWorkflow: wasc
+            });
+            return;
+        }
+
         let joins = state.workflow.workflow_data.joins ? [...state.workflow.workflow_data.joins] : [];
         joins.push(action.payload.join);
 
@@ -469,6 +598,25 @@ export class WorkflowState {
     @Action(actionWorkflow.AddHookWorkflow)
     addHook(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.AddHookWorkflow) {
         const state = ctx.getState();
+
+        if (state.workflow && state.workflow.from_repository) {
+            const hooksAsCode = state.asCodeWorkflow.workflow_data.node.hooks || [];
+            const rootAsCode = Object.assign({}, state.asCodeWorkflow.workflow_data.node, <WNode>{
+                hooks: hooksAsCode.concat([action.payload.hook])
+            });
+            const wasc: Workflow = {
+                ...state.asCodeWorkflow,
+                workflow_data: {
+                    ...state.asCodeWorkflow.workflow_data,
+                    node: rootAsCode
+                }
+            };
+            ctx.setState({
+                ...state,
+                asCodeWorkflow: wasc
+            });
+            return;
+        }
         const hooks = state.workflow.workflow_data.node.hooks || [];
         const root = Object.assign({}, state.workflow.workflow_data.node, <WNode>{
             hooks: hooks.concat([action.payload.hook])
@@ -491,6 +639,30 @@ export class WorkflowState {
     @Action(actionWorkflow.UpdateHookWorkflow)
     updateHook(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UpdateHookWorkflow) {
         const state = ctx.getState();
+
+        if (state.workflow && state.workflow.from_repository) {
+            const rootAsCode = Object.assign({}, state.asCodeWorkflow.workflow_data.node, <WNode>{
+                hooks: state.asCodeWorkflow.workflow_data.node.hooks.map((hook) => {
+                    if (hook.uuid === action.payload.hook.uuid) {
+                        return action.payload.hook;
+                    }
+                    return hook;
+                })
+            });
+            const wasc: Workflow = {
+                ...state.asCodeWorkflow,
+                workflow_data: {
+                    ...state.asCodeWorkflow.workflow_data,
+                    node: rootAsCode
+                }
+            };
+            ctx.setState({
+                ...state,
+                asCodeWorkflow: wasc
+            });
+            return;
+        }
+
         const root = Object.assign({}, state.workflow.workflow_data.node, <WNode>{
             hooks: state.workflow.workflow_data.node.hooks.map((hook) => {
                 if (hook.uuid === action.payload.hook.uuid) {
@@ -517,6 +689,25 @@ export class WorkflowState {
     @Action(actionWorkflow.DeleteHookWorkflow)
     deleteHook(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.DeleteHookWorkflow) {
         const state = ctx.getState();
+
+        if (state.workflow && state.workflow.from_repository) {
+            const rootAsCode = Object.assign({}, state.asCodeWorkflow.workflow_data.node, <WNode>{
+                hooks: state.asCodeWorkflow.workflow_data.node.hooks.filter((hook) => hook.uuid !== action.payload.hook.uuid)
+            });
+            const wasc: Workflow = {
+                ...state.asCodeWorkflow,
+                workflow_data: {
+                    ...state.asCodeWorkflow.workflow_data,
+                    node: rootAsCode,
+                }
+            };
+            ctx.setState({
+                ...state,
+                asCodeWorkflow: wasc
+            });
+            return;
+        }
+
         const root = Object.assign({}, state.workflow.workflow_data.node, <WNode>{
             hooks: state.workflow.workflow_data.node.hooks.filter((hook) => hook.uuid !== action.payload.hook.uuid)
         });
@@ -627,10 +818,15 @@ export class WorkflowState {
             tap(wf => {
                 const state = ctx.getState();
                 let canEdit = wf.permissions.writable;
+                let wasc: Workflow;
+                if (wf.from_repository) {
+                    wasc = cloneDeep(wf);
+                }
                 ctx.setState({
                     ...state,
                     projectKey: action.payload.projectKey,
                     workflow: wf,
+                    asCodeWorkflow: wasc,
                     workflowRun: null,
                     workflowNodeRun: null,
                     canEdit: state.workflowRun ? false : canEdit,

@@ -8,32 +8,28 @@
         </ng-container>
         <ng-container *ngIf="node && !noderun">
             <a class="item" (click)="sendEvent('pipeline')"
-                [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || readonly">
+                [class.disabled]="readonly">
                     {{ 'workflow_node_trigger_add' | translate }}
             </a>
             <a class="item" (click)="sendEvent('parent')"
-                [class.disabled]="!workflow || workflow.workflow_data.node.id !== node.id ||  (workflow.from_repository && workflow.from_repository.length > 0) || readonly">
+                [class.disabled]="workflow.workflow_data.node.id !== node.id || readonly">
                     {{ 'workflow_node_parent' | translate }}
             </a>
-            <a class="item" (click)="sendEvent('fork')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
-            || readonly">
+            <a class="item" (click)="sendEvent('fork')" [class.disabled]="readonly">
                     {{ 'workflow_node_fork_add' | translate }}
             </a>
-            <a class="item" (click)="sendEvent('join')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
-           || readonly">
+            <a class="item" (click)="sendEvent('join')" [class.disabled]="readonly">
                     {{ 'workflow_node_join_add' | translate }}
             </a>
-            <a class="item" (click)="sendEvent('join_link')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
-           || readonly">
+            <a class="item" (click)="sendEvent('join_link')" [class.disabled]="readonly">
                 {{ 'workflow_node_join_link' | translate }}
             </a>
             <hr>
             <a class="item" (click)="sendEvent('hook')"
-                [class.disabled]="!workflow || !workflow.workflow_data || workflow.workflow_data.node.id !== node.id || (workflow.from_repository && workflow.from_repository.length > 0) || readonly">
+                [class.disabled]="!workflow.workflow_data || workflow.workflow_data.node.id !== node.id || readonly">
                 {{ 'workflow_node_hook_add' | translate }}
             </a>
-            <a class="item" (click)="sendEvent('outgoinghook')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
-           || readonly">
+            <a class="item" (click)="sendEvent('outgoinghook')" [class.disabled]="readonly">
                     {{ 'workflow_node_outgoing_hook' | translate }}
             </a>
             <hr>
@@ -49,7 +45,7 @@
                 </a>
             </ng-container>
             <hr>
-            <a class="item" (click)="sendEvent('delete')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || readonly
+            <a class="item" (click)="sendEvent('delete')" [class.disabled]="readonly
                 || node.id === workflow.workflow_data.node.id">
                     {{ 'btn_delete' | translate }}
             </a>

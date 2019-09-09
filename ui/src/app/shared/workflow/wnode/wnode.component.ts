@@ -270,8 +270,15 @@ export class WorkflowWNodeComponent implements OnInit {
     }
 
     createFork(): void {
-        let n = Workflow.getNodeByID(this.node.id, this.workflow);
+        let n: WNode;
+        if (this.workflow.from_repository) {
+            n = Workflow.getNodeByRef(this.node.ref, this.workflow);
+        } else {
+            n = Workflow.getNodeByID(this.node.id, this.workflow);
+        }
         let fork = new WNode();
+        fork.name = 'fork';
+        fork.ref = new Date().getTime().toString();
         fork.type = WNodeType.FORK;
         let t = new WNodeTrigger();
         t.child_node = fork;
@@ -289,6 +296,8 @@ export class WorkflowWNodeComponent implements OnInit {
 
     createJoin(): void {
         let join = new WNode();
+        join.name = 'join';
+        join.ref = new Date().getTime().toString();
         join.type = WNodeType.JOIN;
         join.parents = new Array<WNodeJoin>();
         let p = new WNodeJoin();
