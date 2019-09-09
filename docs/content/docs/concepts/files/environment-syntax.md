@@ -41,9 +41,9 @@ values:
       with a project variable inside {{.cds.proj.var}}
 ```
 
-All variables in CDS have a type: `string` is the default type and can be omitted, `number`, `boolean`, and `text`. You can also define `password`, the value in the file is encrypted. You can generated an encrypted value with the command `cdsctl encrypt MYPROJECT my-data my-super-secret-value`.
+All variables in CDS have a type: `string` (the default type that can be omitted), `number`, `boolean`, and `text`. You can also define `password`, the value in the file is encrypted. You can generate an encrypted value with the command `cdsctl encrypt MYPROJECT my-data my-super-secret-value`.
 
-All values can references other variables, thanks to the CDS interpolation engine:
+All values can reference other variables, thanks to the CDS interpolation engine:
 ```yaml
   myTextVariable:
     type: text
@@ -66,11 +66,11 @@ The environment files can be exported and imported from CDS with the following c
 ➜  ~ cdsctl environment import
 ```
 
-The files can also relies in your git repositories if your workflow definition is [stored in your git repository]({{< relref "../../tutorials/init_workflow_with_cdsctl/" >}}).
+The files can also lie in your git repositories if your workflow definition is [stored in your git repository]({{< relref "../../tutorials/init_workflow_with_cdsctl/" >}}).
 
 ## Usage in a pipeline
 
-While running a pipeline attached to this environment, you can manipulate those variables in too ways.
+While running a pipeline attached to this environment, you can manipulate those variables in too ways:
 
  * From the interpolation engine using `{{.cds.env.MyStringVariable}}`
  * From the environment variables using 

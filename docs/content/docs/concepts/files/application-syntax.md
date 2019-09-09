@@ -7,7 +7,7 @@ card:
   weight: 3
 ---
 
-An **Application** allows you to enable some features of CDS within a workflow. 
+An **Application** allows you to enable some features of CDS within a workflow:
 
 * Variables
 * Keys
@@ -51,7 +51,7 @@ deployments:
 ```
 
 ## Variables
-Define application scoped variables as a dictionnary. Each Variable must have a `type` and a `value`. You will be able to play with those variables using `{{.cds.app.my-variable}}` and `CDS_APP_MY_VARIABLE`. The recognized types are `string`, `password`, `text`, `boolean` or `number`. By default the type is `string`.
+Define application scoped variables as a dictionary. Each Variable must have a `type` and a `value`. You will be able to play with those variables using `{{.cds.app.my-variable}}` and `CDS_APP_MY_VARIABLE`. The recognized types are `string`, `password`, `text`, `boolean` or `number`. By default the type is `string`.
 
 To be able to write secret in the CDS yaml files, you have to encrypt data within your CDS project.
 ```bash
@@ -101,7 +101,7 @@ keys:
 To be able to link an application to a VCS, you must have at least one [repository manager]({{< relref "../../integrations" >}}) properly configured on your CDS instance.
 Each application in CDS can be linked to one repository on a repository manager. 
 
-Defining your VCS setup on an application will allow to benefit for the deep integration of CDS and the Repository Manager (such as GitHub). So you would be able to setup webhooks, browser through commits and publish you release easily.
+Defining your VCS setup on an application will allow to benefit for the deep integration of CDS and the Repository Manager (such as GitHub). So you would be able to setup webhooks, browse through commits and publish your releases easily.
 
 | Setting               | Definition                                                                                   |
 | -------------         |----------------------------------------------------------------------------------------------|
@@ -127,13 +127,13 @@ vcs_ssh_key: proj-ssh-key
 vcs_pgp_key: proj-pgp-key
 ```
 
-Now we this setup you will be able to use the actions [CheckoutApplication]({{< relref "../../actions/builtin-checkoutapplication/" >}}) and [Release]({{< relref "../../actions/builtin-release/" >}}) in your pipelines.
+Now with this setup you will be able to use the actions [CheckoutApplication]({{< relref "../../actions/builtin-checkoutapplication/" >}}) and [Release]({{< relref "../../actions/builtin-release/" >}}) in your pipelines.
 
 ## Deployment
 
 In this section, you can define the setup to deploy your application on a platform. To be able to setup it, you must have at least one [integration supporting deployment]({{< relref "../../integrations" >}}) properly configured on your CDS instance.
 
-The `deployments` section is the list of the settings you cant to use to deployment on several platform. For instance, if you want to be able to be deploy the same application, from the same helm chart with subtle changes in variables, depending on the cluster, you can set the following configuration.
+The `deployments` section is the list of the settings you can use to deploy to several platforms. For instance, if you want to be able to be deploy the same application, from the same helm chart with subtle changes in variables, depending on the cluster, you can set the following configuration.
 
 ```yaml
 version: v1.0

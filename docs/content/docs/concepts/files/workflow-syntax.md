@@ -7,7 +7,7 @@ card:
 ---
 
 A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. 
-Consider the folowwing workflow wich implements a basic two-stages workflow
+Consider the following workflow wich implements a basic two-stage workflow:
 
 ```yaml
 name: my-workflow
@@ -28,7 +28,7 @@ hooks:
   - type: RepositoryWebHook
 ```
 
-Here there are two major things to understand: `workflow` and `hooks`. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies. In this example, the `deploy` pipeline will be triggered after the `build` pipeline.
+There are two major things to understand: `workflow` and `hooks`. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies. In this example, the `deploy` pipeline will be triggered after the `build` pipeline.
 
 ## Run Conditions
 
