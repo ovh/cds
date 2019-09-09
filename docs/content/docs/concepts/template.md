@@ -18,7 +18,7 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
 There are four types of custom parameters available in a template (string, boolean, repository, json).
 ![Parameters](/images/workflow_template_parameters.png)
 
-There are some others parameters that are automatically added by CDS:
+There are some other parameters that are automatically added by CDS:
 
 * **name**: the name of the generated workflow given when template is applied (could be used to set the workflow name but also application names for example).
 * **id**: the id of the template instance, this is unique for each generated workflow and reused when a template is re-applied (you can append this value to pipeline names to prevent override of existing pipeline).
@@ -43,7 +43,7 @@ cdsctl template bulk
 ![Bulk](/images/workflow_template_bulk_ui.gif)
 
 ## Import/Create/Export
-With cdsctl you can import/export a template from/to yaml files with cdsctl, you can also create a template in the ui from **settings** menu:
+With cdsctl you can import/export a template from/to yaml files, you can also create a template in the UI from the **settings** menu:
 ```sh
 cdsctl template push ./my-template/*.yml #from local files
 cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/tests/fixtures/template/simple/example-simple.yml #from remote files
@@ -54,4 +54,4 @@ cdsctl template pull shared.infra/my-template --output-dir ./my-template
 
 ## Delete/Change template group
 When removing a template, all info about the template and its instances are removed but all generated stuff will not be deleted.
-With the CDS ui you can change the template name or group, this will not affect template instances or generated workflow but no group members will not be able to re-apply the template anymore. 
+With the CDS UI you can change the template name or group, this will not affect template instances or generated workflow but no group members will be able to re-apply the template anymore. 

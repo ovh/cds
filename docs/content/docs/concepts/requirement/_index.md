@@ -6,7 +6,7 @@ card:
   weight: 3
 ---
 
-Type of requirements:
+Requirement types:
 
 - Binary
 - Model
@@ -18,11 +18,11 @@ Type of requirements:
 
 A [Job]({{< relref "/docs/concepts/job.md" >}}) will be executed by a **worker**.
 
-CDS will choose and provision a worker for dependending on the **requirements** you define on your job.
+CDS will choose and provision a worker dependending on the **requirements** you define for your job.
 
 You can set as many requirements as you want, following these rules:
 
 - Only one model can be set as requirement
 - Only one hostname can be set as requirement
-- Only one OS & Architecture requirement can be set as at a time
+- Only one OS & Architecture requirement can be set at a time
 - Memory and Services requirements are available only on Docker models
