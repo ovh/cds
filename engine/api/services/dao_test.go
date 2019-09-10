@@ -37,10 +37,9 @@ func TestDAO(t *testing.T) {
 
 	var srv = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
-			Name:       sdk.RandomString(10),
-			Type:       "type-service-test",
-			PublicKey:  publicKey,
-			Maintainer: *u,
+			Name:      sdk.RandomString(10),
+			Type:      "type-service-test",
+			PublicKey: publicKey,
 		},
 	}
 

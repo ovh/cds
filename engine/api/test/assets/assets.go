@@ -451,7 +451,6 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 			Name:       hConsumer.Name,
 			Type:       services.TypeHatchery,
 			PublicKey:  publicKey,
-			Maintainer: *usr1,
 			ConsumerID: &hConsumer.ID,
 		},
 	}
@@ -488,7 +487,6 @@ func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string, 
 			Name:       hConsumer.Name,
 			Type:       serviceType,
 			PublicKey:  publicKey,
-			Maintainer: *usr1,
 			ConsumerID: &hConsumer.ID,
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -247,7 +249,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 
 	var w = new(internal.CurrentWorker)
 	fs := afero.NewOsFs()
-	basedir := "test-" + sdk.RandomString(10)
+	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
 	log.Debug("creating basedir %s", basedir)
 	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
 

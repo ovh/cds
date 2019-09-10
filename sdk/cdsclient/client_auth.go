@@ -74,3 +74,9 @@ func (c *client) AuthSessionDelete(username, id string) error {
 	_, err := c.DeleteJSON(context.Background(), "/user/"+username+"/auth/session/"+id, nil)
 	return err
 }
+
+func (c *client) AuthMe() (sdk.AuthCurrentConsumerResponse, error) {
+	var r sdk.AuthCurrentConsumerResponse
+	_, err := c.GetJSON(context.Background(), "/auth/me", &r)
+	return r, err
+}

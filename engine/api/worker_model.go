@@ -310,7 +310,7 @@ func (api *API) getWorkerModelsForProjectHandler() service.Handler {
 
 func (api *API) getWorkerModelsForGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO move this code in a permGroupID middleware
+		// TODO move this code in a permGroupName middleware
 		groupID, err := requestVarInt(r, "groupID")
 		if err != nil {
 			return err

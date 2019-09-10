@@ -344,3 +344,17 @@ func (api *API) postAuthDetachHandler() service.Handler {
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
+
+func (api *API) getAuthMe() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		c := getAPIConsumer(ctx)
+		s := getAuthSession(ctx)
+		if c == nil || s == nil {
+			return sdk.WithStack(sdk.ErrUnauthorized)
+		}
+		return service.WriteJSON(w, sdk.AuthCurrentConsumerResponse{
+			Consumer: *c,
+			Session:  *s,
+		}, http.StatusOK)
+	}
+}

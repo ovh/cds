@@ -81,7 +81,7 @@ func (api *API) getActionsForProjectHandler() service.Handler {
 
 func (api *API) getActionsForGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO move this in a permGroupID middleware
+		// TODO move to the permGroupName middleware
 		groupID, err := requestVarInt(r, "groupID")
 		if err != nil {
 			return err

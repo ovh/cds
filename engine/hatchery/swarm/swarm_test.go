@@ -27,6 +27,9 @@ func testSwarmHatchery(t *testing.T) *HatcherySwarm {
 
 	h := &HatcherySwarm{
 		dockerClients: map[string]*dockerClient{},
+		Config: HatcheryConfiguration{
+			DisableDockerOptsOnRequirements: false,
+		},
 	}
 	h.dockerClients["default"] = &dockerClient{Client: *c, MaxContainers: 2, name: "default"}
 	return h

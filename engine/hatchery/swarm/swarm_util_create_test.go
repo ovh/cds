@@ -4,12 +4,13 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	types "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
 	context "golang.org/x/net/context"
 
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 )
@@ -145,15 +146,20 @@ func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 	}
 
 	// RegisterOnly = true, this will pull image if image is not found
-	spawnArgs := hatchery.SpawnArguments{RegisterOnly: true}
+	spawnArgs := hatchery.SpawnArguments{
+		RegisterOnly: true,
+		Model: &sdk.Model{
+			Image: args.image,
+		},
+	}
 	err := h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
-	test.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
@@ -181,17 +187,22 @@ func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
 	}
 
 	err := h.pullImage(h.dockerClients["default"], args.image, timeoutPullImage, sdk.Model{})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
-	spawnArgs := hatchery.SpawnArguments{RegisterOnly: false}
+	spawnArgs := hatchery.SpawnArguments{
+		RegisterOnly: false,
+		Model: &sdk.Model{
+			Image: args.image,
+		},
+	}
 	err = h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
-	test.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
@@ -208,15 +219,20 @@ func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
 	}
 
 	err := h.createNetwork(context.TODO(), h.dockerClients["default"], args.network)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
-	spawnArgs := hatchery.SpawnArguments{RegisterOnly: false}
+	spawnArgs := hatchery.SpawnArguments{
+		RegisterOnly: false,
+		Model: &sdk.Model{
+			Image: args.image,
+		},
+	}
 	err = h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
-	test.NoError(t, err)
+	require.NoError(t, err)
 }

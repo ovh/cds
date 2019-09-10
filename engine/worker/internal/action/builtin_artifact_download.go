@@ -31,7 +31,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 		destPath = "."
 	}
 
-	// TODO: we should remove this
+	// TODO: we should remove this issue #4595
 	if !enabled {
 		wk.SendLog(ctx, workerruntime.LevelDebug, "Artifact Download is disabled")
 		return res, nil

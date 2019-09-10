@@ -8,6 +8,7 @@ import (
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/vcs/git"
+	"github.com/spf13/afero"
 )
 
 func RunCheckoutApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
@@ -54,6 +55,13 @@ func RunCheckoutApplication(ctx context.Context, wk workerruntime.Runtime, a sdk
 	if directory != nil {
 		dir = directory.Value
 	}
-
-	return gitClone(ctx, wk, params, gitURL, dir, auth, opts)
+	workdir, err := workerruntime.WorkingDirectory(ctx)
+	if err != nil {
+		return sdk.Result{}, fmt.Errorf("Unable to find current working directory: %v", err)
+	}
+	workdirPath := workdir.Name()
+	if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+		workdirPath, _ = x.RealPath(workdirPath)
+	}
+	return gitClone(ctx, wk, params, gitURL, workdirPath, dir, auth, opts)
 }

@@ -53,23 +53,23 @@ func (c cmds) Strings() []string {
 }
 
 type cmd struct {
-	dir  string
-	cmd  string
-	args []string
+	workdir string
+	cmd     string
+	args    []string
 }
 
 func (c cmd) String() string {
-	return c.cmd + " " + strings.Join(c.args, " ")
+	return c.cmd + " " + strings.Join(c.args, " ") + " from directory" + c.workdir
 }
 
 func getRepoURL(repo string, auth *AuthOpts) (string, error) {
 	if strings.HasPrefix(repo, "http://") || strings.HasPrefix(repo, "ftp://") || strings.HasPrefix(repo, "ftps://") {
-		return "", fmt.Errorf("Git protocol not supported")
+		return "", sdk.WithStack(fmt.Errorf("Git protocol not supported"))
 	}
 	if auth != nil && strings.HasPrefix(repo, "https://") {
 		u, err := url.Parse(repo)
 		if err != nil {
-			return "", err
+			return "", sdk.WithStack(err)
 		}
 		u.User = url.UserPassword(auth.Username, auth.Password)
 		return u.String(), nil
@@ -86,14 +86,18 @@ func runGitCommands(repo string, commands []cmd, auth *AuthOpts, output *OutputO
 
 func runGitCommandsOverSSH(commands []cmd, auth *AuthOpts, output *OutputOpts) error {
 	if auth == nil {
-		return fmt.Errorf("Authentication is required for git over ssh")
+		return sdk.WithStack(fmt.Errorf("Authentication is required for git over ssh"))
 	}
 
-	keyDir := filepath.Dir(auth.PrivateKey.Filename)
+	pkAbsFileName, err := filepath.Abs(auth.PrivateKey.Filename)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	keyDir := filepath.Dir(pkAbsFileName)
 
 	gitSSHCmd := exec.Command("ssh").Path
-	gitSSHCmd += " -i " + auth.PrivateKey.Filename
-	gitSSHCmd += " -o StrictHostKeyChecking=no"
+	gitSSHCmd += " -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
+	gitSSHCmd += " -i " + pkAbsFileName
 
 	var wrapper string
 	if sdk.GOOS == "windows" {
@@ -107,7 +111,7 @@ func runGitCommandsOverSSH(commands []cmd, auth *AuthOpts, output *OutputOpts) e
 
 	wrapperPath := filepath.Join(keyDir, "gitwrapper")
 	if err := ioutil.WriteFile(wrapperPath, []byte(wrapper), os.FileMode(0700)); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	return runGitCommandRaw(commands, output, "GIT_SSH="+wrapperPath)
@@ -123,9 +127,7 @@ func runGitCommandRaw(cmds cmds, output *OutputOpts, envs ...string) error {
 			c.args[i] = os.ExpandEnv(arg)
 		}
 		cmd := exec.Command(c.cmd, c.args...)
-		if c.dir != "" {
-			cmd.Dir = os.ExpandEnv(c.dir)
-		}
+		cmd.Dir = c.workdir
 		cmd.Env = osEnv
 
 		if verbose {
@@ -138,7 +140,7 @@ func runGitCommandRaw(cmds cmds, output *OutputOpts, envs ...string) error {
 		}
 
 		if err := cmd.Start(); err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 
 		//close stdin
@@ -155,9 +157,9 @@ func runGitCommandRaw(cmds cmds, output *OutputOpts, envs ...string) error {
 					}
 					return fmt.Errorf("Command fail: %d", status.ExitStatus())
 				}
-				return exiterr
+				return sdk.WithStack(exiterr)
 			}
-			return err
+			return sdk.WithStack(err)
 		}
 	}
 	return nil

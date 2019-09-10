@@ -59,12 +59,6 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 			workerModelLastModified, _ := img.Metadata["worker_model_last_modified"]
 			if workerModelName == spawnArgs.Model.Name && fmt.Sprintf("%s", workerModelLastModified) == fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()) {
 				withExistingImage = true
-				// TODO
-				//var jobInfo string
-				//if spawnArgs.JobID != 0 {
-				//	jobInfo = fmt.Sprintf(" job:%d", spawnArgs.JobID)
-				//}
-				//log.Debug("spawnWorker> existing image found for worker:%s model:%s img:%s %s %s", name, spawnArgs.Model.Name, img.ID, jobInfo, spawnArg.LogInfo)
 				imageID = img.ID
 				break
 			}

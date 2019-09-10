@@ -1,18 +1,12 @@
 package action
 
 import (
-	"context"
-	"os"
 	"testing"
 
-	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func init() {
@@ -91,69 +85,8 @@ echo "lol"`,
 
 }
 
-type TestWorker struct {
-	t *testing.T
-}
-
-func (w TestWorker) Blur(i interface{}) error {
-	w.t.Log("Blur")
-	return nil
-}
-
-func (_ TestWorker) Client() cdsclient.WorkerInterface {
-	return nil
-}
-
-func (_ TestWorker) Environ() []string {
-	return os.Environ()
-}
-
-func (_ TestWorker) HTTPPort() int32 {
-	return 0
-}
-
-func (_ TestWorker) Name() string {
-	return "test"
-}
-
-func (_ TestWorker) Workspace() afero.Fs {
-	return afero.NewOsFs()
-}
-
-func (_ TestWorker) Register(ctx context.Context) error {
-	return nil
-}
-func (_ TestWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
-	return nil
-}
-func (_ TestWorker) ProcessJob(job sdk.WorkflowNodeJobRunData) (sdk.Result, error) {
-	return sdk.Result{}, nil
-}
-func (w TestWorker) SendLog(ctx context.Context, level workerruntime.Level, format string) {
-	w.t.Log("SendLog> [" + string(level) + "] " + format)
-
-}
-func (_ TestWorker) Unregister() error {
-	return nil
-}
-
-func (_ TestWorker) InstallKey(key sdk.Variable, destinationPath string) (*workerruntime.KeyResponse, error) {
-	return nil, nil
-}
-
-var _ workerruntime.Runtime = new(TestWorker)
-
 func TestRunScriptAction(t *testing.T) {
-	wk := TestWorker{t}
-	wdFS := afero.NewOsFs()
-	wdName := sdk.RandomString(10)
-	require.NoError(t, wdFS.MkdirAll(wdName, os.FileMode(0755)))
-	defer wdFS.RemoveAll(wdName) // nolint
-
-	wdFile, err := wdFS.Open(wdName)
-	require.NoError(t, err)
-
-	ctx := workerruntime.SetWorkingDirectory(context.TODO(), wdFile)
+	wk, ctx := setupTest(t)
 	res, err := RunScriptAction(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{

@@ -307,16 +307,17 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 			return err
 		}
 
+		_, isService := api.isService(ctx)
+
 		// loadRun, DisableDetailledNodeRun = false for calls from CDS Service
 		// as hook service. It's needed to have the buildParameters.
 		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number,
 			workflow.LoadRunOptions{
-				WithDeleted:    false,
-				WithArtifacts:  true,
-				WithLightTests: true,
-				// TODO refactor/users
-				// DisableDetailledNodeRun: getService(ctx) == nil,
-				Language: r.Header.Get("Accept-Language"),
+				WithDeleted:             false,
+				WithArtifacts:           true,
+				WithLightTests:          true,
+				DisableDetailledNodeRun: !isService,
+				Language:                r.Header.Get("Accept-Language"),
 			},
 		)
 		if err != nil {
@@ -589,7 +590,6 @@ func (api *API) getWorkflowNodeRunHistoryHandler() service.Handler {
 	}
 }
 
-// TODO Clean old workflow structure
 func (api *API) getWorkflowCommitsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

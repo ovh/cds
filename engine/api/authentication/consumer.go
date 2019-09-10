@@ -12,7 +12,7 @@ import (
 func NewConsumerWorker(db gorp.SqlExecutor, name string, hatcherySrv *sdk.Service, hatcheryConsumer *sdk.AuthConsumer, groupIDs []int64) (*sdk.AuthConsumer, error) {
 	c := sdk.AuthConsumer{
 		Name:               name,
-		AuthentifiedUserID: hatcherySrv.Maintainer.ID,
+		AuthentifiedUserID: hatcheryConsumer.AuthentifiedUserID,
 		ParentID:           &hatcheryConsumer.ID,
 		Type:               sdk.ConsumerBuiltin,
 		Data:               map[string]string{},

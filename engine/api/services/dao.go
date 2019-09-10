@@ -45,7 +45,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.Se
 		return nil, sdk.WrapError(err, "cannot get service")
 	}
 	if !found {
-		return nil, sdk.WithStack(sdk.ErrNotFound) // TODO return no error
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	isValid, err := gorpmapping.CheckSignature(s, s.Signature)
@@ -54,12 +54,11 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.Se
 	}
 	if !isValid {
 		log.Error("service.get> service %d data corrupted", s.ID)
-		return nil, sdk.WithStack(sdk.ErrNotFound) // TODO return no error
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
-	// TODO why is this code needed ?
 	if s.Name == "" {
-		return nil, sdk.WithStack(sdk.ErrNotFound) // TODO return no error
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	return &s.Service, nil

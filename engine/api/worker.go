@@ -53,8 +53,6 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 			return sdk.WrapError(err, "registerWorkerHandler> Unable to load consumer %v", hatchSrv.ConsumerID)
 		}
 
-		hatchSrv.Maintainer = *hatcheryConsumer.AuthentifiedUser
-
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)

@@ -15,8 +15,6 @@ type CanonicalService struct {
 	HTTPURL    string        `json:"http_url" db:"http_url" cli:"url"`
 	Config     ServiceConfig `json:"config" db:"config" cli:"-"`
 	PublicKey  []byte        `json:"public_key" db:"public_key"`
-	// aggregates
-	Maintainer AuthentifiedUser `json:"maintainer" db:"maintainer"` // TODO maintainer should be loaded from consumer
 }
 
 // Service is a µService registered on CDS API

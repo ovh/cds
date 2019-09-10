@@ -3,7 +3,12 @@ package git
 import (
 	"bytes"
 	"fmt"
+	"path/filepath"
 	"strings"
+
+	"github.com/ovh/cds/sdk/log"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // Info contains some Information about a git repository
@@ -18,14 +23,19 @@ type Info struct {
 
 // ExtractInfo returns an info, containing git information (git.Hash, describe)
 // ignore error if a command fails (example: for empty repository)
-func ExtractInfo(dir string) Info {
-	info := Info{}
-	cmdHash := []cmd{{dir: dir, cmd: "git", args: []string{"rev-parse", "HEAD"}}}
-	cmdDescribe := []cmd{{dir: dir, cmd: "git", args: []string{"describe", "--tags"}}}
-	cmdMessage := []cmd{{dir: dir, cmd: "git", args: []string{"log", "--format=%B", "-1"}}}
-	cmdAuthor := []cmd{{dir: dir, cmd: "git", args: []string{"log", "--format=%an", "-1"}}}
-	cmdAuthorEmail := []cmd{{dir: dir, cmd: "git", args: []string{"log", "--format=%ae", "-1"}}}
-	cmdCurrentBranch := []cmd{{dir: dir, cmd: "git", args: []string{"rev-parse", "--abbrev-ref", "HEAD"}}}
+func ExtractInfo(dir string) (Info, error) {
+	var info Info
+	var err error
+	dir, err = filepath.Abs(dir)
+	if err != nil {
+		return info, sdk.WithStack(err)
+	}
+	cmdHash := []cmd{{workdir: dir, cmd: "git", args: []string{"rev-parse", "HEAD"}}}
+	cmdDescribe := []cmd{{workdir: dir, cmd: "git", args: []string{"describe", "--tags"}}}
+	cmdMessage := []cmd{{workdir: dir, cmd: "git", args: []string{"log", "--format=%B", "-1"}}}
+	cmdAuthor := []cmd{{workdir: dir, cmd: "git", args: []string{"log", "--format=%an", "-1"}}}
+	cmdAuthorEmail := []cmd{{workdir: dir, cmd: "git", args: []string{"log", "--format=%ae", "-1"}}}
+	cmdCurrentBranch := []cmd{{workdir: dir, cmd: "git", args: []string{"rev-parse", "--abbrev-ref", "HEAD"}}}
 
 	// git rev-parse HEAD can fail with
 	// "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree."
@@ -44,8 +54,14 @@ func ExtractInfo(dir string) Info {
 	// git describe can fail with
 	// "fatal: No names found, cannot describe anything."
 	// ignore err
-	info.GitDescribe, _ = gitRawCommandString(cmdDescribe)
-	return info
+	info.GitDescribe, err = gitRawCommandString(cmdDescribe)
+	if err != nil {
+		log.Error("git describe failed: %v", err)
+	}
+
+	log.Debug("git.ExtractInfo> %+v", info)
+
+	return info, nil
 }
 
 func gitRawCommandString(c cmds) (string, error) {

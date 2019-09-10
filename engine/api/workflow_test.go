@@ -720,63 +720,67 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 	test.Equal(t, 0, len(wfUpdated.EventIntegrations))
 }
 
-// TODO: to uncomment
-// func Test_postWorkflowHandlerWithError(t *testing.T) {
-//
-// 	api, db, router, end := newTestAPI(t)
-// 	defer end()
+func Test_postWorkflowHandlerWithError(t *testing.T) {
+	t.SkipNow()
 
-// 	// Init user
-// 	u, pass := assets.InsertAdminUser(t, api.mustDB())
-// 	// Init project
-// 	key := sdk.RandomString(10)
-// 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	// This call on postWorkflowHandler should raise an error
+	// because default payload on non-root node should be illegal
+	// issue #4593
 
-// 	// Init pipeline
-// 	pip := sdk.Pipeline{
-// 		Name:      "pipeline1",
-// 		ProjectID: proj.ID,
-// 	}
-// 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
-// 	//Prepare request
-// 	vars := map[string]string{
-// 		"permProjectKey": proj.Key,
-// 	}
-// 	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
-// 	test.NotEmpty(t, uri)
+	// Init user
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	// Init project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	// Init pipeline
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+	}
 
-// 	var workflow = &sdk.Workflow{
-// 		Name:        "Name",
-// 		Description: "Description",
-// 		WorkflowData: &sdk.WorkflowData{
-// 			Node: sdk.Node{
-// 				Type: sdk.NodeTypePipeline,
-// 				Context: &sdk.NodeContext{
-// 					PipelineID: pip.ID,
-// 				},
-// 				Triggers: []sdk.NodeTrigger{{
-// 					ChildNode: sdk.Node{
-// 						Type: sdk.NodeTypePipeline,
-// 						Context: &sdk.NodeContext{
-// 							PipelineID: pip.ID,
-// 							DefaultPayload: map[string]interface{}{
-// 								"test": "content",
-// 							},
-// 						},
-// 					},
-// 				}},
-// 			},
-// 		},
-// 	}
+	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
-// 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &workflow)
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
 
-// 	//Do the request
-// 	w := httptest.NewRecorder()
-// 	router.Mux.ServeHTTP(w, req)
-// 	assert.Equal(t, 400, w.Code)
-// }
+	var workflow = &sdk.Workflow{
+		Name:        "Name",
+		Description: "Description",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{{
+					ChildNode: sdk.Node{
+						Type: sdk.NodeTypePipeline,
+						Context: &sdk.NodeContext{
+							PipelineID: pip.ID,
+							DefaultPayload: map[string]interface{}{
+								"test": "content",
+							},
+						},
+					},
+				}},
+			},
+		},
+	}
+
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &workflow)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 400, w.Code)
+}
 
 func Test_postWorkflowRollbackHandler(t *testing.T) {
 
