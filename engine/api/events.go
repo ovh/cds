@@ -11,6 +11,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
+
 	"github.com/tevino/abool"
 
 	"github.com/go-gorp/gorp"
@@ -24,11 +27,11 @@ import (
 
 // eventsBrokerSubscribe is the information needed to subscribe
 type eventsBrokerSubscribe struct {
-	UUID    string
-	User    *sdk.AuthConsumer
-	isAlive *abool.AtomicBool
-	w       http.ResponseWriter
-	mutex   sync.Mutex
+	UUID     string
+	consumer *sdk.AuthConsumer
+	isAlive  *abool.AtomicBool
+	w        http.ResponseWriter
+	mutex    sync.Mutex
 }
 
 // lastUpdateBroker keeps connected client of the current route,
@@ -138,8 +141,8 @@ func (b *eventsBroker) Start(ctx context.Context, panicCallback func(s string) (
 				sdk.GoRoutine(ctx, s,
 					func(ctx context.Context) {
 						if c.isAlive.IsSet() {
-							log.Debug("send data to %s", c.UUID)
-							if err := c.Send(receivedEvent); err != nil {
+							log.Debug("eventsBroker> send data to %s", c.UUID)
+							if err := c.Send(b.dbFunc(), receivedEvent); err != nil {
 								b.chanRemoveClient <- c.UUID
 								msg := fmt.Sprintf("%v", err)
 								for _, s := range handledEventErrors {
@@ -182,17 +185,15 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 			return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
 		}
 
-		user := getAPIConsumer(ctx)
-		uuid := sdk.UUID()
-		client := &eventsBrokerSubscribe{
-			UUID:    uuid,
-			User:    user,
-			isAlive: abool.NewBool(true),
-			w:       w,
+		var client = eventsBrokerSubscribe{
+			UUID:     sdk.UUID(),
+			consumer: getAPIConsumer(ctx),
+			isAlive:  abool.NewBool(true),
+			w:        w,
 		}
 
 		// Add this client to the map of those that should receive updates
-		b.chanAddClient <- client
+		b.chanAddClient <- &client
 
 		// Set the headers related to event streaming.
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -200,7 +201,7 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 		w.Header().Set("Connection", "keep-alive")
 		w.Header().Set("X-Accel-Buffering", "no")
 
-		if _, err := w.Write([]byte(fmt.Sprintf("data: ACK: %s \n\n", uuid))); err != nil {
+		if _, err := w.Write([]byte(fmt.Sprintf("data: ACK: %s \n\n", client.UUID))); err != nil {
 			return sdk.WrapError(err, "Unable to send ACK to client")
 		}
 		f.Flush()
@@ -220,7 +221,7 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 				b.chanRemoveClient <- client.UUID
 				break leave
 			case <-tick.C:
-				_ = client.Send(sdk.Event{})
+				_ = client.Send(nil, sdk.Event{})
 			}
 		}
 
@@ -228,39 +229,57 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 	}
 }
 
-func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
-	/* var isSharedInfra bool
-	for _, g := range client.User.OldUserStruct.Groups {
-		if g.ID == group.SharedInfraGroup.ID {
-			isSharedInfra = true
-			break
-		}
-	}
+func (client *eventsBrokerSubscribe) manageEvent(db gorp.SqlExecutor, event sdk.Event) (bool, error) {
+	var isSharedInfra = client.consumer.Groups.HasOneOf(group.SharedInfraGroup.ID)
 
-	projectPermission := permission.ProjectPermission(event.ProjectKey, client.User)
-	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
-		if client.User.Admin() || isSharedInfra || projectPermission >= sdk.PermissionRead {
-			return true
+	switch {
+	case strings.HasPrefix(event.EventType, "sdk.EventProject"):
+		if isSharedInfra || client.consumer.Maintainer() {
+			return true, nil
 		}
-		return false
+
+		perms, err := permission.LoadProjectMaxLevelPermission(context.Background(), db, []string{event.ProjectKey}, client.consumer.GetGroupIDs())
+		if err != nil {
+			return false, err
+		}
+
+		return perms.Level(event.ProjectKey) >= sdk.PermissionRead, nil
+
+	case strings.HasPrefix(event.EventType, "sdk.EventWorkflow") || strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow"):
+		if isSharedInfra || client.consumer.Maintainer() {
+			return true, nil
+		}
+
+		perms, err := permission.LoadWorkflowMaxLevelPermission(context.Background(), db, event.ProjectKey, []string{event.WorkflowName}, client.consumer.GetGroupIDs())
+		if err != nil {
+			return false, err
+		}
+
+		return perms.Level(event.WorkflowName) >= sdk.PermissionRead, nil
+
+	case strings.HasPrefix(event.EventType, "sdk.EventBroadcast"):
+		if event.ProjectKey == "" {
+			return true, nil
+		}
+
+		if isSharedInfra || client.consumer.Maintainer() {
+			return true, nil
+		}
+
+		perms, err := permission.LoadProjectMaxLevelPermission(context.Background(), db, []string{event.ProjectKey}, client.consumer.GetGroupIDs())
+		if err != nil {
+			return false, err
+		}
+
+		return perms.Level(event.ProjectKey) >= sdk.PermissionRead, nil
+	default:
+		return false, nil
+
 	}
-	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") || strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") {
-		if client.User.Admin() || isSharedInfra || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, client.User) >= sdk.PermissionRead {
-			return true
-		}
-		return false
-	}
-	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
-		if client.User.Admin() || isSharedInfra || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, client.User, sdk.PermissionRead) {
-			return true
-		}
-		return false
-	} */
-	return false
 }
 
 // Send an event to a client
-func (client *eventsBrokerSubscribe) Send(event sdk.Event) (err error) {
+func (client *eventsBrokerSubscribe) Send(db gorp.SqlExecutor, event sdk.Event) (err error) {
 	client.mutex.Lock()
 	defer client.mutex.Unlock()
 
@@ -282,8 +301,8 @@ func (client *eventsBrokerSubscribe) Send(event sdk.Event) (err error) {
 
 	var buffer bytes.Buffer
 	if event.EventType != "" {
-		if ok := client.manageEvent(event); !ok {
-			return nil
+		if ok, err := client.manageEvent(db, event); !ok {
+			return err
 		}
 
 		msg, err := json.Marshal(event)
