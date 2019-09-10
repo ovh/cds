@@ -236,12 +236,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		}
 
 		// Set a cookie with the jwt token
-		http.SetCookie(w, &http.Cookie{
-			Name:    jwtCookieName,
-			Value:   jwt,
-			Expires: session.ExpireAt,
-			Path:    "/",
-		})
+    api.SetCookie(w, jwtCookieName, jwt, session.ExpireAt)
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
@@ -325,12 +320,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		local.CleanVerifyConsumerToken(api.Cache, consumer.ID)
 
 		// Set a cookie with the jwt token
-		http.SetCookie(w, &http.Cookie{
-			Name:    jwtCookieName,
-			Value:   jwt,
-			Expires: session.ExpireAt,
-			Path:    "/",
-		})
+    api.SetCookie(w, jwtCookieName, jwt, session.ExpireAt)
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
@@ -494,12 +484,7 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		local.CleanResetConsumerToken(api.Cache, consumer.ID)
 
 		// Set a cookie with the jwt token
-		http.SetCookie(w, &http.Cookie{
-			Name:    jwtCookieName,
-			Value:   jwt,
-			Expires: session.ExpireAt,
-			Path:    "/",
-		})
+    api.SetCookie(w, jwtCookieName, jwt, session.ExpireAt)
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{

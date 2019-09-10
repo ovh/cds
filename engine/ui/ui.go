@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -228,7 +229,11 @@ func (s *Service) indexHTMLReplaceVar() error {
 		return sdk.WrapError(err, "error while reading %s file", indexHTML)
 	}
 
-	indexContent := strings.Replace(string(read), "<base href=\"/\">", "<base href=\""+s.Cfg.BaseURL+"\">", -1)
+	regexBaseHref, err := regexp.Compile("<base href=\".*\">")
+	if err != nil {
+		return sdk.WrapError(err, "cannot parse base href regex")
+	}
+	indexContent := regexBaseHref.ReplaceAllString(string(read), "<base href=\""+s.Cfg.BaseURL+"\">")
 	indexContent = strings.Replace(indexContent, "window.cds_sentry_url = '';", "window.cds_sentry_url = '"+s.Cfg.SentryURL+"';", -1)
 	indexContent = strings.Replace(indexContent, "window.cds_version = '';", "window.cds_version='"+sdk.VERSION+"';", -1)
 

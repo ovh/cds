@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -299,6 +300,12 @@ func (a *API) CheckConfiguration(config interface{}) error {
 
 	if aConfig.URL.API == "" {
 		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
+	}
+
+	if aConfig.URL.UI != "" {
+		if _, err := url.Parse(aConfig.URL.UI); err != nil {
+			return fmt.Errorf("Invalid given UI URL")
+		}
 	}
 
 	if aConfig.Directories.Download == "" {
@@ -815,4 +822,36 @@ func (a *API) PanicDump() func(s string) (io.WriteCloser, error) {
 		log.Error("API Panic stacktrace: %s", s)
 		return cache.NewWriteCloser(a.Cache, cache.Key("api", "panic_dump", s), panicDumpTTL), nil
 	}
+}
+
+// SetCookie on given response writter, automatically add domain and path based on api config.
+func (a *API) SetCookie(w http.ResponseWriter, name, value string, expires time.Time) {
+	a.setCookie(w, &http.Cookie{
+		Name:    name,
+		Value:   value,
+		Expires: expires,
+	})
+}
+
+// UnsetCookie on given response writter, automatically add domain and path based on api config.
+func (a *API) UnsetCookie(w http.ResponseWriter, name string) {
+	a.setCookie(w, &http.Cookie{
+		Name:   name,
+		Value:  "",
+		MaxAge: -1,
+	})
+}
+
+func (a *API) setCookie(w http.ResponseWriter, c *http.Cookie) {
+	if a.Config.URL.UI != "" {
+		// ignore parse error, this have been checked at service start
+		uiURL, _ := url.Parse(a.Config.URL.UI)
+		c.Path = uiURL.Path
+		c.Domain = uiURL.Hostname()
+		if c.Path == "" {
+			c.Path = "/"
+		}
+	}
+
+	http.SetCookie(w, c)
 }
