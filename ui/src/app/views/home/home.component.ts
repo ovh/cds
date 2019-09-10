@@ -33,11 +33,11 @@ export class HomeComponent implements OnInit {
     _broadcastSub: Subscription;
 
     constructor(
-      private _navbarService: NavbarService,
-      private _broadcastService: BroadcastStore,
-      private _authStore: AuthentificationStore,
-      private _timelineStore: TimelineStore,
-      private _cd: ChangeDetectorRef
+        private _navbarService: NavbarService,
+        private _broadcastService: BroadcastStore,
+        private _authStore: AuthentificationStore,
+        private _timelineStore: TimelineStore,
+        private _cd: ChangeDetectorRef
     ) {
         this.user = this._authStore.getUser();
         this.filter = new TimelineFilter();
@@ -69,15 +69,5 @@ export class HomeComponent implements OnInit {
 
     selectTab(t: string): void {
         this.selectedTab = t;
-    }
-
-    markAsRead(id: number) {
-        for (let i = 0; i < this.broadcasts.length; i++) {
-            if (this.broadcasts[i].id === id) {
-                this.broadcasts[i].updating = true;
-            }
-        }
-        this._broadcastService.markAsRead(id)
-            .subscribe();
     }
 }
