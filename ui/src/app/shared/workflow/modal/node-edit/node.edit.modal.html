@@ -51,12 +51,12 @@
                     <div [ngSwitch]="selected">
                         <ng-container *ngSwitchCase="'context'">
                             <app-workflow-node-context [project]="project" [workflow]="workflow" [readonly]="readonly"
-                                [node]="node" (contextChange)="pushChange($event)"></app-workflow-node-context>
+                                [node]="node" [editMode]="editMode" (contextChange)="pushChange($event)"></app-workflow-node-context>
                         </ng-container>
                         <ng-container *ngSwitchCase="'input'">
                             <ng-container *ngIf="!nodeRun">
                                 <app-workflow-node-input [project]="project" [workflow]="workflow" [readonly]="readonly"
-                                    [node]="node" (inputChange)="pushChange($event)"></app-workflow-node-input>
+                                    [node]="node" [editMode]="editMode" (inputChange)="pushChange($event)"></app-workflow-node-input>
                             </ng-container>
                             <ng-container *ngIf="nodeRun">
                                 <app-workflow-node-input [project]="project" [workflow]="workflow" [readonly]="true"
@@ -71,15 +71,16 @@
                         </ng-container>
                         <ng-container *ngSwitchCase="'conditions'">
                             <ng-container *ngIf="hook">
-                                <app-workflow-node-conditions [project]="project" [workflow]="workflow"
+                                <app-workflow-node-conditions [project]="project" [workflow]="workflow" [editMode]="editMode"
                                     [readonly]="readonly" [hook]="hook" (conditionsChange)="pushChange($event)">
                                 </app-workflow-node-conditions>
                             </ng-container>
                             <ng-container *ngIf="!hook">
-                                <app-workflow-node-conditions [project]="project" [workflow]="workflow"
+                                <app-workflow-node-conditions [project]="project" [workflow]="workflow" [editMode]="editMode"
                                     [readonly]="readonly" [node]="node" (conditionsChange)="pushChange($event)">
                                 </app-workflow-node-conditions>
                             </ng-container>
+
                         </ng-container>
                         <ng-container *ngSwitchCase="'permissions'">
                             <ng-container *ngIf="groups">
