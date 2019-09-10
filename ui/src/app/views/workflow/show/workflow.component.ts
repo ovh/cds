@@ -75,8 +75,8 @@ export class WorkflowShowComponent implements OnInit {
 
         this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this._cd.markForCheck();
-            if (s.workflow && s.workflow.from_repository) {
-                this.detailedWorkflow = s.asCodeWorkflow;
+            if (s.editMode) {
+                this.detailedWorkflow = s.editWorkflow;
             } else {
                 this.detailedWorkflow = s.workflow;
             }
@@ -102,7 +102,7 @@ export class WorkflowShowComponent implements OnInit {
 
 
         this.paramsSubs = this.activatedRoute.params.subscribe(() => {
-            this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
+            this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
             this._workflowCoreService.setWorkflowPreview(null);
         });
 
@@ -121,13 +121,13 @@ export class WorkflowShowComponent implements OnInit {
         this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
             .subscribe((wfPreview) => {
                 if (wfPreview != null) {
-                    this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
+                    this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
                 }
             });
     }
 
     savePreview() {
-        this._workflowCoreService.toggleAsCodeEditor({ open: false, save: true });
+        this._workflowCoreService.toggleAsCodeEditor({open: false, save: true});
     }
 
     changeDirection() {
@@ -139,7 +139,7 @@ export class WorkflowShowComponent implements OnInit {
     }
 
     showAsCodeEditor() {
-        this._workflowCoreService.toggleAsCodeEditor({ open: true, save: false });
+        this._workflowCoreService.toggleAsCodeEditor({open: true, save: false});
     }
 
     groupManagement(event: PermissionEvent, skip?: boolean): void {
