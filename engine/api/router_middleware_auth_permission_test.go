@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 )
@@ -469,124 +470,37 @@ func Test_checkSessionPermissions(t *testing.T) {
 	}
 }
 
-func Test_checkWorkerModelPermissionsByUser(t *testing.T) {
-	_, _, _, end := newTestAPI(t)
+func Test_checkWorkerModelPermissions(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	type args struct {
-		m *sdk.Model
-		u *sdk.User
-		p int
+	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	defer func() {
+		assets.DeleteTestGroup(t, db, g)
+	}()
+
+	m := sdk.Model{
+		Name: sdk.RandomString(10),
+		Type: sdk.Docker,
+		ModelDocker: sdk.ModelDocker{
+			Image: "foo/bar:3.4",
+		},
+		GroupID: g.ID,
 	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "Should return true for admin user",
-			args: args{
-				m: &sdk.Model{
-					GroupID: 1,
-				},
-				u: &sdk.User{
-					Admin: true,
-				},
-				p: 7,
-			},
-			want: true,
-		},
-		{
-			name: "Should return true for user who has the right group for getting the model",
-			args: args{
-				m: &sdk.Model{
-					GroupID: 1,
-				},
-				u: &sdk.User{
-					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ID: 1,
-						},
-					},
-				},
-				p: 4,
-			},
-			want: true,
-		},
-		{
-			name: "Should return false for user who has not the right group for updating the model",
-			args: args{
-				m: &sdk.Model{
-					GroupID: 1,
-				},
-				u: &sdk.User{
-					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ID: 1,
-						},
-					},
-				},
-				p: 7,
-			},
-			want: false,
-		},
-		{
-			name: "Should return false for user who has not the right group",
-			args: args{
-				m: &sdk.Model{
-					GroupID: 666,
-				},
-				u: &sdk.User{
-					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ID: 1,
-						},
-					},
-				},
-				p: 7,
-			},
-			want: false,
-		},
-		{
-			name: "Should return true for user who has the right group as admin for updating the model",
-			args: args{
-				m: &sdk.Model{
-					GroupID: 1,
-				},
-				u: &sdk.User{
-					ID:    1,
-					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ID: 1,
-							Members: []sdk.GroupMember{
-								{
-									ID:    sdk.RandomString(10),
-									Admin: true,
-								},
-							},
-						},
-					},
-				},
-				p: 7,
-			},
-			want: true,
-		},
-	}
-	for _, tt := range tests {
-		authUser := &sdk.AuthentifiedUser{OldUserStruct: tt.args.u}
-		if tt.args.u.Admin {
-			authUser.Ring = sdk.UserRingAdmin
-		}
-		// TODO
-		//got := api.checkWorkerModelPermissionsByUser(tt.args.m, authUser, tt.args.p)
-		//if !reflect.DeepEqual(got, tt.want) {
-		//	t.Errorf("%q. checkWorkerModelPermissionsByUser() = %v, want %v", tt.name, got, tt.want)
-		//}
-	}
+	require.NoError(t, workermodel.Insert(db, &m))
+	defer func() {
+		require.NoError(t, workermodel.Delete(db, m.ID))
+	}()
+
+	assert.Error(t, api.checkWorkerModelPermissions(context.TODO(), m.Name, sdk.PermissionRead, map[string]string{
+		"permGroupName": sdk.RandomString(10),
+	}), "error should be returned for random worker model name")
+	assert.Error(t, api.checkWorkerModelPermissions(context.TODO(), sdk.RandomString(10), sdk.PermissionRead, map[string]string{
+		"permGroupName": g.Name,
+	}), "error should be returned for random worker model name")
+	assert.NoError(t, api.checkWorkerModelPermissions(context.TODO(), m.Name, sdk.PermissionRead, map[string]string{
+		"permGroupName": g.Name,
+	}), "no error should be returned for the right group an worker model names")
 }
 
 func Test_checkWorkflowPermissionsByUser(t *testing.T) {
@@ -777,7 +691,7 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 		err = api.checkWorkflowPermissions(ctx, tt.args.wName, tt.args.permissionLevel, m)
 		got := err == nil
 		if !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("%q. checkWorkerModelPermissionsByUser() = %v, want %v", tt.name, got, tt.want)
+			t.Errorf("%q. Test_checkWorkflowPermissionsByUser() = %v, want %v", tt.name, got, tt.want)
 		}
 	}
 }
