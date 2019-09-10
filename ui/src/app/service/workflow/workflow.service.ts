@@ -40,8 +40,12 @@ export class WorkflowService {
      * @returns {Observable<boolean>}
      */
     getTriggerCondition(projectKey: string, workflowName: string, nodeID: number): Observable<WorkflowTriggerConditionCache> {
+        let params = new HttpParams();
+        if (nodeID) {
+            params = params.append('nodeID', nodeID.toString());
+        }
         return this._http.get<WorkflowTriggerConditionCache>(
-            `/project/${projectKey}/workflows/${workflowName}/node/${nodeID}/triggers/condition`);
+            `/project/${projectKey}/workflows/${workflowName}/triggers/condition`,  {params: params});
     }
 
     /**

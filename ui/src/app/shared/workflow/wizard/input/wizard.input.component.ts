@@ -43,6 +43,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
+    @Input() editMode: boolean;
     editableNode: WNode;
 
     @Input('node') set node(data: WNode) {
@@ -239,7 +240,12 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
     updateWorkflow(): void {
         this.loading = true;
         let clonedWorkflow = cloneDeep(this.workflow);
-        let n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+        let n: WNode;
+        if (this.editMode) {
+            n = Workflow.getNodeByRef(this.editableNode.ref, clonedWorkflow);
+        } else {
+            n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+        }
 
         n.context.default_payload = this.editableNode.context.default_payload;
         n.context.default_pipeline_parameters = this.editableNode.context.default_pipeline_parameters;

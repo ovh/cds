@@ -38,6 +38,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     beforeNode: WNode;
     hook: WNodeHook;
     groups: Array<GroupPermission>;
+    editMode: boolean;
 
 
     @ViewChild('nodeEditModal', {static: false})
@@ -71,6 +72,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
         this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
             this._cd.markForCheck();
             this.nodeRun = cloneDeep(s.workflowNodeRun);
+            this.editMode = s.editMode;
             if (!s.editModal) {
                 this.hook = undefined;
                 this.node = undefined;
@@ -82,7 +84,11 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
                 return;
             }
             if (s.node) {
-                this.workflow = s.workflow;
+                if (s.editMode) {
+                    this.workflow = s.editWorkflow;
+                } else {
+                    this.workflow = s.workflow;
+                }
                 let open = this.node != null;
                 this.node = cloneDeep(s.node);
                 this.groups = cloneDeep(this.node.groups);
@@ -163,7 +169,6 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
         let workflow = cloneDeep(this.workflow);
         let node = Workflow.getNodeByID(this.node.id, workflow);
         node.groups = this.node.groups;
-
         this._store.dispatch(new UpdateWorkflow({
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,

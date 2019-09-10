@@ -61,6 +61,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         return this.editableNode;
     }
     @Input() readonly = true;
+    @Input() editMode: boolean;
 
     @Output() conditionsChange = new EventEmitter<boolean>();
 
@@ -150,7 +151,12 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         }
 
         let clonedWorkflow = cloneDeep(this.workflow);
-        let n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+        let n: WNode;
+        if (this.editMode) {
+            n = Workflow.getNodeByRef(this.editableNode.ref, clonedWorkflow);
+        } else {
+            n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+        }
         n.context.conditions = cloneDeep(this.editableNode.context.conditions);
         if (n.context.conditions && n.context.conditions.plain) {
             n.context.conditions.plain.forEach(cc => {
