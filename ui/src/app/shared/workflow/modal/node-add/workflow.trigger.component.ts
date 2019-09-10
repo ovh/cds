@@ -29,6 +29,7 @@ export class WorkflowTriggerComponent {
     @Input() project: Project;
     @Input() loading: boolean;
     @Input() destination: string;
+    @Input() editMode: boolean;
 
     destNode: WNode;
     currentSection = 'pipeline';
@@ -88,7 +89,7 @@ export class WorkflowTriggerComponent {
         let clonedWorkflow = cloneDeep(this.workflow);
         if (this.source && !this.isParent) {
             let sourceNode: WNode;
-            if (!clonedWorkflow.from_repository) {
+            if (!this.editMode) {
                 sourceNode = Workflow.getNodeByID(this.source.id, clonedWorkflow);
             } else {
                 sourceNode = Workflow.getNodeByRef(this.source.ref, clonedWorkflow);

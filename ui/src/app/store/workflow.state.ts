@@ -29,16 +29,15 @@ export class WorkflowStateModel {
     workflowNodeRun: WorkflowNodeRun;
     listRuns: Array<WorkflowRun>;
     filters?: {};
-    asCodeWorkflow: Workflow;
-    canSaveAsCode: boolean;
+    editWorkflow: Workflow;
+    editMode: boolean;
 }
 
 export function getInitialWorkflowState(): WorkflowStateModel {
     return {
         projectKey: null,
         workflow: null,
-        asCodeWorkflow: null,
-        canSaveAsCode: false,
+        editWorkflow: null,
         node: null,
         hook: null,
         editModal: false,
@@ -51,7 +50,8 @@ export function getInitialWorkflowState(): WorkflowStateModel {
         workflowNodeRun: null,
         listRuns: new Array<WorkflowRun>(),
         sidebar: WorkflowSidebarMode.RUNS,
-        filters: {}
+        filters: {},
+        editMode: false
     };
 }
 
@@ -169,7 +169,7 @@ export class WorkflowState {
             const state = ctx.getState();
             ctx.setState({
                 ...state,
-                asCodeWorkflow: action.payload.changes,
+                editWorkflow: action.payload.changes,
             });
             return;
         }
@@ -334,14 +334,14 @@ export class WorkflowState {
 
         // As code Update Cache
         if (state.workflow && state.workflow.from_repository) {
-            const notificationsAsCode = state.asCodeWorkflow.notifications || [];
-            const asCodeWorkflow: Workflow = {
-                ...state.asCodeWorkflow,
-                notifications: notificationsAsCode.concat([action.payload.notification])
+            const notificationsEdit = state.editWorkflow.notifications || [];
+            const editWorkflow: Workflow = {
+                ...state.editWorkflow,
+                notifications: notificationsEdit.concat([action.payload.notification])
             };
             ctx.setState({
                 ...state,
-                asCodeWorkflow: asCodeWorkflow
+                editWorkflow: editWorkflow
             });
             return;
         }
@@ -366,9 +366,9 @@ export class WorkflowState {
 
         // As code Update Cache
         if (state.workflow && state.workflow.from_repository) {
-            const asCodeWorkflow: Workflow = {
-                ...state.asCodeWorkflow,
-                notifications: state.asCodeWorkflow.notifications.map((no) => {
+            const editWorkflow: Workflow = {
+                ...state.editWorkflow,
+                notifications: state.editWorkflow.notifications.map((no) => {
                     if (no.id === action.payload.notification.id) {
                         return action.payload.notification;
                     }
@@ -377,7 +377,7 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                asCodeWorkflow: asCodeWorkflow
+                editWorkflow: editWorkflow
             });
             return;
         }
@@ -405,15 +405,15 @@ export class WorkflowState {
 
         // As code Update Cache
         if (state.workflow && state.workflow.from_repository) {
-            const asCodeWorkflow: Workflow = {
-                ...state.asCodeWorkflow,
-                notifications: state.asCodeWorkflow.notifications.filter(no => {
+            const editWorkflow: Workflow = {
+                ...state.editWorkflow,
+                notifications: state.editWorkflow.notifications.filter(no => {
                     return action.payload.notification.id !== no.id;
                 })
             };
             ctx.setState({
                 ...state,
-                asCodeWorkflow: asCodeWorkflow,
+                editWorkflow: editWorkflow,
             });
             return;
         }
@@ -438,13 +438,13 @@ export class WorkflowState {
         const state = ctx.getState();
         // As code Update Cache
         if (state.workflow && state.workflow.from_repository) {
-            const asCodeWorkflow: Workflow = {
-                ...state.asCodeWorkflow,
+            const editWorkflow: Workflow = {
+                ...state.editWorkflow,
                 event_integrations: action.payload.eventIntegrations
             };
             ctx.setState({
                 ...state,
-                asCodeWorkflow: asCodeWorkflow,
+                editWorkflow: editWorkflow,
             });
             return;
         }
@@ -466,13 +466,13 @@ export class WorkflowState {
         const state = ctx.getState();
         // As code Update Cache
         if (state.workflow && state.workflow.from_repository) {
-            const asCodeWorkflow: Workflow = {
-                ...state.asCodeWorkflow,
-                event_integrations: state.asCodeWorkflow.event_integrations.filter((integ) => integ.id !== action.payload.integrationId)
+            const editWorkflow: Workflow = {
+                ...state.editWorkflow,
+                event_integrations: state.editWorkflow.event_integrations.filter((integ) => integ.id !== action.payload.integrationId)
             };
             ctx.setState({
                 ...state,
-                asCodeWorkflow: asCodeWorkflow,
+                editWorkflow: editWorkflow,
             });
             return;
         }
@@ -504,7 +504,7 @@ export class WorkflowState {
 
         // As code Update Cache
         if (state.workflow && state.workflow.from_repository) {
-            currentWorkflow = cloneDeep(state.asCodeWorkflow);
+            currentWorkflow = cloneDeep(state.editWorkflow);
         } else {
             currentWorkflow = cloneDeep(state.workflow);
         }
@@ -518,7 +518,7 @@ export class WorkflowState {
         if (state.workflow && state.workflow.from_repository) {
             ctx.setState({
                 ...state,
-                asCodeWorkflow: currentWorkflow
+                editWorkflow: currentWorkflow
             });
             return;
         }
@@ -546,18 +546,18 @@ export class WorkflowState {
 
         // As code Update Cache
         if (state.workflow && state.workflow.from_repository) {
-            let joinsAsCode = state.asCodeWorkflow.workflow_data.joins ? [...state.asCodeWorkflow.workflow_data.joins] : [];
+            let joinsAsCode = state.editWorkflow.workflow_data.joins ? [...state.editWorkflow.workflow_data.joins] : [];
             joinsAsCode.push(action.payload.join);
-            const wasc: Workflow = {
-                ...state.asCodeWorkflow,
+            const editWorkflow: Workflow = {
+                ...state.editWorkflow,
                 workflow_data: {
-                    ...state.asCodeWorkflow.workflow_data,
+                    ...state.editWorkflow.workflow_data,
                     joins: joinsAsCode
                 }
             };
             ctx.setState({
                 ...state,
-                asCodeWorkflow: wasc
+                editWorkflow: editWorkflow
             });
             return;
         }
@@ -601,20 +601,20 @@ export class WorkflowState {
         const state = ctx.getState();
 
         if (state.workflow && state.workflow.from_repository) {
-            const hooksAsCode = state.asCodeWorkflow.workflow_data.node.hooks || [];
-            const rootAsCode = Object.assign({}, state.asCodeWorkflow.workflow_data.node, <WNode>{
+            const hooksAsCode = state.editWorkflow.workflow_data.node.hooks || [];
+            const rootAsCode = Object.assign({}, state.editWorkflow.workflow_data.node, <WNode>{
                 hooks: hooksAsCode.concat([action.payload.hook])
             });
-            const wasc: Workflow = {
-                ...state.asCodeWorkflow,
+            const editWorkflow: Workflow = {
+                ...state.editWorkflow,
                 workflow_data: {
-                    ...state.asCodeWorkflow.workflow_data,
+                    ...state.editWorkflow.workflow_data,
                     node: rootAsCode
                 }
             };
             ctx.setState({
                 ...state,
-                asCodeWorkflow: wasc
+                editWorkflow: editWorkflow
             });
             return;
         }
@@ -642,24 +642,24 @@ export class WorkflowState {
         const state = ctx.getState();
 
         if (state.workflow && state.workflow.from_repository) {
-            const rootAsCode = Object.assign({}, state.asCodeWorkflow.workflow_data.node, <WNode>{
-                hooks: state.asCodeWorkflow.workflow_data.node.hooks.map((hook) => {
+            const rootAsCode = Object.assign({}, state.editWorkflow.workflow_data.node, <WNode>{
+                hooks: state.editWorkflow.workflow_data.node.hooks.map((hook) => {
                     if (hook.uuid === action.payload.hook.uuid) {
                         return action.payload.hook;
                     }
                     return hook;
                 })
             });
-            const wasc: Workflow = {
-                ...state.asCodeWorkflow,
+            const editWorkflow: Workflow = {
+                ...state.editWorkflow,
                 workflow_data: {
-                    ...state.asCodeWorkflow.workflow_data,
+                    ...state.editWorkflow.workflow_data,
                     node: rootAsCode
                 }
             };
             ctx.setState({
                 ...state,
-                asCodeWorkflow: wasc
+                editWorkflow: editWorkflow
             });
             return;
         }
@@ -692,19 +692,19 @@ export class WorkflowState {
         const state = ctx.getState();
 
         if (state.workflow && state.workflow.from_repository) {
-            const rootAsCode = Object.assign({}, state.asCodeWorkflow.workflow_data.node, <WNode>{
-                hooks: state.asCodeWorkflow.workflow_data.node.hooks.filter((hook) => hook.uuid !== action.payload.hook.uuid)
+            const rootAsCode = Object.assign({}, state.editWorkflow.workflow_data.node, <WNode>{
+                hooks: state.editWorkflow.workflow_data.node.hooks.filter((hook) => hook.uuid !== action.payload.hook.uuid)
             });
-            const wasc: Workflow = {
-                ...state.asCodeWorkflow,
+            const editWorkflow: Workflow = {
+                ...state.editWorkflow,
                 workflow_data: {
-                    ...state.asCodeWorkflow.workflow_data,
+                    ...state.editWorkflow.workflow_data,
                     node: rootAsCode,
                 }
             };
             ctx.setState({
                 ...state,
-                asCodeWorkflow: wasc
+                editWorkflow: editWorkflow
             });
             return;
         }
@@ -819,19 +819,20 @@ export class WorkflowState {
             tap(wf => {
                 const state = ctx.getState();
                 let canEdit = wf.permissions.writable;
-                let wasc: Workflow;
+                let editWorkflow: Workflow;
                 if (wf.from_repository) {
-                    wasc = cloneDeep(wf);
+                    editWorkflow = cloneDeep(wf);
                 }
                 ctx.setState({
                     ...state,
                     projectKey: action.payload.projectKey,
                     workflow: wf,
-                    asCodeWorkflow: wasc,
+                    editWorkflow: editWorkflow,
                     workflowRun: null,
                     workflowNodeRun: null,
                     canEdit: state.workflowRun ? false : canEdit,
-                    sidebar: WorkflowSidebarMode.RUNS
+                    sidebar: WorkflowSidebarMode.RUNS,
+                    editMode: true
                 });
             }));
     }

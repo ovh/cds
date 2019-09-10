@@ -26,6 +26,7 @@ export class WorkflowWNodeJoinComponent {
     @Input() public noderun: WorkflowNodeRun;
     @Input() public workflowrun: WorkflowRun;
     @Input() public selected: boolean;
+    @Input() public editMode: boolean;
 
     pipelineStatus = PipelineStatus;
     linkJoinSubscription: Subscription;
@@ -48,7 +49,7 @@ export class WorkflowWNodeJoinComponent {
     selectJoinToLink(): void {
         let cloneWorkflow = cloneDeep(this.workflow);
         let currentJoin: WNode;
-        if (this.workflow.from_repository) {
+        if (this.editMode) {
             currentJoin = Workflow.getNodeByRef(this.node.ref, cloneWorkflow);
         } else {
             currentJoin = Workflow.getNodeByID(this.node.id, cloneWorkflow);

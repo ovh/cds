@@ -53,6 +53,7 @@ export class WorkflowWNodeComponent implements OnInit {
     warnings = 0;
     loading: boolean;
 
+    editMode = false;
     readonly = true;
 
     // Subscription
@@ -83,6 +84,7 @@ export class WorkflowWNodeComponent implements OnInit {
     ngOnInit(): void {
         this.sub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this.readonly = !s.canEdit;
+            this.editMode = s.editMode;
             this._cd.markForCheck();
             if (s.workflowRun) {
                 if (this.workflowRun && this.workflowRun.id !== s.workflowRun.id) {
@@ -271,7 +273,7 @@ export class WorkflowWNodeComponent implements OnInit {
 
     createFork(): void {
         let n: WNode;
-        if (this.workflow.from_repository) {
+        if (this.editMode) {
             n = Workflow.getNodeByRef(this.node.ref, this.workflow);
         } else {
             n = Workflow.getNodeByID(this.node.id, this.workflow);
