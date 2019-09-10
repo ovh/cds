@@ -67,6 +67,23 @@ func Tag(key string, value interface{}) trace.Attribute {
 	return trace.StringAttribute(key, fmt.Sprintf("%v", value))
 }
 
+func ContextWithTag(ctx context.Context, s ...interface{}) context.Context {
+	if len(s)%2 != 0 {
+		panic("tags key/value are incorrect")
+	}
+	var tags []tag.Mutator
+	for i := 0; i < len(s)-1; i = i + 2 {
+		k, err := tag.NewKey(s[i].(string))
+		if err != nil {
+			log.Error("ContextWithTag> %v", err)
+			continue
+		}
+		tags = append(tags, tag.Upsert(k, fmt.Sprintf("%v", s[i+1])))
+	}
+	ctx, _ = tag.New(ctx, tags...)
+	return ctx
+}
+
 // Span start a new span from the parent context
 func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Context, func()) {
 	if ctx == nil {
@@ -142,4 +159,12 @@ func NewViewCount(name string, s *stats.Int64Measure, tags []tag.Key) *view.View
 		Aggregation: view.Count(),
 		TagKeys:     tags,
 	}
+}
+
+func MustNewKey(s string) tag.Key {
+	k, err := tag.NewKey(s)
+	if err != nil {
+		panic(err)
+	}
+	return k
 }

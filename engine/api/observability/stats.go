@@ -13,6 +13,20 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+var (
+	DefaultSizeDistribution    = view.Distribution(1024, 2048, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456, 1073741824, 4294967296)
+	DefaultLatencyDistribution = view.Distribution(1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 25, 30, 40, 50, 65, 80, 100, 130, 160, 200, 250, 300, 400, 500, 650, 800, 1000, 2000, 5000, 10000, 20000, 50000, 100000)
+)
+
+const (
+	Host           = "http.host"
+	StatusCode     = "http.status"
+	Path           = "http.path"
+	Method         = "http.method"
+	KeyServerRoute = "http_server_route"
+	Handler        = "http.handler"
+)
+
 // RegisterView begins collecting data for the given views
 func RegisterView(views ...*view.View) error {
 	return sdk.WithStack(view.Register(views...))

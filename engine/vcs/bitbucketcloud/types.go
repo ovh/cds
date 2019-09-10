@@ -190,6 +190,23 @@ type Link struct {
 	Name string `json:"name"`
 }
 
+// Team represent a tema inside bitbucket cloud
+type Team struct {
+	Username    string `json:"username"`
+	DisplayName string `json:"display_name"`
+	UUID        string `json:"uuid"`
+	Type        string `json:"type"`
+}
+
+type Teams struct {
+	Pagelen  int    `json:"pagelen"`
+	Page     int    `json:"page"`
+	Size     int64  `json:"size"`
+	Values   []Team `json:"values"`
+	Next     string `json:"next"`
+	Previous string `json:"previous,omitempty"`
+}
+
 type Repositories struct {
 	Pagelen  int          `json:"pagelen"`
 	Page     int          `json:"page"`
