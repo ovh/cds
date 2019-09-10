@@ -1,7 +1,7 @@
 
-import { HttpClient} from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Vulnerability } from 'app/model/application.model';
+import { Application, Vulnerability } from 'app/model/application.model';
 import { Key } from 'app/model/keys.model';
 import { Observable } from 'rxjs';
 
@@ -9,6 +9,20 @@ import { Observable } from 'rxjs';
 export class ApplicationService {
 
     constructor(private _http: HttpClient) {
+    }
+
+    getApplication(key: string, appName: string): Observable<Application> {
+        let params = new HttpParams();
+        params = params.append('withNotifs', 'true');
+        params = params.append('withUsage', 'true');
+        params = params.append('withIcon', 'true');
+        params = params.append('withKeys', 'true');
+        params = params.append('withDeploymentStrategies', 'true');
+        params = params.append('withVulnerabilities', 'true');
+        return this._http.get<Application>(
+            `/project/${key}/application/${appName}`,
+            { params }
+        )
     }
 
     /**

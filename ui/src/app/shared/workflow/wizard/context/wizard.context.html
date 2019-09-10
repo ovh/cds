@@ -43,21 +43,6 @@
                 </sui-select>
             </div>
         </div>
-        <!-- TO IMPLEMENT
-        <div class="inline fields" *ngIf="showCheckStatus">
-            <div class="four wide field">
-                <label>{{ 'workflow_root_context_application_send_vcs_status' | translate}}</label>
-            </div>
-            <div class="twelve wide field">
-                <div class="ui toggle checkbox ml10">
-                    <input type="checkbox" id="vcs_status" name="vcs_status"
-                           [disabled]="readonly"
-                           [(ngModel)]="node.context.disable_vcs_status" (ngModelChange)="pushChange()">
-                    <label></label>
-                </div>
-            </div>
-        </div>
-        -->
         <div class="inline fields">
             <div class="four wide field">
                 <label>{{ 'workflow_root_context_integration' | translate}}</label>
@@ -126,7 +111,7 @@
 
     <button class="ui right floated green button"
             *ngIf="!readonly"
-            [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
+            [disabled]="loading"
             [class.loading]="loading" (click)="updateWorkflow()">
         {{ 'btn_save' | translate }}
     </button>
