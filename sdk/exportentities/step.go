@@ -60,10 +60,6 @@ func newStep(act sdk.Action) Step {
 			if pattern != nil {
 				s.ArtifactDownload.Pattern = pattern.Value
 			}
-			enabled := sdk.ParameterFind(act.Parameters, "enabled")
-			if enabled != nil && enabled.Value != "true" {
-				s.ArtifactDownload.Enabled = enabled.Value
-			}
 		case sdk.ArtifactUpload:
 			s.ArtifactUpload = &StepArtifactUpload{}
 			path := sdk.ParameterFind(act.Parameters, "path")
@@ -77,10 +73,6 @@ func newStep(act sdk.Action) Step {
 			destination := sdk.ParameterFind(act.Parameters, "destination")
 			if destination != nil {
 				s.ArtifactUpload.Destination = destination.Value
-			}
-			enabled := sdk.ParameterFind(act.Parameters, "enabled")
-			if enabled != nil && enabled.Value != "true" {
-				s.ArtifactUpload.Enabled = enabled.Value
 			}
 		case sdk.ServeStaticFiles:
 			s.ServeStaticFiles = &StepServeStaticFiles{}
@@ -244,7 +236,6 @@ type StepCoverage struct {
 
 // StepArtifactDownload represents exported artifact download step.
 type StepArtifactDownload struct {
-	Enabled string `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Path    string `json:"path,omitempty" yaml:"path,omitempty" jsonschema:"required"`
 	Pattern string `json:"pattern,omitempty" yaml:"pattern,omitempty"`
 	Tag     string `json:"tag,omitempty" yaml:"tag,omitempty" jsonschema:"required"`
@@ -252,7 +243,6 @@ type StepArtifactDownload struct {
 
 // StepArtifactUpload represents exported artifact upload step.
 type StepArtifactUpload struct {
-	Enabled     string `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Destination string `json:"destination,omitempty" yaml:"destination,omitempty"`
 	Path        string `json:"path,omitempty" yaml:"path,omitempty" jsonschema:"required"`
 	Tag         string `json:"tag,omitempty" yaml:"tag,omitempty" jsonschema:"required"`
