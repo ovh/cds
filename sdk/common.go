@@ -13,6 +13,8 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strings"
+	"unicode"
 
 	"github.com/go-gorp/gorp"
 	"github.com/pkg/errors"
@@ -235,4 +237,14 @@ func (s *Int64Slice) Remove(v int64) {
 		}
 	}
 	*s = filtered
+}
+
+func RemoveNotPrintableChar(in string) string {
+	m := func(r rune) rune {
+		if unicode.IsPrint(r) || unicode.IsSpace(r) || unicode.IsPunct(r) {
+			return r
+		}
+		return ' '
+	}
+	return strings.Map(m, in)
 }

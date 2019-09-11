@@ -30,7 +30,7 @@ func VerifyToken(db gorp.SqlExecutor, s string) (*hatchery.WorkerJWTClaims, erro
 
 	claims, ok := unsafeToken.Claims.(*hatchery.WorkerJWTClaims)
 	if ok {
-		log.Debug("worker.VerifyToken> unsafe token is valid %v %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
+		log.Debug("worker.VerifyToken> unsafe token is valid - issuer: %v expiresAt: %v", claims.Issuer, claims.StandardClaims.ExpiresAt)
 	} else {
 		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}

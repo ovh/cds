@@ -67,7 +67,7 @@ func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 		Version:       sdk.VERSION,
 	}
 
-	log.Debug("Registing service %T %s", c, c.Name)
+	log.Info("Registing service %T %s", c, c.Name)
 
 	if c.PrivateKey != nil {
 		pubKeyPEM, err := jws.ExportPublicKey(c.PrivateKey)
@@ -111,5 +111,4 @@ func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStat
 			}
 		}
 	}
-
 }

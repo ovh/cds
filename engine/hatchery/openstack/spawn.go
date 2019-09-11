@@ -78,7 +78,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	udataParam := sdk.WorkerArgs{
 		API:               h.Configuration().API.HTTP.URL,
 		Name:              name,
-		Token:             h.Configuration().API.Token,
+		Token:             spawnArgs.WorkerToken,
 		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		HatcheryName:      h.Name,
 		TTL:               h.Config.WorkerTTL,

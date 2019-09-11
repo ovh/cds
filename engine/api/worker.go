@@ -37,7 +37,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		// Check that the worker can authentify on CDS API
 		workerTokenFromHatchery, err := workerauth.VerifyToken(api.mustDB(), jwt)
 		if err != nil {
-			log.Error("registerWorkerHandler> unauthorized worker jwt token %s: %v", jwt[:12], err)
+			log.Error("registerWorkerHandler> unauthorized worker jwt token %s: %v", jwt, err)
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
 

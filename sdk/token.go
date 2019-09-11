@@ -318,7 +318,7 @@ func (c AuthConsumer) GetGroupIDs() []int64 {
 
 	if len(c.GroupIDs) > 0 {
 		groupIDs = c.GroupIDs
-	} else if c.AuthentifiedUser != nil && c.Type != ConsumerBuiltin {
+	} else if c.AuthentifiedUser != nil {
 		groupIDs = c.AuthentifiedUser.GetGroupIDs()
 	}
 
