@@ -18,7 +18,7 @@ import (
 func (api *API) getWorkflowHooksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// This handler can only be called by a service managed by an admin
-		if _, isService := api.isService(ctx); !isService || isAdmin(ctx) {
+		if _, isService := api.isService(ctx); !isService && !isAdmin(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 

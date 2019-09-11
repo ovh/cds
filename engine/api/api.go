@@ -61,9 +61,8 @@ type Configuration struct {
 		UI  string `toml:"ui" default:"http://localhost:2015" json:"ui"`
 	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################" json:"url"`
 	HTTP struct {
-		Addr       string `toml:"addr" default:"" commented:"true" comment:"Listen HTTP address without port, example: 127.0.0.1" json:"addr"`
-		Port       int    `toml:"port" default:"8081" json:"port"`
-		SessionTTL int    `toml:"sessionTTL" default:"60" json:"sessionTTL"`
+		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen HTTP address without port, example: 127.0.0.1" json:"addr"`
+		Port int    `toml:"port" default:"8081" json:"port"`
 	} `toml:"http" json:"http"`
 	Secrets struct {
 		Key string `toml:"key" json:"-"`
@@ -176,9 +175,6 @@ type Configuration struct {
 			Token        string `toml:"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami" json:"-"`
 		} `toml:"izanami" comment:"Feature flipping provider: https://maif.github.io/izanami" json:"izanami"`
 	} `toml:"features" comment:"###########################\n CDS Features flipping Settings \n##########################" json:"features"`
-	Vault struct {
-		ConfigurationKey string `toml:"configurationKey" json:"-"`
-	} `toml:"vault" json:"vault"`
 	Services    []ServiceConfiguration `toml:"services" comment:"###########################\n CDS Services Settings \n##########################" json:"services"`
 	DefaultOS   string                 `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)" json:"defaultOS"`
 	DefaultArch string                 `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`

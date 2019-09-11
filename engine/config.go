@@ -295,8 +295,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: cfg.Description,
 			Type:        sdk.ConsumerBuiltin,
 			Data:        map[string]string{},
-			GroupIDs:    []int64{},
-			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
 			IssuedAt:    iat,
 		}
 
@@ -321,12 +319,9 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				ID:          cfg.ID,
 				Name:        cfg.Name,
 				Description: cfg.Description,
-
-				Type:     sdk.ConsumerBuiltin,
-				Data:     map[string]string{},
-				GroupIDs: []int64{},
-				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
-				IssuedAt: iat,
+				Type:        sdk.ConsumerBuiltin,
+				Data:        map[string]string{},
+				IssuedAt:    iat,
 			}
 
 			h.Local.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -353,8 +348,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: cfg.Description,
 				Type:        sdk.ConsumerBuiltin,
 				Data:        map[string]string{},
-				GroupIDs:    []int64{},
-				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 				IssuedAt:    iat,
 			}
 
@@ -382,8 +375,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: cfg.Description,
 				Type:        sdk.ConsumerBuiltin,
 				Data:        map[string]string{},
-				GroupIDs:    []int64{},
-				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 				IssuedAt:    iat,
 			}
 
@@ -411,8 +402,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: cfg.Description,
 				Type:        sdk.ConsumerBuiltin,
 				Data:        map[string]string{},
-				GroupIDs:    []int64{},
-				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 				IssuedAt:    iat,
 			}
 
@@ -440,8 +429,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: cfg.Description,
 				Type:        sdk.ConsumerBuiltin,
 				Data:        map[string]string{},
-				GroupIDs:    []int64{},
-				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 				IssuedAt:    iat,
 			}
 
@@ -469,8 +456,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: cfg.Description,
 				Type:        sdk.ConsumerBuiltin,
 				Data:        map[string]string{},
-				GroupIDs:    []int64{},
-				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 				IssuedAt:    iat,
 			}
 
@@ -500,14 +485,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: cfg.Description,
 			Type:        sdk.ConsumerBuiltin,
 			Data:        map[string]string{},
-			GroupIDs:    []int64{},
-			Scopes: []sdk.AuthConsumerScope{
-				sdk.AuthConsumerScopeService,
-				sdk.AuthConsumerScopeHooks,
-				sdk.AuthConsumerScopeProject,
-				sdk.AuthConsumerScopeRun,
-			},
-			IssuedAt: iat,
+			IssuedAt:    iat,
 		}
 
 		conf.Hooks.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -532,8 +510,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: cfg.Description,
 			Type:        sdk.ConsumerBuiltin,
 			Data:        map[string]string{},
-			GroupIDs:    []int64{},
-			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
 			IssuedAt:    iat,
 		}
 
@@ -559,8 +535,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: cfg.Description,
 			Type:        sdk.ConsumerBuiltin,
 			Data:        map[string]string{},
-			GroupIDs:    []int64{},
-			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
 			IssuedAt:    iat,
 		}
 
@@ -586,8 +560,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: cfg.Description,
 			Type:        sdk.ConsumerBuiltin,
 			Data:        map[string]string{},
-			GroupIDs:    []int64{},
-			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
 			IssuedAt:    iat,
 		}
 
@@ -613,8 +585,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: cfg.Description,
 			Type:        sdk.ConsumerBuiltin,
 			Data:        map[string]string{},
-			GroupIDs:    []int64{},
-			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
 			IssuedAt:    iat,
 		}
 
