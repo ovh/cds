@@ -133,7 +133,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 
 	var modelName = "local"
 	if j.model != nil {
-		modelName = j.model.Group.Name + "+" + j.model.Name
+		modelName = j.model.Group.Name + "/" + j.model.Name
 	}
 
 	if h.Service() == nil {

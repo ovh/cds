@@ -41,13 +41,13 @@ export class UserService {
     }
 
     getGroups(username: string): Observable<Array<Group>> {
-        return this._http.get<Array<Group>>(`/user/${username}/groups`).map(gs => {
+        return this._http.get<Array<Group>>(`/user/${username}/group`).map(gs => {
             return gs.map(g => Object.assign(new Group(), g));
         });
     }
 
     getContacts(username: string): Observable<Array<UserContact>> {
-        return this._http.get<Array<UserContact>>(`/user/${username}/contacts`);
+        return this._http.get<Array<UserContact>>(`/user/${username}/contact`);
     }
 
     getConsumers(username: string): Observable<Array<AuthConsumer>> {

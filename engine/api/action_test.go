@@ -221,11 +221,16 @@ func Test_getActions(t *testing.T) {
 	req = assets.NewJWTAuthentifiedRequest(t, jwtGroupMember, http.MethodGet, uri, nil)
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+  assert.Equal(t, 200, w.Code)
+  results = []sdk.Action{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &results))
-	require.Len(t, results, 2)
-	assert.Equal(t, a1.Name, results[0].Name)
-	assert.Equal(t, a2.Name, results[1].Name)
+	require.True(t, len(results) >= 2)
+	for _, r := range results {
+		if r.GroupID != nil {
+			assert.True(t, r.Group.Name == g1.Name || r.Group.Name == sdk.SharedInfraGroupName,
+				"the group name is %s but should be %s or %s", r.Group.Name, g1.Name, sdk.SharedInfraGroupName)
+		}
+	}
 
 	// getActionsForGroupHandler
 	uri = router.GetRoute(http.MethodGet, api.getActionsForGroupHandler, map[string]string{
@@ -236,13 +241,13 @@ func Test_getActions(t *testing.T) {
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
-	res := []sdk.Action{}
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &res))
-	require.True(t, len(res) >= 1)
-	for _, r := range res {
+	results = []sdk.Action{}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &results))
+	require.True(t, len(results) >= 1)
+	for _, r := range results {
 		if r.GroupID != nil {
 			assert.True(t, r.Group.Name == g2.Name || r.Group.Name == sdk.SharedInfraGroupName,
-				"the group name is %d, %s but should be %d %s or %s", *r.GroupID, r.Group.Name, g2.ID, g2.Name, sdk.SharedInfraGroupName)
+				"the group name is %s but should be %s or %s", r.Group.Name, g2.Name, sdk.SharedInfraGroupName)
 		}
 	}
 }

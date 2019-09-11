@@ -20,7 +20,9 @@ export class GroupService {
         if (withoutDefault === true) {
             params = params.append('withoutDefault', 'true');
         }
-        return this._http.get<Group[]>('/group', { params: params });
+        return this._http.get<Group[]>('/group', { params: params }).map(gs => {
+            return gs.map(g => Object.assign(new Group(), g));
+        });
     }
 
     create(group: Group): Observable<Group> {
