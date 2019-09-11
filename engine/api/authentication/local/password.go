@@ -8,6 +8,9 @@ import (
 )
 
 func isPasswordValid(password string) error {
+	if len(password) > 256 {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "given password is not strong enough, level should be >= 3")
+	}
 	passwordStrength := zxcvbn.PasswordStrength(password, nil).Score
 	if passwordStrength < 3 {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "given password is not strong enough, level should be >= 3")
