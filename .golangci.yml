@@ -3,6 +3,7 @@
 service:
   prepare:
     - apt-get update && apt-get install -y libsecret-1-dev
+    - go get github.com/labstack/echo
 
 run:
   skip-dirs:
