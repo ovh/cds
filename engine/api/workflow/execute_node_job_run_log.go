@@ -70,6 +70,7 @@ func LoadLogs(db gorp.SqlExecutor, id int64) ([]sdk.Log, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	var logs []sdk.Log
 	for rows.Next() {
 		l := &sdk.Log{}

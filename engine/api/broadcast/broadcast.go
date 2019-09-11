@@ -101,6 +101,7 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.User) ([]sdk.Broadcast, error) {
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot query")
 	}
+	defer rows.Close()
 
 	broadcasts := []sdk.Broadcast{}
 	for rows.Next() {
