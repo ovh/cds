@@ -33,7 +33,6 @@ func init() {
 	configNewCmd.Flags().BoolVar(&flagConfigNewAsEnv, "env", false, "Print configuration as environment variable")
 	configRegenCmd.Flags().BoolVar(&flagConfigRegenAsEnv, "env", false, "Print configuration as environment variable")
 	configSetCmd.Flags().BoolVar(&flagConfigRegenAsEnv, "env", false, "Print configuration as environment variable")
-
 }
 
 var (
@@ -313,6 +312,5 @@ var configSetCmd = &cobra.Command{
 		if err := ioutil.WriteFile(args[0], btes, os.FileMode(0644)); err != nil {
 			sdk.Exit("%v", err)
 		}
-
 	},
 }

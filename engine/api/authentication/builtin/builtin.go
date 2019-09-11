@@ -63,14 +63,17 @@ func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 }
 
 // NewConsumer returns a new builtin consumer for given data.
+// The parent consumer should be given with all data loaded including the authentified user.
 func NewConsumer(db gorp.SqlExecutor, name, description string, parentConsumer *sdk.AuthConsumer,
 	groupIDs []int64, scopes []sdk.AuthConsumerScope) (*sdk.AuthConsumer, string, error) {
 	if name == "" {
 		return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "name should be given to create a built in consumer")
 	}
 
-	// For each given group id check if it's in parent consumer group ids
-	if !parentConsumer.Admin() {
+	// For each given group id check if it's in parent consumer group ids.
+	// When the parent is a builtin consumer even if it was created by an admin we should check groups to prevent
+	// creating child with more permission than parents.
+	if parentConsumer.Type == sdk.ConsumerBuiltin || !parentConsumer.Admin() {
 		parentGroupIDs := parentConsumer.GetGroupIDs()
 		for i := range groupIDs {
 			if !sdk.IsInInt64Array(groupIDs[i], parentGroupIDs) {

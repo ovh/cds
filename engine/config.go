@@ -49,7 +49,7 @@ func configBootstrap(args []string) Configuration {
 	// Default config if nothing is given
 	if len(args) == 0 {
 		args = []string{
-			"api", "migrate", "hooks", "vcs", "repositories", "elasticsearch",
+			"api", "ui", "migrate", "hooks", "vcs", "repositories", "elasticsearch",
 			"hatchery:local", "hatchery:kubernetes", "hatchery:marathon", "hatchery:openstack", "hatchery:swarm", "hatchery:vsphere",
 		}
 	}
@@ -409,12 +409,11 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				ID:          cfg.ID,
 				Name:        cfg.Name,
 				Description: cfg.Description,
-
-				Type:     sdk.ConsumerBuiltin,
-				Data:     map[string]string{},
-				GroupIDs: []int64{},
-				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
-				IssuedAt: iat,
+				Type:        sdk.ConsumerBuiltin,
+				Data:        map[string]string{},
+				GroupIDs:    []int64{},
+				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
+				IssuedAt:    iat,
 			}
 
 			h.Swarm.API.Token, err = builtin.NewSigninConsumerToken(&c)
