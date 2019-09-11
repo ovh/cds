@@ -60,8 +60,8 @@ export class WorkerModelService {
         return this._http.get<Array<WorkerModel>>(`/project/${projectKey}/worker/model`);
     }
 
-    getAllForGroup(groupID: number): Observable<Array<WorkerModel>> {
-        return this._http.get<Array<WorkerModel>>(`/group/${groupID}/worker/model`);
+    getAllForGroup(groupName: string): Observable<Array<WorkerModel>> {
+        return this._http.get<Array<WorkerModel>>(`/group/${groupName}/worker/model`);
     }
 
     createWorkerModelPattern(mp: ModelPattern): Observable<ModelPattern> {

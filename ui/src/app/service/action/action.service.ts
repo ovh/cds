@@ -20,8 +20,8 @@ export class ActionService {
         return this._http.get<Action[]>(`/project/${projectKey}/action`);
     }
 
-    getAllForGroup(groupID: number): Observable<Action[]> {
-        return this._http.get<Action[]>(`/group/${groupID}/action`);
+    getAllForGroup(groupName: string): Observable<Action[]> {
+        return this._http.get<Action[]>(`/group/${groupName}/action`);
     }
 
     get(groupName: string, name: string): Observable<Action> {

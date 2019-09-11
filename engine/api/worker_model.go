@@ -310,19 +310,13 @@ func (api *API) getWorkerModelsForProjectHandler() service.Handler {
 
 func (api *API) getWorkerModelsForGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO move this code in a permGroupName middleware
-		groupID, err := requestVarInt(r, "groupID")
-		if err != nil {
-			return err
-		}
+		vars := mux.Vars(r)
 
-		// check that the group exists and user is part of the group
-		g, err := group.LoadByID(ctx, api.mustDB(), groupID)
+		groupName := vars["permGroupName"]
+
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
-		}
-		if g == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		if !isGroupMember(ctx, g) && !isAdmin(ctx) {

@@ -5,14 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -168,4 +171,78 @@ func Test_postActionAuditRollbackHandler(t *testing.T) {
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &aRollback))
 
 	assert.Equal(t, 1, len(aRollback.Parameters))
+}
+
+func Test_getActions(t *testing.T) {
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	_, jwtAdmin := assets.InsertAdminUser(t, api.mustDB())
+
+	g1 := &sdk.Group{Name: sdk.RandomString(10)}
+	g2 := assets.InsertGroup(t, db)
+	_, jwtGroupMember := assets.InsertLambdaUser(t, api.mustDB(), g1)
+
+	a1 := sdk.Action{
+		Name:    "A" + sdk.RandomString(10),
+		GroupID: &g1.ID,
+		Type:    sdk.DefaultAction,
+	}
+	assert.NoError(t, action.Insert(db, &a1))
+
+	a2 := sdk.Action{
+		Name:    "B" + sdk.RandomString(10),
+		GroupID: &g1.ID,
+		Type:    sdk.DefaultAction,
+	}
+	assert.NoError(t, action.Insert(db, &a2))
+
+	a3 := sdk.Action{
+		Name:    "C" + sdk.RandomString(10),
+		GroupID: &g2.ID,
+		Type:    sdk.DefaultAction,
+	}
+	assert.NoError(t, action.Insert(db, &a3))
+
+	// getActionsHandler by admin
+	uri := router.GetRoute(http.MethodGet, api.getActionsHandler, nil)
+	test.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodGet, uri, nil)
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+	results := []sdk.Action{}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &results))
+	require.True(t, len(results) >= 3)
+
+	// getActionsHandler by group member
+	uri = router.GetRoute(http.MethodGet, api.getActionsHandler, nil)
+	test.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtGroupMember, http.MethodGet, uri, nil)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &results))
+	require.Len(t, results, 2)
+	assert.Equal(t, a1.Name, results[0].Name)
+	assert.Equal(t, a2.Name, results[1].Name)
+
+	// getActionsForGroupHandler
+	uri = router.GetRoute(http.MethodGet, api.getActionsForGroupHandler, map[string]string{
+		"permGroupName": g2.Name,
+	})
+	test.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodGet, uri, nil)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+	res := []sdk.Action{}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &res))
+	require.True(t, len(res) >= 1)
+	for _, r := range res {
+		if r.GroupID != nil {
+			assert.True(t, r.Group.Name == g2.Name || r.Group.Name == sdk.SharedInfraGroupName,
+				"the group name is %d, %s but should be %d %s or %s", *r.GroupID, r.Group.Name, g2.ID, g2.Name, sdk.SharedInfraGroupName)
+		}
+	}
 }
