@@ -337,9 +337,3 @@ func (api *API) getWorkerModelTypesHandler() service.Handler {
 		return service.WriteJSON(w, sdk.AvailableWorkerModelType, http.StatusOK)
 	}
 }
-
-func (api *API) getWorkerModelCommunicationsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, sdk.AvailableWorkerModelCommunication, http.StatusOK)
-	}
-}

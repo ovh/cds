@@ -689,7 +689,6 @@
   "worker_model_capabilities": "Binaires présents dans les répertoires de la variable d'environnement PATH",
   "worker_model_capabilities_up_to_date": "La liste des binaires est à jour",
   "worker_model_capabilities_need_refresh": "La liste des binaires a besoin d'être rafraîchie par CDS. Dernière mise à jour : ",
-  "worker_model_communication": "Communication avec l'api CDS",
   "worker_model_enable": "Activer",
   "worker_model_enabled": "Ce modèle de worker est activé",
   "worker_model_error": "Ce modèle de worker est en erreur. En sauvegardant, les erreurs seront supprimées.",

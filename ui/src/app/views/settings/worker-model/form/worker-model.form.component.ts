@@ -41,7 +41,6 @@ export class WorkerModelFormComponent implements OnInit {
     @Input() currentUser: AuthentifiedUser;
     @Input() loading: boolean;
     @Input() types: Array<string>;
-    @Input() communications: Array<string>;
     @Input() groups: Array<Group>;
     @Input() patterns: Array<ModelPattern>;
     @Output() save = new EventEmitter();

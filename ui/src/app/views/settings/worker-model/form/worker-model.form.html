@@ -137,17 +137,6 @@
                             <input *ngIf="!workerModel.editable" class="ui input" type="text" name="type"
                                 [ngModel]="workerModel.type" [readonly]="true">
                         </div>
-                        <div class="five wide field">
-                            <label>{{'worker_model_communication' | translate}} *</label>
-                            <sm-select class="fluid search" name="communication"
-                                *ngIf="communications && workerModel.editable" [disabled]="loading"
-                                [(model)]="workerModel.communication" [options]="{'fullTextSearch': true}">
-                                <option *ngFor="let communication of communications" [value]="communication">
-                                    {{communication}}</option>
-                            </sm-select>
-                            <input *ngIf="!workerModel.editable" class="ui input" type="text" name="communication"
-                                [ngModel]="workerModel.communication" [readonly]="true">
-                        </div>
                         <div class="four wide field">
                             <label>{{'worker_model_provision' | translate}}</label>
                             <input class="ui input" type="number" name="provision" [(ngModel)]="workerModel.provision"

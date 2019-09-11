@@ -379,7 +379,6 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.POST(api.postWorkerModelHandler), r.GET(api.getWorkerModelsHandler))
 	r.Handle("/worker/model/enabled", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsEnabledHandler))
 	r.Handle("/worker/model/type", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelTypesHandler))
-	r.Handle("/worker/model/communication", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelCommunicationsHandler))
 	r.Handle("/worker/model/capability/type", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getRequirementTypesHandler))
 	r.Handle("/worker/model/pattern", Scope(sdk.AuthConsumerScopeWorkerModel), r.POST(api.postAddWorkerModelPatternHandler, NeedAdmin(true)), r.GET(api.getWorkerModelPatternsHandler))
 	r.Handle("/worker/model/pattern/{type}/{name}", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelPatternHandler), r.PUT(api.putWorkerModelPatternHandler, NeedAdmin(true)), r.DELETE(api.deleteWorkerModelPatternHandler, NeedAdmin(true)))

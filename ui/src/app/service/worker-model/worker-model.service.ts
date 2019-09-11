@@ -88,10 +88,6 @@ export class WorkerModelService {
         return this._http.get<Array<string>>('/worker/model/type');
     }
 
-    getCommunications(): Observable<Array<string>> {
-        return this._http.get<Array<string>>('/worker/model/communication');
-    }
-
     getUsage(groupName: string, name: string): Observable<Array<Pipeline>> {
         return this._http.get<Array<Pipeline>>(`/worker/model/${groupName}/${name}/usage`);
     }
