@@ -62,7 +62,8 @@ export class WorkflowSaveAsCodeComponent {
                         webworker.stop();
                         this.webworkerSub.unsubscribe();
                     }
-                    this._cd.markForCheck();
+                    console.log(this.ope);
+                    this._cd.detectChanges();
                 });
             }
         });
