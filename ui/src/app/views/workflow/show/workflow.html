@@ -67,14 +67,32 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="right aligned five wide column" title="{{'btn_run_workflow' | translate}}">
-                                            <div class="ui green buttons">
-                                                <div class="ui button" [class.disabled]="!detailedWorkflow.permissions.writable"
-                                                    (click)="runWithParameter()" [class.loading]="loading">
-                                                    {{'btn_run_workflow' | translate }}
+                                        <ng-container *ngIf="!editModeButton">
+                                            <div class="right aligned five wide column" title="{{'btn_run_workflow' | translate}}">
+                                                <div class="ui green buttons">
+                                                    <div class="ui button" [class.disabled]="!detailedWorkflow.permissions.writable"
+                                                         (click)="runWithParameter()" [class.loading]="loading">
+                                                        {{'btn_run_workflow' | translate }}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </ng-container>
+                                        <ng-container *ngIf="editModeButton">
+                                            <div class="right aligned five wide column">
+                                                <div class="ui buttons">
+                                                    <button class="ui button"
+                                                        (click)="rollbackWorkflow()">
+                                                        {{'btn_cancel' | translate }}
+                                                    </button>
+                                                    <div class="or"></div>
+                                                    <button class="ui positive button"
+                                                            (click)="saveWorkflow()"
+                                                            [class.disabled]="!detailedWorkflow.permissions.writable">
+                                                        {{'btn_save'| translate }}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </ng-container>
                                     </div>
                                 </div>
                             </div>

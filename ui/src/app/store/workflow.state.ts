@@ -31,6 +31,7 @@ export class WorkflowStateModel {
 
     editWorkflow: Workflow;
     editMode: boolean;
+    editModeSaveButton: boolean;
 }
 
 export function getInitialWorkflowState(): WorkflowStateModel {
@@ -50,7 +51,8 @@ export function getInitialWorkflowState(): WorkflowStateModel {
         workflowNodeRun: null,
         listRuns: new Array<WorkflowRun>(),
         sidebar: WorkflowSidebarMode.RUNS,
-        editMode: false
+        editMode: false,
+        editModeSaveButton: false
     };
 }
 
@@ -173,7 +175,8 @@ export class WorkflowState {
             ctx.setState({
                 ...stateEdit,
                 editWorkflow: action.payload.changes,
-                node: n
+                node: n,
+                editModeSaveButton: true,
             });
             return;
         }
@@ -345,7 +348,8 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow
+                editWorkflow: editWorkflow,
+                editModeSaveButton: true
             });
             return;
         }
@@ -381,7 +385,8 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow
+                editWorkflow: editWorkflow,
+                editModeSaveButton: true
             });
             return;
         }
@@ -418,6 +423,7 @@ export class WorkflowState {
             ctx.setState({
                 ...state,
                 editWorkflow: editWorkflow,
+                editModeSaveButton: true
             });
             return;
         }
@@ -449,6 +455,7 @@ export class WorkflowState {
             ctx.setState({
                 ...state,
                 editWorkflow: editWorkflow,
+                editModeSaveButton: true
             });
             return;
         }
@@ -477,6 +484,7 @@ export class WorkflowState {
             ctx.setState({
                 ...state,
                 editWorkflow: editWorkflow,
+                editModeSaveButton: true
             });
             return;
         }
@@ -522,7 +530,8 @@ export class WorkflowState {
         if (state.workflow && state.editMode) {
             ctx.setState({
                 ...state,
-                editWorkflow: currentWorkflow
+                editWorkflow: currentWorkflow,
+                editModeSaveButton: true
             });
             return;
         }
@@ -561,7 +570,8 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow
+                editWorkflow: editWorkflow,
+                editModeSaveButton: true
             });
             return;
         }
@@ -618,7 +628,8 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow
+                editWorkflow: editWorkflow,
+                editModeSaveButton: true
             });
             return;
         }
@@ -663,7 +674,8 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow
+                editWorkflow: editWorkflow,
+                editModeSaveButton: true
             });
             return;
         }
@@ -708,7 +720,8 @@ export class WorkflowState {
             };
             ctx.setState({
                 ...state,
-                editWorkflow: editWorkflow
+                editWorkflow: editWorkflow,
+                editModeSaveButton: true
             });
             return;
         }
@@ -1072,6 +1085,17 @@ export class WorkflowState {
         ctx.setState({
             ...state,
             sidebar: WorkflowSidebarMode.RUNS
+        });
+    }
+
+    @Action(actionWorkflow.CancelWorkflowEditMode)
+    cancelWorkflowEditMode(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.CancelWorkflowEditMode) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            editModeSaveButton: false,
+            editMode: false,
+            editWorkflow: cloneDeep(state.workflow)
         });
     }
 
