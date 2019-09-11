@@ -38,11 +38,31 @@ func (c *Common) Start(ctx context.Context, cfg cdsclient.ServiceConfig) error {
 		return nil
 	}
 
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
 	var err error
-	c.Client, c.APIPublicKey, err = cdsclient.NewServiceClient(cfg)
-	if err != nil {
-		return sdk.WithStack(err)
+	var firstAttempt = true
+loop:
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println()
+			return err
+		default:
+			c.Client, c.APIPublicKey, err = cdsclient.NewServiceClient(cfg)
+			if err == nil {
+				fmt.Println()
+				break loop
+			}
+			if firstAttempt {
+				fmt.Print("Waiting for CDS API..")
+				firstAttempt = false
+			}
+			fmt.Print(".")
+			time.Sleep(10 * time.Second)
+		}
 	}
+
 	c.ParsedAPIPublicKey, err = jws.NewPublicKeyFromPEM(c.APIPublicKey)
 	if err != nil {
 		return sdk.WithStack(err)
