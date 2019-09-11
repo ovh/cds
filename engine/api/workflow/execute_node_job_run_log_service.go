@@ -128,7 +128,7 @@ func LoadServicesLogsByJob(db gorp.SqlExecutor, nodeJobRunID int64) ([]sdk.Servi
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer rows.Close() // nolint
 
 	var logs []sdk.ServiceLog
 	for rows.Next() {

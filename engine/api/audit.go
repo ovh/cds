@@ -49,7 +49,7 @@ func actionAuditCleaner(db *gorp.DbMap) error {
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer rows.Close() // nolint
 	var toDel []int64
 	var actionID, count int64
 	for rows.Next() {
