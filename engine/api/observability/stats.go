@@ -29,7 +29,15 @@ const (
 
 // RegisterView begins collecting data for the given views
 func RegisterView(views ...*view.View) error {
-	return sdk.WithStack(view.Register(views...))
+	for _, v := range views {
+		if view.Find(v.Name) == nil {
+			if err := view.Register(v); err != nil {
+				return sdk.WithStack(err)
+			}
+		}
+	}
+
+	return nil
 }
 
 // FindAndRegisterViewLast begins collecting data for the given views
