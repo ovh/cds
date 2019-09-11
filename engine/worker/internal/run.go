@@ -44,7 +44,6 @@ func processJobParameter(params []sdk.Parameter, secrets []sdk.Variable) {
 	}
 
 	params = parameters
-	return
 }
 
 // ProcessActionVariables replaces all placeholders inside action recursively using

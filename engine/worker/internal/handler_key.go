@@ -15,8 +15,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var keysDirectory string
-
 func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)

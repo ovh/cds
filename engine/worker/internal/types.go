@@ -39,7 +39,6 @@ type CurrentWorker struct {
 	currentJob struct {
 		wJob         *sdk.WorkflowNodeJobRun
 		newVariables []sdk.Variable
-		gitsshPath   string
 		params       []sdk.Parameter
 		secrets      []sdk.Variable
 		context      context.Context
