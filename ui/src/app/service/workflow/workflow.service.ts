@@ -49,12 +49,28 @@ export class WorkflowService {
     }
 
     /**
+     * Update the workflow  as code
+     * @param projectKey
+     * @param workflowName
+     */
+    updateAsCode(projectKey: string, workflowName: string,
+                 branch: string, message: string, wf: Workflow): Observable<Operation> {
+        let params = new HttpParams();
+        params = params.append('branch', branch);
+        params = params.append('message', message);
+        return this._http.post<Operation>(
+            `/project/${projectKey}/workflows/${workflowName}/ascode`,
+            wf,
+            { params });
+    }
+
+    /**
      * Transform the workflow as  workflow as code
      * @param projectKey
      * @param workflowName
      */
     migrateAsCode(projectKey: string, workflowName: string): Observable<Operation> {
-        return this._http.post<Operation>(`/project/${projectKey}/workflows/${workflowName}/ascode`, null);
+        return this._http.post<Operation>(`/project/${projectKey}/workflows/${workflowName}/ascode/migrate`, null);
     }
 
     /**

@@ -112,6 +112,7 @@ import { WorkflowWNodePipelineComponent } from './workflow/wnode/pipeline/wnode.
 import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
 import { ZoneContentComponent } from './zone/zone-content/content.component';
 import { ZoneComponent } from './zone/zone.component';
+import { UpdateAscodeComponent } from './modal/save-as-code/update.Ascode.component';
 
 @NgModule({
     imports: [
@@ -178,6 +179,7 @@ import { ZoneComponent } from './zone/zone.component';
         StatusIconComponent,
         TabsComponent,
         TruncatePipe,
+        UpdateAscodeComponent,
         UploadButtonComponent,
         UsageApplicationsComponent,
         UsageComponent,
@@ -284,6 +286,7 @@ import { ZoneComponent } from './zone/zone.component';
         TranslateModule,
         TruncatePipe,
         SafeHtmlPipe,
+        UpdateAscodeComponent,
         VariableComponent,
         VariableFormComponent,
         VariableValueComponent,

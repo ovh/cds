@@ -18,6 +18,7 @@ import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { WorkflowGraphComponent } from 'app/views/workflow/graph/workflow.graph.component';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { UpdateAscodeComponent } from 'app/shared/modal/save-as-code/update.Ascode.component';
 
 @Component({
     selector: 'app-workflow',
@@ -45,6 +46,8 @@ export class WorkflowShowComponent implements OnInit {
     runWithParamComponent: WorkflowNodeRunParamComponent;
     @ViewChild('permWarning', {static: false})
     permWarningModal: WarningModalComponent;
+    @ViewChild('updateAsCode', {static: false})
+    updateAsCodeModal: UpdateAscodeComponent;
 
     selectedHookRef: string;
 
@@ -202,6 +205,8 @@ export class WorkflowShowComponent implements OnInit {
     }
 
     saveWorkflow(): void {
-        console.log('SAVE');
+        if (this.updateAsCodeModal) {
+            this.updateAsCodeModal.show(this.detailedWorkflow, 'workflow');
+        }
     }
 }

@@ -63,9 +63,57 @@ func (api *API) postResyncPRWorkflowAsCodeHandler() service.Handler {
 	}
 }
 
-// postWorkflowAsCodeHandler Make the workflow as code
-// @title Make the workflow as code
+// postWorkflowAsCodeHandler Update an as code workflow
+// @title Make the workflow as code	// @title Update an as code workflow
 func (api *API) postWorkflowAsCodeHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		workflowName := vars["permWorkflowName"]
+		branch := FormString(r, "branch")
+		message := FormString(r, "message")
+
+		u := getAPIConsumer(ctx)
+		p, err := project.Load(api.mustDB(), api.Cache, key,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithIntegrations,
+			project.LoadOptions.WithClearKeys,
+		)
+		if err != nil {
+			return err
+		}
+
+		wfDB, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, workflowName, workflow.LoadOptions{})
+		if err != nil {
+			return err
+		}
+		if wfDB.FromRepository == "" {
+			return sdk.ErrForbidden
+		}
+
+		var wk sdk.Workflow
+		if err := service.UnmarshalBody(r, &wk); err != nil {
+			return err
+		}
+
+		ope, err := workflow.UpdateWorkflowAsCode(ctx, api.Cache, api.mustDB(), p, wk, branch, message, u.AuthentifiedUser)
+		if err != nil {
+			return err
+		}
+
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
+			workflow.UpdateWorkflowAsCodeResult(ctx, api.mustDB(), api.Cache, p, ope, &wk, u)
+		}, api.PanicDump())
+
+		return service.WriteJSON(w, ope, http.StatusOK)
+	}
+}
+
+// postMigrateWorkflowAsCodeHandler Make the workflow as code
+// @title Make the workflow as code
+func (api *API) postMigrateWorkflowAsCodeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -135,12 +183,12 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		}
 
 		// Export workflow + push + create pull request
-		ope, err := workflow.UpdateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, u, project.EncryptWithBuiltinKey)
+		ope, err := workflow.MigrateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, u, project.EncryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "unable to migrate workflow as code")
 		}
 
-		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("MigrateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
 			workflow.UpdateWorkflowAsCodeResult(ctx, api.mustDB(), api.Cache, proj, ope, wf, u)
 		}, api.PanicDump())
 
