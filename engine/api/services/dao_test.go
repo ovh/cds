@@ -8,7 +8,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 )
@@ -23,12 +22,6 @@ func TestDAO(t *testing.T) {
 			t.Fatalf("unable to delete service: %v", err)
 		}
 	}
-
-	var grp = sdk.Group{
-		Name: "services-TestDAO-group",
-	}
-
-	u, _ := assets.InsertLambdaUser(t, db, &grp)
 
 	privateKey, err := jws.NewRandomRSAKey()
 	test.NoError(t, err)
