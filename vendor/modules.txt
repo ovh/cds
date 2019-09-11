@@ -227,8 +227,6 @@ github.com/eapache/go-resiliency/breaker
 github.com/eapache/go-xerial-snappy
 # github.com/eapache/queue v1.1.0
 github.com/eapache/queue
-# github.com/facebookgo/httpcontrol v0.0.0-20150708234001-ccde4420e1fe
-github.com/facebookgo/httpcontrol
 # github.com/fatih/color v1.7.0
 github.com/fatih/color
 # github.com/fatih/structs v1.0.0
@@ -655,9 +653,9 @@ go.opencensus.io/plugin/ochttp/propagation/b3
 go.opencensus.io/trace/propagation
 go.opencensus.io/metric/metricdata
 go.opencensus.io/stats/internal
-go.opencensus.io/metric/metricexport
 go.opencensus.io/internal/tagencoding
 go.opencensus.io/metric/metricproducer
+go.opencensus.io/metric/metricexport
 go.opencensus.io/internal
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate

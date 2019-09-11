@@ -32,7 +32,7 @@ All registered CDS [hatcheries]({{< relref "/docs/components/hatchery/_index.md"
 
 A user can add a worker model by setting an owner group if user is administrator of group.
 
-A CDS administrator can add a worker model, a [worker model pattern]({{< relref "/docs/concepts/worker-model/patterns.md" >}}), attach it to 'shared.infra' group and set provision as he want.
+A CDS administrator can add a worker model, a [worker model pattern]({{< relref "/docs/concepts/worker-model/patterns.md" >}}), attach it to 'shared.infra' group and set provision as he wants.
 
 ## What's a worker model pattern?
 
