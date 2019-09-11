@@ -13,6 +13,7 @@ import { PermissionEvent } from 'app/shared/permission/permission.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import * as actionsWorkflow from 'app/store/workflow.action';
+import { CancelWorkflowEditMode } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { WorkflowGraphComponent } from 'app/views/workflow/graph/workflow.graph.component';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -38,6 +39,7 @@ export class WorkflowShowComponent implements OnInit {
     paramsSubs: Subscription;
     qpsSubs: Subscription;
     direction: string;
+    editModeButton: boolean;
 
     @ViewChild('workflowGraph', {static: false})
     workflowGraph: WorkflowGraphComponent;
@@ -78,6 +80,7 @@ export class WorkflowShowComponent implements OnInit {
             this._cd.markForCheck();
             if (s.editMode) {
                 this.detailedWorkflow = s.editWorkflow;
+                this.editModeButton = s.editModeSaveButton;
             } else {
                 this.detailedWorkflow = s.workflow;
             }
@@ -197,5 +200,13 @@ export class WorkflowShowComponent implements OnInit {
                 this._toast.success('', this._translate.instant('workflow_updated'));
                 this._router.navigate(['/project', this.project.key, 'workflow', this.detailedWorkflow.name]);
             });
+    }
+
+    rollbackWorkflow(): void {
+        this._store.dispatch(new CancelWorkflowEditMode());
+    }
+
+    saveWorkflow(): void {
+        console.log('SAVE');
     }
 }
