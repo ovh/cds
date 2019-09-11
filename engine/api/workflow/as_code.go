@@ -3,6 +3,7 @@ package workflow
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -20,8 +21,99 @@ import (
 
 var CacheOperationKey = cache.Key("repositories", "operation", "push")
 
-// UpdateAsCode does a workflow pull and start an operation to push cds files into the git repository
-func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u sdk.Identifiable, encryptFunc sdk.EncryptFunc) (*sdk.Operation, error) {
+// UpdateWorkflowAsCode update an as code workflow
+func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj *sdk.Project, wf sdk.Workflow, branch string, message string, u *sdk.AuthentifiedUser) (*sdk.Operation, error) {
+	if err := RenameNode(ctx, db, &wf); err != nil {
+		return nil, err
+	}
+	if err := IsValid(ctx, store, db, &wf, proj, LoadOptions{DeepPipeline: true}); err != nil {
+		return nil, err
+	}
+
+	var wp exportentities.WorkflowPulled
+	buffw := new(bytes.Buffer)
+	if _, err := exportWorkflow(wf, exportentities.FormatYAML, buffw, exportentities.WorkflowSkipIfOnlyOneRepoWebhook); err != nil {
+		return nil, sdk.WrapError(err, "unable to export workflow")
+	}
+	wp.Workflow.Name = wf.Name
+	wp.Workflow.Value = base64.StdEncoding.EncodeToString(buffw.Bytes())
+
+	// get application
+	app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
+	var vcsStrategy = app.RepositoryStrategy
+
+	if vcsStrategy.SSHKey != "" {
+		key := proj.GetSSHKey(vcsStrategy.SSHKey)
+		if key == nil {
+			return nil, sdk.WithStack(fmt.Errorf("unable to find key %s on project %s", vcsStrategy.SSHKey, proj.Key))
+		}
+		vcsStrategy.SSHKeyContent = key.Private
+	} else {
+		if err := application.DecryptVCSStrategyPassword(&app); err != nil {
+			return nil, sdk.WrapError(err, "unable to decrypt vcs strategy")
+		}
+		vcsStrategy = app.RepositoryStrategy
+	}
+
+	// Create VCS Operation
+	ope := sdk.Operation{
+		VCSServer:          app.VCSServer,
+		RepoFullName:       app.RepositoryFullname,
+		URL:                "",
+		RepositoryStrategy: vcsStrategy,
+		Setup: sdk.OperationSetup{
+			Push: sdk.OperationPush{
+				FromBranch: branch,
+				Message:    message,
+				Update:     true,
+			},
+		},
+		User: sdk.User{
+			Username: u.Username,
+			Email:    u.GetEmail(),
+		},
+	}
+
+	client, errclient := createVCSClientFromRootNode(ctx, db, store, proj, &wf)
+	if errclient != nil {
+		return nil, errclient
+	}
+
+	repo, errR := client.RepoByFullname(ctx, app.RepositoryFullname)
+	if errR != nil {
+		return nil, sdk.WrapError(errR, "cannot get repo %s", app.RepositoryFullname)
+	}
+
+	if app.RepositoryStrategy.ConnectionType == "ssh" {
+		ope.URL = repo.SSHCloneURL
+	} else {
+		ope.URL = repo.HTTPCloneURL
+	}
+
+	if wf.FromRepository == "" {
+		ope.Setup.Push.Message = fmt.Sprintf("feat: Enable workflow as code [@%s]", u.Username)
+	} else {
+		ope.Setup.Push.Message = fmt.Sprintf("chore: Update workflow [@%s]", u.Username)
+	}
+
+	buf := new(bytes.Buffer)
+	if err := wp.Tar(buf); err != nil {
+		return nil, sdk.WrapError(err, "cannot tar pulled workflow")
+	}
+
+	multipartData := &services.MultiPartData{
+		Reader:      buf,
+		ContentType: "application/tar",
+	}
+	if err := PostRepositoryOperation(ctx, db, *proj, &ope, multipartData); err != nil {
+		return nil, sdk.WrapError(err, "unable to post repository operation")
+	}
+	store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
+	return &ope, nil
+}
+
+// MigrateWorkflowAsCode does a workflow pull and start an operation to push cds files into the git repository
+func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u sdk.Identifiable, encryptFunc sdk.EncryptFunc) (*sdk.Operation, error) {
 	// Get repository
 	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
 		return nil, sdk.WithStack(sdk.ErrApplicationNotFound)
