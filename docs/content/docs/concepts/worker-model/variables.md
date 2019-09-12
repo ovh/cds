@@ -24,5 +24,3 @@ Here is the list of available variables:
 + GraylogPort `int`    
 + GraylogExtraKey `string`
 + GraylogExtraValue `string`
-+ GrpcAPI `string`
-+ GrpcInsecure `bool`
