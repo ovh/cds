@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Operation } from 'app/model/operation.model';
 import { Project } from 'app/model/project.model';
@@ -7,11 +8,10 @@ import { ApplicationWorkflowService } from 'app/service/services.module';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { Subscription } from 'rxjs';
-import { first } from 'rxjs/operators';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { AuthenticationState } from 'app/store/authentication.state';
-import { Store } from '@ngxs/store';
+import { Subscription } from 'rxjs';
+import { first } from 'rxjs/operators';
 
 @Component({
     selector: 'app-update-ascode',
@@ -82,18 +82,19 @@ export class UpdateAscodeComponent {
                     this.dataToSave).pipe(first()).subscribe(ope => {
                     this.ope = ope;
                     let zone = new NgZone({ enableLongStackTrace: false });
-                    let webworker = new CDSWebWorker('./assets/worker/web/operation.js')
+                    let webworker = new CDSWebWorker('./assets/worker/web/operation.js');
                     webworker.start({
                         'user': this._store.selectSnapshot(AuthenticationState.user),
                         // 'session': this._authStore.getSessionToken(),
                         'api': '/cdsapi',
-                        'path': '/import/' + this.project.key + '/' + ope.uuid
+                        'path': '/project/' + this.project.key + '/workflows/' + this.name + '/ascode/' + this.ope.uuid
                     });
-                    this.webworkerSub = webworker.response().subscribe(ope => {
-                        if (ope) {
+                    this.webworkerSub = webworker.response().subscribe(operation => {
+                        if (operation) {
                             zone.run(() => {
-                                this.ope = JSON.parse(ope);
+                                this.ope = JSON.parse(operation);
                                 if (this.ope.status > 1) {
+                                    this.loading = false;
                                     webworker.stop();
                                 }
                                 this._cd.markForCheck();
