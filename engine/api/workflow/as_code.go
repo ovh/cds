@@ -90,12 +90,6 @@ func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExe
 		ope.URL = repo.HTTPCloneURL
 	}
 
-	if wf.FromRepository == "" {
-		ope.Setup.Push.Message = fmt.Sprintf("feat: Enable workflow as code [@%s]", u.Username)
-	} else {
-		ope.Setup.Push.Message = fmt.Sprintf("chore: Update workflow [@%s]", u.Username)
-	}
-
 	buf := new(bytes.Buffer)
 	if err := wp.Tar(buf); err != nil {
 		return nil, sdk.WrapError(err, "cannot tar pulled workflow")
@@ -108,6 +102,7 @@ func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExe
 	if err := PostRepositoryOperation(ctx, db, *proj, &ope, multipartData); err != nil {
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
+	ope.RepositoryStrategy.SSHKeyContent = ""
 	store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 	return &ope, nil
 }
@@ -197,6 +192,8 @@ func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj 
 	if err := PostRepositoryOperation(ctx, db, *proj, &ope, multipartData); err != nil {
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
+
+	ope.RepositoryStrategy.SSHKeyContent = ""
 	k := cache.Key(CacheOperationKey, ope.UUID)
 	if err := store.SetWithTTL(k, ope, 300); err != nil {
 		log.Error("cannot SetWithTTL: %s: %v", k, err)
@@ -274,10 +271,12 @@ func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, ope *sdk.Operation, wf *sdk.Workflow, u sdk.Identifiable) {
 	counter := 0
 	defer func() {
+		ope.RepositoryStrategy.SSHKeyContent = ""
 		k := cache.Key(CacheOperationKey, ope.UUID)
 		if err := store.SetWithTTL(k, ope, 300); err != nil {
 			log.Error("cannot SetWithTTL: %s: %v", k, err)
 		}
+
 	}()
 	for {
 		counter++
@@ -285,6 +284,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			log.Error("unable to get repository operation %s: %v", ope.UUID, err)
 			continue
 		}
+
 		if ope.Status == sdk.OperationStatusError {
 			log.Error("operation in error %s: %s", ope.UUID, ope.Error)
 			break
@@ -368,7 +368,6 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				ope.Error = "unable to commit transaction"
 				return
 			}
-
 			event.PublishWorkflowUpdate(p.Key, *wf, *oldW, u)
 			return
 		}

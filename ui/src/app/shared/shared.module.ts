@@ -42,6 +42,7 @@ import { LabelsEditComponent } from './labels/edit/labels.edit.component';
 import { MenuComponent } from './menu/menu.component';
 import { ConfirmModalComponent } from './modal/confirm/confirm.component';
 import { DeleteModalComponent } from './modal/delete/delete.component';
+import { UpdateAscodeComponent } from './modal/save-as-code/update.Ascode.component';
 import { WarningModalComponent } from './modal/warning/warning.component';
 import { ParameterFormComponent } from './parameter/form/parameter.form';
 import { ParameterListComponent } from './parameter/list/parameter.component';
@@ -112,7 +113,6 @@ import { WorkflowWNodePipelineComponent } from './workflow/wnode/pipeline/wnode.
 import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
 import { ZoneContentComponent } from './zone/zone-content/content.component';
 import { ZoneComponent } from './zone/zone.component';
-import { UpdateAscodeComponent } from './modal/save-as-code/update.Ascode.component';
 
 @NgModule({
     imports: [
