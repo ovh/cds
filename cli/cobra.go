@@ -243,14 +243,14 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 		switch f := run.(type) {
 		case RunFunc:
 			if f == nil {
-				cmd.Help()
+				cmd.Help() // nolint
 				OSExit(0)
 			}
 			ExitOnError(f(vals))
 			OSExit(0)
 		case RunGetFunc:
 			if f == nil {
-				cmd.Help()
+				cmd.Help() // nolint
 				OSExit(0)
 			}
 			i, err := f(vals)
@@ -310,7 +310,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 
 		case RunListFunc:
 			if f == nil {
-				cmd.Help()
+				cmd.Help() // nolint
 				OSExit(0)
 			}
 
@@ -410,7 +410,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 
 		case RunDeleteFunc:
 			if f == nil {
-				cmd.Help()
+				cmd.Help() // nolint
 				OSExit(0)
 			}
 

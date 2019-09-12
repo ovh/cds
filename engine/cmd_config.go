@@ -93,7 +93,7 @@ var configCheckCmd = &cobra.Command{
 	Long:  `$ engine config check <path>`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			cmd.Help()
+			cmd.Help() // nolint
 			sdk.Exit("Wrong usage")
 		}
 
@@ -201,7 +201,7 @@ var configRegenCmd = &cobra.Command{
 	Long:  `$ engine config regen <input-path> <output-path>`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
-			cmd.Help()
+			cmd.Help() // nolint
 			sdk.Exit("Wrong usage")
 		}
 
@@ -248,7 +248,7 @@ var configSetCmd = &cobra.Command{
 	Long:  `$ engine config set <path> [key value]... `,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 3 || len(args)%2 == 0 {
-			cmd.Help()
+			cmd.Help() // nolint
 			sdk.Exit("Wrong usage")
 		}
 
