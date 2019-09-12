@@ -68,7 +68,7 @@ func New(target interface{}, name string, autoIncrement bool, keys ...string) Ta
 		tmplStrFuncs := x.Canonical()
 		for _, f := range tmplStrFuncs {
 			h := sha1.New()
-			h.Write(f.Bytes())
+			_, _ = h.Write(f.Bytes())
 			bs := h.Sum(nil)
 			sha := fmt.Sprintf("%x", bs)
 

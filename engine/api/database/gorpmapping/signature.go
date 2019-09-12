@@ -84,7 +84,7 @@ var CanonicalFormTemplates = struct {
 
 func getSigner(f *CanonicalForm) string {
 	h := sha1.New()
-	h.Write(f.Bytes())
+	_, _ = h.Write(f.Bytes())
 	bs := h.Sum(nil)
 	sha := fmt.Sprintf("%x", bs)
 	return sha
@@ -103,7 +103,7 @@ func canonicalTemplate(data Canonicaller) (string, *template.Template, error) {
 	CanonicalFormTemplates.l.RUnlock()
 
 	if !has {
-		sdk.WithStack(fmt.Errorf("no canonical function available for %T", data))
+		return "", nil, sdk.WithStack(fmt.Errorf("no canonical function available for %T", data))
 	}
 
 	return sha, t, nil
@@ -117,7 +117,7 @@ func getCanonicalTemplate(f *CanonicalForm) (*template.Template, error) {
 	CanonicalFormTemplates.l.RUnlock()
 
 	if !has {
-		sdk.WithStack(fmt.Errorf("no canonical function available"))
+		return nil, sdk.WithStack(fmt.Errorf("no canonical function available"))
 	}
 
 	return t, nil
