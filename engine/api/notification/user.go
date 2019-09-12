@@ -61,7 +61,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.
 					}
 				}
 				if jn.SendToAuthor == nil || *jn.SendToAuthor {
-					if author, ok := params["cds.author"]; ok {
+					if author, ok := params["cds.author.email"]; ok {
 						jn.Recipients = append(jn.Recipients, author)
 					}
 				}
