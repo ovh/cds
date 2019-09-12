@@ -244,6 +244,10 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	if len(name) > 63 {
 		name = name[:60]
 	}
+
+	name = strings.Replace(name, "/", "-", -1)
+	name = strings.Replace(name, ".", "-", -1)
+
 	log.Debug("hatchery> kubernetes> SpawnWorker> %s", name)
 
 	var logJob string
