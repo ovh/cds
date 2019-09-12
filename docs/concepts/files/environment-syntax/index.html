@@ -550,9 +550,9 @@ values:
       with a project variable inside {{.cds.proj.var}}
 </code></pre>
 
-<p>All variables in CDS have a type: <code>string</code> is the default type and can be omitted, <code>number</code>, <code>boolean</code>, and <code>text</code>. You can also define <code>password</code>, the value in the file is encrypted. You can generated an encrypted value with the command <code>cdsctl encrypt MYPROJECT my-data my-super-secret-value</code>.</p>
+<p>All variables in CDS have a type: <code>string</code> (the default type that can be omitted), <code>number</code>, <code>boolean</code>, and <code>text</code>. You can also define <code>password</code>, the value in the file is encrypted. You can generate an encrypted value with the command <code>cdsctl encrypt MYPROJECT my-data my-super-secret-value</code>.</p>
 
-<p>All values can references other variables, thanks to the CDS interpolation engine:</p>
+<p>All values can reference other variables, thanks to the CDS interpolation engine:</p>
 
 <pre><code class="language-yaml">  myTextVariable:
     type: text
@@ -573,11 +573,11 @@ values:
 <pre><code>➜  ~ cdsctl environment import
 </code></pre>
 
-<p>The files can also relies in your git repositories if your workflow definition is <a href="https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/">stored in your git repository</a>.</p>
+<p>The files can also lie in your git repositories if your workflow definition is <a href="https://ovh.github.io/cds/docs/tutorials/init_workflow_with_cdsctl/">stored in your git repository</a>.</p>
 
 <h2 id="usage-in-a-pipeline">Usage in a pipeline</h2>
 
-<p>While running a pipeline attached to this environment, you can manipulate those variables in too ways.</p>
+<p>While running a pipeline attached to this environment, you can manipulate those variables in too ways:</p>
 
 <ul>
 <li>From the interpolation engine using <code>{{.cds.env.MyStringVariable}}</code></li>

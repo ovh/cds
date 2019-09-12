@@ -17,13 +17,13 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following Pipeline which implements a basic two-stages continuous delivery pipeline.
+    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following Pipeline which implements a basic two-stage continuous delivery pipeline:
 version: v1.0 name: build stages: - Compile - Package jobs: - job: Build UI stage: Compile steps: - gitClone: branch: &#39;{{.git.branch}}&#39; commit: &#39;{{.git.hash}}&#39; directory: cds url: &#39;{{.git.url}}&#39; - script: - cd cds/ui - npm set registry https://registry.npmjs.org - npm install - ng build -prod --aot - tar cfz ui.">
 <meta property="og:description"
-    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following Pipeline which implements a basic two-stages continuous delivery pipeline.
+    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following Pipeline which implements a basic two-stage continuous delivery pipeline:
 version: v1.0 name: build stages: - Compile - Package jobs: - job: Build UI stage: Compile steps: - gitClone: branch: &#39;{{.git.branch}}&#39; commit: &#39;{{.git.hash}}&#39; directory: cds url: &#39;{{.git.url}}&#39; - script: - cd cds/ui - npm set registry https://registry.npmjs.org - npm install - ng build -prod --aot - tar cfz ui.">
 <meta name="twitter:description"
-    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following Pipeline which implements a basic two-stages continuous delivery pipeline.
+    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following Pipeline which implements a basic two-stage continuous delivery pipeline:
 version: v1.0 name: build stages: - Compile - Package jobs: - job: Build UI stage: Compile steps: - gitClone: branch: &#39;{{.git.branch}}&#39; commit: &#39;{{.git.hash}}&#39; directory: cds url: &#39;{{.git.url}}&#39; - script: - cd cds/ui - npm set registry https://registry.npmjs.org - npm install - ng build -prod --aot - tar cfz ui.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/files/pipeline-syntax/">
 <meta property="og:title" content="Pipeline configuration file">
@@ -516,7 +516,7 @@ version: v1.0 name: build stages: - Compile - Package jobs: - job: Build UI stag
 
 
 <p>A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc.
-Consider the following Pipeline which implements a basic two-stages continuous delivery pipeline.</p>
+Consider the following Pipeline which implements a basic two-stage continuous delivery pipeline:</p>
 
 <pre><code class="language-yaml">version: v1.0
 name: build
@@ -591,9 +591,9 @@ jobs:
 
 <h2 id="stages">Stages</h2>
 
-<p>This file describes three jobs (<code>Build UI</code>, <code>Test UI</code> and <code>Package UI</code>) in two stages <code>Compile</code> and <code>Package</code>. The two first jobs will be run in parallel in the first stage. When the first Stage will be successful, the second stage containing the last job will be run.</p>
+<p>This file describes three jobs (<code>Build UI</code>, <code>Test UI</code> and <code>Package UI</code>) in two stages <code>Compile</code> and <code>Package</code>. The two first jobs will be run in parallel in the first stage. When the first Stage is successful, the second stage containing the last job will be run.</p>
 
-<p>A pipeline will always begin with</p>
+<p>A pipeline always begins with:</p>
 
 <pre><code class="language-yaml">version: v1.0
 name: build
@@ -601,6 +601,8 @@ stages:
 - Compile
 - Package
 </code></pre>
+
+<p>where:</p>
 
 <ul>
 <li><code>version: v1.0</code> represents the version of the syntax used in this file</li>
@@ -613,25 +615,29 @@ stages:
 <p>Each job has several properties:</p>
 
 <ul>
-<li><strong>name</strong> - <code>job: Build UI</code> defines the name as <code>Build UI</code></li>
-<li><strong>stage</strong> - this is mandatory if you have more than one stage. It must be one of the list stages described above</li>
-<li><strong>enabled</strong> - can be omitted, true by default. If you want to disable a Job</li>
-<li><strong>requirements</strong> - the list of the requirements to match a worker. Read more about <a href="https://ovh.github.io/cds/docs/concepts/requirement/">requirements</a></li>
-<li><strong>steps</strong> - the ordered list of steps</li>
+<li><strong>name</strong> - <code>job: Build UI</code> defines the name as <code>Build UI</code>.</li>
+<li><strong>stage</strong> - this is mandatory if you have more than one stage. It must be one of the list stages described above.</li>
+<li><strong>enabled</strong> - can be omitted, true by default. If you want to disable a Job, set this property to false.</li>
+<li><strong>requirements</strong> - the list of the requirements to match a worker. Read more about <a href="https://ovh.github.io/cds/docs/concepts/requirement/">requirements</a>.</li>
+<li><strong>steps</strong> - the ordered list of steps.</li>
 </ul>
 
 <h2 id="steps">Steps</h2>
 
-<p>Each job is composed of steps. A step is an action performed by a <a href="https://ovh.github.io/cds/docs/components/worker/">CDS Worker</a> within a workspace. Each step use an <a href="https://ovh.github.io/cds/docs/actions/">action</a> and the syntax is:</p>
+<p>Each job is composed of steps. A step is an action performed by a <a href="https://ovh.github.io/cds/docs/components/worker/">CDS Worker</a> within a workspace. Each step uses an <a href="https://ovh.github.io/cds/docs/actions/">action</a> and the syntax is:</p>
 
-<p>If the action has only one parameter:</p>
+<ul>
+<li>if the action has only one parameter:</li>
+</ul>
 
 <pre><code class="language-yaml">- job: xxx
   steps:
   - myAction: myParameter
 </code></pre>
 
-<p>If the action has more that one parameter:</p>
+<ul>
+<li>if the action has more that one parameter:</li>
+</ul>
 
 <pre><code class="language-yaml">- job: xxx
   steps:
@@ -640,7 +646,7 @@ stages:
       mySecondParameter: value
 </code></pre>
 
-<p>Read more about available <a href="https://ovh.github.io/cds/docs/actions/">actions</a></p>
+<p>Read more about available <a href="https://ovh.github.io/cds/docs/actions/">actions</a>.</p>
 
 
 

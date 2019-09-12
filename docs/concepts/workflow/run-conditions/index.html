@@ -17,14 +17,17 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of git.branch is master.
-If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on Edit run conditions like this:">
+    content="In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions. For example, if you want to run a pipeline automatically only if the value of git.branch is master.
+To edit your pipeline condition on the user interface, you have to select a node under edition mode of your workflow and click on Edit run conditions like this:
+There are 2 types of conditions:">
 <meta property="og:description"
-    content="In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of git.branch is master.
-If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on Edit run conditions like this:">
+    content="In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions. For example, if you want to run a pipeline automatically only if the value of git.branch is master.
+To edit your pipeline condition on the user interface, you have to select a node under edition mode of your workflow and click on Edit run conditions like this:
+There are 2 types of conditions:">
 <meta name="twitter:description"
-    content="In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of git.branch is master.
-If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on Edit run conditions like this:">
+    content="In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions. For example, if you want to run a pipeline automatically only if the value of git.branch is master.
+To edit your pipeline condition on the user interface, you have to select a node under edition mode of your workflow and click on Edit run conditions like this:
+There are 2 types of conditions:">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/workflow/run-conditions/">
 <meta property="og:title" content="Run conditions on pipeline">
 <meta name="twitter:title" content="Run conditions on pipeline">
@@ -514,13 +517,13 @@ If you want to edit your pipeline condition on the user interface you have to se
 
 
 
-<p>In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of <code>git.branch</code> is <code>master</code>.</p>
+<p>In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions. For example, if you want to run a pipeline automatically only if the value of <code>git.branch</code> is <code>master</code>.</p>
 
-<p>If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on <code>Edit run conditions</code> like this:</p>
+<p>To edit your pipeline condition on the user interface, you have to select a node under edition mode of your workflow and click on <code>Edit run conditions</code> like this:</p>
 
 <p><img src="https://ovh.github.io/cds/images/workflow_pipeline_run_conditions_link.png" alt="Pipeline run conditions link" /></p>
 
-<p>You have 2 types of conditions:</p>
+<p>There are 2 types of conditions:</p>
 
 <h2 id="basic-run-conditions">Basic run conditions</h2>
 
@@ -532,9 +535,9 @@ If you want to edit your pipeline condition on the user interface you have to se
 
 <h2 id="advanced-run-conditions">Advanced run conditions</h2>
 
-<p>If you want some advanced run conditions like for example make some compute over specific variables and then compare their values you have the ability to use advanced run conditions. In fact, you are free to make any compute or comparison because advanced condition is a script that you write in <a href="http://www.lua.org/">Lua</a> and MUST return a boolean (<code>true</code> if you want to run the pipeline or <code>false</code> if you don&rsquo;t). In this case the variables syntax is in Unix case (example: <code>cds_dest_application</code>) and prefixed with <code>cds_</code>, <code>git_</code> or <code>workflow_</code>. In general rules when you have a CDS variable containing <code>.</code> or <code>-</code> you must replace with <code>_</code>. For example if you have a variable named <code>cds.build.my-variable</code> then in lua you have to use it with <code>cds_build_my_variable</code>.</p>
+<p>If you want some advanced run conditions, like for example make some computation over specific variables and then compare their values, you have the ability to use advanced run conditions. In fact, you are free to make any computation or comparison because advanced condition is a <a href="http://www.lua.org/">Lua</a> script that returns a boolean (<code>true</code> if you want to run the pipeline or <code>false</code> if you don&rsquo;t). In this case the variables syntax is in Unix case (example: <code>cds_dest_application</code>) and prefixed with <code>cds_</code>, <code>git_</code> or <code>workflow_</code>. In general, <code>.</code> or <code>-</code> in CDS variable name must be replaced with <code>_</code>. For example, if you have a variable named <code>cds.build.my-variable</code> then in Lua you have to use it as <code>cds_build_my_variable</code>.</p>
 
-<p>Pay attention, <strong><em>all types of variables are string</em></strong>. Inside the Lua editor on CDS you have the autocompletion of your variables, you just have write <code>cds_</code>, <code>git_</code> or <code>workflow_</code> to see suggestions. Please be aware that you can&rsquo;t have at the same time basic conditions and advanced conditions. <strong><em>The behavior when you have both is that ONLY advanced run conditions will be effective</em></strong>.</p>
+<p>Pay attention, <strong><em>all types of variables are string</em></strong>. Inside the Lua editor on CDS you have the autocompletion of your variables, you just have to write <code>cds_</code>, <code>git_</code> or <code>workflow_</code> to see suggestions. Please be aware that you can&rsquo;t have at the same time basic conditions and advanced conditions. <strong><em>The behavior when you have both is that ONLY advanced run conditions will be effective</em></strong>.</p>
 
 <p>For example if you want to launch the pipeline if the value of <code>cds_status</code> is <code>Success</code> and <code>git_branch</code> is <code>master</code> OR if the value of <code>cds_manual</code> is <code>true</code> you have to write:</p>
 
@@ -542,7 +545,7 @@ If you want to edit your pipeline condition on the user interface you have to se
 return cds_status == &quot;Success&quot; and (git_branch == &quot;master&quot; or cds_manual == &quot;true&quot;)
 </code></pre>
 
-<p>Another use case is to enable auto-prod only if you are in a work week day (not saturday and sunday):</p>
+<p>Another use case is to enable auto-prod during working days only (not Saturday and Sunday):</p>
 
 <pre><code class="language-lua">return os.date(&quot;%w&quot;) &lt; &quot;5&quot;
 </code></pre>

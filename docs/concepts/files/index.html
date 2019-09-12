@@ -17,17 +17,17 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="Using CDS Workflow Configuration Files, checked into source control, provides several benefits: * Code reviews on the workflow configuration * Ability to update workflow configuration from particular branch * Gain efficienty while editing the workflow configuration
-This usage of CDS Workflow Configuration Files is particulary suitable for single repository CI/CD workflows.
-CDS Workflow Configuration Files relies on several text files on YAML syntax in a .cds directory at the root of your repository.">
+    content="Using CDS Workflow Configuration Files, checked into source control, provides several benefits:
+ Code reviews on the workflow configuration Ability to update workflow configuration from particular branch Gain efficiency while editing the workflow configuration  This usage of CDS Workflow Configuration Files is particulary suitable for single repository CI/CD workflows.
+CDS Workflow Configuration Files relies on several text files with YAML syntax in a .cds directory at the root of your repository.">
 <meta property="og:description"
-    content="Using CDS Workflow Configuration Files, checked into source control, provides several benefits: * Code reviews on the workflow configuration * Ability to update workflow configuration from particular branch * Gain efficienty while editing the workflow configuration
-This usage of CDS Workflow Configuration Files is particulary suitable for single repository CI/CD workflows.
-CDS Workflow Configuration Files relies on several text files on YAML syntax in a .cds directory at the root of your repository.">
+    content="Using CDS Workflow Configuration Files, checked into source control, provides several benefits:
+ Code reviews on the workflow configuration Ability to update workflow configuration from particular branch Gain efficiency while editing the workflow configuration  This usage of CDS Workflow Configuration Files is particulary suitable for single repository CI/CD workflows.
+CDS Workflow Configuration Files relies on several text files with YAML syntax in a .cds directory at the root of your repository.">
 <meta name="twitter:description"
-    content="Using CDS Workflow Configuration Files, checked into source control, provides several benefits: * Code reviews on the workflow configuration * Ability to update workflow configuration from particular branch * Gain efficienty while editing the workflow configuration
-This usage of CDS Workflow Configuration Files is particulary suitable for single repository CI/CD workflows.
-CDS Workflow Configuration Files relies on several text files on YAML syntax in a .cds directory at the root of your repository.">
+    content="Using CDS Workflow Configuration Files, checked into source control, provides several benefits:
+ Code reviews on the workflow configuration Ability to update workflow configuration from particular branch Gain efficiency while editing the workflow configuration  This usage of CDS Workflow Configuration Files is particulary suitable for single repository CI/CD workflows.
+CDS Workflow Configuration Files relies on several text files with YAML syntax in a .cds directory at the root of your repository.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/files/">
 <meta property="og:title" content="Configuration files">
 <meta name="twitter:title" content="Configuration files">
@@ -523,14 +523,17 @@ CDS Workflow Configuration Files relies on several text files on YAML syntax in 
 
 
 
-<p>Using <code>CDS Workflow Configuration Files</code>, checked into source control, provides several benefits:
-* Code reviews on the workflow configuration
-* Ability to update workflow configuration from particular branch
-* Gain efficienty while editing the workflow configuration</p>
+<p>Using <code>CDS Workflow Configuration Files</code>, checked into source control, provides several benefits:</p>
+
+<ul>
+<li>Code reviews on the workflow configuration</li>
+<li>Ability to update workflow configuration from particular branch</li>
+<li>Gain efficiency while editing the workflow configuration</li>
+</ul>
 
 <p>This usage of <code>CDS Workflow Configuration Files</code> is particulary suitable for single repository CI/CD workflows.</p>
 
-<p><code>CDS Workflow Configuration Files</code> relies on several text files on YAML syntax in a <code>.cds</code> directory at the root of your repository. Several files may be used to describe properly each component, such as applications, environments and pipelines of your CDS workflow.</p>
+<p><code>CDS Workflow Configuration Files</code> relies on several text files with YAML syntax in a <code>.cds</code> directory at the root of your repository. Several files may be used to describe each component, such as applications, environments and pipelines in your CDS workflow.</p>
 
 <h2 id="basic-example">Basic example</h2>
 
@@ -564,7 +567,7 @@ drwxr-xr-x  6 fsamin  staff  192 Mar 27 11:01 ..
 
 <h3 id="workflow-syntax">Workflow syntax</h3>
 
-<p>First of all, here the workflow file:</p>
+<p>First of all, here is the workflow file:</p>
 
 <pre><code class="language-yaml">name: democds
 workflow:
@@ -578,7 +581,7 @@ workflow:
     application: demo
 </code></pre>
 
-<p>This is the representation of the whole workflow, starting from <code>build</code> then <code>deploy</code>.  As shown, the workflow file only contains the description of pipelines orchestration.</p>
+<p>This is the representation of the whole workflow, starting from <code>build</code> then <code>deploy</code>.  As shown, the workflow file contains the description of pipelines orchestration only.</p>
 
 <p>Read more about CDS <a href="https://ovh.github.io/cds/docs/concepts/files/workflow-syntax/">workflow syntax</a></p>
 

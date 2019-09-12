@@ -17,14 +17,14 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the folowwing workflow wich implements a basic two-stages workflow
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook  Here there are two major things to understand: workflow and hooks. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies.">
+    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook  There are two major things to understand: workflow and hooks. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies.">
 <meta property="og:description"
-    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the folowwing workflow wich implements a basic two-stages workflow
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook  Here there are two major things to understand: workflow and hooks. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies.">
+    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook  There are two major things to understand: workflow and hooks. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies.">
 <meta name="twitter:description"
-    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the folowwing workflow wich implements a basic two-stages workflow
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook  Here there are two major things to understand: workflow and hooks. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies.">
+    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook  There are two major things to understand: workflow and hooks. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/files/workflow-syntax/">
 <meta property="og:title" content="Workflow configuration file">
 <meta name="twitter:title" content="Workflow configuration file">
@@ -514,7 +514,7 @@ name: my-workflow workflow: build: pipeline: build application: my-application d
 
 
 <p>A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc.
-Consider the folowwing workflow wich implements a basic two-stages workflow</p>
+Consider the following workflow wich implements a basic two-stage workflow:</p>
 
 <pre><code class="language-yaml">name: my-workflow
 workflow:
@@ -534,7 +534,7 @@ hooks:
   - type: RepositoryWebHook
 </code></pre>
 
-<p>Here there are two major things to understand: <code>workflow</code> and <code>hooks</code>. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies. In this example, the <code>deploy</code> pipeline will be triggered after the <code>build</code> pipeline.</p>
+<p>There are two major things to understand: <code>workflow</code> and <code>hooks</code>. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies. In this example, the <code>deploy</code> pipeline will be triggered after the <code>build</code> pipeline.</p>
 
 <h2 id="run-conditions">Run Conditions</h2>
 

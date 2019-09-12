@@ -536,7 +536,7 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
 <p>There are four types of custom parameters available in a template (string, boolean, repository, json).
 <img src="https://ovh.github.io/cds/images/workflow_template_parameters.png" alt="Parameters" /></p>
 
-<p>There are some others parameters that are automatically added by CDS:</p>
+<p>There are some other parameters that are automatically added by CDS:</p>
 
 <ul>
 <li><strong>name</strong>: the name of the generated workflow given when template is applied (could be used to set the workflow name but also application names for example).</li>
@@ -568,7 +568,7 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
 
 <h2 id="import-create-export">Import/Create/Export</h2>
 
-<p>With cdsctl you can import/export a template from/to yaml files with cdsctl, you can also create a template in the ui from <strong>settings</strong> menu:</p>
+<p>With cdsctl you can import/export a template from/to yaml files, you can also create a template in the UI from the <strong>settings</strong> menu:</p>
 
 <pre><code class="language-sh">cdsctl template push ./my-template/*.yml #from local files
 cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/tests/fixtures/template/simple/example-simple.yml #from remote files
@@ -581,7 +581,7 @@ cdsctl template pull shared.infra/my-template --output-dir ./my-template
 <h2 id="delete-change-template-group">Delete/Change template group</h2>
 
 <p>When removing a template, all info about the template and its instances are removed but all generated stuff will not be deleted.
-With the CDS ui you can change the template name or group, this will not affect template instances or generated workflow but no group members will not be able to re-apply the template anymore.</p>
+With the CDS UI you can change the template name or group, this will not affect template instances or generated workflow but no group members will be able to re-apply the template anymore.</p>
 
 
 

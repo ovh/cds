@@ -59,8 +59,8 @@ You have to:
       
       <guid>https://ovh.github.io/cds/docs/concepts/workflow/hooks/kafka-hook/</guid>
       <description>Do you want to run a workflow from a Kafka message? This kind of hook is for you.
-This kind of hook will connect to a Kafka topic and consume message. For each message, it will trigger your workflow.
-The Kafka message have to be a JSON message, it in will be used as a payload for your workflow See payload documentation.
+This kind of hook will connect to a Kafka topic and consume messages. For each message, it will trigger your workflow.
+The Kafka message have to be in JSON format. It will be used as a payload for your workflow. See payload documentation.
 Link your project to a Kafka platform On your CDS Project, select the platforms section then add a Kafka platform.</description>
     </item>
     
@@ -70,9 +70,9 @@ Link your project to a Kafka platform On your CDS Project, select the platforms 
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/workflow/hooks/rabbitmq-hook/</guid>
-      <description>You want to run a workflow from a RabbitMQ message? This kind of hook is for you.
-This kind of hook will connect to a RabbitMQ queue and consume message. For each message, it will trigger your workflow.
-The RabbitMQ message have to be a JSON message, it in will be used as a payload for your workflow See payload documentation.
+      <description>Do you want to run a workflow from a RabbitMQ message? This kind of hook is for you.
+This kind of hook will connect to a RabbitMQ queue and consume messages. For each message, it will trigger your workflow.
+The RabbitMQ message have to be in JSON format. It will be used as a payload for your workflow. See payload documentation.
 Link your project to a RabbitMQ platform On your CDS Project, select the platforms section then add a RabbitMQ platform.</description>
     </item>
     

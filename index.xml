@@ -102,8 +102,8 @@ In order to trigger this one you just have to make a HTTP call on the given URL 
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/files/workflow-syntax/</guid>
-      <description>A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the folowwing workflow wich implements a basic two-stages workflow
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook  Here there are two major things to understand: workflow and hooks. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies.</description>
+      <description>A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production hooks: build: - type: RepositoryWebHook  There are two major things to understand: workflow and hooks. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies.</description>
     </item>
     
     <item>
@@ -134,7 +134,7 @@ Then, you can:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/files/pipeline-syntax/</guid>
-      <description>A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following Pipeline which implements a basic two-stages continuous delivery pipeline.
+      <description>A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following Pipeline which implements a basic two-stage continuous delivery pipeline:
 version: v1.0 name: build stages: - Compile - Package jobs: - job: Build UI stage: Compile steps: - gitClone: branch: &#39;{{.git.branch}}&#39; commit: &#39;{{.git.hash}}&#39; directory: cds url: &#39;{{.git.url}}&#39; - script: - cd cds/ui - npm set registry https://registry.npmjs.org - npm install - ng build -prod --aot - tar cfz ui.</description>
     </item>
     
@@ -210,9 +210,9 @@ The following tools must be included in the model:
       
       <guid>https://ovh.github.io/cds/docs/concepts/files/worker_model-syntax/</guid>
       <description>Example:
-name: go-official-1.11.4-stretch group: shared.infra communication: http image: golang:1.11.4-stretch description: official from https://hub.docker.com/_/golang/ type: docker pattern_name: basic_unix  Import a worker model
+name: go-official-1.11.4-stretch group: shared.infra communication: http image: golang:1.11.4-stretch description: official from https://hub.docker.com/_/golang/ type: docker pattern_name: basic_unix  Import a worker model:
 cdsctl worker model import ./go-official-1.11.4-stretch.yml  or with a remote file:
-cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml   If you want to specify an image using a private registry or a private image. You need to fill credentials in field username and password to access to your image. And if your image is not on docker hub but from a private registry you need to fill the registry info (the registry api url, for example for docker hub it&amp;rsquo;s https://index.</description>
+cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml   If you want to specify an image using a private registry or a private image, you need to fill credentials in field username and password to access your image. And if your image is not on docker hub but from a private registry, you need to fill the registry info (the registry api url, for example for docker hub it&amp;rsquo;s https://index.</description>
     </item>
     
     <item>
@@ -243,9 +243,9 @@ version: v1.0 name: CDS_SonarScanner description: Run Sonar analysis. You must h
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/files/application-syntax/</guid>
-      <description>An Application allows you to enable some features of CDS within a workflow.
+      <description>An Application allows you to enable some features of CDS within a workflow:
  Variables Keys VCS Deployment  The application configuration format is as following:
-version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml  Variables Define application scoped variables as a dictionnary.</description>
+version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml  Variables Define application scoped variables as a dictionary.</description>
     </item>
     
     <item>
@@ -356,7 +356,7 @@ Add a step of type script Docker image postgres:9.5.3 start a PostgreSQL at star
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/worker-model/variables/</guid>
-      <description>When you want to add a new worker model or a new worker model pattern you have to use some variables that CDS give you with interpolation. To use them for example for the --api flag, CDS provides a variable named API that you can use like this --api={{.API}}.
+      <description>When you want to add a new worker model or a new worker model pattern, you have to use some variables that CDS gives you with interpolation. To use them for example for the --api flag, CDS provides a variable named API that you can use like this --api={{.API}}.
 Here is the list of available variables:
  API string &amp;ndash;&amp;gt; URI of the CDS API set in the hatchery configuration Token string &amp;ndash;&amp;gt; token set in the hatchery configuration Name string &amp;ndash;&amp;gt; Name of the worker BaseDir string &amp;ndash;&amp;gt; basedir configuration set in the hatchery configuration HTTPInsecure bool &amp;ndash;&amp;gt; http insecure configuration set in the hatchery configuration Model int64 &amp;ndash;&amp;gt; ID of the model that the hatchery want to spawn Hatchery int64 &amp;ndash;&amp;gt; ID of the hatchery HatcheryName string PipelineBuildJobID int64 WorkflowJobID int64 &amp;ndash;&amp;gt; Useful to know which workflow job the hatchery will launch spawning this worker TTL int FromWorkerImage bool</description>
     </item>
@@ -367,7 +367,7 @@ Here is the list of available variables:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/worker-model/patterns/</guid>
-      <description>On CDS you can use worker model on any platform, distribution and arch you want. To permit that you need to indicate what will be executed on the worker vm or image before the execution of the worker binary itself. For example before launching the worker binary you need to download that binary with curl or wget ore anything else, depends on which OS you are.
+      <description>In CDS you can use worker model on any platform, distribution and arch you want. To permit that you need to indicate what will be executed on the worker vm or image before the execution of the worker binary itself. For example, before launching the worker binary you need to download that binary with curl or wget or anything else, depends on which OS you are.
 To not copy/paste each time the same script for each worker model on the same OS and also to give the ability for a no CDS administrator to create their own worker model you can create worker model patterns.</description>
     </item>
     
@@ -410,7 +410,7 @@ You have to:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_network/</guid>
-      <description>The Network Access prerequisite allow you to require a worker to have access to a specific server
+      <description>The Network Access prerequisite allows you to require a worker to have access to a specific server.
 Example:
 golang.org:80  </description>
     </item>
@@ -421,8 +421,9 @@ golang.org:80  </description>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/workflow/run-conditions/</guid>
-      <description>In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of git.branch is master.
-If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on Edit run conditions like this:</description>
+      <description>In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions. For example, if you want to run a pipeline automatically only if the value of git.branch is master.
+To edit your pipeline condition on the user interface, you have to select a node under edition mode of your workflow and click on Edit run conditions like this:
+There are 2 types of conditions:</description>
     </item>
     
     <item>
@@ -458,7 +459,7 @@ In order to communicate with a CDS worker, a plugin MUST fill the following requ
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/workflow/join/</guid>
-      <description>A join lets workflow to wait the end of two or more parent pipelines.
+      <description>A join lets workflow to await the end of two or more parent pipelines.
 You can trigger one or many pipelines after a join.</description>
     </item>
     
@@ -469,8 +470,8 @@ You can trigger one or many pipelines after a join.</description>
       
       <guid>https://ovh.github.io/cds/docs/concepts/workflow/hooks/kafka-hook/</guid>
       <description>Do you want to run a workflow from a Kafka message? This kind of hook is for you.
-This kind of hook will connect to a Kafka topic and consume message. For each message, it will trigger your workflow.
-The Kafka message have to be a JSON message, it in will be used as a payload for your workflow See payload documentation.
+This kind of hook will connect to a Kafka topic and consume messages. For each message, it will trigger your workflow.
+The Kafka message have to be in JSON format. It will be used as a payload for your workflow. See payload documentation.
 Link your project to a Kafka platform On your CDS Project, select the platforms section then add a Kafka platform.</description>
     </item>
     
@@ -481,8 +482,8 @@ Link your project to a Kafka platform On your CDS Project, select the platforms 
       
       <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/</guid>
       <description>The Service Link prerequisite allow you to use any Docker image as a dependency of a job.
-This is pretty useful if you want to make some tests with a real database, or put your builded application as a job prerequisite for doing some tests.
-How to use service requirement When editing a pipeline job, choose your model as usual, then add a new service requirement, the name you set will be the service&amp;rsquo;s hostname, set the Docker image for the service as the value.</description>
+This is useful when you want to make some tests with a real database, or put your built application as a job prerequisite for doing some tests.
+How to use service requirement When editing a pipeline job, choose your model as usual, then add a new service requirement (the name you set will be the service&amp;rsquo;s hostname) and set the Docker image for the service as the value.</description>
     </item>
     
     <item>
@@ -514,8 +515,8 @@ cdsctl admin errors get &amp;lt;error_uuid&amp;gt;  Usage in code All errors fro
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/requirement/requirement_memory/</guid>
-      <description>The Memory requirement allows you to require a worker to have a specific number of mb of RAM.
-For example if you need 2Gb of RAM for your worker you can put 2048 in your memory requirement.</description>
+      <description>The Memory requirement allows you to require a worker to have a specific number of MiB of RAM.
+For example if you need 2 GiB of RAM for your worker you can put 2048 in your memory requirement.</description>
     </item>
     
     <item>
@@ -524,10 +525,10 @@ For example if you need 2Gb of RAM for your worker you can put 2048 in your memo
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/workflow/mutex/</guid>
-      <description>By default, the same pipeline can run at the same time on multiple runs.
-In a CDS Workflow, you can limit running a pipeline one at a time.
+      <description>By default, the same pipeline can be run multiple times at once.
+In a CDS Workflow, you can limit running a pipeline to one at a time.
 Click on the pipeline → Edit the pipeline context → enable &amp;ldquo;Limit one run at run time&amp;rdquo;
-Example of use case: run an integration test once on a particular environment.</description>
+Examplary use case: run an integration test once on a particular environment.</description>
     </item>
     
     <item>
@@ -536,9 +537,9 @@ Example of use case: run an integration test once on a particular environment.</
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/workflow/hooks/rabbitmq-hook/</guid>
-      <description>You want to run a workflow from a RabbitMQ message? This kind of hook is for you.
-This kind of hook will connect to a RabbitMQ queue and consume message. For each message, it will trigger your workflow.
-The RabbitMQ message have to be a JSON message, it in will be used as a payload for your workflow See payload documentation.
+      <description>Do you want to run a workflow from a RabbitMQ message? This kind of hook is for you.
+This kind of hook will connect to a RabbitMQ queue and consume messages. For each message, it will trigger your workflow.
+The RabbitMQ message have to be in JSON format. It will be used as a payload for your workflow. See payload documentation.
 Link your project to a RabbitMQ platform On your CDS Project, select the platforms section then add a RabbitMQ platform.</description>
     </item>
     
@@ -600,7 +601,7 @@ Beware about launching job: if you put a prerequisite os-architecture with value
       
       <guid>https://ovh.github.io/cds/docs/concepts/workflow/sidebar/</guid>
       <description>On the left sidebar, there is only one select box for filter on CDS Tags.
-So, what&amp;rsquo;s a tag? A tag is a CDS Variable, exported as a tag. There are default tags as git.branch, git.hash, tiggered_by and environment. For example if you want to know on which branch the build was launched you just have to filter on a specific CDS tag (in this case git.branch)
+So, what&amp;rsquo;s a tag? A tag is a CDS Variable, exported as a tag. There are default tags as git.branch, git.hash, tiggered_by and environment. For example, if you want to know on which branch the build was launched, you just have to filter on a specific CDS tag (in this case git.branch)
 Inside a job, a user can add a Tag with the worker command</description>
     </item>
     

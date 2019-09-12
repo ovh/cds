@@ -37,8 +37,9 @@ Then, you can:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/workflow/run-conditions/</guid>
-      <description>In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of git.branch is master.
-If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on Edit run conditions like this:</description>
+      <description>In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions. For example, if you want to run a pipeline automatically only if the value of git.branch is master.
+To edit your pipeline condition on the user interface, you have to select a node under edition mode of your workflow and click on Edit run conditions like this:
+There are 2 types of conditions:</description>
     </item>
     
     <item>
@@ -47,7 +48,7 @@ If you want to edit your pipeline condition on the user interface you have to se
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/workflow/join/</guid>
-      <description>A join lets workflow to wait the end of two or more parent pipelines.
+      <description>A join lets workflow to await the end of two or more parent pipelines.
 You can trigger one or many pipelines after a join.</description>
     </item>
     
@@ -57,10 +58,10 @@ You can trigger one or many pipelines after a join.</description>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/concepts/workflow/mutex/</guid>
-      <description>By default, the same pipeline can run at the same time on multiple runs.
-In a CDS Workflow, you can limit running a pipeline one at a time.
+      <description>By default, the same pipeline can be run multiple times at once.
+In a CDS Workflow, you can limit running a pipeline to one at a time.
 Click on the pipeline → Edit the pipeline context → enable &amp;ldquo;Limit one run at run time&amp;rdquo;
-Example of use case: run an integration test once on a particular environment.</description>
+Examplary use case: run an integration test once on a particular environment.</description>
     </item>
     
     <item>
@@ -70,7 +71,7 @@ Example of use case: run an integration test once on a particular environment.</
       
       <guid>https://ovh.github.io/cds/docs/concepts/workflow/sidebar/</guid>
       <description>On the left sidebar, there is only one select box for filter on CDS Tags.
-So, what&amp;rsquo;s a tag? A tag is a CDS Variable, exported as a tag. There are default tags as git.branch, git.hash, tiggered_by and environment. For example if you want to know on which branch the build was launched you just have to filter on a specific CDS tag (in this case git.branch)
+So, what&amp;rsquo;s a tag? A tag is a CDS Variable, exported as a tag. There are default tags as git.branch, git.hash, tiggered_by and environment. For example, if you want to know on which branch the build was launched, you just have to filter on a specific CDS tag (in this case git.branch)
 Inside a job, a user can add a Tag with the worker command</description>
     </item>
     
