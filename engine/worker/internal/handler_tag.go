@@ -10,7 +10,10 @@ import (
 
 func tagHandler(wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm() // Parses the request body
+		if err := r.ParseForm(); err != nil {
+			writeError(w, r, err)
+			return
+		}
 		tags := []sdk.WorkflowRunTag{}
 		for k := range r.Form {
 			tags = append(tags, sdk.WorkflowRunTag{

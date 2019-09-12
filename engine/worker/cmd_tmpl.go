@@ -63,7 +63,7 @@ func tmplCmd() func(cmd *cobra.Command, args []string) {
 			sdk.Exit("Wrong usage: Example : worker tmpl filea fileb")
 		}
 
-		a := workerruntime.TmplPath{args[0], args[1]}
+		a := workerruntime.TmplPath{Path: args[0], Destination: args[1]}
 
 		data, errMarshal := json.Marshal(a)
 		if errMarshal != nil {

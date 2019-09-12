@@ -138,7 +138,11 @@ func writeScriptContent(script *script, fs afero.Fs, basedir afero.File) (func()
 			script.dir = basedir.Name()
 		}
 	}
-	deferFunc := func() { fs.Remove(tmpFileName) }
+	deferFunc := func() {
+		if err := fs.Remove(tmpFileName); err != nil {
+			log.Error("unable to remove %s: %v", tmpFileName, err)
+		}
+	}
 
 	// Chmod file
 	if err := fs.Chmod(tmpscript.Name(), 0755); err != nil {
