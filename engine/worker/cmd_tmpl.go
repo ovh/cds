@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -67,7 +68,15 @@ func tmplCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			sdk.Exit("Wrong usage: Example : worker tmpl filea fileb")
 		}
 
-		a := tmplPath{args[0], args[1]}
+		currentDir, err := os.Getwd()
+		if err != nil {
+			sdk.Exit("Internal error during Getwd command")
+		}
+
+		a := tmplPath{
+			filepath.Join(currentDir, args[0]),
+			filepath.Join(currentDir, args[1]),
+		}
 
 		data, errMarshal := json.Marshal(a)
 		if errMarshal != nil {
