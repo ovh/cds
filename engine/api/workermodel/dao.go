@@ -76,7 +76,7 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor, filter *LoadFilter, opts 
 		query = gorpmapping.NewQuery("SELECT * FROM worker_model ORDER BY name")
 	} else {
 		query = gorpmapping.NewQuery(`
-      SELECT worker_model.*
+      SELECT distinct worker_model.*
       FROM worker_model
       LEFT JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
       WHERE ` + filter.SQL() + `
@@ -100,7 +100,7 @@ func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int6
     `).Args(gorpmapping.IDsToQueryString(groupIDs))
 	} else {
 		query = gorpmapping.NewQuery(`
-      SELECT worker_model.*
+      SELECT distinct worker_model.*
       FROM worker_model
       LEFT JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
       WHERE worker_model.group_id = ANY(string_to_array(:groupIDs, ',')::int[])
