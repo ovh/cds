@@ -26,7 +26,7 @@ export class SigninComponent implements OnInit {
     localSigninActive: boolean;
     localSignupActive: boolean;
     ldapSigninActive: boolean;
-    passwordShowError: boolean;
+    passwordError: string;
     passwordLevel: number;
 
     constructor(
@@ -79,7 +79,7 @@ export class SigninComponent implements OnInit {
     }
 
     clickShowLocalSignup() {
-        this.passwordShowError = false;
+        this.passwordError = null;
         this.passwordLevel = null;
         this.showSuccessSignup = false;
         this.localSigninActive = false;
@@ -96,8 +96,13 @@ export class SigninComponent implements OnInit {
     }
 
     signup(f: NgForm) {
+        if (f.value.password.length > 256) {
+            this.passwordError = 'auth_password_too_long';
+            this._cd.markForCheck();
+            return;
+        }
         if (this.passwordLevel < 3) {
-            this.passwordShowError = true;
+            this.passwordError = 'auth_password_too_weak';
             this._cd.markForCheck();
             return;
         }
@@ -139,9 +144,11 @@ export class SigninComponent implements OnInit {
     }
 
     onChangeSignupPassword(e: any) {
-        this.passwordShowError = false;
-        let res = zxcvbn(e.target.value);
-        this.passwordLevel = res.score;
+        this.passwordError = null;
+        if (e.target.value.length <= 256) {
+            let res = zxcvbn(e.target.value);
+            this.passwordLevel = res.score;
+        }
         this._cd.markForCheck();
     }
 }
