@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -74,8 +75,8 @@ func tmplCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		a := tmplPath{
-			filepath.Join(currentDir, args[0]),
-			filepath.Join(currentDir, args[1]),
+			getAbsoluteDir(args[0], currentDir),
+			getAbsoluteDir(args[1], currentDir),
 		}
 
 		data, errMarshal := json.Marshal(a)
@@ -104,6 +105,14 @@ func tmplCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			cdsError := sdk.DecodeError(body)
 			sdk.Exit("tmpl failed: %v\n", cdsError)
 		}
+	}
+}
+
+func getAbsoluteDir(arg string, currentDir string) string {
+	if strings.HasSuffix(arg, string(filepath.Separator)) {
+		return arg
+	} else {
+		return filepath.Join(currentDir, arg)
 	}
 }
 
