@@ -97,7 +97,7 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 			case "sdk.EventJob":
 				continue
 			}
-			observability.Record(b.router.Background, b.router.Stats.SSEEvents, 1)
+			observability.Record(b.router.Background, SSEEvents, 1)
 			cacheMsgChan <- e
 		}
 	}
@@ -114,14 +114,14 @@ func (b *eventsBroker) Start(ctx context.Context, panicCallback func(s string) (
 	for {
 		select {
 		case <-tickerMetrics.C:
-			observability.Record(b.router.Background, b.router.Stats.SSEClients, int64(len(b.clients)))
+			observability.Record(b.router.Background, SSEClients, int64(len(b.clients)))
 
 		case <-ctx.Done():
 			if b.clients != nil {
 				for uuid := range b.clients {
 					delete(b.clients, uuid)
 				}
-				observability.Record(b.router.Background, b.router.Stats.SSEClients, 0)
+				observability.Record(b.router.Background, SSEClients, 0)
 			}
 			if ctx.Err() != nil {
 				log.Error("eventsBroker.Start> Exiting: %v", ctx.Err())

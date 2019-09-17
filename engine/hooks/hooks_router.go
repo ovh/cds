@@ -16,7 +16,8 @@ func (s *Service) initRouter(ctx context.Context) {
 
 	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
 	r.Handle("/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
-
+	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
+	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
 	r.Handle("/webhook/{uuid}", nil, r.POST(s.webhookHandler, api.Auth(false)), r.GET(s.webhookHandler, api.Auth(false)), r.DELETE(s.webhookHandler, api.Auth(false)), r.PUT(s.webhookHandler, api.Auth(false)))
 	r.Handle("/task", nil, r.POST(s.postTaskHandler), r.GET(s.getTasksHandler))
 	r.Handle("/task/bulk/start", nil, r.GET(s.startTasksHandler))

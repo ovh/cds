@@ -17,114 +17,123 @@ package api
 // limitations under the License.
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 
-	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/sdk/log"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
+
+	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk/log"
 )
 
-// InitMetrics initialize prometheus metrics
-func (r *Router) InitMetrics(service, name string) error {
-	r.Stats.Errors = stats.Int64(
-		fmt.Sprintf("cds/%s/%s/router_errors", service, name),
-		"number of errors",
-		stats.UnitDimensionless)
-	r.Stats.Hits = stats.Int64(
-		fmt.Sprintf("cds/%s/%s/router_hits", service, name),
-		"number of hits",
-		stats.UnitDimensionless)
-	r.Stats.SSEClients = stats.Int64(fmt.Sprintf("cds/%s/%s/sse_clients", service, name),
-		"number of sse clients",
-		stats.UnitDimensionless)
-	r.Stats.SSEEvents = stats.Int64(fmt.Sprintf("cds/%s/%s/sse_events", service, name),
-		"number of sse events",
-		stats.UnitDimensionless)
-	r.Stats.ServerRequestCount = stats.Int64(
-		fmt.Sprintf("cds/%s/%s/http/server/request_count", service, name),
-		"Number of HTTP requests started",
-		stats.UnitDimensionless)
-	r.Stats.ServerRequestBytes = stats.Int64(
-		fmt.Sprintf("cds/%s/%s/http/server/request_bytes", service, name),
-		"HTTP request body size if set as ContentLength (uncompressed)",
-		stats.UnitBytes)
-	r.Stats.ServerResponseBytes = stats.Int64(
-		fmt.Sprintf("cds/%s/%s/http/server/response_bytes", service, name),
-		"HTTP response body size (uncompressed)",
-		stats.UnitBytes)
-	r.Stats.ServerLatency = stats.Float64(
-		fmt.Sprintf("cds/%s/%s/http/server/latency", service, name),
-		"End-to-end latency",
-		stats.UnitMilliseconds)
+// InitRouterMetrics initialize prometheus metrics
+func InitRouterMetrics(s service.NamedService) error {
+	var err error
+	onceMetrics.Do(func() {
+		Errors = stats.Int64(
+			"cds/router_errors",
+			"number of errors",
+			stats.UnitDimensionless)
+		Hits = stats.Int64(
+			"cds/router_hits",
+			"number of hits",
+			stats.UnitDimensionless)
+		SSEClients = stats.Int64(
+			"cds/sse_clients",
+			"number of sse clients",
+			stats.UnitDimensionless)
+		SSEEvents = stats.Int64(
+			"cds/sse_events",
+			"number of sse events",
+			stats.UnitDimensionless)
+		ServerRequestCount = stats.Int64(
+			"cds/http/server/request_count",
+			"Number of HTTP requests started",
+			stats.UnitDimensionless)
+		ServerRequestBytes = stats.Int64(
+			"cds/http/server/request_bytes",
+			"HTTP request body size if set as ContentLength (uncompressed)",
+			stats.UnitBytes)
+		ServerResponseBytes = stats.Int64(
+			"cds/http/server/response_bytes",
+			"HTTP response body size (uncompressed)",
+			stats.UnitBytes)
+		ServerLatency = stats.Float64(
+			"cds/http/server/latency",
+			"End-to-end latency",
+			stats.UnitMilliseconds)
 
-	tagCDSInstance := observability.MustNewKey("cds")
+		tagServiceType := observability.MustNewKey(observability.TagServiceType)
+		tagServiceName := observability.MustNewKey(observability.TagServiceName)
 
-	ServerRequestCountView := &view.View{
-		Name:        "http/server/request_count_by_handler",
-		Description: "Count of HTTP requests started",
-		Measure:     r.Stats.ServerRequestCount,
-		TagKeys:     []tag.Key{tagCDSInstance, observability.MustNewKey(observability.Handler)},
-		Aggregation: view.Count(),
-	}
+		ServerRequestCountView := &view.View{
+			Name:        "cds/http/server/request_count_by_handler",
+			Description: "Count of HTTP requests started",
+			Measure:     ServerRequestCount,
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, observability.MustNewKey(observability.Handler)},
+			Aggregation: view.Count(),
+		}
 
-	ServerRequestBytesView := &view.View{
-		Name:        "http/server/request_bytes_by_handler",
-		Description: "Size distribution of HTTP request body",
-		Measure:     r.Stats.ServerRequestBytes,
-		TagKeys:     []tag.Key{tagCDSInstance, observability.MustNewKey(observability.Handler)},
-		Aggregation: observability.DefaultSizeDistribution,
-	}
+		ServerRequestBytesView := &view.View{
+			Name:        "cds/http/server/request_bytes_by_handler",
+			Description: "Size distribution of HTTP request body",
+			Measure:     ServerRequestBytes,
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, observability.MustNewKey(observability.Handler)},
+			Aggregation: observability.DefaultSizeDistribution,
+		}
 
-	ServerResponseBytesView := &view.View{
-		Name:        "http/server/response_bytes_by_handler",
-		Description: "Size distribution of HTTP response body",
-		Measure:     r.Stats.ServerResponseBytes,
-		TagKeys:     []tag.Key{tagCDSInstance, observability.MustNewKey(observability.Handler)},
-		Aggregation: observability.DefaultSizeDistribution,
-	}
+		ServerResponseBytesView := &view.View{
+			Name:        "cds/http/server/response_bytes_by_handler",
+			Description: "Size distribution of HTTP response body",
+			Measure:     ServerResponseBytes,
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, observability.MustNewKey(observability.Handler)},
+			Aggregation: observability.DefaultSizeDistribution,
+		}
 
-	ServerLatencyView := &view.View{
-		Name:        "http/server/latency_by_handler",
-		Description: "Latency distribution of HTTP requests",
-		Measure:     r.Stats.ServerLatency,
-		TagKeys:     []tag.Key{tagCDSInstance, observability.MustNewKey(observability.Handler)},
-		Aggregation: observability.DefaultLatencyDistribution,
-	}
+		ServerLatencyView := &view.View{
+			Name:        "cds/http/server/latency_by_handler",
+			Description: "Latency distribution of HTTP requests",
+			Measure:     ServerLatency,
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, observability.MustNewKey(observability.Handler)},
+			Aggregation: observability.DefaultLatencyDistribution,
+		}
 
-	ServerRequestCountByMethod := &view.View{
-		Name:        "http/server/request_count_by_method_and_handler",
-		Description: "Server request count by HTTP method",
-		TagKeys:     []tag.Key{tagCDSInstance, observability.MustNewKey(observability.Method), observability.MustNewKey(observability.Handler)},
-		Measure:     r.Stats.ServerRequestCount,
-		Aggregation: view.Count(),
-	}
+		ServerRequestCountByMethod := &view.View{
+			Name:        "cds/http/server/request_count_by_method_and_handler",
+			Description: "Server request count by HTTP method",
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, observability.MustNewKey(observability.Method), observability.MustNewKey(observability.Handler)},
+			Measure:     ServerRequestCount,
+			Aggregation: view.Count(),
+		}
 
-	ServerResponseCountByStatusCode := &view.View{
-		Name:        "http/server/response_count_by_status_code_and_handler",
-		Description: "Server response count by status code",
-		TagKeys:     []tag.Key{tagCDSInstance, observability.MustNewKey(observability.StatusCode), observability.MustNewKey(observability.Handler)},
-		Measure:     r.Stats.ServerLatency,
-		Aggregation: view.Count(),
-	}
+		ServerResponseCountByStatusCode := &view.View{
+			Name:        "cds/http/server/response_count_by_status_code_and_handler",
+			Description: "Server response count by status code",
+			TagKeys:     []tag.Key{tagServiceType, tagServiceName, observability.MustNewKey(observability.StatusCode), observability.MustNewKey(observability.Handler)},
+			Measure:     ServerLatency,
+			Aggregation: view.Count(),
+		}
 
-	log.Info("Stats initialized")
+		err = observability.RegisterView(
+			observability.NewViewCount("cds/http/router/router_errors", Errors, []tag.Key{tagServiceType, tagServiceName}),
+			observability.NewViewCount("cds/http/router/router_hits", Hits, []tag.Key{tagServiceType, tagServiceName}),
+			observability.NewViewLast("cds/http/router/sse_clients", SSEClients, []tag.Key{tagServiceType, tagServiceName}),
+			observability.NewViewCount("cds/http/router/sse_events", SSEEvents, []tag.Key{tagServiceType, tagServiceName}),
+			ServerRequestCountView,
+			ServerRequestBytesView,
+			ServerResponseBytesView,
+			ServerLatencyView,
+			ServerRequestCountByMethod,
+			ServerResponseCountByStatusCode,
+		)
+	})
 
-	return observability.RegisterView(
-		observability.NewViewCount("router_errors", r.Stats.Errors, []tag.Key{tagCDSInstance}),
-		observability.NewViewCount("router_hits", r.Stats.Hits, []tag.Key{tagCDSInstance}),
-		observability.NewViewLast("sse_clients", r.Stats.SSEClients, []tag.Key{tagCDSInstance}),
-		observability.NewViewCount("sse_events", r.Stats.SSEEvents, []tag.Key{tagCDSInstance}),
-		ServerRequestCountView,
-		ServerRequestBytesView,
-		ServerResponseBytesView,
-		ServerLatencyView,
-		ServerRequestCountByMethod,
-		ServerResponseCountByStatusCode,
-	)
+	log.Debug("router> Stats initialized")
+
+	return err
 }
 
 type trackingResponseWriter struct {

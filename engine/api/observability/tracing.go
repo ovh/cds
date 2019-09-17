@@ -13,8 +13,8 @@ import (
 )
 
 // New may start a tracing span
-func New(ctx context.Context, serviceName, name string, sampler trace.Sampler, spanKind int) (context.Context, *trace.Span) {
-	if !traceEnable {
+func New(ctx context.Context, s service, name string, sampler trace.Sampler, spanKind int) (context.Context, *trace.Span) {
+	if traceExporter == nil {
 		return ctx, nil
 	}
 	return trace.StartSpan(ctx, name,
@@ -23,8 +23,8 @@ func New(ctx context.Context, serviceName, name string, sampler trace.Sampler, s
 }
 
 // Start may start a tracing span
-func Start(ctx context.Context, serviceName string, w http.ResponseWriter, req *http.Request, opt Options, db gorp.SqlExecutor, store cache.Store) (context.Context, error) {
-	if !traceEnable || !opt.Enable {
+func Start(ctx context.Context, s service, w http.ResponseWriter, req *http.Request, opt Options, db gorp.SqlExecutor, store cache.Store) (context.Context, error) {
+	if traceExporter == nil {
 		return ctx, nil
 	}
 
@@ -89,6 +89,10 @@ func Start(ctx context.Context, serviceName string, w http.ResponseWriter, req *
 	)
 
 	ctx = tracingutils.SpanContextToContext(ctx, span.SpanContext())
+	ctx = ContextWithTag(ctx,
+		TagServiceType, s.Type(),
+		TagServiceName, s.Name(),
+	)
 	return ctx, nil
 }
 

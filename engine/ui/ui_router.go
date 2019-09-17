@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -24,6 +25,8 @@ func (s *Service) initRouter(ctx context.Context) {
 
 	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
 	r.Handle("/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
+	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
+	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
 
 	// proxypass
 	r.Mux.PathPrefix("/cdsapi").Handler(s.getReverseProxy("/cdsapi", s.Cfg.API.HTTP.URL))

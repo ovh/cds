@@ -59,11 +59,10 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	s.Name = s.Cfg.Name
+	s.ServiceName = s.Cfg.Name
+	s.ServiceType = services.TypeUI
 	s.HTTPURL = s.Cfg.URL
-	s.Type = services.TypeUI
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
-	s.ServiceName = "cds-ui"
 
 	// HTMLDir must contains the ui dist directory.
 	// ui.tar.gz contains the dist directory

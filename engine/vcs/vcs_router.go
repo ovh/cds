@@ -15,11 +15,13 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Background = ctx
 	r.URL = s.Cfg.URL
 	r.SetHeaderFunc = api.DefaultHeaders
-	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey), s.authMiddleware, api.TracingMiddlewareFunc(s.ServiceName, nil, nil))
+	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey), s.authMiddleware, api.TracingMiddlewareFunc(s, nil, nil))
 	r.PostMiddlewares = append(r.PostMiddlewares, api.TracingPostMiddleware)
 
 	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
 	r.Handle("/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
+	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
+	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
 
 	r.Handle("/vcs", nil, r.GET(s.getAllVCSServersHandler))
 	r.Handle("/vcs/{name}", nil, r.GET(s.getVCSServersHandler))

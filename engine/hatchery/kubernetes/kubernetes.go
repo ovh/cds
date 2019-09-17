@@ -135,11 +135,10 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		}
 	}
 
-	h.Name = h.Config.Name
+	h.Common.Common.ServiceName = h.Config.Name
+	h.Common.Common.ServiceType = services.TypeHatchery
 	h.HTTPURL = h.Config.URL
-	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
-	h.Common.Common.ServiceName = "cds-hatchery-kubernetes"
 	var err error
 	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
 	if err != nil {
@@ -273,7 +272,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              name,
 		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
-		HatcheryName:      h.Name,
+		HatcheryName:      h.Name(),
 		TTL:               h.Config.WorkerTTL,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,

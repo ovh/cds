@@ -66,6 +66,7 @@ func configBootstrap(args []string) Configuration {
 		switch a {
 		case "api":
 			conf.API = &api.Configuration{}
+			conf.API.Name = "cds-api-" + namesgenerator.GetRandomNameCDS(0)
 			defaults.SetDefaults(conf.API)
 			conf.API.Services = append(conf.API.Services, api.ServiceConfiguration{
 				Name:       "sample-service",
@@ -79,6 +80,7 @@ func configBootstrap(args []string) Configuration {
 			})
 		case "ui":
 			conf.UI = &ui.Configuration{}
+			conf.UI.Name = "cds-ui-" + namesgenerator.GetRandomNameCDS(0)
 			defaults.SetDefaults(conf.UI)
 		case "migrate":
 			conf.DatabaseMigrate = &migrateservice.Configuration{}

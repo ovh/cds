@@ -19,6 +19,8 @@ func (s *Service) initRouter(ctx context.Context) {
 
 	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
 	r.Handle("/mon/status", nil, r.GET(s.getStatusHandler))
+	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
+	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
 	r.Handle("/operations", nil, r.POST(s.postOperationHandler))
 	r.Handle("/operations/{uuid}", nil, r.GET(s.getOperationsHandler))
 }

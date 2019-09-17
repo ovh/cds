@@ -4,10 +4,9 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-
-	"github.com/ovh/cds/engine/api/observability"
 )
 
 type HandlerScope []sdk.AuthConsumerScope
@@ -133,7 +132,8 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/status", ScopeNone(), r.GET(api.statusHandler, Auth(false)))
 	r.Handle("/mon/version", ScopeNone(), r.GET(VersionHandler, Auth(false)))
 	r.Handle("/mon/db/migrate", ScopeNone(), r.GET(api.getMonDBStatusMigrateHandler, NeedAdmin(true)))
-	r.Handle("/mon/metrics", ScopeNone(), r.GET(observability.StatsHandler, Auth(false)))
+	r.Handle("/mon/metrics", ScopeNone(), r.GET(service.GetPrometheustMetricsHandler(api), Auth(false)))
+	r.Handle("/mon/metrics/all", ScopeNone(), r.GET(service.GetMetricsHandler, Auth(false)))
 	r.Handle("/mon/errors/{uuid}", ScopeNone(), r.GET(api.getErrorHandler, NeedAdmin(true)))
 	r.Handle("/mon/panic/{uuid}", ScopeNone(), r.GET(api.getPanicDumpHandler, Auth(false)))
 

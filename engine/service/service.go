@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ovh/cds/engine/api/observability"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
@@ -32,9 +34,17 @@ func (c *Common) CommonMonitoring() sdk.MonitoringStatus {
 	}
 }
 
+func (c *Common) Type() string {
+	return c.ServiceType
+}
+
+func (c *Common) Name() string {
+	return c.ServiceName
+}
+
 func (c *Common) Start(ctx context.Context, cfg cdsclient.ServiceConfig) error {
 	// no register for api
-	if c.Type == "api" {
+	if c.ServiceType == "api" {
 		return nil
 	}
 
@@ -67,27 +77,35 @@ loop:
 	if err != nil {
 		return sdk.WithStack(err)
 	}
+
+	ctx = observability.ContextWithTag(ctx,
+		observability.TagServiceType, c.Type(),
+		observability.TagServiceName, c.Name(),
+	)
+
+	RegisterCommonMetricsView(ctx)
+
 	return nil
 }
 
-func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
+func (c *Common) Register(cfg sdk.ServiceConfig) error {
+	log.Info("Registing service %s(%T) %s", c.Type(), c, c.Name())
+
 	// no register for api
-	if c.Type == "api" {
+	if c.ServiceType == "api" {
 		return nil
 	}
 
 	var srv = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
-			Name:    c.Name,
+			Name:    c.ServiceName,
 			HTTPURL: c.HTTPURL,
-			Type:    c.Type,
+			Type:    c.ServiceType,
 			Config:  cfg,
 		},
 		LastHeartbeat: time.Time{},
 		Version:       sdk.VERSION,
 	}
-
-	log.Info("Registing service %T %s", c, c.Name)
 
 	if c.PrivateKey != nil {
 		pubKeyPEM, err := jws.ExportPublicKey(c.PrivateKey)
@@ -108,7 +126,7 @@ func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 // Heartbeat have to be launch as a goroutine, call DoHeartBeat each 30s
 func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus) error {
 	// no heartbeat for api
-	if c.Type == "api" {
+	if c.ServiceType == "api" {
 		return nil
 	}
 

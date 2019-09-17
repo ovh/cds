@@ -20,6 +20,8 @@ import (
 
 // Tags contants
 const (
+	TagServiceType        = "service_type"
+	TagServiceName        = "service_name"
 	TagWorkflow           = "workflow"
 	TagWorkflowRun        = "workflow_run"
 	TagProjectKey         = "project_key"
@@ -84,6 +86,24 @@ func ContextWithTag(ctx context.Context, s ...interface{}) context.Context {
 	}
 	ctx, _ = tag.New(ctx, tags...)
 	return ctx
+}
+
+func ContextGetTags(ctx context.Context, s ...string) []tag.Mutator {
+	m := tag.FromContext(ctx)
+	var tags []tag.Mutator
+
+	for i := 0; i < len(s); i++ {
+		k, err := tag.NewKey(s[i])
+		if err != nil {
+			log.Error("ContextGetTags> %v", err)
+			continue
+		}
+		val, ok := m.Value(k)
+		if ok {
+			tags = append(tags, tag.Upsert(k, val))
+		}
+	}
+	return tags
 }
 
 // Span start a new span from the parent context

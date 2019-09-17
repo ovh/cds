@@ -13,12 +13,14 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"strings"
+	"sync"
 	"time"
 
 	muxcontext "github.com/gorilla/context"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
@@ -29,6 +31,18 @@ import (
 )
 
 const nbPanicsBeforeFail = 50
+
+var (
+	onceMetrics         sync.Once
+	Errors              *stats.Int64Measure
+	Hits                *stats.Int64Measure
+	SSEClients          *stats.Int64Measure
+	SSEEvents           *stats.Int64Measure
+	ServerRequestCount  *stats.Int64Measure
+	ServerRequestBytes  *stats.Int64Measure
+	ServerResponseBytes *stats.Int64Measure
+	ServerLatency       *stats.Float64Measure
+)
 
 // Router is a wrapper around mux.Router
 type Router struct {
@@ -45,16 +59,6 @@ type Router struct {
 	panicked               bool
 	nbPanic                int
 	lastPanic              *time.Time
-	Stats                  struct {
-		Errors              *stats.Int64Measure
-		Hits                *stats.Int64Measure
-		SSEClients          *stats.Int64Measure
-		SSEEvents           *stats.Int64Measure
-		ServerRequestCount  *stats.Int64Measure
-		ServerRequestBytes  *stats.Int64Measure
-		ServerResponseBytes *stats.Int64Measure
-		ServerLatency       *stats.Float64Measure
-	}
 }
 
 // HandlerConfigParam is a type used in handler configuration, to set specific config on a route given a method
@@ -70,6 +74,7 @@ func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.Ha
 		if rc != nil && rc.Handler != nil {
 			name = runtime.FuncForPC(reflect.ValueOf(rc.Handler).Pointer()).Name()
 			name = strings.Replace(name, ".func1", "", 1)
+			name = strings.Replace(name, ".1", "", 1)
 		}
 		id := fmt.Sprintf("%d", sdk.GoroutineID())
 
@@ -86,7 +91,14 @@ func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.Ha
 }
 
 func (r *Router) compress(fn http.HandlerFunc) http.HandlerFunc {
-	return handlers.CompressHandlerLevel(fn, gzip.DefaultCompression).ServeHTTP
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Disable GZIP compression on prometheus call
+		if !strings.Contains(r.Header.Get("User-Agent"), "Prometheus") {
+			handlers.CompressHandlerLevel(fn, gzip.DefaultCompression).ServeHTTP(w, r)
+		} else {
+			fn(w, r)
+		}
+	}
 }
 
 func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
@@ -187,8 +199,9 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 		cfg.Config[handlers[i].Method] = handlers[i]
 		name := runtime.FuncForPC(reflect.ValueOf(handlers[i].Handler).Pointer()).Name()
 		name = strings.Replace(name, ".func1", "", 1)
+		name = strings.Replace(name, ".1", "", 1)
 		name = strings.Replace(name, "github.com/ovh/cds/engine/", "", 1)
-		log.Info("Registering handler %s on %s %s", name, handlers[i].Method, uri)
+		log.Debug("Registering handler %s on %s %s", name, handlers[i].Method, uri)
 		handlers[i].Name = name
 	}
 
@@ -226,16 +239,21 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		observability.Record(ctx, r.Stats.Hits, 1)
 
 		//Get route configuration
 		rc := cfg.Config[req.Method]
 		if rc == nil || rc.Handler == nil {
-			observability.Record(ctx, r.Stats.Errors, 1)
+			observability.Record(ctx, Errors, 1)
 			service.WriteError(w, req, sdk.ErrNotFound)
 			return
 		}
 
+		// Make the request context inherit from the context of the router
+		tags := observability.ContextGetTags(r.Background, observability.TagServiceType, observability.TagServiceName)
+		ctx, err = tag.New(ctx, tags...)
+		if err != nil {
+			log.Error("observability.ContextGetTags> %v", err)
+		}
 		ctx = observability.ContextWithTag(ctx,
 			observability.Handler, rc.Name,
 			observability.Host, req.Host,
@@ -258,26 +276,26 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 				log.Info("[%-3d] | %-7s | %13v | %v [%s]", responseWriter.statusCode, req.Method, latency, req.URL, rc.Name)
 			}
 
-			observability.RecordFloat64(ctx, r.Stats.ServerLatency, float64(latency)/float64(time.Millisecond))
-			observability.Record(ctx, r.Stats.ServerRequestBytes, responseWriter.reqSize)
-			observability.Record(ctx, r.Stats.ServerResponseBytes, responseWriter.respSize)
-
+			observability.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))
+			observability.Record(ctx, ServerRequestBytes, responseWriter.reqSize)
+			observability.Record(ctx, ServerResponseBytes, responseWriter.respSize)
 		}()
 
-		observability.Record(ctx, r.Stats.ServerRequestCount, 1)
+		observability.Record(ctx, Hits, 1)
+		observability.Record(ctx, ServerRequestCount, 1)
 
 		for _, m := range r.Middlewares {
 			var err error
 			ctx, err = m(ctx, responseWriter, req, rc)
 			if err != nil {
-				observability.Record(r.Background, r.Stats.Errors, 1)
+				observability.Record(r.Background, Errors, 1)
 				service.WriteError(w, req, err)
 				return
 			}
 		}
 
 		if err := rc.Handler(ctx, responseWriter.wrappedResponseWriter(), req); err != nil {
-			observability.Record(r.Background, r.Stats.Errors, 1)
+			observability.Record(r.Background, Errors, 1)
 			observability.End(ctx, responseWriter, req)
 			service.WriteError(responseWriter, req, err)
 			return

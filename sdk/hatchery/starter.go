@@ -10,8 +10,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.opencensus.io/stats"
-
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -112,7 +110,11 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 	ctx, end := observability.Span(j.ctx, "hatchery.spawnWorkerForJob")
 	defer end()
 
-	stats.Record(WithTags(ctx, h), h.Metrics().SpawnedWorkers.M(1))
+	ctx = observability.ContextWithTag(ctx,
+		observability.TagServiceName, h.Name(),
+		observability.TagServiceType, h.Type(),
+	)
+	observability.Record(ctx, GetMetrics().SpawnedWorkers, 1)
 
 	log.Debug("hatchery> spawnWorkerForJob> %d", j.id)
 	defer log.Debug("hatchery> spawnWorkerForJob> %d (%.3f seconds elapsed)", j.id, time.Since(time.Unix(j.timestamp, 0)).Seconds())

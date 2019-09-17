@@ -2,15 +2,15 @@ package observability
 
 import (
 	"context"
-	"net/http"
 	"strings"
+	"sync"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 
-	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -27,13 +27,40 @@ const (
 	Handler        = "http.handler"
 )
 
+type ExposedView struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Tags        []string `json:"tags"`
+	Dimension   string   `json:"dimension"`
+	Aggregation string   `json:"aggregagtion"`
+}
+
+var (
+	ExposedViews     []ExposedView
+	exposedViewMutex sync.Mutex
+)
+
 // RegisterView begins collecting data for the given views
 func RegisterView(views ...*view.View) error {
+	exposedViewMutex.Lock()
+	defer exposedViewMutex.Unlock()
+
 	for _, v := range views {
 		if view.Find(v.Name) == nil {
+			log.Debug("obserbability.RegisterView> Registering view %s with tags %v on measure %p", v.Name, v.TagKeys, v.Measure)
 			if err := view.Register(v); err != nil {
 				return sdk.WithStack(err)
 			}
+			var ev = ExposedView{
+				Name:        v.Name,
+				Description: v.Description,
+				Dimension:   v.Measure.Unit(),
+				Aggregation: v.Aggregation.Type.String(),
+			}
+			for _, t := range v.TagKeys {
+				ev.Tags = append(ev.Tags, t.Name())
+			}
+			ExposedViews = append(ExposedViews, ev)
 		}
 	}
 
@@ -62,17 +89,6 @@ func FindAndRegisterViewLastFloat64(nameInput string, tags []tag.Key) (*view.Vie
 	value := stats.Float64("cds/cds-api/"+name, name, stats.UnitDimensionless)
 	newView := NewViewLastFloat64(name, value, tags)
 	return newView, view.Register(newView)
-}
-
-// StatsHandler returns a Handler to exposer prometheus views
-func StatsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if statsExporter == nil {
-			return nil
-		}
-		statsExporter.ServeHTTP(w, r)
-		return nil
-	}
 }
 
 // Record an int64 measure

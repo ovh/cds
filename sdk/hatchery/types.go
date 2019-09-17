@@ -48,18 +48,16 @@ func (s *SpawnArguments) ModelName() string {
 // NeedRegistration return true if worker model need regsitration
 // ID returns hatchery id
 type Interface interface {
+	Name() string
+	Type() string
 	InitHatchery() error
 	SpawnWorker(ctx context.Context, spawnArgs SpawnArguments) error
 	CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool
-
 	WorkersStarted() []string
 	Service() *sdk.Service
 	CDSClient() cdsclient.Interface
 	Configuration() service.HatcheryCommonConfiguration
-
 	Serve(ctx context.Context) error
-	ServiceName() string
-	Metrics() *Metrics
 	PanicDumpDirectory() (string, error)
 	GetPrivateKey() *rsa.PrivateKey
 }

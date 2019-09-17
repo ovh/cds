@@ -70,11 +70,10 @@ type Common struct {
 	APIPublicKey         []byte
 	ParsedAPIPublicKey   *rsa.PublicKey
 	StartupTime          time.Time
-	Name                 string
 	HTTPURL              string
-	Type                 string
 	MaxHeartbeatFailures int
 	ServiceName          string
+	ServiceType          string
 	ServiceInstance      *sdk.Service
 	PrivateKey           *rsa.PrivateKey
 }
@@ -86,9 +85,10 @@ type Service interface {
 	CheckConfiguration(cfg interface{}) error
 	Start(ctx context.Context, cfg cdsclient.ServiceConfig) error
 	Init(cfg interface{}) (cdsclient.ServiceConfig, error)
-	Register(ctx context.Context, cfg sdk.ServiceConfig) error
+	Register(cfg sdk.ServiceConfig) error
 	Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus) error
 	Status() sdk.MonitoringStatus
+	NamedService
 }
 
 // BeforeStart has to be implemented if you want to run some code after the ApplyConfiguration and before the Serve of a Service

@@ -69,12 +69,11 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	h.Name = h.Config.Name
+	h.Common.Common.ServiceName = h.Config.Name
+	h.Common.Common.ServiceType = services.TypeHatchery
 	h.HTTPURL = h.Config.URL
 
-	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
-	h.Common.Common.ServiceName = "cds-hatchery-openstack"
 	var err error
 	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
 	if err != nil {
@@ -269,7 +268,7 @@ func (h *HatcheryOpenstack) killAwolServers() {
 		// Delete workers, if not identified by CDS API
 		// Wait for 10 minutes, to avoid killing worker babies
 		log.Debug("killAwolServers> server %s status: %s last update: %s toDeleteKilled:%t inWorkersList:%t", s.Name, s.Status, time.Since(s.Updated), toDeleteKilled, inWorkersList)
-		if isWorker && (workerHatcheryName == "" || workerHatcheryName == h.Name) &&
+		if isWorker && (workerHatcheryName == "" || workerHatcheryName == h.Name()) &&
 			(s.Status == "SHUTOFF" || toDeleteKilled || (!inWorkersList && time.Since(s.Updated) > 10*time.Minute)) {
 
 			// if it's was a worker model for registration
@@ -315,7 +314,7 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(workerModelName, workerM
 			"worker_model_name":          workerModelName,
 			"model":                      model,
 			"flavor":                     flavor,
-			"created_by":                 "cdsHatchery_" + h.Name,
+			"created_by":                 "cdsHatchery_" + h.Name(),
 			"worker_model_last_modified": workerModelNameLastModified,
 		},
 	}).ExtractImageID()

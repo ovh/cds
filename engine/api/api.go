@@ -56,7 +56,8 @@ import (
 
 // Configuration is the configuraton structure for CDS API
 type Configuration struct {
-	URL struct {
+	Name string `toml:"name" comment:"Name of this CDS API Service\n Enter a name to enable this service" json:"name"`
+	URL  struct {
 		API string `toml:"api" default:"http://localhost:8081" json:"api"`
 		UI  string `toml:"ui" default:"http://localhost:2015" json:"ui"`
 	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################" json:"url"`
@@ -264,6 +265,7 @@ type API struct {
 		queue                    *stats.Int64Measure
 		WorkflowRunsMarkToDelete *stats.Int64Measure
 		WorkflowRunsDeleted      *stats.Int64Measure
+		DatabaseConns            *stats.Int64Measure
 	}
 	AuthenticationDrivers map[sdk.AuthConsumerType]sdk.AuthDriver
 }
@@ -280,10 +282,8 @@ func (a *API) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	a.Type = services.TypeAPI
-	a.ServiceName = "cds-api"
-	a.Name = event.GetCDSName()
-
+	a.Common.ServiceType = services.TypeAPI
+	a.Common.ServiceName = a.Config.Name
 	return nil
 }
 
@@ -292,6 +292,10 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	aConfig, ok := config.(Configuration)
 	if !ok {
 		return fmt.Errorf("Invalid API configuration")
+	}
+
+	if aConfig.Name == "" {
+		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
 	}
 
 	if aConfig.URL.API == "" {
@@ -565,7 +569,7 @@ func (a *API) Serve(ctx context.Context) error {
 		Background: ctx,
 	}
 	a.InitRouter()
-	if err := a.Router.InitMetrics("cds-api", a.Name); err != nil {
+	if err := InitRouterMetrics(a); err != nil {
 		log.Error("unable to init router metrics: %v", err)
 	}
 

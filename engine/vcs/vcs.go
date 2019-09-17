@@ -55,9 +55,9 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	s.Name = s.Cfg.Name
+	s.ServiceName = s.Cfg.Name
+	s.ServiceType = services.TypeVCS
 	s.HTTPURL = s.Cfg.URL
-	s.Type = services.TypeVCS
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 	s.ServiceName = "cds-vcs"
 
