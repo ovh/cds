@@ -134,16 +134,17 @@ func initFromFlags(cmd *cobra.Command, w *internal.CurrentWorker) {
 	}
 
 	log.Initialize(&log.Conf{
-		Level:                  FlagString(cmd, flagLogLevel),
-		GraylogProtocol:        FlagString(cmd, flagGraylogProtocol),
-		GraylogHost:            FlagString(cmd, flagGraylogHost),
-		GraylogPort:            FlagString(cmd, flagGraylogPort),
-		GraylogExtraKey:        FlagString(cmd, flagGraylogExtraKey),
-		GraylogExtraValue:      FlagString(cmd, flagGraylogExtraValue),
-		GraylogFieldCDSVersion: sdk.VERSION,
-		GraylogFieldCDSOS:      sdk.GOOS,
-		GraylogFieldCDSArch:    sdk.GOARCH,
-		GraylogFieldCDSName:    givenName,
+		Level:                      FlagString(cmd, flagLogLevel),
+		GraylogProtocol:            FlagString(cmd, flagGraylogProtocol),
+		GraylogHost:                FlagString(cmd, flagGraylogHost),
+		GraylogPort:                FlagString(cmd, flagGraylogPort),
+		GraylogExtraKey:            FlagString(cmd, flagGraylogExtraKey),
+		GraylogExtraValue:          FlagString(cmd, flagGraylogExtraValue),
+		GraylogFieldCDSVersion:     sdk.VERSION,
+		GraylogFieldCDSOS:          sdk.GOOS,
+		GraylogFieldCDSArch:        sdk.GOARCH,
+		GraylogFieldCDSServiceName: givenName,
+		GraylogFieldCDSServiceType: "worker",
 	})
 
 	hatcheryName := FlagString(cmd, flagHatcheryName)
