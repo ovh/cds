@@ -19,8 +19,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
@@ -709,6 +707,20 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				b := sdk.VCSBranch{
+					Default:      true,
+					DisplayID:    "master",
+					LatestCommit: "defaultcommit",
+				}
+				b2 := sdk.VCSBranch{
+					Default:      false,
+					DisplayID:    "feat/branch",
+					LatestCommit: "mylastcommit",
+				}
+				if err := enc.Encode([]sdk.VCSBranch{b,b2}); err != nil {
+					return writeError(w, err)
+				}
 				// NEED GET BRANCH TO GET LASTEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=feat%2Fbranch":
 				b := sdk.VCSBranch{
@@ -847,7 +859,6 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 		},
 	}
 
-	(&w).RetroMigrate()
 	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	// CREATE RUN
@@ -1672,7 +1683,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	assert.Equal(t, "steven.guiheux", mapParams2["git.author"])
 	assert.Equal(t, "super commit", mapParams2["git.message"])
 	assert.Equal(t, "bar", mapParams2["my.value"])
-	assert.Equal(t, "build", mapParams2["workflow.root.pipeline"])
+	assert.Equal(t, "empty", mapParams2["workflow.root.pipeline"])
 	assert.Equal(t, "github", wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].VCSServer)
 }
 
@@ -1876,7 +1887,7 @@ func TestGitParamWithJoin(t *testing.T) {
 	assert.Equal(t, "steven.guiheux", mapParamsJoin["git.author"])
 	assert.Equal(t, "super commit", mapParamsJoin["git.message"])
 	assert.Equal(t, "bar", mapParamsJoin["my.value"])
-	assert.Equal(t, "build", mapParamsJoin["workflow.root.pipeline"])
+	assert.Equal(t, "empty", mapParamsJoin["workflow.root.pipeline"])
 
 	mapParams2 := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Joins[0].Triggers[0].ChildNode.ID][0].BuildParameters)
 	assert.Equal(t, "feat/branch", mapParams2["git.branch"])
@@ -1884,7 +1895,7 @@ func TestGitParamWithJoin(t *testing.T) {
 	assert.Equal(t, "steven.guiheux", mapParams2["git.author"])
 	assert.Equal(t, "super commit", mapParams2["git.message"])
 	assert.Equal(t, "bar", mapParams2["my.value"])
-	assert.Equal(t, "build", mapParams2["workflow.root.pipeline"])
+	assert.Equal(t, "empty", mapParams2["workflow.root.pipeline"])
 	assert.Equal(t, "join", mapParams2["workflow.join.node"])
 	assert.Equal(t, "feat/branch", wr.WorkflowNodeRuns[w.WorkflowData.Joins[0].Triggers[0].ChildNode.ID][0].VCSBranch)
 }
@@ -2088,7 +2099,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 	assert.Equal(t, "steven.guiheux", mapParamsFork["git.author"])
 	assert.Equal(t, "super commit", mapParamsFork["git.message"])
 	assert.Equal(t, "bar", mapParamsFork["my.value"])
-	assert.Equal(t, "build", mapParamsFork["workflow.root.pipeline"])
+	assert.Equal(t, "empty", mapParamsFork["workflow.root.pipeline"])
 
 	mapParams2 := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID][0].BuildParameters)
 	assert.Equal(t, "feat/branch", mapParams2["git.branch"])
@@ -2096,7 +2107,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 	assert.Equal(t, "steven.guiheux", mapParams2["git.author"])
 	assert.Equal(t, "super commit", mapParams2["git.message"])
 	assert.Equal(t, "bar", mapParams2["my.value"])
-	assert.Equal(t, "build", mapParams2["workflow.root.pipeline"])
+	assert.Equal(t, "empty", mapParams2["workflow.root.pipeline"])
 	assert.Equal(t, "fork", mapParams2["workflow.fork.node"])
 }
 
