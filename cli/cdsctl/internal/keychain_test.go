@@ -1,5 +1,7 @@
 package internal
 
+// +build !skipkeychaintests
+
 import (
 	"testing"
 

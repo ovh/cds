@@ -31,7 +31,7 @@ endef
 
 
 TEST_PKGS = $(shell go list ./... | grep -v vendor)
-TEST_CMD = go test -v -timeout 180s -coverprofile=profile.coverprofile
+TEST_CMD = go test -tags skipkeychaintests -v -timeout 180s -coverprofile=profile.coverprofile
 
 $(TARGET_DIR):
 	$(info create $(TARGET_DIR) directory)
