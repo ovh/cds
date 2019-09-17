@@ -109,11 +109,10 @@ func tmplCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 }
 
 func getAbsoluteDir(arg string, currentDir string) string {
-	if strings.HasSuffix(arg, string(filepath.Separator)) {
+	if strings.HasPrefix(arg, string(filepath.Separator)) {
 		return arg
-	} else {
-		return filepath.Join(currentDir, arg)
 	}
+	return filepath.Join(currentDir, arg)
 }
 
 func (wk *currentWorker) tmplHandler(w http.ResponseWriter, r *http.Request) {
