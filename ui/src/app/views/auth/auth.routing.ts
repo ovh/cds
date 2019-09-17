@@ -1,5 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { NoAuthenticationGuard } from 'app/guard/no-authentication.guard';
 import { AskResetComponent } from './ask-reset/ask-reset';
 import { AskSigninComponent } from './ask-signin/ask-signin.component';
 import { AuthComponent } from './auth.component';
@@ -17,7 +18,8 @@ const routes: Routes = [
             {
                 path: 'signin',
                 component: SigninComponent,
-                data: { title: 'CDS • Sign in' }
+                data: { title: 'CDS • Sign in' },
+                canActivate: [NoAuthenticationGuard]
             },
             {
                 path: 'ask-reset',

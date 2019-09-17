@@ -161,17 +161,7 @@ export class AppComponent implements OnInit {
         let authKey: string;
         let authValue: string;
         let user = this._store.selectSnapshot(AuthenticationState.user);
-        // ADD user AUTH
-        // TODO refact SSE auth
-        // let sessionToken = this._authStore.getSessionToken();
-        // if (sessionToken) {
-        if (false) {
-            // authKey = this._authStore.localStorageSessionKey;
-            // authValue = sessionToken;
-        } else if (user) {
-            // authKey = 'Authorization';
-            // authValue = 'Basic ' + user.token;
-        } else {
+        if (!user) {
             return;
         }
 
