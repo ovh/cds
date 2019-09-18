@@ -21,7 +21,7 @@ export class AuthenticationGuard implements CanActivate, CanActivateChild {
                     this._store.dispatch(new FetchCurrentUser()).subscribe(
                         () => { },
                         () => {
-                            this._router.navigate(['auth/signin'], <NavigationExtras>{
+                            this._router.navigate(['/auth/signin'], <NavigationExtras>{
                                 queryParams: {
                                     redirect: state.url
                                 }

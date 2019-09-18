@@ -76,7 +76,7 @@ func TestHatcheryLocal(t *testing.T) {
 	b, _ := json.Marshal(cfg)
 	json.Unmarshal(b, &srvConfig) // nolint
 
-	_, err = h.Register(context.TODO(), srvConfig)
+	err = h.Register(srvConfig)
 	require.NoError(t, err)
 
 	heartbeatCtx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)

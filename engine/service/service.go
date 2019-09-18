@@ -139,13 +139,13 @@ func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStat
 			return ctx.Err()
 		case <-ticker.C:
 			if err := c.Client.ServiceHeartbeat(status()); err != nil {
-				log.Warning("%s> Heartbeat failure: %v", c.Name, err)
+				log.Warning("%s> Heartbeat failure: %v", c.Name(), err)
 				heartbeatFailures++
 			}
 
 			// if register failed too many time, stop heartbeat
 			if heartbeatFailures > c.MaxHeartbeatFailures {
-				return fmt.Errorf("%s> Heartbeat> Register failed excedeed", c.Name)
+				return fmt.Errorf("%s> Heartbeat> Register failed excedeed", c.Name())
 			}
 		}
 	}
