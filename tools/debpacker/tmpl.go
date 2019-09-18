@@ -59,7 +59,9 @@ chmod 770 /var/lib/{{.PackageName}}
 echo "Service initialization"
 {{.SystemdServiceConfig.PostInstallCmd}}
 {{end -}}
+{{if .SystemdServiceConfig.ExecStart -}}
 chmod +x {{.SystemdServiceConfig.ExecStart}}
+{{end -}}
 
 set +e
 {{if  (.NeedsService) -}}
