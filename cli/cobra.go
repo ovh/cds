@@ -235,7 +235,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 		n, _ := cmd.Flags().GetBool("no-interactive")
 		b, _ := cmd.Flags().GetBool("insecure")
 		v, _ := cmd.Flags().GetBool("verbose")
-		vals["context"] = append(vals["context"], fmt.Sprintf("%s", c))
+		vals["context"] = append(vals["context"], c)
 		vals["no-interactive"] = append(vals["no-interactive"], fmt.Sprintf("%v", n))
 		vals["insecure"] = append(vals["insecure"], fmt.Sprintf("%v", b))
 		vals["verbose"] = append(vals["verbose"], fmt.Sprintf("%v", v))
