@@ -213,15 +213,12 @@ func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) 
 
 	// add generated workflow to writer
 	var wor exportentities.Workflow
-	if err := yaml.Unmarshal([]byte(res.Workflow), &wor); err != nil {
+	bs := []byte(res.Workflow)
+	if err := yaml.Unmarshal(bs, &wor); err != nil {
 		return sdk.NewError(sdk.Error{
 			ID:      sdk.ErrWrongRequest.ID,
 			Message: "Cannot parse generated workflow",
 		}, err)
-	}
-	bs, err := exportentities.Marshal(wor, exportentities.FormatYAML)
-	if err != nil {
-		return err
 	}
 	if err := tw.WriteHeader(&tar.Header{
 		Name: fmt.Sprintf(exportentities.PullWorkflowName, wor.Name),
@@ -236,17 +233,13 @@ func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) 
 
 	// add generated pipelines to writer
 	for _, p := range res.Pipelines {
+		bs := []byte(p)
 		var pip exportentities.PipelineV1
-		if err := yaml.Unmarshal([]byte(p), &pip); err != nil {
+		if err := yaml.Unmarshal(bs, &pip); err != nil {
 			return sdk.NewError(sdk.Error{
 				ID:      sdk.ErrWrongRequest.ID,
 				Message: "Cannot parse generated pipeline",
 			}, err)
-		}
-
-		bs, err := exportentities.Marshal(pip, exportentities.FormatYAML)
-		if err != nil {
-			return err
 		}
 		if err := tw.WriteHeader(&tar.Header{
 			Name: fmt.Sprintf(exportentities.PullPipelineName, pip.Name),
@@ -262,17 +255,13 @@ func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) 
 
 	// add generated applications to writer
 	for _, a := range res.Applications {
+		bs := []byte(a)
 		var app exportentities.Application
-		if err := yaml.Unmarshal([]byte(a), &app); err != nil {
+		if err := yaml.Unmarshal(bs, &app); err != nil {
 			return sdk.NewError(sdk.Error{
 				ID:      sdk.ErrWrongRequest.ID,
 				Message: "Cannot parse generated application",
 			}, err)
-		}
-
-		bs, err := exportentities.Marshal(app, exportentities.FormatYAML)
-		if err != nil {
-			return err
 		}
 		if err := tw.WriteHeader(&tar.Header{
 			Name: fmt.Sprintf(exportentities.PullApplicationName, app.Name),
@@ -288,17 +277,13 @@ func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) 
 
 	// add generated environments to writer
 	for _, e := range res.Environments {
+		bs := []byte(e)
 		var env exportentities.Environment
-		if err := yaml.Unmarshal([]byte(e), &env); err != nil {
+		if err := yaml.Unmarshal(bs, &env); err != nil {
 			return sdk.NewError(sdk.Error{
 				ID:      sdk.ErrWrongRequest.ID,
 				Message: "Cannot parse generated environment",
 			}, err)
-		}
-
-		bs, err := exportentities.Marshal(env, exportentities.FormatYAML)
-		if err != nil {
-			return err
 		}
 		if err := tw.WriteHeader(&tar.Header{
 			Name: fmt.Sprintf(exportentities.PullEnvironmentName, env.Name),
