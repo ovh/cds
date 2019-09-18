@@ -17,10 +17,12 @@ func (c *client) AuthDriverList() (sdk.AuthDriverResponse, error) {
 func (c *client) AuthConsumerSignin(consumerType sdk.AuthConsumerType, request sdk.AuthConsumerSigninRequest) (sdk.AuthConsumerSigninResponse, error) {
 	var res sdk.AuthConsumerSigninResponse
 	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/auth/consumer/"+string(consumerType)+"/signin", request, &res)
-	if err != nil {
-		return res, err
-	}
-	return res, nil
+	return res, err
+}
+
+func (c *client) AuthConsumerSignout() error {
+	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/auth/consumer/signout", nil, nil)
+	return err
 }
 
 func (c *client) AuthConsumerLocalSignup(request sdk.AuthConsumerSigninRequest) error {
@@ -53,13 +55,17 @@ func (c *client) AuthConsumerDelete(username, id string) error {
 	return err
 }
 
+func (c *client) AuthConsumerRegen(username, id string) (sdk.AuthConsumerCreateResponse, error) {
+	var consumer sdk.AuthConsumerCreateResponse
+	request := sdk.AuthConsumerRegenRequest{RevokeSessions: true}
+	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/user/"+username+"/auth/consumer/"+id+"/regen", request, &consumer)
+	return consumer, err
+}
+
 func (c *client) AuthConsumerCreateForUser(username string, request sdk.AuthConsumer) (sdk.AuthConsumerCreateResponse, error) {
 	var consumer sdk.AuthConsumerCreateResponse
 	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/user/"+username+"/auth/consumer", request, &consumer)
-	if err != nil {
-		return consumer, err
-	}
-	return consumer, nil
+	return consumer, err
 }
 
 func (c *client) AuthSessionListByUser(username string) (sdk.AuthSessions, error) {

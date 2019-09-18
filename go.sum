@@ -123,8 +123,6 @@ github.com/creack/pty v1.1.7 h1:6pwm8kMQKCmgUg0ZHTm5+/YvRK0s3THD/28+T6/kk4A=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
 github.com/dancannon/gorethink v4.0.0+incompatible h1:KFV7Gha3AuqT+gr0B/eKvGhbjmUv0qGF43aKCIKVE9A=
 github.com/dancannon/gorethink v4.0.0+incompatible/go.mod h1:BLvkat9KmZc1efyYwhz3WnybhRZtgF1K929FD8z1avU=
-github.com/danieljoos/wincred v1.0.1 h1:fcRTaj17zzROVqni2FiToKUVg3MmJ4NtMSGCySPIr/g=
-github.com/danieljoos/wincred v1.0.1/go.mod h1:SnuYRW9lp1oJrZX/dXJqr0cPK5gYXqx3EJbmjhLdK9U=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -137,8 +135,6 @@ github.com/dnaeon/go-vcr v0.0.0-20180920040454-5637cf3d8a31 h1:Dzuw9GtbmllUqEcoH
 github.com/dnaeon/go-vcr v0.0.0-20180920040454-5637cf3d8a31/go.mod h1:aBB1+wY4s93YsC3HHjMBMrwTj2R9FHDzUr9KyGc8n1E=
 github.com/docker/distribution v2.7.0-rc.0+incompatible h1:Nw9tozLpkMnG3IA1zLzsCuwKizII6havt4iIXWWzU2s=
 github.com/docker/distribution v2.7.0-rc.0+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
-github.com/docker/docker-credential-helpers v0.6.1 h1:Dq4iIfcM7cNtddhLVWe9h4QDjsi4OER3Z8voPu/I52g=
-github.com/docker/docker-credential-helpers v0.6.1/go.mod h1:WRaJzqw3CTB9bk10avuGsjVBZsD05qeibJ1/TYlvc0Y=
 github.com/docker/engine v0.0.0-20180816081446-320063a2ad06 h1:CcxlLWAS/9b46iqHDTBlALJZF9atXVNjeymdCNrUfnY=
 github.com/docker/engine v0.0.0-20180816081446-320063a2ad06/go.mod h1:3CPr2caMgTHxxIAZgEMd3uLYPDlRvPqCpyeRf6ncPcY=
 github.com/docker/go-connections v0.3.0 h1:3lOnM9cSzgGwx8VfK/NGOW5fLQ0GjIlCkaktF+n1M6o=
@@ -367,6 +363,8 @@ github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 h1:PJPDf8OUfOK1bb/
 github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1/go.mod h1:1NbS8ALrpOvjt0rHPNLyCIeMtbizbir8U//inJ+zuB8=
 github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 h1:Z9n2FFNUXsshfwJMBgNA0RU6/i7WVaAegv3PtuIHPMs=
 github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51/go.mod h1:CzGEWj7cYgsdH8dAjBGEr58BoE7ScuLd+fwFZ44+/x8=
+github.com/keybase/go.dbus v0.0.0-20190710215703-a33a09c8a604 h1:9uixD8kYjfDc8rUOW7bJLy0oaGkaPLO2foA9wk1WsyE=
+github.com/keybase/go.dbus v0.0.0-20190710215703-a33a09c8a604/go.mod h1:a8clEhrrGV/d76/f9r2I41BwANMihfZYV9C223vaxqE=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1 h1:mweAR1A6xJ3oS2pRaGiHgQ4OO8tzTaLawm8vnODuwDk=
@@ -667,6 +665,8 @@ github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 h1:ESFSdwY
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b h1:mvFk4C4VehqptP44jpYKCokoptnqgRg6TU3hNTtd134=
 github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b/go.mod h1:LH8s5iF2nb4JFQ1A9fAcvsdqzUGZttifagNxO5TOiPQ=
+github.com/yesnault/go-keychain v0.0.0-20190829105400-f78f7ae h1:zCVbLQGe9/4TyKeSScCQgJ4YXUSzKP6J1UL3909wahM=
+github.com/yesnault/go-keychain v0.0.0-20190829105400-f78f7ae/go.mod h1:EzotOW21xnO2Lld4dB8qr2bSnzi3nGtE9FG33n/y2Q8=
 github.com/yesnault/go-toml v0.0.0-20170920144045-9a5282f85277 h1:5wm+TddKWEVUnNGFEYYThIVBAdJkZjNCnco5SJYo99Q=
 github.com/yesnault/go-toml v0.0.0-20170920144045-9a5282f85277/go.mod h1:SsMrIuedaKvK8GekjwjVv8gMnHNAuvoINpKCARzdsEQ=
 github.com/yesnault/gorp v0.0.0-20190906150006-6210446a0d92 h1:NI7JOFhbvqPAk0y88x/bkbsN2R5ExG83dIujLtC9GtE=
