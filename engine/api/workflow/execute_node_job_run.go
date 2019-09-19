@@ -197,7 +197,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 
 	runContext := nodeRunContext{}
 
-	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.ID)
+	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
 	if node != nil && node.Context != nil {
 		if node.Context.PipelineID != 0 {
 			pip, has := wr.Workflow.Pipelines[node.Context.PipelineID]
