@@ -10,6 +10,8 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
+var testInstallKey = exportentities.StepInstallKey("proj-mykey")
+var testAdvancedInstallKey = exportentities.StepInstallKey(map[string]string{"name": "proj-mykey", "file": "myfile"})
 var tests = []struct {
 	Name string
 	Step exportentities.Step
@@ -38,6 +40,22 @@ var tests = []struct {
 		},
 		Json: `{"artifactDownload":{"path":"{{.cds.workspace}}"}}`,
 		Yaml: "artifactDownload:\n  path: '{{.cds.workspace}}'\n",
+	},
+	{
+		Name: "Step with typed action install key",
+		Step: exportentities.Step{
+			InstallKey: &testInstallKey,
+		},
+		Json: `{"installKey":"proj-mykey"}`,
+		Yaml: "installKey: proj-mykey\n",
+	},
+	{
+		Name: "Step with typed action install key advanced parameters",
+		Step: exportentities.Step{
+			InstallKey: &testAdvancedInstallKey,
+		},
+		Json: `{"installKey":{"file":"myfile","name":"proj-mykey"}}`,
+		Yaml: "installKey:\n  file: myfile\n  name: proj-mykey\n",
 	},
 	{
 		Name: "Step with not typed action",
@@ -72,10 +90,10 @@ func TestUnMarshal(t *testing.T) {
 			var step exportentities.Step
 
 			assert.NoError(t, json.Unmarshal([]byte(test.Json), &step))
-			assert.Equal(t, test.Step, step, "Invalid json unmarshal")
+			assert.Equal(t, test.Step.String(), step.String(), "Invalid json unmarshal")
 
 			assert.NoError(t, yaml.Unmarshal([]byte(test.Yaml), &step))
-			assert.Equal(t, test.Step, step, "Invalid yaml unmarshal")
+			assert.Equal(t, test.Step.String(), step.String(), "Invalid yaml unmarshal")
 		})
 	}
 }

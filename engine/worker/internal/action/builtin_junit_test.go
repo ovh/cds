@@ -10,7 +10,6 @@ import (
 )
 
 func Test_computeStats(t *testing.T) {
-	t.SkipNow()
 	type args struct {
 		res *sdk.Result
 		v   *venom.Tests

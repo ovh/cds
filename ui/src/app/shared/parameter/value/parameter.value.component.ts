@@ -1,5 +1,5 @@
 import { AfterViewChecked, ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { AllKeys } from 'app/model/keys.model';
+import { AllKeys, Key } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Project } from 'app/model/project.model';
 import { RepositoriesManager, Repository } from 'app/model/repositories.model';
@@ -24,7 +24,16 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
 
     editableValue: string | number | boolean;
     @Input() type: string;
-    @Input() keys: AllKeys;
+    @Input('keys')
+    set keys(data: AllKeys) {
+        this._keys = data;
+        if (data) {
+            this.allKeys = [].concat(data.ssh).concat(data.pgp);
+        }
+    }
+    get keys(): AllKeys {
+        return this._keys;
+    }
     @Input('value')
     set value(data: string | number | boolean) {
         this.castValue(data);
@@ -75,6 +84,8 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
     alreadyRefreshed: boolean;
     list: Array<string>;
     themeSubscription: Subscription;
+    _keys: AllKeys;
+    allKeys: Key[];
 
     constructor(
         private _repoManagerService: RepoManagerService,
