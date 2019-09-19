@@ -35,6 +35,17 @@ Environment="{{$key}}={{$value}}"
 WantedBy={{.SystemdServiceConfig.WantedBy}}
 `
 
+	preinstTmpl = `#!/bin/bash
+set +e
+{{if  (.NeedsService) -}}
+if  [ -f "/lib/systemd/system/{{.PackageName}}.service" ];then
+	systemctl stop {{.PackageName}}
+	systemctl disable {{.PackageName}}
+fi
+systemctl daemon-reload
+{{end -}}
+`
+
 	postinstTmpl = `#!/bin/bash
 set -e
 echo "Create the {{.SystemdServiceConfig.User}} User, Group and Directories"
@@ -48,12 +59,36 @@ chmod 770 /var/lib/{{.PackageName}}
 echo "Service initialization"
 {{.SystemdServiceConfig.PostInstallCmd}}
 {{end -}}
+{{if .SystemdServiceConfig.ExecStart -}}
 chmod +x {{.SystemdServiceConfig.ExecStart}}
+{{end -}}
 
 set +e
+{{if  (.NeedsService) -}}
 echo "Service installed"
+systemctl daemon-reload
 systemctl enable {{.PackageName}}
-systemctl status {{.PackageName}}
+{{if  (.SystemdServiceConfig.AutoStart) -}}
+systemctl start {{.PackageName}}
+{{end -}}
+systemctl --no-pager status {{.PackageName}}
 echo "run systemctl start {{.PackageName}} to start"
+{{end -}}
+`
+
+	prermTmpl = `#!/bin/bash
+set +e
+{{if  (.NeedsService) -}}
+systemctl stop {{.PackageName}}
+systemctl disable {{.PackageName}}
+systemctl daemon-reload
+{{end -}}
+`
+
+	postrmTmpl = `#!/bin/bash
+set +e
+{{if  (.NeedsService) -}}
+systemctl daemon-reload
+{{end -}}
 `
 )
