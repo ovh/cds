@@ -13,11 +13,10 @@ import (
 var testInstallKey = exportentities.StepInstallKey("proj-mykey")
 var testAdvancedInstallKey = exportentities.StepInstallKey(map[string]string{"name": "proj-mykey", "file": "myfile"})
 var tests = []struct {
-	Name           string
-	Step           exportentities.Step
-	SkipUnmarshall bool
-	Json           string
-	Yaml           string
+	Name string
+	Step exportentities.Step
+	Json string
+	Yaml string
 }{
 	{
 		Name: "Step with custom action",
@@ -55,9 +54,8 @@ var tests = []struct {
 		Step: exportentities.Step{
 			InstallKey: &testAdvancedInstallKey,
 		},
-		SkipUnmarshall: true,
-		Json:           `{"installKey":{"file":"myfile","name":"proj-mykey"}}`,
-		Yaml:           "installKey:\n  file: myfile\n  name: proj-mykey\n",
+		Json: `{"installKey":{"file":"myfile","name":"proj-mykey"}}`,
+		Yaml: "installKey:\n  file: myfile\n  name: proj-mykey\n",
 	},
 	{
 		Name: "Step with not typed action",
@@ -88,17 +86,14 @@ func TestMarshal(t *testing.T) {
 
 func TestUnMarshal(t *testing.T) {
 	for _, test := range tests {
-		if test.SkipUnmarshall {
-			continue
-		}
 		t.Run(test.Name, func(t *testing.T) {
 			var step exportentities.Step
 
 			assert.NoError(t, json.Unmarshal([]byte(test.Json), &step))
-			assert.Equal(t, test.Step, step, "Invalid json unmarshal")
+			assert.Equal(t, test.Step.String(), step.String(), "Invalid json unmarshal")
 
 			assert.NoError(t, yaml.Unmarshal([]byte(test.Yaml), &step))
-			assert.Equal(t, test.Step, step, "Invalid yaml unmarshal")
+			assert.Equal(t, test.Step.String(), step.String(), "Invalid yaml unmarshal")
 		})
 	}
 }

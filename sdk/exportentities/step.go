@@ -1,12 +1,15 @@
 package exportentities
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/ovh/cds/sdk"
+
+	"github.com/fsamin/go-dump"
 )
 
 func newStep(act sdk.Action) Step {
@@ -785,4 +788,11 @@ func stepToMap(i interface{}) (map[string]string, error) {
 		return nil, sdk.WithStack(err)
 	}
 	return m, nil
+}
+
+func (s Step) String() string {
+	buf := new(bytes.Buffer)
+	dump := dump.NewEncoder(buf)
+	_ = dump.Fdump(s)
+	return buf.String()
 }
