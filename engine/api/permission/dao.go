@@ -14,7 +14,7 @@ import (
 )
 
 func LoadWorkflowMaxLevelPermission(ctx context.Context, db gorp.SqlExecutor, projectKey string, workflowNames []string, groupIDs []int64) (sdk.EntitiesPermissions, error) {
-	ctx, end := observability.Span(ctx, "permission.LoadWorkflowMaxLevelPermission")
+	_, end := observability.Span(ctx, "permission.LoadWorkflowMaxLevelPermission")
 	defer end()
 
 	query := `
@@ -42,7 +42,7 @@ func LoadWorkflowMaxLevelPermission(ctx context.Context, db gorp.SqlExecutor, pr
 }
 
 func LoadProjectMaxLevelPermission(ctx context.Context, db gorp.SqlExecutor, projectKeys []string, groupIDs []int64) (sdk.EntitiesPermissions, error) {
-	ctx, end := observability.Span(ctx, "permission.LoadProjectMaxLevelPermission")
+	_, end := observability.Span(ctx, "permission.LoadProjectMaxLevelPermission")
 	defer end()
 
 	query := `

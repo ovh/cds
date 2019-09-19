@@ -38,15 +38,11 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 			return nil, false, nil
 		} else if exitingNodeRun != nil && exitingNodeRun.Status != sdk.StatusStopped {
 			log.Debug("hook %d is over, we have to reprocess al the things", node.ID)
-			for i := range node.Triggers {
-				t := &node.Triggers[i]
-				log.Debug("checking trigger %+v", t)
-				r1, err := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, []*sdk.WorkflowNodeRun{exitingNodeRun}, node, subNumber)
-				if err != nil {
-					return nil, false, sdk.WrapError(err, "Unable to process outgoing hook triggers")
-				}
-				report.Merge(r1, nil) // nolint
+			r1, _, err := processWorkflowDataRun(ctx, db, store, proj, wr, nil, nil, nil)
+			if err != nil {
+				return nil, false, sdk.WrapError(err, "Unable to process workflow run after outgoing hooks")
 			}
+			report.Merge(r1, nil) // nolint
 			return report, false, nil
 		} else if exitingNodeRun != nil && exitingNodeRun.Status == sdk.StatusStopped {
 			return report, false, nil

@@ -68,7 +68,7 @@ func (api *API) getAdminServiceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
-		srv, err := services.LoadAllByType(ctx, api.mustDB(), name)
+		srv, err := services.LoadByName(ctx, api.mustDB(), name)
 		if err != nil {
 			return err
 		}
@@ -198,6 +198,40 @@ func (api *API) postAdminDatabaseSignatureRollEntityByPrimaryKey() service.Handl
 		pk := vars["pk"]
 
 		if err := gorpmapping.RollSignedTupleByPrimaryKey(api.mustDB(), entity, pk); err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func (api *API) getAdminDatabaseEncryptedEntities() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return service.WriteJSON(w, gorpmapping.ListEncryptedEntities(), http.StatusOK)
+	}
+}
+
+func (api *API) getAdminDatabaseEncryptedTuplesByEntity() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		entity := vars["entity"]
+
+		pks, err := gorpmapping.ListTuplesByEntity(api.mustDB(), entity)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, pks, http.StatusOK)
+	}
+}
+
+func (api *API) postAdminDatabaseRollEncryptedEntityByPrimaryKey() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		entity := vars["entity"]
+		pk := vars["pk"]
+
+		if err := gorpmapping.RollEncryptedTupleByPrimaryKey(api.mustDB(), entity, pk); err != nil {
 			return err
 		}
 

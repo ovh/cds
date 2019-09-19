@@ -57,12 +57,10 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	genname := h.Configuration().Name
-	h.Name = genname
+	h.Common.Common.ServiceName = genname
+	h.Common.Common.ServiceType = services.TypeHatchery
 	h.HTTPURL = h.Config.URL
-
-	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
-	h.Common.Common.ServiceName = "cds-hatchery-local"
 	var err error
 	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
 	if err != nil {

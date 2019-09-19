@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 )
@@ -77,7 +76,7 @@ func TestHatcheryLocal(t *testing.T) {
 	b, _ := json.Marshal(cfg)
 	json.Unmarshal(b, &srvConfig) // nolint
 
-	err = h.Register(context.TODO(), srvConfig)
+	err = h.Register(srvConfig)
 	require.NoError(t, err)
 
 	heartbeatCtx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
@@ -95,10 +94,11 @@ func TestHatcheryLocal(t *testing.T) {
 	if !gock.IsDone() {
 		pending := gock.Pending()
 		for _, m := range pending {
-			t.Errorf("PENDING %s %s", m.Request().Method, m.Request().URLStruct.String())
+			if m.Request().URLStruct.String() != "http://lolcat.host/services/heartbeat" {
+				t.Errorf("PENDING %s %s", m.Request().Method, m.Request().URLStruct.String())
+			}
 		}
 	}
-	assert.False(t, gock.HasUnmatchedRequest(), "gock should not have unmatched request")
 	if gock.HasUnmatchedRequest() {
 		reqs := gock.GetUnmatchedRequests()
 		for _, req := range reqs {

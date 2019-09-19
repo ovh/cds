@@ -37,8 +37,6 @@ func InitMock(t *testing.T) {
 	hatcheryAuthenticationToken, _ := authentication.NewSessionJWT(&sdk.AuthSession{
 		ID:         id,
 		ConsumerID: consumerID,
-		GroupIDs:   []int64{},
-		Scopes:     sdk.AuthConsumerScopeSlice{},
 		ExpireAt:   time.Now().Add(time.Hour),
 	})
 

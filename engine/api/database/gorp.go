@@ -36,7 +36,17 @@ func DBMap(db *sql.DB) *gorp.DbMap {
 	}
 
 	for _, m := range gorpmapping.Mapping {
-		dbmap.AddTableWithName(m.Target, m.Name).SetKeys(m.AutoIncrement, m.Keys...)
+		tableMap := dbmap.AddTableWithName(m.Target, m.Name).SetKeys(m.AutoIncrement, m.Keys...)
+
+		if m.EncryptedEntity {
+			for _, f := range m.EncryptedFields {
+				columnMap := tableMap.ColMap(f)
+				if columnMap != nil {
+					columnMap.SetTransient(true)
+				}
+			}
+		}
+
 	}
 
 	lastDB = db

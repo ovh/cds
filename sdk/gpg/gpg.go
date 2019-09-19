@@ -38,9 +38,13 @@ func NewPrivateKeyFromData(data io.Reader, passphrase string) (*PrivateKey, erro
 		return nil, errors.Wrap(err, "Failed to parse GPG key")
 	}
 
-	e.PrivateKey.Decrypt([]byte(passphrase))
+	if err := e.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
+		return nil, err
+	}
 	for _, subkey := range e.Subkeys {
-		subkey.PrivateKey.Decrypt([]byte(passphrase))
+		if err := subkey.PrivateKey.Decrypt([]byte(passphrase)); err != nil {
+			return nil, err
+		}
 	}
 
 	return &PrivateKey{Entity: e}, nil

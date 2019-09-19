@@ -1,7 +1,6 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { NavigationEnd, Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Broadcast } from 'app/model/broadcast.model';
@@ -28,10 +27,7 @@ import { filter } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class NavbarComponent implements OnInit, AfterViewInit {
-    // flag to indicate that the component is ready to use
-    ready = false;
-
+export class NavbarComponent implements OnInit {
     // List of projects in the nav bar
     navProjects: Array<NavbarProjectData> = [];
     listFavs: Array<NavbarProjectData> = [];
@@ -66,7 +62,6 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         private _language: LanguageStore,
         private _theme: ThemeStore,
         private _routerService: RouterService,
-        private _translate: TranslateService,
         private _cd: ChangeDetectorRef
     ) {
         this.userSubscription = this._store.select(AuthenticationState.user).subscribe(u => {
@@ -98,13 +93,6 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     changeTheme() {
         let darkActive = !!this.themeSwitch.value;
         this._theme.set(darkActive ? 'night' : 'light');
-    }
-
-    ngAfterViewInit() {
-        this._translate.get('navbar_projects_placeholder').subscribe(() => {
-            this.ready = true;
-            this._cd.markForCheck();
-        });
     }
 
     ngOnInit() {

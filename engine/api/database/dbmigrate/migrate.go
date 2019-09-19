@@ -9,8 +9,8 @@ import (
 
 	"github.com/ovh/cds/sdk"
 
+	gorp "github.com/go-gorp/gorp"
 	migrate "github.com/rubenv/sql-migrate"
-	gorp "gopkg.in/gorp.v1"
 )
 
 //Do applies migration

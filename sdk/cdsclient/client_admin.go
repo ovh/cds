@@ -148,3 +148,39 @@ func (c *client) AdminDatabaseSignaturesRollAllEntities() error {
 	}
 	return nil
 }
+
+func (c *client) AdminDatabaseListEncryptedEntities() ([]string, error) {
+	var res []string
+	_, err := c.GetJSON(context.Background(), "/admin/database/encryption", &res)
+	return res, err
+}
+
+func (c *client) AdminDatabaseRollEncryptedEntity(e string) error {
+	url := fmt.Sprintf("/admin/database/encryption/%s", e)
+	var pks []string
+	if _, err := c.GetJSON(context.Background(), url, &pks); err != nil {
+		return err
+	}
+
+	for _, pk := range pks {
+		url := fmt.Sprintf("/admin/database/encryption/%s/roll/%s", e, pk)
+		if _, err := c.PostJSON(context.Background(), url, nil, nil); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *client) AdminDatabaseRollAllEncryptedEntities() error {
+	entities, err := c.AdminDatabaseListEncryptedEntities()
+	if err != nil {
+		return err
+	}
+	for _, e := range entities {
+		if err := c.AdminDatabaseRollEncryptedEntity(e); err != nil {
+			return err
+		}
+	}
+	return nil
+}

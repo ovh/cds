@@ -47,7 +47,7 @@ func TestClone(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if _, err := Clone(tt.args.repo, tt.args.path, tt.args.auth, tt.args.opts, tt.args.output); (err != nil) != tt.wantErr {
+		if _, err := Clone(tt.args.repo, test.GetTestName(t), tt.args.path, tt.args.auth, tt.args.opts, tt.args.output); (err != nil) != tt.wantErr {
 			t.Errorf("%q. Clone() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 		}
 	}
@@ -70,7 +70,7 @@ func Test_gitCloneOverHTTPS(t *testing.T) {
 			name: "Clone public repo over http without any options",
 			args: args{
 				repo: "https://github.com/fsamin/go-dump.git",
-				path: "/tmp/Test_gitCloneOverHTTPS-1",
+				path: "tmp/Test_gitCloneOverHTTPS-1",
 			},
 			wantErr: false,
 		},
@@ -78,7 +78,7 @@ func Test_gitCloneOverHTTPS(t *testing.T) {
 			name: "Clone public repo over http options and checkout commit",
 			args: args{
 				repo: "https://github.com/fsamin/go-dump.git",
-				path: "/tmp/Test_gitCloneOverHTTPS-2",
+				path: "tmp/Test_gitCloneOverHTTPS-2",
 				opts: &CloneOpts{
 					CheckoutCommit: "ffa09687b10de28606ad5b7f577f3cebe44cdd56",
 				},
@@ -87,15 +87,15 @@ func Test_gitCloneOverHTTPS(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		os.RemoveAll(tt.args.path)
+		os.RemoveAll(test.GetTestName(t))
 		out := new(bytes.Buffer)
 		err := new(bytes.Buffer)
 		tt.args.output = &OutputOpts{
 			Stdout: out,
 			Stderr: err,
 		}
-
-		if _, err := Clone(tt.args.repo, tt.args.path, tt.args.auth, tt.args.opts, tt.args.output); (err != nil) != tt.wantErr {
+		os.MkdirAll(test.GetTestName(t), os.FileMode(0755))
+		if _, err := Clone(tt.args.repo, test.GetTestName(t), tt.args.path, tt.args.auth, tt.args.opts, tt.args.output); (err != nil) != tt.wantErr {
 			t.Errorf("%q. gitCloneOverHTTPS() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 		}
 
@@ -125,7 +125,7 @@ func Test_gitCloneOverSSH(t *testing.T) {
 			name: "Clone public repo over http without any options",
 			args: args{
 				repo: "git@github.com:fsamin/go-dump.git",
-				path: "/tmp/Test_gitCloneOverHTTPS-1",
+				path: "tmp/Test_gitCloneOverHTTPS-1",
 				auth: &AuthOpts{
 					PrivateKey: vcs.SSHKey{Filename: homedir + "/.ssh/id_rsa"},
 				},
@@ -140,15 +140,16 @@ func Test_gitCloneOverSSH(t *testing.T) {
 			}
 		}
 
-		os.RemoveAll(tt.args.path)
+		os.RemoveAll(test.GetTestName(t))
 		out := new(bytes.Buffer)
 		err := new(bytes.Buffer)
 		tt.args.output = &OutputOpts{
 			Stdout: out,
 			Stderr: err,
 		}
+		os.MkdirAll(test.GetTestName(t), os.FileMode(0755))
 
-		if _, err := Clone(tt.args.repo, tt.args.path, tt.args.auth, tt.args.opts, tt.args.output); (err != nil) != tt.wantErr {
+		if _, err := Clone(tt.args.repo, test.GetTestName(t), tt.args.path, tt.args.auth, tt.args.opts, tt.args.output); (err != nil) != tt.wantErr {
 			t.Errorf("%q. gitCloneOverSSH() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 		}
 
@@ -172,17 +173,17 @@ func Test_gitCommand(t *testing.T) {
 			name: "Clone public repo over http without any options",
 			args: args{
 				repo: "https://github.com/ovh/cds.git",
-				path: "/tmp/Test_gitCommand-1",
+				path: "tmp/Test_gitCommand-1",
 			},
 			want: []string{
-				"git clone https://github.com/ovh/cds.git /tmp/Test_gitCommand-1",
+				"git clone https://github.com/ovh/cds.git tmp/Test_gitCommand-1",
 			},
 		},
 		{
 			name: "Clone public repo over http with options",
 			args: args{
 				repo: "https://github.com/ovh/cds.git",
-				path: "/tmp/Test_gitCommand-2",
+				path: "tmp/Test_gitCommand-2",
 				opts: &CloneOpts{
 					Branch:    "master",
 					Depth:     1,
@@ -191,14 +192,14 @@ func Test_gitCommand(t *testing.T) {
 				},
 			},
 			want: []string{
-				"git clone --verbose --depth 1 --branch master --recursive https://github.com/ovh/cds.git /tmp/Test_gitCommand-2",
+				"git clone --verbose --depth 1 --branch master --recursive https://github.com/ovh/cds.git tmp/Test_gitCommand-2",
 			},
 		},
 		{
 			name: "Clone public repo over http with branch and checkout commit",
 			args: args{
 				repo: "https://github.com/ovh/cds.git",
-				path: "/tmp/Test_gitCommand-3",
+				path: "tmp/Test_gitCommand-3",
 				opts: &CloneOpts{
 					Branch:         "master",
 					Quiet:          true,
@@ -206,7 +207,7 @@ func Test_gitCommand(t *testing.T) {
 				},
 			},
 			want: []string{
-				"git clone --quiet --branch master https://github.com/ovh/cds.git /tmp/Test_gitCommand-3",
+				"git clone --quiet --branch master https://github.com/ovh/cds.git tmp/Test_gitCommand-3",
 				"git reset --hard eb8b87a",
 			},
 		},
@@ -214,22 +215,23 @@ func Test_gitCommand(t *testing.T) {
 			name: "Clone public repo over http with only checkout commit",
 			args: args{
 				repo: "https://github.com/ovh/cds.git",
-				path: "/tmp/Test_gitCommand-3",
+				path: "tmp/Test_gitCommand-3",
 				opts: &CloneOpts{
 					Quiet:          true,
 					CheckoutCommit: "eb8b87a",
 				},
 			},
 			want: []string{
-				"git clone --quiet https://github.com/ovh/cds.git /tmp/Test_gitCommand-3",
+				"git clone --quiet https://github.com/ovh/cds.git tmp/Test_gitCommand-3",
 				"git fetch origin eb8b87a",
 				"git reset --hard eb8b87a",
 			},
 		},
 	}
 	for _, tt := range tests {
-		os.RemoveAll(tt.args.path)
-		if _, got := prepareGitCloneCommands(tt.args.repo, tt.args.path, tt.args.opts); !reflect.DeepEqual(got.Strings(), tt.want) {
+		os.RemoveAll(test.GetTestName(t))
+		os.MkdirAll(test.GetTestName(t), os.FileMode(0755))
+		if _, got, _ := prepareGitCloneCommands(tt.args.repo, test.GetTestName(t), tt.args.path, tt.args.opts); !reflect.DeepEqual(got.Strings(), tt.want) {
 			t.Errorf("%q. gitCloneCommand() = %v, want %v", tt.name, got, tt.want)
 		}
 	}

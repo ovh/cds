@@ -341,7 +341,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		"hatchery":            h.Config.Name,
 	}
 
-	// TODO: Add new options on hatchery swarm to allow advanced docker option such as addHost, priviledge, port mapping and so one
+	// Add new options on hatchery swarm to allow advanced docker option such as addHost, priviledge, port mapping and so one: #4594
 	dockerOpts, errDockerOpts := h.computeDockerOpts(spawnArgs.Requirements)
 	if errDockerOpts != nil {
 		return errDockerOpts
@@ -349,12 +349,12 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	udataParam := sdk.WorkerArgs{
 		API:               h.Configuration().API.HTTP.URL,
-		Token:             h.Configuration().API.Token,
+		Token:             spawnArgs.WorkerToken,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              name,
 		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		TTL:               h.Config.WorkerTTL,
-		HatcheryName:      h.Name,
+		HatcheryName:      h.Name(),
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,

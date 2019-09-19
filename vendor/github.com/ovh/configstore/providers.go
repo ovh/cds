@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 	"unicode"
@@ -14,32 +15,37 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ErrorProvider registers a configstore provider which always returns an error.
-func ErrorProvider(name string, err error) {
-	RegisterProvider(name, func() (ItemList, error) { return ItemList{}, err })
+/*
+** DEFAULT PROVIDERS IMPLEMENTATION
+ */
+
+func errorProvider(s *Store, name string, err error) {
+	s.RegisterProvider(name, newErrorProvider(err))
 }
 
-// File registers a configstore provider which reads from the file given in parameter (static content).
-func File(filename string) {
-	file(filename, false, nil)
+func newErrorProvider(err error) Provider {
+	return func() (ItemList, error) {
+		return ItemList{}, err
+	}
 }
 
-// FileRefresh registers a configstore provider which readfs from the file given in parameter (provider watches file stat for auto refresh, watchers get notified).
-func FileRefresh(filename string) {
-	file(filename, true, nil)
+func fileProvider(s *Store, filename string) {
+	file(s, filename, false, nil)
 }
 
-// FileCustom registers a configstore provider which reads from the file given in parameter, and loads the content using the given unmarshal function
-func FileCustom(filename string, fn func([]byte) ([]Item, error)) {
-	file(filename, false, fn)
+func fileRefreshProvider(s *Store, filename string) {
+	file(s, filename, true, nil)
 }
 
-// FileCustomRefresh registers a configstore provider which reads from the file given in parameter, and loads the content using the given unmarshal function; and watches file stat for auto refresh
-func FileCustomRefresh(filename string, fn func([]byte) ([]Item, error)) {
-	file(filename, true, fn)
+func fileCustomProvider(s *Store, filename string, fn func([]byte) ([]Item, error)) {
+	file(s, filename, false, fn)
 }
 
-func file(filename string, refresh bool, fn func([]byte) ([]Item, error)) {
+func fileCustomRefreshProvider(s *Store, filename string, fn func([]byte) ([]Item, error)) {
+	file(s, filename, true, fn)
+}
+
+func file(s *Store, filename string, refresh bool, fn func([]byte) ([]Item, error)) {
 
 	if filename == "" {
 		return
@@ -50,10 +56,10 @@ func file(filename string, refresh bool, fn func([]byte) ([]Item, error)) {
 	last := time.Now()
 	vals, err := readFile(filename, fn)
 	if err != nil {
-		ErrorProvider(providername, err)
+		errorProvider(s, providername, err)
 		return
 	}
-	inmem := InMemory(providername)
+	inmem := inMemoryProvider(s, providername)
 	logrus.Infof("Configuration from file: %s", filename)
 	inmem.Add(vals...)
 
@@ -77,19 +83,13 @@ func file(filename string, refresh bool, fn func([]byte) ([]Item, error)) {
 				inmem.mut.Lock()
 				inmem.items = vals
 				inmem.mut.Unlock()
-				NotifyWatchers()
+				s.NotifyWatchers()
 			}
 		}()
 	}
 }
 
-// FileTree registers a configstore provider which reads from the files contained in the directory given in parameter.
-// A limited hierarchy is supported: files can either be top level (in which case the file name will be used as the item key),
-// or nested in a single sub-directory (in which case the sub-directory name will be used as item key for all the files contained in it).
-// The content of the files should be the plain data, with no envelope.
-// Capitalization can be used to indicate item priority for sub-directories containing multiple items which should be differentiated.
-// Capitalized = higher priority.
-func FileTree(dirname string) {
+func fileTreeProvider(s *Store, dirname string) {
 
 	if dirname == "" {
 		return
@@ -99,7 +99,7 @@ func FileTree(dirname string) {
 
 	files, err := ioutil.ReadDir(dirname)
 	if err != nil {
-		ErrorProvider(providername, err)
+		errorProvider(s, providername, err)
 		return
 	}
 
@@ -111,28 +111,26 @@ func FileTree(dirname string) {
 		if f.IsDir() {
 			items, err = browseDir(items, filename, f.Name())
 			if err != nil {
-				ErrorProvider(providername, err)
+				errorProvider(s, providername, err)
 				return
 			}
 		} else {
 			it, err := readItem(filename, f.Name(), f.Name())
 			if err != nil {
-				ErrorProvider(providername, err)
+				errorProvider(s, providername, err)
 				return
 			}
 			items = append(items, it)
 		}
 	}
 
-	inmem := InMemory(providername)
+	inmem := inMemoryProvider(s, providername)
 	for _, it := range items {
 		inmem.Add(it)
 	}
 }
 
-// FileList registers a configstore provider which reads from the files contained in the directory given in parameter.
-// The content of the files should be JSON/YAML similar to the File provider.
-func FileList(dirname string) {
+func fileListProvider(s *Store, dirname string) {
 
 	if dirname == "" {
 		return
@@ -140,12 +138,14 @@ func FileList(dirname string) {
 
 	files, err := ioutil.ReadDir(dirname)
 	if err != nil {
-		ErrorProvider(fmt.Sprintf("filelist:%s", dirname), err)
+		errorProvider(s, fmt.Sprintf("filelist:%s", dirname), err)
 		return
 	}
 
 	for _, file := range files {
-		File(filepath.Join(dirname, file.Name()))
+		if !file.IsDir() {
+			fileProvider(s, filepath.Join(dirname, file.Name()))
+		}
 	}
 }
 
@@ -201,6 +201,12 @@ func readFile(filename string, fn func([]byte) ([]Item, error)) ([]Item, error) 
 	return vals, nil
 }
 
+func inMemoryProvider(s *Store, name string) *InMemoryProvider {
+	inmem := &InMemoryProvider{}
+	s.RegisterProvider(name, inmem.Items)
+	return inmem
+}
+
 // InMemoryProvider implements an in-memory configstore provider.
 type InMemoryProvider struct {
 	items []Item
@@ -222,10 +228,28 @@ func (inmem *InMemoryProvider) Items() (ItemList, error) {
 	return ItemList{Items: inmem.items}, nil
 }
 
-// InMemory registers an InMemoryProvider with a given arbitrary name and returns it.
-// You can append any number of items to it, see Add().
-func InMemory(name string) *InMemoryProvider {
-	inmem := &InMemoryProvider{}
-	RegisterProvider(name, inmem.Items)
-	return inmem
+func envProvider(s *Store, prefix string) {
+
+	if prefix != "" && !strings.HasSuffix(prefix, "_") {
+		prefix += "_"
+	}
+
+	prefixName := strings.ToUpper(prefix)
+	if prefixName == "" {
+		prefixName = "all"
+	}
+	inmem := inMemoryProvider(s, fmt.Sprintf("env:%s", prefixName))
+
+	prefix = transformKey(prefix)
+
+	for _, e := range os.Environ() {
+		ePair := strings.SplitN(e, "=", 2)
+		if len(ePair) <= 1 {
+			continue
+		}
+		eTr := transformKey(ePair[0])
+		if strings.HasPrefix(eTr, prefix) {
+			inmem.Add(NewItem(strings.TrimPrefix(eTr, prefix), ePair[1], 15))
+		}
+	}
 }

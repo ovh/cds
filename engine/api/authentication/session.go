@@ -16,8 +16,6 @@ func NewSession(db gorp.SqlExecutor, c *sdk.AuthConsumer, duration time.Duration
 	s := sdk.AuthSession{
 		ConsumerID: c.ID,
 		ExpireAt:   time.Now().Add(duration),
-		GroupIDs:   c.GroupIDs,
-		Scopes:     c.Scopes,
 	}
 
 	if err := InsertSession(db, &s); err != nil {
@@ -45,9 +43,7 @@ func CheckSession(ctx context.Context, db gorp.SqlExecutor, sessionID string) (*
 // NewSessionJWT generate a signed token for given auth session.
 func NewSessionJWT(s *sdk.AuthSession) (string, error) {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS512, sdk.AuthSessionJWTClaims{
-		ID:       s.ID,
-		GroupIDs: s.GroupIDs,
-		Scopes:   s.Scopes,
+		ID: s.ID,
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    IssuerName,
 			Subject:   s.ConsumerID,

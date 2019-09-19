@@ -142,13 +142,14 @@ type AuthConsumerSigninRequest map[string]string
 
 // AuthConsumerSigninResponse response for a auth consumer signin.
 type AuthConsumerSigninResponse struct {
-	Token string            `json:"token"`
-	User  *AuthentifiedUser `json:"user"`
+	APIURL string            `json:"api_url,omitempty"`
+	Token  string            `json:"token"` // session token
+	User   *AuthentifiedUser `json:"user"`
 }
 
 // AuthConsumerCreateResponse response for a auth consumer creation.
 type AuthConsumerCreateResponse struct {
-	Token    string        `json:"token"`
+	Token    string        `json:"token"` // sign in token
 	Consumer *AuthConsumer `json:"consumer"`
 }
 
@@ -159,6 +160,12 @@ type AuthDriverUserInfo struct {
 	Fullname   string
 	Email      string
 	MFA        bool
+}
+
+// AuthCurrentConsumerResponse describe the current consumer and the current session
+type AuthCurrentConsumerResponse struct {
+	Consumer AuthConsumer `json:"consumer"`
+	Session  AuthSession  `json:"session"`
 }
 
 // AuthConsumerType constant to identify what is the driver used to create a consumer.
@@ -212,6 +219,64 @@ func (d AuthConsumerData) Value() (driver.Value, error) {
 	return j, WrapError(err, "cannot marshal AuthConsumerData")
 }
 
+// AuthConsumerWarningType constant for consumer warnings.
+type AuthConsumerWarningType string
+
+// Consumer warning types.
+const (
+	WarningGroupInvalid     AuthConsumerWarningType = "group-invalid"
+	WarningGroupRemoved     AuthConsumerWarningType = "group-removed"
+	WarningLastGroupRemoved AuthConsumerWarningType = "last-group-removed"
+)
+
+// AuthConsumerWarnings contains specific information from the auth driver.
+type AuthConsumerWarnings []AuthConsumerWarning
+
+// NewConsumerWarningGroupInvalid returns a new warning for given group info.
+func NewConsumerWarningGroupInvalid(groupID int64, groupName string) AuthConsumerWarning {
+	return AuthConsumerWarning{
+		Type:      WarningGroupInvalid,
+		GroupID:   groupID,
+		GroupName: groupName,
+	}
+}
+
+// NewConsumerWarningGroupRemoved returns a new warning for given group info.
+func NewConsumerWarningGroupRemoved(groupID int64, groupName string) AuthConsumerWarning {
+	return AuthConsumerWarning{
+		Type:      WarningGroupRemoved,
+		GroupID:   groupID,
+		GroupName: groupName,
+	}
+}
+
+// NewConsumerWarningLastGroupRemoved returns a new warning.
+func NewConsumerWarningLastGroupRemoved() AuthConsumerWarning {
+	return AuthConsumerWarning{Type: WarningLastGroupRemoved}
+}
+
+// AuthConsumerWarning contains info about a warning.
+type AuthConsumerWarning struct {
+	Type      AuthConsumerWarningType `json:"type"`
+	GroupID   int64                   `json:"group_id,omitempty"`
+	GroupName string                  `json:"group_name,omitempty"`
+}
+
+// Scan consumer data.
+func (w *AuthConsumerWarnings) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, w), "cannot unmarshal AuthConsumerWarnings")
+}
+
+// Value returns driver.Value from consumer warnings.
+func (w AuthConsumerWarnings) Value() (driver.Value, error) {
+	j, err := json.Marshal(w)
+	return j, WrapError(err, "cannot marshal AuthConsumerWarnings")
+}
+
 // AuthConsumers gives functions for auth consumer slice.
 type AuthConsumers []AuthConsumer
 
@@ -226,8 +291,11 @@ type AuthConsumer struct {
 	Data               AuthConsumerData       `json:"-" db:"data"` // NEVER returns auth consumer data in json, TODO this fields should be visible only in auth package
 	Created            time.Time              `json:"created" cli:"created" db:"created"`
 	GroupIDs           Int64Slice             `json:"group_ids,omitempty" cli:"group_ids" db:"group_ids"`
+	InvalidGroupIDs    Int64Slice             `json:"invalid_group_ids,omitempty" db:"invalid_group_ids"`
 	Scopes             AuthConsumerScopeSlice `json:"scopes,omitempty" cli:"scopes" db:"scopes"`
 	IssuedAt           time.Time              `json:"issued_at" cli:"issued_at" db:"issued_at"`
+	Disabled           bool                   `json:"disabled" cli:"disabled" db:"disabled"`
+	Warnings           AuthConsumerWarnings   `json:"warnings,omitempty" db:"warnings"`
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
 	Groups           Groups            `json:"groups,omitempty" db:"-"`
@@ -250,7 +318,7 @@ func (c AuthConsumer) GetGroupIDs() []int64 {
 
 	if len(c.GroupIDs) > 0 {
 		groupIDs = c.GroupIDs
-	} else if c.AuthentifiedUser != nil && c.Type != ConsumerBuiltin {
+	} else if c.AuthentifiedUser != nil {
 		groupIDs = c.AuthentifiedUser.GetGroupIDs()
 	}
 
@@ -291,13 +359,11 @@ type AuthSessions []AuthSession
 
 // AuthSession struct.
 type AuthSession struct {
-	ID         string                 `json:"id" cli:"id,key" db:"id"`
-	ConsumerID string                 `json:"consumer_id" cli:"consumer_id" db:"consumer_id"`
-	ExpireAt   time.Time              `json:"expire_at,omitempty" cli:"expire_at" db:"expire_at"`
-	Created    time.Time              `json:"created" cli:"created" db:"created"`
-	GroupIDs   Int64Slice             `json:"group_ids" cli:"group_ids" db:"group_ids"`
-	Scopes     AuthConsumerScopeSlice `json:"scopes" cli:"scopes" db:"scopes"`
-	MFA        bool                   `json:"mfa" cli:"mfa" db:"mfa"`
+	ID         string    `json:"id" cli:"id,key" db:"id"`
+	ConsumerID string    `json:"consumer_id" cli:"consumer_id" db:"consumer_id"`
+	ExpireAt   time.Time `json:"expire_at,omitempty" cli:"expire_at" db:"expire_at"`
+	Created    time.Time `json:"created" cli:"created" db:"created"`
+	MFA        bool      `json:"mfa" cli:"mfa" db:"mfa"`
 	// aggregates
 	Consumer *AuthConsumer `json:"consumer,omitempty" db:"-"`
 	Groups   []Group       `json:"groups,omitempty" db:"-"`
@@ -306,9 +372,7 @@ type AuthSession struct {
 
 // AuthSessionJWTClaims is the specific claims format for JWT session.
 type AuthSessionJWTClaims struct {
-	ID       string
-	GroupIDs []int64
-	Scopes   []AuthConsumerScope
+	ID string
 	jwt.StandardClaims
 }
 

@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
@@ -137,22 +136,18 @@ func (api *API) postConsumerRegenByUserHandler() service.Handler {
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		// Load the consumer from the input
 		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
 		if err != nil {
 			return err
 		}
-		if consumer.Type != sdk.ConsumerBuiltin {
-			return sdk.NewErrorFrom(sdk.ErrForbidden, "can't regen a no builtin consumer")
-		}
 
-		// Update the IAT attribute in database
-		consumer.IssuedAt = time.Now()
-		if err := authentication.UpdateConsumer(tx, consumer); err != nil {
+		if err := authentication.ConsumerRegen(tx, consumer); err != nil {
 			return err
 		}
+
 		jws, err := builtin.NewSigninConsumerToken(consumer) // Regen a new jws (signin token)
 		if err != nil {
 			return err

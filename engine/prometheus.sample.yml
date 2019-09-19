@@ -1,0 +1,19 @@
+# This is an example of prometheus configuration file for development purpose
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Setup one target per cds engine process. If you run multiple cds services in one engine process, you should setup one instance
+scrape_configs:
+  - job_name: 'cds-engine'
+    scrape_interval: 5s
+    metrics_path: '/mon/metrics'
+    static_configs:
+      - targets: 
+         - 'my-hostname:8081'
+
+# How to start prometheus container
+# docker run --name prometheus-cds -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml --publish 9090:9090 --detach prom/prometheus:v2.0.0 --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus --web.console.libraries=/etc/prometheus/console_libraries --web.console.templates=/etc/prometheus/consoles --storage.tsdb.retention=200h
+
+# How to start grafana container
+# docker run --name grafana-cds --p 3000:3000 -d grafana/grafana:4.6.2

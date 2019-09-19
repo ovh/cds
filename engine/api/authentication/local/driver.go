@@ -26,7 +26,6 @@ func NewDriver(signupDisabled bool, uiURL, allowedDomains string) sdk.AuthDriver
 // AuthDriver for local authentication.
 type AuthDriver struct {
 	signupDisabled bool
-	uiURL          string
 	allowedDomains []string
 }
 

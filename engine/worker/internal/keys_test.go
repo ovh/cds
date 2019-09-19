@@ -6,10 +6,13 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/spf13/afero"
@@ -51,7 +54,7 @@ func encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
 func TestInstallKey_SSHKeyWithoutDesination(t *testing.T) {
 	var w = new(CurrentWorker)
 	fs := afero.NewOsFs()
-	basedir := "test-" + sdk.RandomString(10)
+	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
 	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
 
 	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, afero.NewBasePathFs(fs, basedir)); err != nil {
@@ -83,7 +86,7 @@ func TestInstallKey_SSHKeyWithoutDesination(t *testing.T) {
 func TestInstallKey_SSHKeyWithDesination(t *testing.T) {
 	var w = new(CurrentWorker)
 	fs := afero.NewOsFs()
-	basedir := "test-" + sdk.RandomString(10)
+	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
 	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
 
 	if err := w.Init("test-worker", "test-hatchery", "http://lolcat.host", "xxx-my-token", "", true, afero.NewBasePathFs(fs, basedir)); err != nil {

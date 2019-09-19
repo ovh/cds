@@ -274,17 +274,13 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		}
 
 		// Set a cookie with the jwt token
-		http.SetCookie(w, &http.Cookie{
-			Name:    jwtCookieName,
-			Value:   jwt,
-			Expires: session.ExpireAt,
-			Path:    "/",
-		})
+		api.SetCookie(w, jwtCookieName, jwt, session.ExpireAt)
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
-			Token: jwt,
-			User:  usr,
+			Token:  jwt,
+			User:   usr,
+			APIURL: api.Config.URL.API,
 		}
 
 		return service.WriteJSON(w, resp, http.StatusOK)
@@ -300,12 +296,7 @@ func (api *API) postAuthSignoutHandler() service.Handler {
 		}
 
 		// Delete the jwt cookie value
-		http.SetCookie(w, &http.Cookie{
-			Name:   jwtCookieName,
-			Value:  "",
-			MaxAge: -1,
-			Path:   "/",
-		})
+		api.UnsetCookie(w, jwtCookieName)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -348,14 +339,23 @@ func (api *API) postAuthDetachHandler() service.Handler {
 
 		// If we just removed the current consumer, clean http cookie.
 		if consumer.ID == currentConsumer.ID {
-			http.SetCookie(w, &http.Cookie{
-				Name:   jwtCookieName,
-				Value:  "",
-				MaxAge: -1,
-				Path:   "/",
-			})
+			api.UnsetCookie(w, jwtCookieName)
 		}
 
 		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
+func (api *API) getAuthMe() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		c := getAPIConsumer(ctx)
+		s := getAuthSession(ctx)
+		if c == nil || s == nil {
+			return sdk.WithStack(sdk.ErrUnauthorized)
+		}
+		return service.WriteJSON(w, sdk.AuthCurrentConsumerResponse{
+			Consumer: *c,
+			Session:  *s,
+		}, http.StatusOK)
 	}
 }

@@ -5,11 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/blang/semver"
+	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
@@ -31,18 +33,26 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, pa
 	depth := sdk.ParameterFind(a.Parameters, "depth")
 	submodules := sdk.ParameterFind(a.Parameters, "submodules")
 
-	deprecatedKey := true
-
-	if privateKey != nil && (strings.HasPrefix(privateKey.Value, "app-") || strings.HasPrefix(privateKey.Value, "proj-") || strings.HasPrefix(privateKey.Value, "env-")) {
-		deprecatedKey = false
-	}
 	var key *vcs.SSHKey
 	if privateKey != nil {
-		// TODO find the key from the deprecated way or not
-		if deprecatedKey {
+		// The private key parameter, contains the name of the private key to use.
+		// Let's look up in the secret list to find the content of the private key
+		privateKeyContent := sdk.VariableFind(secrets, privateKey.Value)
 
-		} else {
+		if privateKeyContent == nil {
+			return sdk.Result{}, fmt.Errorf("unknown key \"%s\"", privateKey.Value)
+		}
 
+		installedKey, err := wk.InstallKey(sdk.Variable{
+			Name:  privateKeyContent.Name,
+			Value: privateKeyContent.Value,
+		}, "")
+		if err != nil {
+			return sdk.Result{}, err
+		}
+		key = &vcs.SSHKey{
+			Filename: installedKey.PKey,
+			Content:  installedKey.Content,
 		}
 	}
 
@@ -79,6 +89,7 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, pa
 		if err != nil {
 			return sdk.Result{}, fmt.Errorf("Could not use VCS Auth Strategy from application: %v", err)
 		}
+		key = &auth.PrivateKey
 	}
 
 	if gitURL == "" {
@@ -135,12 +146,21 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, pa
 	if directory != nil {
 		dir = directory.Value
 	}
-	return gitClone(ctx, wk, params, gitURL, dir, auth, opts)
+
+	workdir, err := workerruntime.WorkingDirectory(ctx)
+	if err != nil {
+		return sdk.Result{}, fmt.Errorf("Unable to find current working directory: %v", err)
+	}
+
+	workdirPath := workdir.Name()
+	if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+		workdirPath, _ = x.RealPath(workdirPath)
+	}
+
+	return gitClone(ctx, wk, params, gitURL, workdirPath, dir, auth, opts)
 }
 
-func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Parameter, url string, dir string, auth *git.AuthOpts, clone *git.CloneOpts) (sdk.Result, error) {
-	// Install ssh key
-
+func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Parameter, url, basedir, dir string, auth *git.AuthOpts, clone *git.CloneOpts) (sdk.Result, error) {
 	//Prepare all options - logs
 	stdErr := new(bytes.Buffer)
 	stdOut := new(bytes.Buffer)
@@ -152,7 +172,7 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 
 	git.LogFunc = log.Info
 	//Perform the git clone
-	userLogCommand, err := git.Clone(url, dir, auth, clone, output)
+	userLogCommand, err := git.Clone(url, basedir, dir, auth, clone, output)
 
 	w.SendLog(ctx, workerruntime.LevelInfo, userLogCommand)
 
@@ -173,7 +193,11 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 	gitURLHTTP := sdk.ParameterValue(params, "git.http_url")
 	var vars []sdk.Variable
 	if gitURLSSH == url || gitURLHTTP == url {
-		vars, _ = extractInfo(ctx, w, dir, params, clone.Tag, clone.Branch, clone.CheckoutCommit)
+		vars, err = extractInfo(ctx, w, basedir, dir, params, clone.Tag, clone.Branch, clone.CheckoutCommit)
+	}
+
+	if err != nil {
+		w.SendLog(ctx, workerruntime.LevelWarn, err.Error())
 	}
 
 	stdTaglistErr := new(bytes.Buffer)
@@ -183,26 +207,29 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 		Stdout: stdTagListOut,
 	}
 
-	errTag := git.TagList(url, dir, auth, outputGitTag)
+	errTag := git.TagList(url, basedir, dir, auth, outputGitTag)
 
 	if len(stdTaglistErr.Bytes()) > 0 {
 		w.SendLog(ctx, workerruntime.LevelInfo, stdTaglistErr.String())
 	}
 
 	if errTag != nil {
-		return sdk.Result{}, fmt.Errorf("Unable to list tag for getting current version: %s", errTag)
+		return sdk.Result{}, sdk.WithStack(fmt.Errorf("Unable to list tag for getting current version: %v", errTag))
 	}
 
 	return sdk.Result{Status: sdk.StatusSuccess, NewVariables: vars}, nil
 }
 
-func extractInfo(ctx context.Context, w workerruntime.Runtime, dir string, params []sdk.Parameter, tag, branch, commit string) ([]sdk.Variable, error) {
+func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir string, params []sdk.Parameter, tag, branch, commit string) ([]sdk.Variable, error) {
 	var res []sdk.Variable
 	author := sdk.ParameterValue(params, "git.author")
 	authorEmail := sdk.ParameterValue(params, "git.author.email")
 	message := sdk.ParameterValue(params, "git.message")
 
-	info := git.ExtractInfo(dir)
+	info, err := git.ExtractInfo(filepath.Join(dir))
+	if err != nil {
+		return nil, err
+	}
 
 	cdsVersion := sdk.ParameterFind(params, "cds.version")
 	if cdsVersion == nil || cdsVersion.Value == "" {

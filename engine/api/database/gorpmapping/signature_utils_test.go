@@ -13,7 +13,7 @@ import (
 
 func Test_GetSignedEntities(t *testing.T) {
 	entities := gorpmapping.ListSignedEntities()
-	assert.Len(t, entities, 5) // The are 3 signed entities loaded by the imports
+	assert.True(t, len(entities) > 5)
 	t.Logf("%v", entities)
 }
 

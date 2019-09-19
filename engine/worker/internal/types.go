@@ -39,7 +39,6 @@ type CurrentWorker struct {
 	currentJob struct {
 		wJob         *sdk.WorkflowNodeJobRun
 		newVariables []sdk.Variable
-		gitsshPath   string
 		params       []sdk.Parameter
 		secrets      []sdk.Variable
 		context      context.Context
@@ -73,7 +72,9 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 	if err != nil {
 		log.Error("SendLog> %v", err)
 	}
-	wk.sendLog(jobID, fmt.Sprintf("[%s] ", level)+s, stepOrder, false)
+	if err := wk.sendLog(jobID, fmt.Sprintf("[%s] ", level)+s, stepOrder, false); err != nil {
+		log.Error("SendLog> %v", err)
+	}
 }
 
 func (wk *CurrentWorker) Name() string {

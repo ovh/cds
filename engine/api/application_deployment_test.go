@@ -372,5 +372,4 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 			Type:  sdk.IntegrationConfigTypeString,
 			Value: "my-url",
 		})
-
 }

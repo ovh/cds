@@ -78,11 +78,10 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 
 	s.cfg = dbCfg
 	log.Debug("%+v", s.cfg)
-	s.Name = s.cfg.Name
+	s.ServiceName = s.cfg.Name
+	s.ServiceType = services.TypeDBMigrate
 	s.HTTPURL = s.cfg.URL
 
-	s.Type = services.TypeDBMigrate
-	s.ServiceName = "cds-migrate"
 	s.MaxHeartbeatFailures = s.cfg.API.MaxHeartbeatFailures
 	s.Router = &api.Router{
 		Mux: mux.NewRouter(),
@@ -191,5 +190,7 @@ func (s *dbmigservice) initRouter(ctx context.Context) {
 
 	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
 	r.Handle("/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
+	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
+	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
 	r.Handle("/", nil, r.GET(s.getMigrationHandler, api.Auth(false)))
 }

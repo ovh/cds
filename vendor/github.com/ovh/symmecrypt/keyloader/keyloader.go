@@ -66,7 +66,6 @@ type watchKey struct {
 
 // A sealedKey is an implementation of an encryption key that is encrypted using symmecrypt/seal.
 type sealedKey struct {
-	encryptedKey string
 	decryptedKey symmecrypt.Key
 	decrypted    uint32
 	waitCh       chan struct{}
@@ -157,13 +156,19 @@ func UnsealKey(k *KeyConfig, s *seal.Seal) (*KeyConfig, error) {
 	}, nil
 }
 
-// ConfiguredKeys returns a list of all the encryption keys present in the configstore
+// ConfiguredKeys returns a list of all the encryption keys present in the default store in configstore
 // ensuring they are unsealed.
 func ConfiguredKeys() ([]*KeyConfig, error) {
+	return ConfiguredKeysFromStore(configstore.DefaultStore)
+}
+
+// ConfiguredKeys returns a list of all the encryption keys present in a specific store instance
+// ensuring they are unsealed.
+func ConfiguredKeysFromStore(store *configstore.Store) ([]*KeyConfig, error) {
 
 	ret := []*KeyConfig{}
 
-	items, err := ConfigFilter.GetItemList()
+	items, err := ConfigFilter.Store(store).GetItemList()
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +218,7 @@ func configFactory() interface{} {
 ** CONSTRUCTORS
  */
 
-// LoadKey instantiates a new encryption key for a given identifier from the configstore.
+// LoadKey instantiates a new encryption key for a given identifier from the default store in configstore.
 //
 // If several keys are found for the identifier, they are sorted by timestamp, and a composite key is returned.
 // The most recent key will be used for encryption, and decryption will be done by any of them.
@@ -226,8 +231,24 @@ func configFactory() interface{} {
 // Either use a built-in cipher, or make sure to register a proper factory for this cipher.
 // This KeyFactory will be called, either directly or when the symmecrypt/seal global singleton gets unsealed, if applicable.
 func LoadKey(identifier string) (symmecrypt.Key, error) {
+	return LoadKeyFromStore(identifier, configstore.DefaultStore)
+}
 
-	items, err := ConfigFilter.Slice(identifier).GetItemList()
+// LoadKeyFromStore instantiates a new encryption key for a given identifier from a specific store instance.
+//
+// If several keys are found for the identifier, they are sorted by timestamp, and a composite key is returned.
+// The most recent key will be used for encryption, and decryption will be done by any of them.
+// There needs to be _only one_ key with the highest priority for the identifier.
+//
+// If the key configuration specifies it is sealed, the key returned will be wrapped by an unseal mechanism.
+// When the symmecrypt/seal global singleton gets unsealed, the key will become usable instantly. It will return errors in the meantime.
+//
+// The key cipher name is expected to match a KeyFactory that got registered through RegisterCipher().
+// Either use a built-in cipher, or make sure to register a proper factory for this cipher.
+// This KeyFactory will be called, either directly or when the symmecrypt/seal global singleton gets unsealed, if applicable.
+func LoadKeyFromStore(identifier string, store *configstore.Store) (symmecrypt.Key, error) {
+
+	items, err := ConfigFilter.Slice(identifier).Store(store).GetItemList()
 	if err != nil {
 		return nil, err
 	}
@@ -279,18 +300,24 @@ func LoadKey(identifier string) (symmecrypt.Key, error) {
 	return comp, nil
 }
 
-// LoadSingleKey instantiates a new encryption key using LoadKey from the configstore without specifying its identifier.
+// LoadSingleKey instantiates a new encryption key using LoadKey from the default store in configstore without specifying its identifier.
 // It will error if several different identifiers are found.
 func LoadSingleKey() (symmecrypt.Key, error) {
-	ident, err := singleKeyIdentifier()
+	return LoadSingleKeyFromStore(configstore.DefaultStore)
+}
+
+// LoadSingleKey instantiates a new encryption key using LoadKey from a specific store instance without specifying its identifier.
+// It will error if several different identifiers are found.
+func LoadSingleKeyFromStore(store *configstore.Store) (symmecrypt.Key, error) {
+	ident, err := singleKeyIdentifier(store)
 	if err != nil {
 		return nil, err
 	}
-	return LoadKey(ident)
+	return LoadKeyFromStore(ident, store)
 }
 
-func singleKeyIdentifier() (string, error) {
-	items, err := ConfigFilter.GetItemList()
+func singleKeyIdentifier(store *configstore.Store) (string, error) {
+	items, err := ConfigFilter.Store(store).GetItemList()
 	if err != nil {
 		return "", err
 	}
@@ -306,28 +333,40 @@ func singleKeyIdentifier() (string, error) {
 	return "", errors.New("ambiguous config: several encryption keys found and no identifier supplied")
 }
 
-// WatchKey instantiates a new hot-reloading encryption key from the configstore.
+// WatchKey instantiates a new hot-reloading encryption key from the default store in configstore.
 // It uses LoadKey(), so the underlying implementation can be anything supported (composite, sealed, any cipher, ...)
 func WatchKey(identifier string) (symmecrypt.Key, error) {
-	b, err := LoadKey(identifier)
+	return WatchKeyFromStore(identifier, configstore.DefaultStore)
+}
+
+// WatchKeyFromStore instantiates a new hot-reloading encryption key from a specific store instance.
+// It uses LoadKey(), so the underlying implementation can be anything supported (composite, sealed, any cipher, ...)
+func WatchKeyFromStore(identifier string, store *configstore.Store) (symmecrypt.Key, error) {
+	b, err := LoadKeyFromStore(identifier, store)
 	if err != nil {
 		return nil, err
 	}
 
 	holder := &watchKey{identifier: identifier, k: b}
-	go holder.watch()
+	go holder.watch(store)
 
 	return holder, nil
 }
 
-// WatchSingleKey instantiates a new hot-relating encryption key from the configstore without specifying its identifier.
+// WatchSingleKey instantiates a new hot-reloading encryption key from the default store in configstore without specifying its identifier.
 // It will error if several different identifiers are found.
 func WatchSingleKey() (symmecrypt.Key, error) {
-	ident, err := singleKeyIdentifier()
+	return WatchSingleKeyFromStore(configstore.DefaultStore)
+}
+
+// WatchSingleKey instantiates a new hot-reloading encryption key from a specific store instance without specifying its identifier.
+// It will error if several different identifiers are found.
+func WatchSingleKeyFromStore(store *configstore.Store) (symmecrypt.Key, error) {
+	ident, err := singleKeyIdentifier(store)
 	if err != nil {
 		return nil, err
 	}
-	return WatchKey(ident)
+	return WatchKeyFromStore(ident, store)
 }
 
 /*
@@ -335,11 +374,11 @@ func WatchSingleKey() (symmecrypt.Key, error) {
  */
 
 // Watch for configstore update notifications, then reload the key through LoadKey().
-func (kh *watchKey) watch() {
-	for range configstore.Watch() {
+func (kh *watchKey) watch(store *configstore.Store) {
+	for range store.Watch() {
 		time.Sleep(10 * time.Millisecond)
 		// small sleep to yield to symmecrypt/seal in case of seal change
-		b, err := LoadKey(kh.identifier)
+		b, err := LoadKeyFromStore(kh.identifier, store)
 		if err != nil {
 			logrus.Errorf("symmecrypt/keyloader: configuration fetch error for key '%s': %s", kh.identifier, err)
 			continue

@@ -51,13 +51,13 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		event.PublishDeleteProjectPermission(proj, sdk.GroupPermission{
 			Group:      *grp,
 			Permission: link.Role,
-		}, getAPIConsumer(ctx))
+		})
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}

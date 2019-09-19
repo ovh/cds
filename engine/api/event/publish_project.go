@@ -109,11 +109,11 @@ func PublishUpdateProjectPermission(p *sdk.Project, gp sdk.GroupPermission, oldG
 }
 
 // PublishDeleteProjectPermission publishes an event on deleting a group permission on the project
-func PublishDeleteProjectPermission(p *sdk.Project, gp sdk.GroupPermission, u sdk.Identifiable) {
+func PublishDeleteProjectPermission(p *sdk.Project, gp sdk.GroupPermission) {
 	e := sdk.EventProjectPermissionDelete{
 		Permission: gp,
 	}
-	PublishProjectEvent(e, p.Key, u)
+	PublishProjectEvent(e, p.Key, nil)
 }
 
 // PublishAddProjectKey publishes an event on adding a project key

@@ -1,8 +1,8 @@
-<div class="ui inverted fixed menu navbar" *ngIf="ready">
+<div class="ui inverted fixed menu navbar">
     <a href="#" [routerLink]="['/']"><img src="assets/images/cds.png" class="item"
             title="{{'navbar_home' | translate}}" /></a>
     <ng-container *ngIf="currentUser">
-        <a class="item link" href="#" [routerLink]="['project', 'list', 'all']" *ngIf="currentUser">
+        <a class="item link" href="#" [routerLink]="['project', 'list', 'all']">
             {{ 'navbar_projects' | translate }}
         </a>
         <div class="ui pointing dropdown link item" suiDropdown>

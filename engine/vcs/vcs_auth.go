@@ -25,8 +25,6 @@ func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req
 		return ctx, nil
 	}
 
-	// TODO: check that request are signed by API Public Key
-
 	encodedAccessToken := req.Header.Get(sdk.HeaderXAccessToken)
 	accessToken, err := base64.StdEncoding.DecodeString(encodedAccessToken)
 	if err != nil {

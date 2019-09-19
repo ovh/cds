@@ -82,7 +82,6 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			log.Error("postServiceRegisterHandler> unable to find service by name %s: %v", srv.Name, errOldSrv)
 			return sdk.WithStack(errOldSrv)
 		} else {
-			srv.Maintainer = *getAPIConsumer(ctx).AuthentifiedUser
 			if err := services.Insert(tx, &srv); err != nil {
 				return sdk.WithStack(err)
 			}

@@ -13,6 +13,7 @@ import { AuthConsumer, AuthScope } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { GroupService } from 'app/service/group/group.service';
 import { UserService } from 'app/service/user/user.service';
 import { Column, Select } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -52,6 +53,7 @@ export class ConsumerCreateModalComponent {
     constructor(
         private _modalService: SuiModalService,
         private _userService: UserService,
+        private _groupService: GroupService,
         private _authenticationService: AuthenticationService,
         private _cd: ChangeDetectorRef,
         private _toast: ToastService,
@@ -109,7 +111,7 @@ export class ConsumerCreateModalComponent {
         this.loadingScopes = true;
         this._cd.markForCheck();
 
-        this._userService.getGroups(this.user.username)
+        this._groupService.getAll()
             .pipe(finalize(() => {
                 this.loadingGroups = false;
                 this._cd.markForCheck();

@@ -38,10 +38,9 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("ApplyConfiguration> Invalid Elasticsearch configuration")
 	}
 
-	s.Name = s.Cfg.Name
 	s.HTTPURL = s.Cfg.URL
-
-	s.Type = services.TypeElasticsearch
+	s.ServiceName = s.Cfg.Name
+	s.ServiceType = services.TypeElasticsearch
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 	s.ServiceName = "cds-elasticsearch"
 	return nil

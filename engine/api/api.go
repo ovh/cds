@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -55,14 +56,14 @@ import (
 
 // Configuration is the configuraton structure for CDS API
 type Configuration struct {
-	URL struct {
+	Name string `toml:"name" comment:"Name of this CDS API Service\n Enter a name to enable this service" json:"name"`
+	URL  struct {
 		API string `toml:"api" default:"http://localhost:8081" json:"api"`
 		UI  string `toml:"ui" default:"http://localhost:2015" json:"ui"`
 	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################" json:"url"`
 	HTTP struct {
-		Addr       string `toml:"addr" default:"" commented:"true" comment:"Listen HTTP address without port, example: 127.0.0.1" json:"addr"`
-		Port       int    `toml:"port" default:"8081" json:"port"`
-		SessionTTL int    `toml:"sessionTTL" default:"60" json:"sessionTTL"`
+		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen HTTP address without port, example: 127.0.0.1" json:"addr"`
+		Port int    `toml:"port" default:"8081" json:"port"`
 	} `toml:"http" json:"http"`
 	Secrets struct {
 		Key string `toml:"key" json:"-"`
@@ -167,16 +168,6 @@ type Configuration struct {
 			SessionToken        string `toml:"sessionToken" json:"-" comment:"A static AWS session token"`
 		} `toml:"awss3" json:"awss3"`
 	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported" json:"artifact"`
-	Events struct {
-		Kafka struct {
-			Enabled         bool   `toml:"enabled" json:"enabled"`
-			Broker          string `toml:"broker" json:"broker"`
-			Topic           string `toml:"topic" json:"topic"`
-			User            string `toml:"user" json:"user"`
-			Password        string `toml:"password" json:"-"`
-			MaxMessageBytes int    `toml:"maxmessagebytes" default:"10000000" json:"maxmessagebytes"`
-		} `toml:"kafka" json:"kafka"`
-	} `toml:"events" comment:"#######################\n CDS Events Settings \n######################" json:"events"`
 	Features struct {
 		Izanami struct {
 			APIURL       string `toml:"apiurl" json:"apiurl"`
@@ -185,9 +176,6 @@ type Configuration struct {
 			Token        string `toml:"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami" json:"-"`
 		} `toml:"izanami" comment:"Feature flipping provider: https://maif.github.io/izanami" json:"izanami"`
 	} `toml:"features" comment:"###########################\n CDS Features flipping Settings \n##########################" json:"features"`
-	Vault struct {
-		ConfigurationKey string `toml:"configurationKey" json:"-"`
-	} `toml:"vault" json:"vault"`
 	Services    []ServiceConfiguration `toml:"services" comment:"###########################\n CDS Services Settings \n##########################" json:"services"`
 	DefaultOS   string                 `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)" json:"defaultOS"`
 	DefaultArch string                 `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`
@@ -277,6 +265,7 @@ type API struct {
 		queue                    *stats.Int64Measure
 		WorkflowRunsMarkToDelete *stats.Int64Measure
 		WorkflowRunsDeleted      *stats.Int64Measure
+		DatabaseConns            *stats.Int64Measure
 	}
 	AuthenticationDrivers map[sdk.AuthConsumerType]sdk.AuthDriver
 }
@@ -293,10 +282,8 @@ func (a *API) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	a.Type = services.TypeAPI
-	a.ServiceName = "cds-api"
-	a.Name = event.GetCDSName()
-
+	a.Common.ServiceType = services.TypeAPI
+	a.Common.ServiceName = a.Config.Name
 	return nil
 }
 
@@ -307,8 +294,18 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid API configuration")
 	}
 
+	if aConfig.Name == "" {
+		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
+	}
+
 	if aConfig.URL.API == "" {
 		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
+	}
+
+	if aConfig.URL.UI != "" {
+		if _, err := url.Parse(aConfig.URL.UI); err != nil {
+			return fmt.Errorf("Invalid given UI URL")
+		}
 	}
 
 	if aConfig.Directories.Download == "" {
@@ -380,13 +377,14 @@ func (a *API) CheckConfiguration(config interface{}) error {
 }
 
 type StartupConfig struct {
-	Consumers []StartupConfigService
+	Consumers []StartupConfigService `json:"consumers"`
+	IAT       int64                  `json:"iat"`
 }
 type StartupConfigService struct {
-	ID          string
-	Name        string
-	Description string
-	ServiceType string
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	ServiceType string `json:"service_type"`
 }
 
 // Serve will start the http api server
@@ -571,7 +569,7 @@ func (a *API) Serve(ctx context.Context) error {
 		Background: ctx,
 	}
 	a.InitRouter()
-	if err := a.Router.InitMetrics("cds-api", a.Name); err != nil {
+	if err := InitRouterMetrics(a); err != nil {
 		log.Error("unable to init router metrics: %v", err)
 	}
 
@@ -709,34 +707,6 @@ func (a *API) Serve(ctx context.Context) error {
 		authentication.SessionCleaner(ctx, a.mustDB)
 	}, a.PanicDump())
 
-	//Temporary migration code
-	migrate.Add(sdk.Migration{Name: "WorkflowNotification", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.WorkflowNotifications(a.Cache, a.DBConnectionFactory.GetDBMap)
-	}})
-	migrate.Add(sdk.Migration{Name: "CleanArtifactBuiltinActions", Release: "0.38.1", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.CleanArtifactBuiltinActions(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
-	}})
-	migrate.Add(sdk.Migration{Name: "StageConditions", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.StageConditions(a.Cache, a.DBConnectionFactory.GetDBMap())
-	}})
-	migrate.Add(sdk.Migration{Name: "GitClonePrivateKeyParameter", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.GitClonePrivateKeyParameter(a.mustDB(), a.Cache)
-	}})
-	migrate.Add(sdk.Migration{Name: "ActionModelRequirements", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.ActionModelRequirements(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
-	}})
-	migrate.Add(sdk.Migration{Name: "AddPublicEventIntegration", Release: "0.40.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		kafkaCfg := migrate.KafkaConfig{
-			Enabled:         a.Config.Events.Kafka.Enabled,
-			Broker:          a.Config.Events.Kafka.Broker,
-			Topic:           a.Config.Events.Kafka.Topic,
-			User:            a.Config.Events.Kafka.User,
-			Password:        a.Config.Events.Kafka.Password,
-			MaxMessageBytes: a.Config.Events.Kafka.MaxMessageBytes,
-		}
-		return migrate.AddPublicEventIntegration(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, kafkaCfg)
-	}})
-
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {
 		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")
@@ -852,4 +822,36 @@ func (a *API) PanicDump() func(s string) (io.WriteCloser, error) {
 		log.Error("API Panic stacktrace: %s", s)
 		return cache.NewWriteCloser(a.Cache, cache.Key("api", "panic_dump", s), panicDumpTTL), nil
 	}
+}
+
+// SetCookie on given response writter, automatically add domain and path based on api config.
+func (a *API) SetCookie(w http.ResponseWriter, name, value string, expires time.Time) {
+	a.setCookie(w, &http.Cookie{
+		Name:    name,
+		Value:   value,
+		Expires: expires,
+	})
+}
+
+// UnsetCookie on given response writter, automatically add domain and path based on api config.
+func (a *API) UnsetCookie(w http.ResponseWriter, name string) {
+	a.setCookie(w, &http.Cookie{
+		Name:   name,
+		Value:  "",
+		MaxAge: -1,
+	})
+}
+
+func (a *API) setCookie(w http.ResponseWriter, c *http.Cookie) {
+	if a.Config.URL.UI != "" {
+		// ignore parse error, this have been checked at service start
+		uiURL, _ := url.Parse(a.Config.URL.UI)
+		c.Path = uiURL.Path
+		c.Domain = uiURL.Hostname()
+		if c.Path == "" {
+			c.Path = "/"
+		}
+	}
+
+	http.SetCookie(w, c)
 }

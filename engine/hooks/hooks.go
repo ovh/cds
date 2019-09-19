@@ -50,12 +50,10 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	s.Name = s.Cfg.Name
+	s.ServiceName = s.Cfg.Name
+	s.ServiceType = services.TypeHooks
 	s.HTTPURL = s.Cfg.URL
-	s.Type = services.TypeHooks
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
-	s.ServiceName = "cds-hooks"
-
 	return nil
 }
 

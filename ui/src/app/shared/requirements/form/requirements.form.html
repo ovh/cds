@@ -12,7 +12,7 @@
                 <label for="requirementname">
                         {{ 'requirement_hostname_service' | translate }}
                     </label>
-                <input name="name" [disabled]="newRequirement.type !== 'service'" auto-complete autocomplete="off" type="text" required pattern="[a-zA-Z0-9\-\._]*" placeholder="{{'requirement_placeholder_name_' + newRequirement.type | translate}}" [source]="suggest"
+                <input name="requirementname" id="requirementname" [disabled]="newRequirement.type !== 'service'" auto-complete autocomplete="off" type="text" required pattern="[a-zA-Z0-9\-\._]*" placeholder="{{placeholderTypeName[newRequirement.type]}}" [source]="suggest"
                     [min-chars]="3" [(ngModel)]="newRequirement.name" [no-match-found-text]="false">
                 <div *ngIf="formAddRequirement.invalid && !formAddRequirement.pristine" class="ui error message">
                     <p>{{'requirement_hostname_error' | translate}}</p>
@@ -30,13 +30,13 @@
                         {{ 'requirement_value_service' | translate }}
                     </label>
                 <div class="field">
-                    <input name="value" auto-complete autocomplete="off" type="text" [source]="suggest" [min-chars]="3" [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}"
+                    <input name="value" id="value" auto-complete autocomplete="off" type="text" [source]="suggest" [min-chars]="3" [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" placeholder="{{placeholderTypeValue[newRequirement.type]}}"
                         [no-match-found-text]="false">
                 </div>
             </div>
 
             <div *ngIf="newRequirement.type === 'model' && workerModels != null">
-                <input name="value-workermodel" auto-complete autocomplete="off" type="text" [source]="suggestWithWorkerModel" [min-chars]="0" [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" (blur)="setName(formAddRequirement)" placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}"
+                <input name="value-workermodel" auto-complete autocomplete="off" type="text" [source]="suggestWithWorkerModel" [min-chars]="0" [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" (blur)="setName(formAddRequirement)" placeholder="{{'requirement_placeholder_value_model' | translate}}"
                     [no-match-found-text]="false">
                 <p *ngIf="workerModelLinked != null">
                     <a class="ui" [routerLink]="['/settings', 'worker-model', newRequirement.value]" target="_blank" (click)="closeModal()">
@@ -46,13 +46,13 @@
                 <label for="opts">
                         {{ 'requirement_options' | translate }}
                     </label>
-                <textarea name="opts" [(ngModel)]="newRequirement.opts" rows="3" placeholder="{{'requirement_placeholder_opts_' + newRequirement.type | translate}}"></textarea>
+                <textarea name="opts" id="opts" [(ngModel)]="newRequirement.opts" rows="3" placeholder="{{'requirement_placeholder_opts_model' | translate}}"></textarea>
             </div>
             <div *ngIf="newRequirement.type === 'service'">
-                <label for="opts">
+                <label for="servopts">
                         {{ 'requirement_options' | translate }}
                     </label>
-                <textarea name="opts" [(ngModel)]="newRequirement.opts" rows="3" placeholder="{{'requirement_placeholder_opts_' + newRequirement.type | translate}}"></textarea>
+                <textarea name="servopts" id="servopts" [(ngModel)]="newRequirement.opts" rows="3" placeholder="{{'requirement_placeholder_opts_service' | translate}}"></textarea>
             </div>
         </div>
         <div class="one wide center mtop8" *ngIf="newRequirement.type === 'model' && workerModelLinked != null">
@@ -85,5 +85,5 @@
         <a href="https://ovh.github.io/cds/docs/concepts/requirement/" target="_blank">
         {{ 'requirement_documentation' | translate }} </a>
     </p>
-    <p [innerHtml]="getHelp()"></p>
+    <p [innerHtml]="helpType[newRequirement.type]"></p>
 </form>

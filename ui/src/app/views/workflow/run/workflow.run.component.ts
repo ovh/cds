@@ -136,7 +136,7 @@ export class WorkflowRunComponent implements OnInit {
                 this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_success', {
                     workflowName: this.workflowName,
                 }), {
-                        icon: 'assets/images/checked.png',
+                        icon: './assets/images/checked.png',
                         tag: `${this.workflowName}-${this.workflowRun.num}.${this.workflowRun.last_subnumber}`
                     }).subscribe();
                 break;
@@ -144,7 +144,7 @@ export class WorkflowRunComponent implements OnInit {
                 this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_failing', {
                     workflowName: this.workflowName
                 }), {
-                        icon: 'assets/images/close.png',
+                        icon: './assets/images/close.png',
                         tag: `${this.workflowName}-${this.workflowRun.num}.${this.workflowRun.last_subnumber}`
                     }).subscribe();
                 break;

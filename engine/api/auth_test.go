@@ -434,3 +434,19 @@ func generateToken(t *testing.T, username string) string {
 	}
 	return raw
 }
+
+func Test_getAuthMe(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	_, jwtRaw := assets.InsertLambdaUser(t, db)
+
+	uri := api.Router.GetRoute(http.MethodGet, api.getAuthMe, nil)
+	require.NotEmpty(t, uri)
+
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, "GET", uri, nil)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 200, rec.Code)
+	t.Logf(rec.Body.String())
+}

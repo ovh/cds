@@ -3,9 +3,16 @@ package gorpmapping
 import (
 	"encoding/json"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/configstore"
+	// Import all symmecrypt ciphers
+	_ "github.com/ovh/symmecrypt/ciphers/aesgcm"
+	_ "github.com/ovh/symmecrypt/ciphers/aespmacsiv"
+	_ "github.com/ovh/symmecrypt/ciphers/chacha20poly1305"
+	_ "github.com/ovh/symmecrypt/ciphers/hmac"
+	_ "github.com/ovh/symmecrypt/ciphers/xchacha20poly1305"
 	"github.com/ovh/symmecrypt/keyloader"
+
+	"github.com/ovh/cds/sdk"
 )
 
 func ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyConfig) error {

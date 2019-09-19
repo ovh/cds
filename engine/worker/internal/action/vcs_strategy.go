@@ -42,15 +42,19 @@ func vcsStrategy(ctx context.Context, wk workerruntime.Runtime, params []sdk.Par
 			return gitURL, nil, err
 		}
 
-		keysDirectory := filepath.Dir(installedKey.PKey)
-
-		if err := vcs.SetupSSHKey(nil, keysDirectory, privateKeyVar); err != nil {
-			return gitURL, nil, fmt.Errorf("unable to setup ssh key. %s", err)
+		aferoKeyDir, err := workerruntime.KeysDirectory(ctx)
+		if err != nil {
+			return "", nil, sdk.WithStack(err)
 		}
 
+		if err := vcs.SetupSSHKey(wk.Workspace(), aferoKeyDir.Name(), privateKeyVar); err != nil {
+			return gitURL, nil, sdk.WithStack(fmt.Errorf("unable to setup ssh key. %s", err))
+		}
+
+		keysDirectory := filepath.Dir(installedKey.PKey)
 		key, errK := vcs.GetSSHKey(secrets, keysDirectory, &privateKeyVar)
 		if errK != nil && !sdk.ErrorIs(errK, sdk.ErrKeyNotFound) {
-			return gitURL, nil, fmt.Errorf("unable to setup ssh key. %s", errK)
+			return gitURL, nil, sdk.WithStack(fmt.Errorf("unable to setup ssh key. %s", errK))
 		}
 
 		if auth == nil {
@@ -60,7 +64,7 @@ func vcsStrategy(ctx context.Context, wk workerruntime.Runtime, params []sdk.Par
 
 		url := sdk.ParameterFind(params, "git.url")
 		if url == nil || url.Value == "" {
-			return gitURL, nil, fmt.Errorf("SSH Url (git.url) not found. Nothing to perform")
+			return gitURL, nil, sdk.WithStack(fmt.Errorf("SSH Url (git.url) not found. Nothing to perform"))
 		}
 		gitURL = url.Value
 
@@ -80,7 +84,7 @@ func vcsStrategy(ctx context.Context, wk workerruntime.Runtime, params []sdk.Par
 
 		url := sdk.ParameterFind(params, "git.http_url")
 		if url == nil || url.Value == "" {
-			return gitURL, nil, fmt.Errorf("SSH Url (git.http_url) not found. Nothing to perform")
+			return gitURL, nil, sdk.WithStack(fmt.Errorf("SSH Url (git.http_url) not found. Nothing to perform"))
 		}
 		gitURL = url.Value
 	}

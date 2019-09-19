@@ -40,11 +40,10 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	h.Name = h.Config.Name
 	h.HTTPURL = h.Config.URL
-	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
-	h.Common.Common.ServiceName = "cds-hatchery-swarm"
+	h.Common.Common.ServiceName = h.Config.Name
+	h.Common.Common.ServiceType = services.TypeHatchery
 	var err error
 	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
 	if err != nil {
@@ -65,7 +64,7 @@ func (h *HatcherySwarm) Status() sdk.MonitoringStatus {
 		defer cancelList()
 		images, err := dockerClient.ImageList(ctxList, types.ImageListOptions{All: true})
 		if err != nil {
-			log.Warning("hatchery> swarm> %s> Status> Unable to list images on %s: %s", h.Name, dockerName, err)
+			log.Warning("hatchery> swarm> %s> Status> Unable to list images on %s: %s", h.Name(), dockerName, err)
 			status = sdk.MonitoringStatusAlert
 		}
 		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Images-" + dockerName, Value: fmt.Sprintf("%d", len(images)), Status: status})
@@ -73,7 +72,7 @@ func (h *HatcherySwarm) Status() sdk.MonitoringStatus {
 		status = sdk.MonitoringStatusOK
 		cs, err := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
 		if err != nil {
-			log.Warning("hatchery> swarm> %s> Status> Unable to list containers on %s: %s", h.Name, dockerName, err)
+			log.Warning("hatchery> swarm> %s> Status> Unable to list containers on %s: %s", h.Name(), dockerName, err)
 			status = sdk.MonitoringStatusAlert
 		}
 		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Containers-" + dockerName, Value: fmt.Sprintf("%d", len(cs)), Status: status})

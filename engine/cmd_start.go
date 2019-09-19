@@ -6,16 +6,14 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
 
-	"github.com/google/gops/agent"
-	"github.com/spf13/cobra"
-	"go.opencensus.io/tag"
-
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
@@ -27,9 +25,12 @@ import (
 	"github.com/ovh/cds/engine/migrateservice"
 	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/engine/ui"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+
+	"github.com/spf13/cobra"
 )
 
 func init() {
@@ -80,7 +81,7 @@ This component operates CDS VCS connectivity
 
 Start all of this with a single command:
 
-	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]
+	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate] [ui]
 
 All the services are using the same configuration file format.
 
@@ -93,38 +94,15 @@ See $ engine config command for more details.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			cmd.Help()
+			cmd.Help() // nolint
 			return
 		}
 
 		// Initialize config
 		conf := configImport(args, flagStartConfigFile, flagStartRemoteConfig, flagStartRemoteConfigKey, flagStartVaultAddr, flagStartVaultToken, false)
-
-		// gops debug
-		if conf.Debug.Enable {
-			if conf.Debug.RemoteDebugURL != "" {
-				log.Info("Starting gops agent on %s", conf.Debug.RemoteDebugURL)
-				if err := agent.Listen(&agent.Options{Addr: conf.Debug.RemoteDebugURL}); err != nil {
-					log.Error("Error on starting gops agent: %v", err)
-				}
-			} else {
-				log.Info("Starting gops agent locally")
-				if err := agent.Listen(nil); err != nil {
-					log.Error("Error on starting gops agent locally: %v", err)
-				}
-			}
-		}
-
 		ctx, cancel := context.WithCancel(context.Background())
 
 		// initialize context
-		instance := "cdsinstance"
-		if conf.Tracing.Enable && conf.Tracing.Name != "" {
-			instance = conf.Tracing.Name
-		}
-		tagCDSInstance, _ := tag.NewKey("cds")
-		ctx, _ = tag.New(ctx, tag.Upsert(tagCDSInstance, instance))
-
 		defer cancel()
 
 		// gracefully shutdown all
@@ -141,9 +119,13 @@ See $ engine config command for more details.
 			service service.Service
 			cfg     interface{}
 		}
-		services := []serviceConf{}
 
-		names := []string{}
+		var (
+			serviceConfs []serviceConf
+			names        []string
+			types        []string
+		)
+
 		for _, a := range args {
 			fmt.Printf("Starting service %s\n", a)
 			switch a {
@@ -151,74 +133,106 @@ See $ engine config command for more details.
 				if conf.API == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
-				services = append(services, serviceConf{arg: a, service: api.New(), cfg: *conf.API})
-				names = append(names, instance)
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: api.New(), cfg: *conf.API})
+				names = append(names, conf.API.Name)
+				types = append(types, services.TypeAPI)
+
+			case "ui":
+				if conf.UI == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: ui.New(), cfg: *conf.UI})
+				names = append(names, conf.UI.Name)
+				types = append(types, services.TypeUI)
+
 			case "migrate":
 				if conf.DatabaseMigrate == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
-				services = append(services, serviceConf{arg: a, service: migrateservice.New(), cfg: *conf.DatabaseMigrate})
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: migrateservice.New(), cfg: *conf.DatabaseMigrate})
 				names = append(names, conf.DatabaseMigrate.Name)
+				types = append(types, services.TypeDBMigrate)
+
 			case "hatchery:local":
 				if conf.Hatchery.Local == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
-				services = append(services, serviceConf{arg: a, service: local.New(), cfg: *conf.Hatchery.Local})
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: local.New(), cfg: *conf.Hatchery.Local})
 				names = append(names, conf.Hatchery.Local.Name)
+				types = append(types, services.TypeHatchery)
+
 			case "hatchery:kubernetes":
 				if conf.Hatchery.Kubernetes == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
-				services = append(services, serviceConf{arg: a, service: kubernetes.New(), cfg: *conf.Hatchery.Kubernetes})
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: kubernetes.New(), cfg: *conf.Hatchery.Kubernetes})
 				names = append(names, conf.Hatchery.Kubernetes.Name)
+				types = append(types, services.TypeHatchery)
+
 			case "hatchery:marathon":
 				if conf.Hatchery.Marathon == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
-				services = append(services, serviceConf{arg: a, service: marathon.New(), cfg: *conf.Hatchery.Marathon})
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: marathon.New(), cfg: *conf.Hatchery.Marathon})
 				names = append(names, conf.Hatchery.Marathon.Name)
+				types = append(types, services.TypeHatchery)
+
 			case "hatchery:openstack":
 				if conf.Hatchery.Openstack == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
-				services = append(services, serviceConf{arg: a, service: openstack.New(), cfg: *conf.Hatchery.Openstack})
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: openstack.New(), cfg: *conf.Hatchery.Openstack})
 				names = append(names, conf.Hatchery.Openstack.Name)
+				types = append(types, services.TypeAPI)
+
 			case "hatchery:swarm":
 				if conf.Hatchery.Swarm == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
-				services = append(services, serviceConf{arg: a, service: swarm.New(), cfg: *conf.Hatchery.Swarm})
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: swarm.New(), cfg: *conf.Hatchery.Swarm})
 				names = append(names, conf.Hatchery.Swarm.Name)
+				types = append(types, services.TypeHatchery)
+
 			case "hatchery:vsphere":
 				if conf.Hatchery.VSphere == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
-				services = append(services, serviceConf{arg: a, service: vsphere.New(), cfg: *conf.Hatchery.VSphere})
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: vsphere.New(), cfg: *conf.Hatchery.VSphere})
 				names = append(names, conf.Hatchery.VSphere.Name)
+				types = append(types, services.TypeHatchery)
+
 			case "hooks":
 				if conf.Hooks == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
-				services = append(services, serviceConf{arg: a, service: hooks.New(), cfg: *conf.Hooks})
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: hooks.New(), cfg: *conf.Hooks})
 				names = append(names, conf.Hooks.Name)
+				types = append(types, services.TypeHooks)
+
 			case "vcs":
 				if conf.VCS == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
-				services = append(services, serviceConf{arg: a, service: vcs.New(), cfg: *conf.VCS})
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: vcs.New(), cfg: *conf.VCS})
 				names = append(names, conf.VCS.Name)
+				types = append(types, services.TypeVCS)
+
 			case "repositories":
 				if conf.Repositories == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
-				services = append(services, serviceConf{arg: a, service: repositories.New(), cfg: *conf.Repositories})
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: repositories.New(), cfg: *conf.Repositories})
 				names = append(names, conf.Repositories.Name)
+				types = append(types, services.TypeRepositories)
+
 			case "elasticsearch":
 				if conf.ElasticSearch == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
-				services = append(services, serviceConf{arg: a, service: elasticsearch.New(), cfg: *conf.ElasticSearch})
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: elasticsearch.New(), cfg: *conf.ElasticSearch})
 				names = append(names, conf.ElasticSearch.Name)
+				types = append(types, services.TypeElasticsearch)
+
 			default:
 				fmt.Printf("Error: service '%s' unknown\n", a)
 				os.Exit(1)
@@ -226,22 +240,30 @@ See $ engine config command for more details.
 		}
 
 		//Initialize logs
-		log.Initialize(&log.Conf{
-			Level:                  conf.Log.Level,
-			GraylogProtocol:        conf.Log.Graylog.Protocol,
-			GraylogHost:            conf.Log.Graylog.Host,
-			GraylogPort:            fmt.Sprintf("%d", conf.Log.Graylog.Port),
-			GraylogExtraKey:        conf.Log.Graylog.ExtraKey,
-			GraylogExtraValue:      conf.Log.Graylog.ExtraValue,
-			GraylogFieldCDSVersion: sdk.VERSION,
-			GraylogFieldCDSOS:      sdk.GOOS,
-			GraylogFieldCDSArch:    sdk.GOARCH,
-			GraylogFieldCDSName:    strings.Join(names, "_"),
-			Ctx:                    ctx,
+		logConf := log.Conf{
+			Level:                      conf.Log.Level,
+			GraylogProtocol:            conf.Log.Graylog.Protocol,
+			GraylogHost:                conf.Log.Graylog.Host,
+			GraylogPort:                fmt.Sprintf("%d", conf.Log.Graylog.Port),
+			GraylogExtraKey:            conf.Log.Graylog.ExtraKey,
+			GraylogExtraValue:          conf.Log.Graylog.ExtraValue,
+			GraylogFieldCDSVersion:     sdk.VERSION,
+			GraylogFieldCDSOS:          sdk.GOOS,
+			GraylogFieldCDSArch:        sdk.GOARCH,
+			GraylogFieldCDSServiceName: strings.Join(names, "_"),
+			GraylogFieldCDSServiceType: strings.Join(types, "_"),
+			Ctx:                        ctx,
+		}
+		// TODO Logger: each service should have it own logger
+		log.Initialize(&logConf)
+
+		// Sort the slice of services we have to start to be sure to start the API au first
+		sort.Slice(serviceConfs, func(i, j int) bool {
+			return serviceConfs[i].arg < serviceConfs[j].arg
 		})
 
 		//Configure the services
-		for _, s := range services {
+		for _, s := range serviceConfs {
 			if err := s.service.ApplyConfiguration(s.cfg); err != nil {
 				sdk.Exit("Unable to init service %s: %v", s.arg, err)
 			}
@@ -252,16 +274,14 @@ See $ engine config command for more details.
 				}
 			}
 
-			// Initialiaze tracing
-			if err := observability.Init(conf.Tracing, "cds-"+s.arg); err != nil {
+			c, err := observability.Init(ctx, conf.Telemetry, s.service)
+			if err != nil {
 				sdk.Exit("Unable to start tracing exporter: %v", err)
 			}
-		}
 
-		//Start the services
-		for _, s := range services {
-			go start(ctx, s.service, s.cfg, s.arg)
-			//Stupid trick: when API is starting wait a bit before start the other
+			go start(c, s.service, s.cfg, s.arg)
+
+			// Stupid trick: when API is starting wait a bit before start the other
 			if s.arg == "API" || s.arg == "api" {
 				time.Sleep(2 * time.Second)
 			}
@@ -301,7 +321,7 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 	json.Unmarshal(b, &srvConfig) // nolint
 
 	// then register
-	if err := s.Register(c, srvConfig); err != nil {
+	if err := s.Register(srvConfig); err != nil {
 		log.Error("%s> Unable to register: %v", serviceName, err)
 		return err
 	}
@@ -316,7 +336,7 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 	}()
 
 	go func() {
-		if err := s.Serve(c); err != nil {
+		if err := s.Serve(ctx); err != nil {
 			log.Error("%s> Serve: %+v", serviceName, err)
 			cancel()
 		}

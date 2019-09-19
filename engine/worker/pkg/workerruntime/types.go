@@ -25,8 +25,9 @@ type FilePath struct {
 }
 
 type KeyResponse struct {
-	PKey string `json:"pkey"`
-	Type string `json:"type"`
+	PKey    string `json:"pkey"`
+	Type    string `json:"type"`
+	Content []byte `json:"-"`
 }
 
 type TmplPath struct {

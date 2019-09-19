@@ -105,7 +105,7 @@ func InitExternal(ctx context.Context, db *gorp.DbMap, ss []sdk.ExternalService)
 		oldSrv, errOldSrv := LoadByNameForUpdateAndSkipLocked(ctx, tx, s.Name)
 		if errOldSrv != nil && !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
 			_ = tx.Rollback()
-			return sdk.WithStack(fmt.Errorf("Unable to find service %s", s.Name))
+			return sdk.WithStack(fmt.Errorf("Unable to find service %s: %v", s.Name, errOldSrv))
 		}
 
 		if oldSrv == nil {

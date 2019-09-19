@@ -8,7 +8,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 )
@@ -24,12 +23,6 @@ func TestDAO(t *testing.T) {
 		}
 	}
 
-	var grp = sdk.Group{
-		Name: "services-TestDAO-group",
-	}
-
-	u, _ := assets.InsertLambdaUser(t, db, &grp)
-
 	privateKey, err := jws.NewRandomRSAKey()
 	test.NoError(t, err)
 	publicKey, err := jws.ExportPublicKey(privateKey)
@@ -37,10 +30,9 @@ func TestDAO(t *testing.T) {
 
 	var srv = sdk.Service{
 		CanonicalService: sdk.CanonicalService{
-			Name:       sdk.RandomString(10),
-			Type:       "type-service-test",
-			PublicKey:  publicKey,
-			Maintainer: *u,
+			Name:      sdk.RandomString(10),
+			Type:      "type-service-test",
+			PublicKey: publicKey,
 		},
 	}
 

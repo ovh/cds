@@ -13,7 +13,14 @@
             <form *ngIf="!showSuccessMessage" class="ui form" (ngSubmit)="resetPassword(loginForm)" #loginForm="ngForm">
                 <div class="field">
                     <label>{{ 'user_label_new_password' | translate }}</label>
-                    <input type="password" name="password" ngModel required [disabled]="loading">
+                    <input type="password" name="password" (keyup)="onChangeSignupPassword($event)" ngModel required
+                        [disabled]="loading">
+                    <sui-progress *ngIf="!passwordError && passwordLevel !== null"
+                        class="bottom attached indicating active" [maximum]="5" [value]="passwordLevel + 1">
+                    </sui-progress>
+                </div>
+                <div *ngIf="passwordError" class="ui error message">
+                    <p>{{ passwordError | translate }}</p>
                 </div>
                 <div class="field right aligned">
                     <button class="ui green button" type="submit"

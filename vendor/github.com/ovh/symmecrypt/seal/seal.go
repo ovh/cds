@@ -56,7 +56,12 @@ type internalKey struct {
 
 // InitFromConfig initializes the global singleton seal from the configstore.
 func InitFromConfig(onChange func(*Seal)) error {
-	seal, err := NewSealFromConfig()
+	return InitFromStore(onChange, configstore.DefaultStore)
+}
+
+// InitFromStore initializes the global singleton seal from a specific store instance.
+func InitFromStore(onChange func(*Seal), s *configstore.Store) error {
+	seal, err := NewSealFromStore(s)
 	if err != nil {
 		return err
 	}
@@ -65,8 +70,8 @@ func InitFromConfig(onChange func(*Seal)) error {
 		setGlobal(seal)
 	}
 	go func() {
-		for range configstore.Watch() {
-			newSeal, err := NewSealFromConfig()
+		for range s.Watch() {
+			newSeal, err := NewSealFromStore(s)
 			if err != nil {
 				logrus.Errorf("symmecrypt/seal: configuration fetch error: %s", err)
 				continue
@@ -113,7 +118,12 @@ func Exists() bool {
 
 // NewSealFromConfig instantiates a new Seal from the configstore.
 func NewSealFromConfig() (*Seal, error) {
-	sec, err := SealConfigFilter.GetItem(ConfigName)
+	return NewSealFromStore(configstore.DefaultStore)
+}
+
+// NewSealFromStore instantiates a new Seal from a specific store instance.
+func NewSealFromStore(s *configstore.Store) (*Seal, error) {
+	sec, err := SealConfigFilter.Store(s).GetItem(ConfigName)
 	if err != nil {
 		if _, ok := err.(configstore.ErrItemNotFound); ok {
 			// Not found in config: disabled

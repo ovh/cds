@@ -71,14 +71,4 @@ export class HomeComponent implements OnInit {
     selectTab(t: string): void {
         this.selectedTab = t;
     }
-
-    markAsRead(id: number) {
-        for (let i = 0; i < this.broadcasts.length; i++) {
-            if (this.broadcasts[i].id === id) {
-                this.broadcasts[i].updating = true;
-            }
-        }
-        this._broadcastService.markAsRead(id)
-            .subscribe();
-    }
 }

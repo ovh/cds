@@ -9,6 +9,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/cli/cdsctl/internal"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -39,7 +40,7 @@ func versionRun(v cli.Values) error {
 
 	m := map[string]interface{}{
 		"version":  sdk.VersionString(),
-		"keychain": keychainEnabled,
+		"keychain": internal.IsKeychainEnabled(),
 	}
 
 	if apiVersion != nil {

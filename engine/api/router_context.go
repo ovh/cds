@@ -12,14 +12,16 @@ const (
 	contextJWT
 	contextJWTRaw
 	contextDate
+	contextJWTFromCookie
 )
 
 // ContextValues retuns auth values of a context
 func ContextValues(ctx context.Context) map[interface{}]interface{} {
 	return map[interface{}]interface{}{
-		//contextHatchery: ctx.Value(contextHatchery),
-		//contextService:  ctx.Value(contextService),
-		//contextWorker:   ctx.Value(contextWorker),
-		//contextUser:     ctx.Value(contextUser),
+		contextSession:       ctx.Value(contextSession),
+		contextAPIConsumer:   ctx.Value(contextAPIConsumer),
+		contextJWT:           ctx.Value(contextJWT),
+		contextJWTRaw:        ctx.Value(contextJWTRaw),
+		contextJWTFromCookie: ctx.Value(contextJWTFromCookie),
 	}
 }

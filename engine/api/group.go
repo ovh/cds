@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
@@ -160,7 +161,6 @@ func (api *API) deleteGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["permGroupName"]
-		u := getAPIConsumer(ctx)
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -173,9 +173,15 @@ func (api *API) deleteGroupHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load %s", name)
 		}
 
+		// Get project permission
 		projPerms, err := project.LoadPermissions(tx, g.ID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load projects for group")
+		}
+
+		// Remove the group from all consumers
+		if err := authentication.ConsumerRemoveGroup(ctx, tx, g); err != nil {
+			return err
 		}
 
 		if err := group.Delete(ctx, tx, g); err != nil {
@@ -186,10 +192,9 @@ func (api *API) deleteGroupHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		// TODO refact events
-		groupPerm := sdk.GroupPermission{Group: *g}
+		// Send project permission changes
 		for _, pg := range projPerms {
-			event.PublishDeleteProjectPermission(&pg.Project, groupPerm, u)
+			event.PublishDeleteProjectPermission(&pg.Project, sdk.GroupPermission{Group: *g})
 		}
 
 		return service.WriteJSON(w, nil, http.StatusOK)
@@ -246,6 +251,11 @@ func (api *API) postGroupUserHandler() service.Handler {
 			Admin:   data.Admin,
 		}); err != nil {
 			return sdk.WrapError(err, "cannot add user %s in group %s", u.Username, g.Name)
+		}
+
+		// Restore invalid group for existing user's consumer
+		if err := authentication.ConsumerRestoreInvalidatedGroupForUser(ctx, tx, g.ID, u.ID); err != nil {
+			return err
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -378,6 +388,11 @@ func (api *API) deleteGroupUserHandler() service.Handler {
 		}
 
 		if err := group.DeleteLinkGroupUser(tx, link); err != nil {
+			return err
+		}
+
+		// Remove the group from all consumers
+		if err := authentication.ConsumerInvalidateGroupForUser(ctx, tx, g, u.ID); err != nil {
 			return err
 		}
 

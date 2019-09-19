@@ -12,13 +12,14 @@ const resetLocalConsumerTokenDuration time.Duration = time.Hour * 1
 
 type resetLocalConsumerToken struct {
 	ConsumerID string
-	Nonce      string
+	Nonce      int64
 }
 
 // NewResetConsumerToken returns a new reset consumer token for given consumer id.
 func NewResetConsumerToken(store cache.Store, consumerID string) (string, error) {
 	payload := resetLocalConsumerToken{
 		ConsumerID: consumerID,
+		Nonce:      time.Now().UnixNano(),
 	}
 
 	cacheKey := cache.Key("authentication:consumer:reset", consumerID)
@@ -37,7 +38,7 @@ func CheckResetConsumerToken(store cache.Store, signature string) (string, error
 	}
 
 	cacheKey := cache.Key("authentication:consumer:reset", payload.ConsumerID)
-	var nonce string
+	var nonce int64
 	if ok := store.Get(cacheKey, &nonce); !ok || nonce != payload.Nonce {
 		return "", sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given reset consumer token")
 	}

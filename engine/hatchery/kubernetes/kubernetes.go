@@ -135,11 +135,10 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		}
 	}
 
-	h.Name = h.Config.Name
+	h.Common.Common.ServiceName = h.Config.Name
+	h.Common.Common.ServiceType = services.TypeHatchery
 	h.HTTPURL = h.Config.URL
-	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
-	h.Common.Common.ServiceName = "cds-hatchery-kubernetes"
 	var err error
 	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
 	if err != nil {
@@ -244,6 +243,10 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	if len(name) > 63 {
 		name = name[:60]
 	}
+
+	name = strings.Replace(name, "/", "-", -1)
+	name = strings.Replace(name, ".", "-", -1)
+
 	log.Debug("hatchery> kubernetes> SpawnWorker> %s", name)
 
 	var logJob string
@@ -265,11 +268,11 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 
 	udataParam := sdk.WorkerArgs{
 		API:               h.Configuration().API.HTTP.URL,
-		Token:             h.Configuration().API.Token,
+		Token:             spawnArgs.WorkerToken,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              name,
 		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
-		HatcheryName:      h.Name,
+		HatcheryName:      h.Name(),
 		TTL:               h.Config.WorkerTTL,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,

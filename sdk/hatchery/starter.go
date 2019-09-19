@@ -10,8 +10,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"go.opencensus.io/stats"
-
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -78,11 +76,11 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 				WorkerName:   fmt.Sprintf("register-%s-%s", strings.ToLower(m.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
 				Model:        m,
 				RegisterOnly: true,
-				HatcheryName: h.ServiceName(),
+				HatcheryName: h.Service().Name,
 			}
 
 			// Get a JWT to authentified the worker
-			_, jwt, err := NewWorkerToken(h.ServiceName(), h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
+			jwt, err := NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
 			if err != nil {
 				var spawnError = sdk.SpawnErrorForm{
 					Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
@@ -112,7 +110,11 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 	ctx, end := observability.Span(j.ctx, "hatchery.spawnWorkerForJob")
 	defer end()
 
-	stats.Record(WithTags(ctx, h), h.Metrics().SpawnedWorkers.M(1))
+	ctx = observability.ContextWithTag(ctx,
+		observability.TagServiceName, h.Name(),
+		observability.TagServiceType, h.Type(),
+	)
+	observability.Record(ctx, GetMetrics().SpawnedWorkers, 1)
 
 	log.Debug("hatchery> spawnWorkerForJob> %d", j.id)
 	defer log.Debug("hatchery> spawnWorkerForJob> %d (%.3f seconds elapsed)", j.id, time.Since(time.Unix(j.timestamp, 0)).Seconds())
@@ -133,7 +135,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 
 	var modelName = "local"
 	if j.model != nil {
-		modelName = j.model.Group.Name + "+" + j.model.Name
+		modelName = j.model.Group.Name + "/" + j.model.Name
 	}
 
 	if h.Service() == nil {
@@ -177,7 +179,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) bool {
 	}
 
 	// Get a JWT to authentified the worker
-	_, jwt, err := NewWorkerToken(h.ServiceName(), h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
+	jwt, err := NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
 	if err != nil {
 		var spawnError = sdk.SpawnErrorForm{
 			Error: fmt.Sprintf("cannot spawn worker for register: %v", err),

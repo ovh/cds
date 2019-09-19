@@ -1503,9 +1503,9 @@ func UpdateFavorite(db gorp.SqlExecutor, workflowID int64, u int64, add bool) er
 func IsDeploymentIntegrationUsed(db gorp.SqlExecutor, projectID int64, appID int64, pfName string) (bool, error) {
 	query := `
 	SELECT count(1)
-	FROM workflow_node_context
-	JOIN project_integration ON project_integration.id = workflow_node_context.project_integration_id
-	WHERE workflow_node_context.application_id = $2
+	FROM w_node_context
+	JOIN project_integration ON project_integration.id = w_node_context.project_integration_id
+	WHERE w_node_context.application_id = $2
 	AND project_integration.project_id = $1
 	AND project_integration.name = $3
 	`

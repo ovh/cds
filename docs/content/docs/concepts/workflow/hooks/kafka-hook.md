@@ -3,11 +3,11 @@ title: "Kafka hook"
 weight: 5
 ---
 
-You want to run a workflow from a Kafka message? This kind of hook is for you.
+Do you want to run a workflow from a Kafka message? This kind of hook is for you.
 
-This kind of hook will connect to a Kafka topic and consume message. For each message, it will trigger your workflow.
+This kind of hook will connect to a Kafka topic and consume messages. For each message, it will trigger your workflow.
 
-The Kafka message have to be a JSON message, it in will be used as a payload for your workflow [See payload documentation]({{< relref "/docs/concepts/workflow/payload.md" >}}).
+The Kafka message have to be in JSON format. It will be used as a payload for your workflow. [See payload documentation]({{< relref "/docs/concepts/workflow/payload.md" >}}).
 
 ## Link your project to a Kafka platform
 
@@ -31,6 +31,6 @@ Select the Kafka Hook and complete the information:
 
 ## Add run condition
 
-The workflow will be triggered for all message received in Kafka queue.
+The workflow will be triggered for all messages received in Kafka queue.
 
 If you don't want to launch the root pipeline for each message, you can add a [run condition]({{< relref "/docs/concepts/workflow/run-conditions.md" >}}).

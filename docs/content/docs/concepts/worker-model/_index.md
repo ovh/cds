@@ -20,7 +20,7 @@ There are 4 types of worker models:
  * Docker images, see [how to create a worker model Docker]({{< relref "/docs/tutorials/worker_model-docker/_index.md" >}})
  * OpenStack images, see [how to create a worker model OpenStack]({{< relref "/docs/tutorials/worker_model-openstack.md" >}})
  * vSphere images, see [how to create a worker model vSphere]({{< relref "/docs/tutorials/worker_model-vsphere.md" >}})
- * Host worker models, which is a worker launched on the same host than the hatchery, we don't recommend to use this in production.
+ * Host worker model, which means workers launched on the same host as the hatchery. The security implication of such setup is lack of isolation between worker processes. They will share host resources like CPU, RAM, file system etc. For this reason, we don't recommend using this model in production.
 
 ## Behavior
 
@@ -32,7 +32,7 @@ All registered CDS [hatcheries]({{< relref "/docs/components/hatchery/_index.md"
 
 A user can add a worker model by setting an owner group if user is administrator of group.
 
-A CDS administrator can add a worker model, a [worker model pattern]({{< relref "/docs/concepts/worker-model/patterns.md" >}}), attach it to 'shared.infra' group and set provision as he want.
+A CDS administrator can add a worker model, a [worker model pattern]({{< relref "/docs/concepts/worker-model/patterns.md" >}}), attach it to 'shared.infra' group and set provision as he wants.
 
 ## What's a worker model pattern?
 

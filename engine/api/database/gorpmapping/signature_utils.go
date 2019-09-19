@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ovh/cds/sdk"
-
 	"github.com/go-gorp/gorp"
+
+	"github.com/ovh/cds/sdk"
 )
 
 func ListSignedEntities() []string {
@@ -43,6 +43,21 @@ func ListCanonicalFormsByEntity(db gorp.SqlExecutor, entity string) ([]sdk.Canon
 		if res[i].Signer == sha {
 			res[i].Latest = true
 		}
+	}
+
+	return res, nil
+}
+
+func ListTuplesByEntity(db gorp.SqlExecutor, entity string) ([]string, error) {
+	e, ok := Mapping[entity]
+	if !ok {
+		return nil, sdk.WithStack(errors.New("unknown entity"))
+	}
+
+	query := NewQuery(fmt.Sprintf("select %s::text from %s", e.Keys[0], e.Name))
+	var res []string
+	if err := GetAll(context.Background(), db, query, &res); err != nil {
+		return nil, err
 	}
 
 	return res, nil

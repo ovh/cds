@@ -21,6 +21,7 @@ func consumer() *cobra.Command {
 			cli.NewListCommand(authConsumerListCmd, authConsumerListRun, nil),
 			cli.NewCommand(authConsumerNewCmd, authConsumerNewRun, nil),
 			cli.NewCommand(authConsumerDeleteCmd, authConsumerDeleteRun, nil),
+			cli.NewCommand(authConsumerRegenCmd, authConsumerRegenRun, nil),
 		},
 	)
 }
@@ -192,6 +193,39 @@ func authConsumerDeleteRun(v cli.Values) error {
 		return err
 	}
 	fmt.Printf("Consumer '%s' successfully deleted.\n", consumerID)
+
+	return nil
+}
+
+var authConsumerRegenCmd = cli.Command{
+	Name:    "regen",
+	Aliases: []string{"regenerate"},
+	Short:   "Regenerate an existing auth consumer",
+	OptionalArgs: []cli.Arg{
+		{
+			Name: "username",
+		},
+	},
+	Args: []cli.Arg{
+		{
+			Name: "consumer-id",
+		},
+	},
+}
+
+func authConsumerRegenRun(v cli.Values) error {
+	username := v.GetString("username")
+	if username == "" {
+		username = "me"
+	}
+
+	consumerID := v.GetString("consumer-id")
+	consumer, err := client.AuthConsumerRegen(username, consumerID)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Consumer '%s' successfully regenerated.\n", consumerID)
+	fmt.Printf("Token: %s\n", consumer.Token)
 
 	return nil
 }

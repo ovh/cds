@@ -22,8 +22,6 @@ export class LogoutInterceptor implements HttpInterceptor {
                     if (e.status === 0) {
                         this._toast.error('API Unreachable', '');
                     } else if (req.url.indexOf('auth') === -1 && e.status === 401) {
-                        // this._authStore.removeUser();
-
                         let navigationExtras: NavigationExtras = {
                             queryParams: {}
                         };
@@ -34,7 +32,7 @@ export class LogoutInterceptor implements HttpInterceptor {
                         }
 
                         this._router.navigate(['/auth/signin'], navigationExtras);
-                    } else {
+                    } else if (req.url.indexOf('auth/me') === -1) { // ignore error on auth/me used for auth pages
                         // error formatted from CDS API
                         if (e.error && e.error.message) {
                             this._toast.error(e.statusText, e.error.message);

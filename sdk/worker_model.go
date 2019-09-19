@@ -33,20 +33,6 @@ var (
 	}
 )
 
-// Existing worker communication
-const (
-	HTTP = "http"
-	GRPC = "grpc"
-)
-
-var (
-	// AvailableWorkerModelCommunication List of all worker model communication
-	AvailableWorkerModelCommunication = []string{
-		string(HTTP),
-		string(GRPC),
-	}
-)
-
 // Model represents a worker model (ex: Go 1.5.1 Docker Images)
 // with specified capabilities (ex: go, golint and go2xunit binaries)
 //easyjson:json

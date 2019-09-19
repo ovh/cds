@@ -33,7 +33,7 @@ PRJ_KEY_B;Project B;2019-06-21T17:52:36;foo;bar2
 PRJ_KEY_C;Project C;2019-06-21T17:52:37;foo;bar2
 ```
 
-Here, `ou1` and `ou2` are two metadata key. You can add more metadata by adding key on the first line and values on lines below.
+Here, `ou1` and `ou2` are two metadata keys. You can add more metadata by adding key on the first line and values on lines below.
 
 You can import / create metadata:
 

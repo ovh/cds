@@ -14,17 +14,18 @@ import (
 
 // Conf contains log configuration
 type Conf struct {
-	Level                  string
-	GraylogHost            string
-	GraylogPort            string
-	GraylogProtocol        string
-	GraylogExtraKey        string
-	GraylogExtraValue      string
-	GraylogFieldCDSName    string
-	GraylogFieldCDSVersion string
-	GraylogFieldCDSOS      string
-	GraylogFieldCDSArch    string
-	Ctx                    context.Context
+	Level                      string
+	GraylogHost                string
+	GraylogPort                string
+	GraylogProtocol            string
+	GraylogExtraKey            string
+	GraylogExtraValue          string
+	GraylogFieldCDSServiceType string
+	GraylogFieldCDSServiceName string
+	GraylogFieldCDSVersion     string
+	GraylogFieldCDSOS          string
+	GraylogFieldCDSArch        string
+	Ctx                        context.Context
 }
 
 var (
@@ -80,8 +81,11 @@ func Initialize(conf *Conf) {
 			}
 		}
 
-		if conf.GraylogFieldCDSName != "" {
-			extra["CDSName"] = conf.GraylogFieldCDSName
+		if conf.GraylogFieldCDSServiceName != "" {
+			extra["CDSName"] = conf.GraylogFieldCDSServiceName
+		}
+		if conf.GraylogFieldCDSServiceName != "" {
+			extra["CDSService"] = conf.GraylogFieldCDSServiceType
 		}
 		if conf.GraylogFieldCDSVersion != "" {
 			extra["CDSVersion"] = conf.GraylogFieldCDSVersion

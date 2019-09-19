@@ -8,13 +8,17 @@ import (
 
 	"go.opencensus.io/stats"
 
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // WorkerPool returns all the worker owned by the hatchery h, registered or not on the CDS API
 func WorkerPool(ctx context.Context, h Interface, status ...string) ([]sdk.Worker, error) {
-	ctx = WithTags(ctx, h)
+	ctx = observability.ContextWithTag(ctx,
+		observability.TagServiceName, h.Name(),
+		observability.TagServiceType, h.Type(),
+	)
 
 	// First: call API
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -93,12 +97,12 @@ func WorkerPool(ctx context.Context, h Interface, status ...string) ([]sdk.Worke
 	}
 
 	measures := []stats.Measurement{
-		h.Metrics().PendingWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
-		h.Metrics().RegisteringWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
-		h.Metrics().WaitingWorkers.M(int64(nbPerStatus[sdk.StatusWaiting])),
-		h.Metrics().CheckingWorkers.M(int64(nbPerStatus[sdk.StatusChecking])),
-		h.Metrics().BuildingWorkers.M(int64(nbPerStatus[sdk.StatusBuilding])),
-		h.Metrics().DisabledWorkers.M(int64(nbPerStatus[sdk.StatusDisabled])),
+		GetMetrics().PendingWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
+		GetMetrics().RegisteringWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
+		GetMetrics().WaitingWorkers.M(int64(nbPerStatus[sdk.StatusWaiting])),
+		GetMetrics().CheckingWorkers.M(int64(nbPerStatus[sdk.StatusChecking])),
+		GetMetrics().BuildingWorkers.M(int64(nbPerStatus[sdk.StatusBuilding])),
+		GetMetrics().DisabledWorkers.M(int64(nbPerStatus[sdk.StatusDisabled])),
 	}
 	stats.Record(ctx, measures...)
 

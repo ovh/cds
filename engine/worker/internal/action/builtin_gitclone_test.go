@@ -1,0 +1,234 @@
+package action
+
+import (
+	"path/filepath"
+	"testing"
+
+	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestRunGitCloneInSSHWithoutVCSStrategyShouldRaiseError(t *testing.T) {
+	wk, ctx := setupTest(t)
+
+	res, err := RunGitClone(ctx, wk,
+		sdk.Action{}, nil, nil)
+	assert.Error(t, err)
+	assert.NotEqual(t, sdk.StatusSuccess, res.Status)
+}
+
+func TestRunGitCloneInSSHWithoutKeyShouldRaiseError(t *testing.T) {
+	wk, ctx := setupTest(t)
+
+	res, err := RunGitClone(ctx, wk,
+		sdk.Action{
+			Parameters: []sdk.Parameter{
+				{
+					Name:  "url",
+					Value: "git@github.com:ovh/cds.git",
+				},
+				{
+					Name:  "privateKey",
+					Value: "proj-ssh-key",
+				},
+			},
+		}, nil, nil)
+	assert.Error(t, err)
+	assert.NotEqual(t, sdk.StatusSuccess, res.Status)
+}
+
+func TestRunGitCloneInSSHWithPrivateKey(t *testing.T) {
+	wk, ctx := setupTest(t)
+
+	res, err := RunGitClone(ctx, wk,
+		sdk.Action{
+			Parameters: []sdk.Parameter{
+				{
+					Name:  "url",
+					Value: "git@github.com:fsamin/dummy-empty-repo.git",
+				}, {
+					Name:  "privateKey",
+					Value: "proj-ssh-key",
+				},
+			},
+		},
+		nil,
+		[]sdk.Variable{
+			{
+				Name:  "proj-ssh-key",
+				Value: string(test.TestKey),
+			},
+		})
+	assert.NoError(t, err)
+	assert.Equal(t, sdk.StatusSuccess, res.Status)
+
+	assert.DirExists(t, filepath.Join(wk.workingDirectory.File.Name(), "dummy-empty-repo"))
+	assert.DirExists(t, filepath.Join(wk.workingDirectory.File.Name(), "dummy-empty-repo", ".git"))
+}
+
+func TestRunGitCloneInSSHWithTheWrongPrivateKeyShouldFail(t *testing.T) {
+	wk, ctx := setupTest(t)
+
+	res, err := RunGitClone(ctx, wk,
+		sdk.Action{
+			Parameters: []sdk.Parameter{
+				{
+					Name:  "url",
+					Value: "git@github.com:fsamin/dummy-empty-repo.git",
+				}, {
+					Name:  "privateKey",
+					Value: "proj-ssh-key",
+				},
+			},
+		},
+		nil,
+		[]sdk.Variable{
+			{
+				Name:  "proj-ssh-key",
+				Value: "this not a private key",
+			},
+		})
+	assert.Error(t, err)
+	assert.NotEqual(t, sdk.StatusSuccess, res.Status)
+}
+
+func TestRunGitCloneInSSHWithPrivateKeyWithTargetDirectory(t *testing.T) {
+	wk, ctx := setupTest(t)
+
+	res, err := RunGitClone(ctx, wk,
+		sdk.Action{
+			Parameters: []sdk.Parameter{
+				{
+					Name:  "url",
+					Value: "git@github.com:fsamin/dummy-empty-repo.git",
+				}, {
+					Name:  "privateKey",
+					Value: "proj-ssh-key",
+				}, {
+					Name:  "directory",
+					Value: "there-there",
+				},
+			},
+		},
+		nil,
+		[]sdk.Variable{
+			{
+				Name:  "proj-ssh-key",
+				Value: string(test.TestKey),
+			},
+		})
+	assert.NoError(t, err)
+	assert.Equal(t, sdk.StatusSuccess, res.Status)
+
+	assert.DirExists(t, filepath.Join(wk.workingDirectory.File.Name(), "there-there"))
+	assert.DirExists(t, filepath.Join(wk.workingDirectory.File.Name(), "there-there", ".git"))
+	assert.Empty(t, res.NewVariables)
+}
+
+func TestRunGitCloneInSSHWithPrivateKeyAndExtractInfo(t *testing.T) {
+	wk, ctx := setupTest(t)
+
+	res, err := RunGitClone(ctx, wk,
+		sdk.Action{
+			Parameters: []sdk.Parameter{
+				{
+					Name:  "url",
+					Value: "git@github.com:fsamin/dummy-empty-repo.git",
+				}, {
+					Name:  "privateKey",
+					Value: "proj-ssh-key",
+				}, {
+					Name:  "directory",
+					Value: ".",
+				},
+			},
+		},
+		[]sdk.Parameter{
+			{
+				Name:  "git.url",
+				Value: "git@github.com:fsamin/dummy-empty-repo.git",
+			},
+			{
+				Name:  "cds.version",
+				Value: "1",
+			},
+		},
+		[]sdk.Variable{
+			{
+				Name:  "proj-ssh-key",
+				Value: string(test.TestKey),
+			},
+		})
+	assert.NoError(t, err)
+	assert.Equal(t, sdk.StatusSuccess, res.Status)
+
+	assert.DirExists(t, filepath.Join(wk.workingDirectory.File.Name(), ".git"))
+	assert.NotEmpty(t, res.NewVariables)
+	t.Logf("new variables: %+v", res.NewVariables)
+}
+
+func TestRunGitCloneInSSHWithApplicationVCSStrategy(t *testing.T) {
+	wk, ctx := setupTest(t)
+
+	res, err := RunGitClone(ctx, wk,
+		sdk.Action{
+			Parameters: []sdk.Parameter{
+				{
+					Name:  "directory",
+					Value: ".",
+				},
+			},
+		},
+		[]sdk.Parameter{
+			{
+				Name:  "git.connection.type",
+				Value: "ssh",
+			},
+			{
+				Name:  "git.url",
+				Value: "git@github.com:fsamin/dummy-empty-repo.git",
+			},
+			{
+				Name:  "git.ssh.key",
+				Value: "proj-ssh-key",
+			},
+			{
+				Name:  "cds.key.proj-ssh-key.priv",
+				Value: string(test.TestKey),
+			},
+			{
+				Name:  "cds.version",
+				Value: "1",
+			},
+		}, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, sdk.StatusSuccess, res.Status)
+
+	assert.DirExists(t, filepath.Join(wk.workingDirectory.File.Name(), ".git"))
+	assert.NotEmpty(t, res.NewVariables)
+	t.Logf("new variables: %+v", res.NewVariables)
+}
+
+func TestRunGitCloneInHTTPSWithoutAuth(t *testing.T) {
+
+	wk, ctx := setupTest(t)
+
+	res, err := RunGitClone(ctx, wk,
+		sdk.Action{
+			Parameters: []sdk.Parameter{
+				{
+					Name:  "url",
+					Value: "https://github.com/fsamin/dummy-empty-repo.git",
+				},
+			},
+		}, nil, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, sdk.StatusSuccess, res.Status)
+	assert.DirExists(t, filepath.Join(wk.workingDirectory.File.Name(), "dummy-empty-repo"))
+	assert.DirExists(t, filepath.Join(wk.workingDirectory.File.Name(), "dummy-empty-repo", ".git"))
+}
+
+func TestRunGitCloneInHTTPSWithAuth(t *testing.T) {
+
+}

@@ -51,15 +51,6 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 		return nil, sdk.WrapError(err, "unable to create operation request")
 	}
 
-	// update user permission if we come from hook
-	// TODO groups should be in identifiable before calling this func
-	/*if opts.Hook != nil {
-		u.OldUserStruct.Groups = make([]sdk.Group, len(p.ProjectGroups))
-		for i, gp := range p.ProjectGroups {
-			u.OldUserStruct.Groups[i] = gp.Group
-		}
-	}*/
-
 	if err := PostRepositoryOperation(ctx, db, *p, &ope, nil); err != nil {
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}

@@ -12,9 +12,10 @@ import (
 )
 
 var (
-	cfg    *cdsclient.Config
-	client cdsclient.Interface
-	root   *cobra.Command
+	cfg            *cdsclient.Config
+	configFilePath string
+	client         cdsclient.Interface
+	root           *cobra.Command
 )
 
 func main() {
@@ -25,11 +26,14 @@ func main() {
 		application(),
 		consumer(),
 		encrypt(),
+		contexts(),
 		environment(),
 		events(),
 		group(),
 		health(),
 		login(),
+		reset(),
+		signup(),
 		monitoring(),
 		pipeline(),
 		project(),
@@ -51,6 +55,7 @@ func main() {
 func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 	root := cli.NewCommand(mainCmd, mainRun, cmds)
 
+	root.PersistentFlags().StringP("context", "c", "", "cdsctl context name")
 	root.PersistentFlags().StringP("file", "f", "", "set configuration file")
 	root.PersistentFlags().BoolP("no-interactive", "n", false, "Set to disable interaction with ctl")
 	root.PersistentFlags().BoolP("verbose", "", false, "Enable verbose output")
@@ -58,7 +63,7 @@ func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 
 	root.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		var err error
-		cfg, err = loadConfig(cmd)
+		configFilePath, cfg, err = loadConfig(cmd)
 
 		if err == nil && cfg != nil {
 			client = cdsclient.New(*cfg)
@@ -67,6 +72,9 @@ func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 		// Do not load config on login
 		if cmd.Name() == "login" ||
 			cmd.Name() == "signup" ||
+			cmd.Name() == "verify" ||
+			cmd.Name() == "reset-password" ||
+			cmd.Name() == "confirm" ||
 			cmd.Name() == "version" ||
 			cmd.Name() == "doc" || strings.HasPrefix(cmd.Use, "doc ") || (cmd.Run == nil && cmd.RunE == nil) {
 			return
@@ -94,11 +102,14 @@ Per default, the command line ` + "`cdsctl`" + ` uses your keychain on your os:
 
 * OSX: Keychain Access
 * Linux System: Secret-tool (libsecret)
-* Windows: Windows Credentials service
 
 You can bypass keychain tools by using environment variables:
 
-	CDS_API_URL="https://instance.cds.api" CDS_USER="username" CDS_TOKEN="yourtoken" cdsctl [command]
+	CDS_API_URL="https://instance.cds.api" CDS_USER="username" CDS_SESSION_TOKEN="yourtoken" cdsctl [command]
+
+You can use a "sign in" token attached to a consumer:
+
+	CDS_API_URL="https://instance.cds.api" CDS_SIGNIN_TOKEN="token-consumer" cdsctl [command]
 
 
 Want to debug something? You can use ` + "`CDS_VERBOSE`" + ` environment variable.

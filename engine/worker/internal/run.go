@@ -44,7 +44,6 @@ func processJobParameter(params []sdk.Parameter, secrets []sdk.Variable) {
 	}
 
 	params = parameters
-	return
 }
 
 // ProcessActionVariables replaces all placeholders inside action recursively using
@@ -443,8 +442,16 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	ctx = workerruntime.SetJobID(ctx, jobInfo.NodeJobRun.ID)
 	// start logger routine with a large buffer
 	w.logger.logChan = make(chan sdk.Log, 100000)
-	go w.logProcessor(ctx, jobInfo.NodeJobRun.ID)
-	defer w.drainLogsAndCloseLogger(ctx)
+	go func() {
+		if err := w.logProcessor(ctx, jobInfo.NodeJobRun.ID); err != nil {
+			log.Error("processJob> Logs processor error: %v", err)
+		}
+	}()
+	defer func() {
+		if err := w.drainLogsAndCloseLogger(ctx); err != nil {
+			log.Error("processJob> Drain logs error: %v", err)
+		}
+	}()
 
 	wdFile, wdAbs, err := w.setupWorkingDirectory(jobInfo)
 	if err != nil {

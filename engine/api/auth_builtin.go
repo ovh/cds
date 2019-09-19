@@ -65,12 +65,7 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		}
 
 		// Set a cookie with the jwt token
-		http.SetCookie(w, &http.Cookie{
-			Name:    jwtCookieName,
-			Value:   jwt,
-			Expires: session.ExpireAt,
-			Path:    "/",
-		})
+		api.SetCookie(w, jwtCookieName, jwt, session.ExpireAt)
 
 		usr, err := user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
 		if err != nil {
@@ -79,8 +74,9 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
-			Token: jwt,
-			User:  usr,
+			Token:  jwt,
+			User:   usr,
+			APIURL: api.Config.URL.API,
 		}
 
 		if err := tx.Commit(); err != nil {

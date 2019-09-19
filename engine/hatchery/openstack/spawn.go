@@ -59,12 +59,6 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 			workerModelLastModified, _ := img.Metadata["worker_model_last_modified"]
 			if workerModelName == spawnArgs.Model.Name && fmt.Sprintf("%s", workerModelLastModified) == fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()) {
 				withExistingImage = true
-				// TODO
-				//var jobInfo string
-				//if spawnArgs.JobID != 0 {
-				//	jobInfo = fmt.Sprintf(" job:%d", spawnArgs.JobID)
-				//}
-				//log.Debug("spawnWorker> existing image found for worker:%s model:%s img:%s %s %s", name, spawnArgs.Model.Name, img.ID, jobInfo, spawnArg.LogInfo)
 				imageID = img.ID
 				break
 			}
@@ -84,9 +78,9 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	udataParam := sdk.WorkerArgs{
 		API:               h.Configuration().API.HTTP.URL,
 		Name:              name,
-		Token:             h.Configuration().API.Token,
+		Token:             spawnArgs.WorkerToken,
 		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
-		HatcheryName:      h.Name,
+		HatcheryName:      h.Name(),
 		TTL:               h.Config.WorkerTTL,
 		FromWorkerImage:   withExistingImage,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
@@ -108,7 +102,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	// Create openstack vm
 	meta := map[string]string{
 		"worker":                     name,
-		"hatchery_name":              h.Name,
+		"hatchery_name":              h.Name(),
 		"register_only":              fmt.Sprintf("%t", spawnArgs.RegisterOnly),
 		"flavor":                     spawnArgs.Model.ModelVirtualMachine.Flavor,
 		"model":                      spawnArgs.Model.ModelVirtualMachine.Image,

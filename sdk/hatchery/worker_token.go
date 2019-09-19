@@ -8,27 +8,23 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, expiration time.Time, w SpawnArguments) (sdk.AuthSession, string, error) {
-	var token sdk.AuthSession
-	token.ID = sdk.UUID()
-	token.Created = time.Now()
-	token.ExpireAt = expiration
-	token.Scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeWorker}
+// NewWorkerToken .
+func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, expiration time.Time, w SpawnArguments) (string, error) {
 	claims := WorkerJWTClaims{
 		Worker: w,
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    hatcheryName,
 			Subject:   w.WorkerName,
-			Id:        token.ID,
+			Id:        sdk.UUID(),
 			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: token.ExpireAt.Unix(),
+			ExpiresAt: expiration.Unix(),
 		},
 	}
 
 	jwtoken := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)
 	signedJWToken, err := jwtoken.SignedString(privateKey)
 	if err != nil {
-		return token, "", sdk.WithStack(err)
+		return "", sdk.WithStack(err)
 	}
-	return token, signedJWToken, nil
+	return signedJWToken, nil
 }

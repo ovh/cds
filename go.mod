@@ -1,5 +1,7 @@
 module github.com/ovh/cds
 
+go 1.12
+
 require (
 	cloud.google.com/go v0.44.3 // indirect
 	contrib.go.opencensus.io/exporter/jaeger v0.1.0
@@ -18,6 +20,7 @@ require (
 	github.com/Shopify/toxiproxy v2.1.4+incompatible // indirect
 	github.com/alecthomas/jsonschema v0.0.0-20190429041900-eff3f6c90428
 	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
+	github.com/apoydence/onpar v0.0.0-20190519213022-ee068f8ea4d1 // indirect
 	github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05 // indirect
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
@@ -42,13 +45,11 @@ require (
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/dancannon/gorethink v4.0.0+incompatible // indirect
-	github.com/danieljoos/wincred v1.0.1 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20181014144952-4e0d7dc8888f // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dnaeon/go-vcr v0.0.0-20180920040454-5637cf3d8a31 // indirect
 	github.com/docker/distribution v2.7.0-rc.0+incompatible
 	github.com/docker/docker v1.13.1
-	github.com/docker/docker-credential-helpers v0.6.1
 	github.com/docker/go-connections v0.3.0
 	github.com/docker/go-metrics v0.0.0-20180209012529-399ea8c73916 // indirect
 	github.com/docker/go-units v0.3.2 // indirect
@@ -59,10 +60,6 @@ require (
 	github.com/eapache/go-resiliency v1.1.0
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
-	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
-	github.com/facebookgo/freeport v0.0.0-20150612182905-d4adf43b75b9 // indirect
-	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
-	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
 	github.com/fatih/color v1.7.0
 	github.com/fatih/structs v1.0.0
 	github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b // indirect
@@ -85,7 +82,6 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
-	github.com/google/gops v0.0.0-20170728214508-806455e841dc
 	github.com/googleapis/gnostic v0.1.0 // indirect
 	github.com/gophercloud/gophercloud v0.0.0-20190504011306-6f9faf57fddc
 	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
@@ -125,11 +121,13 @@ require (
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/keybase/go-crypto v0.0.0-20181127160227-255a5089e85a
+	github.com/keybase/go-keychain v0.0.0-20190828020956-aa639f275ae1
+	github.com/keybase/go.dbus v0.0.0-20190710215703-a33a09c8a604 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lib/pq v1.0.0
 	github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024 // indirect
-	github.com/magiconair/properties v1.8.1 // indirect
+	github.com/magiconair/properties v1.8.1
 	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d
 	github.com/marstr/guid v1.1.0 // indirect
 	github.com/maruel/panicparse v1.3.0
@@ -171,9 +169,9 @@ require (
 	github.com/ory-am/common v0.4.0 // indirect
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
 	github.com/ovh/cds/sdk/izanami v0.0.0-20190703101657-683453b50b2a
-	github.com/ovh/configstore v0.0.0-20190211110801-86dc25ae30bd
+	github.com/ovh/configstore v0.3.2
 	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 // indirect
-	github.com/ovh/symmecrypt v0.2.0
+	github.com/ovh/symmecrypt v0.4.0
 	github.com/ovh/venom v0.25.0
 	github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -184,6 +182,7 @@ require (
 	github.com/pierrec/lz4 v2.0.5+incompatible // indirect
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.8.1
+	github.com/poy/onpar v0.0.0-20190519213022-ee068f8ea4d1 // indirect
 	github.com/prometheus/client_golang v1.1.0 // indirect
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a // indirect
@@ -239,7 +238,7 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/gorethink/gorethink.v4 v4.1.0 // indirect
-	gopkg.in/gorp.v1 v1.7.1
+	gopkg.in/gorp.v1 v1.7.1 // indirect
 	gopkg.in/h2non/gock.v1 v1.0.14
 	gopkg.in/ini.v1 v1.28.0 // indirect
 	gopkg.in/ldap.v2 v2.5.1
@@ -261,7 +260,9 @@ require (
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
-replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f
+replace gopkg.in/gorp.v1 => github.com/yesnault/gorp v0.0.0-20190906150006-6210446a0d92
+
+replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-20190906150006-6210446a0d92
 
 replace github.com/docker/docker => github.com/docker/engine v0.0.0-20180816081446-320063a2ad06
 
@@ -270,3 +271,7 @@ replace github.com/ovh/cds/sdk/interpolate => ./sdk/interpolate
 replace github.com/ovh/cds/sdk/izanami => ./sdk/izanami
 
 replace github.com/keybase/go-crypto => github.com/Alkorin/crypto v0.0.0-20190124155437-5ea49ae
+
+replace github.com/ovh/cds/tools/smtpmock => ./tools/smtpmock
+
+replace github.com/keybase/go-keychain => github.com/yesnault/go-keychain v0.0.0-20190829105400-f78f7ae

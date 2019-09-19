@@ -111,7 +111,9 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 
 		// Insert the authentication
 		if err := mail.SendMailVerifyToken(reqData["email"], newUser.Username, verifyToken,
-			api.Config.URL.UI+"/auth/verify?token=%s"); err != nil {
+			api.Config.URL.UI+"/auth/verify?token=%s",
+			api.Config.URL.API,
+		); err != nil {
 			return sdk.WrapError(err, "cannot send verify token email for user %s", newUser.Username)
 		}
 
@@ -132,13 +134,17 @@ func initBuiltinConsumersFromStartupConfig(tx gorp.SqlExecutor, consumer *sdk.Au
 
 	log.Warning("Magic token detected !: %s", initToken)
 
+	if startupConfig.IAT == 0 || startupConfig.IAT > time.Now().Unix() {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given init token, issued at value should be set and can not be in the future")
+	}
+
 	// Create the consumers provided by the startup configuration
 	for _, cfg := range startupConfig.Consumers {
 		var scopes sdk.AuthConsumerScopeSlice
 
 		switch cfg.ServiceType {
 		case services.TypeHatchery:
-			scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution}
+			scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeWorkerModel}
 		case services.TypeHooks:
 			scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHooks, sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun}
 		default:
@@ -155,7 +161,7 @@ func initBuiltinConsumersFromStartupConfig(tx gorp.SqlExecutor, consumer *sdk.Au
 			Data:               map[string]string{},
 			GroupIDs:           []int64{group.SharedInfraGroup.ID},
 			Scopes:             scopes,
-			IssuedAt:           time.Now(),
+			IssuedAt:           time.Unix(startupConfig.IAT, 0),
 		}
 
 		if err := authentication.InsertConsumer(tx, &c); err != nil {
@@ -230,17 +236,13 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		}
 
 		// Set a cookie with the jwt token
-		http.SetCookie(w, &http.Cookie{
-			Name:    jwtCookieName,
-			Value:   jwt,
-			Expires: session.ExpireAt,
-			Path:    "/",
-		})
+		api.SetCookie(w, jwtCookieName, jwt, session.ExpireAt)
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
-			Token: jwt,
-			User:  usr,
+			Token:  jwt,
+			User:   usr,
+			APIURL: api.Config.URL.API,
 		}
 
 		return service.WriteJSON(w, resp, http.StatusOK)
@@ -256,10 +258,16 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 
 		localDriver := driver.(*local.AuthDriver)
 
-		var reqData sdk.AuthConsumerSigninRequest
-		if err := service.UnmarshalBody(r, &reqData); err != nil {
-			return err
+		var reqData = sdk.AuthConsumerSigninRequest{}
+		var tokenInQueryString = QueryString(r, "token")
+		if tokenInQueryString != "" {
+			reqData["token"] = tokenInQueryString
+		} else {
+			if err := service.UnmarshalBody(r, &reqData); err != nil {
+				return err
+			}
 		}
+
 		if err := localDriver.CheckVerifyRequest(reqData); err != nil {
 			return err
 		}
@@ -313,17 +321,13 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		local.CleanVerifyConsumerToken(api.Cache, consumer.ID)
 
 		// Set a cookie with the jwt token
-		http.SetCookie(w, &http.Cookie{
-			Name:    jwtCookieName,
-			Value:   jwt,
-			Expires: session.ExpireAt,
-			Path:    "/",
-		})
+		api.SetCookie(w, jwtCookieName, jwt, session.ExpireAt)
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
-			Token: jwt,
-			User:  usr,
+			APIURL: api.Config.URL.API,
+			Token:  jwt,
+			User:   usr,
 		}
 
 		return service.WriteJSON(w, resp, http.StatusOK)
@@ -394,7 +398,9 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 
 		// Insert the authentication
 		if err := mail.SendMailAskResetToken(contact.Value, existingLocalConsumer.AuthentifiedUser.Username, resetToken,
-			api.Config.URL.UI+"/auth/reset?token=%s"); err != nil {
+			api.Config.URL.UI+"/auth/reset?token=%s",
+			api.Config.URL.API,
+		); err != nil {
 			return sdk.WrapError(err, "cannot send reset token email at %s", contact.Value)
 		}
 
@@ -419,6 +425,11 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &reqData); err != nil {
 			return err
 		}
+
+		if reqData["token"] == "" {
+			reqData["token"] = QueryString(r, "token")
+		}
+
 		if err := localDriver.CheckResetRequest(reqData); err != nil {
 			return err
 		}
@@ -481,17 +492,13 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		local.CleanResetConsumerToken(api.Cache, consumer.ID)
 
 		// Set a cookie with the jwt token
-		http.SetCookie(w, &http.Cookie{
-			Name:    jwtCookieName,
-			Value:   jwt,
-			Expires: session.ExpireAt,
-			Path:    "/",
-		})
+		api.SetCookie(w, jwtCookieName, jwt, session.ExpireAt)
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
-			Token: jwt,
-			User:  usr,
+			Token:  jwt,
+			User:   usr,
+			APIURL: api.Config.URL.API,
 		}
 
 		return service.WriteJSON(w, resp, http.StatusOK)

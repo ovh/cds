@@ -54,7 +54,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	}
 
 	annot := annotation{
-		HatcheryName:            h.Name,
+		HatcheryName:            h.Name(),
 		WorkerName:              name,
 		RegisterOnly:            spawnArgs.RegisterOnly,
 		WorkerModelLastModified: fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
@@ -79,7 +79,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WrapError(errW, "state in error")
 	}
 
-	return h.launchScriptWorker(name, spawnArgs.JobID, *spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
+	return h.launchScriptWorker(name, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
 }
 
 // createVMModel create a model for a specific worker model
@@ -93,7 +93,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 	}
 
 	annot := annotation{
-		HatcheryName:            h.Name,
+		HatcheryName:            h.Name(),
 		WorkerModelLastModified: fmt.Sprintf("%d", model.UserLastModified.Unix()),
 		WorkerModelName:         model.Name,
 		Model:                   true,
@@ -162,7 +162,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 }
 
 // launchScriptWorker launch a script on the worker
-func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, model sdk.Model, registerOnly bool, vmInfo types.ManagedObjectReference) error {
+func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, token string, model sdk.Model, registerOnly bool, vmInfo types.ManagedObjectReference) error {
 	ctx := context.Background()
 	// Retrieve the new VM
 	vm := object.NewVirtualMachine(h.vclient.Client, vmInfo)
@@ -194,9 +194,9 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, model sdk
 	udataParam := sdk.WorkerArgs{
 		API:               h.Configuration().API.HTTP.URL,
 		Name:              name,
-		Token:             h.Configuration().API.Token,
+		Token:             token,
 		Model:             model.Group.Name + "/" + model.Name,
-		HatcheryName:      h.Name,
+		HatcheryName:      h.Name(),
 		TTL:               h.Config.WorkerTTL,
 		FromWorkerImage:   true,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,

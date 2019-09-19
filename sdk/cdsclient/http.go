@@ -89,7 +89,7 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 	if in != nil {
 		b, err = json.Marshal(in)
 		if err != nil {
-			return nil, nil, 0, err
+			return nil, nil, 0, sdk.WithStack(err)
 		}
 	}
 
@@ -100,19 +100,19 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 
 	res, header, code, err := c.Request(ctx, method, path, body, mods...)
 	if err != nil {
-		return nil, nil, code, err
+		return nil, nil, code, sdk.WithStack(err)
 	}
 
 	if code >= 400 {
 		if err := sdk.DecodeError(res); err != nil {
 			return res, nil, code, err
 		}
-		return res, nil, code, fmt.Errorf("HTTP %d", code)
+		return res, nil, code, sdk.WithStack(fmt.Errorf("HTTP %d", code))
 	}
 
 	if out != nil {
 		if err := json.Unmarshal(res, out); err != nil {
-			return res, nil, code, err
+			return res, nil, code, sdk.WithStack(err)
 		}
 	}
 
@@ -123,7 +123,7 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 func (c *client) Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error) {
 	respBody, respHeader, code, err := c.Stream(ctx, method, path, body, false, mods...)
 	if err != nil {
-		return nil, nil, 0, err
+		return nil, nil, 0, sdk.WithStack(err)
 	}
 	defer func() {
 		// Drain and close the body to let the Transport reuse the connection
@@ -134,7 +134,7 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 	var bodyBtes []byte
 	bodyBtes, err = ioutil.ReadAll(respBody)
 	if err != nil {
-		return nil, nil, code, err
+		return nil, nil, code, sdk.WithStack(err)
 	}
 
 	if c.config.Verbose {
@@ -145,9 +145,9 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 
 	if code >= 400 {
 		if err := sdk.DecodeError(bodyBtes); err != nil {
-			return bodyBtes, nil, code, err
+			return bodyBtes, nil, code, sdk.WithStack(err)
 		}
-		return bodyBtes, nil, code, fmt.Errorf("HTTP %d", code)
+		return bodyBtes, nil, code, sdk.WithStack(fmt.Errorf("HTTP %d", code))
 	}
 
 	return bodyBtes, respHeader, code, nil
@@ -161,13 +161,19 @@ var signinRouteRegexp = regexp.MustCompile(`\/auth\/consumer\/.*\/signin`)
 func (c *client) Stream(ctx context.Context, method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
 	// Checks that current session_token is still valid
 	// If not, challenge a new one against the authenticationToken
-	if path != "/auth/consumer/builtin/signin" && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+	var checkToken = !strings.Contains(path, "/auth/consumer/builtin/signin") &&
+		!strings.Contains(path, "/auth/consumer/local/signin") &&
+		!strings.Contains(path, "/auth/consumer/local/signup") &&
+		!strings.Contains(path, "/auth/consumer/local/verify") &&
+		!strings.Contains(path, "/auth/consumer/worker/signin")
+
+	if checkToken && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
 		if c.config.Verbose {
 			fmt.Printf("session token invalid: (%s). Relogin...\n", c.config.SessionToken)
 		}
 		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
 		if err != nil {
-			return nil, nil, -1, err
+			return nil, nil, -1, sdk.WithStack(err)
 		}
 		if c.config.Verbose {
 			fmt.Println("jwt: ", resp.Token[:12])
@@ -185,13 +191,15 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 	if body != nil {
 		bodyContent, err = ioutil.ReadAll(body)
 		if err != nil {
-			return nil, nil, 0, err
+			return nil, nil, 0, sdk.WithStack(err)
 		}
 	}
 
-	url := c.config.Host + path
+	var url string
 	if strings.HasPrefix(path, "http") {
 		url = path
+	} else {
+		url = c.config.Host + path
 	}
 
 	for i := 0; i <= c.config.Retry; i++ {
@@ -242,7 +250,6 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			dmp, _ := httputil.DumpRequestOut(req, true)
 			log.Printf("%s", string(dmp))
 			log.Println(cli.Green("**************************"))
-
 		}
 
 		var errDo error
@@ -252,9 +259,8 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		} else {
 			resp, errDo = c.httpClient.Do(req)
 		}
-
 		if errDo != nil {
-			return nil, nil, 0, errDo
+			return nil, nil, 0, sdk.WithStack(errDo)
 		}
 
 		if c.config.Verbose {
@@ -283,9 +289,9 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 				resp.Body.Close()
 				continue
 			}
-			if cdserr := sdk.DecodeError(body); cdserr != nil {
+			if err := sdk.DecodeError(body); err != nil {
 				resp.Body.Close()
-				return nil, resp.Header, resp.StatusCode, cdserr
+				return nil, resp.Header, resp.StatusCode, sdk.WithStack(err)
 			}
 		}
 
@@ -297,23 +303,12 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			continue
 		}
 
-		if errDo != nil && (strings.Contains(errDo.Error(), "connection reset by peer") ||
-			strings.Contains(errDo.Error(), "unexpected EOF")) {
-			savederror = errDo
-			if resp != nil && resp.Body != nil {
-				resp.Body.Close()
-			}
-			continue
-		}
 		if resp != nil && resp.Body != nil {
 			resp.Body.Close()
 		}
-		if errDo != nil {
-			return nil, nil, 0, errDo
-		}
 	}
 
-	return nil, nil, 0, fmt.Errorf("x%d: %s", c.config.Retry, savederror)
+	return nil, nil, 0, sdk.WithStack(fmt.Errorf("x%d: %s", c.config.Retry, savederror))
 }
 
 // UploadMultiPart upload multipart

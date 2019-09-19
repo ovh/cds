@@ -47,8 +47,9 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable, destinationPath string) (*
 			}
 
 			return &workerruntime.KeyResponse{
-				PKey: installedKeyPath,
-				Type: sdk.KeyTypeSSH,
+				PKey:    installedKeyPath,
+				Type:    sdk.KeyTypeSSH,
+				Content: []byte(key.Value),
 			}, nil
 
 		}
@@ -66,8 +67,9 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable, destinationPath string) (*
 		}
 
 		return &workerruntime.KeyResponse{
-			PKey: destinationPath,
-			Type: sdk.KeyTypeSSH,
+			PKey:    destinationPath,
+			Type:    sdk.KeyTypeSSH,
+			Content: []byte(key.Value),
 		}, nil
 
 	case sdk.KeyTypePGP:
@@ -135,8 +137,9 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable, destinationPath string) (*
 
 		}
 		return &workerruntime.KeyResponse{
-			Type: sdk.KeyTypePGP,
-			PKey: tmpfile.Name(),
+			Type:    sdk.KeyTypePGP,
+			PKey:    tmpfile.Name(),
+			Content: content,
 		}, nil
 
 	default:

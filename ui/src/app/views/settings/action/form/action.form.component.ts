@@ -98,17 +98,20 @@ export class ActionFormComponent implements OnDestroy {
     }
 
     refreshActions(): void {
-        if (this.action.group_id) {
-            this._actionService.getAllForGroup(this.action.group_id)
-                .pipe(finalize(() => this._cd.markForCheck()))
-                .subscribe(as => {
-                this.actions = as.filter(a => this.action.id !== a.id);
-            });
-            this._workerModelService.getAllForGroup(this.action.group_id)
-                .pipe(finalize(() => this._cd.markForCheck()))
-                .subscribe(wms => {
-                this.workerModels = wms;
-            });
+        if (this.action.group_id && this.groups) {
+            let group = this.groups.find(g => g.id === Number(this.action.group_id));
+            if (group) {
+                this._actionService.getAllForGroup(group.name)
+                    .pipe(finalize(() => this._cd.markForCheck()))
+                    .subscribe(as => {
+                        this.actions = as.filter(a => this.action.id !== a.id);
+                    });
+                this._workerModelService.getAllForGroup(group.name)
+                    .pipe(finalize(() => this._cd.markForCheck()))
+                    .subscribe(wms => {
+                        this.workerModels = wms;
+                    });
+            }
         }
     }
 

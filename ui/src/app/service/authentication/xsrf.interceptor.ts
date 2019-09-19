@@ -9,12 +9,12 @@ export class XSRFInterceptor implements HttpInterceptor {
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         if (req.url.indexOf('assets/i18n') !== -1) {
-            return next.handle(req.clone());
+            return next.handle(req);
         }
 
         return next.handle(req.clone({
             setHeaders: this.addHeader(),
-            url: '/cdsapi' + req.url
+            url: './cdsapi' + req.url
         }));
     }
 

@@ -9,7 +9,6 @@ import (
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
@@ -84,8 +83,6 @@ func TestUpdateSession(t *testing.T) {
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	g := assets.InsertGroup(t, db)
-
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
@@ -97,12 +94,11 @@ func TestUpdateSession(t *testing.T) {
 	s, err := authentication.NewSession(db, c, time.Second, false)
 	test.NoError(t, err)
 
-	s.GroupIDs = []int64{g.ID}
+	s.MFA = true
 	test.NoError(t, authentication.UpdateSession(db, s))
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
 	test.NoError(t, err)
-	test.NotNil(t, res)
 	test.Equal(t, s, res)
 }
 

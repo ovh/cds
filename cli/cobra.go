@@ -231,9 +231,11 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 		}
 
 		vals := argsToVal(args)
+		c, _ := cmd.Flags().GetString("context")
 		n, _ := cmd.Flags().GetBool("no-interactive")
 		b, _ := cmd.Flags().GetBool("insecure")
 		v, _ := cmd.Flags().GetBool("verbose")
+		vals["context"] = append(vals["context"], c)
 		vals["no-interactive"] = append(vals["no-interactive"], fmt.Sprintf("%v", n))
 		vals["insecure"] = append(vals["insecure"], fmt.Sprintf("%v", b))
 		vals["verbose"] = append(vals["verbose"], fmt.Sprintf("%v", v))
@@ -243,14 +245,14 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 		switch f := run.(type) {
 		case RunFunc:
 			if f == nil {
-				cmd.Help()
+				cmd.Help() // nolint
 				OSExit(0)
 			}
 			ExitOnError(f(vals))
 			OSExit(0)
 		case RunGetFunc:
 			if f == nil {
-				cmd.Help()
+				cmd.Help() // nolint
 				OSExit(0)
 			}
 			i, err := f(vals)
@@ -310,7 +312,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 
 		case RunListFunc:
 			if f == nil {
-				cmd.Help()
+				cmd.Help() // nolint
 				OSExit(0)
 			}
 
@@ -410,7 +412,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 
 		case RunDeleteFunc:
 			if f == nil {
-				cmd.Help()
+				cmd.Help() // nolint
 				OSExit(0)
 			}
 

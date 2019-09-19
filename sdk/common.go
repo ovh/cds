@@ -13,6 +13,8 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strings"
+	"unicode"
 
 	"github.com/go-gorp/gorp"
 	"github.com/pkg/errors"
@@ -209,4 +211,40 @@ func (s *Int64Slice) Scan(src interface{}) error {
 func (s Int64Slice) Value() (driver.Value, error) {
 	j, err := json.Marshal(s)
 	return j, WrapError(err, "cannot marshal Int64Slice")
+}
+
+// Contains return true if given value is in the slice.
+func (s *Int64Slice) Contains(v int64) bool {
+	if s == nil || len(*s) == 0 {
+		return false
+	}
+
+	for _, i := range *s {
+		if i == v {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Remove all occurrences of given value from the slice.
+func (s *Int64Slice) Remove(v int64) {
+	filtered := make([]int64, 0, len(*s))
+	for _, i := range *s {
+		if i != v {
+			filtered = append(filtered, i)
+		}
+	}
+	*s = filtered
+}
+
+func RemoveNotPrintableChar(in string) string {
+	m := func(r rune) rune {
+		if unicode.IsPrint(r) || unicode.IsSpace(r) || unicode.IsPunct(r) {
+			return r
+		}
+		return ' '
+	}
+	return strings.Map(m, in)
 }
