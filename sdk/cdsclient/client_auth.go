@@ -33,9 +33,12 @@ func (c *client) AuthConsumerLocalSignup(request sdk.AuthConsumerSigninRequest) 
 	return nil
 }
 
-func (c *client) AuthConsumerLocalSignupVerify(uri string) (sdk.AuthConsumerSigninResponse, error) {
+func (c *client) AuthConsumerLocalSignupVerify(token string) (sdk.AuthConsumerSigninResponse, error) {
 	var res sdk.AuthConsumerSigninResponse
-	_, _, _, err := c.RequestJSON(context.Background(), "POST", uri, nil, &res)
+	_, err := c.PostJSON(context.Background(), "/auth/consumer/local/verify",
+		sdk.AuthConsumerSigninRequest{
+			"token": token,
+		}, &res)
 	if err != nil {
 		return res, err
 	}
@@ -85,4 +88,22 @@ func (c *client) AuthMe() (sdk.AuthCurrentConsumerResponse, error) {
 	var r sdk.AuthCurrentConsumerResponse
 	_, err := c.GetJSON(context.Background(), "/auth/me", &r)
 	return r, err
+}
+
+func (c *client) AuthConsumerLocalAskResetPassword(r sdk.AuthConsumerSigninRequest) error {
+	_, err := c.PostJSON(context.Background(), "/auth/consumer/local/askReset", r, nil)
+	return err
+}
+
+func (c *client) AuthConsumerLocalResetPassword(token, newPassword string) (sdk.AuthConsumerSigninResponse, error) {
+	var res sdk.AuthConsumerSigninResponse
+	_, _, _, err := c.RequestJSON(context.Background(), "POST", "/auth/consumer/local/reset",
+		sdk.AuthConsumerSigninRequest{
+			"token":    token,
+			"password": newPassword,
+		}, &res)
+	if err != nil {
+		return res, err
+	}
+	return res, nil
 }

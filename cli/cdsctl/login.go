@@ -132,7 +132,7 @@ func loginRun(v cli.Values) error {
 		return fmt.Errorf("cannot signin: %v", err)
 	}
 
-	return doAfterLogin(v, apiURL, res)
+	return doAfterLogin(client, v, apiURL, res)
 }
 
 func loginRunLocal(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
@@ -226,7 +226,7 @@ func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType) (sdk.Auth
 	return req, nil
 }
 
-func doAfterLogin(v cli.Values, apiURL string, res sdk.AuthConsumerSigninResponse) error {
+func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, res sdk.AuthConsumerSigninResponse) error {
 	noInteractive := v.GetBool("no-interactive")
 	insecureSkipVerifyTLS := v.GetBool("insecure")
 	if insecureSkipVerifyTLS {
@@ -348,7 +348,7 @@ func createOrRegenConsumer(apiURL, username, sessionToken string) (string, strin
 
 	consumers, err := client.AuthConsumerListByUser(username)
 	if err != nil {
-		return "", "", fmt.Errorf("cdsctl: cannot retreive consumer list")
+		return "", "", fmt.Errorf("cdsctl: cannot retrieve consumer list: %v", err)
 	}
 
 	consumerName := fmt.Sprintf("cdsctl/%s", hostname)

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -138,15 +137,16 @@ var signupVerifyCmd = cli.Command{
 	Short: "Verify local CDS signup",
 	Args: []cli.Arg{
 		{
-			Name:       "callback-url",
+			Name:       "token",
 			AllowEmpty: false,
-			IsValid: func(s string) bool {
-				_, err := url.Parse(s)
-				return err == nil
-			},
 		},
 	},
 	Flags: []cli.Flag{
+		{
+			Name:      "api-url",
+			ShortHand: "H",
+			Usage:     "Url to your CDS api.",
+		},
 		{
 			Name:  "env",
 			Usage: "Display the commands to set up the environment for the cds client.",
@@ -156,17 +156,20 @@ var signupVerifyCmd = cli.Command{
 }
 
 func signupVerifyFunc(v cli.Values) error {
-	uri := v.GetString("callback-url")
-
-	// Load all drivers from given CDS instance
-	client := cdsclient.New(cdsclient.Config{
-		Verbose: os.Getenv("CDS_VERBOSE") == "true",
-	})
-
-	signupresponse, err := client.AuthConsumerLocalSignupVerify(uri)
+	apiURL, err := getAPIURL(v)
 	if err != nil {
 		return err
 	}
 
-	return doAfterLogin(v, signupresponse.APIURL, signupresponse)
+	client := cdsclient.New(cdsclient.Config{
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+		Host:    apiURL,
+	})
+
+	signupresponse, err := client.AuthConsumerLocalSignupVerify(v.GetString("token"))
+	if err != nil {
+		return err
+	}
+
+	return doAfterLogin(client, v, signupresponse.APIURL, signupresponse)
 }

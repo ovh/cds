@@ -460,6 +460,8 @@ func WithUsage() RequestModifier {
 type AuthClient interface {
 	AuthDriverList() (sdk.AuthDriverResponse, error)
 	AuthConsumerSignin(sdk.AuthConsumerType, sdk.AuthConsumerSigninRequest) (sdk.AuthConsumerSigninResponse, error)
+	AuthConsumerLocalAskResetPassword(sdk.AuthConsumerSigninRequest) error
+	AuthConsumerLocalResetPassword(token, newPassword string) (sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerLocalSignup(sdk.AuthConsumerSigninRequest) error
 	AuthConsumerLocalSignupVerify(uri string) (sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerSignout() error

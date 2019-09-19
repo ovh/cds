@@ -262,7 +262,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 
 		//Log request
 		start := time.Now()
-		defer func() {
+		defer func(ctx context.Context) {
 			if responseWriter.statusCode == 0 {
 				responseWriter.statusCode = 200
 			}
@@ -279,7 +279,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 			observability.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))
 			observability.Record(ctx, ServerRequestBytes, responseWriter.reqSize)
 			observability.Record(ctx, ServerResponseBytes, responseWriter.respSize)
-		}()
+		}(ctx)
 
 		observability.Record(ctx, Hits, 1)
 		observability.Record(ctx, ServerRequestCount, 1)

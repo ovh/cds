@@ -112,7 +112,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 		// Insert the authentication
 		if err := mail.SendMailVerifyToken(reqData["email"], newUser.Username, verifyToken,
 			api.Config.URL.UI+"/auth/verify?token=%s",
-			api.Config.URL.API+"/auth/consumer/local/verify?token=%s",
+			api.Config.URL.API,
 		); err != nil {
 			return sdk.WrapError(err, "cannot send verify token email for user %s", newUser.Username)
 		}
@@ -240,8 +240,9 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
-			Token: jwt,
-			User:  usr,
+			Token:  jwt,
+			User:   usr,
+			APIURL: api.Config.URL.API,
 		}
 
 		return service.WriteJSON(w, resp, http.StatusOK)
@@ -397,7 +398,9 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 
 		// Insert the authentication
 		if err := mail.SendMailAskResetToken(contact.Value, existingLocalConsumer.AuthentifiedUser.Username, resetToken,
-			api.Config.URL.UI+"/auth/reset?token=%s"); err != nil {
+			api.Config.URL.UI+"/auth/reset?token=%s",
+			api.Config.URL.API,
+		); err != nil {
 			return sdk.WrapError(err, "cannot send reset token email at %s", contact.Value)
 		}
 
@@ -422,6 +425,11 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &reqData); err != nil {
 			return err
 		}
+
+		if reqData["token"] == "" {
+			reqData["token"] = QueryString(r, "token")
+		}
+
 		if err := localDriver.CheckResetRequest(reqData); err != nil {
 			return err
 		}
@@ -488,8 +496,9 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
-			Token: jwt,
-			User:  usr,
+			Token:  jwt,
+			User:   usr,
+			APIURL: api.Config.URL.API,
 		}
 
 		return service.WriteJSON(w, resp, http.StatusOK)
