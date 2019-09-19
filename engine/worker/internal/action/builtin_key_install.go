@@ -7,11 +7,11 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/spf13/afero"
+
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-
-	"github.com/spf13/afero"
 )
 
 func RunInstallKey(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
