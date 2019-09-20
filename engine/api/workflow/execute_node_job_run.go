@@ -195,38 +195,22 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 		return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot load run by ID %d", nodeRun.WorkflowRunID)
 	}
 
-	runContext := nodeRunContext{}
+	var projectIntegrationModelID int64
+	var groups []sdk.GroupPermission
 
 	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
 	if node != nil && node.Context != nil {
-		if node.Context.PipelineID != 0 {
-			pip, has := wr.Workflow.Pipelines[node.Context.PipelineID]
-			if has {
-				runContext.Pipeline = pip
-			}
-		}
-		if node.Context.ApplicationID != 0 {
-			app, has := wr.Workflow.Applications[node.Context.ApplicationID]
-			if has {
-				runContext.Application = app
-			}
-		}
-		if node.Context.EnvironmentID != 0 {
-			env, has := wr.Workflow.Environments[node.Context.EnvironmentID]
-			if has {
-				runContext.Environment = env
-			}
-		}
 		if node.Context.ProjectIntegrationID != 0 {
 			pp, has := wr.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID]
 			if has {
-				runContext.ProjectIntegration = pp
+				projectIntegrationModelID = pp.Model.ID
 			}
 		}
+		groups = node.Groups
 	}
 
 	var errReport error
-	report, errReport = report.Merge(execute(ctx, db, store, proj, nodeRun, runContext))
+	report, errReport = report.Merge(execute(ctx, db, store, proj, nodeRun, projectIntegrationModelID, groups))
 
 	return report, errReport
 }

@@ -79,7 +79,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 	return report, nil
 }
 
-func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nr *sdk.WorkflowNodeRun, runContext nodeRunContext) (*ProcessorReport, error) {
+func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nr *sdk.WorkflowNodeRun, projectIntegrationModelID int64, groupPermissionOnNode []sdk.GroupPermission) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.execute",
 		observability.Tag(observability.TagWorkflowRun, nr.Number),
@@ -130,7 +130,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 				//Insert data in workflow_node_run_job
 				log.Debug("workflow.execute> stage %s call addJobsToQueue", stage.Name)
 				var err error
-				report, err = report.Merge(addJobsToQueue(ctx, db, stage, wr, nr, runContext))
+				report, err = report.Merge(addJobsToQueue(ctx, db, stage, wr, nr, projectIntegrationModelID, groupPermissionOnNode))
 				if err != nil {
 					return report, err
 				}
@@ -313,7 +313,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 
 			log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
 			var err error
-			report, err = report.Merge(execute(ctx, db, store, proj, waitingRun, runContext))
+			report, err = report.Merge(execute(ctx, db, store, proj, waitingRun, projectIntegrationModelID, groupPermissionOnNode))
 			if err != nil {
 				return nil, sdk.WrapError(err, "Unable to reprocess workflow")
 			}
@@ -324,7 +324,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	return report, nil
 }
 
-func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, runContext nodeRunContext) (*ProcessorReport, error) {
+func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, projectIntegrationModelID int64, groupPermissionOnNode []sdk.GroupPermission) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.addJobsToQueue")
 	defer end()
@@ -342,14 +342,14 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	}
 
 	_, next = observability.Span(ctx, "workflow.getIntegrationPluginBinaries")
-	integrationPluginBinaries, err := getIntegrationPluginBinaries(db, runContext)
+	integrationPluginBinaries, err := getIntegrationPluginBinaries(db, projectIntegrationModelID)
 	if err != nil {
 		return report, sdk.WrapError(err, "unable to get integration plugins requirement")
 	}
 	next()
 
 	_, next = observability.Span(ctx, "workflow.getJobExecutablesGroups")
-	groups, err := getJobExecutablesGroups(wr, runContext)
+	groups, err := getJobExecutablesGroups(wr, groupPermissionOnNode)
 	if err != nil {
 		return report, sdk.WrapError(err, "error getting job executables groups")
 	}
@@ -471,22 +471,22 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	return report, nil
 }
 
-func getIntegrationPluginBinaries(db gorp.SqlExecutor, runContext nodeRunContext) ([]sdk.GRPCPluginBinary, error) {
-	if runContext.ProjectIntegration.Model.ID > 0 {
-		plugin, err := plugin.LoadByIntegrationModelIDAndType(db, runContext.ProjectIntegration.Model.ID, sdk.GRPCPluginDeploymentIntegration)
+func getIntegrationPluginBinaries(db gorp.SqlExecutor, projectIntegrationModelID int64) ([]sdk.GRPCPluginBinary, error) {
+	if projectIntegrationModelID > 0 {
+		plugin, err := plugin.LoadByIntegrationModelIDAndType(db, projectIntegrationModelID, sdk.GRPCPluginDeploymentIntegration)
 		if err != nil {
-			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", runContext.ProjectIntegration.Model.ID, err)
+			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", projectIntegrationModelID, err)
 		}
 		return plugin.Binaries, nil
 	}
 	return nil, nil
 }
 
-func getJobExecutablesGroups(wr *sdk.WorkflowRun, runContext nodeRunContext) ([]sdk.Group, error) {
+func getJobExecutablesGroups(wr *sdk.WorkflowRun, groupPermissionOnNode []sdk.GroupPermission) ([]sdk.Group, error) {
 	var groups []sdk.Group
 
-	if len(runContext.NodeGroups) > 0 {
-		for _, gp := range runContext.NodeGroups {
+	if len(groupPermissionOnNode) > 0 {
+		for _, gp := range groupPermissionOnNode {
 			if gp.Permission >= permission.PermissionReadExecute {
 				groups = append(groups, gp.Group)
 			}
@@ -626,7 +626,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 	res := []sdk.Parameter{}
 	if len(res) == 0 {
 		var err error
-		res, err = GetBuildParameterFromNodeContext(proj, wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
+		res, err = getBuildParameterFromNodeContext(proj, wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
 		if err != nil {
 			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to get workflow node parameters: %v", err)
 		}

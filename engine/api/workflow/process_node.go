@@ -372,7 +372,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	//Execute the node run !
-	r1, err := execute(ctx, db, store, proj, run, runContext)
+	r1, err := execute(ctx, db, store, proj, run, runContext.ProjectIntegration.Model.ID, n.Groups)
 	if err != nil {
 		return nil, false, sdk.WrapError(err, "unable to execute workflow run")
 	}
