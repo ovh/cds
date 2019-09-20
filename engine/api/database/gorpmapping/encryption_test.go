@@ -15,8 +15,8 @@ type TestEncryptedData struct {
 	gorpmapping.SignedEntity
 	ID                   int64  `db:"id"`
 	Data                 string `db:"data"`
-	SensitiveData        string `db:"sensitive_data" gorpmapping:"encrypted"`
-	AnotherSensitiveData string `db:"another_sensitive_data" gorpmapping:"encrypted"`
+	SensitiveData        string `db:"sensitive_data" gorpmapping:"encrypted,Data"`
+	AnotherSensitiveData string `db:"another_sensitive_data" gorpmapping:"encrypted,ID,Data"`
 }
 
 func (e TestEncryptedData) Canonical() gorpmapping.CanonicalForms {

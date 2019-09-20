@@ -17,7 +17,7 @@ const (
 	KeyEcnryptionIdentifier = "db-crypt"
 )
 
-func Encrypt(src interface{}, dst *[]byte, extra ...[]byte) error {
+func Encrypt(src interface{}, dst *[]byte, extra []interface{}) error {
 	k, err := keyloader.LoadKey(KeyEcnryptionIdentifier)
 	if err != nil {
 		return sdk.WithStack(err)
@@ -28,7 +28,13 @@ func Encrypt(src interface{}, dst *[]byte, extra ...[]byte) error {
 		return sdk.WithStack(fmt.Errorf("unable to marshal content: %v", err))
 	}
 
-	btes, err := k.Encrypt(clearContent, extra...)
+	var extrabytes [][]byte
+	for _, e := range extra {
+		btes, _ := json.Marshal(e)
+		extrabytes = append(extrabytes, btes)
+	}
+
+	btes, err := k.Encrypt(clearContent, extrabytes...)
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("unable to encrypt content: %v", err))
 	}
@@ -38,7 +44,7 @@ func Encrypt(src interface{}, dst *[]byte, extra ...[]byte) error {
 	return nil
 }
 
-func Decrypt(src []byte, dest interface{}, extra ...[]byte) error {
+func Decrypt(src []byte, dest interface{}, extra []interface{}) error {
 	t := reflect.TypeOf(dest)
 	if t.Kind() != reflect.Ptr {
 		return fmt.Errorf("gorpmapping: cannot Decrypt into a non-pointer : %v", t)
@@ -49,7 +55,13 @@ func Decrypt(src []byte, dest interface{}, extra ...[]byte) error {
 		return sdk.WithStack(err)
 	}
 
-	clearContent, err := k.Decrypt(src, extra...)
+	var extrabytes [][]byte
+	for _, e := range extra {
+		btes, _ := json.Marshal(e)
+		extrabytes = append(extrabytes, btes)
+	}
+
+	clearContent, err := k.Decrypt(src, extrabytes...)
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("unable to decrypt content: %v", err))
 	}
@@ -77,15 +89,21 @@ func updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 
 	for _, f := range mapping.EncryptedFields {
 		var encryptedContent []byte
-		field := val.FieldByName(f).Interface()
-		if err := Encrypt(&field, &encryptedContent); err != nil {
+		field := val.FieldByName(f.Name).Interface()
+
+		var extras []interface{}
+		for _, extra := range f.Extras {
+			fieldV := val.FieldByName(extra)
+			if !fieldV.IsValid() {
+				return sdk.WithStack(fmt.Errorf("unable to find extra field %s", extra))
+			}
+			extras = append(extras, fieldV.Interface())
+		}
+		if err := Encrypt(&field, &encryptedContent, extras); err != nil {
 			return err
 		}
-		encryptedContents[f] = encryptedContent
-
-		dbTag := reflectFindFieldTagValue(i, f, "db")
-		column := strings.SplitN(dbTag, ",", 2)[0]
-		encryptedColumns[f] = column
+		encryptedContents[f.Name] = encryptedContent
+		encryptedColumns[f.Name] = f.Column
 	}
 
 	table, key, id, err := dbMappingPKey(i)
@@ -130,7 +148,7 @@ func resetEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 
 	for _, f := range mapping.EncryptedFields {
 		// Reset the field to the zero value
-		field := val.FieldByName(f)
+		field := val.FieldByName(f.Name)
 		zero := reflect.Zero(field.Type())
 		field.Set(zero)
 	}
@@ -167,6 +185,7 @@ func getEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	var fieldsValue = make(map[int]*reflect.Value, len(mapping.EncryptedFields))
 	var encryptedFieldsSlice = make([]interface{}, len(mapping.EncryptedFields))
 	var encryptedContents = make([]interface{}, len(mapping.EncryptedFields))
+	var extrasFieldsNames = make(map[int][]string, len(mapping.EncryptedFields))
 
 	val := reflect.ValueOf(i)
 	if reflect.ValueOf(i).Kind() == reflect.Ptr {
@@ -174,18 +193,19 @@ func getEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	}
 
 	for idx, f := range mapping.EncryptedFields {
-		dbTag := reflectFindFieldTagValue(i, f, "db")
+		dbTag := reflectFindFieldTagValue(i, f.Name, "db")
 		column := strings.SplitN(dbTag, ",", 2)[0]
 
 		encryptedColumnsSlice[idx] = column
 		var encryptedContent []byte
 		encryptedContents[idx] = &encryptedContent
 
-		field := val.FieldByName(f)
+		field := val.FieldByName(f.Name)
 		fieldsValue[idx] = &field
 		fi := field.Interface()
 
 		encryptedFieldsSlice[idx] = &fi
+		extrasFieldsNames[idx] = f.Extras
 	}
 
 	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s = $1", strings.Join(encryptedColumnsSlice, ","), table, key)
@@ -196,8 +216,14 @@ func getEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	// Loop over the loaded encrypted content
 	// Decrypt them and set the target fields with the result
 	for idx, encryptedContent := range encryptedContents {
+		extrasFieldNames := extrasFieldsNames[idx]
+		var extras []interface{}
+		for _, e := range extrasFieldNames {
+			extras = append(extras, val.FieldByName(e).Interface())
+		}
+
 		var encryptedContent = encryptedContent.(*[]byte)
-		if err := Decrypt(*encryptedContent, encryptedFieldsSlice[idx]); err != nil {
+		if err := Decrypt(*encryptedContent, encryptedFieldsSlice[idx], extras); err != nil {
 			return err
 		}
 		fieldsValue[idx].Set(reflect.ValueOf(*encryptedFieldsSlice[idx].(*interface{})))
@@ -241,7 +267,7 @@ func getEncryptedSliceData(db gorp.SqlExecutor, i interface{}) error {
 	// We prepare the list of all the fields we want to collect from the database
 	var encryptedColumnsSlice = make([]string, len(mapping.EncryptedFields))
 	for idx, f := range mapping.EncryptedFields {
-		dbTag := reflectFindFieldTagValue(ieval, f, "db")
+		dbTag := reflectFindFieldTagValue(ieval, f.Name, "db")
 		column := strings.SplitN(dbTag, ",", 2)[0]
 		encryptedColumnsSlice[idx] = column
 	}
@@ -275,6 +301,7 @@ func getEncryptedSliceData(db gorp.SqlExecutor, i interface{}) error {
 		var targetSliceFound bool
 		for idxTargetSlice := 0; idxTargetSlice < val.Len(); idxTargetSlice++ {
 			targetSlice := val.Index(idxTargetSlice)
+
 			// Find the right target against the primary key
 			primaryKeyReference := reflectFindValueByTag(targetSlice.Interface(), "db", key)
 			// Check the primary key known the from target slice and from the database
@@ -282,12 +309,17 @@ func getEncryptedSliceData(db gorp.SqlExecutor, i interface{}) error {
 				targetSliceFound = true
 				// Decrypt all the contents
 				for idx := range mapping.EncryptedFields {
-					targetField := targetSlice.FieldByName(mapping.EncryptedFields[idx])
+					// We gather the extras fields for each encrypted field
+					var extras []interface{}
+					for _, e := range mapping.EncryptedFields[idx].Extras {
+						extras = append(extras, targetSlice.FieldByName(e).Interface())
+					}
+					targetField := targetSlice.FieldByName(mapping.EncryptedFields[idx].Name)
 					encryptedContentPtr := scanner[idx+1]
 					encryptedContent := reflect.ValueOf(encryptedContentPtr).Elem().Interface().([]byte)
 					targetHolder := reflect.New(reflect.TypeOf(targetField.Interface())).Interface()
 					// Decrypt and store the result in the target slice element through power of reflection
-					if err := Decrypt(encryptedContent, targetHolder); err != nil {
+					if err := Decrypt(encryptedContent, targetHolder, extras); err != nil {
 						return sdk.WithStack(err)
 					}
 					targetField.Set(reflect.ValueOf(targetHolder).Elem())
