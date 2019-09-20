@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/symmecrypt/keyloader"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -18,11 +17,6 @@ const (
 )
 
 func Encrypt(src interface{}, dst *[]byte, extra []interface{}) error {
-	k, err := keyloader.LoadKey(KeyEcnryptionIdentifier)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-
 	clearContent, err := json.Marshal(src)
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("unable to marshal content: %v", err))
@@ -34,7 +28,7 @@ func Encrypt(src interface{}, dst *[]byte, extra []interface{}) error {
 		extrabytes = append(extrabytes, btes)
 	}
 
-	btes, err := k.Encrypt(clearContent, extrabytes...)
+	btes, err := encryptionKey.Encrypt(clearContent, extrabytes...)
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("unable to encrypt content: %v", err))
 	}
@@ -50,18 +44,13 @@ func Decrypt(src []byte, dest interface{}, extra []interface{}) error {
 		return fmt.Errorf("gorpmapping: cannot Decrypt into a non-pointer : %v", t)
 	}
 
-	k, err := keyloader.LoadKey(KeyEcnryptionIdentifier)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-
 	var extrabytes [][]byte
 	for _, e := range extra {
 		btes, _ := json.Marshal(e)
 		extrabytes = append(extrabytes, btes)
 	}
 
-	clearContent, err := k.Decrypt(src, extrabytes...)
+	clearContent, err := encryptionKey.Decrypt(src, extrabytes...)
 	if err != nil {
 		return sdk.WithStack(fmt.Errorf("unable to decrypt content: %v", err))
 	}

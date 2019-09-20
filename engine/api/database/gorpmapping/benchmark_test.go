@@ -9,13 +9,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-/** Benchmark resuls on 09/03/19
+/**
+
+Benchmark resuls on 09/03/19
 
 BenchmarkGetWithoutDecryption: 540722 ns/op 6403 B/op 191 allocs/op
 BenchmarkGetWithDecryption: 1142721 ns/op 88750 B/op 802 allocs/op
 BenchmarkInsertWithoutSignature: 1579614 ns/op 84759 B/op 726 allocs/op
 BenchmarkInsertWithSignature: 2911001 ns/op 127447 B/op 1049 allocs/op
 BenchmarkCheckSignature: 81943 ns/op 41161 B/op 290 allocs/op
+
+Benchmark resuls on 20/03/19 - (with more data encrypted per op due to extras)
+
+BenchmarkGetWithoutDecryption: 719757 ns/op 6353 B/op 191 allocs/op
+BenchmarkGetWithDecryption: 960652 ns/op 9287 B/op 280 allocs/op
+BenchmarkInsertWithoutSignature: 2002177 ns/op 5342 B/op 200 allocs/op
+BenchmarkInsertWithSignature: 2452006 ns/op 8253 B/op 254 allocs/op
+BenchmarkCheckSignature: 5283 ns/op 1344 B/op 21 allocs/op
+
 */
 
 func BenchmarkGetWithoutDecryption(b *testing.B) {
