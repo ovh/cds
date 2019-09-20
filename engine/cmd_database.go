@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/mholt/archiver"
 	"github.com/olekukonko/tablewriter"
 	migrate "github.com/rubenv/sql-migrate"
@@ -282,7 +283,7 @@ func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) err
 		sdk.Exit("Error: %v\n", err)
 	}
 
-	migrations, err := dbmigrate.Do(connFactory.DB, sqlMigrateDir, dir, dryrun, limit)
+	migrations, err := dbmigrate.Do(connFactory.DB, gorp.PostgresDialect{}, sqlMigrateDir, dir, dryrun, limit)
 	if err != nil {
 		sdk.Exit("Error: %v\n", err)
 	}

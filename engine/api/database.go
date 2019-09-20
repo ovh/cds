@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/database/dbmigrate"
@@ -33,7 +34,7 @@ func (api *API) postDatabaseMigrationUnlockedHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Id is mandatory. Check id from table gorp_migrations_lock")
 		}
 
-		return dbmigrate.UnlockMigrate(api.mustDB().Db, id)
+		return dbmigrate.UnlockMigrate(api.mustDB().Db, id, gorp.PostgresDialect{})
 	}
 }
 
