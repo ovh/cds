@@ -313,7 +313,7 @@ func TestManualRun3(t *testing.T) {
 	for _, g := range []sdk.Group{g0, g1} {
 		oldg, _ := group.LoadGroup(db, g.Name)
 		if oldg != nil {
-			group.DeleteGroupAndDependencies(db, oldg)
+			test.NoError(t, group.DeleteGroupAndDependencies(db, oldg))
 		}
 	}
 
@@ -408,8 +408,8 @@ func TestManualRun3(t *testing.T) {
 	s2.Enabled = true
 	s.PipelineID = pip.ID
 	s2.PipelineID = pip.ID
-	pipeline.InsertStage(db, s)
-	pipeline.InsertStage(db, s2)
+	test.NoError(t, pipeline.InsertStage(db, s))
+	test.NoError(t, pipeline.InsertStage(db, s2))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -425,8 +425,8 @@ func TestManualRun3(t *testing.T) {
 			Name:    "job11",
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
-	pipeline.InsertJob(db, j2, s2.ID, &pip)
+	test.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip))
+	test.NoError(t, pipeline.InsertJob(db, j2, s2.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 	s2.Jobs = append(s.Jobs, *j2)
 
