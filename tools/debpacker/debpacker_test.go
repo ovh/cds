@@ -65,7 +65,7 @@ func TestPrepare(t *testing.T) {
 
 	if !(assert.Equal(t, 8, len(mw.directories)) &&
 		assert.Equal(t, 3, len(mw.copies)) &&
-		assert.Equal(t, 3, len(mw.files))) {
+		assert.Equal(t, 6, len(mw.files))) {
 		t.FailNow()
 	}
 
@@ -84,11 +84,11 @@ Depends: one, two
 
 	// copyBinaryFile
 	assert.Equal(t, directory{"target/test/usr/bin", os.FileMode(0755)}, mw.directories[1])
-	assert.Equal(t, copy{"target/test/usr/bin", os.FileMode(0644), []string{"/bin/sh"}}, mw.copies[0])
+	assert.Equal(t, copy{targetPath: "target/test", path: "usr/bin", perm: os.FileMode(0644), sources: []string{"/bin/sh"}}, mw.copies[0])
 
 	// copyConfigurationFiles
 	assert.Equal(t, directory{"target/test/etc/test", os.FileMode(0755)}, mw.directories[2])
-	assert.Equal(t, copy{"target/test/etc/test", os.FileMode(0644), []string{"./one.conf", "two.conf"}}, mw.copies[1])
+	assert.Equal(t, copy{targetPath: "target/test", path: "etc/test", perm: os.FileMode(0644), sources: []string{"./one.conf", "two.conf"}}, mw.copies[1])
 
 	// mkDirs
 	assert.Equal(t, directory{"target/test/var/lib/test", os.FileMode(0755)}, mw.directories[3])
@@ -97,7 +97,7 @@ Depends: one, two
 
 	// copyOtherFiles
 	assert.Equal(t, directory{"target/test/var/lib/test", os.FileMode(0755)}, mw.directories[6])
-	assert.Equal(t, copy{"target/test/var/lib/test", os.FileMode(0644), []string{"./one/*.conf", "two.conf:conf/files"}}, mw.copies[2])
+	assert.Equal(t, copy{targetPath: "target/test", path: "var/lib/test", perm: os.FileMode(0644), sources: []string{"./one/*.conf", "two.conf:conf/files"}}, mw.copies[2])
 
 	// writeSystemdServiceFile
 	assert.Equal(t, directory{"target/test/lib/systemd/system", os.FileMode(0755)}, mw.directories[7])
@@ -128,11 +128,11 @@ mkdir -p /var/lib/test
 chown -R test:test /var/lib/test
 chmod 770 /var/lib/test
 chmod +x /usr/bin/sh
-
 set +e
 echo "Service installed"
+systemctl daemon-reload
 systemctl enable test
-systemctl status test
+systemctl --no-pager status test
 echo "run systemctl start test to start"
-`, os.FileMode(0755)}, mw.files[2])
+`, os.FileMode(0755)}, mw.files[5])
 }
