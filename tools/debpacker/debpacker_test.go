@@ -119,6 +119,27 @@ Environment="env2=val2"
 WantedBy=multi-user.target
 `, os.FileMode(0644)}, mw.files[1])
 
+	assert.Equal(t, file{"target/test/DEBIAN/prerm", `#!/bin/bash
+set +e
+systemctl stop test
+systemctl disable test
+systemctl daemon-reload
+`, os.FileMode(0755)}, mw.files[2])
+
+	assert.Equal(t, file{"target/test/DEBIAN/postrm", `#!/bin/bash
+set +e
+systemctl daemon-reload
+`, os.FileMode(0755)}, mw.files[3])
+
+	assert.Equal(t, file{"target/test/DEBIAN/preinst", `#!/bin/bash
+set +e
+if  [ -f "/lib/systemd/system/test.service" ];then
+	systemctl stop test
+	systemctl disable test
+fi
+systemctl daemon-reload
+`, os.FileMode(0755)}, mw.files[4])
+
 	// writePostinstFile
 	assert.Equal(t, file{"target/test/DEBIAN/postinst", `#!/bin/bash
 set -e
