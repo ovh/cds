@@ -11,8 +11,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getDeprecatedUsers(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadDeprecatedUserOptionFunc) ([]sdk.User, error) {
-	dus := []deprecatedUser{}
+func GetDeprecatedUsers(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadDeprecatedUserOptionFunc) ([]sdk.User, error) {
+	dus := []DeprecatedUser{}
 
 	if err := gorpmapping.GetAll(ctx, db, q, &dus); err != nil {
 		return nil, sdk.WrapError(err, "cannot get deprecated users")
@@ -43,7 +43,7 @@ func getDeprecatedUsers(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.
 }
 
 func getDeprecatedUser(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadDeprecatedUserOptionFunc) (*sdk.User, error) {
-	var du deprecatedUser
+	var du DeprecatedUser
 
 	found, err := gorpmapping.Get(ctx, db, q, &du)
 	if err != nil {
@@ -74,7 +74,7 @@ func LoadDeprecatedUsersWithoutAuthByIDs(ctx context.Context, db gorp.SqlExecuto
     FROM "user"
     WHERE id = ANY(string_to_array($1, ',')::int[])
   `).Args(gorpmapping.IDsToQueryString(ids))
-	return getDeprecatedUsers(ctx, db, query, opts...)
+	return GetDeprecatedUsers(ctx, db, query, opts...)
 }
 
 // LoadDeprecatedUserWithoutAuthByID returns deprecated user from database for given id.

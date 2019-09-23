@@ -84,7 +84,7 @@ func (m MigrationUsers) ToAuthentifiedUserIDs() []string {
 	return ids
 }
 
-type deprecatedUser struct {
+type DeprecatedUser struct {
 	ID       int64    `db:"id"`
 	Username string   `db:"username"`
 	Admin    bool     `db:"admin"`
@@ -96,5 +96,5 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(authentifiedUser{}, "authentified_user", false, "id"))
 	gorpmapping.Register(gorpmapping.New(userContact{}, "user_contact", true, "id"))
 	gorpmapping.Register(gorpmapping.New(migrationUser{}, "authentified_user_migration", true, "id"))
-	gorpmapping.Register(gorpmapping.New(deprecatedUser{}, "user", true, "id"))
+	gorpmapping.Register(gorpmapping.New(DeprecatedUser{}, "user", true, "id"))
 }
