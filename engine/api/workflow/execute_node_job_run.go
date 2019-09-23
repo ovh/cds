@@ -557,18 +557,7 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log, max
 		return sdk.WrapError(insertLog(db, logs), "cannot insert log")
 	}
 
-	existingLogs, err := LoadStepLogs(db, logs.PipelineBuildJobID, logs.StepOrder)
-	if err != nil {
-		return sdk.WrapError(err, "cannot load existing logs")
-	}
-
-	logbuf := bytes.NewBufferString(existingLogs.Val)
-	logbuf.WriteString(logs.Val)
-	existingLogs.Val = logbuf.String()
-	existingLogs.LastModified = logs.LastModified
-	existingLogs.Done = logs.Done
-
-	return sdk.WrapError(updateLog(db, existingLogs), "cannot update log")
+	return sdk.WrapError(updateLog(db, logs), "cannot update log")
 }
 
 //AddServiceLog adds a service log

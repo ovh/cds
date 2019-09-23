@@ -142,14 +142,12 @@ func updateLog(db gorp.SqlExecutor, logs *sdk.Log) error {
 
 	query := `
 		UPDATE workflow_node_run_job_logs set
-			workflow_node_run_job_id = $1,
-			workflow_node_run_id = $2,
-			start = $3,
-			last_modified = $4,
-			done = $5,
-			step_order = $6,
-			value = $7
-		where id = $8`
+			workflow_node_run_id = $3,
+			start = $4,
+			last_modified = $5,
+			done = $6,
+			value = value || $7
+		WHERE workflow_node_run_job_id = $1 AND step_order = $2`
 
 	s, errs := ptypes.Timestamp(logs.Start)
 	if errs != nil {
@@ -164,8 +162,6 @@ func updateLog(db gorp.SqlExecutor, logs *sdk.Log) error {
 		return errd
 	}
 
-	if _, err := db.Exec(query, logs.PipelineBuildJobID, logs.PipelineBuildID, s, m, d, logs.StepOrder, logs.Val, logs.Id); err != nil {
-		return err
-	}
-	return nil
+	_, err := db.Exec(query, logs.PipelineBuildJobID, logs.StepOrder, logs.PipelineBuildID, s, m, d, logs.Val)
+	return sdk.WrapError(err, "unable to update log")
 }
