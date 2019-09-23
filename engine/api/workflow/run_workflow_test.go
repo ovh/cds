@@ -10,8 +10,10 @@ import (
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -301,14 +303,73 @@ func TestManualRun3(t *testing.T) {
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
 	ctx := context.Background()
 
 	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
+
+	g0 := sdk.Group{Name: "g0"}
+	g1 := sdk.Group{Name: "g1"}
+	for _, g := range []sdk.Group{g0, g1} {
+		oldg, _ := group.LoadGroup(db, g.Name)
+		if oldg != nil {
+			test.NoError(t, group.DeleteGroupAndDependencies(db, oldg))
+		}
+	}
+
+	test.NoError(t, group.InsertGroup(db, &g0))
+	test.NoError(t, group.InsertGroup(db, &g1))
+
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g0.ID, permission.PermissionReadWriteExecute))
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g1.ID, permission.PermissionReadWriteExecute))
 
 	g, err := group.LoadGroup(db, "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
+
+	modelIntegration := sdk.IntegrationModel{
+		Name:       sdk.RandomString(10),
+		Deployment: true,
+	}
+	test.NoError(t, integration.InsertModel(db, &modelIntegration))
+	t.Logf("### Integration model %s created with id: %d\n", modelIntegration.Name, modelIntegration.ID)
+
+	projInt := sdk.ProjectIntegration{
+		Config: sdk.IntegrationConfig{
+			"test": sdk.IntegrationConfigValue{
+				Description: "here is a test",
+				Type:        sdk.IntegrationConfigTypeString,
+				Value:       "test",
+			},
+		},
+		Name:               sdk.RandomString(10),
+		ProjectID:          proj.ID,
+		Model:              modelIntegration,
+		IntegrationModelID: modelIntegration.ID,
+	}
+	test.NoError(t, integration.InsertIntegration(db, &projInt))
+	t.Logf("### Integration %s created with id: %d\n", projInt.Name, projInt.ID)
+
+	p := sdk.GRPCPlugin{
+		Author:             "unitTest",
+		Description:        "desc",
+		Name:               sdk.RandomString(10),
+		Type:               sdk.GRPCPluginDeploymentIntegration,
+		IntegrationModelID: &modelIntegration.ID,
+		Integration:        modelIntegration.Name,
+		Binaries: []sdk.GRPCPluginBinary{
+			{
+				OS:   "linux",
+				Arch: "adm64",
+				Name: "blabla",
+			},
+		},
+	}
+
+	test.NoError(t, plugin.Insert(db, &p))
+	assert.NotEqual(t, 0, p.ID)
+
 	model, _ := workermodel.LoadByNameAndGroupID(db, "TestManualRun", g.ID)
 	if model == nil {
 		model = &sdk.Model{
@@ -340,22 +401,37 @@ func TestManualRun3(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 
-	s := sdk.NewStage("stage 1")
+	// one pipeline with two stages
+	s := sdk.NewStage("stage1-pipeline1")
+	s2 := sdk.NewStage("stage2-pipeline1")
 	s.Enabled = true
+	s2.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(db, s)
+	s2.PipelineID = pip.ID
+	test.NoError(t, pipeline.InsertStage(db, s))
+	test.NoError(t, pipeline.InsertStage(db, s2))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled:      true,
-			Name:         "job20",
+			Name:         "job10",
 			Requirements: []sdk.Requirement{{Name: "TestManualRun", Value: "TestManualRun", Type: sdk.ModelRequirement}},
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
+	j2 := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+			Name:    "job11",
+		},
+	}
+	test.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip))
+	test.NoError(t, pipeline.InsertJob(db, j2, s2.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
+	s2.Jobs = append(s.Jobs, *j2)
 
 	pip.Stages = append(pip.Stages, *s)
+	pip.Stages = append(pip.Stages, *s2)
 
 	//Second pipeline
 	pip2 := sdk.Pipeline{
@@ -364,7 +440,7 @@ func TestManualRun3(t *testing.T) {
 		Name:       "pip2",
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
-	s = sdk.NewStage("stage 1")
+	s = sdk.NewStage("stage1-pipeline2")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
 	pipeline.InsertStage(db, s)
@@ -389,7 +465,14 @@ func TestManualRun3(t *testing.T) {
 				Ref:  "node1",
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
-					PipelineID: pip.ID,
+					PipelineID:           pip.ID,
+					ProjectIntegrationID: projInt.ID,
+				},
+				Groups: []sdk.GroupPermission{
+					{
+						Group:      g0,
+						Permission: 777,
+					},
 				},
 				Triggers: []sdk.NodeTrigger{
 					{
@@ -400,6 +483,12 @@ func TestManualRun3(t *testing.T) {
 							Context: &sdk.NodeContext{
 								PipelineID: pip2.ID,
 							},
+							Groups: []sdk.GroupPermission{
+								{
+									Group:      g1,
+									Permission: 777,
+								},
+							},
 						},
 					},
 				},
@@ -407,7 +496,7 @@ func TestManualRun3(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys)
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys, project.LoadOptions.WithIntegrations)
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -440,15 +529,25 @@ func TestManualRun3(t *testing.T) {
 	test.NoError(t, err)
 	assert.Equal(t, 0, int(countAlreadyInQueueNone.Count))
 
+queueRun:
 	filter3 := workflow.NewQueueFilter()
 	filter3.Rights = permission.PermissionReadExecute
 
-	jobs, err := workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter3, append(u.Groups, proj.ProjectGroups[0].Group))
+	var jobs []sdk.WorkflowNodeJobRun
+	// this group must return nothing (execGroups)
+	jobs, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group))
+	test.NoError(t, err)
+	assert.Equal(t, 0, len(jobs))
+
+	// this group must return first job (execGroups)
+	jobs, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter3, append(u.Groups, g0))
 	test.NoError(t, err)
 
 	for i := range jobs {
 		j := &jobs[i]
 		tx, _ := db.Begin()
+
+		t.Logf("##### work on job : %+v\n", j.Job.Action.Name)
 
 		//BookNodeJobRun
 		_, err = workflow.BookNodeJobRun(cache, j.ID, &sdk.Service{
@@ -537,11 +636,35 @@ func TestManualRun3(t *testing.T) {
 		assert.NotEmpty(t, logs)
 
 		tx.Commit()
+
+		// check if there is another job to run
+		if j.Job.Action.Name == "job10" {
+			goto queueRun
+		} else if j.Job.Action.Name == "job11" {
+			assert.Equal(t, 2, len(j.ExecGroups))
+			// this pipeline is attached to an deployment integration
+			// so, we check IntegrationPluginBinaries
+			assert.Equal(t, 1, len(j.IntegrationPluginBinaries))
+
+			// Check ExecGroups
+			var g0Found bool
+			for _, eg := range j.ExecGroups {
+				if eg.Name != "shared.infra" && eg.Name != "g0" {
+					t.Fatalf("this group %s should not be in execGroups", eg.Name)
+				}
+				if eg.Name == "g0" {
+					g0Found = true
+				}
+			}
+			if !g0Found {
+				t.Fatal("g0 group not found in execGroups")
+			}
+		}
 	}
 
 	filter = workflow.NewQueueFilter()
 	filter.Rights = permission.PermissionReadExecute
-	jobs, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group))
+	jobs, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(jobs))
 
@@ -559,7 +682,7 @@ func TestManualRun3(t *testing.T) {
 		filter.Rights = permission.PermissionReadExecute
 		filter.Since = &t0
 		filter.Until = &t1
-		jobsSince, err := workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group))
+		jobsSince, err := workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
 		test.NoError(t, err)
 		for _, job := range jobsSince {
 			if jobs[0].ID == job.ID {
@@ -570,7 +693,7 @@ func TestManualRun3(t *testing.T) {
 		filter = workflow.NewQueueFilter()
 		filter.Rights = permission.PermissionReadExecute
 		filter.Since = &t0
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group))
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
 		test.NoError(t, err)
 		var found bool
 		for _, job := range jobsSince {
@@ -588,7 +711,7 @@ func TestManualRun3(t *testing.T) {
 		filter.Rights = permission.PermissionReadExecute
 		filter.Since = &t0
 		filter.Until = &t1
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group))
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
 		test.NoError(t, err)
 		for _, job := range jobsSince {
 			if jobs[0].ID == job.ID {
@@ -603,7 +726,7 @@ func TestManualRun3(t *testing.T) {
 		filter = workflow.NewQueueFilter()
 		filter.Rights = permission.PermissionReadExecute
 		filter.RatioService = &cent
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group))
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
 		test.NoError(t, err)
 		for _, job := range jobsSince {
 			if !job.ContainsService {
@@ -618,7 +741,7 @@ func TestManualRun3(t *testing.T) {
 		filter = workflow.NewQueueFilter()
 		filter.Rights = permission.PermissionReadExecute
 		filter.RatioService = &zero
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group))
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
 		test.NoError(t, err)
 		for _, job := range jobsSince {
 			if job.ContainsService {
@@ -632,7 +755,7 @@ func TestManualRun3(t *testing.T) {
 		filter = workflow.NewQueueFilter()
 		filter.Rights = permission.PermissionReadExecute
 		filter.ModelType = []string{sdk.Openstack}
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group))
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
 		test.NoError(t, err)
 		// we don't want the job with the worker model "TestManualRun"
 		for _, job := range jobsSince {

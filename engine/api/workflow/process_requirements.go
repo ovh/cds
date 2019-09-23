@@ -50,6 +50,13 @@ func processNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Work
 			model = value
 		}
 
+		if v.Type == sdk.NetworkAccessRequirement {
+			if !strings.Contains(value, ":") {
+				errm.Append(sdk.ErrInvalidJobRequirementNetworkAccess)
+				break
+			}
+		}
+
 		sdk.AddRequirement(&requirements, v.ID, name, v.Type, value)
 	}
 

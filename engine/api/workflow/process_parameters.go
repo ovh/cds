@@ -36,8 +36,8 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 	return params, errm
 }
 
-// GetNodeBuildParameters returns the parameters compute from  node context (project, application,  pipeline, pyaload)
-func GetBuildParameterFromNodeContext(proj *sdk.Project, w *sdk.Workflow, runContext nodeRunContext, pipelineParameters []sdk.Parameter, payload interface{}, hookEvent *sdk.WorkflowNodeRunHookEvent) ([]sdk.Parameter, error) {
+// getBuildParameterFromNodeContext returns the parameters compute from  node context (project, application,  pipeline, pyaload)
+func getBuildParameterFromNodeContext(proj *sdk.Project, w *sdk.Workflow, runContext nodeRunContext, pipelineParameters []sdk.Parameter, payload interface{}, hookEvent *sdk.WorkflowNodeRunHookEvent) ([]sdk.Parameter, error) {
 	tmpProj := sdk.ParametersFromProjectVariables(*proj)
 	vars := make(map[string]string, len(tmpProj))
 	for k, v := range tmpProj {
@@ -209,7 +209,7 @@ func getNodeRunBuildParameters(ctx context.Context, proj *sdk.Project, wr *sdk.W
 	defer end()
 
 	// GET PARAMETER FROM NODE CONTEXT
-	params, errparam := GetBuildParameterFromNodeContext(proj, &wr.Workflow, runContext, run.PipelineParameters, run.Payload, run.HookEvent)
+	params, errparam := getBuildParameterFromNodeContext(proj, &wr.Workflow, runContext, run.PipelineParameters, run.Payload, run.HookEvent)
 	if errparam != nil {
 		return nil, sdk.WrapError(errparam, "unable to compute node build parameters")
 	}
