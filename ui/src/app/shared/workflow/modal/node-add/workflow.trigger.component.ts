@@ -80,15 +80,6 @@ export class WorkflowTriggerComponent {
         c.operator = 'eq';
         this.destNode.context.conditions.plain.push(c);
         if (this.editMode) {
-            switch (this.destNode.type) {
-                case 'pipeline':
-                    this.destNode.name =
-                        this.project.pipeline_names.find(p => p.id === this.destNode.context.pipeline_id).name;
-                    break;
-                case 'outgoinghook':
-                    this.destNode.name = 'Outgoing';
-                    break;
-            }
             this.destNode.ref = new Date().getTime().toString();
         }
         let clonedWorkflow = cloneDeep(this.workflow);

@@ -68,6 +68,10 @@ export class WorkflowWNodeJoinComponent {
             projectKey: this.project.key,
             workflowName: w.name,
             changes: w
-        })).subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
+        })).subscribe(() => {
+            if (!this.editMode) {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            }
+        });
     }
 }
