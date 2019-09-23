@@ -349,7 +349,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	next()
 
 	_, next = observability.Span(ctx, "workflow.getJobExecutablesGroups")
-	groups, err := getJobExecutablesGroups(wr, nr)
+	groups, err := getExecutablesGroups(wr, nr)
 	if err != nil {
 		return report, sdk.WrapError(err, "error getting job executables groups")
 	}
@@ -493,7 +493,7 @@ func getIntegrationPluginBinaries(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *
 	return nil, nil
 }
 
-func getJobExecutablesGroups(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) ([]sdk.Group, error) {
+func getExecutablesGroups(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) ([]sdk.Group, error) {
 	var groups []sdk.Group
 
 	node := wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
