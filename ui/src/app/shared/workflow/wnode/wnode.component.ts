@@ -264,7 +264,9 @@ export class WorkflowWNodeComponent implements OnInit {
 
         this._store.dispatch(action).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (!this.editMode) {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
                 if (modal) {
                     modal.approve(null);
                 }
@@ -323,7 +325,9 @@ export class WorkflowWNodeComponent implements OnInit {
             changes: w
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (!this.editMode) {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
                 if (modal) {
                     modal.approve(null);
                 }
