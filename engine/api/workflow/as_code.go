@@ -5,21 +5,18 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/ovh/cds/engine/api/operation"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
-
-var CacheOperationKey = cache.Key("repositories", "operation", "push")
 
 // UpdateWorkflowAsCode update an as code workflow
 func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj *sdk.Project, wf sdk.Workflow, branch string, message string, u *sdk.AuthentifiedUser) (*sdk.Operation, error) {
@@ -40,71 +37,12 @@ func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExe
 
 	// get application
 	app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
-	var vcsStrategy = app.RepositoryStrategy
 
-	if vcsStrategy.SSHKey != "" {
-		key := proj.GetSSHKey(vcsStrategy.SSHKey)
-		if key == nil {
-			return nil, sdk.WithStack(fmt.Errorf("unable to find key %s on project %s", vcsStrategy.SSHKey, proj.Key))
-		}
-		vcsStrategy.SSHKeyContent = key.Private
-	} else {
-		if err := application.DecryptVCSStrategyPassword(&app); err != nil {
-			return nil, sdk.WrapError(err, "unable to decrypt vcs strategy")
-		}
-		vcsStrategy = app.RepositoryStrategy
+	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
+		return nil, sdk.WithStack(sdk.ErrApplicationNotFound)
 	}
 
-	// Create VCS Operation
-	ope := sdk.Operation{
-		VCSServer:          app.VCSServer,
-		RepoFullName:       app.RepositoryFullname,
-		URL:                "",
-		RepositoryStrategy: vcsStrategy,
-		Setup: sdk.OperationSetup{
-			Push: sdk.OperationPush{
-				FromBranch: branch,
-				Message:    message,
-				Update:     true,
-			},
-		},
-		User: sdk.User{
-			Username: u.Username,
-			Email:    u.GetEmail(),
-		},
-	}
-
-	client, errclient := createVCSClientFromRootNode(ctx, db, store, proj, &wf)
-	if errclient != nil {
-		return nil, errclient
-	}
-
-	repo, errR := client.RepoByFullname(ctx, app.RepositoryFullname)
-	if errR != nil {
-		return nil, sdk.WrapError(errR, "cannot get repo %s", app.RepositoryFullname)
-	}
-
-	if app.RepositoryStrategy.ConnectionType == "ssh" {
-		ope.URL = repo.SSHCloneURL
-	} else {
-		ope.URL = repo.HTTPCloneURL
-	}
-
-	buf := new(bytes.Buffer)
-	if err := wp.Tar(ctx, buf); err != nil {
-		return nil, sdk.WrapError(err, "cannot tar pulled workflow")
-	}
-
-	multipartData := &services.MultiPartData{
-		Reader:      buf,
-		ContentType: "application/tar",
-	}
-	if err := PostRepositoryOperation(ctx, db, *proj, &ope, multipartData); err != nil {
-		return nil, sdk.WrapError(err, "unable to post repository operation")
-	}
-	ope.RepositoryStrategy.SSHKeyContent = ""
-	store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
-	return &ope, nil
+	return operation.PushOperation(ctx, db, store, proj, &app, wp, branch, message, u)
 }
 
 // MigrateWorkflowAsCode does a workflow pull and start an operation to push cds files into the git repository
@@ -119,89 +57,20 @@ func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj 
 		return nil, sdk.WithStack(sdk.ErrRepoNotFound)
 	}
 
-	client, errclient := createVCSClientFromRootNode(ctx, db, store, proj, wf)
-	if errclient != nil {
-		return nil, errclient
-	}
-
-	repo, errR := client.RepoByFullname(ctx, app.RepositoryFullname)
-	if errR != nil {
-		return nil, sdk.WrapError(errR, "cannot get repo %s", app.RepositoryFullname)
-	}
-
 	// Export workflow
 	pull, err := Pull(ctx, db, store, proj, wf.Name, exportentities.FormatYAML, encryptFunc, exportentities.WorkflowSkipIfOnlyOneRepoWebhook)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot pull workflow")
 	}
 
-	buf := new(bytes.Buffer)
-	if err := pull.Tar(ctx, buf); err != nil {
-		return nil, sdk.WrapError(err, "cannot tar pulled workflow")
-	}
-
-	var vcsStrategy = app.RepositoryStrategy
-
-	if vcsStrategy.SSHKey != "" {
-		key := proj.GetSSHKey(vcsStrategy.SSHKey)
-		if key == nil {
-			return nil, fmt.Errorf("unable to find key %s on project %s", vcsStrategy.SSHKey, proj.Key)
-		}
-		vcsStrategy.SSHKeyContent = key.Private
-	} else {
-		if err := application.DecryptVCSStrategyPassword(&app); err != nil {
-			return nil, sdk.WrapError(err, "unable to decrypt vcs strategy")
-		}
-		vcsStrategy = app.RepositoryStrategy
-	}
-
-	// Create VCS Operation
-	ope := sdk.Operation{
-		VCSServer:          app.VCSServer,
-		RepoFullName:       app.RepositoryFullname,
-		URL:                "",
-		RepositoryStrategy: vcsStrategy,
-		Setup: sdk.OperationSetup{
-			Push: sdk.OperationPush{
-				FromBranch: fmt.Sprintf("cdsAsCode-%d", time.Now().Unix()),
-				Message:    "",
-			},
-		},
-		User: sdk.User{
-			Username: u.GetUsername(),
-			Email:    u.GetEmail(),
-		},
-	}
-
-	if app.RepositoryStrategy.ConnectionType == "ssh" {
-		ope.URL = repo.SSHCloneURL
-	} else {
-		ope.URL = repo.HTTPCloneURL
-	}
-
+	var message string
 	if wf.FromRepository == "" {
-		ope.Setup.Push.Message = fmt.Sprintf("feat: Enable workflow as code [@%s]", u.GetUsername())
+		message = fmt.Sprintf("feat: Enable workflow as code [@%s]", u.GetUsername())
 	} else {
-		ope.Setup.Push.Message = fmt.Sprintf("chore: Update workflow [@%s]", u.GetUsername())
+		message = fmt.Sprintf("chore: Update workflow [@%s]", u.GetUsername())
 	}
 
-	multipartData := &services.MultiPartData{
-		Reader:      buf,
-		ContentType: "application/tar",
-	}
-	if err := PostRepositoryOperation(ctx, db, *proj, &ope, multipartData); err != nil {
-		return nil, sdk.WrapError(err, "unable to post repository operation")
-	}
-
-	ope.RepositoryStrategy.SSHKeyContent = ""
-	k := cache.Key(CacheOperationKey, ope.UUID)
-	if err := store.SetWithTTL(k, ope, 300); err != nil {
-		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
-	}
-
-	log.Debug("workflow.UpdateAsCode> ope: %+v", ope)
-
-	return &ope, nil
+	return operation.PushOperation(ctx, db, store, proj, &app, pull, fmt.Sprintf("cdsAsCode-%d", time.Now().Unix()), message, u)
 }
 
 // CheckPullRequestStatus checks the status of the pull request
@@ -272,11 +141,10 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 	counter := 0
 	defer func() {
 		ope.RepositoryStrategy.SSHKeyContent = ""
-		k := cache.Key(CacheOperationKey, ope.UUID)
+		k := cache.Key(operation.CacheOperationKey, ope.UUID)
 		if err := store.SetWithTTL(k, ope, 300); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
-
 	}()
 	for {
 		counter++

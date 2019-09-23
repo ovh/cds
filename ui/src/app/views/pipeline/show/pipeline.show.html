@@ -55,6 +55,7 @@
                     *ngIf="project.permissions.writable">
                     <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
                 </a>
+                <button class="ui green button" *ngIf="editMode" [disabled]="!pipeline.editModeChanged" (click)="saveEditMode()">{{'btn_save' | translate }}</button>
             </sm-menu>
         </div>
 
@@ -63,7 +64,7 @@
                 <div class="viewContent" [ngSwitch]="selectedTab">
                     <div *ngSwitchCase="'pipeline'">
                         <app-pipeline-workflow [project]="project" [currentPipeline]="pipeline"
-                            [queryParams]="queryParams"></app-pipeline-workflow>
+                            [queryParams]="queryParams" [editMode]="editMode"></app-pipeline-workflow>
                     </div>
                     <div *ngSwitchCase="'parameters'">
                         <h3>{{ 'pipeline_parameters_list_title' | translate }}</h3>
@@ -102,3 +103,10 @@
 <ng-template #loadPipeline>
     <div class="ui text active loader">Loading pipeline...</div>
 </ng-template>
+<ng-container *ngIf="appAsCode">
+    <app-update-ascode
+            [project]="project"
+            [appName]="appAsCode.name"
+            [name]="pipeline.name"
+            #updateEditMode></app-update-ascode>
+</ng-container>
