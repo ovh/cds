@@ -1091,10 +1091,14 @@ export class WorkflowState {
     @Action(actionWorkflow.CancelWorkflowEditMode)
     cancelWorkflowEditMode(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.CancelWorkflowEditMode) {
         const state = ctx.getState();
+        let editMode = false;
+        if (state.workflow.from_repository) {
+            editMode = true;
+        }
         ctx.setState({
             ...state,
             editModeSaveButton: false,
-            editMode: false,
+            editMode: editMode,
             editWorkflow: cloneDeep(state.workflow)
         });
     }
