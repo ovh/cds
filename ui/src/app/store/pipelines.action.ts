@@ -71,7 +71,7 @@ export class AddPipelineStage {
 
 export class MovePipelineStage {
     static readonly type = '[Pipeline] Move Pipeline Stage';
-    constructor(public payload: { projectKey: string, pipelineName: string, stage: Stage }) { }
+    constructor(public payload: { projectKey: string, pipeline: Pipeline, stage: Stage }) { }
 }
 
 export class UpdatePipelineStage {
@@ -86,17 +86,17 @@ export class DeletePipelineStage {
 
 export class AddPipelineJob {
     static readonly type = '[Pipeline] Add Pipeline Job';
-    constructor(public payload: { projectKey: string, pipelineName: string, stageId: number, job: Job }) { }
+    constructor(public payload: { projectKey: string, pipelineName: string, stage: Stage, job: Job }) { }
 }
 
 export class UpdatePipelineJob {
     static readonly type = '[Pipeline] Update Pipeline Job';
-    constructor(public payload: { projectKey: string, pipelineName: string, stageId: number, changes: Job }) { }
+    constructor(public payload: { projectKey: string, pipelineName: string, stage: Stage, changes: Job }) { }
 }
 
 export class DeletePipelineJob {
     static readonly type = '[Pipeline] Delete Pipeline Job';
-    constructor(public payload: { projectKey: string, pipelineName: string, stageId: number, job: Job }) { }
+    constructor(public payload: { projectKey: string, pipelineName: string, stage: Stage, job: Job }) { }
 }
 
 //  ------- Misc --------- //

@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -21,7 +22,7 @@ func (api *API) getWorkflowAsCodeHandler() service.Handler {
 		uuid := vars["uuid"]
 
 		var ope sdk.Operation
-		k := cache.Key(workflow.CacheOperationKey, uuid)
+		k := cache.Key(operation.CacheOperationKey, uuid)
 		b, err := api.Cache.Get(k, &ope)
 		if err != nil {
 			log.Error("cannot get from cache %s: %v", k, err)

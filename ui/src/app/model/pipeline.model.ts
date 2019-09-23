@@ -65,6 +65,7 @@ export class Pipeline {
     // UI Params
     forceRefresh: boolean;
     previewMode: boolean;
+    editModeChanged: boolean;
 
     // Return true if pattern is good
     public static checkName(name: string): boolean {

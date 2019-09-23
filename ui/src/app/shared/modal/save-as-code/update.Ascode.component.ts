@@ -12,6 +12,8 @@ import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
+import { Pipeline } from 'app/model/pipeline.model';
 
 @Component({
     selector: 'app-update-ascode',
@@ -42,7 +44,7 @@ export class UpdateAscodeComponent {
 
     constructor(private _modalService: SuiModalService, private _awService: ApplicationWorkflowService,
                 private _cd: ChangeDetectorRef, private _toast: ToastService, private _translate: TranslateService,
-                private _workflowService: WorkflowService, private _store: Store) {
+                private _workflowService: WorkflowService, private _store: Store, private _pipService: PipelineService) {
     }
 
     show(data: any, type: string) {
@@ -103,8 +105,35 @@ export class UpdateAscodeComponent {
                     });
                 });
                 break;
+            case 'pipeline':
+                this._pipService.updateAsCode(this.project.key, <Pipeline>this.dataToSave, this.selectedBranch, this.commitMessage).subscribe(ope => {
+                    this.ope = ope;
+                    let zone = new NgZone({ enableLongStackTrace: false });
+                    let webworker = new CDSWebWorker('./assets/worker/web/operation.js');
+                    webworker.start({
+                        'user': this._store.selectSnapshot(AuthenticationState.user),
+                        // 'session': this._authStore.getSessionToken(),
+                        'api': '/cdsapi',
+                        'path': '/project/' + this.project.key + '/workflows/' + this.name + '/ascode/' + this.ope.uuid
+                    });
+                    this.webworkerSub = webworker.response().subscribe(operation => {
+                        if (operation) {
+                            zone.run(() => {
+                                this.ope = JSON.parse(operation);
+                                if (this.ope.status > 1) {
+                                    this.loading = false;
+                                    webworker.stop();
+                                }
+                                this._cd.markForCheck();
+                            });
+                        }
+                    });
+                });
+                break;
             default:
                 this._toast.error('', this._translate.instant('ascode_error_unknown_type'))
         }
+
+
     }
 }

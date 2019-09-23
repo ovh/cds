@@ -23,7 +23,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchPipeline } from 'app/store/pipelines.action';
-import { PipelinesState } from 'app/store/pipelines.state';
+import { PipelinesState, PipelinesStateModel } from 'app/store/pipelines.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, flatMap } from 'rxjs/operators';
@@ -73,6 +73,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
     tags: string[] = [];
     loading: boolean;
     themeSubscription: Subscription;
+    pipSubscription: Subscription;
 
     constructor(
         private store: Store,
@@ -129,22 +130,24 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
             this.store.dispatch(new FetchPipeline({
                 projectKey: this.project.key,
                 pipelineName: pipeline.name
-            })).pipe(
-                flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, pipeline.name))),
-                finalize(() => this._cd.markForCheck())
-            ).subscribe((pip) => {
-                this.currentPipeline = pip;
-                this.pipParamsReady = true;
-                this.editableNode.context.default_pipeline_parameters =
-                    cloneDeep(Pipeline.mergeAndKeepOld(pip.parameters, this.editableNode.context.default_pipeline_parameters));
-                try {
-                    this.editableNode.context.default_payload = JSON.parse(this.payloadString);
-                    this.invalidJSON = false;
-                } catch (e) {
-                    this.invalidJSON = true;
-                }
-                if (!this.editableNode.context.default_payload) {
-                    this.editableNode.context.default_payload = {};
+            }));
+            this.pipSubscription = this.store.select(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
+                if (pip.pipeline.name === pipeline.name && pip.currentProjectKey == this.project.key) {
+                    this.currentPipeline = pip.pipeline;
+                    this.pipParamsReady = true;
+                    this.editableNode.context.default_pipeline_parameters =
+                        cloneDeep(Pipeline.mergeAndKeepOld(pip.pipeline.parameters, this.editableNode.context.default_pipeline_parameters));
+                    try {
+                        this.editableNode.context.default_payload = JSON.parse(this.payloadString);
+                        this.invalidJSON = false;
+                    } catch (e) {
+                        this.invalidJSON = true;
+                    }
+                    if (!this.editableNode.context.default_payload) {
+                        this.editableNode.context.default_payload = {};
+                    }
+                    this._cd.markForCheck();
+                    this.pipSubscription.unsubscribe();
                 }
             });
         }
