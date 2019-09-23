@@ -3,28 +3,33 @@ package sdk
 import "github.com/mitchellh/mapstructure"
 
 // EventWorkflowAdd represents the event when adding a workflow
+//easyjson:json
 type EventWorkflowAdd struct {
 	Workflow Workflow `json:"workflow"`
 }
 
 // EventWorkflowUpdate represents the event when updating a workflow
+//easyjson:json
 type EventWorkflowUpdate struct {
 	NewWorkflow Workflow `json:"new_workflow"`
 	OldWorkflow Workflow `json:"old_workflow"`
 }
 
 // EventWorkflowDelete represents the event when deleting a workflow
+//easyjson:json
 type EventWorkflowDelete struct {
 	Workflow Workflow `json:"workflow"`
 }
 
 // EventWorkflowPermissionAdd represents the event when adding a workflow permission
+//easyjson:json
 type EventWorkflowPermissionAdd struct {
 	WorkflowID int64           `json:"workflow_id"`
 	Permission GroupPermission `json:"group_permission"`
 }
 
 // EventWorkflowPermissionUpdate represents the event when updating a workflow permission
+//easyjson:json
 type EventWorkflowPermissionUpdate struct {
 	WorkflowID    int64           `json:"workflow_id"`
 	OldPermission GroupPermission `json:"old_group_permission"`
@@ -32,6 +37,7 @@ type EventWorkflowPermissionUpdate struct {
 }
 
 // EventWorkflowPermissionDelete represents the event when deleting a workflow permission
+//easyjson:json
 type EventWorkflowPermissionDelete struct {
 	WorkflowID int64           `json:"workflow_id"`
 	Permission GroupPermission `json:"group_permission"`

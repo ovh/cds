@@ -3,6 +3,7 @@ package sdk
 import "github.com/mitchellh/mapstructure"
 
 // EventProjectAdd represents the event when adding a project
+//easyjson:json
 type EventProjectAdd struct {
 	Variables   []Variable        `json:"variables"`
 	Permissions []GroupPermission `json:"groups_permission"`
@@ -11,6 +12,7 @@ type EventProjectAdd struct {
 }
 
 // EventProjectUpdate represents the event when updating a project
+//easyjson:json
 type EventProjectUpdate struct {
 	OldName     string   `json:"old_name"`
 	NewName     string   `json:"new_name"`
@@ -19,73 +21,87 @@ type EventProjectUpdate struct {
 }
 
 // EventProjectDelete represents the event when deleting a project
+//easyjson:json
 type EventProjectDelete struct {
 }
 
 // EventProjectVariableAdd represents the event when adding a project variable
+//easyjson:json
 type EventProjectVariableAdd struct {
 	Variable Variable `json:"variable"`
 }
 
 // EventProjectVariableUpdate represents the event when updating a project variable
+//easyjson:json
 type EventProjectVariableUpdate struct {
 	OldVariable Variable `json:"old_variable"`
 	NewVariable Variable `json:"new_variable"`
 }
 
 // EventProjectVariableDelete represents the event when deleting a project variable
+//easyjson:json
 type EventProjectVariableDelete struct {
 	Variable Variable `json:"variable"`
 }
 
 // EventProjectPermissionAdd represents the event when adding a project permission
+//easyjson:json
 type EventProjectPermissionAdd struct {
 	Permission GroupPermission `json:"group_permission"`
 }
 
 // EventProjectPermissionUpdate represents the event when updating a project permission
+//easyjson:json
 type EventProjectPermissionUpdate struct {
 	OldPermission GroupPermission `json:"old_group_permission"`
 	NewPermission GroupPermission `json:"new_group_permission"`
 }
 
 // EventProjectPermissionDelete represents the event when deleting a project permission
+//easyjson:json
 type EventProjectPermissionDelete struct {
 	Permission GroupPermission `json:"group_permission"`
 }
 
 // EventProjectKeyAdd represents the event when adding a project key
+//easyjson:json
 type EventProjectKeyAdd struct {
 	Key ProjectKey `json:"key"`
 }
 
 // EventProjectKeyDelete represents the event when deleting a project key
+//easyjson:json
 type EventProjectKeyDelete struct {
 	Key ProjectKey `json:"key"`
 }
 
 // EventProjectVCSServerAdd represents the event when adding a project vcs server
+//easyjson:json
 type EventProjectVCSServerAdd struct {
 	VCSServerName string `json:"vcs_server"`
 }
 
 // EventProjectVCSServerDelete represents the event when deleting a project vcs server
+//easyjson:json
 type EventProjectVCSServerDelete struct {
 	VCSServerName string `json:"vcs_server"`
 }
 
 // EventProjectIntegrationAdd represents the event when adding a project integration
+//easyjson:json
 type EventProjectIntegrationAdd struct {
 	Integration ProjectIntegration `json:"integration"`
 }
 
 // EventProjectIntegrationUpdate represents the event when updating a project integration
+//easyjson:json
 type EventProjectIntegrationUpdate struct {
 	OldIntegration  ProjectIntegration `json:"old_integration"`
 	NewsIntegration ProjectIntegration `json:"new_integration"`
 }
 
 // EventProjectIntegrationDelete represents the event when deleting a project integration
+//easyjson:json
 type EventProjectIntegrationDelete struct {
 	Integration ProjectIntegration `json:"integration"`
 }
