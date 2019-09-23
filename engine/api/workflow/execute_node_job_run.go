@@ -188,31 +188,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 		return report.Merge(syncTakeJobInNodeRun(ctx, db, nodeRun, job, stageIndex))
 	}
 
-	_, next = observability.Span(ctx, "workflow.LoadRunByID")
-	wr, err := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{DisableDetailledNodeRun: true, WithTests: true})
-	next()
-	if err != nil {
-		return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot load run by ID %d", nodeRun.WorkflowRunID)
-	}
-
-	var projectIntegrationModelID int64
-	var groups []sdk.GroupPermission
-
-	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
-	if node != nil && node.Context != nil {
-		if node.Context.ProjectIntegrationID != 0 {
-			pp, has := wr.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID]
-			if has {
-				projectIntegrationModelID = pp.Model.ID
-			}
-		}
-		groups = node.Groups
-	}
-
-	var errReport error
-	report, errReport = report.Merge(execute(ctx, db, store, proj, nodeRun, projectIntegrationModelID, groups))
-
-	return report, errReport
+	return report.Merge(executeNodeRun(ctx, db, store, proj, nodeRun))
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
