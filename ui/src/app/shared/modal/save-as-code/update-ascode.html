@@ -25,7 +25,7 @@
         </form>
         <div class="ui loading text" *ngIf="!branches">Loading....</div>
         <div class="ui success message" *ngIf="ope?.status === 2">
-            {{ope.setup | json}}
+            {{ 'workflow_as_code_pr_success' | translate }}
             <a href="{{ope.setup.push.pr_link}}" target="_blank">{{ ope.setup.push.pr_link }}</a>
         </div>
         <div class="ui error message" *ngIf="ope?.status > 2">

@@ -178,6 +178,7 @@ func (api *API) InitRouter() {
 	r.Handle("/warning/{permProjectKey}/{hash}", Scope(sdk.AuthConsumerScopeProject), r.PUT(api.putWarningsHandler))
 
 	// Application
+	r.Handle("/project/{permProjectKey}/ascode/application", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getAsCodeApplicationHandler))
 	r.Handle("/project/{permProjectKey}/application/{applicationName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getApplicationHandler), r.PUT(api.updateApplicationHandler), r.DELETE(api.deleteApplicationHandler))
 	r.Handle("/project/{permProjectKey}/application/{applicationName}/metrics/{metricName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getApplicationMetricHandler))
 	r.Handle("/project/{permProjectKey}/application/{applicationName}/keys", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getKeysInApplicationHandler), r.POST(api.addKeyInApplicationHandler))
@@ -199,6 +200,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/parameter", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getParametersInPipelineHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/parameter/{name}", Scope(sdk.AuthConsumerScopeProject), r.POST(api.addParameterInPipelineHandler), r.PUT(api.updateParameterInPipelineHandler), r.DELETE(api.deleteParameterFromPipelineHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getPipelineHandler), r.PUT(api.updatePipelineHandler), r.DELETE(api.deletePipelineHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/ascode", Scope(sdk.AuthConsumerScopeProject), r.PUT(api.updateAsCodePipelineHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/rollback/{auditID}", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postPipelineRollbackHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/audits", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getPipelineAuditHandler))
 	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage", Scope(sdk.AuthConsumerScopeProject), r.POST(api.addStageHandler))

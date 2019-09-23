@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/ovh/cds/engine/api/operation"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -51,7 +52,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 		return nil, sdk.WrapError(err, "unable to create operation request")
 	}
 
-	if err := PostRepositoryOperation(ctx, db, *p, &ope, nil); err != nil {
+	if err := operation.PostRepositoryOperation(ctx, db, *p, &ope, nil); err != nil {
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 
@@ -309,39 +310,6 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 	}
 
 	return ope, nil
-}
-
-// PostRepositoryOperation creates a new repository operation
-func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.Project, ope *sdk.Operation, multipartData *services.MultiPartData) error {
-	srvs, err := services.LoadAllByType(ctx, db, services.TypeRepositories)
-	if err != nil {
-		return sdk.WrapError(err, "Unable to found repositories service")
-	}
-
-	if ope.RepositoryStrategy.ConnectionType == "ssh" {
-		for _, k := range prj.Keys {
-			if k.Name == ope.RepositoryStrategy.SSHKey {
-				ope.RepositoryStrategy.SSHKeyContent = k.Private
-				break
-			}
-		}
-		ope.RepositoryStrategy.User = ""
-		ope.RepositoryStrategy.Password = ""
-	} else {
-		ope.RepositoryStrategy.SSHKey = ""
-		ope.RepositoryStrategy.SSHKeyContent = ""
-	}
-
-	if multipartData == nil {
-		if _, _, err := services.DoJSONRequest(ctx, db, srvs, http.MethodPost, "/operations", ope, ope); err != nil {
-			return sdk.WrapError(err, "Unable to perform operation")
-		}
-		return nil
-	}
-	if _, err := services.DoMultiPartRequest(ctx, db, srvs, http.MethodPost, "/operations", multipartData, ope, ope); err != nil {
-		return sdk.WrapError(err, "Unable to perform multipart operation")
-	}
-	return nil
 }
 
 // GetRepositoryOperation get repository operation status

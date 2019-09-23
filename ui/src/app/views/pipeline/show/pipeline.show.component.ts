@@ -22,11 +22,13 @@ import {
     FetchPipeline,
     UpdatePipelineParameter
 } from 'app/store/pipelines.action';
-import { PipelinesState } from 'app/store/pipelines.state';
+import { PipelinesState, PipelinesStateModel } from 'app/store/pipelines.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first } from 'rxjs/operators';
+import { ApplicationService } from 'app/service/application/application.service';
+import { UpdateAscodeComponent } from 'app/shared/modal/save-as-code/update.Ascode.component';
 
 @Component({
     selector: 'app-pipeline-show',
@@ -42,9 +44,11 @@ export class PipelineShowComponent implements OnInit {
 
     project: Project;
     pipeline: Pipeline;
+    editMode: boolean;
     pipelineSubscriber: Subscription;
     projectSubscription: Subscription;
     asCodeEditorSubscription: Subscription;
+    appAsCode: Application;
 
     applications: Array<Application> = new Array<Application>();
     workflows: Array<Workflow> = new Array<Workflow>();
@@ -66,6 +70,8 @@ export class PipelineShowComponent implements OnInit {
     queryParams: Params;
     @ViewChild('paramWarning', { static: false })
     parameterModalWarning: WarningModalComponent;
+    @ViewChild('updateEditMode', { static: false})
+    asCodeSaveModal: UpdateAscodeComponent;
 
     keys: AllKeys;
     asCodeEditorOpen: boolean;
@@ -81,7 +87,8 @@ export class PipelineShowComponent implements OnInit {
         public _translate: TranslateService,
         private _keyService: KeyService,
         private _pipCoreService: PipelineCoreService,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _appService: ApplicationService
     ) {
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
         this.project = this._routeActivated.snapshot.data['project'];
@@ -167,16 +174,32 @@ export class PipelineShowComponent implements OnInit {
             this.pipelineSubscriber.unsubscribe();
         }
 
-        this.pipelineSubscriber = this._store.select(PipelinesState.selectPipeline(this.projectKey, this.pipName))
+        this.pipelineSubscriber = this._store.select(PipelinesState.getCurrent())
             .pipe(
                 filter((pip) => pip != null),
             )
-            .subscribe((pip) => {
-                this.pipeline = cloneDeep(pip);
-                if (pip.usage) {
-                    this.applications = pip.usage.applications || [];
-                    this.workflows = pip.usage.workflows || [];
-                    this.environments = pip.usage.environments || [];
+            .subscribe((pip: PipelinesStateModel) => {
+                if (!pip || !pip.pipeline || pip.pipeline.name !== this.pipName || pip.currentProjectKey !== this.projectKey) {
+                    return;
+                }
+                this.editMode = pip.editMode;
+                if (pip.editMode) {
+                    this.pipeline = cloneDeep(pip.editPipeline);
+                    if (this.pipeline.from_repository) {
+                        // get application
+                        this._appService.getAsCodeApplication(this.projectKey, this.pipeline.from_repository)
+                            .pipe(first()).subscribe(app => {
+                                this.appAsCode = app;
+                        });
+                    }
+                } else {
+                    this.pipeline = cloneDeep(pip.pipeline);
+                }
+
+                if (this.pipeline.usage) {
+                    this.applications = this.pipeline.usage.applications || [];
+                    this.workflows = this.pipeline.usage.workflows || [];
+                    this.environments = this.pipeline.usage.environments || [];
                 }
 
                 this.usageCount = this.applications.length + this.environments.length + this.workflows.length;
@@ -226,6 +249,13 @@ export class PipelineShowComponent implements OnInit {
                     })).subscribe(() => this._toast.success('', this._translate.instant('parameter_deleted')));
                     break;
             }
+        }
+    }
+
+    saveEditMode(): void {
+        if (this.editMode && this.pipeline.from_repository && this.asCodeSaveModal) {
+            // show modal to save as code
+            this.asCodeSaveModal.show(this.pipeline, 'pipeline');
         }
     }
 }

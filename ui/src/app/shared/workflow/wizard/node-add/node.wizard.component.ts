@@ -19,11 +19,11 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { AddApplication } from 'app/store/applications.action';
 import { ApplicationsState } from 'app/store/applications.state';
 import { AddPipeline } from 'app/store/pipelines.action';
-import { PipelinesState } from 'app/store/pipelines.state';
+import { PipelinesState, PipelinesStateModel } from 'app/store/pipelines.state';
 import { AddEnvironmentInProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Observable, of as observableOf } from 'rxjs';
+import { Observable, of as observableOf, Subscription } from 'rxjs';
 import { finalize, first, flatMap, map } from 'rxjs/operators';
 
 @Component({
@@ -109,6 +109,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   _createNewEnvironment = false;
   integrations: IdName[] = [];
   loadingIntegrations = false;
+  pipSubscription: Subscription;
 
   constructor(
     private _router: Router,
@@ -177,21 +178,19 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     }
 
     this.loadingCreatePipeline = true;
-    return this.store.dispatch(new AddPipeline({
+    this.store.dispatch(new AddPipeline({
       projectKey: this.project.key,
       pipeline: this.newPipeline
-    })).pipe(
-      finalize(() => {
-          this.loadingCreatePipeline = false;
-          this._cd.markForCheck();
-      }),
-      flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, this.newPipeline.name))),
-      map((pip) => {
+    }));
+    this.pipSubscription = this.store.select(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
+      if (pip.pipeline.name === this.newPipeline.name && pip.currentProjectKey == this.project.key) {
         this._toast.success('', this._translate.instant('pipeline_added'));
-        this.node.context.pipeline_id = pip.id;
+        this.node.context.pipeline_id = pip.pipeline.id;
         this.pipelineSection = 'application';
-        return pip
-      }));
+        this.loadingCreatePipeline = false;
+        this._cd.markForCheck();
+      }
+    });
   }
 
   selectOrCreatePipeline(): Observable<string> {

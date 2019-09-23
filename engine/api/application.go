@@ -107,6 +107,20 @@ func (api *API) getApplicationsHandler() service.Handler {
 	}
 }
 
+func (api *API) getAsCodeApplicationHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars[permProjectKey]
+		fromRepo := FormString(r, "repo")
+
+		app, errApp := application.LoadAsCode(api.mustDB(), api.Cache, projectKey, fromRepo)
+		if errApp != nil {
+			return sdk.WrapError(errApp, "getAsCodeApplicationHandler: Cannot load application from repo %s for project %s from db", fromRepo, projectKey)
+		}
+		return service.WriteJSON(w, app, http.StatusOK)
+	}
+}
+
 func (api *API) getApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -135,7 +149,7 @@ func (api *API) getApplicationHandler() service.Handler {
 			loadOptions = append(loadOptions, application.LoadOptions.WithIcon)
 		}
 
-		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, loadOptions...)
+		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName)
 		if errApp != nil {
 			return sdk.WrapError(errApp, "getApplicationHandler: Cannot load application %s for project %s from db", applicationName, projectKey)
 		}

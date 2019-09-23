@@ -4,3 +4,10 @@
   align-content: stretch;
   height: 100%;
 }
+
+sm-menu {
+  .ui.green.button {
+    position: absolute;
+    right: 12px;
+  }
+}
