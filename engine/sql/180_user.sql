@@ -82,6 +82,7 @@ CREATE TABLE "auth_session" (
 SELECT create_foreign_key_idx_cascade('FK_AUTH_SESSION_CONSUMER', 'auth_session', 'auth_consumer', 'consumer_id', 'id');
 
 -- Update services and workers tables
+-- TODO create backup table for old_services then recreate service table
 ALTER TABLE services ADD COLUMN IF NOT EXISTS auth_consumer_id VARCHAR(36);
 ALTER TABLE services ADD COLUMN IF NOT EXISTS maintainer JSONB;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS public_key BYTEA;
@@ -150,3 +151,4 @@ DROP TABLE "auth_consumer";
 DROP TABLE "authentified_user";
 DROP TABLE "test_encrypted_data";
 ALTER TABLE old_worker RENAME TO worker;
+-- TODO old_services to services
