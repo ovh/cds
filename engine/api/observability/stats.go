@@ -15,7 +15,7 @@ import (
 
 var (
 	// DefaultSizeDistribution 25k, 100k, 250, 500, 1M, 1.5M, 5M, 10M,
-	DefaultSizeDistribution = view.Distribution(25*1024, 100*1024, 250*1024, 500*1024, 1000*1024, 1500*1024, 5000*1024, 10000*1024)
+	DefaultSizeDistribution = view.Distribution(25*1024, 100*1024, 250*1024, 500*1024, 1024*1024, 1.5*1024*1024, 5*1024*1024, 10*1024*1024)
 	// DefaultLatencyDistribution 100ms, ...
 	DefaultLatencyDistribution = view.Distribution(100, 200, 300, 400, 500, 750, 1000, 2000, 5000)
 )
