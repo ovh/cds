@@ -53,6 +53,11 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     currentUser: User;
     themeSubscription: Subscription;
     themeSwitch = new FormControl();
+    searchValue: string;
+    searchProjects: Array<NavbarSearchItem>;
+    searchApplications: Array<NavbarSearchItem>;
+    searchWorkflows: Array<NavbarSearchItem>;
+    isSearch = false;
 
     constructor(
         private _navbarService: NavbarService,
@@ -153,13 +158,107 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         });
     }
 
-    searchEvent(event) {
-        if (!event || !event.target || !event.target.value) {
-            this.items = this.recentItems;
-        } else {
-            let value = event.target.value;
-            this.items = this.searchItems;
-            event.target.value = value;
+    search() {
+        this.searchProjects = new Array<NavbarSearchItem>();
+        this.searchApplications = new Array<NavbarSearchItem>();
+        this.searchWorkflows = new Array<NavbarSearchItem>();
+
+        if (this.searchValue && this.searchValue !== '') {
+            this.isSearch = true;
+            this.processSearch(this.searchItems);
+            return;
+        }
+
+        // no search, display recentItems
+        this.isSearch = false;
+        this.processSearch(this.recentItems);
+    }
+
+    processSearch(items: Array<NavbarSearchItem>) {
+        let searchPrjFull = false;
+        let searchAppFull = false;
+        let searchWfFull = false;
+
+        let projectKey = '';
+        let isProjectOnly = false;
+        let containsProject = false;
+        let firstPart = '';
+
+        if (this.searchValue && this.searchValue !== '') {
+            isProjectOnly = this.searchValue.endsWith('/');
+            containsProject = this.searchValue.includes('/');
+            if (containsProject) {
+                firstPart = this.searchValue.substring(0, this.searchValue.indexOf('/')).toLowerCase();
+            }
+
+            // if the search contains a project, get the current projectKey
+            if (containsProject) {
+                for (let index = 0; index < items.length; index++) {
+                    const element = items[index];
+                    if (element.type !== 'project') {
+                        continue;
+                    }
+                    if (isProjectOnly) { // search end with '/'
+                        if (element.title.toLowerCase() + '/' === this.searchValue.toLowerCase() ||
+                            element.projectKey.toLowerCase() + '/' === this.searchValue.toLowerCase()) {
+                            projectKey = element.projectKey;
+                            break;
+                        }
+                    } else if ((element.title.toLowerCase() === firstPart) ||
+                               (element.projectKey.toLowerCase() === firstPart)) {
+                        projectKey = element.projectKey;
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (let index = 0; index < items.length; index++) {
+            const element = items[index];
+            let toadd = false;
+            if (!this.searchValue || this.searchValue === '') { // recent view
+                toadd = true;
+            } else if (isProjectOnly || containsProject) {
+                if (element.projectKey === projectKey) {
+                    toadd = true;
+                }
+            } else {
+                // if search is not in projectKey and not in title, skip this item
+                if (element.projectKey.toLowerCase().includes(this.searchValue.toLowerCase()) ||
+                    element.title.toLowerCase().includes(this.searchValue.toLowerCase())) {
+                    toadd = true;
+                }
+            }
+
+            if (!toadd) {
+                continue
+            }
+            switch (element.type) {
+                case 'project':
+                    if (this.searchProjects.length < 10) {
+                        this.searchProjects.push(element);
+                    } else {
+                        searchPrjFull = true;
+                    }
+                    break;
+                case 'workflow':
+                    if (this.searchWorkflows.length < 10) {
+                        this.searchWorkflows.push(element);
+                    } else {
+                        searchWfFull = true;
+                    }
+                    break;
+                case 'application':
+                    if (this.searchApplications.length < 10) {
+                        this.searchApplications.push(element);
+                    } else {
+                        searchAppFull = true;
+                    }
+                    break;
+            }
+            if (searchPrjFull && searchWfFull && searchAppFull) {
+                break;
+            }
         }
     }
 
