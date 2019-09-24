@@ -104,16 +104,14 @@ type Termui struct {
 	currentJobURL    string
 	msg              string
 
-	me                             *sdk.User
-	status                         *sdk.MonitoringStatus
-	elapsedStatus                  time.Duration
-	workers                        []sdk.Worker
-	elapsedWorkers                 time.Duration
-	services                       []sdk.Service
-	elapsedWorkerModels            time.Duration
-	workflowNodeJobRun             []sdk.WorkflowNodeJobRun
-	elapsedWorkflowNodeJobRun      time.Duration
-	elapsedWorkflowNodeJobRunCount time.Duration
+	me                        *sdk.User
+	status                    *sdk.MonitoringStatus
+	elapsedStatus             time.Duration
+	workers                   []sdk.Worker
+	elapsedWorkers            time.Duration
+	services                  []sdk.Service
+	workflowNodeJobRun        []sdk.WorkflowNodeJobRun
+	elapsedWorkflowNodeJobRun time.Duration
 
 	header, times           *termui.Par
 	queue                   *cli.ScrollableList
@@ -151,18 +149,6 @@ func (ui *Termui) execLoadData() error {
 			return err
 		}
 	}
-
-	start = time.Now()
-	if _, err := client.WorkerModels(nil); err != nil {
-		return err
-	}
-	ui.elapsedWorkerModels = time.Since(start)
-
-	start = time.Now()
-	if _, err := client.QueueCountWorkflowNodeJobRun(nil, nil, "", nil); err != nil {
-		return err
-	}
-	ui.elapsedWorkflowNodeJobRunCount = time.Since(start)
 
 	return nil
 }
@@ -302,11 +288,9 @@ func (ui *Termui) render() { ui.renderChan <- ui.execRender }
 func (ui *Termui) execRender() {
 	if ui.msg == "" {
 		ui.times.Text = fmt.Sprintf(
-			"[count queue wf %s](fg-cyan) | [queue wf %s](fg-cyan) | [workers %s](fg-cyan) | [wModels %s](fg-cyan) | [status %s](fg-cyan)",
-			sdk.Round(ui.elapsedWorkflowNodeJobRunCount, time.Millisecond).String(),
+			"[queue wf %s](fg-cyan) | [workers %s](fg-cyan) | [status %s](fg-cyan)",
 			sdk.Round(ui.elapsedWorkflowNodeJobRun, time.Millisecond).String(),
 			sdk.Round(ui.elapsedWorkers, time.Millisecond).String(),
-			sdk.Round(ui.elapsedWorkerModels, time.Millisecond).String(),
 			sdk.Round(ui.elapsedStatus, time.Millisecond).String(),
 		)
 	} else {
