@@ -13,6 +13,7 @@ import { ServiceListComponent } from './service/list/service.list.component';
 import { ServiceShowComponent } from './service/show/service.show.component';
 import { WorkerModelPatternAddComponent } from './worker-model-pattern/add/worker-model-pattern.add.component';
 import { WorkerModelPatternEditComponent } from './worker-model-pattern/edit/worker-model-pattern.edit.component';
+import { WorkerModelPatternFormComponent } from './worker-model-pattern/form/worker-model.pattern.form.component';
 import { WorkerModelPatternListComponent } from './worker-model-pattern/list/worker-model-pattern.list.component';
 
 @NgModule({
@@ -21,6 +22,7 @@ import { WorkerModelPatternListComponent } from './worker-model-pattern/list/wor
         WorkerModelPatternListComponent,
         WorkerModelPatternAddComponent,
         WorkerModelPatternEditComponent,
+        WorkerModelPatternFormComponent,
         BroadcastAddComponent,
         BroadcastEditComponent,
         BroadcastListComponent,

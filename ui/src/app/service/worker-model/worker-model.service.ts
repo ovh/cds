@@ -64,7 +64,7 @@ export class WorkerModelService {
         return this._http.get<Array<WorkerModel>>(`/group/${groupName}/worker/model`);
     }
 
-    createWorkerModelPattern(mp: ModelPattern): Observable<ModelPattern> {
+    createPattern(mp: ModelPattern): Observable<ModelPattern> {
         return this._http.post<ModelPattern>('/worker/model/pattern', mp);
     }
 

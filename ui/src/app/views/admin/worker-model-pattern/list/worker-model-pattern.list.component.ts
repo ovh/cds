@@ -8,6 +8,7 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'app-worker-model-pattern-list',
     templateUrl: './worker-model-pattern.list.html',
+    styleUrls: ['./worker-model-pattern.list.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkerModelPatternListComponent {
@@ -24,7 +25,8 @@ export class WorkerModelPatternListComponent {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
             return d => {
-                return d.name.toLowerCase().indexOf(lowerFilter) !== -1 || d.type.toLowerCase().indexOf(lowerFilter) !== -1;
+                return d.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    d.type.toLowerCase().indexOf(lowerFilter) !== -1;
             }
         };
 

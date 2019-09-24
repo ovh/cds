@@ -8,8 +8,8 @@ select create_foreign_key_idx_cascade('FK_USER_KEY_USER', 'user_key', 'user', 'u
 CREATE TABLE IF NOT EXISTS "authentified_user" (
   id VARCHAR(36) PRIMARY KEY,
   created TIMESTAMP WITH TIME ZONE,
-  username TEXT NOT NULL,
-  fullname TEXT NOT NULL,
+  username VARCHAR(255) NOT NULL,
+  fullname VARCHAR(255) NOT NULL,
   ring VARCHAR(25) NOT NULL,
   sig BYTEA,
   signer TEXT
@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS "user_contact" (
   id BIGSERIAL PRIMARY KEY,
   created TIMESTAMP WITH TIME ZONE,
   user_id VARCHAR(36),
-  type TEXT NOT NULL,
-  value TEXT NOT NULL,
+  type VARCHAR(64) NOT NULL,
+  value VARCHAR(255) NOT NULL,
   primary_contact BOOLEAN NOT NULL DEFAULT FALSE,
   verified BOOLEAN NOT NULL DEFAULT FALSE,
   sig BYTEA,

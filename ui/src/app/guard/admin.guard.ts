@@ -14,13 +14,19 @@ export class AdminGuard implements CanActivate, CanActivateChild {
     ) { }
 
     isAdmin(): Observable<boolean> {
-        return this._store.selectOnce(AuthenticationState.user).map((u: AuthentifiedUser): boolean => {
-            if (!u.isAdmin()) {
-                this._router.navigate(['/']);
-                return false;
-            }
-            return true;
-        });
+        return this._store.select(AuthenticationState.user)
+            .map((u: AuthentifiedUser): boolean => {
+                if (!u) {
+                    return null;
+                }
+                if (!u.isAdmin()) {
+                    this._router.navigate(['/']);
+                    return null;
+                }
+                return true;
+            })
+            .filter(exists => exists !== null)
+            .first();
     }
 
     canActivate(
