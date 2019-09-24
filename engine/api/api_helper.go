@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// group should have members aggregated and authentified user old user struct should be set.
 func isGroupAdmin(ctx context.Context, g *sdk.Group) bool {
 	c := getAPIConsumer(ctx)
 	if c == nil {

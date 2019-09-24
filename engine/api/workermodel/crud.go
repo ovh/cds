@@ -149,10 +149,14 @@ func Update(ctx context.Context, db gorp.SqlExecutor, old *sdk.Model, data sdk.M
 
 // CopyModelTypeData try to set missing type info for given model data.
 func CopyModelTypeData(old, data *sdk.Model) error {
+	if old.Restricted && !data.Restricted && data.PatternName == "" {
+		return sdk.NewErrorFrom(sdk.ErrWorkerModelNoPattern, "a model script pattern should be given to set the model to not restricted")
+	}
+
 	// if model is not restricted and a pattern is not given, reuse old model info
 	if !data.Restricted && data.PatternName == "" {
 		if old.Type != data.Type {
-			return sdk.WrapError(sdk.ErrWorkerModelNoPattern, "we can't fetch previous user data because type or restricted is different")
+			return sdk.NewErrorFrom(sdk.ErrWorkerModelNoPattern, "we can't fetch previous user data because type or restricted is different")
 		}
 		// set pattern data on given model
 		switch data.Type {

@@ -197,7 +197,7 @@ func (api *API) getWorkerModelHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		modelName := vars["permModelName"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
