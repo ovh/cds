@@ -214,10 +214,13 @@
 }
 
 .searchpopup {
-  width: 700px;
+  width: 650px;
   .description {
     padding-top: 2px;
     padding-bottom: 5px;
+    a {
+      color: #4183C4 !important;
+    }
   }
 }
 

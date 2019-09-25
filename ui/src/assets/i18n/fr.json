@@ -423,6 +423,8 @@
   "navbar_seen_recently": "Vu récemment: ",
   "navbar_dark_mode": "Mode sombre",
   "navbar_disconnect": "Déconnexion",
+  "navbar_search_help": "Aide",
+  "navbar_search_help_details": "Tips: 'projectkey/' : affiche tous les workflows et les applications du projet. Vous aurez le même résultat avec 'titre du projet/'.",
   "notification_on_workflow_success": "SUCCÈS sur le workflow '{{workflowName}}'",
   "notification_on_workflow_failing": "ÉCHEC sur le workflow '{{workflowName}}'",
   "notification_on_failure": "Envoyer en cas d'échec",

@@ -63,6 +63,9 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     searchWorkflows: Array<NavbarSearchItem>;
     isSearch = false;
     containsResult = false;
+    projectsSubscription: Subscription;
+    applicationsSubscription: Subscription;
+    workflowsSubscription: Subscription;
 
     constructor(
         private _navbarService: NavbarService,
@@ -126,7 +129,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         });
 
         // Listen change on recent projects viewed
-        this._projectStore.getRecentProjects().subscribe(projects => {
+        this.projectsSubscription = this._projectStore.getRecentProjects().subscribe(projects => {
             if (projects) {
                 this.recentItems = projects.toArray().map((prj) => ({
                     type: 'project',
@@ -137,12 +140,12 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                     this.recentItems.filter((i) => i.type !== 'project')
                 );
                 this.items = this.recentItems;
-                this._cd.detectChanges();
+                this._cd.markForCheck();
             }
         });
 
         // Listen change on recent app viewed
-        this._appStore.getRecentApplications().subscribe(apps => {
+        this.applicationsSubscription = this._appStore.getRecentApplications().subscribe(apps => {
             if (apps) {
                 this.navRecentApp = apps;
                 this.recentItems = this.recentItems
@@ -157,12 +160,12 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                         }))
                     );
                 this.items = this.recentItems;
-                this._cd.detectChanges();
+                this._cd.markForCheck();
             }
         });
 
         // Listen change on recent workflows viewed
-        this._workflowStore.getRecentWorkflows().subscribe(workflows => {
+        this.workflowsSubscription = this._workflowStore.getRecentWorkflows().subscribe(workflows => {
             if (workflows) {
                 this.navRecentWorkflows = workflows;
                 this.listWorkflows = workflows;
@@ -175,7 +178,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                     this.recentItems.filter((i) => i.type !== 'workflow')
                 );
                 this.items = this.recentItems;
-                this._cd.detectChanges();
+                this._cd.markForCheck();
             }
         });
     }
