@@ -68,16 +68,6 @@ func (workflows Workflows) Names() []string {
 	return res
 }
 
-// AsCodeEvent represents all pending modifications on a workflow
-type AsCodeEvent struct {
-	ID             int64     `json:"id" db:"id" cli:"-"`
-	WorkflowID     int64     `json:"workflow_id" db:"workflow_id" cli:"-"`
-	PullRequestID  int64     `json:"pullrequest_id" db:"pullrequest_id" cli:"-"`
-	PullRequestURL string    `json:"pullrequest_url" db:"pullrequest_url" cli:"-"`
-	Username       string    `json:"username" db:"username" cli:"-"`
-	CreationDate   time.Time `json:"creation_date" db:"creation_date" cli:"-"`
-}
-
 // GetApplication retrieve application from workflow
 func (w *Workflow) GetApplication(ID int64) Application {
 	return w.Applications[ID]

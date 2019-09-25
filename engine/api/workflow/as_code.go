@@ -5,21 +5,21 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/ovh/cds/engine/api/operation"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // UpdateWorkflowAsCode update an as code workflow
-func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj *sdk.Project, wf sdk.Workflow, branch string, message string, u *sdk.AuthentifiedUser) (*sdk.Operation, error) {
+func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj *sdk.Project, wf sdk.Workflow, app sdk.Application, branch string, message string, u *sdk.AuthentifiedUser) (*sdk.Operation, error) {
 	if err := RenameNode(ctx, db, &wf); err != nil {
 		return nil, err
 	}
@@ -35,9 +35,6 @@ func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExe
 	wp.Workflow.Name = wf.Name
 	wp.Workflow.Value = base64.StdEncoding.EncodeToString(buffw.Bytes())
 
-	// get application
-	app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
-
 	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
 		return nil, sdk.WithStack(sdk.ErrApplicationNotFound)
 	}
@@ -45,16 +42,11 @@ func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExe
 	return operation.PushOperation(ctx, db, store, proj, &app, wp, branch, message, u)
 }
 
-// MigrateWorkflowAsCode does a workflow pull and start an operation to push cds files into the git repository
-func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u sdk.Identifiable, encryptFunc sdk.EncryptFunc) (*sdk.Operation, error) {
+// MigrateAsCode does a workflow pull and start an operation to push cds files into the git repository
+func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, app sdk.Application, u sdk.Identifiable, encryptFunc sdk.EncryptFunc) (*sdk.Operation, error) {
 	// Get repository
 	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
 		return nil, sdk.WithStack(sdk.ErrApplicationNotFound)
-	}
-
-	app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
-	if app.VCSServer == "" || app.RepositoryFullname == "" {
-		return nil, sdk.WithStack(sdk.ErrRepoNotFound)
 	}
 
 	// Export workflow
@@ -122,7 +114,7 @@ func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		}
 		// If event ended, delete it from db
 		if merged || closed {
-			if err := deleteAsCodeEvent(db, event); err != nil {
+			if err := ascode.DeleteAsCodeEvent(db, event); err != nil {
 				return err
 			}
 		} else {
@@ -133,117 +125,4 @@ func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 	log.Debug("workflow.SyncAsCodeEvent> events left: %v", wf.AsCodeEvent)
 	event.PublishWorkflowUpdate(proj.Key, *wf, *wf, u)
 	return nil
-}
-
-// UpdateWorkflowAsCodeResult pulls repositories operation and the create pullrequest + update workflow
-func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, ope *sdk.Operation, wf *sdk.Workflow, u sdk.Identifiable) {
-	counter := 0
-	defer func() {
-		ope.RepositoryStrategy.SSHKeyContent = ""
-		k := cache.Key(operation.CacheOperationKey, ope.UUID)
-		if err := store.SetWithTTL(k, ope, 300); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", k, err)
-		}
-	}()
-	for {
-		counter++
-		if err := GetRepositoryOperation(ctx, db, ope); err != nil {
-			log.Error("unable to get repository operation %s: %v", ope.UUID, err)
-			continue
-		}
-
-		if ope.Status == sdk.OperationStatusError {
-			log.Error("operation in error %s: %s", ope.UUID, ope.Error)
-			break
-		}
-		if ope.Status == sdk.OperationStatusDone {
-			app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
-			vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
-			if vcsServer == nil {
-				log.Error("postWorkflowAsCodeHandler> No vcsServer found")
-				ope.Status = sdk.OperationStatusError
-				ope.Error = "No vcsServer found"
-				return
-			}
-			client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, p.Key, vcsServer)
-			if errclient != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to create repositories manager client: %v", errclient)
-				ope.Status = sdk.OperationStatusError
-				ope.Error = "unable to create repositories manager client"
-				return
-			}
-
-			request := sdk.VCSPullRequest{
-				Title: ope.Setup.Push.Message,
-				Head: sdk.VCSPushEvent{
-					Branch: sdk.VCSBranch{
-						DisplayID: ope.Setup.Push.FromBranch,
-					},
-					Repo: app.RepositoryFullname,
-				},
-				Base: sdk.VCSPushEvent{
-					Branch: sdk.VCSBranch{
-						DisplayID: ope.Setup.Push.ToBranch,
-					},
-					Repo: app.RepositoryFullname,
-				},
-			}
-			pr, err := client.PullRequestCreate(ctx, app.RepositoryFullname, request)
-			if err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to create pull request: %v", err)
-				ope.Status = sdk.OperationStatusError
-				ope.Error = "unable to create pull request"
-				return
-			}
-			ope.Setup.Push.PRLink = pr.URL
-
-			asCodeEvent := sdk.AsCodeEvent{
-				PullRequestID:  int64(pr.ID),
-				WorkflowID:     wf.ID,
-				PullRequestURL: pr.URL,
-				Username:       u.GetUsername(),
-				CreationDate:   time.Now(),
-			}
-
-			oldW, errOld := LoadByID(ctx, db, store, p, wf.ID, LoadOptions{})
-			if errOld != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to load workflow: %v", err)
-				ope.Status = sdk.OperationStatusError
-				ope.Error = "unable to load workflow"
-				return
-			}
-
-			tx, err := db.Begin()
-			if err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to start transaction: %v", err)
-				ope.Status = sdk.OperationStatusError
-				ope.Error = "unable to start transaction"
-				return
-			}
-			defer tx.Rollback() // nolint
-
-			if err := insertAsCodeEvent(tx, asCodeEvent); err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to insert as code event: %v", err)
-				ope.Status = sdk.OperationStatusError
-				ope.Error = "unable to insert as code event"
-				return
-			}
-
-			if err := tx.Commit(); err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to commit workflow: %v", err)
-				ope.Status = sdk.OperationStatusError
-				ope.Error = "unable to commit transaction"
-				return
-			}
-			event.PublishWorkflowUpdate(p.Key, *wf, *oldW, u)
-			return
-		}
-
-		if counter == 30 {
-			ope.Status = sdk.OperationStatusError
-			ope.Error = "Unable to enable workflow as code"
-			break
-		}
-		time.Sleep(2 * time.Second)
-	}
 }

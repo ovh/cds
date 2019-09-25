@@ -14,6 +14,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
@@ -578,7 +579,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 
 	if opts.WithAsCodeUpdateEvent {
 		_, next = observability.Span(ctx, "workflow.load.AddCodeUpdateEvents")
-		asCodeEvents, errAS := LoadAsCodeEvent(db, res.ID)
+		asCodeEvents, errAS := ascode.LoadAsCodeEventByWorkflowID(db, res.ID)
 		next()
 
 		if errAS != nil {
