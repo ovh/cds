@@ -74,15 +74,25 @@
 
         <ng-template let-popup #popupSearchTemplate>
             <div class="content searchpopup">
-                <h3 *ngIf="isSearch"><div class="ui left"><i class="search icon"></i> {{'navbar_results' | translate}}</div></h3>
-                <h3 *ngIf="!isSearch"><div class="ui left"><i class="history icon"></i>{{'navbar_seen_recently' | translate}}</div></h3>
-                <div class="ui internally celled grid">
-                    <div class="four wide column" *ngIf="isSearch">
+                <h3 *ngIf="containsResult && isSearch"><div class="ui left"><i class="search icon"></i> {{'navbar_results' | translate}}</div></h3>
+                <h3 *ngIf="containsResult && !isSearch"><div class="ui left"><i class="history icon"></i>{{'navbar_seen_recently' | translate}}</div></h3>
+                <h3 *ngIf="!containsResult"><div class="ui center"><i class="search icon"></i>{{'navbar_no_result' | translate}}</div></h3>
+                <div class="ui internally celled grid" *ngIf="containsResult">
+                    <div class="four wide column">
                         <div class="ui secondary pointing menu">
                             <div class="ui relaxed divided list">
                                 <div class="item">
                                     <div class="content">
                                         {{ 'common_projects' | translate }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui secondary pointing menu" *ngIf="!searchProjects || searchProjects.length <= 0">
+                            <div class="ui relaxed divided list">
+                                <div class="item">
+                                    <div class="content">
+                                        {{ 'navbar_no_project' | translate}}
                                     </div>
                                 </div>
                             </div>
@@ -109,6 +119,15 @@
                                 <div class="item">
                                     <div class="content">
                                         {{ 'common_workflows' | translate }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui secondary pointing menu" *ngIf="!searchWorkflows || searchWorkflows.length <= 0">
+                            <div class="ui relaxed divided list">
+                                <div class="item">
+                                    <div class="content">
+                                        {{ 'navbar_no_project' | translate}}
                                     </div>
                                 </div>
                             </div>
@@ -142,6 +161,15 @@
                                 <div class="item">
                                     <div class="content">
                                         {{ 'common_applications' | translate }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui secondary pointing menu" *ngIf="!searchApplications || searchApplications.length <= 0">
+                            <div class="ui relaxed divided list">
+                                <div class="item">
+                                    <div class="content">
+                                        {{ 'navbar_no_application' | translate}}
                                     </div>
                                 </div>
                             </div>

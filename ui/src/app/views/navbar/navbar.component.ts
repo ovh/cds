@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Application } from 'app/model/application.model';
 import { Broadcast } from 'app/model/broadcast.model';
 import { NavbarProjectData, NavbarRecentData, NavbarSearchItem } from 'app/model/navbar.model';
+import { Project } from 'app/model/project.model';
 import { User } from 'app/model/user.model';
 import { ApplicationStore } from 'app/service/application/application.store';
 import { AuthentificationStore } from 'app/service/auth/authentification.store';
@@ -12,12 +13,14 @@ import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
 import { LanguageStore } from 'app/service/language/language.store';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
+import { ProjectStore } from 'app/service/services.module';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { List } from 'immutable';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
+
 
 @Component({
     selector: 'app-navbar',
@@ -33,6 +36,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     // List of projects in the nav bar
     navProjects: Array<NavbarProjectData> = [];
     listFavs: Array<NavbarProjectData> = [];
+    navRecentProjects: List<Project>;
     navRecentApp: List<Application>;
     navRecentWorkflows: List<NavbarRecentData>;
     searchItems: Array<NavbarSearchItem> = [];
@@ -58,10 +62,12 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     searchApplications: Array<NavbarSearchItem>;
     searchWorkflows: Array<NavbarSearchItem>;
     isSearch = false;
+    containsResult = false;
 
     constructor(
         private _navbarService: NavbarService,
         private _authStore: AuthentificationStore,
+        private _projectStore: ProjectStore,
         private _appStore: ApplicationStore,
         private _workflowStore: WorkflowStore,
         private _broadcastStore: BroadcastStore,
@@ -116,6 +122,22 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         this._authStore.getUserlst().subscribe(user => {
             if (user) {
                 this.getData();
+            }
+        });
+
+        // Listen change on recent projects viewed
+        this._projectStore.getRecentProjects().subscribe(projects => {
+            if (projects) {
+                this.recentItems = projects.toArray().map((prj) => ({
+                    type: 'project',
+                    value: prj.project_key,
+                    title: prj.name,
+                    projectKey: prj.project_key
+                })).concat(
+                    this.recentItems.filter((i) => i.type !== 'project')
+                );
+                this.items = this.recentItems;
+                this._cd.detectChanges();
             }
         });
 
@@ -183,12 +205,16 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         let isProjectOnly = false;
         let containsProject = false;
         let firstPart = '';
+        let secondPart = '';
+        this.containsResult = false;
 
         if (this.searchValue && this.searchValue !== '') {
             isProjectOnly = this.searchValue.endsWith('/');
             containsProject = this.searchValue.includes('/');
             if (containsProject) {
+                // FIRSTPART/SECONDPART
                 firstPart = this.searchValue.substring(0, this.searchValue.indexOf('/')).toLowerCase();
+                secondPart = this.searchValue.substring(this.searchValue.indexOf('/') + 1, this.searchValue.length).toLowerCase();
             }
 
             // if the search contains a project, get the current projectKey
@@ -218,8 +244,18 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             let toadd = false;
             if (!this.searchValue || this.searchValue === '') { // recent view
                 toadd = true;
-            } else if (isProjectOnly || containsProject) {
+            } else if (isProjectOnly) {
                 if (element.projectKey === projectKey) {
+                    toadd = true;
+                }
+            } else if (containsProject) {
+                // add project of firstpart/secondpart
+                if (element.projectKey === projectKey && element.type === 'project') {
+                    toadd = true;
+                }
+
+                if ((element.projectKey === projectKey) &&
+                    element.title.toLowerCase().includes(secondPart)) {
                     toadd = true;
                 }
             } else {
@@ -237,6 +273,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 case 'project':
                     if (this.searchProjects.length < 10) {
                         this.searchProjects.push(element);
+                        this.containsResult = true;
                     } else {
                         searchPrjFull = true;
                     }
@@ -244,6 +281,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 case 'workflow':
                     if (this.searchWorkflows.length < 10) {
                         this.searchWorkflows.push(element);
+                        this.containsResult = true;
                     } else {
                         searchWfFull = true;
                     }
@@ -251,6 +289,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 case 'application':
                     if (this.searchApplications.length < 10) {
                         this.searchApplications.push(element);
+                        this.containsResult = true;
                     } else {
                         searchAppFull = true;
                     }
