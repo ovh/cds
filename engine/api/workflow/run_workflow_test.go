@@ -1,13 +1,11 @@
 package workflow_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"context"
 	"testing"
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -21,6 +19,8 @@ import (
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestManualRun1(t *testing.T) {
@@ -314,21 +314,28 @@ func TestManualRun3(t *testing.T) {
 	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
 	g0 := sdk.Group{Name: "g0"}
-	g1 := sdk.Group{Name: "g1"} 
+	g1 := sdk.Group{Name: "g1"}
 	for _, g := range []sdk.Group{g0, g1} {
-		oldg, _ := group.LoadGroup(db, g.Name)
+		oldg, _ := group.LoadByName(context.TODO(), db, g.Name)
 		if oldg != nil {
-			test.NoError(t, group.DeleteGroupAndDependencies(db, oldg))
+			test.NoError(t, group.Delete(context.TODO(), db, oldg))
 		}
 	}
 
-	test.NoError(t, group.InsertGroup(db, &g0))
-	test.NoError(t, group.InsertGroup(db, &g1))
+	test.NoError(t, group.Insert(db, &g0))
+	test.NoError(t, group.Insert(db, &g1))
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   g0.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}))
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   g1.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}))
 
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g0.ID, permission.PermissionReadWriteExecute))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g1.ID, permission.PermissionReadWriteExecute))
-
-	g, err := group.LoadGroup(db, "shared.infra")
+	g, err := group.LoadByName(context.TODO(), db, "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}

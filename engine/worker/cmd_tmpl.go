@@ -7,12 +7,15 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/engine/worker/internal"
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -66,7 +69,7 @@ func tmplCmd() func(cmd *cobra.Command, args []string) {
 			sdk.Exit("Internal error during Getwd command")
 		}
 
-		a := tmplPath{
+		a := workerruntime.TmplPath{
 			Path:        getAbsoluteDir(args[0], currentDir),
 			Destination: getAbsoluteDir(args[1], currentDir),
 		}
@@ -98,4 +101,11 @@ func tmplCmd() func(cmd *cobra.Command, args []string) {
 			sdk.Exit("tmpl failed: %v\n", cdsError)
 		}
 	}
+}
+
+func getAbsoluteDir(arg string, currentDir string) string {
+	if strings.HasPrefix(arg, string(filepath.Separator)) {
+		return arg
+	}
+	return filepath.Join(currentDir, arg)
 }
