@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
@@ -99,13 +100,23 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return err
 		}
 
-		ope, err := workflow.UpdateWorkflowAsCode(ctx, api.Cache, api.mustDB(), p, wk, branch, message, u.AuthentifiedUser)
+		// get application
+		app := wfDB.Applications[wfDB.WorkflowData.Node.Context.ApplicationID]
+
+		ope, err := workflow.UpdateWorkflowAsCode(ctx, api.Cache, api.mustDB(), p, wk, app, branch, message, u.AuthentifiedUser)
 		if err != nil {
 			return err
 		}
 
 		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
-			workflow.UpdateWorkflowAsCodeResult(ctx, api.mustDB(), api.Cache, p, ope, &wk, u)
+			ed := ascode.EntityData{
+				Operation: ope,
+				Name:      wk.Name,
+				ID:        wk.ID,
+				Type:      ascode.AsCodeWorkflow,
+				FromRepo:  wk.FromRepository,
+			}
+			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, p, &app, ed, u)
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, ope, http.StatusOK)
@@ -183,14 +194,26 @@ func (api *API) postMigrateWorkflowAsCodeHandler() service.Handler {
 			}
 		}
 
+		app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
+		if app.VCSServer == "" || app.RepositoryFullname == "" {
+			return sdk.ErrRepoNotFound
+		}
+
 		// Export workflow + push + create pull request
-		ope, err := workflow.MigrateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, u, project.EncryptWithBuiltinKey)
+		ope, err := workflow.MigrateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, app, u, project.EncryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "unable to migrate workflow as code")
 		}
 
 		sdk.GoRoutine(context.Background(), fmt.Sprintf("MigrateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
-			workflow.UpdateWorkflowAsCodeResult(ctx, api.mustDB(), api.Cache, proj, ope, wf, u)
+			ed := ascode.EntityData{
+				FromRepo:  wf.FromRepository,
+				Type:      ascode.AsCodeWorkflow,
+				ID:        wf.ID,
+				Name:      wf.Name,
+				Operation: ope,
+			}
+			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, &app, ed, u)
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, ope, http.StatusOK)
