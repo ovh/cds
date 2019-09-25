@@ -121,3 +121,16 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 	}
 	return nil
 }
+
+// GetRepositoryOperation get repository operation status
+func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, ope *sdk.Operation) error {
+	srvs, err := services.LoadAllByType(ctx, db, services.TypeRepositories)
+	if err != nil {
+		return sdk.WrapError(err, "Unable to found repositories service")
+	}
+
+	if _, _, err := services.DoJSONRequest(ctx, db, srvs, http.MethodGet, "/operations/"+ope.UUID, nil, ope); err != nil {
+		return sdk.WrapError(err, "Unable to get operation")
+	}
+	return nil
+}

@@ -2,13 +2,15 @@ package api
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/application"
+	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -65,6 +67,18 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodePipelineHandler-%s", ope.UUID), func(ctx context.Context) {
+			ed := ascode.EntityData{
+				FromRepo:  pipelineDB.FromRepository,
+				Type:      ascode.AsCodePipeline,
+				ID:        pipelineDB.ID,
+				Name:      pipelineDB.Name,
+				Operation: ope,
+			}
+			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, app, ed, u)
+		}, api.PanicDump())
+
 		return service.WriteJSON(w, ope, http.StatusOK)
 	}
 }
