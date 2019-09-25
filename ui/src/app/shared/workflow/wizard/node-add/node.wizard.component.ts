@@ -180,7 +180,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       pipeline: this.newPipeline
     }));
     this.pipSubscription = this.store.select(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
-      if (pip.pipeline.name === this.newPipeline.name && pip.currentProjectKey == this.project.key) {
+      if (pip.pipeline.name === this.newPipeline.name && pip.currentProjectKey === this.project.key) {
         this._toast.success('', this._translate.instant('pipeline_added'));
         this.node.context.pipeline_id = pip.pipeline.id;
         this.pipelineSection = 'application';

@@ -9,13 +9,6 @@ import {
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import * as pipelineActions from 'app/store/pipelines.action';
-import { PipelinesState, PipelinesStateModel } from 'app/store/pipelines.state';
-import cloneDeep from 'lodash-es/cloneDeep';
-import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
-import { DragulaService } from 'ng2-dragula';
-import { Subscription } from 'rxjs';
-import { finalize, first, flatMap } from 'rxjs/operators';
 import { Job } from 'app/model/job.model';
 import { AllKeys } from 'app/model/keys.model';
 import { PermissionValue } from 'app/model/permission.model';
@@ -28,6 +21,13 @@ import { VariableService } from 'app/service/variable/variable.service';
 import { ActionEvent } from 'app/shared/action/action.event.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
+import * as pipelineActions from 'app/store/pipelines.action';
+import { PipelinesStateModel } from 'app/store/pipelines.state';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
+import { DragulaService } from 'ng2-dragula';
+import { Subscription } from 'rxjs';
+import { finalize, first } from 'rxjs/operators';
 
 @Component({
     selector: 'app-pipeline-workflow',
@@ -62,16 +62,33 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
             this.selectDefaultJob();
             this._pipCoreService.toggleAsCodeEditor({ open: false, save: false });
         } else {
-            let jobFound = false;
-            let stageFound = null;
-            if (this.selectedStage) {
-                stageFound = this.selectedStage && data.stages && data.stages.find((stage) => stage.id === this.selectedStage.id);
-                jobFound = stageFound && this.selectedJob && stageFound.jobs && stageFound.jobs.some((job) => {
-                    return job.pipeline_action_id === this.selectedJob.pipeline_action_id;
-                });
-                if (stageFound && !jobFound) {
-                    this.selectDefaultJobInStage(this.selectedStage);
+            let jobFound: Job;
+            let stageFound: Stage;
+            if (this.editMode) {
+                if (this.selectedStage) {
+                    stageFound = data.stages.find((stage) => stage.ref === this.selectedStage.ref);
                 }
+                if (this.selectedJob) {
+                    jobFound = stageFound.jobs.find(j => j.ref === this.selectedJob.ref)
+                }
+            } else {
+                if (this.selectedStage) {
+                    stageFound = this.selectedStage && data.stages && data.stages.find((stage) => stage.id === this.selectedStage.id);
+                    if (stageFound) {
+                        jobFound =  this.selectedJob && stageFound.jobs && stageFound.jobs.find((job) => {
+                            return job.pipeline_action_id === this.selectedJob.pipeline_action_id;
+                        });
+                    }
+
+                }
+            }
+            if (jobFound && stageFound) {
+                this.selectJob(jobFound, stageFound);
+            } else if (stageFound) {
+                this.selectStage(stageFound);
+            }
+            if (stageFound && !jobFound) {
+                this.selectDefaultJobInStage(this.selectedStage);
             }
             if (!stageFound && !jobFound) {
                 this.selectDefaultJob();
@@ -195,11 +212,11 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
             projectKey: this.project.key,
             pipelineName: this.pipeline.name,
             stage: s
-        })).subscribe(s => {
-            if (!s['pipelines']) {
+        })).subscribe(st => {
+            if (!st['pipelines']) {
                 return;
             }
-            let pipStateModel = <PipelinesStateModel>s['pipelines'];
+            let pipStateModel = <PipelinesStateModel>st['pipelines'];
             if (!pipStateModel.editPipeline) {
                 this._toast.success('', this._translate.instant('stage_added'));
                 this.selectStage(pipStateModel.pipeline.stages[pipStateModel.pipeline.stages.length - 1]);
@@ -234,11 +251,11 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
             pipelineName: this.pipeline.name,
             stage: s,
             job: jobToAdd
-        })).subscribe((s) => {
-            if (!s['pipelines']) {
+        })).subscribe((st) => {
+            if (!st['pipelines']) {
                 return;
             }
-            let pipStateModel = <PipelinesStateModel>s['pipelines'];
+            let pipStateModel = <PipelinesStateModel>st['pipelines'];
             if (!pipStateModel.editMode) {
                 this._toast.success('', this._translate.instant('stage_job_added'));
                 this.selectStage(pipStateModel.pipeline.stages.find((stage) => this.selectedStage.id === stage.id));
@@ -350,8 +367,10 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                 })).subscribe(() => {
                     if (!this.editMode) {
                         this._toast.success('', this._translate.instant('stage_job_updated'));
-                        this.selectedStage = this.pipeline.stages.find((s) => this.selectedStage.id === s.id) || this.selectedStage;
-                        this.selectedJob = this.selectedStage.jobs.find((j) => this.selectedJob.action.id === j.action.id) || this.selectedJob;
+                        this.selectedStage = this.pipeline.stages
+                            .find((s) => this.selectedStage.id === s.id) || this.selectedStage;
+                        this.selectedJob = this.selectedStage.jobs
+                            .find((j) => this.selectedJob.action.id === j.action.id) || this.selectedJob;
                     }
                 });
                 break;

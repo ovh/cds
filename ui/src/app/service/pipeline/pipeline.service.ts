@@ -2,11 +2,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Job } from 'app/model/job.model';
+import { Operation } from 'app/model/operation.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Stage } from 'app/model/stage.model';
 import { WorkflowTriggerConditionCache } from 'app/model/workflow.model';
-import { Observable, pipe } from 'rxjs';
-import { Operation } from 'app/model/operation.model';
+import { Observable } from 'rxjs';
 
 /**
  * Service to access Pipeline from API.
