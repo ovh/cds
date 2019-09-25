@@ -393,7 +393,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		}
 
 		_, next = observability.Span(ctx, "workflow.processNodeJobRunRequirements")
-		jobRequirements, containsService, wm, err := processNodeJobRunRequirements(ctx, db, *job, run, sdk.Groups(groups).ToIDs(), integrationPluginBinaries)
+		jobRequirements, containsService, wm, err := processNodeJobRunRequirements(ctx, db, *job, nr, sdk.Groups(groups).ToIDs(), integrationPluginBinaries)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
@@ -514,10 +514,11 @@ func getIntegrationPluginBinaries(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *
 }
 
 func getExecutablesGroups(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) ([]sdk.Group, error) {
+	var node = wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
 	var groups []sdk.Group
 
-	if len(runContext.NodeGroups) > 0 {
-		for _, gp := range runContext.NodeGroups {
+	if len(node.Groups) > 0 {
+		for _, gp := range node.Groups {
 			if gp.Permission >= sdk.PermissionReadExecute {
 				groups = append(groups, gp.Group)
 			}

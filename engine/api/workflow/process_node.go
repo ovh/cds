@@ -222,7 +222,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 		// If we change repo and we dont find ancestor on the same repo, just keep the branch
 		if !found {
-			b := sdk.ParameterFind(run.BuildParameters, tagGitBranch)
+			b := sdk.ParameterFind(nr.BuildParameters, tagGitBranch)
 			if b != nil {
 				currentJobGitValues[tagGitBranch] = b.Value
 			}

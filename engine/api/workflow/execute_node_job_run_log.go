@@ -124,7 +124,7 @@ func updateLog(db gorp.SqlExecutor, logs *sdk.Log) error {
 			value = value || $7
 		WHERE workflow_node_run_job_id = $1 AND step_order = $2`
 
-	if _, err := db.Exec(query, logs.JobID, logs.StepOrder, logs.NodeRunID, logs.Start, logs.LastModified, logs.Done, , logs.Val); err != nil {
+	if _, err := db.Exec(query, logs.JobID, logs.StepOrder, logs.NodeRunID, logs.Start, logs.LastModified, logs.Done, logs.Val); err != nil {
 		return sdk.WithStack(err)
 	}
 	return nil
