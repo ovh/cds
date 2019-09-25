@@ -70,6 +70,7 @@ func LoadLogs(db gorp.SqlExecutor, id int64) ([]sdk.Log, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close() // nolint
 	var logs []sdk.Log
 	for rows.Next() {
 		l := &sdk.Log{}
@@ -116,16 +117,14 @@ func updateLog(db gorp.SqlExecutor, logs *sdk.Log) error {
 
 	query := `
 		UPDATE workflow_node_run_job_logs set
-			workflow_node_run_job_id = $1,
-			workflow_node_run_id = $2,
-			start = $3,
-			last_modified = $4,
-			done = $5,
-			step_order = $6,
-			value = $7
-		where id = $8`
+			workflow_node_run_id = $3,
+			start = $4,
+			last_modified = $5,
+			done = $6,
+			value = value || $7
+		WHERE workflow_node_run_job_id = $1 AND step_order = $2`
 
-	if _, err := db.Exec(query, logs.JobID, logs.NodeRunID, logs.Start, logs.LastModified, logs.Done, logs.StepOrder, logs.Val, logs.ID); err != nil {
+	if _, err := db.Exec(query, logs.JobID, logs.StepOrder, logs.NodeRunID, logs.Start, logs.LastModified, logs.Done, , logs.Val); err != nil {
 		return sdk.WithStack(err)
 	}
 	return nil

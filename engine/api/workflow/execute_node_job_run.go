@@ -189,47 +189,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 	}
 	syncJobInNodeRun(nodeRun, job, stageIndex)
 
-	_, next = observability.Span(ctx, "workflow.LoadRunByID")
-	wr, err := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{DisableDetailledNodeRun: true, WithTests: true})
-	next()
-	if err != nil {
-		return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot load run by ID %d", nodeRun.WorkflowRunID)
-	}
-
-	runContext := nodeRunContext{}
-
-	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.ID)
-	if node != nil && node.Context != nil {
-		if node.Context.PipelineID != 0 {
-			pip, has := wr.Workflow.Pipelines[node.Context.PipelineID]
-			if has {
-				runContext.Pipeline = pip
-			}
-		}
-		if node.Context.ApplicationID != 0 {
-			app, has := wr.Workflow.Applications[node.Context.ApplicationID]
-			if has {
-				runContext.Application = app
-			}
-		}
-		if node.Context.EnvironmentID != 0 {
-			env, has := wr.Workflow.Environments[node.Context.EnvironmentID]
-			if has {
-				runContext.Environment = env
-			}
-		}
-		if node.Context.ProjectIntegrationID != 0 {
-			pp, has := wr.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID]
-			if has {
-				runContext.ProjectIntegration = pp
-			}
-		}
-	}
-
-	var errReport error
-	report, errReport = report.Merge(execute(ctx, db, store, proj, nodeRun, runContext))
-
-	return report, errReport
+	return report.Merge(executeNodeRun(ctx, db, store, proj, nodeRun))
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
@@ -598,18 +558,7 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log, max
 		return sdk.WrapError(insertLog(db, logs), "cannot insert log")
 	}
 
-	existingLogs, err := LoadStepLogs(db, logs.JobID, logs.StepOrder)
-	if err != nil {
-		return sdk.WrapError(err, "cannot load existing logs")
-	}
-
-	logbuf := bytes.NewBufferString(existingLogs.Val)
-	logbuf.WriteString(logs.Val)
-	existingLogs.Val = logbuf.String()
-	existingLogs.LastModified = logs.LastModified
-	existingLogs.Done = logs.Done
-
-	return sdk.WrapError(updateLog(db, existingLogs), "cannot update log")
+	return sdk.WrapError(updateLog(db, logs), "cannot update log")
 }
 
 //AddServiceLog adds a service log

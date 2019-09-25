@@ -508,7 +508,9 @@ func (api *API) putWorkflowIconHandler() service.Handler {
 			return sdk.ErrIconBadSize
 		}
 
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, workflow.LoadOptions{})
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, workflow.LoadOptions{
+			Minimal: true,
+		})
 		if err != nil {
 			return err
 		}

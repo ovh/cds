@@ -10,8 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
-
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/engine/worker/internal"
@@ -63,7 +61,15 @@ func tmplCmd() func(cmd *cobra.Command, args []string) {
 			sdk.Exit("Wrong usage: Example : worker tmpl filea fileb")
 		}
 
-		a := workerruntime.TmplPath{Path: args[0], Destination: args[1]}
+		currentDir, err := os.Getwd()
+		if err != nil {
+			sdk.Exit("Internal error during Getwd command")
+		}
+
+		a := tmplPath{
+			Path:        getAbsoluteDir(args[0], currentDir),
+			Destination: getAbsoluteDir(args[1], currentDir),
+		}
 
 		data, errMarshal := json.Marshal(a)
 		if errMarshal != nil {

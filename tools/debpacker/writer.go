@@ -13,7 +13,7 @@ import (
 type Writer interface {
 	CreateDirectory(path string, perm os.FileMode) error
 	CreateFile(path string, content []byte, perm os.FileMode) error
-	CopyFiles(path string, perm os.FileMode, sources ...string) error
+	CopyFiles(targetPath string, path string, perm os.FileMode, sources ...string) error
 }
 
 type fileSystemWriter struct{}
@@ -33,18 +33,23 @@ func (f fileSystemWriter) CreateFile(path string, content []byte, perm os.FileMo
 	return errors.Wrapf(err, "Cannot write file at %s", path)
 }
 
-func (f fileSystemWriter) CopyFiles(path string, perm os.FileMode, sources ...string) error {
+func (f fileSystemWriter) CopyFiles(targetPath string, path string, perm os.FileMode, sources ...string) error {
 	for _, source := range sources {
-		dest := path
+		dest := targetPath
 
 		// check if source file contains an out dir, if true create it
 		split := strings.Split(source, ":")
 		if len(split) > 1 {
 			source = split[0]
 			dest = filepath.Join(dest, split[1])
+			if !strings.HasPrefix(split[1], "/") {
+				dest = filepath.Join(dest, path, split[1])
+			}
 			if err := f.CreateDirectory(dest, os.FileMode(0755)); err != nil {
 				return err
 			}
+		} else {
+			dest = filepath.Join(targetPath, path)
 		}
 
 		matches, err := zglob.Glob(source)
@@ -82,10 +87,8 @@ func (f fileSystemWriter) CopyFiles(path string, perm os.FileMode, sources ...st
 				}
 				defer originFile.Close()
 
-				var destPath string
-				if l == m {
-					destPath = dest
-				} else {
+				destPath := dest
+				if l != m {
 					destPath = filepath.Join(dest, strings.TrimPrefix(filepath.Dir(l), filepath.Dir(m)))
 					if err := f.CreateDirectory(destPath, os.FileMode(0755)); err != nil {
 						return err

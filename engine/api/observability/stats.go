@@ -14,8 +14,10 @@ import (
 )
 
 var (
-	DefaultSizeDistribution    = view.Distribution(1024, 2048, 4096, 16384, 65536, 262144, 1048576, 4194304, 16777216, 67108864, 268435456, 1073741824, 4294967296)
-	DefaultLatencyDistribution = view.Distribution(1, 2, 3, 4, 5, 6, 8, 10, 13, 16, 20, 25, 30, 40, 50, 65, 80, 100, 130, 160, 200, 250, 300, 400, 500, 650, 800, 1000, 2000, 5000, 10000, 20000, 50000, 100000)
+	// DefaultSizeDistribution 25k, 100k, 250, 500, 1M, 1.5M, 5M, 10M,
+	DefaultSizeDistribution = view.Distribution(25*1024, 100*1024, 250*1024, 500*1024, 1024*1024, 1.5*1024*1024, 5*1024*1024, 10*1024*1024)
+	// DefaultLatencyDistribution 100ms, ...
+	DefaultLatencyDistribution = view.Distribution(100, 200, 300, 400, 500, 750, 1000, 2000, 5000)
 )
 
 const (

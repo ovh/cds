@@ -197,6 +197,7 @@ var (
 	ErrBadBrokerConfiguration                        = Error{ID: 181, Status: http.StatusBadRequest}
 	ErrSignupDisabled                                = Error{ID: 182, Status: http.StatusForbidden}
 	ErrUsernamePresent                               = Error{ID: 183, Status: http.StatusBadRequest}
+	ErrInvalidJobRequirementNetworkAccess            = Error{ID: 184, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -376,6 +377,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrIntegrationtNotFound.ID:                          "integration not found",
 	ErrSignupDisabled.ID:                                "Sign up is disabled for target consumer type",
 	ErrBadBrokerConfiguration.ID:                        "Cannot connect to the broker of your event integration. Check your configuration",
+	ErrInvalidJobRequirementNetworkAccess.ID:            "Invalid job requirement: network requirement must contains ':'. Example: golang.org:http, golang.org:443",
 }
 
 var errorsFrench = map[int]string{
@@ -554,6 +556,7 @@ var errorsFrench = map[int]string{
 	ErrEnvironmentNotFound.ID:                           "l'environnement n'existe pas",
 	ErrSignupDisabled.ID:                                "La création de compte est désactivée pour ce mode d'authentification.",
 	ErrBadBrokerConfiguration.ID:                        "Impossible de se connecter à votre intégration de type évènement. Veuillez vérifier votre configuration",
+	ErrInvalidJobRequirementNetworkAccess.ID:            "Pré-requis de job invalide: Le pré-requis network doit contenir un ':'. Exemple: golang.org:http, golang.org:443",
 }
 
 var errorsLanguages = []map[int]string{
