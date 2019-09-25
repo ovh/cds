@@ -25,7 +25,7 @@ import { FetchPipeline } from 'app/store/pipelines.action';
 import { PipelinesState, PipelinesStateModel } from 'app/store/pipelines.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { finalize, flatMap } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
 declare var CodeMirror: any;
@@ -130,7 +130,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
                 pipelineName: pipeline.name
             }));
             this.pipSubscription = this.store.select(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
-                if (pip.pipeline.name === pipeline.name && pip.currentProjectKey == this.project.key) {
+                if (pip.pipeline.name === pipeline.name && pip.currentProjectKey === this.project.key) {
                     this.currentPipeline = pip.pipeline;
                     this.pipParamsReady = true;
                     this.editableNode.context.default_pipeline_parameters =

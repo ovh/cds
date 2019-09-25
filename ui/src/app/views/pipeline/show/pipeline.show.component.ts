@@ -9,9 +9,11 @@ import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { Workflow } from 'app/model/workflow.model';
+import { ApplicationService } from 'app/service/application/application.service';
 import { KeyService } from 'app/service/keys/keys.service';
 import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { UpdateAscodeComponent } from 'app/shared/modal/save-as-code/update.Ascode.component';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -27,8 +29,6 @@ import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first } from 'rxjs/operators';
-import { ApplicationService } from 'app/service/application/application.service';
-import { UpdateAscodeComponent } from 'app/shared/modal/save-as-code/update.Ascode.component';
 
 @Component({
     selector: 'app-pipeline-show',

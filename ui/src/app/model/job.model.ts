@@ -17,6 +17,7 @@ export class Job {
 
     constructor() {
         this.action = new Action();
+        this.action.enabled = true;
         this.ref = new Date().getTime();
     }
 }

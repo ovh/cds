@@ -1,12 +1,12 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
+import { Job } from 'app/model/job.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline, PipelineAudit } from 'app/model/pipeline.model';
-import { clone, cloneDeep } from 'lodash-es';
+import { cloneDeep } from 'lodash-es';
 import { tap } from 'rxjs/operators';
 import * as actionPipeline from './pipelines.action';
 import * as ActionProject from './project.action';
-import { Job } from 'app/model/job.model';
 
 export class PipelinesStateModel {
     public pipeline: Pipeline;
@@ -44,7 +44,6 @@ export class PipelinesState {
     @Action(actionPipeline.AddPipeline)
     add(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.AddPipeline) {
         const state = ctx.getState();
-        let pipKey = `${action.payload.projectKey}/${action.payload.pipeline.name}`;
 
         return this._http.post<Pipeline>(
             `/project/${action.payload.projectKey}/pipeline`,
@@ -128,7 +127,8 @@ export class PipelinesState {
     @Action(actionPipeline.FetchPipeline)
     fetch(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.FetchPipeline) {
         const state = ctx.getState();
-        if (state.pipeline && state.pipeline.name === action.payload.pipelineName && state.currentProjectKey === action.payload.projectKey) {
+        if (state.pipeline && state.pipeline.name === action.payload.pipelineName &&
+            state.currentProjectKey === action.payload.projectKey) {
             return;
         }
         return ctx.dispatch(new actionPipeline.ResyncPipeline({ ...action.payload }));
@@ -326,8 +326,8 @@ export class PipelinesState {
         const stateEditMode = ctx.getState();
         if (stateEditMode.editMode) {
             let pipToUpdate = cloneDeep(action.payload.pipeline);
-            for (let i=0; i<pipToUpdate.stages.length; i++) {
-                pipToUpdate.stages[i].build_order = i+1;
+            for (let i = 0; i < pipToUpdate.stages.length; i++) {
+                pipToUpdate.stages[i].build_order = i + 1;
             }
             pipToUpdate.editModeChanged = true;
             ctx.setState({
@@ -418,8 +418,9 @@ export class PipelinesState {
     updateJob(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.UpdatePipelineJob) {
         const stateEditMode = ctx.getState();
         let job = action.payload.changes;
-
         if (stateEditMode.editMode) {
+            job.action.hasChanged = false;
+            job.action.loading = false;
             let pipToUpdate = cloneDeep(stateEditMode.editPipeline);
             pipToUpdate.editModeChanged = true;
             let stage = pipToUpdate.stages.find(s => s.ref === action.payload.stage.ref);
@@ -442,7 +443,6 @@ export class PipelinesState {
         return this._http.put<Pipeline>(url, job)
             .pipe(tap((pip) => {
                 const state = ctx.getState();
-                let pipKey = pip.projectKey + '/' + pip.name;
                 let pipUpdated = Object.assign({}, state.pipeline, <Pipeline>{ stages: pip.stages });
 
                 ctx.setState({
@@ -475,7 +475,6 @@ export class PipelinesState {
         return this._http.delete<Pipeline>(url)
             .pipe(tap((pip) => {
                 const state = ctx.getState();
-                let pipKey = action.payload.projectKey + '/' + action.payload.pipelineName;
                 let pipUpdated = Object.assign({}, state.pipeline, { stages: pip.stages });
 
                 ctx.setState({
@@ -496,7 +495,6 @@ export class PipelinesState {
             { params, responseType: <any>'text' }
         ).pipe(tap((asCode: string) => {
             const state = ctx.getState();
-            let pipKey = action.payload.projectKey + '/' + action.payload.pipelineName;
 
             ctx.dispatch(new actionPipeline.LoadPipeline({
                 projectKey: action.payload.projectKey,
@@ -518,7 +516,6 @@ export class PipelinesState {
             { params, headers }
         ).pipe(tap((pip: Pipeline) => {
             const state = ctx.getState();
-            const pipKey = action.payload.projectKey + '/' + action.payload.pipelineName;
 
             ctx.dispatch(new actionPipeline.LoadPipeline({
                 projectKey: action.payload.projectKey,
@@ -530,7 +527,6 @@ export class PipelinesState {
     @Action(actionPipeline.ExternalChangePipeline)
     externalChange(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.ExternalChangePipeline) {
         const state = ctx.getState();
-        const pipKey = action.payload.projectKey + '/' + action.payload.pipelineName;
         const pipUpdated = Object.assign({}, state.pipeline, { externalChange: true });
 
         ctx.setState({

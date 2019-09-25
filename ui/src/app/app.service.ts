@@ -218,9 +218,8 @@ export class AppService {
             return
         }
 
-        const pipKey = event.project_key + '-' + event.pipeline_name;
         this._store.selectOnce(PipelinesState).subscribe((pips: PipelinesStateModel) => {
-            if (!pips || !pips.pipeline || pips.pipeline.name !== event.pipeline_name || pips.currentProjectKey !== event.project_key){
+            if (!pips || !pips.pipeline || pips.pipeline.name !== event.pipeline_name || pips.currentProjectKey !== event.project_key) {
                 return;
             }
 

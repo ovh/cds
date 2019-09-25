@@ -3,7 +3,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Operation } from 'app/model/operation.model';
+import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ApplicationWorkflowService } from 'app/service/services.module';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -12,8 +14,6 @@ import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { PipelineService } from 'app/service/pipeline/pipeline.service';
-import { Pipeline } from 'app/model/pipeline.model';
 
 @Component({
     selector: 'app-update-ascode',
@@ -106,7 +106,9 @@ export class UpdateAscodeComponent {
                 });
                 break;
             case 'pipeline':
-                this._pipService.updateAsCode(this.project.key, <Pipeline>this.dataToSave, this.selectedBranch, this.commitMessage).subscribe(ope => {
+                this._pipService
+                    .updateAsCode(this.project.key, <Pipeline>this.dataToSave, this.selectedBranch, this.commitMessage)
+                    .subscribe(ope => {
                     this.ope = ope;
                     let zone = new NgZone({ enableLongStackTrace: false });
                     let webworker = new CDSWebWorker('./assets/worker/web/operation.js');
