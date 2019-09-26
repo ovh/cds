@@ -19,7 +19,7 @@ import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
 import {
-    AddPipelineParameter,
+    AddPipelineParameter, CancelPipelineEdition,
     DeletePipelineParameter,
     FetchPipeline,
     UpdatePipelineParameter
@@ -249,6 +249,12 @@ export class PipelineShowComponent implements OnInit {
                     })).subscribe(() => this._toast.success('', this._translate.instant('parameter_deleted')));
                     break;
             }
+        }
+    }
+
+    cancelPipeline(): void {
+        if (this.editMode) {
+            this._store.dispatch(new CancelPipelineEdition());
         }
     }
 

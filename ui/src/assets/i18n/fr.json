@@ -147,6 +147,8 @@
   "btn_run_workflow": "Lancer le workflow",
   "btn_run": "Lancer le pipeline",
   "btn_save": "Sauvegarder",
+  "btn_save_pipeline": "Sauvegarder le pipeline",
+  "btn_save_workflow": "Sauvegarder le workflow",
   "btn_synchronize": "Synchronizer",
   "btn_validate": "Valider",
   "cdsctl_choice_arch": "Choisissez votre architecture",
