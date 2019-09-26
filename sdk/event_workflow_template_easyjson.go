@@ -58,32 +58,17 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk(out *jwriter.Writer, in EventWorkf
 	_ = first
 	{
 		const prefix string = ",\"old_workflow_template\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk1(out, in.OldWorkflowTemplate)
 	}
 	{
 		const prefix string = ",\"new_workflow_template\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk1(out, in.NewWorkflowTemplate)
 	}
 	{
 		const prefix string = ",\"change_message\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.ChangeMessage))
 	}
 	out.RawByte('}')
@@ -247,7 +232,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk1(in *jlexer.Lexer, out *WorkflowTe
 				if out.Group == nil {
 					out.Group = new(Group)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk6(in, &*out.Group)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk6(in, out.Group)
 			}
 		case "first_audit":
 			if in.IsNull() {
@@ -257,7 +242,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk1(in *jlexer.Lexer, out *WorkflowTe
 				if out.FirstAudit == nil {
 					out.FirstAudit = new(AuditWorkflowTemplate)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk7(in, &*out.FirstAudit)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk7(in, out.FirstAudit)
 			}
 		case "last_audit":
 			if in.IsNull() {
@@ -267,7 +252,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk1(in *jlexer.Lexer, out *WorkflowTe
 				if out.LastAudit == nil {
 					out.LastAudit = new(AuditWorkflowTemplate)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk7(in, &*out.LastAudit)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk7(in, out.LastAudit)
 			}
 		case "editable":
 			out.Editable = bool(in.Bool())
@@ -289,62 +274,32 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk1(out *jwriter.Writer, in WorkflowT
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"group_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.GroupID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"slug\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Slug))
 	}
 	{
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	{
 		const prefix string = ",\"parameters\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Parameters == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
@@ -360,22 +315,12 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk1(out *jwriter.Writer, in WorkflowT
 	}
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Workflow))
 	}
 	{
 		const prefix string = ",\"pipelines\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Pipelines == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
@@ -391,12 +336,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk1(out *jwriter.Writer, in WorkflowT
 	}
 	{
 		const prefix string = ",\"applications\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Applications == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
@@ -412,12 +352,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk1(out *jwriter.Writer, in WorkflowT
 	}
 	{
 		const prefix string = ",\"environments\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Environments == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
@@ -433,72 +368,37 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk1(out *jwriter.Writer, in WorkflowT
 	}
 	{
 		const prefix string = ",\"version\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.Version))
 	}
 	{
 		const prefix string = ",\"import_url\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.ImportURL))
 	}
 	if in.Group != nil {
 		const prefix string = ",\"group\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk6(out, *in.Group)
 	}
 	if in.FirstAudit != nil {
 		const prefix string = ",\"first_audit\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk7(out, *in.FirstAudit)
 	}
 	if in.LastAudit != nil {
 		const prefix string = ",\"last_audit\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk7(out, *in.LastAudit)
 	}
 	if in.Editable {
 		const prefix string = ",\"editable\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Editable))
 	}
 	if in.ChangeMessage != "" {
 		const prefix string = ",\"change_message\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.ChangeMessage))
 	}
 	out.RawByte('}')
@@ -556,82 +456,42 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk7(out *jwriter.Writer, in AuditWork
 	_ = first
 	{
 		const prefix string = ",\"workflow_template_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.WorkflowTemplateID))
 	}
 	if in.ChangeMessage != "" {
 		const prefix string = ",\"change_message\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.ChangeMessage))
 	}
 	{
 		const prefix string = ",\"data_before\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk1(out, in.DataBefore)
 	}
 	{
 		const prefix string = ",\"data_after\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk1(out, in.DataAfter)
 	}
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"triggered_by\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.TriggeredBy))
 	}
 	{
 		const prefix string = ",\"created\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.Created).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"event_type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.EventType))
 	}
 	out.RawByte('}')
@@ -700,32 +560,17 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk6(out *jwriter.Writer, in Group) {
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	if len(in.Members) != 0 {
 		const prefix string = ",\"members\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
 			for v14, v15 := range in.Members {
@@ -739,12 +584,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk6(out *jwriter.Writer, in Group) {
 	}
 	if in.Admin {
 		const prefix string = ",\"admin\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Admin))
 	}
 	out.RawByte('}')
@@ -792,42 +632,22 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk8(out *jwriter.Writer, in GroupMemb
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.ID))
 	}
 	{
 		const prefix string = ",\"username\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Username))
 	}
 	{
 		const prefix string = ",\"fullname\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Fullname))
 	}
 	if in.Admin {
 		const prefix string = ",\"admin\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Admin))
 	}
 	out.RawByte('}')
@@ -869,12 +689,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk5(out *jwriter.Writer, in Environme
 	_ = first
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Value))
 	}
 	out.RawByte('}')
@@ -916,12 +731,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk4(out *jwriter.Writer, in Applicati
 	_ = first
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Value))
 	}
 	out.RawByte('}')
@@ -963,12 +773,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk3(out *jwriter.Writer, in PipelineT
 	_ = first
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Value))
 	}
 	out.RawByte('}')
@@ -1014,32 +819,17 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk2(out *jwriter.Writer, in WorkflowT
 	_ = first
 	{
 		const prefix string = ",\"key\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Key))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"required\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Required))
 	}
 	out.RawByte('}')
@@ -1083,22 +873,12 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk9(out *jwriter.Writer, in EventWork
 	_ = first
 	{
 		const prefix string = ",\"old_workflow_template_instance\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk10(out, in.OldWorkflowTemplateInstance)
 	}
 	{
 		const prefix string = ",\"new_workflow_template_instance\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk10(out, in.NewWorkflowTemplateInstance)
 	}
 	out.RawByte('}')
@@ -1176,7 +956,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk10(in *jlexer.Lexer, out *WorkflowT
 				if out.FirstAudit == nil {
 					out.FirstAudit = new(AuditWorkflowTemplateInstance)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk12(in, &*out.FirstAudit)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk12(in, out.FirstAudit)
 			}
 		case "last_audit":
 			if in.IsNull() {
@@ -1186,7 +966,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk10(in *jlexer.Lexer, out *WorkflowT
 				if out.LastAudit == nil {
 					out.LastAudit = new(AuditWorkflowTemplateInstance)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk12(in, &*out.LastAudit)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk12(in, out.LastAudit)
 			}
 		case "template":
 			if in.IsNull() {
@@ -1196,7 +976,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk10(in *jlexer.Lexer, out *WorkflowT
 				if out.Template == nil {
 					out.Template = new(WorkflowTemplate)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk1(in, &*out.Template)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk1(in, out.Template)
 			}
 		case "project":
 			if in.IsNull() {
@@ -1206,7 +986,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk10(in *jlexer.Lexer, out *WorkflowT
 				if out.Project == nil {
 					out.Project = new(Project)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in, &*out.Project)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in, out.Project)
 			}
 		case "workflow":
 			if in.IsNull() {
@@ -1216,7 +996,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk10(in *jlexer.Lexer, out *WorkflowT
 				if out.Workflow == nil {
 					out.Workflow = new(Workflow)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk14(in, &*out.Workflow)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk14(in, out.Workflow)
 			}
 		default:
 			in.SkipRecursive()
@@ -1234,42 +1014,22 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk10(out *jwriter.Writer, in Workflow
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"workflow_template_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.WorkflowTemplateID))
 	}
 	{
 		const prefix string = ",\"project_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ProjectID))
 	}
 	{
 		const prefix string = ",\"workflow_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.WorkflowID == nil {
 			out.RawString("null")
 		} else {
@@ -1278,82 +1038,42 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk10(out *jwriter.Writer, in Workflow
 	}
 	{
 		const prefix string = ",\"workflow_template_version\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.WorkflowTemplateVersion))
 	}
 	{
 		const prefix string = ",\"request\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk11(out, in.Request)
 	}
 	{
 		const prefix string = ",\"workflow_name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.WorkflowName))
 	}
 	if in.FirstAudit != nil {
 		const prefix string = ",\"first_audit\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk12(out, *in.FirstAudit)
 	}
 	if in.LastAudit != nil {
 		const prefix string = ",\"last_audit\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk12(out, *in.LastAudit)
 	}
 	if in.Template != nil {
 		const prefix string = ",\"template\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk1(out, *in.Template)
 	}
 	if in.Project != nil {
 		const prefix string = ",\"project\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk13(out, *in.Project)
 	}
 	if in.Workflow != nil {
 		const prefix string = ",\"workflow\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out, *in.Workflow)
 	}
 	out.RawByte('}')
@@ -1446,7 +1166,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk14(in *jlexer.Lexer, out *Workflow)
 				if out.Usage == nil {
 					out.Usage = new(Usage)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk17(in, &*out.Usage)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk17(in, out.Usage)
 			}
 		case "history_length":
 			out.HistoryLength = int64(in.Int64())
@@ -1682,7 +1402,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk14(in *jlexer.Lexer, out *Workflow)
 				if out.WorkflowData == nil {
 					out.WorkflowData = new(WorkflowData)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk26(in, &*out.WorkflowData)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk26(in, out.WorkflowData)
 			}
 		case "event_integrations":
 			if in.IsNull() {
@@ -1752,82 +1472,42 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	if in.Description != "" {
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	if in.Icon != "" {
 		const prefix string = ",\"icon\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Icon))
 	}
 	{
 		const prefix string = ",\"last_modified\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.LastModified).MarshalJSON())
 	}
 	if in.ProjectID != 0 {
 		const prefix string = ",\"project_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ProjectID))
 	}
 	{
 		const prefix string = ",\"project_key\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.ProjectKey))
 	}
 	if len(in.Groups) != 0 {
 		const prefix string = ",\"groups\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
 			for v30, v31 := range in.Groups {
@@ -1841,22 +1521,12 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	{
 		const prefix string = ",\"permissions\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk16(out, in.Permissions)
 	}
 	{
 		const prefix string = ",\"metadata\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Metadata == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
@@ -1877,32 +1547,17 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	if in.Usage != nil {
 		const prefix string = ",\"usage\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk17(out, *in.Usage)
 	}
 	{
 		const prefix string = ",\"history_length\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.HistoryLength))
 	}
 	if len(in.PurgeTags) != 0 {
 		const prefix string = ",\"purge_tags\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
 			for v33, v34 := range in.PurgeTags {
@@ -1916,12 +1571,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	if len(in.Notifications) != 0 {
 		const prefix string = ",\"notifications\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
 			for v35, v36 := range in.Notifications {
@@ -1935,52 +1585,27 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	if in.FromRepository != "" {
 		const prefix string = ",\"from_repository\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.FromRepository))
 	}
 	if in.DerivedFromWorkflowID != 0 {
 		const prefix string = ",\"derived_from_workflow_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.DerivedFromWorkflowID))
 	}
 	if in.DerivedFromWorkflowName != "" {
 		const prefix string = ",\"derived_from_workflow_name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.DerivedFromWorkflowName))
 	}
 	if in.DerivationBranch != "" {
 		const prefix string = ",\"derivation_branch\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.DerivationBranch))
 	}
 	{
 		const prefix string = ",\"audits\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Audits == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
@@ -1996,12 +1621,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	{
 		const prefix string = ",\"pipelines\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Pipelines == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
@@ -2022,12 +1642,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	{
 		const prefix string = ",\"applications\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Applications == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
@@ -2048,12 +1663,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	{
 		const prefix string = ",\"environments\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Environments == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
@@ -2074,12 +1684,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	{
 		const prefix string = ",\"project_integrations\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.ProjectIntegrations == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
@@ -2100,12 +1705,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	{
 		const prefix string = ",\"hook_models\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.HookModels == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
@@ -2126,12 +1726,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	{
 		const prefix string = ",\"outgoing_hook_models\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.OutGoingHookModels == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
@@ -2152,12 +1747,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	{
 		const prefix string = ",\"labels\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Labels == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
@@ -2173,32 +1763,17 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	{
 		const prefix string = ",\"to_delete\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.ToDelete))
 	}
 	{
 		const prefix string = ",\"favorite\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Favorite))
 	}
 	{
 		const prefix string = ",\"workflow_data\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.WorkflowData == nil {
 			out.RawString("null")
 		} else {
@@ -2207,12 +1782,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	{
 		const prefix string = ",\"event_integrations\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.EventIntegrations == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
@@ -2228,12 +1798,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	{
 		const prefix string = ",\"as_code_events\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.AsCodeEvent == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
@@ -2249,32 +1814,17 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in Workflow
 	}
 	if in.FromTemplate != "" {
 		const prefix string = ",\"from_template\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.FromTemplate))
 	}
 	if in.TemplateUpToDate {
 		const prefix string = ",\"template_up_to_date\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.TemplateUpToDate))
 	}
 	{
 		const prefix string = ",\"urls\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk28(out, in.URLs)
 	}
 	out.RawByte('}')
@@ -2318,22 +1868,12 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk28(out *jwriter.Writer, in URL) {
 	_ = first
 	{
 		const prefix string = ",\"api_url\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.APIURL))
 	}
 	{
 		const prefix string = ",\"ui_url\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.UIURL))
 	}
 	out.RawByte('}')
@@ -2359,8 +1899,6 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk27(in *jlexer.Lexer, out *AsCodeEve
 		switch key {
 		case "id":
 			out.ID = int64(in.Int64())
-		case "workflow_id":
-			out.WorkflowID = int64(in.Int64())
 		case "pullrequest_id":
 			out.PullRequestID = int64(in.Int64())
 		case "pullrequest_url":
@@ -2369,8 +1907,12 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk27(in *jlexer.Lexer, out *AsCodeEve
 			out.Username = string(in.String())
 		case "creation_date":
 			if data := in.Raw(); in.Ok() {
-				in.AddError((out.CreationDate).UnmarshalJSON(data))
+				in.AddError((out.CreateDate).UnmarshalJSON(data))
 			}
+		case "from_repository":
+			out.FromRepo = string(in.String())
+		case "data":
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk29(in, &out.Data)
 		default:
 			in.SkipRecursive()
 		}
@@ -2387,63 +1929,237 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk27(out *jwriter.Writer, in AsCodeEv
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
-		const prefix string = ",\"workflow_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.Int64(int64(in.WorkflowID))
-	}
-	{
 		const prefix string = ",\"pullrequest_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.PullRequestID))
 	}
 	{
 		const prefix string = ",\"pullrequest_url\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.PullRequestURL))
 	}
 	{
 		const prefix string = ",\"username\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Username))
 	}
 	{
 		const prefix string = ",\"creation_date\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
+		out.RawString(prefix)
+		out.Raw((in.CreateDate).MarshalJSON())
+	}
+	{
+		const prefix string = ",\"from_repository\":"
+		out.RawString(prefix)
+		out.String(string(in.FromRepo))
+	}
+	{
+		const prefix string = ",\"data\":"
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk29(out, in.Data)
+	}
+	out.RawByte('}')
+}
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk29(in *jlexer.Lexer, out *AsCodeEventData) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
 		}
-		out.Raw((in.CreationDate).MarshalJSON())
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "workflows":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Workflows = make(AsCodeEventDataValue)
+				} else {
+					out.Workflows = nil
+				}
+				for !in.IsDelim('}') {
+					key := int64(in.Int64Str())
+					in.WantColon()
+					var v51 string
+					v51 = string(in.String())
+					(out.Workflows)[key] = v51
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "pipelines":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Pipelines = make(AsCodeEventDataValue)
+				} else {
+					out.Pipelines = nil
+				}
+				for !in.IsDelim('}') {
+					key := int64(in.Int64Str())
+					in.WantColon()
+					var v52 string
+					v52 = string(in.String())
+					(out.Pipelines)[key] = v52
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "applications":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Applications = make(AsCodeEventDataValue)
+				} else {
+					out.Applications = nil
+				}
+				for !in.IsDelim('}') {
+					key := int64(in.Int64Str())
+					in.WantColon()
+					var v53 string
+					v53 = string(in.String())
+					(out.Applications)[key] = v53
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		case "environments":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Environments = make(AsCodeEventDataValue)
+				} else {
+					out.Environments = nil
+				}
+				for !in.IsDelim('}') {
+					key := int64(in.Int64Str())
+					in.WantColon()
+					var v54 string
+					v54 = string(in.String())
+					(out.Environments)[key] = v54
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk29(out *jwriter.Writer, in AsCodeEventData) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"workflows\":"
+		out.RawString(prefix[1:])
+		if in.Workflows == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v55First := true
+			for v55Name, v55Value := range in.Workflows {
+				if v55First {
+					v55First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.Int64Str(int64(v55Name))
+				out.RawByte(':')
+				out.String(string(v55Value))
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"pipelines\":"
+		out.RawString(prefix)
+		if in.Pipelines == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v56First := true
+			for v56Name, v56Value := range in.Pipelines {
+				if v56First {
+					v56First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.Int64Str(int64(v56Name))
+				out.RawByte(':')
+				out.String(string(v56Value))
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"applications\":"
+		out.RawString(prefix)
+		if in.Applications == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v57First := true
+			for v57Name, v57Value := range in.Applications {
+				if v57First {
+					v57First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.Int64Str(int64(v57Name))
+				out.RawByte(':')
+				out.String(string(v57Value))
+			}
+			out.RawByte('}')
+		}
+	}
+	{
+		const prefix string = ",\"environments\":"
+		out.RawString(prefix)
+		if in.Environments == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v58First := true
+			for v58Name, v58Value := range in.Environments {
+				if v58First {
+					v58First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.Int64Str(int64(v58Name))
+				out.RawByte(':')
+				out.String(string(v58Value))
+			}
+			out.RawByte('}')
+		}
 	}
 	out.RawByte('}')
 }
@@ -2467,7 +2183,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk26(in *jlexer.Lexer, out *WorkflowD
 		}
 		switch key {
 		case "node":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk29(in, &out.Node)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk30(in, &out.Node)
 		case "joins":
 			if in.IsNull() {
 				in.Skip()
@@ -2484,9 +2200,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk26(in *jlexer.Lexer, out *WorkflowD
 					out.Joins = (out.Joins)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v51 Node
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk29(in, &v51)
-					out.Joins = append(out.Joins, v51)
+					var v59 Node
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk30(in, &v59)
+					out.Joins = append(out.Joins, v59)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2507,38 +2223,28 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk26(out *jwriter.Writer, in Workflow
 	_ = first
 	{
 		const prefix string = ",\"node\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk29(out, in.Node)
+		out.RawString(prefix[1:])
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk30(out, in.Node)
 	}
 	{
 		const prefix string = ",\"joins\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Joins == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v52, v53 := range in.Joins {
-				if v52 > 0 {
+			for v60, v61 := range in.Joins {
+				if v60 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk29(out, v53)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk30(out, v61)
 			}
 			out.RawByte(']')
 		}
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk29(in *jlexer.Lexer, out *Node) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk30(in *jlexer.Lexer, out *Node) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -2583,9 +2289,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk29(in *jlexer.Lexer, out *Node) {
 					out.Triggers = (out.Triggers)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v54 NodeTrigger
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk30(in, &v54)
-					out.Triggers = append(out.Triggers, v54)
+					var v62 NodeTrigger
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk31(in, &v62)
+					out.Triggers = append(out.Triggers, v62)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2598,7 +2304,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk29(in *jlexer.Lexer, out *Node) {
 				if out.Context == nil {
 					out.Context = new(NodeContext)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk31(in, &*out.Context)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk32(in, out.Context)
 			}
 		case "outgoing_hook":
 			if in.IsNull() {
@@ -2608,7 +2314,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk29(in *jlexer.Lexer, out *Node) {
 				if out.OutGoingHookContext == nil {
 					out.OutGoingHookContext = new(NodeOutGoingHook)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk32(in, &*out.OutGoingHookContext)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk33(in, out.OutGoingHookContext)
 			}
 		case "parents":
 			if in.IsNull() {
@@ -2626,9 +2332,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk29(in *jlexer.Lexer, out *Node) {
 					out.JoinContext = (out.JoinContext)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v55 NodeJoin
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk33(in, &v55)
-					out.JoinContext = append(out.JoinContext, v55)
+					var v63 NodeJoin
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk34(in, &v63)
+					out.JoinContext = append(out.JoinContext, v63)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2649,9 +2355,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk29(in *jlexer.Lexer, out *Node) {
 					out.Hooks = (out.Hooks)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v56 NodeHook
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk34(in, &v56)
-					out.Hooks = append(out.Hooks, v56)
+					var v64 NodeHook
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk35(in, &v64)
+					out.Hooks = append(out.Hooks, v64)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2672,9 +2378,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk29(in *jlexer.Lexer, out *Node) {
 					out.Groups = (out.Groups)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v57 GroupPermission
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk15(in, &v57)
-					out.Groups = append(out.Groups, v57)
+					var v65 GroupPermission
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk15(in, &v65)
+					out.Groups = append(out.Groups, v65)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2689,173 +2395,118 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk29(in *jlexer.Lexer, out *Node) {
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk29(out *jwriter.Writer, in Node) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk30(out *jwriter.Writer, in Node) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"workflow_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.WorkflowID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"ref\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Ref))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"triggers\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Triggers == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v58, v59 := range in.Triggers {
-				if v58 > 0 {
+			for v66, v67 := range in.Triggers {
+				if v66 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk30(out, v59)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk31(out, v67)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"context\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Context == nil {
 			out.RawString("null")
 		} else {
-			easyjson3f98ee73EncodeGithubComOvhCdsSdk31(out, *in.Context)
+			easyjson3f98ee73EncodeGithubComOvhCdsSdk32(out, *in.Context)
 		}
 	}
 	{
 		const prefix string = ",\"outgoing_hook\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.OutGoingHookContext == nil {
 			out.RawString("null")
 		} else {
-			easyjson3f98ee73EncodeGithubComOvhCdsSdk32(out, *in.OutGoingHookContext)
+			easyjson3f98ee73EncodeGithubComOvhCdsSdk33(out, *in.OutGoingHookContext)
 		}
 	}
 	{
 		const prefix string = ",\"parents\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.JoinContext == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v60, v61 := range in.JoinContext {
-				if v60 > 0 {
+			for v68, v69 := range in.JoinContext {
+				if v68 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk33(out, v61)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk34(out, v69)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"hooks\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Hooks == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v62, v63 := range in.Hooks {
-				if v62 > 0 {
+			for v70, v71 := range in.Hooks {
+				if v70 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk34(out, v63)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk35(out, v71)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.Groups) != 0 {
 		const prefix string = ",\"groups\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v64, v65 := range in.Groups {
-				if v64 > 0 {
+			for v72, v73 := range in.Groups {
+				if v72 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk15(out, v65)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk15(out, v73)
 			}
 			out.RawByte(']')
 		}
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk34(in *jlexer.Lexer, out *NodeHook) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk35(in *jlexer.Lexer, out *NodeHook) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -2899,9 +2550,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk34(in *jlexer.Lexer, out *NodeHook)
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v66 WorkflowNodeHookConfigValue
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk35(in, &v66)
-					(out.Config)[key] = v66
+					var v74 WorkflowNodeHookConfigValue
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk36(in, &v74)
+					(out.Config)[key] = v74
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -2916,99 +2567,64 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk34(in *jlexer.Lexer, out *NodeHook)
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk34(out *jwriter.Writer, in NodeHook) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk35(out *jwriter.Writer, in NodeHook) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"uuid\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.UUID))
 	}
 	{
 		const prefix string = ",\"ref\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Ref))
 	}
 	{
 		const prefix string = ",\"node_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.NodeID))
 	}
 	{
 		const prefix string = ",\"hook_model_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.HookModelID))
 	}
 	{
 		const prefix string = ",\"hook_model_name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.HookModelName))
 	}
 	{
 		const prefix string = ",\"config\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Config == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
 			out.RawByte('{')
-			v67First := true
-			for v67Name, v67Value := range in.Config {
-				if v67First {
-					v67First = false
+			v75First := true
+			for v75Name, v75Value := range in.Config {
+				if v75First {
+					v75First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v67Name))
+				out.String(string(v75Name))
 				out.RawByte(':')
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk35(out, v67Value)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk36(out, v75Value)
 			}
 			out.RawByte('}')
 		}
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk35(in *jlexer.Lexer, out *WorkflowNodeHookConfigValue) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk36(in *jlexer.Lexer, out *WorkflowNodeHookConfigValue) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -3049,9 +2665,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk35(in *jlexer.Lexer, out *WorkflowN
 					out.MultipleChoiceList = (out.MultipleChoiceList)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v68 string
-					v68 = string(in.String())
-					out.MultipleChoiceList = append(out.MultipleChoiceList, v68)
+					var v76 string
+					v76 = string(in.String())
+					out.MultipleChoiceList = append(out.MultipleChoiceList, v76)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -3066,64 +2682,44 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk35(in *jlexer.Lexer, out *WorkflowN
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk35(out *jwriter.Writer, in WorkflowNodeHookConfigValue) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk36(out *jwriter.Writer, in WorkflowNodeHookConfigValue) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Value))
 	}
 	{
 		const prefix string = ",\"configurable\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Configurable))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"multiple_choice_list\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.MultipleChoiceList == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v69, v70 := range in.MultipleChoiceList {
-				if v69 > 0 {
+			for v77, v78 := range in.MultipleChoiceList {
+				if v77 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v70))
+				out.String(string(v78))
 			}
 			out.RawByte(']')
 		}
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk33(in *jlexer.Lexer, out *NodeJoin) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk34(in *jlexer.Lexer, out *NodeJoin) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -3160,53 +2756,33 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk33(in *jlexer.Lexer, out *NodeJoin)
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk33(out *jwriter.Writer, in NodeJoin) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk34(out *jwriter.Writer, in NodeJoin) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"node_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.NodeID))
 	}
 	if in.ParentName != "" {
 		const prefix string = ",\"parent_name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.ParentName))
 	}
 	if in.ParentID != 0 {
 		const prefix string = ",\"parent_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ParentID))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk32(in *jlexer.Lexer, out *NodeOutGoingHook) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk33(in *jlexer.Lexer, out *NodeOutGoingHook) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -3244,9 +2820,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk32(in *jlexer.Lexer, out *NodeOutGo
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v71 WorkflowNodeHookConfigValue
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk35(in, &v71)
-					(out.Config)[key] = v71
+					var v79 WorkflowNodeHookConfigValue
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk36(in, &v79)
+					(out.Config)[key] = v79
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -3261,69 +2837,49 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk32(in *jlexer.Lexer, out *NodeOutGo
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk32(out *jwriter.Writer, in NodeOutGoingHook) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk33(out *jwriter.Writer, in NodeOutGoingHook) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"node_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.NodeID))
 	}
 	{
 		const prefix string = ",\"hook_model_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.HookModelID))
 	}
 	{
 		const prefix string = ",\"config\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Config == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
 			out.RawByte('{')
-			v72First := true
-			for v72Name, v72Value := range in.Config {
-				if v72First {
-					v72First = false
+			v80First := true
+			for v80Name, v80Value := range in.Config {
+				if v80First {
+					v80First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v72Name))
+				out.String(string(v80Name))
 				out.RawByte(':')
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk35(out, v72Value)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk36(out, v80Value)
 			}
 			out.RawByte('}')
 		}
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk31(in *jlexer.Lexer, out *NodeContext) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk32(in *jlexer.Lexer, out *NodeContext) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -3378,15 +2934,15 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk31(in *jlexer.Lexer, out *NodeConte
 					out.DefaultPipelineParameters = (out.DefaultPipelineParameters)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v73 Parameter
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk36(in, &v73)
-					out.DefaultPipelineParameters = append(out.DefaultPipelineParameters, v73)
+					var v81 Parameter
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk37(in, &v81)
+					out.DefaultPipelineParameters = append(out.DefaultPipelineParameters, v81)
 					in.WantComma()
 				}
 				in.Delim(']')
 			}
 		case "conditions":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk37(in, &out.Conditions)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk38(in, &out.Conditions)
 		case "mutex":
 			out.Mutex = bool(in.Bool())
 		default:
@@ -3399,78 +2955,43 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk31(in *jlexer.Lexer, out *NodeConte
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk31(out *jwriter.Writer, in NodeContext) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk32(out *jwriter.Writer, in NodeContext) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"node_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.NodeID))
 	}
 	{
 		const prefix string = ",\"pipeline_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.PipelineID))
 	}
 	{
 		const prefix string = ",\"application_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ApplicationID))
 	}
 	{
 		const prefix string = ",\"environment_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.EnvironmentID))
 	}
 	{
 		const prefix string = ",\"project_integration_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ProjectIntegrationID))
 	}
 	if in.DefaultPayload != nil {
 		const prefix string = ",\"default_payload\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if m, ok := in.DefaultPayload.(easyjson.Marshaler); ok {
 			m.MarshalEasyJSON(out)
 		} else if m, ok := in.DefaultPayload.(json.Marshaler); ok {
@@ -3481,48 +3002,33 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk31(out *jwriter.Writer, in NodeCont
 	}
 	{
 		const prefix string = ",\"default_pipeline_parameters\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.DefaultPipelineParameters == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v74, v75 := range in.DefaultPipelineParameters {
-				if v74 > 0 {
+			for v82, v83 := range in.DefaultPipelineParameters {
+				if v82 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk36(out, v75)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk37(out, v83)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"conditions\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk37(out, in.Conditions)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk38(out, in.Conditions)
 	}
 	{
 		const prefix string = ",\"mutex\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Mutex))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk37(in *jlexer.Lexer, out *WorkflowNodeConditions) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk38(in *jlexer.Lexer, out *WorkflowNodeConditions) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -3557,9 +3063,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk37(in *jlexer.Lexer, out *WorkflowN
 					out.PlainConditions = (out.PlainConditions)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v76 WorkflowNodeCondition
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk38(in, &v76)
-					out.PlainConditions = append(out.PlainConditions, v76)
+					var v84 WorkflowNodeCondition
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk39(in, &v84)
+					out.PlainConditions = append(out.PlainConditions, v84)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -3576,25 +3082,21 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk37(in *jlexer.Lexer, out *WorkflowN
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk37(out *jwriter.Writer, in WorkflowNodeConditions) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk38(out *jwriter.Writer, in WorkflowNodeConditions) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	if len(in.PlainConditions) != 0 {
 		const prefix string = ",\"plain\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		first = false
+		out.RawString(prefix[1:])
 		{
 			out.RawByte('[')
-			for v77, v78 := range in.PlainConditions {
-				if v77 > 0 {
+			for v85, v86 := range in.PlainConditions {
+				if v85 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk38(out, v78)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk39(out, v86)
 			}
 			out.RawByte(']')
 		}
@@ -3611,7 +3113,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk37(out *jwriter.Writer, in Workflow
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk38(in *jlexer.Lexer, out *WorkflowNodeCondition) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk39(in *jlexer.Lexer, out *WorkflowNodeCondition) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -3646,43 +3148,28 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk38(in *jlexer.Lexer, out *WorkflowN
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk38(out *jwriter.Writer, in WorkflowNodeCondition) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk39(out *jwriter.Writer, in WorkflowNodeCondition) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"variable\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Variable))
 	}
 	{
 		const prefix string = ",\"operator\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Operator))
 	}
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Value))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk36(in *jlexer.Lexer, out *Parameter) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk37(in *jlexer.Lexer, out *Parameter) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -3723,73 +3210,43 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk36(in *jlexer.Lexer, out *Parameter
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk36(out *jwriter.Writer, in Parameter) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk37(out *jwriter.Writer, in Parameter) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Value))
 	}
 	if in.Description != "" {
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	if in.Advanced {
 		const prefix string = ",\"advanced\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Advanced))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk30(in *jlexer.Lexer, out *NodeTrigger) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk31(in *jlexer.Lexer, out *NodeTrigger) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -3817,7 +3274,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk30(in *jlexer.Lexer, out *NodeTrigg
 		case "parent_node_name":
 			out.ParentNodeName = string(in.String())
 		case "child_node":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk29(in, &out.ChildNode)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk30(in, &out.ChildNode)
 		default:
 			in.SkipRecursive()
 		}
@@ -3828,59 +3285,34 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk30(in *jlexer.Lexer, out *NodeTrigg
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk30(out *jwriter.Writer, in NodeTrigger) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk31(out *jwriter.Writer, in NodeTrigger) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"parent_node_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ParentNodeID))
 	}
 	{
 		const prefix string = ",\"child_node_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ChildNodeID))
 	}
 	{
 		const prefix string = ",\"parent_node_name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.ParentNodeName))
 	}
 	{
 		const prefix string = ",\"child_node\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk29(out, in.ChildNode)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk30(out, in.ChildNode)
 	}
 	out.RawByte('}')
 }
@@ -3929,52 +3361,27 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk25(out *jwriter.Writer, in Label) {
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"color\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Color))
 	}
 	{
 		const prefix string = ",\"project_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ProjectID))
 	}
 	if in.WorkflowID != 0 {
 		const prefix string = ",\"workflow_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.WorkflowID))
 	}
 	out.RawByte('}')
@@ -4027,9 +3434,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk24(in *jlexer.Lexer, out *WorkflowH
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v79 WorkflowNodeHookConfigValue
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk35(in, &v79)
-					(out.DefaultConfig)[key] = v79
+					var v87 WorkflowNodeHookConfigValue
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk36(in, &v87)
+					(out.DefaultConfig)[key] = v87
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -4052,118 +3459,68 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk24(out *jwriter.Writer, in Workflow
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"author\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Author))
 	}
 	{
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	{
 		const prefix string = ",\"identifier\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Identifier))
 	}
 	{
 		const prefix string = ",\"icon\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Icon))
 	}
 	{
 		const prefix string = ",\"command\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Command))
 	}
 	{
 		const prefix string = ",\"default_config\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.DefaultConfig == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
 			out.RawByte('{')
-			v80First := true
-			for v80Name, v80Value := range in.DefaultConfig {
-				if v80First {
-					v80First = false
+			v88First := true
+			for v88Name, v88Value := range in.DefaultConfig {
+				if v88First {
+					v88First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v80Name))
+				out.String(string(v88Name))
 				out.RawByte(':')
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk35(out, v80Value)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk36(out, v88Value)
 			}
 			out.RawByte('}')
 		}
 	}
 	{
 		const prefix string = ",\"disabled\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Disabled))
 	}
 	out.RawByte('}')
@@ -4196,7 +3553,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk23(in *jlexer.Lexer, out *ProjectIn
 		case "integration_model_id":
 			out.IntegrationModelID = int64(in.Int64())
 		case "model":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk39(in, &out.Model)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk40(in, &out.Model)
 		case "config":
 			if in.IsNull() {
 				in.Skip()
@@ -4210,9 +3567,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk23(in *jlexer.Lexer, out *ProjectIn
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v81 IntegrationConfigValue
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk40(in, &v81)
-					(out.Config)[key] = v81
+					var v89 IntegrationConfigValue
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk41(in, &v89)
+					(out.Config)[key] = v89
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -4233,9 +3590,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk23(in *jlexer.Lexer, out *ProjectIn
 					out.GRPCPlugins = (out.GRPCPlugins)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v82 GRPCPlugin
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk41(in, &v82)
-					out.GRPCPlugins = append(out.GRPCPlugins, v82)
+					var v90 GRPCPlugin
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk42(in, &v90)
+					out.GRPCPlugins = append(out.GRPCPlugins, v90)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -4256,102 +3613,67 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk23(out *jwriter.Writer, in ProjectI
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"project_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ProjectID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"integration_model_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.IntegrationModelID))
 	}
 	{
 		const prefix string = ",\"model\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk39(out, in.Model)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk40(out, in.Model)
 	}
 	{
 		const prefix string = ",\"config\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Config == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
 			out.RawByte('{')
-			v83First := true
-			for v83Name, v83Value := range in.Config {
-				if v83First {
-					v83First = false
+			v91First := true
+			for v91Name, v91Value := range in.Config {
+				if v91First {
+					v91First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v83Name))
+				out.String(string(v91Name))
 				out.RawByte(':')
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk40(out, v83Value)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk41(out, v91Value)
 			}
 			out.RawByte('}')
 		}
 	}
 	if len(in.GRPCPlugins) != 0 {
 		const prefix string = ",\"integration_plugins\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v84, v85 := range in.GRPCPlugins {
-				if v84 > 0 {
+			for v92, v93 := range in.GRPCPlugins {
+				if v92 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk41(out, v85)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk42(out, v93)
 			}
 			out.RawByte(']')
 		}
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk41(in *jlexer.Lexer, out *GRPCPlugin) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk42(in *jlexer.Lexer, out *GRPCPlugin) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -4396,9 +3718,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk41(in *jlexer.Lexer, out *GRPCPlugi
 					out.Parameters = (out.Parameters)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v86 Parameter
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk36(in, &v86)
-					out.Parameters = append(out.Parameters, v86)
+					var v94 Parameter
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk37(in, &v94)
+					out.Parameters = append(out.Parameters, v94)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -4419,9 +3741,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk41(in *jlexer.Lexer, out *GRPCPlugi
 					out.Binaries = (out.Binaries)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v87 GRPCPluginBinary
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk42(in, &v87)
-					out.Binaries = append(out.Binaries, v87)
+					var v95 GRPCPluginBinary
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk43(in, &v95)
+					out.Binaries = append(out.Binaries, v95)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -4438,113 +3760,73 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk41(in *jlexer.Lexer, out *GRPCPlugi
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk41(out *jwriter.Writer, in GRPCPlugin) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk42(out *jwriter.Writer, in GRPCPlugin) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"author\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Author))
 	}
 	{
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	if len(in.Parameters) != 0 {
 		const prefix string = ",\"parameters\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v88, v89 := range in.Parameters {
-				if v88 > 0 {
+			for v96, v97 := range in.Parameters {
+				if v96 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk36(out, v89)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk37(out, v97)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"binaries\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Binaries == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v90, v91 := range in.Binaries {
-				if v90 > 0 {
+			for v98, v99 := range in.Binaries {
+				if v98 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk42(out, v91)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk43(out, v99)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"integration\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Integration))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk42(in *jlexer.Lexer, out *GRPCPluginBinary) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk43(in *jlexer.Lexer, out *GRPCPluginBinary) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -4597,9 +3879,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk42(in *jlexer.Lexer, out *GRPCPlugi
 					out.Entrypoints = (out.Entrypoints)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v92 string
-					v92 = string(in.String())
-					out.Entrypoints = append(out.Entrypoints, v92)
+					var v100 string
+					v100 = string(in.String())
+					out.Entrypoints = append(out.Entrypoints, v100)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -4622,9 +3904,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk42(in *jlexer.Lexer, out *GRPCPlugi
 					out.Args = (out.Args)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v93 string
-					v93 = string(in.String())
-					out.Args = append(out.Args, v93)
+					var v101 string
+					v101 = string(in.String())
+					out.Args = append(out.Args, v101)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -4645,9 +3927,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk42(in *jlexer.Lexer, out *GRPCPlugi
 					out.Requirements = (out.Requirements)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v94 Requirement
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk43(in, &v94)
-					out.Requirements = append(out.Requirements, v94)
+					var v102 Requirement
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk44(in, &v102)
+					out.Requirements = append(out.Requirements, v102)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -4671,18 +3953,14 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk42(in *jlexer.Lexer, out *GRPCPlugi
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk42(out *jwriter.Writer, in GRPCPluginBinary) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk43(out *jwriter.Writer, in GRPCPluginBinary) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	if in.OS != "" {
 		const prefix string = ",\"os\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		first = false
+		out.RawString(prefix[1:])
 		out.String(string(in.OS))
 	}
 	if in.Arch != "" {
@@ -4775,11 +4053,11 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk42(out *jwriter.Writer, in GRPCPlug
 		}
 		{
 			out.RawByte('[')
-			for v96, v97 := range in.Entrypoints {
-				if v96 > 0 {
+			for v104, v105 := range in.Entrypoints {
+				if v104 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v97))
+				out.String(string(v105))
 			}
 			out.RawByte(']')
 		}
@@ -4804,11 +4082,11 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk42(out *jwriter.Writer, in GRPCPlug
 		}
 		{
 			out.RawByte('[')
-			for v98, v99 := range in.Args {
-				if v98 > 0 {
+			for v106, v107 := range in.Args {
+				if v106 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v99))
+				out.String(string(v107))
 			}
 			out.RawByte(']')
 		}
@@ -4823,11 +4101,11 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk42(out *jwriter.Writer, in GRPCPlug
 		}
 		{
 			out.RawByte('[')
-			for v100, v101 := range in.Requirements {
-				if v100 > 0 {
+			for v108, v109 := range in.Requirements {
+				if v108 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk43(out, v101)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk44(out, v109)
 			}
 			out.RawByte(']')
 		}
@@ -4854,7 +4132,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk42(out *jwriter.Writer, in GRPCPlug
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk43(in *jlexer.Lexer, out *Requirement) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk44(in *jlexer.Lexer, out *Requirement) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -4893,63 +4171,38 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk43(in *jlexer.Lexer, out *Requireme
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk43(out *jwriter.Writer, in Requirement) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk44(out *jwriter.Writer, in Requirement) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"action_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ActionID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Value))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk40(in *jlexer.Lexer, out *IntegrationConfigValue) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk41(in *jlexer.Lexer, out *IntegrationConfigValue) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -4984,43 +4237,28 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk40(in *jlexer.Lexer, out *Integrati
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk40(out *jwriter.Writer, in IntegrationConfigValue) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk41(out *jwriter.Writer, in IntegrationConfigValue) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Value))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	if in.Description != "" {
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk39(in *jlexer.Lexer, out *IntegrationModel) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk40(in *jlexer.Lexer, out *IntegrationModel) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -5062,9 +4300,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk39(in *jlexer.Lexer, out *Integrati
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v104 IntegrationConfigValue
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk40(in, &v104)
-					(out.DefaultConfig)[key] = v104
+					var v112 IntegrationConfigValue
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk41(in, &v112)
+					(out.DefaultConfig)[key] = v112
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -5082,9 +4320,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk39(in *jlexer.Lexer, out *Integrati
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v105 IntegrationConfigValue
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk40(in, &v105)
-					(out.DeploymentDefaultConfig)[key] = v105
+					var v113 IntegrationConfigValue
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk41(in, &v113)
+					(out.DeploymentDefaultConfig)[key] = v113
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -5102,27 +4340,27 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk39(in *jlexer.Lexer, out *Integrati
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v106 IntegrationConfig
+					var v114 IntegrationConfig
 					if in.IsNull() {
 						in.Skip()
 					} else {
 						in.Delim('{')
 						if !in.IsDelim('}') {
-							v106 = make(IntegrationConfig)
+							v114 = make(IntegrationConfig)
 						} else {
-							v106 = nil
+							v114 = nil
 						}
 						for !in.IsDelim('}') {
 							key := string(in.String())
 							in.WantColon()
-							var v107 IntegrationConfigValue
-							easyjson3f98ee73DecodeGithubComOvhCdsSdk40(in, &v107)
-							(v106)[key] = v107
+							var v115 IntegrationConfigValue
+							easyjson3f98ee73DecodeGithubComOvhCdsSdk41(in, &v115)
+							(v114)[key] = v115
 							in.WantComma()
 						}
 						in.Delim('}')
 					}
-					(out.PublicConfigurations)[key] = v106
+					(out.PublicConfigurations)[key] = v114
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -5151,145 +4389,105 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk39(in *jlexer.Lexer, out *Integrati
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk39(out *jwriter.Writer, in IntegrationModel) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk40(out *jwriter.Writer, in IntegrationModel) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"author\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Author))
 	}
 	{
 		const prefix string = ",\"identifier\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Identifier))
 	}
 	{
 		const prefix string = ",\"icon\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Icon))
 	}
 	{
 		const prefix string = ",\"default_config\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.DefaultConfig == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
 			out.RawByte('{')
-			v108First := true
-			for v108Name, v108Value := range in.DefaultConfig {
-				if v108First {
-					v108First = false
+			v116First := true
+			for v116Name, v116Value := range in.DefaultConfig {
+				if v116First {
+					v116First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v108Name))
+				out.String(string(v116Name))
 				out.RawByte(':')
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk40(out, v108Value)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk41(out, v116Value)
 			}
 			out.RawByte('}')
 		}
 	}
 	{
 		const prefix string = ",\"deployment_default_config\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.DeploymentDefaultConfig == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
 			out.RawByte('{')
-			v109First := true
-			for v109Name, v109Value := range in.DeploymentDefaultConfig {
-				if v109First {
-					v109First = false
+			v117First := true
+			for v117Name, v117Value := range in.DeploymentDefaultConfig {
+				if v117First {
+					v117First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v109Name))
+				out.String(string(v117Name))
 				out.RawByte(':')
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk40(out, v109Value)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk41(out, v117Value)
 			}
 			out.RawByte('}')
 		}
 	}
 	if len(in.PublicConfigurations) != 0 {
 		const prefix string = ",\"public_configurations\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('{')
-			v110First := true
-			for v110Name, v110Value := range in.PublicConfigurations {
-				if v110First {
-					v110First = false
+			v118First := true
+			for v118Name, v118Value := range in.PublicConfigurations {
+				if v118First {
+					v118First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v110Name))
+				out.String(string(v118Name))
 				out.RawByte(':')
-				if v110Value == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+				if v118Value == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 					out.RawString(`null`)
 				} else {
 					out.RawByte('{')
-					v111First := true
-					for v111Name, v111Value := range v110Value {
-						if v111First {
-							v111First = false
+					v119First := true
+					for v119Name, v119Value := range v118Value {
+						if v119First {
+							v119First = false
 						} else {
 							out.RawByte(',')
 						}
-						out.String(string(v111Name))
+						out.String(string(v119Name))
 						out.RawByte(':')
-						easyjson3f98ee73EncodeGithubComOvhCdsSdk40(out, v111Value)
+						easyjson3f98ee73EncodeGithubComOvhCdsSdk41(out, v119Value)
 					}
 					out.RawByte('}')
 				}
@@ -5299,72 +4497,37 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk39(out *jwriter.Writer, in Integrat
 	}
 	{
 		const prefix string = ",\"disabled\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Disabled))
 	}
 	{
 		const prefix string = ",\"hook\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Hook))
 	}
 	{
 		const prefix string = ",\"storage\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Storage))
 	}
 	{
 		const prefix string = ",\"deployment\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Deployment))
 	}
 	{
 		const prefix string = ",\"compute\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Compute))
 	}
 	{
 		const prefix string = ",\"event\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Event))
 	}
 	if in.Public {
 		const prefix string = ",\"public\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Public))
 	}
 	out.RawByte('}')
@@ -5408,9 +4571,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk22(in *jlexer.Lexer, out *Environme
 					out.Variable = (out.Variable)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v112 Variable
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk44(in, &v112)
-					out.Variable = append(out.Variable, v112)
+					var v120 Variable
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk45(in, &v120)
+					out.Variable = append(out.Variable, v120)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -5435,9 +4598,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk22(in *jlexer.Lexer, out *Environme
 					out.Keys = (out.Keys)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v113 EnvironmentKey
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk45(in, &v113)
-					out.Keys = append(out.Keys, v113)
+					var v121 EnvironmentKey
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk46(in, &v121)
+					out.Keys = append(out.Keys, v121)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -5450,7 +4613,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk22(in *jlexer.Lexer, out *Environme
 				if out.Usage == nil {
 					out.Usage = new(Usage)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk17(in, &*out.Usage)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk17(in, out.Usage)
 			}
 		case "from_repository":
 			out.FromRepository = string(in.String())
@@ -5470,107 +4633,67 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk22(out *jwriter.Writer, in Environm
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	if len(in.Variable) != 0 {
 		const prefix string = ",\"variables\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v114, v115 := range in.Variable {
-				if v114 > 0 {
+			for v122, v123 := range in.Variable {
+				if v122 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk44(out, v115)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk45(out, v123)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"project_key\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.ProjectKey))
 	}
 	{
 		const prefix string = ",\"last_modified\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.LastModified))
 	}
 	{
 		const prefix string = ",\"keys\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Keys == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v116, v117 := range in.Keys {
-				if v116 > 0 {
+			for v124, v125 := range in.Keys {
+				if v124 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk45(out, v117)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk46(out, v125)
 			}
 			out.RawByte(']')
 		}
 	}
 	if in.Usage != nil {
 		const prefix string = ",\"usage\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk17(out, *in.Usage)
 	}
 	if in.FromRepository != "" {
 		const prefix string = ",\"from_repository\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.FromRepository))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk45(in *jlexer.Lexer, out *EnvironmentKey) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk46(in *jlexer.Lexer, out *EnvironmentKey) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -5611,73 +4734,43 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk45(in *jlexer.Lexer, out *Environme
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk45(out *jwriter.Writer, in EnvironmentKey) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk46(out *jwriter.Writer, in EnvironmentKey) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"environment_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.EnvironmentID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"public\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Public))
 	}
 	{
 		const prefix string = ",\"private\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Private))
 	}
 	{
 		const prefix string = ",\"keyID\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.KeyID))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk44(in *jlexer.Lexer, out *Variable) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk45(in *jlexer.Lexer, out *Variable) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -5714,18 +4807,14 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk44(in *jlexer.Lexer, out *Variable)
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk44(out *jwriter.Writer, in Variable) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk45(out *jwriter.Writer, in Variable) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	if in.ID != 0 {
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		first = false
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
@@ -5740,22 +4829,12 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk44(out *jwriter.Writer, in Variable
 	}
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Value))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	out.RawByte('}')
@@ -5805,9 +4884,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk21(in *jlexer.Lexer, out *Applicati
 					out.Variable = (out.Variable)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v118 Variable
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk44(in, &v118)
-					out.Variable = append(out.Variable, v118)
+					var v126 Variable
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk45(in, &v126)
+					out.Variable = append(out.Variable, v126)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -5828,9 +4907,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk21(in *jlexer.Lexer, out *Applicati
 					out.Notifications = (out.Notifications)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v119 UserNotification
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk46(in, &v119)
-					out.Notifications = append(out.Notifications, v119)
+					var v127 UserNotification
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk47(in, &v127)
+					out.Notifications = append(out.Notifications, v127)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -5844,7 +4923,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk21(in *jlexer.Lexer, out *Applicati
 		case "repository_fullname":
 			out.RepositoryFullname = string(in.String())
 		case "vcs_strategy":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk47(in, &out.RepositoryStrategy)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk48(in, &out.RepositoryStrategy)
 		case "metadata":
 			if in.IsNull() {
 				in.Skip()
@@ -5858,9 +4937,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk21(in *jlexer.Lexer, out *Applicati
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v120 string
-					v120 = string(in.String())
-					(out.Metadata)[key] = v120
+					var v128 string
+					v128 = string(in.String())
+					(out.Metadata)[key] = v128
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -5881,9 +4960,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk21(in *jlexer.Lexer, out *Applicati
 					out.Keys = (out.Keys)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v121 ApplicationKey
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk48(in, &v121)
-					out.Keys = append(out.Keys, v121)
+					var v129 ApplicationKey
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk49(in, &v129)
+					out.Keys = append(out.Keys, v129)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -5896,7 +4975,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk21(in *jlexer.Lexer, out *Applicati
 				if out.Usage == nil {
 					out.Usage = new(Usage)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk17(in, &*out.Usage)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk17(in, out.Usage)
 			}
 		case "deployment_strategies":
 			if in.IsNull() {
@@ -5911,27 +4990,27 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk21(in *jlexer.Lexer, out *Applicati
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v122 IntegrationConfig
+					var v130 IntegrationConfig
 					if in.IsNull() {
 						in.Skip()
 					} else {
 						in.Delim('{')
 						if !in.IsDelim('}') {
-							v122 = make(IntegrationConfig)
+							v130 = make(IntegrationConfig)
 						} else {
-							v122 = nil
+							v130 = nil
 						}
 						for !in.IsDelim('}') {
 							key := string(in.String())
 							in.WantColon()
-							var v123 IntegrationConfigValue
-							easyjson3f98ee73DecodeGithubComOvhCdsSdk40(in, &v123)
-							(v122)[key] = v123
+							var v131 IntegrationConfigValue
+							easyjson3f98ee73DecodeGithubComOvhCdsSdk41(in, &v131)
+							(v130)[key] = v131
 							in.WantComma()
 						}
 						in.Delim('}')
 					}
-					(out.DeploymentStrategies)[key] = v122
+					(out.DeploymentStrategies)[key] = v130
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -5952,9 +5031,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk21(in *jlexer.Lexer, out *Applicati
 					out.Vulnerabilities = (out.Vulnerabilities)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v124 Vulnerability
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk49(in, &v124)
-					out.Vulnerabilities = append(out.Vulnerabilities, v124)
+					var v132 Vulnerability
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk50(in, &v132)
+					out.Vulnerabilities = append(out.Vulnerabilities, v132)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -5977,222 +5056,147 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk21(out *jwriter.Writer, in Applicat
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	{
 		const prefix string = ",\"icon\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Icon))
 	}
 	{
 		const prefix string = ",\"project_key\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.ProjectKey))
 	}
 	if len(in.Variable) != 0 {
 		const prefix string = ",\"variables\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v125, v126 := range in.Variable {
-				if v125 > 0 {
+			for v133, v134 := range in.Variable {
+				if v133 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk44(out, v126)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk45(out, v134)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.Notifications) != 0 {
 		const prefix string = ",\"notifications\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v127, v128 := range in.Notifications {
-				if v127 > 0 {
+			for v135, v136 := range in.Notifications {
+				if v135 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk46(out, v128)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk47(out, v136)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"last_modified\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.LastModified).MarshalJSON())
 	}
 	if in.VCSServer != "" {
 		const prefix string = ",\"vcs_server\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.VCSServer))
 	}
 	if in.RepositoryFullname != "" {
 		const prefix string = ",\"repository_fullname\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.RepositoryFullname))
 	}
 	if true {
 		const prefix string = ",\"vcs_strategy\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk47(out, in.RepositoryStrategy)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk48(out, in.RepositoryStrategy)
 	}
 	{
 		const prefix string = ",\"metadata\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Metadata == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
 			out.RawByte('{')
-			v129First := true
-			for v129Name, v129Value := range in.Metadata {
-				if v129First {
-					v129First = false
+			v137First := true
+			for v137Name, v137Value := range in.Metadata {
+				if v137First {
+					v137First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v129Name))
+				out.String(string(v137Name))
 				out.RawByte(':')
-				out.String(string(v129Value))
+				out.String(string(v137Value))
 			}
 			out.RawByte('}')
 		}
 	}
 	{
 		const prefix string = ",\"keys\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Keys == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v130, v131 := range in.Keys {
-				if v130 > 0 {
+			for v138, v139 := range in.Keys {
+				if v138 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk48(out, v131)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk49(out, v139)
 			}
 			out.RawByte(']')
 		}
 	}
 	if in.Usage != nil {
 		const prefix string = ",\"usage\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk17(out, *in.Usage)
 	}
 	if len(in.DeploymentStrategies) != 0 {
 		const prefix string = ",\"deployment_strategies\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('{')
-			v132First := true
-			for v132Name, v132Value := range in.DeploymentStrategies {
-				if v132First {
-					v132First = false
+			v140First := true
+			for v140Name, v140Value := range in.DeploymentStrategies {
+				if v140First {
+					v140First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v132Name))
+				out.String(string(v140Name))
 				out.RawByte(':')
-				if v132Value == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+				if v140Value == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 					out.RawString(`null`)
 				} else {
 					out.RawByte('{')
-					v133First := true
-					for v133Name, v133Value := range v132Value {
-						if v133First {
-							v133First = false
+					v141First := true
+					for v141Name, v141Value := range v140Value {
+						if v141First {
+							v141First = false
 						} else {
 							out.RawByte(',')
 						}
-						out.String(string(v133Name))
+						out.String(string(v141Name))
 						out.RawByte(':')
-						easyjson3f98ee73EncodeGithubComOvhCdsSdk40(out, v133Value)
+						easyjson3f98ee73EncodeGithubComOvhCdsSdk41(out, v141Value)
 					}
 					out.RawByte('}')
 				}
@@ -6202,36 +5206,26 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk21(out *jwriter.Writer, in Applicat
 	}
 	if len(in.Vulnerabilities) != 0 {
 		const prefix string = ",\"vulnerabilities\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v134, v135 := range in.Vulnerabilities {
-				if v134 > 0 {
+			for v142, v143 := range in.Vulnerabilities {
+				if v142 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk49(out, v135)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk50(out, v143)
 			}
 			out.RawByte(']')
 		}
 	}
 	if in.FromRepository != "" {
 		const prefix string = ",\"from_repository\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.FromRepository))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk49(in *jlexer.Lexer, out *Vulnerability) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk50(in *jlexer.Lexer, out *Vulnerability) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -6286,143 +5280,78 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk49(in *jlexer.Lexer, out *Vulnerabi
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk49(out *jwriter.Writer, in Vulnerability) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk50(out *jwriter.Writer, in Vulnerability) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"application_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ApplicationID))
 	}
 	{
 		const prefix string = ",\"title\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Title))
 	}
 	{
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	{
 		const prefix string = ",\"cve\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.CVE))
 	}
 	{
 		const prefix string = ",\"link\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Link))
 	}
 	{
 		const prefix string = ",\"component\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Component))
 	}
 	{
 		const prefix string = ",\"version\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Version))
 	}
 	{
 		const prefix string = ",\"origin\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Origin))
 	}
 	{
 		const prefix string = ",\"severity\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Severity))
 	}
 	{
 		const prefix string = ",\"fix_in\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.FixIn))
 	}
 	{
 		const prefix string = ",\"ignored\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Ignored))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk48(in *jlexer.Lexer, out *ApplicationKey) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk49(in *jlexer.Lexer, out *ApplicationKey) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -6463,73 +5392,43 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk48(in *jlexer.Lexer, out *Applicati
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk48(out *jwriter.Writer, in ApplicationKey) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk49(out *jwriter.Writer, in ApplicationKey) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"application_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ApplicationID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"public\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Public))
 	}
 	{
 		const prefix string = ",\"private\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Private))
 	}
 	{
 		const prefix string = ",\"keyID\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.KeyID))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk47(in *jlexer.Lexer, out *RepositoryStrategy) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk48(in *jlexer.Lexer, out *RepositoryStrategy) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -6574,93 +5473,53 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk47(in *jlexer.Lexer, out *Repositor
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk47(out *jwriter.Writer, in RepositoryStrategy) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk48(out *jwriter.Writer, in RepositoryStrategy) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"connection_type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.ConnectionType))
 	}
 	{
 		const prefix string = ",\"ssh_key\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.SSHKey))
 	}
 	if in.SSHKeyContent != "" {
 		const prefix string = ",\"ssh_key_content\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.SSHKeyContent))
 	}
 	{
 		const prefix string = ",\"user\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.User))
 	}
 	{
 		const prefix string = ",\"password\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Password))
 	}
 	if in.Branch != "" {
 		const prefix string = ",\"branch\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Branch))
 	}
 	if in.DefaultBranch != "" {
 		const prefix string = ",\"default_branch\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.DefaultBranch))
 	}
 	{
 		const prefix string = ",\"pgp_key\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.PGPKey))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk46(in *jlexer.Lexer, out *UserNotification) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk47(in *jlexer.Lexer, out *UserNotification) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -6698,9 +5557,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk46(in *jlexer.Lexer, out *UserNotif
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v136 UserNotificationSettings
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk50(in, &v136)
-					(out.Notifications)[key] = v136
+					var v144 UserNotificationSettings
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk51(in, &v144)
+					(out.Notifications)[key] = v144
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -6715,69 +5574,49 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk46(in *jlexer.Lexer, out *UserNotif
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk46(out *jwriter.Writer, in UserNotification) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk47(out *jwriter.Writer, in UserNotification) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"application_pipeline_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ApplicationPipelineID))
 	}
 	{
 		const prefix string = ",\"pipeline\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk20(out, in.Pipeline)
 	}
 	{
 		const prefix string = ",\"environment\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk22(out, in.Environment)
 	}
 	{
 		const prefix string = ",\"notifications\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Notifications == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
 			out.RawByte('{')
-			v137First := true
-			for v137Name, v137Value := range in.Notifications {
-				if v137First {
-					v137First = false
+			v145First := true
+			for v145Name, v145Value := range in.Notifications {
+				if v145First {
+					v145First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v137Name))
+				out.String(string(v145Name))
 				out.RawByte(':')
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk50(out, v137Value)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk51(out, v145Value)
 			}
 			out.RawByte('}')
 		}
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk50(in *jlexer.Lexer, out *UserNotificationSettings) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk51(in *jlexer.Lexer, out *UserNotificationSettings) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -6846,9 +5685,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk50(in *jlexer.Lexer, out *UserNotif
 					out.Recipients = (out.Recipients)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v138 string
-					v138 = string(in.String())
-					out.Recipients = append(out.Recipients, v138)
+					var v146 string
+					v146 = string(in.String())
+					out.Recipients = append(out.Recipients, v146)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -6861,10 +5700,10 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk50(in *jlexer.Lexer, out *UserNotif
 				if out.Template == nil {
 					out.Template = new(UserNotificationTemplate)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk51(in, &*out.Template)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk52(in, out.Template)
 			}
 		case "conditions":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk37(in, &out.Conditions)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk38(in, &out.Conditions)
 		default:
 			in.SkipRecursive()
 		}
@@ -6875,18 +5714,14 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk50(in *jlexer.Lexer, out *UserNotif
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk50(out *jwriter.Writer, in UserNotificationSettings) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk51(out *jwriter.Writer, in UserNotificationSettings) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	if in.OnSuccess != "" {
 		const prefix string = ",\"on_success\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		first = false
+		out.RawString(prefix[1:])
 		out.String(string(in.OnSuccess))
 	}
 	if in.OnFailure != "" {
@@ -6939,11 +5774,11 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk50(out *jwriter.Writer, in UserNoti
 		}
 		{
 			out.RawByte('[')
-			for v139, v140 := range in.Recipients {
-				if v139 > 0 {
+			for v147, v148 := range in.Recipients {
+				if v147 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v140))
+				out.String(string(v148))
 			}
 			out.RawByte(']')
 		}
@@ -6956,7 +5791,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk50(out *jwriter.Writer, in UserNoti
 		} else {
 			out.RawString(prefix)
 		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk51(out, *in.Template)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk52(out, *in.Template)
 	}
 	if true {
 		const prefix string = ",\"conditions\":"
@@ -6966,11 +5801,11 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk50(out *jwriter.Writer, in UserNoti
 		} else {
 			out.RawString(prefix)
 		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk37(out, in.Conditions)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk38(out, in.Conditions)
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk51(in *jlexer.Lexer, out *UserNotificationTemplate) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk52(in *jlexer.Lexer, out *UserNotificationTemplate) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -7003,18 +5838,14 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk51(in *jlexer.Lexer, out *UserNotif
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk51(out *jwriter.Writer, in UserNotificationTemplate) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk52(out *jwriter.Writer, in UserNotificationTemplate) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	if in.Subject != "" {
 		const prefix string = ",\"subject\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		first = false
+		out.RawString(prefix[1:])
 		out.String(string(in.Subject))
 	}
 	if in.Body != "" {
@@ -7072,9 +5903,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk20(in *jlexer.Lexer, out *Pipeline)
 					out.Stages = (out.Stages)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v141 Stage
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk52(in, &v141)
-					out.Stages = append(out.Stages, v141)
+					var v149 Stage
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk53(in, &v149)
+					out.Stages = append(out.Stages, v149)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -7095,9 +5926,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk20(in *jlexer.Lexer, out *Pipeline)
 					out.Parameter = (out.Parameter)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v142 Parameter
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk36(in, &v142)
-					out.Parameter = append(out.Parameter, v142)
+					var v150 Parameter
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk37(in, &v150)
+					out.Parameter = append(out.Parameter, v150)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -7110,7 +5941,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk20(in *jlexer.Lexer, out *Pipeline)
 				if out.Usage == nil {
 					out.Usage = new(Usage)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk17(in, &*out.Usage)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk17(in, out.Usage)
 			}
 		case "last_modified":
 			out.LastModified = int64(in.Int64())
@@ -7132,117 +5963,72 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk20(out *jwriter.Writer, in Pipeline
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	{
 		const prefix string = ",\"projectKey\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.ProjectKey))
 	}
 	{
 		const prefix string = ",\"stages\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Stages == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v143, v144 := range in.Stages {
-				if v143 > 0 {
+			for v151, v152 := range in.Stages {
+				if v151 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk52(out, v144)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk53(out, v152)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.Parameter) != 0 {
 		const prefix string = ",\"parameters\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v145, v146 := range in.Parameter {
-				if v145 > 0 {
+			for v153, v154 := range in.Parameter {
+				if v153 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk36(out, v146)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk37(out, v154)
 			}
 			out.RawByte(']')
 		}
 	}
 	if in.Usage != nil {
 		const prefix string = ",\"usage\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk17(out, *in.Usage)
 	}
 	{
 		const prefix string = ",\"last_modified\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.LastModified))
 	}
 	{
 		const prefix string = ",\"from_repository\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.FromRepository))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk52(in *jlexer.Lexer, out *Stage) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk53(in *jlexer.Lexer, out *Stage) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -7285,9 +6071,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk52(in *jlexer.Lexer, out *Stage) {
 					out.RunJobs = (out.RunJobs)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v147 WorkflowNodeJobRun
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk53(in, &v147)
-					out.RunJobs = append(out.RunJobs, v147)
+					var v155 WorkflowNodeJobRun
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk54(in, &v155)
+					out.RunJobs = append(out.RunJobs, v155)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -7308,15 +6094,15 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk52(in *jlexer.Lexer, out *Stage) {
 					out.Prerequisites = (out.Prerequisites)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v148 Prerequisite
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk54(in, &v148)
-					out.Prerequisites = append(out.Prerequisites, v148)
+					var v156 Prerequisite
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk55(in, &v156)
+					out.Prerequisites = append(out.Prerequisites, v156)
 					in.WantComma()
 				}
 				in.Delim(']')
 			}
 		case "conditions":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk37(in, &out.Conditions)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk38(in, &out.Conditions)
 		case "last_modified":
 			out.LastModified = int64(in.Int64())
 		case "jobs":
@@ -7335,9 +6121,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk52(in *jlexer.Lexer, out *Stage) {
 					out.Jobs = (out.Jobs)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v149 Job
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk55(in, &v149)
-					out.Jobs = append(out.Jobs, v149)
+					var v157 Job
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk56(in, &v157)
+					out.Jobs = append(out.Jobs, v157)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -7360,9 +6146,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk52(in *jlexer.Lexer, out *Stage) {
 					out.Warnings = (out.Warnings)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v150 PipelineBuildWarning
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk56(in, &v150)
-					out.Warnings = append(out.Warnings, v150)
+					var v158 PipelineBuildWarning
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in, &v158)
+					out.Warnings = append(out.Warnings, v158)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -7377,167 +6163,112 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk52(in *jlexer.Lexer, out *Stage) {
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk52(out *jwriter.Writer, in Stage) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk53(out *jwriter.Writer, in Stage) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"build_order\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int(int(in.BuildOrder))
 	}
 	{
 		const prefix string = ",\"enabled\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Enabled))
 	}
 	{
 		const prefix string = ",\"run_jobs\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.RunJobs == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v151, v152 := range in.RunJobs {
-				if v151 > 0 {
+			for v159, v160 := range in.RunJobs {
+				if v159 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk53(out, v152)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk54(out, v160)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"prerequisites\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Prerequisites == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v153, v154 := range in.Prerequisites {
-				if v153 > 0 {
+			for v161, v162 := range in.Prerequisites {
+				if v161 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk54(out, v154)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk55(out, v162)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"conditions\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk37(out, in.Conditions)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk38(out, in.Conditions)
 	}
 	{
 		const prefix string = ",\"last_modified\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.LastModified))
 	}
 	{
 		const prefix string = ",\"jobs\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Jobs == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v155, v156 := range in.Jobs {
-				if v155 > 0 {
+			for v163, v164 := range in.Jobs {
+				if v163 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk55(out, v156)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk56(out, v164)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"status\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Status))
 	}
 	{
 		const prefix string = ",\"warnings\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Warnings == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v157, v158 := range in.Warnings {
-				if v157 > 0 {
+			for v165, v166 := range in.Warnings {
+				if v165 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk56(out, v158)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk57(out, v166)
 			}
 			out.RawByte(']')
 		}
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk56(in *jlexer.Lexer, out *PipelineBuildWarning) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in *jlexer.Lexer, out *PipelineBuildWarning) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -7559,7 +6290,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk56(in *jlexer.Lexer, out *PipelineB
 		case "type":
 			out.Type = string(in.String())
 		case "action":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in, &out.Action)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk58(in, &out.Action)
 		default:
 			in.SkipRecursive()
 		}
@@ -7570,33 +6301,23 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk56(in *jlexer.Lexer, out *PipelineB
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk56(out *jwriter.Writer, in PipelineBuildWarning) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk57(out *jwriter.Writer, in PipelineBuildWarning) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"action\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk57(out, in.Action)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk58(out, in.Action)
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in *jlexer.Lexer, out *Action) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk58(in *jlexer.Lexer, out *Action) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -7659,9 +6380,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in *jlexer.Lexer, out *Action) {
 					out.Requirements = (out.Requirements)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v159 Requirement
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk43(in, &v159)
-					out.Requirements = append(out.Requirements, v159)
+					var v167 Requirement
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk44(in, &v167)
+					out.Requirements = append(out.Requirements, v167)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -7682,9 +6403,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in *jlexer.Lexer, out *Action) {
 					out.Parameters = (out.Parameters)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v160 Parameter
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk36(in, &v160)
-					out.Parameters = append(out.Parameters, v160)
+					var v168 Parameter
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk37(in, &v168)
+					out.Parameters = append(out.Parameters, v168)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -7705,9 +6426,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in *jlexer.Lexer, out *Action) {
 					out.Actions = (out.Actions)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v161 Action
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in, &v161)
-					out.Actions = append(out.Actions, v161)
+					var v169 Action
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk58(in, &v169)
+					out.Actions = append(out.Actions, v169)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -7720,7 +6441,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in *jlexer.Lexer, out *Action) {
 				if out.Group == nil {
 					out.Group = new(Group)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk6(in, &*out.Group)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk6(in, out.Group)
 			}
 		case "first_audit":
 			if in.IsNull() {
@@ -7730,7 +6451,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in *jlexer.Lexer, out *Action) {
 				if out.FirstAudit == nil {
 					out.FirstAudit = new(AuditAction)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk58(in, &*out.FirstAudit)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk59(in, out.FirstAudit)
 			}
 		case "last_audit":
 			if in.IsNull() {
@@ -7740,7 +6461,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in *jlexer.Lexer, out *Action) {
 				if out.LastAudit == nil {
 					out.LastAudit = new(AuditAction)
 				}
-				easyjson3f98ee73DecodeGithubComOvhCdsSdk58(in, &*out.LastAudit)
+				easyjson3f98ee73DecodeGithubComOvhCdsSdk59(in, out.LastAudit)
 			}
 		case "editable":
 			out.Editable = bool(in.Bool())
@@ -7754,214 +6475,129 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in *jlexer.Lexer, out *Action) {
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk57(out *jwriter.Writer, in Action) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk58(out *jwriter.Writer, in Action) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	if in.GroupID != nil {
 		const prefix string = ",\"group_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(*in.GroupID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	{
 		const prefix string = ",\"enabled\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Enabled))
 	}
 	{
 		const prefix string = ",\"deprecated\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Deprecated))
 	}
 	if in.StepName != "" {
 		const prefix string = ",\"step_name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.StepName))
 	}
 	{
 		const prefix string = ",\"optional\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Optional))
 	}
 	{
 		const prefix string = ",\"always_executed\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.AlwaysExecuted))
 	}
 	{
 		const prefix string = ",\"requirements\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Requirements == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v162, v163 := range in.Requirements {
-				if v162 > 0 {
+			for v170, v171 := range in.Requirements {
+				if v170 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk43(out, v163)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk44(out, v171)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"parameters\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Parameters == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v164, v165 := range in.Parameters {
-				if v164 > 0 {
+			for v172, v173 := range in.Parameters {
+				if v172 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk36(out, v165)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk37(out, v173)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.Actions) != 0 {
 		const prefix string = ",\"actions\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v166, v167 := range in.Actions {
-				if v166 > 0 {
+			for v174, v175 := range in.Actions {
+				if v174 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk57(out, v167)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk58(out, v175)
 			}
 			out.RawByte(']')
 		}
 	}
 	if in.Group != nil {
 		const prefix string = ",\"group\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk6(out, *in.Group)
 	}
 	if in.FirstAudit != nil {
 		const prefix string = ",\"first_audit\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk58(out, *in.FirstAudit)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk59(out, *in.FirstAudit)
 	}
 	if in.LastAudit != nil {
 		const prefix string = ",\"last_audit\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk58(out, *in.LastAudit)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk59(out, *in.LastAudit)
 	}
 	if in.Editable {
 		const prefix string = ",\"editable\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Editable))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk58(in *jlexer.Lexer, out *AuditAction) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk59(in *jlexer.Lexer, out *AuditAction) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -8008,93 +6644,53 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk58(in *jlexer.Lexer, out *AuditActi
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk58(out *jwriter.Writer, in AuditAction) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk59(out *jwriter.Writer, in AuditAction) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"action_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ActionID))
 	}
 	{
 		const prefix string = ",\"data_type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.DataType))
 	}
 	{
 		const prefix string = ",\"data_before\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.DataBefore))
 	}
 	{
 		const prefix string = ",\"data_after\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.DataAfter))
 	}
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"triggered_by\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.TriggeredBy))
 	}
 	{
 		const prefix string = ",\"created\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.Created).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"event_type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.EventType))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk55(in *jlexer.Lexer, out *Job) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk56(in *jlexer.Lexer, out *Job) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -8122,7 +6718,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk55(in *jlexer.Lexer, out *Job) {
 		case "last_modified":
 			out.LastModified = int64(in.Int64())
 		case "action":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in, &out.Action)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk58(in, &out.Action)
 		case "warnings":
 			if in.IsNull() {
 				in.Skip()
@@ -8139,9 +6735,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk55(in *jlexer.Lexer, out *Job) {
 					out.Warnings = (out.Warnings)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v168 PipelineBuildWarning
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk56(in, &v168)
-					out.Warnings = append(out.Warnings, v168)
+					var v176 PipelineBuildWarning
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in, &v176)
+					out.Warnings = append(out.Warnings, v176)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -8156,84 +6752,54 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk55(in *jlexer.Lexer, out *Job) {
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk55(out *jwriter.Writer, in Job) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk56(out *jwriter.Writer, in Job) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"pipeline_action_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.PipelineActionID))
 	}
 	{
 		const prefix string = ",\"pipeline_stage_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.PipelineStageID))
 	}
 	{
 		const prefix string = ",\"enabled\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Enabled))
 	}
 	{
 		const prefix string = ",\"last_modified\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.LastModified))
 	}
 	{
 		const prefix string = ",\"action\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk57(out, in.Action)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk58(out, in.Action)
 	}
 	{
 		const prefix string = ",\"warnings\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Warnings == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v169, v170 := range in.Warnings {
-				if v169 > 0 {
+			for v177, v178 := range in.Warnings {
+				if v177 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk56(out, v170)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk57(out, v178)
 			}
 			out.RawByte(']')
 		}
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk54(in *jlexer.Lexer, out *Prerequisite) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk55(in *jlexer.Lexer, out *Prerequisite) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -8266,33 +6832,23 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk54(in *jlexer.Lexer, out *Prerequis
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk54(out *jwriter.Writer, in Prerequisite) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk55(out *jwriter.Writer, in Prerequisite) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"parameter\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Parameter))
 	}
 	{
 		const prefix string = ",\"expected_value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.ExpectedValue))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk53(in *jlexer.Lexer, out *WorkflowNodeJobRun) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk54(in *jlexer.Lexer, out *WorkflowNodeJobRun) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -8318,7 +6874,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk53(in *jlexer.Lexer, out *WorkflowN
 		case "workflow_node_run_id":
 			out.WorkflowNodeRunID = int64(in.Int64())
 		case "job":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk59(in, &out.Job)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk60(in, &out.Job)
 		case "parameters":
 			if in.IsNull() {
 				in.Skip()
@@ -8335,9 +6891,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk53(in *jlexer.Lexer, out *WorkflowN
 					out.Parameters = (out.Parameters)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v171 Parameter
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk36(in, &v171)
-					out.Parameters = append(out.Parameters, v171)
+					var v179 Parameter
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk37(in, &v179)
+					out.Parameters = append(out.Parameters, v179)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -8365,7 +6921,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk53(in *jlexer.Lexer, out *WorkflowN
 		case "model_type":
 			out.ModelType = string(in.String())
 		case "bookedby":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk60(in, &out.BookedBy)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk61(in, &out.BookedBy)
 		case "spawninfos":
 			if in.IsNull() {
 				in.Skip()
@@ -8382,9 +6938,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk53(in *jlexer.Lexer, out *WorkflowN
 					out.SpawnInfos = (out.SpawnInfos)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v172 SpawnInfo
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk61(in, &v172)
-					out.SpawnInfos = append(out.SpawnInfos, v172)
+					var v180 SpawnInfo
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk62(in, &v180)
+					out.SpawnInfos = append(out.SpawnInfos, v180)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -8405,9 +6961,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk53(in *jlexer.Lexer, out *WorkflowN
 					out.ExecGroups = (out.ExecGroups)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v173 Group
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk6(in, &v173)
-					out.ExecGroups = append(out.ExecGroups, v173)
+					var v181 Group
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk6(in, &v181)
+					out.ExecGroups = append(out.ExecGroups, v181)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -8428,9 +6984,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk53(in *jlexer.Lexer, out *WorkflowN
 					out.IntegrationPluginBinaries = (out.IntegrationPluginBinaries)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v174 GRPCPluginBinary
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk42(in, &v174)
-					out.IntegrationPluginBinaries = append(out.IntegrationPluginBinaries, v174)
+					var v182 GRPCPluginBinary
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk43(in, &v182)
+					out.IntegrationPluginBinaries = append(out.IntegrationPluginBinaries, v182)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -8448,9 +7004,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk53(in *jlexer.Lexer, out *WorkflowN
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v175 string
-					v175 = string(in.String())
-					(out.Header)[key] = v175
+					var v183 string
+					v183 = string(in.String())
+					(out.Header)[key] = v183
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -8467,257 +7023,162 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk53(in *jlexer.Lexer, out *WorkflowN
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk53(out *jwriter.Writer, in WorkflowNodeJobRun) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk54(out *jwriter.Writer, in WorkflowNodeJobRun) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"project_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ProjectID))
 	}
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ID))
 	}
 	if in.WorkflowNodeRunID != 0 {
 		const prefix string = ",\"workflow_node_run_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.WorkflowNodeRunID))
 	}
 	{
 		const prefix string = ",\"job\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk59(out, in.Job)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk60(out, in.Job)
 	}
 	if len(in.Parameters) != 0 {
 		const prefix string = ",\"parameters\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v176, v177 := range in.Parameters {
-				if v176 > 0 {
+			for v184, v185 := range in.Parameters {
+				if v184 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk36(out, v177)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk37(out, v185)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"status\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Status))
 	}
 	{
 		const prefix string = ",\"retry\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int(int(in.Retry))
 	}
 	if true {
 		const prefix string = ",\"queued\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.Queued).MarshalJSON())
 	}
 	if in.QueuedSeconds != 0 {
 		const prefix string = ",\"queued_seconds\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.QueuedSeconds))
 	}
 	if true {
 		const prefix string = ",\"start\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.Start).MarshalJSON())
 	}
 	if true {
 		const prefix string = ",\"done\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.Done).MarshalJSON())
 	}
 	if in.Model != "" {
 		const prefix string = ",\"model\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Model))
 	}
 	if in.ModelType != "" {
 		const prefix string = ",\"model_type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.ModelType))
 	}
 	if true {
 		const prefix string = ",\"bookedby\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk60(out, in.BookedBy)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk61(out, in.BookedBy)
 	}
 	{
 		const prefix string = ",\"spawninfos\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.SpawnInfos == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v178, v179 := range in.SpawnInfos {
-				if v178 > 0 {
+			for v186, v187 := range in.SpawnInfos {
+				if v186 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk61(out, v179)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk62(out, v187)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"exec_groups\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.ExecGroups == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v180, v181 := range in.ExecGroups {
-				if v180 > 0 {
+			for v188, v189 := range in.ExecGroups {
+				if v188 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk6(out, v181)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk6(out, v189)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.IntegrationPluginBinaries) != 0 {
 		const prefix string = ",\"integration_plugin_binaries\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v182, v183 := range in.IntegrationPluginBinaries {
-				if v182 > 0 {
+			for v190, v191 := range in.IntegrationPluginBinaries {
+				if v190 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk42(out, v183)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk43(out, v191)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.Header) != 0 {
 		const prefix string = ",\"header\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('{')
-			v184First := true
-			for v184Name, v184Value := range in.Header {
-				if v184First {
-					v184First = false
+			v192First := true
+			for v192Name, v192Value := range in.Header {
+				if v192First {
+					v192First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v184Name))
+				out.String(string(v192Name))
 				out.RawByte(':')
-				out.String(string(v184Value))
+				out.String(string(v192Value))
 			}
 			out.RawByte('}')
 		}
 	}
 	if in.ContainsService {
 		const prefix string = ",\"contains_service\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.ContainsService))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk61(in *jlexer.Lexer, out *SpawnInfo) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk62(in *jlexer.Lexer, out *SpawnInfo) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -8745,7 +7206,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk61(in *jlexer.Lexer, out *SpawnInfo
 				in.AddError((out.RemoteTime).UnmarshalJSON(data))
 			}
 		case "message":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk62(in, &out.Message)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk63(in, &out.Message)
 		case "user_message":
 			out.UserMessage = string(in.String())
 		default:
@@ -8758,18 +7219,14 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk61(in *jlexer.Lexer, out *SpawnInfo
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk61(out *jwriter.Writer, in SpawnInfo) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk62(out *jwriter.Writer, in SpawnInfo) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	if true {
 		const prefix string = ",\"api_time\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		first = false
+		out.RawString(prefix[1:])
 		out.Raw((in.APITime).MarshalJSON())
 	}
 	if true {
@@ -8790,7 +7247,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk61(out *jwriter.Writer, in SpawnInf
 		} else {
 			out.RawString(prefix)
 		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk62(out, in.Message)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk63(out, in.Message)
 	}
 	if in.UserMessage != "" {
 		const prefix string = ",\"user_message\":"
@@ -8804,7 +7261,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk61(out *jwriter.Writer, in SpawnInf
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk62(in *jlexer.Lexer, out *SpawnMsg) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk63(in *jlexer.Lexer, out *SpawnMsg) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -8841,15 +7298,15 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk62(in *jlexer.Lexer, out *SpawnMsg)
 					out.Args = (out.Args)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v185 interface{}
-					if m, ok := v185.(easyjson.Unmarshaler); ok {
+					var v193 interface{}
+					if m, ok := v193.(easyjson.Unmarshaler); ok {
 						m.UnmarshalEasyJSON(in)
-					} else if m, ok := v185.(json.Unmarshaler); ok {
+					} else if m, ok := v193.(json.Unmarshaler); ok {
 						_ = m.UnmarshalJSON(in.Raw())
 					} else {
-						v185 = in.Interface()
+						v193 = in.Interface()
 					}
-					out.Args = append(out.Args, v185)
+					out.Args = append(out.Args, v193)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -8864,42 +7321,32 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk62(in *jlexer.Lexer, out *SpawnMsg)
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk62(out *jwriter.Writer, in SpawnMsg) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk63(out *jwriter.Writer, in SpawnMsg) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.ID))
 	}
 	{
 		const prefix string = ",\"args\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Args == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v186, v187 := range in.Args {
-				if v186 > 0 {
+			for v194, v195 := range in.Args {
+				if v194 > 0 {
 					out.RawByte(',')
 				}
-				if m, ok := v187.(easyjson.Marshaler); ok {
+				if m, ok := v195.(easyjson.Marshaler); ok {
 					m.MarshalEasyJSON(out)
-				} else if m, ok := v187.(json.Marshaler); ok {
+				} else if m, ok := v195.(json.Marshaler); ok {
 					out.Raw(m.MarshalJSON())
 				} else {
-					out.Raw(json.Marshal(v187))
+					out.Raw(json.Marshal(v195))
 				}
 			}
 			out.RawByte(']')
@@ -8907,7 +7354,7 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk62(out *jwriter.Writer, in SpawnMsg
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk60(in *jlexer.Lexer, out *Service) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk61(in *jlexer.Lexer, out *Service) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -8931,7 +7378,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk60(in *jlexer.Lexer, out *Service) 
 				in.AddError((out.LastHeartbeat).UnmarshalJSON(data))
 			}
 		case "monitoring_status":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk63(in, &out.MonitoringStatus)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk64(in, &out.MonitoringStatus)
 		case "version":
 			out.Version = string(in.String())
 		case "up_to_date":
@@ -8957,15 +7404,15 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk60(in *jlexer.Lexer, out *Service) 
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v188 interface{}
-					if m, ok := v188.(easyjson.Unmarshaler); ok {
+					var v196 interface{}
+					if m, ok := v196.(easyjson.Unmarshaler); ok {
 						m.UnmarshalEasyJSON(in)
-					} else if m, ok := v188.(json.Unmarshaler); ok {
+					} else if m, ok := v196.(json.Unmarshaler); ok {
 						_ = m.UnmarshalJSON(in.Raw())
 					} else {
-						v188 = in.Interface()
+						v196 = in.Interface()
 					}
-					(out.Config)[key] = v188
+					(out.Config)[key] = v196
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -8987,117 +7434,72 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk60(in *jlexer.Lexer, out *Service) 
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk60(out *jwriter.Writer, in Service) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk61(out *jwriter.Writer, in Service) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"last_heartbeat\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Raw((in.LastHeartbeat).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"monitoring_status\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk63(out, in.MonitoringStatus)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk64(out, in.MonitoringStatus)
 	}
 	{
 		const prefix string = ",\"version\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Version))
 	}
 	{
 		const prefix string = ",\"up_to_date\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Uptodate))
 	}
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"http_url\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.HTTPURL))
 	}
 	{
 		const prefix string = ",\"config\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Config == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
 			out.RawByte('{')
-			v190First := true
-			for v190Name, v190Value := range in.Config {
-				if v190First {
-					v190First = false
+			v198First := true
+			for v198Name, v198Value := range in.Config {
+				if v198First {
+					v198First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v190Name))
+				out.String(string(v198Name))
 				out.RawByte(':')
-				if m, ok := v190Value.(easyjson.Marshaler); ok {
+				if m, ok := v198Value.(easyjson.Marshaler); ok {
 					m.MarshalEasyJSON(out)
-				} else if m, ok := v190Value.(json.Marshaler); ok {
+				} else if m, ok := v198Value.(json.Marshaler); ok {
 					out.Raw(m.MarshalJSON())
 				} else {
-					out.Raw(json.Marshal(v190Value))
+					out.Raw(json.Marshal(v198Value))
 				}
 			}
 			out.RawByte('}')
@@ -9105,17 +7507,12 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk60(out *jwriter.Writer, in Service)
 	}
 	{
 		const prefix string = ",\"public_key\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Base64Bytes(in.PublicKey)
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk63(in *jlexer.Lexer, out *MonitoringStatus) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk64(in *jlexer.Lexer, out *MonitoringStatus) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -9154,9 +7551,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk63(in *jlexer.Lexer, out *Monitorin
 					out.Lines = (out.Lines)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v193 MonitoringStatusLine
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk64(in, &v193)
-					out.Lines = append(out.Lines, v193)
+					var v201 MonitoringStatusLine
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk65(in, &v201)
+					out.Lines = append(out.Lines, v201)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -9171,44 +7568,34 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk63(in *jlexer.Lexer, out *Monitorin
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk63(out *jwriter.Writer, in MonitoringStatus) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk64(out *jwriter.Writer, in MonitoringStatus) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"now\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Raw((in.Now).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"lines\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Lines == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v194, v195 := range in.Lines {
-				if v194 > 0 {
+			for v202, v203 := range in.Lines {
+				if v202 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk64(out, v195)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk65(out, v203)
 			}
 			out.RawByte(']')
 		}
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk64(in *jlexer.Lexer, out *MonitoringStatusLine) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk65(in *jlexer.Lexer, out *MonitoringStatusLine) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -9245,53 +7632,33 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk64(in *jlexer.Lexer, out *Monitorin
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk64(out *jwriter.Writer, in MonitoringStatusLine) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk65(out *jwriter.Writer, in MonitoringStatusLine) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"status\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Status))
 	}
 	{
 		const prefix string = ",\"component\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Component))
 	}
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Value))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk59(in *jlexer.Lexer, out *ExecutedJob) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk60(in *jlexer.Lexer, out *ExecutedJob) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -9326,9 +7693,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk59(in *jlexer.Lexer, out *ExecutedJ
 					out.StepStatus = (out.StepStatus)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v196 StepStatus
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk65(in, &v196)
-					out.StepStatus = append(out.StepStatus, v196)
+					var v204 StepStatus
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk66(in, &v204)
+					out.StepStatus = append(out.StepStatus, v204)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -9348,7 +7715,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk59(in *jlexer.Lexer, out *ExecutedJ
 		case "last_modified":
 			out.LastModified = int64(in.Int64())
 		case "action":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in, &out.Action)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk58(in, &out.Action)
 		case "warnings":
 			if in.IsNull() {
 				in.Skip()
@@ -9365,9 +7732,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk59(in *jlexer.Lexer, out *ExecutedJ
 					out.Warnings = (out.Warnings)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v197 PipelineBuildWarning
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk56(in, &v197)
-					out.Warnings = append(out.Warnings, v197)
+					var v205 PipelineBuildWarning
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk57(in, &v205)
+					out.Warnings = append(out.Warnings, v205)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -9382,135 +7749,85 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk59(in *jlexer.Lexer, out *ExecutedJ
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk59(out *jwriter.Writer, in ExecutedJob) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk60(out *jwriter.Writer, in ExecutedJob) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"step_status\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		if in.StepStatus == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v198, v199 := range in.StepStatus {
-				if v198 > 0 {
+			for v206, v207 := range in.StepStatus {
+				if v206 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk65(out, v199)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk66(out, v207)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"reason\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Reason))
 	}
 	{
 		const prefix string = ",\"worker_name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.WorkerName))
 	}
 	{
 		const prefix string = ",\"worker_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.WorkerID))
 	}
 	{
 		const prefix string = ",\"pipeline_action_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.PipelineActionID))
 	}
 	{
 		const prefix string = ",\"pipeline_stage_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.PipelineStageID))
 	}
 	{
 		const prefix string = ",\"enabled\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Enabled))
 	}
 	{
 		const prefix string = ",\"last_modified\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.LastModified))
 	}
 	{
 		const prefix string = ",\"action\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk57(out, in.Action)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk58(out, in.Action)
 	}
 	{
 		const prefix string = ",\"warnings\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Warnings == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v200, v201 := range in.Warnings {
-				if v200 > 0 {
+			for v208, v209 := range in.Warnings {
+				if v208 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk56(out, v201)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk57(out, v209)
 			}
 			out.RawByte(']')
 		}
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk65(in *jlexer.Lexer, out *StepStatus) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk66(in *jlexer.Lexer, out *StepStatus) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -9551,48 +7868,28 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk65(in *jlexer.Lexer, out *StepStatu
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk65(out *jwriter.Writer, in StepStatus) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk66(out *jwriter.Writer, in StepStatus) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"step_order\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int(int(in.StepOrder))
 	}
 	{
 		const prefix string = ",\"status\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Status))
 	}
 	{
 		const prefix string = ",\"start\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.Start).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"done\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.Done).MarshalJSON())
 	}
 	out.RawByte('}')
@@ -9652,92 +7949,47 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk19(out *jwriter.Writer, in AuditWor
 	_ = first
 	{
 		const prefix string = ",\"project_key\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.ProjectKey))
 	}
 	{
 		const prefix string = ",\"workflow_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.WorkflowID))
 	}
 	{
 		const prefix string = ",\"data_type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.DataType))
 	}
 	{
 		const prefix string = ",\"data_before\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.DataBefore))
 	}
 	{
 		const prefix string = ",\"data_after\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.DataAfter))
 	}
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"triggered_by\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.TriggeredBy))
 	}
 	{
 		const prefix string = ",\"created\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.Created).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"event_type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.EventType))
 	}
 	out.RawByte('}')
@@ -9781,9 +8033,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk18(in *jlexer.Lexer, out *WorkflowN
 					out.SourceNodeRefs = (out.SourceNodeRefs)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v202 string
-					v202 = string(in.String())
-					out.SourceNodeRefs = append(out.SourceNodeRefs, v202)
+					var v210 string
+					v210 = string(in.String())
+					out.SourceNodeRefs = append(out.SourceNodeRefs, v210)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -9804,9 +8056,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk18(in *jlexer.Lexer, out *WorkflowN
 					out.NodeIDs = (out.NodeIDs)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v203 int64
-					v203 = int64(in.Int64())
-					out.NodeIDs = append(out.NodeIDs, v203)
+					var v211 int64
+					v211 = int64(in.Int64())
+					out.NodeIDs = append(out.NodeIDs, v211)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -9814,7 +8066,7 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk18(in *jlexer.Lexer, out *WorkflowN
 		case "type":
 			out.Type = string(in.String())
 		case "settings":
-			easyjson3f98ee73DecodeGithubComOvhCdsSdk50(in, &out.Settings)
+			easyjson3f98ee73DecodeGithubComOvhCdsSdk51(in, &out.Settings)
 		default:
 			in.SkipRecursive()
 		}
@@ -9831,12 +8083,8 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk18(out *jwriter.Writer, in Workflow
 	_ = first
 	if in.ID != 0 {
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		first = false
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	if in.WorkflowID != 0 {
@@ -9859,11 +8107,11 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk18(out *jwriter.Writer, in Workflow
 		}
 		{
 			out.RawByte('[')
-			for v204, v205 := range in.SourceNodeRefs {
-				if v204 > 0 {
+			for v212, v213 := range in.SourceNodeRefs {
+				if v212 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v205))
+				out.String(string(v213))
 			}
 			out.RawByte(']')
 		}
@@ -9878,11 +8126,11 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk18(out *jwriter.Writer, in Workflow
 		}
 		{
 			out.RawByte('[')
-			for v206, v207 := range in.NodeIDs {
-				if v206 > 0 {
+			for v214, v215 := range in.NodeIDs {
+				if v214 > 0 {
 					out.RawByte(',')
 				}
-				out.Int64(int64(v207))
+				out.Int64(int64(v215))
 			}
 			out.RawByte(']')
 		}
@@ -9899,13 +8147,8 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk18(out *jwriter.Writer, in Workflow
 	}
 	{
 		const prefix string = ",\"settings\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		easyjson3f98ee73EncodeGithubComOvhCdsSdk50(out, in.Settings)
+		out.RawString(prefix)
+		easyjson3f98ee73EncodeGithubComOvhCdsSdk51(out, in.Settings)
 	}
 	out.RawByte('}')
 }
@@ -9944,9 +8187,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk17(in *jlexer.Lexer, out *Usage) {
 					out.Workflows = (out.Workflows)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v208 Workflow
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk14(in, &v208)
-					out.Workflows = append(out.Workflows, v208)
+					var v216 Workflow
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk14(in, &v216)
+					out.Workflows = append(out.Workflows, v216)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -9967,9 +8210,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk17(in *jlexer.Lexer, out *Usage) {
 					out.Environments = (out.Environments)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v209 Environment
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk22(in, &v209)
-					out.Environments = append(out.Environments, v209)
+					var v217 Environment
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk22(in, &v217)
+					out.Environments = append(out.Environments, v217)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -9990,9 +8233,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk17(in *jlexer.Lexer, out *Usage) {
 					out.Pipelines = (out.Pipelines)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v210 Pipeline
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk20(in, &v210)
-					out.Pipelines = append(out.Pipelines, v210)
+					var v218 Pipeline
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk20(in, &v218)
+					out.Pipelines = append(out.Pipelines, v218)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10013,9 +8256,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk17(in *jlexer.Lexer, out *Usage) {
 					out.Applications = (out.Applications)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v211 Application
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk21(in, &v211)
-					out.Applications = append(out.Applications, v211)
+					var v219 Application
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk21(in, &v219)
+					out.Applications = append(out.Applications, v219)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10036,19 +8279,15 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk17(out *jwriter.Writer, in Usage) {
 	_ = first
 	if len(in.Workflows) != 0 {
 		const prefix string = ",\"workflows\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		first = false
+		out.RawString(prefix[1:])
 		{
 			out.RawByte('[')
-			for v212, v213 := range in.Workflows {
-				if v212 > 0 {
+			for v220, v221 := range in.Workflows {
+				if v220 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out, v213)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out, v221)
 			}
 			out.RawByte(']')
 		}
@@ -10063,11 +8302,11 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk17(out *jwriter.Writer, in Usage) {
 		}
 		{
 			out.RawByte('[')
-			for v214, v215 := range in.Environments {
-				if v214 > 0 {
+			for v222, v223 := range in.Environments {
+				if v222 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk22(out, v215)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk22(out, v223)
 			}
 			out.RawByte(']')
 		}
@@ -10082,11 +8321,11 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk17(out *jwriter.Writer, in Usage) {
 		}
 		{
 			out.RawByte('[')
-			for v216, v217 := range in.Pipelines {
-				if v216 > 0 {
+			for v224, v225 := range in.Pipelines {
+				if v224 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk20(out, v217)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk20(out, v225)
 			}
 			out.RawByte(']')
 		}
@@ -10101,11 +8340,11 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk17(out *jwriter.Writer, in Usage) {
 		}
 		{
 			out.RawByte('[')
-			for v218, v219 := range in.Applications {
-				if v218 > 0 {
+			for v226, v227 := range in.Applications {
+				if v226 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk21(out, v219)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk21(out, v227)
 			}
 			out.RawByte(']')
 		}
@@ -10153,32 +8392,17 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk16(out *jwriter.Writer, in Permissi
 	_ = first
 	{
 		const prefix string = ",\"readable\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Bool(bool(in.Readable))
 	}
 	{
 		const prefix string = ",\"writable\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Writable))
 	}
 	{
 		const prefix string = ",\"executable\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Executable))
 	}
 	out.RawByte('}')
@@ -10222,22 +8446,12 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk15(out *jwriter.Writer, in GroupPer
 	_ = first
 	{
 		const prefix string = ",\"group\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk6(out, in.Group)
 	}
 	{
 		const prefix string = ",\"permission\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int(int(in.Permission))
 	}
 	out.RawByte('}')
@@ -10293,9 +8507,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.Workflows = (out.Workflows)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v220 Workflow
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk14(in, &v220)
-					out.Workflows = append(out.Workflows, v220)
+					var v228 Workflow
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk14(in, &v228)
+					out.Workflows = append(out.Workflows, v228)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10316,9 +8530,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.WorkflowNames = (out.WorkflowNames)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v221 IDName
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk66(in, &v221)
-					out.WorkflowNames = append(out.WorkflowNames, v221)
+					var v229 IDName
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk67(in, &v229)
+					out.WorkflowNames = append(out.WorkflowNames, v229)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10339,9 +8553,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.Pipelines = (out.Pipelines)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v222 Pipeline
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk20(in, &v222)
-					out.Pipelines = append(out.Pipelines, v222)
+					var v230 Pipeline
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk20(in, &v230)
+					out.Pipelines = append(out.Pipelines, v230)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10362,9 +8576,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.PipelineNames = (out.PipelineNames)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v223 IDName
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk66(in, &v223)
-					out.PipelineNames = append(out.PipelineNames, v223)
+					var v231 IDName
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk67(in, &v231)
+					out.PipelineNames = append(out.PipelineNames, v231)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10385,9 +8599,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.Applications = (out.Applications)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v224 Application
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk21(in, &v224)
-					out.Applications = append(out.Applications, v224)
+					var v232 Application
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk21(in, &v232)
+					out.Applications = append(out.Applications, v232)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10408,9 +8622,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.ApplicationNames = (out.ApplicationNames)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v225 IDName
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk66(in, &v225)
-					out.ApplicationNames = append(out.ApplicationNames, v225)
+					var v233 IDName
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk67(in, &v233)
+					out.ApplicationNames = append(out.ApplicationNames, v233)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10431,9 +8645,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.ProjectGroups = (out.ProjectGroups)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v226 GroupPermission
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk15(in, &v226)
-					out.ProjectGroups = append(out.ProjectGroups, v226)
+					var v234 GroupPermission
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk15(in, &v234)
+					out.ProjectGroups = append(out.ProjectGroups, v234)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10454,9 +8668,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.Variable = (out.Variable)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v227 Variable
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk44(in, &v227)
-					out.Variable = append(out.Variable, v227)
+					var v235 Variable
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk45(in, &v235)
+					out.Variable = append(out.Variable, v235)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10477,9 +8691,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.Environments = (out.Environments)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v228 Environment
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk22(in, &v228)
-					out.Environments = append(out.Environments, v228)
+					var v236 Environment
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk22(in, &v236)
+					out.Environments = append(out.Environments, v236)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10500,9 +8714,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.EnvironmentNames = (out.EnvironmentNames)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v229 IDName
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk66(in, &v229)
-					out.EnvironmentNames = append(out.EnvironmentNames, v229)
+					var v237 IDName
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk67(in, &v237)
+					out.EnvironmentNames = append(out.EnvironmentNames, v237)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10523,9 +8737,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.Labels = (out.Labels)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v230 Label
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk25(in, &v230)
-					out.Labels = append(out.Labels, v230)
+					var v238 Label
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk25(in, &v238)
+					out.Labels = append(out.Labels, v238)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10545,9 +8759,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v231 string
-					v231 = string(in.String())
-					(out.Metadata)[key] = v231
+					var v239 string
+					v239 = string(in.String())
+					(out.Metadata)[key] = v239
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -10568,9 +8782,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.Keys = (out.Keys)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v232 ProjectKey
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk67(in, &v232)
-					out.Keys = append(out.Keys, v232)
+					var v240 ProjectKey
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk68(in, &v240)
+					out.Keys = append(out.Keys, v240)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10591,9 +8805,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.VCSServers = (out.VCSServers)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v233 ProjectVCSServer
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk68(in, &v233)
-					out.VCSServers = append(out.VCSServers, v233)
+					var v241 ProjectVCSServer
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk69(in, &v241)
+					out.VCSServers = append(out.VCSServers, v241)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10614,9 +8828,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 					out.Integrations = (out.Integrations)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v234 ProjectIntegration
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk23(in, &v234)
-					out.Integrations = append(out.Integrations, v234)
+					var v242 ProjectIntegration
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk23(in, &v242)
+					out.Integrations = append(out.Integrations, v242)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -10634,9 +8848,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Project) 
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v235 bool
-					v235 = bool(in.Bool())
-					(out.Features)[key] = v235
+					var v243 bool
+					v243 = bool(in.Bool())
+					(out.Features)[key] = v243
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -10671,411 +8885,291 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk13(out *jwriter.Writer, in Project)
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	{
 		const prefix string = ",\"icon\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Icon))
 	}
 	{
 		const prefix string = ",\"created\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.Created).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"last_modified\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.LastModified).MarshalJSON())
 	}
 	if len(in.Workflows) != 0 {
 		const prefix string = ",\"workflows\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v236, v237 := range in.Workflows {
-				if v236 > 0 {
+			for v244, v245 := range in.Workflows {
+				if v244 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out, v237)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk14(out, v245)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.WorkflowNames) != 0 {
 		const prefix string = ",\"workflow_names\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v238, v239 := range in.WorkflowNames {
-				if v238 > 0 {
+			for v246, v247 := range in.WorkflowNames {
+				if v246 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk66(out, v239)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk67(out, v247)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.Pipelines) != 0 {
 		const prefix string = ",\"pipelines\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v240, v241 := range in.Pipelines {
-				if v240 > 0 {
+			for v248, v249 := range in.Pipelines {
+				if v248 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk20(out, v241)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk20(out, v249)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.PipelineNames) != 0 {
 		const prefix string = ",\"pipeline_names\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v242, v243 := range in.PipelineNames {
-				if v242 > 0 {
+			for v250, v251 := range in.PipelineNames {
+				if v250 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk66(out, v243)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk67(out, v251)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.Applications) != 0 {
 		const prefix string = ",\"applications\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v244, v245 := range in.Applications {
-				if v244 > 0 {
+			for v252, v253 := range in.Applications {
+				if v252 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk21(out, v245)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk21(out, v253)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.ApplicationNames) != 0 {
 		const prefix string = ",\"application_names\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v246, v247 := range in.ApplicationNames {
-				if v246 > 0 {
+			for v254, v255 := range in.ApplicationNames {
+				if v254 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk66(out, v247)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk67(out, v255)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.ProjectGroups) != 0 {
 		const prefix string = ",\"groups\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v248, v249 := range in.ProjectGroups {
-				if v248 > 0 {
+			for v256, v257 := range in.ProjectGroups {
+				if v256 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk15(out, v249)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk15(out, v257)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.Variable) != 0 {
 		const prefix string = ",\"variables\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v250, v251 := range in.Variable {
-				if v250 > 0 {
+			for v258, v259 := range in.Variable {
+				if v258 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk44(out, v251)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk45(out, v259)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.Environments) != 0 {
 		const prefix string = ",\"environments\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v252, v253 := range in.Environments {
-				if v252 > 0 {
+			for v260, v261 := range in.Environments {
+				if v260 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk22(out, v253)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk22(out, v261)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.EnvironmentNames) != 0 {
 		const prefix string = ",\"environment_names\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v254, v255 := range in.EnvironmentNames {
-				if v254 > 0 {
+			for v262, v263 := range in.EnvironmentNames {
+				if v262 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk66(out, v255)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk67(out, v263)
 			}
 			out.RawByte(']')
 		}
 	}
 	if len(in.Labels) != 0 {
 		const prefix string = ",\"labels\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v256, v257 := range in.Labels {
-				if v256 > 0 {
+			for v264, v265 := range in.Labels {
+				if v264 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk25(out, v257)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk25(out, v265)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"permissions\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk16(out, in.Permissions)
 	}
 	{
 		const prefix string = ",\"metadata\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Metadata == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
 			out.RawByte('{')
-			v258First := true
-			for v258Name, v258Value := range in.Metadata {
-				if v258First {
-					v258First = false
+			v266First := true
+			for v266Name, v266Value := range in.Metadata {
+				if v266First {
+					v266First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v258Name))
+				out.String(string(v266Name))
 				out.RawByte(':')
-				out.String(string(v258Value))
+				out.String(string(v266Value))
 			}
 			out.RawByte('}')
 		}
 	}
 	{
 		const prefix string = ",\"keys\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Keys == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v259, v260 := range in.Keys {
-				if v259 > 0 {
+			for v267, v268 := range in.Keys {
+				if v267 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk67(out, v260)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk68(out, v268)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"vcs_servers\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.VCSServers == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v261, v262 := range in.VCSServers {
-				if v261 > 0 {
+			for v269, v270 := range in.VCSServers {
+				if v269 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk68(out, v262)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk69(out, v270)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"integrations\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Integrations == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v263, v264 := range in.Integrations {
-				if v263 > 0 {
+			for v271, v272 := range in.Integrations {
+				if v271 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk23(out, v264)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk23(out, v272)
 			}
 			out.RawByte(']')
 		}
 	}
 	{
 		const prefix string = ",\"features\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Features == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
 			out.RawByte('{')
-			v265First := true
-			for v265Name, v265Value := range in.Features {
-				if v265First {
-					v265First = false
+			v273First := true
+			for v273Name, v273Value := range in.Features {
+				if v273First {
+					v273First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v265Name))
+				out.String(string(v273Name))
 				out.RawByte(':')
-				out.Bool(bool(v265Value))
+				out.Bool(bool(v273Value))
 			}
 			out.RawByte('}')
 		}
 	}
 	{
 		const prefix string = ",\"favorite\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Favorite))
 	}
 	{
 		const prefix string = ",\"urls\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk28(out, in.URLs)
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk68(in *jlexer.Lexer, out *ProjectVCSServer) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk69(in *jlexer.Lexer, out *ProjectVCSServer) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -11108,33 +9202,23 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk68(in *jlexer.Lexer, out *ProjectVC
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk68(out *jwriter.Writer, in ProjectVCSServer) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk69(out *jwriter.Writer, in ProjectVCSServer) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"username\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Username))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk67(in *jlexer.Lexer, out *ProjectKey) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk68(in *jlexer.Lexer, out *ProjectKey) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -11175,73 +9259,43 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk67(in *jlexer.Lexer, out *ProjectKe
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk67(out *jwriter.Writer, in ProjectKey) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk68(out *jwriter.Writer, in ProjectKey) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"project_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ProjectID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"public\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Public))
 	}
 	{
 		const prefix string = ",\"private\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Private))
 	}
 	{
 		const prefix string = ",\"keyID\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.KeyID))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk66(in *jlexer.Lexer, out *IDName) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk67(in *jlexer.Lexer, out *IDName) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -11284,9 +9338,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk66(in *jlexer.Lexer, out *IDName) {
 					out.Labels = (out.Labels)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v266 Label
-					easyjson3f98ee73DecodeGithubComOvhCdsSdk25(in, &v266)
-					out.Labels = append(out.Labels, v266)
+					var v274 Label
+					easyjson3f98ee73DecodeGithubComOvhCdsSdk25(in, &v274)
+					out.Labels = append(out.Labels, v274)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -11301,65 +9355,40 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk66(in *jlexer.Lexer, out *IDName) {
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk66(out *jwriter.Writer, in IDName) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk67(out *jwriter.Writer, in IDName) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	if in.Description != "" {
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	if in.Icon != "" {
 		const prefix string = ",\"icon\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Icon))
 	}
 	if len(in.Labels) != 0 {
 		const prefix string = ",\"labels\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v267, v268 := range in.Labels {
-				if v267 > 0 {
+			for v275, v276 := range in.Labels {
+				if v275 > 0 {
 					out.RawByte(',')
 				}
-				easyjson3f98ee73EncodeGithubComOvhCdsSdk25(out, v268)
+				easyjson3f98ee73EncodeGithubComOvhCdsSdk25(out, v276)
 			}
 			out.RawByte(']')
 		}
@@ -11419,82 +9448,42 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk12(out *jwriter.Writer, in AuditWor
 	_ = first
 	{
 		const prefix string = ",\"workflow_template_instance_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.WorkflowTemplateInstanceID))
 	}
 	{
 		const prefix string = ",\"data_type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.DataType))
 	}
 	{
 		const prefix string = ",\"data_before\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.DataBefore))
 	}
 	{
 		const prefix string = ",\"data_after\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.DataAfter))
 	}
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"triggered_by\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.TriggeredBy))
 	}
 	{
 		const prefix string = ",\"created\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.Created).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"event_type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.EventType))
 	}
 	out.RawByte('}')
@@ -11535,9 +9524,9 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk11(in *jlexer.Lexer, out *WorkflowT
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v269 string
-					v269 = string(in.String())
-					(out.Parameters)[key] = v269
+					var v277 string
+					v277 = string(in.String())
+					(out.Parameters)[key] = v277
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -11560,63 +9549,43 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk11(out *jwriter.Writer, in Workflow
 	_ = first
 	{
 		const prefix string = ",\"project_key\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.ProjectKey))
 	}
 	{
 		const prefix string = ",\"workflow_name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.WorkflowName))
 	}
 	{
 		const prefix string = ",\"parameters\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Parameters == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
 			out.RawByte('{')
-			v270First := true
-			for v270Name, v270Value := range in.Parameters {
-				if v270First {
-					v270First = false
+			v278First := true
+			for v278Name, v278Value := range in.Parameters {
+				if v278First {
+					v278First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v270Name))
+				out.String(string(v278Name))
 				out.RawByte(':')
-				out.String(string(v270Value))
+				out.String(string(v278Value))
 			}
 			out.RawByte('}')
 		}
 	}
 	if in.Detached {
 		const prefix string = ",\"detached\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Detached))
 	}
 	out.RawByte('}')
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk69(in *jlexer.Lexer, out *EventWorkflowTemplateInstanceAdd) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk70(in *jlexer.Lexer, out *EventWorkflowTemplateInstanceAdd) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -11647,18 +9616,13 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk69(in *jlexer.Lexer, out *EventWork
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk69(out *jwriter.Writer, in EventWorkflowTemplateInstanceAdd) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk70(out *jwriter.Writer, in EventWorkflowTemplateInstanceAdd) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"workflow_template_instance\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk10(out, in.WorkflowTemplateInstance)
 	}
 	out.RawByte('}')
@@ -11667,27 +9631,27 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk69(out *jwriter.Writer, in EventWor
 // MarshalJSON supports json.Marshaler interface
 func (v EventWorkflowTemplateInstanceAdd) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson3f98ee73EncodeGithubComOvhCdsSdk69(&w, v)
+	easyjson3f98ee73EncodeGithubComOvhCdsSdk70(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v EventWorkflowTemplateInstanceAdd) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson3f98ee73EncodeGithubComOvhCdsSdk69(w, v)
+	easyjson3f98ee73EncodeGithubComOvhCdsSdk70(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *EventWorkflowTemplateInstanceAdd) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson3f98ee73DecodeGithubComOvhCdsSdk69(&r, v)
+	easyjson3f98ee73DecodeGithubComOvhCdsSdk70(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *EventWorkflowTemplateInstanceAdd) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson3f98ee73DecodeGithubComOvhCdsSdk69(l, v)
+	easyjson3f98ee73DecodeGithubComOvhCdsSdk70(l, v)
 }
-func easyjson3f98ee73DecodeGithubComOvhCdsSdk70(in *jlexer.Lexer, out *EventWorkflowTemplateAdd) {
+func easyjson3f98ee73DecodeGithubComOvhCdsSdk71(in *jlexer.Lexer, out *EventWorkflowTemplateAdd) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -11718,18 +9682,13 @@ func easyjson3f98ee73DecodeGithubComOvhCdsSdk70(in *jlexer.Lexer, out *EventWork
 		in.Consumed()
 	}
 }
-func easyjson3f98ee73EncodeGithubComOvhCdsSdk70(out *jwriter.Writer, in EventWorkflowTemplateAdd) {
+func easyjson3f98ee73EncodeGithubComOvhCdsSdk71(out *jwriter.Writer, in EventWorkflowTemplateAdd) {
 	out.RawByte('{')
 	first := true
 	_ = first
 	{
 		const prefix string = ",\"workflow_template\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson3f98ee73EncodeGithubComOvhCdsSdk1(out, in.WorkflowTemplate)
 	}
 	out.RawByte('}')
@@ -11738,23 +9697,23 @@ func easyjson3f98ee73EncodeGithubComOvhCdsSdk70(out *jwriter.Writer, in EventWor
 // MarshalJSON supports json.Marshaler interface
 func (v EventWorkflowTemplateAdd) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson3f98ee73EncodeGithubComOvhCdsSdk70(&w, v)
+	easyjson3f98ee73EncodeGithubComOvhCdsSdk71(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v EventWorkflowTemplateAdd) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson3f98ee73EncodeGithubComOvhCdsSdk70(w, v)
+	easyjson3f98ee73EncodeGithubComOvhCdsSdk71(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *EventWorkflowTemplateAdd) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson3f98ee73DecodeGithubComOvhCdsSdk70(&r, v)
+	easyjson3f98ee73DecodeGithubComOvhCdsSdk71(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *EventWorkflowTemplateAdd) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson3f98ee73DecodeGithubComOvhCdsSdk70(l, v)
+	easyjson3f98ee73DecodeGithubComOvhCdsSdk71(l, v)
 }

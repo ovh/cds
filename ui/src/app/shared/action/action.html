@@ -122,11 +122,13 @@
 
             <ng-container *ngIf="(editableAction.id || pipeline.from_repository) && !editableAction.showAddStep">
                 <div [ngClass]="publicActions.length > 0 ? 'seven wide column' : 'fourteen wide column'">
-                    <button class="ui fluid green button" name="updatebtn" (click)="sendActionEvent('update')"
+                    <button class="ui fluid green button" name="updatebtn"
+                            (click)="sendActionEvent('update')"
                         [disabled]="!editableAction.hasChanged || editableAction.loading"
                         [class.loading]="editableAction.loading">
                         <i class="save icon"></i>
-                        {{ 'btn_save' | translate }}
+                        <span *ngIf="!editPipelineMode">{{ 'btn_save' | translate }}</span>
+                        <span *ngIf="editPipelineMode">{{ 'btn_apply' | translate }}</span>
                     </button>
                 </div>
                 <div class="two wide column">

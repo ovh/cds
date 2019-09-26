@@ -1,6 +1,6 @@
 <div id="PipelineEditWorkflow">
     <div class="ui grid">
-        <div class="row">
+        <div class="row" *ngIf="!editMode">
             <div class="ui sixteen column centered">
                 <div class="ui buttons">
                     <div class="ui blue button" (click)="showAsCodeEditor()">
@@ -70,7 +70,7 @@
     </div>
     <div *ngIf="selectedJob && pipeline" class="mb130">
         <app-action [project]="project" [suggest]="suggest" [action]="selectedJob.action" [pipeline]="pipeline"
-            [stage]="selectedStage" [keys]="keys" [edit]="project.permissions.writable"
+            [stage]="selectedStage" [keys]="keys" [edit]="project.permissions.writable" [editPipelineMode]="editMode"
             (actionEvent)="jobEvent($event)">
         </app-action>
     </div>

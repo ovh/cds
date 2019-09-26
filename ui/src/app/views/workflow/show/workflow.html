@@ -29,6 +29,13 @@
                     *ngIf="detailedWorkflow.permissions.writable">
                     <i class="graduation icon"></i>
                     {{'common_advanced' | translate }}</a>
+                <div class="ui small buttons" *ngIf="editMode">
+                    <ng-container *ngIf="editModeWorkflowChanged">
+                        <button class="ui button" (click)="rollbackWorkflow()">{{'common_cancel' | translate }}</button>
+                        <div class="or"></div>
+                    </ng-container>
+                    <button class="ui green button"  [disabled]="!editModeWorkflowChanged" (click)="saveWorkflow()">{{'btn_save_workflow' | translate }}</button>
+                </div>
             </sm-menu>
         </div>
         <div *ngIf="selectedTab === 'workflows'" class="workflowShowGraph">
@@ -67,32 +74,16 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <ng-container *ngIf="!editModeButton">
+
                                             <div class="right aligned five wide column" title="{{'btn_run_workflow' | translate}}">
                                                 <div class="ui green buttons">
-                                                    <div class="ui button" [class.disabled]="!detailedWorkflow.permissions.writable"
+                                                    <div class="ui button" [class.disabled]="!detailedWorkflow.permissions.writable || editModeWorkflowChanged"
                                                          (click)="runWithParameter()" [class.loading]="loading">
                                                         {{'btn_run_workflow' | translate }}
                                                     </div>
                                                 </div>
                                             </div>
-                                        </ng-container>
-                                        <ng-container *ngIf="editModeButton">
-                                            <div class="right aligned five wide column">
-                                                <div class="ui buttons">
-                                                    <button class="ui button"
-                                                        (click)="rollbackWorkflow()">
-                                                        {{'btn_cancel' | translate }}
-                                                    </button>
-                                                    <div class="or"></div>
-                                                    <button class="ui positive button"
-                                                            (click)="saveWorkflow()"
-                                                            [class.disabled]="!detailedWorkflow.permissions.writable">
-                                                        {{'btn_save'| translate }}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </ng-container>
+
                                     </div>
                                 </div>
                             </div>

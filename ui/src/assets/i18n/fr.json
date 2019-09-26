@@ -125,6 +125,8 @@
   "btn_run_workflow": "Lancer le workflow",
   "btn_validate": "Valider",
   "btn_save": "Sauvegarder",
+  "btn_save_pipeline": "Sauvegarder le pipeline",
+  "btn_save_workflow": "Sauvegarder le workflow",
   "btn_next": "Suivant",
   "btn_add": "Ajouter",
   "btn_back": "Retour",

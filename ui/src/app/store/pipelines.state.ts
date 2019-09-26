@@ -552,6 +552,16 @@ export class PipelinesState {
             if (pip.from_repository) {
                 editMode = true;
                 editPipeline = cloneDeep(pip);
+                if (editPipeline.stages) {
+                    editPipeline.stages.forEach(s => {
+                       s.ref = new Date().getTime();
+                       if (s.jobs) {
+                           s.jobs.forEach(j => {
+                               j.ref = new Date().getTime();
+                           })
+                       }
+                    });
+                }
             }
 
             ctx.setState({
@@ -567,5 +577,30 @@ export class PipelinesState {
     @Action(actionPipeline.ClearCachePipeline)
     clearCache(ctx: StateContext<PipelinesStateModel>, _: actionPipeline.ClearCachePipeline) {
         ctx.setState(getInitialPipelinesState());
+    }
+
+    @Action(actionPipeline.CancelPipelineEdition)
+    cancelPipelineEdition(ctx: StateContext<PipelinesStateModel>, _: actionPipeline.CancelPipelineEdition) {
+        const state = ctx.getState();
+        let editMode = state.editMode;
+        if (state.pipeline.from_repository) {
+            editMode = true;
+        }
+        let editPipeline = cloneDeep(state.pipeline);
+        if (editPipeline.stages) {
+            editPipeline.stages.forEach(s => {
+                s.ref = new Date().getTime();
+                if (s.jobs) {
+                    s.jobs.forEach(j => {
+                        j.ref = new Date().getTime();
+                    })
+                }
+            });
+        }
+        ctx.setState({
+            ...state,
+            editPipeline: editPipeline,
+            editMode: editMode,
+        });
     }
 }

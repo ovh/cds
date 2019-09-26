@@ -56,22 +56,12 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk(out *jwriter.Writer, in EventProje
 	_ = first
 	{
 		const prefix string = ",\"old_variable\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson12a0d420EncodeGithubComOvhCdsSdk1(out, in.OldVariable)
 	}
 	{
 		const prefix string = ",\"new_variable\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson12a0d420EncodeGithubComOvhCdsSdk1(out, in.NewVariable)
 	}
 	out.RawByte('}')
@@ -143,12 +133,8 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk1(out *jwriter.Writer, in Variable)
 	_ = first
 	if in.ID != 0 {
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		first = false
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
@@ -163,22 +149,12 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk1(out *jwriter.Writer, in Variable)
 	}
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Value))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	out.RawByte('}')
@@ -220,12 +196,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk2(out *jwriter.Writer, in EventProj
 	_ = first
 	{
 		const prefix string = ",\"variable\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson12a0d420EncodeGithubComOvhCdsSdk1(out, in.Variable)
 	}
 	out.RawByte('}')
@@ -291,12 +262,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk3(out *jwriter.Writer, in EventProj
 	_ = first
 	{
 		const prefix string = ",\"variable\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson12a0d420EncodeGithubComOvhCdsSdk1(out, in.Variable)
 	}
 	out.RawByte('}')
@@ -362,12 +328,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk4(out *jwriter.Writer, in EventProj
 	_ = first
 	{
 		const prefix string = ",\"vcs_server\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.VCSServerName))
 	}
 	out.RawByte('}')
@@ -433,12 +394,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk5(out *jwriter.Writer, in EventProj
 	_ = first
 	{
 		const prefix string = ",\"vcs_server\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.VCSServerName))
 	}
 	out.RawByte('}')
@@ -546,32 +502,17 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk6(out *jwriter.Writer, in EventProj
 	_ = first
 	{
 		const prefix string = ",\"old_name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.OldName))
 	}
 	{
 		const prefix string = ",\"new_name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.NewName))
 	}
 	{
 		const prefix string = ",\"old_metadata\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.OldMetadata == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
@@ -592,12 +533,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk6(out *jwriter.Writer, in EventProj
 	}
 	{
 		const prefix string = ",\"new_metadata\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.NewMetadata == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
@@ -681,22 +617,12 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk7(out *jwriter.Writer, in EventProj
 	_ = first
 	{
 		const prefix string = ",\"old_group_permission\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson12a0d420EncodeGithubComOvhCdsSdk8(out, in.OldPermission)
 	}
 	{
 		const prefix string = ",\"new_group_permission\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson12a0d420EncodeGithubComOvhCdsSdk8(out, in.NewPermission)
 	}
 	out.RawByte('}')
@@ -764,22 +690,12 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk8(out *jwriter.Writer, in GroupPerm
 	_ = first
 	{
 		const prefix string = ",\"group\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson12a0d420EncodeGithubComOvhCdsSdk9(out, in.Group)
 	}
 	{
 		const prefix string = ",\"permission\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int(int(in.Permission))
 	}
 	out.RawByte('}')
@@ -848,32 +764,17 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk9(out *jwriter.Writer, in Group) {
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	if len(in.Members) != 0 {
 		const prefix string = ",\"members\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
 			for v6, v7 := range in.Members {
@@ -887,12 +788,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk9(out *jwriter.Writer, in Group) {
 	}
 	if in.Admin {
 		const prefix string = ",\"admin\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Admin))
 	}
 	out.RawByte('}')
@@ -940,42 +836,22 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk10(out *jwriter.Writer, in GroupMem
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.ID))
 	}
 	{
 		const prefix string = ",\"username\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Username))
 	}
 	{
 		const prefix string = ",\"fullname\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Fullname))
 	}
 	if in.Admin {
 		const prefix string = ",\"admin\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Admin))
 	}
 	out.RawByte('}')
@@ -1017,12 +893,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk11(out *jwriter.Writer, in EventPro
 	_ = first
 	{
 		const prefix string = ",\"group_permission\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson12a0d420EncodeGithubComOvhCdsSdk8(out, in.Permission)
 	}
 	out.RawByte('}')
@@ -1088,12 +959,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk12(out *jwriter.Writer, in EventPro
 	_ = first
 	{
 		const prefix string = ",\"group_permission\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson12a0d420EncodeGithubComOvhCdsSdk8(out, in.Permission)
 	}
 	out.RawByte('}')
@@ -1159,12 +1025,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk13(out *jwriter.Writer, in EventPro
 	_ = first
 	{
 		const prefix string = ",\"key\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson12a0d420EncodeGithubComOvhCdsSdk14(out, in.Key)
 	}
 	out.RawByte('}')
@@ -1240,62 +1101,32 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk14(out *jwriter.Writer, in ProjectK
 	_ = first
 	{
 		const prefix string = ",\"project_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ProjectID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"public\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Public))
 	}
 	{
 		const prefix string = ",\"private\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Private))
 	}
 	{
 		const prefix string = ",\"keyID\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.KeyID))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	out.RawByte('}')
@@ -1337,12 +1168,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk15(out *jwriter.Writer, in EventPro
 	_ = first
 	{
 		const prefix string = ",\"key\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson12a0d420EncodeGithubComOvhCdsSdk14(out, in.Key)
 	}
 	out.RawByte('}')
@@ -1410,22 +1236,12 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk16(out *jwriter.Writer, in EventPro
 	_ = first
 	{
 		const prefix string = ",\"old_integration\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson12a0d420EncodeGithubComOvhCdsSdk17(out, in.OldIntegration)
 	}
 	{
 		const prefix string = ",\"new_integration\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson12a0d420EncodeGithubComOvhCdsSdk17(out, in.NewsIntegration)
 	}
 	out.RawByte('}')
@@ -1542,62 +1358,32 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk17(out *jwriter.Writer, in ProjectI
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"project_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ProjectID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"integration_model_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.IntegrationModelID))
 	}
 	{
 		const prefix string = ",\"model\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		easyjson12a0d420EncodeGithubComOvhCdsSdk18(out, in.Model)
 	}
 	{
 		const prefix string = ",\"config\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Config == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
@@ -1618,12 +1404,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk17(out *jwriter.Writer, in ProjectI
 	}
 	if len(in.GRPCPlugins) != 0 {
 		const prefix string = ",\"integration_plugins\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
 			for v11, v12 := range in.GRPCPlugins {
@@ -1730,62 +1511,32 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk20(out *jwriter.Writer, in GRPCPlug
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"author\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Author))
 	}
 	{
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	if len(in.Parameters) != 0 {
 		const prefix string = ",\"parameters\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('[')
 			for v15, v16 := range in.Parameters {
@@ -1799,12 +1550,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk20(out *jwriter.Writer, in GRPCPlug
 	}
 	{
 		const prefix string = ",\"binaries\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Binaries == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
@@ -1820,12 +1566,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk20(out *jwriter.Writer, in GRPCPlug
 	}
 	{
 		const prefix string = ",\"integration\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Integration))
 	}
 	out.RawByte('}')
@@ -1963,12 +1704,8 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk22(out *jwriter.Writer, in GRPCPlug
 	_ = first
 	if in.OS != "" {
 		const prefix string = ",\"os\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		first = false
+		out.RawString(prefix[1:])
 		out.String(string(in.OS))
 	}
 	if in.Arch != "" {
@@ -2185,52 +1922,27 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk23(out *jwriter.Writer, in Requirem
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"action_id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Int64(int64(in.ActionID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Value))
 	}
 	out.RawByte('}')
@@ -2282,62 +1994,32 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk21(out *jwriter.Writer, in Paramete
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Value))
 	}
 	if in.Description != "" {
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	if in.Advanced {
 		const prefix string = ",\"advanced\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Advanced))
 	}
 	out.RawByte('}')
@@ -2383,32 +2065,17 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk19(out *jwriter.Writer, in Integrat
 	_ = first
 	{
 		const prefix string = ",\"value\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.String(string(in.Value))
 	}
 	{
 		const prefix string = ",\"type\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Type))
 	}
 	if in.Description != "" {
 		const prefix string = ",\"description\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Description))
 	}
 	out.RawByte('}')
@@ -2550,62 +2217,32 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk18(out *jwriter.Writer, in Integrat
 	_ = first
 	{
 		const prefix string = ",\"id\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}
 	{
 		const prefix string = ",\"name\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{
 		const prefix string = ",\"author\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Author))
 	}
 	{
 		const prefix string = ",\"identifier\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Identifier))
 	}
 	{
 		const prefix string = ",\"icon\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Icon))
 	}
 	{
 		const prefix string = ",\"default_config\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.DefaultConfig == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
@@ -2626,12 +2263,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk18(out *jwriter.Writer, in Integrat
 	}
 	{
 		const prefix string = ",\"deployment_default_config\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.DeploymentDefaultConfig == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {
@@ -2652,12 +2284,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk18(out *jwriter.Writer, in Integrat
 	}
 	if len(in.PublicConfigurations) != 0 {
 		const prefix string = ",\"public_configurations\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		{
 			out.RawByte('{')
 			v37First := true
@@ -2692,72 +2319,37 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk18(out *jwriter.Writer, in Integrat
 	}
 	{
 		const prefix string = ",\"disabled\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Disabled))
 	}
 	{
 		const prefix string = ",\"hook\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Hook))
 	}
 	{
 		const prefix string = ",\"storage\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Storage))
 	}
 	{
 		const prefix string = ",\"deployment\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Deployment))
 	}
 	{
 		const prefix string = ",\"compute\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Compute))
 	}
 	{
 		const prefix string = ",\"event\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Event))
 	}
 	if in.Public {
 		const prefix string = ",\"public\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Bool(bool(in.Public))
 	}
 	out.RawByte('}')
@@ -2799,12 +2391,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk24(out *jwriter.Writer, in EventPro
 	_ = first
 	{
 		const prefix string = ",\"integration\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson12a0d420EncodeGithubComOvhCdsSdk17(out, in.Integration)
 	}
 	out.RawByte('}')
@@ -2870,12 +2457,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk25(out *jwriter.Writer, in EventPro
 	_ = first
 	{
 		const prefix string = ",\"integration\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		easyjson12a0d420EncodeGithubComOvhCdsSdk17(out, in.Integration)
 	}
 	out.RawByte('}')
@@ -3087,12 +2669,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk27(out *jwriter.Writer, in EventPro
 	_ = first
 	{
 		const prefix string = ",\"variables\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix[1:])
 		if in.Variables == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
@@ -3108,12 +2685,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk27(out *jwriter.Writer, in EventPro
 	}
 	{
 		const prefix string = ",\"groups_permission\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Permissions == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
@@ -3129,12 +2701,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk27(out *jwriter.Writer, in EventPro
 	}
 	{
 		const prefix string = ",\"keys\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Keys == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
@@ -3150,12 +2717,7 @@ func easyjson12a0d420EncodeGithubComOvhCdsSdk27(out *jwriter.Writer, in EventPro
 	}
 	{
 		const prefix string = ",\"metadata\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		if in.Metadata == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 			out.RawString(`null`)
 		} else {

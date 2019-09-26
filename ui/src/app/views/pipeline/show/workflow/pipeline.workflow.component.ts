@@ -66,20 +66,31 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
             let stageFound: Stage;
             if (this.editMode) {
                 if (this.selectedStage) {
-                    stageFound = data.stages.find((stage) => stage.ref === this.selectedStage.ref);
-                }
-                if (this.selectedJob) {
-                    jobFound = stageFound.jobs.find(j => j.ref === this.selectedJob.ref)
+                    if (data && data.stages) {
+                        stageFound = data.stages.find((stage) => stage.ref === this.selectedStage.ref);
+                    } else {
+                        delete this.selectedStage;
+                    }
+                    if (this.selectedJob && stageFound) {
+                        jobFound = stageFound.jobs.find(j => j.ref === this.selectedJob.ref)
+                    } else {
+                        delete this.selectedJob;
+                    }
                 }
             } else {
                 if (this.selectedStage) {
-                    stageFound = this.selectedStage && data.stages && data.stages.find((stage) => stage.id === this.selectedStage.id);
-                    if (stageFound) {
-                        jobFound =  this.selectedJob && stageFound.jobs && stageFound.jobs.find((job) => {
-                            return job.pipeline_action_id === this.selectedJob.pipeline_action_id;
-                        });
+                    if (data && data.stages) {
+                        stageFound = this.selectedStage && data.stages && data.stages.find((stage) => stage.id === this.selectedStage.id);
+                        if (stageFound && this.selectedJob && stageFound.jobs) {
+                            jobFound =  stageFound.jobs.find((job) => {
+                                return job.pipeline_action_id === this.selectedJob.pipeline_action_id;
+                            });
+                        } else {
+                            delete this.selectedJob;
+                        }
+                    } else {
+                        delete this.selectedStage;
                     }
-
                 }
             }
             if (jobFound && stageFound) {
