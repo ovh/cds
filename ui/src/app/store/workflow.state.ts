@@ -31,7 +31,7 @@ export class WorkflowStateModel {
     filters?: {};
     editWorkflow: Workflow;
     editMode: boolean;
-    editModeSaveButton: boolean;
+    editModeWorkflowChanged: boolean;
 }
 
 export function getInitialWorkflowState(): WorkflowStateModel {
@@ -53,8 +53,7 @@ export function getInitialWorkflowState(): WorkflowStateModel {
         sidebar: WorkflowSidebarMode.RUNS,
         filters: {},
         editMode: false,
-        editModeSaveButton: false
-
+        editModeWorkflowChanged: false
     };
 }
 
@@ -178,7 +177,7 @@ export class WorkflowState {
                 ...stateEdit,
                 editWorkflow: action.payload.changes,
                 node: n,
-                editModeSaveButton: true,
+                editModeWorkflowChanged: true,
             });
             return;
         }
@@ -351,7 +350,7 @@ export class WorkflowState {
             ctx.setState({
                 ...state,
                 editWorkflow: editWorkflow,
-                editModeSaveButton: true
+                editModeWorkflowChanged: true
             });
             return;
         }
@@ -388,7 +387,7 @@ export class WorkflowState {
             ctx.setState({
                 ...state,
                 editWorkflow: editWorkflow,
-                editModeSaveButton: true
+                editModeWorkflowChanged: true
             });
             return;
         }
@@ -425,7 +424,7 @@ export class WorkflowState {
             ctx.setState({
                 ...state,
                 editWorkflow: editWorkflow,
-                editModeSaveButton: true
+                editModeWorkflowChanged: true
             });
             return;
         }
@@ -457,7 +456,7 @@ export class WorkflowState {
             ctx.setState({
                 ...state,
                 editWorkflow: editWorkflow,
-                editModeSaveButton: true
+                editModeWorkflowChanged: true
             });
             return;
         }
@@ -486,7 +485,7 @@ export class WorkflowState {
             ctx.setState({
                 ...state,
                 editWorkflow: editWorkflow,
-                editModeSaveButton: true
+                editModeWorkflowChanged: true
             });
             return;
         }
@@ -533,7 +532,7 @@ export class WorkflowState {
             ctx.setState({
                 ...state,
                 editWorkflow: currentWorkflow,
-                editModeSaveButton: true
+                editModeWorkflowChanged: true
             });
             return;
         }
@@ -573,7 +572,7 @@ export class WorkflowState {
             ctx.setState({
                 ...state,
                 editWorkflow: editWorkflow,
-                editModeSaveButton: true
+                editModeWorkflowChanged: true
             });
             return;
         }
@@ -631,7 +630,7 @@ export class WorkflowState {
             ctx.setState({
                 ...state,
                 editWorkflow: editWorkflow,
-                editModeSaveButton: true
+                editModeWorkflowChanged: true
             });
             return;
         }
@@ -677,7 +676,7 @@ export class WorkflowState {
             ctx.setState({
                 ...state,
                 editWorkflow: editWorkflow,
-                editModeSaveButton: true
+                editModeWorkflowChanged: true
             });
             return;
         }
@@ -723,7 +722,7 @@ export class WorkflowState {
             ctx.setState({
                 ...state,
                 editWorkflow: editWorkflow,
-                editModeSaveButton: true
+                editModeWorkflowChanged: true
             });
             return;
         }
@@ -843,6 +842,12 @@ export class WorkflowState {
                 if (wf.from_repository) {
                     editWorkflow = cloneDeep(wf);
                     editMode = true;
+                    // compute ref on node
+                    Workflow.getAllNodes(editWorkflow).forEach(n => {
+                        if (!n.ref) {
+                            n.ref = new Date().getTime().toString();
+                        }
+                    });
                 }
                 ctx.setState({
                     ...state,
@@ -1102,11 +1107,18 @@ export class WorkflowState {
         if (state.workflow.from_repository) {
             editMode = true;
         }
+        let editWorkflow = cloneDeep(state.workflow)
+        // compute ref on node
+        Workflow.getAllNodes(editWorkflow).forEach(n => {
+            if (!n.ref) {
+                n.ref = new Date().getTime().toString();
+            }
+        });
         ctx.setState({
             ...state,
-            editModeSaveButton: false,
+            editModeWorkflowChanged: false,
             editMode: editMode,
-            editWorkflow: cloneDeep(state.workflow)
+            editWorkflow: editWorkflow
         });
     }
 

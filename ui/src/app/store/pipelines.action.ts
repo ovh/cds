@@ -130,4 +130,9 @@ export class ClearCachePipeline {
     constructor() { }
 }
 
+export class CancelPipelineEdition {
+    static readonly type = '[Pipeline] Cancel pipeline edition';
+    constructor() { }
+}
+
 

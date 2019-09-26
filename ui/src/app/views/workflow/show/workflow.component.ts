@@ -40,7 +40,8 @@ export class WorkflowShowComponent implements OnInit {
     paramsSubs: Subscription;
     qpsSubs: Subscription;
     direction: string;
-    editModeButton: boolean;
+    editMode: boolean;
+    editModeWorkflowChanged: boolean;
 
     @ViewChild('workflowGraph', {static: false})
     workflowGraph: WorkflowGraphComponent;
@@ -81,9 +82,10 @@ export class WorkflowShowComponent implements OnInit {
 
         this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this._cd.markForCheck();
+            this.editMode = s.editMode;
             if (s.editMode) {
                 this.detailedWorkflow = s.editWorkflow;
-                this.editModeButton = s.editModeSaveButton;
+                this.editModeWorkflowChanged = s.editModeWorkflowChanged;
             } else {
                 this.detailedWorkflow = s.workflow;
             }

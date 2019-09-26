@@ -39,4 +39,12 @@
       }
     }
   }
+
+  sm-menu {
+    .ui.buttons {
+      position: absolute;
+      right: 55px;
+      margin-top: 2px;
+    }
+  }
 }

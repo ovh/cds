@@ -126,6 +126,8 @@
   "btn_run_workflow": "Run workflow",
   "btn_validate": "Validate",
   "btn_save": "Save",
+  "btn_save_pipeline": "Save pipeline",
+  "btn_save_workflow": "Save workflow",
   "btn_next": "Next",
   "btn_add": "Add",
   "btn_back": "Back",

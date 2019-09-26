@@ -55,7 +55,13 @@
                     *ngIf="project.permissions.writable">
                     <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
                 </a>
-                <button class="ui green button" *ngIf="editMode" [disabled]="!pipeline.editModeChanged" (click)="saveEditMode()">{{'btn_save' | translate }}</button>
+                <div class="ui small buttons" *ngIf="editMode">
+                    <ng-container *ngIf="pipeline.editModeChanged">
+                        <button class="ui button" (click)="cancelPipeline()">{{'common_cancel' | translate }}</button>
+                        <div class="or"></div>
+                    </ng-container>
+                    <button class="ui green button"  [disabled]="!pipeline.editModeChanged" (click)="saveEditMode()">{{'btn_save_pipeline' | translate }}</button>
+                </div>
             </sm-menu>
         </div>
 
