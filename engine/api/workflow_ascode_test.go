@@ -23,7 +23,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func TestPostWorkflowAsCodeHandler(t *testing.T) {
+func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
@@ -34,6 +34,8 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
 	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerRepo", services.TypeRepositories)
 	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
+
+	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -65,6 +67,15 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 					HTTPCloneURL: "https:foo",
 				}
 				if err := enc.Encode(vcsRepo); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/foo/myrepo/branches":
+				bs := make([]sdk.VCSBranch, 1)
+				bs[0] = sdk.VCSBranch{
+					DisplayID: "master",
+					Default:   true,
+				}
+				if err := enc.Encode(bs); err != nil {
 					return writeError(w, err)
 				}
 			case "/vcs/github/webhooks":
@@ -102,6 +113,7 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 					return writeError(w, err)
 				}
 			default:
+				t.Logf("[WRONG ROUTE] %s", r.URL.String())
 				w.StatusCode = http.StatusNotFound
 			}
 
@@ -180,14 +192,12 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 
 	t.Logf("%+v", w)
 
-	uri := api.Router.GetRoute("POST", api.postWorkflowAsCodeHandler, map[string]string{
+	uri := api.Router.GetRoute("POST", api.postMigrateWorkflowAsCodeHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w.Name,
 	})
 
-	req, err := http.NewRequest("POST", uri, nil)
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
+	req := assets.NewJWTAuthentifiedRequest(t, pass, "POST", uri, nil)
 
 	// Do the request
 	wr := httptest.NewRecorder()
