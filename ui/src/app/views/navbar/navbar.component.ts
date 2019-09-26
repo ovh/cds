@@ -188,6 +188,11 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         this.searchApplications = new Array<NavbarSearchItem>();
         this.searchWorkflows = new Array<NavbarSearchItem>();
 
+        // refresh data if cache was cleaned
+        if (!this._navbarService.isInCache()) {
+            this.getData();
+        }
+
         if (this.searchValue && this.searchValue !== '') {
             this.isSearch = true;
             this.processSearch(this.searchItems);
