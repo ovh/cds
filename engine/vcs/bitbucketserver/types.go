@@ -58,8 +58,10 @@ type TagResponse struct {
 }
 
 type Author struct {
-	Name  string `json:"name"`
-	Email string `json:"emailAddress"`
+	Name        string `json:"name"`
+	Email       string `json:"emailAddress"`
+	DisplayName string `json:"displayName"`
+	Slug        string `json:"slug"`
 }
 
 type CommitsResponse struct {
