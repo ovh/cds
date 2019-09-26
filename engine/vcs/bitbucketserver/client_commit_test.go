@@ -22,4 +22,6 @@ func TestCommit(t *testing.T) {
 	commit, err := client.Commit(context.Background(), "CDS/images", "1244a1ccf125a80abeb191fce98d3cdcad13b8c2")
 	test.NoError(t, err)
 	t.Logf("%+v", commit)
+	assert.Equal(t, "Steven Guiheux", commit.Author.DisplayName)
+	assert.Equal(t, "steven.guiheux", commit.Author.Avatar)
 }
