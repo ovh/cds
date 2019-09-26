@@ -17,7 +17,7 @@ When the pipeline is triggered, a worker defined by the model will be spawned wi
 
 You can define environment variables of the service by setting requirement value as:
 ```bash
-    registry.ovh.net/official/postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword
+    postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword
 ```
 
 To define your job's requirements in the UI, you just have to go to the job's edition page and click on requirements:
