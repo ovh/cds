@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ovh/cds/engine/api/ascode"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -1381,7 +1382,15 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 			Push: sdk.OperationPush{},
 		},
 	}
-	workflow.UpdateWorkflowAsCodeResult(context.TODO(), api.mustDB(), api.Cache, proj, &ope, w1, u)
+	ed := ascode.EntityData{
+		FromRepo:  w1.FromRepository,
+		Operation: &ope,
+		Name:      w1.Name,
+		ID:        w1.ID,
+		Type:      ascode.AsCodeWorkflow,
+	}
+
+	ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, proj, &app, ed, u)
 
 	//Prepare request
 	vars := map[string]string{
