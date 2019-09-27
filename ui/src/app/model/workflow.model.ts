@@ -1,3 +1,4 @@
+import { AsCodeEvents } from 'app/model/ascode.model';
 import { Permission } from 'app/model/permission.model';
 import { Application } from './application.model';
 import { AuditWorkflow } from './audit.model';
@@ -348,15 +349,6 @@ export class Workflow {
     constructor() {
         this.workflow_data = new WorkflowData();
     }
-}
-
-export class AsCodeEvents {
-    id: number;
-    workflow_id: number;
-    pullrequest_id: number;
-    pullrequest_url: string;
-    username: string;
-    creation_date: string;
 }
 
 export class WorkflowPipelineNameImpact {
