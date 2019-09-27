@@ -14,6 +14,7 @@ type AsCodeEvent struct {
 	Username       string          `json:"username" db:"username"`
 	CreateDate     time.Time       `json:"creation_date" db:"creation_date"`
 	FromRepo       string          `json:"from_repository" db:"from_repository"`
+	Migrate        bool            `json:"migrate" db:"migrate"`
 	Data           AsCodeEventData `json:"data" db:"data"`
 }
 

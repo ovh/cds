@@ -84,15 +84,6 @@ export class WorkflowService {
         return this._http.post<Operation>(`/project/${projectKey}/workflows/${workflowName}/ascode/migrate`, null);
     }
 
-    /**
-     * Resync As Code PR
-     * @param projectKey
-     * @param workflowName
-     */
-    resyncPRAsCode(projectKey: string, workflowName: string) {
-        return this._http.post(`/project/${projectKey}/workflows/${workflowName}/ascode/resync/pr`, null)
-    }
-
     updateRunNumber(projectKey: string, workflowName: string, runNumber: number): Observable<null> {
         return this._http.post<null>(
             `/project/${projectKey}/workflows/${workflowName}/runs/num`,

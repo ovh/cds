@@ -126,7 +126,7 @@ func UpdateMetadata(db gorp.SqlExecutor, workflowID int64, metadata sdk.Metadata
 }
 
 // updateFromRepository update the from_repository of a workflow
-func updateFromRepository(db gorp.SqlExecutor, workflowID int64, fromRepository string) error {
+func UpdateFromRepository(db gorp.SqlExecutor, workflowID int64, fromRepository string) error {
 	if _, err := db.Exec("UPDATE workflow SET from_repository = $1, last_modified = current_timestamp WHERE id = $2", fromRepository, workflowID); err != nil {
 		return sdk.WithStack(err)
 	}
@@ -578,10 +578,15 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	}
 
 	if opts.WithAsCodeUpdateEvent {
+		var asCodeEvents []sdk.AsCodeEvent
+		var errAS error
 		_, next = observability.Span(ctx, "workflow.load.AddCodeUpdateEvents")
-		asCodeEvents, errAS := ascode.LoadAsCodeEventByWorkflowID(db, res.ID)
+		if res.FromRepository != "" {
+			asCodeEvents, errAS = ascode.LoadAsCodeEventByRepo(db, res.FromRepository)
+		} else {
+			asCodeEvents, errAS = ascode.LoadAsCodeEventByWorkflowID(db, res.ID)
+		}
 		next()
-
 		if errAS != nil {
 			return nil, sdk.WrapError(errAS, "Load> unable to load as code update events")
 		}

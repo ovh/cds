@@ -11,4 +11,9 @@ export class AsCodeEventComponent {
 
     @Input() events: Array<AsCodeEvents>;
     @Input() repo: string;
+
+
+    resyncEvents(): void {
+
+    }
 }

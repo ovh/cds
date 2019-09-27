@@ -172,25 +172,28 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   }
 
   createPipeline(): Observable<Pipeline> {
+    debugger;
     if (!Pipeline.checkName(this.newPipeline.name)) {
       this.errorPipelineNamePattern = true;
       return observableOf(null);
     }
 
     this.loadingCreatePipeline = true;
-    this.store.dispatch(new AddPipeline({
+    return this.store.dispatch(new AddPipeline({
       projectKey: this.project.key,
       pipeline: this.newPipeline
-    }));
-    this.pipSubscription = this.store.select(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
-      if (pip.pipeline.name === this.newPipeline.name && pip.currentProjectKey === this.project.key) {
-        this._toast.success('', this._translate.instant('pipeline_added'));
-        this.node.context.pipeline_id = pip.pipeline.id;
-        this.pipelineSection = 'application';
-        this.loadingCreatePipeline = false;
-        this._cd.markForCheck();
-      }
-    });
+    })).pipe(
+        finalize(() => {
+          this.loadingCreatePipeline = false;
+          this._cd.markForCheck();
+        }),
+        flatMap(() => this.store.selectOnce(PipelinesState.getCurrent())),
+        map((pip: PipelinesStateModel) => {
+          this._toast.success('', this._translate.instant('pipeline_added'));
+          this.node.context.pipeline_id = pip.pipeline.id;
+          this.pipelineSection = 'application';
+          return pip.pipeline
+        }));
   }
 
   selectOrCreatePipeline(): Observable<string> {
