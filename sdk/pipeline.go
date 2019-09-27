@@ -6,16 +6,17 @@ import (
 
 // Pipeline represents the complete behavior of CDS for each projects
 type Pipeline struct {
-	ID             int64       `json:"id" yaml:"-" db:"id"`
-	Name           string      `json:"name" cli:"name,key" db:"name"`
-	Description    string      `json:"description" cli:"description" db:"description"`
-	ProjectKey     string      `json:"projectKey" db:"projectKey"`
-	ProjectID      int64       `json:"-" db:"project_id"`
-	Stages         []Stage     `json:"stages"`
-	Parameter      []Parameter `json:"parameters,omitempty"`
-	Usage          *Usage      `json:"usage,omitempty"`
-	LastModified   int64       `json:"last_modified" cli:"modified"`
-	FromRepository string      `json:"from_repository" cli:"from_repository" db:"from_repository"`
+	ID             int64         `json:"id" yaml:"-" db:"id"`
+	Name           string        `json:"name" cli:"name,key" db:"name"`
+	Description    string        `json:"description" cli:"description" db:"description"`
+	ProjectKey     string        `json:"projectKey" db:"projectKey"`
+	ProjectID      int64         `json:"-" db:"project_id"`
+	Stages         []Stage       `json:"stages"`
+	Parameter      []Parameter   `json:"parameters,omitempty"`
+	Usage          *Usage        `json:"usage,omitempty"`
+	LastModified   int64         `json:"last_modified" cli:"modified"`
+	FromRepository string        `json:"from_repository" cli:"from_repository" db:"from_repository"`
+	AsCodeEvents   []AsCodeEvent `json:"ascode_events" cli:"-" db:"-"`
 }
 
 // PipelineAudit represents pipeline audit

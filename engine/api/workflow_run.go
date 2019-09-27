@@ -10,15 +10,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ovh/cds/engine/api/permission"
-
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -958,24 +958,43 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 	if wfRun.Status == sdk.StatusPending {
 		// BECOME AS CODE ?
 		if wf.FromRepository == "" && len(wf.AsCodeEvent) > 0 {
+			if wf.WorkflowData.Node.Context.ApplicationID == 0 {
+				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(sdk.ErrApplicationNotFound, "unable to find application on root node"))
+				report.Merge(r1, nil) // nolint
+				return
+			}
+			app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
+
 			tx, err := db.Begin()
 			if err != nil {
 				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to start transaction"))
 				report.Merge(ctx, r1, nil) // nolint
 				return
 			}
-			if err := workflow.SyncAsCodeEvent(ctx, tx, cache, p, wf, u); err != nil {
+			m, _, fromRepo, err := ascode.SyncAsCodeEvent(ctx, tx, cache, p, &app)
+			if err != nil {
 				tx.Rollback() // nolint
 				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to sync as code event"))
 				report.Merge(ctx, r1, nil) // nolint
 				return
 			}
+			if m {
+				wf.FromRepository = fromRepo
+				if err := workflow.UpdateFromRepository(tx, wf.ID, wf.FromRepository); err != nil {
+					tx.Rollback() // nolint
+					r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to save repository on workflow"))
+					report.Merge(r1, nil) // nolint
+					return
+				}
+			}
+
 			if err := tx.Commit(); err != nil {
 				tx.Rollback() // nolint
 				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to commit transaction as code event"))
 				report.Merge(ctx, r1, nil) // nolint
 				return
 			}
+
 		}
 
 		// IF AS CODE - REBUILD Workflow

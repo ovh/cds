@@ -9,13 +9,10 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // UpdateWorkflowAsCode update an as code workflow
@@ -63,67 +60,4 @@ func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj 
 	}
 
 	return operation.PushOperation(ctx, db, store, proj, &app, pull, fmt.Sprintf("cdsAsCode-%d", time.Now().Unix()), message, u)
-}
-
-// CheckPullRequestStatus checks the status of the pull request
-func CheckPullRequestStatus(ctx context.Context, client sdk.VCSAuthorizedClient, repoFullName string, prID int64) (bool, bool, error) {
-	pr, err := client.PullRequest(ctx, repoFullName, int(prID))
-	if err != nil {
-		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			log.Debug("Pull request %s #%d not found", repoFullName, int(prID))
-			return false, true, nil
-		}
-		return false, false, sdk.WrapError(err, "unable to check pull request status")
-	}
-	return pr.Merged, pr.Closed, nil
-}
-
-// SyncAsCodeEvent checks if workflow as to become ascode
-func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, u sdk.Identifiable) error {
-	if len(wf.AsCodeEvent) == 0 {
-		return nil
-	}
-
-	client, errclient := createVCSClientFromRootNode(ctx, db, store, proj, wf)
-	if errclient != nil {
-		return errclient
-	}
-	app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
-
-	eventLeft := make([]sdk.AsCodeEvent, 0)
-	for _, event := range wf.AsCodeEvent {
-		merged, closed, err := CheckPullRequestStatus(ctx, client, app.RepositoryFullname, event.PullRequestID)
-		if err != nil {
-			return err
-		}
-		// Event merged and workflow not as code yet:  change it to as code workflow
-		if merged && wf.FromRepository == "" {
-			repo, errR := client.RepoByFullname(ctx, app.RepositoryFullname)
-			if errR != nil {
-				return sdk.WrapError(errR, "cannot get repo %s", app.RepositoryFullname)
-			}
-			if app.RepositoryStrategy.ConnectionType == "ssh" {
-				wf.FromRepository = repo.SSHCloneURL
-			} else {
-				wf.FromRepository = repo.HTTPCloneURL
-			}
-			wf.LastModified = time.Now()
-
-			if err := updateFromRepository(db, wf.ID, wf.FromRepository); err != nil {
-				return sdk.WrapError(err, "unable to update workflow from_repository")
-			}
-		}
-		// If event ended, delete it from db
-		if merged || closed {
-			if err := ascode.DeleteAsCodeEvent(db, event); err != nil {
-				return err
-			}
-		} else {
-			eventLeft = append(eventLeft, event)
-		}
-	}
-	wf.AsCodeEvent = eventLeft
-	log.Debug("workflow.SyncAsCodeEvent> events left: %v", wf.AsCodeEvent)
-	event.PublishWorkflowUpdate(ctx, proj.Key, *wf, *wf, u)
-	return nil
 }
