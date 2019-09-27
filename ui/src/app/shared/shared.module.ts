@@ -8,6 +8,7 @@ import { SuiModule } from '@richardlt/ng2-semantic-ui';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { NoAuthenticationGuard } from 'app/guard/no-authentication.guard';
+import { AsCodeEventComponent } from 'app/shared/ascode/events/ascode.event.component';
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
 import { GroupFormComponent } from 'app/shared/group/form/group.form.component';
 import { AutoFocusInputComponent } from 'app/shared/input/autofocus/autofocus.input.component';
@@ -138,6 +139,7 @@ import { ZoneComponent } from './zone/zone.component';
         ActionStepComponent,
         ActionStepFormComponent,
         ActionStepSummaryComponent,
+        AsCodeEventComponent,
         AuditListComponent,
         AutoFocusInputComponent,
         BreadcrumbComponent,
@@ -247,6 +249,7 @@ import { ZoneComponent } from './zone/zone.component';
         AuditListComponent,
         ActionStepComponent,
         ActionStepFormComponent,
+        AsCodeEventComponent,
         BreadcrumbComponent,
         ProjectBreadcrumbComponent,
         ChartComponentComponent,

@@ -1,0 +1,22 @@
+<div class="asCodeEvents">
+    <p>
+        {{ 'pipeline_from_repository' | translate: {repo: repo} }}
+    </p>
+    <ul>
+        <li *ngFor="let e of events">
+            <a href="{{e.pullrequest_url}}" target="_blank">PullRequest #{{e.pullrequest_id}}</a>
+            <ul>
+                <ng-container *ngIf="e.data && e.data.workflows">
+                    <li *ngFor="let k of e?.data?.workflows | keys">
+                        <a class="ui blue horizontal mini label">Workflow</a>{{' ' + e.data.workflows[k]}}
+                    </li>
+                </ng-container>
+                <ng-container *ngIf="e.data && e.data.pipelines">
+                    <li *ngFor="let k of e?.data?.pipelines | keys">
+                        <a class="ui green horizontal mini label">Pipeline</a>{{' ' + e.data.pipelines[k]}}
+                    </li>
+                </ng-container>
+            </ul>
+        </li>
+    </ul>
+</div>

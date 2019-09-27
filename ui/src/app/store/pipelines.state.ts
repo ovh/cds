@@ -3,6 +3,7 @@ import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { Job } from 'app/model/job.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline, PipelineAudit } from 'app/model/pipeline.model';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { cloneDeep } from 'lodash-es';
 import { tap } from 'rxjs/operators';
 import * as actionPipeline from './pipelines.action';
@@ -39,7 +40,7 @@ export class PipelinesState {
         );
     }
 
-    constructor(private _http: HttpClient) { }
+    constructor(private _http: HttpClient, private _pipelineService: PipelineService) { }
 
     @Action(actionPipeline.AddPipeline)
     add(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.AddPipeline) {
@@ -537,15 +538,8 @@ export class PipelinesState {
 
     @Action(actionPipeline.ResyncPipeline)
     resync(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.ResyncPipeline) {
-        let params = new HttpParams();
-        params = params.append('withApplications', 'true');
-        params = params.append('withWorkflows', 'true');
-        params = params.append('withEnvironments', 'true');
-
-        return this._http.get<Pipeline>(
-            `/project/${action.payload.projectKey}/pipeline/${action.payload.pipelineName}`,
-            { params }
-        ).pipe(tap((pip) => {
+        return this._pipelineService.getPipeline(action.payload.projectKey, action.payload.pipelineName)
+            .pipe(tap((pip) => {
             const state = ctx.getState();
             let editMode = false;
             let editPipeline: Pipeline;
