@@ -288,6 +288,11 @@ func (api *API) initMetrics(ctx context.Context) error {
 		observability.NewViewCount("workflow_runs_deleted", api.Metrics.WorkflowRunsDeleted, tags),
 	)
 
+	if err != nil {
+		return err
+	}
+
+	err = observability.RegisterView(service.CommonMetricsView(ctx)...)
 	return err
 }
 
