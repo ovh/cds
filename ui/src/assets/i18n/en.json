@@ -492,7 +492,7 @@
   "pipeline_loading": "Loading pipeline...",
   "pipeline_name": "Pipeline name",
   "pipeline_description": "Pipeline description",
-  "pipeline_from_repository": "Pipeline imported from {{repo}}",
+  "pipeline_from_repository": "Imported from {{repo}}",
   "pipeline_name_new": "New pipeline name",
   "pipeline_name_error": "Invalid pipeline name. Allowed pattern is: a-zA-Z0-9._-",
   "pipeline_parameters_list_title": "List of pipeline parameters: ",

@@ -28,6 +28,7 @@ export class PipelineService {
         params = params.append('withApplications', 'true');
         params = params.append('withWorkflows', 'true');
         params = params.append('withEnvironments', 'true');
+        params = params.append('withAsCodeEvents', 'true');
         return this._http.get<Pipeline>('/project/' + key + '/pipeline/' + pipName, { params: params });
     }
 
