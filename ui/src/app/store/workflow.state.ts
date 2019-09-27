@@ -11,6 +11,7 @@ import { finalize, first, tap } from 'rxjs/operators';
 import * as ActionProject from './project.action';
 import * as actionWorkflow from './workflow.action';
 import { UpdateModal, UpdateWorkflowRunList } from './workflow.action';
+import { ResyncEvents } from 'app/store/ascode.action';
 
 export class WorkflowStateModel {
     workflow: Workflow; // selected workflow
@@ -1114,6 +1115,13 @@ export class WorkflowState {
             editMode: editMode,
             editWorkflow: editWorkflow
         });
+    }
+
+    @Action(ResyncEvents)
+    refreshAsCodeEvents(ctx: StateContext<WorkflowStateModel>, _) {
+        const state = ctx.getState();
+        ctx.dispatch(new actionWorkflow
+            .GetWorkflow({projectKey: state.projectKey, workflowName: state.workflow.name}));
     }
 
 }

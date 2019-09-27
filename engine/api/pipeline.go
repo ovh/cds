@@ -283,6 +283,7 @@ func (api *API) getPipelineHandler() service.Handler {
 		withApp := FormBool(r, "withApplications")
 		withWorkflows := FormBool(r, "withWorkflows")
 		withEnvironments := FormBool(r, "withEnvironments")
+		withAsCodeEvent := FormBool(r, "withAsCodeEvents")
 
 		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {
@@ -291,6 +292,14 @@ func (api *API) getPipelineHandler() service.Handler {
 
 		if withApp || withWorkflows || withEnvironments {
 			p.Usage = &sdk.Usage{}
+		}
+
+		if withAsCodeEvent {
+			events, errE := ascode.LoadAsCodeEventByRepo(api.mustDB(), p.FromRepository)
+			if errE != nil {
+				return errE
+			}
+			p.AsCodeEvents = events
 		}
 
 		if withWorkflows {

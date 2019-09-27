@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/ascode"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -169,5 +171,31 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
+	}
+}
+
+func (api *API) postResyncPRAsCodeHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		fromRepo := FormString(r, "repo")
+
+		proj, errP := project.Load(api.mustDB(), api.Cache, key,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithIntegrations,
+			project.LoadOptions.WithClearKeys)
+		if errP != nil {
+			return sdk.WrapError(errP, "unable to load project")
+		}
+		app, err := application.LoadAsCode(api.mustDB(), api.Cache, key, fromRepo)
+		if err != nil {
+			return err
+		}
+		if _, _, _, err := ascode.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, proj, app); err != nil {
+			return err
+		}
+		return nil
 	}
 }
