@@ -11,33 +11,17 @@ import { Observable } from 'rxjs/Rx';
 export class NavbarService {
 
   private _navbar: BehaviorSubject<Array<NavbarProjectData>> = new BehaviorSubject(null);
-  private inCache = false;
 
   constructor(private _http: HttpClient) { }
 
-  /**
-   * return false if cache is cleaned
-   */
-  isInCache() {
-    return this.inCache;
-  }
-
-  /**
-   * clean current cache
-   */
-  cleanCache() {
-    this._navbar = new BehaviorSubject(null);
-    this.inCache = false;
-  }
   /**
    * Get the navbar data from API.
    * @returns {Observable<Array<NavbarProjectData>>}
    */
   getData(fromCache?: boolean): Observable<Array<NavbarProjectData>> {
-    if (!this.inCache || !fromCache) {
+    if (!fromCache) {
       this._http.get<Array<NavbarProjectData>>('/ui/navbar')
         .subscribe((data) => {
-          this.inCache = true;
           this._navbar.next(data);
         });
     }

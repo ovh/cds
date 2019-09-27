@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { NavbarRecentData } from 'app/model/navbar.model';
 import { LoadOpts, Project } from 'app/model/project.model';
-import { List, Map } from 'immutable';
+import { List, Map, } from 'immutable';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ProjectService } from './project.service';
 
@@ -23,7 +23,12 @@ export class ProjectStore {
     constructor(
         private _projectService: ProjectService,
     ) {
+        this.loadRecentProjects();
+    }
 
+    loadRecentProjects(): void {
+        let arrayApp = JSON.parse(localStorage.getItem(ProjectStore.RECENT_PROJECTS_KEY));
+        this._recentProjects.next(List.of(...arrayApp));
     }
 
     getProjectsList(resync: boolean = false): Observable<List<Project>> {
