@@ -42,7 +42,8 @@ a,
   }
 }
 
-.ui.list > .item > .content {
+.ui.list > .item > .content,
+.ui.list > .item > .content > .description {
     .night & {
         color: $darkTheme_grey_6;
     }

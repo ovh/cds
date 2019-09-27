@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { ProjectStore } from 'app/service/services.module';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { FetchProject, UpdateFavoriteProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
@@ -56,7 +57,8 @@ export class ProjectShowComponent implements OnInit {
         private _warningStore: WarningStore,
         private _helpersService: HelpersService,
         private _store: Store,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _projectStore: ProjectStore,
     ) {
         this.initWarnings();
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
@@ -75,6 +77,7 @@ export class ProjectShowComponent implements OnInit {
                     });
                 }
                 this.project = proj;
+                this._projectStore.updateRecentProject(this.project);
                 this._cd.markForCheck();
             });
     }

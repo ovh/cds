@@ -30,8 +30,8 @@ Create an environment file to import :
     values:
     a-readable-variable:
         type: string
-        value: registry.ovh.net/engine/http2kafka
-    a-variable:
+        value: value
+    my-data:
         type: password
         value: 01234567890987654321
     EOF

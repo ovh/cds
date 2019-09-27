@@ -9,8 +9,8 @@ import { Event, EventType } from './model/event.model';
 import { LoadOpts } from './model/project.model';
 import { TimelineFilter } from './model/timeline.model';
 import { BroadcastStore } from './service/broadcast/broadcast.store';
-import { RouterService } from './service/router/router.service';
-import { TimelineStore } from './service/timeline/timeline.store';
+import { NavbarService } from './service/navbar/navbar.service';
+import { RouterService, TimelineStore } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
 import { ToastService } from './shared/toast/ToastService';
 import { DeleteFromCacheApplication, ExternalChangeApplication, ResyncApplication } from './store/applications.action';
@@ -39,7 +39,8 @@ export class AppService {
         private _timelineStore: TimelineStore,
         private _toast: ToastService,
         private _workflowRunService: WorkflowRunService,
-        private _store: Store
+        private _store: Store,
+        private _navbarService: NavbarService,
     ) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
     }
@@ -66,6 +67,7 @@ export class AppService {
             event.type_event === EventType.WORKFLOW_ADD || event.type_event === EventType.WORKFLOW_UPDATE ||
             event.type_event === EventType.WORKFLOW_DELETE) {
             this.updateProjectCache(event);
+            this._navbarService.cleanCache();
         }
         if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
             this.updateApplicationCache(event);
