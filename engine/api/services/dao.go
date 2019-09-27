@@ -66,7 +66,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.Se
 
 // LoadAll returns all services in database.
 func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Service, error) {
-	query := gorpmapping.NewQuery(`SELECT * FROM services`)
+	query := gorpmapping.NewQuery(`SELECT * FROM service`)
 	return getAll(ctx, db, query)
 }
 
@@ -75,43 +75,43 @@ func LoadAllByType(ctx context.Context, db gorp.SqlExecutor, stype string) ([]sd
 	if ss, ok := internalCache.getFromCache(stype); ok {
 		return ss, nil
 	}
-	query := gorpmapping.NewQuery(`SELECT * FROM services WHERE type = $1`).Args(stype)
+	query := gorpmapping.NewQuery(`SELECT * FROM service WHERE type = $1`).Args(stype)
 	return getAll(ctx, db, query)
 }
 
 // LoadByConsumerID returns a service by its consumer id.
 func LoadByConsumerID(ctx context.Context, db gorp.SqlExecutor, consumerID string) (*sdk.Service, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM services WHERE auth_consumer_id = $1").Args(consumerID)
+	query := gorpmapping.NewQuery("SELECT * FROM service WHERE auth_consumer_id = $1").Args(consumerID)
 	return get(ctx, db, query)
 }
 
 // LoadByNameAndType returns a service by its name and type.
 func LoadByNameAndType(ctx context.Context, db gorp.SqlExecutor, name, stype string) (*sdk.Service, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM services WHERE name = $1 and type = $2").Args(name, stype)
+	query := gorpmapping.NewQuery("SELECT * FROM service WHERE name = $1 and type = $2").Args(name, stype)
 	return get(ctx, db, query)
 }
 
 // LoadByName returns a service by its name.
 func LoadByName(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.Service, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM services WHERE name = $1").Args(name)
+	query := gorpmapping.NewQuery("SELECT * FROM service WHERE name = $1").Args(name)
 	return get(ctx, db, query)
 }
 
 // LoadByNameForUpdateAndSkipLocked returns a service by its name.
 func LoadByNameForUpdateAndSkipLocked(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.Service, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM services WHERE name = $1  FOR UPDATE SKIP LOCKED").Args(name)
+	query := gorpmapping.NewQuery("SELECT * FROM service WHERE name = $1  FOR UPDATE SKIP LOCKED").Args(name)
 	return get(ctx, db, query)
 }
 
 // LoadByID returns a service by its id.
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, id int64) (*sdk.Service, error) {
-	query := gorpmapping.NewQuery("SELECT * FROM services WHERE id = $1").Args(id)
+	query := gorpmapping.NewQuery("SELECT * FROM service WHERE id = $1").Args(id)
 	return get(ctx, db, query)
 }
 
 // FindDeadServices returns services which haven't heart since th duration
 func FindDeadServices(ctx context.Context, db gorp.SqlExecutor, t time.Duration) ([]sdk.Service, error) {
-	query := gorpmapping.NewQuery(`SELECT * FROM services WHERE last_heartbeat < $1`).Args(time.Now().Add(-1 * t))
+	query := gorpmapping.NewQuery(`SELECT * FROM service WHERE last_heartbeat < $1`).Args(time.Now().Add(-1 * t))
 	return getAll(ctx, db, query)
 }
 

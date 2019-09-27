@@ -82,15 +82,24 @@ CREATE TABLE "auth_session" (
 SELECT create_foreign_key_idx_cascade('FK_AUTH_SESSION_CONSUMER', 'auth_session', 'auth_consumer', 'consumer_id', 'id');
 
 -- Update services and workers tables
--- TODO create backup table for old_services then recreate service table
-ALTER TABLE services ADD COLUMN IF NOT EXISTS auth_consumer_id VARCHAR(36);
-ALTER TABLE services ADD COLUMN IF NOT EXISTS maintainer JSONB;
-ALTER TABLE services ADD COLUMN IF NOT EXISTS public_key BYTEA;
-ALTER TABLE services ADD COLUMN IF NOT EXISTS sig BYTEA;
-ALTER TABLE services ADD COLUMN IF NOT EXISTS signer TEXT;
-ALTER TABLE services ADD COLUMN IF NOT EXISTS encrypted_jwt BYTEA;
-ALTER TABLE services ALTER COLUMN hash DROP NOT NULL;
-SELECT create_unique_index('services', 'IDX_SERVICES_AUTH_CONSUMER_ID', 'auth_consumer_id');
+
+ALTER TABLE services RENAME TO old_services;
+
+CREATE TABLE "service" (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(256),
+    auth_consumer_id VARCHAR(36),
+    type VARCHAR(256),
+    http_url VARCHAR(256),
+    config JSONB,
+    public_key BYTEA,
+    last_heartbeat timestamp with time zone,
+    monitoring_status JSONB,
+    sig BYTEA,
+    signer TEXT
+);
+
+SELECT create_unique_index('service', 'IDX_SERVICE_AUTH_CONSUMER_ID', 'auth_consumer_id');
 
 ALTER TABLE worker RENAME TO old_worker;
 
@@ -99,7 +108,7 @@ CREATE TABLE "worker" (
   name VARCHAR(255) NOT NULL,
   last_beat TIMESTAMP WITH TIME ZONE NOT NULL,
   status VARCHAR(255) NOT NULL,
-  model_id BIGINT NOT NULL,
+  model_id BIGINT,
   job_run_id BIGINT,
   hatchery_id BIGINT NOT NULL,
   auth_consumer_id VARCHAR(36) REFERENCES auth_consumer(id),
@@ -113,10 +122,8 @@ select create_index('worker', 'IDX_WORKER_MODEL', 'model_id,id');
 SELECT create_foreign_key('FK_WORKER_WORKFLOW_NODE_RUN_JOB', 'worker', 'workflow_node_run_job', 'job_run_id', 'id');
 SELECT create_unique_index('worker', 'IDX_WORKER_JOB_RUN', 'job_run_id');
 SELECT create_unique_index('worker', 'IDX_WORKER_NAME', 'name');
-SELECT create_foreign_key('FK_WORKER_SERVICES', 'worker', 'services', 'hatchery_id', 'id');
+SELECT create_foreign_key('FK_WORKER_SERVICE', 'worker', 'service', 'hatchery_id', 'id');
 SELECT create_unique_index('worker', 'IDX_WORKER_AUTH_CONSUMER_ID', 'auth_consumer_id');
-
-ALTER TABLE worker alter column model_id DROP NOT NULL;
 
 -- Update groups and dependencies tables
 ALTER TABLE project_group DROP CONSTRAINT IF EXISTS "fk_project_group_pipeline";
@@ -129,9 +136,6 @@ ALTER TABLE workflow_template DROP CONSTRAINT IF EXISTS "fk_workflow_template_gr
 SELECT create_foreign_key('FK_WORKFLOW_TEMPLATE_GROUP', 'workflow_template', 'group', 'group_id', 'id');
 ALTER TABLE "action" DROP CONSTRAINT IF EXISTS "fk_action_group";
 SELECT create_foreign_key('FK_ACTION_GROUP', 'action', 'group', 'group_id', 'id');
-
--- TODO DELETE CASCADE access_token when worker is removed
-
 
 CREATE TABLE "test_encrypted_data" (
   id BIGSERIAL PRIMARY KEY,
@@ -148,7 +152,31 @@ DROP TABLE "user_contact";
 DROP TABLE "worker";
 DROP TABLE "auth_session";
 DROP TABLE "auth_consumer";
+DROP TABLE "service";
 DROP TABLE "authentified_user";
 DROP TABLE "test_encrypted_data";
+
 ALTER TABLE old_worker RENAME TO worker;
--- TODO old_services to services
+ALTER TABLE old_services RENAME TO services;
+
+ALTER TABLE "action" DROP CONSTRAINT IF EXISTS "fk_action_group";
+SELECT create_foreign_key_idx_cascade('fk_action_group', 'action', 'group', 'group_id', 'id');
+
+ALTER TABLE "group_user" DROP CONSTRAINT IF EXISTS "fk_group_user_group";
+ALTER TABLE "group_user" DROP CONSTRAINT IF EXISTS "fk_group_user_user";
+DROP INDEX IF EXISTS "idx_fk_group_user_group";
+DROP INDEX IF EXISTS "idx_fk_group_user_user";
+
+SELECT create_foreign_key('fk_group_user_group', 'group_user', 'group', 'group_id', 'id');
+SELECT create_foreign_key('fk_group_user_user', 'group_user', 'user', 'user_id', 'id');
+
+ALTER TABLE workflow_template DROP CONSTRAINT IF EXISTS "fk_workflow_template_group";
+SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_TEMPLATE_GROUP', 'workflow_template', 'group', 'group_id', 'id');
+
+DROP INDEX idx_fk_project_group_pipeline;
+ALTER TABLE project_group DROP CONSTRAINT IF EXISTS "fk_project_group_pipeline";
+SELECT create_foreign_key('FK_PROJECT_GROUP_PIPELINE', 'project_group', 'project', 'project_id', 'id');
+
+DROP INDEX idx_fk_user_key_user;
+ALTER TABLE user_key DROP CONSTRAINT IF EXISTS "fk_user_key_user";
+select create_foreign_key('FK_USER_KEY_USER', 'user_key', 'user', 'user_id', 'id');
