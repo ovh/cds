@@ -363,7 +363,9 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, 
 	// Useful to let models cache in hatchery refresh
 	// FIXME should me managed by worker model package
 	keyWorkerModel := workermodel.KeyBookWorkerModel(modelID)
-	store.UpdateTTL(keyWorkerModel, workermodel.CacheTTLInSeconds+10)
+	if err := store.UpdateTTL(keyWorkerModel, workermodel.CacheTTLInSeconds+10); err != nil {
+		return w, err
+	}
 	// delete from cache by group
 	store.Delete(cache.Key("api:workermodels:bygroup", fmt.Sprintf("%d", t.GroupID)))
 

@@ -111,15 +111,15 @@ func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
 }
 
 //UpdateTTL update the ttl linked to the key
-func (s *RedisStore) UpdateTTL(key string, ttl int) {
+func (s *RedisStore) UpdateTTL(key string, ttl int) error {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		return fmt.Errorf("redis> cannot get redis client")
 	}
 
 	if err := s.Client.Expire(key, time.Duration(ttl)*time.Second).Err(); err != nil {
-		log.Error("redis>UpdateTTL> set error %s: %v", key, err)
+		return sdk.WrapError(err, "redis>UpdateTTL> set error %s", key)
 	}
+	return nil
 }
 
 //Set a value in redis

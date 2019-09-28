@@ -25,7 +25,7 @@ type Store interface {
 	Get(key string, value interface{}) bool
 	Set(key string, value interface{})
 	SetWithTTL(key string, value interface{}, ttl int)
-	UpdateTTL(key string, ttl int)
+	UpdateTTL(key string, ttl int) error
 	Delete(key string)
 	DeleteAll(key string)
 	Enqueue(queueName string, value interface{}) error
