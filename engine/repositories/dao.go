@@ -42,7 +42,10 @@ func (d *dao) loadOperation(uuid string) *sdk.Operation {
 }
 
 func (d *dao) loadAllOperations() ([]*sdk.Operation, error) {
-	n := d.store.SetCard(rootKey)
+	n, err := d.store.SetCard(rootKey)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to setCard %v", rootKey)
+	}
 	opes := make([]*sdk.Operation, n)
 	for i := 0; i < n; i++ {
 		opes[i] = &sdk.Operation{}

@@ -36,7 +36,10 @@ func (d *dao) RemoveGerritRepoHook(vcsServer string, repo string, g gerritTaskIn
 // FindGerritTasksByRepo get all gerrit hooks on the given repository
 func (d *dao) FindGerritTasksByRepo(vcsServer string, repo string) ([]gerritTaskInfo, error) {
 	key := cache.Key(gerritRepoKey, vcsServer, repo)
-	nbGerritHooks := d.store.SetCard(key)
+	nbGerritHooks, err := d.store.SetCard(key)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to setCard %v", key)
+	}
 
 	hooks := make([]*gerritTaskInfo, nbGerritHooks)
 	for i := 0; i < nbGerritHooks; i++ {

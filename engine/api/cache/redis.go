@@ -339,8 +339,9 @@ func (s *RedisStore) SetRemove(rootKey string, memberKey string, member interfac
 }
 
 // SetCard returns the cardinality of a ZSet
-func (s *RedisStore) SetCard(key string) int {
-	return int(s.Client.ZCard(key).Val())
+func (s *RedisStore) SetCard(key string) (int, error) {
+	v := s.Client.ZCard(key)
+	return int(v.Val()), v.Err()
 }
 
 // SetScan scans a ZSet

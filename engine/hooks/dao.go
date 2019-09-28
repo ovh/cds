@@ -12,7 +12,10 @@ type dao struct {
 }
 
 func (d *dao) FindAllTasks() ([]sdk.Task, error) {
-	nbTasks := d.store.SetCard(rootKey)
+	nbTasks, err := d.store.SetCard(rootKey)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unsable to setCard %v", rootKey)
+	}
 	tasks := make([]*sdk.Task, nbTasks, nbTasks)
 	for i := 0; i < nbTasks; i++ {
 		tasks[i] = &sdk.Task{}
@@ -85,7 +88,10 @@ func (d *dao) QueueLen() (int, error) {
 }
 
 func (d *dao) FindAllTaskExecutions(t *sdk.Task) ([]sdk.TaskExecution, error) {
-	nbExecutions := d.store.SetCard(cache.Key(executionRootKey, t.Type, t.UUID))
+	nbExecutions, err := d.store.SetCard(cache.Key(executionRootKey, t.Type, t.UUID))
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to setCard %s", cache.Key(executionRootKey, t.Type, t.UUID))
+	}
 	execs := make([]*sdk.TaskExecution, nbExecutions, nbExecutions)
 	for i := 0; i < nbExecutions; i++ {
 		execs[i] = &sdk.TaskExecution{}

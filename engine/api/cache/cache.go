@@ -38,7 +38,7 @@ type Store interface {
 	Status() sdk.MonitoringStatusLine
 	SetAdd(rootKey string, memberKey string, member interface{}) error
 	SetRemove(rootKey string, memberKey string, member interface{}) error
-	SetCard(key string) int
+	SetCard(key string) (int, error)
 	SetScan(key string, members ...interface{}) error
 	ZScan(key, pattern string) ([]string, error)
 	Lock(key string, expiration time.Duration, retryWaitDurationMillisecond int, retryCount int) bool
