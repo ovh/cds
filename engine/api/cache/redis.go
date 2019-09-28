@@ -311,8 +311,11 @@ func (s *RedisStore) Status() sdk.MonitoringStatusLine {
 }
 
 // RemoveFromQueue removes a member from a list
-func (s *RedisStore) RemoveFromQueue(rootKey string, memberKey string) {
-	s.Client.LRem(rootKey, 0, memberKey)
+func (s *RedisStore) RemoveFromQueue(rootKey string, memberKey string) error {
+	if err := s.Client.LRem(rootKey, 0, memberKey).Err(); err != nil {
+		return sdk.WrapError(err, "error on RemoveFromQueue: rooKey:%v memberKey:%v", rootKey, memberKey)
+	}
+	return nil
 }
 
 // SetAdd add a member (identified by a key) in the cached set
