@@ -25,8 +25,8 @@ type gerritTaskInfo struct {
 }
 
 // RegisterGerritRepoHook register hook on gerrit repository
-func (d *dao) RegisterGerritRepoHook(vcsServer string, repo string, g gerritTaskInfo) {
-	d.store.SetAdd(cache.Key(gerritRepoKey, vcsServer, repo), g.UUID, g)
+func (d *dao) RegisterGerritRepoHook(vcsServer string, repo string, g gerritTaskInfo) error {
+	return d.store.SetAdd(cache.Key(gerritRepoKey, vcsServer, repo), g.UUID, g)
 }
 
 func (d *dao) RemoveGerritRepoHook(vcsServer string, repo string, g gerritTaskInfo) {

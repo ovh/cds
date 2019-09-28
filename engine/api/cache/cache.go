@@ -36,7 +36,7 @@ type Store interface {
 	Subscribe(queueName string) PubSub
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
 	Status() sdk.MonitoringStatusLine
-	SetAdd(rootKey string, memberKey string, member interface{})
+	SetAdd(rootKey string, memberKey string, member interface{}) error
 	SetRemove(rootKey string, memberKey string, member interface{}) error
 	SetCard(key string) int
 	SetScan(key string, members ...interface{}) error

@@ -247,11 +247,13 @@ func (s *Service) putTaskHandler() service.Handler {
 		}
 
 		//Save it
-		s.Dao.SaveTask(t)
+		if err := s.Dao.SaveTask(t); err != nil {
+			return sdk.WrapError(err, "Unable to save task %v", t)
+		}
 
 		//Start the task
 		if _, err := s.startTask(ctx, t); err != nil {
-			return sdk.WrapError(err, "Unable start task %+v", t)
+			return sdk.WrapError(err, "Unable start task %v", t)
 		}
 
 		return nil
@@ -423,11 +425,13 @@ func (s *Service) addTask(ctx context.Context, h *sdk.NodeHook) error {
 	}
 
 	//Save the task
-	s.Dao.SaveTask(t)
+	if err := s.Dao.SaveTask(t); err != nil {
+		return sdk.WrapError(err, "unable to addTask %v", t)
+	}
 
 	//Start the task
 	if _, err := s.startTask(ctx, t); err != nil {
-		return sdk.WrapError(err, "Unable start task %+v", t)
+		return sdk.WrapError(err, "Unable start task %v", t)
 	}
 	return nil
 }
@@ -439,7 +443,9 @@ func (s *Service) addAndExecuteTask(ctx context.Context, nr sdk.WorkflowNodeRun)
 		return t, sdk.TaskExecution{}, sdk.WrapError(err, "Hooks> addAndExecuteTask> Unable to parse node run (%+v)", nr)
 	}
 	// Save the task
-	s.Dao.SaveTask(&t)
+	if err := s.Dao.SaveTask(&t); err != nil {
+		return t, sdk.TaskExecution{}, sdk.WrapError(err, "unable to save task %v", t)
+	}
 
 	// Start the task
 	e, err := s.startTask(ctx, &t)
@@ -478,7 +484,9 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 		return sdk.WrapError(err, "Unable start task %+v", t)
 	}
 	// Save the task
-	s.Dao.SaveTask(t)
+	if err := s.Dao.SaveTask(t); err != nil {
+		return sdk.WrapError(err, "unable to save task %v", t)
+	}
 	return nil
 }
 

@@ -20,8 +20,7 @@ type dao struct {
 }
 
 func (d *dao) saveOperation(o *sdk.Operation) error {
-	d.store.SetAdd(rootKey, o.UUID, o)
-	return nil
+	return d.store.SetAdd(rootKey, o.UUID, o)
 }
 
 func (d *dao) pushOperation(o *sdk.Operation) error {

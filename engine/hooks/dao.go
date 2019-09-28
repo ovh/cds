@@ -42,8 +42,8 @@ func (d *dao) FindTask(uuid string) *sdk.Task {
 	return nil
 }
 
-func (d *dao) SaveTask(r *sdk.Task) {
-	d.store.SetAdd(rootKey, r.UUID, r)
+func (d *dao) SaveTask(r *sdk.Task) error {
+	return d.store.SetAdd(rootKey, r.UUID, r)
 }
 
 func (d *dao) DeleteTask(r *sdk.Task) error {
@@ -59,10 +59,10 @@ func (d *dao) DeleteTask(r *sdk.Task) error {
 	return nil
 }
 
-func (d *dao) SaveTaskExecution(r *sdk.TaskExecution) {
+func (d *dao) SaveTaskExecution(r *sdk.TaskExecution) error {
 	setKey := cache.Key(executionRootKey, r.Type, r.UUID)
 	execKey := fmt.Sprintf("%d", r.Timestamp)
-	d.store.SetAdd(setKey, execKey, r)
+	return d.store.SetAdd(setKey, execKey, r)
 }
 
 func (d *dao) DeleteTaskExecution(r *sdk.TaskExecution) error {

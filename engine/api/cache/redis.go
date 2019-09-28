@@ -317,12 +317,16 @@ func (s *RedisStore) RemoveFromQueue(rootKey string, memberKey string) error {
 }
 
 // SetAdd add a member (identified by a key) in the cached set
-func (s *RedisStore) SetAdd(rootKey string, memberKey string, member interface{}) {
-	s.Client.ZAdd(rootKey, redis.Z{
+func (s *RedisStore) SetAdd(rootKey string, memberKey string, member interface{}) error {
+	err := s.Client.ZAdd(rootKey, redis.Z{
 		Member: memberKey,
 		Score:  float64(time.Now().UnixNano()),
-	})
+	}).Err()
+	if err != nil {
+		return sdk.WrapError(err, "error on SetAdd")
+	}
 	s.SetWithTTL(Key(rootKey, memberKey), member, -1)
+	return nil
 }
 
 // SetRemove removes a member from a set
