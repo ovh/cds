@@ -323,8 +323,10 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	}
 
 	if err := client.SetStatus(ctx, evt); err != nil {
-		repositoriesmanager.RetryEvent(&evt, err, store)
-		log.Error("sendEvent> err:%v", err)
+		if err2 := repositoriesmanager.RetryEvent(&evt, err, store); err2 != nil {
+			log.Error("sendEvent>processEvent> err while retry event: %v", err2)
+		}
+		return fmt.Errorf("sendEvent> err:%v", err)
 	}
 
 	if vcsConf.Type != "gerrit" && (notif.Settings.Template.DisableComment == nil || !*notif.Settings.Template.DisableComment) {
@@ -340,7 +342,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			for _, pr := range prs {
 				if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash && !pr.Merged && !pr.Closed {
 					if err := client.PullRequestComment(ctx, app.RepositoryFullname, pr.ID, report); err != nil {
-						log.Error("sendVCSEventStatus> unable to send PR report%v", err)
+						log.Error("sendVCSEventStatus> unable to send PR report:%v", err)
 						return nil
 					}
 					// if we found the pull request for head branch we can break (only one PR for the branch should exist)

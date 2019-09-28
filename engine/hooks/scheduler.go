@@ -84,7 +84,9 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 							continue
 						}
 						log.Warning("Hooks> retryTaskExecutionsRoutine > Enqueing very old hooks %s %d/%d type:%s status:%s timestamp:%d err:%v", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
-						s.Dao.EnqueueTaskExecution(&e)
+						if err := s.Dao.EnqueueTaskExecution(&e); err != nil {
+							log.Error("Hooks> retryTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
+						}
 					}
 					if e.NbErrors < s.Cfg.RetryError && e.LastError != "" {
 						// avoid re-enqueue if the lastError is about a git branch not found
@@ -95,7 +97,9 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 							continue
 						}
 						log.Warning("Hooks> retryTaskExecutionsRoutine > Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
-						s.Dao.EnqueueTaskExecution(&e)
+						if err := s.Dao.EnqueueTaskExecution(&e); err != nil {
+							log.Error("Hooks> retryTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
+						}
 						continue
 					}
 				}
@@ -136,7 +140,9 @@ func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error
 							e.Status = ""
 							s.Dao.SaveTaskExecution(&e)
 							log.Info("Hooks> enqueueScheduledTaskExecutionsRoutine > Enqueing %s task %s:%d", e.Type, e.UUID, e.Timestamp)
-							s.Dao.EnqueueTaskExecution(&e)
+							if err := s.Dao.EnqueueTaskExecution(&e); err != nil {
+								log.Error("Hooks> enqueueScheduledTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
+							}
 							alreadyEnqueued = true
 						}
 

@@ -63,7 +63,9 @@ func (s *Service) webhookHandler() service.Handler {
 		s.Dao.SaveTaskExecution(exec)
 
 		//Push the webhook execution in the queue, so it will be executed
-		s.Dao.EnqueueTaskExecution(exec)
+		if err := s.Dao.EnqueueTaskExecution(exec); err != nil {
+			return err
+		}
 
 		//Return the execution
 		return service.WriteJSON(w, exec, http.StatusOK)

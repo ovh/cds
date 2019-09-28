@@ -28,8 +28,7 @@ type Store interface {
 	UpdateTTL(key string, ttl int)
 	Delete(key string)
 	DeleteAll(key string)
-	Enqueue(queueName string, value interface{})
-	Dequeue(queueName string, value interface{})
+	Enqueue(queueName string, value interface{}) error
 	DequeueWithContext(c context.Context, queueName string, value interface{})
 	QueueLen(queueName string) int
 	RemoveFromQueue(queueName string, memberKey string)

@@ -214,7 +214,9 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 				s.Dao.SaveTaskExecution(exec)
 
 				//Push the webhook execution in the queue, so it will be executed
-				s.Dao.EnqueueTaskExecution(exec)
+				if err := s.Dao.EnqueueTaskExecution(exec); err != nil {
+					log.Error("ComputeGerritStreamEvent > error on EnqueueTaskExecution %v", err)
+				}
 			}
 		}
 	}

@@ -25,23 +25,26 @@ func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap, store cache.Sto
 		db := DBFunc()
 		if db != nil {
 			if err := processEvent(c, db, e, store); err != nil {
-				log.Error("ReceiveEvents> err while processing error = %s", err)
-				RetryEvent(&e, err, store)
+				log.Error("ReceiveEvents> err while processing error: %v", err)
+				if err2 := RetryEvent(&e, err, store); err2 != nil {
+					log.Error("ReceiveEvents> err while processing error on retry: %v", err2)
+				}
 			}
 			continue
 		}
-		RetryEvent(&e, nil, store)
+		if err := RetryEvent(&e, nil, store); err != nil {
+			log.Error("ReceiveEvents> err while retry event: %v", err)
+		}
 	}
 }
 
 //RetryEvent retries the events
-func RetryEvent(e *sdk.Event, err error, store cache.Store) {
+func RetryEvent(e *sdk.Event, err error, store cache.Store) error {
 	e.Attempts++
 	if e.Attempts > 2 {
-		log.Error("ReceiveEvents> Aborting event processing %v", err)
-		return
+		return sdk.WrapError(err, "ReceiveEvents> Aborting event processing")
 	}
-	store.Enqueue("events_repositoriesmanager", e)
+	return store.Enqueue("events_repositoriesmanager", e)
 }
 
 func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store cache.Store) error {
@@ -71,7 +74,9 @@ func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store ca
 	}
 
 	if err := c.SetStatus(ctx, event); err != nil {
-		RetryEvent(&event, err, store)
+		if err2 := RetryEvent(&event, err, store); err2 != nil {
+			log.Error("repositoriesmanager>processEvent> err while retry event: %v", err2)
+		}
 		return fmt.Errorf("repositoriesmanager>processEvent> SetStatus > event.EventType:%s err:%s", event.EventType, err)
 	}
 

@@ -25,8 +25,7 @@ func (d *dao) saveOperation(o *sdk.Operation) error {
 }
 
 func (d *dao) pushOperation(o *sdk.Operation) error {
-	d.store.Enqueue(processorKey, o.UUID)
-	return nil
+	return d.store.Enqueue(processorKey, o.UUID)
 }
 
 func (d *dao) deleteOperation(o *sdk.Operation) error {

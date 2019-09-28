@@ -82,7 +82,9 @@ func (s *Service) startRabbitMQHook(t *sdk.Task) error {
 				RabbitMQ:  &sdk.RabbitMQTaskExecution{Message: d.Body},
 			}
 			s.Dao.SaveTaskExecution(&exec)
-			s.Dao.EnqueueTaskExecution(&exec)
+			if err := s.Dao.EnqueueTaskExecution(&exec); err != nil {
+				log.Error("startRabbitMQHook > error on EnqueueTaskExecution: %v", err)
+			}
 		}
 		consumer.done <- nil
 	}()
