@@ -174,19 +174,17 @@ func (s *RedisStore) Enqueue(queueName string, value interface{}) error {
 }
 
 //QueueLen returns the length of a queue
-func (s *RedisStore) QueueLen(queueName string) int {
+func (s *RedisStore) QueueLen(queueName string) (int, error) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return 0
+		return 0, fmt.Errorf("redis> cannot get redis client")
 	}
-
 	var errRedis error
 	var res int64
 	res, errRedis = s.Client.LLen(queueName).Result()
 	if errRedis != nil {
-		log.Warning("redis> Cannot read %s :%s", queueName, errRedis)
+		return 0, sdk.WrapError(errRedis, "redis> Cannot read %s", queueName)
 	}
-	return int(res)
+	return int(res), nil
 }
 
 //DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context

@@ -73,7 +73,7 @@ func (d *dao) EnqueueTaskExecution(r *sdk.TaskExecution) error {
 	return d.store.Enqueue(schedulerQueueKey, k)
 }
 
-func (d *dao) QueueLen() int {
+func (d *dao) QueueLen() (int, error) {
 	return d.store.QueueLen(schedulerQueueKey)
 }
 

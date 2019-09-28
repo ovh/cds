@@ -56,7 +56,11 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 		case <-c.Done():
 			return c.Err()
 		case <-tick.C:
-			size := s.Dao.QueueLen()
+			size, err := s.Dao.QueueLen()
+			if err != nil {
+				log.Error("Hooks> retryTaskExecutionsRoutine > Unable to get queueLen: %v", err)
+				continue
+			}
 			if size > 20 {
 				log.Warning("Hooks> too many tasks in scheduler for now, skipped this retry ticker. size:%d", size)
 				continue
@@ -209,8 +213,11 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		if c.Err() != nil {
 			return c.Err()
 		}
-
-		size := s.Dao.QueueLen()
+		size, err := s.Dao.QueueLen()
+		if err != nil {
+			log.Error("Hooks> dequeueTaskExecutions > Unable to get queueLen: %v", err)
+			continue
+		}
 		log.Debug("Hooks> dequeueTaskExecutions> current queue size: %d", size)
 
 		// Dequeuing context

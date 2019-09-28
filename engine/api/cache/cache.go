@@ -30,7 +30,7 @@ type Store interface {
 	DeleteAll(key string)
 	Enqueue(queueName string, value interface{}) error
 	DequeueWithContext(c context.Context, queueName string, value interface{}) error
-	QueueLen(queueName string) int
+	QueueLen(queueName string) (int, error)
 	RemoveFromQueue(queueName string, memberKey string)
 	Publish(queueName string, value interface{})
 	Subscribe(queueName string) PubSub

@@ -498,7 +498,10 @@ func (s *Service) Status() sdk.MonitoringStatus {
 
 	// hook queue in status
 	status := sdk.MonitoringStatusOK
-	size := s.Dao.QueueLen()
+	size, errQ := s.Dao.QueueLen()
+	if errQ != nil {
+		log.Error("Status> Unable to retrieve queue len: %v", errQ)
+	}
 	if size >= 100 {
 		status = sdk.MonitoringStatusAlert
 	} else if size >= 10 {
