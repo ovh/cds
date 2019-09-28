@@ -41,12 +41,10 @@ func publishEvent(e sdk.Event) error {
 	if err != nil {
 		return sdk.WrapError(err, "Cannot marshal event %+v", e)
 	}
-	store.Publish("events_pubsub", string(b))
-	return nil
+	return store.Publish("events_pubsub", string(b))
 }
 
 // Publish sends a event to a queue
-//func Publish(event sdk.Event, eventType string) {
 func Publish(payload interface{}, u *sdk.User) {
 	p := structs.Map(payload)
 	var projectKey, applicationName, pipelineName, environmentName, workflowName string

@@ -224,22 +224,19 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 }
 
 // Publish a msg in a channel
-func (s *RedisStore) Publish(channel string, value interface{}) {
+func (s *RedisStore) Publish(channel string, value interface{}) error {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		return fmt.Errorf("redis> cannot get redis client")
 	}
 
 	msg, err := json.Marshal(value)
 	if err != nil {
-		log.Warning("redis.Publish> Marshall error, cannot push in channel %s: %v", channel, err)
-		return
+		return sdk.WrapError(err, "redis.Publish> Marshall error, cannot push in channel %s", channel)
 	}
 
 	iUnquoted, err := strconv.Unquote(string(msg))
 	if err != nil {
-		log.Warning("redis.Publish> Unquote error, cannot push in channel %s: %v", channel, err)
-		return
+		return sdk.WrapError(err, "redis.Publish> Unquote error, cannot push in channel %s", channel)
 	}
 
 	for i := 0; i < 10; i++ {
@@ -250,6 +247,7 @@ func (s *RedisStore) Publish(channel string, value interface{}) {
 		log.Warning("redis.Publish> Unable to publish in channel %s: %v", channel, errP)
 		time.Sleep(100 * time.Millisecond)
 	}
+	return nil
 }
 
 // Subscribe to a channel
