@@ -215,7 +215,10 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 
 		// Dequeuing context
 		var taskKey string
-		s.Cache.DequeueWithContext(c, schedulerQueueKey, &taskKey)
+		if err := s.Cache.DequeueWithContext(c, schedulerQueueKey, &taskKey); err != nil {
+			log.Error("Hooks> dequeueTaskExecutions> store.DequeueWithContext err: %v", err)
+			continue
+		}
 		log.Debug("Hooks> dequeueTaskExecutions> work on taskKey: %s", taskKey)
 
 		// Load the task execution

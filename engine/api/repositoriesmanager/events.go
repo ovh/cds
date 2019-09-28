@@ -16,7 +16,10 @@ import (
 func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	for {
 		e := sdk.Event{}
-		store.DequeueWithContext(c, "events_repositoriesmanager", &e)
+		if err := store.DequeueWithContext(c, "events_repositoriesmanager", &e); err != nil {
+			log.Error("repositoriesmanager.ReceiveEvents > store.DequeueWithContext err: %v", err)
+			continue
+		}
 		if err := c.Err(); err != nil {
 			log.Error("Exiting repositoriesmanager.ReceiveEvents: %v", err)
 			return

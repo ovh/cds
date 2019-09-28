@@ -173,29 +173,6 @@ func (s *RedisStore) Enqueue(queueName string, value interface{}) error {
 	return nil
 }
 
-//Dequeue gets from queue This is blocking while there is nothing in the queue
-func (s *RedisStore) Dequeue(queueName string, value interface{}) error {
-	if s.Client == nil {
-		return fmt.Errorf("redis> cannot get redis client")
-	}
-read:
-	res, err := s.Client.BRPop(0, queueName).Result()
-	if err != nil {
-		log.Warning("redis> Error dequeueing %s:%v", queueName, err)
-		if err == io.EOF {
-			time.Sleep(1 * time.Second)
-			goto read
-		}
-	}
-	if len(res) != 2 {
-		return fmt.Errorf("Dequeue invalid data, len: %d", len(res))
-	}
-	if err := json.Unmarshal([]byte(res[1]), value); err != nil {
-		return sdk.WrapError(err, "redis> Cannot unmarshal %s", queueName)
-	}
-	return nil
-}
-
 //QueueLen returns the length of a queue
 func (s *RedisStore) QueueLen(queueName string) int {
 	if s.Client == nil {
@@ -213,10 +190,9 @@ func (s *RedisStore) QueueLen(queueName string) int {
 }
 
 //DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
-func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, value interface{}) {
+func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, value interface{}) error {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		return fmt.Errorf("redis> cannot get redis client")
 	}
 
 	var elem string
@@ -237,15 +213,16 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 				break
 			}
 		case <-c.Done():
-			return
+			return nil
 		}
 	}
 	if elem != "" {
 		b := []byte(elem)
 		if err := json.Unmarshal(b, value); err != nil {
-			log.Error("redis.DequeueWithContext> error on unmarshal value on queue:%s err:%v", queueName, err)
+			return sdk.WrapError(err, "redis.DequeueWithContext> error on unmarshal value on queue:%s", queueName)
 		}
 	}
+	return nil
 }
 
 // Publish a msg in a channel
