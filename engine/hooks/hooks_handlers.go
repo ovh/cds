@@ -298,9 +298,7 @@ func (s *Service) deleteTaskHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task")
 		}
 
-		s.deleteTask(ctx, t)
-
-		return nil
+		return s.deleteTask(ctx, t)
 	}
 }
 
@@ -354,7 +352,9 @@ func (s *Service) deleteAllTaskExecutionsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
 		}
 		for i := range execs {
-			s.Dao.DeleteTaskExecution(&execs[i])
+			if err := s.Dao.DeleteTaskExecution(&execs[i]); err != nil {
+				return err
+			}
 		}
 
 		//Start the task
@@ -384,7 +384,9 @@ func (s *Service) deleteTaskBulkHandler() service.Handler {
 			if err := s.stopTask(t); err != nil {
 				return sdk.WrapError(sdk.ErrNotFound, "Stop task %s", err)
 			}
-			s.deleteTask(ctx, t)
+			if err := s.deleteTask(ctx, t); err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -467,7 +469,9 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 	execs, _ := s.Dao.FindAllTaskExecutions(t)
 	for _, e := range execs {
 		if e.Status == TaskExecutionScheduled {
-			s.Dao.DeleteTaskExecution(&e)
+			if err := s.Dao.DeleteTaskExecution(&e); err != nil {
+				log.Error("unable to delete previous task execution: %v", err)
+			}
 		}
 	}
 	if _, err := s.startTask(ctx, t); err != nil {
@@ -478,14 +482,14 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 	return nil
 }
 
-func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) {
+func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) error {
 	switch t.Type {
 	case TypeGerrit:
 		s.stopGerritHookTask(t)
 	}
 
 	//Delete the task
-	s.Dao.DeleteTask(t)
+	return s.Dao.DeleteTask(t)
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service

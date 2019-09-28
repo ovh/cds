@@ -46,12 +46,17 @@ func (d *dao) SaveTask(r *sdk.Task) {
 	d.store.SetAdd(rootKey, r.UUID, r)
 }
 
-func (d *dao) DeleteTask(r *sdk.Task) {
-	d.store.SetRemove(rootKey, r.UUID, r)
+func (d *dao) DeleteTask(r *sdk.Task) error {
+	if err := d.store.SetRemove(rootKey, r.UUID, r); err != nil {
+		return err
+	}
 	execs, _ := d.FindAllTaskExecutions(r)
 	for _, e := range execs {
-		d.DeleteTaskExecution(&e)
+		if err := d.DeleteTaskExecution(&e); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (d *dao) SaveTaskExecution(r *sdk.TaskExecution) {
@@ -60,10 +65,10 @@ func (d *dao) SaveTaskExecution(r *sdk.TaskExecution) {
 	d.store.SetAdd(setKey, execKey, r)
 }
 
-func (d *dao) DeleteTaskExecution(r *sdk.TaskExecution) {
+func (d *dao) DeleteTaskExecution(r *sdk.TaskExecution) error {
 	setKey := cache.Key(executionRootKey, r.Type, r.UUID)
 	execKey := fmt.Sprintf("%d", r.Timestamp)
-	d.store.SetRemove(setKey, execKey, r)
+	return d.store.SetRemove(setKey, execKey, r)
 }
 
 func (d *dao) EnqueueTaskExecution(r *sdk.TaskExecution) error {

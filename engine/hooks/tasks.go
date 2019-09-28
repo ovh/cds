@@ -90,8 +90,11 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 			}
 		}
 		if !found && t.Type != TypeOutgoingWebHook && t.Type != TypeOutgoingWorkflow {
-			s.deleteTask(ctx, t)
-			log.Info("Hook> Task %s deleted on synchronization", t.UUID)
+			if err := s.deleteTask(ctx, t); err != nil {
+				log.Error("Hook> Error on task %s delete on synchronization: %v", t.UUID, err)
+			} else {
+				log.Info("Hook> Task %s deleted on synchronization", t.UUID)
+			}
 		}
 	}
 

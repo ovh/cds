@@ -326,9 +326,12 @@ func (s *RedisStore) SetAdd(rootKey string, memberKey string, member interface{}
 }
 
 // SetRemove removes a member from a set
-func (s *RedisStore) SetRemove(rootKey string, memberKey string, member interface{}) {
-	s.Client.ZRem(rootKey, memberKey)
+func (s *RedisStore) SetRemove(rootKey string, memberKey string, member interface{}) error {
+	if err := s.Client.ZRem(rootKey, memberKey).Err(); err != nil {
+		return sdk.WrapError(err, "error on SetRemove")
+	}
 	s.Delete(Key(rootKey, memberKey))
+	return nil
 }
 
 // SetCard returns the cardinality of a ZSet

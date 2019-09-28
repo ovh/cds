@@ -37,7 +37,7 @@ type Store interface {
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
 	Status() sdk.MonitoringStatusLine
 	SetAdd(rootKey string, memberKey string, member interface{})
-	SetRemove(rootKey string, memberKey string, member interface{})
+	SetRemove(rootKey string, memberKey string, member interface{}) error
 	SetCard(key string) int
 	SetScan(key string, members ...interface{}) error
 	ZScan(key, pattern string) ([]string, error)
