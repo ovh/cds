@@ -251,12 +251,11 @@ func (s *RedisStore) Publish(channel string, value interface{}) error {
 }
 
 // Subscribe to a channel
-func (s *RedisStore) Subscribe(channel string) PubSub {
+func (s *RedisStore) Subscribe(channel string) (PubSub, error) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return nil
+		return nil, fmt.Errorf("redis> cannot get redis client")
 	}
-	return s.Client.Subscribe(channel)
+	return s.Client.Subscribe(channel), nil
 }
 
 // GetMessageFromSubscription from a redis PubSub

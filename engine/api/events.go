@@ -69,8 +69,11 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 	if cacheMsgChan == nil {
 		return
 	}
-
-	pubSub := store.Subscribe("events_pubsub")
+	pubSub, err := store.Subscribe("events_pubsub")
+	if err != nil {
+		log.Error("events.cacheSubscribe> Exiting on error: %v", err)
+		return
+	}
 	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
 	for {

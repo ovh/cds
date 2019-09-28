@@ -33,7 +33,7 @@ type Store interface {
 	QueueLen(queueName string) (int, error)
 	RemoveFromQueue(queueName string, memberKey string) error
 	Publish(queueName string, value interface{}) error
-	Subscribe(queueName string) PubSub
+	Subscribe(queueName string) (PubSub, error)
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
 	Status() sdk.MonitoringStatusLine
 	SetAdd(rootKey string, memberKey string, member interface{}) error
