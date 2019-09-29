@@ -108,7 +108,7 @@ func getStatusFromIzanami(featureID string, projectKey string) bool {
 }
 
 // Clean the feature cache
-func Clean(store cache.Store) {
+func Clean(store cache.Store) error {
 	keys := cache.Key(cacheFeatureKey, "*")
-	store.DeleteAll(keys)
+	return store.DeleteAll(keys)
 }

@@ -109,7 +109,8 @@ func (s *sessionstore) Set(session SessionKey, subkey string, i interface{}) err
 func (s *sessionstore) Delete(session SessionKey) error {
 	k := cache.Key(cacheSessionStore, string(session))
 	ks := cache.Key(cacheSessionStore, string(session), "*")
-	s.cache.DeleteAll(k)
-	s.cache.DeleteAll(ks)
-	return nil
+	if err := s.cache.DeleteAll(k); err != nil {
+		return err
+	}
+	return s.cache.DeleteAll(ks)
 }

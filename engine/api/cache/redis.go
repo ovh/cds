@@ -140,22 +140,21 @@ func (s *RedisStore) Delete(key string) {
 }
 
 //DeleteAll delete all mathing keys in redis
-func (s *RedisStore) DeleteAll(pattern string) {
+func (s *RedisStore) DeleteAll(pattern string) error {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 	keys, err := s.Client.Keys(pattern).Result()
 	if err != nil {
-		log.Warning("redis> Error deleting %s : %s", pattern, err)
-		return
+		return sdk.WrapError(err, "redis> Error deleting %s", pattern)
 	}
 	if len(keys) == 0 {
-		return
+		return nil
 	}
 	if err := s.Client.Del(keys...).Err(); err != nil {
-		log.Warning("redis> Error deleting %s : %s", pattern, err)
+		return sdk.WrapError(err, "redis> Error deleting %s", pattern)
 	}
+	return nil
 }
 
 //Enqueue pushes to queue
