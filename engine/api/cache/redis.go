@@ -113,7 +113,7 @@ func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
 //UpdateTTL update the ttl linked to the key
 func (s *RedisStore) UpdateTTL(key string, ttl int) error {
 	if s.Client == nil {
-		return fmt.Errorf("redis> cannot get redis client")
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	if err := s.Client.Expire(key, time.Duration(ttl)*time.Second).Err(); err != nil {
@@ -160,7 +160,7 @@ func (s *RedisStore) DeleteAll(pattern string) error {
 //Enqueue pushes to queue
 func (s *RedisStore) Enqueue(queueName string, value interface{}) error {
 	if s.Client == nil {
-		return fmt.Errorf("redis> cannot get redis client")
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 	b, err := json.Marshal(value)
 	if err != nil {
@@ -189,7 +189,7 @@ func (s *RedisStore) QueueLen(queueName string) (int, error) {
 //DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
 func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, value interface{}) error {
 	if s.Client == nil {
-		return fmt.Errorf("redis> cannot get redis client")
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	var elem string
@@ -225,7 +225,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 // Publish a msg in a channel
 func (s *RedisStore) Publish(channel string, value interface{}) error {
 	if s.Client == nil {
-		return fmt.Errorf("redis> cannot get redis client")
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	msg, err := json.Marshal(value)
@@ -417,6 +417,7 @@ func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMilliseco
 	return res, sdk.WrapError(errRedis, "redis> set error %s", key)
 }
 
+// Unlock deletes a key from cache
 func (s *RedisStore) Unlock(key string) error {
 	s.Delete(key)
 	return nil
