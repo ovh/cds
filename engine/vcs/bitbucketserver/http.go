@@ -178,7 +178,9 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 			}
 		}
 		if method == "GET" {
-			c.consumer.cache.Set(cacheKey, v)
+			if err := c.consumer.cache.Set(cacheKey, v); err != nil {
+				log.Error("unable to cache set %v: %v", cacheKey, err)
+			}
 		}
 	}
 

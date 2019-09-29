@@ -121,7 +121,6 @@ func (g *githubClient) Branch(ctx context.Context, fullname, theBranch string) (
 		if !g.Cache.Get(cacheBranchKey, &branch) {
 			log.Error("Unable to get branch (%s) from the cache", cacheBranchKey)
 		}
-
 	} else {
 		if err := json.Unmarshal(body, &branch); err != nil {
 			log.Warning("githubClient.Branch> Unable to parse github branch: %s", err)

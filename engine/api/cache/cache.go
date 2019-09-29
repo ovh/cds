@@ -23,8 +23,8 @@ func Key(args ...string) string {
 //Store is an interface
 type Store interface {
 	Get(key string, value interface{}) bool
-	Set(key string, value interface{})
-	SetWithTTL(key string, value interface{}, ttl int)
+	Set(key string, value interface{}) error
+	SetWithTTL(key string, value interface{}, ttl int) error
 	UpdateTTL(key string, ttl int) error
 	Delete(key string) error
 	DeleteAll(key string) error

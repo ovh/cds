@@ -1021,6 +1021,8 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		vcsInfos.Message = commit.Message
 	}
 
-	store.Set(cacheKey, vcsInfos)
+	if err := store.Set(cacheKey, vcsInfos); err != nil {
+		log.Error("unable to cache set %v: %v", cacheKey, err)
+	}
 	return &vcsInfos, nil
 }

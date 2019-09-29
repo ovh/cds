@@ -95,19 +95,19 @@ func (s *RedisStore) Get(key string, value interface{}) bool {
 }
 
 //SetWithTTL a value in local store (0 for eternity)
-func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
+func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) error {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 	b, err := json.Marshal(value)
 	if err != nil {
-		log.Warning("redis> error caching %s: %s", key, err)
+		return sdk.WrapError(err, "redis> error caching %s", key)
 	}
 
 	if err := s.Client.Set(key, string(b), time.Duration(ttl)*time.Second).Err(); err != nil {
-		log.Error("redis> set error %s: %v", key, err)
+		return sdk.WrapError(err, "redis> set error %s", key)
 	}
+	return nil
 }
 
 //UpdateTTL update the ttl linked to the key
@@ -123,8 +123,8 @@ func (s *RedisStore) UpdateTTL(key string, ttl int) error {
 }
 
 //Set a value in redis
-func (s *RedisStore) Set(key string, value interface{}) {
-	s.SetWithTTL(key, value, s.ttl)
+func (s *RedisStore) Set(key string, value interface{}) error {
+	return s.SetWithTTL(key, value, s.ttl)
 }
 
 //Delete a key in redis
@@ -175,7 +175,7 @@ func (s *RedisStore) Enqueue(queueName string, value interface{}) error {
 //QueueLen returns the length of a queue
 func (s *RedisStore) QueueLen(queueName string) (int, error) {
 	if s.Client == nil {
-		return 0, fmt.Errorf("redis> cannot get redis client")
+		return 0, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 	var errRedis error
 	var res int64

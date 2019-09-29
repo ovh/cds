@@ -144,7 +144,9 @@ func (api *API) workerCheckingHandler() service.Handler {
 		}
 		key := cache.Key("worker", wk.ID)
 		wk.Status = sdk.StatusChecking
-		api.Cache.Set(key, wk)
+		if err := api.Cache.Set(key, wk); err != nil {
+			log.Error("unable to cache set %v: %v", key, err)
+		}
 
 		return nil
 	}
@@ -172,7 +174,9 @@ func (api *API) workerWaitingHandler() service.Handler {
 		}
 		key := cache.Key("worker", wk.ID)
 		wk.Status = sdk.StatusWaiting
-		api.Cache.Set(key, wk)
+		if err := api.Cache.Set(key, wk); err != nil {
+			log.Error("unable to cache set %v: %v", key, err)
+		}
 
 		return nil
 	}

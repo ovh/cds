@@ -70,7 +70,9 @@ func GetFeatures(store cache.Store, projectKey string) map[string]bool {
 	}
 
 	// no expiration delay is set, the cache is cleared by Izanami calls on /feature/clean
-	store.Set(cacheFeatureKey+projectKey, projFeats)
+	if err := store.Set(cacheFeatureKey+projectKey, projFeats); err != nil {
+		log.Error("unable to cache set %v: %v", cacheFeatureKey+projectKey, err)
+	}
 
 	return projFeats.Features
 }

@@ -105,7 +105,9 @@ func GetWorker(db *gorp.DbMap, store cache.Store, workerID, workerName string) (
 		if err != nil {
 			return nil, fmt.Errorf("cannot load worker '%s': %s", workerName, err)
 		}
-		store.Set(key, w)
+		if err := store.Set(key, w); err != nil {
+			log.Error("unable to cache set %v: %v", key, err)
+		}
 	}
 	return w, nil
 }
@@ -127,7 +129,9 @@ func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, e
 			srv.IsSharedInfra = true
 			srv.Uptodate = srv.Version == sdk.VERSION
 		}
-		store.Set(key, srv)
+		if err := store.Set(key, srv); err != nil {
+			log.Error("unable to cache set %v: %v", key, err)
+		}
 	}
 	return srv, nil
 }

@@ -90,7 +90,10 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			data["auth_type"] = "basic"
 		}
 
-		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
+		keyr := cache.Key("reposmanager", "oauth", token)
+		if err := api.Cache.Set(keyr, data); err != nil {
+			log.Error("unable to cache set %v: %v", keyr, err)
+		}
 		return service.WriteJSON(w, data, http.StatusOK)
 	}
 }
