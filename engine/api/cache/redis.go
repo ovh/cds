@@ -399,7 +399,7 @@ func (s *RedisStore) ZScan(key, pattern string) ([]string, error) {
 	return keys, nil
 }
 
-func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMillisecond int, retryCount int) bool {
+func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMillisecond int, retryCount int) (bool, error) {
 	var errRedis error
 	var res bool
 	if retrywdMillisecond == -1 {
@@ -415,12 +415,10 @@ func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMilliseco
 		}
 		time.Sleep(time.Duration(retrywdMillisecond) * time.Millisecond)
 	}
-	if errRedis != nil {
-		log.Error("redis> set error %s: %v", key, errRedis)
-	}
-	return res
+	return res, sdk.WrapError(errRedis, "redis> set error %s", key)
 }
 
-func (s *RedisStore) Unlock(key string) {
+func (s *RedisStore) Unlock(key string) error {
 	s.Delete(key)
+	return nil
 }

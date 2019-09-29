@@ -6,6 +6,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -59,11 +60,17 @@ func (d *dao) loadAllOperations() ([]*sdk.Operation, error) {
 var errLockUnavailable = fmt.Errorf("errLockUnavailable")
 
 func (d *dao) lock(uuid string) error {
-	if d.store.Lock(cache.Key(locksKey, uuid), 10*time.Minute, -1, -1) {
-		d.store.Lock(cache.Key(lastAccessKey, uuid), 3*24*time.Hour, -1, -1)
-		return nil
+	ok, err := d.store.Lock(cache.Key(locksKey, uuid), 10*time.Minute, -1, -1)
+	if err != nil || !ok {
+		return errLockUnavailable
 	}
-	return errLockUnavailable
+
+	_, err2 := d.store.Lock(cache.Key(lastAccessKey, uuid), 3*24*time.Hour, -1, -1)
+	if err2 != nil {
+		return sdk.WrapError(err2, "error on lock uuid: %s", uuid)
+	}
+
+	return nil
 }
 
 func (d *dao) deleteLock(uuid string) {
@@ -71,8 +78,12 @@ func (d *dao) deleteLock(uuid string) {
 }
 
 func (d *dao) unlock(uuid string, retention time.Duration) error {
-	d.store.Unlock(cache.Key(locksKey, uuid))
-	d.store.Lock(cache.Key(lastAccessKey, uuid), retention, -1, -1)
+	if err := d.store.Unlock(cache.Key(locksKey, uuid)); err != nil {
+		log.Error("error on unlock uuid %s: %v", uuid, err)
+	}
+	if _, err := d.store.Lock(cache.Key(lastAccessKey, uuid), retention, -1, -1); err != nil {
+		return sdk.WrapError(err, "error on cache.lock uuid:%s", uuid)
+	}
 	return nil
 }
 

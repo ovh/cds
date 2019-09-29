@@ -41,8 +41,8 @@ type Store interface {
 	SetCard(key string) (int, error)
 	SetScan(key string, members ...interface{}) error
 	ZScan(key, pattern string) ([]string, error)
-	Lock(key string, expiration time.Duration, retryWaitDurationMillisecond int, retryCount int) bool
-	Unlock(key string)
+	Lock(key string, expiration time.Duration, retryWaitDurationMillisecond int, retryCount int) (bool, error)
+	Unlock(key string) error
 }
 
 //New init a cache
