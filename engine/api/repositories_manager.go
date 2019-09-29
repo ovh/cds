@@ -395,7 +395,9 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 
 		cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
 		if sync {
-			api.Cache.Delete(cacheKey)
+			if err := api.Cache.Delete(cacheKey); err != nil {
+				log.Error("getReposFromRepositoriesManagerHandler> error on delete cache key %v: %s", cacheKey, err)
+			}
 		}
 
 		var repos []sdk.VCSRepo

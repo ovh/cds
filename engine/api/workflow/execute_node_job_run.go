@@ -528,8 +528,9 @@ func FreeNodeJobRun(store cache.Store, id int64) error {
 	k := keyBookJob(id)
 	h := sdk.Service{}
 	if store.Get(k, &h) {
-		// job not already booked, book it for 2 min
-		store.Delete(k)
+		if err := store.Delete(k); err != nil {
+			log.Error("error on cache delete %v: %v", k, err)
+		}
 		return nil
 	}
 	return sdk.WrapError(sdk.ErrJobNotBooked, "BookNodeJobRun> job %d already released", id)

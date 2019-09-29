@@ -105,7 +105,9 @@ func (api *API) disableWorkerHandler() service.Handler {
 
 		//Remove the worker from the cache
 		key := cache.Key("worker", id)
-		api.Cache.Delete(key)
+		if err := api.Cache.Delete(key); err != nil {
+			log.Error("disableWorkerHandler> unable to delete cache key %v: %v", key, err)
+		}
 
 		return nil
 	}

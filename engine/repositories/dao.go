@@ -73,8 +73,12 @@ func (d *dao) lock(uuid string) error {
 	return nil
 }
 
-func (d *dao) deleteLock(uuid string) {
-	d.store.Delete(cache.Key(locksKey, uuid))
+func (d *dao) deleteLock(uuid string) error {
+	k := cache.Key(locksKey, uuid)
+	if err := d.store.Delete(k); err != nil {
+		return sdk.WrapError(err, "unable to cache delete %v: %v", k, err)
+	}
+	return nil
 }
 
 func (d *dao) unlock(uuid string, retention time.Duration) error {

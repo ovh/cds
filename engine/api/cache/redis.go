@@ -128,15 +128,15 @@ func (s *RedisStore) Set(key string, value interface{}) {
 }
 
 //Delete a key in redis
-func (s *RedisStore) Delete(key string) {
+func (s *RedisStore) Delete(key string) error {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	if err := s.Client.Del(key).Err(); err != nil {
-		log.Error("redis> error deleting %s : %s", key, err)
+		return sdk.WrapError(err, "redis> error deleting %s", key)
 	}
+	return nil
 }
 
 //DeleteAll delete all mathing keys in redis

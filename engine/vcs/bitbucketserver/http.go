@@ -156,7 +156,9 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	}
 
 	if method != "GET" {
-		c.consumer.cache.Delete(cacheKey)
+		if err := c.consumer.cache.Delete(cacheKey); err != nil {
+			log.Error("bitbucketClient.do> unable to delete cache key %v: %v", cacheKey, err)
+		}
 	}
 
 	// Unmarshall the JSON response

@@ -152,5 +152,7 @@ func BookForRegister(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.S
 // UnbookForRegister release the book
 func UnbookForRegister(store cache.Store, id int64) {
 	k := KeyBookWorkerModel(id)
-	store.Delete(k)
+	if err := store.Delete(k); err != nil {
+		log.Error("unable to delete cache key %v: %v", k, err)
+	}
 }

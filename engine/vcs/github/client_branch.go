@@ -102,11 +102,15 @@ func (g *githubClient) Branch(ctx context.Context, fullname, theBranch string) (
 	url := "/repos/" + fullname + "/branches/" + theBranch
 	status, body, _, err := g.get(url)
 	if err != nil {
-		g.Cache.Delete(cacheBranchKey)
+		if err := g.Cache.Delete(cacheBranchKey); err != nil {
+			log.Error("githubClient.Branch> unable to delete cache key %v: %v", cacheBranchKey, err)
+		}
 		return nil, err
 	}
 	if status >= 400 {
-		g.Cache.Delete(cacheBranchKey)
+		if err := g.Cache.Delete(cacheBranchKey); err != nil {
+			log.Error("githubClient.Branch> unable to delete cache key %v: %v", cacheBranchKey, err)
+		}
 		return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 	}
 
@@ -127,7 +131,9 @@ func (g *githubClient) Branch(ctx context.Context, fullname, theBranch string) (
 
 	if branch.Name == "" {
 		log.Warning("githubClient.Branch> Cannot find branch %v: %s", branch, theBranch)
-		g.Cache.Delete(cacheBranchKey)
+		if err := g.Cache.Delete(cacheBranchKey); err != nil {
+			log.Error("githubClient.Branch> unable to delete cache key %v: %v", cacheBranchKey, err)
+		}
 		return nil, fmt.Errorf("githubClient.Branch > Cannot find branch %s", theBranch)
 	}
 

@@ -26,7 +26,7 @@ type Store interface {
 	Set(key string, value interface{})
 	SetWithTTL(key string, value interface{}, ttl int)
 	UpdateTTL(key string, ttl int) error
-	Delete(key string)
+	Delete(key string) error
 	DeleteAll(key string) error
 	Enqueue(queueName string, value interface{}) error
 	DequeueWithContext(c context.Context, queueName string, value interface{}) error

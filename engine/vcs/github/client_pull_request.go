@@ -24,11 +24,15 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 
 		status, body, _, err := g.get(url, opts...)
 		if err != nil {
-			g.Cache.Delete(cachePullRequestKey)
+			if err := g.Cache.Delete(cachePullRequestKey); err != nil {
+				log.Error("githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
+			}
 			return sdk.VCSPullRequest{}, err
 		}
 		if status >= 400 {
-			g.Cache.Delete(cachePullRequestKey)
+			if err := g.Cache.Delete(cachePullRequestKey); err != nil {
+				log.Error("githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
+			}
 			return sdk.VCSPullRequest{}, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 		}
 
@@ -50,7 +54,9 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 
 		if pr.Number != id {
 			log.Warning("githubClient.PullRequest> Cannot find pullrequest %d", id)
-			g.Cache.Delete(cachePullRequestKey)
+			if err := g.Cache.Delete(cachePullRequestKey); err != nil {
+				log.Error("githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
+			}
 			return sdk.VCSPullRequest{}, sdk.WithStack(fmt.Errorf("cannot find pullrequest %d", id))
 		}
 

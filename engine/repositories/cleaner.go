@@ -97,7 +97,9 @@ func (s *Service) vacuumFileSystemCleanerFunc(repoUUID string) error {
 		return err
 	}
 
-	s.dao.deleteLock(repoUUID)
+	if err := s.dao.deleteLock(repoUUID); err != nil {
+		log.Error("unable to deleteLock %v: %v", repoUUID, err)
+	}
 
 	return nil
 }
