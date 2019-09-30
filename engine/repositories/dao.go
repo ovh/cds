@@ -29,8 +29,7 @@ func (d *dao) pushOperation(o *sdk.Operation) error {
 }
 
 func (d *dao) deleteOperation(o *sdk.Operation) error {
-	d.store.SetRemove(rootKey, o.UUID, o)
-	return nil
+	return d.store.SetRemove(rootKey, o.UUID, o)
 }
 
 func (d *dao) loadOperation(uuid string) *sdk.Operation {
@@ -80,7 +79,7 @@ func (d *dao) lock(uuid string) error {
 func (d *dao) deleteLock(uuid string) error {
 	k := cache.Key(locksKey, uuid)
 	if err := d.store.Delete(k); err != nil {
-		return sdk.WrapError(err, "unable to cache delete %v: %v", k, err)
+		log.Error("unable to cache delete %s: %v", k, err)
 	}
 	return nil
 }

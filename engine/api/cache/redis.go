@@ -257,8 +257,7 @@ func (s *RedisStore) Subscribe(channel string) (PubSub, error) {
 // GetMessageFromSubscription from a redis PubSub
 func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (string, error) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return "", nil
+		return "", sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	rps, ok := pb.(*redis.PubSub)
@@ -320,8 +319,7 @@ func (s *RedisStore) SetAdd(rootKey string, memberKey string, member interface{}
 	if err != nil {
 		return sdk.WrapError(err, "error on SetAdd")
 	}
-	s.SetWithTTL(Key(rootKey, memberKey), member, -1)
-	return nil
+	return s.SetWithTTL(Key(rootKey, memberKey), member, -1)
 }
 
 // SetRemove removes a member from a set
@@ -329,8 +327,7 @@ func (s *RedisStore) SetRemove(rootKey string, memberKey string, member interfac
 	if err := s.Client.ZRem(rootKey, memberKey).Err(); err != nil {
 		return sdk.WrapError(err, "error on SetRemove")
 	}
-	s.Delete(Key(rootKey, memberKey))
-	return nil
+	return s.Delete(Key(rootKey, memberKey))
 }
 
 // SetCard returns the cardinality of a ZSet
@@ -370,16 +367,14 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 				// but try to delete the member from the Redis ZSET
 				log.Error("redis>SetScan member %s not found", keys[i])
 				if err := s.Client.ZRem(key, values[i]).Err(); err != nil {
-					log.Error("redis>SetScan unable to delete member %s", keys[i])
-					return err
+					return sdk.WrapError(err, "redis>SetScan unable to delete member %s", keys[i])
 				}
 				log.Info("redis> member %s deleted", keys[i])
-				return fmt.Errorf("SetScan member %s not found", keys[i])
+				return sdk.WithStack(fmt.Errorf("SetScan member %s not found", keys[i]))
 			}
 
 			if err := json.Unmarshal([]byte(res[i].(string)), members[i]); err != nil {
-				log.Warning("redis> cannot unmarshal %s :%s", keys[i], err)
-				return err
+				return sdk.WrapError(err, "redis> cannot unmarshal %s", keys[i])
 			}
 		}
 	}
@@ -416,6 +411,5 @@ func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMilliseco
 
 // Unlock deletes a key from cache
 func (s *RedisStore) Unlock(key string) error {
-	s.Delete(key)
-	return nil
+	return s.Delete(key)
 }

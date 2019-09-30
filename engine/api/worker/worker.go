@@ -364,7 +364,7 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, 
 	// FIXME should me managed by worker model package
 	keyWorkerModel := workermodel.KeyBookWorkerModel(modelID)
 	if err := store.UpdateTTL(keyWorkerModel, workermodel.CacheTTLInSeconds+10); err != nil {
-		return w, err
+		log.Error("cannot UpdateTTL in cache %s: %v", keyWorkerModel, err)
 	}
 	// delete from cache by group
 	keyGroup := cache.Key("api:workermodels:bygroup", fmt.Sprintf("%d", t.GroupID))

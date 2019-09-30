@@ -125,7 +125,10 @@ func (s *sessionstore) Delete(session SessionKey) error {
 	k := cache.Key(cacheSessionStore, string(session))
 	ks := cache.Key(cacheSessionStore, string(session), "*")
 	if err := s.cache.DeleteAll(k); err != nil {
-		return err
+		log.Error("unable to cache deleteAll %s: %v", k, err)
 	}
-	return s.cache.DeleteAll(ks)
+	if err := s.cache.DeleteAll(ks); err != nil {
+		log.Error("unable to cache deleteAll %s: %v", ks, err)
+	}
+	return nil
 }

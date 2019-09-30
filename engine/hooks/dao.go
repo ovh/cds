@@ -83,7 +83,7 @@ func (d *dao) EnqueueTaskExecution(r *sdk.TaskExecution) error {
 	k := cache.Key(executionRootKey, r.Type, r.UUID, fmt.Sprintf("%d", r.Timestamp))
 	// before enqueue, be sure that it's not in queue
 	if err := d.store.RemoveFromQueue(schedulerQueueKey, k); err != nil {
-		return err
+		log.Error("error on cache RemoveFromQueue %s: %v", schedulerQueueKey, err)
 	}
 	return d.store.Enqueue(schedulerQueueKey, k)
 }
