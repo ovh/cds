@@ -84,6 +84,10 @@ notifications:
           Details : {{.cds.buildURL}}
           Triggered by : {{.cds.triggered_by.username}}
           Branch : {{.git.branch}}
+  - type: vcs
+    settings:
+      template:
+        disable_comment: true
 `,
 			},
 		},

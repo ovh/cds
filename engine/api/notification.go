@@ -27,6 +27,11 @@ func (api *API) getUserNotificationTypeHandler() service.Handler {
 				SendToGroups: &sdk.False,
 				Template:     &sdk.UserNotificationTemplateJabber,
 			},
+			sdk.VCSUserNotification: {
+				Template: &sdk.UserNotificationTemplate{
+					Body: sdk.DefaultWorkflowNodeRunReport,
+				},
+			},
 		}, http.StatusOK)
 	}
 }
