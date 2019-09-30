@@ -3,7 +3,7 @@ title: "Join"
 weight: 5
 ---
 
-A join lets workflow to wait the end of two or more parent pipelines.
+A join lets workflow to await the end of two or more parent pipelines.
 
 ![Join](/images/workflows.design.join_en.png)
 

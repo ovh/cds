@@ -23,7 +23,6 @@ export class WorkerModelAddComponent implements OnInit {
     loading = false;
     workerModel: WorkerModel;
     types: Array<string>;
-    communications: Array<string>;
     groups: Array<Group>;
     patterns: Array<ModelPattern>;
     patternSelected: ModelPattern;
@@ -73,8 +72,7 @@ export class WorkerModelAddComponent implements OnInit {
         this.loading = true;
         forkJoin([
             this._workerModelService.getPatterns(),
-            this._workerModelService.getTypes(),
-            this._workerModelService.getCommunications()
+            this._workerModelService.getTypes()
         ])
             .pipe(finalize(() => {
                 this.loading = false;
@@ -83,7 +81,6 @@ export class WorkerModelAddComponent implements OnInit {
             .subscribe(results => {
                 this.patterns = results[0];
                 this.types = results[1];
-                this.communications = results[2];
             });
     }
 

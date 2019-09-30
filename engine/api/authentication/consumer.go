@@ -120,14 +120,19 @@ func ConsumerRemoveGroup(ctx context.Context, db gorp.SqlExecutor, g *sdk.Group)
 }
 
 // ConsumerInvalidateGroupForUser set group as invalid in all user's consumers and set warning.
-func ConsumerInvalidateGroupForUser(ctx context.Context, db gorp.SqlExecutor, g *sdk.Group, userID string) error {
+func ConsumerInvalidateGroupForUser(ctx context.Context, db gorp.SqlExecutor, g *sdk.Group, u *sdk.AuthentifiedUser) error {
+	// If an admin is removed from a group we want to preserve its consumer with this group
+	if u.Ring == sdk.UserRingAdmin {
+		return nil
+	}
+
 	// Load all consumers for the user
-	cs, err := LoadConsumersByUserID(ctx, db, userID)
+	cs, err := LoadConsumersByUserID(ctx, db, u.ID)
 	if err != nil {
 		return err
 	}
 	for i := range cs {
-		if !cs[i].GroupIDs.Contains(g.ID) {
+		if len(cs[i].GroupIDs) == 0 || !cs[i].GroupIDs.Contains(g.ID) {
 			continue
 		}
 
@@ -159,7 +164,7 @@ func ConsumerRestoreInvalidatedGroupForUser(ctx context.Context, db gorp.SqlExec
 		return err
 	}
 	for i := range cs {
-		if !cs[i].InvalidGroupIDs.Contains(groupID) {
+		if len(cs[i].InvalidGroupIDs) == 0 || !cs[i].InvalidGroupIDs.Contains(groupID) {
 			continue
 		}
 
@@ -170,11 +175,85 @@ func ConsumerRestoreInvalidatedGroupForUser(ctx context.Context, db gorp.SqlExec
 		// If the consumer was disabled because there was no group left inside, it can be re-enable
 		cs[i].Disabled = false
 
-		// Clean warnings, removes warning for current group and last group removed wanring if exists
+		// Clean warnings, removes warning for current group and last group removed warning if exists
 		filteredWarnings := make(sdk.AuthConsumerWarnings, 0, len(cs[i].Warnings))
 		for _, w := range cs[i].Warnings {
 			if (w.Type == sdk.WarningGroupInvalid && w.GroupID != groupID) ||
 				w.Type == sdk.WarningGroupRemoved {
+				filteredWarnings = append(filteredWarnings, w)
+			}
+		}
+		cs[i].Warnings = filteredWarnings
+
+		if err := UpdateConsumer(db, &cs[i]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ConsumerInvalidateGroupsForUser set groups as invalid if the user is not a member in all user's consumers and set warning.
+func ConsumerInvalidateGroupsForUser(ctx context.Context, db gorp.SqlExecutor, userID string, userGroupIDs sdk.Int64Slice) error {
+	// Load all consumers for the user
+	cs, err := LoadConsumersByUserID(ctx, db, userID, LoadConsumerOptions.WithConsumerGroups)
+	if err != nil {
+		return err
+	}
+	for i := range cs {
+		// If there is no group in the consumer we can skip it
+		if len(cs[i].GroupIDs) == 0 {
+			continue
+		}
+
+		for j := range cs[i].Groups {
+			if userGroupIDs.Contains(cs[i].Groups[j].ID) {
+				continue
+			}
+
+			// Remove the group id from slice and add it to the invalid ones
+			cs[i].GroupIDs.Remove(cs[i].Groups[j].ID)
+			cs[i].InvalidGroupIDs = append(cs[i].InvalidGroupIDs, cs[i].Groups[j].ID)
+			cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningGroupInvalid(cs[i].Groups[j].ID, cs[i].Groups[j].Name))
+		}
+
+		// If there is no group left in the consumer we want to disable it
+		if len(cs[i].GroupIDs) == 0 {
+			cs[i].Disabled = true
+			cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningLastGroupRemoved())
+		}
+
+		if err := UpdateConsumer(db, &cs[i]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ConsumerRestoreInvalidatedGroupsForUser restore invalidated group for all user's consumer, this should be used only for a admin user.
+func ConsumerRestoreInvalidatedGroupsForUser(ctx context.Context, db gorp.SqlExecutor, userID string) error {
+	// Load all consumers for the user
+	cs, err := LoadConsumersByUserID(ctx, db, userID)
+	if err != nil {
+		return err
+	}
+	for i := range cs {
+		if len(cs[i].InvalidGroupIDs) == 0 {
+			continue
+		}
+
+		// Moves invalid group ids to valid slice
+		cs[i].GroupIDs = append(cs[i].GroupIDs, cs[i].InvalidGroupIDs...)
+		cs[i].InvalidGroupIDs = nil
+
+		// If the consumer was disabled because there was no group left inside, it can be re-enable
+		cs[i].Disabled = false
+
+		// Clean warnings, removes warning for invalid groups and last group removed warning if exists
+		filteredWarnings := make(sdk.AuthConsumerWarnings, 0, len(cs[i].Warnings))
+		for _, w := range cs[i].Warnings {
+			if w.Type == sdk.WarningGroupRemoved {
 				filteredWarnings = append(filteredWarnings, w)
 			}
 		}

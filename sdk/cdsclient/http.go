@@ -164,7 +164,8 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 	var checkToken = !strings.Contains(path, "/auth/consumer/builtin/signin") &&
 		!strings.Contains(path, "/auth/consumer/local/signin") &&
 		!strings.Contains(path, "/auth/consumer/local/signup") &&
-		!strings.Contains(path, "/auth/consumer/local/verify")
+		!strings.Contains(path, "/auth/consumer/local/verify") &&
+		!strings.Contains(path, "/auth/consumer/worker/signin")
 
 	if checkToken && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
 		if c.config.Verbose {

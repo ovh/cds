@@ -17,7 +17,7 @@ import (
 type client struct {
 	httpClient    *http.Client
 	httpSSEClient *http.Client
-	config        Config
+	config        *Config
 	name          string
 }
 
@@ -52,7 +52,7 @@ func NewHTTPClient(timeout time.Duration, insecureSkipVerifyTLS bool) *http.Clie
 // New returns a client from a config struct
 func New(c Config) Interface {
 	cli := new(client)
-	cli.config = c
+	cli.config = &c
 	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Second*60, c.InsecureSkipVerifyTLS)
 	cli.httpSSEClient = NewHTTPClient(0, c.InsecureSkipVerifyTLS)
@@ -67,7 +67,7 @@ func NewWorker(endpoint string, name string, c *http.Client) WorkerInterface {
 		Retry: 10,
 	}
 	cli := new(client)
-	cli.config = conf
+	cli.config = &conf
 	cli.config.Mutex = new(sync.Mutex)
 
 	if c == nil {
@@ -106,7 +106,7 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	}
 
 	cli := new(client)
-	cli.config = conf
+	cli.config = &conf
 	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
 	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
@@ -128,7 +128,7 @@ func NewServiceClient(cfg ServiceConfig) (Interface, []byte, error) {
 	}
 
 	cli := new(client)
-	cli.config = conf
+	cli.config = &conf
 	cli.config.Mutex = new(sync.Mutex)
 	cli.httpClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
 	cli.httpSSEClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)

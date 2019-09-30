@@ -93,7 +93,7 @@ func InsertContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
 	c.Created = time.Now()
 	dbc := userContact{UserContact: *c}
 	if err := gorpmapping.InsertAndSign(db, &dbc); err != nil {
-		return err
+		return sdk.WrapError(err, "unable to insert contact userID:%s type:%s value:%s", dbc.UserID, dbc.Type, dbc.Value)
 	}
 	*c = dbc.UserContact
 	return nil
@@ -107,4 +107,4 @@ func UpdateContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
 	}
 	*c = dbc.UserContact
 	return nil
-} 
+}

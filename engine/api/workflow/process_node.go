@@ -114,23 +114,23 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		return nil, false, sdk.ErrPipelineNotFound
 	}
 
-	run := createWorkflowNodeRun(wr, n, parents, subNumber, hookEvent, manual)
+	nr := createWorkflowNodeRun(wr, n, parents, subNumber, hookEvent, manual)
 
 	// PIPELINE PARAMETER
 	if n.Type == sdk.NodeTypePipeline {
-		run.PipelineParameters = computePipelineParameters(wr, n, manual)
+		nr.PipelineParameters = computePipelineParameters(wr, n, manual)
 	}
 
 	// PAYLOAD
 	var errorPayload error
-	run.Payload, errorPayload = computePayload(n, hookEvent, manual)
+	nr.Payload, errorPayload = computePayload(n, hookEvent, manual)
 	if errorPayload != nil {
 		return nil, false, errorPayload
 	}
 
 	// WORKFLOW RUN BUILD PARAMETER
 	var errBP error
-	run.BuildParameters, errBP = computeBuildParameters(wr, run, parents, manual)
+	nr.BuildParameters, errBP = computeBuildParameters(wr, nr, parents, manual)
 	if errBP != nil {
 		return nil, false, errBP
 	}
@@ -152,7 +152,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	// NODE CONTEXT BUILD PARAMETER
-	computeNodeContextBuildParameters(ctx, proj, wr, run, n, runContext)
+	computeNodeContextBuildParameters(ctx, proj, wr, nr, n, runContext)
 
 	// PARENT BUILD PARAMETER WITH git.*
 	if len(parents) > 0 {
@@ -162,16 +162,16 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		if errPP != nil {
 			return nil, false, sdk.WrapError(errPP, "processNode> getParentParameters failed")
 		}
-		mapBuildParams := sdk.ParametersToMap(run.BuildParameters)
+		mapBuildParams := sdk.ParametersToMap(nr.BuildParameters)
 		mapParentParams := sdk.ParametersToMap(parentsParams)
 
-		run.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams))
+		nr.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams))
 	}
 
 	isRoot := n.ID == wr.Workflow.WorkflowData.Node.ID
 
 	// GIT PARAMS
-	// Here, run.BuildParameters contains parent git params, get from getParentParameters
+	// Here, nr.BuildParameters contains parent git params, get from getParentParameters
 
 	var app sdk.Application
 	var currentRepo string
@@ -184,7 +184,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		currentRepo = app.RepositoryFullname
 	}
 
-	parentRepo := sdk.ParameterFind(run.BuildParameters, tagGitRepository)
+	parentRepo := sdk.ParameterFind(nr.BuildParameters, tagGitRepository)
 
 	// Compute git params for current job
 	// Get from parent when
@@ -192,7 +192,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	// * no repo on current job
 	// * parent was on same repo
 	if isRoot || currentRepo == "" || (parentRepo != nil && parentRepo.Value == currentRepo) {
-		for _, param := range run.BuildParameters {
+		for _, param := range nr.BuildParameters {
 			switch param.Name {
 			case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL, tagGitServer:
 				currentJobGitValues[param.Name] = param.Value
@@ -222,7 +222,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 		// If we change repo and we dont find ancestor on the same repo, just keep the branch
 		if !found {
-			b := sdk.ParameterFind(run.BuildParameters, tagGitBranch)
+			b := sdk.ParameterFind(nr.BuildParameters, tagGitBranch)
 			if b != nil {
 				currentJobGitValues[tagGitBranch] = b.Value
 			}
@@ -249,12 +249,12 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	// Update git params / git columns
 	if isRoot && vcsInf != nil {
-		setValuesGitInBuildParameters(run, *vcsInf)
+		setValuesGitInBuildParameters(nr, *vcsInf)
 	}
 
 	// CONDITION
-	if !checkCondition(wr, n.Context.Conditions, run.BuildParameters) {
-		log.Debug("Condition failed %d/%d %+v", wr.ID, n.ID, run.BuildParameters)
+	if !checkCondition(wr, n.Context.Conditions, nr.BuildParameters) {
+		log.Debug("Condition failed %d/%d %+v", wr.ID, n.ID, nr.BuildParameters)
 		return nil, false, nil
 	}
 
@@ -274,23 +274,23 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	// Update datas if repo change
 	if !isRoot && vcsInf != nil {
-		setValuesGitInBuildParameters(run, *vcsInf)
+		setValuesGitInBuildParameters(nr, *vcsInf)
 	}
 
 	// ADD TAG
 	// Tag VCS infos : add in tag only if it does not exist
 	if !wr.TagExists(tagGitRepository) {
-		wr.Tag(tagGitRepository, run.VCSRepository)
-		if run.VCSBranch != "" && run.VCSTag == "" {
-			wr.Tag(tagGitBranch, run.VCSBranch)
+		wr.Tag(tagGitRepository, nr.VCSRepository)
+		if nr.VCSBranch != "" && nr.VCSTag == "" {
+			wr.Tag(tagGitBranch, nr.VCSBranch)
 		}
-		if run.VCSTag != "" {
-			wr.Tag(tagGitTag, run.VCSTag)
+		if nr.VCSTag != "" {
+			wr.Tag(tagGitTag, nr.VCSTag)
 		}
-		if len(run.VCSHash) >= 7 {
-			wr.Tag(tagGitHash, run.VCSHash[:7])
+		if len(nr.VCSHash) >= 7 {
+			wr.Tag(tagGitHash, nr.VCSHash[:7])
 		} else {
-			wr.Tag(tagGitHash, run.VCSHash)
+			wr.Tag(tagGitHash, nr.VCSHash)
 		}
 		wr.Tag(tagGitAuthor, vcsInf.Author)
 	}
@@ -302,41 +302,41 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	for _, info := range wr.Infos {
 		if info.IsError && info.SubNumber == wr.LastSubNumber {
-			run.Status = string(sdk.StatusFail)
-			run.Done = time.Now()
+			nr.Status = string(sdk.StatusFail)
+			nr.Done = time.Now()
 			break
 		}
 	}
 
-	if err := insertWorkflowNodeRun(db, run); err != nil {
-		return nil, false, sdk.WrapError(err, "unable to insert run (node id : %d, node name : %s, subnumber : %d)", run.WorkflowNodeID, run.WorkflowNodeName, run.SubNumber)
+	if err := insertWorkflowNodeRun(db, nr); err != nil {
+		return nil, false, sdk.WrapError(err, "unable to insert run (node id : %d, node name : %s, subnumber : %d)", nr.WorkflowNodeID, nr.WorkflowNodeName, nr.SubNumber)
 	}
 	wr.LastExecution = time.Now()
 
-	buildParameters := sdk.ParametersToMap(run.BuildParameters)
+	buildParameters := sdk.ParametersToMap(nr.BuildParameters)
 	_, okUI := buildParameters["cds.ui.pipeline.run"]
 	_, okID := buildParameters["cds.node.id"]
 	if !okUI || !okID {
 		if !okUI {
-			uiRunURL := fmt.Sprintf("%s/project/%s/workflow/%s/run/%s/node/%d?name=%s", baseUIURL, buildParameters["cds.project"], buildParameters["cds.workflow"], buildParameters["cds.run.number"], run.ID, n.Name)
-			sdk.AddParameter(&run.BuildParameters, "cds.ui.pipeline.run", sdk.StringParameter, uiRunURL)
+			uiRunURL := fmt.Sprintf("%s/project/%s/workflow/%s/run/%s/node/%d?name=%s", baseUIURL, buildParameters["cds.project"], buildParameters["cds.workflow"], buildParameters["cds.run.number"], nr.ID, n.Name)
+			sdk.AddParameter(&nr.BuildParameters, "cds.ui.pipeline.run", sdk.StringParameter, uiRunURL)
 		}
 		if !okID {
-			sdk.AddParameter(&run.BuildParameters, "cds.node.id", sdk.StringParameter, fmt.Sprintf("%d", run.ID))
+			sdk.AddParameter(&nr.BuildParameters, "cds.node.id", sdk.StringParameter, fmt.Sprintf("%d", nr.ID))
 		}
 
-		if err := UpdateNodeRunBuildParameters(db, run.ID, run.BuildParameters); err != nil {
+		if err := UpdateNodeRunBuildParameters(db, nr.ID, nr.BuildParameters); err != nil {
 			return nil, false, sdk.WrapError(err, "unable to update workflow node run build parameters")
 		}
 	}
 
-	report.Add(*run)
+	report.Add(*nr)
 
 	//Update workflow run
 	if wr.WorkflowNodeRuns == nil {
 		wr.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
 	}
-	wr.WorkflowNodeRuns[run.WorkflowNodeID] = append(wr.WorkflowNodeRuns[run.WorkflowNodeID], *run)
+	wr.WorkflowNodeRuns[nr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[nr.WorkflowNodeID], *nr)
 	wr.LastSubNumber = MaxSubNumber(wr.WorkflowNodeRuns)
 
 	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
@@ -354,7 +354,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		and workflow_node_run.id <> $2
 		and workflow_node_run.workflow_node_name = $3
 		and workflow_node_run.status = $4`
-		nbMutex, err := db.SelectInt(mutexQuery, n.WorkflowID, run.ID, n.Name, string(sdk.StatusBuilding))
+		nbMutex, err := db.SelectInt(mutexQuery, n.WorkflowID, nr.ID, n.Name, string(sdk.StatusBuilding))
 		if err != nil {
 			return nil, false, sdk.WrapError(err, "unable to check mutexes")
 		}
@@ -376,7 +376,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	//Execute the node run !
-	r1, err := execute(ctx, db, store, proj, run, runContext)
+	r1, err := executeNodeRun(ctx, db, store, proj, nr)
 	if err != nil {
 		return nil, false, sdk.WrapError(err, "unable to execute workflow run")
 	}

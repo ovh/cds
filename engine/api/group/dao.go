@@ -72,7 +72,7 @@ func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64, opts ..
 }
 
 // LoadAllByDeprecatedUserID returns all groups from database for given user id.
-func LoadAllByDeprecatedUserID(ctx context.Context, db gorp.SqlExecutor, deprecatedUserID int64, opts ...LoadOptionFunc) ([]sdk.Group, error) {
+func LoadAllByDeprecatedUserID(ctx context.Context, db gorp.SqlExecutor, deprecatedUserID int64, opts ...LoadOptionFunc) (sdk.Groups, error) {
 	query := gorpmapping.NewQuery(`
     SELECT "group".*
     FROM "group"

@@ -7,7 +7,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -71,9 +73,9 @@ func (api *API) putUserHandler() service.Handler {
 
 		var oldUser *sdk.AuthentifiedUser
 		if username == "me" {
-			oldUser, err = user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
+			oldUser, err = user.LoadByID(ctx, tx, consumer.AuthentifiedUserID, user.LoadOptions.WithDeprecatedUser)
 		} else {
-			oldUser, err = user.LoadByUsername(ctx, tx, username)
+			oldUser, err = user.LoadByUsername(ctx, tx, username, user.LoadOptions.WithDeprecatedUser)
 		}
 		if err != nil {
 			return err
@@ -93,6 +95,22 @@ func (api *API) putUserHandler() service.Handler {
 				}
 				if count < 2 {
 					return sdk.NewErrorFrom(sdk.ErrForbidden, "can't remove the last admin")
+				}
+
+				// Invalidate consumer's group if user is not part of it
+				gs, err := group.LoadAllByDeprecatedUserID(ctx, tx, oldUser.OldUserStruct.ID)
+				if err != nil {
+					return err
+				}
+				if err := authentication.ConsumerInvalidateGroupsForUser(ctx, tx, oldUser.ID, gs.ToIDs()); err != nil {
+					return err
+				}
+			}
+
+			// If new ring is admin we need to restore invalid consumer group for user
+			if data.Ring == sdk.UserRingAdmin {
+				if err := authentication.ConsumerRestoreInvalidatedGroupsForUser(ctx, tx, oldUser.ID); err != nil {
+					return err
 				}
 			}
 

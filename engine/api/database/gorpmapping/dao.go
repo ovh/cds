@@ -88,7 +88,7 @@ func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, op
 	defer end()
 
 	if _, err := db.Select(i, q.query, q.arguments...); err != nil {
-		sdk.WithStack(err)
+		return sdk.WithStack(err)
 	}
 
 	for _, f := range opts {

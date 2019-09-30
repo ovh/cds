@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
-	"github.com/ovh/cds/sdk/cdsclient"
-
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -77,12 +78,10 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 	dbCfg, _ := cfg.(Configuration)
 
 	s.cfg = dbCfg
-	log.Debug("%+v", s.cfg)
-	s.Name = s.cfg.Name
+	s.ServiceName = s.cfg.Name
+	s.ServiceType = services.TypeDBMigrate
 	s.HTTPURL = s.cfg.URL
 
-	s.Type = services.TypeDBMigrate
-	s.ServiceName = "cds-migrate"
 	s.MaxHeartbeatFailures = s.cfg.API.MaxHeartbeatFailures
 	s.Router = &api.Router{
 		Mux: mux.NewRouter(),
@@ -92,14 +91,32 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 
 func (s *dbmigservice) BeforeStart() error {
 	log.Info("DBMigrate> Starting Database migration...")
-	errDo := s.doMigrate()
+	dbConn, err := database.Init(
+		s.cfg.DB.User,
+		s.cfg.DB.Role,
+		s.cfg.DB.Password,
+		s.cfg.DB.Name,
+		s.cfg.DB.Host,
+		s.cfg.DB.Port,
+		s.cfg.DB.SSLMode,
+		s.cfg.DB.ConnectTimeout,
+		s.cfg.DB.Timeout,
+		s.cfg.DB.MaxConn)
+	if err != nil {
+		return sdk.WrapError(fmt.Errorf("cannot connect to database: %v", err), "getMigrate")
+	}
+
+	upgradeTo := os.Getenv("UPGRADE_TO")     // Set this env variable to define the maximum migration file you want to upgrade
+	downgradeTo := os.Getenv("DOWNGRADE_TO") // Set this env variable to define the maximum migration file you want to downgrade
+
+	errDo := s.doMigrate(dbConn.DB, gorp.PostgresDialect{}, upgradeTo, downgradeTo)
 	if errDo != nil {
 		log.Error("DBMigrate> Migration failed %v", errDo)
 		s.currentStatus.err = errDo
 	}
 
 	log.Info("DBMigrate> Retrieving Database migration status...")
-	status, errGet := s.getMigrate()
+	status, errGet := s.getMigrate(dbConn.DB, gorp.PostgresDialect{})
 	if errGet != nil {
 		log.Error("DBMigrate> Migration status unavailable %v", errGet)
 	}
@@ -191,5 +208,7 @@ func (s *dbmigservice) initRouter(ctx context.Context) {
 
 	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
 	r.Handle("/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
+	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
+	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
 	r.Handle("/", nil, r.GET(s.getMigrationHandler, api.Auth(false)))
 }

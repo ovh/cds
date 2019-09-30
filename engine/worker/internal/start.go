@@ -77,18 +77,15 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 	}
 
 	// Errors check loops
-	go func(errs chan error) {
-		for {
-			select {
-			case err := <-errs:
-				log.Error("An error has occured: %v", err)
-				if strings.Contains(err.Error(), "not authenticated") {
-					endFunc()
-					return
-				}
+	go func() {
+		for err := range errsChan {
+			log.Error("An error has occured: %v", err)
+			if strings.Contains(err.Error(), "not authenticated") {
+				endFunc()
+				return
 			}
 		}
-	}(errsChan)
+	}()
 
 	// Register (heartbeat loop)
 	go func() {

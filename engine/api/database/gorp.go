@@ -40,7 +40,7 @@ func DBMap(db *sql.DB) *gorp.DbMap {
 
 		if m.EncryptedEntity {
 			for _, f := range m.EncryptedFields {
-				columnMap := tableMap.ColMap(f)
+				columnMap := tableMap.ColMap(f.Name)
 				if columnMap != nil {
 					columnMap.SetTransient(true)
 				}

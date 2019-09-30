@@ -59,7 +59,7 @@ type cmd struct {
 }
 
 func (c cmd) String() string {
-	return c.cmd + " " + strings.Join(c.args, " ") + " from directory" + c.workdir
+	return c.cmd + " " + strings.Join(c.args, " ")
 }
 
 func getRepoURL(repo string, auth *AuthOpts) (string, error) {

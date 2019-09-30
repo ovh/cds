@@ -4,10 +4,9 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-
-	"github.com/ovh/cds/engine/api/observability"
 )
 
 type HandlerScope []sdk.AuthConsumerScope
@@ -67,7 +66,7 @@ func (api *API) InitRouter() {
 	r.Handle("/action/{permGroupName}/{permActionName}/audit/{auditID}/rollback", Scope(sdk.AuthConsumerScopeAction), r.POST(api.postActionAuditRollbackHandler))
 	r.Handle("/action/requirement", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getActionsRequirements, Auth(false))) // FIXME add auth used by hatcheries
 	r.Handle("/project/{permProjectKey}/action", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getActionsForProjectHandler))
-	r.Handle("/group/{groupID}/action", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getActionsForGroupHandler))
+	r.Handle("/group/{permGroupName}/action", Scope(sdk.AuthConsumerScopeGroup), r.GET(api.getActionsForGroupHandler))
 	r.Handle("/actionBuiltin", ScopeNone(), r.GET(api.getActionsBuiltinHandler))
 	r.Handle("/actionBuiltin/{permActionBuiltinName}", ScopeNone(), r.GET(api.getActionBuiltinHandler))
 	r.Handle("/actionBuiltin/{permActionBuiltinName}/usage", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getActionBuiltinUsageHandler))
@@ -133,7 +132,8 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/status", ScopeNone(), r.GET(api.statusHandler, Auth(false)))
 	r.Handle("/mon/version", ScopeNone(), r.GET(VersionHandler, Auth(false)))
 	r.Handle("/mon/db/migrate", ScopeNone(), r.GET(api.getMonDBStatusMigrateHandler, NeedAdmin(true)))
-	r.Handle("/mon/metrics", ScopeNone(), r.GET(observability.StatsHandler, Auth(false)))
+	r.Handle("/mon/metrics", ScopeNone(), r.GET(service.GetPrometheustMetricsHandler(api), Auth(false)))
+	r.Handle("/mon/metrics/all", ScopeNone(), r.GET(service.GetMetricsHandler, Auth(false)))
 	r.Handle("/mon/errors/{uuid}", ScopeNone(), r.GET(api.getErrorHandler, NeedAdmin(true)))
 	r.Handle("/mon/panic/{uuid}", ScopeNone(), r.GET(api.getPanicDumpHandler, Auth(false)))
 
@@ -361,8 +361,8 @@ func (api *API) InitRouter() {
 	r.Handle("/user/timeline", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getTimelineHandler))
 	r.Handle("/user/timeline/filter", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
 	r.Handle("/user/{permUsernamePublic}", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserHandler), r.PUT(api.putUserHandler), r.DELETE(api.deleteUserHandler))
-	r.Handle("/user/{permUsernamePublic}/groups", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserGroupsHandler))
-	r.Handle("/user/{permUsername}/contacts", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserContactsHandler))
+	r.Handle("/user/{permUsernamePublic}/group", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserGroupsHandler))
+	r.Handle("/user/{permUsername}/contact", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserContactsHandler))
 	r.Handle("/user/{permUsername}/auth/consumer", Scope(sdk.AuthConsumerScopeAccessToken), r.GET(api.getConsumersByUserHandler), r.POST(api.postConsumerByUserHandler))
 	r.Handle("/user/{permUsername}/auth/consumer/{permConsumerID}", Scope(sdk.AuthConsumerScopeAccessToken), r.DELETE(api.deleteConsumerByUserHandler))
 	r.Handle("/user/{permUsername}/auth/consumer/{permConsumerID}/regen", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postConsumerRegenByUserHandler))
@@ -379,7 +379,6 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.POST(api.postWorkerModelHandler), r.GET(api.getWorkerModelsHandler))
 	r.Handle("/worker/model/enabled", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsEnabledHandler))
 	r.Handle("/worker/model/type", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelTypesHandler))
-	r.Handle("/worker/model/communication", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelCommunicationsHandler))
 	r.Handle("/worker/model/capability/type", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getRequirementTypesHandler))
 	r.Handle("/worker/model/pattern", Scope(sdk.AuthConsumerScopeWorkerModel), r.POST(api.postAddWorkerModelPatternHandler, NeedAdmin(true)), r.GET(api.getWorkerModelPatternsHandler))
 	r.Handle("/worker/model/pattern/{type}/{name}", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelPatternHandler), r.PUT(api.putWorkerModelPatternHandler, NeedAdmin(true)), r.DELETE(api.deleteWorkerModelPatternHandler, NeedAdmin(true)))
@@ -391,7 +390,7 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/{permGroupName}/{permModelName}/error", Scope(sdk.AuthConsumerScopeWorkerModel), r.PUT(api.putSpawnErrorWorkerModelHandler))
 
 	r.Handle("/project/{permProjectKey}/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsForProjectHandler))
-	r.Handle("/group/{groupID}/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsForGroupHandler))
+	r.Handle("/group/{permGroupName}/worker/model", Scope(sdk.AuthConsumerScopeWorkerModel), r.GET(api.getWorkerModelsForGroupHandler))
 
 	// Workflows
 	r.Handle("/workflow/hook", Scope(sdk.AuthConsumerScopeHooks), r.GET(api.getWorkflowHooksHandler))

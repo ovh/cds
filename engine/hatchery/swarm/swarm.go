@@ -349,12 +349,12 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	udataParam := sdk.WorkerArgs{
 		API:               h.Configuration().API.HTTP.URL,
-		Token:             h.Configuration().API.Token,
+		Token:             spawnArgs.WorkerToken,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              name,
 		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		TTL:               h.Config.WorkerTTL,
-		HatcheryName:      h.Name,
+		HatcheryName:      h.Name(),
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,

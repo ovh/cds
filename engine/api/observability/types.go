@@ -27,7 +27,6 @@ type Configuration struct {
 			ReporteringPeriod int `toml:"ReporteringPeriod" default:"10" json:"reporteringPeriod"`
 		} `json:"prometheus"`
 	} `json:"exporter"`
-	Name string `toml:"name" default:"cdsinstance" comment:"Name of this CDS Instance. This value is added to /mon/metrics as label named 'cds' on each series" json:"name"`
 }
 
 //Options is the options struct for a new tracing span

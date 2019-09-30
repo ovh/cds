@@ -12,7 +12,6 @@ import (
 
 	cache "github.com/patrickmn/go-cache"
 	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/observability"
@@ -27,29 +26,21 @@ var (
 	Client                 cdsclient.HTTPClient
 	defaultMaxProvisioning = 10
 	models                 []sdk.Model
-
-	// Opencensus tags
-	TagHatchery     tag.Key
-	TagHatcheryName tag.Key
 )
-
-func init() {
-	TagHatchery, _ = tag.NewKey("hatchery")
-	TagHatcheryName, _ = tag.NewKey("hatchery_name")
-}
-
-// WithTags returns a context with opencenstus tags
-func WithTags(ctx context.Context, h Interface) context.Context {
-	ctx, _ = tag.New(ctx,
-		tag.Upsert(TagHatchery, h.ServiceName()),
-		tag.Upsert(TagHatcheryName, h.Service().Name),
-	)
-	return ctx
-}
 
 // Create creates hatchery
 func Create(ctx context.Context, h Interface) error {
 	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	ctx = observability.ContextWithTag(ctx,
+		observability.TagServiceName, h.Name(),
+		observability.TagServiceType, h.Type(),
+	)
+
+	if err := initMetrics(); err != nil {
+		return err
+	}
 
 	// Gracefully shutdown connections
 	c := make(chan os.Signal, 1)
@@ -147,9 +138,8 @@ func Create(ctx context.Context, h Interface) error {
 
 			var traceEnded *struct{}
 			currentCtx, currentCancel := context.WithTimeout(ctx, 10*time.Minute)
-			currentCtx = WithTags(currentCtx, h)
 			if val, has := j.Header.Get(tracingutils.SampledHeader); has && val == "1" {
-				currentCtx, _ = observability.New(currentCtx, h.ServiceName(), "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
+				currentCtx, _ = observability.New(currentCtx, h, "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 
 				r, _ := j.Header.Get(sdk.WorkflowRunHeader)
 				w, _ := j.Header.Get(sdk.WorkflowHeader)
@@ -187,10 +177,10 @@ func Create(ctx context.Context, h Interface) error {
 				}
 			}()
 
-			stats.Record(currentCtx, h.Metrics().Jobs.M(1))
+			stats.Record(currentCtx, GetMetrics().Jobs.M(1))
 
 			if _, ok := j.Header["SSE"]; ok {
-				stats.Record(currentCtx, h.Metrics().JobsSSE.M(1))
+				stats.Record(currentCtx, GetMetrics().JobsSSE.M(1))
 			}
 
 			//Check if the jobs is concerned by a pending worker creation
@@ -248,13 +238,13 @@ func Create(ctx context.Context, h Interface) error {
 				}
 			} else {
 				if canRunJob(h, workerRequest) {
-					log.Debug("hatchery %s can try to spawn a worker for job %d", h.ServiceName(), j.ID)
+					log.Debug("hatchery %s can try to spawn a worker for job %d", h.Name(), j.ID)
 					canTakeJob = true
 				}
 			}
 
 			if !canTakeJob {
-				log.Info("hatchery %s is not able to run the job %d", h.ServiceName(), j.ID)
+				log.Info("hatchery %s is not able to run the job %d", h.Name(), j.ID)
 				endTrace("cannot run job")
 				continue
 			}
@@ -366,6 +356,12 @@ func canRunJobWithModel(h InterfaceWithModels, j workerStarterRequest, model *sd
 		if model.Type != sdk.Docker && (r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement) {
 			log.Debug("canRunJob> %d - job %d - job with service requirement or memory requirement: only for model docker. current model:%s", j.timestamp, j.id, model.Type)
 			return false
+		}
+
+		// Skip network access requirement as we can't check it
+		if r.Type == sdk.NetworkAccessRequirement || r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
+			log.Debug("canRunJob> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
+			continue
 		}
 
 		if r.Type == sdk.OSArchRequirement && model.RegisteredOS != "" && model.RegisteredArch != "" && r.Value != (model.RegisteredOS+"/"+model.RegisteredArch) {

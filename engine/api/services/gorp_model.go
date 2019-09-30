@@ -18,6 +18,6 @@ func (s service) Canonical() gorpmapping.CanonicalForms {
 
 func init() {
 	gorpmapping.Register(
-		gorpmapping.New(service{}, "services", true, "id"),
+		gorpmapping.New(service{}, "service", true, "id"),
 	)
 }

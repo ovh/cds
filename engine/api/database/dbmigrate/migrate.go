@@ -14,7 +14,7 @@ import (
 )
 
 //Do applies migration
-func Do(DBFunc func() *sql.DB, sqlMigrateDir string, dir migrate.MigrationDirection, dryrun bool, limit int) ([]*migrate.PlannedMigration, error) {
+func Do(DBFunc func() *sql.DB, dialect gorp.Dialect, sqlMigrateDir string, dir migrate.MigrationDirection, dryrun bool, limit int) ([]*migrate.PlannedMigration, error) {
 	source := migrate.FileMigrationSource{
 		Dir: sqlMigrateDir,
 	}
@@ -33,13 +33,13 @@ func Do(DBFunc func() *sql.DB, sqlMigrateDir string, dir migrate.MigrationDirect
 		return nil, sdk.WithStack(err)
 	}
 	hostname = fmt.Sprintf("%s-%d", hostname, time.Now().UnixNano())
-	if err := lockMigrate(DBFunc(), hostname); err != nil {
+	if err := lockMigrate(DBFunc(), hostname, dialect); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 
 	_, errExec := migrate.ExecMax(DBFunc(), "postgres", source, dir, limit)
 
-	if err := UnlockMigrate(DBFunc(), hostname); err != nil {
+	if err := UnlockMigrate(DBFunc(), hostname, dialect); err != nil {
 		return nil, fmt.Errorf("Cannot unlock migration: %v", err)
 	}
 
@@ -59,9 +59,9 @@ type DatabaseMigration struct {
 	AppliedAt *time.Time `db:"applied_at"`
 }
 
-func lockMigrate(db *sql.DB, id string) error {
+func lockMigrate(db *sql.DB, id string, dialect gorp.Dialect) error {
 	// construct a gorp DbMap
-	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
+	dbmap := &gorp.DbMap{Db: db, Dialect: dialect}
 	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "ID")
 	// create table if not exist
 	if err := dbmap.CreateTablesIfNotExists(); err != nil {
@@ -76,7 +76,15 @@ func lockMigrate(db *sql.DB, id string) error {
 	defer tx.Rollback() // nolint
 
 	var pendingMigration []MigrationLock
-	if _, err := tx.Select(&pendingMigration, "SELECT * FROM gorp_migrations_lock WHERE unlocked IS NULL FOR UPDATE OF gorp_migrations_lock NOWAIT"); err != nil {
+	var query string
+	switch dialect.(type) {
+	case gorp.PostgresDialect:
+		query = "SELECT * FROM gorp_migrations_lock WHERE unlocked IS NULL FOR UPDATE OF gorp_migrations_lock NOWAIT"
+	default:
+		query = "SELECT * FROM gorp_migrations_lock WHERE unlocked IS NULL"
+	}
+
+	if _, err := tx.Select(&pendingMigration, query); err != nil {
 		return sdk.WithStack(err)
 	}
 
@@ -159,9 +167,9 @@ func List(db *sql.DB) ([]sdk.DatabaseMigrationStatus, error) {
 }
 
 // UnlockMigrate unlocks an ID from table gorp_migrations_lock
-func UnlockMigrate(db *sql.DB, id string) error {
+func UnlockMigrate(db *sql.DB, id string, dialect gorp.Dialect) error {
 	// construct a gorp DbMap
-	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
+	dbmap := &gorp.DbMap{Db: db, Dialect: dialect}
 	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "ID")
 
 	tx, err := dbmap.Begin()
@@ -172,7 +180,15 @@ func UnlockMigrate(db *sql.DB, id string) error {
 	defer tx.Rollback() // nolint
 
 	var pendingMigration []MigrationLock
-	if _, err := tx.Select(&pendingMigration, "SELECT * FROM gorp_migrations_lock WHERE unlocked IS NULL FOR UPDATE OF gorp_migrations_lock NOWAIT"); err != nil {
+	var query string
+	switch dialect.(type) {
+	case gorp.PostgresDialect:
+		query = "SELECT * FROM gorp_migrations_lock WHERE unlocked IS NULL FOR UPDATE OF gorp_migrations_lock NOWAIT"
+	default:
+		query = "SELECT * FROM gorp_migrations_lock WHERE unlocked IS NULL"
+	}
+
+	if _, err := tx.Select(&pendingMigration, query); err != nil {
 		return sdk.WithStack(err)
 	}
 
@@ -200,7 +216,7 @@ func UnlockMigrate(db *sql.DB, id string) error {
 }
 
 // Get the status of all migration scripts
-func Get(DBFunc func() *sql.DB, dir string) ([]sdk.DatabaseMigrationStatus, error) {
+func Get(DBFunc func() *sql.DB, dir string, dialect gorp.Dialect) ([]sdk.DatabaseMigrationStatus, error) {
 	source := migrate.FileMigrationSource{
 		Dir: dir,
 	}
@@ -210,7 +226,13 @@ func Get(DBFunc func() *sql.DB, dir string) ([]sdk.DatabaseMigrationStatus, erro
 		return nil, sdk.WithStack(err)
 	}
 
-	records, err := migrate.GetMigrationRecords(DBFunc(), "postgres")
+	var dialectString = "postgres"
+	switch dialect.(type) {
+	case gorp.SqliteDialect:
+		dialectString = "sqlite3"
+	}
+
+	records, err := migrate.GetMigrationRecords(DBFunc(), dialectString)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}

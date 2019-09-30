@@ -2,6 +2,9 @@ package gorpmapping
 
 import (
 	"encoding/json"
+	"sync"
+
+	"github.com/ovh/symmecrypt"
 
 	"github.com/ovh/configstore"
 	// Import all symmecrypt ciphers
@@ -15,36 +18,57 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+var (
+	once          sync.Once
+	signatureKey  symmecrypt.Key
+	encryptionKey symmecrypt.Key
+)
+
 func ConfigureKeys(signatureKeys, encryptionKeys *[]keyloader.KeyConfig) error {
-	// Marshal the keys
-	var marshalledKeys [][]byte
-	for _, k := range *signatureKeys {
-		btes, err := json.Marshal(k)
+	var globalErr error
+	once.Do(func() {
+		// Marshal the keys
+		var marshalledKeys [][]byte
+		for _, k := range *signatureKeys {
+			btes, err := json.Marshal(k)
+			if err != nil {
+				globalErr = sdk.WithStack(err)
+				return
+			}
+			marshalledKeys = append(marshalledKeys, btes)
+		}
+		for _, k := range *encryptionKeys {
+			btes, err := json.Marshal(k)
+			if err != nil {
+				globalErr = sdk.WithStack(err)
+			}
+			marshalledKeys = append(marshalledKeys, btes)
+		}
+
+		// Push the keys in the keyloader
+		// TODO: this should be updated to whole configuration management with configstore
+		var provider configstore.Provider
+		provider = func() (configstore.ItemList, error) {
+			list := configstore.ItemList{}
+			for _, btes := range marshalledKeys {
+				list.Items = append(list.Items, configstore.NewItem(keyloader.EncryptionKeyConfigName, string(btes), 99))
+			}
+
+			return list, nil
+		}
+		configstore.RegisterProvider("fakeConfigstoreProvider", provider)
+
+		var err error
+		signatureKey, err = keyloader.WatchKey(KeySignIdentifier)
 		if err != nil {
-			return sdk.WithStack(err)
+			globalErr = sdk.WithStack(err)
 		}
-		marshalledKeys = append(marshalledKeys, btes)
-	}
-	for _, k := range *encryptionKeys {
-		btes, err := json.Marshal(k)
+
+		encryptionKey, err = keyloader.WatchKey(KeyEcnryptionIdentifier)
 		if err != nil {
-			return sdk.WithStack(err)
+			globalErr = sdk.WithStack(err)
 		}
-		marshalledKeys = append(marshalledKeys, btes)
-	}
+	})
 
-	// Push the keys in the keyloader
-	// TODO: this should be updated to whole configuration management with configstore
-	var provider configstore.Provider
-	provider = func() (configstore.ItemList, error) {
-		list := configstore.ItemList{}
-		for _, btes := range marshalledKeys {
-			list.Items = append(list.Items, configstore.NewItem(keyloader.EncryptionKeyConfigName, string(btes), 99))
-		}
-
-		return list, nil
-	}
-	configstore.RegisterProvider("fakeConfigstoreProvider", provider)
-
-	return nil
+	return globalErr
 }

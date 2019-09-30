@@ -33,7 +33,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		return ctx, sdk.WithStack(err)
 	}
 	if ok {
-		log.Info("authentification granted by token")
+		log.Info("authMiddleware> authentification granted by token")
 		return ctx, nil
 	}
 
@@ -53,15 +53,17 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	if ok {
 		claims := jwt.Claims.(*sdk.AuthSessionJWTClaims)
 		sessionID := claims.StandardClaims.Id
+		log.Debug("authMiddleware> try to retrieve session for given jwt with id: %s", sessionID)
 		// Check for session based on jwt from context
 		session, err = authentication.CheckSession(ctx, api.mustDB(), sessionID)
 		if err != nil {
-			log.Warning("cannot find a valid session for given JWT: %v", err)
+			log.Warning("authMiddleware> cannot find a valid session for given JWT: %v", err)
 		}
 	}
 
 	if session != nil {
 		ctx = context.WithValue(ctxWithJWT, contextSession, session)
+		log.Debug("authMiddleware> try to retrieve consumer for given session with id: %s", session.ConsumerID)
 		// Load auth consumer for current session in database with authentified user and contacts
 		c, err := authentication.LoadConsumerByID(ctx, api.mustDB(), session.ConsumerID,
 			authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -82,6 +84,8 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	if consumer != nil {
+		log.Debug("authMiddleware> check scope for current consumer")
+
 		ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 
 		// Checks scopes, all expected scopes should be in actual scopes
@@ -136,7 +140,7 @@ func (api *API) authStatusTokenMiddleware(ctx context.Context, w http.ResponseWr
 		return ctx, false, nil
 	}
 	for _, h := range rc.AllowedTokens {
-		log.Debug("checking allowed token: %v", h)
+		log.Debug("authStatusTokenMiddleware> checking allowed token: %v", h)
 		headerSplitted := strings.Split(h, ":")
 		receivedValue := req.Header.Get(headerSplitted[0])
 		if receivedValue != headerSplitted[1] {
@@ -149,6 +153,8 @@ func (api *API) authStatusTokenMiddleware(ctx context.Context, w http.ResponseWr
 func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
 	ctx, end := observability.Span(ctx, "router.jwtMiddleware")
 	defer end()
+
+	log.Debug("jwtMiddleware> try to find a jwt token in cookie or header")
 
 	var jwtRaw string
 	var jwtFromCookie bool
@@ -168,7 +174,7 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 	jwt, err := authentication.CheckSessionJWT(jwtRaw)
 	if err != nil {
 		// If the given JWT is not valid log the error and return
-		log.Warning("jwtMiddleware> invalid given jwt token: %v", err)
+		log.Warning("jwtMiddleware> invalid given jwt token: %+v", err)
 		return ctx, nil
 	}
 

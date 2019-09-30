@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/symmecrypt"
-	"github.com/ovh/symmecrypt/keyloader"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -84,7 +83,7 @@ var CanonicalFormTemplates = struct {
 
 func getSigner(f *CanonicalForm) string {
 	h := sha1.New()
-	h.Write(f.Bytes())
+	_, _ = h.Write(f.Bytes())
 	bs := h.Sum(nil)
 	sha := fmt.Sprintf("%x", bs)
 	return sha
@@ -103,7 +102,7 @@ func canonicalTemplate(data Canonicaller) (string, *template.Template, error) {
 	CanonicalFormTemplates.l.RUnlock()
 
 	if !has {
-		sdk.WithStack(fmt.Errorf("no canonical function available for %T", data))
+		return "", nil, sdk.WithStack(fmt.Errorf("no canonical function available for %T", data))
 	}
 
 	return sha, t, nil
@@ -117,18 +116,13 @@ func getCanonicalTemplate(f *CanonicalForm) (*template.Template, error) {
 	CanonicalFormTemplates.l.RUnlock()
 
 	if !has {
-		sdk.WithStack(fmt.Errorf("no canonical function available"))
+		return nil, sdk.WithStack(fmt.Errorf("no canonical function available"))
 	}
 
 	return t, nil
 }
 
 func sign(data Canonicaller) (string, []byte, error) {
-	k, err := keyloader.LoadKey(KeySignIdentifier)
-	if err != nil {
-		return "", nil, sdk.WithStack(err)
-	}
-
 	signer, tmpl, err := canonicalTemplate(data)
 	if err != nil {
 		return "", nil, err
@@ -144,7 +138,7 @@ func sign(data Canonicaller) (string, []byte, error) {
 		return "", nil, sdk.WrapError(err, "unable to sign data")
 	}
 
-	btes, err := k.Encrypt(clearContent.Bytes())
+	btes, err := signatureKey.Encrypt(clearContent.Bytes())
 	if err != nil {
 		return "", nil, sdk.WithStack(fmt.Errorf("unable to encrypt content: %v", err))
 	}
@@ -154,11 +148,6 @@ func sign(data Canonicaller) (string, []byte, error) {
 
 // CheckSignature return true if a given signature is valid for given object.
 func CheckSignature(i Canonicaller, sig []byte) (bool, error) {
-	k, err := keyloader.LoadKey(KeySignIdentifier)
-	if err != nil {
-		return false, sdk.WrapError(err, "unable to the load the key")
-	}
-
 	var CanonicalForms = i.Canonical()
 	var f *CanonicalForm
 	for {
@@ -166,7 +155,7 @@ func CheckSignature(i Canonicaller, sig []byte) (bool, error) {
 		if f == nil {
 			return false, nil
 		}
-		ok, err := checkSignature(i, k, f, sig)
+		ok, err := checkSignature(i, signatureKey, f, sig)
 		if err != nil {
 			return ok, err
 		}

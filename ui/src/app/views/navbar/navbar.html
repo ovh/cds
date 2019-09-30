@@ -63,29 +63,145 @@
     <a class="item link" href="#" [routerLink]="['/project']" *ngIf="currentUser">
         {{ 'navbar_project_create' | translate }}
     </a>
-
     <div class="right menu details">
-        <ng-template let-result let-query="query" #searchTemplate>
-            <div>
-                <div class="title">
-                    {{result.title}}
-                    <div class="inline floated right" *ngIf="result.favorite">
-                        <i class="pointing star icon favorite"></i>
-                    </div>
+        <div class="ui search"  suiPopup popupPlacement="bottom"
+            [popupTemplate]="popupSearchTemplate" popupTrigger="outsideClick" #popup="suiPopup">
+            <div class="ui icon input">
+                <input class="prompt" type="text" placeholder="{{'navbar_search' | translate}}" [(ngModel)]="searchValue" (blur)="search()" (click)="search()" (keyup)="search()">
+                <i class="search icon"></i>
+            </div>
+        </div>
+
+        <ng-template let-popup #popupSearchTemplate>
+            <div class="content searchpopup">
+                <div class="ui right floated" suiPopup popupPlacement="left" [popupText]="'navbar_search_help_details' | translate"><i class="help icon"></i> 
+                    {{ 'navbar_search_help' | translate }}
                 </div>
-                <div class="info">
-                    <span *ngIf="result.type === 'workflow'">{{'navbar_workflow_in' | translate}}</span>
-                    <span *ngIf="result.type === 'application'">{{'navbar_application_in' | translate}}</span>
-                    <span *ngIf="result.type === 'project'">{{'common_project' | translate}}</span>
-                    <span class="ui text tiny blue" *ngIf="result.type !== 'project'">{{result.projectKey}}</span>
+                
+                <div *ngIf="containsResult && isSearch"><div class="ui left"><i class="search icon"></i> {{'navbar_results' | translate}}</div></div>
+                <div *ngIf="containsResult && !isSearch"><div class="ui left"><i class="history icon"></i>{{'navbar_seen_recently' | translate}}</div></div>
+                <div *ngIf="!containsResult"><div class="ui center"><i class="search icon"></i>{{'navbar_no_result' | translate}}</div></div>
+                <div class="ui internally celled grid" *ngIf="containsResult">
+                    <div class="four wide column">
+                        <div class="ui secondary pointing menu">
+                            <div class="ui relaxed divided list">
+                                <div class="item">
+                                    <div class="content">
+                                        {{ 'common_projects' | translate }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui secondary pointing menu" *ngIf="!searchProjects || searchProjects.length <= 0">
+                            <div class="ui relaxed divided list">
+                                <div class="item">
+                                    <div class="content">
+                                        {{ 'navbar_no_project' | translate}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui secondary pointing menu" *ngFor="let el of searchProjects">
+                            <div class="ui relaxed divided list">
+                                <div class="item">
+                                    <i class="pointing star icon favorite"  *ngIf="el.favorite"></i>
+                                    <div class="content">
+                                        <a class="header" (click)="$event.stopPropagation()"
+                                            [routerLink]="['/project', el.projectKey]"
+                                            title="{{ 'common_project_title' | translate }}{{el.title}}">
+                                            {{el.title}}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="six wide column">
+                        <div class="ui secondary pointing menu">
+                            <div class="ui relaxed divided list">
+                                <div class="item">
+                                    <div class="content">
+                                        {{ 'common_workflows' | translate }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui secondary pointing menu" *ngIf="!searchWorkflows || searchWorkflows.length <= 0">
+                            <div class="ui relaxed divided list">
+                                <div class="item">
+                                    <div class="content">
+                                        {{ 'navbar_no_workflow' | translate}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui secondary pointing menu" *ngFor="let el of searchWorkflows">
+                            <div class="ui relaxed divided list">
+                                <div class="item">
+                                    <i class="pointing star icon favorite"  *ngIf="el.favorite"></i>
+                                    <div class="content">
+                                        <a class="header" (click)="$event.stopPropagation()"
+                                            [routerLink]="['/project', el.projectKey, 'workflow', el.title]"
+                                            title="{{ 'common_workflow_title' | translate }}{{el.title}}">
+                                            {{el.title}}
+                                        </a>
+                                        <div class="description">{{'navbar_in_project' | translate}} 
+                                            <a (click)="$event.stopPropagation()"
+                                                [routerLink]="['/project', el.projectKey]"
+                                                title="{{ 'common_project_title' | translate }}{{el.title}}">
+                                                {{el.projectKey}}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            
+                    <div class="six wide column">
+                        <div class="ui secondary pointing menu">
+                            <div class="ui relaxed divided list">
+                                <div class="item">
+                                    <div class="content">
+                                        {{ 'common_applications' | translate }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui secondary pointing menu" *ngIf="!searchApplications || searchApplications.length <= 0">
+                            <div class="ui relaxed divided list">
+                                <div class="item">
+                                    <div class="content">
+                                        {{ 'navbar_no_application' | translate}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui secondary pointing menu" *ngFor="let el of searchApplications">
+                            <div class="ui relaxed divided list">
+                                <div class="item">
+                                    <div class="content">
+                                        <a class="header" (click)="$event.stopPropagation()"
+                                            [routerLink]="['/project', el.projectKey, 'application', el.title]"
+                                            title="{{ 'common_application_title' | translate }}{{el.title}}">
+                                            {{el.title}}
+                                        </a>
+                                        <div class="description">{{'navbar_in_project' | translate}} 
+                                            <a (click)="$event.stopPropagation()"
+                                                [routerLink]="['/project', el.projectKey]"
+                                                title="{{ 'common_project_title' | translate }}{{el.title}}">
+                                                {{el.projectKey}}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </ng-template>
-        <sui-search placeholder="{{'navbar_search' | translate}}" [optionsFilter]="searchItem"
-            [resultTemplate]="searchTemplate" [options]="items" [maxResults]="10" [allowEmptyQuery]="true"
-            [retainSelectedResult]="false" [resetQueryOnChange]="false" (keydown)="searchEvent($event)"
-            (resultSelected)="navigateToResult($event)">
-        </sui-search>
 
         <button class="ui icon button link item notification" suiPopup popupPlacement="bottom right"
             [popupTemplate]="popupTemplate" popupTrigger="outsideClick" #popup="suiPopup">

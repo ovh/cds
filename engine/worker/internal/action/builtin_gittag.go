@@ -71,7 +71,7 @@ func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, para
 		smver.Patch++
 	}
 
-	r, _ := regexp.Compile("^([0-9A-Za-z\\-.]+)$")
+	r, _ := regexp.Compile(`^([0-9A-Za-z\-.]+)$`)
 	// prerelease version notes: example: alpha, rc-1, ...
 	if tagPrerelease != nil && tagPrerelease.Value != "" {
 		if !r.MatchString(tagPrerelease.Value) {

@@ -24,6 +24,7 @@ func init() {
 	mapBuiltinActions[sdk.DeployApplicationAction] = action.RunDeployApplication
 	mapBuiltinActions[sdk.CoverageAction] = action.RunParseCoverageResultAction
 	mapBuiltinActions[sdk.ServeStaticFiles] = action.RunServeStaticFiles
+	mapBuiltinActions[sdk.InstallKeyAction] = action.RunInstallKey
 }
 
 func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) sdk.Result {
@@ -34,7 +35,7 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, params []s
 			Reason: fmt.Sprintf("unknown builtin step: %s", a.Name),
 		}
 		log.Error("worker.runBuiltin> %v", res.Reason)
-		w.SendLog(ctx,workerruntime.LevelError, res.Reason)
+		w.SendLog(ctx, workerruntime.LevelError, res.Reason)
 		return res
 	}
 
@@ -44,7 +45,7 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, params []s
 		res.Status = sdk.StatusFail
 		res.Reason = err.Error()
 		log.Error("worker.runBuiltin> %v", err)
-		w.SendLog(ctx,workerruntime.LevelError, res.Reason)
+		w.SendLog(ctx, workerruntime.LevelError, res.Reason)
 	}
 	return res
 }

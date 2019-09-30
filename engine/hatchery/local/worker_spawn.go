@@ -73,7 +73,7 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              spawnArgs.WorkerName,
 		Model:             spawnArgs.ModelName(),
-		HatcheryName:      h.Name,
+		HatcheryName:      h.Name(),
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,

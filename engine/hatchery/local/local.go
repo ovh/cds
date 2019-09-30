@@ -3,6 +3,7 @@ package local
 import (
 	"context"
 	"fmt"
+	"net"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -57,12 +58,10 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	genname := h.Configuration().Name
-	h.Name = genname
+	h.Common.Common.ServiceName = genname
+	h.Common.Common.ServiceType = services.TypeHatchery
 	h.HTTPURL = h.Config.URL
-
-	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
-	h.Common.Common.ServiceName = "cds-hatchery-local"
 	var err error
 	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
 	if err != nil {
@@ -273,7 +272,17 @@ func (h *HatcheryLocal) checkRequirement(r sdk.Requirement) (bool, error) {
 			return false, fmt.Errorf("invalid requirement %s", r.Value)
 		}
 		return osarch[0] == strings.ToLower(sdk.GOOS) && osarch[1] == strings.ToLower(sdk.GOARCH), nil
+	case sdk.NetworkAccessRequirement:
+		log.Debug("checkRequirement> checking network requirement:%v", r.Value)
+		conn, err := net.DialTimeout("tcp", r.Value, 10*time.Second)
+		if err != nil {
+			log.Debug("checkRequirement> dial err:%v", err)
+			return false, nil
+		}
+		conn.Close()
+		return true, nil
 	default:
+		log.Debug("checkRequirement> %v don't work on this hatchery", r.Type)
 		return false, nil
 	}
 }

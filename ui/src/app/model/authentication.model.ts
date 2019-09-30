@@ -34,6 +34,11 @@ export class AuthDriverManifest {
     icon: string;
 }
 
+export class AuthCurrentConsumerResponse {
+    consumer: AuthConsumer;
+    session: AuthSession;
+}
+
 export class AuthConsumerSigninResponse {
     token: string;
     user: AuthentifiedUser;

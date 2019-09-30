@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
     AuthConsumerSigninResponse,
+    AuthCurrentConsumerResponse,
     AuthDriverManifests,
     AuthDriverSigningRedirect,
     AuthScope
@@ -13,6 +14,10 @@ export class AuthenticationService {
     constructor(
         private _http: HttpClient
     ) { }
+
+    getMe(): Observable<AuthCurrentConsumerResponse> {
+        return this._http.get<AuthCurrentConsumerResponse>('/auth/me');
+    }
 
     askSignin(consumerType: string, origin: string, redirectURI: string, requireMFA: boolean): Observable<AuthDriverSigningRedirect> {
         let params = new HttpParams();

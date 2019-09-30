@@ -85,7 +85,7 @@ func prepareGitCloneCommands(repo, workdirPath, path string, opts *CloneOpts) (s
 		}
 	}
 
-	userLogCommand := "Executing: git " + strings.Join(gitcmd.args, " ") + " from directory " + gitcmd.workdir + "...  "
+	userLogCommand := "Executing: git " + strings.Join(gitcmd.args, " ") + "...  "
 	gitcmd.args = append(gitcmd.args, repo)
 
 	if path != "" {

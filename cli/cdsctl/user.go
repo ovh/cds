@@ -67,15 +67,6 @@ func userShowRun(v cli.Values) (interface{}, error) {
 	return *u, nil
 }
 
-var userResetCmd = cli.Command{
-	Name:  "reset",
-	Short: "Reset CDS user password",
-	OptionalArgs: []cli.Arg{
-		{Name: "username"},
-		{Name: "email"},
-	},
-}
-
 var userFavoriteCmd = cli.Command{
 	Name:  "favorite",
 	Short: "Display all the user favorites",

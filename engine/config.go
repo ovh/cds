@@ -49,7 +49,7 @@ func configBootstrap(args []string) Configuration {
 	// Default config if nothing is given
 	if len(args) == 0 {
 		args = []string{
-			"api", "migrate", "hooks", "vcs", "repositories", "elasticsearch",
+			"api", "ui", "migrate", "hooks", "vcs", "repositories", "elasticsearch",
 			"hatchery:local", "hatchery:kubernetes", "hatchery:marathon", "hatchery:openstack", "hatchery:swarm", "hatchery:vsphere",
 		}
 	}
@@ -66,6 +66,7 @@ func configBootstrap(args []string) Configuration {
 		switch a {
 		case "api":
 			conf.API = &api.Configuration{}
+			conf.API.Name = "cds-api-" + namesgenerator.GetRandomNameCDS(0)
 			defaults.SetDefaults(conf.API)
 			conf.API.Services = append(conf.API.Services, api.ServiceConfiguration{
 				Name:       "sample-service",
@@ -79,6 +80,7 @@ func configBootstrap(args []string) Configuration {
 			})
 		case "ui":
 			conf.UI = &ui.Configuration{}
+			conf.UI.Name = "cds-ui-" + namesgenerator.GetRandomNameCDS(0)
 			defaults.SetDefaults(conf.UI)
 		case "migrate":
 			conf.DatabaseMigrate = &migrateservice.Configuration{}
@@ -295,8 +297,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: cfg.Description,
 			Type:        sdk.ConsumerBuiltin,
 			Data:        map[string]string{},
-			GroupIDs:    []int64{},
-			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
 			IssuedAt:    iat,
 		}
 
@@ -321,12 +321,9 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				ID:          cfg.ID,
 				Name:        cfg.Name,
 				Description: cfg.Description,
-
-				Type:     sdk.ConsumerBuiltin,
-				Data:     map[string]string{},
-				GroupIDs: []int64{},
-				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService},
-				IssuedAt: iat,
+				Type:        sdk.ConsumerBuiltin,
+				Data:        map[string]string{},
+				IssuedAt:    iat,
 			}
 
 			h.Local.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -353,8 +350,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: cfg.Description,
 				Type:        sdk.ConsumerBuiltin,
 				Data:        map[string]string{},
-				GroupIDs:    []int64{},
-				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 				IssuedAt:    iat,
 			}
 
@@ -382,8 +377,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: cfg.Description,
 				Type:        sdk.ConsumerBuiltin,
 				Data:        map[string]string{},
-				GroupIDs:    []int64{},
-				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 				IssuedAt:    iat,
 			}
 
@@ -409,12 +402,9 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				ID:          cfg.ID,
 				Name:        cfg.Name,
 				Description: cfg.Description,
-
-				Type:     sdk.ConsumerBuiltin,
-				Data:     map[string]string{},
-				GroupIDs: []int64{},
-				Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
-				IssuedAt: iat,
+				Type:        sdk.ConsumerBuiltin,
+				Data:        map[string]string{},
+				IssuedAt:    iat,
 			}
 
 			h.Swarm.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -441,8 +431,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: cfg.Description,
 				Type:        sdk.ConsumerBuiltin,
 				Data:        map[string]string{},
-				GroupIDs:    []int64{},
-				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 				IssuedAt:    iat,
 			}
 
@@ -470,8 +458,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 				Description: cfg.Description,
 				Type:        sdk.ConsumerBuiltin,
 				Data:        map[string]string{},
-				GroupIDs:    []int64{},
-				Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeWorkerModel},
 				IssuedAt:    iat,
 			}
 
@@ -501,14 +487,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: cfg.Description,
 			Type:        sdk.ConsumerBuiltin,
 			Data:        map[string]string{},
-			GroupIDs:    []int64{},
-			Scopes: []sdk.AuthConsumerScope{
-				sdk.AuthConsumerScopeService,
-				sdk.AuthConsumerScopeHooks,
-				sdk.AuthConsumerScopeProject,
-				sdk.AuthConsumerScopeRun,
-			},
-			IssuedAt: iat,
+			IssuedAt:    iat,
 		}
 
 		conf.Hooks.API.Token, err = builtin.NewSigninConsumerToken(&c)
@@ -533,8 +512,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: cfg.Description,
 			Type:        sdk.ConsumerBuiltin,
 			Data:        map[string]string{},
-			GroupIDs:    []int64{},
-			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
 			IssuedAt:    iat,
 		}
 
@@ -560,8 +537,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: cfg.Description,
 			Type:        sdk.ConsumerBuiltin,
 			Data:        map[string]string{},
-			GroupIDs:    []int64{},
-			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
 			IssuedAt:    iat,
 		}
 
@@ -587,8 +562,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: cfg.Description,
 			Type:        sdk.ConsumerBuiltin,
 			Data:        map[string]string{},
-			GroupIDs:    []int64{},
-			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
 			IssuedAt:    iat,
 		}
 
@@ -614,8 +587,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			Description: cfg.Description,
 			Type:        sdk.ConsumerBuiltin,
 			Data:        map[string]string{},
-			GroupIDs:    []int64{},
-			Scopes:      []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
 			IssuedAt:    iat,
 		}
 

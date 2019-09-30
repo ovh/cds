@@ -58,12 +58,12 @@
                                 <label>{{ 'user_label_password' | translate }}*</label>
                                 <input type="password" name="password" (keyup)="onChangeSignupPassword($event)" ngModel
                                     required>
-                                <sui-progress *ngIf="!passwordShowError && passwordLevel !== null"
+                                <sui-progress *ngIf="!passwordError && passwordLevel !== null"
                                     class="bottom attached indicating active" [maximum]="5" [value]="passwordLevel + 1">
                                 </sui-progress>
                             </div>
-                            <div *ngIf="passwordShowError" class="ui error message">
-                                <p>{{ 'auth_password_too_weak' | translate }}</p>
+                            <div *ngIf="passwordError" class="ui error message">
+                                <p>{{ passwordError | translate }}</p>
                             </div>
                             <div class="field" *ngIf="isFirstConnection">
                                 <label>{{ 'account_signup_init_token' | translate }}</label>

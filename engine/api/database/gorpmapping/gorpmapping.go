@@ -22,7 +22,13 @@ type TableMapping struct {
 	SignedEntity    bool
 	Keys            []string
 	EncryptedEntity bool
-	EncryptedFields []string
+	EncryptedFields []EncryptedField
+}
+
+type EncryptedField struct {
+	Name   string
+	Column string
+	Extras []string
 }
 
 // New initialize a TableMapping.
@@ -36,15 +42,31 @@ func New(target interface{}, name string, autoIncrement bool, keys ...string) Ta
 
 	var (
 		encryptedEntity bool
-		encryptedFields []string
+		encryptedFields []EncryptedField
 	)
 	var signedEntity bool
 	for i := 0; i < v.NumField(); i++ {
-		dbTag, ok := v.Type().Field(i).Tag.Lookup("gorpmapping")
+		gmTag, ok := v.Type().Field(i).Tag.Lookup("gorpmapping")
 		if ok {
-			if sdk.IsInArray("encrypted", strings.Split(dbTag, ",")) {
+			tagValues := strings.Split(gmTag, ",")
+			if len(tagValues) == 0 {
+				continue
+			}
+
+			dbTag, ok := v.Type().Field(i).Tag.Lookup("db")
+			if !ok {
+				continue
+			}
+			column := strings.SplitN(dbTag, ",", 2)[0]
+
+			if tagValues[0] == "encrypted" {
 				encryptedEntity = true
-				encryptedFields = append(encryptedFields, v.Type().Field(i).Name)
+				encryptedFields = append(encryptedFields,
+					EncryptedField{
+						Name:   v.Type().Field(i).Name,
+						Extras: tagValues[1:],
+						Column: column,
+					})
 			}
 		}
 
@@ -68,7 +90,7 @@ func New(target interface{}, name string, autoIncrement bool, keys ...string) Ta
 		tmplStrFuncs := x.Canonical()
 		for _, f := range tmplStrFuncs {
 			h := sha1.New()
-			h.Write(f.Bytes())
+			_, _ = h.Write(f.Bytes())
 			bs := h.Sum(nil)
 			sha := fmt.Sprintf("%x", bs)
 

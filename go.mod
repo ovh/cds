@@ -45,13 +45,11 @@ require (
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/dancannon/gorethink v4.0.0+incompatible // indirect
-	github.com/danieljoos/wincred v1.0.1 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20181014144952-4e0d7dc8888f // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dnaeon/go-vcr v0.0.0-20180920040454-5637cf3d8a31 // indirect
 	github.com/docker/distribution v2.7.0-rc.0+incompatible
 	github.com/docker/docker v1.13.1
-	github.com/docker/docker-credential-helpers v0.6.1
 	github.com/docker/go-connections v0.3.0
 	github.com/docker/go-metrics v0.0.0-20180209012529-399ea8c73916 // indirect
 	github.com/docker/go-units v0.3.2 // indirect
@@ -62,10 +60,6 @@ require (
 	github.com/eapache/go-resiliency v1.1.0
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
-	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
-	github.com/facebookgo/freeport v0.0.0-20150612182905-d4adf43b75b9 // indirect
-	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
-	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
 	github.com/fatih/color v1.7.0
 	github.com/fatih/structs v1.0.0
 	github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b // indirect
@@ -127,6 +121,8 @@ require (
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/keybase/go-crypto v0.0.0-20181127160227-255a5089e85a
+	github.com/keybase/go-keychain v0.0.0-20190828020956-aa639f275ae1
+	github.com/keybase/go.dbus v0.0.0-20190710215703-a33a09c8a604
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lib/pq v1.0.0
@@ -139,7 +135,7 @@ require (
 	github.com/mattn/go-oci8 v0.0.0-20181017025833-e3e58f4cc797 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mattn/go-shellwords v1.0.3 // indirect
-	github.com/mattn/go-sqlite3 v1.10.0 // indirect
+	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/mattn/go-zglob v0.0.0-20171230104132-4959821b4817
 	github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
@@ -277,3 +273,5 @@ replace github.com/ovh/cds/sdk/izanami => ./sdk/izanami
 replace github.com/keybase/go-crypto => github.com/Alkorin/crypto v0.0.0-20190124155437-5ea49ae
 
 replace github.com/ovh/cds/tools/smtpmock => ./tools/smtpmock
+
+replace github.com/keybase/go-keychain => github.com/yesnault/go-keychain v0.0.0-20190829105400-f78f7ae

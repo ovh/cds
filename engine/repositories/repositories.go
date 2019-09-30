@@ -50,10 +50,9 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid Repositories configuration")
 	}
 
-	s.Name = s.Cfg.Name
+	s.ServiceName = s.Cfg.Name
+	s.ServiceType = services.TypeRepositories
 	s.HTTPURL = s.Cfg.URL
-
-	s.Type = services.TypeRepositories
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 	s.ServiceName = "cds-repositories"
 

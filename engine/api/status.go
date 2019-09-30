@@ -182,17 +182,10 @@ func (api *API) computeGlobalStatusByNumbers(s computeGlobalNumbers) string {
 }
 
 func (api *API) initMetrics(ctx context.Context) error {
-	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs_started", api.Name)
-	api.Metrics.WorkflowRunStarted = stats.Int64(label, "number of started workflow runs", stats.UnitDimensionless)
 
-	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_failed", api.Name)
-	api.Metrics.WorkflowRunFailed = stats.Int64(label, "number of failed workflow runs", stats.UnitDimensionless)
+	log.Info("Metrics initialized for %s/%s", api.Type(), api.Name())
 
-	log.Info("Metrics initialized")
-
-	tagCDSInstance, _ := tag.NewKey("cds")
-	tags := []tag.Key{tagCDSInstance}
-
+	// TODO refactor all the metrics name to replace "cds-api" by "api.Type()"
 	api.Metrics.nbUsers = stats.Int64("cds/cds-api/nb_users", "number of users", stats.UnitDimensionless)
 	api.Metrics.nbApplications = stats.Int64("cds/cds-api/nb_applications", "nb_applications", stats.UnitDimensionless)
 	api.Metrics.nbProjects = stats.Int64("cds/cds-api/nb_projects", "nb_projects", stats.UnitDimensionless)
@@ -204,42 +197,57 @@ func (api *API) initMetrics(ctx context.Context) error {
 	api.Metrics.nbWorkflowRuns = stats.Int64("cds/cds-api/nb_workflow_runs", "nb_workflow_runs", stats.UnitDimensionless)
 	api.Metrics.nbWorkflowNodeRuns = stats.Int64("cds/cds-api/nb_workflow_node_runs", "nb_workflow_node_runs", stats.UnitDimensionless)
 	api.Metrics.nbMaxWorkersBuilding = stats.Int64("cds/cds-api/nb_max_workers_building", "nb_max_workers_building", stats.UnitDimensionless)
-
 	api.Metrics.queue = stats.Int64("cds/cds-api/queue", "queue", stats.UnitDimensionless)
-
-	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_mark_to_delete", api.Name)
-	api.Metrics.WorkflowRunsMarkToDelete = stats.Int64(label, "number of workflow runs mark to delete", stats.UnitDimensionless)
-	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_deleted", api.Name)
-	api.Metrics.WorkflowRunsDeleted = stats.Int64(label, "number of workflow runs deleted", stats.UnitDimensionless)
+	api.Metrics.WorkflowRunsMarkToDelete = stats.Int64(
+		fmt.Sprintf("cds/cds-api/%s/workflow_runs_mark_to_delete", api.Name()),
+		"number of workflow runs mark to delete",
+		stats.UnitDimensionless)
+	api.Metrics.WorkflowRunsDeleted = stats.Int64(
+		fmt.Sprintf("cds/cds-api/%s/workflow_runs_deleted", api.Name()),
+		"number of workflow runs deleted",
+		stats.UnitDimensionless)
+	api.Metrics.WorkflowRunStarted = stats.Int64(
+		fmt.Sprintf("cds/cds-api/%s/workflow_runs_started", api.Name()),
+		"number of started workflow runs",
+		stats.UnitDimensionless)
+	api.Metrics.WorkflowRunFailed = stats.Int64(
+		fmt.Sprintf("cds/cds-api/%s/workflow_runs_failed", api.Name()),
+		"number of failed workflow runs",
+		stats.UnitDimensionless)
+	api.Metrics.DatabaseConns = stats.Int64(
+		fmt.Sprintf("cds/cds-api/%s/database_conn°", api.Name()),
+		"number database connections",
+		stats.UnitDimensionless)
 
 	tagRange, _ = tag.NewKey("range")
 	tagStatus, _ = tag.NewKey("status")
-	tagServiceName, _ = tag.NewKey("name")
-	tagService, _ = tag.NewKey("service")
 
-	tagsRange := []tag.Key{tagCDSInstance, tagRange, tagStatus}
-	tagsService = []tag.Key{tagCDSInstance, tagServiceName, tagService}
-
-	api.computeMetrics(ctx)
+	tagServiceType := observability.MustNewKey(observability.TagServiceType)
+	tagServiceName := observability.MustNewKey(observability.TagServiceName)
+	tagsRange := []tag.Key{tagRange, tagStatus}
+	tagsService = []tag.Key{tagServiceName, tagServiceType}
 
 	err := observability.RegisterView(
-		observability.NewViewLast("nb_users", api.Metrics.nbUsers, tags),
-		observability.NewViewLast("nb_applications", api.Metrics.nbApplications, tags),
-		observability.NewViewLast("nb_projects", api.Metrics.nbProjects, tags),
-		observability.NewViewLast("nb_groups", api.Metrics.nbGroups, tags),
-		observability.NewViewLast("nb_pipelines", api.Metrics.nbPipelines, tags),
-		observability.NewViewLast("nb_workflows", api.Metrics.nbWorkflows, tags),
-		observability.NewViewLast("nb_artifacts", api.Metrics.nbArtifacts, tags),
-		observability.NewViewLast("nb_worker_models", api.Metrics.nbWorkerModels, tags),
-		observability.NewViewLast("nb_workflow_runs", api.Metrics.nbWorkflowRuns, tags),
-		observability.NewViewLast("nb_workflow_node_runs", api.Metrics.nbWorkflowNodeRuns, tags),
-		observability.NewViewLast("nb_max_workers_building", api.Metrics.nbMaxWorkersBuilding, tags),
-		observability.NewViewLast("queue", api.Metrics.queue, tagsRange),
-		observability.NewViewCount("workflow_runs_started", api.Metrics.WorkflowRunStarted, tags),
-		observability.NewViewCount("workflow_runs_failed", api.Metrics.WorkflowRunFailed, tags),
-		observability.NewViewCount("workflow_runs_mark_to_delete", api.Metrics.WorkflowRunsMarkToDelete, tags),
-		observability.NewViewCount("workflow_runs_deleted", api.Metrics.WorkflowRunsDeleted, tags),
+		observability.NewViewLast("cds/nb_users", api.Metrics.nbUsers, nil),
+		observability.NewViewLast("cds/nb_applications", api.Metrics.nbApplications, nil),
+		observability.NewViewLast("cds/nb_projects", api.Metrics.nbProjects, nil),
+		observability.NewViewLast("cds/nb_groups", api.Metrics.nbGroups, nil),
+		observability.NewViewLast("cds/nb_pipelines", api.Metrics.nbPipelines, nil),
+		observability.NewViewLast("cds/nb_workflows", api.Metrics.nbWorkflows, nil),
+		observability.NewViewLast("cds/nb_artifacts", api.Metrics.nbArtifacts, nil),
+		observability.NewViewLast("cds/nb_worker_models", api.Metrics.nbWorkerModels, nil),
+		observability.NewViewLast("cds/nb_workflow_runs", api.Metrics.nbWorkflowRuns, nil),
+		observability.NewViewLast("cds/nb_workflow_node_runs", api.Metrics.nbWorkflowNodeRuns, nil),
+		observability.NewViewLast("cds/nb_max_workers_building", api.Metrics.nbMaxWorkersBuilding, nil),
+		observability.NewViewLast("cds/queue", api.Metrics.queue, tagsRange),
+		observability.NewViewCount("cds/workflow_runs_started", api.Metrics.WorkflowRunStarted, tagsService),
+		observability.NewViewCount("cds/workflow_runs_failed", api.Metrics.WorkflowRunFailed, tagsService),
+		observability.NewViewCount("cds/workflow_runs_mark_to_delete", api.Metrics.WorkflowRunsMarkToDelete, tagsService),
+		observability.NewViewCount("cds/workflow_runs_deleted", api.Metrics.WorkflowRunsDeleted, tagsService),
+		observability.NewViewLast("cds/database_conn", api.Metrics.DatabaseConns, tagsService),
 	)
+
+	api.computeMetrics(ctx)
 
 	return err
 }
@@ -266,6 +274,8 @@ func (api *API) computeMetrics(ctx context.Context) {
 				api.countMetric(ctx, api.Metrics.nbWorkflowRuns, "SELECT COALESCE(MAX(id), 0) FROM workflow_run")
 				api.countMetric(ctx, api.Metrics.nbWorkflowNodeRuns, "SELECT COALESCE(MAX(id),0) FROM workflow_node_run")
 				api.countMetric(ctx, api.Metrics.nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'")
+
+				observability.Record(ctx, api.Metrics.DatabaseConns, int64(api.DBConnectionFactory.DB().Stats().OpenConnections))
 
 				now := time.Now()
 				now10s := now.Add(-10 * time.Second)

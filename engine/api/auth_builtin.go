@@ -74,8 +74,9 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 
 		// Prepare http response
 		resp := sdk.AuthConsumerSigninResponse{
-			Token: jwt,
-			User:  usr,
+			Token:  jwt,
+			User:   usr,
+			APIURL: api.Config.URL.API,
 		}
 
 		if err := tx.Commit(); err != nil {

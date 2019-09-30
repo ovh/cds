@@ -144,19 +144,22 @@ func Insert(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
 	*au = u.AuthentifiedUser
 
 	// TODO refactor this when authenticatedUser will replace user
-	oldUser := &sdk.User{
-		Admin:    u.Ring == sdk.UserRingAdmin,
-		Email:    "no-reply-" + u.Username + "@corp.ovh.com",
-		Username: u.Username,
-		Origin:   "local",
-		Fullname: u.Fullname,
-	}
-	if err := insertDeprecatedUser(db, oldUser); err != nil {
-		return sdk.WrapError(err, "unable to insert old user for authenticated_user.id=%s", u.ID)
+	if au.OldUserStruct == nil {
+		oldUser := &sdk.User{
+			Admin:    u.Ring == sdk.UserRingAdmin,
+			Email:    "no-reply-" + u.Username + "@corp.ovh.com",
+			Username: u.Username,
+			Origin:   "local",
+			Fullname: u.Fullname,
+		}
+		if err := insertDeprecatedUser(db, oldUser); err != nil {
+			return sdk.WrapError(err, "unable to insert old user for authenticated_user.id=%s", u.ID)
+		}
+		au.OldUserStruct = oldUser
 	}
 	return insertUserMigration(db, &MigrationUser{
 		AuthentifiedUserID: u.ID,
-		UserID:             oldUser.ID,
+		UserID:             au.OldUserStruct.ID,
 	})
 }
 

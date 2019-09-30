@@ -34,8 +34,6 @@ export CDS_GRAYLOG_HOST={{.GraylogHost}}
 export CDS_GRAYLOG_PORT={{.GraylogPort}}
 export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
 export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
-#export CDS_GRPC_API={{.GrpcAPI}}
-#export CDS_GRPC_INSECURE={{.GrpcInsecure}}
 
 # Basic build binaries
 cd $HOME

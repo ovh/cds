@@ -56,11 +56,10 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	h.Name = h.Config.Name
+	h.Common.Common.ServiceName = h.Config.Name
+	h.Common.Common.ServiceType = services.TypeHatchery
 	h.HTTPURL = h.Config.URL
-	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
-	h.Common.Common.ServiceName = "cds-hatchery-vsphere"
 	var err error
 	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
 	if err != nil {

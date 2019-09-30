@@ -136,7 +136,7 @@ func (api *API) postConsumerRegenByUserHandler() service.Handler {
 		if err != nil {
 			return sdk.WithStack(err)
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		// Load the consumer from the input
 		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)

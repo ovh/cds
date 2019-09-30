@@ -143,13 +143,13 @@ type AuthConsumerSigninRequest map[string]string
 // AuthConsumerSigninResponse response for a auth consumer signin.
 type AuthConsumerSigninResponse struct {
 	APIURL string            `json:"api_url,omitempty"`
-	Token  string            `json:"token"`
+	Token  string            `json:"token"` // session token
 	User   *AuthentifiedUser `json:"user"`
 }
 
 // AuthConsumerCreateResponse response for a auth consumer creation.
 type AuthConsumerCreateResponse struct {
-	Token    string        `json:"token"`
+	Token    string        `json:"token"` // sign in token
 	Consumer *AuthConsumer `json:"consumer"`
 }
 
@@ -318,7 +318,7 @@ func (c AuthConsumer) GetGroupIDs() []int64 {
 
 	if len(c.GroupIDs) > 0 {
 		groupIDs = c.GroupIDs
-	} else if c.AuthentifiedUser != nil && c.Type != ConsumerBuiltin {
+	} else if c.AuthentifiedUser != nil {
 		groupIDs = c.AuthentifiedUser.GetGroupIDs()
 	}
 

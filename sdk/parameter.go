@@ -31,6 +31,7 @@ var (
 		PipelineParameter,
 		KeySSHParameter,
 		KeyPGPParameter,
+		KeyParameter,
 	}
 )
 

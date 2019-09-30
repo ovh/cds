@@ -392,7 +392,7 @@ func (api *API) deleteGroupUserHandler() service.Handler {
 		}
 
 		// Remove the group from all consumers
-		if err := authentication.ConsumerInvalidateGroupForUser(ctx, tx, g, u.ID); err != nil {
+		if err := authentication.ConsumerInvalidateGroupForUser(ctx, tx, g, u); err != nil {
 			return err
 		}
 

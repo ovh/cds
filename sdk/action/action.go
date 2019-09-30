@@ -6,6 +6,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -18,6 +19,7 @@ var List = []Manifest{
 	DeployApplication,
 	GitClone,
 	GitTag,
+	InstallKey,
 	JUnit,
 	Release,
 	Script,

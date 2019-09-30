@@ -307,6 +307,8 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 			return err
 		}
 
+		withDetailledNodeRun := QueryString(r, "withDetails")
+
 		_, isService := api.isService(ctx)
 
 		// loadRun, DisableDetailledNodeRun = false for calls from CDS Service
@@ -316,7 +318,7 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 				WithDeleted:             false,
 				WithArtifacts:           true,
 				WithLightTests:          true,
-				DisableDetailledNodeRun: !isService,
+				DisableDetailledNodeRun: !isService && withDetailledNodeRun != "true",
 				Language:                r.Header.Get("Accept-Language"),
 			},
 		)
