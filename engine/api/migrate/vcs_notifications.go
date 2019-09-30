@@ -83,6 +83,7 @@ func AddDefaultVCSNotifications(ctx context.Context, store cache.Store, DBFunc f
 		}
 
 		if err := tx.Commit(); err != nil {
+			_ = tx.Rollback()
 			log.Error("migrate.AddDefaultVCSNotifications> cannot commit transaction for workflow id %d : %v", workflowID, err)
 		}
 	}
