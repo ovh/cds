@@ -7,12 +7,12 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
-	"syscall"
 	"time"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
+	"golang.org/x/sys/unix"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -109,7 +109,7 @@ func CommonMetricsView(ctx context.Context) []*view.View {
 							log.Error("unable to find current process: %v", err)
 							return
 						}
-						if err := p.Signal(syscall.SIGINFO); err != nil {
+						if err := p.Signal(unix.SIGINFO); err != nil {
 							log.Error("unable to send signal: %v", err)
 							return
 						}
