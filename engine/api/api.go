@@ -12,13 +12,13 @@ import (
 	"os/signal"
 	"runtime/pprof"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/blang/semver"
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
+	"golang.org/x/sys/unix"
 
 	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/action"
@@ -864,7 +864,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	// Dump heap to objecstore on SIGINFO
 	siginfoChan := make(chan os.Signal, 1)
-	signal.Notify(siginfoChan, syscall.SIGINFO)
+	signal.Notify(siginfoChan, unix.SIGINFO)
 	go func() {
 		<-siginfoChan
 		signal.Stop(siginfoChan)
@@ -906,5 +906,5 @@ func (p heapProfile) GetName() string {
 }
 func (p heapProfile) GetPath() string {
 	hostname, _ := os.Hostname()
-	return "api-mem-heap-" + hostname
+	return fmt.Sprintf("api-heap-profile-%d-%s", time.Now().Unix(), hostname)
 }
