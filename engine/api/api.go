@@ -1,13 +1,18 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"os/signal"
+	"runtime/pprof"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/blang/semver"
@@ -662,7 +667,7 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error("unable to init api metrics: %v", err)
 	}
 
-	//Intialize notification package
+	// Intialize notification package
 	notification.Init(a.Config.URL.UI)
 
 	log.Info("Initializing Authentication driver...")
@@ -857,6 +862,23 @@ func (a *API) Serve(ctx context.Context) error {
 		return sdk.WrapError(err, "Cannot upsert cds version")
 	}
 
+	// Dump heap to objecstore on SIGINFO
+	siginfoChan := make(chan os.Signal, 1)
+	signal.Notify(siginfoChan, syscall.SIGINFO)
+	go func() {
+		<-siginfoChan
+		signal.Stop(siginfoChan)
+		var buffer = new(bytes.Buffer)
+		pprof.Lookup("heap").WriteTo(buffer, 1)
+		var heapProfile = heapProfile{uuid: sdk.UUID()}
+		s, err := a.SharedStorage.Store(heapProfile, ioutil.NopCloser(buffer))
+		if err != nil {
+			log.Error("unable to upload heap profile: %v", err)
+			return
+		}
+		log.Error("api> heap dump uploaded to %s", s)
+	}()
+
 	log.Info("Starting CDS API HTTP Server on %s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {
 		return fmt.Errorf("Cannot start HTTP server: %v", err)
@@ -871,4 +893,18 @@ func (a *API) PanicDump() func(s string) (io.WriteCloser, error) {
 	return func(s string) (io.WriteCloser, error) {
 		return cache.NewWriteCloser(a.Cache, cache.Key("api", "panic_dump", s), panicDumpTTL), nil
 	}
+}
+
+type heapProfile struct {
+	uuid string
+}
+
+var _ objectstore.Object = new(heapProfile)
+
+func (p heapProfile) GetName() string {
+	return p.uuid
+}
+func (p heapProfile) GetPath() string {
+	hostname, _ := os.Hostname()
+	return "api-mem-heap-" + hostname
 }
