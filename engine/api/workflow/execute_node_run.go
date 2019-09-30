@@ -479,6 +479,7 @@ func getIntegrationPluginBinaries(db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *
 			pp, has := wr.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID]
 			if has {
 				projectIntegrationModelID = pp.Model.ID
+				break
 			}
 		}
 	}
