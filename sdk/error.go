@@ -196,6 +196,7 @@ var (
 	ErrEnvironmentNotFound                           = Error{ID: 179, Status: http.StatusBadRequest}
 	ErrIntegrationtNotFound                          = Error{ID: 180, Status: http.StatusBadRequest}
 	ErrBadBrokerConfiguration                        = Error{ID: 181, Status: http.StatusBadRequest}
+	ErrInvalidJobRequirementNetworkAccess            = Error{ID: 182, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -374,6 +375,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrEnvironmentNotFound.ID:                           "environment not found",
 	ErrIntegrationtNotFound.ID:                          "integration not found",
 	ErrBadBrokerConfiguration.ID:                        "Cannot connect to the broker of your event integration. Check your configuration",
+	ErrInvalidJobRequirementNetworkAccess.ID:            "Invalid job requirement: network requirement must contains ':'. Example: golang.org:http, golang.org:443",
 }
 
 var errorsFrench = map[int]string{
@@ -551,6 +553,7 @@ var errorsFrench = map[int]string{
 	ErrResourceNotInProject.ID:                          "La ressource n'est pas lié au projet",
 	ErrEnvironmentNotFound.ID:                           "l'environnement n'existe pas",
 	ErrBadBrokerConfiguration.ID:                        "Impossible de se connecter à votre intégration de type évènement. Veuillez vérifier votre configuration",
+	ErrInvalidJobRequirementNetworkAccess.ID:            "Pré-requis de job invalide: Le pré-requis network doit contenir un ':'. Exemple: golang.org:http, golang.org:443",
 }
 
 var errorsLanguages = []map[int]string{

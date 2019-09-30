@@ -49,12 +49,12 @@ func actionAuditCleaner(db *gorp.DbMap) error {
 	if err != nil {
 		return err
 	}
+	defer rows.Close() // nolint
 	var toDel []int64
 	var actionID, count int64
 	for rows.Next() {
 		err = rows.Scan(&actionID, &count)
 		if err != nil {
-			rows.Close()
 			return err
 		}
 
@@ -62,7 +62,6 @@ func actionAuditCleaner(db *gorp.DbMap) error {
 			toDel = append(toDel, actionID)
 		}
 	}
-	rows.Close()
 
 	// Now delete older version to keep only 20
 	query = `DELETE FROM action_audit

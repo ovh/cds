@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    Input,
+    OnDestroy,
+    OnInit,
+    ViewChild
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -6,11 +14,13 @@ import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteWorkflow, DeleteWorkflowIcon, UpdateWorkflow, UpdateWorkflowIcon } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { forkJoin } from 'rxjs';
+import { DragulaService } from 'ng2-dragula';
+import { forkJoin, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
 
@@ -20,8 +30,8 @@ import { finalize, first } from 'rxjs/operators';
     styleUrls: ['./workflow.admin.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-
-export class WorkflowAdminComponent implements OnInit {
+@AutoUnsubscribe()
+export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
     @Input() project: Project;
 
@@ -42,16 +52,19 @@ export class WorkflowAdminComponent implements OnInit {
     runnumber: number;
     originalRunNumber: number;
 
+    allTags = new Array<string>();
     existingTags = new Array<string>();
     selectedTags = new Array<string>();
     purgeTag: string;
     iconUpdated = false;
+    tagsToAdd = new Array<string>();
 
     @ViewChild('updateWarning', { static: false })
     private warningUpdateModal: WarningModalComponent;
 
     loading = false;
     fileTooLarge = false;
+    dragulaSubscription: Subscription;
 
     constructor(
         private store: Store,
@@ -60,8 +73,28 @@ export class WorkflowAdminComponent implements OnInit {
         private _router: Router,
         private _workflowRunService: WorkflowRunService,
         private _workflowService: WorkflowService,
-        private _cd: ChangeDetectorRef
-    ) { }
+        private _cd: ChangeDetectorRef,
+        private _dragularService: DragulaService,
+    ) {
+        this._dragularService.createGroup('bag-tag', {
+            accepts: function (el, target, source, sibling) {
+                if (sibling === null) {
+                    return false;
+                }
+                return true;
+            }
+        });
+
+        this.dragulaSubscription = this._dragularService.drop('bag-tag').subscribe(({ el, source }) => {
+            setTimeout(() => {
+                this.updateTagMetadata();
+            });
+        });
+    }
+
+    ngOnDestroy() {
+        this._dragularService.destroy('bag-tag');
+    }
 
     ngOnInit(): void {
         if (!this._workflow.metadata) {
@@ -69,7 +102,6 @@ export class WorkflowAdminComponent implements OnInit {
         }
         if (this._workflow.metadata['default_tags']) {
             this.selectedTags = this._workflow.metadata['default_tags'].split(',');
-            this.existingTags.push(...this.selectedTags);
         }
 
         if (this.project.permission !== 7) {
@@ -80,19 +112,27 @@ export class WorkflowAdminComponent implements OnInit {
         this._workflowRunService.getTags(this.project.key, this._workflow.name)
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(tags => {
-                let existingTags = [];
-                Object.keys(tags).forEach(k => {
-                    if (tags.hasOwnProperty(k) && this.existingTags.indexOf(k) === -1) {
-                        existingTags.push(k);
-                    }
-                });
-                this.existingTags = this.existingTags.concat(existingTags);
+                if (tags) {
+                    this.allTags = Object.keys(tags);
+                    this.initExistingtags();
+                }
+
+
             });
         this._workflowRunService.getRunNumber(this.project.key, this.workflow)
             .pipe(first(), finalize(() => this._cd.markForCheck())).subscribe(n => {
                 this.originalRunNumber = n.num;
                 this.runnumber = n.num;
             });
+    }
+
+    initExistingtags(): void {
+        this.existingTags = [];
+        this.allTags.forEach(t => {
+            if (this.selectedTags.indexOf(t) === -1) {
+                this.existingTags.push(t);
+            }
+        });
     }
 
     deleteIcon(): void {
@@ -120,8 +160,23 @@ export class WorkflowAdminComponent implements OnInit {
             });
     }
 
-    updateTagMetadata(m): void {
-        this._workflow.metadata['default_tags'] = m.join(',');
+    updateTagMetadata(): void {
+        if (this.tagsToAdd && this.tagsToAdd.length > 0) {
+            if (!this.selectedTags) {
+                this.selectedTags = new Array();
+            }
+            this.selectedTags.push(...this.tagsToAdd);
+            this.initExistingtags();
+        }
+
+        this._workflow.metadata['default_tags'] = this.selectedTags.join(',');
+        this.tagsToAdd = [];
+    }
+
+    removeFromSelectedTags(ind: number): void {
+        this.selectedTags.splice(ind, 1);
+        this.initExistingtags();
+        this.updateTagMetadata();
     }
 
     onSubmitWorkflowUpdate(skip?: boolean) {

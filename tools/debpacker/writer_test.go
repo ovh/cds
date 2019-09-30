@@ -20,9 +20,10 @@ type file struct {
 }
 
 type copy struct {
-	path    string
-	perm    os.FileMode
-	sources []string
+	targetPath string
+	path       string
+	perm       os.FileMode
+	sources    []string
 }
 
 func (m *mockWriter) CreateDirectory(path string, perm os.FileMode) error {
@@ -35,7 +36,7 @@ func (m *mockWriter) CreateFile(path string, content []byte, perm os.FileMode) e
 	return nil
 }
 
-func (m *mockWriter) CopyFiles(path string, perm os.FileMode, sources ...string) error {
-	m.copies = append(m.copies, copy{path, perm, sources})
+func (m *mockWriter) CopyFiles(targetPath string, path string, perm os.FileMode, sources ...string) error {
+	m.copies = append(m.copies, copy{targetPath: targetPath, path: path, perm: perm, sources: sources})
 	return nil
 }

@@ -4,13 +4,14 @@ weight: 9
 ---
 
 Using `CDS Workflow Configuration Files`, checked into source control, provides several benefits:
+
 * Code reviews on the workflow configuration
 * Ability to update workflow configuration from particular branch
-* Gain efficienty while editing the workflow configuration
+* Gain efficiency while editing the workflow configuration
 
 This usage of `CDS Workflow Configuration Files` is particulary suitable for single repository CI/CD workflows.
 
-`CDS Workflow Configuration Files` relies on several text files on YAML syntax in a `.cds` directory at the root of your repository. Several files may be used to describe properly each component, such as applications, environments and pipelines of your CDS workflow.
+`CDS Workflow Configuration Files` relies on several text files with YAML syntax in a `.cds` directory at the root of your repository. Several files may be used to describe each component, such as applications, environments and pipelines in your CDS workflow.
 
 ## Basic example
 
@@ -45,7 +46,7 @@ drwxr-xr-x  6 fsamin  staff  192 Mar 27 11:01 ..
 Here we have 4 yaml files, two pipelines: `build.pip.yml` and `deploy.pip.yml`, one application `demo.app.yml` and the overall workflow description file `democds.yml`.
 
 ### Workflow syntax
-First of all, here the workflow file:
+First of all, here is the workflow file:
 
 ```yaml
 name: democds
@@ -60,7 +61,7 @@ workflow:
     application: demo
 ```
 
-This is the representation of the whole workflow, starting from `build` then `deploy`.  As shown, the workflow file only contains the description of pipelines orchestration.
+This is the representation of the whole workflow, starting from `build` then `deploy`.  As shown, the workflow file contains the description of pipelines orchestration only.
 
 Read more about CDS [workflow syntax]({{< relref "./workflow-syntax.md" >}})
 

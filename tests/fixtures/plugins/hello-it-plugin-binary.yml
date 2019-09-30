@@ -8,5 +8,5 @@ requirements:
   value: python
   type: binary
 - name: localhost.local
-  value: localhost.local
+  value: ovh.com:443
   type: network

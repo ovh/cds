@@ -307,11 +307,13 @@ func (c *client) queueIndirectArtifactTempURLPost(url string, content []byte) er
 			body, err = ioutil.ReadAll(resp.Body)
 			if err != nil {
 				globalErr = err
+				time.Sleep(1 * time.Second)
 				continue
 			}
 
 			if resp.StatusCode >= 300 {
 				globalErr = fmt.Errorf("[%d] Unable to upload artifact: (HTTP %d) %s", i, resp.StatusCode, string(body))
+				time.Sleep(1 * time.Second)
 				continue
 			}
 

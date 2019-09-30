@@ -7,7 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -67,7 +69,15 @@ func tmplCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			sdk.Exit("Wrong usage: Example : worker tmpl filea fileb")
 		}
 
-		a := tmplPath{args[0], args[1]}
+		currentDir, err := os.Getwd()
+		if err != nil {
+			sdk.Exit("Internal error during Getwd command")
+		}
+
+		a := tmplPath{
+			getAbsoluteDir(args[0], currentDir),
+			getAbsoluteDir(args[1], currentDir),
+		}
 
 		data, errMarshal := json.Marshal(a)
 		if errMarshal != nil {
@@ -96,6 +106,13 @@ func tmplCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			sdk.Exit("tmpl failed: %v\n", cdsError)
 		}
 	}
+}
+
+func getAbsoluteDir(arg string, currentDir string) string {
+	if strings.HasPrefix(arg, string(filepath.Separator)) {
+		return arg
+	}
+	return filepath.Join(currentDir, arg)
 }
 
 func (wk *currentWorker) tmplHandler(w http.ResponseWriter, r *http.Request) {

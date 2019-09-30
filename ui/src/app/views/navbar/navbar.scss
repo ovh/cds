@@ -19,10 +19,29 @@
     margin-right: 30px;
   }
 
-  sui-search {
+  .ui.search {
     padding-top: 6px;
     height: 30px;
     margin-right: 10px;
+
+    .ui.input {
+      .prompt {
+          background-color: rgba(225, 226, 229, .1);
+          border-color: transparent;
+          &:focus {
+              border: 1.5px solid #50cfd9;
+          }
+          color: white;
+          opacity: 1;
+      }
+      i {
+          &.search.icon {
+              opacity: 1;
+          }
+          color: white;
+          opacity: 1;
+      }
+    }
   }
 
   sm-select {
@@ -190,6 +209,17 @@
 
     &.mt {
       margin-top: 4px;
+    }
+  }
+}
+
+.searchpopup {
+  width: 650px;
+  .description {
+    padding-top: 2px;
+    padding-bottom: 5px;
+    a {
+      color: #4183C4 !important;
     }
   }
 }
