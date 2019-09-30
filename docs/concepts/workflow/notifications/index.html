@@ -507,6 +507,7 @@
 <li>
 <ul>
 <li><a href="#user-notifications">User notifications</a></li>
+<li><a href="#vcs-notifications">VCS Notifications</a></li>
 <li><a href="#events">Events</a></li>
 </ul></li>
 </ul>
@@ -524,6 +525,74 @@
 <h2 id="user-notifications">User notifications</h2>
 
 <p>You can configure user notifications to send email or a message on jabber with different parameters. Inside the body of the notification you can customise the message thanks to the CDS variable templating with syntax like <code>{{.cds.myvar}}</code>. You can also use <code>HTML</code> to customise the message, then in order to let CDS interpret your message as an <code>HTML</code> one you just need to wrap all your message inside html tag like this <code>&lt;html&gt;MyContentHere&lt;/html&gt;</code>.</p>
+
+<h2 id="vcs-notifications">VCS Notifications</h2>
+
+<p>You can configure for which node in your workflow CDS have to send a status on your repository service provider (Github, Bitbucket, &hellip;). You can configure if you want to have a comment on your pull-request when your workflow fails or you can just disable pull-request comment to only have status of your pipelines. By default you already have a default template for your pull-request comment but you can customize it with different kinds of templating. To have access about the <code>node run</code> data and write some loops and conditions you can use the standard syntax as the <a href="https://golang.org/pkg/text/template/#hdr-Actions">go templating</a> but with <code>[[</code> <code>]]</code> delimitters. You can also use the CDS interpolation engine with the same syntax you already know and use inside pipelines, for example: <code>{{.cds.workflow}}</code> to get the name of the workflow.</p>
+
+<p>For the go templating you have few variables you can use/iterate over.</p>
+
+<ul>
+<li><code>.Stages</code>: an array of stages with <code>.RunJobs</code>inside which are the array of runned jobs with their <code>.Name</code>
+
+<ul>
+<li><code>.RunJobs</code>: Inside a stage object which are the array of runned jobs
+
+<ul>
+<li><code>.Job.Action.Name</code>: The name of the runned job</li>
+<li><code>.Job.Status</code>: The status of runned job</li>
+</ul></li>
+</ul></li>
+<li><code>.Tests</code>: array of tests results
+
+<ul>
+<li><code>.Total</code>: total number of tests</li>
+<li><code>.TotalOK</code>: total number of OK tests</li>
+<li><code>.TotalKO</code>: total number of KO tests</li>
+<li><code>.TotalSkipped</code>: total number of skipped tests</li>
+</ul></li>
+</ul>
+
+<p>If you need to know about other variable you can check data structure <a href="https://github.com/ovh/cds/blob/master/sdk/workflow_run.go#L40">here</a>.</p>
+
+<p>For example by default the template of pull-request comment is:</p>
+
+<pre><code>[[- if .Stages ]]
+CDS Report [[.WorkflowNodeName]]#[[.Number]].[[.SubNumber]] [[ if eq .Status &quot;Success&quot; -]] ✔ [[ else ]][[ if eq .Status &quot;Fail&quot; -]] ✘ [[ else ]][[ if eq .Status &quot;Stopped&quot; -]] ■ [[ else ]]- [[ end ]] [[ end ]] [[ end ]]
+[[- range $s := .Stages]]
+[[- if $s.RunJobs ]]
+* [[$s.Name]]
+[[- range $j := $s.RunJobs]]
+  * [[$j.Job.Action.Name]] [[ if eq $j.Status &quot;Success&quot; -]] ✔ [[ else ]][[ if eq $j.Status &quot;Fail&quot; -]] ✘ [[ else ]][[ if eq $j.Status &quot;Stopped&quot; -]] ■ [[ else ]]- [[ end ]] [[ end ]] [[ end ]]
+[[- end]]
+[[- end]]
+[[- end]]
+[[- end]]
+
+[[- if .Tests ]]
+[[- if gt .Tests.TotalKO 0]]
+Unit Tests Report
+
+[[- range $ts := .Tests.TestSuites]]
+* [[ $ts.Name ]]
+[[range $tc := $ts.TestCases]]
+  [[- if or ($tc.Errors) ($tc.Failures) ]]  * [[ $tc.Name ]] ✘ [[- end]]
+[[end]]
+[[- end]]
+[[- end]]
+[[- end]]
+</code></pre>
+
+<p>Which, for a pipeline with 1 stage and a job in failure, is displayed like this:</p>
+
+<pre><code>CDS Report build#11.0 ✘
+* Stage 1
+  * my job ✘
+</code></pre>
+
+<p>And displayed on GitHub:</p>
+
+<p><img src="../images/example_pr_comment.png?height=200px" alt="example_pr_comment.png" /></p>
 
 <h2 id="events">Events</h2>
 

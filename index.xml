@@ -715,7 +715,7 @@ Parameters  destination: (optional) Destination of this artifact. Use the name o
       <description>The Bitbucket Cloud Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Cloud to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud  How to configure Bitbucket Cloud integration  Go on Bitbucket.</description>
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud. More informations  How to configure Bitbucket Cloud integration  Go on Bitbucket.</description>
     </item>
     
     <item>
@@ -727,7 +727,7 @@ This integration enables some features:
       <description>The Bitbucket Server Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:</description>
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket. More informations Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:</description>
     </item>
     
     <item>
@@ -842,7 +842,7 @@ Parameters  branch: (optional) Instead of pointing the newly created HEAD to the
       <description>The Github Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by Github to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Git Repository Poller Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitHub Send comments on your Pull-Requests when a workflow is failed  Resume on what you have to do before using the GitHub Integration  As a CDS Administrator:  Create a CDS application on GitHub Complete CDS Configuration File Start the vcs µService  As a user, which is admin on a CDS Project: link Project to GitHub As a user, with writing rights on a CDS project:  Link a CDS Application to a Git repository Add a repository webhook on a workflow (this will automatically create a webhook on GitHub)   How to configure GitHub integration Create a CDS application on GitHub As a CDS Administrator</description>
+ Git Repository Webhook Git Repository Poller Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitHub. More informations Send comments on your Pull-Requests when a workflow is failed.</description>
     </item>
     
     <item>
@@ -854,7 +854,7 @@ This integration enables some features:
       <description>The GitLab Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by GitLab to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab  How to configure GitLab integration What you need to perform the following steps:</description>
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab. More informations  How to configure GitLab integration What you need to perform the following steps:</description>
     </item>
     
     <item>
