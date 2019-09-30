@@ -416,7 +416,9 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 		if !find || len(repos) == 0 {
 			var errRepos error
 			repos, errRepos = client.Repos(ctx)
-			api.Cache.SetWithTTL(cacheKey, repos, 0)
+			if err := api.Cache.SetWithTTL(cacheKey, repos, 0); err != nil {
+				log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+			}
 			if errRepos != nil {
 				return sdk.WrapError(errRepos, "getReposFromRepositoriesManagerHandler> Cannot get repos: %v", errRepos)
 			}

@@ -53,7 +53,10 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 				break
 			}
 		}
-		b.consumer.cache.SetWithTTL(stashCommitsKey, stashCommits, 3*60*60) //3 hours
+		//3 hours
+		if err := b.consumer.cache.SetWithTTL(stashCommitsKey, stashCommits, 3*60*60); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", stashCommitsKey, err)
+		}
 	}
 
 	urlCommit := b.consumer.URL + "/projects/" + project + "/repos/" + slug + "/commits/"
@@ -152,7 +155,10 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 				break
 			}
 		}
-		b.consumer.cache.SetWithTTL(stashCommitsKey, stashCommits, 3*60*60) //3 hours
+		//3 hours
+		if err := b.consumer.cache.SetWithTTL(stashCommitsKey, stashCommits, 3*60*60); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", stashCommitsKey, err)
+		}
 	}
 
 	urlCommit := b.consumer.URL + "/projects/" + project + "/repos/" + slug + "/compare/commits"

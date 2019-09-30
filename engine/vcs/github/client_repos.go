@@ -71,7 +71,10 @@ func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("vcs", "github", "repos", g.OAuthToken, "/user/repos"), repos, 61*60)
+	k := cache.Key("vcs", "github", "repos", g.OAuthToken, "/user/repos")
+	if err := g.Cache.SetWithTTL(k, repos, 61*60); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", k, err)
+	}
 
 	responseRepos := []sdk.VCSRepo{}
 	for _, repo := range repos {
@@ -139,7 +142,10 @@ func (g *githubClient) repoByFullname(fullname string) (Repository, error) {
 			return Repository{}, err
 		}
 		//Put the body on cache for one hour and one minute
-		g.Cache.SetWithTTL(cache.Key("vcs", "github", "repo", g.OAuthToken, url), repo, 61*60)
+		k := cache.Key("vcs", "github", "repo", g.OAuthToken, url)
+		if err := g.Cache.SetWithTTL(k, repo, 61*60); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", k, err)
+		}
 	}
 
 	return repo, nil

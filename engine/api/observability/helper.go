@@ -124,7 +124,9 @@ func findPrimaryKeyFromRequest(req *http.Request, db gorp.SqlExecutor, store cac
 					log.Error("tracingMiddleware> %v", err)
 					return "", false
 				}
-				store.SetWithTTL(cacheKey, pkey, 60*15)
+				if err := store.SetWithTTL(cacheKey, pkey, 60*15); err != nil {
+					log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+				}
 			}
 		}
 	}

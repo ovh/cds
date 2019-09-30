@@ -71,7 +71,10 @@ func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag,
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("vcs", "github", "tags", g.OAuthToken, "/repos/"+fullname+"/tags"), tags, 61*60)
+	k := cache.Key("vcs", "github", "tags", g.OAuthToken, "/repos/"+fullname+"/tags")
+	if err := g.Cache.SetWithTTL(k, tags, 61*60); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", k, err)
+	}
 
 	tagsResult := make([]sdk.VCSTag, len(tags))
 	j := 0

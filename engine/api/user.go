@@ -502,7 +502,10 @@ func (api *API) loginUserHandler() service.Handler {
 			if err != nil {
 				return sdk.WithStack(err)
 			}
-			api.Cache.SetWithTTL("api:loginUserHandler:RequestToken:"+loginUserRequest.RequestToken, token, 30*60)
+			k := "api:loginUserHandler:RequestToken:" + loginUserRequest.RequestToken
+			if err := api.Cache.SetWithTTL(k, token, 30*60); err != nil {
+				log.Error("cannot SetWithTTL: %s: %v", k, err)
+			}
 		}
 
 		if err := group.CheckUserInDefaultGroup(api.mustDB(), u.ID); err != nil {

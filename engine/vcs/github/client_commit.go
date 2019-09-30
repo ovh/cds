@@ -175,7 +175,10 @@ func (g *githubClient) Commits(ctx context.Context, repo, theBranch, since, unti
 		commitsResult = append(commitsResult, commit)
 	}
 
-	g.Cache.SetWithTTL(cache.Key("vcs", "github", "commits", repo, "since="+since, "until="+until), commitsResult, 3*60*60)
+	key := cache.Key("vcs", "github", "commits", repo, "since="+since, "until="+until)
+	if err := g.Cache.SetWithTTL(key, commitsResult, 3*60*60); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", key, err)
+	}
 
 	return commitsResult, nil
 }
@@ -247,7 +250,10 @@ func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 			return sdk.VCSCommit{}, err
 		}
 		//Put the body on cache for one hour and one minute
-		g.Cache.SetWithTTL(cache.Key("vcs", "github", "commit", g.OAuthToken, url), c, 61*60)
+		k := cache.Key("vcs", "github", "commit", g.OAuthToken, url)
+		if err := g.Cache.SetWithTTL(k, c, 61*60); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", k, err)
+		}
 	}
 
 	commit := sdk.VCSCommit{
@@ -308,7 +314,10 @@ func (g *githubClient) CommitsBetweenRefs(ctx context.Context, repo, base, head 
 			}
 		}
 		//Put the body on cache for one hour and one minute
-		g.Cache.SetWithTTL(cache.Key("vcs", "github", "commitdiff", g.OAuthToken, url), &commits, 61*60)
+		k := cache.Key("vcs", "github", "commitdiff", g.OAuthToken, url)
+		if err := g.Cache.SetWithTTL(k, &commits, 61*60); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", k, err)
+		}
 	}
 
 	return commits, nil

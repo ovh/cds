@@ -116,7 +116,10 @@ func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string
 			return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "Unable to parse github commit: %s", ref)
 		}
 		//Put the body on cache for one hour and one minute
-		g.Cache.SetWithTTL(cache.Key("vcs", "github", "statuses", g.OAuthToken, url), ss, 61*60)
+		k := cache.Key("vcs", "github", "statuses", g.OAuthToken, url)
+		if err := g.Cache.SetWithTTL(k, ss, 61*60); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", k, err)
+		}
 	}
 
 	vcsStatuses := []sdk.VCSCommitStatus{}

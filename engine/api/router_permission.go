@@ -88,8 +88,12 @@ func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, u *sdk.User) er
 			u.Groups = append(u.Groups, group)
 		}
 
-		store.SetWithTTL(kp, u.Permissions, 120)
-		store.SetWithTTL(kg, u.Groups, 120)
+		if err := store.SetWithTTL(kp, u.Permissions, 120); err != nil {
+			log.Error("cannot SetWithTTL kp: %s: %v", kp, err)
+		}
+		if err := store.SetWithTTL(kg, u.Groups, 120); err != nil {
+			log.Error("cannot SetWithTTL kg: %s: %v", kg, err)
+		}
 
 	}
 	return nil
@@ -112,7 +116,9 @@ func loadPermissionsByGroupID(db gorp.SqlExecutor, store cache.Store, groupID in
 		if err := db.QueryRow(query, groupID).Scan(&g.Name); err != nil {
 			return g, sdk.UserPermissions{}, fmt.Errorf("no group with id %d: %s", groupID, err)
 		}
-		store.SetWithTTL(kg, g, 120)
+		if err := store.SetWithTTL(kg, g, 120); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", kg, err)
+		}
 	}
 
 	find2, err2 := store.Get(ku, &u.Permissions)
@@ -123,7 +129,9 @@ func loadPermissionsByGroupID(db gorp.SqlExecutor, store cache.Store, groupID in
 		if err := loadGroupPermissionInUser(db, groupID, &u); err != nil {
 			return g, sdk.UserPermissions{}, sdk.WrapError(err, "loadPermissionsByGroupID")
 		}
-		store.SetWithTTL(ku, u.Permissions, 120)
+		if err := store.SetWithTTL(ku, u.Permissions, 120); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", ku, err)
+		}
 	}
 
 	return g, u.Permissions.Clone(), nil

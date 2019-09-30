@@ -76,7 +76,10 @@ func (g *githubClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), branches, 61*60)
+	k := cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches")
+	if err := g.Cache.SetWithTTL(k, branches, 61*60); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", k, err)
+	}
 
 	branchesResult := []sdk.VCSBranch{}
 	for _, b := range branches {
@@ -145,7 +148,10 @@ func (g *githubClient) Branch(ctx context.Context, fullname, theBranch string) (
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch/"+theBranch), branch, 61*60)
+	k := cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch/"+theBranch)
+	if err := g.Cache.SetWithTTL(k, branch, 61*60); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", k, err)
+	}
 
 	branchResult := &sdk.VCSBranch{
 		DisplayID:    branch.Name,

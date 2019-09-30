@@ -65,7 +65,9 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 		}
 
 		//Put the body on cache for one hour and one minute
-		g.Cache.SetWithTTL(cachePullRequestKey, pr, 61*60)
+		if err := g.Cache.SetWithTTL(cachePullRequestKey, pr, 61*60); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", cachePullRequestKey, err)
+		}
 		break
 	}
 
@@ -121,7 +123,10 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls"), pullRequests, 61*60)
+	k := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls")
+	if err := g.Cache.SetWithTTL(k, pullRequests, 61*60); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", k, err)
+	}
 
 	prResults := []sdk.VCSPullRequest{}
 	for _, pullr := range pullRequests {

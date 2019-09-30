@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // PubSub represents a subscriber
@@ -67,6 +68,8 @@ type writerCloser struct {
 }
 
 func (w *writerCloser) Close() error {
-	w.store.SetWithTTL(w.key, w.String(), w.ttl)
+	if err := w.store.SetWithTTL(w.key, w.String(), w.ttl); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", w.key, err)
+	}
 	return nil
 }

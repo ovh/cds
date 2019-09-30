@@ -97,7 +97,9 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 		}
 
 		ok = runNodeJob.ID == getWorker(ctx).ActionBuildID
-		api.Cache.SetWithTTL(k, ok, 60*15)
+		if err := api.Cache.SetWithTTL(k, ok, 60*15); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", k, err)
+		}
 		if !ok {
 			log.Error("checkWorkerPermission> actionBuildID:%v runNodeJob.ID:%v", getWorker(ctx).ActionBuildID, runNodeJob.ID)
 		}

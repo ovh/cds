@@ -120,7 +120,9 @@ func StoreXSRFToken(store cache.Store, accessToken sdk.AccessToken) string {
 	log.Debug("accesstoken.StoreXSRFToken")
 	var xsrfToken = sdk.UUID()
 	var k = cache.Key("token", "xsrf", accessToken.ID)
-	store.SetWithTTL(k, &xsrfToken, _XSRFTokenDuration)
+	if err := store.SetWithTTL(k, &xsrfToken, _XSRFTokenDuration); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", k, err)
+	}
 	return xsrfToken
 }
 

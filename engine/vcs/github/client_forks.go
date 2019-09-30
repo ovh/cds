@@ -67,7 +67,10 @@ func (g *githubClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRep
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("vcs", "github", "forks", g.OAuthToken, "/user/", repo, "/forks"), repos, 61*60)
+	k := cache.Key("vcs", "github", "forks", g.OAuthToken, "/user/", repo, "/forks")
+	if err := g.Cache.SetWithTTL(k, repos, 61*60); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", k, err)
+	}
 
 	responseRepos := []sdk.VCSRepo{}
 	for _, repo := range repos {

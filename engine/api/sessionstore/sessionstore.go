@@ -58,7 +58,9 @@ func (s *sessionstore) New(session SessionKey) (SessionKey, error) {
 	}
 
 	k := cache.Key(cacheSessionStore, string(session))
-	s.cache.SetWithTTL(k, 1, s.ttl)
+	if err := s.cache.SetWithTTL(k, 1, s.ttl); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", k, err)
+	}
 	return session, nil
 }
 
@@ -71,7 +73,9 @@ func (s *sessionstore) Exists(session SessionKey) (bool, error) {
 	}
 
 	if exist {
-		s.cache.SetWithTTL(k, 1, s.ttl)
+		if err := s.cache.SetWithTTL(k, 1, s.ttl); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", k, err)
+		}
 	}
 	return exist, nil
 }
@@ -92,7 +96,9 @@ func (s *sessionstore) Get(session SessionKey, subkey string, i interface{}) err
 	if err != nil {
 		log.Error("cannot get from cache %s: %v", ks, err)
 	}
-	s.cache.SetWithTTL(ks, i, s.ttl)
+	if err := s.cache.SetWithTTL(ks, i, s.ttl); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", ks, err)
+	}
 	return nil
 }
 
@@ -108,7 +114,9 @@ func (s *sessionstore) Set(session SessionKey, subkey string, i interface{}) err
 	}
 
 	ks := cache.Key(k, subkey)
-	s.cache.SetWithTTL(ks, i, s.ttl)
+	if err := s.cache.SetWithTTL(ks, i, s.ttl); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", ks, err)
+	}
 
 	return nil
 }

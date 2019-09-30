@@ -53,7 +53,9 @@ func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, erro
 			return user, sdk.WithStack(err)
 		}
 		//Put the body on cache for 1 hour
-		client.Cache.SetWithTTL(cacheKey, user, 60*60)
+		if err := client.Cache.SetWithTTL(cacheKey, user, 60*60); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+		}
 	}
 
 	return user, nil
@@ -82,7 +84,9 @@ func (client *bitbucketcloudClient) Teams(ctx context.Context) (Teams, error) {
 			return teams, sdk.WithStack(err)
 		}
 		//Put the body on cache for 1 hour
-		client.Cache.SetWithTTL(cacheKey, teams, 60*60)
+		if err := client.Cache.SetWithTTL(cacheKey, teams, 60*60); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+		}
 	}
 
 	return teams, nil

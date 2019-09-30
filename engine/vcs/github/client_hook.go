@@ -104,7 +104,9 @@ func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cacheKey, webhooks, 61*60)
+	if err := g.Cache.SetWithTTL(cacheKey, webhooks, 61*60); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+	}
 	return webhooks, nil
 }
 

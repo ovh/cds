@@ -36,7 +36,10 @@ func (g *githubClient) User(ctx context.Context, username string) (User, error) 
 			return User{}, err
 		}
 		//Put the body on cache for one hour and one minute
-		g.Cache.SetWithTTL(cache.Key("vcs", "github", "users", g.OAuthToken, url), user, 61*60)
+		k := cache.Key("vcs", "github", "users", g.OAuthToken, url)
+		if err := g.Cache.SetWithTTL(k, user, 61*60); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", k, err)
+		}
 	}
 
 	return user, nil

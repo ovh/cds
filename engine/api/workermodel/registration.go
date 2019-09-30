@@ -147,7 +147,9 @@ func BookForRegister(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.S
 	}
 	if !find {
 		// worker model not already booked, book it for 6 min
-		store.SetWithTTL(k, hatchery, bookRegisterTTLInSeconds)
+		if err := store.SetWithTTL(k, hatchery, bookRegisterTTLInSeconds); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", k, err)
+		}
 		return nil, nil
 	}
 	return &h, sdk.WrapError(sdk.ErrWorkerModelAlreadyBooked, "worker model %d already booked by %s (%d)", id, h.Name, h.ID)

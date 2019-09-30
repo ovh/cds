@@ -522,7 +522,9 @@ func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Se
 	}
 	if !find {
 		// job not already booked, book it for 2 min
-		store.SetWithTTL(k, hatchery, 120)
+		if err := store.SetWithTTL(k, hatchery, 120); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", k, err)
+		}
 		return nil, nil
 	}
 	if h.ID == hatchery.ID {

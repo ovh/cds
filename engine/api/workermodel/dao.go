@@ -170,7 +170,9 @@ func LoadAllByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.User, opts 
 		return nil, errl
 	}
 
-	store.SetWithTTL(key, models, CacheTTLInSeconds)
+	if err := store.SetWithTTL(key, models, CacheTTLInSeconds); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", key, err)
+	}
 	return models, nil
 }
 
@@ -226,7 +228,9 @@ func LoadAllUsableOnGroupWithClearPassword(db gorp.SqlExecutor, store cache.Stor
 		}
 	}
 
-	store.SetWithTTL(key, models, CacheTTLInSeconds)
+	if err := store.SetWithTTL(key, models, CacheTTLInSeconds); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", key, err)
+	}
 
 	return models, nil
 }
