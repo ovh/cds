@@ -1,5 +1,7 @@
+// +build windows
+
 package sdk
 
-import "golang.org/x/sys/unix"
+import "syscall"
 
-var SIGINFO = unix.SIGPWR
+var SIGINFO = syscall.Signal(0x1d)
