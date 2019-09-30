@@ -80,7 +80,7 @@ func CommonMetricsView(ctx context.Context) []*view.View {
 		hostname, _ := os.Hostname()
 		ctx, _ = tag.New(ctx, tag.Upsert(tagHostname, hostname))
 
-		var maxMemoryS = os.Getenv("CDS_MAX_HEAP_SIZE")
+		var maxMemoryS = os.Getenv("CDS_MAX_HEAP_SIZE") // in bytes
 		var maxMemory uint64
 		var onceMaxMemorySignal = new(sync.Once)
 		if maxMemoryS != "" {
