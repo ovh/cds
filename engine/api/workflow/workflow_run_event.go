@@ -199,21 +199,6 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	if !node.IsLinkedToRepo(&wr.Workflow) {
 		return nil
 	}
-
-	notif, errN := loadVCSNotificationWithNodeID(db, wr.WorkflowID, node.ID)
-	if errN != nil {
-		return sdk.WrapError(errN, "cannot load notification")
-	}
-
-	// vcs notification not enabled
-	if notif.ID == 0 {
-		return nil
-	}
-
-	if nodeRun.VCSReport == "" {
-		nodeRun.VCSReport = notif.Settings.Template.Body
-	}
-
 	app = wr.Workflow.Applications[node.Context.ApplicationID]
 	if node.Context.PipelineID > 0 {
 		pip = wr.Workflow.Pipelines[node.Context.PipelineID]
@@ -329,7 +314,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		return fmt.Errorf("sendEvent> err:%s", err)
 	}
 
-	if vcsConf.Type != "gerrit" && (notif.Settings.Template.DisableComment == nil || !*notif.Settings.Template.DisableComment) {
+	if vcsConf.Type != "gerrit" {
 		//Check if this branch and this commit is a pullrequest
 		prs, err := client.PullRequests(ctx, app.RepositoryFullname)
 		if err != nil {

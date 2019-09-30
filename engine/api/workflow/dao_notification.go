@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"database/sql"
-
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
@@ -59,27 +58,10 @@ func loadNotification(db gorp.SqlExecutor, w *sdk.Workflow, id int64) (sdk.Workf
 		if notifNode != nil {
 			n.SourceNodeRefs = append(n.SourceNodeRefs, notifNode.Name)
 		}
+
 	}
 
 	return n, nil
-}
-
-func loadVCSNotificationWithNodeID(db gorp.SqlExecutor, workflowID, nodeID int64) (sdk.WorkflowNotification, error) {
-	dbnotif := Notification{}
-	query := `SELECT workflow_notification.*
-	FROM workflow_notification
-		JOIN workflow_notification_source ON workflow_notification.id = workflow_notification_source.workflow_notification_id
-	WHERE workflow_notification.workflow_id = $1 AND workflow_notification_source.node_id = $2 AND workflow_notification.type = $3`
-	//Load the notification
-	if err := db.SelectOne(&dbnotif, query, workflowID, nodeID, sdk.VCSUserNotification); err != nil {
-		if err == sql.ErrNoRows {
-			return sdk.WorkflowNotification{}, nil
-		}
-		return sdk.WorkflowNotification{}, sdk.WrapError(err, "Unable to load notification for workflow id %d and node id %d", workflowID, nodeID)
-	}
-	dbnotif.WorkflowID = workflowID
-
-	return sdk.WorkflowNotification(dbnotif), nil
 }
 
 func InsertNotification(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNotification) error {
@@ -140,6 +122,5 @@ func (no *Notification) PostGet(db gorp.SqlExecutor) error {
 	if err := gorpmapping.JSONNullString(res, &no.Settings); err != nil {
 		return sdk.WrapError(err, "cannot parse user notification")
 	}
-
 	return nil
 }

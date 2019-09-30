@@ -1,7 +1,9 @@
 package sdk
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"net/url"
 	"sort"
 	"strings"
@@ -240,7 +242,6 @@ type WorkflowNodeRun struct {
 	HookExecutionTimeStamp int64                                `json:"hook_execution_timestamp,omitempty"`
 	HookExecutionID        string                               `json:"execution_id,omitempty"`
 	Callback               *WorkflowNodeOutgoingHookRunCallback `json:"callback,omitempty"`
-	VCSReport              string                               `json:"vcs_report,omitempty"`
 }
 
 // WorkflowNodeOutgoingHookRunCallback is the callback coming from hooks uservice avec an outgoing hook execution
@@ -451,6 +452,43 @@ func (w *WorkflowNodeRunArtifact) GetPath() string {
 	container = url.QueryEscape(container)
 	container = strings.Replace(container, "/", "-", -1)
 	return container
+}
+
+const workflowNodeRunReport = `{{- if .Stages }}
+CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}} {{ if eq .Status "Success" -}} ✔ {{ else }}{{ if eq .Status "Fail" -}} ✘ {{ else }}{{ if eq .Status "Stopped" -}} ■ {{ else }}- {{ end }} {{ end }} {{ end }}
+{{- range $s := .Stages}}
+{{- if $s.RunJobs }}
+* {{$s.Name}}
+{{- range $j := $s.RunJobs}}
+  * {{$j.Job.Action.Name}} {{ if eq $j.Status "Success" -}} ✔ {{ else }}{{ if eq $j.Status "Fail" -}} ✘ {{ else }}{{ if eq $j.Status "Stopped" -}} ■ {{ else }}- {{ end }} {{ end }} {{ end }}
+{{- end}}
+{{- end}}
+{{- end}}
+{{- end}}
+
+{{- if .Tests }}
+{{- if gt .Tests.TotalKO 0}}
+Unit Tests Report
+
+{{- range $ts := .Tests.TestSuites}}
+* {{ $ts.Name }}
+{{range $tc := $ts.TestCases}}
+  {{- if or ($tc.Errors) ($tc.Failures) }}  * {{ $tc.Name }} ✘ {{- end}}
+{{end}}
+{{- end}}
+{{- end}}
+{{- end}}
+`
+
+func (nr WorkflowNodeRun) Report() (string, error) {
+	t := template.New("")
+	t, err := t.Parse(workflowNodeRunReport)
+	if err != nil {
+		return "", err
+	}
+	out := new(bytes.Buffer)
+	errE := t.Execute(out, nr)
+	return out.String(), errE
 }
 
 type WorkflowQueue []WorkflowNodeJobRun
