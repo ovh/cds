@@ -5,12 +5,17 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strconv"
+	"sync"
+	"syscall"
 	"time"
 
-	"github.com/ovh/cds/sdk"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
+
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func CommonMetricsView(ctx context.Context) []*view.View {
@@ -76,6 +81,13 @@ func CommonMetricsView(ctx context.Context) []*view.View {
 		hostname, _ := os.Hostname()
 		ctx, _ = tag.New(ctx, tag.Upsert(tagHostname, hostname))
 
+		var maxMemoryS = os.Getenv("CDS_MAX_HEAP_SIZE")
+		var maxMemory uint64
+		var onceMaxMemorySignal = new(sync.Once)
+		if maxMemoryS != "" {
+			maxMemory, _ = strconv.ParseUint(maxMemoryS, 10, 64)
+		}
+
 		var tick = time.NewTicker(10 * time.Second)
 		defer tick.Stop()
 		for {
@@ -89,6 +101,21 @@ func CommonMetricsView(ctx context.Context) []*view.View {
 				stats.Record(ctx, totalAllocStats.M(int64(m.TotalAlloc)))
 				stats.Record(ctx, sysStats.M(int64(m.Sys)))
 				stats.Record(ctx, gcStats.M(int64(m.NumGC)))
+
+				if maxMemory > 0 && m.Alloc >= maxMemory {
+					onceMaxMemorySignal.Do(func() {
+						p, err := os.FindProcess(os.Getpid())
+						if err != nil {
+							log.Error("unable to find current process: %v", err)
+							return
+						}
+						if err := p.Signal(syscall.SIGINFO); err != nil {
+							log.Error("unable to send signal: %v", err)
+							return
+						}
+						log.Info("metrics> SIGINFO signal send to %v", os.Getpid())
+					})
+				}
 			}
 		}
 	})
