@@ -27,7 +27,10 @@ func (g *githubClient) User(ctx context.Context, username string) (User, error) 
 	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
-		g.Cache.Get(cache.Key("vcs", "github", "users", g.OAuthToken, url), &user)
+		k := cache.Key("vcs", "github", "users", g.OAuthToken, url)
+		if _, err := g.Cache.Get(k, &user); err != nil {
+			log.Error("cannot get from cache %s: %v", k, err)
+		}
 	} else {
 		if err := json.Unmarshal(body, &user); err != nil {
 			return User{}, err

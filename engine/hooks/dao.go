@@ -5,6 +5,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type dao struct {
@@ -39,7 +40,11 @@ func (d *dao) FindAllKeysMatchingPattern(pattern string) ([]string, error) {
 func (d *dao) FindTask(uuid string) *sdk.Task {
 	key := cache.Key(rootKey, uuid)
 	t := &sdk.Task{}
-	if d.store.Get(key, t) {
+	find, err := d.store.Get(key, t)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", key, err)
+	}
+	if find {
 		return t
 	}
 	return nil

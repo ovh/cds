@@ -49,7 +49,11 @@ func (g *githubClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				g.Cache.Get(cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), &branches)
+				k := cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches")
+				_, err := g.Cache.Get(k, &branches)
+				if err != nil {
+					log.Error("cannot get from cache %s: %v", k, err)
+				}
 				if len(branches) != 0 || attempt > 5 {
 					//We found branches, let's exit the loop
 					break
@@ -118,7 +122,11 @@ func (g *githubClient) Branch(ctx context.Context, fullname, theBranch string) (
 	var branch Branch
 	if status == http.StatusNotModified {
 		//If repos aren't updated, lets get them from cache
-		if !g.Cache.Get(cacheBranchKey, &branch) {
+		find, err := g.Cache.Get(cacheBranchKey, &branch)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", cacheBranchKey, err)
+		}
+		if !find {
 			log.Error("Unable to get branch (%s) from the cache", cacheBranchKey)
 		}
 	} else {

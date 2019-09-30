@@ -944,7 +944,11 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	// Try to get the data from cache
 	cacheKey := cache.Key("api:workflow:getVCSInfos:", applicationVCSServer, applicationRepositoryFullname, vcsInfos.String())
-	if store.Get(cacheKey, &vcsInfos) {
+	find, err := store.Get(cacheKey, &vcsInfos)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", cacheKey, err)
+	}
+	if find {
 		log.Debug("completeVCSInfos> load from cache: %s", cacheKey)
 		return &vcsInfos, nil
 	}

@@ -81,7 +81,10 @@ func (c *githubClient) setETag(path string, headers http.Header) {
 
 func (c *githubClient) getETag(path string) string {
 	var s string
-	c.Cache.Get(cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), &s)
+	k := cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1))
+	if _, err := c.Cache.Get(k, &s); err != nil {
+		log.Error("cannot get from cache %s: %v", k, err)
+	}
 	return s
 }
 

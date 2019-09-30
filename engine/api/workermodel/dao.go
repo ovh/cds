@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 const modelColumns = `
@@ -122,7 +123,11 @@ func LoadAllByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.User, opts 
 	}
 	key := cache.Key(prefixKey, user.Username)
 	models := []sdk.Model{}
-	if store.Get(key, &models) {
+	find, err := store.Get(key, &models)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", key, err)
+	}
+	if find {
 		return models, nil
 	}
 
@@ -160,9 +165,9 @@ func LoadAllByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.User, opts 
 
 		args = []interface{}{user.ID, group.SharedInfraGroup.ID}
 	}
-	models, err := loadAll(db, false, query, args...)
-	if err != nil {
-		return nil, err
+	models, errl := loadAll(db, false, query, args...)
+	if errl != nil {
+		return nil, errl
 	}
 
 	store.SetWithTTL(key, models, CacheTTLInSeconds)
@@ -174,7 +179,11 @@ func LoadAllUsableOnGroupWithClearPassword(db gorp.SqlExecutor, store cache.Stor
 	key := cache.Key("api:workermodels:bygroup", fmt.Sprintf("%d", groupID))
 
 	models := make([]sdk.Model, 0)
-	if store.Get(key, &models) {
+	find, err := store.Get(key, &models)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", key, err)
+	}
+	if find {
 		return models, nil
 	}
 
@@ -202,9 +211,9 @@ func LoadAllUsableOnGroupWithClearPassword(db gorp.SqlExecutor, store cache.Stor
       ORDER by name
     `, modelColumns)
 	}
-	models, err := loadAll(db, true, query, groupID)
-	if err != nil {
-		return nil, sdk.WithStack(err)
+	models, errl := loadAll(db, true, query, groupID)
+	if errl != nil {
+		return nil, sdk.WithStack(errl)
 	}
 
 	for i := range models {

@@ -71,33 +71,30 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 	}, nil
 }
 
-//Get a key from redis
-func (s *RedisStore) Get(key string, value interface{}) bool {
+// Get a key from redis
+func (s *RedisStore) Get(key string, value interface{}) (bool, error) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return false
+		return false, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	val, errRedis := s.Client.Get(key).Result()
 	if errRedis != nil && errRedis != redis.Nil {
-		log.Error("redis>Get> get error %s : %v", key, errRedis)
-		return false
+		return false, sdk.WrapError(errRedis, "redis> get error %s", key)
 	}
 	if val != "" {
 		if err := json.Unmarshal([]byte(val), value); err != nil {
-			log.Error("redis>Get> cannot unmarshal %s :%s", key, err)
-			return false
+			return false, sdk.WrapError(err, "redis> cannot get unmarshal %s", key)
 		}
-		return true
+		return true, nil
 	}
 
-	return false
+	return false, nil
 }
 
-//SetWithTTL a value in local store (0 for eternity)
+// SetWithTTL a value in local store (0 for eternity)
 func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) error {
 	if s.Client == nil {
-		sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 	b, err := json.Marshal(value)
 	if err != nil {
@@ -110,7 +107,7 @@ func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) error {
 	return nil
 }
 
-//UpdateTTL update the ttl linked to the key
+// UpdateTTL update the ttl linked to the key
 func (s *RedisStore) UpdateTTL(key string, ttl int) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
@@ -122,12 +119,12 @@ func (s *RedisStore) UpdateTTL(key string, ttl int) error {
 	return nil
 }
 
-//Set a value in redis
+// Set a value in redis
 func (s *RedisStore) Set(key string, value interface{}) error {
 	return s.SetWithTTL(key, value, s.ttl)
 }
 
-//Delete a key in redis
+// Delete a key in redis
 func (s *RedisStore) Delete(key string) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
@@ -139,7 +136,7 @@ func (s *RedisStore) Delete(key string) error {
 	return nil
 }
 
-//DeleteAll delete all mathing keys in redis
+// DeleteAll delete all mathing keys in redis
 func (s *RedisStore) DeleteAll(pattern string) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
@@ -157,7 +154,7 @@ func (s *RedisStore) DeleteAll(pattern string) error {
 	return nil
 }
 
-//Enqueue pushes to queue
+// Enqueue pushes to queue
 func (s *RedisStore) Enqueue(queueName string, value interface{}) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
@@ -172,7 +169,7 @@ func (s *RedisStore) Enqueue(queueName string, value interface{}) error {
 	return nil
 }
 
-//QueueLen returns the length of a queue
+// QueueLen returns the length of a queue
 func (s *RedisStore) QueueLen(queueName string) (int, error) {
 	if s.Client == nil {
 		return 0, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
@@ -186,7 +183,7 @@ func (s *RedisStore) QueueLen(queueName string) (int, error) {
 	return int(res), nil
 }
 
-//DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
+// DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
 func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, value interface{}) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))

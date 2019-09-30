@@ -124,7 +124,11 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 
 	cacheKey := cache.Key("vcs", "bitbucket", "request", req.URL.String(), token.Token())
 	if v != nil && method == "GET" {
-		if c.consumer.cache.Get(cacheKey, v) {
+		find, err := c.consumer.cache.Get(cacheKey, v)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", cacheKey, err)
+		}
+		if find {
 			return nil
 		}
 	}

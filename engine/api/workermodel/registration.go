@@ -141,7 +141,11 @@ func KeyBookWorkerModel(id int64) string {
 func BookForRegister(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
 	k := KeyBookWorkerModel(id)
 	h := sdk.Service{}
-	if !store.Get(k, &h) {
+	find, err := store.Get(k, &h)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", k, err)
+	}
+	if !find {
 		// worker model not already booked, book it for 6 min
 		store.SetWithTTL(k, hatchery, bookRegisterTTLInSeconds)
 		return nil, nil

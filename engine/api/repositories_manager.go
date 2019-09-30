@@ -114,7 +114,12 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 
 		data := map[string]string{}
 
-		if !api.Cache.Get(cache.Key("reposmanager", "oauth", state), &data) {
+		key := cache.Key("reposmanager", "oauth", state)
+		find, err := api.Cache.Get(key, &data)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", key, err)
+		}
+		if !find {
 			return sdk.WrapError(sdk.ErrForbidden, "repositoriesManagerAuthorizeCallback> Error")
 		}
 		projectKey := data["project_key"]
@@ -404,7 +409,11 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 		}
 
 		var repos []sdk.VCSRepo
-		if !api.Cache.Get(cacheKey, &repos) || len(repos) == 0 {
+		find, err := api.Cache.Get(cacheKey, &repos)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", cacheKey, err)
+		}
+		if !find || len(repos) == 0 {
 			var errRepos error
 			repos, errRepos = client.Repos(ctx)
 			api.Cache.SetWithTTL(cacheKey, repos, 0)

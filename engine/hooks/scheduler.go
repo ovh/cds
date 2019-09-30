@@ -239,7 +239,11 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 
 		// Load the task execution
 		var t = sdk.TaskExecution{}
-		if !s.Cache.Get(taskKey, &t) {
+		find, err := s.Cache.Get(taskKey, &t)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", taskKey, err)
+		}
+		if !find {
 			continue
 		}
 		t.ProcessingTimestamp = time.Now().UnixNano()

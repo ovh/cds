@@ -98,7 +98,10 @@ func GetWorker(db *gorp.DbMap, store cache.Store, workerID, workerName string) (
 	var w = &sdk.Worker{}
 
 	key := cache.Key("worker", workerID)
-	b := store.Get(key, w)
+	b, err := store.Get(key, w)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", key, err)
+	}
 	if !b || w.ActionBuildID == 0 {
 		var err error
 		w, err = worker.LoadWorker(db, workerID)
@@ -118,8 +121,11 @@ func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, e
 	//TODO: this should be embeded in the repository layer
 	var srv = &sdk.Service{}
 	key := cache.Key("services", hash)
-	// Else load it from DB
-	if !store.Get(key, srv) {
+	find, err := store.Get(key, srv)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", key, err)
+	}
+	if !find { // Else load it from DB
 		var err error
 		srv, err = services.FindByHash(db, hash)
 		if err != nil {

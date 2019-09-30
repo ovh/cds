@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // NewSessionKey generates a random UUID according to RFC 4122
@@ -64,7 +65,10 @@ func (s *sessionstore) New(session SessionKey) (SessionKey, error) {
 func (s *sessionstore) Exists(session SessionKey) (bool, error) {
 	k := cache.Key(cacheSessionStore, string(session))
 	var sval int
-	exist := s.cache.Get(k, &sval)
+	exist, err := s.cache.Get(k, &sval)
+	if err != nil {
+		log.Error("cannot get from redis %s: %v", k, err)
+	}
 
 	if exist {
 		s.cache.SetWithTTL(k, 1, s.ttl)
@@ -84,7 +88,10 @@ func (s *sessionstore) Get(session SessionKey, subkey string, i interface{}) err
 	}
 
 	ks := cache.Key(k, subkey)
-	s.cache.Get(ks, i)
+	_, err = s.cache.Get(ks, i)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", ks, err)
+	}
 	s.cache.SetWithTTL(ks, i, s.ttl)
 	return nil
 }

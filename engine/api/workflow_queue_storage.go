@@ -262,7 +262,11 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 		cacheKey := cache.Key("workflows:artifacts", art.GetPath(), art.GetName())
 		cachedArt := sdk.WorkflowNodeRunArtifact{}
-		if !api.Cache.Get(cacheKey, &cachedArt) {
+		find, err := api.Cache.Get(cacheKey, &cachedArt)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", cacheKey, err)
+		}
+		if !find {
 			return sdk.WrapError(sdk.ErrNotFound, "postWorkflowJobArtifactWithTempURLCallbackHandler> Unable to find artifact, key:%s", cacheKey)
 		}
 

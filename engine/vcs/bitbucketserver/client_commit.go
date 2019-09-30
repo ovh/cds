@@ -7,6 +7,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, until string) ([]sdk.VCSCommit, error) {
@@ -20,7 +21,11 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 
 	var stashCommitsKey = cache.Key("vcs", "bitbucket", b.consumer.URL, repo, "commits", "since@"+since, "until@"+until)
 
-	if !b.consumer.cache.Get(stashCommitsKey, &stashCommits) {
+	find, err := b.consumer.cache.Get(stashCommitsKey, &stashCommits)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", stashCommitsKey, err)
+	}
+	if !find {
 		response := CommitsResponse{}
 		path := fmt.Sprintf("/projects/%s/repos/%s/commits", project, slug)
 		params := url.Values{}
@@ -115,7 +120,11 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 
 	var stashCommitsKey = cache.Key("vcs", "bitbucket", b.consumer.URL, repo, "compare/commits", "from@"+base, "to@"+head)
 
-	if !b.consumer.cache.Get(stashCommitsKey, &stashCommits) {
+	find, err := b.consumer.cache.Get(stashCommitsKey, &stashCommits)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", stashCommitsKey, err)
+	}
+	if !find {
 		response := CommitsResponse{}
 		path := fmt.Sprintf("/projects/%s/repos/%s/compare/commits", project, slug)
 		params := url.Values{}

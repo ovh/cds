@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) error {
@@ -47,8 +48,14 @@ func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, u *sdk.User) er
 	u.Groups = nil
 	kp := cache.Key("users", u.Username, "perms")
 	kg := cache.Key("users", u.Username, "groups")
-	okp := store.Get(kp, &u.Permissions)
-	okg := store.Get(kg, &u.Groups)
+	okp, errp := store.Get(kp, &u.Permissions)
+	if errp != nil {
+		log.Error("cannot get from cache %s: %v", kp, errp)
+	}
+	okg, errg := store.Get(kg, &u.Groups)
+	if errg != nil {
+		log.Error("cannot get from cache %s: %v", kg, errg)
+	}
 	if !okp || !okg {
 		query := `
 			SELECT "group".id, "group".name, "group_user".group_admin
@@ -96,7 +103,11 @@ func loadPermissionsByGroupID(db gorp.SqlExecutor, store cache.Store, groupID in
 	}
 	kg := cache.Key("groups", strconv.Itoa(int(groupID)))
 	ku := cache.Key("groups", strconv.Itoa(int(groupID)), "perms")
-	if !store.Get(kg, &g) {
+	find, err := store.Get(kg, &g)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", kg, err)
+	}
+	if !find {
 		query := `SELECT "group".name FROM "group" WHERE "group".id = $1`
 		if err := db.QueryRow(query, groupID).Scan(&g.Name); err != nil {
 			return g, sdk.UserPermissions{}, fmt.Errorf("no group with id %d: %s", groupID, err)
@@ -104,7 +115,11 @@ func loadPermissionsByGroupID(db gorp.SqlExecutor, store cache.Store, groupID in
 		store.SetWithTTL(kg, g, 120)
 	}
 
-	if !store.Get(ku, &u.Permissions) {
+	find2, err2 := store.Get(ku, &u.Permissions)
+	if err2 != nil {
+		log.Error("cannot get from cache %s: %v", ku, err2)
+	}
+	if !find2 {
 		if err := loadGroupPermissionInUser(db, groupID, &u); err != nil {
 			return g, sdk.UserPermissions{}, sdk.WrapError(err, "loadPermissionsByGroupID")
 		}

@@ -83,7 +83,11 @@ func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook
 		//Github may return 304 status because we are using conditional request with ETag based headers
 		if status == http.StatusNotModified {
 			//If repos aren't updated, lets get them from cache
-			if !g.Cache.Get(cacheKey, &webhooks) {
+			find, err := g.Cache.Get(cacheKey, &webhooks)
+			if err != nil {
+				log.Error("cannot get from cache %s: %v", cacheKey, err)
+			}
+			if !find {
 				opts[0] = withoutETag
 				log.Error("Unable to get getHooks (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
 				continue

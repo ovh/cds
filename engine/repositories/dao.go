@@ -36,7 +36,11 @@ func (d *dao) deleteOperation(o *sdk.Operation) error {
 func (d *dao) loadOperation(uuid string) *sdk.Operation {
 	key := cache.Key(rootKey, uuid)
 	o := new(sdk.Operation)
-	if d.store.Get(key, o) {
+	find, err := d.store.Get(key, o)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", key, err)
+	}
+	if find {
 		return o
 	}
 	return nil
@@ -94,7 +98,11 @@ func (d *dao) unlock(uuid string, retention time.Duration) error {
 func (d *dao) isExpired(uuid string) bool {
 	k := cache.Key(lastAccessKey, uuid)
 	var b bool
-	if d.store.Get(k, &b) {
+	find, err := d.store.Get(k, &b)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", k, err)
+	}
+	if find {
 		return false
 	}
 	return true

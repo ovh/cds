@@ -36,7 +36,11 @@ func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, erro
 	url := "/user"
 	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", client.OAuthToken, url)
 
-	if !client.Cache.Get(cacheKey, &user) {
+	find, err := client.Cache.Get(cacheKey, &user)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", cacheKey, err)
+	}
+	if !find {
 		status, body, _, err := client.get(url)
 		if err != nil {
 			log.Warning("bitbucketcloudClient.CurrentUser> Error %s", err)
@@ -61,7 +65,11 @@ func (client *bitbucketcloudClient) Teams(ctx context.Context) (Teams, error) {
 	url := "/teams?role=member"
 	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", "teams", client.OAuthToken, url)
 
-	if !client.Cache.Get(cacheKey, &teams) {
+	find, err := client.Cache.Get(cacheKey, &teams)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", cacheKey, err)
+	}
+	if !find {
 		status, body, _, err := client.get(url)
 		if err != nil {
 			log.Warning("bitbucketcloudClient.Teams> Error %s", err)

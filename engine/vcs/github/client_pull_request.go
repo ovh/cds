@@ -39,7 +39,11 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 		//Github may return 304 status because we are using conditional request with ETag based headers
 		if status == http.StatusNotModified {
 			//If repos aren't updated, lets get them from cache
-			if !g.Cache.Get(cachePullRequestKey, &pr) {
+			find, err := g.Cache.Get(cachePullRequestKey, &pr)
+			if err != nil {
+				log.Error("cannot get from cache %s: %v", cachePullRequestKey, err)
+			}
+			if !find {
 				opts = []getArgFunc{withoutETag}
 				log.Error("Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cachePullRequestKey, g.OAuthToken, ""))
 				continue
@@ -91,7 +95,11 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				if !g.Cache.Get(cacheKey, &pullRequests) {
+				find, err := g.Cache.Get(cacheKey, &pullRequests)
+				if err != nil {
+					log.Error("cannot get from cache %s: %v", cacheKey, err)
+				}
+				if !find {
 					opts[0] = withoutETag
 					log.Error("Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
 					continue
