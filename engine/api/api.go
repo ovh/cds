@@ -18,7 +18,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
-	"golang.org/x/sys/unix"
 
 	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/action"
@@ -864,7 +863,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	// Dump heap to objecstore on SIGINFO
 	siginfoChan := make(chan os.Signal, 1)
-	signal.Notify(siginfoChan, unix.SIGINFO)
+	signal.Notify(siginfoChan, sdk.SIGINFO)
 	go func() {
 		<-siginfoChan
 		signal.Stop(siginfoChan)
