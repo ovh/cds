@@ -9,6 +9,9 @@ default_config:
     type: password
 deployment: true
 deployment_default_config:
+  release_name:
+    type: string
+    description: Fill it if you want to use another name than your application name for the Helm release. Leave empty if not
   timeout:
     type: string
     value: 180
