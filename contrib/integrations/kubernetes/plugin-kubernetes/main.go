@@ -277,6 +277,7 @@ func executeK8s(q *integrationplugin.DeployQuery) error {
 }
 
 func executeHelm(q *integrationplugin.DeployQuery) error {
+	releaseName := q.GetOptions()["cds.integration.release_name"]
 	namespace := q.GetOptions()["cds.integration.namespace"]
 	helmChart := q.GetOptions()["cds.integration.helm_chart"]
 	helmValues := q.GetOptions()["cds.integration.helm_values"]
@@ -286,6 +287,9 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 	application := q.GetOptions()["cds.application"]
 	if namespace == "" {
 		namespace = "default"
+	}
+	if releaseName != "" {
+		application = releaseName
 	}
 
 	helmFound := false
@@ -337,36 +341,13 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 	if err := cmdInit.Run(); err != nil {
 		return fmt.Errorf("Cannot execute helm init : %v", err)
 	}
-
-	cmdPluginInstall := exec.Command(binaryName, "plugin", "install", "https://github.com/rimusz/helm-tiller")
-	cmdPluginInstall.Env = os.Environ()
-	cmdPluginInstall.Stderr = os.Stderr
-	cmdPluginInstall.Stdout = os.Stdout
-	if err := cmdPluginInstall.Run(); err != nil {
-		return fmt.Errorf("Cannot execute helm plugin install : %v", err)
-	}
-	helmHost := "HELM_HOST=127.0.0.1:44134"
 	kubeCfg := "KUBECONFIG=" + path.Join(cwd, ".kube/config")
-
-	cmdPluginStart := exec.Command(binaryName, "tiller", "start-ci", namespace)
-	cmdPluginStart.Env = os.Environ()
-	for i := range cmdPluginStart.Env {
-		if strings.HasPrefix(cmdPluginStart.Env[i], "PATH=") {
-			cmdPluginStart.Env[i] += fmt.Sprintf(":%s", path.Dir(path.Join(cwd, binaryName)))
-		}
-	}
-	cmdPluginStart.Env = append(cmdPluginStart.Env, helmHost, kubeCfg)
-	cmdPluginStart.Stderr = os.Stderr
-	cmdPluginStart.Stdout = os.Stdout
-	if err := cmdPluginStart.Run(); err != nil {
-		return fmt.Errorf("Cannot execute helm tiller start : %v", err)
-	}
 
 	if _, err := os.Stat(helmChart); err == nil {
 		fmt.Println("Helm dependency update")
 		cmdDependency := exec.Command(binaryName, "dependency", "update", helmChart)
 		cmdDependency.Env = os.Environ()
-		cmdDependency.Env = append(cmdDependency.Env, helmHost, kubeCfg)
+		cmdDependency.Env = append(cmdDependency.Env, kubeCfg)
 		cmdDependency.Stderr = os.Stderr
 		cmdDependency.Stdout = os.Stdout
 		if errCmd := cmdDependency.Run(); errCmd != nil {
@@ -376,7 +357,7 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 
 	cmdGet := exec.Command(binaryName, "get", application)
 	cmdGet.Env = os.Environ()
-	cmdGet.Env = append(cmdGet.Env, helmHost, kubeCfg)
+	cmdGet.Env = append(cmdGet.Env, kubeCfg)
 	errCmd := cmdGet.Run()
 
 	var args []string
@@ -411,7 +392,7 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 	fmt.Printf("Execute: helm %s\n", strings.Join(args, " "))
 	cmd := exec.Command(binaryName, args...)
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, helmHost, kubeCfg)
+	cmd.Env = append(cmd.Env, kubeCfg)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
