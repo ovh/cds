@@ -201,7 +201,8 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
-		ctx := req.Context()
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
 
 		responseWriter := &trackingResponseWriter{
 			writer: w,
@@ -228,7 +229,7 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		observability.Record(ctx, r.Stats.Hits, 1)
+		observability.Record(r.Background, r.Stats.Hits, 1)
 
 		//Get route configuration
 		rc := cfg.Config[req.Method]
