@@ -175,6 +175,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 					Username:       u.GetUsername(),
 					CreateDate:     time.Now(),
 					FromRepo:       ed.FromRepo,
+					Migrate:        !ed.Operation.Setup.Push.Update,
 				}
 			}
 

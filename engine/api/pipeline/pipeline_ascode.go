@@ -27,5 +27,5 @@ func UpdatePipelineAsCode(ctx context.Context, store cache.Store, db gorp.SqlExe
 		Value: base64.StdEncoding.EncodeToString(buffw.Bytes()),
 	}
 	wp.Pipelines[0] = wpi
-	return operation.PushOperation(ctx, db, store, proj, app, wp, branch, message, u)
+	return operation.PushOperation(ctx, db, store, proj, app, wp, branch, message, true, u)
 }

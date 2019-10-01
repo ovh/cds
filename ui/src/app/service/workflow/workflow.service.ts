@@ -69,19 +69,13 @@ export class WorkflowService {
         let params = new HttpParams();
         params = params.append('branch', branch);
         params = params.append('message', message);
+        if (!wf) {
+            params = params.append('migrate', 'true');
+        }
         return this._http.post<Operation>(
             `/project/${projectKey}/workflows/${workflowName}/ascode`,
             wf,
             { params });
-    }
-
-    /**
-     * Transform the workflow as  workflow as code
-     * @param projectKey
-     * @param workflowName
-     */
-    migrateAsCode(projectKey: string, workflowName: string): Observable<Operation> {
-        return this._http.post<Operation>(`/project/${projectKey}/workflows/${workflowName}/ascode/migrate`, null);
     }
 
     updateRunNumber(projectKey: string, workflowName: string, runNumber: number): Observable<null> {

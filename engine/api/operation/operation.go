@@ -18,7 +18,7 @@ import (
 
 var CacheOperationKey = cache.Key("repositories", "operation", "push")
 
-func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, wp exportentities.WorkflowPulled, branch, message string, u sdk.Identifiable) (*sdk.Operation, error) {
+func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, wp exportentities.WorkflowPulled, branch, message string, isUpdate bool, u sdk.Identifiable) (*sdk.Operation, error) {
 	var vcsStrategy = app.RepositoryStrategy
 	if vcsStrategy.SSHKey != "" {
 		key := proj.GetSSHKey(vcsStrategy.SSHKey)
@@ -43,7 +43,7 @@ func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 			Push: sdk.OperationPush{
 				FromBranch: branch,
 				Message:    message,
-				Update:     true,
+				Update:     isUpdate,
 			},
 		},
 		User: sdk.User{

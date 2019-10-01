@@ -5,6 +5,7 @@ import {
     Optional,
     SkipSelf
 } from '@angular/core';
+import { AscodeService } from 'app/service/ascode/ascode.service';
 import { ActionService } from './action/action.service';
 import { ApplicationAuditService } from './application/application.audit.service';
 import {
@@ -78,6 +79,7 @@ export class ServicesModule {
                 ApplicationWorkflowService,
                 ApplicationService,
                 ApplicationStore,
+                AscodeService,
                 AuthenticationService,
                 ConfigService,
                 DownloadService,
@@ -152,6 +154,7 @@ export {
     ApplicationWorkflowService,
     ApplicationResolver,
     ApplicationStore,
+    AscodeService,
     AuthenticationService,
     ConfigService,
     DownloadService,
