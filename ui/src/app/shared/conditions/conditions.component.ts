@@ -29,6 +29,13 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
             if (this.conditionNames) {
                 this.suggest = this.conditionNames.map((d) => d.replace(/-|\./g, '_'));
             }
+            if (this.conditions && this.conditions.plain) {
+                this.conditions.plain.forEach((cond) => {
+                    if (this.conditionNames.indexOf(cond.variable) === -1) {
+                        this.conditionNames.push(cond.variable);
+                    }
+                });
+            }
         }
     }
     get triggerConditions(): WorkflowTriggerConditionCache {
@@ -138,6 +145,14 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
         }
         return;
 
+    }
+
+    filterConditionVariables(opts: string[], query: string) {
+        let result: Array<string> = opts.filter((opt) => opt.indexOf(query) > -1);
+        if (result.indexOf(query) === -1) {
+            result.push(query);
+        }
+        return result;
     }
 
     changeCodeMirror(): void {

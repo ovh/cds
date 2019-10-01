@@ -38,7 +38,8 @@
                                 <ng-container *ngIf="conditionNames">
                                     <sui-select class="fluid selection" [(ngModel)]="c.variable"
                                         (ngModelChange)="pushChange('name')" [options]="conditionNames"
-                                        [isSearchable]="true" [isDisabled]="readonly" #selectName>
+                                        [optionsFilter]="filterConditionVariables" [isSearchable]="true"
+                                        [isDisabled]="readonly" #selectName>
                                         <sui-select-option *ngFor="let option of selectName.filteredOptions"
                                             [value]="option">
                                         </sui-select-option>

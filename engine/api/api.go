@@ -1,12 +1,16 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -578,7 +582,7 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error("unable to init api metrics: %v", err)
 	}
 
-	// Initialize notification package
+	// Intialize notification package
 	notification.Init(a.Config.URL.UI)
 
 	log.Info("Initializing Authentication drivers...")
@@ -707,6 +711,10 @@ func (a *API) Serve(ctx context.Context) error {
 		authentication.SessionCleaner(ctx, a.mustDB)
 	}, a.PanicDump())
 
+	migrate.Add(sdk.Migration{Name: "AddDefaultVCSNotifications", Release: "0.41.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.AddDefaultVCSNotifications(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
+	}})
+
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {
 		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")
@@ -807,6 +815,23 @@ func (a *API) Serve(ctx context.Context) error {
 		return sdk.WrapError(err, "Cannot upsert cds version")
 	}
 
+	// Dump heap to objecstore on SIGINFO
+	siginfoChan := make(chan os.Signal, 1)
+	signal.Notify(siginfoChan, sdk.SIGINFO)
+	go func() {
+		<-siginfoChan
+		signal.Stop(siginfoChan)
+		var buffer = new(bytes.Buffer)
+		pprof.Lookup("heap").WriteTo(buffer, 1)
+		var heapProfile = heapProfile{uuid: sdk.UUID()}
+		s, err := a.SharedStorage.Store(heapProfile, ioutil.NopCloser(buffer))
+		if err != nil {
+			log.Error("unable to upload heap profile: %v", err)
+			return
+		}
+		log.Error("api> heap dump uploaded to %s", s)
+	}()
+
 	log.Info("Starting CDS API HTTP Server on %s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {
 		return fmt.Errorf("Cannot start HTTP server: %v", err)
@@ -854,4 +879,18 @@ func (a *API) setCookie(w http.ResponseWriter, c *http.Cookie) {
 	}
 
 	http.SetCookie(w, c)
+}
+
+type heapProfile struct {
+	uuid string
+}
+
+var _ objectstore.Object = new(heapProfile)
+
+func (p heapProfile) GetName() string {
+	return p.uuid
+}
+func (p heapProfile) GetPath() string {
+	hostname, _ := os.Hostname()
+	return fmt.Sprintf("api-heap-profile-%d-%s", time.Now().Unix(), hostname)
 }

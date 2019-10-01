@@ -67,7 +67,9 @@ func craftNotificationEntry(w sdk.Workflow, notif sdk.WorkflowNotification) ([]s
 			entry.Settings.Template.Body = ""
 		}
 		if entry.Settings.Template.Body == "" && entry.Settings.Template.Subject == "" {
-			entry.Settings.Template = nil
+			if entry.Settings.Template.DisableComment == nil || !*entry.Settings.Template.DisableComment {
+				entry.Settings.Template = nil
+			}
 		}
 	}
 
@@ -177,7 +179,10 @@ func ProcessNotificationValues(notif NotificationEntry) (sdk.WorkflowNotificatio
 			n.Settings.Template.Subject = defaultTemplate.Subject
 		}
 		if n.Settings.Template.Body == "" {
-			n.Settings.Template.Subject = defaultTemplate.Body
+			n.Settings.Template.Body = defaultTemplate.Body
+		}
+		if n.Settings.Template.DisableComment == nil || !*n.Settings.Template.DisableComment {
+			n.Settings.Template.DisableComment = nil
 		}
 	}
 	return n, nil

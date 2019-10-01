@@ -17,7 +17,6 @@ require (
 	github.com/SSSaaS/sssa-golang v0.0.0-20170502204618-d37d7782d752 // indirect
 	github.com/SermoDigital/jose v0.9.1 // indirect
 	github.com/Shopify/sarama v1.19.0
-	github.com/Shopify/toxiproxy v2.1.4+incompatible // indirect
 	github.com/alecthomas/jsonschema v0.0.0-20190429041900-eff3f6c90428
 	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
 	github.com/apoydence/onpar v0.0.0-20190519213022-ee068f8ea4d1 // indirect
@@ -58,8 +57,6 @@ require (
 	github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76 // indirect
 	github.com/duosecurity/duo_api_golang v0.0.0-20180315112207-d0530c80e49a // indirect
 	github.com/eapache/go-resiliency v1.1.0
-	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
-	github.com/eapache/queue v1.1.0 // indirect
 	github.com/fatih/color v1.7.0
 	github.com/fatih/structs v1.0.0
 	github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b // indirect
@@ -71,7 +68,7 @@ require (
 	github.com/garyburd/redigo v1.6.0 // indirect
 	github.com/gin-contrib/sse v0.0.0-20190301062529-5545eab6dad3 // indirect
 	github.com/gin-gonic/gin v1.3.0
-	github.com/gizak/termui v0.0.0-20190301062529-bf53c5cbea3f
+	github.com/gizak/termui v2.3.0+incompatible
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-gorp/gorp v2.0.0+incompatible
 	github.com/go-redis/redis v6.15.2+incompatible
@@ -80,7 +77,6 @@ require (
 	github.com/gocql/gocql v0.0.0-20181018123354-22229812a83e // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/golang/protobuf v1.3.2
-	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/googleapis/gnostic v0.1.0 // indirect
 	github.com/gophercloud/gophercloud v0.0.0-20190504011306-6f9faf57fddc
@@ -150,8 +146,6 @@ require (
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/mndrix/tap-go v0.0.0-20170113192335-56cca451570b // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mxk/go-imap v0.0.0-20150429134902-531c36c3f12d // indirect
 	github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d
 	github.com/ncw/swift v0.0.0-20171019114456-c95c6e5c2d1a
@@ -159,8 +153,6 @@ require (
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.0-20160621093029-daf2955e742c
 	github.com/olivere/elastic v6.2.17+incompatible // indirect
-	github.com/onsi/ginkgo v1.7.0 // indirect
-	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v0.0.0-20180718062236-bc1467269fce // indirect
@@ -179,13 +171,11 @@ require (
 	github.com/pelletier/go-toml v1.4.0
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/phayes/permbits v0.0.0-20160816172359-32459f104210
-	github.com/pierrec/lz4 v2.0.5+incompatible // indirect
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.8.1
 	github.com/poy/onpar v0.0.0-20190519213022-ee068f8ea4d1 // indirect
 	github.com/prometheus/client_golang v1.1.0 // indirect
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
-	github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/samuel/go-zookeeper v0.0.0-20180130194729-c4fab1ac1bec // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
@@ -228,7 +218,7 @@ require (
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
 	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a // indirect
+	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
 	golang.org/x/text v0.3.2
 	google.golang.org/genproto v0.0.0-20190817000702-55e96fffbd48 // indirect
 	google.golang.org/grpc v1.23.0
@@ -257,12 +247,12 @@ require (
 	k8s.io/apimachinery v0.0.0-20190223094358-dcb391cde5ca
 	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/klog v0.2.0 // indirect
+	labix.org/v2/mgo v0.0.0-20140701140051-000000000287 // indirect
+	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
-replace gopkg.in/gorp.v1 => github.com/yesnault/gorp v0.0.0-20190906150006-6210446a0d92
-
-replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-20190906150006-6210446a0d92
+replace github.com/go-gorp/gorp => github.com/yesnault/gorp v2.0.1-0.20190906143353-6210446a0d92+incompatible
 
 replace github.com/docker/docker => github.com/docker/engine v0.0.0-20180816081446-320063a2ad06
 
@@ -270,8 +260,8 @@ replace github.com/ovh/cds/sdk/interpolate => ./sdk/interpolate
 
 replace github.com/ovh/cds/sdk/izanami => ./sdk/izanami
 
-replace github.com/keybase/go-crypto => github.com/Alkorin/crypto v0.0.0-20190124155437-5ea49ae
+replace github.com/keybase/go-crypto => github.com/Alkorin/crypto v0.0.0-20190802123352-5ea49ae5e604
 
 replace github.com/ovh/cds/tools/smtpmock => ./tools/smtpmock
 
-replace github.com/keybase/go-keychain => github.com/yesnault/go-keychain v0.0.0-20190829105400-f78f7ae
+replace github.com/keybase/go-keychain => github.com/yesnault/go-keychain v0.0.0-20190829085436-f78f7ae28786

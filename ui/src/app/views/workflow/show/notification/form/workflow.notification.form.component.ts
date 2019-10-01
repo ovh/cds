@@ -1,15 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Project } from 'app/model/project.model';
-import {
-    notificationOnFailure,
-    notificationOnSuccess,
-    notificationTypes,
-    WNode,
-    WNodeType,
-    Workflow,
-    WorkflowNotification,
-    WorkflowTriggerConditionCache
-} from 'app/model/workflow.model';
+// tslint:disable-next-line: max-line-length
+import { notificationOnFailure, notificationOnSuccess, notificationTypes, WNode, WNodeType, Workflow, WorkflowNotification, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { NotificationService } from 'app/service/notification/notification.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first } from 'rxjs/operators';
@@ -43,6 +35,7 @@ export class WorkflowNotificationFormComponent implements OnInit {
     notifOnSuccess: Array<string>;
     notifOnFailure: Array<string>;
     selectedUsers: string;
+    commentEnabled = true;
     nodeError = false;
     loadingNotifTemplate = false;
     triggerConditions: WorkflowTriggerConditionCache;
@@ -97,6 +90,10 @@ export class WorkflowNotificationFormComponent implements OnInit {
             });
         }
 
+        if (this.notification && this.notification.type === 'vcs') {
+            this.commentEnabled = !this.notification.settings.template.disable_comment;
+        }
+
     }
 
     formatNode(): void {
@@ -117,8 +114,11 @@ export class WorkflowNotificationFormComponent implements OnInit {
 
         this.loading = true;
 
-        if (this.selectedUsers) {
+        if (this.selectedUsers != null) {
             this.notification.settings.recipients = this.selectedUsers.split(',');
+        }
+        if (this.notification.type === 'vcs') {
+            this.notification.settings.template.disable_comment = !this.commentEnabled;
         }
         this.updatedNotification.emit(this.notification);
     }

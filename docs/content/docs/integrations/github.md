@@ -14,8 +14,8 @@ This integration enables some features:
  - [Git Repository Webhook]({{<relref "/docs/concepts/workflow/hooks/git-repo-webhook.md" >}})
  - [Git Repository Poller]({{<relref "/docs/concepts/workflow/hooks/git-repo-poller.md" >}})
  - Easy to use action [CheckoutApplication]({{<relref "/docs/actions/builtin-checkoutapplication.md" >}}) and [GitClone]({{<relref "/docs/actions/builtin-gitclone.md">}}) for advanced usage
- - Send build notifications on your Pull-Requests and Commits on GitHub
- - Send comments on your Pull-Requests when a workflow is failed
+ - Send build notifications on your Pull-Requests and Commits on GitHub. [More informations]({{<relref "/docs/concepts/workflow/notifications.md#vcs-notifications" >}})
+ - Send comments on your Pull-Requests when a workflow is failed. [More informations]({{<relref "/docs/concepts/workflow/notifications.md#vcs-notifications" >}})
 
 ## Resume on what you have to do before using the GitHub Integration
 

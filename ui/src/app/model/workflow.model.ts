@@ -699,7 +699,7 @@ export class WorkflowPullItem {
     value: string;
 }
 
-export const notificationTypes = ['jabber', 'email'];
+export const notificationTypes = ['jabber', 'email', 'vcs'];
 export const notificationOnSuccess = ['always', 'change', 'never'];
 export const notificationOnFailure = ['always', 'change', 'never'];
 
@@ -742,4 +742,5 @@ export class UserNotificationSettings {
 export class UserNotificationTemplate {
     subject: string;
     body: string;
+    disable_comment: boolean;
 }

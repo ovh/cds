@@ -4,15 +4,19 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"runtime"
+	"strconv"
 	"sync"
+	"time"
 
-	"github.com/ovh/cds/sdk"
-
-	"github.com/ovh/cds/engine/api/observability"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
+
+	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type NamedService interface {
@@ -154,12 +158,43 @@ func RegisterCommonMetricsView(ctx context.Context) {
 		}
 
 		sdk.GoRoutine(ctx, "service_metrics", func(ctx context.Context) {
-			var m runtime.MemStats
-			runtime.ReadMemStats(&m)
-			observability.Record(ctx, allocStats, int64(m.Alloc))
-			observability.Record(ctx, totalAllocStats, int64(m.TotalAlloc))
-			observability.Record(ctx, sysStats, int64(m.Sys))
-			observability.Record(ctx, gcStats, int64(m.NumGC))
+			var maxMemoryS = os.Getenv("CDS_MAX_HEAP_SIZE") // in bytes
+			var maxMemory uint64
+			var onceMaxMemorySignal = new(sync.Once)
+			if maxMemoryS != "" {
+				maxMemory, _ = strconv.ParseUint(maxMemoryS, 10, 64)
+			}
+
+			var tick = time.NewTicker(10 * time.Second)
+			defer tick.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-tick.C:
+					var m runtime.MemStats
+					runtime.ReadMemStats(&m)
+					stats.Record(ctx, allocStats.M(int64(m.Alloc)))
+					stats.Record(ctx, totalAllocStats.M(int64(m.TotalAlloc)))
+					stats.Record(ctx, sysStats.M(int64(m.Sys)))
+					stats.Record(ctx, gcStats.M(int64(m.NumGC)))
+
+					if maxMemory > 0 && m.Alloc >= maxMemory {
+						onceMaxMemorySignal.Do(func() {
+							p, err := os.FindProcess(os.Getpid())
+							if err != nil {
+								log.Error("unable to find current process: %v", err)
+								return
+							}
+							if err := p.Signal(sdk.SIGINFO); err != nil {
+								log.Error("unable to send signal: %v", err)
+								return
+							}
+							log.Info("metrics> SIGINFO signal send to %v", os.Getpid())
+						})
+					}
+				}
+			}
 		})
 	})
 }

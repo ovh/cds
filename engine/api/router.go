@@ -206,7 +206,8 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
-		ctx := req.Context()
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
 
 		dateRFC5322 := req.Header.Get("Date")
 		dateReq, err := sdk.ParseDateRFC5322(dateRFC5322)
@@ -281,7 +282,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 			observability.Record(ctx, ServerResponseBytes, responseWriter.respSize)
 		}(ctx)
 
-		observability.Record(ctx, Hits, 1)
+		observability.Record(r.Background, Hits, 1)
 		observability.Record(ctx, ServerRequestCount, 1)
 
 		for _, m := range r.Middlewares {
