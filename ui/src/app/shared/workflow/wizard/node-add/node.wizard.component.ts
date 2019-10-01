@@ -169,7 +169,6 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
   }
 
   createPipeline(): Observable<Pipeline> {
-    debugger;
     if (!Pipeline.checkName(this.newPipeline.name)) {
       this.errorPipelineNamePattern = true;
       return observableOf(null);

@@ -3,12 +3,12 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/ascode"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -178,6 +178,7 @@ func (api *API) postResyncPRAsCodeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
+		appName := FormString(r, "appName")
 		fromRepo := FormString(r, "repo")
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, key,
@@ -189,10 +190,17 @@ func (api *API) postResyncPRAsCodeHandler() service.Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "unable to load project")
 		}
-		app, err := application.LoadAsCode(api.mustDB(), api.Cache, key, fromRepo)
-		if err != nil {
-			return err
+		var app *sdk.Application
+		var errA error
+		if fromRepo != "" {
+			app, errA = application.LoadAsCode(api.mustDB(), api.Cache, key, fromRepo)
+		} else {
+			app, errA = application.LoadByName(api.mustDB(), api.Cache, key, appName)
 		}
+		if errA != nil {
+			return errA
+		}
+
 		if _, _, _, err := ascode.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, proj, app); err != nil {
 			return err
 		}

@@ -32,18 +32,8 @@
                             </div>
                         </div>
                         <div class="migrate">
-                            <button class="ui right floated mini button" *ngIf="!showButtons"
-                                (click)="showButtons = true">{{'common_migrate'
+                            <button class="ui right floated mini button" (click)="saveAsCodeModal()">{{'common_migrate'
                                 | translate}}</button>
-                            <div class="ui mini buttons" *ngIf="showButtons">
-                                <button class="ui button" (click)="showButtons = false"
-                                    [class.loading]="loadingPopupButton"
-                                    [disabled]="loadingPopupButton">{{'common_cancel' | translate}}</button>
-                                <div class="or"></div>
-                                <button class="ui positive button" (click)="migrateAsCode()"
-                                    [class.loading]="loadingPopupButton"
-                                    [disabled]="loadingPopupButton">{{'btn_save' | translate}}</button>
-                            </div>
                         </div>
                     </div>
                 </ng-container>
@@ -128,5 +118,10 @@
         </app-workflow-template-apply-modal>
     </ng-container>
 </section>
-<app-workflow-save-as-code-modal [project]="project" [workflow]="workflow" #saveAsCode>
-</app-workflow-save-as-code-modal>
+<ng-container *ngIf="workflow">
+    <app-update-ascode
+            [project]="project"
+            [appName]="workflow.applications[workflow.workflow_data.node.context.application_id].name"
+            [name]="workflow.name"
+            #updateAsCode></app-update-ascode>
+</ng-container>
