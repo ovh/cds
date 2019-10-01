@@ -8,12 +8,12 @@
             <ul>
                 <ng-container *ngIf="e.data && e.data.workflows">
                     <li *ngFor="let k of e?.data?.workflows | keys">
-                        <a class="ui blue horizontal mini label">Workflow</a>{{' ' + e.data.workflows[k]}}
+                        <div class="ui blue horizontal mini label">Workflow</div>{{' ' + e.data.workflows[k]}}
                     </li>
                 </ng-container>
                 <ng-container *ngIf="e.data && e.data.pipelines">
                     <li *ngFor="let k of e?.data?.pipelines | keys">
-                        <a class="ui green horizontal mini label">Pipeline</a>{{' ' + e.data.pipelines[k]}}
+                        <div class="ui green horizontal mini label">Pipeline</div>{{' ' + e.data.pipelines[k]}}
                     </li>
                 </ng-container>
             </ul>
