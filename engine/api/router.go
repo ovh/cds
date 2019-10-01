@@ -321,8 +321,8 @@ func (r *asynchronousRequest) do(ctx context.Context, h service.AsynchronousHand
 	var buf bytes.Buffer
 	tee := io.TeeReader(r.body, &buf)
 	r.body = &buf
-	req.Body = ioutil.NopCloser(tee)
 	//Recreate a new buffer from the bytes stores in memory
+	req.Body = ioutil.NopCloser(tee)
 	for k, v := range r.vars {
 		muxcontext.Set(req, k, v)
 	}
@@ -330,6 +330,7 @@ func (r *asynchronousRequest) do(ctx context.Context, h service.AsynchronousHand
 	if r.err != nil {
 		r.nbErrors++
 	}
+	muxcontext.Clear(req)
 	return r.err
 }
 
