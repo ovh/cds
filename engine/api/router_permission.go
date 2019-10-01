@@ -111,5 +111,5 @@ func loadPermissionsByGroupID(db gorp.SqlExecutor, store cache.Store, groupID in
 		store.SetWithTTL(ku, u.Permissions, 120)
 	}
 
-	return g, u.Permissions, nil
+	return g, u.Permissions.Clone(), nil
 }

@@ -26,8 +26,26 @@ type Favorite struct {
 type UserPermissions struct {
 	Groups        []string           `json:"Groups,omitempty"` // json key are capitalized to ensure exising data in cache are still valid
 	GroupsAdmin   []string           `json:"GroupsAdmin,omitempty"`
-	ProjectsPerm  map[string]int     `json:"ProjectsPerm,omitempty"`
+	ProjectsPerm  UserPermissionsMap `json:"ProjectsPerm,omitempty"`
 	WorkflowsPerm UserPermissionsMap `json:"WorkflowsPerm,omitempty"`
+}
+
+func (u UserPermissions) Clone() UserPermissions {
+	up := UserPermissions{}
+	up.Groups = make([]string, len(u.Groups))
+	up.GroupsAdmin = make([]string, len(u.GroupsAdmin))
+	up.ProjectsPerm = make(UserPermissionsMap, len(u.ProjectsPerm))
+	up.WorkflowsPerm = make(UserPermissionsMap, len(u.WorkflowsPerm))
+	copy(up.Groups, u.Groups)
+	copy(up.GroupsAdmin, u.GroupsAdmin)
+
+	for i, v := range u.ProjectsPerm {
+		up.ProjectsPerm[i] = v
+	}
+	for i, v := range u.WorkflowsPerm {
+		up.WorkflowsPerm[i] = v
+	}
+	return up
 }
 
 // UserPermissionsMap is a type of map. The in key the key and name of the object and value is the level of permissions
