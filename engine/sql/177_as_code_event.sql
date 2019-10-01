@@ -1,6 +1,6 @@
 -- +migrate Up
 ALTER TABLE "workflow_as_code_events" ADD COLUMN data JSONB;
-ALTER TABLE "workflow_as_code_events" ADD COLUMN migrate BOOL;
+ALTER TABLE "workflow_as_code_events" ADD COLUMN migrate BOOL DEFAULT false;
 ALTER TABLE "workflow_as_code_events" ADD COLUMN from_repository VARCHAR(300);
 ALTER TABLE "workflow_as_code_events" DROP COLUMN workflow_id;
 ALTER TABLE "workflow_as_code_events" RENAME TO "as_code_events";

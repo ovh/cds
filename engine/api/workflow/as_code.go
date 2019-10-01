@@ -36,11 +36,11 @@ func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExe
 		return nil, sdk.WithStack(sdk.ErrApplicationNotFound)
 	}
 
-	return operation.PushOperation(ctx, db, store, proj, &app, wp, branch, message, u)
+	return operation.PushOperation(ctx, db, store, proj, &app, wp, branch, message, true, u)
 }
 
 // MigrateAsCode does a workflow pull and start an operation to push cds files into the git repository
-func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, app sdk.Application, u sdk.Identifiable, encryptFunc sdk.EncryptFunc) (*sdk.Operation, error) {
+func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, app sdk.Application, u sdk.Identifiable, encryptFunc sdk.EncryptFunc, branch, message string) (*sdk.Operation, error) {
 	// Get repository
 	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
 		return nil, sdk.WithStack(sdk.ErrApplicationNotFound)
@@ -52,12 +52,15 @@ func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj 
 		return nil, sdk.WrapError(err, "cannot pull workflow")
 	}
 
-	var message string
-	if wf.FromRepository == "" {
-		message = fmt.Sprintf("feat: Enable workflow as code [@%s]", u.GetUsername())
-	} else {
-		message = fmt.Sprintf("chore: Update workflow [@%s]", u.GetUsername())
+	if message == "" {
+		if wf.FromRepository == "" {
+			message = fmt.Sprintf("feat: Enable workflow as code [@%s]", u.GetUsername())
+		} else {
+			message = fmt.Sprintf("chore: Update workflow [@%s]", u.GetUsername())
+		}
 	}
-
-	return operation.PushOperation(ctx, db, store, proj, &app, pull, fmt.Sprintf("cdsAsCode-%d", time.Now().Unix()), message, u)
+	if branch == "" {
+		branch = fmt.Sprintf("cdsAsCode-%d", time.Now().Unix())
+	}
+	return operation.PushOperation(ctx, db, store, proj, &app, pull, branch, message, false, u)
 }

@@ -6,12 +6,12 @@ import { NavbarService } from 'app/service/navbar/navbar.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
+import { ResyncEvents } from 'app/store/ascode.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first, tap } from 'rxjs/operators';
 import * as ActionProject from './project.action';
 import * as actionWorkflow from './workflow.action';
 import { UpdateModal, UpdateWorkflowRunList } from './workflow.action';
-import { ResyncEvents } from 'app/store/ascode.action';
 
 export class WorkflowStateModel {
     workflow: Workflow; // selected workflow
@@ -19,6 +19,7 @@ export class WorkflowStateModel {
     node: WNode; // selected node
     hook: WNodeHook; // selected hook
     editModal: boolean; // is edit modal is opened
+    modalSaveAsCode: boolean; // is modal to save as code is opened
     loadingWorkflow: boolean;
     loadingWorkflowRuns: boolean;
     loadingWorkflowRun: boolean;
@@ -43,6 +44,7 @@ export function getInitialWorkflowState(): WorkflowStateModel {
         node: null,
         hook: null,
         editModal: false,
+        modalSaveAsCode: false,
         loadingWorkflow: false,
         loadingWorkflowRuns: false,
         loadingWorkflowRun: false,
@@ -1129,5 +1131,15 @@ export class WorkflowState {
         ctx.dispatch(new actionWorkflow
             .GetWorkflow({projectKey: state.projectKey, workflowName: state.workflow.name}));
     }
+
+    @Action(actionWorkflow.OpenSaveWorkflowModal)
+    openSaveWorkflowModal(ctx: StateContext<WorkflowStateModel>, _) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            modalSaveAsCode: true
+        });
+    }
+
 
 }

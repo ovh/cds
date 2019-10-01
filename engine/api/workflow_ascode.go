@@ -76,7 +76,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 
 		// MIGRATION TO AS CODE
 		if migrate {
-			return api.migrateWorkflowAsCode(ctx, w, p, wfDB, &app)
+			return api.migrateWorkflowAsCode(ctx, w, p, wfDB, &app, branch, message)
 		}
 
 		// UPDATE EXISTING AS CODE WORKFLOW
@@ -110,7 +110,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 	}
 }
 
-func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter, proj *sdk.Project, wf *sdk.Workflow, app *sdk.Application) error {
+func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter, proj *sdk.Project, wf *sdk.Workflow, app *sdk.Application, branch, message string) error {
 	u := getAPIConsumer(ctx)
 
 	// Sync as code event
@@ -160,14 +160,14 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 	}
 
 	// Export workflow + push + create pull request
-	ope, err := workflow.MigrateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, *app, u, project.EncryptWithBuiltinKey)
+	ope, err := workflow.MigrateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, *app, u, project.EncryptWithBuiltinKey, branch, message)
 	if err != nil {
 		return sdk.WrapError(err, "unable to migrate workflow as code")
 	}
 
 	sdk.GoRoutine(context.Background(), fmt.Sprintf("MigrateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
 		ed := ascode.EntityData{
-			FromRepo:  wf.FromRepository,
+			FromRepo:  ope.URL,
 			Type:      ascode.AsCodeWorkflow,
 			ID:        wf.ID,
 			Name:      wf.Name,

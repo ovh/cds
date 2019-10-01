@@ -219,7 +219,12 @@ export class CleanWorkflowState {
 }
 
 export class CancelWorkflowEditMode {
-    static readonly type = '[Workflow] Cancle workflow edit model';
+    static readonly type = '[Workflow] Cancel workflow edit modal';
+    constructor() { }
+}
+
+export class OpenSaveWorkflowModal {
+    static readonly type = '[Workflow] Save workflow modal';
     constructor() { }
 }
 
