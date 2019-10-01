@@ -60,7 +60,7 @@ Docker-Compose or Helm are your friends, see [Ready To Run Tutorials](https://ov
 
 Most of the CI/CD Tools play with jobs inside a pipeline. CDS introduce a new concept named `CDS Workflows`.
 A [CDS Workflow](https://ovh.github.io/cds/docs/concepts/workflow/) allows you to chain pipelines with triggers.
-A [pipeline](https://ovh.github.io/cds/docs/concepts/pipeline/) is structured in sequential [stages](https://ovh.github.io/cds/docs/concepts/pipeline/) containing one or multiple concurrent [jobs](https://ovh.github.io/cds/docs/concepts/job/).
+A [pipeline](https://ovh.github.io/cds/docs/concepts/pipeline/) is structured in sequential [stages](https://ovh.github.io/cds/docs/concepts/pipeline/#stages) containing one or multiple concurrent [jobs](https://ovh.github.io/cds/docs/concepts/job/).
 
 
 ### Can I use it in production?
