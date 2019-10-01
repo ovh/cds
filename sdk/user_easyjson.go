@@ -151,24 +151,8 @@ func easyjson9e1087fdDecodeGithubComOvhCdsSdk1(in *jlexer.Lexer, out *UserPermis
 				in.Delim(']')
 			}
 		case "ProjectsPerm":
-			if in.IsNull() {
-				in.Skip()
-			} else {
-				in.Delim('{')
-				if !in.IsDelim('}') {
-					out.ProjectsPerm = make(map[string]int)
-				} else {
-					out.ProjectsPerm = nil
-				}
-				for !in.IsDelim('}') {
-					key := string(in.String())
-					in.WantColon()
-					var v5 int
-					v5 = int(in.Int())
-					(out.ProjectsPerm)[key] = v5
-					in.WantComma()
-				}
-				in.Delim('}')
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.ProjectsPerm).UnmarshalJSON(data))
 			}
 		case "WorkflowsPerm":
 			if data := in.Raw(); in.Ok() {
@@ -198,11 +182,11 @@ func easyjson9e1087fdEncodeGithubComOvhCdsSdk1(out *jwriter.Writer, in UserPermi
 		}
 		{
 			out.RawByte('[')
-			for v6, v7 := range in.Groups {
-				if v6 > 0 {
+			for v5, v6 := range in.Groups {
+				if v5 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v7))
+				out.String(string(v6))
 			}
 			out.RawByte(']')
 		}
@@ -217,11 +201,11 @@ func easyjson9e1087fdEncodeGithubComOvhCdsSdk1(out *jwriter.Writer, in UserPermi
 		}
 		{
 			out.RawByte('[')
-			for v8, v9 := range in.GroupsAdmin {
-				if v8 > 0 {
+			for v7, v8 := range in.GroupsAdmin {
+				if v7 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v9))
+				out.String(string(v8))
 			}
 			out.RawByte(']')
 		}
@@ -234,21 +218,7 @@ func easyjson9e1087fdEncodeGithubComOvhCdsSdk1(out *jwriter.Writer, in UserPermi
 		} else {
 			out.RawString(prefix)
 		}
-		{
-			out.RawByte('{')
-			v10First := true
-			for v10Name, v10Value := range in.ProjectsPerm {
-				if v10First {
-					v10First = false
-				} else {
-					out.RawByte(',')
-				}
-				out.String(string(v10Name))
-				out.RawByte(':')
-				out.Int(int(v10Value))
-			}
-			out.RawByte('}')
-		}
+		out.Raw((in.ProjectsPerm).MarshalJSON())
 	}
 	if len(in.WorkflowsPerm) != 0 {
 		const prefix string = ",\"WorkflowsPerm\":"
