@@ -67,7 +67,6 @@ func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
 
 // ResyncCommitStatus resync commit status for a workflow run
 func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
-
 	_, end := observability.Span(ctx, "workflow.resyncCommitStatus",
 		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
 		observability.Tag(observability.TagWorkflowRun, wr.Number),
@@ -91,7 +90,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 		node := wr.Workflow.WorkflowData.NodeByID(nodeID)
 		if !node.IsLinkedToRepo(&wr.Workflow) {
-			return nil
+			continue
 		}
 		vcsServerName = wr.Workflow.Applications[node.Context.ApplicationID].VCSServer
 		repoFullName = wr.Workflow.Applications[node.Context.ApplicationID].RepositoryFullname
@@ -191,7 +190,6 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 // sendVCSEventStatus send status
 func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) error {
 	log.Debug("Send status for node run %d", nodeRun.ID)
-
 	var app sdk.Application
 	var pip sdk.Pipeline
 	var env sdk.Environment
@@ -326,7 +324,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	if err := client.SetStatus(ctx, evt); err != nil {
 		repositoriesmanager.RetryEvent(&evt, err, store)
-		return fmt.Errorf("sendEvent> err:%s", err)
+		log.Error("sendEvent> err:%s", err)
 	}
 
 	if vcsConf.Type != "gerrit" && (notif.Settings.Template.DisableComment == nil || !*notif.Settings.Template.DisableComment) {

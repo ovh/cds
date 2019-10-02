@@ -83,7 +83,11 @@ func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, p
 	payload := map[string]string{
 		"text": text,
 	}
-	values, _ := json.Marshal(payload)
+	values, err := json.Marshal(payload)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
 	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%d/comments", project, slug, prID)
 
 	return b.do(ctx, "POST", "core", path, nil, values, nil, &options{asUser: true})
