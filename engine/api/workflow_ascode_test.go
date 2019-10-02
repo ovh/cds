@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/go-gorp/gorp"
 	"io/ioutil"
 	"net/http"
@@ -315,12 +316,12 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 
 	t.Logf("%+v", w)
 
-	uri := api.Router.GetRoute("POST", api.postMigrateWorkflowAsCodeHandler, map[string]string{
+	uri := api.Router.GetRoute("POST", api.postWorkflowAsCodeHandler, map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w.Name,
 	})
 
-	req := assets.NewJWTAuthentifiedRequest(t, pass, "POST", uri, nil)
+	req := assets.NewJWTAuthentifiedRequest(t, pass, "POST", fmt.Sprintf("%s?migrate=true", uri), nil)
 
 	// Do the request
 	wr := httptest.NewRecorder()
