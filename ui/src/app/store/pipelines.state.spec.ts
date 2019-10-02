@@ -19,6 +19,9 @@ import { PipelinesState, PipelinesStateModel } from './pipelines.state';
 import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
 import { WorkflowState } from './workflow.state';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
+import { EnvironmentService } from 'app/service/environment/environment.service';
+import { ApplicationService } from 'app/service/application/application.service';
 
 describe('Pipelines', () => {
     let store: Store;
@@ -26,7 +29,8 @@ describe('Pipelines', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            providers: [NavbarService, WorkflowRunService, WorkflowService, ProjectStore, ProjectService],
+            providers: [NavbarService, WorkflowRunService, WorkflowService, ProjectStore,
+                ProjectService, PipelineService, EnvironmentService, ApplicationService],
             imports: [
                 NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowState]),
                 HttpClientTestingModule
@@ -63,13 +67,10 @@ describe('Pipelines', () => {
             name: 'pip1',
             projectKey: testProjectKey
         });
-        store.selectOnce(PipelinesState).subscribe((state: PipelinesStateModel) => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
-        });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
         });
     }));
 
@@ -86,12 +87,12 @@ describe('Pipelines', () => {
             return req.url === '/project/test1/pipeline';
         })).flush(pipeline);
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
         });
 
         store.dispatch(new pipelinesActions.FetchPipeline({
@@ -99,12 +100,12 @@ describe('Pipelines', () => {
             pipelineName: 'pip1'
         }));
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
         });
 
         store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
@@ -128,12 +129,12 @@ describe('Pipelines', () => {
             return req.url === '/project/test1/pipeline';
         })).flush(pipeline);
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
         });
 
         pipeline.name = 'pip1bis';
@@ -146,12 +147,12 @@ describe('Pipelines', () => {
             return req.url === '/project/test1/pipeline/pip1';
         })).flush(pipeline);
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1bis')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1bis');
-            expect(pip.projectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.name).toEqual('pip1bis');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
         });
 
         store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
@@ -174,13 +175,10 @@ describe('Pipelines', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/pipeline';
         })).flush(pipeline);
-        store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
-        });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe(pip => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
         });
 
         store.dispatch(new pipelinesActions.DeletePipeline({
@@ -190,8 +188,8 @@ describe('Pipelines', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/pipeline/pip1';
         })).flush(null);
-        store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(0);
+        store.selectOnce(PipelinesState.getCurrent()).subscribe(state => {
+            expect(state.pipeline).toBeFalsy();
         });
 
         store.selectOnce(ProjectState).subscribe((projState: ProjectStateModel) => {
@@ -214,13 +212,12 @@ describe('Pipelines', () => {
             return req.url === '/project/test1/pipeline';
         })).flush(pipeline);
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe(pip => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.overview).toBeFalsy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
         });
 
         store.dispatch(new pipelinesActions.FetchPipelineAudits({
@@ -234,15 +231,15 @@ describe('Pipelines', () => {
             return req.url === '/project/test1/pipeline/pip1/audits';
         })).flush([audit]);
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.audits).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
-            expect(pip.audits.length).toEqual(1);
-            expect(pip.audits[0].action).toEqual('update');
+            expect(pip.pipeline.audits).toBeTruthy();
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.audits.length).toEqual(1);
+            expect(pip.pipeline.audits[0].action).toEqual('update');
         });
     }));
 
@@ -260,12 +257,12 @@ describe('Pipelines', () => {
             return req.url === '/project/test1/pipeline';
         })).flush(pipeline);
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy(1);
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe(pip => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
         });
 
         let parameter = new Parameter();
@@ -282,15 +279,15 @@ describe('Pipelines', () => {
             return req.url === '/project/test1/pipeline/pip1/parameter/testvar';
         })).flush(parameter);
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
-            expect(pip.parameters).toBeTruthy();
-            expect(pip.parameters.length).toEqual(1);
-            expect(pip.parameters[0].name).toEqual('testvar');
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.parameters).toBeTruthy();
+            expect(pip.pipeline.parameters.length).toEqual(1);
+            expect(pip.pipeline.parameters[0].name).toEqual('testvar');
         });
     }));
 
@@ -329,15 +326,15 @@ describe('Pipelines', () => {
             parameter
         }));
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
-            expect(pip.parameters).toBeTruthy();
-            expect(pip.parameters.length).toEqual(1);
-            expect(pip.parameters[0].name).toEqual('testvarrenamed');
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.parameters).toBeTruthy();
+            expect(pip.pipeline.parameters.length).toEqual(1);
+            expect(pip.pipeline.parameters[0].name).toEqual('testvarrenamed');
         });
     }));
 
@@ -376,15 +373,15 @@ describe('Pipelines', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/test1/pipeline/pip1/parameter/testvar';
         })).flush(parameter);
-        store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+        store.selectOnce(PipelinesState).subscribe((state: PipelinesStateModel) => {
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
-            expect(pip.parameters).toBeTruthy();
-            expect(pip.parameters.length).toEqual(0);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.parameters).toBeTruthy();
+            expect(pip.pipeline.parameters.length).toEqual(0);
         });
     }));
 
@@ -403,12 +400,12 @@ describe('Pipelines', () => {
             return req.url === '/project/test1/pipeline';
         })).flush(pipeline);
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe(pip => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
         });
 
         let stage = new Stage();
@@ -428,15 +425,15 @@ describe('Pipelines', () => {
             stages: [stage],
         });
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
-            expect(pip.stages).toBeTruthy();
-            expect(pip.stages.length).toEqual(1);
-            expect(pip.stages[0].name).toEqual('testStage');
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.stages).toBeTruthy();
+            expect(pip.pipeline.stages.length).toEqual(1);
+            expect(pip.pipeline.stages[0].name).toEqual('testStage');
         });
     }));
 
@@ -484,15 +481,15 @@ describe('Pipelines', () => {
             stages: [stage],
         });
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
-            expect(pip.stages).toBeTruthy();
-            expect(pip.stages.length).toEqual(1);
-            expect(pip.stages[0].name).toEqual('testStageRenamed');
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.stages).toBeTruthy();
+            expect(pip.pipeline.stages.length).toEqual(1);
+            expect(pip.pipeline.stages[0].name).toEqual('testStageRenamed');
         });
     }));
 
@@ -509,12 +506,12 @@ describe('Pipelines', () => {
             return req.url === '/project/test1/pipeline';
         })).flush(pipeline);
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe(pip => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
         });
 
         let stage = new Stage();
@@ -534,15 +531,15 @@ describe('Pipelines', () => {
             stages: [stage],
         });
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
-            expect(pip.stages).toBeTruthy();
-            expect(pip.stages.length).toEqual(1);
-            expect(pip.stages[0].name).toEqual('testStage');
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.stages).toBeTruthy();
+            expect(pip.pipeline.stages.length).toEqual(1);
+            expect(pip.pipeline.stages[0].name).toEqual('testStage');
         });
 
         store.dispatch(new pipelinesActions.DeletePipelineStage({
@@ -557,12 +554,12 @@ describe('Pipelines', () => {
             projectKey: testProjectKey,
             stages: [],
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
-            expect(pip.stages).toBeTruthy();
-            expect(pip.stages.length).toEqual(0);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.stages).toBeTruthy();
+            expect(pip.pipeline.stages.length).toEqual(0);
         });
     }));
 
@@ -581,12 +578,12 @@ describe('Pipelines', () => {
             return req.url === '/project/test1/pipeline';
         })).flush(pipeline);
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe(pip => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
         });
 
         let stage = new Stage();
@@ -612,7 +609,7 @@ describe('Pipelines', () => {
         store.dispatch(new pipelinesActions.AddPipelineJob({
             projectKey: testProjectKey,
             pipelineName: 'pip1',
-            stageId: stage.id,
+            stage: stage,
             job
         }));
         http.expectOne(((req: HttpRequest<any>) => {
@@ -625,19 +622,19 @@ describe('Pipelines', () => {
 
 
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
-            expect(pip.stages).toBeTruthy();
-            expect(pip.stages.length).toEqual(1);
-            expect(pip.stages[0].name).toEqual('testStage');
-            expect(pip.stages[0].jobs).toBeTruthy();
-            expect(pip.stages[0].jobs.length).toEqual(1);
-            expect(pip.stages[0].jobs[0].pipeline_action_id).toEqual(2);
-            expect(pip.stages[0].jobs[0].action.name).toEqual('testjob');
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.stages).toBeTruthy();
+            expect(pip.pipeline.stages.length).toEqual(1);
+            expect(pip.pipeline.stages[0].name).toEqual('testStage');
+            expect(pip.pipeline.stages[0].jobs).toBeTruthy();
+            expect(pip.pipeline.stages[0].jobs.length).toEqual(1);
+            expect(pip.pipeline.stages[0].jobs[0].pipeline_action_id).toEqual(2);
+            expect(pip.pipeline.stages[0].jobs[0].action.name).toEqual('testjob');
         });
     }));
 
@@ -654,12 +651,12 @@ describe('Pipelines', () => {
             return req.url === '/project/test1/pipeline';
         })).flush(pipeline);
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe(pip => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
         });
 
         let stage = new Stage();
@@ -685,7 +682,7 @@ describe('Pipelines', () => {
         store.dispatch(new pipelinesActions.AddPipelineJob({
             projectKey: testProjectKey,
             pipelineName: 'pip1',
-            stageId: stage.id,
+            stage: stage,
             job
         }));
         http.expectOne(((req: HttpRequest<any>) => {
@@ -700,7 +697,7 @@ describe('Pipelines', () => {
         store.dispatch(new pipelinesActions.UpdatePipelineJob({
             projectKey: testProjectKey,
             pipelineName: 'pip1',
-            stageId: stage.id,
+            stage: stage,
             changes: job
         }));
         http.expectOne(((req: HttpRequest<any>) => {
@@ -712,19 +709,19 @@ describe('Pipelines', () => {
         });
 
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
-            expect(pip.stages).toBeTruthy();
-            expect(pip.stages.length).toEqual(1);
-            expect(pip.stages[0].name).toEqual('testStage');
-            expect(pip.stages[0].jobs).toBeTruthy();
-            expect(pip.stages[0].jobs.length).toEqual(1);
-            expect(pip.stages[0].jobs[0].pipeline_action_id).toEqual(2);
-            expect(pip.stages[0].jobs[0].action.name).toEqual('jobupdated');
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.stages).toBeTruthy();
+            expect(pip.pipeline.stages.length).toEqual(1);
+            expect(pip.pipeline.stages[0].name).toEqual('testStage');
+            expect(pip.pipeline.stages[0].jobs).toBeTruthy();
+            expect(pip.pipeline.stages[0].jobs.length).toEqual(1);
+            expect(pip.pipeline.stages[0].jobs[0].pipeline_action_id).toEqual(2);
+            expect(pip.pipeline.stages[0].jobs[0].action.name).toEqual('jobupdated');
         });
     }));
 
@@ -741,12 +738,12 @@ describe('Pipelines', () => {
             return req.url === '/project/test1/pipeline';
         })).flush(pipeline);
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe(pip => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
         });
 
         let stage = new Stage();
@@ -772,7 +769,7 @@ describe('Pipelines', () => {
         store.dispatch(new pipelinesActions.AddPipelineJob({
             projectKey: testProjectKey,
             pipelineName: 'pip1',
-            stageId: stage.id,
+            stage: stage,
             job
         }));
         http.expectOne(((req: HttpRequest<any>) => {
@@ -786,7 +783,7 @@ describe('Pipelines', () => {
         store.dispatch(new pipelinesActions.DeletePipelineJob({
             projectKey: testProjectKey,
             pipelineName: 'pip1',
-            stageId: stage.id,
+            stage: stage,
             job
         }));
         http.expectOne(((req: HttpRequest<any>) => {
@@ -798,17 +795,17 @@ describe('Pipelines', () => {
         });
 
         store.selectOnce(PipelinesState).subscribe(state => {
-            expect(Object.keys(state.pipelines).length).toEqual(1);
+            expect(state.pipeline).toBeTruthy();
         });
-        store.selectOnce(PipelinesState.selectPipeline(testProjectKey, 'pip1')).subscribe((pip: Pipeline) => {
+        store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
             expect(pip).toBeTruthy();
-            expect(pip.name).toEqual('pip1');
-            expect(pip.projectKey).toEqual(testProjectKey);
-            expect(pip.stages).toBeTruthy();
-            expect(pip.stages.length).toEqual(1);
-            expect(pip.stages[0].name).toEqual('testStage');
-            expect(pip.stages[0].jobs).toBeTruthy();
-            expect(pip.stages[0].jobs.length).toEqual(0);
+            expect(pip.pipeline.name).toEqual('pip1');
+            expect(pip.currentProjectKey).toEqual(testProjectKey);
+            expect(pip.pipeline.stages).toBeTruthy();
+            expect(pip.pipeline.stages.length).toEqual(1);
+            expect(pip.pipeline.stages[0].name).toEqual('testStage');
+            expect(pip.pipeline.stages[0].jobs).toBeTruthy();
+            expect(pip.pipeline.stages[0].jobs.length).toEqual(0);
         });
     }));
 });
