@@ -66,10 +66,11 @@ func loadNotification(db gorp.SqlExecutor, w *sdk.Workflow, id int64) (sdk.Workf
 
 func loadVCSNotificationWithNodeID(db gorp.SqlExecutor, workflowID, nodeID int64) (sdk.WorkflowNotification, error) {
 	dbnotif := Notification{}
+	// TODO: change this to return slice of workflow notifications and handle multiple notification for a single node
 	query := `SELECT workflow_notification.*
 	FROM workflow_notification
 		JOIN workflow_notification_source ON workflow_notification.id = workflow_notification_source.workflow_notification_id
-	WHERE workflow_notification.workflow_id = $1 AND workflow_notification_source.node_id = $2 AND workflow_notification.type = $3`
+	WHERE workflow_notification.workflow_id = $1 AND workflow_notification_source.node_id = $2 AND workflow_notification.type = $3 LIMIT 1`
 	//Load the notification
 	if err := db.SelectOne(&dbnotif, query, workflowID, nodeID, sdk.VCSUserNotification); err != nil {
 		if err == sql.ErrNoRows {
