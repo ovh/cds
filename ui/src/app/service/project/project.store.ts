@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { NavbarRecentData } from 'app/model/navbar.model';
 import { LoadOpts, Project } from 'app/model/project.model';
-import { List, Map, } from 'immutable';
+import { List, Map } from 'immutable';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ProjectService } from './project.service';
 
