@@ -307,7 +307,8 @@ export class NavbarComponent implements OnInit, AfterViewInit {
      * Listen change on project list.
      */
     getData(): void {
-        this.navbarSubscription = this._navbarService.getData().subscribe(data => {
+        this._navbarService.refreshData();
+        this.navbarSubscription = this._navbarService.getObservable().subscribe(data => {
             if (Array.isArray(data) && data.length > 0) {
                 this.searchItems = new Array<NavbarSearchItem>();
                 let favProj = [];
