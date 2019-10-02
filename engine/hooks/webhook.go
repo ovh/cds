@@ -54,17 +54,20 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "unable ro read github request: %s", string(t.WebHook.RequestBody))
 		}
+		branch := strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
 		if pushEvent.Deleted {
-			branch := strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
 			err := s.enqueueBranchDeletion(projectKey, workflowName, branch)
 
 			return nil, sdk.WrapError(err, "cannot enqueue branch deletion")
+		}
+		if err := s.stopBranchDeletionTask(branch); err != nil {
+			log.Error("cannot stop branch deletion task for branch %s : %v", branch, err)
 		}
 		payload["git.author"] = pushEvent.HeadCommit.Author.Username
 		payload["git.author.email"] = pushEvent.HeadCommit.Author.Email
 
 		if !strings.HasPrefix(pushEvent.Ref, "refs/tags/") {
-			payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
+			payload["git.branch"] = branch
 		} else {
 			payload["git.tag"] = strings.TrimPrefix(pushEvent.Ref, "refs/tags/")
 		}
@@ -108,7 +111,11 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 		payload["git.author"] = pushEvent.UserUsername
 		payload["git.author.email"] = pushEvent.UserEmail
 		if !strings.HasPrefix(pushEvent.Ref, "refs/tags/") {
-			payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
+			branch := strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
+			payload["git.branch"] = branch
+			if err := s.stopBranchDeletionTask(branch); err != nil {
+				log.Error("cannot stop branch deletion task for branch %s : %v", branch, err)
+			}
 		} else {
 			payload["git.tag"] = strings.TrimPrefix(pushEvent.Ref, "refs/tags/")
 		}
@@ -156,7 +163,11 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 			payload["git.author.email"] = pushEvent.Actor.EmailAddress
 
 			if !strings.HasPrefix(pushChange.RefID, "refs/tags/") {
-				payload["git.branch"] = strings.TrimPrefix(pushChange.RefID, "refs/heads/")
+				branch := strings.TrimPrefix(pushChange.RefID, "refs/heads/")
+				payload["git.branch"] = branch
+				if err := s.stopBranchDeletionTask(branch); err != nil {
+					log.Error("cannot stop branch deletion task for branch %s : %v", branch, err)
+				}
 			} else {
 				payload["git.tag"] = strings.TrimPrefix(pushChange.RefID, "refs/tags/")
 			}
@@ -179,6 +190,7 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 			payload["payload"] = string(payloadStr)
 			payloads = append(payloads, payload)
 		}
+
 	case BitbucketCloudHeader:
 		var event BitbucketCloudPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &event); err != nil {
@@ -206,7 +218,12 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 			}
 
 			if pushChange.New.Type == "branch" {
-				payload["git.branch"] = strings.TrimPrefix(pushChange.New.Name, "refs/heads/")
+				branch := strings.TrimPrefix(pushChange.New.Name, "refs/heads/")
+				payload["git.branch"] = branch
+				if err := s.stopBranchDeletionTask(branch); err != nil {
+					log.Error("cannot stop branch deletion task for branch %s : %v", branch, err)
+				}
+
 			} else if pushChange.New.Type == "tag" {
 				payload["git.tag"] = strings.TrimPrefix(pushChange.New.Name, "refs/tags/")
 			} else {
@@ -368,7 +385,7 @@ func (s *Service) enqueueBranchDeletion(projectKey, workflowName, branch string)
 	task := sdk.Task{
 		Config: config,
 		Type:   TypeBranchDeletion,
-		UUID:   sdk.UUID(),
+		UUID:   branch + "-" + sdk.UUID(),
 	}
 
 	_, err := s.startTask(context.Background(), &task)

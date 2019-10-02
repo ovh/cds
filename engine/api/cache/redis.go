@@ -407,6 +407,15 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 	return nil
 }
 
+func (s *RedisStore) ZScan(key, pattern string) ([]string, error) {
+	keys, _, err := s.Client.ZScan(key, 0, pattern, 0).Result()
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+
+	return keys, nil
+}
+
 func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMillisecond int, retryCount int) bool {
 	var errRedis error
 	var res bool

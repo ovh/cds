@@ -29,6 +29,10 @@ func (d *dao) FindAllTasks() ([]sdk.Task, error) {
 	return alltasks, nil
 }
 
+func (d *dao) FindAllKeysMatchingPattern(pattern string) ([]string, error) {
+	return d.store.ZScan(rootKey, pattern)
+}
+
 func (d *dao) FindTask(uuid string) *sdk.Task {
 	key := cache.Key(rootKey, uuid)
 	t := &sdk.Task{}

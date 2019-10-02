@@ -16,7 +16,8 @@ func init() {
 
 func Test_doWebHookExecution(t *testing.T) {
 	log.SetLogger(t)
-	s := Service{}
+	s, cancel := setupTestHookService(t)
+	defer cancel()
 	task := &sdk.TaskExecution{
 		UUID: sdk.RandomString(10),
 		Type: TypeWebHook,
@@ -36,7 +37,8 @@ func Test_doWebHookExecution(t *testing.T) {
 }
 func Test_doWebHookExecutionGithub(t *testing.T) {
 	log.SetLogger(t)
-	s := Service{}
+	s, cancel := setupTestHookService(t)
+	defer cancel()
 	task := &sdk.TaskExecution{
 		UUID: sdk.RandomString(10),
 		Type: TypeRepoManagerWebHook,
@@ -60,7 +62,8 @@ func Test_doWebHookExecutionGithub(t *testing.T) {
 
 func Test_doWebHookExecutionTagGithub(t *testing.T) {
 	log.SetLogger(t)
-	s := Service{}
+	s, cancel := setupTestHookService(t)
+	defer cancel()
 	task := &sdk.TaskExecution{
 		UUID: sdk.RandomString(10),
 		Type: TypeRepoManagerWebHook,
@@ -85,7 +88,8 @@ func Test_doWebHookExecutionTagGithub(t *testing.T) {
 
 func Test_doWebHookExecutionGitlab(t *testing.T) {
 	log.SetLogger(t)
-	s := Service{}
+	s, cancel := setupTestHookService(t)
+	defer cancel()
 	task := &sdk.TaskExecution{
 		UUID: sdk.RandomString(10),
 		Type: TypeRepoManagerWebHook,
@@ -109,7 +113,8 @@ func Test_doWebHookExecutionGitlab(t *testing.T) {
 
 func Test_doWebHookExecutionBitbucket(t *testing.T) {
 	log.SetLogger(t)
-	s := Service{}
+	s, cancel := setupTestHookService(t)
+	defer cancel()
 	task := &sdk.TaskExecution{
 		UUID: sdk.RandomString(10),
 		Type: TypeRepoManagerWebHook,
@@ -132,7 +137,8 @@ func Test_doWebHookExecutionBitbucket(t *testing.T) {
 
 func Test_doWebHookExecutionBitbucketMultiple(t *testing.T) {
 	log.SetLogger(t)
-	s := Service{}
+	s, cancel := setupTestHookService(t)
+	defer cancel()
 	task := &sdk.TaskExecution{
 		UUID: sdk.RandomString(10),
 		Type: TypeRepoManagerWebHook,
