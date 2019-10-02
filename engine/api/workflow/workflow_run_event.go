@@ -336,7 +336,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		}
 
 		//Send comment on pull request
-		if nodeRun.Status == sdk.StatusFail.String() || nodeRun.Status == sdk.StatusStopped.String() {
+		if nodeRun.Status == sdk.StatusFail.String() || nodeRun.Status == sdk.StatusStopped.String() || notif.Settings.OnSuccess == sdk.UserNotificationAlways {
 			for _, pr := range prs {
 				if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash && !pr.Merged && !pr.Closed {
 					if err := client.PullRequestComment(ctx, app.RepositoryFullname, pr.ID, report); err != nil {

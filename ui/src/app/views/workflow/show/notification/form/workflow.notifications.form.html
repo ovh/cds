@@ -97,6 +97,12 @@
                 </sui-checkbox>
             </div>
             <div class="field">
+                <sui-checkbox class="toggle no-mt" name="alwaysSend" [(ngModel)]="alwaysSend"
+                    [isDisabled]="!commentEnabled">
+                    {{ 'workflow_notification_vcs_comment_always' | translate}}
+                </sui-checkbox>
+            </div>
+            <div class="field">
                 <label>{{ 'workflow_notification_vcs_pr_comment_body' | translate }}</label>
                 <textarea type="text" class="ui input" [(ngModel)]="notification.settings.template.body"
                     [disabled]="!commentEnabled" name="body"></textarea>
