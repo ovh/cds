@@ -28,9 +28,12 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 
 	UUID := sdk.UUID()
 
-	_, _ = assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeRepositories)
-
+	a, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeVCS)
+	b, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeRepositories)
+	defer func() {
+		_ = services.Delete(db, a) // nolint
+		_ = services.Delete(db, b) // nolint
+	}()
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
 		func(r *http.Request) (*http.Response, error) {
