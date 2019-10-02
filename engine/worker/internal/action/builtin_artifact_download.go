@@ -21,7 +21,6 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	project := sdk.ParameterValue(params, "cds.project")
 	workflow := sdk.ParameterValue(params, "cds.workflow")
 	number := sdk.ParameterValue(params, "cds.run.number")
-	enabled := sdk.ParameterValue(params, "enabled") != "false"
 	pattern := sdk.ParameterValue(a.Parameters, "pattern")
 
 	destPath := sdk.ParameterValue(a.Parameters, "path")
@@ -29,12 +28,6 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 
 	if destPath == "" {
 		destPath = "."
-	}
-
-	// TODO: we should remove this issue #4595
-	if !enabled {
-		wk.SendLog(ctx, workerruntime.LevelDebug, "Artifact Download is disabled")
-		return res, nil
 	}
 
 	if err := os.MkdirAll(destPath, os.FileMode(0744)); err != nil {
