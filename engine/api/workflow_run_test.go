@@ -1019,6 +1019,9 @@ func Test_resyncWorkflowRunHandlerError(t *testing.T) {
 		ProjectID:          proj.ID,
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
+		RepositoryStrategy: sdk.RepositoryStrategy{
+			ConnectionType: "ssh",
+		},
 	}
 	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
@@ -1234,12 +1237,24 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	assert.Equal(t, int64(1), wr.Number)
 }
 
+/**
+ * This test does
+ * 1. Create worklow
+ * 2. Migrate as code => this will create PR.id = 1
+ * 3. Run workflow :  Must fail on getting PR.id = 1
+ */
 func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+
+	// Clean ascode event
+	evts, _ := ascode.LoadAsCodeEventByRepo(db, "ssh:/cloneurl")
+	for _, e := range evts {
+		_ = ascode.DeleteAsCodeEvent(db, e) // nolint
+	}
 
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
@@ -1344,6 +1359,14 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 				if err := enc.Encode(res); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/foo/myrepo":
+				r := sdk.VCSRepo{
+					SSHCloneURL:  "ssh:/cloneurl",
+					HTTPCloneURL: "http:/cloneurl",
+				}
+				if err := enc.Encode(r); err != nil {
+					return writeError(w, err)
+				}
 			case "/vcs/github/repos/foo/myrepo/hooks":
 				h := sdk.VCSHook{}
 				h.Name = "hook"
@@ -1353,11 +1376,13 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 			case "/vcs/github/repos/foo/myrepo/pullrequests":
 				pr := sdk.VCSPullRequest{
 					Title: "blabla",
+					URL:   "myurl",
+					ID:    1,
 				}
 				if err := enc.Encode(pr); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/foo/myrepo/pullrequests/0":
+			case "/vcs/github/repos/foo/myrepo/pullrequests/1":
 				return writeError(w, fmt.Errorf("error for test"))
 
 			case "/task/bulk":
@@ -1379,11 +1404,13 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	ope := sdk.Operation{
 		UUID: "123",
 		Setup: sdk.OperationSetup{
-			Push: sdk.OperationPush{},
+			Push: sdk.OperationPush{
+				Update: false,
+			},
 		},
 	}
 	ed := ascode.EntityData{
-		FromRepo:  w1.FromRepository,
+		FromRepo:  "ssh:/cloneurl",
 		Operation: &ope,
 		Name:      w1.Name,
 		ID:        w1.ID,
