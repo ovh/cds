@@ -324,7 +324,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	if err := client.SetStatus(ctx, evt); err != nil {
 		repositoriesmanager.RetryEvent(&evt, err, store)
-		log.Error("sendEvent> err:%s", err)
+		log.Error("sendEvent> err:%v", err)
 	}
 
 	if vcsConf.Type != "gerrit" && (notif.Settings.Template.DisableComment == nil || !*notif.Settings.Template.DisableComment) {
