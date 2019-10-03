@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	muxcontext "github.com/gorilla/context"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
@@ -323,14 +322,10 @@ func (r *asynchronousRequest) do(ctx context.Context, h service.AsynchronousHand
 	r.body = &buf
 	//Recreate a new buffer from the bytes stores in memory
 	req.Body = ioutil.NopCloser(tee)
-	for k, v := range r.vars {
-		muxcontext.Set(req, k, v)
-	}
 	r.err = h(ctx, req)
 	if r.err != nil {
 		r.nbErrors++
 	}
-	muxcontext.Clear(req)
 	return r.err
 }
 
