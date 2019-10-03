@@ -35,7 +35,7 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 
 	a, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
 	b, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerRepo", services.TypeRepositories)
-	b, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
+	c, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
 
 	defer func() {
 		services.Delete(db, a)
