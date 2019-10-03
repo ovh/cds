@@ -119,7 +119,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	// PAYLOAD
 	var errorPayload error
-	nr.Payload, errorPayload = computePayload(n, hookEvent, manual)
+	nr.Payload, errorPayload = computePayload(n, hookEvent, parents, manual)
 	if errorPayload != nil {
 		return nil, false, errorPayload
 	}
@@ -204,7 +204,8 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		found := false
 		for _, parent := range wr.WorkflowNodeRuns {
 			repo := sdk.ParameterFind(&parent[0].BuildParameters, tagGitRepository)
-			if repo != nil && repo.Value == currentRepo {
+			if repo != nil && (repo.Value == currentRepo ||
+				(repo.Value != currentRepo && parent[0].ApplicationID == n.Context.ApplicationID)) { // same application, but different repo, it's a fork
 				found = true
 				// copy git info from ancestors
 				for _, param := range parent[0].BuildParameters {
@@ -455,7 +456,7 @@ func computePipelineParameters(wr *sdk.WorkflowRun, n *sdk.Node, manual *sdk.Wor
 	return pipParams
 }
 
-func computePayload(n *sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (interface{}, error) {
+func computePayload(n *sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, parents []*sdk.WorkflowNodeRun, manual *sdk.WorkflowNodeRunManual) (interface{}, error) {
 	switch {
 	case hookEvent != nil && hookEvent.Payload != nil:
 		return hookEvent.Payload, nil
