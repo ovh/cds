@@ -23,7 +23,12 @@ export class ProjectStore {
     constructor(
         private _projectService: ProjectService,
     ) {
+        this.loadRecentProjects();
+    }
 
+    loadRecentProjects(): void {
+        let arrayApp = JSON.parse(localStorage.getItem(ProjectStore.RECENT_PROJECTS_KEY));
+        this._recentProjects.next(List.of(...arrayApp));
     }
 
     getProjectsList(resync: boolean = false): Observable<List<Project>> {

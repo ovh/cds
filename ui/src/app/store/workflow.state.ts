@@ -677,7 +677,7 @@ export class WorkflowState {
                 workflow_name: action.payload.workflowName,
             }
         ).pipe(tap(() => {
-            this._navbarService.getData(); // TODO: to delete
+            this._navbarService.refreshData();
             if (state.workflow) {
                 ctx.setState({
                     ...state,

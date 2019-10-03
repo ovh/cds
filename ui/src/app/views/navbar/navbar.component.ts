@@ -34,7 +34,6 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     ready = false;
 
     // List of projects in the nav bar
-    navProjects: Array<NavbarProjectData> = [];
     listFavs: Array<NavbarProjectData> = [];
     navRecentProjects: List<Project>;
     navRecentApp: List<Application>;
@@ -188,11 +187,6 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         this.searchApplications = new Array<NavbarSearchItem>();
         this.searchWorkflows = new Array<NavbarSearchItem>();
 
-        // refresh data if cache was cleaned
-        if (!this._navbarService.isInCache()) {
-            this.getData();
-        }
-
         if (this.searchValue && this.searchValue !== '') {
             this.isSearch = true;
             this.processSearch(this.searchItems);
@@ -313,9 +307,9 @@ export class NavbarComponent implements OnInit, AfterViewInit {
      * Listen change on project list.
      */
     getData(): void {
-        this.navbarSubscription = this._navbarService.getData().subscribe(data => {
+        this._navbarService.refreshData();
+        this.navbarSubscription = this._navbarService.getObservable().subscribe(data => {
             if (Array.isArray(data) && data.length > 0) {
-                this.navProjects = data;
                 this.searchItems = new Array<NavbarSearchItem>();
                 let favProj = [];
                 this.listFavs = data.filter((p) => {
@@ -329,7 +323,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                     return p.favorite;
                 }).slice(0, 7);
 
-                this.navProjects.forEach(p => {
+                data.forEach(p => {
                     switch (p.type) {
                         case 'workflow':
                             this.searchItems.push({

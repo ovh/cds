@@ -41,7 +41,7 @@ export class HomeComponent implements OnInit {
     ) {
         this.user = this._authStore.getUser();
         this.filter = new TimelineFilter();
-        this._navbarSub = this._navbarService.getData(true)
+        this._navbarSub = this._navbarService.getObservable()
             .subscribe((data) => {
                 if (Array.isArray(data)) {
                     this.favorites = data.filter((fav) => fav.favorite);

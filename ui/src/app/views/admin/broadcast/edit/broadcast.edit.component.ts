@@ -51,7 +51,7 @@ export class BroadcastEditComponent {
         this.broadcastLevelsList.forEach(element => {
             this.levels.push(element.value);
         });
-        this.navbarSub = this._navbarService.getData(true)
+        this.navbarSub = this._navbarService.getObservable()
             .subscribe((data) => {
                 this.loading = false;
                 if (Array.isArray(data)) {
