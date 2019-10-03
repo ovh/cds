@@ -33,9 +33,15 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 
 	UUID := sdk.UUID()
 
-	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerRepo", services.TypeRepositories)
-	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
+	a, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
+	b, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerRepo", services.TypeRepositories)
+	b, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
+
+	defer func() {
+		services.Delete(db, a)
+		services.Delete(db, b)
+		services.Delete(db, c)
+	}()
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -144,7 +150,6 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 	if !assert.NoError(t, workflow.Insert(context.Background(), db, api.Cache, w, proj)) {
 		return
 	}
-	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, w, proj))
 
 	// Updating workflow
 	w.WorkflowData.Node.Triggers = []sdk.NodeTrigger{
