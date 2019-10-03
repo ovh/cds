@@ -598,7 +598,7 @@ queueRun:
 		}
 
 		//TakeNodeJobRun
-		j, _, _ = workflow.TakeNodeJobRun(context.TODO(), func() *gorp.DbMap { return db }, db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
+		takenJob, _, _ := workflow.TakeNodeJobRun(context.TODO(), func() *gorp.DbMap { return db }, db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
 			{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
@@ -609,7 +609,7 @@ queueRun:
 		})
 
 		//Load workflow node run
-		nodeRun, err := workflow.LoadNodeRunByID(db, j.WorkflowNodeRunID, workflow.LoadRunOptions{})
+		nodeRun, err := workflow.LoadNodeRunByID(db, takenJob.WorkflowNodeRunID, workflow.LoadRunOptions{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -648,7 +648,7 @@ queueRun:
 			t.FailNow()
 		}
 
-		logs, err := workflow.LoadLogs(db, j.ID)
+		logs, err := workflow.LoadLogs(db, takenJob.ID)
 		assert.NoError(t, err)
 		if t.Failed() {
 			tx.Rollback()
@@ -659,17 +659,17 @@ queueRun:
 		tx.Commit()
 
 		// check if there is another job to run
-		if j.Job.Action.Name == "job10" {
+		if takenJob.Job.Action.Name == "job10" {
 			goto queueRun
-		} else if j.Job.Action.Name == "job11" {
-			assert.Equal(t, 2, len(j.ExecGroups))
+		} else if takenJob.Job.Action.Name == "job11" {
+			assert.Equal(t, 2, len(takenJob.ExecGroups))
 			// this pipeline is attached to an deployment integration
 			// so, we check IntegrationPluginBinaries
-			assert.Equal(t, 1, len(j.IntegrationPluginBinaries))
+			assert.Equal(t, 1, len(takenJob.IntegrationPluginBinaries))
 
 			// Check ExecGroups
 			var g0Found bool
-			for _, eg := range j.ExecGroups {
+			for _, eg := range takenJob.ExecGroups {
 				if eg.Name != "shared.infra" && eg.Name != "g0" {
 					t.Fatalf("this group %s should not be in execGroups", eg.Name)
 				}
@@ -685,17 +685,17 @@ queueRun:
 
 	filter = workflow.NewQueueFilter()
 	filter.Rights = sdk.PermissionReadExecute
-	jobs, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+	jobs20, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
 	require.NoError(t, err)
-	assert.Equal(t, 1, len(jobs))
+	assert.Equal(t, 1, len(jobs20))
 
-	if len(jobs) == 1 {
-		assert.Equal(t, "Waiting", jobs[0].Status)
-		assert.Equal(t, "job20", jobs[0].Job.Job.Action.Name)
+	if len(jobs20) == 1 {
+		assert.Equal(t, "Waiting", jobs20[0].Status)
+		assert.Equal(t, "job20", jobs20[0].Job.Job.Action.Name)
 
 		// test since / until
-		t.Logf("##### jobs[0].Queued : %+v\n", jobs[0].Queued)
-		since := jobs[0].Queued
+		t.Logf("##### jobs[0].Queued : %+v\n", jobs20[0].Queued)
+		since := jobs20[0].Queued
 
 		t0 := since.Add(-2 * time.Minute)
 		t1 := since.Add(-1 * time.Minute)
@@ -706,7 +706,7 @@ queueRun:
 		jobsSince, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
 		require.NoError(t, err)
 		for _, job := range jobsSince {
-			if jobs[0].ID == job.ID {
+			if jobs20[0].ID == job.ID {
 				assert.Fail(t, " this job should not be in queue since/until")
 			}
 		}
@@ -718,7 +718,7 @@ queueRun:
 		require.NoError(t, err)
 		var found bool
 		for _, job := range jobsSince {
-			if jobs[0].ID == job.ID {
+			if jobs20[0].ID == job.ID {
 				found = true
 			}
 		}
@@ -735,7 +735,7 @@ queueRun:
 		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
 		require.NoError(t, err)
 		for _, job := range jobsSince {
-			if jobs[0].ID == job.ID {
+			if jobs20[0].ID == job.ID {
 				assert.Fail(t, " this job should not be in queue since/until")
 			}
 		}
