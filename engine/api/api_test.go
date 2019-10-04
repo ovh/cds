@@ -41,7 +41,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 		dbFunc:   api.DBConnectionFactory.GetDBMap,
 		messages: make(chan sdk.Event),
 	}
-	api.eventsBroker.Init(context.Background(), api.PanicDump())
+	api.eventsBroker.Init(router.Background, api.PanicDump())
 	f := func() {
 		cancel()
 		end()
