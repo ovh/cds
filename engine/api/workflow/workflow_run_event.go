@@ -131,64 +131,48 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		}
 
 		if statusFound == nil || statusFound.State == "" {
-			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
+			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun, false); err != nil {
 				log.Error("resyncCommitStatus> Error sending status %s err: %v", details, err)
 			}
 			continue
 		}
 
 		if statusFound.State == sdk.StatusBuilding.String() {
-			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
+			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun, false); err != nil {
 				log.Error("resyncCommitStatus> Error sending status %s err: %v", details, err)
 			}
 			continue
 		}
 
+		skipStatus := false
 		switch statusFound.State {
-		case sdk.StatusBuilding.String():
-			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
-				log.Error("resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
-			}
-			continue
-
 		case sdk.StatusSuccess.String():
 			switch nodeRun.Status {
 			case sdk.StatusSuccess.String():
-				continue
-			default:
-				if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
-					log.Error("resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
-				}
-				continue
+				skipStatus = true
 			}
 		case sdk.StatusFail.String():
 			switch nodeRun.Status {
 			case sdk.StatusFail.String():
-				continue
-			default:
-				if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
-					log.Error("resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
-				}
-				continue
+				skipStatus = true
 			}
 
 		case sdk.StatusSkipped.String():
 			switch nodeRun.Status {
 			case sdk.StatusDisabled.String(), sdk.StatusNeverBuilt.String(), sdk.StatusSkipped.String():
-				continue
-			default:
-				if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
-					log.Error("resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
-				}
-				continue
+				skipStatus = true
 			}
+		}
+
+		if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun, skipStatus); err != nil {
+			log.Error("resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
 		}
 	}
 	return nil
 }
 
 // sendVCSEventStatus send status
-func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) error {
+func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, skipStatusUpdate bool) error {
 	log.Debug("Send status for node run %d", nodeRun.ID)
 	var app sdk.Application
 	var pip sdk.Pipeline
@@ -322,9 +306,11 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		EnvironmentName: envName,
 	}
 
-	if err := client.SetStatus(ctx, evt); err != nil {
-		repositoriesmanager.RetryEvent(&evt, err, store)
-		log.Error("sendEvent> err:%v", err)
+	if !skipStatusUpdate {
+		if err := client.SetStatus(ctx, evt); err != nil {
+			repositoriesmanager.RetryEvent(&evt, err, store)
+			log.Error("sendEvent> err:%v", err)
+		}
 	}
 
 	if vcsConf.Type != "gerrit" && (notif.Settings.Template.DisableComment == nil || !*notif.Settings.Template.DisableComment) {
