@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/event"
+
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
@@ -30,6 +32,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 		Cache:               cache,
 	}
 	api.InitRouter()
+	event.Initialize(db, api.Cache)
 	f := func() {
 		cancel()
 		end()
