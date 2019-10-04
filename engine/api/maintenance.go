@@ -9,16 +9,18 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (a *API) listenMaintenance(c context.Context) {
-	pubSub := a.Cache.Subscribe(sdk.MaintenanceQueueName)
+func (a *API) listenMaintenance(c context.Context) error {
+	pubSub, err := a.Cache.Subscribe(sdk.MaintenanceQueueName)
+	if err != nil {
+		return sdk.WrapError(err, "listenMaintenance> unable to subscribe to %s", sdk.MaintenanceQueueName)
+	}
 	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
 	for {
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				log.Error("listenMaintenance> Exiting: %v", c.Err())
-				return
+				return sdk.WrapError(c.Err(), "listenMaintenance> Exiting")
 			}
 		case <-tick.C:
 			msg, err := a.Cache.GetMessageFromSubscription(c, pubSub)

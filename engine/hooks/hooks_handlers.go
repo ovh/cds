@@ -63,7 +63,9 @@ func (s *Service) webhookHandler() service.Handler {
 		s.Dao.SaveTaskExecution(exec)
 
 		//Push the webhook execution in the queue, so it will be executed
-		s.Dao.EnqueueTaskExecution(exec)
+		if err := s.Dao.EnqueueTaskExecution(exec); err != nil {
+			return err
+		}
 
 		//Return the execution
 		return service.WriteJSON(w, exec, http.StatusOK)
@@ -245,11 +247,13 @@ func (s *Service) putTaskHandler() service.Handler {
 		}
 
 		//Save it
-		s.Dao.SaveTask(t)
+		if err := s.Dao.SaveTask(t); err != nil {
+			return sdk.WrapError(err, "Unable to save task %v", t)
+		}
 
 		//Start the task
 		if _, err := s.startTask(ctx, t); err != nil {
-			return sdk.WrapError(err, "Unable start task %+v", t)
+			return sdk.WrapError(err, "Unable start task %v", t)
 		}
 
 		return nil
@@ -296,9 +300,7 @@ func (s *Service) deleteTaskHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task")
 		}
 
-		s.deleteTask(ctx, t)
-
-		return nil
+		return s.deleteTask(ctx, t)
 	}
 }
 
@@ -352,7 +354,9 @@ func (s *Service) deleteAllTaskExecutionsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
 		}
 		for i := range execs {
-			s.Dao.DeleteTaskExecution(&execs[i])
+			if err := s.Dao.DeleteTaskExecution(&execs[i]); err != nil {
+				return err
+			}
 		}
 
 		//Start the task
@@ -382,7 +386,9 @@ func (s *Service) deleteTaskBulkHandler() service.Handler {
 			if err := s.stopTask(t); err != nil {
 				return sdk.WrapError(sdk.ErrNotFound, "Stop task %s", err)
 			}
-			s.deleteTask(ctx, t)
+			if err := s.deleteTask(ctx, t); err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -419,11 +425,13 @@ func (s *Service) addTask(ctx context.Context, h *sdk.NodeHook) error {
 	}
 
 	//Save the task
-	s.Dao.SaveTask(t)
+	if err := s.Dao.SaveTask(t); err != nil {
+		return sdk.WrapError(err, "unable to addTask %v", t)
+	}
 
 	//Start the task
 	if _, err := s.startTask(ctx, t); err != nil {
-		return sdk.WrapError(err, "Unable start task %+v", t)
+		return sdk.WrapError(err, "Unable start task %v", t)
 	}
 	return nil
 }
@@ -435,7 +443,9 @@ func (s *Service) addAndExecuteTask(ctx context.Context, nr sdk.WorkflowNodeRun)
 		return t, sdk.TaskExecution{}, sdk.WrapError(err, "Hooks> addAndExecuteTask> Unable to parse node run (%+v)", nr)
 	}
 	// Save the task
-	s.Dao.SaveTask(&t)
+	if err := s.Dao.SaveTask(&t); err != nil {
+		return t, sdk.TaskExecution{}, sdk.WrapError(err, "unable to save task %v", t)
+	}
 
 	// Start the task
 	e, err := s.startTask(ctx, &t)
@@ -465,25 +475,29 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 	execs, _ := s.Dao.FindAllTaskExecutions(t)
 	for _, e := range execs {
 		if e.Status == TaskExecutionScheduled {
-			s.Dao.DeleteTaskExecution(&e)
+			if err := s.Dao.DeleteTaskExecution(&e); err != nil {
+				log.Error("unable to delete previous task execution: %v", err)
+			}
 		}
 	}
 	if _, err := s.startTask(ctx, t); err != nil {
 		return sdk.WrapError(err, "Unable start task %+v", t)
 	}
 	// Save the task
-	s.Dao.SaveTask(t)
+	if err := s.Dao.SaveTask(t); err != nil {
+		return sdk.WrapError(err, "unable to save task %v", t)
+	}
 	return nil
 }
 
-func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) {
+func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) error {
 	switch t.Type {
 	case TypeGerrit:
 		s.stopGerritHookTask(t)
 	}
 
 	//Delete the task
-	s.Dao.DeleteTask(t)
+	return s.Dao.DeleteTask(t)
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
@@ -496,7 +510,10 @@ func (s *Service) Status() sdk.MonitoringStatus {
 
 	// hook queue in status
 	status := sdk.MonitoringStatusOK
-	size := s.Dao.QueueLen()
+	size, errQ := s.Dao.QueueLen()
+	if errQ != nil {
+		log.Error("Status> Unable to retrieve queue len: %v", errQ)
+	}
 	if size >= 100 {
 		status = sdk.MonitoringStatusAlert
 	} else if size >= 10 {

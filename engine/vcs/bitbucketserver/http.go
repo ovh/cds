@@ -124,7 +124,11 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 
 	cacheKey := cache.Key("vcs", "bitbucket", "request", req.URL.String(), token.Token())
 	if v != nil && method == "GET" {
-		if c.consumer.cache.Get(cacheKey, v) {
+		find, err := c.consumer.cache.Get(cacheKey, v)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", cacheKey, err)
+		}
+		if find {
 			return nil
 		}
 	}
@@ -156,7 +160,9 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	}
 
 	if method != "GET" {
-		c.consumer.cache.Delete(cacheKey)
+		if err := c.consumer.cache.Delete(cacheKey); err != nil {
+			log.Error("bitbucketClient.do> unable to delete cache key %v: %v", cacheKey, err)
+		}
 	}
 
 	// Unmarshall the JSON response
@@ -176,7 +182,9 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 			}
 		}
 		if method == "GET" {
-			c.consumer.cache.Set(cacheKey, v)
+			if err := c.consumer.cache.Set(cacheKey, v); err != nil {
+				log.Error("unable to cache set %v: %v", cacheKey, err)
+			}
 		}
 	}
 

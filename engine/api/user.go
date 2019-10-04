@@ -502,7 +502,10 @@ func (api *API) loginUserHandler() service.Handler {
 			if err != nil {
 				return sdk.WithStack(err)
 			}
-			api.Cache.SetWithTTL("api:loginUserHandler:RequestToken:"+loginUserRequest.RequestToken, token, 30*60)
+			k := "api:loginUserHandler:RequestToken:" + loginUserRequest.RequestToken
+			if err := api.Cache.SetWithTTL(k, token, 30*60); err != nil {
+				log.Error("cannot SetWithTTL: %s: %v", k, err)
+			}
 		}
 
 		if err := group.CheckUserInDefaultGroup(api.mustDB(), u.ID); err != nil {
@@ -611,7 +614,12 @@ func (api *API) loginUserCallbackHandler() service.Handler {
 		}
 
 		var accessToken sdk.AccessToken
-		if !api.Cache.Get("api:loginUserHandler:RequestToken:"+request.RequestToken, &accessToken) {
+		key := "api:loginUserHandler:RequestToken:" + request.RequestToken
+		find, err := api.Cache.Get(key, &accessToken)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", key, err)
+		}
+		if !find {
 			return sdk.ErrNotFound
 		}
 

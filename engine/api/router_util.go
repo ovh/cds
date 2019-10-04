@@ -21,8 +21,12 @@ func (api *API) deleteUserPermissionCache(ctx context.Context, store cache.Store
 		username := deprecatedGetUser(ctx).Username
 		kp := cache.Key("users", username, "perms")
 		kg := cache.Key("users", username, "groups")
-		store.Delete(kp)
-		store.Delete(kg)
+		if err := store.Delete(kp); err != nil {
+			log.Error("error on delete cache perms %v: %v", kp, err)
+		}
+		if err := store.Delete(kg); err != nil {
+			log.Error("error on delete cache groups %v: %v", kg, err)
+		}
 	}
 }
 

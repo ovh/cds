@@ -11,7 +11,10 @@ import (
 func (s *Service) processor(ctx context.Context) error {
 	for {
 		var uuid string
-		s.dao.store.DequeueWithContext(ctx, processorKey, &uuid)
+		if err := s.dao.store.DequeueWithContext(ctx, processorKey, &uuid); err != nil {
+			log.Error("repositories > processor > store.DequeueWithContext err: %v", err)
+			continue
+		}
 		if uuid != "" {
 			op := s.dao.loadOperation(uuid)
 			if err := s.do(*op); err != nil {

@@ -105,7 +105,10 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 	if err := PostRepositoryOperation(ctx, db, *proj, &ope, multipartData); err != nil {
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
-	store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
+	k := cache.Key(CacheOperationKey, ope.UUID)
+	if err := store.SetWithTTL(k, ope, 300); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", k, err)
+	}
 
 	return &ope, nil
 }
@@ -175,7 +178,10 @@ func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, ope *sdk.Operation, wf *sdk.Workflow, u *sdk.User) {
 	counter := 0
 	defer func() {
-		store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
+		k := cache.Key(CacheOperationKey, ope.UUID)
+		if err := store.SetWithTTL(k, ope, 300); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", k, err)
+		}
 	}()
 	for {
 		counter++

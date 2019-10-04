@@ -49,7 +49,12 @@ func SetClient(c *izanami.Client) {
 func GetFeatures(store cache.Store, projectKey string) map[string]bool {
 	projFeats := ProjectFeatures{}
 
-	if store.Get(cacheFeatureKey+projectKey, &projFeats) {
+	k := cacheFeatureKey + projectKey
+	find, err := store.Get(k, &projFeats)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", k, err)
+	}
+	if find {
 		// if missing features, invalidate cache and rebuild data from Izanami
 		var missingFeature bool
 		for _, f := range List() {
@@ -70,7 +75,9 @@ func GetFeatures(store cache.Store, projectKey string) map[string]bool {
 	}
 
 	// no expiration delay is set, the cache is cleared by Izanami calls on /feature/clean
-	store.Set(cacheFeatureKey+projectKey, projFeats)
+	if err := store.Set(cacheFeatureKey+projectKey, projFeats); err != nil {
+		log.Error("unable to cache set %v: %v", cacheFeatureKey+projectKey, err)
+	}
 
 	return projFeats.Features
 }
@@ -108,7 +115,7 @@ func getStatusFromIzanami(featureID string, projectKey string) bool {
 }
 
 // Clean the feature cache
-func Clean(store cache.Store) {
+func Clean(store cache.Store) error {
 	keys := cache.Key(cacheFeatureKey, "*")
-	store.DeleteAll(keys)
+	return store.DeleteAll(keys)
 }
