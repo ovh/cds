@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -123,6 +124,8 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 		store.Client.Close()
 		store.Client = nil
 	}
+
+	event.Initialize(DBConnectionFactory.GetDBMap(), store)
 
 	return DBConnectionFactory.GetDBMap(), store, cancel
 }
