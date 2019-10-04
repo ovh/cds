@@ -363,9 +363,14 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, 
 	// Useful to let models cache in hatchery refresh
 	// FIXME should me managed by worker model package
 	keyWorkerModel := workermodel.KeyBookWorkerModel(modelID)
-	store.UpdateTTL(keyWorkerModel, workermodel.CacheTTLInSeconds+10)
+	if err := store.UpdateTTL(keyWorkerModel, workermodel.CacheTTLInSeconds+10); err != nil {
+		log.Error("cannot UpdateTTL in cache %s: %v", keyWorkerModel, err)
+	}
 	// delete from cache by group
-	store.Delete(cache.Key("api:workermodels:bygroup", fmt.Sprintf("%d", t.GroupID)))
+	keyGroup := cache.Key("api:workermodels:bygroup", fmt.Sprintf("%d", t.GroupID))
+	if err := store.Delete(keyGroup); err != nil {
+		log.Error("error on delete cache key %v: %v", keyGroup, err)
+	}
 
 	return w, nil
 }
@@ -394,7 +399,10 @@ func SetToBuilding(db gorp.SqlExecutor, store cache.Store, workerID string, acti
 
 	_, err := res.RowsAffected()
 	// delete the worker from the cache
-	store.Delete(cache.Key("worker", workerID))
+	key := cache.Key("worker", workerID)
+	if err := store.Delete(key); err != nil {
+		log.Error("setToBuilding> error while delete cache key %v", key)
+	}
 	return err
 }
 

@@ -120,7 +120,9 @@ func StoreXSRFToken(store cache.Store, accessToken sdk.AccessToken) string {
 	log.Debug("accesstoken.StoreXSRFToken")
 	var xsrfToken = sdk.UUID()
 	var k = cache.Key("token", "xsrf", accessToken.ID)
-	store.SetWithTTL(k, &xsrfToken, _XSRFTokenDuration)
+	if err := store.SetWithTTL(k, &xsrfToken, _XSRFTokenDuration); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", k, err)
+	}
 	return xsrfToken
 }
 
@@ -129,7 +131,11 @@ func CheckXSRFToken(store cache.Store, accessToken sdk.AccessToken, xsrfToken st
 	log.Debug("accesstoken.CheckXSRFToken")
 	var expectedXSRFfToken string
 	var k = cache.Key("token", "xsrf", accessToken.ID)
-	if store.Get(k, &expectedXSRFfToken) {
+	find, err := store.Get(k, &expectedXSRFfToken)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", k, err)
+	}
+	if find {
 		return expectedXSRFfToken == xsrfToken
 	}
 	return false

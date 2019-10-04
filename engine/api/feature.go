@@ -10,7 +10,6 @@ import (
 
 func (api *API) cleanFeatureHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		feature.Clean(api.Cache)
-		return nil
+		return feature.Clean(api.Cache)
 	}
 }

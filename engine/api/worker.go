@@ -105,7 +105,9 @@ func (api *API) disableWorkerHandler() service.Handler {
 
 		//Remove the worker from the cache
 		key := cache.Key("worker", id)
-		api.Cache.Delete(key)
+		if err := api.Cache.Delete(key); err != nil {
+			log.Error("disableWorkerHandler> unable to delete cache key %v: %v", key, err)
+		}
 
 		return nil
 	}
@@ -142,7 +144,9 @@ func (api *API) workerCheckingHandler() service.Handler {
 		}
 		key := cache.Key("worker", wk.ID)
 		wk.Status = sdk.StatusChecking
-		api.Cache.Set(key, wk)
+		if err := api.Cache.Set(key, wk); err != nil {
+			log.Error("unable to cache set %v: %v", key, err)
+		}
 
 		return nil
 	}
@@ -170,7 +174,9 @@ func (api *API) workerWaitingHandler() service.Handler {
 		}
 		key := cache.Key("worker", wk.ID)
 		wk.Status = sdk.StatusWaiting
-		api.Cache.Set(key, wk)
+		if err := api.Cache.Set(key, wk); err != nil {
+			log.Error("unable to cache set %v: %v", key, err)
+		}
 
 		return nil
 	}

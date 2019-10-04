@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // PubSub represents a subscriber
@@ -22,28 +23,27 @@ func Key(args ...string) string {
 
 //Store is an interface
 type Store interface {
-	Get(key string, value interface{}) bool
-	Set(key string, value interface{})
-	SetWithTTL(key string, value interface{}, ttl int)
-	UpdateTTL(key string, ttl int)
-	Delete(key string)
-	DeleteAll(key string)
-	Enqueue(queueName string, value interface{})
-	Dequeue(queueName string, value interface{})
-	DequeueWithContext(c context.Context, queueName string, value interface{})
-	QueueLen(queueName string) int
-	RemoveFromQueue(queueName string, memberKey string)
-	Publish(queueName string, value interface{})
-	Subscribe(queueName string) PubSub
+	Get(key string, value interface{}) (bool, error)
+	Set(key string, value interface{}) error
+	SetWithTTL(key string, value interface{}, ttl int) error
+	UpdateTTL(key string, ttl int) error
+	Delete(key string) error
+	DeleteAll(key string) error
+	Enqueue(queueName string, value interface{}) error
+	DequeueWithContext(c context.Context, queueName string, value interface{}) error
+	QueueLen(queueName string) (int, error)
+	RemoveFromQueue(queueName string, memberKey string) error
+	Publish(queueName string, value interface{}) error
+	Subscribe(queueName string) (PubSub, error)
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
 	Status() sdk.MonitoringStatusLine
-	SetAdd(rootKey string, memberKey string, member interface{})
-	SetRemove(rootKey string, memberKey string, member interface{})
-	SetCard(key string) int
+	SetAdd(rootKey string, memberKey string, member interface{}) error
+	SetRemove(rootKey string, memberKey string, member interface{}) error
+	SetCard(key string) (int, error)
 	SetScan(key string, members ...interface{}) error
 	ZScan(key, pattern string) ([]string, error)
-	Lock(key string, expiration time.Duration, retryWaitDurationMillisecond int, retryCount int) bool
-	Unlock(key string)
+	Lock(key string, expiration time.Duration, retryWaitDurationMillisecond int, retryCount int) (bool, error)
+	Unlock(key string) error
 }
 
 //New init a cache
@@ -68,6 +68,8 @@ type writerCloser struct {
 }
 
 func (w *writerCloser) Close() error {
-	w.store.SetWithTTL(w.key, w.String(), w.ttl)
+	if err := w.store.SetWithTTL(w.key, w.String(), w.ttl); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", w.key, err)
+	}
 	return nil
 }

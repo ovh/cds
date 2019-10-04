@@ -112,7 +112,9 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 				Kafka:     &sdk.KafkaTaskExecution{Message: msg.Value},
 			}
 			s.Dao.SaveTaskExecution(&exec)
-			s.Dao.EnqueueTaskExecution(&exec)
+			if err := s.Dao.EnqueueTaskExecution(&exec); err != nil {
+				log.Error("startKafkaHook > error on EnqueueTaskExecution: %v", err)
+			}
 			consumer.MarkOffset(msg, "delivered")
 		}
 	}()

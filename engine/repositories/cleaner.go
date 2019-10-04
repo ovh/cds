@@ -46,7 +46,7 @@ func (s *Service) vacuumStoreCleanerRun() error {
 		}
 		if time.Since(*o.Date) > 24*time.Hour*time.Duration(s.Cfg.OperationRetention) {
 			if err := s.dao.deleteOperation(o); err != nil {
-				log.Error("vacuumStoreCleanerRun> unable to delete operation %s", o.UUID)
+				log.Error("vacuumStoreCleanerRun> unable to delete operation %s: %v", o.UUID, err)
 			}
 		}
 	}
@@ -97,7 +97,9 @@ func (s *Service) vacuumFileSystemCleanerFunc(repoUUID string) error {
 		return err
 	}
 
-	s.dao.deleteLock(repoUUID)
+	if err := s.dao.deleteLock(repoUUID); err != nil {
+		log.Error("unable to deleteLock %v: %v", repoUUID, err)
+	}
 
 	return nil
 }

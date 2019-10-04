@@ -713,7 +713,9 @@ func (a *API) Serve(ctx context.Context) error {
 
 	log.Info("Initializing internal routines...")
 	sdk.GoRoutine(ctx, "maintenance.Subscribe", func(ctx context.Context) {
-		a.listenMaintenance(ctx)
+		if err := a.listenMaintenance(ctx); err != nil {
+			log.Error("error while initializing listen maintenance routine: %s", err)
+		}
 	}, a.PanicDump())
 
 	sdk.GoRoutine(ctx, "workermodel.Initialize", func(ctx context.Context) {

@@ -71,152 +71,122 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 	}, nil
 }
 
-//Get a key from redis
-func (s *RedisStore) Get(key string, value interface{}) bool {
+// Get a key from redis
+func (s *RedisStore) Get(key string, value interface{}) (bool, error) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return false
+		return false, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	val, errRedis := s.Client.Get(key).Result()
 	if errRedis != nil && errRedis != redis.Nil {
-		log.Error("redis>Get> get error %s : %v", key, errRedis)
-		return false
+		return false, sdk.WrapError(errRedis, "redis> get error %s", key)
 	}
 	if val != "" {
 		if err := json.Unmarshal([]byte(val), value); err != nil {
-			log.Error("redis>Get> cannot unmarshal %s :%s", key, err)
-			return false
+			return false, sdk.WrapError(err, "redis> cannot get unmarshal %s", key)
 		}
-		return true
+		return true, nil
 	}
 
-	return false
+	return false, nil
 }
 
-//SetWithTTL a value in local store (0 for eternity)
-func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
+// SetWithTTL a value in local store (0 for eternity)
+func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) error {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 	b, err := json.Marshal(value)
 	if err != nil {
-		log.Warning("redis> error caching %s: %s", key, err)
+		return sdk.WrapError(err, "redis> error caching %s", key)
 	}
 
 	if err := s.Client.Set(key, string(b), time.Duration(ttl)*time.Second).Err(); err != nil {
-		log.Error("redis> set error %s: %v", key, err)
+		return sdk.WrapError(err, "redis> set error %s", key)
 	}
+	return nil
 }
 
-//UpdateTTL update the ttl linked to the key
-func (s *RedisStore) UpdateTTL(key string, ttl int) {
+// UpdateTTL update the ttl linked to the key
+func (s *RedisStore) UpdateTTL(key string, ttl int) error {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	if err := s.Client.Expire(key, time.Duration(ttl)*time.Second).Err(); err != nil {
-		log.Error("redis>UpdateTTL> set error %s: %v", key, err)
+		return sdk.WrapError(err, "redis>UpdateTTL> set error %s", key)
 	}
+	return nil
 }
 
-//Set a value in redis
-func (s *RedisStore) Set(key string, value interface{}) {
-	s.SetWithTTL(key, value, s.ttl)
+// Set a value in redis
+func (s *RedisStore) Set(key string, value interface{}) error {
+	return s.SetWithTTL(key, value, s.ttl)
 }
 
-//Delete a key in redis
-func (s *RedisStore) Delete(key string) {
+// Delete a key in redis
+func (s *RedisStore) Delete(key string) error {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	if err := s.Client.Del(key).Err(); err != nil {
-		log.Error("redis> error deleting %s : %s", key, err)
+		return sdk.WrapError(err, "redis> error deleting %s", key)
 	}
+	return nil
 }
 
-//DeleteAll delete all mathing keys in redis
-func (s *RedisStore) DeleteAll(pattern string) {
+// DeleteAll delete all mathing keys in redis
+func (s *RedisStore) DeleteAll(pattern string) error {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 	keys, err := s.Client.Keys(pattern).Result()
 	if err != nil {
-		log.Warning("redis> Error deleting %s : %s", pattern, err)
-		return
+		return sdk.WrapError(err, "redis> Error deleting %s", pattern)
 	}
 	if len(keys) == 0 {
-		return
+		return nil
 	}
 	if err := s.Client.Del(keys...).Err(); err != nil {
-		log.Warning("redis> Error deleting %s : %s", pattern, err)
+		return sdk.WrapError(err, "redis> Error deleting %s", pattern)
 	}
+	return nil
 }
 
-//Enqueue pushes to queue
-func (s *RedisStore) Enqueue(queueName string, value interface{}) {
+// Enqueue pushes to queue
+func (s *RedisStore) Enqueue(queueName string, value interface{}) error {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 	b, err := json.Marshal(value)
 	if err != nil {
-		log.Warning("redis> Error queueing %s:%s", queueName, err)
+		return sdk.WrapError(err, "error queueing %s:%s", queueName, err)
 	}
 	if err := s.Client.LPush(queueName, string(b)).Err(); err != nil {
-		log.Warning("redis> Error while LPUSH to %s: %s", queueName, err)
+		return sdk.WrapError(err, "error while LPUSH to %s: %s", queueName, err)
 	}
+	return nil
 }
 
-//Dequeue gets from queue This is blocking while there is nothing in the queue
-func (s *RedisStore) Dequeue(queueName string, value interface{}) {
+// QueueLen returns the length of a queue
+func (s *RedisStore) QueueLen(queueName string) (int, error) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		return 0, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
-read:
-	res, err := s.Client.BRPop(0, queueName).Result()
-	if err != nil {
-		log.Warning("redis> Error dequeueing %s:%s", queueName, err)
-		if err == io.EOF {
-			time.Sleep(1 * time.Second)
-			goto read
-		}
-	}
-	if len(res) != 2 {
-		return
-	}
-	if err := json.Unmarshal([]byte(res[1]), value); err != nil {
-		log.Warning("redis> Cannot unmarshal %s :%s", queueName, err)
-	}
-}
-
-//QueueLen returns the length of a queue
-func (s *RedisStore) QueueLen(queueName string) int {
-	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return 0
-	}
-
 	var errRedis error
 	var res int64
 	res, errRedis = s.Client.LLen(queueName).Result()
 	if errRedis != nil {
-		log.Warning("redis> Cannot read %s :%s", queueName, errRedis)
+		return 0, sdk.WrapError(errRedis, "redis> Cannot read %s", queueName)
 	}
-	return int(res)
+	return int(res), nil
 }
 
-//DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
-func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, value interface{}) {
+// DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
+func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, value interface{}) error {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	var elem string
@@ -237,34 +207,32 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 				break
 			}
 		case <-c.Done():
-			return
+			return nil
 		}
 	}
 	if elem != "" {
 		b := []byte(elem)
 		if err := json.Unmarshal(b, value); err != nil {
-			log.Error("redis.DequeueWithContext> error on unmarshal value on queue:%s err:%v", queueName, err)
+			return sdk.WrapError(err, "redis.DequeueWithContext> error on unmarshal value on queue:%s", queueName)
 		}
 	}
+	return nil
 }
 
 // Publish a msg in a channel
-func (s *RedisStore) Publish(channel string, value interface{}) {
+func (s *RedisStore) Publish(channel string, value interface{}) error {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return
+		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	msg, err := json.Marshal(value)
 	if err != nil {
-		log.Warning("redis.Publish> Marshall error, cannot push in channel %s: %v", channel, err)
-		return
+		return sdk.WrapError(err, "redis.Publish> Marshall error, cannot push in channel %s", channel)
 	}
 
 	iUnquoted, err := strconv.Unquote(string(msg))
 	if err != nil {
-		log.Warning("redis.Publish> Unquote error, cannot push in channel %s: %v", channel, err)
-		return
+		return sdk.WrapError(err, "redis.Publish> Unquote error, cannot push in channel %s", channel)
 	}
 
 	for i := 0; i < 10; i++ {
@@ -275,22 +243,21 @@ func (s *RedisStore) Publish(channel string, value interface{}) {
 		log.Warning("redis.Publish> Unable to publish in channel %s: %v", channel, errP)
 		time.Sleep(100 * time.Millisecond)
 	}
+	return nil
 }
 
 // Subscribe to a channel
-func (s *RedisStore) Subscribe(channel string) PubSub {
+func (s *RedisStore) Subscribe(channel string) (PubSub, error) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return nil
+		return nil, fmt.Errorf("redis> cannot get redis client")
 	}
-	return s.Client.Subscribe(channel)
+	return s.Client.Subscribe(channel), nil
 }
 
 // GetMessageFromSubscription from a redis PubSub
 func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (string, error) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return "", nil
+		return "", sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
 
 	rps, ok := pb.(*redis.PubSub)
@@ -336,28 +303,37 @@ func (s *RedisStore) Status() sdk.MonitoringStatusLine {
 }
 
 // RemoveFromQueue removes a member from a list
-func (s *RedisStore) RemoveFromQueue(rootKey string, memberKey string) {
-	s.Client.LRem(rootKey, 0, memberKey)
+func (s *RedisStore) RemoveFromQueue(rootKey string, memberKey string) error {
+	if err := s.Client.LRem(rootKey, 0, memberKey).Err(); err != nil {
+		return sdk.WrapError(err, "error on RemoveFromQueue: rooKey:%v memberKey:%v", rootKey, memberKey)
+	}
+	return nil
 }
 
 // SetAdd add a member (identified by a key) in the cached set
-func (s *RedisStore) SetAdd(rootKey string, memberKey string, member interface{}) {
-	s.Client.ZAdd(rootKey, redis.Z{
+func (s *RedisStore) SetAdd(rootKey string, memberKey string, member interface{}) error {
+	err := s.Client.ZAdd(rootKey, redis.Z{
 		Member: memberKey,
 		Score:  float64(time.Now().UnixNano()),
-	})
-	s.SetWithTTL(Key(rootKey, memberKey), member, -1)
+	}).Err()
+	if err != nil {
+		return sdk.WrapError(err, "error on SetAdd")
+	}
+	return s.SetWithTTL(Key(rootKey, memberKey), member, -1)
 }
 
 // SetRemove removes a member from a set
-func (s *RedisStore) SetRemove(rootKey string, memberKey string, member interface{}) {
-	s.Client.ZRem(rootKey, memberKey)
-	s.Delete(Key(rootKey, memberKey))
+func (s *RedisStore) SetRemove(rootKey string, memberKey string, member interface{}) error {
+	if err := s.Client.ZRem(rootKey, memberKey).Err(); err != nil {
+		return sdk.WrapError(err, "error on SetRemove")
+	}
+	return s.Delete(Key(rootKey, memberKey))
 }
 
 // SetCard returns the cardinality of a ZSet
-func (s *RedisStore) SetCard(key string) int {
-	return int(s.Client.ZCard(key).Val())
+func (s *RedisStore) SetCard(key string) (int, error) {
+	v := s.Client.ZCard(key)
+	return int(v.Val()), v.Err()
 }
 
 // SetScan scans a ZSet
@@ -391,16 +367,14 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 				// but try to delete the member from the Redis ZSET
 				log.Error("redis>SetScan member %s not found", keys[i])
 				if err := s.Client.ZRem(key, values[i]).Err(); err != nil {
-					log.Error("redis>SetScan unable to delete member %s", keys[i])
-					return err
+					return sdk.WrapError(err, "redis>SetScan unable to delete member %s", keys[i])
 				}
 				log.Info("redis> member %s deleted", keys[i])
-				return fmt.Errorf("SetScan member %s not found", keys[i])
+				return sdk.WithStack(fmt.Errorf("SetScan member %s not found", keys[i]))
 			}
 
 			if err := json.Unmarshal([]byte(res[i].(string)), members[i]); err != nil {
-				log.Warning("redis> cannot unmarshal %s :%s", keys[i], err)
-				return err
+				return sdk.WrapError(err, "redis> cannot unmarshal %s", keys[i])
 			}
 		}
 	}
@@ -416,7 +390,7 @@ func (s *RedisStore) ZScan(key, pattern string) ([]string, error) {
 	return keys, nil
 }
 
-func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMillisecond int, retryCount int) bool {
+func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMillisecond int, retryCount int) (bool, error) {
 	var errRedis error
 	var res bool
 	if retrywdMillisecond == -1 {
@@ -432,12 +406,10 @@ func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMilliseco
 		}
 		time.Sleep(time.Duration(retrywdMillisecond) * time.Millisecond)
 	}
-	if errRedis != nil {
-		log.Error("redis> set error %s: %v", key, errRedis)
-	}
-	return res
+	return res, sdk.WrapError(errRedis, "redis> set error %s", key)
 }
 
-func (s *RedisStore) Unlock(key string) {
-	s.Delete(key)
+// Unlock deletes a key from cache
+func (s *RedisStore) Unlock(key string) error {
+	return s.Delete(key)
 }

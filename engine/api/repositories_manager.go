@@ -90,7 +90,10 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			data["auth_type"] = "basic"
 		}
 
-		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
+		keyr := cache.Key("reposmanager", "oauth", token)
+		if err := api.Cache.Set(keyr, data); err != nil {
+			log.Error("unable to cache set %v: %v", keyr, err)
+		}
 		return service.WriteJSON(w, data, http.StatusOK)
 	}
 }
@@ -111,7 +114,12 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 
 		data := map[string]string{}
 
-		if !api.Cache.Get(cache.Key("reposmanager", "oauth", state), &data) {
+		key := cache.Key("reposmanager", "oauth", state)
+		find, err := api.Cache.Get(key, &data)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", key, err)
+		}
+		if !find {
 			return sdk.WrapError(sdk.ErrForbidden, "repositoriesManagerAuthorizeCallback> Error")
 		}
 		projectKey := data["project_key"]
@@ -395,14 +403,22 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 
 		cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
 		if sync {
-			api.Cache.Delete(cacheKey)
+			if err := api.Cache.Delete(cacheKey); err != nil {
+				log.Error("getReposFromRepositoriesManagerHandler> error on delete cache key %v: %s", cacheKey, err)
+			}
 		}
 
 		var repos []sdk.VCSRepo
-		if !api.Cache.Get(cacheKey, &repos) || len(repos) == 0 {
+		find, err := api.Cache.Get(cacheKey, &repos)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", cacheKey, err)
+		}
+		if !find || len(repos) == 0 {
 			var errRepos error
 			repos, errRepos = client.Repos(ctx)
-			api.Cache.SetWithTTL(cacheKey, repos, 0)
+			if err := api.Cache.SetWithTTL(cacheKey, repos, 0); err != nil {
+				log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+			}
 			if errRepos != nil {
 				return sdk.WrapError(errRepos, "getReposFromRepositoriesManagerHandler> Cannot get repos: %v", errRepos)
 			}

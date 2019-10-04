@@ -45,7 +45,9 @@ func (api *API) postWorkerModelHandler() service.Handler {
 		}
 
 		key := cache.Key("api:workermodels:*")
-		api.Cache.DeleteAll(key)
+		if err := api.Cache.DeleteAll(key); err != nil {
+			return err
+		}
 
 		// reload complete worker model
 		new, err := workermodel.LoadByID(api.mustDB(), model.ID)
@@ -111,7 +113,9 @@ func (api *API) putWorkerModelHandler() service.Handler {
 		}
 
 		key := cache.Key("api:workermodels:*")
-		api.Cache.DeleteAll(key)
+		if err := api.Cache.DeleteAll(key); err != nil {
+			return err
+		}
 
 		new, err := workermodel.LoadByID(api.mustDB(), model.ID)
 		if err != nil {
@@ -155,9 +159,7 @@ func (api *API) deleteWorkerModelHandler() service.Handler {
 		}
 
 		key := cache.Key("api:workermodels:*")
-		api.Cache.DeleteAll(key)
-
-		return nil
+		return api.Cache.DeleteAll(key)
 	}
 }
 

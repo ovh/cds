@@ -25,8 +25,8 @@ type gerritTaskInfo struct {
 }
 
 // RegisterGerritRepoHook register hook on gerrit repository
-func (d *dao) RegisterGerritRepoHook(vcsServer string, repo string, g gerritTaskInfo) {
-	d.store.SetAdd(cache.Key(gerritRepoKey, vcsServer, repo), g.UUID, g)
+func (d *dao) RegisterGerritRepoHook(vcsServer string, repo string, g gerritTaskInfo) error {
+	return d.store.SetAdd(cache.Key(gerritRepoKey, vcsServer, repo), g.UUID, g)
 }
 
 func (d *dao) RemoveGerritRepoHook(vcsServer string, repo string, g gerritTaskInfo) {
@@ -36,7 +36,10 @@ func (d *dao) RemoveGerritRepoHook(vcsServer string, repo string, g gerritTaskIn
 // FindGerritTasksByRepo get all gerrit hooks on the given repository
 func (d *dao) FindGerritTasksByRepo(vcsServer string, repo string) ([]gerritTaskInfo, error) {
 	key := cache.Key(gerritRepoKey, vcsServer, repo)
-	nbGerritHooks := d.store.SetCard(key)
+	nbGerritHooks, err := d.store.SetCard(key)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to setCard %v", key)
+	}
 
 	hooks := make([]*gerritTaskInfo, nbGerritHooks)
 	for i := 0; i < nbGerritHooks; i++ {
@@ -214,7 +217,9 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 				s.Dao.SaveTaskExecution(exec)
 
 				//Push the webhook execution in the queue, so it will be executed
-				s.Dao.EnqueueTaskExecution(exec)
+				if err := s.Dao.EnqueueTaskExecution(exec); err != nil {
+					log.Error("ComputeGerritStreamEvent > error on EnqueueTaskExecution %v", err)
+				}
 			}
 		}
 	}

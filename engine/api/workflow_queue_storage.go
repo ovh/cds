@@ -262,7 +262,11 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 		cacheKey := cache.Key("workflows:artifacts", art.GetPath(), art.GetName())
 		cachedArt := sdk.WorkflowNodeRunArtifact{}
-		if !api.Cache.Get(cacheKey, &cachedArt) {
+		find, err := api.Cache.Get(cacheKey, &cachedArt)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", cacheKey, err)
+		}
+		if !find {
 			return sdk.WrapError(sdk.ErrNotFound, "postWorkflowJobArtifactWithTempURLCallbackHandler> Unable to find artifact, key:%s", cacheKey)
 		}
 
@@ -370,7 +374,10 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		art.TempURLSecretKey = key
 
 		cacheKey := cache.Key("workflows:artifacts", art.GetPath(), art.GetName())
-		api.Cache.SetWithTTL(cacheKey, art, 60*60) //Put this in cache for 1 hour
+		//Put this in cache for 1 hour
+		if err := api.Cache.SetWithTTL(cacheKey, art, 60*60); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+		}
 
 		return service.WriteJSON(w, art, http.StatusOK)
 	}

@@ -45,7 +45,10 @@ func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				g.Cache.Get(cache.Key("vcs", "github", "repos", g.OAuthToken, "/user/repos"), &repos)
+				k := cache.Key("vcs", "github", "repos", g.OAuthToken, "/user/repos")
+				if _, err := g.Cache.Get(k, &repos); err != nil {
+					log.Error("cannot get from cache %s: %v", k, err)
+				}
 				if len(repos) != 0 || attempt > 5 {
 					//We found repos, let's exit the loop
 					break
@@ -68,7 +71,10 @@ func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("vcs", "github", "repos", g.OAuthToken, "/user/repos"), repos, 61*60)
+	k := cache.Key("vcs", "github", "repos", g.OAuthToken, "/user/repos")
+	if err := g.Cache.SetWithTTL(k, repos, 61*60); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", k, err)
+	}
 
 	responseRepos := []sdk.VCSRepo{}
 	for _, repo := range repos {
@@ -126,14 +132,20 @@ func (g *githubClient) repoByFullname(fullname string) (Repository, error) {
 	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
-		g.Cache.Get(cache.Key("vcs", "github", "repo", g.OAuthToken, url), &repo)
+		k := cache.Key("vcs", "github", "repo", g.OAuthToken, url)
+		if _, err := g.Cache.Get(k, &repo); err != nil {
+			log.Error("cannot get from cache %s: %v", k, err)
+		}
 	} else {
 		if err := json.Unmarshal(body, &repo); err != nil {
 			log.Warning("githubClient.Repos> Unable to parse github repository: %s", err)
 			return Repository{}, err
 		}
 		//Put the body on cache for one hour and one minute
-		g.Cache.SetWithTTL(cache.Key("vcs", "github", "repo", g.OAuthToken, url), repo, 61*60)
+		k := cache.Key("vcs", "github", "repo", g.OAuthToken, url)
+		if err := g.Cache.SetWithTTL(k, repo, 61*60); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", k, err)
+		}
 	}
 
 	return repo, nil

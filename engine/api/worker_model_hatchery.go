@@ -61,7 +61,9 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 		}
 
 		key := cache.Key("api:workermodels:*")
-		api.Cache.DeleteAll(key)
+		if err := api.Cache.DeleteAll(key); err != nil {
+			return err
+		}
 		workermodel.UnbookForRegister(api.Cache, workerModelID)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
