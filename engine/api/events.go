@@ -238,6 +238,10 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 }
 
 func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
+	if strings.HasPrefix(event.EventType, "sdk.EventMaintenance") {
+		return true
+	}
+
 	var isSharedInfra bool
 	for _, g := range client.User.Groups {
 		if g.ID == group.SharedInfraGroup.ID {
