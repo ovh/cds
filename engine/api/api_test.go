@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/sdk"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -33,6 +34,14 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 	}
 	api.InitRouter()
 	event.Initialize(db, api.Cache)
+	api.eventsBroker = &eventsBroker{
+		router:   api.Router,
+		cache:    api.Cache,
+		clients:  make(map[string]*eventsBrokerSubscribe),
+		dbFunc:   api.DBConnectionFactory.GetDBMap,
+		messages: make(chan sdk.Event),
+	}
+	api.eventsBroker.Init(context.Background(), api.PanicDump())
 	f := func() {
 		cancel()
 		end()
