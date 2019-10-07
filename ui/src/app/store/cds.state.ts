@@ -1,7 +1,6 @@
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
 import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 import { GetCDSStatus, UpdateMaintenance } from 'app/store/cds.action';
-import { tap } from 'rxjs/operators';
 
 
 export class CDSStateModel {

@@ -1,12 +1,13 @@
 import { registerLocaleData } from '@angular/common';
 import localeEN from '@angular/common/locales/en';
 import localeFR from '@angular/common/locales/fr';
-import { AfterViewInit, Component, ElementRef, NgZone, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, NgZone, OnInit, ViewChild } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { GetCDSStatus } from 'app/store/cds.action';
+import { CDSState } from 'app/store/cds.state';
 import { Observable } from 'rxjs';
 import { bufferTime, filter, map, mergeMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
@@ -23,7 +24,6 @@ import { ToastService } from './shared/toast/ToastService';
 import { CDSSharedWorker } from './shared/worker/shared.worker';
 import { CDSWebWorker } from './shared/worker/web.worker';
 import { CDSWorker } from './shared/worker/worker';
-import { CDSState } from 'app/store/cds.state';
 
 declare var PACMAN: any;
 
@@ -156,7 +156,7 @@ export class AppComponent implements OnInit {
             if (!this.maintenance && m.maintenance && !this.gameInit) {
                 setTimeout(() => {
                     this.gameInit = true;
-                    PACMAN.init(this.eltGamification.nativeElement, "/assets/js/");
+                    PACMAN.init(this.eltGamification.nativeElement, '/assets/js/');
                 }, 1000);
             }
             this.maintenance = m.maintenance;

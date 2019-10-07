@@ -5,11 +5,11 @@ import { NgxsLoggerPluginModule } from '@ngxs/logger-plugin';
 import { NgxsModule } from '@ngxs/store';
 import { SharedModule } from 'app/shared/shared.module';
 import { ApplicationsState } from 'app/store/applications.state';
+import { CDSState } from 'app/store/cds.state';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { environment as env } from '../../environments/environment';
 import { ProjectState } from './project.state';
 import { WorkflowState } from './workflow.state';
-import { CDSState } from 'app/store/cds.state';
 
 
 @NgModule({
