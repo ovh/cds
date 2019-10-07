@@ -1,5 +1,8 @@
 <div class="conditions ui form">
     <ng-container *ngIf="hook != null">
+        <div class="ui info message">
+            <p>{{'workflow_run_conditions_hook' | translate}}</p>
+        </div>
         <app-conditions [project]="project" [readonly]="readonly" [triggerConditions]="triggerConditions"
             [(conditions)]="editableHook.conditions" (conditionsChange)="pushChange($event)">
         </app-conditions>
