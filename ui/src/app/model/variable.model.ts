@@ -27,3 +27,15 @@ export class VariableAudit {
     versionned: Date;
     author; string;
 }
+
+export let GitVariables = [
+    'git.repository',
+    'git.branch',
+    'git.message',
+    'git.author',
+    'git.hash',
+    'git.hash.short',
+    'git.url',
+    'git.http_url',
+    'git.server'
+];

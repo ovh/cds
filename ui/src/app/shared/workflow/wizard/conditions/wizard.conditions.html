@@ -1,7 +1,14 @@
 <div class="conditions ui form">
-    <app-conditions [project]="project" [readonly]="readonly" [triggerConditions]="triggerConditions"
-        [(conditions)]="editableNode.context.conditions" (conditionsChange)="pushChange($event)">
-    </app-conditions>
+    <ng-container *ngIf="hook != null">
+        <app-conditions [project]="project" [readonly]="readonly" [triggerConditions]="triggerConditions"
+            [(conditions)]="editableHook.conditions" (conditionsChange)="pushChange($event)">
+        </app-conditions>
+    </ng-container>
+    <ng-container *ngIf="hook == null">
+        <app-conditions [project]="project" [readonly]="readonly" [triggerConditions]="triggerConditions"
+            [(conditions)]="editableNode.context.conditions" (conditionsChange)="pushChange($event)">
+        </app-conditions>
+    </ng-container>
 
     <button class="ui right floated green button" (click)="updateWorkflow()" *ngIf="!readonly" [class.loading]="loading"
         [disabled]="loading">
