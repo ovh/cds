@@ -17,6 +17,7 @@ type NodeHook struct {
 	HookModelID   int64                  `json:"hook_model_id" db:"hook_model_id"`
 	HookModelName string                 `json:"hook_model_name" db:"-"`
 	Config        WorkflowNodeHookConfig `json:"config" db:"-"`
+	Conditions    WorkflowNodeConditions `json:"conditions" db:"-"`
 }
 
 //Equals checks functionnal equality between two hooks

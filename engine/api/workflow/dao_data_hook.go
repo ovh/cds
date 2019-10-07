@@ -78,11 +78,17 @@ func LoadAllHooks(db gorp.SqlExecutor) ([]sdk.NodeHook, error) {
 }
 
 func (h *dbNodeHookData) PostGet(db gorp.SqlExecutor) error {
-	var configS string
-	if err := db.SelectOne(&configS, "select config from w_node_hook where id = $1", h.ID); err != nil {
+	res := struct {
+		Config     string         `db:"config"`
+		Conditions sql.NullString `db:"conditions"`
+	}{}
+	if err := db.SelectOne(&res, "select config, conditions from w_node_hook where id = $1", h.ID); err != nil {
 		return sdk.WithStack(err)
 	}
-	if err := json.Unmarshal([]byte(configS), &h.Config); err != nil {
+	if err := json.Unmarshal([]byte(res.Config), &h.Config); err != nil {
+		return sdk.WithStack(err)
+	}
+	if err := gorpmapping.JSONNullString(res.Conditions, &h.Conditions); err != nil {
 		return sdk.WithStack(err)
 	}
 	return nil
@@ -118,8 +124,13 @@ func (h *dbNodeHookData) PostUpdate(db gorp.SqlExecutor) error {
 		return sdk.WrapError(errC, "dbNodeHookData.PostUpdate> Unable to marshall config")
 	}
 
-	if _, err := db.Exec("UPDATE w_node_hook SET config = $1 WHERE id = $2", config, h.ID); err != nil {
-		return sdk.WrapError(err, "dbNodeHookData.PostUpdate> Unable to update config")
+	conditions, errCond := gorpmapping.JSONToNullString(h.Conditions)
+	if errCond != nil {
+		return sdk.WrapError(errCond, "Unable to marshall hook conditions")
+	}
+
+	if _, err := db.Exec("UPDATE w_node_hook SET config = $1, conditions = $2 WHERE id = $3", config, conditions, h.ID); err != nil {
+		return sdk.WrapError(err, "dbNodeHookData.PostUpdate> Unable to update config and conditions")
 	}
 	return nil
 }
