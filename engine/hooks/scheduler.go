@@ -229,6 +229,12 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		}
 		log.Debug("Hooks> dequeueTaskExecutions> current queue size: %d", size)
 
+		if s.Maintenance {
+			log.Info("Maintenance enable, wait 1 minute")
+			time.Sleep(1 * time.Minute)
+			continue
+		}
+
 		// Dequeuing context
 		var taskKey string
 		if err := s.Cache.DequeueWithContext(c, schedulerQueueKey, &taskKey); err != nil {
