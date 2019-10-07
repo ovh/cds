@@ -307,6 +307,13 @@ func TestManualRun3(t *testing.T) {
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
+	// Remove all job in queue
+	filterClean := workflow.NewQueueFilter()
+	nrj, _ := workflow.LoadNodeJobRunQueue(context.TODO(), db, cache, filterClean)
+	for _, j := range nrj {
+		_ = workflow.DeleteNodeJobRuns(db, j.WorkflowNodeRunID)
+	}
+
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
 	ctx := context.Background()
@@ -553,6 +560,7 @@ queueRun:
 
 	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter3, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)).ToIDs())
 	require.NoError(t, err)
+	require.True(t, len(jobs) > 0)
 
 	for i := range jobs {
 		j := &jobs[i]
