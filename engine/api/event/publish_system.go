@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fatih/structs"
+
 	"github.com/ovh/cds/sdk"
 )
 
@@ -17,5 +18,5 @@ func PublishMaintenanceEvent(payload interface{}) {
 		EventType: fmt.Sprintf("%T", payload),
 		Payload:   structs.Map(payload),
 	}
-	publishEvent(event)
+	_ = publishEvent(event)
 }
