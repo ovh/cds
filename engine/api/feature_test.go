@@ -32,7 +32,7 @@ func newTestAPIWithIzanamiToken(t *testing.T, token string, bootstrapFunc ...tes
 		Cache:               cache,
 	}
 	api.Config.Features.Izanami.Token = token
-	api.InitRouter()
+	api.InitRouter(router.Background)
 	f := func() {
 		cancel()
 		end()
