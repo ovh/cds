@@ -57,6 +57,7 @@ export class AppComponent implements OnInit {
 
     @ViewChild('gamification', {static: false})
     eltGamification: ElementRef;
+    gameInit: boolean;
 
     constructor(
         _translate: TranslateService,
@@ -152,8 +153,9 @@ export class AppComponent implements OnInit {
 
         this.cdsstateSub = this._store.select(CDSState.getCurrentState()).subscribe( m => {
             // Switch maintenance ON
-            if (!this.maintenance && m.maintenance) {
+            if (!this.maintenance && m.maintenance && !this.gameInit) {
                 setTimeout(() => {
+                    this.gameInit = true;
                     PACMAN.init(this.eltGamification.nativeElement, "/assets/js/");
                 }, 1000);
             }
