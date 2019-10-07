@@ -18,6 +18,9 @@ import (
 func (api *API) postMaintenanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		enable := FormString(r, "enable")
+		if err := api.Cache.Set(sdk.MaintenanceAPIKey, enable); err != nil {
+			return err
+		}
 		return api.Cache.Publish(sdk.MaintenanceQueueName, enable)
 	}
 }
