@@ -2,11 +2,9 @@ package workflow
 
 import (
 	"database/sql"
-	"encoding/json"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -62,9 +60,6 @@ func LoadAllHooks(db gorp.SqlExecutor) ([]sdk.NodeHook, error) {
 
 	nodes := make([]sdk.NodeHook, 0, len(res))
 	for i := range res {
-		if err := res[i].PostGet(db); err != nil {
-			return nil, err
-		}
 		for _, m := range models {
 			if res[i].HookModelID == m.ID {
 				res[i].HookModelName = m.Name
@@ -75,23 +70,6 @@ func LoadAllHooks(db gorp.SqlExecutor) ([]sdk.NodeHook, error) {
 	}
 
 	return nodes, nil
-}
-
-func (h *dbNodeHookData) PostGet(db gorp.SqlExecutor) error {
-	res := struct {
-		Config     string         `db:"config"`
-		Conditions sql.NullString `db:"conditions"`
-	}{}
-	if err := db.SelectOne(&res, "select config, conditions from w_node_hook where id = $1", h.ID); err != nil {
-		return sdk.WithStack(err)
-	}
-	if err := json.Unmarshal([]byte(res.Config), &h.Config); err != nil {
-		return sdk.WithStack(err)
-	}
-	if err := gorpmapping.JSONNullString(res.Conditions, &h.Conditions); err != nil {
-		return sdk.WithStack(err)
-	}
-	return nil
 }
 
 func insertNodeHookData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
@@ -108,29 +86,6 @@ func insertNodeHookData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error
 			return sdk.WrapError(err, "insertNodeHookData> Unable to insert workflow node hook")
 		}
 		h.ID = dbHook.ID
-	}
-	return nil
-}
-
-// PostInsert is a db hook
-func (h *dbNodeHookData) PostInsert(db gorp.SqlExecutor) error {
-	return h.PostUpdate(db)
-}
-
-// PostUpdate is a db hook
-func (h *dbNodeHookData) PostUpdate(db gorp.SqlExecutor) error {
-	config, errC := gorpmapping.JSONToNullString(h.Config)
-	if errC != nil {
-		return sdk.WrapError(errC, "dbNodeHookData.PostUpdate> Unable to marshall config")
-	}
-
-	conditions, errCond := gorpmapping.JSONToNullString(h.Conditions)
-	if errCond != nil {
-		return sdk.WrapError(errCond, "Unable to marshall hook conditions")
-	}
-
-	if _, err := db.Exec("UPDATE w_node_hook SET config = $1, conditions = $2 WHERE id = $3", config, conditions, h.ID); err != nil {
-		return sdk.WrapError(err, "dbNodeHookData.PostUpdate> Unable to update config and conditions")
 	}
 	return nil
 }
