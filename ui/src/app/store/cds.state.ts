@@ -41,13 +41,13 @@ export class CDSState {
 
     @Action(GetCDSStatus)
     getCDSStatus(ctx: StateContext<CDSStateModel>, _: GetCDSStatus) {
-        this._monitoringService.getStatus().pipe(tap((status) => {
-            let maintenance = status.lines.find(m => {
+        this._monitoringService.getStatus().subscribe(s => {
+            let maintenance = s.lines.find(m => {
                 if (m.component === 'Global/Maintenance') {
                     return m
                 }
             }).value;
             ctx.dispatch(new UpdateMaintenance(maintenance === 'true'));
-        }));
+        });
     }
 }

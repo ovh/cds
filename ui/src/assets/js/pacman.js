@@ -7,6 +7,7 @@
  * fix what happens when a ghost is eaten (should go back to base)
  * do proper ghost mechanics (blinky/wimpy etc)
  */
+
 var NONE        = 4,
     UP          = 3,
     LEFT        = 2,
@@ -586,7 +587,10 @@ Pacman.Map = function (size) {
     }
 
     function reset() {
-        map    = Pacman.MAP.clone();
+        map    = [];
+        Pacman.MAP.forEach(m => {
+            map.push([...m]);
+        });
         height = map.length;
         width  = map[0].length;
     };
@@ -1251,18 +1255,3 @@ Pacman.WALLS = [
         {"line": [11.5, 10]}, {"curve": [11.5, 9.5, 11, 9.5]},
         {"line": [10.5, 9.5]}]
 ];
-
-Object.prototype.clone = function () {
-    var i, newObj = (this instanceof Array) ? [] : {};
-    for (i in this) {
-        if (i === 'clone') {
-            continue;
-        }
-        if (this[i] && typeof this[i] === "object") {
-            newObj[i] = this[i].clone();
-        } else {
-            newObj[i] = this[i];
-        }
-    }
-    return newObj;
-};
