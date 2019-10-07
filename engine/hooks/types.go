@@ -16,10 +16,11 @@ const (
 // Service is the stuct representing a hooks µService
 type Service struct {
 	service.Common
-	Cfg    Configuration
-	Router *api.Router
-	Cache  cache.Store
-	Dao    dao
+	Cfg         Configuration
+	Router      *api.Router
+	Cache       cache.Store
+	Dao         dao
+	Maintenance bool
 }
 
 // Configuration is the hooks configuration structure

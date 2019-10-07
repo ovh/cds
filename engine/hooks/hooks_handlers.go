@@ -653,3 +653,23 @@ func (s *Service) postStopTaskExecutionHandler() service.Handler {
 		return nil
 	}
 }
+
+func (s *Service) postMaintenanceHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Get the UUID of the task from the URL
+		enableS := api.FormString(r, "enable")
+		enable, err := strconv.ParseBool(enableS)
+		if err != nil {
+			return sdk.WrapError(err, "unable to parse maintenance params")
+		}
+
+		if err := s.Dao.store.Set(MaintenanceHookKey, enable); err != nil {
+			return sdk.WrapError(err, "unable to save maintenance state")
+		}
+		if err := s.Dao.store.Publish(MaintenanceHookQueue, enable); err != nil {
+			return sdk.WrapError(err, "unable to publish maintenance state")
+		}
+		s.Maintenance = enable
+		return nil
+	}
+}
