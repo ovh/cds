@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/ovh/cds/engine/service"
@@ -37,7 +36,7 @@ func (api *API) InitRouter() {
 		dbFunc:   api.DBConnectionFactory.GetDBMap,
 		messages: make(chan sdk.Event),
 	}
-	api.eventsBroker.Init(context.Background(), api.PanicDump())
+	api.eventsBroker.Init(r.Background, api.PanicDump())
 
 	// Auth
 	r.Handle("/auth/driver", ScopeNone(), r.GET(api.getAuthDriversHandler, Auth(false)))
