@@ -18,10 +18,10 @@ import (
 func (api *API) postMaintenanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		enable := FormString(r, "enable")
-		api.Cache.Publish(sdk.MaintenanceQueueName, enable)
-		return nil
+		return api.Cache.Publish(sdk.MaintenanceQueueName, enable)
 	}
 }
+
 func (api *API) adminTruncateWarningsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if _, err := api.mustDB().Exec("delete from warning"); err != nil {

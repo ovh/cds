@@ -56,7 +56,11 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 		case <-c.Done():
 			return c.Err()
 		case <-tick.C:
-			size := s.Dao.QueueLen()
+			size, err := s.Dao.QueueLen()
+			if err != nil {
+				log.Error("Hooks> retryTaskExecutionsRoutine > Unable to get queueLen: %v", err)
+				continue
+			}
 			if size > 20 {
 				log.Warning("Hooks> too many tasks in scheduler for now, skipped this retry ticker. size:%d", size)
 				continue
@@ -84,18 +88,24 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 							continue
 						}
 						log.Warning("Hooks> retryTaskExecutionsRoutine > Enqueing very old hooks %s %d/%d type:%s status:%s timestamp:%d err:%v", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
-						s.Dao.EnqueueTaskExecution(&e)
+						if err := s.Dao.EnqueueTaskExecution(&e); err != nil {
+							log.Error("Hooks> retryTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
+						}
 					}
 					if e.NbErrors < s.Cfg.RetryError && e.LastError != "" {
 						// avoid re-enqueue if the lastError is about a git branch not found
 						// the branch was deleted from git repository, it will never work
 						if strings.Contains(e.LastError, "branchName parameter must be provided") {
 							log.Warning("Hooks> retryTaskExecutionsRoutine > Do not re-enqueue this taskExecution with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
-							s.Dao.DeleteTaskExecution(&e)
+							if err := s.Dao.DeleteTaskExecution(&e); err != nil {
+								log.Error("Hooks> retryTaskExecutionsRoutine > error on DeleteTaskExecution: %v", err)
+							}
 							continue
 						}
 						log.Warning("Hooks> retryTaskExecutionsRoutine > Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
-						s.Dao.EnqueueTaskExecution(&e)
+						if err := s.Dao.EnqueueTaskExecution(&e); err != nil {
+							log.Error("Hooks> retryTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
+						}
 						continue
 					}
 				}
@@ -131,12 +141,16 @@ func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error
 						// this will avoid to re-enqueue the same scheduled task execution if the dequeue take more than 30s (ticker of this goroutine)
 						if alreadyEnqueued {
 							log.Info("Hooks> enqueueScheduledTaskExecutionsRoutine > task execution already enqueued for this task %s of type %s- delete it", e.UUID, e.Type)
-							s.Dao.DeleteTaskExecution(&e)
+							if err := s.Dao.DeleteTaskExecution(&e); err != nil {
+								log.Error("Hooks> enqueueScheduledTaskExecutionsRoutine > error on DeleteTaskExecution: %v", err)
+							}
 						} else {
 							e.Status = ""
 							s.Dao.SaveTaskExecution(&e)
 							log.Info("Hooks> enqueueScheduledTaskExecutionsRoutine > Enqueing %s task %s:%d", e.Type, e.UUID, e.Timestamp)
-							s.Dao.EnqueueTaskExecution(&e)
+							if err := s.Dao.EnqueueTaskExecution(&e); err != nil {
+								log.Error("Hooks> enqueueScheduledTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
+							}
 							alreadyEnqueued = true
 						}
 
@@ -177,21 +191,26 @@ func (s *Service) deleteTaskExecutionsRoutine(c context.Context) error {
 					// Delete all branch deletion task execution
 					case TypeBranchDeletion:
 						if e.Status == TaskExecutionDone && e.ProcessingTimestamp != 0 {
-							s.Dao.DeleteTaskExecution(&e)
+							if err := s.Dao.DeleteTaskExecution(&e); err != nil {
+								log.Error("Hooks> deleteTaskExecutionsRoutine > error on DeleteTaskExecution: %v", err)
+							}
 							taskToDelete = true
 						}
 					default:
 						if i >= s.Cfg.ExecutionHistory && e.ProcessingTimestamp != 0 {
-							s.Dao.DeleteTaskExecution(&e)
+							if err := s.Dao.DeleteTaskExecution(&e); err != nil {
+								log.Error("Hooks> deleteTaskExecutionsRoutine > error on DeleteTaskExecution: %v", err)
+							}
 						}
 					}
 
 				}
 
 				if taskToDelete {
-					s.deleteTask(c, &t)
+					if err := s.deleteTask(c, &t); err != nil {
+						log.Error("Hooks> deleteTaskExecutionsRoutine > Unable to deleteTask (%s): %v", t.UUID, err)
+					}
 				}
-
 			}
 		}
 	}
@@ -203,18 +222,28 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		if c.Err() != nil {
 			return c.Err()
 		}
-
-		size := s.Dao.QueueLen()
+		size, err := s.Dao.QueueLen()
+		if err != nil {
+			log.Error("Hooks> dequeueTaskExecutions > Unable to get queueLen: %v", err)
+			continue
+		}
 		log.Debug("Hooks> dequeueTaskExecutions> current queue size: %d", size)
 
 		// Dequeuing context
 		var taskKey string
-		s.Cache.DequeueWithContext(c, schedulerQueueKey, &taskKey)
+		if err := s.Cache.DequeueWithContext(c, schedulerQueueKey, &taskKey); err != nil {
+			log.Error("Hooks> dequeueTaskExecutions> store.DequeueWithContext err: %v", err)
+			continue
+		}
 		log.Debug("Hooks> dequeueTaskExecutions> work on taskKey: %s", taskKey)
 
 		// Load the task execution
 		var t = sdk.TaskExecution{}
-		if !s.Cache.Get(taskKey, &t) {
+		find, err := s.Cache.Get(taskKey, &t)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", taskKey, err)
+		}
+		if !find {
 			continue
 		}
 		t.ProcessingTimestamp = time.Now().UnixNano()
@@ -230,12 +259,16 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 			log.Error("Hooks> dequeueTaskExecutions failed: Task %s not found - deleting this task execution", t.UUID)
 			t.LastError = "Internal Error: Task not found"
 			t.NbErrors++
-			s.Dao.DeleteTaskExecution(&t)
+			if err := s.Dao.DeleteTaskExecution(&t); err != nil {
+				log.Error("Hooks> dequeueTaskExecutions > error on DeleteTaskExecution: %v", err)
+			}
 			continue
 
 		} else if t.NbErrors >= s.Cfg.RetryError {
 			log.Info("Hooks> dequeueTaskExecutions> Deleting task execution %s cause: to many errors:%d lastError:%s", t.UUID, t.NbErrors, t.LastError)
-			s.Dao.DeleteTaskExecution(&t)
+			if err := s.Dao.DeleteTaskExecution(&t); err != nil {
+				log.Error("Hooks> dequeueTaskExecutions > error on DeleteTaskExecution: %v", err)
+			}
 			continue
 
 		} else if task.Stopped {
@@ -251,7 +284,9 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 				if strings.Contains(err.Error(), "Unsupported task type") {
 					// delete this task execution, as it will never work
 					log.Info("Hooks> dequeueTaskExecutions> Deleting task execution %s as err:%v", t.UUID, err)
-					s.Dao.DeleteTaskExecution(&t)
+					if err := s.Dao.DeleteTaskExecution(&t); err != nil {
+						log.Error("Hooks> dequeueTaskExecutions > error on DeleteTaskExecution: %v", err)
+					}
 					continue
 				} else {
 					log.Error("Hooks> dequeueTaskExecutions> %s failed err[%d]: %v", t.UUID, t.NbErrors, err)

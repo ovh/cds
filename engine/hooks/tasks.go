@@ -90,8 +90,11 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 			}
 		}
 		if !found && t.Type != TypeOutgoingWebHook && t.Type != TypeOutgoingWorkflow {
-			s.deleteTask(ctx, t)
-			log.Info("Hook> Task %s deleted on synchronization", t.UUID)
+			if err := s.deleteTask(ctx, t); err != nil {
+				log.Error("Hook> Error on task %s delete on synchronization: %v", t.UUID, err)
+			} else {
+				log.Info("Hook> Task %s deleted on synchronization", t.UUID)
+			}
 		}
 	}
 
@@ -104,10 +107,13 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		}
 		t, err := s.hookToTask(&h)
 		if err != nil {
-			log.Error("Hook> Unable to transform hoot to tast task %+v: %v", h, err)
+			log.Error("Hook> Unable to transform hook to task %+v: %v", h, err)
 			continue
 		}
-		s.Dao.SaveTask(t)
+		if err := s.Dao.SaveTask(t); err != nil {
+			log.Error("Hook> Unable to save task %+v: %v", h, err)
+			continue
+		}
 	}
 
 	// Start listening to gerrit event stream
@@ -246,7 +252,9 @@ func (s *Service) stopTasks() error {
 
 func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecution, error) {
 	t.Stopped = false
-	s.Dao.SaveTask(t)
+	if err := s.Dao.SaveTask(t); err != nil {
+		return nil, sdk.WrapError(err, "unable to save task")
+	}
 
 	switch t.Type {
 	case TypeWebHook, TypeRepoManagerWebHook, TypeWorkflowHook:
@@ -345,7 +353,9 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 func (s *Service) stopTask(t *sdk.Task) error {
 	log.Info("Hooks> Stopping task %s", t.UUID)
 	t.Stopped = true
-	s.Dao.SaveTask(t)
+	if err := s.Dao.SaveTask(t); err != nil {
+		return sdk.WrapError(err, "unable to save task %v", t)
+	}
 
 	switch t.Type {
 	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller, TypeKafka, TypeWorkflowHook:

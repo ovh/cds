@@ -20,7 +20,7 @@ func NewSessionXSRFToken(store cache.Store, sessionID string) string {
 func GetSessionXSRFToken(store cache.Store, sessionID string) (string, bool) {
 	var XSRFToken string
 	var k = cache.Key("token", "xsrf", sessionID)
-	if store.Get(k, &XSRFToken) {
+	if has, _ := store.Get(k, &XSRFToken); has {
 		return XSRFToken, true
 	}
 	return "", false

@@ -30,7 +30,7 @@ export class FavoriteComponent {
     ) {
       this.loadBookmarks();
 
-      this._navbarSub = this._navbarService.getData(true)
+      this._navbarSub = this._navbarService.getObservable()
         .subscribe((data) => {
             this._cd.markForCheck();
             this.loading = false;

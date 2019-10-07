@@ -72,10 +72,10 @@ type CommitsResponse struct {
 }
 
 type Commit struct {
-	Hash      string  `json:"id"`
-	Author    *Author `json:"author"`
-	Timestamp int64   `json:"authorTimestamp"`
-	Message   string  `json:"message"`
+	Hash      string `json:"id"`
+	Author    Author `json:"author"`
+	Timestamp int64  `json:"authorTimestamp"`
+	Message   string `json:"message"`
 }
 
 type Status struct {

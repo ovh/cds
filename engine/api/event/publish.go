@@ -9,17 +9,18 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var store cache.Store
 
-func publishEvent(e sdk.Event) {
+func publishEvent(e sdk.Event) error {
 	if store == nil {
-		return
+		return nil
 	}
 
-	store.Enqueue("events", e)
+	if err := store.Enqueue("events", e); err != nil {
+		return err
+	}
 
 	// send to cache for cds repositories manager
 	var toSkipSendReposManager bool
@@ -31,19 +32,19 @@ func publishEvent(e sdk.Event) {
 		}
 	}
 	if !toSkipSendReposManager {
-		store.Enqueue("events_repositoriesmanager", e)
+		if err := store.Enqueue("events_repositoriesmanager", e); err != nil {
+			return err
+		}
 	}
 
 	b, err := json.Marshal(e)
 	if err != nil {
-		log.Warning("%v", sdk.WrapError(err, "Cannot marshal event %+v", e))
-		return
+		return sdk.WrapError(err, "Cannot marshal event %+v", e)
 	}
-	store.Publish("events_pubsub", string(b))
+	return store.Publish("events_pubsub", string(b))
 }
 
 // Publish sends a event to a queue
-//func Publish(event sdk.Event, eventType string) {
 func Publish(payload interface{}, u sdk.Identifiable) {
 	p := structs.Map(payload)
 	var projectKey, applicationName, pipelineName, environmentName, workflowName string

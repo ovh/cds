@@ -44,7 +44,7 @@ export class BroadcastAddComponent {
         private _broadcastService: BroadcastService,
         private _cd: ChangeDetectorRef
     ) {
-        this.navbarSub = this._navbarService.getData(true).subscribe((data) => {
+        this.navbarSub = this._navbarService.getObservable().subscribe((data) => {
             this.loading = false;
             if (Array.isArray(data)) {
                 let voidProj = new NavbarProjectData();

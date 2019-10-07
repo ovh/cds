@@ -67,7 +67,6 @@ func SendEvent(ctx context.Context, db gorp.SqlExecutor, key string, report *Pro
 
 // ResyncCommitStatus resync commit status for a workflow run
 func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
-
 	_, end := observability.Span(ctx, "workflow.resyncCommitStatus",
 		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
 		observability.Tag(observability.TagWorkflowRun, wr.Number),
@@ -91,7 +90,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 		node := wr.Workflow.WorkflowData.NodeByID(nodeID)
 		if !node.IsLinkedToRepo(&wr.Workflow) {
-			return nil
+			continue
 		}
 		vcsServerName = wr.Workflow.Applications[node.Context.ApplicationID].VCSServer
 		repoFullName = wr.Workflow.Applications[node.Context.ApplicationID].RepositoryFullname
@@ -191,7 +190,6 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 // sendVCSEventStatus send status
 func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) error {
 	log.Debug("Send status for node run %d", nodeRun.ID)
-
 	var app sdk.Application
 	var pip sdk.Pipeline
 	var env sdk.Environment
@@ -325,8 +323,10 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	}
 
 	if err := client.SetStatus(ctx, evt); err != nil {
-		repositoriesmanager.RetryEvent(&evt, err, store)
-		return fmt.Errorf("sendEvent> err:%s", err)
+		if err2 := repositoriesmanager.RetryEvent(&evt, err, store); err2 != nil {
+			log.Error("sendEvent>processEvent> err while retry event: %v", err2)
+		}
+		return fmt.Errorf("sendEvent> err:%v", err)
 	}
 
 	if vcsConf.Type != "gerrit" && (notif.Settings.Template.DisableComment == nil || !*notif.Settings.Template.DisableComment) {
@@ -338,11 +338,11 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		}
 
 		//Send comment on pull request
-		if nodeRun.Status == sdk.StatusFail || nodeRun.Status == sdk.StatusStopped {
+		if nodeRun.Status == sdk.StatusFail || nodeRun.Status == sdk.StatusStopped || notif.Settings.OnSuccess == sdk.UserNotificationAlways {
 			for _, pr := range prs {
 				if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash && !pr.Merged && !pr.Closed {
 					if err := client.PullRequestComment(ctx, app.RepositoryFullname, pr.ID, report); err != nil {
-						log.Error("sendVCSEventStatus> unable to send PR report%v", err)
+						log.Error("sendVCSEventStatus> unable to send PR report:%v", err)
 						return nil
 					}
 					// if we found the pull request for head branch we can break (only one PR for the branch should exist)

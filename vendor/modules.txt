@@ -779,7 +779,7 @@ gopkg.in/asn1-ber.v1
 gopkg.in/bsm/sarama-cluster.v2
 # gopkg.in/go-playground/validator.v8 v8.18.2
 gopkg.in/go-playground/validator.v8
-# gopkg.in/gorp.v1 v1.7.1 => github.com/yesnault/gorp v2.0.1-0.20190906143353-6210446a0d92+incompatible
+# gopkg.in/gorp.v1 v1.7.1
 gopkg.in/gorp.v1
 # gopkg.in/h2non/gock.v1 v1.0.14
 gopkg.in/h2non/gock.v1

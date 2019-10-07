@@ -41,7 +41,10 @@ func (g *githubClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRep
 			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				g.Cache.Get(cache.Key("vcs", "github", "forks", g.OAuthToken, "/user/", repo, "/forks"), &repos)
+				k := cache.Key("vcs", "github", "forks", g.OAuthToken, "/user/", repo, "/forks")
+				if _, err := g.Cache.Get(k, &repos); err != nil {
+					log.Error("cannot get from cache %s: %v", k, err)
+				}
 				if len(repos) != 0 || attempt > 5 {
 					//We found repos, let's exit the loop
 					break
@@ -64,7 +67,10 @@ func (g *githubClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRep
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("vcs", "github", "forks", g.OAuthToken, "/user/", repo, "/forks"), repos, 61*60)
+	k := cache.Key("vcs", "github", "forks", g.OAuthToken, "/user/", repo, "/forks")
+	if err := g.Cache.SetWithTTL(k, repos, 61*60); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", k, err)
+	}
 
 	responseRepos := []sdk.VCSRepo{}
 	for _, repo := range repos {

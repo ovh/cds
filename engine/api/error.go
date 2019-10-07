@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type graylogResponse struct {
@@ -84,7 +85,11 @@ func (api *API) getPanicDumpHandler() service.Handler {
 
 		k := cache.Key("api", "panic_dump", id)
 		var data string
-		if !api.Cache.Get(k, &data) {
+		find, err := api.Cache.Get(k, &data)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", k, err)
+		}
+		if !find {
 			return sdk.ErrNotFound
 		}
 		w.Write([]byte(data)) // nolint

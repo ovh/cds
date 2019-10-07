@@ -230,7 +230,9 @@ export class AppComponent implements OnInit {
     startVersionWorker(): void {
         this.stopWorker(this.versionWorker, this.versionWorkerSubscription);
         this.versionWorker = new CDSWebWorker('./assets/worker/web/version.js');
-        this.versionWorker.start({});
+        this.versionWorker.start({
+            mode: environment.name
+        });
         this.versionWorker.response().subscribe(msg => {
             if (msg) {
                 this.zone.run(() => {

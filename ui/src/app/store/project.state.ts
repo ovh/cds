@@ -440,7 +440,7 @@ export class ProjectState {
                 project_key: action.payload.projectKey
             }
         ).pipe(tap(() => {
-            this._navbarService.getData(); // TODO: to delete
+            this._navbarService.refreshData();
             if (state.project && state.project.key) {
                 ctx.setState({
                     ...state,

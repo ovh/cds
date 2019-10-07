@@ -6,6 +6,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -20,31 +21,35 @@ type dao struct {
 }
 
 func (d *dao) saveOperation(o *sdk.Operation) error {
-	d.store.SetAdd(rootKey, o.UUID, o)
-	return nil
+	return d.store.SetAdd(rootKey, o.UUID, o)
 }
 
 func (d *dao) pushOperation(o *sdk.Operation) error {
-	d.store.Enqueue(processorKey, o.UUID)
-	return nil
+	return d.store.Enqueue(processorKey, o.UUID)
 }
 
 func (d *dao) deleteOperation(o *sdk.Operation) error {
-	d.store.SetRemove(rootKey, o.UUID, o)
-	return nil
+	return d.store.SetRemove(rootKey, o.UUID, o)
 }
 
 func (d *dao) loadOperation(uuid string) *sdk.Operation {
 	key := cache.Key(rootKey, uuid)
 	o := new(sdk.Operation)
-	if d.store.Get(key, o) {
+	find, err := d.store.Get(key, o)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", key, err)
+	}
+	if find {
 		return o
 	}
 	return nil
 }
 
 func (d *dao) loadAllOperations() ([]*sdk.Operation, error) {
-	n := d.store.SetCard(rootKey)
+	n, err := d.store.SetCard(rootKey)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to setCard %v", rootKey)
+	}
 	opes := make([]*sdk.Operation, n)
 	for i := 0; i < n; i++ {
 		opes[i] = &sdk.Operation{}
@@ -58,27 +63,45 @@ func (d *dao) loadAllOperations() ([]*sdk.Operation, error) {
 var errLockUnavailable = fmt.Errorf("errLockUnavailable")
 
 func (d *dao) lock(uuid string) error {
-	if d.store.Lock(cache.Key(locksKey, uuid), 10*time.Minute, -1, -1) {
-		d.store.Lock(cache.Key(lastAccessKey, uuid), 3*24*time.Hour, -1, -1)
-		return nil
+	ok, err := d.store.Lock(cache.Key(locksKey, uuid), 10*time.Minute, -1, -1)
+	if err != nil || !ok {
+		return errLockUnavailable
 	}
-	return errLockUnavailable
+
+	_, err2 := d.store.Lock(cache.Key(lastAccessKey, uuid), 3*24*time.Hour, -1, -1)
+	if err2 != nil {
+		return sdk.WrapError(err2, "error on lock uuid: %s", uuid)
+	}
+
+	return nil
 }
 
-func (d *dao) deleteLock(uuid string) {
-	d.store.Delete(cache.Key(locksKey, uuid))
+func (d *dao) deleteLock(uuid string) error {
+	k := cache.Key(locksKey, uuid)
+	if err := d.store.Delete(k); err != nil {
+		log.Error("unable to cache delete %s: %v", k, err)
+	}
+	return nil
 }
 
 func (d *dao) unlock(uuid string, retention time.Duration) error {
-	d.store.Unlock(cache.Key(locksKey, uuid))
-	d.store.Lock(cache.Key(lastAccessKey, uuid), retention, -1, -1)
+	if err := d.store.Unlock(cache.Key(locksKey, uuid)); err != nil {
+		log.Error("error on unlock uuid %s: %v", uuid, err)
+	}
+	if _, err := d.store.Lock(cache.Key(lastAccessKey, uuid), retention, -1, -1); err != nil {
+		return sdk.WrapError(err, "error on cache.lock uuid:%s", uuid)
+	}
 	return nil
 }
 
 func (d *dao) isExpired(uuid string) bool {
 	k := cache.Key(lastAccessKey, uuid)
 	var b bool
-	if d.store.Get(k, &b) {
+	find, err := d.store.Get(k, &b)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", k, err)
+	}
+	if find {
 		return false
 	}
 	return true

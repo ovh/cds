@@ -71,7 +71,7 @@ func (api *API) checkJobIDPermissions(ctx context.Context, permID string, perm i
 	if wk, isWorker := api.isWorker(ctx); isWorker && perm >= sdk.PermissionReadExecute {
 		var ok bool
 		k := cache.Key("api:workers", getAPIConsumer(ctx).ID, "perm", permID)
-		if api.Cache.Get(k, &ok) && ok {
+		if has, _ := api.Cache.Get(k, &ok); ok && has {
 			return nil
 		}
 

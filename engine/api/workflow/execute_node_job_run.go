@@ -276,7 +276,11 @@ func checkStatusWaiting(store cache.Store, jobID int64, status string) error {
 	if status != sdk.StatusWaiting {
 		k := keyBookJob(jobID)
 		h := sdk.Service{}
-		if store.Get(k, &h) {
+		find, err := store.Get(k, &h)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", k, err)
+		}
+		if find {
 			return sdk.WrapError(sdk.ErrAlreadyTaken, "job %d is not waiting status and was booked by hatchery %d. Current status:%s", jobID, h.ID, status)
 		}
 		return sdk.WrapError(sdk.ErrAlreadyTaken, "job %d is not waiting status. Current status:%s", jobID, status)
@@ -513,9 +517,15 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
 	k := keyBookJob(id)
 	h := sdk.Service{}
-	if !store.Get(k, &h) {
+	find, err := store.Get(k, &h)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", k, err)
+	}
+	if !find {
 		// job not already booked, book it for 2 min
-		store.SetWithTTL(k, hatchery, 120)
+		if err := store.SetWithTTL(k, hatchery, 120); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", k, err)
+		}
 		return nil, nil
 	}
 	if h.ID == hatchery.ID {
@@ -528,9 +538,14 @@ func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Se
 func FreeNodeJobRun(store cache.Store, id int64) error {
 	k := keyBookJob(id)
 	h := sdk.Service{}
-	if store.Get(k, &h) {
-		// job not already booked, book it for 2 min
-		store.Delete(k)
+	find, err := store.Get(k, &h)
+	if err != nil {
+		log.Error("cannot get from cache %s: %v", k, err)
+	}
+	if find {
+		if err := store.Delete(k); err != nil {
+			log.Error("error on cache delete %v: %v", k, err)
+		}
 		return nil
 	}
 	return sdk.WrapError(sdk.ErrJobNotBooked, "BookNodeJobRun> job %d already released", id)

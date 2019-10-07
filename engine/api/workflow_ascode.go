@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getWorkflowAsCodeHandler() service.Handler {
@@ -20,7 +21,11 @@ func (api *API) getWorkflowAsCodeHandler() service.Handler {
 		uuid := vars["uuid"]
 
 		var ope sdk.Operation
-		b := api.Cache.Get(cache.Key(workflow.CacheOperationKey, uuid), &ope)
+		k := cache.Key(workflow.CacheOperationKey, uuid)
+		b, err := api.Cache.Get(k, &ope)
+		if err != nil {
+			log.Error("cannot get from cache %s: %v", k, err)
+		}
 		if !b {
 			return sdk.ErrNotFound
 		}

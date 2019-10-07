@@ -40,7 +40,7 @@ func CheckVerifyConsumerToken(store cache.Store, signature string) (string, erro
 
 	cacheKey := cache.Key("authentication:consumer:verify", payload.ConsumerID)
 	var nonce string
-	if ok := store.Get(cacheKey, &nonce); !ok || nonce != payload.Nonce {
+	if ok, _ := store.Get(cacheKey, &nonce); !ok || nonce != payload.Nonce {
 		return "", sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given verify consumer token")
 	}
 

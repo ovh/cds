@@ -82,7 +82,6 @@ require (
 	github.com/gophercloud/gophercloud v0.0.0-20190504011306-6f9faf57fddc
 	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
 	github.com/gorhill/cronexpr v0.0.0-20161205141322-d520615e531a
-	github.com/gorilla/context v1.1.1
 	github.com/gorilla/handlers v0.0.0-20160816184729-a5775781a543
 	github.com/gorilla/mux v1.6.2
 	github.com/gotestyourself/gotestyourself v2.1.0+incompatible // indirect

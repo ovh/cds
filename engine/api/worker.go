@@ -12,7 +12,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	workerauth "github.com/ovh/cds/engine/api/authentication/worker"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -164,10 +163,6 @@ func (api *API) disableWorkerHandler() service.Handler {
 			}
 			return sdk.WrapError(err, "cannot update worker status")
 		}
-
-		//Remove the worker from the cache
-		key := cache.Key("worker", id)
-		api.Cache.Delete(key)
 
 		return nil
 	}

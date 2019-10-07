@@ -24,18 +24,26 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 
 		status, body, _, err := g.get(url, opts...)
 		if err != nil {
-			g.Cache.Delete(cachePullRequestKey)
+			if err := g.Cache.Delete(cachePullRequestKey); err != nil {
+				log.Error("githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
+			}
 			return sdk.VCSPullRequest{}, err
 		}
 		if status >= 400 {
-			g.Cache.Delete(cachePullRequestKey)
+			if err := g.Cache.Delete(cachePullRequestKey); err != nil {
+				log.Error("githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
+			}
 			return sdk.VCSPullRequest{}, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 		}
 
 		//Github may return 304 status because we are using conditional request with ETag based headers
 		if status == http.StatusNotModified {
 			//If repos aren't updated, lets get them from cache
-			if !g.Cache.Get(cachePullRequestKey, &pr) {
+			find, err := g.Cache.Get(cachePullRequestKey, &pr)
+			if err != nil {
+				log.Error("cannot get from cache %s: %v", cachePullRequestKey, err)
+			}
+			if !find {
 				opts = []getArgFunc{withoutETag}
 				log.Error("Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cachePullRequestKey, g.OAuthToken, ""))
 				continue
@@ -50,12 +58,16 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 
 		if pr.Number != id {
 			log.Warning("githubClient.PullRequest> Cannot find pullrequest %d", id)
-			g.Cache.Delete(cachePullRequestKey)
+			if err := g.Cache.Delete(cachePullRequestKey); err != nil {
+				log.Error("githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
+			}
 			return sdk.VCSPullRequest{}, sdk.WithStack(fmt.Errorf("cannot find pullrequest %d", id))
 		}
 
 		//Put the body on cache for one hour and one minute
-		g.Cache.SetWithTTL(cachePullRequestKey, pr, 61*60)
+		if err := g.Cache.SetWithTTL(cachePullRequestKey, pr, 61*60); err != nil {
+			log.Error("cannot SetWithTTL: %s: %v", cachePullRequestKey, err)
+		}
 		break
 	}
 
@@ -85,7 +97,11 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				if !g.Cache.Get(cacheKey, &pullRequests) {
+				find, err := g.Cache.Get(cacheKey, &pullRequests)
+				if err != nil {
+					log.Error("cannot get from cache %s: %v", cacheKey, err)
+				}
+				if !find {
 					opts[0] = withoutETag
 					log.Error("Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
 					continue
@@ -107,7 +123,10 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls"), pullRequests, 61*60)
+	k := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls")
+	if err := g.Cache.SetWithTTL(k, pullRequests, 61*60); err != nil {
+		log.Error("cannot SetWithTTL: %s: %v", k, err)
+	}
 
 	prResults := []sdk.VCSPullRequest{}
 	for _, pullr := range pullRequests {

@@ -67,7 +67,7 @@ export class AppService {
             event.type_event === EventType.WORKFLOW_ADD || event.type_event === EventType.WORKFLOW_UPDATE ||
             event.type_event === EventType.WORKFLOW_DELETE) {
             this.updateProjectCache(event);
-            this._navbarService.cleanCache();
+            this._navbarService.refreshData();
         }
         if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
             this.updateApplicationCache(event);

@@ -39,7 +39,7 @@ func CheckResetConsumerToken(store cache.Store, signature string) (string, error
 
 	cacheKey := cache.Key("authentication:consumer:reset", payload.ConsumerID)
 	var nonce int64
-	if ok := store.Get(cacheKey, &nonce); !ok || nonce != payload.Nonce {
+	if ok, _ := store.Get(cacheKey, &nonce); !ok || nonce != payload.Nonce {
 		return "", sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given reset consumer token")
 	}
 
