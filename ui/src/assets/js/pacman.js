@@ -1,3 +1,4 @@
+/* CREDIT: https://github.com/daleharvey/pacman */
 /*jslint browser: true, undef: true, eqeqeq: true, nomen: true, white: true */
 /*global window: false, document: false */
 
@@ -744,12 +745,14 @@ Pacman.Audio = function(game) {
     };
 
     function play(name) {
+        /*
         if (!game.soundDisabled()) {
             endEvents[name] = function() { ended(name); };
             playing.push(name);
             files[name].addEventListener("ended", endEvents[name], true);
             files[name].play();
         }
+         */
     };
 
     function pause() {
@@ -1058,6 +1061,7 @@ var PACMAN = (function () {
         map.draw(ctx);
         dialog("Loading ...");
 
+        /*
         var extension = 'ogg';//Modernizr.audio.ogg ? 'ogg' : 'mp3';
 
         var audio_files = [
@@ -1068,8 +1072,9 @@ var PACMAN = (function () {
             ["eating", root + "audio/eating.short." + extension],
             ["eating2", root + "audio/eating.short." + extension]
         ];
-
-        load(audio_files, function() { loaded(); });
+         */
+        loaded();
+        //load(audio_files, function() { loaded(); });
     };
 
     function load(arr, callback) {
