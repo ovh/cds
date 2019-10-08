@@ -87,7 +87,6 @@ export class UpdateAscodeComponent {
                     let webworker = new CDSWebWorker('./assets/worker/web/operation.js');
                     webworker.start({
                         'user': this._store.selectSnapshot(AuthenticationState.user),
-                        // 'session': this._authStore.getSessionToken(),
                         'api': '/cdsapi',
                         'path': '/project/' + this.project.key + '/workflows/' + this.name + '/ascode/' + this.ope.uuid
                     });
@@ -114,7 +113,6 @@ export class UpdateAscodeComponent {
                     let webworker = new CDSWebWorker('./assets/worker/web/operation.js');
                     webworker.start({
                         'user': this._store.selectSnapshot(AuthenticationState.user),
-                        // 'session': this._authStore.getSessionToken(),
                         'api': '/cdsapi',
                         'path': '/project/' + this.project.key + '/workflows/' + this.name + '/ascode/' + this.ope.uuid
                     });

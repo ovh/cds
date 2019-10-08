@@ -45,7 +45,7 @@ export class WorkflowService {
             params = params.append('nodeID', nodeID.toString());
         }
         return this._http.get<WorkflowTriggerConditionCache>(
-            `/project/${projectKey}/workflows/${workflowName}/triggers/condition`,  {params: params});
+            `/project/${projectKey}/workflows/${workflowName}/triggers/condition`,  { params });
     }
 
     /**

@@ -82,7 +82,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     if (data && data.stages) {
                         stageFound = this.selectedStage && data.stages && data.stages.find((stage) => stage.id === this.selectedStage.id);
                         if (stageFound && this.selectedJob && stageFound.jobs) {
-                            jobFound =  stageFound.jobs.find((job) => {
+                            jobFound = stageFound.jobs.find((job) => {
                                 return job.pipeline_action_id === this.selectedJob.pipeline_action_id;
                             });
                         } else {
@@ -237,18 +237,6 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
             this.addJob(this.selectedStage);
             this._cd.markForCheck();
         });
-        /*
-        .pipe(
-            flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, this.pipeline.name))),
-            finalize(() => {
-                this._cd.markForCheck();
-            })
-        ).subscribe((pip) => {
-            this._toast.success('', this._translate.instant('stage_added'));
-            this.selectedStage = pip.stages[pip.stages.length - 1];
-            this.addJob(this.selectedStage);
-        });
-         */
     }
 
     addJob(s: Stage): void {

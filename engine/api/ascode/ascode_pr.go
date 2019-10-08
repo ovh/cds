@@ -95,7 +95,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	counter := 0
 	defer func() {
 		ed.Operation.RepositoryStrategy.SSHKeyContent = ""
-		store.SetWithTTL(cache.Key(operation.CacheOperationKey, ed.Operation.UUID), ed.Operation, 300)
+		_ = store.SetWithTTL(cache.Key(operation.CacheOperationKey, ed.Operation.UUID), ed.Operation, 300)
 	}()
 	for {
 		counter++
@@ -157,6 +157,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 				for _, prItem := range prs {
 					if prItem.Base.Branch.DisplayID == ed.Operation.Setup.Push.ToBranch && prItem.Head.Branch.DisplayID == ed.Operation.Setup.Push.FromBranch {
 						pr = prItem
+						break
 					}
 				}
 			}
@@ -182,7 +183,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 			switch ed.Type {
 			case AsCodeWorkflow:
 				if asCodeEvent.Data.Workflows == nil {
-					asCodeEvent.Data.Workflows = make(map[int64]string, 0)
+					asCodeEvent.Data.Workflows = make(map[int64]string)
 				}
 				found := false
 				for k := range asCodeEvent.Data.Workflows {
@@ -196,7 +197,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 				}
 			case AsCodePipeline:
 				if asCodeEvent.Data.Pipelines == nil {
-					asCodeEvent.Data.Pipelines = make(map[int64]string, 0)
+					asCodeEvent.Data.Pipelines = make(map[int64]string)
 				}
 				found := false
 				for k := range asCodeEvent.Data.Pipelines {

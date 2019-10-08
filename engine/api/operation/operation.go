@@ -85,7 +85,7 @@ func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 	ope.RepositoryStrategy.SSHKeyContent = ""
-	store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
+	_ = store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 	return &ope, nil
 }
 
