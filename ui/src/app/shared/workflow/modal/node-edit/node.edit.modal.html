@@ -40,6 +40,10 @@
                             <a class="item" [class.active]="selected === 'hook'" (click)="changeView('hook')">
                                 Hook
                             </a>
+                            <a class="item" [class.active]="selected === 'conditions'"
+                                (click)="changeView('conditions')">
+                                {{ 'workflow_node_condition_label' | translate }}
+                            </a>
                         </ng-container>
                     </div>
                 </div>
@@ -66,9 +70,16 @@
                             </app-workflow-node-outgoinghook>
                         </ng-container>
                         <ng-container *ngSwitchCase="'conditions'">
-                            <app-workflow-node-conditions [project]="project" [workflow]="workflow"
-                                [readonly]="readonly" [node]="node" (conditionsChange)="pushChange($event)">
-                            </app-workflow-node-conditions>
+                            <ng-container *ngIf="hook">
+                                <app-workflow-node-conditions [project]="project" [workflow]="workflow"
+                                    [readonly]="readonly" [hook]="hook" (conditionsChange)="pushChange($event)">
+                                </app-workflow-node-conditions>
+                            </ng-container>
+                            <ng-container *ngIf="!hook">
+                                <app-workflow-node-conditions [project]="project" [workflow]="workflow"
+                                    [readonly]="readonly" [node]="node" (conditionsChange)="pushChange($event)">
+                                </app-workflow-node-conditions>
+                            </ng-container>
                         </ng-container>
                         <ng-container *ngSwitchCase="'permissions'">
                             <ng-container *ngIf="groups">

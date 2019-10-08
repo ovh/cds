@@ -84,9 +84,10 @@ type NodeEntry struct {
 
 // HookEntry represents a hook as code
 type HookEntry struct {
-	Model  string            `json:"type,omitempty" yaml:"type,omitempty" jsonschema_description:"Model of the hook.\nhttps://ovh.github.io/cds/docs/concepts/workflow/hooks"`
-	Ref    string            `json:"ref,omitempty" yaml:"ref,omitempty"`
-	Config map[string]string `json:"config,omitempty" yaml:"config,omitempty"`
+	Model      string                      `json:"type,omitempty" yaml:"type,omitempty" jsonschema_description:"Model of the hook.\nhttps://ovh.github.io/cds/docs/concepts/workflow/hooks"`
+	Ref        string                      `json:"ref,omitempty" yaml:"ref,omitempty"`
+	Config     map[string]string           `json:"config,omitempty" yaml:"config,omitempty"`
+	Conditions *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty" jsonschema_description:"Conditions to run this hook.\nhttps://ovh.github.io/cds/docs/concepts/workflow/run-conditions."`
 }
 
 // WorkflowVersion is the type for the version
@@ -333,11 +334,18 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 				return exportedWorkflow, sdk.WrapError(sdk.ErrNotFound, "unable to find hook model %s", h.HookModelName)
 			}
 
-			exportedWorkflow.PipelineHooks = append(exportedWorkflow.PipelineHooks, HookEntry{
-				Model:  h.HookModelName,
-				Ref:    h.Ref,
-				Config: h.Config.Values(m.DefaultConfig),
-			})
+			pipHook := HookEntry{
+				Model:      h.HookModelName,
+				Ref:        h.Ref,
+				Config:     h.Config.Values(m.DefaultConfig),
+				Conditions: &h.Conditions,
+			}
+
+			if h.Conditions.LuaScript == "" && len(h.Conditions.PlainConditions) == 0 {
+				pipHook.Conditions = nil
+			}
+
+			exportedWorkflow.PipelineHooks = append(exportedWorkflow.PipelineHooks, pipHook)
 		}
 		exportedWorkflow.Payload = entry.Payload
 		exportedWorkflow.Parameters = entry.Parameters
@@ -698,11 +706,16 @@ func (w *Workflow) processHooks(n *sdk.Node, wf *sdk.Workflow) {
 				h.Ref = fmt.Sprintf("%d", time.Now().Unix())
 			}
 
-			n.Hooks = append(n.Hooks, sdk.NodeHook{
+			hook := sdk.NodeHook{
 				Config:        cfg,
 				Ref:           h.Ref,
 				HookModelName: h.Model,
-			})
+			}
+
+			if h.Conditions != nil {
+				hook.Conditions = *h.Conditions
+			}
+			n.Hooks = append(n.Hooks, hook)
 		}
 	}
 

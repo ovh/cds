@@ -247,6 +247,7 @@ func (api *API) InitRouter(ctx context.Context) {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/log/service", r.GET(api.getWorkflowNodeRunJobServiceLogsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/step/{stepOrder}", r.GET(api.getWorkflowNodeRunJobStepHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", r.GET(api.getWorkflowTriggerConditionHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/hook/triggers/condition", r.GET(api.getWorkflowTriggerHookConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", r.POST(api.releaseApplicationWorkflowHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/callback", r.POST(api.postWorkflowJobHookCallbackHandler, AllowServices(true)))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/details", r.GET(api.getWorkflowJobHookDetailsHandler, NeedService()))

@@ -139,11 +139,11 @@ func (s *Service) stopTaskHandler() service.Handler {
 func (s *Service) postTaskHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//This handler read a sdk.WorkflowNodeHook from the body
-		hook := &sdk.NodeHook{}
-		if err := service.UnmarshalBody(r, hook); err != nil {
+		var hook sdk.NodeHook
+		if err := service.UnmarshalBody(r, &hook); err != nil {
 			return sdk.WithStack(err)
 		}
-		if err := s.addTask(ctx, hook); err != nil {
+		if err := s.addTask(ctx, &hook); err != nil {
 			return sdk.WithStack(err)
 		}
 		return nil
