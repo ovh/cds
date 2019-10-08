@@ -846,7 +846,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			}
 		}
 
-		// To handle conditon on hooks
+		// To handle conditions on hooks
 		if opts.Hook != nil {
 			hook, errH := workflow.LoadHookByUUID(api.mustDB(), opts.Hook.WorkflowNodeHookUUID)
 			if errH != nil {
