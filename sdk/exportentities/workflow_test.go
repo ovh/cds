@@ -264,6 +264,9 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 							"crontab": "* * * * *",
 							"payload": "{}",
 						},
+						Conditions: &sdk.WorkflowNodeConditions{
+							LuaScript: "return true",
+						},
 					},
 				},
 			},
@@ -281,6 +284,9 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						Hooks: []sdk.NodeHook{
 							{
 								HookModelName: "Scheduler",
+								Conditions: sdk.WorkflowNodeConditions{
+									LuaScript: "return true",
+								},
 								Config: sdk.WorkflowNodeHookConfig{
 									"crontab": sdk.WorkflowNodeHookConfigValue{
 										Value:        "* * * * *",
@@ -965,6 +971,11 @@ pipeline_hooks:
   ref: "1541182443"
   config:
     method: POST
+  conditions:
+    check:
+    - variable: lolilol
+      operator: eq
+      value: coucou
 metadata:
   default_tags: git.branch,git.author
 `,

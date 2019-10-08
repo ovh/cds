@@ -682,6 +682,7 @@ export class WNodeHook {
     node_id: number;
     hook_model_id: number;
     config: Map<string, WorkflowNodeHookConfigValue>;
+    conditions: WorkflowNodeConditions;
 
     // UI only
     model: WorkflowHookModel;
