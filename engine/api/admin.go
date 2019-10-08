@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -17,11 +18,25 @@ import (
 
 func (api *API) postMaintenanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		enable := FormString(r, "enable")
-		if err := api.Cache.Set(sdk.MaintenanceAPIKey, enable); err != nil {
+		enable := FormBool(r, "enable")
+		hook := FormBool(r, "withHook")
+
+		if hook {
+			srvs, err := services.FindByType(api.mustDB(), services.TypeHooks)
+			if err != nil {
+				return err
+			}
+			url := fmt.Sprintf("/admin/maintenance?enable=%v", enable)
+			_, code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodPost, url, nil, nil)
+			if errHooks != nil || code >= 400 {
+				return fmt.Errorf("unable to change hook maintenant state to %v. Code result %d: %v", enable, code, errHooks)
+			}
+		}
+
+		if err := api.Cache.SetWithTTL(sdk.MaintenanceAPIKey, enable, 0); err != nil {
 			return err
 		}
-		return api.Cache.Publish(sdk.MaintenanceQueueName, enable)
+		return api.Cache.Publish(sdk.MaintenanceQueueName, fmt.Sprintf("%v", enable))
 	}
 }
 

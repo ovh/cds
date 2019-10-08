@@ -21,17 +21,33 @@ func adminMaintenance() *cobra.Command {
 var adminMaintenanceEnableCmd = cli.Command{
 	Name:  "enable",
 	Short: "Enable CDS maintenance",
+	Flags: []cli.Flag{
+		{
+			Name:    "hooks",
+			Usage:   "provided to propagate to the hooks services",
+			Default: "false",
+			Type:    cli.FlagBool,
+		},
+	},
 }
 
 func adminMaintenanceEnable(v cli.Values) error {
-	return client.Maintenance(true)
+	return client.Maintenance(true, v.GetBool("hooks"))
 }
 
 var adminMaintenanceDisableCmd = cli.Command{
 	Name:  "disable",
 	Short: "Disable CDS maintenance",
+	Flags: []cli.Flag{
+		{
+			Name:    "hooks",
+			Usage:   "provided to propagate to the hooks services",
+			Default: "false",
+			Type:    cli.FlagBool,
+		},
+	},
 }
 
 func adminMaintenanceDisable(v cli.Values) error {
-	return client.Maintenance(false)
+	return client.Maintenance(false, v.GetBool("hooks"))
 }

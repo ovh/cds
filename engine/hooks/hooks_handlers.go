@@ -663,10 +663,10 @@ func (s *Service) postMaintenanceHandler() service.Handler {
 			return sdk.WrapError(err, "unable to parse maintenance params")
 		}
 
-		if err := s.Dao.store.Set(MaintenanceHookKey, enable); err != nil {
+		if err := s.Dao.store.SetWithTTL(MaintenanceHookKey, enable, 0); err != nil {
 			return sdk.WrapError(err, "unable to save maintenance state")
 		}
-		if err := s.Dao.store.Publish(MaintenanceHookQueue, enable); err != nil {
+		if err := s.Dao.store.Publish(MaintenanceHookQueue, fmt.Sprintf("%v", enable)); err != nil {
 			return sdk.WrapError(err, "unable to publish maintenance state")
 		}
 		s.Maintenance = enable

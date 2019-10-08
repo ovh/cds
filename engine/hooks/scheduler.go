@@ -65,6 +65,11 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 				log.Warning("Hooks> too many tasks in scheduler for now, skipped this retry ticker. size:%d", size)
 				continue
 			}
+
+			if s.Maintenance {
+				log.Warning("Hook> retryTaskExecutionsRoutine> Maintenance ON. Queue: %d", size)
+			}
+
 			tasks, err := s.Dao.FindAllTasks()
 			if err != nil {
 				log.Error("Hooks> retryTaskExecutionsRoutine > Unable to find all tasks: %v", err)
@@ -230,7 +235,7 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		log.Debug("Hooks> dequeueTaskExecutions> current queue size: %d", size)
 
 		if s.Maintenance {
-			log.Info("Maintenance enable, wait 1 minute")
+			log.Info("Maintenance enable, wait 1 minute. Queue %d", size)
 			time.Sleep(1 * time.Minute)
 			continue
 		}

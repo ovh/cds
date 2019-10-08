@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime/pprof"
-	"strconv"
 	"strings"
 	"time"
 
@@ -837,15 +836,8 @@ func (a *API) Serve(ctx context.Context) error {
 		}, a.PanicDump())
 
 	// Check maintenance on redis
-	var maintS string
-	_, err := a.Cache.Get(sdk.MaintenanceAPIKey, &maintS)
-	if err != nil {
+	if _, err := a.Cache.Get(sdk.MaintenanceAPIKey, &a.Maintenance); err != nil {
 		return err
-	}
-	var errB error
-	a.Maintenance, errB = strconv.ParseBool(maintS)
-	if errB != nil {
-		log.Error("Wrong value in redis store for maintenance: %v", maintS)
 	}
 
 	s := &http.Server{
