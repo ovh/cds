@@ -23,7 +23,7 @@
                 </div>
             </div>
         </form>
-        <div class="ui loading text" *ngIf="!branches">Loading....</div>
+        <div class="ui loading text" *ngIf="!branches">{{ 'common_loading' | translate }}</div>
         <div class="ui success message" *ngIf="ope?.status === 2">
             {{ 'workflow_as_code_pr_success' | translate }}
             <a href="{{ope.setup.push.pr_link}}" target="_blank">{{ ope.setup.push.pr_link }}</a>

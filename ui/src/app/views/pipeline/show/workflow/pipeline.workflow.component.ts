@@ -73,7 +73,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     if (data && data.stages) {
                         stageFound = this.selectedStage && data.stages && data.stages.find((stage) => stage.id === this.selectedStage.id);
                         if (stageFound && this.selectedJob && stageFound.jobs) {
-                            jobFound =  stageFound.jobs.find((job) => {
+                            jobFound = stageFound.jobs.find((job) => {
                                 return job.pipeline_action_id === this.selectedJob.pipeline_action_id;
                             });
                         } else {
