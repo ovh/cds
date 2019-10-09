@@ -18,7 +18,7 @@ func (api *API) InitRouter(ctx context.Context) {
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, TracingPostMiddleware)
 
 	r := api.Router
-	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))
+	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false), MaintenanceAware()))
 	r.Handle("/login/callback", r.POST(api.loginUserCallbackHandler, Auth(false)))
 
 	log.Info("Initializing Events broker")

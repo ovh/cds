@@ -67,7 +67,9 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 			}
 
 			if s.Maintenance {
-				log.Warning("Hook> retryTaskExecutionsRoutine> Maintenance ON. Queue: %d", size)
+				log.Info("Hooks> retryTaskExecutionsRoutine> Maintenance enable, wait 1 minute. Queue %d", size)
+				time.Sleep(1 * time.Minute)
+				continue
 			}
 
 			tasks, err := s.Dao.FindAllTasks()
@@ -82,7 +84,7 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					continue
 				}
 				for _, e := range execs {
-					if e.Status == TaskExecutionDoing || e.Status == TaskExecutionScheduled {
+					if e.Status == TaskExecutionDoing || e.Status == TaskExecutionScheduled || e.Status == TaskExecutionEnqueued {
 						continue
 					}
 
@@ -92,6 +94,8 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 							log.Warning("Hooks> retryTaskExecutionsRoutine > Very old hook without UUID %d/%d type:%s status:%s timestamp:%d err:%v", e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
 							continue
 						}
+						e.Status = TaskExecutionEnqueued
+						s.Dao.SaveTaskExecution(&e)
 						log.Warning("Hooks> retryTaskExecutionsRoutine > Enqueing very old hooks %s %d/%d type:%s status:%s timestamp:%d err:%v", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
 						if err := s.Dao.EnqueueTaskExecution(&e); err != nil {
 							log.Error("Hooks> retryTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
@@ -107,6 +111,8 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 							}
 							continue
 						}
+						e.Status = TaskExecutionEnqueued
+						s.Dao.SaveTaskExecution(&e)
 						log.Warning("Hooks> retryTaskExecutionsRoutine > Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
 						if err := s.Dao.EnqueueTaskExecution(&e); err != nil {
 							log.Error("Hooks> retryTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
@@ -119,9 +125,9 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 	}
 }
 
-// Every 30 seconds, the scheduler try to launch all scheduled tasks (scheduler or repoPoller) which have never been processed
+// Every 10 seconds, the scheduler try to launch all scheduled tasks which have never been processed
 func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error {
-	tick := time.NewTicker(time.Duration(30) * time.Second)
+	tick := time.NewTicker(time.Duration(10) * time.Second)
 	defer tick.Stop()
 	for {
 		select {
@@ -150,13 +156,17 @@ func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error
 								log.Error("Hooks> enqueueScheduledTaskExecutionsRoutine > error on DeleteTaskExecution: %v", err)
 							}
 						} else {
-							e.Status = ""
+							e.Status = TaskExecutionEnqueued
 							s.Dao.SaveTaskExecution(&e)
 							log.Info("Hooks> enqueueScheduledTaskExecutionsRoutine > Enqueing %s task %s:%d", e.Type, e.UUID, e.Timestamp)
 							if err := s.Dao.EnqueueTaskExecution(&e); err != nil {
 								log.Error("Hooks> enqueueScheduledTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
 							}
-							alreadyEnqueued = true
+							// this will avoid to re-enqueue the same scheduled task execution if the dequeue take more than 30s (ticker of this goroutine)
+							if e.Type == TypeRepoPoller || e.Type == TypeScheduler {
+								alreadyEnqueued = true
+							}
+
 						}
 
 					}

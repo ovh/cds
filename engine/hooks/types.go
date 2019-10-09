@@ -8,6 +8,7 @@ import (
 
 // Task execution status
 const (
+	TaskExecutionEnqueued  = "ENQUEUED"
 	TaskExecutionDoing     = "DOING"
 	TaskExecutionDone      = "DONE"
 	TaskExecutionScheduled = "SCHEDULED"

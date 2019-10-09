@@ -6,6 +6,7 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { User } from 'app/model/user.model';
 import { GetCDSStatus } from 'app/store/cds.action';
 import { CDSState } from 'app/store/cds.state';
 import { Observable } from 'rxjs';
@@ -54,6 +55,7 @@ export class AppComponent implements OnInit {
     currentTheme: string;
     maintenance: boolean;
     cdsstateSub: Subscription;
+    user: User;
 
     @ViewChild('gamification', {static: false})
     eltGamification: ElementRef;
@@ -105,9 +107,11 @@ export class AppComponent implements OnInit {
         this._store.dispatch(new GetCDSStatus());
         this._authStore.getUserlst().subscribe(user => {
             if (!user) {
+                delete this.user;
                 this.isConnected = false;
                 this.stopWorker(this.sseWorker, null);
             } else {
+                this.user = user;
                 this.isConnected = true;
                 this.startSSE();
             }
@@ -153,7 +157,7 @@ export class AppComponent implements OnInit {
 
         this.cdsstateSub = this._store.select(CDSState.getCurrentState()).subscribe( m => {
             // Switch maintenance ON
-            if (!this.maintenance && m.maintenance && !this.gameInit) {
+            if (!this.maintenance && m.maintenance && !this.gameInit && this.isConnected && !this.user.admin) {
                 setTimeout(() => {
                     this.gameInit = true;
                     PACMAN.init(this.eltGamification.nativeElement, '/assets/js/');
@@ -178,15 +182,14 @@ export class AppComponent implements OnInit {
         }
         let authKey: string;
         let authValue: string;
-        let user = this._authStore.getUser();
         // ADD user AUTH
         let sessionToken = this._authStore.getSessionToken();
         if (sessionToken) {
             authKey = this._authStore.localStorageSessionKey;
             authValue = sessionToken;
-        } else if (user) {
+        } else if (this.user) {
             authKey = 'Authorization';
-            authValue = 'Basic ' + user.token;
+            authValue = 'Basic ' + this.user.token;
         } else {
             return;
         }
