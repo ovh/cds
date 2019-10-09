@@ -761,8 +761,6 @@
   "worker_model_username": "Username",
   "worker_model_password": "Password",
   "workflow_modal_change_view_confirm": "Are you sure you want to discard your unsaved changes?",
-  "workflow_save_as_code_title": "Save workflow as code",
-  "workflow_save_as_code_pending": "Pushing files...",
   "workflow_as_code_pr_success": "A pull-request has just been created:",
   "workflow_node_condition_empty": "There are empty run conditions",
   "workflow_node_condition_duplicate": "You test many times the same variable",
