@@ -392,6 +392,7 @@
   "job_delete": "Supprimer le job",
   "job_spawn_title": "Informations",
   "job_spawn_no_information": "Pas d'information pour l'instant...",
+  "maintenance_title": "CDS est actuellement en maintenance. Merci de patienter.",
   "monitoring": "Monitoring",
   "navbar_actions": "Actions",
   "navbar_project_create": "Créer un projet",

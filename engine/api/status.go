@@ -173,6 +173,12 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 		})
 	}
 
+	linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
+		Status:    sdk.MonitoringStatusOK,
+		Component: "Global/Maintenance",
+		Value:     fmt.Sprintf("%v", api.Maintenance),
+	})
+
 	for stype, r := range resume {
 		if r.minInstance == 0 {
 			continue

@@ -1,10 +1,13 @@
 import { registerLocaleData } from '@angular/common';
 import localeEN from '@angular/common/locales/en';
 import localeFR from '@angular/common/locales/fr';
-import { Component, NgZone, OnInit } from '@angular/core';
+import { Component, ElementRef, NgZone, OnInit, ViewChild } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { GetCDSStatus } from 'app/store/cds.action';
+import { CDSState } from 'app/store/cds.state';
 import { Observable } from 'rxjs';
 import { bufferTime, filter, map, mergeMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
@@ -21,6 +24,8 @@ import { ToastService } from './shared/toast/ToastService';
 import { CDSSharedWorker } from './shared/worker/shared.worker';
 import { CDSWebWorker } from './shared/worker/web.worker';
 import { CDSWorker } from './shared/worker/worker';
+
+declare var PACMAN: any;
 
 @Component({
     selector: 'app-root',
@@ -47,6 +52,12 @@ export class AppComponent implements OnInit {
     toasterConfig: any;
     lastPing: number;
     currentTheme: string;
+    maintenance: boolean;
+    cdsstateSub: Subscription;
+
+    @ViewChild('gamification', {static: false})
+    eltGamification: ElementRef;
+    gameInit: boolean;
 
     constructor(
         _translate: TranslateService,
@@ -58,7 +69,8 @@ export class AppComponent implements OnInit {
         private _router: Router,
         private _notification: NotificationService,
         private _appService: AppService,
-        private _toastService: ToastService
+        private _toastService: ToastService,
+        private _store: Store
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this.toasterConfig = this._toastService.getConfig();
@@ -87,7 +99,10 @@ export class AppComponent implements OnInit {
         this._notification.requestPermission();
     }
 
+
+
     ngOnInit(): void {
+        this._store.dispatch(new GetCDSStatus());
         this._authStore.getUserlst().subscribe(user => {
             if (!user) {
                 this.isConnected = false;
@@ -135,6 +150,17 @@ export class AppComponent implements OnInit {
                     this._titleService.setTitle('CDS');
                 }
             });
+
+        this.cdsstateSub = this._store.select(CDSState.getCurrentState()).subscribe( m => {
+            // Switch maintenance ON
+            if (!this.maintenance && m.maintenance && !this.gameInit) {
+                setTimeout(() => {
+                    this.gameInit = true;
+                    PACMAN.init(this.eltGamification.nativeElement, '/assets/js/');
+                }, 1000);
+            }
+            this.maintenance = m.maintenance;
+        });
     }
 
     stopWorker(w: CDSWorker, s: Subscription): void {

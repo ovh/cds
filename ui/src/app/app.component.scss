@@ -34,4 +34,47 @@
       padding-top: 0px;
     }
   }
+
+  .maintenance {
+
+    h2 {
+      margin: 50px 0;
+      text-align: center;
+    }
+
+    .logo {
+      width: 400px;
+      margin: auto;
+      img {
+        height: 150px;
+        animation: slidein 10s infinite;
+      }
+    }
+  }
+  .gamification {
+    width: 450px;
+    height: 450px;
+    margin: auto;
+  }
+}
+
+@keyframes slidein {
+  from {
+    margin-left: -50%;
+    transform: scaleX(1);
+  }
+
+  50% {
+    margin-left: 100%;
+    transform: scaleX(1);
+  }
+  51% {
+    margin-left: 100%;
+    transform: scaleX(-1);
+  }
+
+  to {
+    margin-left: -50%;
+    transform: scaleX(-1);
+  }
 }

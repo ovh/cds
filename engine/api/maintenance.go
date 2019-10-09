@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -33,6 +34,7 @@ func (a *API) listenMaintenance(c context.Context) error {
 				log.Warning("listenMaintenance> Cannot parse value %s: %s", msg, err)
 			}
 			a.Maintenance = b
+			event.PublishMaintenanceEvent(sdk.EventMaintenance{Enable: b})
 		}
 	}
 }
