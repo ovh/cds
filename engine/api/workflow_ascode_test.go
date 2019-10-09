@@ -202,9 +202,15 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 
 	UUID := sdk.UUID()
 
-	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerRepo", services.TypeRepositories)
-	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
+	a, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
+	b, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerRepo", services.TypeRepositories)
+	c, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
+
+	defer func() {
+		_ = services.Delete(db, a)
+		_ = services.Delete(db, b)
+		_ = services.Delete(db, c)
+	}()
 
 	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 
