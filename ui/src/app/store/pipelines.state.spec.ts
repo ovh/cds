@@ -231,6 +231,7 @@ describe('Pipelines', () => {
             return req.url === '/project/test1/pipeline/pip1/audits';
         })).flush([audit]);
         store.selectOnce(PipelinesState).subscribe(state => {
+            console.log(state.pipeline);
             expect(state.pipeline).toBeTruthy();
         });
         store.selectOnce(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
