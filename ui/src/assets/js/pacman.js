@@ -1072,7 +1072,6 @@ var PACMAN = (function () {
             ["eating", root + "audio/eating.short." + extension],
             ["eating2", root + "audio/eating.short." + extension]
         ];
-        load(audio_files, function() { loaded(); });
          */
         loaded();
         //load(audio_files, function() { loaded(); });
