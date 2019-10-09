@@ -95,7 +95,10 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 							continue
 						}
 						e.Status = TaskExecutionEnqueued
-						s.Dao.SaveTaskExecution(&e)
+						if err := s.Dao.SaveTaskExecution(&e); err != nil {
+							log.Warning("Hooks> retryTaskExecutionsRoutine> unable to save task execution for old hook %d: %v", e.UUID, err)
+							continue
+						}
 						log.Warning("Hooks> retryTaskExecutionsRoutine > Enqueing very old hooks %s %d/%d type:%s status:%s timestamp:%d err:%v", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
 						if err := s.Dao.EnqueueTaskExecution(&e); err != nil {
 							log.Error("Hooks> retryTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
@@ -112,7 +115,10 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 							continue
 						}
 						e.Status = TaskExecutionEnqueued
-						s.Dao.SaveTaskExecution(&e)
+						if err := s.Dao.SaveTaskExecution(&e); err != nil {
+							log.Warning("Hooks> retryTaskExecutionsRoutine> unable to save task execution for %d: %v", e.UUID, err)
+							continue
+						}
 						log.Warning("Hooks> retryTaskExecutionsRoutine > Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
 						if err := s.Dao.EnqueueTaskExecution(&e); err != nil {
 							log.Error("Hooks> retryTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
