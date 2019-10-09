@@ -103,28 +103,6 @@ export class PipelinesState {
 
     }
 
-    /*
-    @Action(actionPipeline.LoadPipeline)
-    load(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.LoadPipeline) {
-        const state = ctx.getState();
-        let pipKey = `${action.payload.projectKey}/${action.payload.pipeline.name}`;
-        let pipelines = state.pipelines;
-
-        // Refresh when change project
-        if (state.currentProjectKey !== action.payload.projectKey) {
-            pipelines = {};
-        }
-
-        ctx.setState({
-            ...state,
-            currentProjectKey: action.payload.projectKey,
-            pipelines: Object.assign({}, pipelines, { [pipKey]: action.payload.pipeline }),
-            loading: false,
-        });
-    }
-
-     */
-
     @Action(actionPipeline.FetchPipeline)
     fetch(ctx: StateContext<PipelinesStateModel>, action: actionPipeline.FetchPipeline) {
         const state = ctx.getState();
@@ -236,10 +214,12 @@ export class PipelinesState {
             `/project/${action.payload.projectKey}/pipeline/${action.payload.pipelineName}/audits`
         ).pipe(tap((audits: PipelineAudit[]) => {
             const state = ctx.getState();
-            ctx.dispatch(new actionPipeline.LoadPipeline({
-                projectKey: action.payload.projectKey,
-                pipeline: Object.assign({}, state.pipeline, { audits })
-            }));
+            ctx.setState({
+                ...state,
+                currentProjectKey: action.payload.projectKey,
+                pipeline: Object.assign({}, state.pipeline, { audits }),
+                loading: false,
+            });
         }));
     }
 
@@ -250,10 +230,13 @@ export class PipelinesState {
             `/project/${action.payload.projectKey}/pipeline/${action.payload.pipelineName}/rollback/${auditId}`,
             {}
         ).pipe(tap((pip: Pipeline) => {
-            ctx.dispatch(new actionPipeline.LoadPipeline({
-                projectKey: action.payload.projectKey,
-                pipeline: pip
-            }));
+            const state = ctx.getState();
+            ctx.setState({
+                ...state,
+                currentProjectKey: action.payload.projectKey,
+                pipeline: pip,
+                loading: false,
+            });
         }));
     }
 
@@ -477,7 +460,6 @@ export class PipelinesState {
             .pipe(tap((pip) => {
                 const state = ctx.getState();
                 let pipUpdated = Object.assign({}, state.pipeline, { stages: pip.stages });
-
                 ctx.setState({
                     ...state,
                     pipeline: pipUpdated,
@@ -496,11 +478,12 @@ export class PipelinesState {
             { params, responseType: <any>'text' }
         ).pipe(tap((asCode: string) => {
             const state = ctx.getState();
-
-            ctx.dispatch(new actionPipeline.LoadPipeline({
-                projectKey: action.payload.projectKey,
-                pipeline: Object.assign({}, state.pipeline, <Pipeline>{ asCode })
-            }));
+            ctx.setState({
+                ...state,
+                currentProjectKey: action.payload.projectKey,
+                pipeline: Object.assign({}, state.pipeline, <Pipeline>{ asCode }),
+                loading: false,
+            });
         }));
     }
 
@@ -517,11 +500,12 @@ export class PipelinesState {
             { params, headers }
         ).pipe(tap((pip: Pipeline) => {
             const state = ctx.getState();
-
-            ctx.dispatch(new actionPipeline.LoadPipeline({
-                projectKey: action.payload.projectKey,
-                pipeline: Object.assign({}, state.pipeline, { preview: pip })
-            }));
+            ctx.setState({
+                ...state,
+                currentProjectKey: action.payload.projectKey,
+                pipeline: Object.assign({}, state.pipeline, { preview: pip }),
+                loading: false,
+            });
         }));
     }
 

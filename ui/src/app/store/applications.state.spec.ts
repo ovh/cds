@@ -21,6 +21,8 @@ import { AddProject } from './project.action';
 import { ProjectState, ProjectStateModel } from './project.state';
 import { WorkflowState } from './workflow.state';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
+import { EnvironmentService } from 'app/service/environment/environment.service';
+import { ApplicationService } from 'app/service/application/application.service';
 
 describe('Applications', () => {
     let store: Store;
@@ -36,6 +38,8 @@ describe('Applications', () => {
                 ProjectService,
                 ProjectStore,
                 PipelineService,
+                EnvironmentService,
+                ApplicationService
             ],
             imports: [
                 NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowState]),
