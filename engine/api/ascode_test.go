@@ -59,8 +59,13 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 		},
 	}))
 
-	_, _ = assets.InsertService(t, db, "Test_postImportAsCodeHandler", services.TypeRepositories)
-	_, _ = assets.InsertService(t, db, "Test_VCSService", services.TypeVCS)
+	a, _ := assets.InsertService(t, db, "Test_postImportAsCodeHandler", services.TypeRepositories)
+	b, _ := assets.InsertService(t, db, "Test_VCSService", services.TypeVCS)
+
+	defer func() {
+		_ = services.Delete(db, a)
+		_ = services.Delete(db, b)
+	}()
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -126,7 +131,10 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 
 	u, pass := assets.InsertAdminUser(t, db)
 
-	_, _ = assets.InsertService(t, db, "Test_getImportAsCodeHandler", services.TypeRepositories)
+	a, _ := assets.InsertService(t, db, "Test_getImportAsCodeHandler", services.TypeRepositories)
+	defer func() {
+		_ = services.Delete(db, a)
+	}()
 
 	UUID := sdk.UUID()
 
@@ -191,8 +199,13 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	pkey := sdk.RandomString(10)
 	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
-	_, _ = assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Repo", services.TypeRepositories)
-	_, _ = assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_VCS", services.TypeHooks)
+	a, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Repo", services.TypeRepositories)
+	b, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_VCS", services.TypeHooks)
+
+	defer func() {
+		_ = services.Delete(db, a)
+		_ = services.Delete(db, b)
+	}()
 
 	UUID := sdk.UUID()
 
