@@ -1070,7 +1070,11 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		}
 	}
 
-	_, _ = assets.InsertService(t, db, "TestInsertNewCodeCoverageReport", services.TypeVCS)
+	a, _ := assets.InsertService(t, db, "TestInsertNewCodeCoverageReport", services.TypeVCS)
+
+	defer func() {
+		_ = services.Delete(db, a)
+	}()
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
