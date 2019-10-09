@@ -94,3 +94,21 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 		return service.WriteJSON(w, data, http.StatusOK)
 	}
 }
+
+func (api *API) getWorkflowTriggerHookConditionHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		data := struct {
+			Operators      map[string]string `json:"operators"`
+			ConditionNames []string          `json:"names"`
+		}{
+			Operators: sdk.WorkflowConditionsOperators,
+		}
+
+		data.ConditionNames = append(data.ConditionNames, sdk.BasicGitVariableNames...)
+		data.ConditionNames = append(data.ConditionNames, "git.tag")
+		data.ConditionNames = append(data.ConditionNames, "payload")
+
+		sort.Strings(data.ConditionNames)
+		return service.WriteJSON(w, data, http.StatusOK)
+	}
+}

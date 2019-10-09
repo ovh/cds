@@ -4,16 +4,9 @@ import { Store } from '@ngxs/store';
 import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import {
-    WNode,
-    WNodeContext,
-    Workflow,
-    WorkflowNodeCondition,
-    WorkflowNodeConditions,
-    WorkflowTriggerConditionCache
-} from 'app/model/workflow.model';
+// tslint:disable-next-line: max-line-length
+import { WNode, WNodeContext, WNodeHook, Workflow, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { ThemeStore } from 'app/service/theme/theme.store';
-import { VariableService } from 'app/service/variable/variable.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Table } from 'app/shared/table/table';
@@ -60,13 +53,33 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     get node(): WNode {
         return this.editableNode;
     }
+    editableHook: WNodeHook;
+    @Input('hook') set hook(data: WNodeHook) {
+        if (data) {
+            this.editableHook = cloneDeep(data);
+            if (!this.editableHook.conditions) {
+                this.editableHook.conditions = new WorkflowNodeConditions();
+            }
+            if (!this.editableHook.conditions.plain) {
+                this.editableHook.conditions.plain = new Array<WorkflowNodeCondition>();
+            }
+
+            this.previousValue = this.editableHook.conditions.lua_script;
+            let condition = this.editableHook.conditions.plain.find(cc => cc.variable === 'cds.manual');
+            if (condition) {
+                condition.value = <any>(condition.value !== 'false');
+            }
+        }
+    };
+    get hook(): WNodeHook {
+        return this.editableHook;
+    }
     @Input() readonly = true;
     @Input() editMode: boolean;
 
     @Output() conditionsChange = new EventEmitter<boolean>();
 
     codeMirrorConfig: any;
-    suggest: Array<string> = [];
     loadingConditions = false;
     permission = PermissionValue;
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
@@ -77,7 +90,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
 
     constructor(
         private store: Store,
-        private _variableService: VariableService,
         private _workflowService: WorkflowService,
         private _toast: ToastService,
         private _translate: TranslateService,
@@ -109,60 +121,110 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             }
         });
 
-        this._variableService.getContextVariable(this.project.key, this.node.context.pipeline_id)
-            .pipe(finalize(() => this._cd.markForCheck()))
-            .subscribe((suggest) => this.suggest = suggest);
+        if (this.node) {
+            this._workflowService.getTriggerCondition(this.project.key, this.workflow.name, this.node.id)
+                .pipe(
+                    first(),
+                    finalize(() => {
+                        this.loadingConditions = false;
+                        this._cd.markForCheck();
+                    })
+                )
+                .subscribe(wtc => this.triggerConditions = wtc);
+        } else {
+            this._workflowService.getTriggerHookCondition(this.project.key, this.workflow.name)
+                .pipe(
+                    first(),
+                    finalize(() => {
+                        this.loadingConditions = false;
+                        this._cd.markForCheck();
+                    })
+                )
+                .subscribe(wtc => this.triggerConditions = wtc);
+        }
 
-        this._workflowService.getTriggerCondition(this.project.key, this.workflow.name, this.node.id)
-            .pipe(
-                first(),
-                finalize(() => {
-                    this.loadingConditions = false;
-                    this._cd.markForCheck();
-                })
-            )
-            .subscribe(wtc => this.triggerConditions = wtc);
+
+
     }
 
     updateWorkflow(): void {
         this.loading = true;
-        if (this.editableNode.context.conditions.lua_script && this.editableNode.context.conditions.lua_script !== '') {
-            this.editableNode.context.conditions.plain = null;
-        } else {
-            this.editableNode.context.conditions.lua_script = '';
-            let sizeBefore = this.editableNode.context.conditions.plain.length;
+        if (this.editableNode != null) {
+            if (this.editableNode.context.conditions.lua_script && this.editableNode.context.conditions.lua_script !== '') {
+                this.editableNode.context.conditions.plain = null;
+            } else {
+                this.editableNode.context.conditions.lua_script = '';
+                let sizeBefore = this.editableNode.context.conditions.plain.length;
 
 
-            let tmp = uniqBy(this.editableNode.context.conditions.plain, 'variable');
-            let sizeAfter = tmp.length;
-            if (sizeAfter !== sizeBefore) {
-                this._toast.error('Conflict', this._translate.instant('workflow_node_condition_duplicate'));
-                this.loading = false;
-                return;
+                let tmp = uniqBy(this.editableNode.context.conditions.plain, 'variable');
+                let sizeAfter = tmp.length;
+                if (sizeAfter !== sizeBefore) {
+                    this._toast.error('Conflict', this._translate.instant('workflow_node_condition_duplicate'));
+                    this.loading = false;
+                    return;
+                }
+                this.editableNode.context.conditions.plain = tmp;
+
+                let emptyConditions = this.editableNode.context.conditions.plain.findIndex(c => !c.variable)
+                if (emptyConditions > -1) {
+                    this._toast.error('Forbidden', this._translate.instant('workflow_node_condition_empty'));
+                    this.loading = false;
+                    return;
+                }
             }
-            this.editableNode.context.conditions.plain = tmp;
+        } else if (this.editableHook != null) {
+            if (this.editableHook.conditions.lua_script && this.editableHook.conditions.lua_script !== '') {
+                this.editableHook.conditions.plain = null;
+            } else {
+                this.editableHook.conditions.lua_script = '';
+                let sizeBefore = this.editableHook.conditions.plain.length;
 
-            let emptyConditions = this.editableNode.context.conditions.plain.findIndex(c => !c.variable)
-            if (emptyConditions > -1) {
-                this._toast.error('Forbidden', this._translate.instant('workflow_node_condition_empty'));
-                this.loading = false;
-                return;
+
+                let tmp = uniqBy(this.editableHook.conditions.plain, 'variable');
+                let sizeAfter = tmp.length;
+                if (sizeAfter !== sizeBefore) {
+                    this._toast.error('Conflict', this._translate.instant('workflow_node_condition_duplicate'));
+                    this.loading = false;
+                    return;
+                }
+                this.editableHook.conditions.plain = tmp;
+
+                let emptyConditions = this.editableHook.conditions.plain.findIndex(c => !c.variable)
+                if (emptyConditions > -1) {
+                    this._toast.error('Forbidden', this._translate.instant('workflow_node_condition_empty'));
+                    this.loading = false;
+                    return;
+                }
             }
         }
+
 
         let clonedWorkflow = cloneDeep(this.workflow);
-        let n: WNode;
-        if (this.editMode) {
-            n = Workflow.getNodeByRef(this.editableNode.ref, clonedWorkflow);
-        } else {
-            n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+
+        if (this.editableNode) {
+            let n: WNode;
+            if (this.editMode) {
+                n = Workflow.getNodeByRef(this.editableNode.ref, clonedWorkflow);
+            } else {
+                n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+            }
+            n.context.conditions = cloneDeep(this.editableNode.context.conditions);
+            if (n.context.conditions && n.context.conditions.plain) {
+                n.context.conditions.plain.forEach(cc => {
+                    cc.value = cc.value.toString();
+                });
+            }
+        } else if (this.editableHook) {
+            let hook = Workflow.getHookByRef(this.editableHook.ref, clonedWorkflow);
+            hook.conditions = cloneDeep(this.editableHook.conditions);
+            if (hook.conditions && hook.conditions.plain) {
+                hook.conditions.plain.forEach(cc => {
+                    cc.value = cc.value.toString();
+                });
+            }
         }
-        n.context.conditions = cloneDeep(this.editableNode.context.conditions);
-        if (n.context.conditions && n.context.conditions.plain) {
-            n.context.conditions.plain.forEach(cc => {
-                cc.value = cc.value.toString();
-            });
-        }
+
 
         this.store.dispatch(new UpdateWorkflow({
             projectKey: this.workflow.project_key,

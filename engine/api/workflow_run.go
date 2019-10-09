@@ -24,6 +24,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/luascript"
 )
 
 const (
@@ -849,6 +850,37 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		}
 
 		c := getAPIConsumer(ctx)
+		// To handle conditions on hooks
+		if opts.Hook != nil {
+			hook, errH := workflow.LoadHookByUUID(api.mustDB(), opts.Hook.WorkflowNodeHookUUID)
+			if errH != nil {
+				return sdk.WrapError(errH, "cannot load hook for uuid %s", opts.Hook.WorkflowNodeHookUUID)
+			}
+			conditions := hook.Conditions
+			params := sdk.ParametersFromMap(opts.Hook.Payload)
+
+			var errc error
+			var conditionsOK bool
+			if conditions.LuaScript == "" {
+				conditionsOK, errc = sdk.WorkflowCheckConditions(conditions.PlainConditions, params)
+			} else {
+				luacheck, err := luascript.NewCheck()
+				if err != nil {
+					return sdk.WrapError(err, "cannot check lua script")
+				}
+				luacheck.SetVariables(sdk.ParametersToMap(params))
+				errc = luacheck.Perform(conditions.LuaScript)
+				conditionsOK = luacheck.Result
+			}
+
+			if errc != nil {
+				return sdk.WrapError(errc, "cannot check conditoons")
+			}
+
+			if !conditionsOK {
+				return sdk.ErrConditionsNotOk
+			}
+		}
 
 		var wf *sdk.Workflow
 		// IF CONTINUE EXISTING RUN

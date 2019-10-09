@@ -1423,6 +1423,167 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 	assert.Equal(t, 403, rec.Code)
 }
 
+func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), s))
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	//Second pipeline
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2))
+	s = sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip2.ID
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), s))
+	j = &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
+	s.Jobs = append(s.Jobs, *j)
+
+	mockHookService, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerWithoutRightConditionsOnHook", services.TypeHooks)
+	defer func() {
+		_ = services.Delete(db, mockHookService) // nolint
+	}()
+
+	//This is a mock for the repositories service
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+
+			switch r.URL.String() {
+			case "/task/bulk":
+				hooks := map[string]sdk.NodeHook{}
+				hooks["1cbf3792-126b-4111-884f-077bdee9523c"] = sdk.NodeHook{
+					Conditions: sdk.WorkflowNodeConditions{
+						LuaScript: "return false",
+					},
+					HookModelName: sdk.WebHookModel.Name,
+					Config:        sdk.WebHookModel.DefaultConfig,
+					Ref:           "root.0",
+					UUID:          "1cbf3792-126b-4111-884f-077bdee9523c",
+				}
+				if err := enc.Encode(hooks); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				return writeError(w, fmt.Errorf("route %s must not be called", r.URL.String()))
+			}
+			return w, nil
+		},
+	)
+
+	_, errDb := db.Exec("DELETE FROM w_node_hook WHERE uuid = $1", "1cbf3792-126b-4111-884f-077bdee9523c")
+	test.NoError(t, errDb)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		HookModels: map[int64]sdk.WorkflowHookModel{
+			1: sdk.WebHookModel,
+		},
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Hooks: []sdk.NodeHook{
+					sdk.NodeHook{
+						Conditions: sdk.WorkflowNodeConditions{
+							LuaScript: "return false",
+						},
+						HookModelName: sdk.WebHookModel.Name,
+						Config:        sdk.WebHookModel.DefaultConfig,
+						Ref:           "root.0",
+						UUID:          "1cbf3792-126b-4111-884f-077bdee9523c",
+					},
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "child",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithEnvironments)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj2, "test_1", workflow.LoadOptions{})
+	test.NoError(t, err)
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Hook: &sdk.WorkflowNodeRunHookEvent{
+			Payload:              nil,
+			WorkflowNodeHookUUID: "1cbf3792-126b-4111-884f-077bdee9523c",
+		},
+	}
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	var body []byte
+	_, err = req.Body.Read(body)
+	test.NoError(t, err)
+	defer req.Body.Close()
+	assert.Equal(t, 400, rec.Code)
+}
+
 func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()

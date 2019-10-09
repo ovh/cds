@@ -771,6 +771,7 @@
   "workflow_vcs_resynced": "VCS status resynced",
   "workflow_added": "Workflow added",
   "workflow_run_scheduling": "Crafting workflow",
+  "workflow_run_conditions_hook": "Pay attention, you can not use run conditions with variable as {{.cds.build...}} because conditions are checked before a run is created.",
   "workflow_context_invalid": "Invalid JSON",
   "workflow_icon": "Workflow icon",
   "workflow_create": "Create a workflow",

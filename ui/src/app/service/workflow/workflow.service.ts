@@ -49,6 +49,17 @@ export class WorkflowService {
     }
 
     /**
+     * Get workflow trigger hook condition
+     * @param projectKey Project unique key
+     * @param workflow Workflow to delete
+     * @returns {Observable<boolean>}
+     */
+    getTriggerHookCondition(projectKey: string, workflowName: string): Observable<WorkflowTriggerConditionCache> {
+        return this._http.get<WorkflowTriggerConditionCache>(
+            `/project/${projectKey}/workflows/${workflowName}/hook/triggers/condition`);
+    }
+
+    /**
      * Update the workflow  as code
      * @param projectKey
      * @param workflowName

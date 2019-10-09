@@ -1,5 +1,12 @@
 package sdk
 
+import (
+	"database/sql/driver"
+	json "encoding/json"
+
+	"github.com/pkg/errors"
+)
+
 // Those are icon for hooks
 const (
 	GitlabIcon    = "Gitlab"
@@ -16,7 +23,8 @@ type NodeHook struct {
 	NodeID        int64                  `json:"node_id" db:"node_id"`
 	HookModelID   int64                  `json:"hook_model_id" db:"hook_model_id"`
 	HookModelName string                 `json:"hook_model_name" db:"-"`
-	Config        WorkflowNodeHookConfig `json:"config" db:"-"`
+	Config        WorkflowNodeHookConfig `json:"config" db:"config"`
+	Conditions    WorkflowNodeConditions `json:"conditions" db:"conditions"`
 }
 
 //Equals checks functionnal equality between two hooks
@@ -65,6 +73,21 @@ const WorkflowHookModelBuiltin = "builtin"
 
 //WorkflowNodeHookConfig represents the configguration for a WorkflowNodeHook
 type WorkflowNodeHookConfig map[string]WorkflowNodeHookConfigValue
+
+// Value returns driver.Value from WorkflowNodeHookConfig request.
+func (w WorkflowNodeHookConfig) Value() (driver.Value, error) {
+	j, err := json.Marshal(w)
+	return j, WrapError(err, "cannot marshal WorkflowNodeHookConfig")
+}
+
+// Scan workflow template request.
+func (w *WorkflowNodeHookConfig) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowNodeHookConfig")
+}
 
 // GetBuiltinHookModelByName retrieve the hook model
 func GetBuiltinHookModelByName(name string) *WorkflowHookModel {
