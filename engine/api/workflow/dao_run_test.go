@@ -119,7 +119,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 				if err := enc.Encode([]sdk.VCSBranch{b}); err != nil {
 					return writeError(w, err)
 				}
-				// NEED GET BRANCH TO GET LASTEST COMMIT
+				// NEED GET BRANCH TO GET LATEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
 				b := sdk.VCSBranch{
 					Default:      false,
@@ -380,7 +380,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
-				// NEED GET BRANCH TO GET LASTEST COMMIT
+				// NEED GET BRANCH TO GET LATEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
 				b := sdk.VCSBranch{
 					Default:      false,
@@ -570,7 +570,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 				if err := enc.Encode(repo); err != nil {
 					return writeError(w, err)
 				}
-				// NEED GET BRANCH TO GET LASTEST COMMIT
+				// NEED GET BRANCH TO GET LATEST COMMIT
 			case "/vcs/github/repos/sguiheux/demo/branches/?branch=master":
 				b := sdk.VCSBranch{
 					Default:      false,
