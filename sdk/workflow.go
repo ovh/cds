@@ -2,11 +2,15 @@ package sdk
 
 import (
 	"crypto/rand"
+	"database/sql/driver"
 	"encoding/hex"
+	json "encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // DefaultHistoryLength is the default history length
@@ -203,6 +207,21 @@ func (w *Workflow) ValidateType() error {
 type WorkflowNodeConditions struct {
 	PlainConditions []WorkflowNodeCondition `json:"plain,omitempty" yaml:"check,omitempty"`
 	LuaScript       string                  `json:"lua_script,omitempty" yaml:"script,omitempty"`
+}
+
+// Value returns driver.Value from WorkflowNodeConditions request.
+func (w WorkflowNodeConditions) Value() (driver.Value, error) {
+	j, err := json.Marshal(w)
+	return j, WrapError(err, "cannot marshal WorkflowNodeConditions")
+}
+
+// Scan workflow template request.
+func (w *WorkflowNodeConditions) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowNodeConditions")
 }
 
 //WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex

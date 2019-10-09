@@ -729,6 +729,7 @@
   "workflow_vcs_resynced": "Statuts du dépot distant resynchronisés",
   "workflow_added": "Workflow créé",
   "workflow_run_scheduling": "Construction du workflow",
+  "workflow_run_conditions_hook": "Attention, vous ne pouvez pas utiliser des conditions de lancement utilisant {{.cds.build...}} car la vérification des conditions s'effectue avant la création d'un run.",
   "workflow_context_invalid": "JSON invalide",
   "workflow_icon": "Icône du workflow",
   "workflow_create": "Création d'un workflow",

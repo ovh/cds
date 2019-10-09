@@ -5,6 +5,7 @@ type Task struct {
 	UUID              string                 `json:"uuid" cli:"UUID,key"`
 	Type              string                 `json:"type" cli:"Type"`
 	Config            WorkflowNodeHookConfig `json:"config" cli:"Config"`
+	Conditions        WorkflowNodeConditions `json:"conditions" cli:"Conditions"`
 	Stopped           bool                   `json:"stopped" cli:"Stopped"`
 	Executions        []TaskExecution        `json:"executions"`
 	NbExecutionsTotal int                    `json:"nb_executions_total" cli:"nb_executions_total"`
