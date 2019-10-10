@@ -1,0 +1,44 @@
+name: Signup Admin & User
+
+vars:
+  api.url: 'http://localhost:8081'
+  ui.url: 'http://localhost:4200'
+  cdsctl : 'cdsctl'
+  cdsctl.config : './cdsrc'
+  smtpmock.url: 'http://localhost:2024'
+  user.rw.username: cds.integration.tests.rw
+  user.rw.email: it-user-rw@localhost.local
+
+testcases:
+- name: create-admin-user
+  steps:
+  - type: http
+    method: POST
+    url: '{{.api.url}}/user/signup'
+    headers: 
+      'Content-Type': 'application/json'
+    body: '{"user" : {"username": "{{.user.rw.username}}", "fullname": "IT User RW", "email":"{{.user.rw.email}}"}, "callback" : "cdsctl user confirm %s %s"}'
+
+- name: post-create-user
+  steps:
+  - type: http
+    method: GET
+    url: '{{.smtpmock.url}}/messages/{{.user.rw.email}}/latest'
+    assertions:
+    - result.statuscode ShouldEqual 200
+    vars:
+      verify: 
+        from: result.bodyjson.content
+        regex: cdsctl user confirm (?:(?:\w+)\.*)+ ([a-zA-Z0-9]*)
+
+- name: prepare-cdsctl-config-file
+  steps:
+  - script: |
+          cat << EOF > {{.cdsctl.config}}
+          Host = "{{.api.url}}"
+          InsecureSkipVerifyTLS = false
+          Token = "xxxxxxxx"
+          User = "{{.user.rw.username}}"
+          EOF
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} user confirm {{.user.rw.username}} {{.post-create-user.verify}}"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} user me"
