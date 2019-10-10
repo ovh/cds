@@ -1118,6 +1118,13 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
+
+	// wait a little to let the goroutine in deleteWorkflowHandler
+	// to terminate before terminate the test.
+	// otherwise, this log can append:
+	// panic: Log in goroutine after Test_deleteWorkflowHandler has completed [recovered]
+	// panic: Log in goroutine after Test_deleteWorkflowHandler has completed
+	time.Sleep(5 * time.Second)
 }
 
 func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {

@@ -515,7 +515,7 @@ func TestManualRun3(t *testing.T) {
 
 	filter := workflow.NewQueueFilter()
 	// test nil since/until
-	_, err = workflow.CountNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group))
+	_, err = workflow.CountNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group, g0, g1))
 	test.NoError(t, err)
 
 	// queue should be empty with since 0,0 until 0,0
@@ -525,7 +525,7 @@ func TestManualRun3(t *testing.T) {
 	filter.Since = &t0
 	filter.Until = &t1
 
-	countAlreadyInQueueNone, err := workflow.CountNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group))
+	countAlreadyInQueueNone, err := workflow.CountNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group, g0, g1))
 	test.NoError(t, err)
 	assert.Equal(t, 0, int(countAlreadyInQueueNone.Count))
 
@@ -535,7 +535,7 @@ queueRun:
 
 	var jobs []sdk.WorkflowNodeJobRun
 	// this group must return nothing (execGroups)
-	jobs, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group))
+	jobs, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group, g0, g1))
 	test.NoError(t, err)
 	assert.Equal(t, 0, len(jobs))
 
