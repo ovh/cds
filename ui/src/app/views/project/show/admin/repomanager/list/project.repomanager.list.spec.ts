@@ -28,6 +28,7 @@ import { SharedModule } from '../../../../../../shared/shared.module';
 import { ToastService } from '../../../../../../shared/toast/ToastService';
 import { ProjectModule } from '../../../../project.module';
 import { ProjectRepoManagerComponent } from './project.repomanager.list.component';
+import { ApplicationService } from 'app/service/application/application.service';
 
 describe('CDS: Project RepoManager List Component', () => {
 
@@ -51,6 +52,8 @@ describe('CDS: Project RepoManager List Component', () => {
                 VariableService,
                 ToasterService,
                 TranslateService,
+                ApplicationService,
+                EnvironmentService,
                 TranslateParser,
                 NavbarService,
                 WorkflowService,
@@ -114,6 +117,11 @@ describe('CDS: Project RepoManager List Component', () => {
         fixture.detectChanges(true);
 
         compiled.querySelector('.ui.red.button.active').click();
+        fixture.detectChanges(true);
+
+        // Button is not in component nativeElement
+        compiled.querySelector('.actions .ui.green.button').click();
+        fixture.detectChanges(true);
 
         expect(store.dispatch).toHaveBeenCalledWith(new DisconnectRepositoryManagerInProject({
             projectKey: 'key1',

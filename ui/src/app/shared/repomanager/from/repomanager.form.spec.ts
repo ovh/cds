@@ -21,6 +21,7 @@ import { RepoManagerService } from '../../../service/repomanager/project.repoman
 import { VariableService } from '../../../service/variable/variable.service';
 import { SharedModule } from '../../shared.module';
 import { RepoManagerFormComponent } from './repomanager.form.component';
+import { ApplicationService } from 'app/service/application/application.service';
 
 describe('CDS: Project RepoManager Form Component', () => {
 
@@ -30,6 +31,7 @@ describe('CDS: Project RepoManager Form Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
+                ApplicationService,
                 TranslateLoader,
                 RepoManagerService,
                 ProjectStore,

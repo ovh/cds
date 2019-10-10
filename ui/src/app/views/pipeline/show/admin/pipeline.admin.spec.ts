@@ -24,6 +24,9 @@ import { SharedModule } from '../../../../shared/shared.module';
 import { ToastService } from '../../../../shared/toast/ToastService';
 import { PipelineModule } from '../../pipeline.module';
 import { PipelineAdminComponent } from './pipeline.admin.component';
+import { ApplicationService } from 'app/service/application/application.service';
+import { EnvironmentService } from 'app/service/environment/environment.service';
+import { of } from 'rxjs';
 
 describe('CDS: Pipeline Admin Component', () => {
 
@@ -47,6 +50,8 @@ describe('CDS: Pipeline Admin Component', () => {
                 WorkflowRunService,
                 TranslateParser,
                 UserService,
+                ApplicationService,
+                EnvironmentService,
                 AuthenticationService,
                 ProjectStore,
                 ProjectService
@@ -95,7 +100,7 @@ describe('CDS: Pipeline Admin Component', () => {
 
         let store: Store = injector.get(Store);
         spyOn(store, 'dispatch').and.callFake(() => {
-            return Observable.of(null);
+            return of(null);
         });
         fixture.debugElement.nativeElement.querySelector('.ui.button.green.button').click();
 
