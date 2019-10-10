@@ -22,7 +22,12 @@ import { PipelineService } from '../../../../service/pipeline/pipeline.service';
 import { ProjectService } from '../../../../service/project/project.service';
 import { ProjectStore } from '../../../../service/project/project.store';
 import { RepoManagerService } from '../../../../service/repomanager/project.repomanager.service';
-import { ServicesModule, WorkflowRunService, WorkflowStore } from '../../../../service/services.module';
+import {
+    MonitoringService,
+    ServicesModule,
+    WorkflowRunService,
+    WorkflowStore
+} from '../../../../service/services.module';
 import { VariableService } from '../../../../service/variable/variable.service';
 import { WorkflowService } from '../../../../service/workflow/workflow.service';
 import { SharedModule } from '../../../../shared/shared.module';
@@ -54,6 +59,7 @@ describe('CDS: Application Admin Component', () => {
                 ProjectService,
                 PipelineService,
                 EnvironmentService,
+                MonitoringService,
                 NavbarService,
                 VariableService,
                 { provide: ToastService, useClass: MockToast },
