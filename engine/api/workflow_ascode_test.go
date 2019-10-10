@@ -33,6 +33,12 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 
 	UUID := sdk.UUID()
 
+	svcs, errS := services.LoadAll(context.TODO(), db)
+	assert.NoError(t, errS)
+	for _, s := range svcs {
+		_ = services.Delete(db, &s) // nolint
+	}
+
 	a, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
 	b, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerRepo", services.TypeRepositories)
 	c, _ := assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
