@@ -31,6 +31,8 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { ProjectModule } from '../project.module';
 import { ProjectAddComponent } from './project.add.component';
+import { ApplicationService } from 'app/service/application/application.service';
+
 describe('CDS: Project Show Component', () => {
 
     let injector: Injector;
@@ -51,6 +53,7 @@ describe('CDS: Project Show Component', () => {
                 ProjectService,
                 PipelineService,
                 MonitoringService,
+                ApplicationService,
                 EnvironmentService,
                 VariableService,
                 ToasterService,

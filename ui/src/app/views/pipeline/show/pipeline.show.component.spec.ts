@@ -28,6 +28,9 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineShowComponent } from './pipeline.show.component';
+import { ApplicationService } from 'app/service/application/application.service';
+import { EnvironmentService } from 'app/service/environment/environment.service';
+
 describe('CDS: Pipeline Show', () => {
 
     beforeEach(() => {
@@ -35,6 +38,8 @@ describe('CDS: Pipeline Show', () => {
             declarations: [],
             providers: [
                 KeyService,
+                ApplicationService,
+                EnvironmentService,
                 PipelineCoreService,
                 PipelineService,
                 ProjectService,

@@ -106,7 +106,7 @@ describe('CDS: Action Component', () => {
         action.requirements = new Array<Requirement>();
         fixture.componentInstance.editableAction = action;
         fixture.componentInstance.edit = true;
-        fixture.componentInstance.project = <Project>{ key: 'key' }
+        fixture.componentInstance.project = <Project>{ key: 'key' };
 
         fixture.detectChanges();
         tick(50);
