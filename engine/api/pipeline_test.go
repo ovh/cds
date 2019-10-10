@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"github.com/ovh/cds/engine/api/application"
 	"io/ioutil"
@@ -27,6 +28,12 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	UUID := sdk.UUID()
+
+	svcs, errS := services.LoadAll(context.TODO(), db)
+	assert.NoError(t, errS)
+	for _, s := range svcs {
+		_ = services.Delete(db, &s) // nolint
+	}
 
 	a, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeVCS)
 	b, _ := assets.InsertService(t, db, "TestUpdateAsCodePipelineHandler", services.TypeRepositories)
