@@ -2,11 +2,15 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var userCmd = cli.Command{
@@ -116,15 +120,47 @@ func userResetRun(v cli.Values) error {
 
 var userConfirmCmd = cli.Command{
 	Name:  "confirm",
-	Short: "Confirm CDS user password reset",
+	Short: "Confirm CDS user password",
 	Args: []cli.Arg{
 		{Name: "username"},
 		{Name: "token"},
 	},
+	Flags: []cli.Flag{
+		{
+			Name:      "api-url",
+			ShortHand: "H",
+			Usage:     "CDS API URL",
+			IsValid: func(s string) bool {
+				match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
+				return match
+			},
+		}, {
+			Name:  "env",
+			Usage: "Display the commands to set up the environment for the cds client",
+			Type:  cli.FlagBool,
+		},
+	},
 }
 
 func userConfirmRun(v cli.Values) error {
-	ok, password, err := client.UserConfirm(v.GetString("username"), v.GetString("token"))
+	var apiURL = v.GetString("api-url")
+	if strings.HasSuffix(apiURL, "/") {
+		fmt.Fprintf(os.Stderr, "Invalid URL. Remove trailing '/'\n")
+	}
+
+	var username = v.GetString("username")
+	var token = v.GetString("token")
+	var env = v.GetBool("env")
+	var insecureSkipVerifyTLS = v.GetBool("insecure")
+
+	conf := cdsclient.Config{
+		Host:    apiURL,
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+	}
+
+	client = cdsclient.New(conf)
+
+	ok, password, err := client.UserConfirm(username, token)
 	if err != nil {
 		return err
 	}
@@ -132,9 +168,7 @@ func userConfirmRun(v cli.Values) error {
 		return fmt.Errorf("verification failed")
 	}
 
-	fmt.Println("All is fine. Here is your new password:")
-	fmt.Println(password)
-	return nil
+	return doLogin(apiURL, username, password, env, insecureSkipVerifyTLS)
 }
 
 var userFavoriteCmd = cli.Command{
