@@ -1,50 +1,51 @@
 name: Common options test for cdsctl
+version: "2"
 testcases:
 - name: prepare test data
   steps:
-  - script: {{.cds.build.cdsctl}} project remove --force ITCLIAPPPRJ
-  - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP --force
-  - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP
-  - script: {{.cds.build.cdsctl}} project create ITCLIAPPPRJ "Test project" ITCLIAPP_GRP
-  - script: {{.cds.build.cdsctl}} application create ITCLIAPPPRJ ITCLIAPPPRJ-APP1
-  - script: {{.cds.build.cdsctl}} application create ITCLIAPPPRJ ITCLIAPPPRJ-APP2
-  - script: {{.cds.build.cdsctl}} application create ITCLIAPPPRJ ITCLIAPPPRJ-APP3
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITCLIAPPPRJ
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIAPP_GRP --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group add ITCLIAPP_GRP
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project create ITCLIAPPPRJ "Test project" ITCLIAPP_GRP
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application create ITCLIAPPPRJ ITCLIAPPPRJ-APP1
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application create ITCLIAPPPRJ ITCLIAPPPRJ-APP2
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application create ITCLIAPPPRJ ITCLIAPPPRJ-APP3
   - script: rm -rf tests/fixtures/options/output
   - script: mkdir -p tests/fixtures/options/output
 
 - name: test basic
   steps:
-  - script: {{.cds.build.cdsctl}} application list ITCLIAPPPRJ > tests/fixtures/options/output/application_list.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ > tests/fixtures/options/output/application_list.txt
     assertions:
     - result.code ShouldEqual 0
 
 - name: test quiet
   steps:
-  - script: {{.cds.build.cdsctl}} application list ITCLIAPPPRJ -q > tests/fixtures/options/output/application_list_quiet.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ -q > tests/fixtures/options/output/application_list_quiet.txt
     assertions:
     - result.code ShouldEqual 0
 
 - name: test fields
   steps:
-  - script: {{.cds.build.cdsctl}} application list ITCLIAPPPRJ --fields name,project_key > tests/fixtures/options/output/application_list_fields.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name,project_key > tests/fixtures/options/output/application_list_fields.txt
     assertions:
     - result.code ShouldEqual 0
 
 - name: test filters
   steps:
-  - script: {{.cds.build.cdsctl}} application list ITCLIAPPPRJ --filter name=ITCLIAPPPRJ-APP2 > tests/fixtures/options/output/application_list_filter.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --filter name=ITCLIAPPPRJ-APP2 > tests/fixtures/options/output/application_list_filter.txt
     assertions:
     - result.code ShouldEqual 0
 
 - name: test combined
   steps:
-  - script: {{.cds.build.cdsctl}} application list ITCLIAPPPRJ --fields name,project_key --filter name=ITCLIAPPPRJ-APP2 > tests/fixtures/options/output/application_list_combined.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name,project_key --filter name=ITCLIAPPPRJ-APP2 > tests/fixtures/options/output/application_list_combined.txt
     assertions:
     - result.code ShouldEqual 0
 
 - name: test combined quiet
   steps:
-  - script: {{.cds.build.cdsctl}} application list ITCLIAPPPRJ --fields name,project_key --filter name=ITCLIAPPPRJ-APP2 -q > tests/fixtures/options/output/application_list_combined_quiet.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name,project_key --filter name=ITCLIAPPPRJ-APP2 -q > tests/fixtures/options/output/application_list_combined_quiet.txt
     assertions:
     - result.code ShouldEqual 0
 

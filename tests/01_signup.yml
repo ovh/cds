@@ -1,4 +1,4 @@
-name: Signup Admin & User
+name: signup tests
 
 vars:
   api.url: 'http://localhost:8081'
@@ -6,8 +6,9 @@ vars:
   cdsctl : 'cdsctl'
   cdsctl.config : './cdsrc'
   smtpmock.url: 'http://localhost:2024'
-  user.rw.username: cds.integration.tests.rw
-  user.rw.email: it-user-rw@localhost.local
+  username: cds.integration.tests.rw
+  email: it-user-rw@localhost.local
+  fullname: cds.integration.tests.rw 
 
 testcases:
 - name: create-admin-user
@@ -17,13 +18,13 @@ testcases:
     url: '{{.api.url}}/user/signup'
     headers: 
       'Content-Type': 'application/json'
-    body: '{"user" : {"username": "{{.user.rw.username}}", "fullname": "IT User RW", "email":"{{.user.rw.email}}"}, "callback" : "cdsctl user confirm %s %s"}'
+    body: '{"user" : {"username": "{{.username}}", "fullname": "{{.fullname}}", "email":"{{.email}}"}, "callback" : "cdsctl user confirm %s %s"}'
 
 - name: post-create-user
   steps:
   - type: http
     method: GET
-    url: '{{.smtpmock.url}}/messages/{{.user.rw.email}}/latest'
+    url: '{{.smtpmock.url}}/messages/{{.email}}/latest'
     assertions:
     - result.statuscode ShouldEqual 200
     vars:
@@ -33,12 +34,6 @@ testcases:
 
 - name: prepare-cdsctl-config-file
   steps:
-  - script: |
-          cat << EOF > {{.cdsctl.config}}
-          Host = "{{.api.url}}"
-          InsecureSkipVerifyTLS = false
-          Token = "xxxxxxxx"
-          User = "{{.user.rw.username}}"
-          EOF
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} user confirm {{.user.rw.username}} {{.post-create-user.verify}}"
+  - script: rm -f {{.cdsctl.config}}
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} user confirm --api-url {{.api.url}} {{.username}} {{.post-create-user.verify}}"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} user me"

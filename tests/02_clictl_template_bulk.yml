@@ -1,20 +1,21 @@
 name: Template bulk command TestSuite with cdsctl
+version: "2"
 testcases:
 - name: push example simple
   steps:
-  - script: {{.cds.build.cdsctl}} template push ./tests/fixtures/template/simple/*.yml --skip-update-files
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} template push ./fixtures/template/simple/*.yml --skip-update-files
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring Template successfully pushed
 
 - name: prepare test
   steps:
-  - script: {{.cds.build.cdsctl}} project delete --force ITCLIPRJBULK
-  - script: {{.cds.build.cdsctl}} project add ITCLIPRJBULK "Test Project"
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project delete --force ITCLIPRJBULK
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project add ITCLIPRJBULK "Test Project"
 
 - name: sendTemplateBulkRequest
   steps:
-  - script: {{.cds.build.cdsctl}} template bulk --instances-file ./tests/fixtures/template/bulk_request.yml --no-interactive
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} template bulk --instances-file ./fixtures/template/bulk_request.yml --no-interactive
     assertions:
       - result.code ShouldEqual 0
     extracts:
@@ -22,7 +23,7 @@ testcases:
 
 - name: check bulk request status
   steps:
-  - script: {{.cds.build.cdsctl}} admin curl /template/shared.infra/example-simple/bulk/{{.sendTemplateBulkRequest.bulkID}}
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin curl /template/shared.infra/example-simple/bulk/{{.sendTemplateBulkRequest.bulkID}}
     retry: 10
     delay: 2
     assertions:

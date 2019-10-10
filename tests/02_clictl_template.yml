@@ -1,15 +1,16 @@
 name: Template command TestSuite with cdsctl
+version: "2"
 testcases:
 - name: push example with repository
   steps:
-  - script: {{.cds.build.cdsctl}} template push ./tests/fixtures/template/with_repository/*.yml --skip-update-files
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} template push ./fixtures/template/with_repository/*.yml --skip-update-files
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring Template successfully pushed
 
 - name: pull example with repository
   steps:
-  - script: {{.cds.build.cdsctl}} template pull shared.infra/example-with-repository --output-dir ./tests/fixtures/template/with_repository/export --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} template pull shared.infra/example-with-repository --output-dir ./fixtures/template/with_repository/export --force
     assertions:
       - result.code ShouldEqual 0
 

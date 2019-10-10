@@ -1,24 +1,25 @@
 name: Template apply command TestSuite with cdsctl
+version: "2"
 testcases:
 - name: push example simple
   steps:
-  - script: {{.cds.build.cdsctl}} template push ./tests/fixtures/template/simple/*.yml --skip-update-files
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} template push ./fixtures/template/simple/*.yml --skip-update-files
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring Template successfully pushed
 
 - name: prepare test
   steps:
-  - script: {{.cds.build.cdsctl}} project delete --force ITCLIPRJ
-  - script: {{.cds.build.cdsctl}} project add ITCLIPRJ "Test Project"
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project delete --force ITCLIPRJ
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project add ITCLIPRJ "Test Project"
 
 - name: apply example simple template
   steps:
-  - script: {{.cds.build.cdsctl}} template apply ITCLIPRJ ITCLIWKF shared.infra/example-simple -p withDeploy=true -p deployWhen=success -p data='["one", "two"]' --import-push --output-dir ./tests/fixtures/template/simple/export --force --no-interactive
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} template apply ITCLIPRJ ITCLIWKF shared.infra/example-simple -p withDeploy=true -p deployWhen=success -p data='["one", "two"]' --import-push --output-dir ./fixtures/template/simple/export --force --no-interactive
 
 - name: re-apply with cmd from workflow submenu
   steps:
-  - script: {{.cds.build.cdsctl}} workflow applyTemplate ITCLIPRJ ITCLIWKF shared.infra/example-simple -p withDeploy=true -p deployWhen=success -p data='["one", "two"]' --import-push --output-dir ./tests/fixtures/template/simple/export --force --no-interactive
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow applyTemplate ITCLIPRJ ITCLIWKF shared.infra/example-simple -p withDeploy=true -p deployWhen=success -p data='["one", "two"]' --import-push --output-dir ./fixtures/template/simple/export --force --no-interactive
 
 - name: readWorkflowSourceFiles
   steps:
