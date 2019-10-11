@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
@@ -64,7 +65,7 @@ func configBootstrap(args []string) Configuration {
 	}
 	for _, a := range args {
 		switch a {
-		case "api":
+		case services.TypeAPI:
 			conf.API = &api.Configuration{}
 			conf.API.Name = "cds-api-" + namesgenerator.GetRandomNameCDS(0)
 			defaults.SetDefaults(conf.API)
@@ -78,7 +79,7 @@ func configBootstrap(args []string) Configuration {
 				HealthURL:  "https://ovh.github.io",
 				Type:       "doc",
 			})
-		case "ui":
+		case services.TypeUI:
 			conf.UI = &ui.Configuration{}
 			conf.UI.Name = "cds-ui-" + namesgenerator.GetRandomNameCDS(0)
 			defaults.SetDefaults(conf.UI)
@@ -86,23 +87,23 @@ func configBootstrap(args []string) Configuration {
 			conf.DatabaseMigrate = &migrateservice.Configuration{}
 			defaults.SetDefaults(conf.DatabaseMigrate)
 			conf.DatabaseMigrate.Name = "cds-migrate-" + namesgenerator.GetRandomNameCDS(0)
-		case "hatchery:local":
+		case services.TypeHatchery + ":local":
 			conf.Hatchery.Local = &local.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Local)
 			conf.Hatchery.Local.Name = "cds-hatchery-local-" + namesgenerator.GetRandomNameCDS(0)
-		case "hatchery:kubernetes":
+		case services.TypeHatchery + ":kubernetes":
 			conf.Hatchery.Kubernetes = &kubernetes.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Kubernetes)
 			conf.Hatchery.Kubernetes.Name = "cds-hatchery-kubernetes-" + namesgenerator.GetRandomNameCDS(0)
-		case "hatchery:marathon":
+		case services.TypeHatchery + ":marathon":
 			conf.Hatchery.Marathon = &marathon.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Marathon)
 			conf.Hatchery.Marathon.Name = "cds-hatchery-marathon-" + namesgenerator.GetRandomNameCDS(0)
-		case "hatchery:openstack":
+		case services.TypeHatchery + ":openstack":
 			conf.Hatchery.Openstack = &openstack.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Openstack)
 			conf.Hatchery.Openstack.Name = "cds-hatchery-openstack-" + namesgenerator.GetRandomNameCDS(0)
-		case "hatchery:swarm":
+		case services.TypeHatchery + ":swarm":
 			conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Swarm)
 			conf.Hatchery.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
@@ -111,15 +112,15 @@ func configBootstrap(args []string) Configuration {
 				},
 			}
 			conf.Hatchery.Swarm.Name = "cds-hatchery-swarm-" + namesgenerator.GetRandomNameCDS(0)
-		case "hatchery:vsphere":
+		case services.TypeHatchery + ":vsphere":
 			conf.Hatchery.VSphere = &vsphere.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.VSphere)
 			conf.Hatchery.VSphere.Name = "cds-hatchery-vsphere-" + namesgenerator.GetRandomNameCDS(0)
-		case "hooks":
+		case services.TypeHooks:
 			conf.Hooks = &hooks.Configuration{}
 			defaults.SetDefaults(conf.Hooks)
 			conf.Hooks.Name = "cds-hooks-" + namesgenerator.GetRandomNameCDS(0)
-		case "vcs":
+		case services.TypeVCS:
 			conf.VCS = &vcs.Configuration{}
 			defaults.SetDefaults(conf.VCS)
 			var github vcs.GithubServerConfiguration
@@ -140,11 +141,14 @@ func configBootstrap(args []string) Configuration {
 				"Gerrit":         vcs.ServerConfiguration{URL: "http://localhost:8080", Gerrit: &gerrit},
 			}
 			conf.VCS.Name = "cds-vcs-" + namesgenerator.GetRandomNameCDS(0)
-		case "repositories":
+		case services.TypeRepositories:
 			conf.Repositories = &repositories.Configuration{}
 			defaults.SetDefaults(conf.Repositories)
 			conf.Repositories.Name = "cds-repositories-" + namesgenerator.GetRandomNameCDS(0)
-		case "elasticsearch":
+		case services.TypeCDN:
+			conf.CDN = &cdn.Configuration{}
+			defaults.SetDefaults(conf.CDN)
+		case services.TypeElasticsearch:
 			conf.ElasticSearch = &elasticsearch.Configuration{}
 			defaults.SetDefaults(conf.ElasticSearch)
 		default:

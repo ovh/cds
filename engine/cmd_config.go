@@ -12,6 +12,7 @@ import (
 	toml "github.com/yesnault/go-toml"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
@@ -185,6 +186,14 @@ var configCheckCmd = &cobra.Command{
 			fmt.Printf("checking hooks configuration...\n")
 			if err := hooks.New().CheckConfiguration(*conf.Hooks); err != nil {
 				fmt.Printf("hooks Configuration: %v\n", err)
+				hasError = true
+			}
+		}
+
+		if conf.CDN != nil && conf.CDN.API.HTTP.URL != "" {
+			fmt.Printf("checking cdn configuration...\n")
+			if err := cdn.New().CheckConfiguration(*conf.CDN); err != nil {
+				fmt.Printf("cdn Configuration: %v\n", err)
 				hasError = true
 			}
 		}
