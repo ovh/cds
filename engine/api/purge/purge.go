@@ -3,7 +3,6 @@ package purge
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -174,7 +173,7 @@ func deleteWorkflowRunsHistory(ctx context.Context, db gorp.SqlExecutor, store c
 
 // DeleteArtifacts removes artifacts from storage
 func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store, sharedStorage objectstore.Driver, workflowRunID int64) error {
-	wr, err := workflow.LoadRunByID(db, workflowRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: false})
+	wr, err := workflow.LoadRunByID(db, workflowRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: false, WithDeleted: true})
 	if err != nil {
 		return sdk.WrapError(err, "error on load LoadRunByID:%d", workflowRunID)
 	}
@@ -184,7 +183,13 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		return sdk.WrapError(errprj, "error while load project %d", wr.WorkflowID)
 	}
 
-	containersAlreadyDeleted := []string{}
+	type driversContainersT struct {
+		projectKey      string
+		integrationName string
+		containerPath   string
+	}
+
+	driversContainers := []driversContainersT{}
 	for _, wnrs := range wr.WorkflowNodeRuns {
 		for _, wnr := range wnrs {
 			for _, art := range wnr.Artifacts {
@@ -200,24 +205,46 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 					integrationName = sdk.DefaultStorageIntegrationName
 				}
 
+				var found bool
+				for _, dc := range driversContainers {
+					if dc.containerPath == art.GetPath() && proj.Key == dc.projectKey && integrationName == dc.integrationName {
+						found = true
+					}
+				}
+
+				// container not found, add it to list to delete
+				if !found {
+					driversContainers = append(driversContainers, driversContainersT{
+						projectKey:      proj.Key,
+						integrationName: integrationName,
+						containerPath:   art.GetPath(),
+					})
+				}
+
 				storageDriver, err := objectstore.GetDriver(db, sharedStorage, proj.Key, integrationName)
 				if err != nil {
-					log.Error("error while deleting artifact prj:%v wnr:%v name:%v err:%v", proj.Key, wnr.ID, art.Name, err)
+					log.Error("error while getting driver prj:%v integrationName:%v err:%v", proj.Key, integrationName, err)
 					continue
 				}
 
-				nameContainerDelete := fmt.Sprintf("%s-%s", integrationName, art.GetPath())
-				if sdk.IsInArray(nameContainerDelete, containersAlreadyDeleted) {
-					// container already deleted, skip this artifact
+				if err := storageDriver.Delete(&art); err != nil {
+					log.Error("error while deleting container prj:%v wnr:%v name:%v err:%v", proj.Key, wnr.ID, art.GetPath(), err)
 					continue
 				}
-
-				if err := storageDriver.DeleteContainer(art.GetPath()); err != nil {
-					log.Error("error while deleting container prj:%v wnr:%v name:%v", proj.Key, wnr.ID, art.GetPath())
-					continue
-				}
-				containersAlreadyDeleted = append(containersAlreadyDeleted, nameContainerDelete)
 			}
+		}
+	}
+
+	for _, dc := range driversContainers {
+		storageDriver, err := objectstore.GetDriver(db, sharedStorage, dc.projectKey, dc.integrationName)
+		if err != nil {
+			log.Error("error while getting driver prj:%v integrationName:%v err:%v", dc.projectKey, dc.integrationName, err)
+			continue
+		}
+
+		if storageDriver.DeleteContainer(dc.containerPath); err != nil {
+			log.Error("error while deleting container prj:%v path:%v err:%v", dc.projectKey, dc.containerPath, err)
+			continue
 		}
 	}
 

@@ -193,6 +193,7 @@ func (s *SwiftStore) DeleteContainer(containerPath string) error {
 		}
 		return sdk.WrapError(err, "Unable to delete container")
 	}
+	log.Debug("Delete.SwiftStore: %s is deleted", container)
 	return nil
 }
 
