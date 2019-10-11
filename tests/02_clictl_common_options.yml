@@ -10,61 +10,72 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} application create ITCLIAPPPRJ ITCLIAPPPRJ-APP1
   - script: {{.cdsctl}} -f {{.cdsctl.config}} application create ITCLIAPPPRJ ITCLIAPPPRJ-APP2
   - script: {{.cdsctl}} -f {{.cdsctl.config}} application create ITCLIAPPPRJ ITCLIAPPPRJ-APP3
-  - script: rm -rf tests/fixtures/options/output
-  - script: mkdir -p tests/fixtures/options/output
+  - script: rm -rf fixtures/options/output
+  - script: mkdir -p fixtures/options/output
 
 - name: test basic
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ > tests/fixtures/options/output/application_list.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ > ./fixtures/options/output/application_list.txt
     assertions:
     - result.code ShouldEqual 0
 
 - name: test quiet
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ -q > tests/fixtures/options/output/application_list_quiet.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ -q > ./fixtures/options/output/application_list_quiet.txt
     assertions:
     - result.code ShouldEqual 0
 
 - name: test fields
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name,project_key > tests/fixtures/options/output/application_list_fields.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name,project_key > ./fixtures/options/output/application_list_fields.txt
     assertions:
     - result.code ShouldEqual 0
 
 - name: test filters
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --filter name=ITCLIAPPPRJ-APP2 > tests/fixtures/options/output/application_list_filter.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --filter name=ITCLIAPPPRJ-APP2 > ./fixtures/options/output/application_list_filter.txt
     assertions:
     - result.code ShouldEqual 0
 
 - name: test combined
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name,project_key --filter name=ITCLIAPPPRJ-APP2 > tests/fixtures/options/output/application_list_combined.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name,project_key --filter name=ITCLIAPPPRJ-APP2 > ./fixtures/options/output/application_list_combined.txt
     assertions:
     - result.code ShouldEqual 0
 
 - name: test combined quiet
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name,project_key --filter name=ITCLIAPPPRJ-APP2 -q > tests/fixtures/options/output/application_list_combined_quiet.txt
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application list ITCLIAPPPRJ --fields name,project_key --filter name=ITCLIAPPPRJ-APP2 -q > ./fixtures/options/output/application_list_combined_quiet.txt
     assertions:
     - result.code ShouldEqual 0
 
 - name: readExpectedOutput
   steps:
   - type: readfile
-    path: tests/fixtures/options/*.txt
+    path: ./fixtures/options/*.txt
     assertions:
     - result.err ShouldEqual ""
-
-- name: readOutput
-  steps:
+    vars:
+      md5sum_tests_fixtures_options_output_application_list: 
+        from: result.md5sum.fixtures_options_application_list.txt
+      md5sum_tests_fixtures_options_output_application_list_quiet: 
+        from: result.md5sum.fixtures_options_application_list_quiet.txt
+      md5sum_tests_fixtures_options_output_application_list_fields: 
+        from: result.md5sum.fixtures_options_application_list_fields.txt
+      md5sum_tests_fixtures_options_output_application_list_filter: 
+        from: result.md5sum.fixtures_options_application_list_filter.txt
+      md5sum_tests_fixtures_options_output_application_list_combined: 
+        from: result.md5sum.fixtures_options_application_list_combined.txt
+      md5sum_tests_fixtures_options_output_application_list_combined_quiet: 
+        from: result.md5sum.fixtures_options_application_list_combined_quiet.txt
   - type: readfile
-    path: tests/fixtures/options/output/*.txt
+    path: ./fixtures/options/output/*.txt
     assertions:
     - result.err ShouldEqual ""
-    - result.md5sum.tests_fixtures_options_output_application_list.txt ShouldEqual "{{.readExpectedOutput.result.md5sum.tests_fixtures_options_application_list.txt}}"
-    - result.md5sum.tests_fixtures_options_output_application_list_quiet.txt ShouldEqual "{{.readExpectedOutput.result.md5sum.tests_fixtures_options_application_list_quiet.txt}}"
-    - result.md5sum.tests_fixtures_options_output_application_list_fields.txt ShouldEqual "{{.readExpectedOutput.result.md5sum.tests_fixtures_options_application_list_fields.txt}}"
-    - result.md5sum.tests_fixtures_options_output_application_list_filter.txt ShouldEqual "{{.readExpectedOutput.result.md5sum.tests_fixtures_options_application_list_filter.txt}}"
-    - result.md5sum.tests_fixtures_options_output_application_list_combined.txt ShouldEqual "{{.readExpectedOutput.result.md5sum.tests_fixtures_options_application_list_combined.txt}}"
-    - result.md5sum.tests_fixtures_options_output_application_list_combined_quiet.txt ShouldEqual "{{.readExpectedOutput.result.md5sum.tests_fixtures_options_application_list_combined_quiet.txt}}"
+    - result.md5sum.fixtures_options_output_application_list.txt ShouldEqual "{{.readExpectedOutput.md5sum_tests_fixtures_options_output_application_list}}"
+    - result.md5sum.fixtures_options_output_application_list_quiet.txt ShouldEqual "{{.readExpectedOutput.md5sum_tests_fixtures_options_output_application_list_quiet}}"
+    - result.md5sum.fixtures_options_output_application_list_fields.txt ShouldEqual "{{.readExpectedOutput.md5sum_tests_fixtures_options_output_application_list_fields}}"
+    - result.md5sum.fixtures_options_output_application_list_filter.txt ShouldEqual "{{.readExpectedOutput.md5sum_tests_fixtures_options_output_application_list_filter}}"
+    - result.md5sum.fixtures_options_output_application_list_combined.txt ShouldEqual "{{.readExpectedOutput.md5sum_tests_fixtures_options_output_application_list_combined}}"
+    - result.md5sum.fixtures_options_output_application_list_combined_quiet.txt ShouldEqual "{{.readExpectedOutput.md5sum_tests_fixtures_options_output_application_list_combined_quiet}}"
+
