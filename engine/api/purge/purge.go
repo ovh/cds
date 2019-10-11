@@ -243,7 +243,7 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 			continue
 		}
 
-		if storageDriver.DeleteContainer(dc.containerPath); err != nil {
+		if err := storageDriver.DeleteContainer(dc.containerPath); err != nil {
 			log.Error("error while deleting container prj:%v path:%v err:%v", dc.projectKey, dc.containerPath, err)
 			continue
 		}
