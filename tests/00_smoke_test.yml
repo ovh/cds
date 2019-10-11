@@ -4,6 +4,7 @@ vars:
   api.url: 'http://localhost:8081'
   ui.url: 'http://localhost:4200'
   hatchery.url: 'http://localhost:8086'
+  hooks.url: 'http://localhost:8083'
   cdsctl : 'cdsctl'
   smtpmock.url: 'http://localhost:2024'
 
@@ -23,6 +24,9 @@ testcases:
   - type: http
     method: GET
     url: '{{.hatchery.url}}/mon/status'
+  - type: http
+    method: GET
+    url: '{{.hooks.url}}/mon/status'
 
 - name: Check CLI binary is available
   steps:  

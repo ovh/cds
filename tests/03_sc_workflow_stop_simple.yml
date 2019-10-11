@@ -2,34 +2,34 @@ name: Create a simple workflow (ITSCWRKFLW2) run it and then stop it
 testcases:
 - name: assert filepath, your current directory must be at the root of this project
   steps:
-  - script: '[ -f ./tests/fixtures/ITSCWRKFLW2/pipeline.yml ]'
-  - script: '[ -f ./tests/fixtures/ITSCWRKFLW2/workflow.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW2/pipeline.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW2/workflow.yml ]'
 
 - name: prepare test
   steps:
-  - script: "{{.cds.build.cdsctl}} project remove --force ITSCWRKFLW2"
-  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW2 "
-  - script: "{{.cds.build.cdsctl}} project add ITSCWRKFLW2 ITSCWRKFLW2"
-  - script: "{{.cds.build.cdsctl}} application add ITSCWRKFLW2 ITSCWRKFLW2-APPLICATION"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW2"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW2 "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW2 ITSCWRKFLW2"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} application add ITSCWRKFLW2 ITSCWRKFLW2-APPLICATION"
 
 - name: import pipeline
   steps:
-  - script: {{.cds.build.cdsctl}} pipeline import --force ITSCWRKFLW2 ./tests/fixtures/ITSCWRKFLW2/pipeline.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force ITSCWRKFLW2 ./fixtures/ITSCWRKFLW2/pipeline.yml
 
 - name: import workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow import --force ITSCWRKFLW2 ./tests/fixtures/ITSCWRKFLW2/workflow.yml
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force ITSCWRKFLW2 ./fixtures/ITSCWRKFLW2/workflow.yml
 
 - name: run workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW2-WORKFLOW #1 has been launched"
 
 - name: check workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1 --format json
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1 --format json
     retry: 10
     delay: 3
     assertions:
@@ -43,7 +43,7 @@ testcases:
 
 - name: stop workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow stop ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow stop ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW2-WORKFLOW #1 has been stopped"

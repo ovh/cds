@@ -1,0 +1,58 @@
+name: Workflow (ITSCWRKFLW16) update workflow with scheduler
+testcases:
+- name: assert filepath
+  steps:
+  - script: '[ -f ./fixtures/ITSCWRKFLW16/edit_a/pipeline.pip.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW16/edit_b/pipeline.pip.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW16/edit_a/workflow.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW16/edit_b/workflow.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW16"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW16 "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW16 ITSCWRKFLW16"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: import-workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW16 ./fixtures/ITSCWRKFLW16/edit_a/*.yml --skip-update-files
+    assertions:
+    - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow export ITSCWRKFLW16 ITSCWRKFLW16-WORKFLOW --format json
+    assertions:
+    - result.systemoutjson.pipeline_hooks.pipeline_hooks0.config.cron ShouldEqual '10 * * * *'
+
+- name: get-imported-workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow show ITSCWRKFLW16 ITSCWRKFLW16-WORKFLOW --format json
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: check hook from service after import
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin hooks list --filter workflow_id={{.get-imported-workflow.result.systemoutjson.workflow_id}} --format json
+    assertions:
+    - result.systemoutjson.systemoutjson0.cron ShouldEqual '10 * * * *'
+
+- name: update workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW16 ./fixtures/ITSCWRKFLW16/edit_b/*.yml --skip-update-files
+    assertions:
+    - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow export ITSCWRKFLW16 ITSCWRKFLW16-WORKFLOW --format json
+    assertions:
+    - result.systemoutjson.pipeline_hooks.pipeline_hooks0.config.cron ShouldEqual '20 * * * *'
+
+- name: get-updated-workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow show ITSCWRKFLW16 ITSCWRKFLW16-WORKFLOW --format json
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: check hook from service after update
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin hooks list --filter workflow_id={{.get-updated-workflow.result.systemoutjson.workflow_id}} --format json
+    assertions:
+    - result.systemoutjson.systemoutjson0.cron ShouldEqual '20 * * * *'

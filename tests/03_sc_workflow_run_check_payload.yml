@@ -1,0 +1,41 @@
+name: Create a simple workflow (ITSCWRKFLW8)
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./fixtures/ITSCWRKFLW8/payload.pip.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW8/ITSCWRKFLW8.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW8"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW8 "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW8 ITSCWRKFLW8"
+
+- name: push workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW8 ./fixtures/ITSCWRKFLW8/*.yml --skip-update-files
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: run workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW8 ITSCWRKFLW8-WORKFLOW -d '{"aa":"bb","cc":["dd","ee"],"ff":{"gg":"hh"}}'
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW8-WORKFLOW #1 has been launched"
+
+- name: the workflow should be successful
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW8 ITSCWRKFLW8-WORKFLOW 1 --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.status ShouldEqual Success
+    retry: 30
+    delay: 10
+
+- name: download artifact with cdsctl
+  steps:
+  - script: rm -f thefile
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow artifact download ITSCWRKFLW8 ITSCWRKFLW8-WORKFLOW 1
+  - script: cat thefile|grep PAYLOAD
+  - script: cat thefile|grep PAYLOAD|grep '{"aa":"bb","cc":\["dd","ee"\],"ff":{"gg":"hh"}}'

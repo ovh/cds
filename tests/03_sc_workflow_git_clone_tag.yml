@@ -1,0 +1,42 @@
+name: Create a simple workflow (ITSCWRKFLW6) and run it to test gitClone action
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./fixtures/ITSCWRKFLW6/clone.pip.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW6/ITSCWRKFLW6.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW6"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW6"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW6 ITSCWRKFLW6"
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: import pipeline
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force ITSCWRKFLW6 ./fixtures/ITSCWRKFLW6/clone.pip.yml
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: import workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force ITSCWRKFLW6 ./fixtures/ITSCWRKFLW6/ITSCWRKFLW6.yml
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: run workflow
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW6 ITSCWRKFLW6-WORKFLOW -d '{\"git.tag\": \"0.38.1\"}'"
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW6-WORKFLOW #1 has been launched"
+
+- name: check workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW6 ITSCWRKFLW6-WORKFLOW 1 --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.status ShouldEqual Success
+    retry: 30
+    delay: 10
