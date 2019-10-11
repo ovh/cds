@@ -24,6 +24,22 @@ func (b *bitbucketClient) getHooks(ctx context.Context, repo string) ([]WebHook,
 	return resp.Values, nil
 }
 
+func (b *bitbucketClient) getHookByID(ctx context.Context, repo string, webHookID string) (WebHook, error) {
+	var resp WebHook
+
+	project, slug, err := getRepo(repo)
+	if err != nil {
+		return resp, sdk.WithStack(err)
+	}
+
+	getPath := fmt.Sprintf("/projects/%s/repos/%s/webhooks/%s", project, slug, webHookID)
+	if err := b.do(ctx, "GET", "core", getPath, nil, nil, &resp, nil); err != nil {
+		return resp, sdk.WrapError(err, "Unable to get hook %s", webHookID)
+	}
+
+	return resp, nil
+}
+
 func (b *bitbucketClient) GetHook(ctx context.Context, repo, url string) (sdk.VCSHook, error) {
 	whooks, err := b.getHooks(ctx, repo)
 	if err != nil {
@@ -87,6 +103,36 @@ func (b *bitbucketClient) CreateHook(ctx context.Context, repo string, hook *sdk
 		return sdk.WrapError(err, "Unable to get enable webhook")
 	}
 	hook.ID = fmt.Sprintf("%d", request.ID)
+	return nil
+}
+
+func (b *bitbucketClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
+	project, slug, err := getRepo(repo)
+	if err != nil {
+		return err
+	}
+
+	// Get hooks
+	bitbucketHook, err := b.getHookByID(ctx, repo, hook.ID)
+	if err != nil {
+		return err
+	}
+
+	if len(hook.Events) == 0 {
+		hook.Events = []string{"repo:refs_changed"}
+	}
+
+	bitbucketHook.Events = hook.Events
+
+	url := fmt.Sprintf("/projects/%s/repos/%s/webhooks/%d", project, slug, bitbucketHook.ID)
+
+	values, err := json.Marshal(&bitbucketHook)
+	if err != nil {
+		return err
+	}
+	if err := b.do(ctx, "PUT", "core", url, nil, values, &bitbucketHook, nil); err != nil {
+		return sdk.WrapError(err, "Unable to update webhook")
+	}
 	return nil
 }
 

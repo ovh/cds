@@ -16,6 +16,11 @@ func (c *gerritClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 	return nil
 }
 
+//UpdateHook enables the defaut HTTP POST Hook in Gitlab
+func (c *gerritClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
+	return nil
+}
+
 //DeleteHook disables the defaut HTTP POST Hook in Gitlab
 func (c *gerritClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
 	return nil

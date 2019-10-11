@@ -1053,6 +1053,43 @@ func (s *Service) getHookHandler() service.Handler {
 	}
 }
 
+func (s *Service) putHookHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "Unable to get access token headers %s %s/%s", name, owner, repo)
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
+		}
+
+		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
+		}
+		// Check if access token has been refreshed
+		if accessToken != client.GetAccessToken(ctx) {
+			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
+		}
+
+		body := sdk.VCSHook{}
+		if err := service.UnmarshalBody(r, &body); err != nil {
+			return sdk.WrapError(err, "Unable to read body %s %s/%s", name, owner, repo)
+		}
+
+		if err := client.UpdateHook(ctx, fmt.Sprintf("%s/%s", owner, repo), &body); err != nil {
+			return sdk.WrapError(err, "Update %s %s/%s", name, owner, repo)
+		}
+		return service.WriteJSON(w, body, http.StatusOK)
+	}
+}
+
 func (s *Service) postHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")

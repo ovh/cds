@@ -17,6 +17,18 @@ func (c *gitlabClient) GetHook(ctx context.Context, repo, id string) (sdk.VCSHoo
 	return sdk.VCSHook{}, fmt.Errorf("Not yet implemented")
 }
 
+func (c *gitlabClient) GetHookByID(ctx context.Context, repo, idS string) (*gitlab.ProjectHook, error) {
+	id, err := strconv.Atoi(idS)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to parse hook id: %s", idS)
+	}
+	hook, _, err := c.client.Projects.GetProjectHook(repo, id)
+	if err != nil {
+		return hook, sdk.WrapError(err, "unable to get hook %d", id)
+	}
+	return hook, nil
+}
+
 //CreateHook enables the defaut HTTP POST Hook in Gitlab
 func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
 	var url string
@@ -93,6 +105,64 @@ func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 		return sdk.WithStack(fmt.Errorf("cannot create hook. Http %d, Repo %s, hook %+v", resp.StatusCode, repo, opt))
 	}
 	hook.ID = fmt.Sprintf("%d", ph.ID)
+	return nil
+}
+
+//UpdateHook update a gitlob webhook
+func (c *gitlabClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
+	gitlabHook, err := c.GetHookByID(ctx, repo, hook.ID)
+	if err != nil {
+		return err
+	}
+
+	var pushEvent, mergeRequestEvent, TagPushEvent, issueEvent, noteEvent, wikiPageEvent, pipelineEvent, jobEvent bool
+	if len(hook.Events) == 0 {
+		hook.Events = []string{"Push Hook"}
+	}
+
+	for _, e := range hook.Events {
+		switch e {
+		case "Push Hook":
+			pushEvent = true
+		case "Tag Push Hook":
+			TagPushEvent = true
+		case "Issue Hook":
+			issueEvent = true
+		case "Note Hook":
+			noteEvent = true
+		case "Merge Request Hook":
+			mergeRequestEvent = true
+		case "Wiki Page Hook":
+			wikiPageEvent = true
+		case "Pipeline Hook":
+			pipelineEvent = true
+		case "Job Hook":
+			jobEvent = true
+		}
+	}
+
+	opt := gitlab.EditProjectHookOptions{
+		URL:                      &gitlabHook.URL,
+		PushEvents:               &pushEvent,
+		MergeRequestsEvents:      &mergeRequestEvent,
+		TagPushEvents:            &TagPushEvent,
+		IssuesEvents:             &issueEvent,
+		WikiPageEvents:           &wikiPageEvent,
+		NoteEvents:               &noteEvent,
+		PipelineEvents:           &pipelineEvent,
+		JobEvents:                &jobEvent,
+		EnableSSLVerification:    &gitlabHook.EnableSSLVerification,
+		ConfidentialIssuesEvents: &gitlabHook.ConfidentialIssuesEvents,
+	}
+
+	log.Debug("GitlabClient.UpdateHook: %s %s\n", repo, *opt.URL)
+	_, resp, err := c.client.Projects.EditProjectHook(repo, gitlabHook.ID, &opt)
+	if err != nil {
+		return sdk.WrapError(err, "cannot update gitlab project hook %d", hook.ID)
+	}
+	if resp.StatusCode >= 400 {
+		return sdk.WithStack(fmt.Errorf("cannot update hook. Http %d, Repo %s, hook %+v", resp.StatusCode, repo, opt))
+	}
 	return nil
 }
 
