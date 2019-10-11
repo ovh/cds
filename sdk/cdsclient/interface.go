@@ -187,7 +187,7 @@ type PipelineClient interface {
 
 // MaintenanceClient manage maintenance mode on CDS
 type MaintenanceClient interface {
-	Maintenance(enable bool) error
+	Maintenance(enable bool, hooks bool) error
 }
 
 // ProjectClient exposes project related functions

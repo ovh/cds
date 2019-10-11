@@ -1,9 +1,13 @@
 <div id="AppComponent">
-    <ng-container *ngIf="!maintenance">
+    <ng-container *ngIf="!isConnected || !maintenance || user?.admin">
         <div id="navbar" *ngIf="isConnected" [class.connected]="isConnected">
             <app-navbar></app-navbar>
         </div>
-        <div id="banner" class="pointing" (click)="refresh()" *ngIf="showUIUpdatedBanner">
+        <div class="maintenance banner pointing" [class.mt50]="isConnected" *ngIf="maintenance && (!isConnected || user?.admin)">
+            <span>{{ 'maintenance_title' | translate }}</span>
+            <img src="assets/images/maintenance.svg"/>
+        </div>
+        <div class="banner pointing" (click)="refresh()" *ngIf="showUIUpdatedBanner">
             {{ 'ui_updated' | translate }}
         </div>
 
@@ -17,7 +21,7 @@
             </div>
         </div>
     </ng-container>
-    <ng-container *ngIf="maintenance">
+    <ng-container *ngIf="maintenance && isConnected && !user.admin">
         <div class="maintenance">
             <h2>{{ 'maintenance_title' | translate }}</h2>
             <div class="logo">

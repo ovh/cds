@@ -208,6 +208,7 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 				exec := &sdk.TaskExecution{
 					Timestamp: time.Now().UnixNano(),
 					UUID:      h.UUID,
+					Status:    TaskExecutionScheduled,
 					GerritEvent: &sdk.GerritEventExecution{
 						Message: msg,
 					},

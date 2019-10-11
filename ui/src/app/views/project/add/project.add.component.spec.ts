@@ -29,6 +29,7 @@ import { ProjectModule } from '../project.module';
 import { ProjectAddComponent } from './project.add.component';
 import {WorkflowService} from 'app/service/workflow/workflow.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 describe('CDS: Project Show Component', () => {
 
     let injector: Injector;
@@ -46,6 +47,7 @@ describe('CDS: Project Show Component', () => {
                 NavbarService,
                 ProjectService,
                 PipelineService,
+                MonitoringService,
                 EnvironmentService,
                 VariableService,
                 ToasterService,

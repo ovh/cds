@@ -18,7 +18,7 @@ func (api *API) InitRouter(ctx context.Context) {
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, TracingPostMiddleware)
 
 	r := api.Router
-	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))
+	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false), MaintenanceAware()))
 	r.Handle("/login/callback", r.POST(api.loginUserCallbackHandler, Auth(false)))
 
 	log.Info("Initializing Events broker")
@@ -235,12 +235,12 @@ func (api *API) InitRouter(ctx context.Context) {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/num", r.GET(api.getWorkflowRunNumHandler), r.POST(api.postWorkflowRunNumHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler, AllowServices(true), EnableTracing()), r.DELETE(api.deleteWorkflowRunHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", r.POSTEXECUTE(api.stopWorkflowRunHandler, EnableTracing()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", r.POSTEXECUTE(api.stopWorkflowRunHandler, EnableTracing(), MaintenanceAware()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/vcs/resync", r.POSTEXECUTE(api.postResyncVCSWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/resync", r.POST(api.resyncWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/artifacts", r.GET(api.getWorkflowRunArtifactsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}", r.GET(api.getWorkflowNodeRunHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/stop", r.POSTEXECUTE(api.stopWorkflowNodeRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/stop", r.POSTEXECUTE(api.stopWorkflowNodeRunHandler, MaintenanceAware()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeID}/history", r.GET(api.getWorkflowNodeRunHistoryHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/{nodeName}/commits", r.GET(api.getWorkflowCommitsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/info", r.GET(api.getWorkflowNodeRunJobSpawnInfosHandler))
@@ -248,8 +248,8 @@ func (api *API) InitRouter(ctx context.Context) {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/step/{stepOrder}", r.GET(api.getWorkflowNodeRunJobStepHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/hook/triggers/condition", r.GET(api.getWorkflowTriggerHookConditionHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", r.POST(api.releaseApplicationWorkflowHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/callback", r.POST(api.postWorkflowJobHookCallbackHandler, AllowServices(true)))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", r.POST(api.releaseApplicationWorkflowHandler, MaintenanceAware()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/callback", r.POST(api.postWorkflowJobHookCallbackHandler, AllowServices(true), MaintenanceAware()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/details", r.GET(api.getWorkflowJobHookDetailsHandler, NeedService()))
 
 	// Environment
@@ -278,8 +278,8 @@ func (api *API) InitRouter(ctx context.Context) {
 	r.Handle("/project/{permProjectKey}/storage/{integrationName}/staticfiles/{name}", r.POSTEXECUTE(api.postWorkflowJobStaticFilesHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 
 	// Cache
-	r.Handle("/project/{permProjectKey}/storage/{integrationName}/cache/{tag}", r.POSTEXECUTE(api.postPushCacheHandler, NeedWorker()), r.GET(api.getPullCacheHandler, NeedWorker()))
-	r.Handle("/project/{permProjectKey}/storage/{integrationName}/cache/{tag}/url", r.POSTEXECUTE(api.postPushCacheWithTempURLHandler, NeedWorker()), r.GET(api.getPullCacheWithTempURLHandler, NeedWorker()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/cache/{tag}", r.POSTEXECUTE(api.postPushCacheHandler, NeedWorker(), MaintenanceAware()), r.GET(api.getPullCacheHandler, NeedWorker()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/cache/{tag}/url", r.POSTEXECUTE(api.postPushCacheWithTempURLHandler, NeedWorker(), MaintenanceAware()), r.GET(api.getPullCacheWithTempURLHandler, NeedWorker()))
 
 	//Workflow queue
 	r.Handle("/queue/workflows", r.GET(api.getWorkflowJobQueueHandler, EnableTracing(), MaintenanceAware()))
@@ -353,17 +353,17 @@ func (api *API) InitRouter(ctx context.Context) {
 	r.Handle("/auth/mode", r.GET(api.authModeHandler, Auth(false)))
 
 	// Workers
-	r.Handle("/worker", r.GET(api.getWorkersHandler), r.POST(api.registerWorkerHandler, Auth(false)))
-	r.Handle("/worker/refresh", r.POST(api.refreshWorkerHandler))
-	r.Handle("/worker/checking", r.POST(api.workerCheckingHandler))
-	r.Handle("/worker/waiting", r.POST(api.workerWaitingHandler))
-	r.Handle("/worker/unregister", r.POST(api.unregisterWorkerHandler))
-	r.Handle("/worker/{id}/disable", r.POST(api.disableWorkerHandler))
+	r.Handle("/worker", r.GET(api.getWorkersHandler), r.POST(api.registerWorkerHandler, Auth(false), MaintenanceAware()))
+	r.Handle("/worker/refresh", r.POST(api.refreshWorkerHandler, MaintenanceAware()))
+	r.Handle("/worker/checking", r.POST(api.workerCheckingHandler, MaintenanceAware()))
+	r.Handle("/worker/waiting", r.POST(api.workerWaitingHandler, MaintenanceAware()))
+	r.Handle("/worker/unregister", r.POST(api.unregisterWorkerHandler, MaintenanceAware()))
+	r.Handle("/worker/{id}/disable", r.POST(api.disableWorkerHandler, MaintenanceAware()))
 
 	// Worker models
 	r.Handle("/worker/model", r.POST(api.postWorkerModelHandler), r.GET(api.getWorkerModelsHandler))
-	r.Handle("/worker/model/book/{permModelID}", r.PUT(api.bookWorkerModelHandler, NeedHatchery()))
-	r.Handle("/worker/model/error/{permModelID}", r.PUT(api.spawnErrorWorkerModelHandler, NeedHatchery()))
+	r.Handle("/worker/model/book/{permModelID}", r.PUT(api.bookWorkerModelHandler, NeedHatchery(), MaintenanceAware()))
+	r.Handle("/worker/model/error/{permModelID}", r.PUT(api.spawnErrorWorkerModelHandler, NeedHatchery(), MaintenanceAware()))
 	r.Handle("/worker/model/enabled", r.GET(api.getWorkerModelsEnabledHandler, NeedHatchery()))
 	r.Handle("/worker/model/type", r.GET(api.getWorkerModelTypesHandler))
 	r.Handle("/worker/model/communication", r.GET(api.getWorkerModelCommunicationsHandler))
@@ -388,7 +388,7 @@ func (api *API) InitRouter(ctx context.Context) {
 	r.Handle("/feature/clean", r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token), Auth(false)))
 
 	// Engine µServices
-	r.Handle("/services/register", r.POST(api.postServiceRegisterHandler, Auth(false)))
+	r.Handle("/services/register", r.POST(api.postServiceRegisterHandler, Auth(false), MaintenanceAware()))
 	r.Handle("/services/{type}", r.GET(api.getExternalServiceHandler, NeedWorker()))
 
 	// Templates

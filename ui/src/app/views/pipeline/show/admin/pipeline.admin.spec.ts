@@ -21,6 +21,9 @@ import { PipelineModule } from '../../pipeline.module';
 import { PipelineAdminComponent } from './pipeline.admin.component';
 import {WorkflowService} from 'app/service/workflow/workflow.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { MonitoringService } from 'app/service/monitoring/monitoring.service';
+import { ProjectStore } from 'app/service/project/project.store';
+import { ProjectService } from 'app/service/project/project.service';
 
 describe('CDS: Pipeline Admin Component', () => {
 
@@ -42,7 +45,10 @@ describe('CDS: Pipeline Admin Component', () => {
                 TranslateLoader,
                 WorkflowService,
                 WorkflowRunService,
-                TranslateParser
+                TranslateParser,
+                MonitoringService,
+                ProjectStore,
+                ProjectService
             ],
             imports: [
                 PipelineModule,

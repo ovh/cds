@@ -835,6 +835,11 @@ func (a *API) Serve(ctx context.Context) error {
 			purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
 		}, a.PanicDump())
 
+	// Check maintenance on redis
+	if _, err := a.Cache.Get(sdk.MaintenanceAPIKey, &a.Maintenance); err != nil {
+		return err
+	}
+
 	s := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port),
 		Handler:        a.Router.Mux,

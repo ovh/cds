@@ -27,6 +27,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineShowComponent } from './pipeline.show.component';
+import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 describe('CDS: Pipeline Show', () => {
 
     beforeEach(() => {
@@ -39,6 +40,7 @@ describe('CDS: Pipeline Show', () => {
                 ProjectService,
                 ProjectStore,
                 NavbarService,
+                MonitoringService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ToastService, useClass: MockToast },
                 TranslateService,

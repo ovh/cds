@@ -52,6 +52,7 @@ func (s *Service) webhookHandler() service.Handler {
 			Type:      webHook.Type,
 			UUID:      webHook.UUID,
 			Config:    webHook.Config,
+			Status:    TaskExecutionScheduled,
 			WebHook: &sdk.WebHookExecution{
 				RequestBody:   req,
 				RequestHeader: r.Header,
@@ -61,11 +62,6 @@ func (s *Service) webhookHandler() service.Handler {
 
 		//Save the web hook execution
 		s.Dao.SaveTaskExecution(exec)
-
-		//Push the webhook execution in the queue, so it will be executed
-		if err := s.Dao.EnqueueTaskExecution(exec); err != nil {
-			return err
-		}
 
 		//Return the execution
 		return service.WriteJSON(w, exec, http.StatusOK)
@@ -640,7 +636,7 @@ func (s *Service) postStopTaskExecutionHandler() service.Handler {
 
 		for i := range execs {
 			e := &execs[i]
-			if strconv.FormatInt(e.Timestamp, 10) == timestamp && e.Status == TaskExecutionDoing || e.Status == TaskExecutionScheduled {
+			if (strconv.FormatInt(e.Timestamp, 10) == timestamp && e.Status == TaskExecutionDoing) || e.Status == TaskExecutionScheduled || e.Status == TaskExecutionEnqueued {
 				e.Status = TaskExecutionDone
 				e.LastError = TaskExecutionDone
 				e.NbErrors = s.Cfg.RetryError + 1
@@ -650,6 +646,26 @@ func (s *Service) postStopTaskExecutionHandler() service.Handler {
 			}
 		}
 
+		return nil
+	}
+}
+
+func (s *Service) postMaintenanceHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Get the UUID of the task from the URL
+		enableS := api.FormString(r, "enable")
+		enable, err := strconv.ParseBool(enableS)
+		if err != nil {
+			return sdk.WrapError(err, "unable to parse maintenance params")
+		}
+
+		if err := s.Dao.store.SetWithTTL(MaintenanceHookKey, enable, 0); err != nil {
+			return sdk.WrapError(err, "unable to save maintenance state")
+		}
+		if err := s.Dao.store.Publish(MaintenanceHookQueue, fmt.Sprintf("%v", enable)); err != nil {
+			return sdk.WrapError(err, "unable to publish maintenance state")
+		}
+		s.Maintenance = enable
 		return nil
 	}
 }
