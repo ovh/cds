@@ -3,8 +3,7 @@ package sdk
 import (
 	"database/sql/driver"
 	json "encoding/json"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 // Action type
@@ -68,9 +67,12 @@ func (a Action) Value() (driver.Value, error) {
 
 // Scan action.
 func (a *Action) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
 	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(errors.New("type assertion .([]byte) failed"))
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, a), "cannot unmarshal Action")
 }
