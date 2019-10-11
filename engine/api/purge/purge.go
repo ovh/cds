@@ -155,6 +155,7 @@ func deleteWorkflowRunsHistory(ctx context.Context, db gorp.SqlExecutor, store c
 	for _, workflowRunID := range workflowRunIDs {
 		if err := DeleteArtifacts(ctx, db, store, sharedStorage, workflowRunID); err != nil {
 			log.Error("DeleteArtifacts> error while deleting artifacts: %v", err)
+			continue
 		}
 
 		res, err := db.Exec("DELETE FROM workflow_run WHERE workflow_run.id = $1", workflowRunID)
