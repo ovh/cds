@@ -789,16 +789,22 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	assert.Equal(t, "Hi, I am foo", string(body))
 
 	// check if file is stored locally
-	fpath := path.Join(os.TempDir(), "store", fmt.Sprintf("%d-%d-%v", ctx.run.ID, wNodeJobRun.WorkflowNodeRunID, arts[0].Ref), "myartifact")
-	exists := fileExists(fpath)
+	containerPath := path.Join(os.TempDir(), "store", fmt.Sprintf("%d-%d-%v", ctx.run.ID, wNodeJobRun.WorkflowNodeRunID, arts[0].Ref))
+
+	artifactPath := path.Join(containerPath, "myartifact")
+	exists := fileExists(artifactPath)
 	assert.Equal(t, true, exists)
 
 	// then purge run to delete artifact
 	purge.DeleteArtifacts(router.Background, db, api.Cache, api.SharedStorage, ctx.run.ID)
 
 	// check if file is deleted
-	exists = fileExists(fpath)
+	exists = fileExists(artifactPath)
 	assert.Equal(t, false, exists)
+
+	if _, err := os.Stat(containerPath); !os.IsNotExist(err) {
+		t.FailNow()
+	}
 
 }
 
