@@ -23,10 +23,13 @@ func (client *bitbucketcloudClient) CreateHook(ctx context.Context, repo string,
 		hook.URL = client.proxyURL + hook.URL[lastIndexSlash:]
 	}
 
+	if len(hook.Events) == 0 {
+		hook.Events = []string{"repo:push"}
+	}
 	r := WebhookCreate{
 		Description: "CDS webhook - " + hook.Name,
 		Active:      true,
-		Events:      []string{"repo:push"},
+		Events:      hook.Events,
 		URL:         hook.URL,
 	}
 	b, err := json.Marshal(r)

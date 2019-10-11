@@ -19,9 +19,6 @@ func (c *gitlabClient) GetHook(ctx context.Context, repo, id string) (sdk.VCSHoo
 
 //CreateHook enables the defaut HTTP POST Hook in Gitlab
 func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
-	t := true
-	f := false
-
 	var url string
 	if !hook.Workflow {
 		var err error
@@ -47,11 +44,43 @@ func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 		}
 	}
 
+	var pushEvent, mergeRequestEvent, TagPushEvent, issueEvent, noteEvent, wikiPageEvent, pipelineEvent, jobEvent bool
+	if len(hook.Events) == 0 {
+		hook.Events = []string{"Push Hook"}
+	}
+
+	for _, e := range hook.Events {
+		switch e {
+		case "Push Hook":
+			pushEvent = true
+		case "Tag Push Hook":
+			TagPushEvent = true
+		case "Issue Hook":
+			issueEvent = true
+		case "Note Hook":
+			noteEvent = true
+		case "Merge Request Hook":
+			mergeRequestEvent = true
+		case "Wiki Page Hook":
+			wikiPageEvent = true
+		case "Pipeline Hook":
+			pipelineEvent = true
+		case "Job Hook":
+			jobEvent = true
+		}
+	}
+
+	f := false
 	opt := gitlab.AddProjectHookOptions{
 		URL:                   &url,
-		PushEvents:            &t,
-		MergeRequestsEvents:   &f,
-		TagPushEvents:         &f,
+		PushEvents:            &pushEvent,
+		MergeRequestsEvents:   &mergeRequestEvent,
+		TagPushEvents:         &TagPushEvent,
+		IssuesEvents:          &issueEvent,
+		WikiPageEvents:        &wikiPageEvent,
+		NoteEvents:            &noteEvent,
+		PipelineEvents:        &pipelineEvent,
+		JobEvents:             &jobEvent,
 		EnableSSLVerification: &f,
 	}
 

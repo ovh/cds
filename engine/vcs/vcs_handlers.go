@@ -97,20 +97,21 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			res.WebhooksIcon = sdk.BitbucketIcon
 			// https://confluence.atlassian.com/bitbucketserver/event-payload-938025882.html
 			res.Events = []string{
-				"refs_changed",
+				"repo:refs_changed",
+				"repo:modified",
 				"repo:forked",
-				"comment:added",
-				"comment:edited",
-				"comment:deleted",
+				"repo:comment:added",
+				"repo:comment:edited",
+				"repo:comment:deleted",
 				"pr:opened",
 				"pr:modified",
-				"pr:merged",
-				"pr:declined",
-				"pr:deleted",
 				"pr:reviewer:updated",
 				"pr:reviewer:approved",
 				"pr:reviewer:unapproved",
 				"pr:reviewer:needs_work",
+				"pr:merged",
+				"pr:declined",
+				"pr:deleted",
 				"pr:comment:added",
 				"pr:comment:edited",
 				"pr:comment:deleted",
@@ -204,7 +205,7 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 				"Merge Request Hook",
 				"Wiki Page Hook",
 				"Pipeline Hook",
-				"Build Hook",
+				"Job Hook",
 			}
 		case cfg.Gerrit != nil:
 			res.WebhooksSupported = false

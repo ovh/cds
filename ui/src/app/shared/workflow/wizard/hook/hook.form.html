@@ -44,17 +44,19 @@
                                        [readonly]="!_hook.config[k].configurable || mode === 'ro'"/>
                             </ng-container>
                             <!-- MULTICHOICE -->
-                            <ng-container *ngIf="k !== 'payload' && _hook.config[k].type === 'multiple'">
+                            <ng-container *ngIf="k !== 'payload' && _hook.config[k].type === 'multiple' && _hook.config[k].multiple_choice_list">
                                 <div class="ui form">
-                                    <div class="grouped fields">
-                                        <div class="ui grid">
-                                            <div class="five wide column" *ngFor="let eventType of _hook.config[k].multiple_choice_list">
-                                                <ng-container *ngIf="_hook.config[k].temp">
-                                                    <sui-checkbox [(ngModel)]="_hook.config[k].temp[eventType]" (checkChange)="updateHookMultiChoice(k)">{{eventType}}</sui-checkbox>
-                                                </ng-container>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <sui-multi-select class="selection"
+                                                [(ngModel)]="this.tempMultipleConfig"
+                                                [options]="_hook.config[k].multiple_choice_list"
+                                                (ngModelChange)="updateConfigMultipleChoice(k)"
+                                                [isSearchable]="true"
+                                                [isDisabled]="mode === 'ro'"
+                                                #select>
+                                        <sui-select-option *ngFor="let option of select.filteredOptions"
+                                                           [value]="option">
+                                        </sui-select-option>
+                                    </sui-multi-select>
                                 </div>
                             </ng-container>
 

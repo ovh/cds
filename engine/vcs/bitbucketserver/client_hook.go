@@ -66,10 +66,14 @@ func (b *bitbucketClient) CreateHook(ctx context.Context, repo string, hook *sdk
 		}
 	}
 
+	if len(hook.Events) == 0 {
+		hook.Events = []string{"repo:refs_changed"}
+	}
+
 	url := fmt.Sprintf("/projects/%s/repos/%s/webhooks", project, slug)
 	request := WebHook{
 		URL:           hook.URL,
-		Events:        []string{"repo:refs_changed"},
+		Events:        hook.Events,
 		Active:        true,
 		Name:          repo,
 		Configuration: make(map[string]string),

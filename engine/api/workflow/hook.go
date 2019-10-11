@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
@@ -172,9 +173,16 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		for i := range wf.WorkflowData.Node.Hooks {
 			h := &wf.WorkflowData.Node.Hooks[i]
 			v, ok := h.Config["webHookID"]
-			if h.HookModelName == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" && (!ok || v.Value == "") {
-				if err := createVCSConfiguration(ctx, db, store, p, h); err != nil {
-					return sdk.WrapError(err, "Cannot update vcs configuration")
+			if h.HookModelName == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" {
+				if !ok || v.Value == "" {
+					if err := createVCSConfiguration(ctx, db, store, p, h); err != nil {
+						return sdk.WrapError(err, "Cannot update vcs configuration")
+					}
+				}
+				if ok && v.Value != "" {
+					if err := updateVCSConfiguration(ctx, db, store, p, h); err != nil {
+
+					}
 				}
 			}
 		}
@@ -270,9 +278,16 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 	if !webHookInfo.WebhooksSupported || webHookInfo.WebhooksDisabled {
 		return sdk.WrapError(sdk.ErrForbidden, "createVCSConfiguration> hook creation are forbidden")
 	}
+	var valueSlitted []string
+	if _, ok := h.Config[sdk.HookConfigEventFilter]; ok {
+		valueEvent := h.Config[sdk.HookConfigEventFilter].Value
+		valueSlitted = strings.Split(valueEvent, ";")
+	}
+
 	vcsHook := sdk.VCSHook{
 		Method:   "POST",
 		URL:      h.Config["webHookURL"].Value,
+		Events:   valueSlitted,
 		Workflow: true,
 	}
 	if err := client.CreateHook(ctx, h.Config["repoFullName"].Value, &vcsHook); err != nil {
@@ -288,7 +303,11 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 		Configurable: false,
 		Type:         sdk.HookConfigTypeString,
 	}
-
+	h.Config[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
+		Type:         sdk.HookConfigTypeMultiChoice,
+		Configurable: true,
+		Value:        strings.Join(vcsHook.Events, ";"),
+	}
 	return nil
 }
 

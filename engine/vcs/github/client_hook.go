@@ -24,11 +24,14 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 		}
 		hook.URL = g.proxyURL + hook.URL[lastIndexSlash:]
 	}
+	if len(hook.Events) == 0 {
+		hook.Events = []string{"push"}
+	}
 
 	r := WebhookCreate{
 		Name:   "web",
 		Active: true,
-		Events: []string{"push"},
+		Events: hook.Events,
 		Config: WebHookConfig{
 			URL:         hook.URL,
 			ContentType: "json",
