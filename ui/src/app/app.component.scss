@@ -12,7 +12,19 @@
   #navbar.connected {
     display: inherit;
   }
-  #banner {
+  .maintenance.banner {
+    margin-top: 0;
+    img {
+      position: absolute;
+      left: 0;
+      animation: slideinbanner 10s infinite;
+      height: 50px;
+    }
+  }
+  .maintenance.banner.mt50 {
+    margin-top: 50px;
+  }
+  .banner {
     height: 50px;
     margin-top: $navbarHeight;
     background-color: $cds_color_red;
@@ -38,7 +50,7 @@
   .maintenance {
 
     h2 {
-      margin: 50px 0;
+      margin: 20px 0;
       text-align: center;
     }
 
@@ -75,6 +87,27 @@
 
   to {
     margin-left: -50%;
+    transform: scaleX(-1);
+  }
+}
+
+@keyframes slideinbanner {
+  from {
+    left: 0;
+    transform: scaleX(1);
+  }
+
+  50% {
+    left: 96%;
+    transform: scaleX(1);
+  }
+  51% {
+    left: 96%;
+    transform: scaleX(-1);
+  }
+
+  to {
+    left: 0%;
     transform: scaleX(-1);
   }
 }

@@ -21,6 +21,7 @@ import { SharedModule } from '../../shared.module';
 import { RepoManagerFormComponent } from './repomanager.form.component';
 import {WorkflowService} from 'app/service/workflow/workflow.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { MonitoringService } from 'app/service/services.module';
 
 
 describe('CDS: Project RepoManager Form Component', () => {
@@ -43,6 +44,7 @@ describe('CDS: Project RepoManager Form Component', () => {
                 TranslateParser,
                 NavbarService,
                 WorkflowService,
+                MonitoringService,
                 WorkflowRunService
             ],
             imports: [

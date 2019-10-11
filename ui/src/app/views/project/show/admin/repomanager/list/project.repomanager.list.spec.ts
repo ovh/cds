@@ -28,6 +28,8 @@ import { ProjectModule } from '../../../../project.module';
 import { ProjectRepoManagerComponent } from './project.repomanager.list.component';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { MonitoringService } from 'app/service/monitoring/monitoring.service';
+import { of } from 'rxjs';
 describe('CDS: Project RepoManager List Component', () => {
 
     let injector: Injector;
@@ -50,6 +52,7 @@ describe('CDS: Project RepoManager List Component', () => {
                 VariableService,
                 ToasterService,
                 TranslateService,
+                MonitoringService,
                 TranslateParser,
                 NavbarService,
                 WorkflowService,
@@ -100,7 +103,7 @@ describe('CDS: Project RepoManager List Component', () => {
 
         let store: Store = injector.get(Store);
         spyOn(store, 'dispatch').and.callFake(() => {
-            return Observable.of(null);
+            return of(null);
         });
 
         let compiled = fixture.debugElement.nativeElement;
@@ -108,6 +111,10 @@ describe('CDS: Project RepoManager List Component', () => {
         fixture.detectChanges(true);
 
         compiled.querySelector('.ui.red.button.active').click();
+        fixture.detectChanges(true);
+
+        // Confirm deletion because we cannot simulate click on global modal ( out of scope of the component)
+        fixture.componentInstance.confirmDeletion(true);
 
         expect(store.dispatch).toHaveBeenCalledWith(new DisconnectRepositoryManagerInProject({
             projectKey: 'key1',

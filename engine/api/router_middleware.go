@@ -60,7 +60,8 @@ func (api *API) deletePermissionMiddleware(ctx context.Context, w http.ResponseW
 }
 
 func (api *API) maintenanceMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	if rc.Options["maintenance_aware"] == "true" && api.Maintenance {
+	u := deprecatedGetUser(ctx)
+	if (u == nil || !u.Admin) && rc.Options["maintenance_aware"] != "true" && api.Maintenance && rc.Method != http.MethodGet {
 		return ctx, sdk.WrapError(sdk.ErrServiceUnavailable, "CDS Maintenance ON")
 	}
 	return ctx, nil
