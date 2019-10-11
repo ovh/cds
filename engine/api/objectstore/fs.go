@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -12,8 +13,8 @@ import (
 
 // FilesystemStore implements ObjectStore interface with filesystem driver
 type FilesystemStore struct {
-	ProjectIntegration sdk.ProjectIntegration
-	Basedir            string
+	projectIntegration sdk.ProjectIntegration
+	basedir            string
 }
 
 // newFilesystemStore creates a new ObjectStore with filesystem driver
@@ -23,7 +24,7 @@ func newFilesystemStore(projectIntegration sdk.ProjectIntegration, conf ConfigOp
 		return nil, fmt.Errorf("artifact storage is filesystem, but --artifact-basedir is not provided")
 	}
 
-	fss := &FilesystemStore{ProjectIntegration: projectIntegration, Basedir: conf.Basedir}
+	fss := &FilesystemStore{projectIntegration: projectIntegration, basedir: conf.Basedir}
 	return fss, nil
 }
 
@@ -34,12 +35,12 @@ func (fss *FilesystemStore) TemporaryURLSupported() bool {
 
 // GetProjectIntegration returns current projet Integration, nil otherwise
 func (fss *FilesystemStore) GetProjectIntegration() sdk.ProjectIntegration {
-	return fss.ProjectIntegration
+	return fss.projectIntegration
 }
 
 //Status return filesystem storage status
 func (fss *FilesystemStore) Status() sdk.MonitoringStatusLine {
-	if _, err := os.Stat(fss.Basedir); os.IsNotExist(err) {
+	if _, err := os.Stat(fss.basedir); os.IsNotExist(err) {
 		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Filesystem Storage KO (" + err.Error() + ")", Status: sdk.MonitoringStatusAlert}
 	}
 	return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Filesystem Storage", Status: sdk.MonitoringStatusOK}
@@ -52,7 +53,7 @@ func (fss *FilesystemStore) ServeStaticFiles(o Object, entrypoint string, data i
 
 // Store store a object on disk
 func (fss *FilesystemStore) Store(o Object, data io.ReadCloser) (string, error) {
-	dst := path.Join(fss.Basedir, o.GetPath())
+	dst := path.Join(fss.basedir, o.GetPath())
 	if err := os.MkdirAll(dst, 0755); err != nil {
 		return "", err
 	}
@@ -69,12 +70,22 @@ func (fss *FilesystemStore) Store(o Object, data io.ReadCloser) (string, error) 
 
 // Fetch lookup on disk for data
 func (fss *FilesystemStore) Fetch(o Object) (io.ReadCloser, error) {
-	dst := path.Join(fss.Basedir, o.GetPath(), o.GetName())
+	dst := path.Join(fss.basedir, o.GetPath(), o.GetName())
 	return os.Open(dst)
 }
 
-// Delete data on disk
+// Delete deletes data from disk
 func (fss *FilesystemStore) Delete(o Object) error {
-	dst := path.Join(fss.Basedir, o.GetPath(), o.GetName())
+	dst := path.Join(fss.basedir, o.GetPath(), o.GetName())
 	return os.RemoveAll(dst)
+}
+
+// DeleteContainer deletes a directory from disk
+func (fss *FilesystemStore) DeleteContainer(containerPath string) error {
+	// check, just to be sure...
+	if strings.TrimSpace(containerPath) != "" && containerPath != "/" {
+		dst := path.Join(fss.basedir, containerPath)
+		return os.RemoveAll(dst)
+	}
+	return nil
 }

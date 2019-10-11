@@ -3,6 +3,7 @@ package purge
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -183,6 +184,7 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		return sdk.WrapError(errprj, "error while load project %d", wr.WorkflowID)
 	}
 
+	containersAlreadyDeleted := []string{}
 	for _, wnrs := range wr.WorkflowNodeRuns {
 		for _, wnr := range wnrs {
 			for _, art := range wnr.Artifacts {
@@ -204,10 +206,17 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 					continue
 				}
 
-				if err := storageDriver.Delete(&art); err != nil {
-					log.Error("error while deleting artifact prj:%v wnr:%v name:%v", proj.Key, wnr.ID, art.Name)
+				nameContainerDelete := fmt.Sprintf("%s-%s", integrationName, art.GetPath())
+				if sdk.IsInArray(nameContainerDelete, containersAlreadyDeleted) {
+					// container already deleted, skip this artifact
 					continue
 				}
+
+				if err := storageDriver.DeleteContainer(art.GetPath()); err != nil {
+					log.Error("error while deleting container prj:%v wnr:%v name:%v", proj.Key, wnr.ID, art.GetPath())
+					continue
+				}
+				containersAlreadyDeleted = append(containersAlreadyDeleted, nameContainerDelete)
 			}
 		}
 	}

@@ -9,14 +9,24 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/sdk"
 )
 
 func Test_deleteWorkflowRunsHistory(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	sharedStorage := &objectstore.FilesystemStore{ProjectIntegration: sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, Basedir: path.Join(os.TempDir(), "store")}
+	// Init store
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: path.Join(os.TempDir(), "store"),
+			},
+		},
+	}
+
+	sharedStorage, errO := objectstore.Init(context.Background(), cfg)
+	test.NoError(t, errO)
 
 	err := deleteWorkflowRunsHistory(context.Background(), db, cache, sharedStorage, nil)
 	test.NoError(t, err)
