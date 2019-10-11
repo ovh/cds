@@ -1,4 +1,5 @@
 name: Create a simple workflow (ITSCWRKFLW10) and try to run it
+version: "2"
 testcases:
 - name: assert filepath, your current directory must be at the root of this project
   steps:

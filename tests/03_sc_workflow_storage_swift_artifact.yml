@@ -1,4 +1,5 @@
 name: Workflow (ITSCWRKFLW11) should use the action artifact upload / download with integration openstack
+version: "2"
 testcases:
 - name: assert filepath, your current directory must be at the root of this project
   steps:
