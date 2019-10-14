@@ -64,7 +64,7 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 		defer resp.Body.Close()
 
-		if contentType := getContentType(resp); contentType != "application/octet-stream" {
+		if contentType := sdk.GetContentType(resp); contentType != "application/octet-stream" {
 			sdk.Exit("Invalid Binary (Content-Type: %s). Please try again or download it manually from %s\n", contentType, sdk.URLGithubReleases)
 		}
 
@@ -77,13 +77,4 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 		fmt.Println("Update worker done.")
 	}
-}
-
-func getContentType(resp *http.Response) string {
-	for k, v := range resp.Header {
-		if k == "Content-Type" && len(v) >= 1 {
-			return v[0]
-		}
-	}
-	return ""
 }
