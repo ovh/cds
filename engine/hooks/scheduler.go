@@ -31,7 +31,7 @@ func (s *Service) runScheduler(c context.Context) error {
 
 	go func() {
 		if err := s.enqueueScheduledTaskExecutionsRoutine(ctx); err != nil {
-			log.Error("Hooks> runScheduler> retryTaskExecutionsRoutine> %v", err)
+			log.Error("Hooks> runScheduler> enqueueScheduledTaskExecutionsRoutine> %v", err)
 			cancel()
 		}
 	}()
