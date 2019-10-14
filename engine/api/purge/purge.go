@@ -210,6 +210,7 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 				for _, dc := range driversContainers {
 					if dc.containerPath == art.GetPath() && proj.Key == dc.projectKey && integrationName == dc.integrationName {
 						found = true
+						break
 					}
 				}
 
