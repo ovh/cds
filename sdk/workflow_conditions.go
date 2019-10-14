@@ -34,6 +34,9 @@ var (
 
 //WorkflowCheckConditions checks conditions given a list of parameters
 func WorkflowCheckConditions(conditions []WorkflowNodeCondition, params []Parameter) (bool, error) {
+	if len(conditions) == 0 {
+		return true, nil
+	}
 	mapParams := ParametersToMap(params)
 	for k, v := range mapParams {
 		var err error
