@@ -28,7 +28,7 @@ func CountHooksByApplication(db gorp.SqlExecutor, appID int64) (int64, error) {
 func LoadHookByUUID(db gorp.SqlExecutor, uuid string) (sdk.NodeHook, error) {
 	var hook sdk.NodeHook
 	var res dbNodeHookData
-	if err := db.SelectOne(&res, "select * from w_node_hook where uuid = $1", uuid); err != nil {
+	if err := db.SelectOne(&res, "select * from w_node_hook where uuid = $1 ORDER BY node_id DESC LIMIT 1", uuid); err != nil {
 		if err == sql.ErrNoRows {
 			return hook, sdk.WithStack(sdk.ErrNotFound)
 		}
