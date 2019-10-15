@@ -269,6 +269,54 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 	return sdk.Result{Status: sdk.StatusSuccess.String()}
 }
 
+func computeSemver(gitDescribe, cdsVersionValue string) (string, error) {
+	var cdsSemver string
+	smver, errT := semver.ParseTolerant(gitDescribe)
+	if errT != nil {
+		return "", fmt.Errorf("!! WARNING !! git describe %s is not semver compatible, we can't create cds.semver variable", gitDescribe)
+	}
+	// Prerelease versions
+	// for 0.31.1-4-g595de235a, smver.Pre = 4-g595de235a
+	if len(smver.Pre) == 1 {
+		tuple := strings.Split(smver.Pre[0].String(), "-")
+		// we split 4-g595de235a, g595de235a is the sha1
+		if len(tuple) == 2 {
+			cdsSemver = fmt.Sprintf("%d.%d.%d-%s+sha.%s.cds.%s",
+				smver.Major,
+				smver.Minor,
+				smver.Patch,
+				tuple[0],
+				tuple[1],
+				cdsVersionValue,
+			)
+		} else if len(tuple) == 1 {
+			cdsSemver = fmt.Sprintf("%d.%d.%d-%s+cds.%s",
+				smver.Major,
+				smver.Minor,
+				smver.Patch,
+				tuple[0],
+				cdsVersionValue,
+			)
+		}
+	}
+
+	if cdsSemver == "" {
+		// here, there is no prerelease version, it's a tag
+		cdsSemver = fmt.Sprintf("%d.%d.%d+cds.%s",
+			smver.Major,
+			smver.Minor,
+			smver.Patch,
+			cdsVersionValue,
+		)
+	}
+
+	// if git.describe contains a prefix 'v', we keep it
+	if strings.HasPrefix(gitDescribe, "v") {
+		cdsSemver = fmt.Sprintf("v%s", cdsSemver)
+	}
+	return cdsSemver, nil
+}
+
 func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, branch, commit string, sendLog LoggerFunc) error {
 	author := sdk.ParameterValue(*params, "git.author")
 	authorEmail := sdk.ParameterValue(*params, "git.author.email")
@@ -294,43 +342,11 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 		}
 		sendLog(fmt.Sprintf("git.describe: %s", info.GitDescribe))
 
-		smver, errT := semver.ParseTolerant(info.GitDescribe)
-		if errT != nil {
-			sendLog(fmt.Sprintf("!! WARNING !! git describe %s is not semver compatible, we can't create cds.semver variable", info.GitDescribe))
-		} else {
-			// Prerelease versions
-			// for 0.31.1-4-g595de235a, smver.Pre = 4-g595de235a
-			if len(smver.Pre) == 1 {
-				tuple := strings.Split(smver.Pre[0].String(), "-")
-				// we split 4-g595de235a, g595de235a is the sha1
-				if len(tuple) == 2 {
-					cdsSemver = fmt.Sprintf("%d.%d.%d-%s+sha.%s.cds.%s",
-						smver.Major,
-						smver.Minor,
-						smver.Patch,
-						tuple[0],
-						tuple[1],
-						cdsVersion.Value,
-					)
-				}
-			}
+		var errS error
+		cdsSemver, errS = computeSemver(info.GitDescribe, cdsVersion.Value)
+		if errS != nil {
+			sendLog(errS.Error())
 		}
-
-		if cdsSemver == "" {
-			// here, there is no prerelease version, it's a tag
-			cdsSemver = fmt.Sprintf("%d.%d.%d+cds.%s",
-				smver.Major,
-				smver.Minor,
-				smver.Patch,
-				cdsVersion.Value,
-			)
-		}
-
-		// if git.describe contains a prefix 'v', we keep it
-		if strings.HasPrefix(info.GitDescribe, "v") {
-			cdsSemver = fmt.Sprintf("v%s", cdsSemver)
-		}
-
 	} else {
 		// default value if there is no tag on repository
 		cdsSemver = fmt.Sprintf("0.0.1+cds.%s", cdsVersion.Value)
