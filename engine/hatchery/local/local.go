@@ -141,12 +141,14 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 		return fmt.Errorf("Cannot download worker binary from api: %v", err)
 	}
 
+	basedirHatchery := strings.TrimRight(strings.TrimSpace(h.Config.Basedir), "/")
+	cmdWorker := fmt.Sprintf("%s/worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --single-use --force-exit", basedirHatchery)
 	h.ModelLocal = sdk.Model{
 		Name: h.Name,
 		Type: sdk.HostProcess,
 		ModelVirtualMachine: sdk.ModelVirtualMachine{
 			Image: h.Name,
-			Cmd:   "{{.BaseDir}}/worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --single-use --force-exit",
+			Cmd:   cmdWorker,
 		},
 		RegisteredArch:         sdk.GOARCH,
 		RegisteredOS:           sdk.GOOS,
