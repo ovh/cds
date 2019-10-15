@@ -158,7 +158,7 @@ func (c *gitlabClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 	log.Debug("GitlabClient.UpdateHook: %s %s\n", repo, *opt.URL)
 	_, resp, err := c.client.Projects.EditProjectHook(repo, gitlabHook.ID, &opt)
 	if err != nil {
-		return sdk.WrapError(err, "cannot update gitlab project hook %d", hook.ID)
+		return sdk.WrapError(err, "cannot update gitlab project hook %s", hook.ID)
 	}
 	if resp.StatusCode >= 400 {
 		return sdk.WithStack(fmt.Errorf("cannot update hook. Http %d, Repo %s, hook %+v", resp.StatusCode, repo, opt))
