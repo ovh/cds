@@ -86,8 +86,8 @@ type BitbucketServerPRReviewerUpdated struct {
 	Date             string                     `json:"date"`
 	Actor            BitbucketServerActor       `json:"actor"`
 	PullRequest      BitbucketServerPullRequest `json:"pullRequest"`
-	AddedReviewers   BitbucketServerActor       `json:"addedReviewers"`
-	RemovedReviewers BitbucketServerActor       `json:"removedReviewers"`
+	AddedReviewers   []BitbucketServerActor     `json:"addedReviewers"`
+	RemovedReviewers []BitbucketServerActor     `json:"removedReviewers"`
 }
 
 type BitbucketServerPRReviewerUnapproved struct {

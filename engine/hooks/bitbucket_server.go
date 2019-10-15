@@ -30,9 +30,13 @@ func (s *Service) generatePayloadFromBitbucketServerRequest(t *sdk.TaskExecution
 	case "pr:comment:deleted":
 		return s.generatePayloadFromBitbucketServerPRCommentDeleted(t)
 	case "pr:reviewer:approved":
+		return s.generatePayloadFromBitbucketServerPRReviewerApproved(t)
 	case "pr:reviewer:updated":
+		return s.generatePayloadFromBitbucketServerPRReviewerUpdated(t)
 	case "pr:reviewer:unapproved":
+		return s.generatePayloadFromBitbucketServerPRReviewerUnapproved(t)
 	case "pr:reviewer:needs_work":
+		return s.generatePayloadFromBitbucketServerPRReviewerNeedsWork(t)
 	default:
 		payload, err := getAllPayloadMap(t.WebHook.RequestBody)
 		if err != nil {
@@ -77,6 +81,72 @@ func (s *Service) generatePayloadFromBitbucketServerPushEvent(t *sdk.TaskExecuti
 
 		payloads = append(payloads, payload)
 	}
+	return payloads, nil
+}
+
+func (s *Service) generatePayloadFromBitbucketServerPRReviewerUpdated(t *sdk.TaskExecution) ([]map[string]interface{}, error) {
+	payloads := []map[string]interface{}{}
+	var request sdk.BitbucketServerPRReviewerUpdated
+	if err := json.Unmarshal(t.WebHook.RequestBody, &request); err != nil {
+		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPRReviewerUpdated: %s", string(t.WebHook.RequestBody))
+	}
+	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = request.EventKey
+	getVariableFromAuthor(payload, request.Actor)
+	getVariableFromPullRequest(payload, request.PullRequest)
+	getPayloadStringVariable(payload, request)
+	payloads = append(payloads, payload)
+	return payloads, nil
+}
+
+func (s *Service) generatePayloadFromBitbucketServerPRReviewerApproved(t *sdk.TaskExecution) ([]map[string]interface{}, error) {
+	payloads := []map[string]interface{}{}
+	var request sdk.BitbucketServerPRReviewerApproved
+	if err := json.Unmarshal(t.WebHook.RequestBody, &request); err != nil {
+		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPRReviewerApproved: %s", string(t.WebHook.RequestBody))
+	}
+	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = request.EventKey
+	getVariableFromAuthor(payload, request.Actor)
+	getVariableFromPullRequest(payload, request.PullRequest)
+	getVariableFromParticipant(payload, request.Participant)
+	getPayloadStringVariable(payload, request)
+	payload[PR_PREVIOUS_STATE] = request.PreviousStatus
+	payloads = append(payloads, payload)
+	return payloads, nil
+}
+
+func (s *Service) generatePayloadFromBitbucketServerPRReviewerUnapproved(t *sdk.TaskExecution) ([]map[string]interface{}, error) {
+	payloads := []map[string]interface{}{}
+	var request sdk.BitbucketServerPRReviewerApproved
+	if err := json.Unmarshal(t.WebHook.RequestBody, &request); err != nil {
+		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPRReviewerApproved: %s", string(t.WebHook.RequestBody))
+	}
+	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = request.EventKey
+	getVariableFromAuthor(payload, request.Actor)
+	getVariableFromPullRequest(payload, request.PullRequest)
+	getVariableFromParticipant(payload, request.Participant)
+	getPayloadStringVariable(payload, request)
+	payload[PR_PREVIOUS_STATE] = request.PreviousStatus
+	payloads = append(payloads, payload)
+	return payloads, nil
+}
+
+func (s *Service) generatePayloadFromBitbucketServerPRReviewerNeedsWork(t *sdk.TaskExecution) ([]map[string]interface{}, error) {
+	payloads := []map[string]interface{}{}
+	var request sdk.BitbucketServerPRReviewerApproved
+	if err := json.Unmarshal(t.WebHook.RequestBody, &request); err != nil {
+		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPRReviewerApproved: %s", string(t.WebHook.RequestBody))
+	}
+	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = request.EventKey
+	getVariableFromAuthor(payload, request.Actor)
+	getVariableFromPullRequest(payload, request.PullRequest)
+	getVariableFromParticipant(payload, request.Participant)
+	getPayloadStringVariable(payload, request)
+	payload[PR_PREVIOUS_STATE] = request.PreviousStatus
+	payloads = append(payloads, payload)
 	return payloads, nil
 }
 
@@ -130,9 +200,9 @@ func (s *Service) generatePayloadFromBitbucketServerPRDeclined(t *sdk.TaskExecut
 
 func (s *Service) generatePayloadFromBitbucketServerPRDeleted(t *sdk.TaskExecution) ([]map[string]interface{}, error) {
 	payloads := []map[string]interface{}{}
-	var request sdk.BitbucketServerPRDeclinedEvent
+	var request sdk.BitbucketServerPRDeletedEvent
 	if err := json.Unmarshal(t.WebHook.RequestBody, &request); err != nil {
-		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPRDeclinedEvent: %s", string(t.WebHook.RequestBody))
+		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPRDeletedEvent: %s", string(t.WebHook.RequestBody))
 	}
 	payload := make(map[string]interface{})
 	payload[GIT_EVENT] = request.EventKey
@@ -195,7 +265,7 @@ func (s *Service) generatePayloadFromBitbucketServerPRCommentDeleted(t *sdk.Task
 	payloads := []map[string]interface{}{}
 	var request sdk.BitbucketServerPRCommentDeletedEvent
 	if err := json.Unmarshal(t.WebHook.RequestBody, &request); err != nil {
-		return nil, sdk.WrapError(err, "unable to unmarshal into generatePayloadFromBitbucketServerPRCommentDeleted: %s", string(t.WebHook.RequestBody))
+		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPRCommentDeletedEvent: %s", string(t.WebHook.RequestBody))
 	}
 	payload := make(map[string]interface{})
 	payload[GIT_EVENT] = request.EventKey
@@ -269,4 +339,11 @@ func getPayloadFromPRComment(payload map[string]interface{}, comment sdk.Bitbuck
 	payload[PR_COMMENT_AUTHOR] = comment.Author.Name
 	payload[PR_COMMENT_AUTHOR_EMAIL] = comment.Author.EmailAddress
 	payload[PR_COMMENT_TEXT] = comment.Text
+}
+
+func getVariableFromParticipant(payload map[string]interface{}, participant sdk.BitbucketServerParticipant) {
+	payload[PR_REVIEWER] = participant.User.Name
+	payload[PR_REVIEWER_EMAIL] = participant.User.EmailAddress
+	payload[PR_REVIEWER_STATUS] = participant.Status
+	payload[PR_REVIEWER_ROLE] = participant.Role
 }

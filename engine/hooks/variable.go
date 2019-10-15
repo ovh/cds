@@ -7,6 +7,12 @@ const (
 	PR_PREVIOUS_TITLE  = "git.pr.previous.title"
 	PR_PREVIOUS_BRANCH = "git.pr.previous.branch"
 	PR_PREVIOUS_HASH   = "git.pr.previous.has"
+	PR_PREVIOUS_STATE  = "git.pr.previous.state"
+
+	PR_REVIEWER        = "git.pr.reviewer"
+	PR_REVIEWER_EMAIL  = "git.pr.reviewer.email"
+	PR_REVIEWER_STATUS = "git.pr.reviewer.status"
+	PR_REVIEWER_ROLE   = "git.pr.reviewer.role"
 
 	PR_COMMENT_TEXT          = "git.pr.comment"
 	PR_COMMENT_TEXT_PREVIOUS = "git.pr.comment.before"
