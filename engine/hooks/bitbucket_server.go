@@ -66,6 +66,7 @@ func (s *Service) generatePayloadFromBitbucketServerPushEvent(t *sdk.TaskExecuti
 		}
 
 		payload := make(map[string]interface{})
+		payload[GIT_EVENT] = pushEvent.EventKey
 		getVariableFromAuthor(payload, pushEvent.Actor)
 		getVariableFromChange(payload, pushChange)
 		getVariableFromRepository(payload, pushEvent.Repository)
@@ -83,11 +84,11 @@ func (s *Service) generatePayloadFromBitbucketServerPROpened(t *sdk.TaskExecutio
 		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPROpenedEvent: %s", string(t.WebHook.RequestBody))
 	}
 	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = request.EventKey
 	getVariableFromAuthor(payload, request.Actor)
 	getVariableFromPullRequest(payload, request.PullRequest)
-	getVariableFromRepository(payload, request.PullRequest.ToRef.Repository)
-	getVariableFromSrcRepository(payload, request.PullRequest.FromRef.Repository)
 	getPayloadStringVariable(payload, request)
+	payloads = append(payloads, payload)
 	return payloads, nil
 }
 
@@ -98,14 +99,14 @@ func (s *Service) generatePayloadFromBitbucketServerPRModified(t *sdk.TaskExecut
 		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPRModifiedEvent: %s", string(t.WebHook.RequestBody))
 	}
 	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = request.EventKey
 	getVariableFromAuthor(payload, request.Actor)
 	getVariableFromPullRequest(payload, request.PullRequest)
-	getVariableFromRepository(payload, request.PullRequest.ToRef.Repository)
-	getVariableFromSrcRepository(payload, request.PullRequest.FromRef.Repository)
 	getPayloadStringVariable(payload, request)
 	payload[PR_PREVIOUS_TITLE] = request.PreviousTitle
 	payload[PR_PREVIOUS_BRANCH] = request.PreviousTarget.DisplayID
 	payload[PR_PREVIOUS_HASH] = request.PreviousTarget.LatestCommit
+	payloads = append(payloads, payload)
 	return payloads, nil
 }
 
@@ -116,11 +117,11 @@ func (s *Service) generatePayloadFromBitbucketServerPRDeclined(t *sdk.TaskExecut
 		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPRDeclinedEvent: %s", string(t.WebHook.RequestBody))
 	}
 	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = request.EventKey
 	getVariableFromAuthor(payload, request.Actor)
 	getVariableFromPullRequest(payload, request.PullRequest)
-	getVariableFromRepository(payload, request.PullRequest.ToRef.Repository)
-	getVariableFromSrcRepository(payload, request.PullRequest.FromRef.Repository)
 	getPayloadStringVariable(payload, request)
+	payloads = append(payloads, payload)
 	return payloads, nil
 }
 
@@ -131,11 +132,11 @@ func (s *Service) generatePayloadFromBitbucketServerPRDeleted(t *sdk.TaskExecuti
 		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPRDeclinedEvent: %s", string(t.WebHook.RequestBody))
 	}
 	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = request.EventKey
 	getVariableFromAuthor(payload, request.Actor)
 	getVariableFromPullRequest(payload, request.PullRequest)
-	getVariableFromRepository(payload, request.PullRequest.ToRef.Repository)
-	getVariableFromSrcRepository(payload, request.PullRequest.FromRef.Repository)
 	getPayloadStringVariable(payload, request)
+	payloads = append(payloads, payload)
 	return payloads, nil
 }
 
@@ -146,11 +147,11 @@ func (s *Service) generatePayloadFromBitbucketServerPRMerged(t *sdk.TaskExecutio
 		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPRMergedEvent: %s", string(t.WebHook.RequestBody))
 	}
 	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = request.EventKey
 	getVariableFromAuthor(payload, request.Actor)
 	getVariableFromPullRequest(payload, request.PullRequest)
-	getVariableFromRepository(payload, request.PullRequest.ToRef.Repository)
-	getVariableFromSrcRepository(payload, request.PullRequest.FromRef.Repository)
 	getPayloadStringVariable(payload, request)
+	payloads = append(payloads, payload)
 	return payloads, nil
 }
 
@@ -175,7 +176,7 @@ func getPayloadStringVariable(payload map[string]interface{}, msg interface{}) {
 	if err != nil {
 		log.Error("Unable to marshal payload: %v", err)
 	}
-	payload["payload"] = string(payloadStr)
+	payload[PAYLOAD] = string(payloadStr)
 }
 
 func getVariableFromRepository(payload map[string]interface{}, repo sdk.BitbucketServerRepository) {
@@ -183,7 +184,7 @@ func getVariableFromRepository(payload map[string]interface{}, repo sdk.Bitbucke
 }
 
 func getVariableFromSrcRepository(payload map[string]interface{}, repo sdk.BitbucketServerRepository) {
-	payload[GIT_FROM_REPOSITORY] = fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug)
+	payload[GIT_REPOSITORY_BEFORE] = fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug)
 }
 
 func getVariableFromAuthor(payload map[string]interface{}, actor sdk.BitbucketServerActor) {
@@ -198,8 +199,16 @@ func getVariableFromPullRequest(payload map[string]interface{}, pr sdk.Bitbucket
 	payload[PR_ID] = pr.ID
 	payload[PR_STATE] = pr.State
 	payload[PR_TITLE] = pr.Title
-	payload[PR_FROM_BRANCH] = pr.FromRef.DisplayID
-	payload[PR_FROM_COMMIT] = pr.FromRef.LatestCommit
-	payload[PR_TO_BRANCH] = pr.ToRef.DisplayID
-	payload[PR_TO_COMMIT] = pr.ToRef.LatestCommit
+	payload[GIT_BRANCH_BEFORE] = pr.FromRef.DisplayID
+	payload[GIT_HASH_BEFORE] = pr.FromRef.LatestCommit
+	payload[GIT_BRANCH] = pr.ToRef.DisplayID
+	payload[GIT_HASH] = pr.ToRef.LatestCommit
+	hashShort := pr.ToRef.LatestCommit
+	if len(hashShort) >= 7 {
+		hashShort = hashShort[:7]
+	}
+	payload[GIT_HASH_SHORT] = hashShort
+
+	getVariableFromRepository(payload, pr.ToRef.Repository)
+	getVariableFromSrcRepository(payload, pr.FromRef.Repository)
 }

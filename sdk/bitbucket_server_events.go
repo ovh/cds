@@ -107,15 +107,3 @@ type BitbucketServerPRReviewerNeedsWorks struct {
 	Participant    BitbucketServerParticipant `json:"participant"`
 	PreviousStatus string                     `json:"previousStatus"`
 }
-
-/*
-"repo:refs_changed",
-"repo:modified",
-"repo:forked",
-"repo:comment:added",
-"repo:comment:edited",
-"repo:comment:deleted",
-
-
-
-*/

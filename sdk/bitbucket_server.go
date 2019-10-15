@@ -58,7 +58,7 @@ type BitbucketServerRepository struct {
 	ScmID         string                 `json:"scmId"`
 	State         string                 `json:"state"`
 	StatusMessage string                 `json:"statusMessage"`
-	Forkable      string                 `json:"forkable"`
+	Forkable      bool                   `json:"forkable"`
 	Project       BitbucketServerProject `json:"project"`
 	Public        bool                   `json:"public"`
 }
