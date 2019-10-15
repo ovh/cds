@@ -717,10 +717,6 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.AddDefaultVCSNotifications(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
 
-	migrate.Add(sdk.Migration{Name: "AddDefaultVCSNotifications", Release: "0.41.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.AddDefaultVCSNotifications(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
-	}})
-
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {
 		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")
