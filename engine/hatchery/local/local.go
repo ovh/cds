@@ -97,11 +97,6 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("please enter a name in your local hatchery configuration")
 	}
 
-	if ok, err := api.DirectoryExists(hconfig.Basedir); !ok {
-		return fmt.Errorf("Basedir doesn't exist")
-	} else if err != nil {
-		return fmt.Errorf("Invalid basedir: %v", err)
-	}
 	return nil
 }
 
@@ -137,12 +132,21 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 		return fmt.Errorf("Cannot check local capabilities: %v", err)
 	}
 
+	h.BasedirDedicated = fmt.Sprintf("%s/%s", strings.TrimRight(strings.TrimSpace(h.Config.Basedir), "/"), h.Name)
+	if ok, err := api.DirectoryExists(h.BasedirDedicated); !ok {
+		log.Debug("creating directory %s", h.BasedirDedicated)
+		if err := os.MkdirAll(h.BasedirDedicated, 0700); err != nil {
+			return sdk.WrapError(err, "error while creating directory %s", h.BasedirDedicated)
+		}
+	} else if err != nil {
+		return fmt.Errorf("Invalid basedir: %v", err)
+	}
+
 	if err := h.downloadWorker(); err != nil {
 		return fmt.Errorf("Cannot download worker binary from api: %v", err)
 	}
 
-	basedirHatchery := strings.TrimRight(strings.TrimSpace(h.Config.Basedir), "/")
-	cmdWorker := fmt.Sprintf("%s/worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --single-use --force-exit", basedirHatchery)
+	cmdWorker := fmt.Sprintf("%s/worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --single-use --force-exit", h.BasedirDedicated)
 	h.ModelLocal = sdk.Model{
 		Name: h.Name,
 		Type: sdk.HostProcess,
@@ -177,7 +181,7 @@ func (h *HatcheryLocal) downloadWorker() error {
 		return fmt.Errorf("Error http code: %d, url called: %s", resp.StatusCode, urlBinary)
 	}
 
-	workerFullPath := path.Join(h.Config.Basedir, "worker")
+	workerFullPath := path.Join(h.BasedirDedicated, "worker")
 
 	if _, err := os.Stat(workerFullPath); err == nil {
 		log.Debug("removing existing worker binary from %s", workerFullPath)
