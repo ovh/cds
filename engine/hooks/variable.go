@@ -8,6 +8,11 @@ const (
 	PR_PREVIOUS_BRANCH = "git.pr.previous.branch"
 	PR_PREVIOUS_HASH   = "git.pr.previous.has"
 
+	PR_COMMENT_TEXT          = "git.pr.comment"
+	PR_COMMENT_TEXT_PREVIOUS = "git.pr.comment.before"
+	PR_COMMENT_AUTHOR        = "git.pr.comment.author"
+	PR_COMMENT_AUTHOR_EMAIL  = "git.pr.comment.author.email"
+
 	GIT_AUTHOR            = "git.author"
 	GIT_AUTHOR_EMAIL      = "git.author.email"
 	GIT_BRANCH            = "git.branch"

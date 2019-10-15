@@ -24,8 +24,11 @@ func (s *Service) generatePayloadFromBitbucketServerRequest(t *sdk.TaskExecution
 	case "pr:merged":
 		return s.generatePayloadFromBitbucketServerPRMerged(t)
 	case "pr:comment:added":
+		return s.generatePayloadFromBitbucketServerPRCommentAdded(t)
 	case "pr:comment:edited":
+		return s.generatePayloadFromBitbucketServerPRCommentEdited(t)
 	case "pr:comment:deleted":
+		return s.generatePayloadFromBitbucketServerPRCommentDeleted(t)
 	case "pr:reviewer:approved":
 	case "pr:reviewer:updated":
 	case "pr:reviewer:unapproved":
@@ -155,6 +158,55 @@ func (s *Service) generatePayloadFromBitbucketServerPRMerged(t *sdk.TaskExecutio
 	return payloads, nil
 }
 
+func (s *Service) generatePayloadFromBitbucketServerPRCommentAdded(t *sdk.TaskExecution) ([]map[string]interface{}, error) {
+	payloads := []map[string]interface{}{}
+	var request sdk.BitbucketServerPRCommentAddedEvent
+	if err := json.Unmarshal(t.WebHook.RequestBody, &request); err != nil {
+		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPRCommentAddedEvent: %s", string(t.WebHook.RequestBody))
+	}
+	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = request.EventKey
+	getVariableFromAuthor(payload, request.Actor)
+	getVariableFromPullRequest(payload, request.PullRequest)
+	getPayloadFromPRComment(payload, request.Comment)
+	getPayloadStringVariable(payload, request)
+	payloads = append(payloads, payload)
+	return payloads, nil
+}
+
+func (s *Service) generatePayloadFromBitbucketServerPRCommentEdited(t *sdk.TaskExecution) ([]map[string]interface{}, error) {
+	payloads := []map[string]interface{}{}
+	var request sdk.BitbucketServerPRCommentEditedEvent
+	if err := json.Unmarshal(t.WebHook.RequestBody, &request); err != nil {
+		return nil, sdk.WrapError(err, "unable to unmarshal into BitbucketServerPRCommentEditedEvent: %s", string(t.WebHook.RequestBody))
+	}
+	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = request.EventKey
+	getVariableFromAuthor(payload, request.Actor)
+	getVariableFromPullRequest(payload, request.PullRequest)
+	getPayloadFromPRComment(payload, request.Comment)
+	getPayloadStringVariable(payload, request)
+	payload[PR_COMMENT_TEXT_PREVIOUS] = request.PreviousComment
+	payloads = append(payloads, payload)
+	return payloads, nil
+}
+
+func (s *Service) generatePayloadFromBitbucketServerPRCommentDeleted(t *sdk.TaskExecution) ([]map[string]interface{}, error) {
+	payloads := []map[string]interface{}{}
+	var request sdk.BitbucketServerPRCommentDeletedEvent
+	if err := json.Unmarshal(t.WebHook.RequestBody, &request); err != nil {
+		return nil, sdk.WrapError(err, "unable to unmarshal into generatePayloadFromBitbucketServerPRCommentDeleted: %s", string(t.WebHook.RequestBody))
+	}
+	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = request.EventKey
+	getVariableFromAuthor(payload, request.Actor)
+	getVariableFromPullRequest(payload, request.PullRequest)
+	getPayloadFromPRComment(payload, request.Comment)
+	getPayloadStringVariable(payload, request)
+	payloads = append(payloads, payload)
+	return payloads, nil
+}
+
 func getVariableFromChange(payload map[string]interface{}, change sdk.BitbucketServerChange) {
 	if !strings.HasPrefix(change.RefID, "refs/tags/") {
 		branch := strings.TrimPrefix(change.RefID, "refs/heads/")
@@ -211,4 +263,10 @@ func getVariableFromPullRequest(payload map[string]interface{}, pr sdk.Bitbucket
 
 	getVariableFromRepository(payload, pr.ToRef.Repository)
 	getVariableFromSrcRepository(payload, pr.FromRef.Repository)
+}
+
+func getPayloadFromPRComment(payload map[string]interface{}, comment sdk.BitbucketServerComment) {
+	payload[PR_COMMENT_AUTHOR] = comment.Author.Name
+	payload[PR_COMMENT_AUTHOR_EMAIL] = comment.Author.EmailAddress
+	payload[PR_COMMENT_TEXT] = comment.Text
 }

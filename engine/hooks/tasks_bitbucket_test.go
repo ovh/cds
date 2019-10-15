@@ -33,6 +33,152 @@ func Test_doWebHookExecutionBitbucket(t *testing.T) {
 	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", hs[0].Payload["git.hash"])
 }
 
+func Test_doWebHookExecutionBitbucketPRCommentAdded(t *testing.T) {
+	log.SetLogger(t)
+	s, cancel := setupTestHookService(t)
+	defer cancel()
+	task := &sdk.TaskExecution{
+		UUID: sdk.RandomString(10),
+		Type: TypeRepoManagerWebHook,
+		WebHook: &sdk.WebHookExecution{
+			RequestBody: []byte(bitbucketPrCommentAdded),
+			RequestHeader: map[string][]string{
+				BitbucketHeader: {"pr:comment:added"},
+			},
+			RequestURL: "",
+		},
+		Config: map[string]sdk.WorkflowNodeHookConfigValue{
+			sdk.HookConfigEventFilter: {
+				Value: "pr:opened;pr:approved;pr:comment:added",
+			},
+		},
+	}
+	hs, err := s.doWebHookExecution(task)
+	test.NoError(t, err)
+
+	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
+	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
+	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
+
+	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
+	test.Equal(t, "fork/repo", hs[0].Payload[GIT_REPOSITORY_BEFORE])
+	test.Equal(t, "654321654321", hs[0].Payload[GIT_HASH])
+	test.Equal(t, "6543216", hs[0].Payload[GIT_HASH_SHORT])
+
+	test.Equal(t, "pr:comment:added", hs[0].Payload[GIT_EVENT])
+	test.Equal(t, "src_branch", hs[0].Payload[GIT_BRANCH_BEFORE])
+	test.Equal(t, "12345671234567", hs[0].Payload[GIT_HASH_BEFORE])
+	test.Equal(t, "666", hs[0].Payload[PR_ID])
+	test.Equal(t, "OPEN", hs[0].Payload[PR_STATE])
+	test.Equal(t, "My First PR", hs[0].Payload[PR_TITLE])
+	test.Equal(t, "my/repo", hs[0].Payload[GIT_REPOSITORY])
+
+	test.Equal(t, "my comment added", hs[0].Payload[PR_COMMENT_TEXT])
+	test.Equal(t, "steven.guiheux", hs[0].Payload[PR_COMMENT_AUTHOR])
+	test.Equal(t, "steven.guiheux@foo", hs[0].Payload[PR_COMMENT_AUTHOR_EMAIL])
+
+}
+
+func Test_doWebHookExecutionBitbucketPRCommentDeleted(t *testing.T) {
+	log.SetLogger(t)
+	s, cancel := setupTestHookService(t)
+	defer cancel()
+	task := &sdk.TaskExecution{
+		UUID: sdk.RandomString(10),
+		Type: TypeRepoManagerWebHook,
+		WebHook: &sdk.WebHookExecution{
+			RequestBody: []byte(bitbucketPrCommentDeleted),
+			RequestHeader: map[string][]string{
+				BitbucketHeader: {"pr:comment:deleted"},
+			},
+			RequestURL: "",
+		},
+		Config: map[string]sdk.WorkflowNodeHookConfigValue{
+			sdk.HookConfigEventFilter: {
+				Value: "pr:opened;pr:approved;pr:comment:deleted",
+			},
+		},
+	}
+	hs, err := s.doWebHookExecution(task)
+	test.NoError(t, err)
+
+	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
+	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
+	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
+
+	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
+	test.Equal(t, "fork/repo", hs[0].Payload[GIT_REPOSITORY_BEFORE])
+	test.Equal(t, "654321654321", hs[0].Payload[GIT_HASH])
+	test.Equal(t, "6543216", hs[0].Payload[GIT_HASH_SHORT])
+
+	test.Equal(t, "pr:comment:deleted", hs[0].Payload[GIT_EVENT])
+	test.Equal(t, "src_branch", hs[0].Payload[GIT_BRANCH_BEFORE])
+	test.Equal(t, "12345671234567", hs[0].Payload[GIT_HASH_BEFORE])
+	test.Equal(t, "666", hs[0].Payload[PR_ID])
+	test.Equal(t, "OPEN", hs[0].Payload[PR_STATE])
+	test.Equal(t, "My First PR", hs[0].Payload[PR_TITLE])
+	test.Equal(t, "my/repo", hs[0].Payload[GIT_REPOSITORY])
+
+	test.Equal(t, "my comment deleted", hs[0].Payload[PR_COMMENT_TEXT])
+	test.Equal(t, "steven.guiheux", hs[0].Payload[PR_COMMENT_AUTHOR])
+	test.Equal(t, "steven.guiheux@foo", hs[0].Payload[PR_COMMENT_AUTHOR_EMAIL])
+
+}
+
+func Test_doWebHookExecutionBitbucketPRCommentModified(t *testing.T) {
+	log.SetLogger(t)
+	s, cancel := setupTestHookService(t)
+	defer cancel()
+	task := &sdk.TaskExecution{
+		UUID: sdk.RandomString(10),
+		Type: TypeRepoManagerWebHook,
+		WebHook: &sdk.WebHookExecution{
+			RequestBody: []byte(bitbucketPrCommentModified),
+			RequestHeader: map[string][]string{
+				BitbucketHeader: {"pr:comment:edited"},
+			},
+			RequestURL: "",
+		},
+		Config: map[string]sdk.WorkflowNodeHookConfigValue{
+			sdk.HookConfigEventFilter: {
+				Value: "pr:opened;pr:approved;pr:comment:edited",
+			},
+		},
+	}
+	hs, err := s.doWebHookExecution(task)
+	test.NoError(t, err)
+
+	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
+	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
+	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
+
+	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
+	test.Equal(t, "fork/repo", hs[0].Payload[GIT_REPOSITORY_BEFORE])
+	test.Equal(t, "654321654321", hs[0].Payload[GIT_HASH])
+	test.Equal(t, "6543216", hs[0].Payload[GIT_HASH_SHORT])
+
+	test.Equal(t, "pr:comment:edited", hs[0].Payload[GIT_EVENT])
+	test.Equal(t, "src_branch", hs[0].Payload[GIT_BRANCH_BEFORE])
+	test.Equal(t, "12345671234567", hs[0].Payload[GIT_HASH_BEFORE])
+	test.Equal(t, "666", hs[0].Payload[PR_ID])
+	test.Equal(t, "OPEN", hs[0].Payload[PR_STATE])
+	test.Equal(t, "My First PR", hs[0].Payload[PR_TITLE])
+	test.Equal(t, "my/repo", hs[0].Payload[GIT_REPOSITORY])
+
+	test.Equal(t, "my comment edited", hs[0].Payload[PR_COMMENT_TEXT])
+	test.Equal(t, "steven.guiheux", hs[0].Payload[PR_COMMENT_AUTHOR])
+	test.Equal(t, "steven.guiheux@foo", hs[0].Payload[PR_COMMENT_AUTHOR_EMAIL])
+
+	test.Equal(t, "moi aussi", hs[0].Payload[PR_COMMENT_TEXT_PREVIOUS])
+
+}
+
 func Test_doWebHookExecutionBitbucketPROpened(t *testing.T) {
 	log.SetLogger(t)
 	s, cancel := setupTestHookService(t)
@@ -75,6 +221,53 @@ func Test_doWebHookExecutionBitbucketPROpened(t *testing.T) {
 	test.Equal(t, "My First PR", hs[0].Payload[PR_TITLE])
 	test.Equal(t, "my/repo", hs[0].Payload[GIT_REPOSITORY])
 
+}
+
+func Test_doWebHookExecutionBitbucketPRModified(t *testing.T) {
+	log.SetLogger(t)
+	s, cancel := setupTestHookService(t)
+	defer cancel()
+	task := &sdk.TaskExecution{
+		UUID: sdk.RandomString(10),
+		Type: TypeRepoManagerWebHook,
+		WebHook: &sdk.WebHookExecution{
+			RequestBody: []byte(bitbucketPrModified),
+			RequestHeader: map[string][]string{
+				BitbucketHeader: {"pr:modified"},
+			},
+			RequestURL: "",
+		},
+		Config: map[string]sdk.WorkflowNodeHookConfigValue{
+			sdk.HookConfigEventFilter: {
+				Value: "pr:opened;pr:modified",
+			},
+		},
+	}
+	hs, err := s.doWebHookExecution(task)
+	test.NoError(t, err)
+
+	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
+	test.Equal(t, "john doe", hs[0].Payload[CDS_TRIGGERED_BY_FULLNAME])
+	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[CDS_TRIGGERED_BY_EMAIL])
+	test.Equal(t, "john.doe", hs[0].Payload[GIT_AUTHOR])
+	test.Equal(t, "john.doe@targate.fr", hs[0].Payload[GIT_AUTHOR_EMAIL])
+
+	test.Equal(t, "dest_branch", hs[0].Payload[GIT_BRANCH])
+	test.Equal(t, "fork/repo", hs[0].Payload[GIT_REPOSITORY_BEFORE])
+	test.Equal(t, "654321654321", hs[0].Payload[GIT_HASH])
+	test.Equal(t, "6543216", hs[0].Payload[GIT_HASH_SHORT])
+
+	test.Equal(t, "pr:modified", hs[0].Payload[GIT_EVENT])
+	test.Equal(t, "src_branch", hs[0].Payload[GIT_BRANCH_BEFORE])
+	test.Equal(t, "12345671234567", hs[0].Payload[GIT_HASH_BEFORE])
+	test.Equal(t, "666", hs[0].Payload[PR_ID])
+	test.Equal(t, "OPEN", hs[0].Payload[PR_STATE])
+	test.Equal(t, "My First PR", hs[0].Payload[PR_TITLE])
+	test.Equal(t, "my/repo", hs[0].Payload[GIT_REPOSITORY])
+
+	test.Equal(t, "Update README.md", hs[0].Payload[PR_PREVIOUS_TITLE])
+	test.Equal(t, "prev_branch", hs[0].Payload[PR_PREVIOUS_BRANCH])
+	test.Equal(t, "0987654321", hs[0].Payload[PR_PREVIOUS_HASH])
 }
 
 func Test_doWebHookExecutionBitbucketPRMerged(t *testing.T) {
@@ -234,6 +427,815 @@ func Test_doWebHookExecutionBitbucketMultiple(t *testing.T) {
 	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", hs[0].Payload["git.hash"])
 }
 
+var bitbucketPrCommentAdded = `
+{
+    "eventKey": "pr:comment:added",
+    "date": "2019-10-15T09:33:38+0200",
+    "actor": {
+        "name": "john.doe",
+        "emailAddress": "john.doe@targate.fr",
+        "id": 1363,
+        "displayName": "john doe",
+        "active": true,
+        "slug": "foo",
+        "type": "NORMAL",
+        "links": {
+            "self": [
+                {
+                    "href": "https://bitbucket/users/bar"
+                }
+            ]
+        }
+    },
+    "pullRequest": {
+        "id": 666,
+        "version": 0,
+        "title": "My First PR",
+        "state": "OPEN",
+        "open": true,
+        "closed": false,
+        "createdDate": 1569939813210,
+        "updatedDate": 1569939813210,
+        "fromRef": {
+            "id": "refs/heads/workflowUpdate1",
+            "displayId": "src_branch",
+            "latestCommit": "12345671234567",
+            "repository": {
+                "slug": "repo",
+                "id": 11444,
+                "name": "FOO",
+                "scmId": "git",
+                "state": "AVAILABLE",
+                "statusMessage": "Available",
+                "forkable": true,
+                "project": {
+                    "key": "fork",
+                    "id": 112,
+                    "name": "foo",
+                    "type": "PERSONAL",
+                    "owner": {
+                        "name": "foo",
+                        "emailAddress": "foo@bar",
+                        "id": 1363,
+                        "displayName": "foo",
+                        "active": true,
+                        "slug": "foo",
+                        "type": "NORMAL",
+                        "links": {
+                            "self": [
+                                {
+                                    "href": "https://bitbucket/users/bar"
+                                }
+                            ]
+                        }
+                    },
+                    "links": {
+                        "self": [
+                            {
+                                "href": "https://bitbucket/users/bar"
+                            }
+                        ]
+                    }
+                },
+                "public": false,
+                "links": {
+                    "clone": [
+                        {
+                            "href": "https://bitbucket/scm/foo/bar.git",
+                            "name": "http"
+                        },
+                        {
+                            "href": "ssh://git@bitbucket:7999/foo/bar.git",
+                            "name": "ssh"
+                        }
+                    ],
+                    "self": [
+                        {
+                            "href": "https://bitbucket/users/foo/repos/bar/browse"
+                        }
+                    ]
+                }
+            }
+        },
+        "toRef": {
+            "id": "refs/heads/dest_branch",
+            "displayId": "dest_branch",
+            "latestCommit": "654321654321",
+            "repository": {
+                "slug": "repo",
+                "id": 11444,
+                "name": "bar",
+                "scmId": "git",
+                "state": "AVAILABLE",
+                "statusMessage": "Available",
+                "forkable": true,
+                "project": {
+                    "key": "my",
+                    "id": 112,
+                    "name": "my",
+                    "type": "PERSONAL",
+                    "owner": {
+                        "name": "foo",
+                        "emailAddress": "foo@bar",
+                        "id": 1363,
+                        "displayName": "foo",
+                        "active": true,
+                        "slug": "foo",
+                        "type": "NORMAL",
+                        "links": {
+                            "self": [
+                                {
+                                    "href": "https://bitbucket/users/bar"
+                                }
+                            ]
+                        }
+                    },
+                    "links": {
+                        "self": [
+                            {
+                                "href": "https://bitbucket/users/bar"
+                            }
+                        ]
+                    }
+                },
+                "public": false,
+                "links": {
+                    "clone": [
+                        {
+                            "href": "https://bitbucket/scm/bar/foo.git",
+                            "name": "http"
+                        },
+                        {
+                            "href": "ssh://git@bitbucket:7999/bar/foo.git",
+                            "name": "ssh"
+                        }
+                    ],
+                    "self": [
+                        {
+                            "href": "https://bitbucket/users/steven.guiheux/repos/ascoderepo/browse"
+                        }
+                    ]
+                }
+            }
+        },
+        "locked": false,
+        "author": {
+            "user": {
+                "name": "cds",
+                "emailAddress": "foo@bar.fr",
+                "id": 7898,
+                "displayName": "cds",
+                "active": true,
+                "slug": "cds",
+                "type": "NORMAL",
+                "links": {
+                    "self": [
+                        {
+                            "href": "http//foo/bar"
+                        }
+                    ]
+                }
+            },
+            "role": "AUTHOR",
+            "approved": false,
+            "status": "UNAPPROVED"
+        },
+        "reviewers": [],
+        "participants": [],
+        "links": {
+            "self": [
+                {
+                    "href": "fff"
+                }
+            ]
+        }
+    },
+    "comment": {
+        "properties": {
+            "repositoryId": 7716
+        },
+        "id": 252969,
+        "version": 1,
+        "text": "my comment added",
+        "author": {
+            "name": "steven.guiheux",
+            "emailAddress": "steven.guiheux@foo",
+            "id": 1363,
+            "displayName": "Steven Guiheux",
+            "active": true,
+            "slug": "steven.guiheux",
+            "type": "NORMAL"
+        },
+        "createdDate": 1571042924878,
+        "updatedDate": 1571044442062,
+        "comments": [],
+        "tasks": []
+    }
+}`
+var bitbucketPrCommentDeleted = `
+{
+    "eventKey": "pr:comment:deleted",
+    "date": "2019-10-15T09:33:38+0200",
+    "actor": {
+        "name": "john.doe",
+        "emailAddress": "john.doe@targate.fr",
+        "id": 1363,
+        "displayName": "john doe",
+        "active": true,
+        "slug": "foo",
+        "type": "NORMAL",
+        "links": {
+            "self": [
+                {
+                    "href": "https://bitbucket/users/bar"
+                }
+            ]
+        }
+    },
+    "pullRequest": {
+        "id": 666,
+        "version": 0,
+        "title": "My First PR",
+        "state": "OPEN",
+        "open": true,
+        "closed": false,
+        "createdDate": 1569939813210,
+        "updatedDate": 1569939813210,
+        "fromRef": {
+            "id": "refs/heads/workflowUpdate1",
+            "displayId": "src_branch",
+            "latestCommit": "12345671234567",
+            "repository": {
+                "slug": "repo",
+                "id": 11444,
+                "name": "FOO",
+                "scmId": "git",
+                "state": "AVAILABLE",
+                "statusMessage": "Available",
+                "forkable": true,
+                "project": {
+                    "key": "fork",
+                    "id": 112,
+                    "name": "foo",
+                    "type": "PERSONAL",
+                    "owner": {
+                        "name": "foo",
+                        "emailAddress": "foo@bar",
+                        "id": 1363,
+                        "displayName": "foo",
+                        "active": true,
+                        "slug": "foo",
+                        "type": "NORMAL",
+                        "links": {
+                            "self": [
+                                {
+                                    "href": "https://bitbucket/users/bar"
+                                }
+                            ]
+                        }
+                    },
+                    "links": {
+                        "self": [
+                            {
+                                "href": "https://bitbucket/users/bar"
+                            }
+                        ]
+                    }
+                },
+                "public": false,
+                "links": {
+                    "clone": [
+                        {
+                            "href": "https://bitbucket/scm/foo/bar.git",
+                            "name": "http"
+                        },
+                        {
+                            "href": "ssh://git@bitbucket:7999/foo/bar.git",
+                            "name": "ssh"
+                        }
+                    ],
+                    "self": [
+                        {
+                            "href": "https://bitbucket/users/foo/repos/bar/browse"
+                        }
+                    ]
+                }
+            }
+        },
+        "toRef": {
+            "id": "refs/heads/dest_branch",
+            "displayId": "dest_branch",
+            "latestCommit": "654321654321",
+            "repository": {
+                "slug": "repo",
+                "id": 11444,
+                "name": "bar",
+                "scmId": "git",
+                "state": "AVAILABLE",
+                "statusMessage": "Available",
+                "forkable": true,
+                "project": {
+                    "key": "my",
+                    "id": 112,
+                    "name": "my",
+                    "type": "PERSONAL",
+                    "owner": {
+                        "name": "foo",
+                        "emailAddress": "foo@bar",
+                        "id": 1363,
+                        "displayName": "foo",
+                        "active": true,
+                        "slug": "foo",
+                        "type": "NORMAL",
+                        "links": {
+                            "self": [
+                                {
+                                    "href": "https://bitbucket/users/bar"
+                                }
+                            ]
+                        }
+                    },
+                    "links": {
+                        "self": [
+                            {
+                                "href": "https://bitbucket/users/bar"
+                            }
+                        ]
+                    }
+                },
+                "public": false,
+                "links": {
+                    "clone": [
+                        {
+                            "href": "https://bitbucket/scm/bar/foo.git",
+                            "name": "http"
+                        },
+                        {
+                            "href": "ssh://git@bitbucket:7999/bar/foo.git",
+                            "name": "ssh"
+                        }
+                    ],
+                    "self": [
+                        {
+                            "href": "https://bitbucket/users/steven.guiheux/repos/ascoderepo/browse"
+                        }
+                    ]
+                }
+            }
+        },
+        "locked": false,
+        "author": {
+            "user": {
+                "name": "cds",
+                "emailAddress": "foo@bar.fr",
+                "id": 7898,
+                "displayName": "cds",
+                "active": true,
+                "slug": "cds",
+                "type": "NORMAL",
+                "links": {
+                    "self": [
+                        {
+                            "href": "http//foo/bar"
+                        }
+                    ]
+                }
+            },
+            "role": "AUTHOR",
+            "approved": false,
+            "status": "UNAPPROVED"
+        },
+        "reviewers": [],
+        "participants": [],
+        "links": {
+            "self": [
+                {
+                    "href": "fff"
+                }
+            ]
+        }
+    },
+    "comment": {
+        "properties": {
+            "repositoryId": 7716
+        },
+        "id": 252969,
+        "version": 1,
+        "text": "my comment deleted",
+        "author": {
+            "name": "steven.guiheux",
+            "emailAddress": "steven.guiheux@foo",
+            "id": 1363,
+            "displayName": "Steven Guiheux",
+            "active": true,
+            "slug": "steven.guiheux",
+            "type": "NORMAL"
+        },
+        "createdDate": 1571042924878,
+        "updatedDate": 1571044442062,
+        "comments": [],
+        "tasks": []
+    }
+}`
+var bitbucketPrCommentModified = `
+{
+    "eventKey": "pr:comment:edited",
+    "date": "2019-10-15T09:33:38+0200",
+    "actor": {
+        "name": "john.doe",
+        "emailAddress": "john.doe@targate.fr",
+        "id": 1363,
+        "displayName": "john doe",
+        "active": true,
+        "slug": "foo",
+        "type": "NORMAL",
+        "links": {
+            "self": [
+                {
+                    "href": "https://bitbucket/users/bar"
+                }
+            ]
+        }
+    },
+    "pullRequest": {
+        "id": 666,
+        "version": 0,
+        "title": "My First PR",
+        "state": "OPEN",
+        "open": true,
+        "closed": false,
+        "createdDate": 1569939813210,
+        "updatedDate": 1569939813210,
+        "fromRef": {
+            "id": "refs/heads/workflowUpdate1",
+            "displayId": "src_branch",
+            "latestCommit": "12345671234567",
+            "repository": {
+                "slug": "repo",
+                "id": 11444,
+                "name": "FOO",
+                "scmId": "git",
+                "state": "AVAILABLE",
+                "statusMessage": "Available",
+                "forkable": true,
+                "project": {
+                    "key": "fork",
+                    "id": 112,
+                    "name": "foo",
+                    "type": "PERSONAL",
+                    "owner": {
+                        "name": "foo",
+                        "emailAddress": "foo@bar",
+                        "id": 1363,
+                        "displayName": "foo",
+                        "active": true,
+                        "slug": "foo",
+                        "type": "NORMAL",
+                        "links": {
+                            "self": [
+                                {
+                                    "href": "https://bitbucket/users/bar"
+                                }
+                            ]
+                        }
+                    },
+                    "links": {
+                        "self": [
+                            {
+                                "href": "https://bitbucket/users/bar"
+                            }
+                        ]
+                    }
+                },
+                "public": false,
+                "links": {
+                    "clone": [
+                        {
+                            "href": "https://bitbucket/scm/foo/bar.git",
+                            "name": "http"
+                        },
+                        {
+                            "href": "ssh://git@bitbucket:7999/foo/bar.git",
+                            "name": "ssh"
+                        }
+                    ],
+                    "self": [
+                        {
+                            "href": "https://bitbucket/users/foo/repos/bar/browse"
+                        }
+                    ]
+                }
+            }
+        },
+        "toRef": {
+            "id": "refs/heads/dest_branch",
+            "displayId": "dest_branch",
+            "latestCommit": "654321654321",
+            "repository": {
+                "slug": "repo",
+                "id": 11444,
+                "name": "bar",
+                "scmId": "git",
+                "state": "AVAILABLE",
+                "statusMessage": "Available",
+                "forkable": true,
+                "project": {
+                    "key": "my",
+                    "id": 112,
+                    "name": "my",
+                    "type": "PERSONAL",
+                    "owner": {
+                        "name": "foo",
+                        "emailAddress": "foo@bar",
+                        "id": 1363,
+                        "displayName": "foo",
+                        "active": true,
+                        "slug": "foo",
+                        "type": "NORMAL",
+                        "links": {
+                            "self": [
+                                {
+                                    "href": "https://bitbucket/users/bar"
+                                }
+                            ]
+                        }
+                    },
+                    "links": {
+                        "self": [
+                            {
+                                "href": "https://bitbucket/users/bar"
+                            }
+                        ]
+                    }
+                },
+                "public": false,
+                "links": {
+                    "clone": [
+                        {
+                            "href": "https://bitbucket/scm/bar/foo.git",
+                            "name": "http"
+                        },
+                        {
+                            "href": "ssh://git@bitbucket:7999/bar/foo.git",
+                            "name": "ssh"
+                        }
+                    ],
+                    "self": [
+                        {
+                            "href": "https://bitbucket/users/steven.guiheux/repos/ascoderepo/browse"
+                        }
+                    ]
+                }
+            }
+        },
+        "locked": false,
+        "author": {
+            "user": {
+                "name": "cds",
+                "emailAddress": "foo@bar.fr",
+                "id": 7898,
+                "displayName": "cds",
+                "active": true,
+                "slug": "cds",
+                "type": "NORMAL",
+                "links": {
+                    "self": [
+                        {
+                            "href": "http//foo/bar"
+                        }
+                    ]
+                }
+            },
+            "role": "AUTHOR",
+            "approved": false,
+            "status": "UNAPPROVED"
+        },
+        "reviewers": [],
+        "participants": [],
+        "links": {
+            "self": [
+                {
+                    "href": "fff"
+                }
+            ]
+        }
+    },
+    "comment": {
+        "properties": {
+            "repositoryId": 7716
+        },
+        "id": 252969,
+        "version": 1,
+        "text": "my comment edited",
+        "author": {
+            "name": "steven.guiheux",
+            "emailAddress": "steven.guiheux@foo",
+            "id": 1363,
+            "displayName": "Steven Guiheux",
+            "active": true,
+            "slug": "steven.guiheux",
+            "type": "NORMAL"
+        },
+        "createdDate": 1571042924878,
+        "updatedDate": 1571044442062,
+        "comments": [],
+        "tasks": []
+    },
+    "previousComment": "moi aussi"
+}`
+var bitbucketPrModified = `
+{
+    "eventKey": "pr:modified",
+    "date": "2019-10-15T09:33:38+0200",
+    "actor": {
+        "name": "john.doe",
+        "emailAddress": "john.doe@targate.fr",
+        "id": 1363,
+        "displayName": "john doe",
+        "active": true,
+        "slug": "foo",
+        "type": "NORMAL",
+        "links": {
+            "self": [
+                {
+                    "href": "https://bitbucket/users/bar"
+                }
+            ]
+        }
+    },
+    "pullRequest": {
+        "id": 666,
+        "version": 0,
+        "title": "My First PR",
+        "state": "OPEN",
+        "open": true,
+        "closed": false,
+        "createdDate": 1569939813210,
+        "updatedDate": 1569939813210,
+        "fromRef": {
+            "id": "refs/heads/workflowUpdate1",
+            "displayId": "src_branch",
+            "latestCommit": "12345671234567",
+            "repository": {
+                "slug": "repo",
+                "id": 11444,
+                "name": "FOO",
+                "scmId": "git",
+                "state": "AVAILABLE",
+                "statusMessage": "Available",
+                "forkable": true,
+                "project": {
+                    "key": "fork",
+                    "id": 112,
+                    "name": "foo",
+                    "type": "PERSONAL",
+                    "owner": {
+                        "name": "foo",
+                        "emailAddress": "foo@bar",
+                        "id": 1363,
+                        "displayName": "foo",
+                        "active": true,
+                        "slug": "foo",
+                        "type": "NORMAL",
+                        "links": {
+                            "self": [
+                                {
+                                    "href": "https://bitbucket/users/bar"
+                                }
+                            ]
+                        }
+                    },
+                    "links": {
+                        "self": [
+                            {
+                                "href": "https://bitbucket/users/bar"
+                            }
+                        ]
+                    }
+                },
+                "public": false,
+                "links": {
+                    "clone": [
+                        {
+                            "href": "https://bitbucket/scm/foo/bar.git",
+                            "name": "http"
+                        },
+                        {
+                            "href": "ssh://git@bitbucket:7999/foo/bar.git",
+                            "name": "ssh"
+                        }
+                    ],
+                    "self": [
+                        {
+                            "href": "https://bitbucket/users/foo/repos/bar/browse"
+                        }
+                    ]
+                }
+            }
+        },
+        "toRef": {
+            "id": "refs/heads/dest_branch",
+            "displayId": "dest_branch",
+            "latestCommit": "654321654321",
+            "repository": {
+                "slug": "repo",
+                "id": 11444,
+                "name": "bar",
+                "scmId": "git",
+                "state": "AVAILABLE",
+                "statusMessage": "Available",
+                "forkable": true,
+                "project": {
+                    "key": "my",
+                    "id": 112,
+                    "name": "my",
+                    "type": "PERSONAL",
+                    "owner": {
+                        "name": "foo",
+                        "emailAddress": "foo@bar",
+                        "id": 1363,
+                        "displayName": "foo",
+                        "active": true,
+                        "slug": "foo",
+                        "type": "NORMAL",
+                        "links": {
+                            "self": [
+                                {
+                                    "href": "https://bitbucket/users/bar"
+                                }
+                            ]
+                        }
+                    },
+                    "links": {
+                        "self": [
+                            {
+                                "href": "https://bitbucket/users/bar"
+                            }
+                        ]
+                    }
+                },
+                "public": false,
+                "links": {
+                    "clone": [
+                        {
+                            "href": "https://bitbucket/scm/bar/foo.git",
+                            "name": "http"
+                        },
+                        {
+                            "href": "ssh://git@bitbucket:7999/bar/foo.git",
+                            "name": "ssh"
+                        }
+                    ],
+                    "self": [
+                        {
+                            "href": "https://bitbucket/users/steven.guiheux/repos/ascoderepo/browse"
+                        }
+                    ]
+                }
+            }
+        },
+        "locked": false,
+        "author": {
+            "user": {
+                "name": "cds",
+                "emailAddress": "foo@bar.fr",
+                "id": 7898,
+                "displayName": "cds",
+                "active": true,
+                "slug": "cds",
+                "type": "NORMAL",
+                "links": {
+                    "self": [
+                        {
+                            "href": "http//foo/bar"
+                        }
+                    ]
+                }
+            },
+            "role": "AUTHOR",
+            "approved": false,
+            "status": "UNAPPROVED"
+        },
+        "reviewers": [],
+        "participants": [],
+        "links": {
+            "self": [
+                {
+                    "href": "fff"
+                }
+            ]
+        }
+    },
+    "previousTitle": "Update README.md",
+    "previousDescription": null,
+    "previousTarget": {
+        "id": "refs/heads/master",
+        "displayId": "prev_branch",
+        "type": "BRANCH",
+        "latestCommit": "0987654321",
+        "latestChangeset": "0987654321"
+    }
+}`
 var bitbucketPrMerged = `
 {
     "eventKey": "pr:opened",
