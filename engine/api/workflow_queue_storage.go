@@ -78,16 +78,17 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			NodeJobRunID: nodeJobRunID,
 		}
 
+		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
+		if err != nil {
+			return err
+		}
+
 		if staticFile.StaticKey != "" {
-			if err := api.SharedStorage.Delete(&staticFile); err != nil {
+			if err := storageDriver.Delete(&staticFile); err != nil {
 				return sdk.WrapError(err, "Cannot delete existing static files")
 			}
 		}
 
-		storageDriver, err := api.getStorageDriver(vars["permProjectKey"], vars["integrationName"])
-		if err != nil {
-			return err
-		}
 		id := storageDriver.GetProjectIntegration().ID
 		if id > 0 {
 			staticFile.ProjectIntegrationID = &id
@@ -206,7 +207,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 			Created:           time.Now(),
 		}
 
-		storageDriver, err := api.getStorageDriver(vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
 		if err != nil {
 			return err
 		}
@@ -246,7 +247,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		storageDriver, err := api.getStorageDriver(vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
 		if err != nil {
 			return err
 		}
@@ -299,7 +300,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		vars := mux.Vars(r)
 		ref := vars["ref"]
 
-		storageDriver, err := api.getStorageDriver(vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
 		if err != nil {
 			return err
 		}

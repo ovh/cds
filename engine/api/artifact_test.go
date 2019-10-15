@@ -36,7 +36,7 @@ func TestAPI_getStorageDriverDefault(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
 
-	storageDriver, err := api.getStorageDriver(proj.Key, sdk.DefaultStorageIntegrationName)
+	storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, proj.Key, sdk.DefaultStorageIntegrationName)
 	test.NoError(t, err)
 
 	test.NotNil(t, storageDriver)

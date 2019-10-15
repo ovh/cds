@@ -23,6 +23,7 @@ type Driver interface {
 	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error)
 	Fetch(o Object) (io.ReadCloser, error)
 	Delete(o Object) error
+	DeleteContainer(containerPath string) error
 	TemporaryURLSupported() bool
 }
 
@@ -93,8 +94,20 @@ type ConfigOptionsFilesystem struct {
 	Basedir string
 }
 
-// InitDriver init a storage driver from a project integration
-func InitDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver, error) {
+// GetDriver returns the storage driver, integration driver or sharedInfra shared otherwise
+func GetDriver(db gorp.SqlExecutor, sharedStorage Driver, projectKey, integrationName string) (Driver, error) {
+	if integrationName != sdk.DefaultStorageIntegrationName {
+		storageDriver, err := initDriver(db, projectKey, integrationName)
+		if err != nil {
+			return nil, sdk.WrapError(err, "Cannot load storage driver %s/%s", projectKey, integrationName)
+		}
+		return storageDriver, nil
+	}
+	return sharedStorage, nil
+}
+
+// initDriver init a storage driver from a project integration
+func initDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver, error) {
 	projectIntegration, err := integration.LoadProjectIntegrationByName(db, projectKey, integrationName, true)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot load projectIntegration %s/%s", projectKey, integrationName)

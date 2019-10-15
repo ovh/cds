@@ -165,19 +165,35 @@ func (s *SwiftStore) Fetch(o Object) (io.ReadCloser, error) {
 	return pipeReader, nil
 }
 
-// Delete an object from swift
+// Delete deletes an object from swift
 func (s *SwiftStore) Delete(o Object) error {
 	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
 
 	if err := s.ObjectDelete(container, object); err != nil {
-		if err.Error() == "Object Not Found" {
+		if err.Error() == swift.ObjectNotFound.Text {
 			log.Info("Delete.SwiftStore: %s/%s: %s", container, object, err)
 			return nil
 		}
 		return sdk.WrapError(err, "Unable to delete object")
 	}
+	return nil
+}
+
+// DeleteContainer deletes a container from swift
+func (s *SwiftStore) DeleteContainer(containerPath string) error {
+	container := s.containerPrefix + containerPath
+	escape(container, "")
+
+	if err := s.ContainerDelete(container); err != nil {
+		if err.Error() == swift.ContainerNotFound.Text {
+			log.Info("Delete.SwiftStore: %s: %s", container, err)
+			return nil
+		}
+		return sdk.WrapError(err, "Unable to delete container")
+	}
+	log.Debug("Delete.SwiftStore: %s is deleted", container)
 	return nil
 }
 

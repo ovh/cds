@@ -1121,7 +1121,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 			integrationName = sdk.DefaultStorageIntegrationName
 		}
 
-		storageDriver, err := api.getStorageDriver(proj.Key, integrationName)
+		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, proj.Key, integrationName)
 		if err != nil {
 			return err
 		}
@@ -1188,7 +1188,7 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 						integrationName = sdk.DefaultStorageIntegrationName
 					}
 
-					storageDriver, err := api.getStorageDriver(key, integrationName)
+					storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, key, integrationName)
 					if err != nil {
 						log.Error("Cannot load storage driver: %v", err)
 						return

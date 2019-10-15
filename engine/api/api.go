@@ -832,7 +832,7 @@ func (a *API) Serve(ctx context.Context) error {
 		}, a.PanicDump())
 	sdk.GoRoutine(ctx, "Purge",
 		func(ctx context.Context) {
-			purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
+			purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.SharedStorage, a.Metrics.WorkflowRunsMarkToDelete, a.Metrics.WorkflowRunsDeleted)
 		}, a.PanicDump())
 
 	// Check maintenance on redis
