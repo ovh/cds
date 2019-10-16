@@ -182,7 +182,7 @@ func (g *githubClient) getHookByID(ctx context.Context, fullname, id string) (We
 
 	status, body, _, err := g.get(url, opts...)
 	if err != nil {
-		log.Warning("githubClient.PullRequests> Error %s", err)
+		log.Warning("githubClient.PullRequests> Error %v", err)
 		return webhook, sdk.WithStack(err)
 	}
 	if status >= 400 {
@@ -202,7 +202,7 @@ func (g *githubClient) getHookByID(ctx context.Context, fullname, id string) (We
 		}
 	} else {
 		if err := json.Unmarshal(body, &webhook); err != nil {
-			log.Warning("githubClient.getHookByID> Unable to parse github hook: %s", err)
+			log.Warning("githubClient.getHookByID> Unable to parse github hook: %v", err)
 			return webhook, err
 		}
 	}

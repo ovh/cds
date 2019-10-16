@@ -123,7 +123,9 @@ func (client *bitbucketcloudClient) GetHook(ctx context.Context, fullname, webho
 
 func (client *bitbucketcloudClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
 	bitbucketHook, err := client.getHookByID(ctx, repo, hook.ID)
-
+	if err != nil {
+		return err
+	}
 	url := fmt.Sprintf("/repositories/%s/hooks/%s", repo, hook.ID)
 	if client.proxyURL != "" {
 		lastIndexSlash := strings.LastIndex(hook.URL, "/")

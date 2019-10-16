@@ -473,7 +473,7 @@ func (c *vcsClient) UpdateHook(ctx context.Context, fullname string, hook *sdk.V
 	_, err := c.doJSONRequest(ctx, "PUT", path, hook, hook)
 	if err != nil {
 		log.Error("UpdateHook> %v", err)
-		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to update hook %d on repository %s from %s", hook.ID, fullname, c.name)
+		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to update hook %s on repository %s from %s", hook.ID, fullname, c.name)
 	}
 	return nil
 }

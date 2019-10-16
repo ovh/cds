@@ -47,7 +47,7 @@
                             <ng-container *ngIf="k !== 'payload' && _hook.config[k].type === 'multiple' && _hook.config[k].multiple_choice_list">
                                 <div class="ui form">
                                     <sui-multi-select class="selection"
-                                                [(ngModel)]="this.tempMultipleConfig"
+                                                [(ngModel)]="tempMultipleConfig"
                                                 [options]="_hook.config[k].multiple_choice_list"
                                                 (ngModelChange)="updateConfigMultipleChoice(k)"
                                                 [isSearchable]="true"

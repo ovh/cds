@@ -214,7 +214,7 @@ type Repo struct {
 	Name    string                      `json:"name"`
 	Slug    string                      `json:"slug"`
 	Public  bool                        `json:"public"`
-	ScmId   string                      `json:"scmId"`
+	ScmID   string                      `json:"scmId"`
 	Project *sdk.BitbucketServerProject `json:"project"`
 	Link    *Link                       `json:"link"`
 	Links   *Links                      `json:"links"`

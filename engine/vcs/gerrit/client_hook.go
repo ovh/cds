@@ -11,17 +11,17 @@ func (c *gerritClient) GetHook(ctx context.Context, repo, id string) (sdk.VCSHoo
 	return sdk.VCSHook{}, fmt.Errorf("Not implemented")
 }
 
-//CreateHook enables the defaut HTTP POST Hook in Gitlab
+//CreateHook enables the default HTTP POST Hook in Gerrit
 func (c *gerritClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
 	return nil
 }
 
-//UpdateHook enables the defaut HTTP POST Hook in Gitlab
+//UpdateHook enables the default HTTP POST Hook in Gerrit
 func (c *gerritClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
 	return nil
 }
 
-//DeleteHook disables the defaut HTTP POST Hook in Gitlab
+//DeleteHook disables the default HTTP POST Hook in Gerrit
 func (c *gerritClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
 	return nil
 }

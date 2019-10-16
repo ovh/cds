@@ -110,5 +110,5 @@ type BitbucketServerComment struct {
 }
 
 type BitbucketServerProperties struct {
-	RepositoryId int64 `json:"repositoryId"`
+	RepositoryID int64 `json:"repositoryId"`
 }

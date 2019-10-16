@@ -250,6 +250,7 @@ func getAllPayloadMap(body []byte) (map[string]interface{}, error) {
 
 	payloadStr, err := json.Marshal(body)
 	if err != nil {
+		return nil, sdk.WrapError(err, "unable to marshal body")
 	}
 	payload["payload"] = string(payloadStr)
 	return payload, nil

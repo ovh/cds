@@ -2,9 +2,10 @@ package hooks
 
 import (
 	"encoding/json"
+	"strings"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"strings"
 )
 
 func (s *Service) generatePayloadFromBitbucketCloudRequest(t *sdk.TaskExecution, event string) ([]map[string]interface{}, error) {

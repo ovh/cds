@@ -108,7 +108,7 @@ func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 	return nil
 }
 
-//UpdateHook update a gitlob webhook
+//UpdateHook updates a gitlab webhook
 func (c *gitlabClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
 	gitlabHook, err := c.GetHookByID(ctx, repo, hook.ID)
 	if err != nil {
@@ -155,7 +155,7 @@ func (c *gitlabClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 		ConfidentialIssuesEvents: &gitlabHook.ConfidentialIssuesEvents,
 	}
 
-	log.Debug("GitlabClient.UpdateHook: %s %s\n", repo, *opt.URL)
+	log.Debug("GitlabClient.UpdateHook: %s %s", repo, *opt.URL)
 	_, resp, err := c.client.Projects.EditProjectHook(repo, gitlabHook.ID, &opt)
 	if err != nil {
 		return sdk.WrapError(err, "cannot update gitlab project hook %s", hook.ID)
