@@ -65,10 +65,6 @@
                             <div *ngIf="passwordError" class="ui error message">
                                 <p>{{ passwordError | translate }}</p>
                             </div>
-                            <div class="field" *ngIf="isFirstConnection">
-                                <label>{{ 'account_signup_init_token' | translate }}</label>
-                                <input type="password" name="init_token" ngModel required>
-                            </div>
                             <div class="field right aligned">
                                 <button class="ui green button"
                                     type="submit">{{ 'account_signup_btn_create' | translate }}</button>

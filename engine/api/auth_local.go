@@ -6,13 +6,12 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/services"
-
-	"github.com/ovh/cds/engine/api/group"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/local"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/mail"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -38,9 +37,6 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 			return err
 		}
 
-		initToken, hasInitToken := reqData["init_token"]
-		hasInitToken = hasInitToken && initToken != ""
-
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
@@ -56,65 +52,51 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot create a user with given username")
 		}
 
-		// Prepare new user
-		newUser := sdk.AuthentifiedUser{
-			Ring:     sdk.UserRingUser,
+		// Check that user contact don't already exists in database for given email
+		existingEmail, err := user.LoadContactByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, reqData["email"])
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		if existingEmail != nil {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot create a user with given email")
+		}
+
+		// Generate password hash to store in consumer
+		hash, err := local.HashPassword(reqData["password"])
+		if err != nil {
+			return err
+		}
+
+		// Prepare new user registration
+		reg := sdk.UserRegistration{
 			Username: reqData["username"],
 			Fullname: reqData["fullname"],
+			Email:    reqData["email"],
+			Hash:     string(hash),
+		}
+
+		// Insert the new user in database
+		if err := local.InsertRegistration(tx, &reg); err != nil {
+			return err
 		}
 
 		countAdmins, err := user.CountAdmin(tx)
 		if err != nil {
 			return err
 		}
-		// If a magic token is given and there is no admin already registered, set new user as admin
-		if countAdmins == 0 && hasInitToken {
-			newUser.Ring = sdk.UserRingAdmin
-		}
 
-		// Insert the new user in database
-		if err := user.Insert(tx, &newUser); err != nil {
-			return err
-		}
-
-		userContact := sdk.UserContact{
-			Primary:  true,
-			Type:     sdk.UserContactTypeEmail,
-			UserID:   newUser.ID,
-			Value:    reqData["email"],
-			Verified: true,
-		}
-
-		// Insert the primary contact for the new user in database
-		if err := user.InsertContact(tx, &userContact); err != nil {
-			return err
-		}
-
-		// Create new local consumer for new user, set this consumer as pending validation
-		consumer, err := local.NewConsumerWithPassword(tx, newUser.ID, reqData["password"])
-		if err != nil {
-			return err
-		}
-
-		// Check if a magic init token was given for first signup
-		if countAdmins == 0 && hasInitToken {
-			if err := initBuiltinConsumersFromStartupConfig(tx, consumer, initToken); err != nil {
-				return err
-			}
-		}
-
-		// Generate a token to verify consumer
-		verifyToken, err := local.NewVerifyConsumerToken(api.Cache, consumer.ID)
+		// Generate a token to verify registration
+		regToken, err := local.NewRegistrationToken(api.Cache, reg.ID, countAdmins == 0)
 		if err != nil {
 			return err
 		}
 
 		// Insert the authentication
-		if err := mail.SendMailVerifyToken(reqData["email"], newUser.Username, verifyToken,
+		if err := mail.SendMailVerifyToken(reg.Email, reg.Username, regToken,
 			api.Config.URL.UI+"/auth/verify?token=%s",
 			api.Config.URL.API,
 		); err != nil {
-			return sdk.WrapError(err, "cannot send verify token email for user %s", newUser.Username)
+			return sdk.WrapError(err, "cannot send verify token email for user %s", reg.Username)
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -207,11 +189,6 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 
-		// Check if local auth is active
-		if verified, ok := consumer.Data["verified"]; !ok || verified != sdk.TrueString {
-			return sdk.WithStack(sdk.ErrUnauthorized)
-		}
-
 		// Check given password with consumer password
 		if hash, ok := consumer.Data["hash"]; !ok {
 			return sdk.WithStack(sdk.ErrUnauthorized)
@@ -255,10 +232,9 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		if !okDriver {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
-
 		localDriver := driver.(*local.AuthDriver)
 
-		var reqData = sdk.AuthConsumerSigninRequest{}
+		var reqData sdk.AuthConsumerSigninRequest
 		var tokenInQueryString = QueryString(r, "token")
 		if tokenInQueryString != "" {
 			reqData["token"] = tokenInQueryString
@@ -267,12 +243,14 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 				return err
 			}
 		}
-
 		if err := localDriver.CheckVerifyRequest(reqData); err != nil {
 			return err
 		}
 
-		consumerID, err := local.CheckVerifyConsumerToken(api.Cache, reqData["token"])
+		initToken, hasInitToken := reqData["init_token"]
+		hasInitToken = hasInitToken && initToken != ""
+
+		registrationID, err := local.CheckRegistrationToken(api.Cache, reqData["token"])
 		if err != nil {
 			return err
 		}
@@ -283,18 +261,61 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		// Get the consumer from database and set it to verified
-		consumer, err := authentication.LoadConsumerByID(ctx, tx, consumerID)
+		// Get the registration entry from database then delete it
+		reg, err := local.LoadRegistrationByID(ctx, tx, registrationID)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
-		if consumer.Type != sdk.ConsumerLocal {
-			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
+		if err := local.DeleteRegistrationByID(tx, reg.ID); err != nil {
+			return err
 		}
 
-		consumer.Data["verified"] = sdk.TrueString
-		if err := authentication.UpdateConsumer(tx, consumer); err != nil {
+		// Prepare new user
+		newUser := sdk.AuthentifiedUser{
+			Ring:     sdk.UserRingUser,
+			Username: reg.Username,
+			Fullname: reg.Fullname,
+		}
+
+		countAdmins, err := user.CountAdmin(tx)
+		if err != nil {
 			return err
+		}
+		// If a magic token is given and there is no admin already registered, set new user as admin
+		// the init token validity will be checked just after
+		if countAdmins == 0 && hasInitToken {
+			newUser.Ring = sdk.UserRingAdmin
+		}
+
+		// Insert the new user in database
+		if err := user.Insert(tx, &newUser); err != nil {
+			return err
+		}
+
+		userContact := sdk.UserContact{
+			Primary:  true,
+			Type:     sdk.UserContactTypeEmail,
+			UserID:   newUser.ID,
+			Value:    reg.Email,
+			Verified: true,
+		}
+
+		// Insert the primary contact for the new user in database
+		if err := user.InsertContact(tx, &userContact); err != nil {
+			return err
+		}
+
+		// Create new local consumer for new user, set this consumer as pending validation
+		consumer, err := local.NewConsumerWithHash(tx, newUser.ID, reg.Hash)
+		if err != nil {
+			return err
+		}
+
+		// Check if a magic init token was given for first signup
+		if countAdmins == 0 && hasInitToken {
+			if err := initBuiltinConsumersFromStartupConfig(tx, consumer, initToken); err != nil {
+				return err
+			}
 		}
 
 		// Generate a new session for consumer
@@ -366,7 +387,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		contact, err := user.LoadContactsByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, email)
+		contact, err := user.LoadContactByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, email)
 		if err != nil {
 			// If there is no contact for given email, return ok to prevent email exploration
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -453,9 +474,6 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		if consumer.Type != sdk.ConsumerLocal {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
-
-		// In case where the user was not verified already set it to verified
-		consumer.Data["verified"] = sdk.TrueString
 
 		// Generate password hash to store in consumer
 		hash, err := local.HashPassword(reqData["password"])

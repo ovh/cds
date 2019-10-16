@@ -42,9 +42,6 @@ var signupCmd = cli.Command{
 		{
 			Name: "password",
 		},
-		{
-			Name: "init-token",
-		},
 	},
 }
 
@@ -115,14 +112,8 @@ func signupFunc(v cli.Values) error {
 		email = cli.AskValue("Email")
 	}
 
-	var initToken string
-	if drivers.IsFirstConnection {
-		initToken = v.GetString("init-token")
-	}
-
 	signupRequest["email"] = email
 	signupRequest["fullname"] = fullname
-	signupRequest["init_token"] = initToken
 
 	if err := client.AuthConsumerLocalSignup(signupRequest); err != nil {
 		return err
@@ -152,6 +143,9 @@ var signupVerifyCmd = cli.Command{
 			Usage: "Display the commands to set up the environment for the cds client.",
 			Type:  cli.FlagBool,
 		},
+		{
+			Name: "init-token",
+		},
 	},
 }
 
@@ -166,7 +160,8 @@ func signupVerifyFunc(v cli.Values) error {
 		Host:    apiURL,
 	})
 
-	signupresponse, err := client.AuthConsumerLocalSignupVerify(v.GetString("token"))
+	signupresponse, err := client.AuthConsumerLocalSignupVerify(v.GetString("token"),
+		v.GetString("init-token"))
 	if err != nil {
 		return err
 	}

@@ -1,14 +1,11 @@
 package environment_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
@@ -167,23 +164,6 @@ func TestImportInto_Group(t *testing.T) {
 	}
 
 	test.NoError(t, environment.InsertEnvironment(db, &env))
-
-	g0 := sdk.Group{Name: "g0"}
-	g1 := sdk.Group{Name: "g1"}
-	g2 := sdk.Group{Name: "g2"}
-	g3 := sdk.Group{Name: "g3"}
-
-	for _, g := range []sdk.Group{g0, g1, g2, g3} {
-		oldg, _ := group.LoadByName(context.TODO(), db, g.Name)
-		if oldg != nil {
-			require.NoError(t, group.Delete(context.TODO(), db, oldg))
-		}
-	}
-
-	require.NoError(t, group.Insert(db, &g0))
-	require.NoError(t, group.Insert(db, &g1))
-	require.NoError(t, group.Insert(db, &g2))
-	require.NoError(t, group.Insert(db, &g3))
 
 	var err error
 	env.Variable, err = environment.GetAllVariableByID(db, env.ID)

@@ -151,7 +151,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 				u = currentConsumer.AuthentifiedUser
 
 				// If new consumer email not already on exiting user add it
-				existingContact, err := user.LoadContactsByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, userInfo.Email)
+				existingContact, err := user.LoadContactByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, userInfo.Email)
 				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return err
 				}
@@ -182,7 +182,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 					}
 				} else {
 					// Check if a user already exists for external email
-					contact, err := user.LoadContactsByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, userInfo.Email)
+					contact, err := user.LoadContactByTypeAndValue(ctx, tx, sdk.UserContactTypeEmail, userInfo.Email)
 					if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 						return err
 					}

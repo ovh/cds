@@ -463,7 +463,7 @@ type AuthClient interface {
 	AuthConsumerLocalAskResetPassword(sdk.AuthConsumerSigninRequest) error
 	AuthConsumerLocalResetPassword(token, newPassword string) (sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerLocalSignup(sdk.AuthConsumerSigninRequest) error
-	AuthConsumerLocalSignupVerify(uri string) (sdk.AuthConsumerSigninResponse, error)
+	AuthConsumerLocalSignupVerify(token, initToken string) (sdk.AuthConsumerSigninResponse, error)
 	AuthConsumerSignout() error
 	AuthConsumerListByUser(username string) (sdk.AuthConsumers, error)
 	AuthConsumerDelete(username, id string) error

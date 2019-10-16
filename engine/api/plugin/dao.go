@@ -15,7 +15,7 @@ import (
 func Insert(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 	m := grpcPlugin(*p)
 	if err := db.Insert(&m); err != nil {
-		return sdk.WrapError(err, "plugin.Insert")
+		return sdk.WithStack(err)
 	}
 	*p = sdk.GRPCPlugin(m)
 	return nil
@@ -25,7 +25,7 @@ func Insert(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 func Update(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 	m := grpcPlugin(*p)
 	if _, err := db.Update(&m); err != nil {
-		return sdk.WrapError(err, "plugin.Update")
+		return sdk.WithStack(err)
 	}
 	*p = sdk.GRPCPlugin(m)
 	return nil

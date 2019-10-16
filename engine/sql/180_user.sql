@@ -1,5 +1,19 @@
 -- +migrate Up
 
+-- Create new table for user registrations
+CREATE TABLE IF NOT EXISTS "user_registration" (
+  id VARCHAR(36) PRIMARY KEY,
+  created TIMESTAMP WITH TIME ZONE,
+  username VARCHAR(255) NOT NULL,
+  fullname VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  hash TEXT NOT NULL,
+  sig BYTEA,
+  signer TEXT
+);
+select create_unique_index('user_registration','IDX_USER_REGISTRATION_USERNAME','username');
+select create_unique_index('user_registration','IDX_USER_REGISTRATION_EMAIL','email');
+
 -- Update foreign keys for deprecated user table
 ALTER TABLE user_key DROP CONSTRAINT IF EXISTS "fk_user_key_user";
 select create_foreign_key_idx_cascade('FK_USER_KEY_USER', 'user_key', 'user', 'user_id', 'id');
@@ -147,6 +161,7 @@ CREATE TABLE "test_encrypted_data" (
 );
 
 -- +migrate Down
+DROP TABLE "user_registration";
 DROP TABLE "authentified_user_migration";
 DROP TABLE "user_contact";
 DROP TABLE "worker";

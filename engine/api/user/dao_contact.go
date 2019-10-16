@@ -70,8 +70,8 @@ func LoadContactsByUserIDs(ctx context.Context, db gorp.SqlExecutor, userIDs []s
 	return getContacts(ctx, db, query)
 }
 
-// LoadContactsByTypeAndValue returns a contact for given type and value.
-func LoadContactsByTypeAndValue(ctx context.Context, db gorp.SqlExecutor, contactType, value string) (*sdk.UserContact, error) {
+// LoadContactByTypeAndValue returns a contact for given type and value.
+func LoadContactByTypeAndValue(ctx context.Context, db gorp.SqlExecutor, contactType, value string) (*sdk.UserContact, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM user_contact
