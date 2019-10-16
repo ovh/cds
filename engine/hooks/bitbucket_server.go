@@ -20,12 +20,13 @@ func (s *Service) generatePayloadFromBitbucketServerRequest(t *sdk.TaskExecution
 	payload := make(map[string]interface{})
 
 	payload[GIT_EVENT] = request.EventKey
-	getVariableFromAuthor(payload, request.Actor)
-	getVariableFromPullRequest(payload, request.PullRequest)
-	getVariableFromParticipant(payload, request.Participant)
+	getVariableFromBitbucketServerAuthor(payload, request.Actor)
+	getVariableFromBitbucketServerPullRequest(payload, request.PullRequest)
+	getVariableFromBitbucketServerParticipant(payload, request.Participant)
 	getPayloadStringVariable(payload, request)
-	getPayloadFromPRComment(payload, request.Comment)
-	getPayloadFromPreviousTarget(payload, request.PreviousTarget)
+	getPayloadFromBitbucketServerPRComment(payload, request.Comment)
+	getPayloadFromBitbucketServerPreviousTarget(payload, request.PreviousTarget)
+	getVariableFromBitbucketServerRepository(payload, request.Repository)
 
 	if request.PreviousStatus != "" {
 		payload[PR_PREVIOUS_STATE] = request.PreviousStatus
@@ -62,14 +63,14 @@ func (s *Service) generatePayloadFromBitbucketServerRequest(t *sdk.TaskExecution
 		for k, v := range payload {
 			payloadChanges[k] = v
 		}
-		getVariableFromChange(payloadChanges, pushChange)
+		getVariableFromBitbucketServerChange(payloadChanges, pushChange)
 		payloads = append(payloads, payloadChanges)
 	}
 
 	return payloads, nil
 }
 
-func getVariableFromChange(payload map[string]interface{}, change sdk.BitbucketServerChange) {
+func getVariableFromBitbucketServerChange(payload map[string]interface{}, change sdk.BitbucketServerChange) {
 	if !strings.HasPrefix(change.RefID, "refs/tags/") {
 		branch := strings.TrimPrefix(change.RefID, "refs/heads/")
 		payload[GIT_BRANCH] = branch
@@ -85,23 +86,21 @@ func getVariableFromChange(payload map[string]interface{}, change sdk.BitbucketS
 	payload[GIT_HASH_SHORT] = hashShort
 }
 
-func getPayloadStringVariable(payload map[string]interface{}, msg interface{}) {
-	payloadStr, err := json.Marshal(msg)
-	if err != nil {
-		log.Error("Unable to marshal payload: %v", err)
+func getVariableFromBitbucketServerRepository(payload map[string]interface{}, repo *sdk.BitbucketServerRepository) {
+	if repo == nil {
+		return
 	}
-	payload[PAYLOAD] = string(payloadStr)
-}
-
-func getVariableFromRepository(payload map[string]interface{}, repo sdk.BitbucketServerRepository) {
 	payload[GIT_REPOSITORY] = fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug)
 }
 
-func getVariableFromSrcRepository(payload map[string]interface{}, repo sdk.BitbucketServerRepository) {
+func getVariableFromBitbucketServerSrcRepository(payload map[string]interface{}, repo *sdk.BitbucketServerRepository) {
+	if repo == nil {
+		return
+	}
 	payload[GIT_REPOSITORY_BEFORE] = fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug)
 }
 
-func getVariableFromAuthor(payload map[string]interface{}, actor *sdk.BitbucketServerActor) {
+func getVariableFromBitbucketServerAuthor(payload map[string]interface{}, actor *sdk.BitbucketServerActor) {
 	if actor == nil {
 		return
 	}
@@ -112,7 +111,7 @@ func getVariableFromAuthor(payload map[string]interface{}, actor *sdk.BitbucketS
 	payload[CDS_TRIGGERED_BY_EMAIL] = actor.EmailAddress
 }
 
-func getVariableFromPullRequest(payload map[string]interface{}, pr *sdk.BitbucketServerPullRequest) {
+func getVariableFromBitbucketServerPullRequest(payload map[string]interface{}, pr *sdk.BitbucketServerPullRequest) {
 	if pr == nil {
 		return
 	}
@@ -129,11 +128,11 @@ func getVariableFromPullRequest(payload map[string]interface{}, pr *sdk.Bitbucke
 	}
 	payload[GIT_HASH_SHORT] = hashShort
 
-	getVariableFromRepository(payload, pr.ToRef.Repository)
-	getVariableFromSrcRepository(payload, pr.FromRef.Repository)
+	getVariableFromBitbucketServerRepository(payload, &pr.ToRef.Repository)
+	getVariableFromBitbucketServerSrcRepository(payload, &pr.FromRef.Repository)
 }
 
-func getPayloadFromPRComment(payload map[string]interface{}, comment *sdk.BitbucketServerComment) {
+func getPayloadFromBitbucketServerPRComment(payload map[string]interface{}, comment *sdk.BitbucketServerComment) {
 	if comment == nil {
 		return
 	}
@@ -142,7 +141,7 @@ func getPayloadFromPRComment(payload map[string]interface{}, comment *sdk.Bitbuc
 	payload[PR_COMMENT_TEXT] = comment.Text
 }
 
-func getPayloadFromPreviousTarget(payload map[string]interface{}, target *sdk.BitbucketServerPreviousTarget) {
+func getPayloadFromBitbucketServerPreviousTarget(payload map[string]interface{}, target *sdk.BitbucketServerPreviousTarget) {
 	if target == nil {
 		return
 	}
@@ -150,7 +149,7 @@ func getPayloadFromPreviousTarget(payload map[string]interface{}, target *sdk.Bi
 	payload[PR_PREVIOUS_HASH] = target.LatestCommit
 }
 
-func getVariableFromParticipant(payload map[string]interface{}, participant *sdk.BitbucketServerParticipant) {
+func getVariableFromBitbucketServerParticipant(payload map[string]interface{}, participant *sdk.BitbucketServerParticipant) {
 	if participant == nil {
 		return
 	}

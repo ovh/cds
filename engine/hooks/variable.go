@@ -30,6 +30,7 @@ const (
 	GIT_REPOSITORY        = "git.repository"
 	GIT_REPOSITORY_BEFORE = "git.repository.before"
 	GIT_EVENT             = "git.hook"
+	GIT_MESSAGE           = "git.message"
 
 	CDS_TRIGGERED_BY_USERNAME = "cds.triggered_by.username"
 	CDS_TRIGGERED_BY_FULLNAME = "cds.triggered_by.fullname"

@@ -9,80 +9,85 @@ import (
 )
 
 func (s *Service) generatePayloadFromBitbucketCloudRequest(t *sdk.TaskExecution, event string) ([]map[string]interface{}, error) {
-	switch event {
-	case "repo:push":
-		return s.generatePayloadFromBitbucketCloudPushEvent(t)
-	default:
-		payloads := []map[string]interface{}{}
-		payload, err := getAllPayloadMap(t.WebHook.RequestBody)
-		if err != nil {
-			return nil, err
-		}
-		payloads = append(payloads, payload)
-		return payloads, nil
-	}
-}
-
-func (s *Service) generatePayloadFromBitbucketCloudPushEvent(t *sdk.TaskExecution) ([]map[string]interface{}, error) {
 	payloads := []map[string]interface{}{}
-	projectKey := t.Config["project"].Value
-	workflowName := t.Config["workflow"].Value
-	var event BitbucketCloudPushEvent
-	if err := json.Unmarshal(t.WebHook.RequestBody, &event); err != nil {
+
+	var request BitbucketCloudWebHookEvent
+	if err := json.Unmarshal(t.WebHook.RequestBody, &request); err != nil {
 		return nil, sdk.WrapError(err, "unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))
 	}
-	pushEvent := event.Push
-	if len(pushEvent.Changes) == 0 {
-		return nil, nil
-	}
 
-	for _, pushChange := range pushEvent.Changes {
+	projectKey := t.Config["project"].Value
+	workflowName := t.Config["workflow"].Value
+
+	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = event
+	getVariableFromBitbucketCloudAuthor(payload, request.Actor)
+	getVariableFromBitbucketCloudRepository(payload, request.Repository)
+	getPayloadStringVariable(payload, request)
+
+	for _, pushChange := range request.Push.Changes {
 		if pushChange.Closed {
 			if pushChange.Old.Type == "branch" {
-				err := s.enqueueBranchDeletion(projectKey, workflowName, strings.TrimPrefix(pushChange.Old.Name, "refs/heads/"))
-				if err != nil {
+				if err := s.enqueueBranchDeletion(projectKey, workflowName, strings.TrimPrefix(pushChange.Old.Name, "refs/heads/")); err != nil {
 					log.Error("cannot enqueue branch deletion: %v", err)
 				}
 			}
 			continue
 		}
-		payload := make(map[string]interface{})
-		payload["git.author"] = event.Actor.DisplayName
-		if len(pushChange.New.Target.Message) > 0 {
-			payload["git.message"] = pushChange.New.Target.Message
-		}
 
 		if pushChange.New.Type == "branch" {
 			branch := strings.TrimPrefix(pushChange.New.Name, "refs/heads/")
-			payload["git.branch"] = branch
 			if err := s.stopBranchDeletionTask(branch); err != nil {
 				log.Error("cannot stop branch deletion task for branch %s : %v", branch, err)
 			}
 
-		} else if pushChange.New.Type == "tag" {
-			payload["git.tag"] = strings.TrimPrefix(pushChange.New.Name, "refs/tags/")
-		} else {
-			log.Warning("Uknown push type: %s", pushChange.New.Type)
-			continue
 		}
-		payload["git.hash.before"] = pushChange.Old.Target.Hash
-		payload["git.hash"] = pushChange.New.Target.Hash
-		hashShort := pushChange.New.Target.Hash
-		if len(hashShort) >= 7 {
-			hashShort = hashShort[:7]
-		}
-		payload["git.hash.short"] = hashShort
-		payload["git.repository"] = event.Repository.FullName
 
-		payload["cds.triggered_by.username"] = event.Actor.Username
-		payload["cds.triggered_by.fullname"] = event.Actor.DisplayName
-		payloadStr, err := json.Marshal(pushEvent)
-		if err != nil {
-			log.Error("Unable to marshal payload: %v", err)
+		payloadChange := make(map[string]interface{})
+		for k, v := range payload {
+			payloadChange[k] = v
 		}
-		payload["payload"] = string(payloadStr)
-		payloads = append(payloads, payload)
+
+		getVariableFromBitbucketCloudChange(payloadChange, pushChange)
+
+		payloads = append(payloads, payloadChange)
 
 	}
 	return payloads, nil
+}
+
+func getVariableFromBitbucketCloudChange(payload map[string]interface{}, change BitbucketCloudChange) {
+	if change.New.Type == "branch" {
+		branch := strings.TrimPrefix(change.New.Name, "refs/heads/")
+		payload[GIT_BRANCH] = branch
+
+	} else if change.New.Type == "tag" {
+		payload[GIT_TAG] = strings.TrimPrefix(change.New.Name, "refs/tags/")
+	} else {
+		log.Warning("Uknown push type: %s", change.New.Type)
+		return
+	}
+	payload[GIT_HASH_BEFORE] = change.Old.Target.Hash
+	payload[GIT_HASH] = change.New.Target.Hash
+	hashShort := change.New.Target.Hash
+	if len(hashShort) >= 7 {
+		hashShort = hashShort[:7]
+	}
+	payload[GIT_HASH_SHORT] = hashShort
+}
+
+func getVariableFromBitbucketCloudRepository(payload map[string]interface{}, repo *BitbucketCloudRepository) {
+	if repo == nil {
+		return
+	}
+	payload[GIT_REPOSITORY] = repo.FullName
+}
+
+func getVariableFromBitbucketCloudAuthor(payload map[string]interface{}, actor *BitbucketCloudActor) {
+	if actor == nil {
+		return
+	}
+	payload[GIT_AUTHOR] = actor.DisplayName
+	payload[CDS_TRIGGERED_BY_USERNAME] = actor.Username
+	payload[CDS_TRIGGERED_BY_FULLNAME] = actor.DisplayName
 }
