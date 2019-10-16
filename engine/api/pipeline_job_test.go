@@ -185,31 +185,38 @@ func TestUpdateInvalidJobHandler(t *testing.T) {
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u))
 
 	//4. Add Stage
-	stage := &sdk.Stage{
+	stage1 := &sdk.Stage{
 		BuildOrder: 1,
 		Enabled:    true,
 		Name:       "",
 		PipelineID: pip.ID,
 	}
-	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage1))
+	stage2 := &sdk.Stage{
+		BuildOrder: 2,
+		Enabled:    true,
+		Name:       "stage 2",
+		PipelineID: pip.ID,
+	}
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage2))
 
 	//5. Prepare the request
 	job := &sdk.Job{
 		Enabled:         true,
-		PipelineStageID: stage.ID,
+		PipelineStageID: stage1.ID,
 		Action: sdk.Action{
 			Enabled: true,
 			Name:    "myJob",
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage.ID, pip))
+	test.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage1.ID, pip))
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
 	// 6. Prepare the request
 	addJobRequest := sdk.Job{
 		Enabled:          true,
-		PipelineStageID:  stage.ID,
+		PipelineStageID:  stage1.ID,
 		PipelineActionID: job.PipelineActionID,
 		Action: sdk.Action{
 			ID:   job.Action.ID,
@@ -222,7 +229,7 @@ func TestUpdateInvalidJobHandler(t *testing.T) {
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
 		"pipelineKey":    pip.Name,
-		"stageID":        strconv.FormatInt(stage.ID, 10),
+		"stageID":        strconv.FormatInt(stage1.ID, 10),
 		"jobID":          strconv.FormatInt(job.PipelineActionID, 10),
 	}
 
