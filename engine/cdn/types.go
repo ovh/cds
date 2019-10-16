@@ -3,15 +3,18 @@ package cdn
 import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/cdn/objectstore"
 	"github.com/ovh/cds/engine/service"
 )
 
 // Service is the stuct representing a hooks µService
 type Service struct {
 	service.Common
-	Cfg    Configuration
-	Router *api.Router
-	Cache  cache.Store
+	Cfg           Configuration
+	Router        *api.Router
+	Cache         cache.Store
+	DefaultDriver objectstore.Driver
+	MirrorDrivers []objectstore.Driver
 }
 
 // Configuration is the hooks configuration structure
@@ -30,4 +33,11 @@ type Configuration struct {
 			Password string `toml:"password" json:"-"`
 		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Hooks Cache Settings \n######################" json:"cache"`
+	Backends map[string]Backend `toml:"backends" comment:"######################\n CDS CDN Backend Settings \n######################" json:"backends"`
+}
+
+type Backend struct {
+	Local     *objectstore.ConfigOptionsFilesystem `toml:"local"`
+	Openstack *objectstore.ConfigOptionsOpenstack  `toml:"openstack" json:"openstack"`
+	AWSS3     *objectstore.ConfigOptionsAWSS3      `toml:"awss3" json:"awss3"`
 }

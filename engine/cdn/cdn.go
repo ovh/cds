@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/cdn/objectstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -112,4 +113,40 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	return ctx.Err()
+}
+
+func (s *Service) initDefaultDrivers(ctx context.Context) error {
+	for name, config := range s.Cfg.Backends {
+		driverCfg := objectstore.Config{
+			IntegrationName: sdk.DefaultStorageIntegrationName + "/" + name,
+		}
+		switch {
+		case config.AWSS3 != nil:
+			driverCfg.Kind = objectstore.AWSS3
+			driverCfg.Options.AWSS3 = *config.AWSS3
+		case config.Local != nil:
+			driverCfg.Kind = objectstore.Filesystem
+			driverCfg.Options.Filesystem = *config.Local
+		case config.Openstack != nil:
+			driverCfg.Kind = objectstore.Openstack
+			driverCfg.Options.Openstack = *config.Openstack
+
+		}
+
+		if name == "default" {
+			var errDriver error
+			s.DefaultDriver, errDriver = objectstore.Init(ctx, driverCfg)
+			if errDriver != nil {
+				return sdk.WrapError(errDriver, "cannot create driver %s", name)
+			}
+		} else {
+			driver, err := objectstore.Init(ctx, driverCfg)
+			if err != nil {
+				return sdk.WrapError(err, "cannot create driver %s", name)
+			}
+			s.MirrorDrivers = append(s.MirrorDrivers, driver)
+		}
+	}
+
+	return nil
 }
