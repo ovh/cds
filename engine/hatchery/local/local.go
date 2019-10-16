@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -132,7 +133,7 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 		return fmt.Errorf("Cannot check local capabilities: %v", err)
 	}
 
-	h.BasedirDedicated = fmt.Sprintf("%s/%s", strings.TrimRight(strings.TrimSpace(h.Config.Basedir), "/"), h.Name)
+	h.BasedirDedicated = filepath.Dir(fmt.Sprintf("%s/%s/", h.Config.Basedir, h.Name))
 	if ok, err := api.DirectoryExists(h.BasedirDedicated); !ok {
 		log.Debug("creating directory %s", h.BasedirDedicated)
 		if err := os.MkdirAll(h.BasedirDedicated, 0700); err != nil {
