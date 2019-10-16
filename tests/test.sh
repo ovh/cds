@@ -24,6 +24,7 @@ VENOM_OPTS="${VENOM_OPTS:---log debug --output-dir ./results --strict --stop-on-
 CDS_API_URL="${CDS_API_URL:-http://localhost:8081}"
 CDS_UI_URL="${CDS_UI_URL:-http://localhost:4200}"
 CDS_HATCHERY_URL="${CDS_HATCHERY_URL:-http://localhost:8086}"
+CDS_HOOKS_URL="${CDS_HOOKS_URL:-http://localhost:8083}"
 CDSCTL="${CDSCTL:-`which cdsctl`}"
 CDSCTL_CONFIG="${CDSCTL_CONFIG:-.cdsrc}"
 SMTP_MOCK_URL="${SMTP_MOCK_URL-http://localhost:2024}"
@@ -54,27 +55,53 @@ check_failure() {
 smoke_tests() {
     echo "Running smoke tests:"
     for f in $(ls -1 00_*.yml); do
-        echo -e "  ${YELLOW}${f}${NOCOLOR}"
-        ${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL} --var hatchery.url=${CDS_HATCHERY_URL} >${f}.output 2>&1
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL} --var hatchery.url=${CDS_HATCHERY_URL} --var hooks.url=${CDS_HOOKS_URL}"
+        echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
+        ${CMD} >${f}.output 2>&1
         check_failure $? ${f}.output
     done
 }
 
 initialization_tests() {
     echo "Running initialization tests:"
-    echo -e "  ${YELLOW}01_signup.yml (admin)${NOCOLOR}"
-    ${VENOM} run ${VENOM_OPTS} 01_signup.yml --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var username=cds.integration.tests.rw --var email=it-user-rw@localhost.local --var fullname="IT User RW" --var smtpmock.url=${SMTP_MOCK_URL} >01_signup_admin.yml.output 2>&1
+    CMD="${VENOM} run ${VENOM_OPTS} 01_signup.yml --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var username=cds.integration.tests.rw --var email=it-user-rw@localhost.local --var fullname='IT User RW' --var smtpmock.url=${SMTP_MOCK_URL}"
+    echo -e "  ${YELLOW}01_signup.yml (admin) ${DARKGRAY}[${CMD}]${NOCOLOR}"
+    ${CMD} >01_signup_admin.yml.output 2>&1
     check_failure $? 01_signup_admin.yml.output
-    echo -e "  ${YELLOW}01_signup.yml (user)${NOCOLOR}"
-    ${VENOM} run ${VENOM_OPTS} 01_signup.yml --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_user --var api.url=${CDS_API_URL} --var username=cds.integration.tests.ro --var email=it-user-ro@localhost.local --var fullname="IT User RO" --var smtpmock.url=${SMTP_MOCK_URL} >01_signup_user.yml.output 2>&1
+
+    CMD="${VENOM} run ${VENOM_OPTS} 01_signup.yml --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_user --var api.url=${CDS_API_URL} --var username=cds.integration.tests.ro --var email=it-user-ro@localhost.local --var fullname='IT User RO' --var smtpmock.url=${SMTP_MOCK_URL}"
+    echo -e "  ${YELLOW}01_signup.yml (user) ${DARKGRAY}[${CMD}]${NOCOLOR}"
+    ${CMD} >01_signup_user.yml.output 2>&1
+
     check_failure $? 01_signup_user.yml.output
 }
 
 cli_tests() {
     echo "Running CLI tests:"
     for f in $(ls -1 02_cli*.yml); do
-        echo -e "  ${YELLOW}${f}${NOCOLOR}"
-        ${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL} >${f}.output 2>&1
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL}"
+        echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
+        ${CMD} >${f}.output 2>&1
+        check_failure $? ${f}.output
+    done
+}
+
+workflow_tests() {
+    echo "Running Workflow tests:"
+    for f in $(ls -1 03_*.yml); do
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL}"
+        echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
+        ${CMD} >${f}.output 2>&1
+        check_failure $? ${f}.output
+    done
+}
+
+workflow_with_integration_tests() {
+    echo "Running Workflow with Storage integration tests:"
+    for f in $(ls -1 04_*.yml); do
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL}"
+        echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
+        ${CMD} >${f}.output 2>&1
         check_failure $? ${f}.output
     done
 }
@@ -85,5 +112,6 @@ mkdir results
 smoke_tests
 initialization_tests
 cli_tests
-
+workflow_tests
+workflow_with_integration_tests
 
