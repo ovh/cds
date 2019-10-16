@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"mime"
 	"net/http"
 	"strconv"
@@ -10,8 +11,11 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/authentication"
+	cdnauth "github.com/ovh/cds/engine/api/authentication/cdn"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -228,18 +232,18 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 		if len(files) == 1 {
 			file, err := files[0].Open()
 			if err != nil {
-				file.Close()
+				_ = file.Close()
 				return sdk.WrapError(err, "cannot open file")
 			}
 
 			objectPath, err := storageDriver.Store(&art, file)
 			if err != nil {
-				file.Close()
+				_ = file.Close()
 				return sdk.WrapError(err, "Cannot store artifact")
 			}
 			log.Debug("objectpath=%s\n", objectPath)
 			art.ObjectPath = objectPath
-			file.Close()
+			_ = file.Close()
 		}
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
@@ -325,12 +329,12 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		var store objectstore.DriverWithRedirect
-		var ok bool
-		store, ok = storageDriver.(objectstore.DriverWithRedirect)
-		if !ok {
-			return sdk.WrapError(sdk.ErrForbidden, "cast error")
-		}
+		// var store objectstore.DriverWithRedirect
+		// var ok bool
+		// store, ok = storageDriver.(objectstore.DriverWithRedirect)
+		// if !ok {
+		// 	return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler > cast error")
+		// }
 
 		hash, err := sdk.GenerateHash()
 		if err != nil {
@@ -368,27 +372,37 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 			art.ProjectIntegrationID = &id
 		}
 
-		var retryURL = 10
-		var url, key string
-		var errorStoreURL error
+		// jwt.Token
+		// authentication.SignJWT(jwtToken * jwt.Token)
+		srvs, err := services.LoadAllByType(ctx, api.mustDB(), services.TypeCDN)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load services of type CDN")
+		}
+		cdnService := srvs[0]
+		cdnReq := sdk.CDNRequest{}
 
-		for i := 0; i < retryURL; i++ {
-			url, key, errorStoreURL = store.StoreURL(&art, "")
-			if errorStoreURL != nil {
-				log.Warning(ctx, "Error on store.StoreURL: %v - Try %d/%d", errorStoreURL, i, retryURL)
-			} else {
-				// no error
-				break
-			}
-			time.Sleep(100 * time.Millisecond)
+		cdnReqToken, err := authentication.SignJWS(cdnReq, cdnauth.SessionDuration)
+		if err != nil {
+			return sdk.WrapError(err, "cannot sign jws for cdn request")
 		}
 
-		if url == "" || key == "" {
-			return sdk.WrapError(errorStoreURL, "could not generate hash after %d attempts", retryURL)
-		}
+		// for i := 0; i < retryURL; i++ {
+		// 	url, key, errorStoreURL = store.StoreURL(&art, "")
+		// 	if errorStoreURL != nil {
+		// 		log.Warning("Error on store.StoreURL: %v - Try %d/%d", errorStoreURL, i, retryURL)
+		// 	} else {
+		// 		// no error
+		// 		break
+		// 	}
+		// 	time.Sleep(100 * time.Millisecond)
+		// }
 
-		art.TempURL = url
-		art.TempURLSecretKey = key
+		// if url == "" || key == "" {
+		// 	return sdk.WrapError(errorStoreURL, "Could not generate hash after %d attempts", retryURL)
+		// }
+
+		art.TempURL = fmt.Sprintf("%s/upload/%s", cdnService.HTTPURL, cdnReqToken)
+		// art.TempURLSecretKey = key
 
 		cacheKey := cache.Key("workflows:artifacts", art.GetPath(), art.GetName())
 		//Put this in cache for 1 hour
