@@ -44,7 +44,8 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, p
 	pip.ID = oldPipeline.ID
 	for i := range pip.Stages {
 		s := &pip.Stages[i]
-		if !rx.MatchString(s.Name) {
+		// stage name mandatory if there are many stages
+		if len(pip.Stages) > 1 && !rx.MatchString(s.Name) {
 			return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid stage name '%s'. It should match %s", s.Name, sdk.NamePatternSpace))
 		}
 		var stageFound bool

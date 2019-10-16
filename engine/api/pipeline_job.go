@@ -183,7 +183,8 @@ func (api *API) updateJobHandler() service.Handler {
 		}
 
 		rx := sdk.NamePatternSpaceRegex
-		if !rx.MatchString(stage.Name) {
+		// stage name mandatory if there are many stages
+		if len(pipelineData.Stages) > 1 && !rx.MatchString(stage.Name) {
 			return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid stage name '%s'. It should match %s", stage.Name, sdk.NamePatternSpace))
 		}
 
