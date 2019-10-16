@@ -618,6 +618,26 @@ func TestImportUpdate(t *testing.T) {
 						},
 					},
 				},
+				{
+					BuildOrder: 2,
+					Enabled:    true,
+					PipelineID: args.pip.ID,
+					Name:       "This is the second stage. It has 2 jobs",
+					Jobs: []sdk.Job{
+						{
+							Enabled: true,
+							Action: sdk.Action{
+								Name: "Job n°1",
+							},
+						},
+						{
+							Enabled: true,
+							Action: sdk.Action{
+								Name: "Job n°2",
+							},
+						},
+					},
+				},
 			}
 
 			test.NoError(t, pipeline.InsertStage(db, &args.pip.Stages[0]))
