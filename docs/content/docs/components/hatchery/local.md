@@ -13,11 +13,7 @@ can launch CDS Worker on your host.
 Two prerequisites: 
 
 * your host must reach your CDS API on HTTP port defined on your [CDS Configuration]({{< relref "/hosting/configuration.md">}})
-<<<<<<< HEAD
 * the basedir (default is `/var/lib/cds-engine`) must allow to execute binaries.
-=======
-* the basedir (default /tmp) must allow to execute binaries
->>>>>>> cb1820a8190e496643faeeee0e764db24309e052
 
 The worker binary is downloaded from CDS API at the start of the hatchery, it's placed into `basedir` directory.
 
