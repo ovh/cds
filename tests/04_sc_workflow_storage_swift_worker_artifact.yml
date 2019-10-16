@@ -1,5 +1,14 @@
 name: Workflow (ITSCWRKFLW13) should use the worker artifact upload / download
 version: "2"
+
+vars:
+  os_auth_url: ''
+  os_username: ''
+  os_password: ''
+  os_region_name: ''
+  tenant_name: ''
+
+
 testcases:
 - name: assert filepath, your current directory must be at the root of this project
   steps:
@@ -14,7 +23,8 @@ testcases:
 
 - name: import integration
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW13 ./myAWSS3Integration.yml
+  - script: OS_AUTH_URL={{.os_auth_url}} OS_USERNAME={{.os_username}} OS_PASSWORD={{.os_password}} OS_REGION_NAME={{.os_region_name}} TENANT_NAME={{.tenant_name}} eval $(cat ./fixtures/integrations/openstackIntegration.yml) > openstackIntegration.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW11 openstackIntegration.yml
 
 - name: import workflow
   steps:
@@ -22,7 +32,7 @@ testcases:
 
 - name: run workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW13 test-worker-artifact -p integration=myAWSS3Integration
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW13 test-worker-artifact -p integration=myOpenstackIntegration
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow test-worker-artifact #1 has been launched"

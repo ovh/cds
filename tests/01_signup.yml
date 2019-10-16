@@ -17,8 +17,10 @@ testcases:
     method: POST
     url: '{{.api.url}}/user/signup'
     headers: 
-      'Content-Type': 'application/json'
-    body: '{"user" : {"username": "{{.username}}", "fullname": "{{.fullname}}", "email":"{{.email}}"}, "callback" : "cdsctl user confirm %s %s"}'
+      "Content-Type": "application/json"
+    body: |-
+      {"user" : {"username": "{{.username}}", "fullname": "{{.fullname}}", "email":"{{.email}}"}, "callback" : "cdsctl user confirm %s %s"}
+
 
 - name: post-create-user
   steps:
@@ -34,6 +36,6 @@ testcases:
 
 - name: prepare-cdsctl-config-file
   steps:
-  - script: rm -f {{.cdsctl.config}}
+  - script: "rm -f {{.cdsctl.config}}"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} user confirm --api-url {{.api.url}} {{.username}} {{.post-create-user.verify}}"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} user me"
