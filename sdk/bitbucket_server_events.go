@@ -1,109 +1,29 @@
 package sdk
 
-// BitbucketServerPushEvent represents payload send by bitbucket server on a push event
-type BitbucketServerPushEvent struct {
-	EventKey   string                    `json:"eventKey"`
-	Date       string                    `json:"date"`
-	Actor      BitbucketServerActor      `json:"actor"`
-	Repository BitbucketServerRepository `json:"repository"`
-	Changes    []BitbucketServerChange   `json:"changes"`
-}
+type BitbucketServerWebhookEvent struct {
+	EventKey string                `json:"eventKey"`
+	Date     string                `json:"date"`
+	Actor    *BitbucketServerActor `json:"actor"`
 
-type BitbucketServerPROpenedEvent struct {
-	EventKey    string                     `json:"eventKey"`
-	Date        string                     `json:"date"`
-	Actor       BitbucketServerActor       `json:"actor"`
-	PullRequest BitbucketServerPullRequest `json:"pullRequest"`
-}
+	// PR event data
+	PullRequest         *BitbucketServerPullRequest    `json:"pullRequest"`
+	PreviousTitle       string                         `json:"previousTitle"`
+	PreviousDescription interface{}                    `json:"previousDescription"`
+	PreviousTarget      *BitbucketServerPreviousTarget `json:"previousTarget"`
 
-type BitbucketServerPRModifiedEvent struct {
-	EventKey            string                        `json:"eventKey"`
-	Date                string                        `json:"date"`
-	Actor               BitbucketServerActor          `json:"actor"`
-	PullRequest         BitbucketServerPullRequest    `json:"pullRequest"`
-	PreviousTitle       string                        `json:"previousTitle"`
-	PreviousDescription interface{}                   `json:"previousDescription"`
-	PreviousTarget      BitbucketServerPreviousTarget `json:"previousTarget"`
-}
+	// Review event data
+	Participant    *BitbucketServerParticipant `json:"participant"`
+	PreviousStatus string                      `json:"previousStatus"`
 
-type BitbucketServerPRDeclinedEvent struct {
-	EventKey    string                     `json:"eventKey"`
-	Date        string                     `json:"date"`
-	Actor       BitbucketServerActor       `json:"actor"`
-	PullRequest BitbucketServerPullRequest `json:"pullRequest"`
-}
+	// Reviewer edited data
+	AddedReviewers   []BitbucketServerActor `json:"addedReviewers"`
+	RemovedReviewers []BitbucketServerActor `json:"removedReviewers"`
 
-type BitbucketServerPRDeletedEvent struct {
-	EventKey    string                     `json:"eventKey"`
-	Date        string                     `json:"date"`
-	Actor       BitbucketServerActor       `json:"actor"`
-	PullRequest BitbucketServerPullRequest `json:"pullRequest"`
-}
+	// PR Comment event data
+	Comment         *BitbucketServerComment `json:"comment"`
+	PreviousComment string                  `json:"previousComment"`
 
-type BitbucketServerPRMergedEvent struct {
-	EventKey    string                     `json:"eventKey"`
-	Date        string                     `json:"date"`
-	Actor       BitbucketServerActor       `json:"actor"`
-	PullRequest BitbucketServerPullRequest `json:"pullRequest"`
-}
-
-type BitbucketServerPRCommentAddedEvent struct {
-	EventKey    string                     `json:"eventKey"`
-	Date        string                     `json:"date"`
-	Actor       BitbucketServerActor       `json:"actor"`
-	PullRequest BitbucketServerPullRequest `json:"pullRequest"`
-	Comment     BitbucketServerComment     `json:"comment"`
-}
-
-type BitbucketServerPRCommentEditedEvent struct {
-	EventKey        string                     `json:"eventKey"`
-	Date            string                     `json:"date"`
-	Actor           BitbucketServerActor       `json:"actor"`
-	PullRequest     BitbucketServerPullRequest `json:"pullRequest"`
-	Comment         BitbucketServerComment     `json:"comment"`
-	PreviousComment string                     `json:"previousComment"`
-}
-
-type BitbucketServerPRCommentDeletedEvent struct {
-	EventKey    string                     `json:"eventKey"`
-	Date        string                     `json:"date"`
-	Actor       BitbucketServerActor       `json:"actor"`
-	PullRequest BitbucketServerPullRequest `json:"pullRequest"`
-	Comment     BitbucketServerComment     `json:"comment"`
-}
-
-type BitbucketServerPRReviewerApproved struct {
-	EventKey       string                     `json:"eventKey"`
-	Date           string                     `json:"date"`
-	Actor          BitbucketServerActor       `json:"actor"`
-	PullRequest    BitbucketServerPullRequest `json:"pullRequest"`
-	Participant    BitbucketServerParticipant `json:"participant"`
-	PreviousStatus string                     `json:"previousStatus"`
-}
-
-type BitbucketServerPRReviewerUpdated struct {
-	EventKey         string                     `json:"eventKey"`
-	Date             string                     `json:"date"`
-	Actor            BitbucketServerActor       `json:"actor"`
-	PullRequest      BitbucketServerPullRequest `json:"pullRequest"`
-	AddedReviewers   []BitbucketServerActor     `json:"addedReviewers"`
-	RemovedReviewers []BitbucketServerActor     `json:"removedReviewers"`
-}
-
-type BitbucketServerPRReviewerUnapproved struct {
-	EventKey       string                     `json:"eventKey"`
-	Date           string                     `json:"date"`
-	Actor          BitbucketServerActor       `json:"actor"`
-	PullRequest    BitbucketServerPullRequest `json:"pullRequest"`
-	Participant    BitbucketServerParticipant `json:"participant"`
-	PreviousStatus string                     `json:"previousStatus"`
-}
-
-type BitbucketServerPRReviewerNeedsWorks struct {
-	EventKey       string                     `json:"eventKey"`
-	Date           string                     `json:"date"`
-	Actor          BitbucketServerActor       `json:"actor"`
-	PullRequest    BitbucketServerPullRequest `json:"pullRequest"`
-	Participant    BitbucketServerParticipant `json:"participant"`
-	PreviousStatus string                     `json:"previousStatus"`
+	// PushEvent data
+	Repository *BitbucketServerRepository `json:"repository"`
+	Changes    []BitbucketServerChange    `json:"changes"`
 }

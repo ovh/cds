@@ -28,6 +28,7 @@ func Test_doWebHookExecutionBitbucket(t *testing.T) {
 	test.NoError(t, err)
 
 	assert.Equal(t, 1, len(hs))
+	assert.Equal(t, "repo:refs_changed", hs[0].Payload["git.hook"])
 	assert.Equal(t, "name-of-branch", hs[0].Payload["git.branch"])
 	assert.Equal(t, "steven.guiheux", hs[0].Payload["git.author"])
 	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", hs[0].Payload["git.hash"])
