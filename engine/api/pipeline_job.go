@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -179,6 +180,11 @@ func (api *API) updateJobHandler() service.Handler {
 		}
 		if oldJob.PipelineActionID == 0 {
 			return sdk.WrapError(sdk.ErrNotFound, "job not found in pipeline")
+		}
+
+		rx := sdk.NamePatternSpaceRegex
+		if !rx.MatchString(stage.Name) {
+			return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid stage name '%s'. It should match %s", stage.Name, sdk.NamePatternSpace))
 		}
 
 		tx, err := api.mustDB().Begin()
