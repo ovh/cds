@@ -231,27 +231,3 @@ func copyValues(dst, src url.Values) {
 		}
 	}
 }
-
-func getAllPayloadMap(body []byte) (map[string]interface{}, error) {
-	var tempMap map[string]interface{}
-	if err := json.Unmarshal(body, &tempMap); err != nil {
-		return nil, sdk.WrapError(err, "unable tp unmarshal body %s", string(body))
-	}
-	e := dump.NewDefaultEncoder()
-	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-	e.ExtraFields.DetailedMap = false
-	e.ExtraFields.DetailedStruct = false
-	e.ExtraFields.Len = false
-	e.ExtraFields.Type = false
-	payload, err := e.ToMap(tempMap)
-	if err != nil {
-		return nil, sdk.WrapError(err, "unable to compute payload")
-	}
-
-	payloadStr, err := json.Marshal(body)
-	if err != nil {
-		return nil, sdk.WrapError(err, "unable to marshal body")
-	}
-	payload["payload"] = string(payloadStr)
-	return payload, nil
-}
