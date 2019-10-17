@@ -180,6 +180,9 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     refreshDuration(): void {
         if (this.workflowRuns) {
             let stillWorking = false;
+            if (this.workflow) {
+                this.tagToDisplay = this.workflow.metadata['default_tags'].split(',');
+            }
             this.workflowRuns.forEach((r) => {
                 if (PipelineStatus.isActive(r.status)) {
                     stillWorking = true;

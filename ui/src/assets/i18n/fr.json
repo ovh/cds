@@ -576,6 +576,7 @@
   "requirement_documentation": "À propos des pré-requis",
   "requirement_error_model": "Vous ne pouvez pas ajouter plusieurs pré-requis de type modèle",
   "requirement_error_hostname": "Vous ne pouvez pas ajouter plusieurs pré-requis de type hostname",
+  "requirement_placeholder_name_os-architecture": "os/arch",
   "requirement_placeholder_name_service": "HostnameDuService",
   "requirement_placeholder_value_model": "Choisissez un modèle de worker",
   "requirement_placeholder_opts_model": "Si c'est un modèle de worker type Docker, vous pouvez ajouter des options. Consultez la documentation.",

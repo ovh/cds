@@ -105,6 +105,7 @@ export class RequirementsFormComponent implements OnInit {
                         helpMsg = this._translate.instant('requirement_help_memory');
                         break;
                     case 'os-architecture':
+                        placeHolderName = this._translate.instant('requirement_placeholder_name_os-architecture');
                         placeHolderValue = 'linux-amd64';
                         helpMsg = this._translate.instant('requirement_help_os-architecture');
                         break;
