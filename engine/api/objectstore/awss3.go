@@ -38,6 +38,14 @@ func newS3Store(integration sdk.ProjectIntegration, conf ConfigOptionsAWSS3) (*A
 	} else {
 		aConf.Credentials = credentials.NewStaticCredentials(conf.AccessKeyID, conf.SecretAccessKey, conf.SessionToken)
 	}
+
+	// If a custom endpoint is set, set up a new endPoint resolver (eg. minio)
+	if conf.Endpoint != "" {
+		aConf.Endpoint = aws.String(conf.Endpoint)
+		aConf.DisableSSL = aws.Bool(conf.DisableSSL)
+		aConf.S3ForcePathStyle = aws.Bool(conf.S3ForcePathStyle)
+	}
+
 	sess, err := session.NewSession(aConf)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to create an AWS session")

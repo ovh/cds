@@ -75,6 +75,9 @@ type ConfigOptionsAWSS3 struct {
 	AccessKeyID         string
 	SecretAccessKey     string
 	SessionToken        string
+	Endpoint            string //optionnal
+	DisableSSL          bool   //optionnal
+	S3ForcePathStyle    bool   //optionnal
 }
 
 // ConfigOptionsOpenstack is used by ConfigOptions
