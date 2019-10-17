@@ -133,7 +133,7 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 		return fmt.Errorf("Cannot check local capabilities: %v", err)
 	}
 
-	h.BasedirDedicated = filepath.Dir(fmt.Sprintf("%s/%s/", h.Config.Basedir, h.Name))
+	h.BasedirDedicated = filepath.Dir(filepath.Join(h.Config.Basedir, h.Name))
 	if ok, err := api.DirectoryExists(h.BasedirDedicated); !ok {
 		log.Debug("creating directory %s", h.BasedirDedicated)
 		if err := os.MkdirAll(h.BasedirDedicated, 0700); err != nil {
@@ -196,13 +196,12 @@ func (h *HatcheryLocal) downloadWorker() error {
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	defer fp.Close()
 
 	if _, err := io.Copy(fp, resp.Body); err != nil {
 		return sdk.WithStack(err)
 	}
 
-	return nil
+	return sdk.WithStack(fp.Close())
 }
 
 // checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
