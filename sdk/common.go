@@ -72,7 +72,7 @@ const NamePattern = "^[a-zA-Z0-9._-]{1,}$"
 var NamePatternRegex = regexp.MustCompile(NamePattern)
 
 // NamePatternSpace  Pattern for stage name
-const NamePatternSpace = "^[\\sa-zA-Z0-9._-]{1,}$"
+const NamePatternSpace = `^[\sa-zA-Z0-9._-]{1,}$`
 
 // NamePatternSpaceRegex  Pattern regexp
 var NamePatternSpaceRegex = regexp.MustCompile(NamePatternSpace)
