@@ -26,6 +26,7 @@
   "account_btn_submit": "Soumettre",
   "account_btn_signin_ldap": "Se connecter via LDAP",
   "account_login_btn_connect": "Connexion",
+  "account_login_btn_verify": "Vérifier",
   "account_login_title": "Se connecter à CDS",
   "account_password_btn_reset": "Réinitialiser le mot de passe",
   "account_password_btn_reset_validate": "Modifier le mot de passe",

@@ -33,12 +33,17 @@ func (c *client) AuthConsumerLocalSignup(request sdk.AuthConsumerSigninRequest) 
 	return nil
 }
 
-func (c *client) AuthConsumerLocalSignupVerify(token string) (sdk.AuthConsumerSigninResponse, error) {
+func (c *client) AuthConsumerLocalSignupVerify(token, initToken string) (sdk.AuthConsumerSigninResponse, error) {
 	var res sdk.AuthConsumerSigninResponse
-	_, err := c.PostJSON(context.Background(), "/auth/consumer/local/verify",
-		sdk.AuthConsumerSigninRequest{
-			"token": token,
-		}, &res)
+
+	req := sdk.AuthConsumerSigninRequest{
+		"token": token,
+	}
+	if initToken != "" {
+		req["init_token"] = initToken
+	}
+
+	_, err := c.PostJSON(context.Background(), "/auth/consumer/local/verify", req, &res)
 	if err != nil {
 		return res, err
 	}

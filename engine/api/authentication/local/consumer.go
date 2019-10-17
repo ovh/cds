@@ -14,16 +14,10 @@ func NewConsumer(db gorp.SqlExecutor, userID string) (*sdk.AuthConsumer, error) 
 	return newConsumerWithData(db, userID, nil)
 }
 
-// NewConsumerWithPassword returns a new local consumer with given password.
-func NewConsumerWithPassword(db gorp.SqlExecutor, userID, password string) (*sdk.AuthConsumer, error) {
-	// Generate password hash to store in consumer
-	hash, err := HashPassword(password)
-	if err != nil {
-		return nil, err
-	}
-
+// NewConsumerWithHash returns a new local consumer with given hash.
+func NewConsumerWithHash(db gorp.SqlExecutor, userID, hash string) (*sdk.AuthConsumer, error) {
 	return newConsumerWithData(db, userID, map[string]string{
-		"hash": string(hash),
+		"hash": hash,
 	})
 }
 

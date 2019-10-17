@@ -29,6 +29,7 @@ type AuthDriver struct {
 	allowedDomains []string
 }
 
+// GetManifest .
 func (d AuthDriver) GetManifest() sdk.AuthDriverManifest {
 	return sdk.AuthDriverManifest{
 		Type:           sdk.ConsumerLocal,
@@ -36,6 +37,7 @@ func (d AuthDriver) GetManifest() sdk.AuthDriverManifest {
 	}
 }
 
+// GetSessionDuration .
 func (d AuthDriver) GetSessionDuration() time.Duration {
 	return time.Hour * 24 * 30 // 1 month session
 }
@@ -112,6 +114,7 @@ func (d AuthDriver) isAllowedDomain(email string) bool {
 	return false
 }
 
+// GetUserInfo .
 func (d AuthDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
 	// not used for local auth
 	return sdk.AuthDriverUserInfo{}, nil

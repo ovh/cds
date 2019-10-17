@@ -26,6 +26,7 @@
   "account_btn_submit": "Submit",
   "account_btn_signin_ldap": "LDAP Sign in",
   "account_login_btn_connect": "Sign in",
+  "account_login_btn_verify": "Verify",
   "account_login_title": "Sign In to CDS",
   "account_password_btn_reset": "Reset password",
   "account_password_btn_reset_validate": "Modify password",

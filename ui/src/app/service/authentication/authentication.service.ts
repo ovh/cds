@@ -85,9 +85,10 @@ export class AuthenticationService {
         });
     }
 
-    localVerify(token: string): Observable<AuthConsumerSigninResponse> {
+    localVerify(token: string, init_token?: string): Observable<AuthConsumerSigninResponse> {
         return this._http.post<AuthConsumerSigninResponse>(`/auth/consumer/local/verify`, {
-            token
+            token,
+            init_token
         });
     }
 

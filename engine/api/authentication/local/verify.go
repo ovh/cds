@@ -8,47 +8,49 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-const verifyLocalConsumerTokenDuration time.Duration = time.Hour * 24
+const verifyLocalRegistrationTokenDuration time.Duration = time.Hour * 24
 
-// verifyLocalConsumerToken contains data for verify signature.
-type verifyLocalConsumerToken struct {
-	ConsumerID string
-	Nonce      string
+// verifyLocalRegistrationToken contains data for verify signature.
+type verifyLocalRegistrationToken struct {
+	RegistrationID    string `json:"registration_id"`
+	Nonce             string `json:"nonce"`
+	IsFirstConnection bool   `json:"is_first_connection,omitempty"`
 }
 
-// NewVerifyConsumerToken returns a new verify consumer token for given consumer id.
-func NewVerifyConsumerToken(store cache.Store, consumerID string) (string, error) {
-	payload := verifyLocalConsumerToken{
-		ConsumerID: consumerID,
-		Nonce:      sdk.UUID(),
+// NewRegistrationToken returns a new token for given registration id.
+func NewRegistrationToken(store cache.Store, regID string, isFirstConnection bool) (string, error) {
+	payload := verifyLocalRegistrationToken{
+		RegistrationID:    regID,
+		Nonce:             sdk.UUID(),
+		IsFirstConnection: isFirstConnection,
 	}
 
-	cacheKey := cache.Key("authentication:consumer:verify", payload.ConsumerID)
-	if err := store.SetWithDuration(cacheKey, payload.Nonce, verifyLocalConsumerTokenDuration); err != nil {
+	cacheKey := cache.Key("authentication:registration:verify", payload.RegistrationID)
+	if err := store.SetWithDuration(cacheKey, payload.Nonce, verifyLocalRegistrationTokenDuration); err != nil {
 		return "", err
 	}
 
-	return authentication.SignJWS(payload, verifyLocalConsumerTokenDuration)
+	return authentication.SignJWS(payload, verifyLocalRegistrationTokenDuration)
 }
 
-// CheckVerifyConsumerToken checks that the given signature is a valid verify consumer token.
-func CheckVerifyConsumerToken(store cache.Store, signature string) (string, error) {
-	var payload verifyLocalConsumerToken
+// CheckRegistrationToken checks that the given signature is a valid registration token.
+func CheckRegistrationToken(store cache.Store, signature string) (string, error) {
+	var payload verifyLocalRegistrationToken
 	if err := authentication.VerifyJWS(signature, &payload); err != nil {
 		return "", err
 	}
 
-	cacheKey := cache.Key("authentication:consumer:verify", payload.ConsumerID)
+	cacheKey := cache.Key("authentication:registration:verify", payload.RegistrationID)
 	var nonce string
 	if ok, _ := store.Get(cacheKey, &nonce); !ok || nonce != payload.Nonce {
-		return "", sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given verify consumer token")
+		return "", sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given registration token")
 	}
 
-	return payload.ConsumerID, nil
+	return payload.RegistrationID, nil
 }
 
 // CleanVerifyConsumerToken deletes a consumer verify token from cache if exists.
 func CleanVerifyConsumerToken(store cache.Store, consumerID string) {
-	cacheKey := cache.Key("authentication:consumer:verify", consumerID)
+	cacheKey := cache.Key("authentication:registration:verify", consumerID)
 	store.Delete(cacheKey)
 }

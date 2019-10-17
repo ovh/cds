@@ -65,6 +65,15 @@ type Identifiable interface {
 	GetEmail() string
 }
 
+type UserRegistration struct {
+	ID       string    `json:"id" db:"id"`
+	Created  time.Time `json:"created" db:"created"`
+	Username string    `json:"username"  db:"username"`
+	Fullname string    `json:"fullname"  db:"fullname"`
+	Email    string    `json:"email"  db:"email"`
+	Hash     string    `json:"-"  db:"hash"` // do no return hash in json
+}
+
 // AuthentifiedUser struct contains all information about a cds user.
 type AuthentifiedUser struct {
 	ID       string    `json:"id" yaml:"id" cli:"id,key" db:"id"`

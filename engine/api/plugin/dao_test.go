@@ -6,10 +6,12 @@ import (
 	"path"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestInsertUpdateLoadDelete(t *testing.T) {
@@ -29,17 +31,26 @@ func TestInsertUpdateLoadDelete(t *testing.T) {
 
 	db, _, end := test.SetupPG(t)
 	defer end()
-	test.NoError(t, Insert(db, &p))
+
+	require.NoError(t, Insert(db, &p))
 	assert.NotEqual(t, 0, p.ID)
 
-	test.NoError(t, Update(db, &p))
+	require.NoError(t, Update(db, &p))
 
 	_, err := LoadByName(db, "test_plugin")
 	test.NoError(t, err)
 
 	all, err := LoadAll(db)
-	test.NoError(t, err)
-	assert.Len(t, all, 1)
+	require.NoError(t, err)
+	assert.True(t, len(all) >= 1)
+	var found bool
+	for i := range all {
+		if all[i].ID == p.ID {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found)
 
 	// Init store
 	cfg := objectstore.Config{
