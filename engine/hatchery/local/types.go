@@ -13,7 +13,7 @@ import (
 // HatcheryConfiguration is the configuration for local hatchery
 type HatcheryConfiguration struct {
 	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
-	Basedir                      string `mapstructure:"basedir" toml:"basedir" default:"/tmp" comment:"BaseDir for worker workspace" json:"basedir"`
+	Basedir                      string `mapstructure:"basedir" toml:"basedir" default:"/var/lib/cds-engine" comment:"BaseDir for worker workspace" json:"basedir"`
 	NbProvision                  int    `mapstructure:"nbProvision" toml:"nbProvision" default:"1" comment:"Nb Workers to provision" json:"nbProvision"`
 }
 
@@ -22,9 +22,10 @@ type HatcheryLocal struct {
 	hatcheryCommon.Common
 	Config HatcheryConfiguration
 	sync.Mutex
-	hatch      *sdk.Hatchery
-	workers    map[string]workerCmd
-	ModelLocal sdk.Model
+	hatch            *sdk.Hatchery
+	workers          map[string]workerCmd
+	ModelLocal       sdk.Model
+	BasedirDedicated string
 }
 
 type workerCmd struct {

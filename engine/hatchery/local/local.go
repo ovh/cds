@@ -7,10 +7,13 @@ import (
 	"encoding/hex"
 	"fmt"
 	"html/template"
+	"io"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -95,11 +98,6 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("please enter a name in your local hatchery configuration")
 	}
 
-	if ok, err := api.DirectoryExists(hconfig.Basedir); !ok {
-		return fmt.Errorf("Basedir doesn't exist")
-	} else if err != nil {
-		return fmt.Errorf("Invalid basedir: %v", err)
-	}
 	return nil
 }
 
@@ -135,12 +133,27 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 		return fmt.Errorf("Cannot check local capabilities: %v", err)
 	}
 
+	h.BasedirDedicated = filepath.Dir(filepath.Join(h.Config.Basedir, h.Name))
+	if ok, err := api.DirectoryExists(h.BasedirDedicated); !ok {
+		log.Debug("creating directory %s", h.BasedirDedicated)
+		if err := os.MkdirAll(h.BasedirDedicated, 0700); err != nil {
+			return sdk.WrapError(err, "error while creating directory %s", h.BasedirDedicated)
+		}
+	} else if err != nil {
+		return fmt.Errorf("Invalid basedir: %v", err)
+	}
+
+	if err := h.downloadWorker(); err != nil {
+		return fmt.Errorf("Cannot download worker binary from api: %v", err)
+	}
+
+	cmdWorker := fmt.Sprintf("%s/worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --single-use --force-exit", h.BasedirDedicated)
 	h.ModelLocal = sdk.Model{
 		Name: h.Name,
 		Type: sdk.HostProcess,
 		ModelVirtualMachine: sdk.ModelVirtualMachine{
 			Image: h.Name,
-			Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --single-use --force-exit",
+			Cmd:   cmdWorker,
 		},
 		RegisteredArch:         sdk.GOARCH,
 		RegisteredOS:           sdk.GOOS,
@@ -149,6 +162,46 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 	}
 
 	return h.CommonServe(ctx, h)
+}
+
+func (h *HatcheryLocal) downloadWorker() error {
+	urlBinary := h.Client.DownloadURLFromAPI("worker", sdk.GOOS, sdk.GOARCH, "")
+
+	log.Debug("downloading worker binary from %s", urlBinary)
+	resp, err := http.Get(urlBinary)
+	if err != nil {
+		return sdk.WrapError(err, "error while getting binary from CDS API")
+	}
+	defer resp.Body.Close()
+
+	if contentType := sdk.GetContentType(resp); contentType != "application/octet-stream" {
+		return fmt.Errorf("Invalid Binary (Content-Type: %s). Please try again or download it manually from %s", contentType, sdk.URLGithubReleases)
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Error http code: %d, url called: %s", resp.StatusCode, urlBinary)
+	}
+
+	workerFullPath := path.Join(h.BasedirDedicated, "worker")
+
+	if _, err := os.Stat(workerFullPath); err == nil {
+		log.Debug("removing existing worker binary from %s", workerFullPath)
+		if err := os.Remove(workerFullPath); err != nil {
+			return sdk.WrapError(err, "error while removing existing worker binary %s", workerFullPath)
+		}
+	}
+
+	log.Debug("copy worker binary into %s", workerFullPath)
+	fp, err := os.OpenFile(workerFullPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0700)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if _, err := io.Copy(fp, resp.Body); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	return sdk.WithStack(fp.Close())
 }
 
 // checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
