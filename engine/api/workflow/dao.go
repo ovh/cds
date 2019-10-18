@@ -942,13 +942,19 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	}
 
 	// Delete workflow data
-	if uptOption.OldWorkflow != nil {
+	if uptOption.OldWorkflow != nil && uptOption.OldWorkflow.ID != 0 {
 		if err := DeleteWorkflowData(db, *uptOption.OldWorkflow); err != nil {
 			return sdk.WrapError(err, "unable to delete from old workflow data(%d - %s)", w.ID, w.Name)
 		}
 	} else {
-		if err := DeleteWorkflowData(db, *w); err != nil {
-			return sdk.WrapError(err, "unable to delete from workflow data(%d - %s)", w.ID, w.Name)
+		oldW, err := Load(ctx, db, store, p, w.Name, u, LoadOptions{})
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
+			return sdk.WrapError(err, "unable to load old workflow to delete workflow data")
+		}
+		if err == nil {
+			if err := DeleteWorkflowData(db, *oldW); err != nil {
+				return sdk.WrapError(err, "unable to delete from workflow data(%d - %s)", oldW.ID, oldW.Name)
+			}
 		}
 	}
 
