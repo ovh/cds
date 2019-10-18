@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -75,6 +76,9 @@ type ConfigOptionsAWSS3 struct {
 	AccessKeyID         string
 	SecretAccessKey     string
 	SessionToken        string
+	Endpoint            string //optional
+	DisableSSL          bool   //optional
+	ForcePathStyle      bool   //optional
 }
 
 // ConfigOptionsOpenstack is used by ConfigOptions
@@ -119,13 +123,19 @@ func initDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver
 
 	switch projectIntegration.Model.Name {
 	case sdk.AWSIntegrationModel:
-		return newS3Store(projectIntegration, ConfigOptionsAWSS3{
+		cfg := ConfigOptionsAWSS3{
 			Region:          projectIntegration.Config["region"].Value,
 			BucketName:      projectIntegration.Config["bucket_name"].Value,
 			Prefix:          projectIntegration.Config["prefix"].Value,
 			AccessKeyID:     projectIntegration.Config["access_key_id"].Value,
 			SecretAccessKey: projectIntegration.Config["secret_access_key"].Value,
-		})
+		}
+		if endpoint := projectIntegration.Config["endpoint"].Value; endpoint != "" {
+			cfg.Endpoint = endpoint
+			cfg.DisableSSL, _ = strconv.ParseBool(projectIntegration.Config["disable_ssl"].Value)
+			cfg.ForcePathStyle, _ = strconv.ParseBool(projectIntegration.Config["force_path_style"].Value)
+		}
+		return newS3Store(projectIntegration, cfg)
 	case sdk.OpenstackIntegrationModel:
 		return newSwiftStore(projectIntegration, ConfigOptionsOpenstack{
 			Address:         projectIntegration.Config["address"].Value,
