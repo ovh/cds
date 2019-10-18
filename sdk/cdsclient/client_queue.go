@@ -284,12 +284,12 @@ func (c *client) QueueArtifactUpload(ctx context.Context, projectKey, integratio
 	store := new(sdk.ArtifactsStore)
 	uri := fmt.Sprintf("/project/%s/storage/%s", projectKey, integrationName)
 	_, _ = c.GetJSON(ctx, uri, store)
-	if store.TemporaryURLSupported {
-		err := c.queueIndirectArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath)
-		return true, time.Since(t0), err
-	}
-	err := c.queueDirectArtifactUpload(projectKey, integrationName, nodeJobRunID, tag, filePath)
-	return false, time.Since(t0), err
+	// if store.TemporaryURLSupported {
+	err := c.queueIndirectArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath)
+	return true, time.Since(t0), err
+	// }
+	// err := c.queueDirectArtifactUpload(projectKey, integrationName, nodeJobRunID, tag, filePath)
+	// return false, time.Since(t0), err
 }
 
 func (c *client) queueIndirectArtifactTempURL(ctx context.Context, projectKey, integrationName string, art *sdk.WorkflowNodeRunArtifact) error {
@@ -318,7 +318,7 @@ func (c *client) queueIndirectArtifactTempURLPost(url string, content []byte) er
 	var globalErr error
 	var body []byte
 	for i := 0; i < retry; i++ {
-		req, errRequest := http.NewRequest("PUT", url, bytes.NewBuffer(content))
+		req, errRequest := http.NewRequest("POST", url, bytes.NewBuffer(content))
 		if errRequest != nil {
 			return errRequest
 		}

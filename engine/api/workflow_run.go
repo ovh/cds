@@ -10,6 +10,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ovh/cds/engine/api/authentication"
+	cdnauth "github.com/ovh/cds/engine/api/authentication/cdn"
+	"github.com/ovh/cds/engine/api/services"
+
 	"github.com/ovh/cds/engine/api/permission"
 
 	"github.com/go-gorp/gorp"
@@ -1127,23 +1131,50 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 			integrationName = sdk.DefaultStorageIntegrationName
 		}
 
-		storageDriver, err := api.getStorageDriver(proj.Key, integrationName)
+		// storageDriver, err := api.getStorageDriver(proj.Key, integrationName)
+		// if err != nil {
+		// 	return err
+		// }
+
+		// f, err := storageDriver.Fetch(art)
+		// if err != nil {
+		// 	_ = f.Close()
+		// 	return sdk.WrapError(err, "Cannot fetch artifact")
+		// }
+		cdns, err := services.LoadAllByType(ctx, api.mustDB(), services.TypeCDN)
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "cannot get services")
+		}
+		cdn := cdns[0]
+		cdnReq := sdk.CDNRequest{
+			Type:            sdk.CDNArtifactType,
+			IntegrationName: integrationName,
+			ProjectKey:      vars["permProjectKey"],
+			Artifact:        art,
 		}
 
-		f, err := storageDriver.Fetch(art)
+		cdnReqToken, err := authentication.SignJWS(cdnReq, cdnauth.SessionDuration)
 		if err != nil {
-			_ = f.Close()
-			return sdk.WrapError(err, "Cannot fetch artifact")
+			return sdk.WrapError(err, "cannot sign jws for cdn request")
 		}
 
-		if _, err := io.Copy(w, f); err != nil {
-			_ = f.Close()
+		httpClient := http.Client{
+			Timeout: 30 * time.Minute,
+		}
+		res, err := httpClient.Get(cdn.HTTPURL + "/download/" + cdnReqToken)
+		if err != nil {
+			return sdk.WrapError(err, "cannot download artifact")
+		}
+		if res.StatusCode >= 400 {
+			return fmt.Errorf("cannot download artifact, status code: %d", res.StatusCode)
+		}
+
+		if _, err := io.Copy(w, res.Body); err != nil {
+			_ = res.Body.Close()
 			return sdk.WrapError(err, "Cannot stream artifact")
 		}
 
-		if err := f.Close(); err != nil {
+		if err := res.Body.Close(); err != nil {
 			return sdk.WrapError(err, "Cannot close artifact")
 		}
 		return nil
