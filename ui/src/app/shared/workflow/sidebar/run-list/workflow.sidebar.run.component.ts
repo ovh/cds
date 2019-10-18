@@ -180,7 +180,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     refreshDuration(): void {
         if (this.workflowRuns) {
             let stillWorking = false;
-            if (this.workflow) {
+            if (this.workflow && this.workflow.metadata && this.workflow.metadata['default_tags']) {
                 this.tagToDisplay = this.workflow.metadata['default_tags'].split(',');
             }
             this.workflowRuns.forEach((r) => {
