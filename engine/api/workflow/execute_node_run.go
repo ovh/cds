@@ -607,6 +607,7 @@ func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, 
 //NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
 func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
 	runContext := nodeRunContext{}
+	res := []sdk.Parameter{}
 	if refNode != nil && refNode.Context != nil {
 		if refNode.Context.PipelineID != 0 && wf.Pipelines != nil {
 			pip, has := wf.Pipelines[refNode.Context.PipelineID]
@@ -633,10 +634,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 			}
 		}
 		runContext.NodeGroups = refNode.Groups
-	}
 
-	res := []sdk.Parameter{}
-	if len(res) == 0 {
 		var err error
 		res, err = getBuildParameterFromNodeContext(proj, wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
 		if err != nil {
