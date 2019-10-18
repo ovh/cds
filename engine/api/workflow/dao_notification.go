@@ -95,7 +95,7 @@ func InsertNotification(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNot
 	}
 
 	for _, s := range n.SourceNodeRefs {
-		nodeFoundRef := w.WorkflowData.NodeByRef(s)
+		nodeFoundRef := w.WorkflowData.NodeByName(s)
 		if nodeFoundRef == nil || nodeFoundRef.ID == 0 {
 			return sdk.WrapError(sdk.ErrWorkflowNotificationNodeRef, "insertNotification> Invalid notification references node %s", s)
 		}
