@@ -135,9 +135,9 @@ type Configuration struct {
 			AccessKeyID         string `toml:"accessKeyId" json:"accessKeyId" comment:"A static AWS Secret Key ID"`
 			SecretAccessKey     string `toml:"secretAccessKey" json:"-" comment:"A static AWS Secret Access Key"`
 			SessionToken        string `toml:"sessionToken" json:"-" comment:"A static AWS session token"`
-			Endpoint            string `toml:"endpoint" json:"endpoint" comment:"S3 API Endpoint (optional)" commented:"true"` //optionnal
-			DisableSSL          bool   `toml:"disableSSL" json:"disableSSL" commented:"true"`                                  //optionnal
-			S3ForcePathStyle    bool   `toml:"s3ForcePathStyle" json:"s3ForcePathStyle" commented:"true"`                      //optionnal
+			Endpoint            string `toml:"endpoint" json:"endpoint" comment:"S3 API Endpoint (optional)" commented:"true"` //optional
+			DisableSSL          bool   `toml:"disableSSL" json:"disableSSL" commented:"true"`                                  //optional
+			ForcePathStyle      bool   `toml:"forcePathStyle" json:"forcePathStyle" commented:"true"`                          //optional
 		} `toml:"awss3" json:"awss3"`
 	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported" json:"artifact"`
 	Features struct {
@@ -581,7 +581,7 @@ func (a *API) Serve(ctx context.Context) error {
 				SessionToken:        a.Config.Artifact.AWSS3.SessionToken,
 				Endpoint:            a.Config.Artifact.AWSS3.Endpoint,
 				DisableSSL:          a.Config.Artifact.AWSS3.DisableSSL,
-				S3ForcePathStyle:    a.Config.Artifact.AWSS3.S3ForcePathStyle,
+				ForcePathStyle:      a.Config.Artifact.AWSS3.ForcePathStyle,
 			},
 			Openstack: objectstore.ConfigOptionsOpenstack{
 				Address:         a.Config.Artifact.Openstack.URL,

@@ -120,6 +120,15 @@ var (
 			"secret_access_key": IntegrationConfigValue{
 				Type: IntegrationConfigTypePassword,
 			},
+			"endpoint": IntegrationConfigValue{
+				Type: IntegrationConfigTypeString,
+			},
+			"disable_ssl": IntegrationConfigValue{
+				Type: IntegrationConfigTypeBoolean,
+			},
+			"force_path_style": IntegrationConfigValue{
+				Type: IntegrationConfigTypeBoolean,
+			},
 		},
 		Storage:  true,
 		Disabled: false,
@@ -195,6 +204,8 @@ const (
 	IntegrationConfigTypeText = "text"
 	// IntegrationConfigTypePassword represents a password configuration value
 	IntegrationConfigTypePassword = "password"
+	// IntegrationConfigTypeBoolean represents a password configuration value
+	IntegrationConfigTypeBoolean = "boolean"
 )
 
 // IntegrationConfigValue represent a configuration value for a integration

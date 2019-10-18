@@ -43,7 +43,7 @@ func newS3Store(integration sdk.ProjectIntegration, conf ConfigOptionsAWSS3) (*A
 	if conf.Endpoint != "" {
 		aConf.Endpoint = aws.String(conf.Endpoint)
 		aConf.DisableSSL = aws.Bool(conf.DisableSSL)
-		aConf.S3ForcePathStyle = aws.Bool(conf.S3ForcePathStyle)
+		aConf.S3ForcePathStyle = aws.Bool(conf.ForcePathStyle)
 	}
 
 	sess, err := session.NewSession(aConf)
