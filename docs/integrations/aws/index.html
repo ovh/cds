@@ -389,6 +389,7 @@
 <ul>
 <li><a href="#import-a-aws-s3-on-your-cds-project">Import a AWS S3 on your CDS Project</a></li>
 <li><a href="#create-a-public-aws-s3-for-whole-cds-projects">Create a Public AWS S3 for whole CDS Projects</a></li>
+<li><a href="#using-min-io-as-an-alternative">Using min.io as an alternative</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -424,7 +425,6 @@ allows user to use their own AWS S3 Storage and not use the shared storage.</p>
 <pre><code class="language-yml">name: MyAWS
 model:
   name: AWS
-  public: false
 config:
   region:
     value: your-region
@@ -480,6 +480,54 @@ public_configurations:
 <p>Import the integration with :</p>
 
 <pre><code class="language-bash">cdsctl admin integration-model import public-configuration.yml
+</code></pre>
+
+<h3 id="using-min-io-as-an-alternative">Using min.io as an alternative</h3>
+
+<p><a href="https://min.io">Minio</a> is a Open Source, Enterprise-Grade, Amazon S3 Compatible Object Storage.</p>
+
+<p>According to <a href="https://docs.min.io/docs/how-to-use-aws-sdk-for-go-with-minio-server.html">https://docs.min.io/docs/how-to-use-aws-sdk-for-go-with-minio-server.html</a>, you can define <code>endpoint</code>, <code>disable_ssl</code>, <code>force_path_style</code> to link CDS to a Minio server.</p>
+
+<p>For example, you can run a minio local server with the following docker command.</p>
+
+<pre><code class="language-bash">docker run -p 9000:9000 --name minio1 \
+  -e &quot;MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE&quot; \
+  -e &quot;MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY&quot; \
+  -v /mnt/data:/data \
+  minio/minio server /data
+</code></pre>
+
+<p>Then you can import the following content to you project with the <code>cdsctl project integration import</code> command.</p>
+
+<pre><code class="language-yaml">name: local min.io
+model:
+  name: AWS
+storage: true
+config:
+  region:
+    value: us-east-1
+    type: string
+  bucket_name:
+    value: cds-storage
+    type: string
+  prefix:
+    value: cds-prefix-
+    type: string
+  access_key_id:
+    value: 'AKIAIOSFODNN7EXAMPLE'
+    type: string
+  secret_access_key:
+    value: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+    type: password
+  endpoint:
+    value: 'http://localhost:9000'
+    type: string
+  disable_ssl:
+    value: 'true'
+    type: boolean
+  force_path_style:
+    value: 'true'
+    type: boolean
 </code></pre>
 
 
