@@ -268,9 +268,9 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 			return err
 		}
 
-		if !storageDriver.TemporaryURLSupported() {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
+		// if !storageDriver.TemporaryURLSupported() {
+		// 	return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifactWithTempURLCallbackHandler")
+		// }
 
 		art := sdk.WorkflowNodeRunArtifact{}
 		if err := service.UnmarshalBody(r, &art); err != nil {
@@ -325,9 +325,9 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 			return err
 		}
 
-		if !storageDriver.TemporaryURLSupported() {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
+		// if !storageDriver.TemporaryURLSupported() {
+		// 	return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler")
+		// }
 
 		// var store objectstore.DriverWithRedirect
 		// var ok bool
@@ -379,7 +379,12 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load services of type CDN")
 		}
 		cdnService := srvs[0]
-		cdnReq := sdk.CDNRequest{}
+		cdnReq := sdk.CDNRequest{
+			Type:            sdk.CDNArtifactType,
+			IntegrationName: vars["integrationName"],
+			ProjectKey:      vars["permProjectKey"],
+			Artifact:        &art,
+		}
 
 		cdnReqToken, err := authentication.SignJWS(cdnReq, cdnauth.SessionDuration)
 		if err != nil {
@@ -409,6 +414,8 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		if err := api.Cache.SetWithTTL(cacheKey, art, 60*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 		}
+
+		fmt.Printf("---- %+v\n", art)
 
 		return service.WriteJSON(w, art, http.StatusOK)
 	}

@@ -308,14 +308,14 @@ func (nr *WorkflowNodeRun) Translate(lang string) {
 
 //WorkflowNodeRunArtifact represents tests list
 type WorkflowNodeRunArtifact struct {
-	WorkflowID           int64     `json:"workflow_id" db:"workflow_run_id"`
-	WorkflowNodeRunID    int64     `json:"workflow_node_run_id" db:"workflow_node_run_id"`
-	WorkflowNodeJobRunID int64     `json:"workflow_node_job_run_id" db:"-"`
-	ID                   int64     `json:"id" db:"id"`
-	Name                 string    `json:"name" db:"name" cli:"name,key"`
-	Tag                  string    `json:"tag" db:"tag" cli:"tag"`
-	Ref                  string    `json:"ref" db:"ref" cli:"ref"`
-	DownloadHash         string    `json:"download_hash" db:"download_hash"`
+	WorkflowID           int64     `json:"workflow_id,omitempty" db:"workflow_run_id"`
+	WorkflowNodeRunID    int64     `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
+	WorkflowNodeJobRunID int64     `json:"workflow_node_job_run_id,omitempty" db:"-"`
+	ID                   int64     `json:"id,omitempty" db:"id"`
+	Name                 string    `json:"name,omitempty" db:"name" cli:"name,key"`
+	Tag                  string    `json:"tag,omitempty" db:"tag" cli:"tag"`
+	Ref                  string    `json:"ref,omitempty" db:"ref" cli:"ref"`
+	DownloadHash         string    `json:"download_hash,omitempty" db:"download_hash"`
 	Size                 int64     `json:"size,omitempty" db:"size"`
 	Perm                 uint32    `json:"perm,omitempty" db:"perm"`
 	MD5sum               string    `json:"md5sum,omitempty" db:"md5sum" cli:"-"`
@@ -324,7 +324,7 @@ type WorkflowNodeRunArtifact struct {
 	Created              time.Time `json:"created,omitempty" db:"created"`
 	TempURL              string    `json:"temp_url,omitempty" db:"-"`
 	TempURLSecretKey     string    `json:"-" db:"-"`
-	ProjectIntegrationID *int64    `json:"project_integration_id" db:"project_integration_id"`
+	ProjectIntegrationID *int64    `json:"project_integration_id,omitempty" db:"project_integration_id"`
 }
 
 // Equal returns true if w WorkflowNodeRunArtifact equals c

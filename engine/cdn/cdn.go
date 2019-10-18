@@ -87,6 +87,11 @@ func (s *Service) Serve(c context.Context) error {
 		return fmt.Errorf("Cannot connect to redis instance : %v", errCache)
 	}
 
+	// init drivers
+	if err := s.initDefaultDrivers(ctx); err != nil {
+		return sdk.WrapError(err, "cannot init drivers")
+	}
+
 	//Init the http server
 	s.initRouter(ctx)
 	server := &http.Server{
@@ -134,6 +139,7 @@ func (s *Service) initDefaultDrivers(ctx context.Context) error {
 		}
 
 		if name == "default" {
+			log.Info("Init default backend of type...")
 			var errDriver error
 			s.DefaultDriver, errDriver = objectstore.Init(ctx, driverCfg)
 			if errDriver != nil {
