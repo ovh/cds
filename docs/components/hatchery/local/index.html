@@ -20,17 +20,17 @@
     content="Use case If you are a CDS user, you can use shared.infra Worker to run your job.
 But, if you want to use your host for various good reasons as OS, Network, etc&hellip; you can launch CDS Worker on your host.
 Two prerequisites:
- your host must reach your CDS API on HTTP port or GRPC Port defined on your CDS Configuration you need the CDS Worker binary on your host.">
+ your host must reach your CDS API on HTTP port defined on your CDS Configuration the basedir (default is /var/lib/cds-engine) must allow to execute binaries.  The worker binary is downloaded from CDS API at the start of the hatchery, it&rsquo;s placed into basedir directory.">
 <meta property="og:description"
     content="Use case If you are a CDS user, you can use shared.infra Worker to run your job.
 But, if you want to use your host for various good reasons as OS, Network, etc&hellip; you can launch CDS Worker on your host.
 Two prerequisites:
- your host must reach your CDS API on HTTP port or GRPC Port defined on your CDS Configuration you need the CDS Worker binary on your host.">
+ your host must reach your CDS API on HTTP port defined on your CDS Configuration the basedir (default is /var/lib/cds-engine) must allow to execute binaries.  The worker binary is downloaded from CDS API at the start of the hatchery, it&rsquo;s placed into basedir directory.">
 <meta name="twitter:description"
     content="Use case If you are a CDS user, you can use shared.infra Worker to run your job.
 But, if you want to use your host for various good reasons as OS, Network, etc&hellip; you can launch CDS Worker on your host.
 Two prerequisites:
- your host must reach your CDS API on HTTP port or GRPC Port defined on your CDS Configuration you need the CDS Worker binary on your host.">
+ your host must reach your CDS API on HTTP port defined on your CDS Configuration the basedir (default is /var/lib/cds-engine) must allow to execute binaries.  The worker binary is downloaded from CDS API at the start of the hatchery, it&rsquo;s placed into basedir directory.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/components/hatchery/local/">
 <meta property="og:title" content="Hatchery Local">
 <meta name="twitter:title" content="Hatchery Local">
@@ -2424,11 +2424,11 @@ can launch CDS Worker on your host.</p>
 <p>Two prerequisites:</p>
 
 <ul>
-<li>your host must reach your CDS API on HTTP port or GRPC Port defined on your <a href="https://ovh.github.io/cds/hosting/configuration/">CDS Configuration</a></li>
-<li>you need the CDS Worker binary on your host.</li>
+<li>your host must reach your CDS API on HTTP port defined on your <a href="https://ovh.github.io/cds/hosting/configuration/">CDS Configuration</a></li>
+<li>the basedir (default is <code>/var/lib/cds-engine</code>) must allow to execute binaries.</li>
 </ul>
 
-<p>You can download it from <a href="https://github.com/ovh/cds/releases">latest release on GitHub</a> or from download page on your CDS Instance (Navbar -&gt; Settings -&gt; Download)</p>
+<p>The worker binary is downloaded from CDS API at the start of the hatchery, it&rsquo;s placed into <code>basedir</code> directory.</p>
 
 <h2 id="start-local-hatchery">Start Local hatchery</h2>
 
@@ -2442,8 +2442,6 @@ token       xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx
 </code></pre>
 
 <p>Edit the <a href="https://ovh.github.io/cds/hosting/configuration/">CDS Configuration</a> or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated.</p>
-
-<p>This hatchery use the CDS worker binary existing on the PATH on your host.</p>
 
 <p>Then start hatchery:</p>
 

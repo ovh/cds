@@ -51,7 +51,7 @@ How to run $ mkdir /tmp/cdstest &amp;amp;&amp;amp; cd /tmp/cdstest $ curl https:
       <description>Use case If you are a CDS user, you can use shared.infra Worker to run your job.
 But, if you want to use your host for various good reasons as OS, Network, etc&amp;hellip; you can launch CDS Worker on your host.
 Two prerequisites:
- your host must reach your CDS API on HTTP port or GRPC Port defined on your CDS Configuration you need the CDS Worker binary on your host.</description>
+ your host must reach your CDS API on HTTP port defined on your CDS Configuration the basedir (default is /var/lib/cds-engine) must allow to execute binaries.  The worker binary is downloaded from CDS API at the start of the hatchery, it&amp;rsquo;s placed into basedir directory.</description>
     </item>
     
     <item>
