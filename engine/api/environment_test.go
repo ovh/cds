@@ -281,6 +281,13 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 	}
 	test.NoError(t, environment.InsertVariable(api.mustDB(), env.ID, v, u))
 
+	v2 := &sdk.Variable{
+		Name:  "var2",
+		Type:  sdk.SecretVariable,
+		Value: "val2",
+	}
+	test.NoError(t, environment.InsertVariable(api.mustDB(), env.ID, v2, u))
+
 	vars := map[string]string{
 		"permProjectKey":  proj.Key,
 		"environmentName": env.Name,
@@ -304,4 +311,13 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
+
+	// the secret variable must not be here
+	env2, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Production2")
+	if err != nil {
+		t.Fail()
+		return
+	}
+	assert.Equal(t, len(env2.Variable), 1)
+	assert.Equal(t, env2.Variable[0].Type, sdk.StringVariable)
 }
