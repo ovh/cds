@@ -949,7 +949,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	} else {
 		oldW, err := Load(ctx, db, store, p, w.Name, u, LoadOptions{})
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
-			return sdk.WrapError(err, "unable to laod old workflow to delete workflow data")
+			return sdk.WrapError(err, "unable to load old workflow to delete workflow data")
 		}
 		if err == nil {
 			if err := DeleteWorkflowData(db, *oldW); err != nil {
