@@ -238,8 +238,10 @@ func (h *HatcheryOpenstack) killAwolServers() {
 		// if the vm is in BUILD state since > 15 min, we delete it
 		if s.Status == "BUILD" {
 			if isWorker && time.Since(s.Updated) > 15*time.Minute {
-				log.Debug("killAwolServers> Deleting server %s status: %s last update: %s", s.Name, s.Status, time.Since(s.Updated))
-				_ = h.deleteServer(s)
+				log.Warning("killAwolServers> Deleting server %s status: %s last update: %s", s.Name, s.Status, time.Since(s.Updated))
+				if err := h.deleteServer(s); err != nil {
+					log.Error("killAwolServers> Error while deleting server %s not created status: %s last update: %s", s.Name, s.Status, time.Since(s.Updated))
+				}
 			}
 			continue
 		}
