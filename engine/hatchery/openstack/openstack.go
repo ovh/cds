@@ -234,7 +234,15 @@ func (h *HatcheryOpenstack) killAwolServers() {
 
 	for _, s := range h.getServers() {
 		log.Debug("killAwolServers> Checking %s %v", s.Name, s.Metadata)
+		workerName, isWorker := s.Metadata["worker"]
+		// if the vm is in BUILD state since > 15 min, we delete it
 		if s.Status == "BUILD" {
+			if isWorker && time.Since(s.Updated) > 15*time.Minute {
+				log.Warning("killAwolServers> Deleting server %s status: %s last update: %s", s.Name, s.Status, time.Since(s.Updated))
+				if err := h.deleteServer(s); err != nil {
+					log.Error("killAwolServers> Error while deleting server %s not created status: %s last update: %s", s.Name, s.Status, time.Since(s.Updated))
+				}
+			}
 			continue
 		}
 
@@ -253,7 +261,6 @@ func (h *HatcheryOpenstack) killAwolServers() {
 		}
 
 		workerHatcheryName, _ := s.Metadata["hatchery_name"]
-		workerName, isWorker := s.Metadata["worker"]
 		registerOnly, _ := s.Metadata["register_only"]
 		workerModelName, _ := s.Metadata["worker_model_name"]
 		workerModelNameLastModified, _ := s.Metadata["worker_model_last_modified"]
