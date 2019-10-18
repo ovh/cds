@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -438,4 +439,12 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	}
 
 	return doRestart, nil
+}
+
+func getPayloadStringVariable(payload map[string]interface{}, msg interface{}) {
+	payloadStr, err := json.Marshal(msg)
+	if err != nil {
+		log.Error("Unable to marshal payload: %v", err)
+	}
+	payload[PAYLOAD] = string(payloadStr)
 }

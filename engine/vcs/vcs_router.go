@@ -40,7 +40,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/pullrequests/{id}", r.GET(s.getPullRequestHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/pullrequests/{id}/comments", r.POST(s.postPullRequestCommentHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/events", r.GET(s.getEventsHandler, api.EnableTracing()), r.POST(s.postFilterEventsHandler, api.EnableTracing()))
-	r.Handle("/vcs/{name}/repos/{owner}/{repo}/hooks", r.GET(s.getHookHandler, api.EnableTracing()), r.POST(s.postHookHandler, api.EnableTracing()), r.DELETE(s.deleteHookHandler, api.EnableTracing()))
+	r.Handle("/vcs/{name}/repos/{owner}/{repo}/hooks", r.GET(s.getHookHandler, api.EnableTracing()), r.POST(s.postHookHandler, api.EnableTracing()), r.PUT(s.putHookHandler, api.EnableTracing()), r.DELETE(s.deleteHookHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/releases", r.POST(s.postReleaseHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/releases/{release}/artifacts/{artifactName}", r.POST(s.postUploadReleaseFileHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/forks", r.GET(s.getListForks, api.EnableTracing()))
