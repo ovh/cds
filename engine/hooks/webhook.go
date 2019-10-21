@@ -46,7 +46,7 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 	payloads := []map[string]interface{}{}
 
 	var events []string
-	if _, ok := t.Config[sdk.HookConfigEventFilter]; ok {
+	if _, ok := t.Config[sdk.HookConfigEventFilter]; ok && t.Config[sdk.HookConfigEventFilter].Value != "" {
 		events = strings.Split(t.Config[sdk.HookConfigEventFilter].Value, ";")
 	}
 
