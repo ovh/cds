@@ -88,7 +88,7 @@ func (g *githubClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 	if err != nil {
 		return sdk.WrapError(err, "Cannot marshal body %+v", githubWebHook)
 	}
-	res, err := g.put(url, "application/json", bytes.NewBuffer(b), nil)
+	res, err := g.patch(url, "application/json", bytes.NewBuffer(b), nil)
 	if err != nil {
 		return sdk.WrapError(err, "github.UpdateHook")
 	}
