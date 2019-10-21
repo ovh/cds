@@ -1176,10 +1176,10 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 			Type: sdk.NodeTypeJoin,
 			JoinContext: []sdk.NodeJoin{
 				{
-					ParentName: "pip1",
+					ParentName: w.WorkflowData.Node.Name,
 				},
 				{
-					ParentName: "pip2",
+					ParentName: w.WorkflowData.Node.Triggers[0].ChildNode.Name,
 				},
 			},
 			Triggers: []sdk.NodeTrigger{
