@@ -1021,8 +1021,6 @@ func MarkAsDelete(db gorp.SqlExecutor, w *sdk.Workflow) error {
 
 // Delete workflow
 func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow) error {
-	log.Debug("Delete> deleting workflow %d", w.ID)
-
 	// Delete all hooks
 	if err := hookUnregistration(ctx, db, store, p, w.WorkflowData.GetHooks()); err != nil {
 		return sdk.WrapError(err, "Unable to delete hooks from workflow")

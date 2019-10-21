@@ -613,11 +613,11 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 		}
 
 		// Check if there is hooks on this application
-		hooksCount, err := workflow.CountHooksByApplication(db, app.ID)
+		repositoryWebHooksCount, err := workflow.CountRepositoryWebHooksByApplication(db, app.ID)
 		if err != nil {
 			return err
 		}
-		if hooksCount > 0 {
+		if repositoryWebHooksCount > 0 {
 			return sdk.WithStack(sdk.ErrRepositoryUsedByHook)
 		}
 
