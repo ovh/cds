@@ -178,7 +178,7 @@ export class WorkflowComponent {
 
     initRuns(key: string, workflowName: string, filters?: {}): void {
         this._store.dispatch(
-            new GetWorkflowRuns({projectKey: key, workflowName: workflowName, limit: '50', offset: '0', filters: filters})
+            new GetWorkflowRuns({projectKey: key, workflowName: workflowName, limit: '50', offset: '0', filters})
         );
     }
 

@@ -164,7 +164,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         }
 
         this._store.dispatch(new GetWorkflowRuns(
-            {projectKey: this.project.key, workflowName: this.workflow.name, limit: '50', offset: '0', filters: filters})
+            {projectKey: this.project.key, workflowName: this.workflow.name, limit: '50', offset: '0', filters})
         );
     }
 
