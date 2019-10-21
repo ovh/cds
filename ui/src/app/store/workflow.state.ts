@@ -30,6 +30,7 @@ export class WorkflowStateModel {
     workflowRun: WorkflowRun;
     workflowNodeRun: WorkflowNodeRun;
     listRuns: Array<WorkflowRun>;
+    filters?: {};
 }
 
 export function getInitialWorkflowState(): WorkflowStateModel {
@@ -47,7 +48,8 @@ export function getInitialWorkflowState(): WorkflowStateModel {
         workflowRun: null,
         workflowNodeRun: null,
         listRuns: new Array<WorkflowRun>(),
-        sidebar: WorkflowSidebarMode.RUNS
+        sidebar: WorkflowSidebarMode.RUNS,
+        filters: {}
     };
 }
 
@@ -785,9 +787,14 @@ export class WorkflowState {
         ctx.setState({
             ...state,
             loadingWorkflowRuns: true,
+            filters: action.payload.filters
         });
         return this._workflowRunService
-            .runs(action.payload.projectKey, action.payload.workflowName, action.payload.limit).pipe(first(),
+            .runs(action.payload.projectKey,
+                action.payload.workflowName,
+                action.payload.limit,
+                action.payload.offset,
+                action.payload.filters).pipe(first(),
                 finalize(() => {
                     const stateFin = ctx.getState();
                     ctx.setState({

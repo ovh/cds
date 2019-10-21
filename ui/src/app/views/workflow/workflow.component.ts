@@ -133,7 +133,7 @@ export class WorkflowComponent {
 
             if (s.workflow && (!this.workflow || (this.workflow && s.workflow.id !== this.workflow.id))) {
                 this.workflow = s.workflow;
-                this.initRuns(s.projectKey, s.workflow.name);
+                this.initRuns(s.projectKey, s.workflow.name, s.filters);
             }
             if (s.workflow) {
                 this.workflow = s.workflow;
@@ -176,8 +176,10 @@ export class WorkflowComponent {
         });
     }
 
-    initRuns(key: string, workflowName: string): void {
-        this._store.dispatch(new GetWorkflowRuns({projectKey: key, workflowName: workflowName, limit: '50'}));
+    initRuns(key: string, workflowName: string, filters?: {}): void {
+        this._store.dispatch(
+            new GetWorkflowRuns({projectKey: key, workflowName: workflowName, limit: '50', offset: '0', filters: filters})
+        );
     }
 
     updateFav() {
