@@ -188,7 +188,7 @@ func (g *githubClient) GrantWritePermission(ctx context.Context, fullname string
 
 		// Accept the invitation
 		url := fmt.Sprintf("/user/repository_invitations/%d", invit.ID)
-		resp, err := g.patch(url, &postOptions{asUser: true})
+		resp, err := g.patch(url, "", nil, &postOptions{asUser: true})
 		if err != nil {
 			log.Warning("githubClient.GrantWritePermission> Error (%s) %s", url, err)
 			return err
