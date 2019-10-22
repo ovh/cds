@@ -164,6 +164,88 @@ func TestUpdateJobHandler(t *testing.T) {
 	assert.Equal(t, pipResult.Stages[0].Jobs[0].Action.Name, addJobRequest.Action.Name)
 }
 
+func TestUpdateInvalidJobHandler(t *testing.T) {
+	api, db, router, end := newTestAPI(t)
+	defer end()
+
+	//1. Create admin user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+
+	//2. Create project
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
+
+	//3. Create Pipeline
+	pipelineKey := sdk.RandomString(10)
+	pip := &sdk.Pipeline{
+		Name:       pipelineKey,
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u))
+
+	//4. Add Stage
+	stage1 := &sdk.Stage{
+		BuildOrder: 1,
+		Enabled:    true,
+		Name:       "",
+		PipelineID: pip.ID,
+	}
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage1))
+	stage2 := &sdk.Stage{
+		BuildOrder: 2,
+		Enabled:    true,
+		Name:       "stage 2",
+		PipelineID: pip.ID,
+	}
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage2))
+
+	//5. Prepare the request
+	job := &sdk.Job{
+		Enabled:         true,
+		PipelineStageID: stage1.ID,
+		Action: sdk.Action{
+			Enabled: true,
+			Name:    "myJob",
+		},
+	}
+	test.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage1.ID, pip))
+	assert.NotZero(t, job.PipelineActionID)
+	assert.NotZero(t, job.Action.ID)
+
+	// 6. Prepare the request
+	addJobRequest := sdk.Job{
+		Enabled:          true,
+		PipelineStageID:  stage1.ID,
+		PipelineActionID: job.PipelineActionID,
+		Action: sdk.Action{
+			ID:   job.Action.ID,
+			Name: "myJobUpdated",
+		},
+	}
+	jsonBody, _ := json.Marshal(addJobRequest)
+	body := bytes.NewBuffer(jsonBody)
+
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+		"pipelineKey":    pip.Name,
+		"stageID":        strconv.FormatInt(stage1.ID, 10),
+		"jobID":          strconv.FormatInt(job.PipelineActionID, 10),
+	}
+
+	uri := router.GetRoute("PUT", api.updateJobHandler, vars)
+	test.NotEmpty(t, uri)
+
+	req, _ := http.NewRequest("PUT", uri, body)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	//7. Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+}
+
 func TestDeleteJobHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t)
 	defer end()

@@ -71,6 +71,12 @@ const NamePattern = "^[a-zA-Z0-9._-]{1,}$"
 // NamePatternRegex  Pattern regexp
 var NamePatternRegex = regexp.MustCompile(NamePattern)
 
+// NamePatternSpace  Pattern for stage name
+const NamePatternSpace = `^[\sa-zA-Z0-9._-]{1,}$`
+
+// NamePatternSpaceRegex  Pattern regexp
+var NamePatternSpaceRegex = regexp.MustCompile(NamePatternSpace)
+
 // InterfaceSlice cast a untyped slice into a slice of untypes things. It will panic if the parameter is not a slice
 func InterfaceSlice(slice interface{}) []interface{} {
 	s := reflect.ValueOf(slice)
