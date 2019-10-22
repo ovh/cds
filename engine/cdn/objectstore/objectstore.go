@@ -68,6 +68,9 @@ type ConfigOptionsAWSS3 struct {
 	AccessKeyID         string `toml:"accessKeyId" json:"accessKeyId" comment:"A static AWS Secret Key ID"`
 	SecretAccessKey     string `toml:"secretAccessKey" json:"-" comment:"A static AWS Secret Access Key"`
 	SessionToken        string `toml:"sessionToken" json:"-" comment:"A static AWS session token"`
+	Endpoint            string `toml:"endpoint" json:"endpoint" comment:"S3 API Endpoint (optional)" commented:"true"` //optional
+	DisableSSL          bool   `toml:"disableSSL" json:"disableSSL" commented:"true"`                                  //optional
+	ForcePathStyle      bool   `toml:"forcePathStyle" json:"forcePathStyle" commented:"true"`                          //optional
 }
 
 // ConfigOptionsOpenstack is used by ConfigOptions
@@ -101,6 +104,9 @@ func InitDriver(projectIntegration sdk.ProjectIntegration) (Driver, error) {
 			Prefix:          projectIntegration.Config["prefix"].Value,
 			AccessKeyID:     projectIntegration.Config["access_key_id"].Value,
 			SecretAccessKey: projectIntegration.Config["secret_access_key"].Value,
+			Endpoint:        projectIntegration.Config["endpoint"].Value,
+			DisableSSL:      projectIntegration.Config["disable_ssl"].Value == "true",
+			ForcePathStyle:  projectIntegration.Config["force_path_style"].Value == "true",
 		})
 	case sdk.OpenstackIntegrationModel:
 		return newSwiftStore(projectIntegration, ConfigOptionsOpenstack{

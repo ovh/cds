@@ -1081,19 +1081,33 @@ func (api *API) downloadworkflowArtifactDirectHandler() service.Handler {
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-		f, err := api.SharedStorage.Fetch(ctx, art)
+		cdns, err := services.LoadAllByType(ctx, api.mustDB(), services.TypeCDN)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot fetch artifact")
+			return sdk.WrapError(err, "cannot load cdn services")
+		}
+		cdn := cdns[0]
+		integrationName := sdk.DefaultStorageIntegrationName
+		if art.ProjectIntegrationID != nil && *art.ProjectIntegrationID != 0 {
+			integ, err := integration.LoadProjectIntegrationByID(api.mustDB(), *art.ProjectIntegrationID, false)
+			if err != nil {
+				return sdk.WrapError(err, "cannot load project integration by id : %d", art.ProjectIntegrationID)
+			}
+			integrationName = integ.Name
 		}
 
-		if _, err := io.Copy(w, f); err != nil {
-			_ = f.Close()
-			return sdk.WrapError(err, "Cannot stream artifact")
+		url := cdn.HTTPURL
+		cdnReq := sdk.CDNRequest{
+			Artifact:        art,
+			IntegrationName: integrationName,
+			Type:            sdk.CDNArtifactType,
 		}
 
-		if err := f.Close(); err != nil {
-			return sdk.WrapError(err, "Cannot close artifact")
+		cdnToken, err := authentication.SignJWS(cdnReq, cdnauth.SessionDuration)
+		if err != nil {
+			return sdk.WrapError(err, "cannot sign cdn request token : %+v", cdnReq)
 		}
+
+		http.Redirect(w, r, fmt.Sprintf("%s/download/%s", url, cdnToken), http.StatusPermanentRedirect)
 		return nil
 	}
 }

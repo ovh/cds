@@ -328,7 +328,7 @@ type WorkflowNodeRunArtifact struct {
 }
 
 // IsValid check minimal informations needed for a workflow node run artifact
-func (w WorkflowNodeRunArtifact) IsValid(c WorkflowNodeRunArtifact) (bool, error) {
+func (w WorkflowNodeRunArtifact) IsValid() (bool, error) {
 	if w.WorkflowID == 0 || w.WorkflowNodeJobRunID == 0 || w.WorkflowNodeRunID == 0 {
 		return false, fmt.Errorf("not enough information about workflow and job")
 	}

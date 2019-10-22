@@ -2,7 +2,6 @@ package cdn
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,8 +10,10 @@ import (
 )
 
 func (s *Service) storeArtifact(body io.ReadCloser, cdnRequest sdk.CDNRequest) (*sdk.WorkflowNodeRunArtifact, error) {
-	// TODO: add isValid on Artifact
 	art := cdnRequest.Artifact
+	if _, err := art.IsValid(); err != nil {
+		return nil, sdk.WrapError(err, "artifact is not valid")
+	}
 	storageDriver, err := s.getDriver(cdnRequest.ProjectKey, cdnRequest.IntegrationName)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get driver")
@@ -24,22 +25,14 @@ func (s *Service) storeArtifact(body io.ReadCloser, cdnRequest sdk.CDNRequest) (
 	}
 
 	var buf bytes.Buffer
-	// var btes []byte
-	// if _, err := io.CopyBuffer(&buf, body, btes); err != nil {
-	// 	return nil, sdk.WrapError(err, "cannot copy body")
-	// }
 	tee := io.TeeReader(body, &buf)
-	// content, err := ioutil.ReadAll(&buf)
-	// fmt.Printf("content %+v --- err %+v\n", content, err)
-	objectPath, err := storageDriver.Store(art, ioutil.NopCloser(&buf))
+	objectPath, err := storageDriver.Store(art, ioutil.NopCloser(tee))
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot store artifact")
 	}
 	art.ObjectPath = objectPath
-	fmt.Println("objectPath --- ", objectPath)
 
-	// TODO: test mirroring
-	go s.mirroring(art, body, tee)
+	go s.mirroring(art, body, &buf)
 
 	return art, nil
 }
