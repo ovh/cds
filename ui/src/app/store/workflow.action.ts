@@ -39,7 +39,7 @@ export class GetWorkflowRun {
 
 export class GetWorkflowRuns {
     static readonly type = '[Workflow] Get Workflow Runs';
-    constructor(public payload: { projectKey: string, workflowName: string, limit: string }) { }
+    constructor(public payload: { projectKey: string, workflowName: string, limit: string, offset: string, filters?: {}}) { }
 }
 
 export class DeleteWorkflowRun {
