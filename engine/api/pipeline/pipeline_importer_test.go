@@ -594,11 +594,11 @@ func TestImportUpdate(t *testing.T) {
 			pip:  &sdk.Pipeline{},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip, nil))
+			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip))
 
 			args.pip.Parameter = []sdk.Parameter{
 				{Name: "test", Value: "test_value", Type: sdk.StringParameter, Description: "test_description"},
