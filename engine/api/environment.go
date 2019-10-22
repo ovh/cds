@@ -281,12 +281,19 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			}
 		}
 
+		variables := []sdk.Variable{}
+		for _, v := range env.Variable {
+			// do not clone secret variable to avoid 'secret value not specified'
+			if v.Type != sdk.SecretVariable {
+				variables = append(variables, v)
+			}
+		}
 		//Set all the data of the environment we want to clone
 		envPost := sdk.Environment{
 			Name:       cloneName,
 			ProjectID:  p.ID,
 			ProjectKey: p.Key,
-			Variable:   env.Variable,
+			Variable:   variables,
 			Permission: env.Permission,
 		}
 

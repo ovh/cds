@@ -301,7 +301,7 @@
   "environment_created": "Environnement créé",
   "environment_name_error": "Nom d'environnement invalide. Pattern autorisé: a-zA-Z0-9._-",
   "environment_deleted": "Environnement supprimé",
-  "environment_cloned": "Environnement cloné sans les variables mots de passe",
+  "environment_cloned": "Environnement cloné sans les variables mots de passe et les clés",
   "environment_title_clone": "Cloner l'environnement",
   "environment_clone_placeholder": "Nom du nouvel environnement",
   "environment_create": "Ajouter un environnement",
