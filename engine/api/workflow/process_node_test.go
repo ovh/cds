@@ -906,9 +906,6 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, nil, nil)
 	assert.NoError(t, errR)
 
-	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))
-	assert.Equal(t, 1, len(wr.WorkflowNodeRuns[w.WorkflowData.Node.ID]))
-
 	mapParams := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].BuildParameters)
 	assert.Equal(t, "feat/branchForked", mapParams["git.branch"])
 	assert.Equal(t, "mylastcommitForked", mapParams["git.hash"])

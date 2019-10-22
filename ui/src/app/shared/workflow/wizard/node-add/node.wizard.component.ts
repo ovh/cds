@@ -164,6 +164,9 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     if (this.node.context.project_integration_id) {
       this.node.context.project_integration_id = Number(this.node.context.project_integration_id);
     }
+    if (!this.node.ref) {
+      this.node.ref = new Date().getTime().toString();
+    }
     this.nodeCreated.emit(this.node);
   }
 

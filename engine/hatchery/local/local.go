@@ -16,7 +16,6 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
-
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"

@@ -28,7 +28,6 @@ import { NgxsStoreModule } from 'app/store/store.module';
 import { ProjectModule } from 'app/views/project/project.module';
 import { of } from 'rxjs';
 import { ProjectRepoManagerComponent } from './project.repomanager.list.component';
-
 describe('CDS: Project RepoManager List Component', () => {
 
     let injector: Injector;

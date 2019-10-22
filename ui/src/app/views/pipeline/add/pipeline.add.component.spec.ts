@@ -29,6 +29,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineAddComponent } from './pipeline.add.component';
+import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 describe('CDS: Pipeline Add Component', () => {
 
     let injector: Injector;

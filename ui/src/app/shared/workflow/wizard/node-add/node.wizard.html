@@ -141,6 +141,7 @@
                                   class="search"
                                   placeholder="{{ 'common_application' | translate }}"
                                   [(model)]="node.context.application_id"
+                                  (modelChange)="getIntegrations()"
                                   [options]="{'fullTextSearch': true}"
                                   id="WorkflowApplicationSelect">
                                   <option> </option>

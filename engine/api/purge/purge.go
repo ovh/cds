@@ -179,9 +179,9 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		return sdk.WrapError(err, "error on load LoadRunByID:%d", workflowRunID)
 	}
 
-	proj, errprj := project.LoadProjectByWorkflowID(db, store, wr.WorkflowID)
+	proj, errprj := project.LoadProjectByWorkflowID(db, store, workflowRunID)
 	if errprj != nil {
-		return sdk.WrapError(errprj, "error while load project %d", wr.WorkflowID)
+		return sdk.WrapError(errprj, "error while load project %d", workflowRunID)
 	}
 
 	type driversContainersT struct {

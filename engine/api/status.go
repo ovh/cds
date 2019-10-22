@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/api/workermodel"
-
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
@@ -20,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
