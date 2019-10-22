@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -22,22 +23,30 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v2"
 )
 
 func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
+	srvs, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
+
+	for _, srv := range srvs {
+		require.NoError(t, services.Delete(db, &srv))
+	}
+
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestAPI_detachRepositoriesManagerVCS", services.TypeVCS)
-	test.NoError(t, services.Insert(db, mockVCSSservice))
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
 	}()
 
 	mockServiceHook, _ := assets.InsertService(t, db, "TestAPI_detachRepositoriesManagerHook", services.TypeHooks)
-	_ = services.Delete(db, mockServiceHook)
-	test.NoError(t, services.Insert(db, mockServiceHook))
+	defer func() {
+		_ = services.Delete(db, mockServiceHook) // nolint
+	}()
 
 	services.HTTPClient = mock(
 		func(r *http.Request) (*http.Response, error) {

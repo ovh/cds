@@ -290,7 +290,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			Name:       cloneName,
 			ProjectID:  p.ID,
 			ProjectKey: p.Key,
-			Variable:   env.Variable,
+			Variable:   variables,
 		}
 
 		tx, err := api.mustDB().Begin()
