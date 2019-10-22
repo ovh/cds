@@ -17,9 +17,18 @@ func (s *Service) Status() sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
 
 	status := sdk.MonitoringStatusOK
+	if s.DefaultDriver == nil {
+		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "CDN/defaultdriver", Value: "0", Status: sdk.MonitoringStatusWarn})
+		status = sdk.MonitoringStatusWarn
+	} else {
+		m.Lines = append(m.Lines, s.DefaultDriver.Status())
+	}
+
+	for _, driver := range s.MirrorDrivers {
+		m.Lines = append(m.Lines, driver.Status())
+	}
 
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "CDN", Value: status, Status: status})
-
 	return m
 }
 
@@ -81,11 +90,7 @@ func (s *Service) postUploadHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "cannot verify token")
 		}
 
-		// decrypt JWT TOKEN
 		// Get payload to check which kind of data it is
-
-		// config --> nodeRunID, nodeJobRunID, step for logs, tag, name, projectKey
-
 		switch cdnRequest.Type {
 		case sdk.CDNArtifactType:
 			if cdnRequest.Artifact == nil {

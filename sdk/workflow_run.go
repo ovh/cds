@@ -327,6 +327,19 @@ type WorkflowNodeRunArtifact struct {
 	ProjectIntegrationID *int64    `json:"project_integration_id,omitempty" db:"project_integration_id"`
 }
 
+// IsValid check minimal informations needed for a workflow node run artifact
+func (w WorkflowNodeRunArtifact) IsValid(c WorkflowNodeRunArtifact) (bool, error) {
+	if w.WorkflowID == 0 || w.WorkflowNodeJobRunID == 0 || w.WorkflowNodeRunID == 0 {
+		return false, fmt.Errorf("not enough information about workflow and job")
+	}
+
+	if w.Name == "" || w.Tag == "" {
+		return false, fmt.Errorf("not enough information about name or tag")
+	}
+
+	return true, nil
+}
+
 // Equal returns true if w WorkflowNodeRunArtifact equals c
 func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
 	if w.SHA512sum != "" {

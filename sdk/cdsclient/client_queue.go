@@ -279,17 +279,11 @@ func (c *client) QueueSendStepResult(ctx context.Context, id int64, res sdk.Step
 	return err
 }
 
-func (c *client) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) (bool, time.Duration, error) {
+func (c *client) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) (time.Duration, error) {
 	t0 := time.Now()
-	store := new(sdk.ArtifactsStore)
-	uri := fmt.Sprintf("/project/%s/storage/%s", projectKey, integrationName)
-	_, _ = c.GetJSON(ctx, uri, store)
-	// if store.TemporaryURLSupported {
 	err := c.queueIndirectArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath)
-	return true, time.Since(t0), err
-	// }
-	// err := c.queueDirectArtifactUpload(projectKey, integrationName, nodeJobRunID, tag, filePath)
-	// return false, time.Since(t0), err
+
+	return time.Since(t0), err
 }
 
 func (c *client) queueIndirectArtifactTempURL(ctx context.Context, projectKey, integrationName string, art *sdk.WorkflowNodeRunArtifact) error {
@@ -312,13 +306,13 @@ func (c *client) queueIndirectArtifactTempURL(ctx context.Context, projectKey, i
 	return globalURLErr
 }
 
-func (c *client) queueIndirectArtifactTempURLPost(url string, content []byte) error {
+func (c *client) queueIndirectArtifactTempURLPost(art *sdk.WorkflowNodeRunArtifact, content []byte) error {
 	//Post the file to the temporary URL
 	var retry = 10
 	var globalErr error
 	var body []byte
 	for i := 0; i < retry; i++ {
-		req, errRequest := http.NewRequest("POST", url, bytes.NewBuffer(content))
+		req, errRequest := http.NewRequest("POST", art.TempURL, bytes.NewBuffer(content))
 		if errRequest != nil {
 			return errRequest
 		}
@@ -339,6 +333,12 @@ func (c *client) queueIndirectArtifactTempURLPost(url string, content []byte) er
 			if resp.StatusCode >= 300 {
 				globalErr = fmt.Errorf("[%d] Unable to upload artifact: (HTTP %d) %s", i, resp.StatusCode, string(body))
 				time.Sleep(1 * time.Second)
+				continue
+			}
+
+			if err := json.Unmarshal(body, art); err != nil {
+				globalErr = fmt.Errorf("cannot unmarshall body : %v", err)
+				time.Sleep(time.Second)
 				continue
 			}
 
@@ -402,12 +402,12 @@ func (c *client) queueIndirectArtifactUpload(ctx context.Context, projectKey, in
 		return errFileContent
 	}
 
-	if err := c.queueIndirectArtifactTempURLPost(art.TempURL, fileContent); err != nil {
+	if err := c.queueIndirectArtifactTempURLPost(&art, fileContent); err != nil {
 		// If we got a 401 error from the objectstore, probably because temporary URL is not
 		// replicated on all cluster. Wait 5s before use it
 		if strings.Contains(err.Error(), "401 Unauthorized: Temp URL invalid") {
 			time.Sleep(5 * time.Second)
-			if err := c.queueIndirectArtifactTempURLPost(art.TempURL, fileContent); err != nil {
+			if err := c.queueIndirectArtifactTempURLPost(&art, fileContent); err != nil {
 				return err
 			}
 		}
@@ -429,73 +429,6 @@ func (c *client) queueIndirectArtifactUpload(ctx context.Context, projectKey, in
 	}
 
 	return callbackErr
-}
-
-func (c *client) queueDirectArtifactUpload(projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) error {
-	f, errop := os.Open(filePath)
-	if errop != nil {
-		return errop
-	}
-	defer f.Close()
-	//File stat
-	stat, errst := f.Stat()
-	if errst != nil {
-		return errst
-	}
-
-	sha512sum, err512 := sdk.FileSHA512sum(filePath)
-	if err512 != nil {
-		return err512
-	}
-
-	md5sum, errmd5 := sdk.FileMd5sum(filePath)
-	if errmd5 != nil {
-		return errmd5
-	}
-
-	//Read the file once
-	fileContent, errFileContent := ioutil.ReadAll(f)
-	if errFileContent != nil {
-		return errFileContent
-	}
-
-	_, name := filepath.Split(filePath)
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	part, errc := writer.CreateFormFile(name, filepath.Base(filePath))
-	if errc != nil {
-		return errc
-	}
-
-	if _, err := io.Copy(part, bytes.NewBuffer(fileContent)); err != nil {
-		return err
-	}
-
-	writer.WriteField("size", strconv.FormatInt(stat.Size(), 10))                 // nolint
-	writer.WriteField("perm", strconv.FormatUint(uint64(stat.Mode().Perm()), 10)) // nolint
-	writer.WriteField("md5sum", md5sum)                                           // nolint
-	writer.WriteField("sha512sum", sha512sum)                                     // nolint
-	writer.WriteField("nodeJobRunID", fmt.Sprintf("%d", nodeJobRunID))            // nolint
-
-	if errclose := writer.Close(); errclose != nil {
-		return errclose
-	}
-
-	var err error
-	ref := base64.RawURLEncoding.EncodeToString([]byte(tag))
-	uri := fmt.Sprintf("/project/%s/storage/%s/artifact/%s", projectKey, integrationName, ref)
-	for i := 0; i <= c.config.Retry; i++ {
-		var code int
-		_, code, err = c.UploadMultiPart("POST", uri, body,
-			SetHeader("Content-Disposition", "attachment; filename="+name),
-			SetHeader("Content-Type", writer.FormDataContentType()))
-		if err == nil && code < 300 {
-			return nil
-		}
-		time.Sleep(3 * time.Second)
-	}
-
-	return fmt.Errorf("x%d: %v", c.config.Retry, err)
 }
 
 func (c *client) QueueJobTag(ctx context.Context, jobID int64, tags []sdk.WorkflowRunTag) error {

@@ -37,7 +37,7 @@ type Configuration struct {
 }
 
 type Backend struct {
-	Local     *objectstore.ConfigOptionsFilesystem `toml:"local"`
-	Openstack *objectstore.ConfigOptionsOpenstack  `toml:"openstack" json:"openstack"`
-	AWSS3     *objectstore.ConfigOptionsAWSS3      `toml:"awss3" json:"awss3"`
+	Local     *objectstore.ConfigOptionsFilesystem `toml:"local" json:"local,omitempty"`
+	Openstack *objectstore.ConfigOptionsOpenstack  `toml:"openstack" json:"openstack,omitempty"`
+	AWSS3     *objectstore.ConfigOptionsAWSS3      `toml:"awss3" json:"awss3,omitempty"`
 }
