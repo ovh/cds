@@ -50,7 +50,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 
 	go func() {
 		for err := range chanError {
-			wk.SendLog(ctx,workerruntime.LevelInfo, err.Error())
+			wk.SendLog(ctx, workerruntime.LevelInfo, err.Error())
 			globalError.Append(err)
 			wgErrors.Done()
 		}
@@ -65,17 +65,13 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 		go func(path string) {
 			log.Debug("Uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, jobID)
 			defer wg.Done()
-			throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, path)
+			duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, path)
 			if err != nil {
 				chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
 				wgErrors.Add(1)
 				return
 			}
-			if throughTempURL {
-				wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to object store", filename, duration.Seconds()))
-			} else {
-				wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS API", filename, duration.Seconds()))
-			}
+			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to object store", filename, duration.Seconds()))
 		}(p)
 		if len(filesPath) > 1 {
 			//Wait 3 second to get the object storage to set up all the things

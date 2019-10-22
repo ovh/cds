@@ -118,7 +118,7 @@ func InitDriver(projectIntegration sdk.ProjectIntegration) (Driver, error) {
 	}
 }
 
-// Init initialise a new ArtifactStorage
+// Init initialise a new driver
 func Init(c context.Context, cfg Config) (Driver, error) {
 	switch cfg.Kind {
 	case Openstack, Swift:
@@ -126,7 +126,7 @@ func Init(c context.Context, cfg Config) (Driver, error) {
 	case AWSS3:
 		return newS3Store(sdk.ProjectIntegration{Name: cfg.IntegrationName}, cfg.Options.AWSS3)
 	case Filesystem:
-		return newFilesystemStore(sdk.ProjectIntegration{Name: cfg.IntegrationName}, cfg.Options.Filesystem)
+		return NewFilesystemStore(sdk.ProjectIntegration{Name: cfg.IntegrationName}, cfg.Options.Filesystem)
 	default:
 		return nil, fmt.Errorf("Invalid flag --artifact-mode")
 	}

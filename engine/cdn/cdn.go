@@ -17,6 +17,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+const defaultBackendName = "default"
+
 // New returns a new service
 func New() *Service {
 	s := new(Service)
@@ -138,8 +140,8 @@ func (s *Service) initDefaultDrivers(ctx context.Context) error {
 
 		}
 
-		if name == "default" {
-			log.Info("Init default backend of type...")
+		if name == defaultBackendName {
+			log.Info("Init default backend...")
 			var errDriver error
 			s.DefaultDriver, errDriver = objectstore.Init(ctx, driverCfg)
 			if errDriver != nil {
