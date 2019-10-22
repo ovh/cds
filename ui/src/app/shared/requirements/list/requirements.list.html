@@ -69,6 +69,12 @@
                     </div>
                     <ng-template #rValue>
                         <span>{{r.value}}</span>
+                        <div *ngIf="r.type === 'model' || r.type === 'service'">
+                            <label for="opts">
+                                {{ 'requirement_options' | translate }}
+                            </label>
+                            <span>{{r.opts}}</span>
+                        </div>
                     </ng-template>
 
                 </td>
