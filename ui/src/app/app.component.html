@@ -21,7 +21,7 @@
             </div>
         </div>
     </ng-container>
-    <ng-container *ngIf="maintenance && isConnected && !user?.ring === 'ADMIN'">
+    <ng-container *ngIf="maintenance && isConnected && user?.ring !== 'ADMIN'">
         <div class="maintenance">
             <h2>{{ 'maintenance_title' | translate }}</h2>
             <div class="logo">
