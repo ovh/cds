@@ -19,7 +19,7 @@ func (b *bitbucketClient) PullRequest(ctx context.Context, repo string, id int) 
 	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%d", project, slug, id)
 	params := url.Values{}
 
-	var response PullRequest
+	var response sdk.BitbucketServerPullRequest
 	if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
 		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to get pullrequest")
 	}
@@ -38,7 +38,7 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 		return nil, sdk.WithStack(err)
 	}
 
-	bbPR := []PullRequest{}
+	bbPR := []sdk.BitbucketServerPullRequest{}
 
 	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests", project, slug)
 	params := url.Values{}
@@ -103,25 +103,25 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 		return pr, err
 	}
 
-	request := PullRequest{
+	request := sdk.BitbucketServerPullRequest{
 		Title:  pr.Title,
 		State:  "OPEN",
 		Open:   true,
 		Closed: false,
-		FromRef: PullRequestRef{
+		FromRef: sdk.BitbucketServerRef{
 			ID: fmt.Sprintf("refs/heads/%s", pr.Head.Branch.DisplayID),
-			Repository: PullRequestRefRepository{
+			Repository: sdk.BitbucketServerRepository{
 				Slug: slug,
-				Project: Project{
+				Project: sdk.BitbucketServerProject{
 					Key: project,
 				},
 			},
 		},
-		ToRef: PullRequestRef{
+		ToRef: sdk.BitbucketServerRef{
 			ID: fmt.Sprintf("refs/heads/%s", pr.Base.Branch.DisplayID),
-			Repository: PullRequestRefRepository{
+			Repository: sdk.BitbucketServerRepository{
 				Slug: slug,
-				Project: Project{
+				Project: sdk.BitbucketServerProject{
 					Key: project,
 				},
 			},
@@ -141,7 +141,7 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 	return b.ToVCSPullRequest(ctx, repo, request)
 }
 
-func (b *bitbucketClient) ToVCSPullRequest(ctx context.Context, repo string, pullRequest PullRequest) (sdk.VCSPullRequest, error) {
+func (b *bitbucketClient) ToVCSPullRequest(ctx context.Context, repo string, pullRequest sdk.BitbucketServerPullRequest) (sdk.VCSPullRequest, error) {
 	pr := sdk.VCSPullRequest{
 		ID:     pullRequest.ID,
 		Closed: pullRequest.Closed,
@@ -166,7 +166,7 @@ func (b *bitbucketClient) ToVCSPullRequest(ctx context.Context, repo string, pul
 	}
 	if pullRequest.Author != nil {
 		pr.User = sdk.VCSAuthor{
-			Name:        pullRequest.Author.User.Username,
+			Name:        pullRequest.Author.User.Name,
 			DisplayName: pullRequest.Author.User.DisplayName,
 			Email:       pullRequest.Author.User.EmailAddress,
 		}

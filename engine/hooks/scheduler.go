@@ -31,7 +31,7 @@ func (s *Service) runScheduler(c context.Context) error {
 
 	go func() {
 		if err := s.enqueueScheduledTaskExecutionsRoutine(ctx); err != nil {
-			log.Error("Hooks> runScheduler> retryTaskExecutionsRoutine> %v", err)
+			log.Error("Hooks> runScheduler> enqueueScheduledTaskExecutionsRoutine> %v", err)
 			cancel()
 		}
 	}()
@@ -65,6 +65,13 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 				log.Warning("Hooks> too many tasks in scheduler for now, skipped this retry ticker. size:%d", size)
 				continue
 			}
+
+			if s.Maintenance {
+				log.Info("Hooks> retryTaskExecutionsRoutine> Maintenance enable, wait 1 minute. Queue %d", size)
+				time.Sleep(1 * time.Minute)
+				continue
+			}
+
 			tasks, err := s.Dao.FindAllTasks()
 			if err != nil {
 				log.Error("Hooks> retryTaskExecutionsRoutine > Unable to find all tasks: %v", err)
@@ -77,7 +84,7 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					continue
 				}
 				for _, e := range execs {
-					if e.Status == TaskExecutionDoing || e.Status == TaskExecutionScheduled {
+					if e.Status == TaskExecutionDoing || e.Status == TaskExecutionScheduled || e.Status == TaskExecutionEnqueued {
 						continue
 					}
 
@@ -85,6 +92,11 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					if e.ProcessingTimestamp == 0 && e.Timestamp < time.Now().Add(-2*time.Minute).UnixNano() {
 						if e.UUID == "" {
 							log.Warning("Hooks> retryTaskExecutionsRoutine > Very old hook without UUID %d/%d type:%s status:%s timestamp:%d err:%v", e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
+							continue
+						}
+						e.Status = TaskExecutionEnqueued
+						if err := s.Dao.SaveTaskExecution(&e); err != nil {
+							log.Warning("Hooks> retryTaskExecutionsRoutine> unable to save task execution for old hook %s: %v", e.UUID, err)
 							continue
 						}
 						log.Warning("Hooks> retryTaskExecutionsRoutine > Enqueing very old hooks %s %d/%d type:%s status:%s timestamp:%d err:%v", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
@@ -102,6 +114,11 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 							}
 							continue
 						}
+						e.Status = TaskExecutionEnqueued
+						if err := s.Dao.SaveTaskExecution(&e); err != nil {
+							log.Warning("Hooks> retryTaskExecutionsRoutine> unable to save task execution for %s: %v", e.UUID, err)
+							continue
+						}
 						log.Warning("Hooks> retryTaskExecutionsRoutine > Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
 						if err := s.Dao.EnqueueTaskExecution(&e); err != nil {
 							log.Error("Hooks> retryTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
@@ -114,9 +131,9 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 	}
 }
 
-// Every 30 seconds, the scheduler try to launch all scheduled tasks (scheduler or repoPoller) which have never been processed
+// Every 10 seconds, the scheduler try to launch all scheduled tasks which have never been processed
 func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error {
-	tick := time.NewTicker(time.Duration(30) * time.Second)
+	tick := time.NewTicker(time.Duration(10) * time.Second)
 	defer tick.Stop()
 	for {
 		select {
@@ -145,13 +162,17 @@ func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error
 								log.Error("Hooks> enqueueScheduledTaskExecutionsRoutine > error on DeleteTaskExecution: %v", err)
 							}
 						} else {
-							e.Status = ""
+							e.Status = TaskExecutionEnqueued
 							s.Dao.SaveTaskExecution(&e)
 							log.Info("Hooks> enqueueScheduledTaskExecutionsRoutine > Enqueing %s task %s:%d", e.Type, e.UUID, e.Timestamp)
 							if err := s.Dao.EnqueueTaskExecution(&e); err != nil {
 								log.Error("Hooks> enqueueScheduledTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
 							}
-							alreadyEnqueued = true
+							// this will avoid to re-enqueue the same scheduled task execution if the dequeue take more than 30s (ticker of this goroutine)
+							if e.Type == TypeRepoPoller || e.Type == TypeScheduler {
+								alreadyEnqueued = true
+							}
+
 						}
 
 					}
@@ -228,6 +249,12 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 			continue
 		}
 		log.Debug("Hooks> dequeueTaskExecutions> current queue size: %d", size)
+
+		if s.Maintenance {
+			log.Info("Maintenance enable, wait 1 minute. Queue %d", size)
+			time.Sleep(1 * time.Minute)
+			continue
+		}
 
 		// Dequeuing context
 		var taskKey string

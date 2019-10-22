@@ -422,15 +422,21 @@ func (c *vcsClient) CreateHook(ctx context.Context, fullname string, hook *sdk.V
 	return nil
 }
 
+func (c *vcsClient) UpdateHook(ctx context.Context, fullname string, hook *sdk.VCSHook) error {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
+	_, err := c.doJSONRequest(ctx, "PUT", path, hook, hook)
+	if err != nil {
+		log.Error("UpdateHook> %v", err)
+		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to update hook %s on repository %s from %s", hook.ID, fullname, c.name)
+	}
+	return nil
+}
+
 func (c *vcsClient) GetHook(ctx context.Context, fullname, u string) (sdk.VCSHook, error) {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks?url=%s", c.name, fullname, url.QueryEscape(u))
 	hook := &sdk.VCSHook{}
 	_, err := c.doJSONRequest(ctx, "GET", path, nil, hook)
 	return *hook, sdk.WrapError(err, "unable to get hook %s on repository %s from %s", u, fullname, c.name)
-}
-
-func (c *vcsClient) UpdateHook(ctx context.Context, fullname, url string, hook sdk.VCSHook) error {
-	return nil
 }
 
 func (c *vcsClient) DeleteHook(ctx context.Context, fullname string, hook sdk.VCSHook) error {

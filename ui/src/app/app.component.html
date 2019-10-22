@@ -1,18 +1,35 @@
 <div id="AppComponent">
-    <div id="navbar connected" *ngIf="isConnected && !hideNavBar">
-        <app-navbar></app-navbar>
-    </div>
-    <div id="banner" class="pointing" (click)="refresh()" *ngIf="showUIUpdatedBanner">
-        {{ 'ui_updated' | translate }}
-    </div>
-    <div class="page" [class.connected]="isConnected && !hideNavBar">
-        <div class="content" [class.connected]="isConnected && !hideNavBar">
-            <div class="toast">
-                <toaster-container [toasterconfig]="toasterConfig"></toaster-container>
-            </div>
-            <router-outlet></router-outlet>
-            <div class="ui active text loader" *ngIf="displayResolver">{{ 'common_loading_project' | translate }}</div>
+    <ng-container *ngIf="!isConnected || !maintenance || user?.ring === 'ADMIN'">
+        <div id="navbar" *ngIf="isConnected && !hideNavBar" [class.connected]="isConnected">
+            <app-navbar></app-navbar>
         </div>
-    </div>
+        <div class="maintenance banner pointing" [class.mt50]="isConnected" *ngIf="maintenance && (!isConnected || user?.admin)">
+            <span>{{ 'maintenance_title' | translate }}</span>
+            <img src="assets/images/maintenance.svg"/>
+        </div>
+        <div class="banner pointing" (click)="refresh()" *ngIf="showUIUpdatedBanner">
+            {{ 'ui_updated' | translate }}
+        </div>
+
+        <div class="page" [class.connected]="isConnected && !hideNavBar">
+            <div class="content" [class.connected]="isConnected && !hideNavBar">
+                <div class="toast">
+                    <toaster-container [toasterconfig]="toasterConfig"></toaster-container>
+                </div>
+                <router-outlet></router-outlet>
+                <div class="ui active text loader" *ngIf="displayResolver">{{ 'common_loading_project' | translate }}</div>
+            </div>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="maintenance && isConnected && !user.admin">
+        <div class="maintenance">
+            <h2>{{ 'maintenance_title' | translate }}</h2>
+            <div class="logo">
+                <img src="assets/images/maintenance.svg">
+            </div>
+        </div>
+    </ng-container>
+
+    <div class="gamification" #gamification></div>
     <app-node-edit-modal></app-node-edit-modal>
 </div>

@@ -49,14 +49,12 @@
                             </label>
                         </div>
                         <div class="ten wide field">
-                            <input type="text" [(ngModel)]="newIntegration.config[k].value"
-                                *ngIf="newIntegration.config[k].type === 'string'">
+                            <input type="checkbox" [(ngModel)]="newIntegration.config[k].value"  *ngIf="newIntegration.config[k].type === 'boolean'">
+                            <input type="text" [(ngModel)]="newIntegration.config[k].value"  *ngIf="newIntegration.config[k].type === 'string'">
                             <ng-container *ngIf="newIntegration.config[k].type === 'text'">
-                                <codemirror [(ngModel)]="newIntegration.config[k].value" [config]="codeMirrorConfig"
-                                    #codeMirror></codemirror>
+                                <codemirror [(ngModel)]="newIntegration.config[k].value" [config]="codeMirrorConfig" #codeMirror></codemirror>
                             </ng-container>
-                            <input type="password" [(ngModel)]="newIntegration.config[k].value"
-                                *ngIf="newIntegration.config[k].type === 'password'">
+                            <input type="password" [(ngModel)]="newIntegration.config[k].value" *ngIf="newIntegration.config[k].type === 'password'">
                         </div>
                     </div>
                 </ng-container>

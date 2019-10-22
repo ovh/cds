@@ -6,6 +6,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 import { UserService } from 'app/service/user/user.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -27,7 +28,6 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineShowComponent } from './pipeline.show.component';
-
 describe('CDS: Pipeline Show', () => {
 
     beforeEach(() => {
@@ -40,6 +40,7 @@ describe('CDS: Pipeline Show', () => {
                 ProjectService,
                 ProjectStore,
                 NavbarService,
+                MonitoringService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ToastService, useClass: MockToast },
                 TranslateService,

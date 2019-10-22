@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -73,8 +74,18 @@ func (fss *FilesystemStore) Fetch(o Object) (io.ReadCloser, error) {
 	return os.Open(dst)
 }
 
-// Delete data on disk
+// Delete deletes data from disk
 func (fss *FilesystemStore) Delete(o Object) error {
 	dst := path.Join(fss.basedir, o.GetPath(), o.GetName())
 	return os.RemoveAll(dst)
+}
+
+// DeleteContainer deletes a directory from disk
+func (fss *FilesystemStore) DeleteContainer(containerPath string) error {
+	// check, just to be sure...
+	if strings.TrimSpace(containerPath) != "" && containerPath != "/" {
+		dst := path.Join(fss.basedir, containerPath)
+		return os.RemoveAll(dst)
+	}
+	return nil
 }

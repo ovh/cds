@@ -233,6 +233,10 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 }
 
 func (client *eventsBrokerSubscribe) manageEvent(db gorp.SqlExecutor, event sdk.Event) (bool, error) {
+	if strings.HasPrefix(event.EventType, "sdk.EventMaintenance") {
+		return true, nil
+	}
+
 	var isSharedInfra = client.consumer.Groups.HasOneOf(group.SharedInfraGroup.ID)
 
 	switch {

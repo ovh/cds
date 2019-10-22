@@ -104,7 +104,7 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 		defer atomic.AddInt64(&nbKafkaConsumers, -1)
 		for msg := range consumer.Messages() {
 			exec := sdk.TaskExecution{
-				Status:    TaskExecutionDoing,
+				Status:    TaskExecutionScheduled,
 				Config:    t.Config,
 				Type:      TypeKafka,
 				UUID:      t.UUID,
@@ -112,9 +112,6 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 				Kafka:     &sdk.KafkaTaskExecution{Message: msg.Value},
 			}
 			s.Dao.SaveTaskExecution(&exec)
-			if err := s.Dao.EnqueueTaskExecution(&exec); err != nil {
-				log.Error("startKafkaHook > error on EnqueueTaskExecution: %v", err)
-			}
 			consumer.MarkOffset(msg, "delivered")
 		}
 	}()

@@ -1,17 +1,20 @@
 import { registerLocaleData } from '@angular/common';
 import localeEN from '@angular/common/locales/en';
 import localeFR from '@angular/common/locales/fr';
-import { Component, NgZone, OnInit } from '@angular/core';
+import { Component, ElementRef, NgZone, OnInit, ViewChild } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, NavigationStart, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { GetCDSStatus } from 'app/store/cds.action';
+import { CDSState } from 'app/store/cds.state';
 import { Observable } from 'rxjs';
 import { bufferTime, filter, map, mergeMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
 import { AppService } from './app.service';
 import { Event, EventType } from './model/event.model';
+import { AuthentifiedUser } from './model/user.model';
 import { LanguageStore } from './service/language/language.store';
 import { NotificationService } from './service/notification/notification.service';
 import { ThemeStore } from './service/theme/theme.store';
@@ -21,6 +24,8 @@ import { CDSSharedWorker } from './shared/worker/shared.worker';
 import { CDSWebWorker } from './shared/worker/web.worker';
 import { CDSWorker } from './shared/worker/worker';
 import { AuthenticationState } from './store/authentication.state';
+
+declare var PACMAN: any;
 
 @Component({
     selector: 'app-root',
@@ -49,6 +54,13 @@ export class AppComponent implements OnInit {
     lastPing: number;
     currentTheme: string;
     eventsRouteSubscription: Subscription;
+    maintenance: boolean;
+    cdsstateSub: Subscription;
+    user: AuthentifiedUser;
+
+    @ViewChild('gamification', {static: false})
+    eltGamification: ElementRef;
+    gameInit: boolean;
 
     constructor(
         _translate: TranslateService,
@@ -95,12 +107,17 @@ export class AppComponent implements OnInit {
         });
     }
 
+
+
     ngOnInit(): void {
+        this._store.dispatch(new GetCDSStatus());
         this._store.select(AuthenticationState.user).subscribe(user => {
             if (!user) {
+                delete this.user;
                 this.isConnected = false;
                 this.stopWorker(this.sseWorker, null);
             } else {
+                this.user = user;
                 this.isConnected = true;
                 this.startSSE();
             }
@@ -143,6 +160,17 @@ export class AppComponent implements OnInit {
                     this._titleService.setTitle('CDS');
                 }
             });
+
+        this.cdsstateSub = this._store.select(CDSState.getCurrentState()).subscribe( m => {
+            // Switch maintenance ON
+            if (!this.maintenance && m.maintenance && !this.gameInit && this.isConnected && !this.user.isMaintainer()) {
+                setTimeout(() => {
+                    this.gameInit = true;
+                    PACMAN.init(this.eltGamification.nativeElement, '/assets/js/');
+                }, 1000);
+            }
+            this.maintenance = m.maintenance;
+        });
     }
 
     stopWorker(w: CDSWorker, s: Subscription): void {
@@ -160,8 +188,7 @@ export class AppComponent implements OnInit {
         }
         let authKey: string;
         let authValue: string;
-        let user = this._store.selectSnapshot(AuthenticationState.user);
-        if (!user) {
+        if (!this.user) {
             return;
         }
 

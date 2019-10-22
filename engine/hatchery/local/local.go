@@ -3,19 +3,23 @@ package local
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
+	"net/http"
+	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ovh/cds/engine/service"
-
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -116,7 +120,61 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 
 // Serve start the hatchery server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
+	h.BasedirDedicated = filepath.Dir(filepath.Join(h.Config.Basedir, h.Configuration().Name))
+	if ok, err := sdk.DirectoryExists(h.BasedirDedicated); !ok {
+		log.Debug("creating directory %s", h.BasedirDedicated)
+		if err := os.MkdirAll(h.BasedirDedicated, 0700); err != nil {
+			return sdk.WrapError(err, "error while creating directory %s", h.BasedirDedicated)
+		}
+	} else if err != nil {
+		return fmt.Errorf("Invalid basedir: %v", err)
+	}
+
+	if err := h.downloadWorker(); err != nil {
+		return fmt.Errorf("Cannot download worker binary from api: %v", err)
+	}
+
 	return h.CommonServe(ctx, h)
+}
+
+func (h *HatcheryLocal) downloadWorker() error {
+	urlBinary := h.Client.DownloadURLFromAPI("worker", sdk.GOOS, sdk.GOARCH, "")
+
+	log.Debug("downloading worker binary from %s", urlBinary)
+	resp, err := http.Get(urlBinary)
+	if err != nil {
+		return sdk.WrapError(err, "error while getting binary from CDS API")
+	}
+	defer resp.Body.Close()
+
+	if contentType := sdk.GetContentType(resp); contentType != "application/octet-stream" {
+		return fmt.Errorf("Invalid Binary (Content-Type: %s). Please try again or download it manually from %s", contentType, sdk.URLGithubReleases)
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Error http code: %d, url called: %s", resp.StatusCode, urlBinary)
+	}
+
+	workerFullPath := path.Join(h.BasedirDedicated, "worker")
+
+	if _, err := os.Stat(workerFullPath); err == nil {
+		log.Debug("removing existing worker binary from %s", workerFullPath)
+		if err := os.Remove(workerFullPath); err != nil {
+			return sdk.WrapError(err, "error while removing existing worker binary %s", workerFullPath)
+		}
+	}
+
+	log.Debug("copy worker binary into %s", workerFullPath)
+	fp, err := os.OpenFile(workerFullPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0700)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if _, err := io.Copy(fp, resp.Body); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	return sdk.WithStack(fp.Close())
 }
 
 //Configuration returns Hatchery CommonConfiguration

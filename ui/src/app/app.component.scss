@@ -12,7 +12,19 @@
   #navbar.connected {
     display: inherit;
   }
-  #banner {
+  .maintenance.banner {
+    margin-top: 0;
+    img {
+      position: absolute;
+      left: 0;
+      animation: slideinbanner 10s infinite;
+      height: 50px;
+    }
+  }
+  .maintenance.banner.mt50 {
+    margin-top: 50px;
+  }
+  .banner {
     height: 50px;
     margin-top: $navbarHeight;
     background-color: $cds_color_red;
@@ -33,5 +45,69 @@
       transition: all .4s ease 0s;
       padding-top: 0px;
     }
+  }
+
+  .maintenance {
+
+    h2 {
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .logo {
+      width: 400px;
+      margin: auto;
+      img {
+        height: 150px;
+        animation: slidein 10s infinite;
+      }
+    }
+  }
+  .gamification {
+    width: 450px;
+    height: 450px;
+    margin: auto;
+  }
+}
+
+@keyframes slidein {
+  from {
+    margin-left: -50%;
+    transform: scaleX(1);
+  }
+
+  50% {
+    margin-left: 100%;
+    transform: scaleX(1);
+  }
+  51% {
+    margin-left: 100%;
+    transform: scaleX(-1);
+  }
+
+  to {
+    margin-left: -50%;
+    transform: scaleX(-1);
+  }
+}
+
+@keyframes slideinbanner {
+  from {
+    left: 0;
+    transform: scaleX(1);
+  }
+
+  50% {
+    left: 96%;
+    transform: scaleX(1);
+  }
+  51% {
+    left: 96%;
+    transform: scaleX(-1);
+  }
+
+  to {
+    left: 0%;
+    transform: scaleX(-1);
   }
 }

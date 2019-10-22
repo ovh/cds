@@ -60,6 +60,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     availableIntegrations: Array<ProjectIntegration>;
     loading = false;
     themeSubscription: Subscription;
+    tempMultipleConfig = [];
 
     constructor(
         private _hookService: HookService,
@@ -141,13 +142,10 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     initConfig(): void {
         Object.getOwnPropertyNames(this.hook.config).forEach(k => {
             if ((<WorkflowNodeHookConfigValue>this.hook.config[k]).type === 'multiple') {
-
-                // init temp array for checkbox
-                (<WorkflowNodeHookConfigValue>this.hook.config[k]).temp = {};
+                this.tempMultipleConfig = [];
                 for (let event of this.hook.config[k].value.split(';')) {
-                    (<WorkflowNodeHookConfigValue>this.hook.config[k]).temp[event] = true;
+                    this.tempMultipleConfig.push(event);
                 }
-
                 // init ref list from model
                 (<WorkflowNodeHookConfigValue>this.hook.config[k]).multiple_choice_list =
                     (<WorkflowNodeHookConfigValue>this.hook.model.default_config[k]).multiple_choice_list;
@@ -156,11 +154,8 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         });
     }
 
-    updateHookMultiChoice(k: string): void {
-        let finalValue = Object.getOwnPropertyNames((<WorkflowNodeHookConfigValue>this.hook.config[k]).temp).filter(choice => {
-            return (<WorkflowNodeHookConfigValue>this.hook.config[k]).temp[choice];
-        });
-        (<WorkflowNodeHookConfigValue>this.hook.config[k]).value = finalValue.join(';');
+    updateConfigMultipleChoice(k: string): void {
+        (<WorkflowNodeHookConfigValue>this.hook.config[k]).value = this.tempMultipleConfig.join(';');
     }
 
     updateIntegration(): void {

@@ -44,7 +44,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/pullrequests/{id}", nil, r.GET(s.getPullRequestHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/pullrequests/{id}/comments", nil, r.POST(s.postPullRequestCommentHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/events", nil, r.GET(s.getEventsHandler, api.EnableTracing()), r.POST(s.postFilterEventsHandler, api.EnableTracing()))
-	r.Handle("/vcs/{name}/repos/{owner}/{repo}/hooks", nil, r.GET(s.getHookHandler, api.EnableTracing()), r.POST(s.postHookHandler, api.EnableTracing()), r.DELETE(s.deleteHookHandler, api.EnableTracing()))
+	r.Handle("/vcs/{name}/repos/{owner}/{repo}/hooks", nil, r.GET(s.getHookHandler, api.EnableTracing()), r.POST(s.postHookHandler, api.EnableTracing()), r.PUT(s.putHookHandler, api.EnableTracing()), r.DELETE(s.deleteHookHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/releases", nil, r.POST(s.postReleaseHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/releases/{release}/artifacts/{artifactName}", nil, r.POST(s.postUploadReleaseFileHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/forks", nil, r.GET(s.getListForks, api.EnableTracing()))

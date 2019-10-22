@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 
@@ -120,4 +121,19 @@ func (s *SSHStore) Delete(o Object) error {
 	defer session.Close()
 
 	return session.Run("rm -f " + o.GetPath() + "+" + o.GetName())
+}
+
+// DeleteContainer deletes a directory from disk
+func (s *SSHStore) DeleteContainer(containerPath string) error {
+	session, err := s.client.NewSession()
+	if err != nil {
+		return err
+	}
+
+	defer session.Close()
+
+	if strings.TrimSpace(containerPath) != "" && containerPath != "/" {
+		return session.Run("rm -rf " + containerPath)
+	}
+	return nil
 }

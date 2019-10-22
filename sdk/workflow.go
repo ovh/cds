@@ -9,8 +9,6 @@ import (
 	"regexp"
 	"sort"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // DefaultHistoryLength is the default history length
@@ -227,9 +225,12 @@ func (w WorkflowNodeConditions) Value() (driver.Value, error) {
 
 // Scan workflow template request.
 func (w *WorkflowNodeConditions) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
 	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(errors.New("type assertion .([]byte) failed"))
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowNodeConditions")
 }

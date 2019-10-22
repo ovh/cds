@@ -97,20 +97,21 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			res.WebhooksIcon = sdk.BitbucketIcon
 			// https://confluence.atlassian.com/bitbucketserver/event-payload-938025882.html
 			res.Events = []string{
-				"refs_changed",
+				"repo:refs_changed",
+				"repo:modified",
 				"repo:forked",
-				"comment:added",
-				"comment:edited",
-				"comment:deleted",
+				"repo:comment:added",
+				"repo:comment:edited",
+				"repo:comment:deleted",
 				"pr:opened",
 				"pr:modified",
-				"pr:merged",
-				"pr:declined",
-				"pr:deleted",
 				"pr:reviewer:updated",
 				"pr:reviewer:approved",
 				"pr:reviewer:unapproved",
 				"pr:reviewer:needs_work",
+				"pr:merged",
+				"pr:declined",
+				"pr:deleted",
 				"pr:comment:added",
 				"pr:comment:edited",
 				"pr:comment:deleted",
@@ -204,7 +205,7 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 				"Merge Request Hook",
 				"Wiki Page Hook",
 				"Pipeline Hook",
-				"Build Hook",
+				"Job Hook",
 			}
 		case cfg.Gerrit != nil:
 			res.WebhooksSupported = false
@@ -1049,6 +1050,43 @@ func (s *Service) getHookHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, hook, http.StatusOK)
+	}
+}
+
+func (s *Service) putHookHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "Unable to get access token headers %s %s/%s", name, owner, repo)
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
+		}
+
+		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret, created)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
+		}
+		// Check if access token has been refreshed
+		if accessToken != client.GetAccessToken(ctx) {
+			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
+		}
+
+		body := sdk.VCSHook{}
+		if err := service.UnmarshalBody(r, &body); err != nil {
+			return sdk.WrapError(err, "Unable to read body %s %s/%s", name, owner, repo)
+		}
+
+		if err := client.UpdateHook(ctx, fmt.Sprintf("%s/%s", owner, repo), &body); err != nil {
+			return sdk.WrapError(err, "Update %s %s/%s", name, owner, repo)
+		}
+		return service.WriteJSON(w, body, http.StatusOK)
 	}
 }
 

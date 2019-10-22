@@ -74,7 +74,7 @@ func (s *Service) startRabbitMQHook(t *sdk.Task) error {
 		for d := range deliveries {
 			_ = d.Ack(false)
 			exec := sdk.TaskExecution{
-				Status:    TaskExecutionDoing,
+				Status:    TaskExecutionScheduled,
 				Config:    t.Config,
 				Type:      TypeRabbitMQ,
 				UUID:      t.UUID,
@@ -82,9 +82,6 @@ func (s *Service) startRabbitMQHook(t *sdk.Task) error {
 				RabbitMQ:  &sdk.RabbitMQTaskExecution{Message: d.Body},
 			}
 			s.Dao.SaveTaskExecution(&exec)
-			if err := s.Dao.EnqueueTaskExecution(&exec); err != nil {
-				log.Error("startRabbitMQHook > error on EnqueueTaskExecution: %v", err)
-			}
 		}
 		consumer.done <- nil
 	}()

@@ -28,6 +28,7 @@ import (
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
@@ -616,7 +617,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
-	api, _, router, end := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	ctx := testRunWorkflow(t, api, router)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
@@ -732,6 +733,33 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 
 	require.Equal(t, 200, rec.Code)
 	require.Equal(t, "Hi, I am foo", string(body))
+
+	// check if file is stored locally
+	containerPath := path.Join(os.TempDir(), "store", fmt.Sprintf("%d-%d-%v", ctx.run.ID, wNodeJobRun.WorkflowNodeRunID, arts[0].Ref))
+
+	artifactPath := path.Join(containerPath, "myartifact")
+	exists := fileExists(artifactPath)
+	assert.Equal(t, true, exists)
+
+	// then purge run to delete artifact
+	purge.DeleteArtifacts(router.Background, db, api.Cache, api.SharedStorage, ctx.run.ID)
+
+	// check if file is deleted
+	exists = fileExists(artifactPath)
+	assert.Equal(t, false, exists)
+
+	if _, err := os.Stat(containerPath); !os.IsNotExist(err) {
+		t.FailNow()
+	}
+
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
 
 func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {

@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
@@ -96,7 +97,8 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		cmdSplitted[i+1] = "-" + strings.Trim(cmdSplitted[i+1], " ")
 	}
 
-	binCmd := cmdSplitted[0]
+	// Prefix the command with the directory where the worker binary has been downloaded
+	binCmd := filepath.Join(h.BasedirDedicated, cmdSplitted[0])
 	log.Debug("Command exec: %v", cmdSplitted)
 	var cmd *exec.Cmd
 	if spawnArgs.RegisterOnly {

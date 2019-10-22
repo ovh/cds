@@ -89,6 +89,20 @@ func (s *Service) Serve(c context.Context) error {
 	//Init the DAO
 	s.Dao = dao{s.Cache}
 
+	// Get current maintenance state
+	var b bool
+	if _, err := s.Dao.store.Get(MaintenanceHookKey, &b); err != nil {
+		return fmt.Errorf("cannot get %s from redis: %v", MaintenanceHookKey, err)
+	}
+	s.Maintenance = b
+
+	// Listen event on maintenance state
+	go func() {
+		if err := s.listenMaintenance(ctx); err != nil {
+			log.Error("error while initializing listen maintenance routine: %s", err)
+		}
+	}()
+
 	if !s.Cfg.Disable {
 		//Start all the tasks
 		go func() {
