@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/ovh/cds/engine/cdn/objectstore"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -21,4 +22,17 @@ func (s *Service) mirroring(object objectstore.Object, body io.Closer, reader io
 		}
 		reader = &buf
 	}
+}
+
+func (s *Service) downloadFromMirrors(object objectstore.Object) (io.ReadCloser, error) {
+	var content io.ReadCloser
+	var err error
+	for _, mirror := range s.MirrorDrivers {
+		content, err = mirror.Fetch(object)
+		if err == nil {
+			return content, nil
+		}
+	}
+
+	return nil, sdk.WrapError(err, "cannot download from mirrors")
 }
