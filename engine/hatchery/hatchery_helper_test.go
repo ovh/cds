@@ -68,6 +68,11 @@ func InitMock(t *testing.T) {
 		Body(bytes.NewBuffer([]byte("nop"))).
 		AddHeader("Content-Type", "application/octet-stream")
 
+	gock.New("http://lolcat.host").Get("/download/worker/linux/amd64").Times(1).
+		Reply(200).
+		Body(bytes.NewBuffer([]byte("nop"))).
+		AddHeader("Content-Type", "application/octet-stream")
+
 	gock.New("http://lolcat.host").Post("/services/register").
 		HeaderPresent("Authorization").
 		Reply(200).

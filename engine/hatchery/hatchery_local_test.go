@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 	"time"
 
@@ -94,7 +95,8 @@ func TestHatcheryLocal(t *testing.T) {
 	if !gock.IsDone() {
 		pending := gock.Pending()
 		for _, m := range pending {
-			if m.Request().URLStruct.String() != "http://lolcat.host/services/heartbeat" {
+			if m.Request().URLStruct.String() != "http://lolcat.host/services/heartbeat" &&
+				!strings.HasPrefix(m.Request().URLStruct.String(), "http://lolcat.host/download/worker") {
 				t.Errorf("PENDING %s %s", m.Request().Method, m.Request().URLStruct.String())
 			}
 		}
