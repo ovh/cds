@@ -21,16 +21,6 @@ type Driver interface {
 	TemporaryURLSupported() bool
 }
 
-// DriverWithRedirect has to be implemented if your storage backend supports temp url
-type DriverWithRedirect interface {
-	// StoreURL returns a temporary url and a secret key to store an object
-	StoreURL(o Object, contentType string) (url string, key string, err error)
-	// FetchURL returns a temporary url and a secret key to fetch an object
-	FetchURL(o Object) (url string, key string, err error)
-	// ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
-	ServeStaticFilesURL(o Object, entrypoint string) (string, string, error)
-}
-
 // Kind will define const defining all supported objecstore drivers
 type Kind int
 
