@@ -138,7 +138,7 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 func (h *HatcheryLocal) downloadWorker() error {
 	urlBinary := h.Client.DownloadURLFromAPI("worker", sdk.GOOS, sdk.GOARCH, "")
 
-	log.Debug("downloading worker binary from %s", urlBinary)
+	log.Debug("Downloading worker binary from %s", urlBinary)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
@@ -148,7 +148,7 @@ func (h *HatcheryLocal) downloadWorker() error {
 	}
 
 	if contentType := headers.Get("Content-Type"); contentType != "application/octet-stream" {
-		return fmt.Errorf("Invalid Binary (Content-Type: %s). Please try again or download it manually from %s", contentType, sdk.URLGithubReleases)
+		return fmt.Errorf("invalid Binary (Content-Type: %s). Please try again or download it manually from %s", contentType, sdk.URLGithubReleases)
 	}
 
 	workerFullPath := path.Join(h.BasedirDedicated, "worker")
