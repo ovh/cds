@@ -129,11 +129,7 @@ func applicationImportRun(c cli.Values) error {
 	for _, msg := range msgs {
 		fmt.Println(msg)
 	}
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 var applicationExportCmd = cli.Command{

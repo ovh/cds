@@ -117,11 +117,7 @@ func environmentImportRun(c cli.Values) error {
 	for _, s := range msgs {
 		fmt.Println(s)
 	}
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 var environmentExportCmd = cli.Command{
