@@ -1169,7 +1169,6 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	//w1old := *w1
 	w1.Name = "test_2"
 	w1.WorkflowData.Joins = []sdk.Node{
 		{
@@ -1226,8 +1225,11 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 			t.Logf("%s: %s but was undefined", k, v)
 		}
 	}
-
-	test.NoError(t, workflow.Delete(context.TODO(), db, cache, proj, w2))
+	tx, err := db.Begin()
+	require.NoError(t, err)
+	defer tx.Rollback()
+	test.NoError(t, workflow.Delete(context.TODO(), tx, cache, proj, w2))
+	require.NoError(t, tx.Commit())
 }
 
 func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
