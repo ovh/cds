@@ -3,7 +3,6 @@ package local
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"os"
@@ -140,18 +139,16 @@ func (h *HatcheryLocal) downloadWorker() error {
 	urlBinary := h.Client.DownloadURLFromAPI("worker", sdk.GOOS, sdk.GOARCH, "")
 
 	log.Debug("downloading worker binary from %s", urlBinary)
-	resp, err := http.Get(urlBinary)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+
+	body, headers, _, err := h.Client.(cdsclient.Raw).Request(ctx, http.MethodGet, urlBinary, nil)
 	if err != nil {
 		return sdk.WrapError(err, "error while getting binary from CDS API")
 	}
-	defer resp.Body.Close()
 
-	if contentType := sdk.GetContentType(resp); contentType != "application/octet-stream" {
+	if contentType := headers.Get("Content-Type"); contentType != "application/octet-stream" {
 		return fmt.Errorf("Invalid Binary (Content-Type: %s). Please try again or download it manually from %s", contentType, sdk.URLGithubReleases)
-	}
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Error http code: %d, url called: %s", resp.StatusCode, urlBinary)
 	}
 
 	workerFullPath := path.Join(h.BasedirDedicated, "worker")
@@ -169,7 +166,7 @@ func (h *HatcheryLocal) downloadWorker() error {
 		return sdk.WithStack(err)
 	}
 
-	if _, err := io.Copy(fp, resp.Body); err != nil {
+	if _, err := fp.Write(body); err != nil {
 		return sdk.WithStack(err)
 	}
 

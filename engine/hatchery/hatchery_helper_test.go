@@ -63,6 +63,11 @@ func InitMock(t *testing.T) {
 			},
 		).AddHeader("X-Api-Pub-Signing-Key", base64.StdEncoding.EncodeToString(pubKey))
 
+	gock.New("http://lolcat.host").Get("/download/worker/darwin/amd64").Times(1).
+		Reply(200).
+		Body(bytes.NewBuffer([]byte("nop"))).
+		AddHeader("Content-Type", "application/octet-stream")
+
 	gock.New("http://lolcat.host").Post("/services/register").
 		HeaderPresent("Authorization").
 		Reply(200).
