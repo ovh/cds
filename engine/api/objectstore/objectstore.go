@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -23,6 +24,7 @@ type Driver interface {
 	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error)
 	Fetch(o Object) (io.ReadCloser, error)
 	Delete(o Object) error
+	DeleteContainer(containerPath string) error
 	TemporaryURLSupported() bool
 }
 
@@ -74,6 +76,9 @@ type ConfigOptionsAWSS3 struct {
 	AccessKeyID         string
 	SecretAccessKey     string
 	SessionToken        string
+	Endpoint            string //optional
+	DisableSSL          bool   //optional
+	ForcePathStyle      bool   //optional
 }
 
 // ConfigOptionsOpenstack is used by ConfigOptions
@@ -93,8 +98,20 @@ type ConfigOptionsFilesystem struct {
 	Basedir string
 }
 
-// InitDriver init a storage driver from a project integration
-func InitDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver, error) {
+// GetDriver returns the storage driver, integration driver or sharedInfra shared otherwise
+func GetDriver(db gorp.SqlExecutor, sharedStorage Driver, projectKey, integrationName string) (Driver, error) {
+	if integrationName != sdk.DefaultStorageIntegrationName {
+		storageDriver, err := initDriver(db, projectKey, integrationName)
+		if err != nil {
+			return nil, sdk.WrapError(err, "Cannot load storage driver %s/%s", projectKey, integrationName)
+		}
+		return storageDriver, nil
+	}
+	return sharedStorage, nil
+}
+
+// initDriver init a storage driver from a project integration
+func initDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver, error) {
 	projectIntegration, err := integration.LoadProjectIntegrationByName(db, projectKey, integrationName, true)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot load projectIntegration %s/%s", projectKey, integrationName)
@@ -106,13 +123,19 @@ func InitDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver
 
 	switch projectIntegration.Model.Name {
 	case sdk.AWSIntegrationModel:
-		return newS3Store(projectIntegration, ConfigOptionsAWSS3{
+		cfg := ConfigOptionsAWSS3{
 			Region:          projectIntegration.Config["region"].Value,
 			BucketName:      projectIntegration.Config["bucket_name"].Value,
 			Prefix:          projectIntegration.Config["prefix"].Value,
 			AccessKeyID:     projectIntegration.Config["access_key_id"].Value,
 			SecretAccessKey: projectIntegration.Config["secret_access_key"].Value,
-		})
+		}
+		if endpoint := projectIntegration.Config["endpoint"].Value; endpoint != "" {
+			cfg.Endpoint = endpoint
+			cfg.DisableSSL, _ = strconv.ParseBool(projectIntegration.Config["disable_ssl"].Value)
+			cfg.ForcePathStyle, _ = strconv.ParseBool(projectIntegration.Config["force_path_style"].Value)
+		}
+		return newS3Store(projectIntegration, cfg)
 	case sdk.OpenstackIntegrationModel:
 		return newSwiftStore(projectIntegration, ConfigOptionsOpenstack{
 			Address:         projectIntegration.Config["address"].Value,

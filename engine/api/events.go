@@ -11,15 +11,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
-
+	"github.com/go-gorp/gorp"
 	"github.com/tevino/abool"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -233,6 +231,10 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 }
 
 func (client *eventsBrokerSubscribe) manageEvent(db gorp.SqlExecutor, event sdk.Event) (bool, error) {
+	if strings.HasPrefix(event.EventType, "sdk.EventMaintenance") {
+		return true, nil
+	}
+
 	var isSharedInfra = client.consumer.Groups.HasOneOf(group.SharedInfraGroup.ID)
 
 	switch {

@@ -3,8 +3,7 @@ package sdk
 import (
 	"database/sql/driver"
 	json "encoding/json"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 // Those are icon for hooks
@@ -82,9 +81,12 @@ func (w WorkflowNodeHookConfig) Value() (driver.Value, error) {
 
 // Scan workflow template request.
 func (w *WorkflowNodeHookConfig) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
 	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(errors.New("type assertion .([]byte) failed"))
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowNodeHookConfig")
 }

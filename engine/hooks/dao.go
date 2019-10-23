@@ -8,6 +8,11 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+const (
+	MaintenanceHookKey   = "cds_maintenance_hook"
+	MaintenanceHookQueue = "cds_maintenance_queue_hook"
+)
+
 type dao struct {
 	store cache.Store
 }

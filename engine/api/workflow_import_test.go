@@ -652,6 +652,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
+			Name:    "myjob",
 			Enabled: true,
 			Actions: []sdk.Action{
 				assets.NewAction(script.ID, sdk.Parameter{Name: "script", Value: "echo lol"}),
@@ -749,6 +750,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 
 	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj))
+	test.NoError(t, workflow.RenameNode(context.TODO(), api.mustDB(), &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{DeepPipeline: true})
 	test.NoError(t, err)
 

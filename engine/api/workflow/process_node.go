@@ -208,7 +208,8 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		found := false
 		for _, parent := range wr.WorkflowNodeRuns {
 			repo := sdk.ParameterFind(parent[0].BuildParameters, tagGitRepository)
-			if repo != nil && repo.Value == currentRepo {
+			// if same repo OR not same repo, and same application, but different repo, it's a fork
+			if repo != nil && (repo.Value == currentRepo || parent[0].ApplicationID == n.Context.ApplicationID) {
 				found = true
 				// copy git info from ancestors
 				for _, param := range parent[0].BuildParameters {

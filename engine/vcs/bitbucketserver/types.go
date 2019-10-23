@@ -210,18 +210,14 @@ type ResponseStatus struct {
 	IsLastPage    bool     `json:"isLastPage"`
 }
 
-type Project struct {
-	Key string `json:"key"`
-}
-
 type Repo struct {
-	Name    string   `json:"name"`
-	Slug    string   `json:"slug"`
-	Public  bool     `json:"public"`
-	ScmId   string   `json:"scmId"`
-	Project *Project `json:"project"`
-	Link    *Link    `json:"link"`
-	Links   *Links   `json:"links"`
+	Name    string                      `json:"name"`
+	Slug    string                      `json:"slug"`
+	Public  bool                        `json:"public"`
+	ScmID   string                      `json:"scmId"`
+	Project *sdk.BitbucketServerProject `json:"project"`
+	Link    *Link                       `json:"link"`
+	Links   *Links                      `json:"links"`
 }
 
 type Links struct {
@@ -240,95 +236,15 @@ type Link struct {
 }
 
 type UsersResponse struct {
-	Values        []User `json:"values"`
-	Size          int    `json:"size"`
-	NextPageStart int    `json:"nextPageStart"`
-	IsLastPage    bool   `json:"isLastPage"`
-}
-
-type User struct {
-	Username     string `json:"name"`
-	EmailAddress string `json:"emailAddress"`
-	DisplayName  string `json:"displayName"`
-	Slug         string `json:"slug"`
-	ID           int    `json:"id"`
-	Active       bool   `json:"active"`
-	Type         string `json:"type"`
-}
-
-type PullRequest struct {
-	ID          int                `json:"id"`
-	Version     int                `json:"version"`
-	Title       string             `json:"title"`
-	Description string             `json:"description"`
-	State       string             `json:"state"`
-	Open        bool               `json:"open"`
-	Closed      bool               `json:"closed"`
-	CreatedDate int                `json:"createdDate"`
-	UpdatedDate int                `json:"updatedDate"`
-	FromRef     PullRequestRef     `json:"fromRef"`
-	ToRef       PullRequestRef     `json:"toRef"`
-	Locked      bool               `json:"locked"`
-	Author      *PullRequestAuthor `json:"author,omitempty"`
-	Reviewers   []struct {
-		User struct {
-			Name         string `json:"name"`
-			EmailAddress string `json:"emailAddress"`
-			ID           int    `json:"id"`
-			DisplayName  string `json:"displayName"`
-			Active       bool   `json:"active"`
-			Slug         string `json:"slug"`
-			Type         string `json:"type"`
-		} `json:"user"`
-		LastReviewedCommit string `json:"lastReviewedCommit"`
-		Role               string `json:"role"`
-		Approved           bool   `json:"approved"`
-		Status             string `json:"status"`
-	} `json:"reviewers,omitempty"`
-	Participants []struct {
-		User struct {
-			Name         string `json:"name"`
-			EmailAddress string `json:"emailAddress"`
-			ID           int    `json:"id"`
-			DisplayName  string `json:"displayName"`
-			Active       bool   `json:"active"`
-			Slug         string `json:"slug"`
-			Type         string `json:"type"`
-		} `json:"user"`
-		Role     string `json:"role"`
-		Approved bool   `json:"approved"`
-		Status   string `json:"status"`
-	} `json:"participants,omitempty"`
-	Links struct {
-		Self []struct {
-			Href string `json:"href"`
-		} `json:"self"`
-	} `json:"links"`
-}
-
-type PullRequestAuthor struct {
-	User     User   `json:"user"`
-	Role     string `json:"role"`
-	Approved bool   `json:"approved"`
-	Status   string `json:"status"`
-}
-
-type PullRequestRef struct {
-	ID           string                   `json:"id"`
-	DisplayID    string                   `json:"displayId"`
-	LatestCommit string                   `json:"latestCommit"`
-	Repository   PullRequestRefRepository `json:"repository"`
-}
-
-type PullRequestRefRepository struct {
-	Slug    string      `json:"slug"`
-	Name    interface{} `json:"name"`
-	Project Project     `json:"project"`
+	Values        []sdk.BitbucketServerActor `json:"values"`
+	Size          int                        `json:"size"`
+	NextPageStart int                        `json:"nextPageStart"`
+	IsLastPage    bool                       `json:"isLastPage"`
 }
 
 type PullRequestResponse struct {
-	Values        []PullRequest `json:"values"`
-	Size          int           `json:"size"`
-	NextPageStart int           `json:"nextPageStart"`
-	IsLastPage    bool          `json:"isLastPage"`
+	Values        []sdk.BitbucketServerPullRequest `json:"values"`
+	Size          int                              `json:"size"`
+	NextPageStart int                              `json:"nextPageStart"`
+	IsLastPage    bool                             `json:"isLastPage"`
 }

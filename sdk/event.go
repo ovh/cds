@@ -162,3 +162,9 @@ type EventNotif struct {
 	Subject    string   `json:"subject,omitempty"`
 	Body       string   `json:"body,omitempty"`
 }
+
+// EventMaintenance contains event data for maintenance event
+//easyjson:json
+type EventMaintenance struct {
+	Enable bool `json:"enable"`
+}

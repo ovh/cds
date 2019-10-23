@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/api/workermodel"
-
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
@@ -20,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -148,6 +147,12 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 			Value:     version,
 		})
 	}
+
+	linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
+		Status:    sdk.MonitoringStatusOK,
+		Component: "Global/Maintenance",
+		Value:     fmt.Sprintf("%v", api.Maintenance),
+	})
 
 	for stype, r := range resume {
 		linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{

@@ -14,8 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/engine/api/authentication"
-
 	"github.com/ovh/venom"
 
 	"github.com/sguiheux/go-coverage"
@@ -23,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"

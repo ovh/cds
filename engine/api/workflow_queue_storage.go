@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	cdnauth "github.com/ovh/cds/engine/api/authentication/cdn"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -84,16 +85,17 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			NodeJobRunID: nodeJobRunID,
 		}
 
+		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
+		if err != nil {
+			return err
+		}
+
 		if staticFile.StaticKey != "" {
-			if err := api.SharedStorage.Delete(&staticFile); err != nil {
+			if err := storageDriver.Delete(&staticFile); err != nil {
 				return sdk.WrapError(err, "Cannot delete existing static files")
 			}
 		}
 
-		storageDriver, err := api.getStorageDriver(vars["permProjectKey"], vars["integrationName"])
-		if err != nil {
-			return err
-		}
 		id := storageDriver.GetProjectIntegration().ID
 		if id > 0 {
 			staticFile.ProjectIntegrationID = &id

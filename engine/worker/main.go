@@ -10,7 +10,6 @@ func main() {
 	cmd.AddCommand(cmdCheckSecret())
 	cmd.AddCommand(cmdTag())
 	cmd.AddCommand(cmdRun())
-	cmd.AddCommand(cmdUpdate())
 	cmd.AddCommand(cmdExit())
 	cmd.AddCommand(cmdVersion)
 	cmd.AddCommand(cmdRegister())

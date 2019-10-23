@@ -38,6 +38,14 @@ func newS3Store(integration sdk.ProjectIntegration, conf ConfigOptionsAWSS3) (*A
 	} else {
 		aConf.Credentials = credentials.NewStaticCredentials(conf.AccessKeyID, conf.SecretAccessKey, conf.SessionToken)
 	}
+
+	// If a custom endpoint is set, set up a new endPoint resolver (eg. minio)
+	if conf.Endpoint != "" {
+		aConf.Endpoint = aws.String(conf.Endpoint)
+		aConf.DisableSSL = aws.Bool(conf.DisableSSL)
+		aConf.S3ForcePathStyle = aws.Bool(conf.ForcePathStyle)
+	}
+
 	sess, err := session.NewSession(aConf)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to create an AWS session")
@@ -62,6 +70,10 @@ func (s *AWSS3Store) account() (*s3.ListObjectsOutput, error) {
 	}
 
 	return out, nil
+}
+
+func (s *AWSS3Store) getContainerPath(containerPath string) string {
+	return path.Join(s.prefix, containerPath)
 }
 
 func (s *AWSS3Store) getObjectPath(o Object) string {
@@ -146,6 +158,7 @@ func (s *AWSS3Store) Fetch(o Object) (io.ReadCloser, error) {
 	return out.Body, nil
 }
 
+// Delete deletes an artifact from a bucket
 func (s *AWSS3Store) Delete(o Object) error {
 	s3n := s3.New(s.sess)
 	log.Debug("AWS-S3-Store> Deleting object %s from bucket %s", s.getObjectPath(o), s.bucketName)
@@ -157,6 +170,21 @@ func (s *AWSS3Store) Delete(o Object) error {
 		return sdk.WrapError(err, "AWS-S3-Store> Unable to delete object %s", s.getObjectPath(o))
 	}
 	log.Debug("AWS-S3-Store> Successfully Deleted object %s/%s", s.bucketName, s.getObjectPath(o))
+	return nil
+}
+
+// DeleteContainer deletes an artifact container (= directory) from a bucket
+func (s *AWSS3Store) DeleteContainer(path string) error {
+	s3n := s3.New(s.sess)
+	log.Debug("AWS-S3-Store> Deleting container %s from bucket %s", s.getContainerPath(path), s.bucketName)
+	_, err := s3n.DeleteObject(&s3.DeleteObjectInput{
+		Key:    aws.String(s.getContainerPath(path)),
+		Bucket: aws.String(s.bucketName),
+	})
+	if err != nil {
+		return sdk.WrapError(err, "AWS-S3-Store> Unable to delete object %s", s.getContainerPath(path))
+	}
+	log.Debug("AWS-S3-Store> Successfully Deleted object %s/%s", s.bucketName, s.getContainerPath(path))
 	return nil
 }
 

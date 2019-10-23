@@ -23,10 +23,13 @@ func (client *bitbucketcloudClient) CreateHook(ctx context.Context, repo string,
 		hook.URL = client.proxyURL + hook.URL[lastIndexSlash:]
 	}
 
+	if len(hook.Events) == 0 {
+		hook.Events = []string{"repo:push"}
+	}
 	r := WebhookCreate{
 		Description: "CDS webhook - " + hook.Name,
 		Active:      true,
-		Events:      []string{"repo:push"},
+		Events:      hook.Events,
 		URL:         hook.URL,
 	}
 	b, err := json.Marshal(r)
@@ -85,6 +88,17 @@ func (client *bitbucketcloudClient) getHooks(ctx context.Context, fullname strin
 	return webhooks, nil
 }
 
+func (client *bitbucketcloudClient) getHookByID(ctx context.Context, fullname string, id string) (Webhook, error) {
+	var webhook Webhook
+
+	path := fmt.Sprintf("/repositories/%s/hooks/%s", fullname, id)
+	var response Webhooks
+	if err := client.do(ctx, "GET", "core", path, nil, nil, &response); err != nil {
+		return webhook, sdk.WrapError(err, "Unable to get hook %s", id)
+	}
+	return webhook, nil
+}
+
 func (client *bitbucketcloudClient) GetHook(ctx context.Context, fullname, webhookURL string) (sdk.VCSHook, error) {
 	var hook sdk.VCSHook
 	hooks, err := client.getHooks(ctx, fullname)
@@ -106,8 +120,13 @@ func (client *bitbucketcloudClient) GetHook(ctx context.Context, fullname, webho
 
 	return hook, sdk.WithStack(sdk.ErrNotFound)
 }
-func (client *bitbucketcloudClient) UpdateHook(ctx context.Context, repo, id string, hook sdk.VCSHook) error {
-	url := fmt.Sprintf("/repositories/%s/hooks", repo)
+
+func (client *bitbucketcloudClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
+	bitbucketHook, err := client.getHookByID(ctx, repo, hook.ID)
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("/repositories/%s/hooks/%s", repo, hook.ID)
 	if client.proxyURL != "" {
 		lastIndexSlash := strings.LastIndex(hook.URL, "/")
 		if client.proxyURL[len(client.proxyURL)-1] == '/' {
@@ -116,15 +135,14 @@ func (client *bitbucketcloudClient) UpdateHook(ctx context.Context, repo, id str
 		hook.URL = client.proxyURL + hook.URL[lastIndexSlash:]
 	}
 
-	r := WebhookCreate{
-		Description: "CDS webhook - " + hook.Name,
-		Active:      true,
-		Events:      []string{"repo:push"},
-		URL:         hook.URL,
+	if len(hook.Events) == 0 {
+		hook.Events = []string{"repo:push"}
 	}
-	b, err := json.Marshal(r)
+
+	bitbucketHook.Events = hook.Events
+	b, err := json.Marshal(bitbucketHook)
 	if err != nil {
-		return sdk.WrapError(err, "Cannot marshal body %+v", r)
+		return sdk.WrapError(err, "cannot marshal body %+v", bitbucketHook)
 	}
 	res, err := client.put(url, "application/json", bytes.NewBuffer(b), nil)
 	if err != nil {
@@ -137,7 +155,7 @@ func (client *bitbucketcloudClient) UpdateHook(ctx context.Context, repo, id str
 	}
 	if res.StatusCode != 200 {
 		err := fmt.Errorf("Unable to update webhook on bitbucketcloud. Status code : %d - Body: %s. ", res.StatusCode, body)
-		return sdk.WrapError(err, "bitbucketcloud.CreateHook. Data : %s", b)
+		return sdk.WrapError(err, "bitbucketcloud.UpdateHook. Data : %s", b)
 	}
 
 	return nil

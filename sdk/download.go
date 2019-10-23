@@ -115,3 +115,13 @@ func CheckContentTypeBinary(resp *http.Response) error {
 	}
 	return nil
 }
+
+// GetContentType returns the content-type header from a http.Response
+func GetContentType(resp *http.Response) string {
+	for k, v := range resp.Header {
+		if k == "Content-Type" && len(v) >= 1 {
+			return v[0]
+		}
+	}
+	return ""
+}

@@ -151,7 +151,7 @@ func (c *githubClient) post(path string, bodyType string, body io.Reader, opts *
 	return httpClient.Do(req)
 }
 
-func (c *githubClient) patch(path string, opts *postOptions) (*http.Response, error) {
+func (c *githubClient) patch(path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
 	if opts == nil {
 		opts = new(postOptions)
 	}
@@ -159,11 +159,14 @@ func (c *githubClient) patch(path string, opts *postOptions) (*http.Response, er
 		path = c.GitHubAPIURL + path
 	}
 
-	req, err := http.NewRequest(http.MethodPatch, path, nil)
+	req, err := http.NewRequest(http.MethodPatch, path, body)
 	if err != nil {
 		return nil, err
 	}
 
+	if bodyType != "" {
+		req.Header.Set("Content-Type", bodyType)
+	}
 	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
 	req.Header.Add("Accept", "application/json")
 	if opts.asUser && c.token != "" {

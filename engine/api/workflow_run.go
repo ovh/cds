@@ -1145,16 +1145,6 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 			integrationName = sdk.DefaultStorageIntegrationName
 		}
 
-		// storageDriver, err := api.getStorageDriver(proj.Key, integrationName)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// f, err := storageDriver.Fetch(art)
-		// if err != nil {
-		// 	_ = f.Close()
-		// 	return sdk.WrapError(err, "Cannot fetch artifact")
-		// }
 		cdns, err := services.LoadAllByType(ctx, api.mustDB(), services.TypeCDN)
 		if err != nil {
 			return sdk.WrapError(err, "cannot get services")
@@ -1239,7 +1229,7 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 						integrationName = sdk.DefaultStorageIntegrationName
 					}
 
-					storageDriver, err := api.getStorageDriver(key, integrationName)
+					storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, key, integrationName)
 					if err != nil {
 						log.Error("Cannot load storage driver: %v", err)
 						return

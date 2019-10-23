@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { UpdateMaintenance } from 'app/store/cds.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { filter, first } from 'rxjs/operators';
 import { Broadcast, BroadcastEvent } from './model/broadcast.model';
@@ -56,6 +57,10 @@ export class AppService {
     manageEvent(event: Event): void {
         if (!event || !event.type_event) {
             return
+        }
+        if (event.type_event.indexOf(EventType.MAINTENANCE) === 0) {
+            this._store.dispatch(new UpdateMaintenance(event.payload['Enable']));
+            return;
         }
         if (event.type_event.indexOf(EventType.PROJECT_PREFIX) === 0 || event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0 ||
             event.type_event === EventType.APPLICATION_ADD || event.type_event === EventType.APPLICATION_UPDATE ||
