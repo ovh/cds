@@ -63,22 +63,11 @@ func (c *client) ApplicationImport(projectKey string, content io.Reader, format 
 		return nil, exportentities.ErrUnsupportedFormat
 	}
 
-	btes, _, code, errRequest := c.Request(context.Background(), "POST", url, content, mods...)
+	btes, _, _, err := c.Request(context.Background(), "POST", url, content, mods...)
 	messages := []string{}
-	if len(btes) > 0 {
-		if err := json.Unmarshal(btes, &messages); err != nil {
-			return nil, err
-		}
-	}
+	_ = json.Unmarshal(btes, &messages)
 
-	if errRequest != nil {
-		return messages, errRequest
-	}
-	if code >= 400 {
-		return messages, fmt.Errorf("HTTP Status code %d", code)
-	}
-
-	return messages, nil
+	return messages, err
 }
 
 func (c *client) EnvironmentImport(projectKey string, content io.Reader, format string, force bool) ([]string, error) {
@@ -106,22 +95,11 @@ func (c *client) EnvironmentImport(projectKey string, content io.Reader, format 
 		return nil, exportentities.ErrUnsupportedFormat
 	}
 
-	btes, _, code, errRequest := c.Request(context.Background(), "POST", url, content, mods...)
+	btes, _, _, err := c.Request(context.Background(), "POST", url, content, mods...)
 	messages := []string{}
-	if len(btes) > 0 {
-		if err := json.Unmarshal(btes, &messages); err != nil {
-			return nil, err
-		}
-	}
+	_ = json.Unmarshal(btes, &messages)
 
-	if errRequest != nil {
-		return messages, errRequest
-	}
-	if code >= 400 {
-		return messages, fmt.Errorf("HTTP Status code %d", code)
-	}
-
-	return messages, nil
+	return messages, err
 }
 
 // WorkerModelImport import a worker model via as code
@@ -191,22 +169,11 @@ func (c *client) WorkflowImport(projectKey string, content io.Reader, format str
 		return nil, exportentities.ErrUnsupportedFormat
 	}
 
-	btes, _, code, errRequest := c.Request(context.Background(), "POST", url, content, mods...)
+	btes, _, _, err := c.Request(context.Background(), "POST", url, content, mods...)
 	messages := []string{}
-	if len(btes) > 0 {
-		if err := json.Unmarshal(btes, &messages); err != nil {
-			return nil, err
-		}
-	}
+	_ = json.Unmarshal(btes, &messages)
 
-	if errRequest != nil {
-		return messages, errRequest
-	}
-	if code >= 400 {
-		return messages, fmt.Errorf("HTTP Status code %d", code)
-	}
-
-	return messages, nil
+	return messages, err
 }
 
 func (c *client) WorkflowPush(projectKey string, tarContent io.Reader, mods ...RequestModifier) ([]string, *tar.Reader, error) {
