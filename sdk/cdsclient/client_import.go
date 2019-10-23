@@ -63,25 +63,19 @@ func (c *client) ApplicationImport(projectKey string, content io.Reader, format 
 		return nil, exportentities.ErrUnsupportedFormat
 	}
 
-	btes, _, code, err := c.Request(context.Background(), "POST", url, content, mods...)
-	if err != nil {
-		return nil, err
-	}
-
-	if code >= 400 {
-		return nil, fmt.Errorf("HTTP Status code %d", code)
-	}
-
+	btes, _, code, errRequest := c.Request(context.Background(), "POST", url, content, mods...)
 	messages := []string{}
-	if code > 400 {
+	if len(btes) > 0 {
 		if err := json.Unmarshal(btes, &messages); err != nil {
-			return nil, sdk.WrapError(err, "HTTP Code %d", code)
+			return nil, err
 		}
-		return messages, fmt.Errorf("HTTP Code %d", code)
 	}
 
-	if err := json.Unmarshal(btes, &messages); err != nil {
-		return nil, err
+	if errRequest != nil {
+		return messages, errRequest
+	}
+	if code >= 400 {
+		return messages, fmt.Errorf("HTTP Status code %d", code)
 	}
 
 	return messages, nil
@@ -112,18 +106,19 @@ func (c *client) EnvironmentImport(projectKey string, content io.Reader, format 
 		return nil, exportentities.ErrUnsupportedFormat
 	}
 
-	btes, _, code, err := c.Request(context.Background(), "POST", url, content, mods...)
-	if err != nil {
-		return nil, err
-	}
-
-	if code >= 400 {
-		return nil, fmt.Errorf("HTTP Status code %d", code)
-	}
-
+	btes, _, code, errRequest := c.Request(context.Background(), "POST", url, content, mods...)
 	messages := []string{}
-	if err := json.Unmarshal(btes, &messages); err != nil {
-		return nil, err
+	if len(btes) > 0 {
+		if err := json.Unmarshal(btes, &messages); err != nil {
+			return nil, err
+		}
+	}
+
+	if errRequest != nil {
+		return messages, errRequest
+	}
+	if code >= 400 {
+		return messages, fmt.Errorf("HTTP Status code %d", code)
 	}
 
 	return messages, nil
@@ -196,18 +191,19 @@ func (c *client) WorkflowImport(projectKey string, content io.Reader, format str
 		return nil, exportentities.ErrUnsupportedFormat
 	}
 
-	btes, _, code, err := c.Request(context.Background(), "POST", url, content, mods...)
-	if err != nil {
-		return nil, err
-	}
-
-	if code >= 400 {
-		return nil, fmt.Errorf("HTTP Status code %d", code)
-	}
-
+	btes, _, code, errRequest := c.Request(context.Background(), "POST", url, content, mods...)
 	messages := []string{}
-	if err := json.Unmarshal(btes, &messages); err != nil {
-		return nil, err
+	if len(btes) > 0 {
+		if err := json.Unmarshal(btes, &messages); err != nil {
+			return nil, err
+		}
+	}
+
+	if errRequest != nil {
+		return messages, errRequest
+	}
+	if code >= 400 {
+		return messages, fmt.Errorf("HTTP Status code %d", code)
 	}
 
 	return messages, nil

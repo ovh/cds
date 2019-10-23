@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) postApplicationImportHandler() service.Handler {
@@ -71,7 +70,6 @@ func (api *API) postApplicationImportHandler() service.Handler {
 			if sdk.ErrorIsUnknown(globalError) {
 				return globalError
 			}
-			log.Warning("%v", globalError)
 			sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
 			return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
 		}

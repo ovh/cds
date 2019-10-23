@@ -114,12 +114,11 @@ func environmentImportRun(c cli.Values) error {
 	formatStr, _ := exportentities.GetFormatStr(format)
 
 	msgs, err := client.EnvironmentImport(c.GetString(_ProjectKey), contentFile, formatStr, c.GetBool("force"))
-	if err != nil {
-		return err
-	}
-
 	for _, s := range msgs {
 		fmt.Println(s)
+	}
+	if err != nil {
+		return err
 	}
 
 	return nil

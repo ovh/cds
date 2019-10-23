@@ -126,17 +126,11 @@ func applicationImportRun(c cli.Values) error {
 	formatStr, _ := exportentities.GetFormatStr(format)
 
 	msgs, err := client.ApplicationImport(c.GetString(_ProjectKey), contentFile, formatStr, c.GetBool("force"))
-	if err != nil {
-		if msgs != nil {
-			for _, msg := range msgs {
-				fmt.Println(msg)
-			}
-		}
-		return err
+	for _, msg := range msgs {
+		fmt.Println(msg)
 	}
-
-	for _, s := range msgs {
-		fmt.Println(s)
+	if err != nil {
+		return err
 	}
 
 	return nil
