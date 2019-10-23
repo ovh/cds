@@ -21,21 +21,10 @@ func (c *client) PipelineImport(projectKey string, content io.Reader, format str
 		url += "&forceUpdate=true"
 	}
 
-	btes, _, code, errReq := c.Request(context.Background(), "POST", url, content)
-	if errReq != nil {
-		return nil, errReq
-	}
-
-	if code >= 400 {
-		return nil, fmt.Errorf("HTTP Status code %d", code)
-	}
-
-	var msgs []string
-	if err := json.Unmarshal(btes, &msgs); err != nil {
-		return []string{string(btes)}, errReq
-	}
-
-	return msgs, nil
+	btes, _, _, err := c.Request(context.Background(), "POST", url, content)
+	messages := []string{}
+	_ = json.Unmarshal(btes, &messages)
+	return messages, err
 }
 
 func (c *client) ApplicationImport(projectKey string, content io.Reader, format string, force bool) ([]string, error) {
