@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"sort"
 	"strconv"
@@ -1179,25 +1178,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 			return sdk.WrapError(err, "cannot sign jws for cdn request")
 		}
 
-		httpClient := http.Client{
-			Timeout: 30 * time.Minute,
-		}
-		res, err := httpClient.Get(cdn.HTTPURL + "/download/" + cdnReqToken)
-		if err != nil {
-			return sdk.WrapError(err, "cannot download artifact")
-		}
-		if res.StatusCode >= 400 {
-			return fmt.Errorf("cannot download artifact, status code: %d", res.StatusCode)
-		}
-
-		if _, err := io.Copy(w, res.Body); err != nil {
-			_ = res.Body.Close()
-			return sdk.WrapError(err, "Cannot stream artifact")
-		}
-
-		if err := res.Body.Close(); err != nil {
-			return sdk.WrapError(err, "Cannot close artifact")
-		}
+		http.Redirect(w, r, cdn.HTTPURL+"/download/"+cdnReqToken, http.StatusMovedPermanently)
 		return nil
 	}
 }
