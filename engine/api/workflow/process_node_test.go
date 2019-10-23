@@ -903,7 +903,8 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, nil, nil)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
 
 	mapParams := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].BuildParameters)
