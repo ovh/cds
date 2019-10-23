@@ -43,5 +43,14 @@ func (s *Service) downloadArtifact(req *http.Request, cdnRequest sdk.CDNRequest)
 		return nil, sdk.WrapError(err, "cannot get driver")
 	}
 
-	return storageDriver.Fetch(cdnRequest.Artifact)
+	content, err := storageDriver.Fetch(cdnRequest.Artifact)
+	if err == nil {
+		return content, nil
+	}
+	// Cannot have mirrors on integrations
+	if cdnRequest.IntegrationName != sdk.DefaultStorageIntegrationName {
+		return nil, sdk.WrapError(err, "cannot download artifact")
+	}
+
+	return s.downloadFromMirrors(cdnRequest.Artifact)
 }
