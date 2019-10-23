@@ -1,17 +1,12 @@
-package worker
+package cdn
 
 import (
 	"crypto/rsa"
 	"fmt"
-	"time"
-
-	"github.com/ovh/cds/engine/api/authentication"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/jws"
 )
-
-// SessionDuration the life time of a CDN token request.
-var SessionDuration = 1 * time.Hour
 
 // VerifyToken checks token technical validity
 func VerifyToken(publicKey *rsa.PublicKey, tokenStr string) (*sdk.CDNRequest, error) {
@@ -20,7 +15,7 @@ func VerifyToken(publicKey *rsa.PublicKey, tokenStr string) (*sdk.CDNRequest, er
 	}
 
 	var cdnjws sdk.CDNRequest
-	if err := authentication.VerifyJWSWithSpecificKey(publicKey, tokenStr, &cdnjws); err != nil {
+	if err := jws.VerifyJWSWithSpecificKey(publicKey, tokenStr, &cdnjws); err != nil {
 		return nil, sdk.NewErrorFrom(sdk.ErrUnauthorized, "Cannot verify jws")
 	}
 

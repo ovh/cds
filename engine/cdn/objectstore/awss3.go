@@ -2,6 +2,7 @@ package objectstore
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -94,7 +95,7 @@ func (s *AWSS3Store) Status() sdk.MonitoringStatusLine {
 	}
 }
 
-func (s *AWSS3Store) Store(o Object, data io.ReadCloser) (string, error) {
+func (s *AWSS3Store) Store(ctx context.Context, o Object, data io.ReadCloser) (string, error) {
 	defer data.Close()
 	log.Debug("AWS-S3-Store> Setting up uploader")
 	uploader := s3manager.NewUploader(s.sess)
@@ -104,7 +105,8 @@ func (s *AWSS3Store) Store(o Object, data io.ReadCloser) (string, error) {
 	}
 
 	log.Debug("AWS-S3-Store> Uploading object %s to bucket %s", s.getObjectPath(o), s.bucketName)
-	out, err := uploader.Upload(&s3manager.UploadInput{
+
+	out, err := uploader.UploadWithContext(ctx, &s3manager.UploadInput{
 		Key:    aws.String(s.getObjectPath(o)),
 		Bucket: aws.String(s.bucketName),
 		Body:   bytes.NewReader(b),
@@ -138,10 +140,10 @@ func (s *AWSS3Store) StoreURL(o Object, contentType string) (string, string, err
 	return urlStr, *key, nil
 }
 
-func (s *AWSS3Store) Fetch(o Object) (io.ReadCloser, error) {
+func (s *AWSS3Store) Fetch(ctx context.Context, o Object) (io.ReadCloser, error) {
 	s3n := s3.New(s.sess)
 	log.Debug("AWS-S3-Store> Fetching object %s from bucket %s", s.getObjectPath(o), s.bucketName)
-	out, err := s3n.GetObject(&s3.GetObjectInput{
+	out, err := s3n.GetObjectWithContext(ctx, &s3.GetObjectInput{
 		Key:    aws.String(s.getObjectPath(o)),
 		Bucket: aws.String(s.bucketName),
 	})
@@ -152,10 +154,10 @@ func (s *AWSS3Store) Fetch(o Object) (io.ReadCloser, error) {
 	return out.Body, nil
 }
 
-func (s *AWSS3Store) Delete(o Object) error {
+func (s *AWSS3Store) Delete(ctx context.Context, o Object) error {
 	s3n := s3.New(s.sess)
 	log.Debug("AWS-S3-Store> Deleting object %s from bucket %s", s.getObjectPath(o), s.bucketName)
-	_, err := s3n.DeleteObject(&s3.DeleteObjectInput{
+	_, err := s3n.DeleteObjectWithContext(ctx, &s3.DeleteObjectInput{
 		Key:    aws.String(s.getObjectPath(o)),
 		Bucket: aws.String(s.bucketName),
 	})

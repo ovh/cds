@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	cdnauth "github.com/ovh/cds/engine/api/authentication/cdn"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/services"
@@ -124,7 +123,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 	}
 }
 
-func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Handler {
+func (api *API) postWorkflowJobArtifactCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if _, isWorker := api.isWorker(ctx); !isWorker {
 			return sdk.ErrForbidden
@@ -142,11 +141,11 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 			log.Error("cannot get from cache %s: %v", cacheKey, err)
 		}
 		if !find {
-			return sdk.WrapError(sdk.ErrNotFound, "postWorkflowJobArtifactWithTempURLCallbackHandler> Unable to find artifact, key:%s", cacheKey)
+			return sdk.WrapError(sdk.ErrNotFound, "Unable to find artifact, key:%s", cacheKey)
 		}
 
 		if !art.Equal(cachedArt) {
-			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifactWithTempURLCallbackHandler> Submitted artifact doesn't match, key:%s art:%v cachedArt:%v", cacheKey, art, cachedArt)
+			return sdk.WrapError(sdk.ErrForbidden, "Submitted artifact doesn't match, key:%s art:%v cachedArt:%v", cacheKey, art, cachedArt)
 		}
 
 		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), art.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
@@ -164,7 +163,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 	}
 }
 
-func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
+func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if _, isWorker := api.isWorker(ctx); !isWorker {
 			return sdk.ErrForbidden
@@ -174,7 +173,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 
 		hash, errG := sdk.GenerateHash()
 		if errG != nil {
-			return sdk.WrapError(errG, "postWorkflowJobArtifacWithTempURLHandler> Could not generate hash")
+			return sdk.WrapError(errG, "Could not generate hash")
 		}
 
 		art := sdk.WorkflowNodeRunArtifact{}
@@ -184,17 +183,17 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 
 		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, art.WorkflowNodeJobRunID)
 		if errJ != nil {
-			return sdk.WrapError(errJ, "postWorkflowJobArtifacWithTempURLHandler> Cannot load node job run with art.WorkflowNodeJobRunID: %d", art.WorkflowNodeJobRunID)
+			return sdk.WrapError(errJ, "Cannot load node job run with art.WorkflowNodeJobRunID: %d", art.WorkflowNodeJobRunID)
 		}
 
 		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
 		if errR != nil {
-			return sdk.WrapError(errR, "postWorkflowJobArtifacWithTempURLHandler> Cannot load node run")
+			return sdk.WrapError(errR, "Cannot load node run")
 		}
 
 		tag, errT := base64.RawURLEncoding.DecodeString(ref)
 		if errT != nil {
-			return sdk.WrapError(errT, "postWorkflowJobArtifacWithTempURLHandler> Cannot decode ref")
+			return sdk.WrapError(errT, "Cannot decode ref")
 		}
 
 		art.WorkflowID = nodeRun.WorkflowRunID
@@ -215,7 +214,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 			Artifact:        &art,
 		}
 
-		cdnReqToken, err := authentication.SignJWS(cdnReq, cdnauth.SessionDuration)
+		cdnReqToken, err := authentication.SignJWS(cdnReq, 0)
 		if err != nil {
 			return sdk.WrapError(err, "cannot sign jws for cdn request")
 		}

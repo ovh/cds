@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"reflect"
+	"time"
 
 	"gopkg.in/square/go-jose.v2"
 
@@ -101,4 +103,41 @@ func UnsafeParse(s string, i interface{}) error {
 	}
 	output := object.UnsafePayloadWithoutVerification()
 	return json.Unmarshal(output, i)
+}
+
+// signaturePayload contains fields for a jws signature payload.
+type signaturePayload struct {
+	Type   string                 `json:"type"`
+	Expire int64                  `json:"expire"`
+	Data   map[string]interface{} `json:"data"`
+}
+
+// VerifyJWSWithSpecificKey checks the validity of given jws string and the public key.
+func VerifyJWSWithSpecificKey(publicKey *rsa.PublicKey, signature string, content interface{}) error {
+	var payload signaturePayload
+	if err := Verify(publicKey, signature, &payload); err != nil {
+		return err
+	}
+
+	if payload.Type != payloadDataType(content) || (payload.Expire > 0 && payload.Expire < time.Now().Unix()) {
+		return sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given jws token or expired: %+v", payload)
+	}
+
+	buf, err := json.Marshal(payload.Data)
+	if err != nil {
+		return sdk.WrapError(err, "unable to decode payload data")
+	}
+	if err := json.Unmarshal(buf, content); err != nil {
+		return sdk.WrapError(err, "unable to decode payload data")
+	}
+
+	return nil
+}
+
+func payloadDataType(content interface{}) string {
+	t := reflect.TypeOf(content)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	return t.Name()
 }
