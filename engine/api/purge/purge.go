@@ -229,6 +229,7 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 					continue
 				}
 
+				log.Debug("DeleteArtifacts> deleting %+v", art)
 				if err := storageDriver.Delete(&art); err != nil {
 					log.Error("error while deleting container prj:%v wnr:%v name:%v err:%v", proj.Key, wnr.ID, art.GetPath(), err)
 					continue
