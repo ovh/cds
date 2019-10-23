@@ -1,6 +1,7 @@
 package objectstore
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"time"
@@ -106,7 +107,7 @@ func (s *SwiftStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadC
 }
 
 // Store stores in swift
-func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
+func (s *SwiftStore) Store(ctx context.Context, o Object, data io.ReadCloser) (string, error) {
 	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	log.Debug("SwiftStore> Storing /%s/%s\n", container, object)
@@ -141,7 +142,7 @@ func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
 }
 
 // Fetch an object from swift
-func (s *SwiftStore) Fetch(o Object) (io.ReadCloser, error) {
+func (s *SwiftStore) Fetch(_ context.Context, o Object) (io.ReadCloser, error) {
 	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 
@@ -162,7 +163,7 @@ func (s *SwiftStore) Fetch(o Object) (io.ReadCloser, error) {
 }
 
 // Delete an object from swift
-func (s *SwiftStore) Delete(o Object) error {
+func (s *SwiftStore) Delete(_ context.Context, o Object) error {
 	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 

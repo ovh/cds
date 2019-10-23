@@ -115,28 +115,6 @@ func VerifyJWS(signature string, content interface{}) error {
 	return nil
 }
 
-// VerifyJWSWithSpecificKey checks the validity of given jws string and the public key.
-func VerifyJWSWithSpecificKey(publicKey *rsa.PublicKey, signature string, content interface{}) error {
-	var payload signaturePayload
-	if err := jws.Verify(publicKey, signature, &payload); err != nil {
-		return err
-	}
-
-	if payload.Type != payloadDataType(content) || (payload.Expire > 0 && payload.Expire < time.Now().Unix()) {
-		return sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given jws token or expired: %+v", payload)
-	}
-
-	buf, err := json.Marshal(payload.Data)
-	if err != nil {
-		return sdk.WrapError(err, "unable to decode payload data")
-	}
-	if err := json.Unmarshal(buf, content); err != nil {
-		return sdk.WrapError(err, "unable to decode payload data")
-	}
-
-	return nil
-}
-
 func payloadDataType(content interface{}) string {
 	t := reflect.TypeOf(content)
 	if t.Kind() == reflect.Ptr {

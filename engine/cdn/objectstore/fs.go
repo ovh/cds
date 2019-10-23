@@ -1,6 +1,7 @@
 package objectstore
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -51,7 +52,7 @@ func (fss *FilesystemStore) ServeStaticFiles(o Object, entrypoint string, data i
 }
 
 // Store store a object on disk
-func (fss *FilesystemStore) Store(o Object, data io.ReadCloser) (string, error) {
+func (fss *FilesystemStore) Store(_ context.Context, o Object, data io.ReadCloser) (string, error) {
 	dst := path.Join(fss.basedir, o.GetPath())
 	if err := os.MkdirAll(dst, 0755); err != nil {
 		return "", err
@@ -68,13 +69,13 @@ func (fss *FilesystemStore) Store(o Object, data io.ReadCloser) (string, error) 
 }
 
 // Fetch lookup on disk for data
-func (fss *FilesystemStore) Fetch(o Object) (io.ReadCloser, error) {
+func (fss *FilesystemStore) Fetch(_ context.Context, o Object) (io.ReadCloser, error) {
 	dst := path.Join(fss.basedir, o.GetPath(), o.GetName())
 	return os.Open(dst)
 }
 
 // Delete data on disk
-func (fss *FilesystemStore) Delete(o Object) error {
+func (fss *FilesystemStore) Delete(_ context.Context, o Object) error {
 	dst := path.Join(fss.basedir, o.GetPath(), o.GetName())
 	return os.RemoveAll(dst)
 }

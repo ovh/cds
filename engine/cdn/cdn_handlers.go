@@ -59,7 +59,7 @@ func (s *Service) getDownloadHandler() service.Handler {
 			w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", cdnRequest.Artifact.Name))
 
 			var err error
-			file, err = s.downloadArtifact(r, *cdnRequest)
+			file, err = s.downloadArtifact(ctx, r, *cdnRequest)
 			if err != nil {
 				return sdk.WrapError(err, "cannot download artifact")
 			}
@@ -96,7 +96,7 @@ func (s *Service) postUploadHandler() service.Handler {
 			if cdnRequest.Artifact == nil {
 				return fmt.Errorf("cannot upload artifact, need artifact description in cdn request token")
 			}
-			artifact, err := s.storeArtifact(r.Body, *cdnRequest)
+			artifact, err := s.storeArtifact(ctx, r.Body, *cdnRequest)
 			if err != nil {
 				return sdk.WrapError(err, "cannot store artifact")
 			}

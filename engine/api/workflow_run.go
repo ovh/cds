@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	cdnauth "github.com/ovh/cds/engine/api/authentication/cdn"
 	"github.com/ovh/cds/engine/api/services"
 
 	"github.com/ovh/cds/engine/api/permission"
@@ -1102,7 +1101,7 @@ func (api *API) downloadworkflowArtifactDirectHandler() service.Handler {
 			Type:            sdk.CDNArtifactType,
 		}
 
-		cdnToken, err := authentication.SignJWS(cdnReq, cdnauth.SessionDuration)
+		cdnToken, err := authentication.SignJWS(cdnReq, 0)
 		if err != nil {
 			return sdk.WrapError(err, "cannot sign cdn request token : %+v", cdnReq)
 		}
@@ -1175,7 +1174,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 			Artifact:        art,
 		}
 
-		cdnReqToken, err := authentication.SignJWS(cdnReq, cdnauth.SessionDuration)
+		cdnReqToken, err := authentication.SignJWS(cdnReq, 0)
 		if err != nil {
 			return sdk.WrapError(err, "cannot sign jws for cdn request")
 		}

@@ -14,10 +14,10 @@ import (
 type Driver interface {
 	GetProjectIntegration() sdk.ProjectIntegration
 	Status() sdk.MonitoringStatusLine
-	Store(o Object, data io.ReadCloser) (string, error)
+	Store(ctx context.Context, o Object, data io.ReadCloser) (string, error)
 	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error)
-	Fetch(o Object) (io.ReadCloser, error)
-	Delete(o Object) error
+	Fetch(ctx context.Context, o Object) (io.ReadCloser, error)
+	Delete(ctx context.Context, o Object) error
 	TemporaryURLSupported() bool
 }
 
