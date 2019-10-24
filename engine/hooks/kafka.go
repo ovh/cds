@@ -87,10 +87,6 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 		return fmt.Errorf("startKafkaHook>Error creating consumer: (%s %s %s %s): %v", broker, consumerGroup, topic, kafkaUser, errConsumer)
 	}
 
-	vConsumer := t.Config[sdk.KafkaHookModelConsumerGroup]
-	vConsumer.Value = consumerGroup
-	t.Config[sdk.KafkaHookModelConsumerGroup] = vConsumer
-
 	// Consume errors
 	go func() {
 		for err := range consumer.Errors() {

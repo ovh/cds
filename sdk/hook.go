@@ -68,11 +68,6 @@ var (
 				Configurable: true,
 				Type:         HookConfigTypeIntegration,
 			},
-			KafkaHookModelConsumerGroup: {
-				Value:        "",
-				Configurable: false,
-				Type:         HookConfigTypeString,
-			},
 			KafkaHookModelTopic: {
 				Value:        "",
 				Configurable: true,
