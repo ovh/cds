@@ -20,26 +20,26 @@ testcases:
 
 - name: grant new group in workflow
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group user add ITSCWRKFLW10-ro cds.integration.tests.ro
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group user add ITSCWRKFLW10-ro {{.ro_username}}
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group grant ITSCWRKFLW10 ITSCWRKFLW10-ro 4 --only-project
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group grant ITSCWRKFLW10 ITSCWRKFLW10-ro 7 --workflow ITSCWRKFLW10-WORKFLOW
 
 - name: run workflow should fail
   steps:
-  - script:  {{.cds.build.cdsctlro}} workflow run ITSCWRKFLW10 ITSCWRKFLW10-WORKFLOW
+  - script: {{.cdsctl}} -f {{.cdsctl.config_ro_user}} workflow run ITSCWRKFLW10 ITSCWRKFLW10-WORKFLOW
     assertions:
     - result.code ShouldNotEqual 0
     - "result.systemout ShouldContainSubstring you don't have execution right"
 
 - name: add user in right group
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group user add ITSCWRKFLW10 cds.integration.tests.ro
-  - script: {{.cds.build.cdsctlro}} group create TESTITSCWRKFLW10
-  - script: {{.cds.build.cdsctlro}} group delete TESTITSCWRKFLW10 --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group user add ITSCWRKFLW10 {{.ro_username}}
+  - script: {{.cdsctl}} -f {{.cdsctl.config_ro_user}} group create TESTITSCWRKFLW10
+  - script: {{.cdsctl}} -f {{.cdsctl.config_ro_user}} group delete TESTITSCWRKFLW10 --force
 
 - name: run workflow should success
   steps:
-  - script:  {{.cds.build.cdsctlro}} workflow run ITSCWRKFLW10 ITSCWRKFLW10-WORKFLOW
+  - script: {{.cdsctl}} -f {{.cdsctl.config_ro_user}} workflow run ITSCWRKFLW10 ITSCWRKFLW10-WORKFLOW
     assertions:
     - result.code ShouldEqual 0
 

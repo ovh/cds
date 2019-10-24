@@ -27,7 +27,9 @@ TEST_DB_PASSWORD = $(if ${CDS_API_DATABASE_PASSWORD},${CDS_API_DATABASE_PASSWORD
 TEST_DB_NAME = $(if ${CDS_API_DATABASE_NAME},${CDS_API_DATABASE_NAME},cds)
 TEST_REDIS_HOST = $(if ${CDS_API_CACHE_REDIS_HOST},${CDS_API_CACHE_REDIS_HOST},localhost:6379)
 TEST_REDIS_PASSWORD = $(if ${CDS_API_CACHE_REDIS_PASSWORD},${CDS_API_CACHE_REDIS_PASSWORD},)
-TEST_DB_START = docker run -d -p $(TEST_DB_PORT):5432 -e POSTGRES_PASSWORD=$(TEST_DB_PASSWORD) -e POSTGRES_USER=$(TEST_DB_USER) -e POSTGRES_DB=$(TEST_DB_NAME) --name postgres-cds postgres
+TEST_DB_START_DOCKER = docker run -d -p $(TEST_DB_PORT):5432 -e POSTGRES_PASSWORD=$(TEST_DB_PASSWORD) -e POSTGRES_USER=$(TEST_DB_USER) -e POSTGRES_DB=$(TEST_DB_NAME) --name postgres-cds postgres
+TEST_DB_DROP_DATABASE = psql -d postgres -c "drop database ${TEST_DB_NAME}"
+TEST_DB_CREATE_DATABASE = psql -d postgres -c "create database ${TEST_DB_NAME} owner ${TEST_DB_USER}" 
 TEST_DB_INIT = $(GO_BUILD) && ./engine database upgrade --db-host $(TEST_DB_HOST) --db-port $(TEST_DB_PORT) --db-user $(TEST_DB_USER) --db-password $(TEST_DB_PASSWORD) --db-name $(TEST_DB_NAME) --db-sslmode disable --migrate-dir ./sql && rm -rf ./engine
 TEST_CMD = go test -v -timeout 600s -coverprofile=profile.coverprofile
 
@@ -70,12 +72,17 @@ build: $(TARGET_DIR)
 	@tar czf dist/sql.tar.gz sql/*
 	$(MAKE) build -C worker
 
-test-db-start:
-	$(TEST_DB_START)
+test-db-start-docker:
+	$(TEST_DB_START_DOCKER)
 	@sleep 5
 	$(TEST_DB_INIT)
 
-test-db-init:
+test-db-restart:
+	$(TEST_DB_DROP_DATABASE)
+	$(TEST_DB_CREATE_DATABASE)
+	$(TEST_DB_INIT)
+
+test-db-init: test-config
 	$(TEST_DB_INIT)
 
 test-config: ${HOME}/.cds/tests.cfg.json
