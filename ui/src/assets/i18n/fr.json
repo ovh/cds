@@ -484,8 +484,6 @@
   "pipeline_stop": "Le pipeline a été arrêté",
   "pipeline_updated": "Pipeline mis à jour",
   "pipeline_administration": "Administration générale du pipeline",
-  "pipeline_run_test_filter_empty": "Il n'y a aucun test correspondant au filter {{criteria}}",
-  "pipeline_run_test_no_error": "Tous les tests sont en succès",
   "pipeline_run_test_total_title_s": " tests",
   "pipeline_run_test_total_title": " test",
   "pipeline_run_test_failed_title_s": " tests en erreur",
