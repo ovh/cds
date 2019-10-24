@@ -514,16 +514,16 @@ func (api *API) addProjectHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
-		p.Permission = permission.PermissionReadWriteExecute
 
 		event.PublishAddProject(p, deprecatedGetUser(ctx))
 
 		proj, errL := project.Load(api.mustDB(), api.Cache, p.Key, deprecatedGetUser(ctx), project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames,
-			project.LoadOptions.WithFavorites, project.LoadOptions.WithKeys, project.LoadOptions.WithPermission,
+			project.LoadOptions.WithFavorites, project.LoadOptions.WithKeys,
 			project.LoadOptions.WithIntegrations, project.LoadOptions.WithVariables)
 		if errL != nil {
 			return sdk.WrapError(errL, "Cannot load project %s", p.Key)
 		}
+		proj.Permission = permission.PermissionReadWriteExecute
 
 		return service.WriteJSON(w, *proj, http.StatusCreated)
 	}
