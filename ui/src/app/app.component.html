@@ -3,7 +3,7 @@
         <div id="navbar" *ngIf="isConnected && !hideNavBar" [class.connected]="isConnected">
             <app-navbar></app-navbar>
         </div>
-        <div class="maintenance banner pointing" [class.mt50]="isConnected" *ngIf="maintenance && (!isConnected || user?.admin)">
+        <div class="maintenance banner pointing" [class.mt50]="isConnected" *ngIf="maintenance && (!isConnected || user?.ring == 'ADMIN')">
             <span>{{ 'maintenance_title' | translate }}</span>
             <img src="assets/images/maintenance.svg"/>
         </div>

@@ -163,7 +163,7 @@ export class AppComponent implements OnInit {
 
         this.cdsstateSub = this._store.select(CDSState.getCurrentState()).subscribe( m => {
             // Switch maintenance ON
-            if (!this.maintenance && m.maintenance && !this.gameInit && this.isConnected && !this.user.isMaintainer()) {
+            if (!this.maintenance && m.maintenance && !this.gameInit && this.isConnected && !this.user.isAdmin()) {
                 setTimeout(() => {
                     this.gameInit = true;
                     PACMAN.init(this.eltGamification.nativeElement, '/assets/js/');
