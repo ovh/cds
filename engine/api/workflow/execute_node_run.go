@@ -722,6 +722,12 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 
 	nodeRun.Status = sdk.StatusStopped.String()
 	nodeRun.Done = time.Now()
+
+	//Delete the line in workflow_node_run_job
+	if err := DeleteNodeJobRuns(tx, nodeRun.ID); err != nil {
+		return nil, sdk.WrapError(err, "Unable to delete node %d job runs ", nodeRun.ID)
+	}
+
 	if errU := UpdateNodeRun(tx, nodeRun); errU != nil {
 		return report, sdk.WrapError(errU, "stopWorkflowNodePipeline> Cannot update node run")
 	}
