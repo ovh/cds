@@ -113,7 +113,7 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
     dataForCurrentPage: any;
     pagesCount: number;
     filterFunc: Filter<T>;
-    filter: string;
+    @Input() filter: string;
     filteredData: Array<T>;
     indexSelected: number;
     columnsCount: number;

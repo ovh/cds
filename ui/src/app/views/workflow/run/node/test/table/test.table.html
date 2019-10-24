@@ -1,61 +1,43 @@
-<div class="testcase">
-    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
-        <thead>
-        <tr>
-            <th>{{ 'pipeline_run_test_testcase_name' | translate }}</th>
-        </tr>
-        </thead>
-        <tbody>
-        <ng-container *ngFor="let tc of getDataForCurrentPage()">
-            <tr>
-                <td (click)="tc.displayed = !tc.displayed">
-                    <i class="unhide icon pointing" *ngIf="!tc.displayed && filter !== 'all'"></i>
-                    <i class="hide icon pointing" *ngIf="tc.displayed  && filter !== 'all'"></i>
-                    <i class="green check icon" *ngIf="filter === 'all' && !tc.errors && !tc.failures"></i>
-                    <i class="red remove circle icon" *ngIf="filter === 'all' && ( (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0))"></i>
-                    <i class="grey ban icon" *ngIf="filter === 'all' && tc.skipped"></i>
-                    {{tc.fullname}}
-                </td>
-            </tr>
-            <tr *ngIf="tc.displayed && (tc.errors || tc.failures)" class="log">
-                <td>
-                    <div *ngIf="tc.errors && tc.errors.length > 0">
-                        <pre *ngFor="let e of tc.errors">{{e.message}} <hr *ngIf="e.message !== ''">  {{e.value}}</pre>
-                    </div>
-                    <div *ngIf="tc.failures && tc.failures.length > 0">
-                        <pre *ngFor="let f of tc.failures">{{f.message}} <hr *ngIf="f.message !== ''"> {{f.value}}</pre>
-                    </div>
-                </td>
-            </tr>
-        </ng-container>
-
-        </tbody>
-        <tfoot *ngIf="getNbOfPages() > 1">
-        <tr>
-            <th colspan="1">
-                <div class="ui right floated pagination menu" >
-                    <a class="icon item" (click)="downPage()">
-                        <i class="left chevron icon"></i>
-                    </a>
-                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
-                    <a class="icon item" (click)="upPage()">
-                        <i class="right chevron icon"></i>
-                    </a>
+<div class="wrapper">
+    <div class="ui grid">
+        <div [ngClass]="{sixteen: !testCaseSelected, eight: testCaseSelected, wide: true, column: true}">
+            <app-data-table [withPagination]="25" [filter]="filterInput" [withFilter]="filter"
+                [columns]="columns" [data]="testcases"
+                [withLineClick]="true" (clickLine)="clickTestCase($event)" [loading]="loading">
+            </app-data-table>
+        </div>
+        <div class="eight wide column" *ngIf="testCaseSelected">
+            <div [ngSwitch]="testCaseSelected.status">
+                {{ 'common_status' | translate }}: {{testCaseSelected.status}}
+                <div *ngSwitchCase="'failed'">
+                    <codemirror
+                        *ngIf="testCaseSelected.errorsAndFailures && testCaseSelected.errorsAndFailures !== ''"
+                        [ngModel]="testCaseSelected.errorsAndFailures"
+                        [config]="codeMirrorConfig"
+                        #textareaCodeMirror>
+                    </codemirror>
                 </div>
-            </th>
-        </tr>
-        </tfoot>
-    </table>
-    <ng-container *ngIf="getDataForCurrentPage().length === 0">
-        <ng-container *ngIf="filter === 'error';else msg">
-            <div class="big msgEmpty">
-                <i class="thumbs up green icon" style=""></i> {{ 'pipeline_run_test_no_error' | translate }}
+                <div *ngSwitchCase="'success'">
+                    <div *ngIf="testCaseSelected.systemout && testCaseSelected.systemout.value">
+                        systemout:
+                        <codemirror
+                            *ngIf="testCaseSelected.systemout.value !== ''"
+                            [ngModel]="testCaseSelected.systemout.value"
+                            [config]="codeMirrorConfig"
+                            #textareaCodeMirror>
+                        </codemirror>
+                    </div>
+                    <div *ngIf="testCaseSelected.systemerr && testCaseSelected.systemerr.value">
+                        systemerr:
+                        <codemirror
+                            *ngIf="testCaseSelected.systemerr.value !== ''"
+                            [ngModel]="testCaseSelected.systemerr.value"
+                            [config]="codeMirrorConfig"
+                            #textareaCodeMirror>
+                        </codemirror>
+                    </div>
+                </div>
             </div>
-        </ng-container>
-        <ng-template #msg>
-            <div class="ui info message msgEmpty">
-                {{ 'pipeline_run_test_filter_empty' | translate: { criteria: filter } }}
-            </div>
-        </ng-template>
-    </ng-container>
+        </div>
+    </div>
 </div>

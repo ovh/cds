@@ -232,6 +232,7 @@ export class TestCase {
     skipped: Array<Skipped>;
     systemout: InnerResult;
     systemerr: InnerResult;
+    errorsAndFailures: string;
 
     // UI param
     displayed: boolean;
