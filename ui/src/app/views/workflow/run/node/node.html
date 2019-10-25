@@ -43,12 +43,30 @@
             </a>
         </sm-menu>
     </div>
-    <div class="scrollingContent" ngx-auto-scroll>
+    <!-- we want to autoscroll page only for building pipeline -->
+    <div *ngIf="selectedTab === 'pipeline' && nodeRun.status === 'Building'; else notBuilding;" class="scrollingContent" ngx-auto-scroll>
         <div class="paddingContent">
-            <div class="viewContent" [ngSwitch]="selectedTab">
-                <div *ngSwitchCase="'pipeline'">
+            <div class="viewContent">
+                <div>
                     <app-node-run-pipeline [run]="nodeRun" [project]="project" [workflowName]="workflowName"></app-node-run-pipeline>
                 </div>
+            </div>
+        </div>
+    </div>
+    <ng-template #notBuilding>
+        <div *ngIf="selectedTab === 'pipeline'" class="scrollingContent">
+            <div class="paddingContent">
+                <div class="viewContent">
+                    <div>
+                        <app-node-run-pipeline [run]="nodeRun" [project]="project" [workflowName]="workflowName"></app-node-run-pipeline>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-template>
+    <div *ngIf="selectedTab !== 'pipeline'" class="scrollingContent">
+        <div class="paddingContent">
+            <div class="viewContent" [ngSwitch]="selectedTab">
                 <div *ngSwitchCase="'artifact'">
                     <app-workflow-artifact-list [artifacts]="nodeRun.artifacts" [staticFiles]="nodeRun.static_files"></app-workflow-artifact-list>
                 </div>

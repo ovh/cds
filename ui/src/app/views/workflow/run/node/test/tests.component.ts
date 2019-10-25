@@ -23,8 +23,6 @@ export class WorkflowRunTestsResultComponent {
     currentBranchTrendBranches: number;
     defaultBranchTrendBranches: number;
 
-    filter = 'failed';
-
     constructor(
         private _cd: ChangeDetectorRef
     ) {

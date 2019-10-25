@@ -1,15 +1,58 @@
 <div class="wrapper">
+    <div class="summary" *ngIf="!testCaseSelected" >
+        <div class="ui grid">
+            <div class="ui row" *ngIf="testsData">
+                <div class="right aligned five wide column">
+                    <a class="pointing" (click)="statusFilter('all')">
+                        {{testsData.total}}
+                        <span *ngIf="testsData.total > 1">{{'pipeline_run_test_total_title_s' | translate}}</span>
+                        <span *ngIf="testsData.total < 2">{{'pipeline_run_test_total_title' | translate}}</span>
+                    </a>
+                </div>
+                <div class="centered five wide column">
+                    <a class="pointing" (click)="statusFilter('failed')">
+                        {{ testsData.ko }}
+                        <span *ngIf="testsData.ko > 1">{{'pipeline_run_test_failed_title_s' | translate}}</span>
+                        <span *ngIf="testsData.ko < 2">{{'pipeline_run_test_failed_title' | translate}}</span>
+                    </a>
+                </div>
+                <div class="five wide column">
+                    <a class="pointing" (click)="statusFilter('skipped')">
+                        {{ testsData.skipped }}
+                        <span *ngIf="testsData.skipped > 1">{{'pipeline_run_test_skipped_title_s' | translate}}</span>
+                        <span *ngIf="testsData.skipped < 2">{{'pipeline_run_test_skipped_title' | translate}}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="ui grid">
-        <div [ngClass]="{sixteen: !testCaseSelected, eight: testCaseSelected, wide: true, column: true}">
+        <div *ngIf="!testCaseSelected" class="sixteen wide column">
             <app-data-table [withPagination]="25" [filter]="filterInput" [withFilter]="filter"
                 [columns]="columns" [data]="testcases"
                 [withLineClick]="true" (clickLine)="clickTestCase($event)" [loading]="loading">
             </app-data-table>
         </div>
-        <div class="eight wide column" *ngIf="testCaseSelected">
+        <div *ngIf="testCaseSelected" class="sixteen wide column">
+            <div class="right floated">
+                <button class="ui primary button" (click)="testCaseSelected=null">
+                    {{ 'btn_back' | translate }}
+                </button>
+            </div>
+
+            <h4>{{ 'common_name' | translate }}</h4>
+            <p> 
+                <ng-container [ngSwitch]="testCaseSelected.status">
+                    <i *ngSwitchCase="'failed'" class="red remove circle icon"></i>
+                    <i *ngSwitchCase="'success'" class="green check icon"></i>
+                    <i *ngSwitchDefault class="grey ban icon"></i>
+                </ng-container>
+                {{ testCaseSelected.fullname }}
+            </p>
             <div [ngSwitch]="testCaseSelected.status">
-                {{ 'common_status' | translate }}: {{testCaseSelected.status}}
                 <div *ngSwitchCase="'failed'">
+                    <h4>Output</h4>
                     <codemirror
                         *ngIf="testCaseSelected.errorsAndFailures && testCaseSelected.errorsAndFailures !== ''"
                         [ngModel]="testCaseSelected.errorsAndFailures"
@@ -19,7 +62,7 @@
                 </div>
                 <div *ngSwitchCase="'success'">
                     <div *ngIf="testCaseSelected.systemout && testCaseSelected.systemout.value">
-                        systemout:
+                        <h4>Systemout</h4>
                         <codemirror
                             *ngIf="testCaseSelected.systemout.value !== ''"
                             [ngModel]="testCaseSelected.systemout.value"
@@ -28,7 +71,7 @@
                         </codemirror>
                     </div>
                     <div *ngIf="testCaseSelected.systemerr && testCaseSelected.systemerr.value">
-                        systemerr:
+                        <h4>Systemerr</h4>
                         <codemirror
                             *ngIf="testCaseSelected.systemerr.value !== ''"
                             [ngModel]="testCaseSelected.systemerr.value"

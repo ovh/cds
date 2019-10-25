@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
-import { Failure, TestCase, TestSuite } from '../../../../../../model/pipeline.model';
+import { Failure, TestCase, Tests } from '../../../../../../model/pipeline.model';
 
 import { ThemeStore } from 'app/service/services.module';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
@@ -15,27 +15,31 @@ import { finalize } from 'rxjs/operators';
 export class WorkflowRunTestTableComponent implements OnInit {
     @ViewChild('code', {static: false}) codemirror: any;
 
-    testcases: Array<TestCase>;
-    filter: Filter<TestCase>;
-    columns: Array<Column<TestCase>>;
-    testCaseSelected: TestCase;
     codeMirrorConfig: any;
+    columns: Array<Column<TestCase>>;
+    filter: Filter<TestCase>;
+    filterInput: string;
+    testcases: Array<TestCase>;
+    testCaseSelected: TestCase;
+    testsData: Tests;
     themeSubscription: Subscription;
 
-    @Input() filterInput: string;
-
-    @Input('statusFilter')
-    set statusFilter(status: string) {
-        this.filterInput = '';
-        if (status !== '') {
+    statusFilter(status: string) {
+        if (status === 'all') {
+            this.filterInput = '';
+        } else if (status !== '') {
             this.filterInput = 'status:' + status;
         }
     }
 
     @Input('tests')
-    set tests(tests: Array<TestSuite>) {
+    set tests(tests: Tests) {
         this.testcases = new Array<TestCase>();
-        for (let ts of tests) {
+        this.testsData = tests;
+        if (!tests || !tests.test_suites) {
+            return
+        }
+        for (let ts of tests.test_suites) {
             if (ts.tests) {
                 let testCases = ts.tests.map(tc => {
                     tc.fullname = ts.name + ' / ' + tc.name;
@@ -96,7 +100,6 @@ export class WorkflowRunTestTableComponent implements OnInit {
                 }
             },
             <Column<TestCase>>{
-                name: 'name',
                 class: 'ten',
                 selector: (tc: TestCase) => tc.fullname
             }
