@@ -80,7 +80,10 @@ export class WorkflowShowComponent implements OnInit {
                 let from_repository = this.detailedWorkflow.from_repository;
                 this.previewWorkflow = this.detailedWorkflow.preview;
                 if (this.detailedWorkflow.preview) {
-                    this.previewWorkflow.from_repository = from_repository;
+                    // check to avoid "can't define property "x": "obj" is not extensible"
+                    if (this.previewWorkflow.hasOwnProperty('from_repository')) {
+                        this.previewWorkflow.from_repository = from_repository;
+                    }
                 }
                 // If a node is selected, update it
                 this.direction = this._workflowStore.getDirection(s.projectKey, this.detailedWorkflow.name);

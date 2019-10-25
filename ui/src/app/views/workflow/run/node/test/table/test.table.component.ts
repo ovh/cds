@@ -33,7 +33,7 @@ export class WorkflowRunTestTableComponent implements OnInit {
 
     getTestCases() {
         let testcases = new Array<TestCase>();
-        if (!this.tests) {
+        if (!this.tests || !this.tests.test_suites) {
             return;
         }
         for (let ts of this.tests.test_suites) {
