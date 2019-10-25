@@ -41,6 +41,7 @@ export class WorkflowNodeRunComponent {
 
     workflowRun: WorkflowRun;
     pipelineName = '';
+    pipelineStatus = PipelineStatus;
 
     // History
     nodeRunsHistory = new Array<WorkflowNodeRun>();

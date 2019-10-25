@@ -66,6 +66,11 @@
 
         // Get cursor position
         var cur = cm.getCursor(0);
+
+        if (!cur || !cm.doc.children[0].lines[cur.line]) {
+            return null;
+        }
+
         // Get current line
         var text = cm.doc.children[0].lines[cur.line].text;
         if (text.indexOf(cdsPrefix) === -1 && text.indexOf(workflowPrefix) === -1 && text.indexOf(gitPrefix) === -1) {
@@ -101,9 +106,12 @@
 
         // Get cursor position
         var cur = cm.getCursor(0);
-        var from = 0;
 
         // Get current line
+        if (!cur || !cm.doc.children[0].lines[cur.line]) {
+            return null;
+        }
+
         var text = cm.doc.children[0].lines[cur.line].text;
         var prefix = "";
 
@@ -135,8 +143,6 @@
         if (indexOfComma !== -1 && cur.ch >= indexOfComma) {
             return null;
         }
-
-        var areaBefore = text.substring(0, cur.ch);
 
         if (lastIndexOfComma === -1) {
             lastIndexOfComma += text.length + 1;

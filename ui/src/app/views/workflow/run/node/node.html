@@ -44,7 +44,7 @@
         </sm-menu>
     </div>
     <!-- we want to autoscroll page only for building pipeline -->
-    <div *ngIf="selectedTab === 'pipeline' && nodeRun.status === 'Building'; else notBuilding;" class="scrollingContent" ngx-auto-scroll>
+    <div *ngIf="selectedTab === 'pipeline' && nodeRun.status === pipelineStatus.BUILDING; else notBuilding;" class="scrollingContent" ngx-auto-scroll>
         <div class="paddingContent">
             <div class="viewContent">
                 <div>

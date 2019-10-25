@@ -80,7 +80,7 @@ export class WorkflowRunTestTableComponent implements OnInit {
             const lowerFilter = f.toLowerCase();
             return d => {
                 if (lowerFilter.indexOf('status:') === 0) {
-                    return lowerFilter.toLowerCase().indexOf(d.status) >= 7;
+                    return lowerFilter.indexOf(d.status) >= 7;
                 }
                 return d.fullname.toLowerCase().indexOf(lowerFilter) !== -1;
             }
@@ -122,10 +122,10 @@ export class WorkflowRunTestTableComponent implements OnInit {
         }
         let r = '';
         for (const f of fs) {
-            if (f.message && f.message !== '') {
+            if (f.message) {
                 r += f.message + '<hr>';
             }
-            if (f.value && f.value !== '') {
+            if (f.value) {
                 r += f.value;
             }
             r += '\n';

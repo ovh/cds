@@ -490,7 +490,6 @@
   "pipeline_run_test_failed_title": " test failed",
   "pipeline_run_test_skipped_title_s": " tests skipped",
   "pipeline_run_test_skipped_title": " test skipped",
-  "pipeline_run_test_testcase_name": "Testsuite / Testcase",
   "pipeline_stage_edit": "Edit stage",
   "pipeline_stage_moved": "Stage moved",
   "pipeline_stage_no": "The pipeline has no stage",
