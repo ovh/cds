@@ -19,9 +19,8 @@ export class WorkflowRunTestTableComponent implements OnInit {
     columns: Array<Column<TestCase>>;
     filter: Filter<TestCase>;
     filterInput: string;
-    testcases: Array<TestCase>;
     testCaseSelected: TestCase;
-    testsData: Tests;
+    @Input() tests: Tests;
     themeSubscription: Subscription;
 
     statusFilter(status: string) {
@@ -32,16 +31,14 @@ export class WorkflowRunTestTableComponent implements OnInit {
         }
     }
 
-    @Input('tests')
-    set tests(tests: Tests) {
-        this.testcases = new Array<TestCase>();
-        this.testsData = tests;
-        if (!tests || !tests.test_suites) {
-            return
+    getTestCases() {
+        let testcases = new Array<TestCase>();
+        if (!this.tests) {
+            return;
         }
-        for (let ts of tests.test_suites) {
+        for (let ts of this.tests.test_suites) {
             if (ts.tests) {
-                let testCases = ts.tests.map(tc => {
+                let testCase = ts.tests.map(tc => {
                     tc.fullname = ts.name + ' / ' + tc.name;
                     if (!tc.errors && !tc.failures) {
                         tc.status = 'success';
@@ -53,9 +50,10 @@ export class WorkflowRunTestTableComponent implements OnInit {
 
                     return tc;
                 });
-                this.testcases.push(...testCases);
+                testcases.push(...testCase);
             }
         }
+        return testcases;
     }
 
     ngOnInit(): void {
