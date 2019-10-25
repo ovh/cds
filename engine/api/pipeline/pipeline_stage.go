@@ -61,16 +61,18 @@ func InsertStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 
 // InsertStageConditions insert prequisite for given stage in database
 func InsertStageConditions(db gorp.SqlExecutor, s *sdk.Stage) error {
-	if len(s.Conditions.PlainConditions) > 0 || s.Conditions.LuaScript != "" {
-		query := "UPDATE pipeline_stage SET conditions = $1 WHERE id = $2"
+	if s.Conditions.LuaScript != "" {
+		s.Conditions.PlainConditions = nil
+	}
+	query := "UPDATE pipeline_stage SET conditions = $1 WHERE id = $2"
 
-		conditionsBts, err := json.Marshal(s.Conditions)
-		if err != nil {
-			return sdk.WrapError(err, "cannot marshal condition for stage %d", s.ID)
-		}
-		if _, err := db.Exec(query, conditionsBts, s.ID); err != nil {
-			return err
-		}
+	conditionsBts, err := json.Marshal(s.Conditions)
+
+	if err != nil {
+		return sdk.WrapError(err, "cannot marshal condition for stage %d", s.ID)
+	}
+	if _, err := db.Exec(query, conditionsBts, s.ID); err != nil {
+		return err
 	}
 	return nil
 }

@@ -137,6 +137,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
     pushChange(event: string, e?: string): void {
         if (event !== 'codemirror') {
             this.conditionsChange.emit(this.conditions);
+            this.conditions.lua_script = '';
             return;
         }
         if (event === 'codemirror' && e && e !== this.previousValue) {
@@ -144,15 +145,6 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
             this.conditionsChange.emit(this.conditions);
         }
         return;
-
-    }
-
-    filterConditionVariables(opts: string[], query: string) {
-        let result: Array<string> = opts.filter((opt) => opt.indexOf(query) > -1);
-        if (result.indexOf(query) === -1) {
-            result.push(query);
-        }
-        return result;
     }
 
     changeCodeMirror(): void {

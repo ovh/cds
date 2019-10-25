@@ -36,14 +36,15 @@
                         <td class="middle-aligned">
                             <div class="field">
                                 <ng-container *ngIf="conditionNames">
-                                    <sui-select class="fluid selection" [(ngModel)]="c.variable"
-                                        (ngModelChange)="pushChange('name')" [options]="conditionNames"
-                                        [optionsFilter]="filterConditionVariables" [isSearchable]="true"
-                                        [isDisabled]="readonly" #selectName>
-                                        <sui-select-option *ngFor="let option of selectName.filteredOptions"
-                                            [value]="option">
-                                        </sui-select-option>
-                                    </sui-select>
+                                    <input name="value-os-architecture"
+                                    auto-complete
+                                    autocomplete="off"
+                                    type="text"
+                                    [source]="conditionNames"
+                                    [min-chars]="0"
+                                    [(ngModel)]="c.variable"
+                                    (ngModelChange)="pushChange('name')"
+                                    [no-match-found-text]="false">
                                 </ng-container>
                             </div>
                         </td>
