@@ -50,9 +50,11 @@ a.disabled:hover {
 .fullheight {
     .CodeMirror {
         height: 100% !important;
+        max-height: 100%;
     } // Code mirror
     .CodeMirror-scroll {
         height: 100% !important;
+        max-height: 100%;
         overflow: auto !important;
     }
 }
