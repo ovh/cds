@@ -6,19 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
-)
-
-var (
-	// ErrNoStage when request requires specific stage but it does not exist
-	ErrNoStage = fmt.Errorf("cds: stage does not exist")
 )
 
 // LoadStage Get a stage from its ID and pipeline ID
@@ -33,7 +27,7 @@ func LoadStage(db gorp.SqlExecutor, pipelineID int64, stageID int64) (*sdk.Stage
 	var stage sdk.Stage
 	rows, err := db.Query(query, pipelineID, stageID)
 	if err == sql.ErrNoRows {
-		return nil, ErrNoStage
+		return nil, fmt.Errorf("stage does not exist")
 	}
 	if err != nil {
 		return nil, err
@@ -56,11 +50,11 @@ func InsertStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 	if err := db.QueryRow(query, s.PipelineID, s.Name, s.BuildOrder, s.Enabled).Scan(&s.ID); err != nil {
 		return err
 	}
-	return InsertStageConditions(db, s)
+	return insertStageConditions(db, s)
 }
 
-// InsertStageConditions insert prequisite for given stage in database
-func InsertStageConditions(db gorp.SqlExecutor, s *sdk.Stage) error {
+// insertStageConditions insert prequisite for given stage in database
+func insertStageConditions(db gorp.SqlExecutor, s *sdk.Stage) error {
 	if s.Conditions.LuaScript != "" {
 		s.Conditions.PlainConditions = nil
 	}
@@ -239,7 +233,7 @@ func UpdateStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 	}
 
 	//Insert all prequisites
-	return InsertStageConditions(db, s)
+	return insertStageConditions(db, s)
 }
 
 // DeleteStageByID Delete stage with associated pipeline action
