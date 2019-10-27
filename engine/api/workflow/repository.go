@@ -147,15 +147,15 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 	return tar.NewReader(buf), nil
 }
 
-type ExportedEntities struct {
+type exportedEntities struct {
 	wrkflw exportentities.Workflow
 	apps   map[string]exportentities.Application
 	pips   map[string]exportentities.PipelineV1
 	envs   map[string]exportentities.Environment
 }
 
-func ExtractFromCDSFiles(tr *tar.Reader) (*ExportedEntities, error) {
-	var res = ExportedEntities{
+func extractFromCDSFiles(tr *tar.Reader) (*exportedEntities, error) {
+	var res = exportedEntities{
 		apps: make(map[string]exportentities.Application),
 		pips: make(map[string]exportentities.PipelineV1),
 		envs: make(map[string]exportentities.Environment),
