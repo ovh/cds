@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -27,7 +26,7 @@ func LoadStage(db gorp.SqlExecutor, pipelineID int64, stageID int64) (*sdk.Stage
 	var stage sdk.Stage
 	rows, err := db.Query(query, pipelineID, stageID)
 	if err == sql.ErrNoRows {
-		return nil, sdk.WithStack(fmt.Errorf("stage does not exist"))
+		return nil, sdk.WrapError(sdk.ErrNotFound, "stage does not exist")
 	}
 	if err != nil {
 		return nil, err
