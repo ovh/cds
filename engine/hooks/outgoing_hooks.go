@@ -196,22 +196,25 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 		}
 
 		var payloadInt interface{}
-		if err := json.Unmarshal([]byte(payloadstr), &payloadInt); err == nil {
-			e := dump.NewDefaultEncoder()
-			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-			e.ExtraFields.DetailedMap = false
-			e.ExtraFields.DetailedStruct = false
-			e.ExtraFields.Len = false
-			e.ExtraFields.Type = false
-			m1, errm1 := e.ToStringMap(payloadInt)
-			if errm1 != nil {
-				log.Error("Hooks> doOutgoingWorkflowExecution> Cannot convert payload to map %s", errm1)
+		if payloadstr != "" {
+			if err := json.Unmarshal([]byte(payloadstr), &payloadInt); err == nil {
+				e := dump.NewDefaultEncoder()
+				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+				e.ExtraFields.DetailedMap = false
+				e.ExtraFields.DetailedStruct = false
+				e.ExtraFields.Len = false
+				e.ExtraFields.Type = false
+				m1, errm1 := e.ToStringMap(payloadInt)
+				if errm1 != nil {
+					log.Error("Hooks> doOutgoingWorkflowExecution> Cannot convert payload to map %s", errm1)
+				} else {
+					payloadValues = m1
+				}
 			} else {
-				payloadValues = m1
+				log.Error("Hooks> doOutgoingWorkflowExecution> Cannot unmarshall payload %s", err)
 			}
-		} else {
-			log.Error("Hooks> doOutgoingWorkflowExecution> Cannot unmarshall payload %s", err)
 		}
+
 		payloadValues["payload"] = string(payloadstr)
 	}
 
