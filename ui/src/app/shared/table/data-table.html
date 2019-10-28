@@ -53,7 +53,7 @@
                 </div>
             </td>
             <ng-container *ngFor="let c of (columns | selector:d)">
-                <td *ngIf="!c.disabled" [ngSwitch]="c.type" class="wide {{c.class}}">
+                <td *ngIf="!c.disabled" [ngSwitch]="c.type" class="wide" [ngClass]="c.class">
                     <i *ngSwitchCase="'icon'" [ngClass]="c.selector"></i>
                     <a *ngSwitchCase="'router-link'" class="ui" [routerLink]="c.selector.link">
                         {{c.selector.value}}
@@ -66,15 +66,14 @@
                     </a>
                     <markdown *ngSwitchCase="'markdown'" [data]="c.selector"></markdown>
                     <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
-                    <button class="ui {{c.selector.class}} button" *ngSwitchCase="'button'" (click)="c.selector.click()">
+                    <button class="ui button" [ngClass]="c.selector.class" *ngSwitchCase="'button'" (click)="c.selector.click()">
                         {{c.selector.title | translate}}
-                        <i class="{{c.selector.icon}} icon" *ngIf="c.selector.icon"></i>
+                        <i class="icon" [ngClass]="c.selector.icon" *ngIf="c.selector.icon"></i>
                     </button>
                     <app-confirm-button *ngSwitchCase="'confirm-button'" [class]="'small'" (event)="c.selector.click()"
                         [title]="c.selector.title">
                     </app-confirm-button>
-                    <span class="ui label {{c.selector.class}}" *ngSwitchCase="'label'">{{c.selector.value |
-                        translate}}</span>
+                    <span class="ui label" [ngClass]="c.selector.class" *ngSwitchCase="'label'">{{c.selector.value | translate}}</span>
                     <ng-container *ngSwitchCase="'router-link-with-icons'">
                         <a class="ui" [routerLink]="c.selector.link">{{c.selector.value}}</a>
                         <span *ngFor="let i of c.selector.icons" suiPopup [popupText]="i.label | translate">
