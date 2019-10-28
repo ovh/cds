@@ -66,8 +66,10 @@
                     </a>
                     <markdown *ngSwitchCase="'markdown'" [data]="c.selector"></markdown>
                     <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
-                    <button class="ui primary button small" *ngSwitchCase="'button'" (click)="c.selector.click()">{{c.selector.title
-                        | translate}}</button>
+                    <button class="ui {{c.selector.class}} button" *ngSwitchCase="'button'" (click)="c.selector.click()">
+                        {{c.selector.title | translate}}
+                        <i class="{{c.selector.icon}} icon" *ngIf="c.selector.icon"></i>
+                    </button>
                     <app-confirm-button *ngSwitchCase="'confirm-button'" [class]="'small'" (event)="c.selector.click()"
                         [title]="c.selector.title">
                     </app-confirm-button>

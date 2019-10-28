@@ -13,7 +13,9 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowRunTestTableComponent implements OnInit {
-    @ViewChild('code', {static: false}) codemirror: any;
+    @ViewChild('codemirror1', { static: false }) codemirror1: any;
+    @ViewChild('codemirror2', { static: false }) codemirror2: any;
+    @ViewChild('codemirror3', { static: false }) codemirror3: any;
 
     codeMirrorConfig: any;
     columns: Array<Column<TestCase>>;
@@ -22,8 +24,10 @@ export class WorkflowRunTestTableComponent implements OnInit {
     testCaseSelected: TestCase;
     @Input() tests: Tests;
     themeSubscription: Subscription;
+    testcases = new Array<TestCase>();
 
     statusFilter(status: string) {
+        this.testCaseSelected = null;
         if (status === 'all') {
             this.filterInput = '';
         } else if (status !== '') {
@@ -60,11 +64,18 @@ export class WorkflowRunTestTableComponent implements OnInit {
         this.themeSubscription = this._theme.get()
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(t => {
-            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
-            if (this.codemirror && this.codemirror.instance) {
-                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
-            }
-        });
+                this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+                if (this.codemirror1 && this.codemirror1.instance) {
+                    this.codemirror1.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+                if (this.codemirror2 && this.codemirror2.instance) {
+                    this.codemirror2.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+                if (this.codemirror3 && this.codemirror3.instance) {
+                    this.codemirror3.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+                this._cd.markForCheck();
+            });
     }
 
     constructor(private _theme: ThemeStore, private _cd: ChangeDetectorRef) {
@@ -100,15 +111,29 @@ export class WorkflowRunTestTableComponent implements OnInit {
             <Column<TestCase>>{
                 class: 'ten',
                 selector: (tc: TestCase) => tc.fullname
-            }
+            },
+            <Column<TestCase>>{
+                type: ColumnType.BUTTON,
+                name: '',
+                class: 'two right aligned',
+                selector: (tc: TestCase) => {
+                    return {
+                        icon: 'eye',
+                        class: 'icon small',
+                        click: () => this.clickTestCase(tc)
+                    };
+                },
+            },
         ];
     }
 
     clickTestCase(tc: TestCase): void {
         if (this.testCaseSelected && this.testCaseSelected.fullname === tc.fullname) {
             this.testCaseSelected = undefined;
+            this.filterInput = '';
             return
         }
+        this.filterInput = tc.fullname;
         tc.errorsAndFailures = this.getFailureString(tc.errors)
         tc.errorsAndFailures += this.getFailureString(tc.failures)
         this.testCaseSelected = tc;

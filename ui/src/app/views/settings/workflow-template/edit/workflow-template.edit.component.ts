@@ -160,6 +160,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
                 selector: (i: WorkflowTemplateInstance) => {
                     return {
                         title: 'common_update',
+                        class: 'primary small',
                         click: () => { this.clickUpdate(i) }
                     };
                 }
