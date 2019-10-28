@@ -1,5 +1,5 @@
 <div class="wrapper">
-    <div class="summary" *ngIf="!testCaseSelected" >
+    <div class="summary">
         <div class="ui grid">
             <div class="ui row" *ngIf="tests">
                 <div class="right aligned five wide column">
@@ -28,57 +28,44 @@
     </div>
     
     <div class="ui grid">
-        <div *ngIf="!testCaseSelected" class="sixteen wide column">
-            <app-data-table [withPagination]="25" [filter]="filterInput" [withFilter]="filter"
-                [columns]="columns" [data]="getTestCases()"
-                [withLineClick]="true" (clickLine)="clickTestCase($event)" [loading]="loading">
+        <div class="sixteen wide column">
+            <app-data-table [withPagination]="20" [filter]="filterInput" [withFilter]="filter"
+                [columns]="columns" [data]="getTestCases()">
             </app-data-table>
         </div>
-        <div *ngIf="testCaseSelected" class="sixteen wide column">
-            <div class="right floated">
-                <button class="ui primary button" (click)="testCaseSelected=null">
-                    {{ 'btn_back' | translate }}
-                </button>
-            </div>
-
-            <h4>{{ 'common_name' | translate }}</h4>
-            <p> 
-                <ng-container [ngSwitch]="testCaseSelected.status">
-                    <i *ngSwitchCase="'failed'" class="red remove circle icon"></i>
-                    <i *ngSwitchCase="'success'" class="green check icon"></i>
-                    <i *ngSwitchDefault class="grey ban icon"></i>
-                </ng-container>
-                {{ testCaseSelected.fullname }}
-            </p>
-            <div [ngSwitch]="testCaseSelected.status">
-                <div *ngSwitchCase="'failed'">
-                    <h4>Output</h4>
-                    <codemirror
-                        *ngIf="testCaseSelected.errorsAndFailures && testCaseSelected.errorsAndFailures !== ''"
-                        [ngModel]="testCaseSelected.errorsAndFailures"
-                        [config]="codeMirrorConfig"
-                        #textareaCodeMirror>
-                    </codemirror>
+        <div class="sixteen wide column" *ngIf="testCaseSelected">
+            <div>
+                <h4>Errors / Failures</h4>
+                <codemirror
+                    *ngIf="testCaseSelected.errorsAndFailures && testCaseSelected.errorsAndFailures !== ''"
+                    [ngModel]="testCaseSelected.errorsAndFailures"
+                    [config]="codeMirrorConfig"
+                    #codemirror1>
+                </codemirror>
+                <div class="ui info message" *ngIf="!testCaseSelected.errorsAndFailures || testCaseSelected.errorsAndFailures === ''">
+                    {{ 'common_no_data' | translate }}
                 </div>
-                <div *ngSwitchCase="'success'">
-                    <div *ngIf="testCaseSelected.systemout && testCaseSelected.systemout.value">
-                        <h4>Systemout</h4>
-                        <codemirror
-                            *ngIf="testCaseSelected.systemout.value !== ''"
-                            [ngModel]="testCaseSelected.systemout.value"
-                            [config]="codeMirrorConfig"
-                            #textareaCodeMirror>
-                        </codemirror>
-                    </div>
-                    <div *ngIf="testCaseSelected.systemerr && testCaseSelected.systemerr.value">
-                        <h4>Systemerr</h4>
-                        <codemirror
-                            *ngIf="testCaseSelected.systemerr.value !== ''"
-                            [ngModel]="testCaseSelected.systemerr.value"
-                            [config]="codeMirrorConfig"
-                            #textareaCodeMirror>
-                        </codemirror>
-                    </div>
+
+                <h4>Systemout</h4>
+                <codemirror
+                    *ngIf="testCaseSelected.systemout && testCaseSelected.systemout.value !== ''"
+                    [ngModel]="testCaseSelected.systemout.value"
+                    [config]="codeMirrorConfig"
+                    #codemirror2>
+                </codemirror>
+                <div class="ui info message" *ngIf="!testCaseSelected.systemout || testCaseSelected.systemout.value === ''">
+                    {{ 'common_no_data' | translate }}
+                </div>
+
+                <h4>Systemerr</h4>
+                <codemirror
+                    *ngIf="testCaseSelected.systemerr && testCaseSelected.systemerr.value !== ''"
+                    [ngModel]="testCaseSelected.systemerr.value"
+                    [config]="codeMirrorConfig"
+                    #codemirror3>
+                </codemirror>
+                <div class="ui info message" *ngIf="!testCaseSelected.systemerr || testCaseSelected.systemerr.value === ''">
+                    {{ 'common_no_data' | translate }}
                 </div>
             </div>
         </div>
