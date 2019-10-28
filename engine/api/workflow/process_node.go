@@ -251,7 +251,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	// CONDITION
 	if !checkCondition(wr, n.Context.Conditions, nr.BuildParameters) {
-		log.Debug("Condition failed %d/%d %+v", wr.ID, n.ID, nr.BuildParameters)
+		log.Debug("Condition failed on processNode %d/%d %+v", wr.ID, n.ID, nr.BuildParameters)
 		return nil, false, nil
 	}
 
@@ -373,8 +373,9 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 				return nil, false, sdk.WrapError(err, "unable to update workflow run")
 			}
 
-			//Mutex is locked. exit without error
-			return report, false, nil
+			// Mutex is locked, but it is as the workflow is ok to be run (conditions ok).
+			// it's ok exit without error
+			return report, true, nil
 		}
 		//Mutex is free, continue
 	}
