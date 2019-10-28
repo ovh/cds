@@ -27,7 +27,7 @@ func LoadStage(db gorp.SqlExecutor, pipelineID int64, stageID int64) (*sdk.Stage
 	var stage sdk.Stage
 	rows, err := db.Query(query, pipelineID, stageID)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("stage does not exist")
+		return nil, sdk.WithStack(fmt.Errorf("stage does not exist"))
 	}
 	if err != nil {
 		return nil, err
@@ -63,10 +63,10 @@ func insertStageConditions(db gorp.SqlExecutor, s *sdk.Stage) error {
 	conditionsBts, err := json.Marshal(s.Conditions)
 
 	if err != nil {
-		return sdk.WrapError(err, "cannot marshal condition for stage %d", s.ID)
+		return sdk.WithStack(err)
 	}
 	if _, err := db.Exec(query, conditionsBts, s.ID); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	return nil
 }
