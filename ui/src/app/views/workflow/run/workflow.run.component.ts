@@ -1,20 +1,17 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowRun } from 'app/model/workflow.run.model';
 import { NotificationService } from 'app/service/notification/notification.service';
 import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { ChangeToRunView, GetWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { ErrorMessageMap } from './errors';
@@ -27,14 +24,10 @@ import { ErrorMessageMap } from './errors';
 })
 @AutoUnsubscribe()
 export class WorkflowRunComponent implements OnInit {
-    @ViewChild('workflowRunParam', { static: false })
-    runWithParamComponent: WorkflowNodeRunParamComponent;
 
-    workflow: Workflow;
     subWorkflow: Subscription;
 
     project: Project;
-    workflowRun: WorkflowRun;
     project$: Subscription;
 
     workflowName: string;
@@ -48,8 +41,8 @@ export class WorkflowRunComponent implements OnInit {
     loadingRun = true;
     errorsMap = ErrorMessageMap;
 
-    // copy of root node to send it into run modal
-    nodeToRun: WNode;
+    // id, status, workflows, infos, num
+    workflowRunData: {};
 
     constructor(
         private _store: Store,
@@ -64,7 +57,7 @@ export class WorkflowRunComponent implements OnInit {
         this.dataSubs = this._activatedRoute.data.subscribe(datas => {
             if (!this.project || (<Project>datas['project']).key !== this.project.key) {
                 this.project = datas['project'];
-                this.workflowRun = null;
+                this.workflowRunData = null;
                 this.workflowName = '';
             }
         });
@@ -80,7 +73,7 @@ export class WorkflowRunComponent implements OnInit {
         this.paramsSubs = this._activatedRoute.params.subscribe(ps => {
             this._cd.markForCheck();
             // if there is no current workflow run
-            if (!this.workflowRun) {
+            if (!this.workflowRunData) {
                 this._store.dispatch(
                     new GetWorkflowRun({
                         projectKey: this.project.key,
@@ -88,7 +81,7 @@ export class WorkflowRunComponent implements OnInit {
                         num: ps['number']
                     }));
             } else {
-                if (this.workflowRun.workflow.name !== this.workflowName || this.workflowRun.num !== ps['number']) {
+                if (this.workflowRunData['workflow'].name !== this.workflowName || this.workflowRunData['num'] !== ps['number']) {
                     this._store.dispatch(
                         new GetWorkflowRun({
                             projectKey: this.project.key,
@@ -102,22 +95,28 @@ export class WorkflowRunComponent implements OnInit {
         this.subWorkflow = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this.loadingRun = s.loadingWorkflowRun;
             if (s.workflowRun) {
-                this.workflow = s.workflow;
-                this.workflowName = this.workflow.name;
+                if (!this.workflowRunData) {
+                    this.workflowRunData = {};
+                }
+                if (!this.workflowRunData['workflow']) {
+                    this.workflowRunData['workflow'] = s.workflowRun.workflow;
+                    this.workflowName = s.workflowRun.workflow.name;
+                }
 
-                let previousWR: WorkflowRun;
-                if (this.workflowRun) {
-                    previousWR = this.workflowRun;
+                if (this.workflowRunData['id'] && this.workflowRunData['id'] === s.workflowRun.id
+                    && this.workflowRunData['status'] !== s.workflowRun.status &&
+                    PipelineStatus.isDone(s.workflowRun.status)) {
+                    this.handleNotification(s.workflowRun);
                 }
-                this.workflowRun = s.workflowRun;
-                if (previousWR && this.workflowRun && previousWR.id === s.workflowRun.id && previousWR.status !== this.workflowRun.status &&
-                    PipelineStatus.isDone(this.workflowRun.status)) {
-                    this.handleNotification();
-                }
-                this.updateTitle();
+                this.workflowRunData['id'] = s.workflowRun.id;
+                this.workflowRunData['status'] = s.workflowRun.status;
+                this.workflowRunData['infos'] = s.workflowRun.infos;
+                this.workflowRunData['num'] = s.workflowRun.num;
+
+                this.updateTitle(s.workflowRun);
                 this._cd.markForCheck();
             } else {
-                delete this.workflowRun;
+                delete this.workflowRunData;
             }
         });
     }
@@ -126,18 +125,18 @@ export class WorkflowRunComponent implements OnInit {
         this.direction = this._workflowStore.getDirection(this.project.key, this.workflowName);
     }
 
-    handleNotification() {
-        if (this.workflowRun.num !== parseInt(this._activatedRoute.snapshot.params['number'], 10)) {
+    handleNotification(wr: WorkflowRun) {
+        if (wr.num !== parseInt(this._activatedRoute.snapshot.params['number'], 10)) {
             return;
         }
 
-        switch (this.workflowRun.status) {
+        switch (wr.status) {
             case PipelineStatus.SUCCESS:
                 this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_success', {
                     workflowName: this.workflowName,
                 }), {
                         icon: 'assets/images/checked.png',
-                        tag: `${this.workflowName}-${this.workflowRun.num}.${this.workflowRun.last_subnumber}`
+                        tag: `${this.workflowName}-${wr.num}.${wr.last_subnumber}`
                     }).subscribe();
                 break;
             case PipelineStatus.FAIL:
@@ -145,36 +144,19 @@ export class WorkflowRunComponent implements OnInit {
                     workflowName: this.workflowName
                 }), {
                         icon: 'assets/images/close.png',
-                        tag: `${this.workflowName}-${this.workflowRun.num}.${this.workflowRun.last_subnumber}`
+                        tag: `${this.workflowName}-${wr.num}.${wr.last_subnumber}`
                     }).subscribe();
                 break;
         }
     }
 
-    updateTitle() {
-        if (!this.workflowRun || !Array.isArray(this.workflowRun.tags)) {
+    updateTitle(wr: WorkflowRun) {
+        if (!Array.isArray(wr.tags)) {
             return;
         }
-        let branch = this.workflowRun.tags.find((tag) => tag.tag === 'git.branch');
+        let branch = wr.tags.find((tag) => tag.tag === 'git.branch');
         if (branch) {
-            this._titleService.setTitle(`#${this.workflowRun.num} [${branch.value}] • ${this.workflowName}`);
-        }
-    }
-
-    relaunch() {
-        if (this.runWithParamComponent && this.runWithParamComponent.show) {
-            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id][0];
-            this.nodeToRun = cloneDeep(this.workflowRun.workflow.workflow_data.node);
-            if (rootNodeRun.hook_event) {
-                this.nodeToRun.context.default_payload = rootNodeRun.hook_event.payload;
-                this.nodeToRun.context.default_pipeline_parameters = rootNodeRun.hook_event.pipeline_parameter;
-            }
-            if (rootNodeRun.manual) {
-                this.nodeToRun.context.default_payload = rootNodeRun.manual.payload;
-                this.nodeToRun.context.default_pipeline_parameters = rootNodeRun.manual.pipeline_parameter;
-            }
-
-            setTimeout(() => this.runWithParamComponent.show(), 100);
+            this._titleService.setTitle(`#${wr.num} [${branch.value}] • ${this.workflowName}`);
         }
     }
 }
