@@ -65,6 +65,14 @@
                         {{c.selector.value}}
                     </a>
                     <markdown *ngSwitchCase="'markdown'" [data]="c.selector"></markdown>
+                    <div *ngSwitchCase="'img-text'" class="vcenter">
+                        <img *ngIf="c.selector.img" [src]="c.selector.img">
+                        <div class="{{c.selector.valueclass}}">
+                            {{ c.selector.value }}
+                        </div>
+                    </div>
+                    <ng-container *ngSwitchCase="'text-html'"><pre [innerHTML]="c.selector"></pre></ng-container>
+                    <ng-container *ngSwitchCase="'time-ago'"> {{c.selector | amTimeAgo}} </ng-container>
                     <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
                     <button class="ui button" [ngClass]="c.selector.class" *ngSwitchCase="'button'" (click)="c.selector.click()">
                         {{c.selector.title | translate}}

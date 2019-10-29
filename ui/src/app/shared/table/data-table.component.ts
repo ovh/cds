@@ -16,7 +16,9 @@ const DESC: direction = 'desc';
 
 export enum ColumnType {
     TEXT = 'text',
+    TEXT_HTML = 'text-html',
     ICON = 'icon',
+    IMG_TEXT = 'img-text',
     LINK_CLICK = 'link-click',
     LINK = 'link',
     ROUTER_LINK = 'router-link',
@@ -26,7 +28,8 @@ export enum ColumnType {
     BUTTON = 'button',
     CONFIRM_BUTTON = 'confirm-button',
     LABEL = 'label',
-    TEXT_COPY = 'text-copy'
+    TEXT_COPY = 'text-copy',
+    TIME_AGO = 'time-ago'
 }
 
 export type SelectorType<T> = (d: T) => ColumnType;
