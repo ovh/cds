@@ -546,7 +546,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 
 		// Update default payload of linked workflow root
 		if len(usage.Workflows) > 0 {
-			proj, errP := project.Load(db, api.Cache, projectKey, u)
+			proj, errP := project.Load(db, api.Cache, projectKey, u, project.LoadOptions.WithIntegrations)
 			if errP != nil {
 				return sdk.WrapError(errP, "attachRepositoriesManager> Cannot load project")
 			}

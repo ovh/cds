@@ -5,7 +5,10 @@ onmessage = function (e) {
     if (e.data.mode === 'local') {
         url = '/assets/version.json';
     } else {
-        url = '/mon/version';
+        if (e.data.base && e.data.base !== '') {
+            url = e.data.base;
+        }
+        url += '/mon/version';
     }
     loadVersion(url);
 };
