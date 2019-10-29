@@ -67,10 +67,7 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 		if errWR != nil {
 			return nil, sdk.WrapError(errWR, "RunFromHook> Unable to process workflow run")
 		}
-		// if there is no report and the wf was not run -> condition not ok, set NeverBuilt
-		// if it was not run due to a mutex -> the report is not nil in this case
-		//   so, we let the wf with status building by returning the report with no error
-		if r1 == nil && !hasRun {
+		if !hasRun {
 			wr.Status = sdk.StatusNeverBuilt.String()
 			wr.LastExecution = time.Now()
 			report.Add(wr)

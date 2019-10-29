@@ -1519,7 +1519,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 	assert.Equal(t, 400, rec.Code)
 }
 
-func Test_postWorkflowRunHandlerWithMutex(t *testing.T) {
+func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -1750,6 +1750,99 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 404, rec.Code)
 }
+
+func Test_postWorkflowRunHandler_ConditionNotOK(t *testing.T) {
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	gr := &sdk.Group{
+		Name: sdk.RandomString(10),
+	}
+	test.NoError(t, group.InsertGroup(db, gr))
+	test.NoError(t, group.InsertGroupInProject(api.mustDB(), proj.ID, gr.ID, 7))
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+
+	env := &sdk.Environment{
+		Name:       sdk.RandomString(10),
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
+	}
+	test.NoError(t, environment.InsertEnvironment(api.mustDB(), env))
+
+	proj2, errp := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
+	test.NoError(t, errp)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					EnvironmentID: env.ID,
+					Conditions: sdk.WorkflowNodeConditions{
+						LuaScript: "return false",
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+
+	test.NoError(t, user.UpdateUser(api.mustDB(), *u))
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w.Name,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			Payload: map[string]string{"foo": "bar"},
+		},
+	}
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+
+	assert.Equal(t, 202, rec.Code)
+
+	// it's an async call, wait a bit the let cds take care of the previous request
+	time.Sleep(3 * time.Second)
+
+	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w.Name, workflow.LoadRunOptions{})
+	test.NoError(t, err)
+	assert.Equal(t, int64(1), lastRun.Number)
+	assert.Equal(t, sdk.StatusNeverBuilt.String(), lastRun.Status)
+	// check "Run conditions aren't ok" info
+	var found bool
+	for _, info := range lastRun.Infos {
+		if info.Message.ID == sdk.MsgWorkflowConditionError.ID {
+			found = true
+		}
+	}
+	assert.Equal(t, true, found)
+}
+
 func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
