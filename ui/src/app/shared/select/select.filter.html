@@ -1,0 +1,10 @@
+<ng-container *ngIf="options">
+    <sui-select class="fluid selection" [(ngModel)]="value"
+                (ngModelChange)="valueChange.emit(value)" [options]="options"
+                [optionsFilter]="filterOptions" [isSearchable]="searchable"
+                [isDisabled]="disabled" #selectName>
+        <sui-select-option *ngFor="let option of selectName.filteredOptions" [value]="option">
+        </sui-select-option>
+    </sui-select>
+</ng-container>
+
