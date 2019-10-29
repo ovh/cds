@@ -147,7 +147,7 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 		return fmt.Errorf("Cannot download worker binary from api: %v", err)
 	}
 
-	cmdWorker := fmt.Sprintf("%s/worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --single-use --force-exit", h.BasedirDedicated)
+	cmdWorker := fmt.Sprintf("%s/%s --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --single-use --force-exit", h.BasedirDedicated, h.getWorkerBinaryName())
 	h.ModelLocal = sdk.Model{
 		Name: h.Name,
 		Type: sdk.HostProcess,
@@ -182,7 +182,7 @@ func (h *HatcheryLocal) downloadWorker() error {
 		return fmt.Errorf("Error http code: %d, url called: %s", resp.StatusCode, urlBinary)
 	}
 
-	workerFullPath := path.Join(h.BasedirDedicated, "worker")
+	workerFullPath := path.Join(h.BasedirDedicated, h.getWorkerBinaryName())
 
 	if _, err := os.Stat(workerFullPath); err == nil {
 		log.Debug("removing existing worker binary from %s", workerFullPath)
@@ -202,6 +202,15 @@ func (h *HatcheryLocal) downloadWorker() error {
 	}
 
 	return sdk.WithStack(fp.Close())
+}
+
+func (h *HatcheryLocal) getWorkerBinaryName() string {
+	workerName := "worker"
+
+	if sdk.GOOS == "windows" {
+		workerName += ".exe"
+	}
+	return workerName
 }
 
 // checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
