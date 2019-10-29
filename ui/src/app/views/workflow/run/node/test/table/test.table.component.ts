@@ -81,6 +81,7 @@ export class WorkflowRunTestTableComponent implements OnInit {
     constructor(private _theme: ThemeStore, private _cd: ChangeDetectorRef) {
         this.codeMirrorConfig = {
             lineWrapping: false,
+            lineNumbers: true,
             autoRefresh: true,
             readOnly: true
         };
