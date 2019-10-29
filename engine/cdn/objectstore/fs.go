@@ -68,6 +68,17 @@ func (fss *FilesystemStore) Store(_ context.Context, o Object, data io.ReadClose
 	return distfile, err
 }
 
+// StoreWithWriter store a object on disk
+func (fss *FilesystemStore) Open(_ context.Context, o Object) (io.WriteCloser, error) {
+	dst := path.Join(fss.basedir, o.GetPath())
+	if err := os.MkdirAll(dst, 0755); err != nil {
+		return nil, err
+	}
+	distfile := path.Join(dst, o.GetName())
+
+	return os.OpenFile(distfile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+}
+
 // Fetch lookup on disk for data
 func (fss *FilesystemStore) Fetch(_ context.Context, o Object) (io.ReadCloser, error) {
 	dst := path.Join(fss.basedir, o.GetPath(), o.GetName())
