@@ -1,10 +1,9 @@
 package cdn
 
 import (
-	"bytes"
 	"context"
+	"fmt"
 	"io"
-	"io/ioutil"
 
 	"github.com/ovh/cds/engine/cdn/objectstore"
 	"github.com/ovh/cds/sdk"
@@ -12,14 +11,30 @@ import (
 )
 
 func (s *Service) mirroring(object objectstore.Object, reader io.Reader) {
+	fmt.Println("Mirroring !", len(s.MirrorDrivers))
+	writerClosers := make([]io.WriteCloser, 0, len(s.MirrorDrivers))
 	for _, mirror := range s.MirrorDrivers {
-		var buf bytes.Buffer
-		tee := io.TeeReader(reader, &buf)
-		_, err := mirror.Store(context.Background(), object, ioutil.NopCloser(tee))
+		fileWriter, err := mirror.Open(context.Background(), object)
 		if err != nil {
 			log.Error("Cannot mirror artifact : %v", err)
+			continue
 		}
-		reader = &buf
+		writerClosers = append(writerClosers, fileWriter)
+	}
+
+	multiWriters := MultiWriteCloser(writerClosers...)
+
+	go func() {
+		_, err := io.Copy(multiWriters, reader)
+		if err != nil {
+			log.Error("cannot write to writers : %v", err)
+			return
+		}
+	}()
+
+	fmt.Println("writerClosers --- ", len(writerClosers))
+	if err := multiWriters.Close(); err != nil {
+		log.Error("cannot close multiWriteClosers : %v", err)
 	}
 }
 

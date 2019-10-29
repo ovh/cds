@@ -95,6 +95,22 @@ func (s *AWSS3Store) Status() sdk.MonitoringStatusLine {
 	}
 }
 
+func (s *AWSS3Store) Open(ctx context.Context, o Object) (io.WriteCloser, error) {
+	reader, writer := io.Pipe()
+	s3file := S3File{
+		ctx:     ctx,
+		s3Store: s,
+		uploadInput: s3manager.UploadInput{
+			Key:    aws.String(s.getObjectPath(o)),
+			Bucket: aws.String(s.bucketName),
+			Body:   reader,
+		},
+		writer: writer,
+	}
+
+	return &s3file, nil
+}
+
 func (s *AWSS3Store) Store(ctx context.Context, o Object, data io.ReadCloser) (string, error) {
 	defer data.Close()
 	log.Debug("AWS-S3-Store> Setting up uploader")
@@ -193,4 +209,24 @@ func (s *AWSS3Store) ServeStaticFiles(o Object, entrypoint string, data io.ReadC
 // ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
 func (s *AWSS3Store) ServeStaticFilesURL(o Object, entrypoint string) (string, string, error) {
 	return "", "", sdk.WithStack(sdk.ErrNotImplemented)
+}
+
+// S3File represent a file in S3 with writer interface implementation
+type S3File struct {
+	ctx         context.Context
+	s3Store     *AWSS3Store
+	uploadInput s3manager.UploadInput
+	writer      *io.PipeWriter
+	reader      *io.PipeReader
+}
+
+func (s3file *S3File) Write(p []byte) (int, error) {
+	fmt.Println("wrrriiiiiiite")
+	return s3file.writer.Write(p)
+}
+
+func (s3file *S3File) Close() error {
+	uploader := s3manager.NewUploader(s3file.s3Store.sess)
+	_, err := uploader.UploadWithContext(s3file.ctx, &s3file.uploadInput)
+	return sdk.WrapError(err, "AWS-S3-Store> Unable to create object %s", *s3file.uploadInput.Key)
 }

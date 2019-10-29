@@ -15,10 +15,10 @@ type Driver interface {
 	GetProjectIntegration() sdk.ProjectIntegration
 	Status() sdk.MonitoringStatusLine
 	Store(ctx context.Context, o Object, data io.ReadCloser) (string, error)
+	Open(ctx context.Context, o Object) (io.WriteCloser, error)
 	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error)
 	Fetch(ctx context.Context, o Object) (io.ReadCloser, error)
 	Delete(ctx context.Context, o Object) error
-	TemporaryURLSupported() bool
 }
 
 // Kind will define const defining all supported objecstore drivers

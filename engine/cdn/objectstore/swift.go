@@ -141,6 +141,26 @@ func (s *SwiftStore) Store(ctx context.Context, o Object, data io.ReadCloser) (s
 	return container + "/" + object, nil
 }
 
+// Open open a writer in swift
+func (s *SwiftStore) Open(_ context.Context, o Object) (io.WriteCloser, error) {
+	container := s.containerPrefix + o.GetPath()
+	object := o.GetName()
+	log.Debug("SwiftStore> Storing /%s/%s\n", container, object)
+	log.Debug("SwiftStore> creating container %s", container)
+	if err := s.ContainerCreate(container, nil); err != nil {
+		return nil, sdk.WrapError(err, "Unable to create container %s", container)
+	}
+
+	log.Debug("SwiftStore> creating object %s/%s", container, object)
+
+	file, errC := s.ObjectCreate(container, object, false, "", "application/octet-stream", nil)
+	if errC != nil {
+		return nil, sdk.WrapError(errC, "SwiftStore> Unable to create object %s", object)
+	}
+
+	return file, nil
+}
+
 // Fetch an object from swift
 func (s *SwiftStore) Fetch(_ context.Context, o Object) (io.ReadCloser, error) {
 	container := s.containerPrefix + o.GetPath()

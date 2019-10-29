@@ -414,21 +414,7 @@ func (c *client) queueIndirectArtifactUpload(ctx context.Context, projectKey, in
 		return err
 	}
 
-	//Try 50 times to make the callback
-	var callbackErr error
-	retry := 50
-	for i := 0; i < retry; i++ {
-		uri := fmt.Sprintf("/project/%s/storage/%s/artifact/%s/url/callback", projectKey, integrationName, art.Ref)
-		ctxt, cancel := context.WithTimeout(ctx, 5*time.Second)
-		_, callbackErr = c.PostJSON(ctxt, uri, &art, nil)
-		if callbackErr == nil {
-			cancel()
-			return nil
-		}
-		cancel()
-	}
-
-	return callbackErr
+	return nil
 }
 
 func (c *client) QueueJobTag(ctx context.Context, jobID int64, tags []sdk.WorkflowRunTag) error {

@@ -3,9 +3,11 @@ package cdn
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -15,6 +17,7 @@ func (s *Service) storeArtifact(ctx context.Context, body io.ReadCloser, cdnRequ
 	if _, err := art.IsValid(); err != nil {
 		return nil, sdk.WrapError(err, "artifact is not valid")
 	}
+
 	storageDriver, err := s.getDriver(cdnRequest.ProjectKey, cdnRequest.IntegrationName)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get driver")
@@ -37,6 +40,20 @@ func (s *Service) storeArtifact(ctx context.Context, body io.ReadCloser, cdnRequ
 		defer body.Close()
 		s.mirroring(art, &buf)
 	})
+
+	//Try 50 times to make the callback
+	var callbackErr error
+	retry := 50
+	for i := 0; i < retry; i++ {
+		uri := fmt.Sprintf("/project/%s/storage/%s/artifact/%s/url/callback", cdnRequest.ProjectKey, cdnRequest.IntegrationName, art.Ref)
+		ctxt, cancel := context.WithTimeout(ctx, 5*time.Second)
+		_, callbackErr = s.Client.PostJSON(ctxt, uri, &art, nil)
+		if callbackErr == nil {
+			cancel()
+			return nil, nil
+		}
+		cancel()
+	}
 
 	return art, nil
 }
