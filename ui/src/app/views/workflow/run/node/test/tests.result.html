@@ -4,7 +4,8 @@
             <div class="ui row" *ngIf="coverage">
                 <div class="right aligned five wide column">
                     <ng-container *ngIf="coverage.report.total_lines > 0">
-                        <span suiPopup popupText="{{coverage.report.covered_lines}}/{{coverage.report.total_lines}} ({{(percentLines - currentBranchTrendLines).toFixed(2) + '%'}})">{{ 'coverage_lines_title' | translate}}{{percentLines}}%</span>
+                        <span *ngIf="currentBranchTrendLines" suiPopup popupText="{{coverage.report.covered_lines}}/{{coverage.report.total_lines}} ({{(percentLines - currentBranchTrendLines).toFixed(2)}}%)">{{ 'coverage_lines_title' | translate}}{{percentLines}}%</span>
+                        <span *ngIf="!currentBranchTrendLines && defaultBranchTrendLines" suiPopup popupText="{{coverage.report.covered_lines}}/{{coverage.report.total_lines}} ({{(percentLines - defaultBranchTrendLines).toFixed(2)}}%)">{{ 'coverage_lines_title' | translate}}{{percentLines}}%</span>
                         <span *ngIf="currentBranchTrendLines" suiPopup popupText="{{'coverage_trend_current_branch' | translate }}">
                             <i class="arrow icon" [class.down]="currentBranchTrendLines > percentLines" [class.red]="currentBranchTrendLines > percentLines"
                                 [class.up]="currentBranchTrendLines < percentLines" [class.green]="currentBranchTrendLines < percentLines"
