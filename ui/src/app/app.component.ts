@@ -259,11 +259,9 @@ export class AppComponent implements OnInit {
 
     startVersionWorker(): void {
         this.stopWorker(this.versionWorker, this.versionWorkerSubscription);
-        let baseURL = this._router['location']._baseHref;
         this.versionWorker = new CDSWebWorker('./assets/worker/web/version.js');
         this.versionWorker.start({
-            mode: environment.name,
-            base: baseURL
+            mode: environment.name
         });
         this.versionWorker.response().subscribe(msg => {
             if (msg) {
