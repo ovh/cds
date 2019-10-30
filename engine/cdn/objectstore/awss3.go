@@ -97,9 +97,11 @@ func (s *AWSS3Store) Status() sdk.MonitoringStatusLine {
 
 func (s *AWSS3Store) Open(ctx context.Context, o Object) (io.WriteCloser, error) {
 	reader, writer := io.Pipe()
+	channel := make(chan []byte, 1000)
 	s3file := S3File{
 		ctx:     ctx,
 		s3Store: s,
+		channel: channel,
 		uploadInput: s3manager.UploadInput{
 			Key:    aws.String(s.getObjectPath(o)),
 			Bucket: aws.String(s.bucketName),
@@ -107,6 +109,17 @@ func (s *AWSS3Store) Open(ctx context.Context, o Object) (io.WriteCloser, error)
 		},
 		writer: writer,
 	}
+
+	go func() {
+		for btes := range s3file.channel {
+			if _, err := writer.Write(btes); err != nil {
+				log.Error("cannot write in writer %v", err)
+			}
+		}
+		if err := writer.Close(); err != nil {
+			log.Error("cannot close writer : %v", err)
+		}
+	}()
 
 	return &s3file, nil
 }
@@ -218,14 +231,16 @@ type S3File struct {
 	uploadInput s3manager.UploadInput
 	writer      *io.PipeWriter
 	reader      *io.PipeReader
+	channel     chan []byte
 }
 
 func (s3file *S3File) Write(p []byte) (int, error) {
-	fmt.Println("wrrriiiiiiite")
-	return s3file.writer.Write(p)
+	s3file.channel <- p
+	return len(p), nil
 }
 
 func (s3file *S3File) Close() error {
+	close(s3file.channel)
 	uploader := s3manager.NewUploader(s3file.s3Store.sess)
 	_, err := uploader.UploadWithContext(s3file.ctx, &s3file.uploadInput)
 	return sdk.WrapError(err, "AWS-S3-Store> Unable to create object %s", *s3file.uploadInput.Key)
