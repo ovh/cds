@@ -6,9 +6,9 @@ onmessage = function (e) {
         url = '/assets/version.json';
     } else {
         if (e.data.base && e.data.base !== '') {
-            url = e.data.base;
+            //url = e.data.base;
         }
-        url += '/mon/version';
+        url = '/mon/version';
     }
     loadVersion(url);
 };
