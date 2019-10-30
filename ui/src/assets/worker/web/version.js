@@ -5,7 +5,7 @@ onmessage = function (e) {
     if (e.data.mode === 'local') {
         url = '/assets/version.json';
     } else {
-        url = '/mon/version';
+        url = 'mon/version';
     }
     loadVersion(url);
 };

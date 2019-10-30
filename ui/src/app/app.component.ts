@@ -115,8 +115,8 @@ export class AppComponent implements OnInit {
                 this.isConnected = true;
                 this.startSSE();
             }
-            this.startVersionWorker();
         });
+        this.startVersionWorker();
 
         this._routerSubscription = this._router.events
             .pipe(filter((event) => event instanceof ResolveStart || event instanceof ResolveEnd))
