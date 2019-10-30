@@ -221,8 +221,12 @@ type S3File struct {
 }
 
 func (s3file *S3File) Write(p []byte) (int, error) {
-	fmt.Println("wrrriiiiiiite")
+	log.Debug("writing %d bytes", len(p))
 	return s3file.writer.Write(p)
+}
+
+func (s3file *S3File) EndWrite() error {
+	return s3file.writer.Close()
 }
 
 func (s3file *S3File) Close() error {
