@@ -142,7 +142,7 @@ func TestAwsS3_Writer(t *testing.T) {
 	writer, err := store.Open(ctx, o)
 	require.NoError(t, err)
 	go func() {
-		_, err = io.Copy(writer, o)
+		_, err := io.Copy(writer, o)
 		require.NoError(t, err)
 		err = writer.(*objectstore.S3File).EndWrite()
 		require.NoError(t, err)

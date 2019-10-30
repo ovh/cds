@@ -24,15 +24,12 @@ func (s *Service) mirroring(object objectstore.Object, reader io.Reader) {
 
 	multiWriters := MultiWriteCloser(writerClosers...)
 
-	go func() {
-		_, err := io.Copy(multiWriters, reader)
-		if err != nil {
-			log.Error("cannot write to writers : %v", err)
-			return
-		}
-	}()
+	_, err := io.Copy(multiWriters, reader)
+	if err != nil {
+		log.Error("cannot write to writers : %v", err)
+		return
+	}
 
-	fmt.Println("writerClosers --- ", len(writerClosers))
 	if err := multiWriters.Close(); err != nil {
 		log.Error("cannot close multiWriteClosers : %v", err)
 	}
