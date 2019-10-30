@@ -69,6 +69,7 @@ func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 		//Do not load config on login
 		if cmd.Name() == "login" ||
 			cmd.Name() == "signup" ||
+			cmd.Name() == "confirm" ||
 			cmd.Name() == "version" ||
 			cmd.Name() == "doc" || strings.HasPrefix(cmd.Use, "doc ") || (cmd.Run == nil && cmd.RunE == nil) {
 			return
