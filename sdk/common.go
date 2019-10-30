@@ -13,6 +13,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -253,4 +254,12 @@ func RemoveNotPrintableChar(in string) string {
 		return ' '
 	}
 	return strings.Map(m, in)
+}
+
+func MustParseBool(s string) bool {
+	b, err := strconv.ParseBool(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }

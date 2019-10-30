@@ -239,6 +239,10 @@ func (s3file *S3File) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
+// func (s3file *S3File) EndWrite() error {
+// 	return s3file.writer.Close()
+// }
+
 func (s3file *S3File) Close() error {
 	close(s3file.channel)
 	uploader := s3manager.NewUploader(s3file.s3Store.sess)
