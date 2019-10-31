@@ -98,20 +98,34 @@ func (s *AWSS3Store) Status() sdk.MonitoringStatusLine {
 func (s *AWSS3Store) Open(ctx context.Context, o Object) (io.WriteCloser, error) {
 	reader, writer := io.Pipe()
 	channel := make(chan []byte)
+	errChan := make(chan error, 1)
 	s3file := S3File{
-		ctx:     ctx,
-		channel: channel,
+		ctx:        ctx,
+		channel:    channel,
+		errChannel: errChan,
 	}
 
 	go func() {
 		// TODO: Handle context and error
-		for btes := range s3file.channel {
-			if _, err := writer.Write(btes); err != nil {
-				log.Error("cannot write in writer %v", err)
+	loop:
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case btes, closed := <-s3file.channel:
+				if closed {
+					break loop
+				}
+				if _, err := writer.Write(btes); err != nil {
+					log.Error("cannot write in writer %v", err)
+					errChan <- err
+					return
+				}
 			}
 		}
 		if err := writer.Close(); err != nil {
 			log.Error("cannot close writer : %v", err)
+			errChan <- err
 		}
 	}()
 
@@ -126,6 +140,7 @@ func (s *AWSS3Store) Open(ctx context.Context, o Object) (io.WriteCloser, error)
 		_, err := uploader.UploadWithContext(ctx, &uploadInput)
 		if err != nil {
 			log.Error("cannot upload : %v", err)
+			errChan <- err
 		}
 	}()
 
@@ -240,6 +255,7 @@ type S3File struct {
 	writer      *io.PipeWriter
 	reader      *io.PipeReader
 	channel     chan []byte
+	errChannel  chan error
 }
 
 func (s3file *S3File) Write(p []byte) (int, error) {
@@ -253,5 +269,11 @@ func (s3file *S3File) EndWrite() error {
 
 func (s3file *S3File) Close() error {
 	close(s3file.channel)
+	select {
+	case err := <-s3file.errChannel:
+		return err
+	default:
+		break
+	}
 	return nil
 }
