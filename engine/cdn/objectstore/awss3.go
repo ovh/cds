@@ -99,10 +99,12 @@ func (s *AWSS3Store) Open(ctx context.Context, o Object) (io.WriteCloser, error)
 	reader, writer := io.Pipe()
 	channel := make(chan []byte)
 	errChan := make(chan error, 1)
+	doneChan := make(chan bool)
 	s3file := S3File{
 		ctx:        ctx,
 		channel:    channel,
 		errChannel: errChan,
+		doneChan:   doneChan,
 	}
 
 	go func() {
@@ -111,6 +113,7 @@ func (s *AWSS3Store) Open(ctx context.Context, o Object) (io.WriteCloser, error)
 		for {
 			select {
 			case <-ctx.Done():
+				doneChan <- true
 				return
 			case btes, closed := <-s3file.channel:
 				if closed {
@@ -126,11 +129,11 @@ func (s *AWSS3Store) Open(ctx context.Context, o Object) (io.WriteCloser, error)
 		if err := writer.Close(); err != nil {
 			log.Error("cannot close writer : %v", err)
 			errChan <- err
+			return
 		}
 	}()
 
 	go func() {
-		// TODO: Handle error with error channel
 		uploader := s3manager.NewUploader(s.sess)
 		uploadInput := s3manager.UploadInput{
 			Key:    aws.String(s.getObjectPath(o)),
@@ -141,7 +144,9 @@ func (s *AWSS3Store) Open(ctx context.Context, o Object) (io.WriteCloser, error)
 		if err != nil {
 			log.Error("cannot upload : %v", err)
 			errChan <- err
+			return
 		}
+		doneChan <- true
 	}()
 
 	return &s3file, nil
@@ -256,6 +261,7 @@ type S3File struct {
 	reader      *io.PipeReader
 	channel     chan []byte
 	errChannel  chan error
+	doneChan    chan bool
 }
 
 func (s3file *S3File) Write(p []byte) (int, error) {
@@ -272,8 +278,9 @@ func (s3file *S3File) Close() error {
 	select {
 	case err := <-s3file.errChannel:
 		return err
-	default:
+	case <-s3file.doneChan:
 		break
 	}
+
 	return nil
 }
