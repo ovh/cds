@@ -2,7 +2,6 @@ package cdn
 
 import (
 	"context"
-	"fmt"
 	"io"
 
 	"github.com/ovh/cds/engine/cdn/objectstore"
@@ -11,7 +10,6 @@ import (
 )
 
 func (s *Service) mirroring(object objectstore.Object, reader io.Reader) {
-	fmt.Println("Mirroring !", len(s.MirrorDrivers))
 	if len(s.MirrorDrivers) == 0 {
 		return
 	}
