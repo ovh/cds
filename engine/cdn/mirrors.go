@@ -12,6 +12,9 @@ import (
 
 func (s *Service) mirroring(object objectstore.Object, reader io.Reader) {
 	fmt.Println("Mirroring !", len(s.MirrorDrivers))
+	if len(s.MirrorDrivers) == 0 {
+		return
+	}
 	writerClosers := make([]io.WriteCloser, 0, len(s.MirrorDrivers))
 	for _, mirror := range s.MirrorDrivers {
 		fileWriter, err := mirror.Open(context.Background(), object)
@@ -31,6 +34,7 @@ func (s *Service) mirroring(object objectstore.Object, reader io.Reader) {
 	}
 
 	if err := multiWriters.Close(); err != nil {
+		// TODO: add re-enqueue when errors
 		log.Error("cannot close multiWriteClosers : %v", err)
 	}
 }

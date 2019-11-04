@@ -82,18 +82,6 @@ func TestAwsS3_Store(t *testing.T) {
 
 	_, err = store.Store(ctx, o, ioutil.NopCloser(o))
 	require.NoError(t, err)
-
-	//writer, err := store.Open(ctx, o)
-	//require.NoError(t, err)
-	//go func() {
-	//	fmt.Println("starting write...")
-	//	_, err = io.Copy(writer, o)
-	//	fmt.Println("ending write...")
-	//	require.NoError(t, err)
-	//}()
-	//err = writer.Close()
-	//require.NoError(t, err)
-
 }
 
 func TestAwsS3_Writer(t *testing.T) {

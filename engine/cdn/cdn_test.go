@@ -8,20 +8,18 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/ovh/cds/engine/cdn/objectstore"
-	"github.com/ovh/cds/sdk"
-
-	"github.com/ovh/cds/sdk/cdsclient"
-
-	"github.com/stretchr/testify/require"
-	"gopkg.in/spacemonkeygo/httpsig.v0"
-
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/h2non/gock.v1"
+	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/cdn/objectstore"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -73,7 +71,6 @@ func newTestService(t *testing.T) (*Service, error) {
 	service.Router = r
 	service.initRouter(ctx)
 	service.Cfg = cfg
-
 	service.DefaultDriver, _ = objectstore.NewFilesystemStore(sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, objectstore.ConfigOptionsFilesystem{BaseDirectory: defaultBaseDir})
 
 	//Init the cache
@@ -83,6 +80,13 @@ func newTestService(t *testing.T) (*Service, error) {
 		log.Error("Unable to init cache (%s): %v", service.Cfg.Cache.Redis.Host, errCache)
 		return nil, errCache
 	}
+
+	service.Client = cdsclient.New(cdsclient.Config{
+		Host: "http://cdstest.test",
+	})
+	service.Client.HTTPSSEClient().Transport = newMockSSERoundTripper(t, context.TODO())
+	gock.InterceptClient(service.Client.HTTPSSEClient())
+	gock.InterceptClient(service.Client.HTTPClient())
 
 	return service, nil
 }
