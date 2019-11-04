@@ -1,13 +1,13 @@
 package cdn
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/authentication"
 
-	cdnauth "github.com/ovh/cds/engine/api/authentication/cdn"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
@@ -24,6 +24,7 @@ func Test_postUploadArtifactHandler(t *testing.T) {
 		WorkflowNodeRunID:    1,
 		WorkflowID:           1,
 		WorkflowNodeJobRunID: 1,
+		Ref:                  "test",
 	}
 
 	cdnReq := sdk.CDNRequest{
@@ -33,7 +34,7 @@ func Test_postUploadArtifactHandler(t *testing.T) {
 		Artifact:        &art,
 	}
 
-	cdnReqToken, err := authentication.SignJWS(cdnReq, cdnauth.SessionDuration)
+	cdnReqToken, err := authentication.SignJWS(cdnReq, 0)
 	test.NoError(t, err, "cannot sign jws")
 
 	//Prepare request
@@ -48,7 +49,7 @@ func Test_postUploadArtifactHandler(t *testing.T) {
 	rec := httptest.NewRecorder()
 	s.Router.Mux.ServeHTTP(rec, req)
 
-	content, err := s.DefaultDriver.Fetch(&art)
+	content, err := s.DefaultDriver.Fetch(context.Background(), &art)
 	test.NoError(t, err, "cannot fetch artifact")
 	contentStr, err := ioutil.ReadAll(content)
 	test.NoError(t, err, "cannot read artifact content")
