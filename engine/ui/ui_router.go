@@ -39,7 +39,7 @@ func (s *Service) getReverseProxy(path, urlRemote string) *httputil.ReverseProxy
 	origin, _ := url.Parse(urlRemote)
 	director := func(req *http.Request) {
 		reqPath := strings.TrimPrefix(req.URL.Path, path)
-		// on proxypass /cdshooks, allow only request on /webhooks/ path
+		// on proxypass /cdshooks, allow only request on /webhook/ path
 		if path == "/cdshooks" && !strings.HasPrefix(reqPath, "/webhook/") {
 			// return 502 bad gateway
 			req = &http.Request{} // nolint
