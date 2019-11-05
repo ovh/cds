@@ -1124,7 +1124,7 @@
 	"title": "confirm",
 	"tags": [],
 	"description": "",
-	"content": " cdsctl user confirm Confirm CDS user password reset\nSynopsis Confirm CDS user password reset\ncdsctl user confirm USERNAME TOKEN  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl user - Manage CDS user  "
+	"content": " cdsctl user confirm Confirm CDS user password\nSynopsis Confirm CDS user password\ncdsctl user confirm USERNAME TOKEN [flags]  Options  -H, --api-url string CDS API URL --env Display the commands to set up the environment for the cds client  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl user - Manage CDS user  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/components/cdsctl/admin/broadcasts/create/",
@@ -2783,7 +2783,7 @@
 	"title": "user",
 	"tags": [],
 	"description": "",
-	"content": " cdsctl user Manage CDS user\nSynopsis Manage CDS user\nOptions inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl - CDS Command line utility cdsctl user confirm - Confirm CDS user password reset cdsctl user favorite - Display all the user favorites cdsctl user list - List CDS users cdsctl user me - Show Current CDS user details cdsctl user reset - Reset CDS user password cdsctl user show - Show CDS user details  "
+	"content": " cdsctl user Manage CDS user\nSynopsis Manage CDS user\nOptions inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl - CDS Command line utility cdsctl user confirm - Confirm CDS user password cdsctl user favorite - Display all the user favorites cdsctl user list - List CDS users cdsctl user me - Show Current CDS user details cdsctl user reset - Reset CDS user password cdsctl user show - Show CDS user details  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/integrations/vsphere/",
