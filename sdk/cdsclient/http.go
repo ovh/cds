@@ -224,11 +224,11 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 
 		var addAuth bool
+		//No auth on /login route or on url that is not cds configured in config.Host
 		if strings.HasPrefix(url, c.config.Host) && !strings.HasPrefix(path, "/login") {
 			addAuth = true
 		}
 
-		//No auth on /login route
 		if addAuth {
 			if c.config.Hash != "" {
 				basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
