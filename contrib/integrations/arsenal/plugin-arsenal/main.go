@@ -107,7 +107,7 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *integrationplug
 	}
 
 	httpClient := &http.Client{
-		Timeout: 15 * time.Second,
+		Timeout: 60 * time.Second,
 	}
 
 	// Prepare the request
