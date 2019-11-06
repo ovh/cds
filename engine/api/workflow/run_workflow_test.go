@@ -558,8 +558,9 @@ queueRun:
 	filter3 := workflow.NewQueueFilter()
 	filter3.Rights = sdk.PermissionReadExecute
 
-	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter3, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)).ToIDs())
+	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter3, sdk.Groups(append(u.OldUserStruct.Groups, g0)).ToIDs())
 	require.NoError(t, err)
+	t.Logf("##### nb job in queue : %d\n", len(jobs))
 	require.True(t, len(jobs) > 0)
 
 	for i := range jobs {
