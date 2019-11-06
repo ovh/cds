@@ -1458,7 +1458,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 						LuaScript: "return false",
 					},
 					HookModelName: sdk.WebHookModel.Name,
-					Config:        sdk.WebHookModel.DefaultConfig,
+					Config:        sdk.WebHookModel.DefaultConfig.Clone(),
 					Ref:           "root.0",
 					UUID:          "1cbf3792-126b-4111-884f-077bdee9523c",
 				}
@@ -1495,7 +1495,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 							LuaScript: "return false",
 						},
 						HookModelName: sdk.WebHookModel.Name,
-						Config:        sdk.WebHookModel.DefaultConfig,
+						Config:        sdk.WebHookModel.DefaultConfig.Clone(),
 						Ref:           "root.0",
 						UUID:          "1cbf3792-126b-4111-884f-077bdee9523c",
 					},
@@ -1616,7 +1616,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 				hooks := map[string]sdk.NodeHook{}
 				hooks["1cbf3792-126b-4111-884f-077bdee9523d"] = sdk.NodeHook{
 					HookModelName: sdk.WebHookModel.Name,
-					Config:        sdk.WebHookModel.DefaultConfig,
+					Config:        sdk.WebHookModel.DefaultConfig.Clone(),
 					Ref:           "root.0",
 					UUID:          "1cbf3792-126b-4111-884f-077bdee9523d",
 				}
@@ -1651,7 +1651,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 				Hooks: []sdk.NodeHook{
 					sdk.NodeHook{
 						HookModelName: sdk.WebHookModel.Name,
-						Config:        sdk.WebHookModel.DefaultConfig,
+						Config:        sdk.WebHookModel.DefaultConfig.Clone(),
 						Ref:           "root.0",
 						UUID:          "1cbf3792-126b-4111-884f-077bdee9523d",
 					},
@@ -1830,7 +1830,7 @@ func Test_postWorkflowRunHandler_ConditionNotOK(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(),api.mustDB(), api.Cache, &w, proj2))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
 
 	//Prepare request
 	vars := map[string]string{
