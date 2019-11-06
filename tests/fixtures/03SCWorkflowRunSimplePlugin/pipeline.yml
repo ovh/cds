@@ -1,0 +1,18 @@
+version: v1.0
+name: 03SCWorkflowRunSimplePlugin-PIPELINE
+stages:
+- Build
+options:
+  Build:
+    conditions:
+      git.branch: master
+jobs:
+
+- job: Run Plugin
+  stage: Build
+  description: Run Plugin
+  steps:
+  - plugin-simple:
+
+  requirements:
+  - plugin: plugin-simple
