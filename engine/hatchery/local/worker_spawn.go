@@ -47,7 +47,7 @@ func (l localWorkerLogger) Fatalf(fmt string, values ...interface{}) {
 	log.Fatalf("hatchery> local> worker> %s> "+fmt, l.name)
 }
 
-const workerCmdTmpl = "worker --api={{.API}} --token={{.Token}} --log-level=debug --basedir={{.BaseDir}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}}"
+const workerCmdTmpl = "{{.BasedirDedicated}}/{{.WorkerBinary}} --api={{.API}} --token={{.Token}} --log-level=debug --basedir={{.BaseDir}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}}"
 
 // SpawnWorker starts a new worker process
 func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
@@ -79,6 +79,8 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
 		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+		WorkerBinary:      h.getWorkerBinaryName(),
+		BasedirDedicated:  h.BasedirDedicated,
 	}
 
 	udataParam.WorkflowJobID = spawnArgs.JobID

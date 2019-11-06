@@ -24,7 +24,6 @@ func (s *Service) generatePayloadFromGithubRequest(t *sdk.TaskExecution, event s
 		branch := strings.TrimPrefix(request.Ref, "refs/heads/")
 		if request.Deleted {
 			err := s.enqueueBranchDeletion(projectKey, workflowName, branch)
-
 			return nil, sdk.WrapError(err, "cannot enqueue branch deletion")
 		}
 		if err := s.stopBranchDeletionTask(branch); err != nil {

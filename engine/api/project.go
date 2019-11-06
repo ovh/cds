@@ -567,7 +567,6 @@ func (api *API) postProjectHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project %s", p.Key)
 		}
-
 		proj.Permissions.Readable = true
 		proj.Permissions.Writable = true
 

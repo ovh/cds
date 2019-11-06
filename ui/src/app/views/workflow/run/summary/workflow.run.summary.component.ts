@@ -40,7 +40,6 @@ export class WorkflowRunSummaryComponent {
     subWR: Subscription;
     @Input() workflowName: string;
     @Output() directionChange = new EventEmitter();
-    @Output() relaunch = new EventEmitter();
 
     _direction: string;
     author: string;

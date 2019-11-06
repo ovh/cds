@@ -92,9 +92,10 @@ func (m *Model) Update(data Model) {
 
 // IsValid returns error if the model is not valid.
 func (m Model) IsValid() error {
-	if m.Name == "" {
-		return WrapError(ErrWrongRequest, "invalid worker model name")
+	if !NamePatternRegex.MatchString(m.Name) {
+		return WrapError(ErrInvalidWorkerModelNamePattern, "worker model name %s does not respect pattern %s", m.Name, NamePattern)
 	}
+
 	if m.GroupID == 0 {
 		return WrapError(ErrWrongRequest, "missing worker model group data")
 	}

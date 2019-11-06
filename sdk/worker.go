@@ -53,6 +53,8 @@ type WorkerArgs struct {
 	GraylogPort       int    `json:"graylog_port"`
 	GraylogExtraKey   string `json:"graylog_extra_key"`
 	GraylogExtraValue string `json:"graylog_extra_value"`
+	WorkerBinary      string
+	BasedirDedicated  string
 }
 
 // TemplateEnvs return envs interpolated with worker arguments

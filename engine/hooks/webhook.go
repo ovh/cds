@@ -57,14 +57,18 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 		if err != nil {
 			return nil, err
 		}
-		payloads = append(payloads, payload)
+		if payload != nil {
+			payloads = append(payloads, payload)
+		}
 	case GitlabHeader:
 		headerValue := t.WebHook.RequestHeader[GitlabHeader][0]
 		payload, err := s.generatePayloadFromGitlabRequest(t, headerValue)
 		if err != nil {
 			return nil, err
 		}
-		payloads = append(payloads, payload)
+		if payload != nil {
+			payloads = append(payloads, payload)
+		}
 	case BitbucketHeader:
 		headerValue := t.WebHook.RequestHeader[BitbucketHeader][0]
 		var errG error

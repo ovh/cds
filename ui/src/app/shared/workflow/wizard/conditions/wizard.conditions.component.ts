@@ -141,9 +141,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                 )
                 .subscribe(wtc => this.triggerConditions = wtc);
         }
-
-
-
     }
 
     updateWorkflow(): void {
@@ -198,7 +195,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             }
         }
 
-
         let clonedWorkflow = cloneDeep(this.workflow);
 
         if (this.editableNode) {
@@ -218,7 +214,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                 });
             }
         }
-
 
         this.store.dispatch(new UpdateWorkflow({
             projectKey: this.workflow.project_key,

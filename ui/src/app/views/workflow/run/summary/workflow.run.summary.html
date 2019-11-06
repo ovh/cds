@@ -59,13 +59,6 @@
                                             <i class="stop icon"></i>
                                             {{ 'common_stop' | translate }}
                                         </button>
-                                        <button class="ui labeled icon button blue" (click)="relaunch.emit(null)"
-                                            [disabled]="loadingAction || !workflow.permissions.executable"
-                                            [class.loading]="loadingAction" *ngIf="workflowRun.status !== pipelineStatusEnum.WAITING &&
-                                                workflowRun.status !== pipelineStatusEnum.BUILDING">
-                                            <i class="repeat icon"></i>
-                                            {{ 'common_relaunch' | translate }}
-                                        </button>
                                     </div>
                                 </div>
                             </div>

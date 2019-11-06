@@ -166,25 +166,31 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 		filepathVal = strings.Split(filepathVal[0], " ")
 	}
 
+	var filepathValComputed []string
 	for _, fp := range filepathVal {
-		filepathVal, err = walkGlobFile(fp)
+		expandedPaths, err := walkGlobFile(fp)
 		if err != nil {
 			return actionplugin.Fail("VENOM - Error on walk files: %v\n", err)
 		}
+		filepathValComputed = append(filepathValComputed, expandedPaths...)
 	}
 
 	if len(filepathExcluded) == 1 {
 		filepathExcluded = strings.Split(filepathExcluded[0], " ")
 	}
 
+	var filepathExcludedComputed []string
 	for _, fp := range filepathExcluded {
-		filepathExcluded, err = walkGlobFile(fp)
+		expandedPaths, err := walkGlobFile(fp)
 		if err != nil {
 			return actionplugin.Fail("VENOM - Error on walk excluded files: %v\n", err)
 		}
+		filepathExcludedComputed = append(filepathExcludedComputed, expandedPaths...)
 	}
 
-	tests, err := v.Process(filepathVal, filepathExcluded)
+	fmt.Printf("VENOM - filepath: %v\n", filepathValComputed)
+	fmt.Printf("VENOM - excluded: %v\n", filepathExcludedComputed)
+	tests, err := v.Process(filepathValComputed, filepathExcludedComputed)
 	if err != nil {
 		return actionplugin.Fail("VENOM - Fail on venom: %v\n", err)
 	}

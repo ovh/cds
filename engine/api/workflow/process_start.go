@@ -52,7 +52,7 @@ func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.
 }
 
 func processStartFromRootNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
-	log.Debug("processWorkflowRun> starting from the root : %d (pipeline %s)", wr.Workflow.WorkflowData.Node.ID, wr.Workflow.Pipelines[wr.Workflow.WorkflowData.Node.Context.ID].Name)
+	log.Debug("processWorkflowRun> starting from the root: %d (pipeline %s)", wr.Workflow.WorkflowData.Node.ID, wr.Workflow.Pipelines[wr.Workflow.WorkflowData.Node.Context.PipelineID].Name)
 	report := new(ProcessorReport)
 	//Run the root: manual or from an event
 	AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{

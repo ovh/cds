@@ -128,6 +128,7 @@ func Test_addProjectHandler(t *testing.T) {
 	projCreated := sdk.Project{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projCreated))
 	assert.Equal(t, proj.Key, projCreated.Key)
+	assert.Equal(t, true, projCreated.Permissions.Writable)
 
 	gr, err := group.LoadByName(context.TODO(), db, proj.Name)
 	assert.NotNil(t, gr)
