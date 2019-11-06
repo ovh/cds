@@ -224,12 +224,12 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 
 		var addAuth bool
-		if strings.HasPrefix(path, c.config.Host) {
+		if strings.HasPrefix(path, c.config.Host) && !strings.HasPrefix(path, "/login") {
 			addAuth = true
 		}
 
 		//No auth on /login route
-		if !strings.HasPrefix(path, "/login") && addAuth {
+		if addAuth {
 			if c.config.Hash != "" {
 				basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
 				req.Header.Set(AuthHeader, basedHash)
