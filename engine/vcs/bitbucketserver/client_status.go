@@ -115,6 +115,8 @@ func processBitbucketState(s Status) string {
 }
 
 const (
+	// "state": "<INPROGRESS|SUCCESSFUL|FAILED>"
+	// doc from https://developer.atlassian.com/server/bitbucket/how-tos/updating-build-status-for-commits/
 	inProgress = "INPROGRESS"
 	successful = "SUCCESSFUL"
 	failed     = "FAILED"
@@ -147,7 +149,7 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 
 func getBitbucketStateFromStatus(status string) string {
 	switch status {
-	case sdk.StatusSuccess.String():
+	case sdk.StatusSuccess.String(), sdk.StatusSkipped.String():
 		return successful
 	case sdk.StatusWaiting.String():
 		return inProgress
