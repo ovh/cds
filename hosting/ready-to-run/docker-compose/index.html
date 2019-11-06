@@ -19,15 +19,15 @@
 <meta name="description"
     content="Run with Docker-Compose The docker-compose.yml contains:
  cds-db service with a PostgreSQL cds-cache service with a Redis cds-migrate service to prepare DB tables cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
-How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest $ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml $ export HOSTNAME=$(hostname) # Get the latest version $ docker pull ovhcom/cds-ui:latest $ docker pull ovhcom/cds-engine:latest # Create PG database $ docker-compose up --no-recreate -d cds-db # check if DB is up # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API, UI and hooks µservice $ docker-compose up -d cds-api cds-ui cds-hooks   Create the first user with WebUI  Open a browser on http://localhost:2015/account/signup, then register a new user admin, with an email admin@localhost.">
+How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest $ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml $ export HOSTNAME=$(hostname) # Get the latest version $ docker pull ovhcom/cds-ui:latest $ docker pull ovhcom/cds-engine:latest # Create PG database $ docker-compose up --no-recreate -d cds-db # check if DB is up # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API, UI and hooks µservice $ docker-compose up -d cds-api cds-ui cds-hooks   Create the first user with WebUI  Open a browser on http://localhost:8080/account/signup, then register a new user admin, with an email admin@localhost.">
 <meta property="og:description"
     content="Run with Docker-Compose The docker-compose.yml contains:
  cds-db service with a PostgreSQL cds-cache service with a Redis cds-migrate service to prepare DB tables cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
-How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest $ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml $ export HOSTNAME=$(hostname) # Get the latest version $ docker pull ovhcom/cds-ui:latest $ docker pull ovhcom/cds-engine:latest # Create PG database $ docker-compose up --no-recreate -d cds-db # check if DB is up # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API, UI and hooks µservice $ docker-compose up -d cds-api cds-ui cds-hooks   Create the first user with WebUI  Open a browser on http://localhost:2015/account/signup, then register a new user admin, with an email admin@localhost.">
+How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest $ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml $ export HOSTNAME=$(hostname) # Get the latest version $ docker pull ovhcom/cds-ui:latest $ docker pull ovhcom/cds-engine:latest # Create PG database $ docker-compose up --no-recreate -d cds-db # check if DB is up # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API, UI and hooks µservice $ docker-compose up -d cds-api cds-ui cds-hooks   Create the first user with WebUI  Open a browser on http://localhost:8080/account/signup, then register a new user admin, with an email admin@localhost.">
 <meta name="twitter:description"
     content="Run with Docker-Compose The docker-compose.yml contains:
  cds-db service with a PostgreSQL cds-cache service with a Redis cds-migrate service to prepare DB tables cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
-How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest $ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml $ export HOSTNAME=$(hostname) # Get the latest version $ docker pull ovhcom/cds-ui:latest $ docker pull ovhcom/cds-engine:latest # Create PG database $ docker-compose up --no-recreate -d cds-db # check if DB is up # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API, UI and hooks µservice $ docker-compose up -d cds-api cds-ui cds-hooks   Create the first user with WebUI  Open a browser on http://localhost:2015/account/signup, then register a new user admin, with an email admin@localhost.">
+How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest $ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml $ export HOSTNAME=$(hostname) # Get the latest version $ docker pull ovhcom/cds-ui:latest $ docker pull ovhcom/cds-engine:latest # Create PG database $ docker-compose up --no-recreate -d cds-db # check if DB is up # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API, UI and hooks µservice $ docker-compose up -d cds-api cds-ui cds-hooks   Create the first user with WebUI  Open a browser on http://localhost:8080/account/signup, then register a new user admin, with an email admin@localhost.">
 <meta property="og:url" content="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/">
 <meta property="og:title" content="Docker Compose">
 <meta name="twitter:title" content="Docker Compose">
@@ -292,7 +292,7 @@ $ docker-compose up -d cds-api cds-ui cds-hooks
 <li>Create the first user with WebUI</li>
 </ul>
 
-<p>Open a browser on <a href="http://localhost:2015/account/signup">http://localhost:2015/account/signup</a>, then register a new user <code>admin</code>,
+<p>Open a browser on <a href="http://localhost:8080/account/signup">http://localhost:8080/account/signup</a>, then register a new user <code>admin</code>,
 with an email <code>admin@localhost.local</code> for example.
 As there is no SMTP server configured in docker-compose.yml file,
 run <code>docker-compose logs</code> to get URL for validate the registration.</p>
@@ -311,7 +311,7 @@ If you don&rsquo;t want to use the keychain, you can select the version i386.</p
 
 <p>See: <a href="https://ovh.github.io/cds/docs/components/cdsctl/">cdsctl documentation</a></p>
 
-<p>You can download cdsctl CLI from <a href="http://localhost:2015/settings/downloads">http://localhost:2015/settings/downloads</a></p>
+<p>You can download cdsctl CLI from <a href="http://localhost:8080/settings/downloads">http://localhost:8080/settings/downloads</a></p>
 
 <pre><code class="language-bash"># on a Linux workstation:
 $ curl http://localhost:8081/download/cdsctl/linux/amd64 -o cdsctl
@@ -411,14 +411,14 @@ This ensures isolation of the workspaces and resources.</p>
 
 <pre><code class="language-bash">$ ./cdsctl workflow run DEMO MyFirstWorkflow
 Workflow MyFirstWorkflow #1 has been launched
-http://localhost:2015/project/DEMO/workflow/MyFirstWorkflow/run/1
+http://localhost:8080/project/DEMO/workflow/MyFirstWorkflow/run/1
 </code></pre>
 
 <ul>
 <li>Check on UI</li>
 </ul>
 
-<p>on <a href="http://localhost:2015/project/DEMO/workflow/MyFirstWorkflow/run/1">http://localhost:2015/project/DEMO/workflow/MyFirstWorkflow/run/1</a> you will have</p>
+<p>on <a href="http://localhost:8080/project/DEMO/workflow/MyFirstWorkflow/run/1">http://localhost:8080/project/DEMO/workflow/MyFirstWorkflow/run/1</a> you will have</p>
 
 <p><img src="https://ovh.github.io/cds/images/ready_to_run_docker_compose_ui.png" alt="Workflow Generated" /></p>
 
