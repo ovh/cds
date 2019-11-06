@@ -1,9 +1,10 @@
+//! Module to let you use service with CDS API
 use chrono::prelude::*;
 use serde_json;
 
-use crate::models::{Group, MonitoringStatus};
 use crate::client::Client;
-use crate::error::{Error as CdsError};
+use crate::error::Error as CdsError;
+use crate::models::{Group, MonitoringStatus};
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(default)]
@@ -40,7 +41,7 @@ pub struct ServiceSDK {
 
 impl ServiceSDK {
     pub fn new() -> Self {
-        ServiceSDK{
+        ServiceSDK {
             ..Default::default()
         }
     }
@@ -59,7 +60,6 @@ pub trait ServiceTrait<T> {
 pub struct APIConfiguration {
     #[serde(rename = "maxHeartbeatFailures")]
     pub max_heartbeat_failures: i32,
-    
     #[serde(rename = "requestTimeout")]
     pub request_timeout: i32,
 
@@ -91,7 +91,7 @@ mod test {
     impl ServiceTrait<Configuration> for ServiceSDK {
         fn apply_configuration(&mut self, config: Configuration) -> Result<(), CdsError> {
             self.client = Client::new(config.api_url.clone(), "".to_string(), config.token.clone());
-	        self.service_name = String::from("cds-service");
+            self.service_name = String::from("cds-service");
             self.api = config.api_url;
             self.name = config.name;
             self.token = config.token;
@@ -119,8 +119,12 @@ mod test {
             Ok(())
         }
 
-        fn register(&mut self, _status: MonitoringStatus, config: Configuration) -> Result<(), CdsError> {
-            let mut srv = Service{
+        fn register(
+            &mut self,
+            _status: MonitoringStatus,
+            config: Configuration,
+        ) -> Result<(), CdsError> {
+            let mut srv = Service {
                 name: self.name.to_owned(),
                 r#type: self.r#type.to_owned(),
                 http_url: self.http_url.to_owned(),
@@ -131,7 +135,6 @@ mod test {
                 ..Default::default()
             };
             srv.hash = self.client.service_register(&srv)?;
-            
             Ok(())
         }
 
@@ -140,16 +143,15 @@ mod test {
         }
     }
 
-
     #[test]
     fn test_service_create() {
-        let my_conf = Configuration{
+        let my_conf = Configuration {
             name: "my_test".to_string(),
             url: "http://localhost:8088".to_string(),
             api_url: "http://localhost:8081".to_string(),
-            token: env::var("CDS_SERVICE_TOKEN").expect("Cannot read CDS_SERVICE_TOKEN env")
+            token: env::var("CDS_SERVICE_TOKEN").expect("Cannot read CDS_SERVICE_TOKEN env"),
         };
-        let mut my_service = ServiceSDK{
+        let mut my_service = ServiceSDK {
             name: "test".to_string(),
             ..Default::default()
         };
@@ -157,6 +159,11 @@ mod test {
         my_service.apply_configuration(my_conf.clone()).unwrap();
 
         assert_eq!(my_service.api, "http://localhost:8081".to_string());
-        assert_eq!(my_service.register(MonitoringStatus::default(), my_conf).is_ok(), true);
+        assert_eq!(
+            my_service
+                .register(MonitoringStatus::default(), my_conf)
+                .is_ok(),
+            true
+        );
     }
 }

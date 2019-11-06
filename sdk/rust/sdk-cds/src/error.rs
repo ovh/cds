@@ -4,61 +4,62 @@ use std::error::Error as StdError;
 use std::fmt;
 use std::io::Error as IOError;
 
+use jwt;
 use reqwest;
+
+macro_rules! from_error {
+    ($type:ty, $target:ident, $targetvar:expr) => {
+        impl From<$type> for $target {
+            fn from(s: $type) -> Self {
+                $targetvar(s.into())
+            }
+        }
+    };
+}
+macro_rules! from_error_str {
+    ($type:ty, $target:ident, $targetvar:expr) => {
+        impl From<$type> for $target {
+            fn from(s: $type) -> Self {
+                $targetvar(s.description().to_string())
+            }
+        }
+    };
+}
+
+#[derive(Serialize, Deserialize, Fail, Debug)]
+/// All errors for CDS SDK
+pub enum Error {
+    #[fail(display = "API Error: {:?}", _0)]
+    ApiError(ApiError),
+    #[fail(display = "IO Error: {:?}", _0)]
+    IoError(String),
+    #[fail(display = "reqwest Error: {:?}", _0)]
+    ReqwestError(String),
+    #[fail(display = "invalid method: {:?}", _0)]
+    InvalidMethod(String),
+    #[fail(display = "jwt error: {:?}", _0)]
+    JWTError(String),
+    #[fail(display = "custom error: {:?}", _0)]
+    Custom(String),
+}
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(default)]
-pub struct Error {
+/// Error from CDS API
+pub struct ApiError {
     pub status: u16,
     pub message: String,
     pub uuid: String,
 }
 
-impl From<IOError> for Error {
-    fn from(e: IOError) -> Error {
-        Error {
-            message: e.description().into(),
-            ..Default::default()
-        }
-    }
-}
+from_error_str!(IOError, Error, Error::IoError);
+from_error_str!(reqwest::Error, Error, Error::ReqwestError);
+from_error_str!(InvalidMethod, Error, Error::InvalidMethod);
+from_error!(String, Error, Error::Custom);
+from_error!(ApiError, Error, Error::ApiError);
+from_error_str!(jwt::errors::Error, Error, Error::JWTError);
 
-impl From<reqwest::Error> for Error {
-    fn from(e: reqwest::Error) -> Error {
-        // Inspect the internal error and output it
-        let mut cds_error = Error {
-            message: e.description().into(),
-            ..Default::default()
-        };
-        if e.is_serialization() {
-            match e.get_ref() {
-                None => (),
-                Some(err) => cds_error.message = format!("JSON ERROR: {:?}", err).into(),
-            }
-        }
-        cds_error
-    }
-}
-
-impl From<InvalidMethod> for Error {
-    fn from(e: InvalidMethod) -> Error {
-        Error {
-            message: e.description().into(),
-            ..Default::default()
-        }
-    }
-}
-
-impl From<String> for Error {
-    fn from(e: String) -> Error {
-        Error {
-            message: e,
-            ..Default::default()
-        }
-    }
-}
-
-impl fmt::Display for Error {
+impl fmt::Display for ApiError {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         if self.status == 0 {
             write!(fmt, "message: {}, uuid: {}", self.message, self.uuid)
@@ -72,7 +73,7 @@ impl fmt::Display for Error {
     }
 }
 
-impl fmt::Debug for Error {
+impl fmt::Debug for ApiError {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         if self.status == 0 {
             write!(fmt, "message: {}, uuid: {}", self.message, self.uuid)
@@ -86,9 +87,9 @@ impl fmt::Debug for Error {
     }
 }
 
-impl Error {
+impl ApiError {
     pub fn new<T: Into<String>>(status: u16, message: T) -> Self {
-        Error {
+        ApiError {
             status,
             message: message.into(),
             ..Default::default()
