@@ -4,21 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
-
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
-)
-
-var (
-	// ErrNoStage when request requires specific stage but it does not exist
-	ErrNoStage = fmt.Errorf("cds: stage does not exist")
 )
 
 // LoadStage Get a stage from its ID and pipeline ID
@@ -33,7 +26,7 @@ func LoadStage(db gorp.SqlExecutor, pipelineID int64, stageID int64) (*sdk.Stage
 	var stage sdk.Stage
 	rows, err := db.Query(query, pipelineID, stageID)
 	if err == sql.ErrNoRows {
-		return nil, ErrNoStage
+		return nil, sdk.WrapError(sdk.ErrNotFound, "stage does not exist")
 	}
 	if err != nil {
 		return nil, err
@@ -56,21 +49,23 @@ func InsertStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 	if err := db.QueryRow(query, s.PipelineID, s.Name, s.BuildOrder, s.Enabled).Scan(&s.ID); err != nil {
 		return err
 	}
-	return InsertStageConditions(db, s)
+	return insertStageConditions(db, s)
 }
 
-// InsertStageConditions insert prequisite for given stage in database
-func InsertStageConditions(db gorp.SqlExecutor, s *sdk.Stage) error {
-	if len(s.Conditions.PlainConditions) > 0 || s.Conditions.LuaScript != "" {
-		query := "UPDATE pipeline_stage SET conditions = $1 WHERE id = $2"
+// insertStageConditions insert prequisite for given stage in database
+func insertStageConditions(db gorp.SqlExecutor, s *sdk.Stage) error {
+	if s.Conditions.LuaScript != "" {
+		s.Conditions.PlainConditions = nil
+	}
+	query := "UPDATE pipeline_stage SET conditions = $1 WHERE id = $2"
 
-		conditionsBts, err := json.Marshal(s.Conditions)
-		if err != nil {
-			return sdk.WrapError(err, "cannot marshal condition for stage %d", s.ID)
-		}
-		if _, err := db.Exec(query, conditionsBts, s.ID); err != nil {
-			return err
-		}
+	conditionsBts, err := json.Marshal(s.Conditions)
+
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	if _, err := db.Exec(query, conditionsBts, s.ID); err != nil {
+		return sdk.WithStack(err)
 	}
 	return nil
 }
@@ -233,7 +228,7 @@ func UpdateStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 	}
 
 	//Insert all prequisites
-	return InsertStageConditions(db, s)
+	return insertStageConditions(db, s)
 }
 
 // DeleteStageByID Delete stage with associated pipeline action

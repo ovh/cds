@@ -1370,7 +1370,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	defer end()
 	allMsg := []sdk.Message{}
 
-	data, err := ExtractFromCDSFiles(tr)
+	data, err := extractFromCDSFiles(tr)
 	if err != nil {
 		return nil, nil, err
 	}

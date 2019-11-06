@@ -151,7 +151,7 @@ func (h *HatcheryLocal) downloadWorker() error {
 		return fmt.Errorf("invalid Binary (Content-Type: %s). Please try again or download it manually from %s", contentType, sdk.URLGithubReleases)
 	}
 
-	workerFullPath := path.Join(h.BasedirDedicated, "worker")
+	workerFullPath := path.Join(h.BasedirDedicated, h.getWorkerBinaryName())
 
 	if _, err := os.Stat(workerFullPath); err == nil {
 		log.Debug("removing existing worker binary from %s", workerFullPath)
@@ -171,6 +171,40 @@ func (h *HatcheryLocal) downloadWorker() error {
 	}
 
 	return sdk.WithStack(fp.Close())
+}
+
+func (h *HatcheryLocal) getWorkerBinaryName() string {
+	workerName := "worker"
+
+	if sdk.GOOS == "windows" {
+		workerName += ".exe"
+	}
+	return workerName
+}
+
+// checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
+// returns an error "Exit status X" if current host misses one requirement
+func (h *HatcheryLocal) checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
+	var tmp map[string]sdk.Requirement
+
+	tmp = make(map[string]sdk.Requirement)
+	for _, r := range req {
+		ok, err := h.checkRequirement(r)
+		if err != nil {
+			return nil, err
+		}
+
+		if ok {
+			tmp[r.Name] = r
+		}
+	}
+
+	capa := make([]sdk.Requirement, 0, len(tmp))
+	for _, r := range tmp {
+		capa = append(capa, r)
+	}
+
+	return capa, nil
 }
 
 //Configuration returns Hatchery CommonConfiguration

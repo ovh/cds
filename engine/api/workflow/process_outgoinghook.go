@@ -131,7 +131,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 	}
 
 	if !checkCondition(wr, node.Context.Conditions, hookRun.BuildParameters) {
-		log.Debug("Condition failed %d/%d %+v", wr.ID, node.ID, hookRun.BuildParameters)
+		log.Debug("Condition failed on processNodeOutGoingHook %d/%d %+v", wr.ID, node.ID, hookRun.BuildParameters)
 		return report, false, nil
 	}
 

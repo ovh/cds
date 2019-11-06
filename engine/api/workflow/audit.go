@@ -245,7 +245,7 @@ func purgeAudits(db gorp.SqlExecutor) error {
 	for _, r := range nbAuditsPerWorkflowID {
 		log.Debug("purgeAudits> deleting audits for workflow %d (%d audits)", r.WorkflowID, r.NbAudits)
 		var ids []int64
-		query = `select id from workflow_audit where workflow_id = $1 order by created asc offset $2`
+		query = `select id from workflow_audit where workflow_id = $1 order by created desc offset $2`
 		if _, err := db.Select(&ids, query, r.WorkflowID, keepAudits); err != nil {
 			return sdk.WithStack(err)
 		}

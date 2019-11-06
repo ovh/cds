@@ -16,7 +16,6 @@ import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
 import { Project } from '../../../model/project.model';
 import { WNode, Workflow } from '../../../model/workflow.model';
-import { WorkflowRun } from '../../../model/workflow.run.model';
 import { WorkflowCoreService } from '../../../service/workflow/workflow.core.service';
 import { WorkflowStore } from '../../../service/workflow/workflow.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
@@ -49,17 +48,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.changeDisplay();
     }
 
-    _workflowRun: WorkflowRun;
-    @Input('workflowRun')
-    set workflowRun(data: WorkflowRun) {
-        if (data) {
-            this._workflowRun = data;
-            this.workflow = data.workflow;
-            this.previousWorkflowRunId = data.id;
-            this.changeDisplay();
-        }
-    }
-
     @Input() project: Project;
 
     @Input('direction')
@@ -81,7 +69,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
     render = new dagreD3.render();
 
     linkWithJoin = false;
-    previousWorkflowRunId = 0;
 
     nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
     hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();

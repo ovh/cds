@@ -121,8 +121,8 @@ export class AppComponent implements OnInit {
                 this.isConnected = true;
                 this.startSSE();
             }
-            this.startVersionWorker();
         });
+        this.startVersionWorker();
 
         this._routerSubscription = this._router.events
             .pipe(filter((event) => event instanceof ResolveStart || event instanceof ResolveEnd))
@@ -230,7 +230,8 @@ export class AppComponent implements OnInit {
                         if (!e.type_event || e.type_event.indexOf(EventType.RUN_WORKFLOW_PREFIX) !== 0) {
                             results.push(e);
                         } else {
-                            let wr = results.find(re => re.project_key === e.project_key && re.workflow_name === e.workflow_name);
+                            let wr = results.find(re => re.project_key === e.project_key
+                                && re.workflow_name === e.workflow_name && re.type_event === e.type_event);
                             if (!wr) {
                                 results.push(e);
                             }
