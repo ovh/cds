@@ -224,7 +224,7 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 
 		var addAuth bool
-		if strings.HasPrefix(path, c.config.Host) && !strings.HasPrefix(path, "/login") {
+		if strings.HasPrefix(url, c.config.Host) && !strings.HasPrefix(path, "/login") {
 			addAuth = true
 		}
 
