@@ -1,0 +1,38 @@
+name: Create a simple workflow (03SCWorkflowRunSimpleService) that use a service and run it
+version: "2"
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./fixtures/03SCWorkflowRunSimpleService/pipeline.yml ]'
+  - script: '[ -f ./fixtures/03SCWorkflowRunSimpleService/workflow.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 03SCWORKFLOWRUNSIMPLESERVICE"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 03SCWorkflowRunSimpleService "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add 03SCWORKFLOWRUNSIMPLESERVICE 03SCWorkflowRunSimpleService"
+
+- name: import pipeline and workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force 03SCWORKFLOWRUNSIMPLESERVICE ./fixtures/03SCWorkflowRunSimpleService/pipeline.yml
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 03SCWORKFLOWRUNSIMPLESERVICE ./fixtures/03SCWorkflowRunSimpleService/workflow.yml
+
+- name: run workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run 03SCWORKFLOWRUNSIMPLESERVICE 03SCWorkflowRunSimpleService-WORKFLOW
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow 03SCWorkflowRunSimpleService-WORKFLOW #1 has been launched"
+
+- name: check workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 03SCWORKFLOWRUNSIMPLESERVICE 03SCWorkflowRunSimpleService-WORKFLOW 1 --format json
+    retry: 18
+    delay: 10
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.num ShouldContainSubstring 1
+    - result.systemoutjson.status ShouldEqual Success
+    - result.systemoutjson.tags ShouldContainSubstring triggered_by
