@@ -24,6 +24,7 @@ type TestWorker struct {
 	workspace        afero.Fs
 	workingDirectory *afero.BasePathFile
 	keyDirectory     *afero.BasePathFile
+	client           cdsclient.WorkerInterface
 }
 
 func (w TestWorker) Blur(i interface{}) error {
@@ -31,8 +32,8 @@ func (w TestWorker) Blur(i interface{}) error {
 	return nil
 }
 
-func (_ TestWorker) Client() cdsclient.WorkerInterface {
-	return nil
+func (w TestWorker) Client() cdsclient.WorkerInterface {
+	return w.client
 }
 
 func (_ TestWorker) Environ() []string {
@@ -114,7 +115,11 @@ func setupTest(t *testing.T) (TestWorker, context.Context) {
 
 	wk.keyDirectory = fi.(*afero.BasePathFile)
 
+	wk.client = cdsclient.NewWorker("http://lolcat.host", "test-client", cdsclient.NewHTTPClient(time.Second*360, false))
+
 	ctx := workerruntime.SetWorkingDirectory(context.TODO(), wk.workingDirectory)
 	ctx = workerruntime.SetKeysDirectory(ctx, wk.keyDirectory)
+	ctx = workerruntime.SetJobID(ctx, 666)
+
 	return wk, ctx
 }
