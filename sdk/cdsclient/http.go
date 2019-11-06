@@ -223,8 +223,13 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			req.Header.Add("X-Provider-Token", c.config.Token)
 		}
 
+		var addAuth bool
+		if strings.HasPrefix(path, c.config.Host) {
+			addAuth = true
+		}
+
 		//No auth on /login route
-		if !strings.HasPrefix(path, "/login") {
+		if !strings.HasPrefix(path, "/login") && addAuth {
 			if c.config.Hash != "" {
 				basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
 				req.Header.Set(AuthHeader, basedHash)
