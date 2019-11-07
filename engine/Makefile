@@ -77,7 +77,11 @@ test-db-start-docker:
 	@sleep 5
 	$(TEST_DB_INIT)
 
-test-db-restart:
+test-db-create:
+	$(TEST_DB_CREATE_DATABASE)
+	$(TEST_DB_INIT)
+
+test-db-recreate:
 	$(TEST_DB_DROP_DATABASE)
 	$(TEST_DB_CREATE_DATABASE)
 	$(TEST_DB_INIT)
