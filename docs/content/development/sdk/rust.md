@@ -14,11 +14,10 @@ use std::env;
 use sdk_cds::Client;
 
 fn main() {
-    let cds_user = "myusername";
     let cds_host = "http://localhost:8081";
     let cds_token = "mytoken";
 
-    let client = Client::new(cds_host, cds_user, cds_token);
+    let client = Client::new(cds_host, cds_token);
 }
 ```
 
@@ -48,13 +47,11 @@ use std::env;
 use sdk_cds::Client;
 
 fn main() {
-    let cds_user =
-        env::var("CDS_USER").expect("You must export environment variable named CDS_USER");
     let cds_host =
         env::var("CDS_HOST").expect("You must export environment variable named CDS_HOST");
     let cds_token =
         env::var("CDS_TOKEN").expect("You must export environment variable named CDS_TOKEN");
-    let my_client = Client::new(cds_host.as_str(), cds_user.as_str(), cds_token.as_str());
+    let my_client = Client::new(cds_host.as_str(), cds_token.as_str());
 
     println!("Hello, world! {:?}", my_client.status().unwrap());
     println!("Me : {:?}", my_client.me().unwrap());
@@ -80,7 +77,6 @@ fn main() {
 + Build & run it: 
 
 ```bash
-$ export CDS_USER=myusername
 $ export CDS_HOST=http://localhost:8081
 $ export CDS_TOKEN=mytoken
 $ cargo run

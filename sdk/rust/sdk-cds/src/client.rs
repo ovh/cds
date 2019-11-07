@@ -21,7 +21,6 @@ pub type Result<T> = std::result::Result<T, CdsError>;
 pub struct Client {
     pub name: String, //Useful for multi instance to give a name to your instance
     pub host: String,
-    pub username: String,
     pub token: String,
     #[serde(skip)]
     session_token: RwLock<RefCell<String>>,
@@ -30,11 +29,11 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new<T: Into<String>>(host: T, username: T, token: T) -> Self {
+    /// Create a new client to access CDS API
+    pub fn new<T: Into<String>>(host: T, token: T) -> Self {
         let host: String = host.into();
         Client {
             host: host.clone(),
-            username: username.into(),
             token: token.into(),
             insecure_skip_verify_tls: !host.starts_with("https"),
             ..Default::default()
@@ -55,7 +54,7 @@ impl Client {
     /// Get minimal information about current user
     pub fn me(&self) -> Result<models::User> {
         let body: Vec<u8> = vec![];
-        self.stream_json("GET".to_string(), format!("/user/{}", self.username), body)
+        self.stream_json("GET".to_string(), String::from("/user/me"), body)
     }
 
     /// Get the list of broadcasts

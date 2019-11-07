@@ -90,7 +90,7 @@ mod test {
 
     impl ServiceTrait<Configuration> for ServiceSDK {
         fn apply_configuration(&mut self, config: Configuration) -> Result<(), CdsError> {
-            self.client = Client::new(config.api_url.clone(), "".to_string(), config.token.clone());
+            self.client = Client::new(config.api_url.clone(), config.token.clone());
             self.service_name = String::from("cds-service");
             self.api = config.api_url;
             self.name = config.name;
