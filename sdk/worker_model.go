@@ -54,7 +54,6 @@ type Model struct {
 	CheckRegistration      bool                `json:"check_registration"  db:"check_registration" cli:"-"`
 	UserLastModified       time.Time           `json:"user_last_modified"  db:"user_last_modified" cli:"-"`
 	CreatedBy              User                `json:"created_by" db:"-" cli:"-"`
-	Provision              int64               `json:"provision" db:"provision" cli:"provision"`
 	GroupID                int64               `json:"group_id" db:"group_id" cli:"-"`
 	NbSpawnErr             int64               `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
 	LastSpawnErr           string              `json:"last_spawn_err" db:"-" cli:"-"`
@@ -78,7 +77,6 @@ func (m *Model) Update(data Model) {
 	m.IsOfficial = data.IsOfficial
 	m.GroupID = data.GroupID
 	m.Type = data.Type
-	m.Provision = data.Provision
 	m.ModelDocker = ModelDocker{}
 	m.ModelVirtualMachine = ModelVirtualMachine{}
 	switch m.Type {

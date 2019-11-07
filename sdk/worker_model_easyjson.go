@@ -98,8 +98,6 @@ func easyjson1c3bd83cDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *Model) {
 			}
 		case "created_by":
 			easyjson1c3bd83cDecodeGithubComOvhCdsSdk3(in, &out.CreatedBy)
-		case "provision":
-			out.Provision = int64(in.Int64())
 		case "group_id":
 			out.GroupID = int64(in.Int64())
 		case "nb_spawn_err":
@@ -144,7 +142,7 @@ func easyjson1c3bd83cDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *Model) {
 				if out.Group == nil {
 					out.Group = new(Group)
 				}
-				easyjson1c3bd83cDecodeGithubComOvhCdsSdk4(in, &*out.Group)
+				easyjson1c3bd83cDecodeGithubComOvhCdsSdk4(in, out.Group)
 			}
 		default:
 			in.SkipRecursive()
@@ -340,16 +338,6 @@ func easyjson1c3bd83cEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in Model) {
 			out.RawString(prefix)
 		}
 		easyjson1c3bd83cEncodeGithubComOvhCdsSdk3(out, in.CreatedBy)
-	}
-	{
-		const prefix string = ",\"provision\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.Int64(int64(in.Provision))
 	}
 	{
 		const prefix string = ",\"group_id\":"

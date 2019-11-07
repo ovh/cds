@@ -65,7 +65,7 @@ func Create(ctx context.Context, h Interface) error {
 		return fmt.Errorf("Create> Init error: %v", err)
 	}
 
-	var chanRegister, chanGetModels, chanProvision <-chan time.Time
+	var chanRegister, chanGetModels <-chan time.Time
 	var modelType string
 
 	hWithModels, isWithModels := h.(InterfaceWithModels)
@@ -81,7 +81,6 @@ func Create(ctx context.Context, h Interface) error {
 		// using time.Tick leaks the underlying ticker but we don't care about it because it is an endless function
 		chanRegister = time.Tick(time.Duration(h.Configuration().Provision.RegisterFrequency) * time.Second) // nolint
 		chanGetModels = time.Tick(10 * time.Second)                                                          // nolint
-		chanProvision = time.Tick(time.Duration(h.Configuration().Provision.Frequency) * time.Second)        // nolint
 
 		modelType = hWithModels.ModelType()
 	}
@@ -257,9 +256,6 @@ func Create(ctx context.Context, h Interface) error {
 			//Ask to start
 			log.Debug("hatchery> Request a worker for job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
 			workersStartChan <- workerRequest
-
-		case <-chanProvision:
-			provisioning(hWithModels, models)
 
 		case <-chanRegister:
 			if err := workerRegister(ctx, hWithModels, workersStartChan); err != nil {

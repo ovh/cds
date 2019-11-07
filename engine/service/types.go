@@ -40,7 +40,6 @@ type HatcheryCommonConfiguration struct {
 	} `toml:"api" json:"api"`
 	Provision struct {
 		Disabled                  bool `toml:"disabled" default:"false" comment:"Disabled provisioning. Format:true or false" json:"disabled"`
-		Frequency                 int  `toml:"frequency" default:"30" comment:"Check provisioning each n Seconds" json:"frequency"`
 		RatioService              *int `toml:"ratioService" default:"50" commented:"true" comment:"Percent reserved for spawning worker with service requirement" json:"ratioService,omitempty" mapstructure:"ratioService"`
 		MaxWorker                 int  `toml:"maxWorker" default:"10" comment:"Maximum allowed simultaneous workers" json:"maxWorker"`
 		MaxConcurrentProvisioning int  `toml:"maxConcurrentProvisioning" default:"10" comment:"Maximum allowed simultaneous workers provisioning" json:"maxConcurrentProvisioning"`

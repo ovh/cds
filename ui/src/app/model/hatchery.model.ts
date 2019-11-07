@@ -24,6 +24,5 @@ export class Model {
     last_registration: string;
     user_last_modified: string;
     created_by: User;
-    provision: number;
     group_id: number;
 }

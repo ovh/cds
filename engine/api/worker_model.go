@@ -40,11 +40,6 @@ func (api *API) postWorkerModelHandler() service.Handler {
 		}
 
 		if !isAdmin(ctx) {
-			// provision is allowed only for CDS Admin or by user with a restricted model
-			if !data.Restricted {
-				data.Provision = 0
-			}
-
 			// if current user is not admin and model is not restricted, a pattern should be given
 			if !data.Restricted && data.PatternName == "" {
 				return sdk.NewErrorFrom(sdk.ErrWorkerModelNoPattern, "missing model pattern name")
@@ -116,11 +111,6 @@ func (api *API) putWorkerModelHandler() service.Handler {
 		}
 
 		if !isAdmin(ctx) {
-			// provision is allowed only for CDS Admin or by user with a restricted model
-			if !data.Restricted {
-				data.Provision = 0
-			}
-
 			if err := workermodel.CopyModelTypeData(old, &data); err != nil {
 				return err
 			}

@@ -137,12 +137,6 @@
                             <input *ngIf="!workerModel.editable" class="ui input" type="text" name="type"
                                 [ngModel]="workerModel.type" [readonly]="true">
                         </div>
-                        <div class="four wide field">
-                            <label>{{'worker_model_provision' | translate}}</label>
-                            <input class="ui input" type="number" name="provision" [(ngModel)]="workerModel.provision"
-                                [disabled]="!(currentUser.admin || workerModel.restricted)"
-                                [readonly]="!workerModel.editable">
-                        </div>
                     </div>
                     <ng-container *ngIf="workerModel.type === 'docker'">
                         <div class="two fields">

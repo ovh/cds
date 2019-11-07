@@ -732,7 +732,6 @@
   "worker_model_last_registration": "Last Registration",
   "worker_model_list_title": "Worker Models",
   "worker_model_name": "Name",
-  "worker_model_provision": "Workers provisioning",
   "worker_model_restricted": "Restricted",
   "worker_model_restricted_help": "Can be used only by user's hatchery. Check if yes.",
   "worker_model_saved": "Worker model saved",

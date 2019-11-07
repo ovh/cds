@@ -9,7 +9,6 @@ type WorkerModel struct {
 	Name          string            `json:"name" yaml:"name"`
 	Group         string            `json:"group" yaml:"group"`
 	Communication string            `json:"communication,omitempty" yaml:"communication,omitempty"`
-	Provision     int64             `json:"provision,omitempty" yaml:"provision,omitempty"`
 	Image         string            `json:"image" yaml:"image"`
 	Registry      string            `json:"registry,omitempty" yaml:"registry,omitempty"`
 	Username      string            `json:"username,omitempty" yaml:"username,omitempty"`
@@ -52,7 +51,6 @@ func NewWorkerModel(wm sdk.Model, opts ...WorkerModelOption) WorkerModel {
 		PatternName:  wm.PatternName,
 		Group:        wm.Group.Name,
 		IsDeprecated: wm.IsDeprecated,
-		Provision:    wm.Provision,
 		Description:  wm.Description,
 		Restricted:   wm.Restricted,
 		Image:        wm.Image,
@@ -92,7 +90,6 @@ func (wm WorkerModel) GetWorkerModel() sdk.Model {
 		PatternName:  wm.PatternName,
 		Group:        &sdk.Group{Name: wm.Group},
 		IsDeprecated: wm.IsDeprecated,
-		Provision:    wm.Provision,
 		Description:  wm.Description,
 		Restricted:   wm.Restricted,
 	}
