@@ -212,7 +212,7 @@ impl Client {
         let rx_signin_routes = Regex::new(r#"/auth/consumer/.*/signin"#).unwrap();
 
         //No auth on signing routes
-        if !rx_signin_routes.is_match(&url) {
+        if url.starts_with(&self.host) && !rx_signin_routes.is_match(&url) {
             let session_token = self.session_token.read();
             // auth the request
             req_http = req_http.header(
