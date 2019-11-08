@@ -6,12 +6,15 @@ use crate::service::Service;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
+use async_std::task;
 use chrono::{DateTime, TimeZone, Utc};
+use futures::prelude::*;
 use parking_lot::RwLock;
 use regex::Regex;
-use reqwest::Client as HttpClient;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use surf;
+use url::Url;
 
 pub type Result<T> = std::result::Result<T, CdsError>;
 
@@ -41,46 +44,52 @@ impl Client {
     }
 
     /// Get CDS Status
-    pub fn status(&self) -> Result<models::MonitoringStatus> {
+    pub async fn status(&self) -> Result<models::MonitoringStatus> {
         let body: Vec<u8> = vec![];
         self.stream_json("GET".to_string(), "/mon/status".to_string(), body)
+            .await
     }
 
-    pub fn config(&self) -> Result<HashMap<String, String>> {
+    pub async fn config(&self) -> Result<HashMap<String, String>> {
         let body: Vec<u8> = vec![];
         self.stream_json("GET".to_string(), "/config/user".to_string(), body)
+            .await
     }
 
     /// Get minimal information about current user
-    pub fn me(&self) -> Result<models::User> {
+    pub async fn me(&self) -> Result<models::User> {
         let body: Vec<u8> = vec![];
         self.stream_json("GET".to_string(), String::from("/user/me"), body)
+            .await
     }
 
     /// Get the list of broadcasts
-    pub fn broadcasts(&self) -> Result<Vec<models::Broadcast>> {
+    pub async fn broadcasts(&self) -> Result<Vec<models::Broadcast>> {
         let body: Vec<u8> = vec![];
         self.stream_json("GET".to_string(), "/broadcast".to_string(), body)
+            .await
     }
 
     /// Get the list of projects
-    pub fn projects(&self) -> Result<Vec<models::Project>> {
+    pub async fn projects(&self) -> Result<Vec<models::Project>> {
         let body: Vec<u8> = vec![];
         self.stream_json("GET".to_string(), "/project".to_string(), body)
+            .await
     }
 
     /// Get the list of applications in a project
-    pub fn applications(&self, project_key: &str) -> Result<Vec<models::Application>> {
+    pub async fn applications(&self, project_key: &str) -> Result<Vec<models::Application>> {
         let body: Vec<u8> = vec![];
         self.stream_json(
             "GET".to_string(),
             format!("/project/{}/applications", project_key),
             body,
         )
+        .await
     }
 
     /// Get the application's details given the project key and the application name
-    pub fn application(
+    pub async fn application(
         &self,
         project_key: &str,
         application_name: &str,
@@ -91,46 +100,59 @@ impl Client {
             format!("/project/{}/application/{}", project_key, application_name),
             body,
         )
+        .await
     }
 
     /// Get all the workflows inside a project given his project key
-    pub fn workflows(&self, project_key: &str) -> Result<Vec<models::Workflow>> {
+    pub async fn workflows(&self, project_key: &str) -> Result<Vec<models::Workflow>> {
         let body: Vec<u8> = vec![];
         self.stream_json(
             "GET".to_string(),
             format!("/project/{}/workflows", project_key),
             body,
         )
+        .await
     }
 
     /// Get the workflow's details given his name
-    pub fn workflow(&self, project_key: &str, workflow_name: &str) -> Result<models::Workflow> {
+    pub async fn workflow(
+        &self,
+        project_key: &str,
+        workflow_name: &str,
+    ) -> Result<models::Workflow> {
         let body: Vec<u8> = vec![];
         self.stream_json(
             "GET".to_string(),
             format!("/project/{}/workflows/{}", project_key, workflow_name),
             body,
         )
+        .await
     }
 
     /// Fetch the count of the queue
-    pub fn queue_count(&self) -> Result<models::QueueCount> {
+    pub async fn queue_count(&self) -> Result<models::QueueCount> {
         let body: Vec<u8> = vec![];
         self.stream_json(
             "GET".to_string(),
             "/queue/workflows/count".to_string(),
             body,
         )
+        .await
     }
 
     /// Get all personal bookmarks
-    pub fn bookmarks(&self) -> Result<Vec<models::Bookmark>> {
+    pub async fn bookmarks(&self) -> Result<Vec<models::Bookmark>> {
         let body: Vec<u8> = vec![];
         self.stream_json("GET".to_string(), String::from("/bookmarks"), body)
+            .await
     }
 
     /// Get last workflow run given their workflow name
-    pub fn last_run(&self, project_key: &str, workflow_name: &str) -> Result<models::WorkflowRun> {
+    pub async fn last_run(
+        &self,
+        project_key: &str,
+        workflow_name: &str,
+    ) -> Result<models::WorkflowRun> {
         let body: Vec<u8> = vec![];
         self.stream_json(
             "GET".to_string(),
@@ -140,19 +162,21 @@ impl Client {
             ),
             body,
         )
+        .await
     }
 
     /// Useful to register a new service to the API
-    pub fn service_register(&self, service: &Service) -> Result<String> {
-        self.stream_json(
+    pub async fn service_register(&self, service: &Service) -> Result<String> {
+        self.stream_json::<_, Service>(
             "POST".to_string(),
             "/services/register".to_string(),
             service,
         )
+        .await
         .map(|serv_resp: Service| serv_resp.hash)
     }
 
-    fn login(
+    async fn login(
         &self,
         consumer_type: String,
         body: HashMap<String, String>,
@@ -162,6 +186,7 @@ impl Client {
             format!("/auth/consumer/{}/signin", consumer_type),
             body,
         )
+        .await
     }
 
     fn has_valid_token(&self) -> Result<bool> {
@@ -181,53 +206,53 @@ impl Client {
         }
     }
 
-    pub fn stream_json<T: Serialize, U: DeserializeOwned>(
+    pub async fn stream_json<T: Serialize, U: DeserializeOwned>(
         &self,
         method: String,
         path: String,
         body: T,
     ) -> Result<U> {
-        let url = format!("{}{}", self.host, path);
-        let mut req_http = HttpClient::new()
-            .request(reqwest::Method::from_bytes(method.as_bytes())?, &url)
-            .header(reqwest::header::CONTENT_TYPE, "application/json")
-            .header(reqwest::header::USER_AGENT, "CDS/sdk")
-            .header("X-Requested-With", "X-CDS-SDK");
+        let uri = format!("{}{}", self.host, path);
+        let url = Url::parse(uri.as_str()).expect("cannot parse url");
+        let mut req_http = surf::Request::new(http::Method::from_bytes(method.as_bytes())?, url)
+            .set_header("Content-Type", "application/json")
+            .set_header("User-Agent", "CDS/sdk")
+            .set_header("X-Requested-With", "X-CDS-SDK");
 
-        let check_token = !url.contains("/auth/consumer/builtin/signin")
-            && !url.contains("/auth/consumer/local/signin")
-            && !url.contains("/auth/consumer/local/signup")
-            && !url.contains("/auth/consumer/local/verify")
-            && !url.contains("/auth/consumer/worker/signin");
+        let check_token = !uri.contains("/auth/consumer/builtin/signin")
+            && !uri.contains("/auth/consumer/local/signin")
+            && !uri.contains("/auth/consumer/local/signup")
+            && !uri.contains("/auth/consumer/local/verify")
+            && !uri.contains("/auth/consumer/worker/signin");
 
         if check_token && !self.has_valid_token()? && !self.token.is_empty() {
             // Renew session
             let mut body = HashMap::new();
             body.insert(String::from("token"), self.token.clone());
 
-            let res = self.login(String::from("builtin"), body)?;
+            let res = task::block_on(self.login(String::from("builtin"), body))?;
             let session_token = self.session_token.read();
             session_token.replace(res.token);
         }
         let rx_signin_routes = Regex::new(r#"/auth/consumer/.*/signin"#).unwrap();
 
         //No auth on signing routes
-        if url.starts_with(&self.host) && !rx_signin_routes.is_match(&url) {
+        if uri.starts_with(&self.host) && !rx_signin_routes.is_match(&uri) {
             let session_token = self.session_token.read();
             // auth the request
-            req_http = req_http.header(
-                http::header::AUTHORIZATION,
+            req_http = req_http.set_header(
+                "Authorization",
                 format!("Bearer {}", &*session_token.borrow()),
             );
         }
-        let mut resp_http = req_http.json(&body).send()?;
+        let mut resp_http = req_http.body_json(&body)?.await?;
 
         if resp_http.status().as_u16() > 400u16 {
-            let mut err: ApiError = resp_http.json().map_err(CdsError::from)?;
+            let mut err: ApiError = resp_http.body_json::<ApiError>().await?;
             err.status = resp_http.status().as_u16();
             return Err(CdsError::ApiError(err));
         }
 
-        resp_http.json().map_err(CdsError::from)
+        resp_http.body_json().map_err(CdsError::from).await
     }
 }

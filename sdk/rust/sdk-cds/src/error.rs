@@ -39,6 +39,8 @@ pub enum Error {
     InvalidMethod(String),
     #[fail(display = "jwt error: {:?}", _0)]
     JWTError(String),
+    #[fail(display = "json error: {:?}", _0)]
+    JsonError(String),
     #[fail(display = "custom error: {:?}", _0)]
     Custom(String),
 }
@@ -57,7 +59,13 @@ from_error_str!(reqwest::Error, Error, Error::ReqwestError);
 from_error_str!(InvalidMethod, Error, Error::InvalidMethod);
 from_error!(String, Error, Error::Custom);
 from_error!(ApiError, Error, Error::ApiError);
+from_error_str!(serde_json::error::Error, Error, Error::JsonError);
 from_error_str!(jwt::errors::Error, Error, Error::JWTError);
+from_error_str!(
+    Box<dyn std::error::Error + std::marker::Send + std::marker::Sync>,
+    Error,
+    Error::Custom
+);
 
 impl fmt::Display for ApiError {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {

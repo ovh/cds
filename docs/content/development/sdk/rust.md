@@ -4,6 +4,10 @@ card:
   name: rest-sdk
 ---
 
+## Prerequisites
+
+Rust CDS SDK uses async/await from Rust stable version so you need a compatible version with async/await.
+
 ## How to use it?
 
 You have to initialize a cdsclient:
@@ -25,13 +29,13 @@ and then, you can use it:
 
 ```rust
 // list projects
-let projects = client.projects().unwrap();
+let projects = client.projects().await.unwrap();
 
 // list applications of project with key TEST
-let applications = client.applications("TEST").unwrap();
+let applications = client.applications("TEST").await.unwrap();
 
 // list workflows
-let workflows = client.workflows("TEST", "test").unwrap();
+let workflows = client.workflows("TEST", "test").await.unwrap();
 ```
 
 Go on https://docs.rs/sdk-cds/latest/sdk_cds/ to see all available funcs and documentations.
@@ -44,6 +48,7 @@ Go on https://docs.rs/sdk-cds/latest/sdk_cds/ to see all available funcs and doc
 ```rust
 use std::env;
 
+use async_std::task;
 use sdk_cds::Client;
 
 fn main() {
@@ -53,24 +58,34 @@ fn main() {
         env::var("CDS_TOKEN").expect("You must export environment variable named CDS_TOKEN");
     let my_client = Client::new(cds_host.as_str(), cds_token.as_str());
 
-    println!("Hello, world! {:?}", my_client.status().unwrap());
-    println!("Me : {:?}", my_client.me().unwrap());
-    println!("projects : {:?}", my_client.projects().unwrap());
+    println!(
+        "Hello, world! {:?}",
+        task::block_on(my_client.status()).unwrap()
+    );
+    println!("Me : {:?}", task::block_on(my_client.me()).unwrap());
+    println!(
+        "projects : {:?}",
+        task::block_on(my_client.projects()).unwrap()
+    );
     println!(
         "applications : {:?}",
-        my_client.applications("TEST").unwrap()[0].name
+        task::block_on(my_client.applications("TEST")).unwrap()[0].name
     );
     println!(
         "application name : {:?}",
-        my_client.application("TEST", "test").unwrap().icon
+        task::block_on(my_client.application("TEST", "test"))
+            .unwrap()
+            .icon
     );
-    println!("workflows : {:?}", my_client.workflows("TEST").unwrap());
+    println!(
+        "workflows : {:?}",
+        task::block_on(my_client.workflows("TEST")).unwrap()
+    );
     println!(
         "workflow test : {:?}",
-        my_client.workflow("TEST", "test").unwrap()
+        task::block_on(my_client.workflow("TEST", "test")).unwrap()
     );
 }
-
 
 ```
 

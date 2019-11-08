@@ -1,4 +1,5 @@
 //! Module to let you use service with CDS API
+use async_std::task;
 use chrono::prelude::*;
 use serde_json;
 
@@ -134,7 +135,7 @@ mod test {
                 version: "Snapshot".to_string(),
                 ..Default::default()
             };
-            srv.hash = self.client.service_register(&srv)?;
+            srv.hash = task::block_on(self.client.service_register(&srv))?;
             Ok(())
         }
 
