@@ -216,8 +216,6 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		log.Debug("spawnWorker> spawning worker %s (%s)", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image)
 	}
 
-	var logJob string
-
 	// Estimate needed memory, we will set 110% of required memory
 	memory := int64(h.Config.DefaultMemory)
 
@@ -267,7 +265,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 				var err error
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
 				if err != nil {
-					log.Warning("spawnMarathonDockerWorker> %s unable to parse memory requirement %d: %v", logJob, memory, err)
+					log.Warning("spawnMarathonDockerWorker> unable to parse memory requirement %d: %v", memory, err)
 					return err
 				}
 			}
@@ -343,20 +341,20 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 			select {
 			case t := <-ticker.C:
 				delta := math.Floor(t.Sub(t0).Seconds())
-				log.Debug("spawnMarathonDockerWorker> %s worker %s spawning in progress [%d seconds] please wait...", logJob, application.ID, int(delta))
+				log.Debug("spawnMarathonDockerWorker> worker %s spawning in progress [%d seconds] please wait...", application.ID, int(delta))
 			case <-stop:
 				return
 			}
 		}
 	}()
 
-	log.Debug("spawnMarathonDockerWorker> %s worker %s spawning in progress, please wait...", logJob, application.ID)
+	log.Debug("spawnMarathonDockerWorker> worker %s spawning in progress, please wait...", application.ID)
 	_, next = observability.Span(ctx, "marathonClient.ApplicationDeployments")
 	deployments, err := h.marathonClient.ApplicationDeployments(application.ID)
 	next()
 	if err != nil {
 		ticker.Stop()
-		return fmt.Errorf("spawnMarathonDockerWorker> %s failed to list deployments: %s", logJob, err.Error())
+		return fmt.Errorf("spawnMarathonDockerWorker> failed to list deployments: %s", err.Error())
 	}
 
 	if len(deployments) == 0 {
@@ -366,55 +364,61 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 
 	_, next = observability.Span(ctx, "waitDeployment")
 	wg := &sync.WaitGroup{}
-	var done bool
-	var successChan = make(chan bool, len(deployments))
+	var successChan = make(chan error, len(deployments))
+
 	for _, deploy := range deployments {
 		wg.Add(1)
 		go func(id string) {
-			defer wg.Done()
-			go func() {
-				time.Sleep((time.Duration(h.Config.WorkerSpawnTimeout) + 1) * time.Second)
-				if done {
-					return
-				}
-				// try to delete deployment
-				log.Debug("spawnMarathonDockerWorker> %s timeout (%d) on deployment %s", logJob, h.Config.WorkerSpawnTimeout, id)
-				if _, err := h.marathonClient.DeleteDeployment(id, true); err != nil {
-					log.Warning("spawnMarathonDockerWorker> %s error on delete timeouted deployment %s: %s", logJob, id, err.Error())
-				}
-				successChan <- false
+			goCtx, cncl := context.WithTimeout(ctx, (time.Duration(h.Config.WorkerSpawnTimeout)+1)*time.Second)
+			tick := time.NewTicker(500 * time.Millisecond)
+			defer func() {
+				cncl()
+				tick.Stop()
 				wg.Done()
 			}()
-
-			if err := h.marathonClient.WaitOnDeployment(id, time.Duration(h.Config.WorkerSpawnTimeout)*time.Second); err != nil {
-				log.Warning("spawnMarathonDockerWorker> %s error on deployment %s: %s", logJob, id, err.Error())
-				successChan <- false
-				return
+			for {
+				select {
+				case _ = <-goCtx.Done():
+					if _, err := h.marathonClient.DeleteDeployment(id, true); err != nil {
+						successChan <- fmt.Errorf("error on delete timeouted deployment %s: %v", id, err.Error())
+					} else {
+						successChan <- fmt.Errorf("deployment for %s timeout", id)
+					}
+					return
+				case _ = <-tick.C:
+					found, err := h.marathonClient.HasDeployment(id)
+					if err != nil {
+						successChan <- fmt.Errorf("error on deployment %s: %s", id, err.Error())
+					}
+					if !found {
+						log.Debug("spawnMarathonDockerWorker> deployment %s succeeded", id)
+						successChan <- nil
+						return
+					}
+				}
 			}
-
-			log.Debug("spawnMarathonDockerWorker> %s deployment %s succeeded", logJob, id)
-			successChan <- true
 		}(deploy.DeploymentID)
 	}
 
 	wg.Wait()
 	next()
 
-	var success = true
+	errors := sdk.MultiError{}
 	for b := range successChan {
-		success = success && b
+		if b != nil {
+			errors.Append(b)
+		}
 		if len(successChan) == 0 {
 			break
 		}
 	}
 	close(successChan)
-	done = true
 
-	if success {
+	if errors.IsEmpty() {
 		return nil
 	}
 
-	return fmt.Errorf("spawnMarathonDockerWorker> %s error while deploying worker", logJob)
+	return fmt.Errorf("spawnMarathonDockerWorker> %s", errors.Error())
 }
 
 func (h *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {
@@ -508,8 +512,8 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 				log.Info("killing disabled worker %s id:%s wk:%d ak:%d", app, w.ID, wk, ak)
 				if _, err := h.marathonClient.DeleteApplication(app, true); err != nil {
 					log.Warning("killDisabledWorkers> Error while delete app %s err:%s", app, err)
-					// continue to next app
 				}
+				break
 			}
 		}
 	}
