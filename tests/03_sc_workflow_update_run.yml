@@ -14,6 +14,7 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW2 ITSCWRKFLW2"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} application add ITSCWRKFLW2 ITSCWRKFLW2-APPLICATION"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} application add ITSCWRKFLW2 ITSCWRKFLW2-ANOTHER-APPLICATION"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml"
 
 - name: import pipeline
   steps:
@@ -47,7 +48,8 @@ testcases:
 - name: import an updated workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force ITSCWRKFLW2 ./fixtures/ITSCWRKFLW2/workflow_updated.yml
-
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow export ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW > ITSCWRKFLW2-WORKFLOW.yml
+  
 - name: run workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW

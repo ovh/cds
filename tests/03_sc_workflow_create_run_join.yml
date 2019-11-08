@@ -9,6 +9,8 @@ testcases:
   - script: '[ -f ./fixtures/ITSCWRKFLW3/deploy.pip.yml ]'
   - script: '[ -f ./fixtures/ITSCWRKFLW3/root.pip.yml ]'
   - script: '[ -f ./fixtures/ITSCWRKFLW3/tests.pip.yml ]'
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml"
+
 
 - name: Create workflow ITSCWRKFLW3 and run it
   steps:

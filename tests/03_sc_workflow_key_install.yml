@@ -14,6 +14,7 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project keys add ITSCWRKFLW5 testkey ssh"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project keys add ITSCWRKFLW5 testkey2 ssh"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project keys add ITSCWRKFLW5 testkeypgp pgp"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml"
 
 - name: import workflow
   steps:

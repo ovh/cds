@@ -11,8 +11,8 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW6"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW6"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW6 ITSCWRKFLW6"
-    assertions:
-    - result.code ShouldEqual 0
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml"
+
 
 - name: import pipeline
   steps:

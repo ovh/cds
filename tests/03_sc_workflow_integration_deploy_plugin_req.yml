@@ -12,6 +12,7 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW15"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW15 "
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW15 ITSCWRKFLW15"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml"
 
 - name: import integration
   steps:
