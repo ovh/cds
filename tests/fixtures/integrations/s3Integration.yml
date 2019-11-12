@@ -18,3 +18,12 @@ config:
   secret_access_key:
     value: "$AWS_SECRET_ACCESS_KEY"
     type: password
+  endpoint:
+    value: "$AWS_ENDPOINT_URL"
+    type: string
+  disable_ssl:
+    value: 'true'
+    type: boolean
+  force_path_style:
+    value: 'true'
+    type: boolean
