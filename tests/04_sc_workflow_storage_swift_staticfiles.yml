@@ -23,8 +23,7 @@ testcases:
 
 - name: import integration
   steps:
-  - script: OS_AUTH_URL={{.os_auth_url}} OS_USERNAME={{.os_username}} OS_PASSWORD={{.os_password}} OS_REGION_NAME={{.os_region_name}} TENANT_NAME={{.tenant_name}} eval $(cat ./fixtures/integrations/openstackIntegration.yml) > openstackIntegration.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW11 openstackIntegration.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW12 {{expandEnv ./fixtures/integrations/openstackIntegration.yml}}
 
 - name: import workflow
   steps:
@@ -49,4 +48,4 @@ testcases:
 - name: check url staticfiles
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW12 test-action-staticfiles 1
-  - script: grep ' https://storage.gra3.cloud.ovh.net/v1' test-action-staticfiles-1.0-pipeline.pipeline-play-staticfiles-stage.-job.NewJob-status.Success-step.1.log
+  #- script: grep ' https://storage' test-action-staticfiles-1.0-pipeline.pipeline-play-staticfiles-stage.-job.NewJob-status.Success-step.1.log

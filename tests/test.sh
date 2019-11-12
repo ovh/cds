@@ -28,13 +28,14 @@ CDS_HOOKS_URL="${CDS_HOOKS_URL:-http://localhost:8083}"
 CDSCTL="${CDSCTL:-`which cdsctl`}"
 CDSCTL_CONFIG="${CDSCTL_CONFIG:-.cdsrc}"
 SMTP_MOCK_URL="${SMTP_MOCK_URL:-http://localhost:2024}"
+
+# The default values below fit to default minio installation.
+# Run "make minio_start" to start a minio docker container 
 AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-east-1}"
 S3_BUCKET="${S3_BUCKET:-cds-it}"
-AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-$MINIO_ACCESS_KEY}"
-AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-$MINIO_SECRET_KEY}"
-AWS_ENDPOINT_URL=""
-AWS_ENDPOINT_DISABLE_SSL=""
-AWS_ENDPOINT_FORCE_PATH_STYLE=""
+AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-AKIAIOSFODNN7EXAMPLE}"
+AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY}"
+AWS_ENDPOINT_URL="${AWS_ENDPOINT_URL:-http://$(hostname):9000}"
 
 echo -e "Using venom using following variables:"
 echo -e "  VENOM=${CYAN}${VENOM}${NOCOLOR}"
@@ -104,6 +105,11 @@ workflow_tests() {
 }
 
 workflow_with_integration_tests() {
+    if [ -z "$OS_AUTH_URL" ]; then echo "missing OS_* variables"; exit 1; fi
+    if [ -z "$OS_REGION_NAME" ]; then echo "missing OS_* variables"; exit 1; fi
+    if [ -z "$OS_TENANT_NAME" ]; then echo "missing OS_* variables"; exit 1; fi
+    if [ -z "$OS_USERNAME" ]; then echo "missing OS_* variables"; exit 1; fi
+    if [ -z "$OS_PASSWORD" ]; then echo "missing OS_* variables"; exit 1; fi
     echo "Running Workflow with Storage integration tests:"
     for f in $(ls -1 04_*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL}"
@@ -120,5 +126,11 @@ smoke_tests
 initialization_tests
 cli_tests
 workflow_tests
-workflow_with_integration_tests
 
+export AWS_DEFAULT_REGION
+export S3_BUCKET
+export AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY
+export AWS_ENDPOINT_URL
+
+workflow_with_integration_tests
