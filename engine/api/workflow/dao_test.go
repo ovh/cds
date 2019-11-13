@@ -1225,6 +1225,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 			t.Logf("%s: %s but was undefined", k, v)
 		}
 	}
+
 	tx, err := db.Begin()
 	require.NoError(t, err)
 	defer tx.Rollback()
