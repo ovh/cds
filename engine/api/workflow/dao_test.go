@@ -12,6 +12,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/fsamin/go-dump"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -1227,7 +1229,11 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		}
 	}
 
-	test.NoError(t, workflow.Delete(context.TODO(), db, cache, proj, w2))
+	tx, err := db.Begin()
+	require.NoError(t, err)
+	defer tx.Rollback()
+	test.NoError(t, workflow.Delete(context.TODO(), tx, cache, proj, w2))
+	require.NoError(t, tx.Commit())
 }
 
 func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
