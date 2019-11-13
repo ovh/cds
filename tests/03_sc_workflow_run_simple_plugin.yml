@@ -37,7 +37,7 @@ testcases:
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 03SCWORKFLOWRUNSIMPLEPLUGIN 03SCWorkflowRunSimplePlugin-WORKFLOW 1 --format json
     retry: 10
-    delay: 3
+    delay: 10
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
