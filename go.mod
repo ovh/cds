@@ -17,7 +17,6 @@ require (
 	github.com/SSSaaS/sssa-golang v0.0.0-20170502204618-d37d7782d752 // indirect
 	github.com/SermoDigital/jose v0.9.1 // indirect
 	github.com/Shopify/sarama v1.19.0
-	github.com/Shopify/toxiproxy v2.1.4+incompatible // indirect
 	github.com/alecthomas/jsonschema v0.0.0-20190429041900-eff3f6c90428
 	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
 	github.com/apoydence/onpar v0.0.0-20190519213022-ee068f8ea4d1 // indirect
@@ -58,8 +57,6 @@ require (
 	github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76 // indirect
 	github.com/duosecurity/duo_api_golang v0.0.0-20180315112207-d0530c80e49a // indirect
 	github.com/eapache/go-resiliency v1.1.0
-	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
-	github.com/eapache/queue v1.1.0 // indirect
 	github.com/fatih/color v1.7.0
 	github.com/fatih/structs v1.0.0
 	github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b // indirect
@@ -80,12 +77,10 @@ require (
 	github.com/gocql/gocql v0.0.0-20181018123354-22229812a83e // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/golang/protobuf v1.3.2
-	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/googleapis/gnostic v0.1.0 // indirect
 	github.com/gophercloud/gophercloud v0.0.0-20190504011306-6f9faf57fddc
 	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
 	github.com/gorhill/cronexpr v0.0.0-20161205141322-d520615e531a
-	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/handlers v0.0.0-20160816184729-a5775781a543
 	github.com/gorilla/mux v1.6.2
 	github.com/gotestyourself/gotestyourself v2.1.0+incompatible // indirect
@@ -124,6 +119,7 @@ require (
 	github.com/keybase/go.dbus v0.0.0-20190710215703-a33a09c8a604
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kr/pty v1.1.8 // indirect
+	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lib/pq v1.0.0
 	github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
@@ -148,11 +144,11 @@ require (
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/mndrix/tap-go v0.0.0-20170113192335-56cca451570b // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/mum4k/termdash v0.10.0
 	github.com/mxk/go-imap v0.0.0-20150429134902-531c36c3f12d // indirect
 	github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d
 	github.com/ncw/swift v0.0.0-20171019114456-c95c6e5c2d1a
+	github.com/nsf/termbox-go v0.0.0-20190817171036-93860e161317 // indirect
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.0-20160621093029-daf2955e742c
 	github.com/olivere/elastic v6.2.17+incompatible // indirect
