@@ -127,6 +127,19 @@ type MockSSERoundTripper struct {
 	reader *io.PipeReader
 }
 
+func TestMarshalEvent(t *testing.T) {
+	msg, err := json.Marshal(sdk.Event{
+		EventType: fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}),
+		Payload: map[string]interface{}{
+			"ID":     float64(1),
+			"Status": sdk.StatusWaiting,
+		},
+	})
+
+	require.NoError(t, err)
+	t.Logf(string(msg))
+}
+
 func (m *MockSSERoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	dump, _ := httputil.DumpRequest(req, false)
 	m.t.Logf(string(dump))
@@ -142,9 +155,7 @@ func (m *MockSSERoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 
 		time.Sleep(5 * time.Second)
 
-		m.t.Logf("sending event on SSE")
-
-		msg, _ := json.Marshal(sdk.Event{
+		msg, err := json.Marshal(sdk.Event{
 			EventType: fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}),
 			Payload: map[string]interface{}{
 				"ID":     float64(1),
@@ -152,9 +163,16 @@ func (m *MockSSERoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 			},
 		})
 
+		if err != nil {
+			m.t.Fatal(err)
+		}
+
+		m.t.Logf("sending event on SSE: %v", string(msg))
+
 		m.writer.Write([]byte("data: "))
 		m.writer.Write(msg)
 		m.writer.Write([]byte("\n\n"))
+		m.t.Logf("event sent on SSE: %v", string(msg))
 
 		<-m.c.Done()
 		m.writer.Close()
