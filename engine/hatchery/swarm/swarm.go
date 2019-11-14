@@ -181,6 +181,10 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	ctx, end := observability.Span(ctx, "swarm.SpawnWorker")
 	defer end()
 
+	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
+		return sdk.WithStack(fmt.Errorf("unable to spawn worker, no Job ID and no Register."))
+	}
+
 	//name is the name of the worker and the name of the container
 	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1))
 	if spawnArgs.RegisterOnly {
@@ -193,8 +197,9 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	// Choose a dockerEngine
 	var dockerClient *dockerClient
 	var foundDockerClient bool
+
 	//  To choose a docker client by the number of containers
-	nbContainersRatio := float64(0)
+	fillrate := float64(-1)
 
 	_, next := observability.Span(ctx, "swarm.chooseDockerEngine")
 	for dname, dclient := range h.dockerClients {
@@ -213,18 +218,24 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 			break
 		}
 
-		var nbContainersFromHatchery int64
+		var nbContainersFromHatchery int
 		for _, cont := range containers {
 			if _, ok := cont.Labels["hatchery"]; ok {
 				nbContainersFromHatchery++
 			}
 		}
 
-		nbContainers := float64(nbContainersFromHatchery) / float64(h.dockerClients[dname].MaxContainers)
-		if nbContainersRatio == 0 || nbContainers < nbContainersRatio {
-			nbContainersRatio = nbContainers
-			dockerClient = h.dockerClients[dname]
-			foundDockerClient = true
+		// If client has enough space to start a container
+		if nbContainersFromHatchery < h.dockerClients[dname].MaxContainers {
+			clientFillRate := float64(nbContainersFromHatchery) / float64(h.dockerClients[dname].MaxContainers)
+			if fillrate > clientFillRate || fillrate == -1 {
+				fillrate = clientFillRate
+				dockerClient = h.dockerClients[dname]
+				foundDockerClient = true
+			}
+			if fillrate == 0 {
+				break
+			}
 		}
 	}
 	next()
@@ -461,7 +472,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		}
 
 		//List all workers
-		ws, errWList := h.getWorkerContainers(dockerClient, cs, types.ContainerListOptions{})
+		ws, errWList := h.getWorkerContainers(cs, types.ContainerListOptions{})
 		if errWList != nil {
 			log.Error("hatchery> swarm> CanSpawn> Unable to list workers on %s: %s", dockerName, errWList)
 			continue
@@ -505,17 +516,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	return false
 }
 
-func (h *HatcherySwarm) getWorkerContainers(dockerClient *dockerClient, containers []types.Container, option types.ContainerListOptions) ([]types.Container, error) {
-	if containers == nil {
-		var errList error
-		// get only started containers
-		containers, errList = h.getContainers(dockerClient, option)
-		if errList != nil {
-			log.Error("hatchery> swarm> getWorkerContainers> Unable to list containers: %s", errList)
-			return nil, errList
-		}
-	}
-
+func (h *HatcherySwarm) getWorkerContainers(containers []types.Container, option types.ContainerListOptions) ([]types.Container, error) {
 	res := []types.Container{}
 	//We only count worker
 	for _, cont := range containers {
@@ -533,7 +534,13 @@ func (h *HatcherySwarm) getWorkerContainers(dockerClient *dockerClient, containe
 func (h *HatcherySwarm) WorkersStarted() []string {
 	res := make([]string, 0)
 	for _, dockerClient := range h.dockerClients {
-		workers, _ := h.getWorkerContainers(dockerClient, nil, types.ContainerListOptions{})
+		// get only started containers
+		containers, errList := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
+		if errList != nil {
+			log.Error("hatchery> swarm> WorkersStarted> Unable to list containers: %s", errList)
+			return nil
+		}
+		workers, _ := h.getWorkerContainers(containers, types.ContainerListOptions{})
 		for _, w := range workers {
 			res = append(res, w.Labels["worker_name"])
 		}
@@ -545,7 +552,13 @@ func (h *HatcherySwarm) WorkersStarted() []string {
 func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
 	list := []string{}
 	for _, dockerClient := range h.dockerClients {
-		workers, errList := h.getWorkerContainers(dockerClient, nil, types.ContainerListOptions{})
+		// get only started containers
+		containers, errList := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
+		if errList != nil {
+			log.Error("hatchery> swarm> WorkersStartedByModel> Unable to list containers: %s", errList)
+			return 0
+		}
+		workers, errList := h.getWorkerContainers(containers, types.ContainerListOptions{})
 		if errList != nil {
 			log.Error("hatchery> swarm> WorkersStartedByModel> Unable to list containers: %s", errList)
 			return 0
@@ -602,22 +615,22 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 	}
 }
 
-func (h *HatcherySwarm) listAwolWorkers(dockerClient *dockerClient) ([]types.Container, error) {
+func (h *HatcherySwarm) listAwolWorkers(dockerClientName string, containers []types.Container) ([]types.Container, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	apiworkers, err := h.CDSClient().WorkerList(ctx)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Cannot get workers on %s", dockerClient.name)
+		return nil, sdk.WrapError(err, "Cannot get workers on %s", dockerClientName)
 	}
 
-	containers, errList := h.getWorkerContainers(dockerClient, nil, types.ContainerListOptions{All: true})
+	workers, errList := h.getWorkerContainers(containers, types.ContainerListOptions{All: true})
 	if errList != nil {
-		return nil, sdk.WrapError(err, "Cannot list containers on %s", dockerClient.name)
+		return nil, sdk.WrapError(err, "Cannot list containers on %s", dockerClientName)
 	}
 
 	//Checking workers
 	oldContainers := []types.Container{}
-	for _, c := range containers {
+	for _, c := range workers {
 		if !strings.Contains(c.Status, "Exited") && time.Now().Add(-1*time.Minute).Unix() < c.Created {
 			log.Debug("hatchery> swarm> listAwolWorkers> container %s(status=%s) is too young", c.Names[0], c.Status)
 			continue
@@ -653,7 +666,13 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClient *dockerClient) ([]types.Con
 
 func (h *HatcherySwarm) killAwolWorker() error {
 	for _, dockerClient := range h.dockerClients {
-		oldContainers, err := h.listAwolWorkers(dockerClient)
+		containers, errC := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
+		if errC != nil {
+			log.Warning("hatchery> swarm> killAwolWorker> Cannot list containers: %s on %s", errC, dockerClient.name)
+			return errC
+		}
+
+		oldContainers, err := h.listAwolWorkers(dockerClient.name, containers)
 		if err != nil {
 			log.Warning("hatchery> swarm> killAwolWorker> Cannot list workers %s on %s", err, dockerClient.name)
 			return err
@@ -665,12 +684,6 @@ func (h *HatcherySwarm) killAwolWorker() error {
 			if err := h.killAndRemove(dockerClient, c.ID); err != nil {
 				log.Debug("hatchery> swarm> killAwolWorker> %v", err)
 			}
-		}
-
-		containers, errC := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
-		if errC != nil {
-			log.Warning("hatchery> swarm> killAwolWorker> Cannot list containers: %s on %s", errC, dockerClient.name)
-			return errC
 		}
 
 		// Checking services
