@@ -13,8 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -86,7 +84,7 @@ XeJEyyEjosSa3qWACDYorGMnzRXdeJa5H7J0W+G3x4tH2LMW8VHS
 -----END RSA PRIVATE KEY-----`)
 
 // SetupPG setup PG DB for test
-func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store, context.CancelFunc) {
+func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store, context.CancelFunc) {
 	log.SetLogger(t)
 	cfg := LoadTestingConf(t)
 	DBDriver = cfg["dbDriver"]
@@ -106,7 +104,9 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 
 	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
 	err = authentication.Init("cds_test", SigningKey) // nolint
-	require.NoError(t, err, "unable to init authentication layer")
+	if err != nil {
+		log.Fatalf("unable to init authentication layer: %v", err)
+	}
 
 	sigKeys := database.RollingKeyConfig{
 		Cipher: "hmac",
