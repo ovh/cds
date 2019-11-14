@@ -11,16 +11,15 @@ card:
 You need two HTTP Headers to request CDS API:
 
 - `Authorization: Bearer your-cds-token`
-- `X-Requested-With: X-CDS-SDK`
 
 ```bash
 # List CDS Project
-curl -H "Authorization: Bearer your-cds-token" -H "X-Requested-With: X-CDS-SDK" https://your-cds-api/project
+curl -H "Authorization: Bearer your-cds-token" https://your-cds-api/project
 ```
 
 ## About CDS Token
 
-The CDS UI uses a session token. If you want to play with CDS API, you probably need a persistent token.
+If you want to play with CDS API, you probably need a CDS consumer token.
 
 You can generate it with:
 
