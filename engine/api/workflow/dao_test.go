@@ -618,8 +618,8 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	assert.Equal(t, env.ID, w2.WorkflowData.Node.Context.EnvironmentID)
 
 	tx, err := db.Begin()
-	defer tx.Rollback()
 	require.NoError(t, err)
+	defer tx.Rollback()
 	test.NoError(t, workflow.Delete(context.TODO(), tx, cache, proj, w2))
 
 	require.NoError(t, tx.Commit())
