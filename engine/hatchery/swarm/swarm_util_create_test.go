@@ -2,6 +2,7 @@ package swarm
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -155,7 +156,10 @@ func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 	err := h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	require.NoError(t, err)
 
-	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
+	containers, err := h.getContainers(h.dockerClients["default"], types.ContainerListOptions{})
+	require.NoError(t, err)
+
+	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})
 	require.NoError(t, err)
 
 	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
@@ -198,7 +202,10 @@ func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
 	err = h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	require.NoError(t, err)
 
-	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
+	containers, err := h.getContainers(h.dockerClients["default"], types.ContainerListOptions{})
+	require.NoError(t, err)
+
+	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})
 	require.NoError(t, err)
 
 	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
@@ -230,9 +237,22 @@ func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
 	err = h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	require.NoError(t, err)
 
-	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
+	containers, err := h.getContainers(h.dockerClients["default"], types.ContainerListOptions{})
+	require.NoError(t, err)
+
+	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})
 	require.NoError(t, err)
 
 	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
 	require.NoError(t, err)
+}
+
+func getContainer(dockerClient *dockerClient, containers []types.Container, name string, options types.ContainerListOptions) (*types.Container, error) {
+	for i := range containers {
+		if strings.Replace(containers[i].Names[0], "/", "", 1) == strings.Replace(name, "/", "", 1) {
+			return &containers[i], nil
+		}
+	}
+
+	return nil, nil
 }
