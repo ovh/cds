@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>Understand the CDS µServices - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description"
+    content="CDS is composed of two binaries: engine and worker, you can find them on CDS Releases for your os/architecture.
+ worker is the binary used to run a CDS Job. engine is the binary used to run all CDS µServices.  CDS µServices A CDS µService is a process that can be launch by the engine binary.
+ api: this is the main µService.  Each api must shared the same PostgreSQL and redis databases.">
+<meta property="og:description"
+    content="CDS is composed of two binaries: engine and worker, you can find them on CDS Releases for your os/architecture.
+ worker is the binary used to run a CDS Job. engine is the binary used to run all CDS µServices.  CDS µServices A CDS µService is a process that can be launch by the engine binary.
+ api: this is the main µService.  Each api must shared the same PostgreSQL and redis databases.">
+<meta name="twitter:description"
+    content="CDS is composed of two binaries: engine and worker, you can find them on CDS Releases for your os/architecture.
+ worker is the binary used to run a CDS Job. engine is the binary used to run all CDS µServices.  CDS µServices A CDS µService is a process that can be launch by the engine binary.
+ api: this is the main µService.  Each api must shared the same PostgreSQL and redis databases.">
+<meta property="og:url" content="https://ovh.github.io/cds/hosting/cds_services/">
+<meta property="og:title" content="Understand the CDS µServices">
+<meta name="twitter:title" content="Understand the CDS µServices">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/" class="active">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Hosting your own instance" href="https://ovh.github.io/cds/hosting/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Requirements" href="https://ovh.github.io/cds/hosting/requirements/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Understand the CDS µServices" href="https://ovh.github.io/cds/hosting/cds_services/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Download" href="https://ovh.github.io/cds/hosting/download/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Ready to RUN">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Docker Compose" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Run with Helm on Kubernetes" href="https://ovh.github.io/cds/hosting/ready-to-run/helm/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Run with binaries" href="https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Configuration" href="https://ovh.github.io/cds/hosting/configuration/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Database Management" href="https://ovh.github.io/cds/hosting/database/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Monitoring" href="https://ovh.github.io/cds/hosting/monitoring/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Upgrade your CDS Instance" href="https://ovh.github.io/cds/hosting/upgrade/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>Understand the CDS µServices</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li><a href="#cds-µservices">CDS µServices</a></li>
+<li><a href="#single-process">Single Process</a></li>
+<li><a href="#multi-processes">Multi-Processes</a></li>
+<li><a href="#ram-resources-needed">RAM resources needed</a></li>
+</ul>
+</nav>
+
+
+
+<p>CDS is composed of two binaries: <code>engine</code> and <code>worker</code>, you can find them on <a href="https://github.com/ovh/cds/releases/latest">CDS Releases</a> for your os/architecture.</p>
+
+<ul>
+<li><code>worker</code> is the binary used to run a CDS Job.</li>
+<li><code>engine</code> is the binary used to run all CDS µServices.</li>
+</ul>
+
+<h1 id="cds-µservices">CDS µServices</h1>
+
+<p>A CDS µService is a process that can be launch by the <code>engine</code> binary.</p>
+
+<ul>
+<li><strong>api</strong>: this is the main µService.
+
+<ul>
+<li>Each <code>api</code> must shared the same PostgreSQL and redis databases. All other CDS µServices have to communicate with <code>api</code>.</li>
+<li>The database user does not need to have the admin rights to create / alter tables.</li>
+</ul></li>
+<li><strong>ui</strong>: the <code>ui</code> service serves the CDS UI static files.
+
+<ul>
+<li>It&rsquo;s the only service that can be accessed by end users.</li>
+<li>http path: <code>/cdsapi</code> - proxypass to reach CDS API.</li>
+<li>http path: <code>/cdshooks</code> - proxypass that can be used by some external integrations or webhooks.</li>
+</ul></li>
+<li><strong>hooks</strong>: this service manages <a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/">Hooks</a>.
+
+<ul>
+<li>You can multi-instanciate this service, it uses a redis to synchronize all tasks over all instances.</li>
+<li>Users and some integrations need to send HTTP requests to this service, you can use the proxypass <code>/cdshooks</code> on the CDS UI to reach this service.</li>
+</ul></li>
+<li><strong>vcs</strong>: The aim of this µService is to communicate with Repository Manager as <a href="https://ovh.github.io/cds/docs/integrations/github/">GitHub</a>, <a href="https://ovh.github.io/cds/docs/integrations/gitlab/">GitLab</a>, <a href="https://ovh.github.io/cds/docs/integrations/bitbucket/">Bitbucket</a>&hellip;
+
+<ul>
+<li>You can multi-instanciate this service, a redis is used to synchronize tasks over all instances.</li>
+</ul></li>
+<li><strong>repositories</strong>: this µService is used to enable the as-code feature.
+
+<ul>
+<li>Users can store CDS Files on their repositories. This service clones user repositories on local filesystem.</li>
+<li>You can&rsquo;t multi-instanciate this service for now.</li>
+</ul></li>
+<li><strong>elasticsearch</strong>: user timeline and vulnerabilities computed are stored on a elasticsearch through this µService.
+
+<ul>
+<li>It&rsquo;s optional unless you want theses features activated on your CDS.</li>
+</ul></li>
+<li><strong>hatchery:local</strong>: the local hatchery spawns CDS Workers locally.
+
+<ul>
+<li>All workers shares the same filesystem.</li>
+<li>Not recommanded for production with <code>shared.infra</code> group</li>
+</ul></li>
+<li><strong>hatchery:swarm</strong>: the swarm hatchery spawn CDS Workers with docker.
+
+<ul>
+<li>A single process of <code>hatchery:swarm</code> can managed many docker daemons.</li>
+<li>You can use <a href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/">Service Requirement</a> with this hatchery.</li>
+<li>This hatchery uses the <a href="https://ovh.github.io/cds/docs/concepts/worker-model/">worker model</a> docker.</li>
+</ul></li>
+<li><strong>hatchery:openstack</strong>: the openstack hatchery creates Virtual Machine with a CDS Worker inside.
+
+<ul>
+<li>This hatchery uses the <a href="https://ovh.github.io/cds/docs/concepts/worker-model/">worker model</a> openstack.</li>
+</ul></li>
+<li><strong>hatchery:kubernetes</strong>: the kubernetes hatchery creates a CDS Worker inside a Pod.
+
+<ul>
+<li>You can use <a href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/">Service Requirement</a> with this hatchery.</li>
+<li>This hatchery uses the <a href="https://ovh.github.io/cds/docs/concepts/worker-model/">worker model</a> docker.</li>
+</ul></li>
+<li><strong>hatchery:marathon</strong>: the marathon hatchery run CDS Worker as a marathon application.
+
+<ul>
+<li>This hatchery uses the <a href="https://ovh.github.io/cds/docs/concepts/worker-model/">worker model</a> docker.</li>
+</ul></li>
+<li><strong>hatchery:vsphere</strong>: the vSphere hatchery creates Virtual Machine with a CDS Worker inside.
+
+<ul>
+<li>This hatchery uses the <a href="https://ovh.github.io/cds/docs/concepts/worker-model/">worker model</a> vsphere.</li>
+</ul></li>
+<li><strong>migrate</strong>: this µService is used to run database migrations to upgrade your CDS Installation.
+
+<ul>
+<li>The configuration needs a postgreSQL user with rights to create / alter tables on postgreSQL.</li>
+</ul></li>
+</ul>
+
+<h1 id="single-process">Single Process</h1>
+
+<p>With a single CDS Engine process, you can run all µServices. This is very convenient for testing CDS locally but it&rsquo;s not recommanded for a production installation.</p>
+
+<p><img src="../images/one-process.png" alt="One Process" /></p>
+
+<h1 id="multi-processes">Multi-Processes</h1>
+
+<p>The binary engine can be used to launch in different processes each µService. This is recommanded for a production installation.</p>
+
+<p>Each µService can be multi-instanciated, example:</p>
+
+<ul>
+<li>6x <code>$engine start api</code>, each api shared the same PostgreSQL and redis.</li>
+<li>3x <code>$engine start hooks</code>, each hooks shared the same redis.</li>
+<li>3x <code>$engine start vcs</code>, each hooks shared the same redis.</li>
+<li>3x <code>$engine start elasticsearch</code>.</li>
+<li>1x <code>$engine start repositories</code>.</li>
+</ul>
+
+<p><img src="../images/many-processes.png" alt="Many Processes" /></p>
+
+<h1 id="ram-resources-needed">RAM resources needed</h1>
+
+<p>Example of an installation for a production with 18.000 jobs launched per day:</p>
+
+<ul>
+<li>6x <code>$engine start api</code>
+
+<ul>
+<li>RAM: 3Go per instance</li>
+<li>Redis: 128Mo</li>
+</ul></li>
+<li>3x <code>$engine start hooks</code>
+
+<ul>
+<li>RAM: 256Mo per instance</li>
+<li>Redis: 256Mo</li>
+</ul></li>
+<li>3x <code>$engine start vcs</code>
+
+<ul>
+<li>RAM: 256Mo per instance</li>
+<li>Redis: 256Mo</li>
+</ul></li>
+<li>3x <code>$engine start elasticsearch</code>
+
+<ul>
+<li>RAM: 256Mo per instance</li>
+</ul></li>
+<li>1x <code>$engine start repositories</code>
+
+<ul>
+<li>RAM: 256Mo per instance</li>
+</ul></li>
+<li>3x <code>$engine start ui</code>
+
+<ul>
+<li>RAM: 128Mo per instance</li>
+</ul></li>
+<li>3x <code>$engine start migrate</code>
+
+<ul>
+<li>RAM: 128Mo per instance</li>
+</ul></li>
+<li>hatcheries: 256Mo per instance</li>
+</ul>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

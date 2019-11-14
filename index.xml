@@ -192,6 +192,17 @@ See output:</description>
     </item>
     
     <item>
+      <title>Understand the CDS µServices</title>
+      <link>https://ovh.github.io/cds/hosting/cds_services/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/cds_services/</guid>
+      <description>CDS is composed of two binaries: engine and worker, you can find them on CDS Releases for your os/architecture.
+ worker is the binary used to run a CDS Job. engine is the binary used to run all CDS µServices.  CDS µServices A CDS µService is a process that can be launch by the engine binary.
+ api: this is the main µService.  Each api must shared the same PostgreSQL and redis databases.</description>
+    </item>
+    
+    <item>
       <title>With your own Docker image</title>
       <link>https://ovh.github.io/cds/docs/tutorials/worker_model-docker/docker-customized/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

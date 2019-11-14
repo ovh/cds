@@ -83,6 +83,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/hosting/cds_services/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/tutorials/worker_model-docker/docker-customized/</loc>
   </url>
   
