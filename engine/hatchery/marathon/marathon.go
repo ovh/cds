@@ -364,7 +364,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 
 	_, next = observability.Span(ctx, "waitDeployment")
 	wg := &sync.WaitGroup{}
-	var successChan = make(chan error, len(deployments))
+	var errorsChan = make(chan error, len(deployments))
 
 	for _, deploy := range deployments {
 		wg.Add(1)
@@ -372,27 +372,29 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 			goCtx, cncl := context.WithTimeout(ctx, (time.Duration(h.Config.WorkerSpawnTimeout)+1)*time.Second)
 			tick := time.NewTicker(500 * time.Millisecond)
 			defer func() {
+				close(errorsChan)
 				cncl()
 				tick.Stop()
 				wg.Done()
+
 			}()
 			for {
 				select {
 				case _ = <-goCtx.Done():
 					if _, err := h.marathonClient.DeleteDeployment(id, true); err != nil {
-						successChan <- fmt.Errorf("error on delete timeouted deployment %s: %v", id, err.Error())
+						errorsChan <- fmt.Errorf("error on delete timeouted deployment %s: %v", id, err.Error())
 					} else {
-						successChan <- fmt.Errorf("deployment for %s timeout", id)
+						errorsChan <- fmt.Errorf("deployment for %s timeout", id)
 					}
 					return
 				case _ = <-tick.C:
 					found, err := h.marathonClient.HasDeployment(id)
 					if err != nil {
-						successChan <- fmt.Errorf("error on deployment %s: %s", id, err.Error())
+						errorsChan <- fmt.Errorf("error on deployment %s: %s", id, err.Error())
 					}
 					if !found {
 						log.Debug("spawnMarathonDockerWorker> deployment %s succeeded", id)
-						successChan <- nil
+						errorsChan <- nil
 						return
 					}
 				}
@@ -404,16 +406,11 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	next()
 
 	errors := sdk.MultiError{}
-	for b := range successChan {
+	for b := range errorsChan {
 		if b != nil {
 			errors.Append(b)
 		}
-		if len(successChan) == 0 {
-			break
-		}
 	}
-	close(successChan)
-
 	if errors.IsEmpty() {
 		return nil
 	}

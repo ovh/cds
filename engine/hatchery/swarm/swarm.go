@@ -478,7 +478,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 			continue
 		}
 
-		//Checking teh number of container on each docker engine
+		//Checking the number of container on each docker engine
 		if nbContainersFromHatchery >= dockerClient.MaxContainers {
 			log.Debug("hatchery> swarm> CanSpawn> max containers reached on %s. current:%d max:%d", dockerName, nbContainersFromHatchery, dockerClient.MaxContainers)
 			continue
