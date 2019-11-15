@@ -1034,6 +1034,14 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.
 		return sdk.WrapError(err, "Delete> Unable to delete workflow data")
 	}
 
+	query := `DELETE FROM w_node_trigger
+					WHERE parent_node_id IN
+					(SELECT id FROM w_node WHERE workflow_id = $1)
+		`
+	if _, err := db.Exec(query, w.ID); err != nil {
+		return sdk.WrapError(err, "unable to delete node trigger")
+	}
+
 	//Delete workflow
 	dbw := Workflow(*w)
 	if _, err := db.Delete(&dbw); err != nil {
