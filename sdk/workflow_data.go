@@ -50,6 +50,9 @@ func (w *WorkflowData) GetHooksMapRef() map[string]NodeHook {
 }
 
 func (w *WorkflowData) Array() []*Node {
+	if w == nil {
+		return nil
+	}
 	nodes := make([]*Node, 0)
 	nodes = w.Node.array(nodes)
 	for i := range w.Joins {
