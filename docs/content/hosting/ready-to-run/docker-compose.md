@@ -46,7 +46,7 @@ $ docker-compose up -d cds-api cds-ui cds-hooks
 
 - Create the first user with WebUI
 
-Open a browser on http://localhost:2015/account/signup, then register a new user `admin`,
+Open a browser on http://localhost:8080/account/signup, then register a new user `admin`,
 with an email `admin@localhost.local` for example.
 As there is no SMTP server configured in docker-compose.yml file,
 run `docker-compose logs` to get URL for validate the registration.
@@ -64,7 +64,7 @@ If you don't want to use the keychain, you can select the version i386.
 
 See: [cdsctl documentation]({{< relref "/docs/components/cdsctl/_index.md" >}})
 
-You can download cdsctl CLI from http://localhost:2015/settings/downloads
+You can download cdsctl CLI from http://localhost:8080/settings/downloads
 ```bash
 # on a Linux workstation:
 $ curl http://localhost:8081/download/cdsctl/linux/amd64 -o cdsctl
@@ -158,12 +158,12 @@ This ensures isolation of the workspaces and resources.
 ```bash
 $ ./cdsctl workflow run DEMO MyFirstWorkflow
 Workflow MyFirstWorkflow #1 has been launched
-http://localhost:2015/project/DEMO/workflow/MyFirstWorkflow/run/1
+http://localhost:8080/project/DEMO/workflow/MyFirstWorkflow/run/1
 ```
 
 - Check on UI
 
-on http://localhost:2015/project/DEMO/workflow/MyFirstWorkflow/run/1 you will have
+on http://localhost:8080/project/DEMO/workflow/MyFirstWorkflow/run/1 you will have
 
 ![Workflow Generated](/images/ready_to_run_docker_compose_ui.png)
 

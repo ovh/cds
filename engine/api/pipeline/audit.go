@@ -148,7 +148,7 @@ func purgeAudits(db gorp.SqlExecutor) error {
 	for _, r := range nbAuditsPerPipelinewID {
 		log.Debug("purgeAudits> deleting audits for pipeline %d (%d audits)", r.PipelineD, r.NbAudits)
 		var ids []int64
-		query = `select id from pipeline_audit where pipeline_id = $1 order by versionned asc offset $2`
+		query = `select id from pipeline_audit where pipeline_id = $1 order by versionned desc offset $2`
 		if _, err := db.Select(&ids, query, r.PipelineD, keepAudits); err != nil {
 			return sdk.WithStack(err)
 		}

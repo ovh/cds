@@ -12,6 +12,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/fsamin/go-dump"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -615,7 +617,12 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	assert.Equal(t, app2.ID, w2.WorkflowData.Node.Context.ApplicationID)
 	assert.Equal(t, env.ID, w2.WorkflowData.Node.Context.EnvironmentID)
 
-	test.NoError(t, workflow.Delete(context.TODO(), db, cache, proj, w2))
+	tx, err := db.Begin()
+	require.NoError(t, err)
+	defer tx.Rollback()
+	test.NoError(t, workflow.Delete(context.TODO(), tx, cache, proj, w2))
+
+	require.NoError(t, tx.Commit())
 }
 
 func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
@@ -1227,7 +1234,11 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		}
 	}
 
-	test.NoError(t, workflow.Delete(context.TODO(), db, cache, proj, w2))
+	tx, err := db.Begin()
+	require.NoError(t, err)
+	defer tx.Rollback()
+	test.NoError(t, workflow.Delete(context.TODO(), tx, cache, proj, w2))
+	require.NoError(t, tx.Commit())
 }
 
 func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {

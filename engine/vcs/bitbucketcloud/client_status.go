@@ -150,7 +150,7 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatu
 	switch eventNR.Status {
 	case sdk.StatusFail.String():
 		data.status = "FAILED"
-	case sdk.StatusSuccess.String():
+	case sdk.StatusSuccess.String(), sdk.StatusSkipped.String():
 		data.status = "SUCCESSFUL"
 	case sdk.StatusStopped.String():
 		data.status = "STOPPED"
