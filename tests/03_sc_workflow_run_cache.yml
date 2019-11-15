@@ -1,0 +1,43 @@
+name: Workflow (ITSCWRKFLW4) should use the worker cache command
+version: "2"
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./fixtures/ITSCWRKFLW4/tag-push-pull.pip.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW4/ITSCWRKFLW4.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW4"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW4 "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW4 ITSCWRKFLW4"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml"
+
+- name: import workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW4 ./fixtures/ITSCWRKFLW4/*.yml --skip-update-files
+
+- name: run workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW4 ITSCWRKFLW4
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW4 #1 has been launched"
+
+- name: the workflow should be successful
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW4 ITSCWRKFLW4 1 --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.status ShouldEqual Success
+    retry: 30
+    delay: 10
+- name: download artifact with cdsctl
+  steps:
+  - script: rm -f tata.txt
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow artifact download ITSCWRKFLW4 ITSCWRKFLW4 1 --exclude tata.txt
+  - script: ls tata.txt
+    assertions:
+    - result.code ShouldNotEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow artifact download ITSCWRKFLW4 ITSCWRKFLW4 1
+  - script: ls tata.txt

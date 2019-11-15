@@ -15,6 +15,8 @@ import (
 	"regexp"
 	"runtime"
 	"runtime/pprof"
+	"strings"
+	"unicode"
 
 	"github.com/go-gorp/gorp"
 
@@ -182,4 +184,30 @@ var rxURL = regexp.MustCompile(`http[s]?:\/\/(.*)`)
 // IsURL returns if given path is a url according to the URL regex.
 func IsURL(path string) bool {
 	return rxURL.MatchString(path)
+}
+
+func RemoveNotPrintableChar(in string) string {
+	m := func(r rune) rune {
+		switch {
+		case unicode.IsLetter(r),
+			unicode.IsSpace(r),
+			unicode.IsDigit(r),
+			unicode.IsNumber(r),
+			unicode.In(r, unicode.Pd, // Filter some punctuation categories
+				unicode.Pe,
+				unicode.Pf,
+				unicode.Pi,
+				unicode.Po,
+				unicode.Ps,
+			),
+			unicode.IsSpace(r),
+			unicode.IsTitle(r),
+			unicode.IsUpper(r):
+			return r
+		default:
+			return ' '
+		}
+
+	}
+	return strings.Map(m, in)
 }

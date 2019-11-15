@@ -10,7 +10,7 @@ engine/engine
 engine/dist
 engine/api/.secrets
 engine/api/config.toml
-engine/config.toml
+engine/config.*toml
 engine/worker/worker
 *.out
 *.coverprofile
@@ -29,6 +29,11 @@ test_results.xml
 *.csv
 .tmp
 contrib/**/dist
+
+# TEST
+tests/fixtures/ITSCWRKFLW1/output
+tests/fixtures/03SCWorkflowRunSimplePlugin/plugin-simple-darwin-amd64
+tests/fixtures/03SCWorkflowRunSimplePlugin/plugin-simple-linux-amd64
 
 # UI
 ui/node_modules

@@ -1,0 +1,6 @@
+name: Version Command TestSuite
+version: "2"
+testcases:
+- name: cds version
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} version"
