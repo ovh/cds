@@ -37,6 +37,5 @@ func InitMarathonMarathonTest(opts marathonJDD) *HatcheryMarathon {
 	}
 	h.Client = cdsclient.New(cdsclient.Config{Host: "http://lolcat.host", InsecureSkipVerifyTLS: false})
 	gock.InterceptClient(h.Client.(cdsclient.Raw).HTTPClient())
-	gock.InterceptClient(h.Client.(cdsclient.Raw).HTTPClient())
 	return h
 }
