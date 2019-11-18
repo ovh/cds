@@ -16,6 +16,7 @@ import (
 )
 
 func TestHatcherySwarm_KillAwolNetwork(t *testing.T) {
+	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
 	h.Config.Name = "swarmy"
 
@@ -79,6 +80,7 @@ func TestHatcherySwarm_KillAwolNetwork(t *testing.T) {
 }
 
 func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
+	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
 	h.Config.Name = "swarmy"
 
@@ -218,6 +220,7 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 }
 
 func TestHatcherySwarm_WorkersStarted(t *testing.T) {
+	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
 	h.Config.Name = "swarmy"
 	containers := []types.Container{
@@ -253,6 +256,7 @@ func TestHatcherySwarm_WorkersStarted(t *testing.T) {
 }
 
 func TestHatcherySwarm_Spawn(t *testing.T) {
+	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
 	h.dockerClients["default"].MaxContainers = 2
 
@@ -319,6 +323,7 @@ func TestHatcherySwarm_Spawn(t *testing.T) {
 }
 
 func TestHatcherySwarm_SpawnMaxContainerReached(t *testing.T) {
+	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
 	h.dockerClients["default"].MaxContainers = 1
 
@@ -351,6 +356,7 @@ func TestHatcherySwarm_SpawnMaxContainerReached(t *testing.T) {
 }
 
 func TestHatcherySwarm_CanSpawn(t *testing.T) {
+	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
 	h.dockerClients["default"].MaxContainers = 1
 
@@ -378,6 +384,7 @@ func TestHatcherySwarm_CanSpawn(t *testing.T) {
 }
 
 func TestHatcherySwarm_MaxContainerReached(t *testing.T) {
+	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
 	h.dockerClients["default"].MaxContainers = 2
 	m := sdk.Model{
@@ -412,6 +419,7 @@ func TestHatcherySwarm_MaxContainerReached(t *testing.T) {
 }
 
 func TestHatcherySwarm_MaxContainerRatioService100(t *testing.T) {
+	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
 	h.dockerClients["default"].MaxContainers = 2
 
@@ -437,6 +445,7 @@ func TestHatcherySwarm_MaxContainerRatioService100(t *testing.T) {
 }
 
 func TestHatcherySwarm_MaxContainerRatioPercentReached(t *testing.T) {
+	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
 	h.Config.Name = "swarmy"
 	h.dockerClients["default"].MaxContainers = 5
@@ -491,6 +500,7 @@ func TestHatcherySwarm_MaxContainerRatioPercentReached(t *testing.T) {
 }
 
 func TestHatcherySwarm_MaxContainerRatioPercentOK(t *testing.T) {
+	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
 	h.dockerClients["default"].MaxContainers = 3
 	h.Config.Provision.MaxWorker = 3
@@ -529,6 +539,7 @@ func TestHatcherySwarm_MaxContainerRatioPercentOK(t *testing.T) {
 }
 
 func TestHatcherySwarm_CanSpawnNoDockerClient(t *testing.T) {
+	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
 	h.dockerClients = nil
 	m := sdk.Model{
