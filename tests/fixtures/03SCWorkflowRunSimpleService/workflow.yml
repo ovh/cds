@@ -1,0 +1,3 @@
+name: 03SCWorkflowRunSimpleService-WORKFLOW
+version: v1.0
+pipeline: 03SCWorkflowRunSimpleService-PIPELINE

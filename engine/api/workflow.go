@@ -560,9 +560,12 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, workflow.LoadOptions{})
+		b, errW := workflow.Exists(api.mustDB(), key, name)
 		if errW != nil {
-			return sdk.WrapError(errW, "Cannot load Workflow %s", key)
+			return sdk.WrapError(errW, "Cannot check Workflow %s", key)
+		}
+		if !b {
+			return sdk.WithStack(sdk.ErrWorkflowNotFound)
 		}
 
 		tx, errT := api.mustDB().Begin()
@@ -571,15 +574,13 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.MarkAsDelete(tx, oldW); err != nil {
+		if err := workflow.MarkAsDelete(tx, key, name); err != nil {
 			return sdk.WrapError(err, "Cannot delete workflow")
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(errT, "Cannot commit transaction")
 		}
-
-		event.PublishWorkflowDelete(key, *oldW, getAPIConsumer(ctx))
 
 		sdk.GoRoutine(ctx, "deleteWorkflowHandler",
 			func(ctx context.Context) {
@@ -588,6 +589,13 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 					log.Error("deleteWorkflowHandler> Cannot start transaction: %v", errT)
 				}
 				defer txg.Rollback() // nolint
+
+				oldW, err := workflow.Load(context.Background(), txg, api.Cache, p, name, workflow.LoadOptions{})
+				if err != nil {
+					log.Error("deleteWorkflowHandler> unable to load workflow: %v", err)
+					return
+				}
+
 				if err := workflow.Delete(context.Background(), txg, api.Cache, p, oldW); err != nil {
 					log.Error("deleteWorkflowHandler> unable to delete workflow: %v", err)
 					return
@@ -595,6 +603,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 				if err := txg.Commit(); err != nil {
 					log.Error("deleteWorkflowHandler> Cannot commit transaction: %v", err)
 				}
+				event.PublishWorkflowDelete(key, *oldW, getAPIConsumer((ctx)))
 			}, api.PanicDump())
 
 		return service.WriteJSON(w, nil, http.StatusOK)

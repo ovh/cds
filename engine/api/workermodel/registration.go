@@ -80,7 +80,6 @@ func updateAllToCheckRegistration(db gorp.SqlExecutor) error {
 
 // UpdateSpawnErrorWorkerModel updates worker model error registration
 func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, spawnError sdk.SpawnErrorForm) error {
-
 	spawnError.Error = sdk.RemoveNotPrintableChar(spawnError.Error)
 	spawnError.Logs = []byte(sdk.RemoveNotPrintableChar(string(spawnError.Logs)))
 

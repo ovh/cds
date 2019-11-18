@@ -997,9 +997,16 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 }
 
 // MarkAsDelete marks a workflow to be deleted
-func MarkAsDelete(db gorp.SqlExecutor, w *sdk.Workflow) error {
-	if _, err := db.Exec("update workflow set to_delete = true where id = $1", w.ID); err != nil {
-		return sdk.WrapError(err, "Unable to mark as delete workflow id %d", w.ID)
+func MarkAsDelete(db gorp.SqlExecutor, key, name string) error {
+	query := `UPDATE workflow 
+			SET to_delete = true 
+			FROM project
+			WHERE 
+				workflow.name = $1 AND 
+				project.id = workflow.project_id AND
+				project.projectkey = $2`
+	if _, err := db.Exec(query, name, key); err != nil {
+		return sdk.WrapError(err, "Unable to mark as delete workflow %s/%s", key, name)
 	}
 	return nil
 }
@@ -1013,6 +1020,14 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.
 
 	if err := DeleteWorkflowData(db, *w); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to delete workflow data")
+	}
+
+	query := `DELETE FROM w_node_trigger
+					WHERE parent_node_id IN
+					(SELECT id FROM w_node WHERE workflow_id = $1)
+		`
+	if _, err := db.Exec(query, w.ID); err != nil {
+		return sdk.WrapError(err, "unable to delete node trigger")
 	}
 
 	//Delete workflow
@@ -1029,6 +1044,10 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 	//Check project is not empty
 	if w.ProjectKey == "" {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
+	}
+
+	if w.WorkflowData == nil {
+		return sdk.WithStack(fmt.Errorf("bad workflow, workflow data must not be null"))
 	}
 
 	if w.Icon != "" {

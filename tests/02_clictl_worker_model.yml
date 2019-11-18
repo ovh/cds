@@ -1,0 +1,80 @@
+name: Worker Command TestSuite
+version: "2"
+testcases:
+- name: prepare test
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete myITModel --force
+  assertions:
+    - result.code ShouldEqual 0
+
+- name: worker model import
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model import ./fixtures/my_worker_model.yml
+  assertions:
+    - result.code ShouldEqual 0
+
+- name: worker model show
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model show myITModel
+  assertions:
+    - result.code ShouldEqual 0
+
+- name: worker model list
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model list
+  assertions:
+    - result.code ShouldEqual 0
+
+- name: worker model import with force
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model import ./fixtures/my_worker_model_updated.yml --force
+  assertions:
+    - result.code ShouldEqual 0
+
+- name: action export
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model export myITModel > ./fixtures/clictl_worker_model_MyITModel.exported
+  - script: diff ./fixtures/clictl_worker_model_MyITModel.exported ./fixtures/my_worker_model_updated.yml
+
+- name: cleanup
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete myITModel --force
+  assertions:
+    - result.code ShouldEqual 0
+
+- name: prepare test openstack model
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete myITModelOS --force
+  assertions:
+    - result.code ShouldEqual 0
+
+- name: worker model import openstack model
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model import ./fixtures/my_worker_model_openstack.yml
+  assertions:
+    - result.code ShouldEqual 0
+
+- name: worker model show
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model show myITModelOS
+  assertions:
+    - result.code ShouldEqual 0
+
+- name: worker model list
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model list
+  assertions:
+    - result.code ShouldEqual 0
+
+- name: worker model list with binary filter
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model list --binary=go
+  assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring nothing
+
+- name: cleanup
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} worker model delete myITModelOS --force
+  assertions:
+    - result.code ShouldEqual 0
