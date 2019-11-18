@@ -23,7 +23,9 @@ type HatcheryLocal struct {
 	sync.Mutex
 	workers           map[string]workerCmd
 	LocalWorkerRunner LocalWorkerRunner
-	BasedirDedicated  string
+	// BasedirDedicated = basedir + hatchery.name
+	// this directory contains the worker donwloaded from api at startup
+	BasedirDedicated string
 }
 
 type workerCmd struct {

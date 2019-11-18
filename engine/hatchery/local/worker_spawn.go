@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
@@ -47,7 +46,7 @@ func (l localWorkerLogger) Fatalf(fmt string, values ...interface{}) {
 	log.Fatalf("hatchery> local> worker> %s> "+fmt, l.name)
 }
 
-const workerCmdTmpl = "{{.BasedirDedicated}}/{{.WorkerBinary}} --api={{.API}} --token={{.Token}} --log-level=debug --basedir={{.BaseDir}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}}"
+const workerCmdTmpl = "{{.WorkerBinary}} --api={{.API}} --token={{.Token}} --log-level=debug --basedir={{.BaseDir}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}}"
 
 // SpawnWorker starts a new worker process
 func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
@@ -79,8 +78,7 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
 		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
-		WorkerBinary:      h.getWorkerBinaryName(),
-		BasedirDedicated:  h.BasedirDedicated,
+		WorkerBinary:      path.Join(h.BasedirDedicated, h.getWorkerBinaryName()),
 	}
 
 	udataParam.WorkflowJobID = spawnArgs.JobID
@@ -100,17 +98,16 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	}
 
 	// Prefix the command with the directory where the worker binary has been downloaded
-	binCmd := filepath.Join(h.BasedirDedicated, cmdSplitted[0])
 	log.Debug("Command exec: %v", cmdSplitted)
 	var cmd *exec.Cmd
 	if spawnArgs.RegisterOnly {
 		cmdSplitted[0] = "register"
-		cmd = h.LocalWorkerRunner.NewCmd(context.Background(), binCmd, cmdSplitted...)
+		cmd = h.LocalWorkerRunner.NewCmd(ctx, cmdSplitted[0], cmdSplitted...)
 	} else {
-		cmd = h.LocalWorkerRunner.NewCmd(context.Background(), binCmd, cmdSplitted[1:]...)
+		cmd = h.LocalWorkerRunner.NewCmd(ctx, cmdSplitted[0], cmdSplitted[1:]...)
 	}
 
-	cmd.Dir = basedir
+	cmd.Dir = udataParam.BaseDir
 
 	// Clearenv
 	env := os.Environ()
