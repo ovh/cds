@@ -207,6 +207,9 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 	gock.New("https://lolcat.host").Delete("/v6.66/containers/net-1-ctn-2").Reply(http.StatusOK).JSON(nil)
 	gock.New("https://lolcat.host").Delete("/v6.66/networks/net-2").Reply(http.StatusOK).JSON(nil)
 
+	net := []types.NetworkResource{}
+	gock.New("https://lolcat.host").Get("/v6.66/networks").Reply(http.StatusOK).JSON(net)
+
 	// Must keep: swarmy-model1-w2, swarmy-model1-w3, swarmy2-model1-w4
 	// Must delete: swarmy-model1-w1, swarmy-model1-w4
 	err := h.killAwolWorker()
@@ -339,6 +342,7 @@ func TestHatcherySwarm_SpawnMaxContainerReached(t *testing.T) {
 	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
 	err := h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{
+		JobID: 666,
 		Model: &m,
 	})
 	assert.Error(t, err)
