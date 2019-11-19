@@ -297,6 +297,17 @@ func (api *API) getProjectHandler() service.Handler {
 		}
 		p.Permissions = permissions.Permissions(p.Key)
 
+		if !p.Permissions.IsMaxLevel() {
+			if !p.Permissions.Readable {
+				if isMaintainer(ctx) {
+					p.Permissions = sdk.Permissions{Readable: true, Writable: false, Executable: false}
+				}
+				if isAdmin(ctx) {
+					p.Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+				}
+			}
+		}
+
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
