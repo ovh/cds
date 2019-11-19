@@ -20,11 +20,7 @@
         <div *ngIf="node.context.application_id || node.context.environment_id || node.context.project_integration_id"
             class="context">
             <div *ngIf="node.context.application_id" class="item ellipsis">
-                <a (click)="$event.stopPropagation()"
-                    [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]"
-                    title="{{ 'common_application_title' | translate }}{{workflow.applications[node.context.application_id].name}}">
-                    {{workflow.applications[node.context.application_id].name}}
-                </a>
+                {{workflow.applications[node.context.application_id].name}}
             </div>
             <div *ngIf="node.context.environment_id" class="item ellipsis">
                 <a (click)="$event.stopPropagation()"

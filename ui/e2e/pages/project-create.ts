@@ -24,7 +24,6 @@ export default class ProjectCreatePage {
       .typeText(this.projectNameInput, name)
       .expect(this.projectKeyInput.value).eql(key)
       .typeText(this.groupSelect, group).pressKey('enter')
-      .click(this.createButton)
       .expect(this.getLocation()).eql(config.baseUrl + '/project/' + key);
   }
 }

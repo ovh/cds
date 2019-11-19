@@ -791,6 +791,7 @@
   "workflow_node_menu_edit": "Edit the context",
   "workflow_node_menu_edit_ro": "Show context configuration",
   "workflow_node_menu_edit_pipeline": "Edit the pipeline",
+  "workflow_node_menu_edit_application": "Edit the application",
   "workflow_run_node_job_queued": "Queued {{time}} ago",
   "workflow_update_name_error": "Invalid workflow name. Allowed pattern is: ^[a-zA-Z0-9._-]{1,}$",
   "workflow_wizard_description": "Choose your workflow options",

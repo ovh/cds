@@ -7,7 +7,7 @@
             <hr>
         </ng-container>
         <ng-container *ngIf="node && !noderun">
-            <a class="item" (click)="sendEvent('pipeline')"
+            <a class="pipeline item" (click)="sendEvent('pipeline')"
                 [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || readonly">
                     {{ 'workflow_node_trigger_add' | translate }}
             </a>
@@ -15,15 +15,15 @@
                 [class.disabled]="!workflow || workflow.workflow_data.node.id !== node.id ||  (workflow.from_repository && workflow.from_repository.length > 0) || readonly">
                     {{ 'workflow_node_parent' | translate }}
             </a>
-            <a class="item" (click)="sendEvent('fork')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
+            <a class="fork item" (click)="sendEvent('fork')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
             || readonly">
                     {{ 'workflow_node_fork_add' | translate }}
             </a>
-            <a class="item" (click)="sendEvent('join')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
+            <a class="add join item" (click)="sendEvent('join')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
            || readonly">
                     {{ 'workflow_node_join_add' | translate }}
             </a>
-            <a class="item" (click)="sendEvent('join_link')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
+            <a class="link join item" (click)="sendEvent('join_link')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0)
            || readonly">
                 {{ 'workflow_node_join_link' | translate }}
             </a>
@@ -48,6 +48,14 @@
                         {{ 'workflow_node_menu_edit_pipeline' | translate }}
                 </a>
             </ng-container>
+            <ng-container *ngIf="workflow && workflow.applications && node && node.context && node.context.application_id">
+                <a class="item" (click)="$event.stopPropagation()"
+                   [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]"
+                   title="{{ 'common_application_title' | translate }}{{workflow.applications[node.context.application_id].name}}">
+                    {{ 'workflow_node_menu_edit_application' | translate }}
+                </a>
+            </ng-container>
+
             <hr>
             <a class="item" (click)="sendEvent('delete')" [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || readonly
                 || node.id === workflow.workflow_data.node.id">

@@ -12,7 +12,7 @@ export default class LoginPage {
     getLocation = ClientFunction(() => document.location.href);
 
     constructor(){
-        this.url = config.baseUrl + '/account/login';
+        this.url = config.baseUrl + '/auth/signin';
         this.userNameInput = Selector('input[name=username]');
         this.passwordInput = Selector('input[name=password]');
         this.loginButton = Selector('.ui.green.button');

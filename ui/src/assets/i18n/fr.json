@@ -791,6 +791,7 @@
   "workflow_node_menu_edit": "Éditer le contexte",
   "workflow_node_menu_edit_ro": "Voir la configuration du contexte",
   "workflow_node_menu_edit_pipeline": "Éditer le pipeline",
+  "workflow_node_menu_edit_application": "Éditer l'application",
   "workflow_run_node_job_queued": "Attente depuis {{time}}",
   "workflow_update_name_error": "Nom de workflow invalide. Pattern autorisé : ^[a-zA-Z0-9._-]{1,}$",
   "workflow_wizard_description": "Choisissez vos options de workflow",
