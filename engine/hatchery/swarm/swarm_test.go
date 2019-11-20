@@ -180,6 +180,12 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 				"worker_model_path": "aa",
 			},
 		},
+		NetworkSettings: &types.NetworkSettings{
+			Networks: map[string]*network.EndpointSettings{
+				"net-1": {NetworkID: "net-1"},
+				"net-2": {NetworkID: "net-2"},
+			},
+		},
 	}
 	gock.New("https://lolcat.host").Get("/v6.66/containers/swarmy-model1-w4/json").Reply(http.StatusOK).JSON(c4)
 	gock.New("https://lolcat.host").Post("/v6.66/containers/swarmy-model1-w4/kill").Reply(http.StatusOK).JSON(nil)
@@ -198,6 +204,9 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 				"net-1-ctn-1": {},
 				"net-1-ctn-2": {},
 			},
+			Labels: map[string]string{
+				"worker_net": "coucou",
+			},
 		},
 	}
 	gock.New("https://lolcat.host").Get("/v6.66/networks/net-1").Reply(http.StatusOK).JSON(ns[0])
@@ -214,6 +223,7 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 
 	// Must keep: swarmy-model1-w2, swarmy-model1-w3, swarmy2-model1-w4
 	// Must delete: swarmy-model1-w1, swarmy-model1-w4
+	// Must delete only network net-2 and containers
 	err := h.killAwolWorker()
 	require.NoError(t, err)
 	require.True(t, gock.IsDone())
