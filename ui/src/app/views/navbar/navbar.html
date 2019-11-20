@@ -295,7 +295,7 @@
             <option value="en"><i class="gb flag"></i></option>
         </sm-select>
 
-        <sm-dropdown icon="settings" *ngIf="currentUser">
+        <sm-dropdown icon="settings" *ngIf="currentUser" class="options">
             <a sm-item href="#"
                 [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'cdsctl']">{{ 'navbar_cdsctl' | translate }}</a>

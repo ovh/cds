@@ -2,13 +2,13 @@ import config from '../config';
 import { Selector, t } from "testcafe";
 import WorkflowTriggerFormPage from './workflow-trigger-form';
 
+const workflowTriggerForm = new WorkflowTriggerFormPage();
+
 export default class WorkflowPage {
 
     url: string;
     workflowTab: Selector;
     runWorkflowButton: Selector;
-
-    workflowTriggerForm: WorkflowTriggerFormPage;
 
     // Modal
     modalRunWorkflowButton: Selector;
@@ -18,8 +18,6 @@ export default class WorkflowPage {
         this.workflowTab = Selector('#WorkflowGraphTabs');
         this.runWorkflowButton = Selector('.ui.green.buttons>.ui.button');
         this.modalRunWorkflowButton = Selector('sui-modal-dimmer .ui.green.button');
-
-        this.workflowTriggerForm = new WorkflowTriggerFormPage();
     }
 
     async runWorkflow() {
@@ -38,7 +36,7 @@ export default class WorkflowPage {
         await t
             .click(Selector(cssClass).nth(index))
             .click(Selector('a.pipeline.item'));
-        await this.workflowTriggerForm.addExistingPipeline(pipName);
+        await workflowTriggerForm.addExistingPipeline(pipName);
     }
 
     async addJoin(cssClass: string, index: number) {

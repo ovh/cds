@@ -48,5 +48,4 @@ test('workflow-create-and-run', async (t) => {
 
     await workflowPage.runWorkflow();
     await t.expect('.runs .item.pointing.success').ok();
-
 });

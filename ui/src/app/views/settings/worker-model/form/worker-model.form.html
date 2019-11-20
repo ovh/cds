@@ -24,12 +24,12 @@
                     <div class="four fields">
                         <div class="field">
                             <label>{{'common_name' | translate}} *</label>
-                            <input class="ui input" type="text" name="name" [(ngModel)]="workerModel.name"
+                            <input class="ui input" type="text" id="model-name" name="name" [(ngModel)]="workerModel.name"
                                 [readonly]="!workerModel.editable">
                         </div>
                         <div class="field">
                             <label>{{'common_group' | translate}} *</label>
-                            <sm-select class="fluid search" name="group" *ngIf="groups && workerModel.editable"
+                            <sm-select class="fluid search" id="group" name="group" *ngIf="groups && workerModel.editable"
                                 [disabled]="loading" [(model)]="workerModel.group_id"
                                 [options]="{'fullTextSearch': true}">
                                 <option *ngFor="let group of groups" [value]="group.id">{{group.name}}</option>
@@ -129,7 +129,7 @@
                     <div class="three fields">
                         <div class="seven wide field">
                             <label>{{'worker_model_type' | translate}} *</label>
-                            <sm-select class="fluid search" name="type" *ngIf="types && workerModel.editable"
+                            <sm-select class="fluid search type" name="type" *ngIf="types && workerModel.editable"
                                 [disabled]="loading" [(model)]="workerModel.type" [options]="{'fullTextSearch': true}"
                                 (onChange)="typeChange($event)">
                                 <option *ngFor="let type of types" [value]="type">{{type}}</option>
@@ -142,7 +142,7 @@
                         <div class="two fields">
                             <div class="fifteen wide field">
                                 <label>{{'worker_model_image' | translate}} *</label>
-                                <input class="ui input" type="text" name="image"
+                                <input class="ui input" type="text" id="image" name="image"
                                     [(ngModel)]="workerModel.model_docker.image" [readonly]="!workerModel.editable">
                             </div>
                             <div class="one wide field">
@@ -178,7 +178,7 @@
                         </ng-container>
                         <div class="field" *ngIf="workerModel.editable">
                             <label>{{'worker_model_pattern_title' | translate}}</label>
-                            <sui-select class="selection" name="pattern" placeholder="{{'common_select' | translate}}"
+                            <sui-select class="selection" id="pattern" name="pattern" placeholder="{{'common_select' | translate}}"
                                 [options]="patternsFiltered" isSearchable="true" [(ngModel)]="patternSelected"
                                 (selectedOptionChange)="patternChange()" [optionFormatter]="formatPattern()"
                                 #selectPattern>
@@ -293,7 +293,7 @@
                     <div *ngIf="workerModel.editable" class="field">
                         <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDelete()"
                             [loading]="deleteLoading"></app-delete-button>
-                        <button class="ui green right floated button" [class.loading]="loading" (click)="clickSave()">
+                        <button class="ui green right floated button" id="save-model-button" [class.loading]="loading" (click)="clickSave()">
                             <i class="save icon"></i>{{ 'btn_save' | translate }}
                         </button>
                     </div>
