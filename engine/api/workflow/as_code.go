@@ -174,7 +174,7 @@ func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 	}
 	wf.AsCodeEvent = eventLeft
 	log.Debug("workflow.SyncAsCodeEvent> events left: %v", wf.AsCodeEvent)
-	event.PublishWorkflowUpdate(proj.Key, *wf, *wf, u)
+	event.PublishWorkflowUpdate(ctx, proj.Key, *wf, *wf, u)
 	return nil
 }
 
@@ -277,7 +277,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				return
 			}
 
-			event.PublishWorkflowUpdate(p.Key, *wf, *oldW, u)
+			event.PublishWorkflowUpdate(ctx, p.Key, *wf, *oldW, u)
 			return
 		}
 

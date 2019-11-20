@@ -141,7 +141,7 @@ func findPrimaryKeyFromRequest(ctx context.Context, req *http.Request, db gorp.S
 				log.Error(ctx, "cannot get from cache %s: %v", cacheKey, errGet)
 			}
 			if !find {
-				pkey, err = findProjetKeyForNodeRunJob(db, id)
+				pkey, err = findProjetKeyForNodeRunJob(ctx, db, id)
 				if err != nil {
 					log.Error(ctx, "tracingMiddleware> %v", err)
 					return "", false

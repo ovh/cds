@@ -151,7 +151,7 @@ func Info(format string, values ...interface{}) {
 }
 
 // Warning prints warnings for user
-func Warning(format string, values ...interface{}) {
+func Warning(ctx context.Context, format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[WARN]    "+format, values...)
 	} else {

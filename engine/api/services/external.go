@@ -26,7 +26,7 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalServ
 			for _, s := range ss {
 				tx, err := db.Begin()
 				if err != nil {
-					log.Warning("services.Ping> Unable to start transaction")
+					log.Warning(ctx, "services.Ping> Unable to start transaction")
 					continue
 				}
 				if err := ping(ctx, tx, s); err != nil {
@@ -86,7 +86,7 @@ func ping(ctx context.Context, db gorp.SqlExecutor, s sdk.ExternalService) error
 	serv.LastHeartbeat = time.Now()
 	serv.MonitoringStatus = mon
 	if err := Update(ctx, db, serv); err != nil {
-		log.Warning("services.ping> unable to update monitoring status: %v", err)
+		log.Warning(ctx, "services.ping> unable to update monitoring status: %v", err)
 		return err
 	}
 	return nil

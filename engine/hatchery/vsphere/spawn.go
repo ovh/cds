@@ -39,7 +39,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		name = "register-" + name
 	}
 
-	_, errM := h.getModelByName(spawnArgs.Model.Name)
+	_, errM := h.getModelByName(ctx, spawnArgs.Model.Name)
 
 	if errM != nil || spawnArgs.Model.NeedRegistration {
 		// Generate worker model vm
@@ -122,7 +122,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 	}
 
 	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine.PreCmd+"; \n"+model.ModelVirtualMachine.Cmd+"; \n"+model.ModelVirtualMachine.PostCmd, nil); errS != nil {
-		log.Warning("createVMModel> cannot start program %s", errS)
+		log.Warning(ctx, "createVMModel> cannot start program %s", errS)
 		annot := annotation{ToDelete: true}
 		if annotStr, err := json.Marshal(annot); err == nil {
 			vm.Reconfigure(ctx, types.VirtualMachineConfigSpec{
@@ -138,10 +138,10 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 	}
 	log.Info("createVMModel> model %s is build", model.Name)
 
-	modelFound, errM := h.getModelByName(model.Name)
+	modelFound, errM := h.getModelByName(ctx, model.Name)
 	if errM == nil {
 		if errD := h.deleteServer(modelFound); errD != nil {
-			log.Warning("createVMModel> Cannot delete previous model %s : %s", model.Name, errD)
+			log.Warning(ctx, "createVMModel> Cannot delete previous model %s : %s", model.Name, errD)
 		}
 	}
 
@@ -213,7 +213,7 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, token str
 	}
 
 	if _, errS := h.launchClientOp(vm, buffer.String(), env); errS != nil {
-		log.Warning("launchScript> cannot start program %s", errS)
+		log.Warning(ctx, "launchScript> cannot start program %s", errS)
 
 		// tag vm to delete
 		annot := annotation{ToDelete: true}

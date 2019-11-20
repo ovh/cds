@@ -37,7 +37,7 @@ func (r *ProcessorReport) WorkflowRuns() []sdk.WorkflowRun {
 }
 
 // Add something to the report
-func (r *ProcessorReport) Add(i ...interface{}) {
+func (r *ProcessorReport) Add(ctx context.Context, i ...interface{}) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
@@ -58,7 +58,7 @@ func (r *ProcessorReport) Add(i ...interface{}) {
 		case *sdk.WorkflowRun:
 			r.workflows = append(r.workflows, *x)
 		default:
-			log.Warning("ProcessorReport> unknown type %T", w)
+			log.Warning(ctx, "ProcessorReport> unknown type %T", w)
 		}
 	}
 }
@@ -76,7 +76,7 @@ func (r *ProcessorReport) All() []interface{} {
 }
 
 // Merge to the provided report and the current report
-func (r *ProcessorReport) Merge(r1 *ProcessorReport, err error) (*ProcessorReport, error) {
+func (r *ProcessorReport) Merge(ctx context.Context, r1 *ProcessorReport, err error) (*ProcessorReport, error) {
 	if r == nil {
 		return r1, err
 	}
@@ -84,7 +84,7 @@ func (r *ProcessorReport) Merge(r1 *ProcessorReport, err error) (*ProcessorRepor
 		return r, err
 	}
 	data := r1.All()
-	r.Add(data...)
+	r.Add(ctx, data...)
 	return r, err
 }
 
@@ -174,7 +174,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 		return nil, sdk.WrapError(err, "Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
 
-	report.Add(*job)
+	report.Add(ctx, *job)
 
 	if status == sdk.StatusBuilding {
 		// Sync job status in noderun
@@ -185,11 +185,13 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 		if errNR != nil {
 			return nil, sdk.WrapError(errNR, "Cannot LoadNodeRunByID node run %d", nodeRun.ID)
 		}
-		return report.Merge(syncTakeJobInNodeRun(ctx, db, nodeRun, job, stageIndex))
+		r, err := syncTakeJobInNodeRun(ctx, db, nodeRun, job, stageIndex)
+		return report.Merge(ctx, r, err)
 	}
 	syncJobInNodeRun(nodeRun, job, stageIndex)
 
-	return report.Merge(executeNodeRun(ctx, db, store, proj, nodeRun))
+	r, err := executeNodeRun(ctx, db, store, proj, nodeRun)
+	return report.Merge(ctx, r, err)
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
@@ -262,8 +264,8 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 		return nil, nil, sdk.WrapError(err, "Cannot save spawn info on node job run %d", jobID)
 	}
 
-	var err error
-	report, err = report.Merge(UpdateNodeJobRunStatus(ctx, db, store, p, job, sdk.StatusBuilding))
+	r, err := UpdateNodeJobRunStatus(ctx, db, store, p, job, sdk.StatusBuilding)
+	report, err = report.Merge(ctx, r, err)
 	if err != nil {
 		log.Debug("TakeNodeJobRun> call UpdateNodeJobRunStatus on job %d set status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
 		return nil, nil, sdk.WrapError(err, "Cannot update node job run %d", jobID)
@@ -651,7 +653,7 @@ func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob s
 		return sdk.WrapError(errS, "RestartWorkflowNodeJob> error on sync nodeJobRun")
 	}
 	if !sync {
-		log.Warning("RestartWorkflowNodeJob> sync doesn't find a nodeJobRun")
+		log.Warning(ctx, "RestartWorkflowNodeJob> sync doesn't find a nodeJobRun")
 	}
 
 	if errU := UpdateNodeRun(db, nodeRun); errU != nil {

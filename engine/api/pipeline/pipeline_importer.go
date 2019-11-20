@@ -197,7 +197,7 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, p
 	errU := UpdatePipeline(db, pip)
 
 	if oldPipeline.Name != pip.Name {
-		event.PublishPipelineUpdate(proj.Key, pip.Name, oldPipeline.Name, u)
+		event.PublishPipelineUpdate(ctx, proj.Key, pip.Name, oldPipeline.Name, u)
 	}
 
 	return sdk.WrapError(errU, "ImportUpdate> cannot update pipeline")
@@ -276,7 +276,7 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 			jobAction.Enabled = true
 			jobAction.Action.Enabled = true
 			if errs := CheckJob(ctx, db, jobAction); errs != nil {
-				log.Warning("pipeline.importNew.CheckJob > %s", errs)
+				log.Warning(ctx, "pipeline.importNew.CheckJob > %s", errs)
 				return errs
 			}
 			if err := action.CheckChildrenForGroupIDs(ctx, db, &jobAction.Action, groupIDs); err != nil {
@@ -291,7 +291,7 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 		}
 	}
 
-	event.PublishPipelineAdd(proj.Key, *pip, u)
+	event.PublishPipelineAdd(ctx, proj.Key, *pip, u)
 
 	return nil
 }

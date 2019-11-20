@@ -222,7 +222,7 @@ func (h *HatcheryOpenstack) killAwolServers(ctx context.Context) {
 	workers, err := h.CDSClient().WorkerList(ctx)
 	now := time.Now().Unix()
 	if err != nil {
-		log.Warning("killAwolServers> Cannot fetch worker list: %s", err)
+		log.Warning(ctx, "killAwolServers> Cannot fetch worker list: %s", err)
 		return
 	}
 
@@ -232,7 +232,7 @@ func (h *HatcheryOpenstack) killAwolServers(ctx context.Context) {
 		// if the vm is in BUILD state since > 15 min, we delete it
 		if s.Status == "BUILD" {
 			if isWorker && time.Since(s.Updated) > 15*time.Minute {
-				log.Warning("killAwolServers> Deleting server %s status: %s last update: %s", s.Name, s.Status, time.Since(s.Updated))
+				log.Warning(ctx, "killAwolServers> Deleting server %s status: %s last update: %s", s.Name, s.Status, time.Since(s.Updated))
 				if err := h.deleteServer(ctx, s); err != nil {
 					log.Error(ctx, "killAwolServers> Error while deleting server %s not created status: %s last update: %s", s.Name, s.Status, time.Since(s.Updated))
 				}
@@ -431,7 +431,7 @@ func (h *HatcheryOpenstack) deleteServer(ctx context.Context, s servers.Server) 
 
 	r := servers.Delete(h.openstackClient, s.ID)
 	if err := r.ExtractErr(); err != nil {
-		log.Warning("deleteServer> Cannot delete worker %s: %s", s.Name, err)
+		log.Warning(ctx, "deleteServer> Cannot delete worker %s: %s", s.Name, err)
 		return err
 	}
 	return nil

@@ -25,7 +25,7 @@ func (g *githubClient) RateLimit(ctx context.Context) error {
 	url := "/rate_limit"
 	status, body, _, err := g.get(ctx, url)
 	if err != nil {
-		log.Warning("githubClient.RateLimit> Error %s", err)
+		log.Warning(ctx, "githubClient.RateLimit> Error %s", err)
 		return err
 	}
 	// If the GitHub instance does not have Rate Limitting enabled you will see a 404.
@@ -37,7 +37,7 @@ func (g *githubClient) RateLimit(ctx context.Context) error {
 	}
 	rateLimit := &RateLimit{}
 	if err := json.Unmarshal(body, rateLimit); err != nil {
-		log.Warning("githubClient.RateLimit> Error %s", err)
+		log.Warning(ctx, "githubClient.RateLimit> Error %s", err)
 		return err
 	}
 	if rateLimit.Rate.Remaining < 100 {

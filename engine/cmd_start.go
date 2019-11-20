@@ -321,7 +321,7 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 	json.Unmarshal(b, &srvConfig) // nolint
 
 	// then register
-	if err := s.Register(srvConfig); err != nil {
+	if err := s.Register(c, srvConfig); err != nil {
 		log.Error(ctx, "%s> Unable to register: %v", serviceName, err)
 		return err
 	}

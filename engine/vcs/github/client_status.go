@@ -30,7 +30,7 @@ type statusData struct {
 //https://developer.github.com/v3/repos/statuses/#create-a-status
 func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if g.DisableStatus {
-		log.Warning("github.SetStatus>  ⚠ Github statuses are disabled")
+		log.Warning(ctx, "github.SetStatus>  ⚠ Github statuses are disabled")
 		return nil
 	}
 

@@ -200,17 +200,17 @@ func (g *githubClient) allCommitBetween(ctx context.Context, repo string, untilD
 			}
 			status, body, headers, err := g.get(ctx, nextPage+urlValues.Encode(), withoutETag)
 			if err != nil {
-				log.Warning("githubClient.Commits> Error %s", err)
+				log.Warning(ctx, "githubClient.Commits> Error %s", err)
 				return nil, err
 			}
 			if status >= 400 {
-				log.Warning("githubClient.Commits> Error %s", errorAPI(body))
+				log.Warning(ctx, "githubClient.Commits> Error %s", errorAPI(body))
 				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 			}
 			nextCommits := []Commit{}
 
 			if err := json.Unmarshal(body, &nextCommits); err != nil {
-				log.Warning("githubClient.Commits> Unable to parse github commits: %s", err)
+				log.Warning(ctx, "githubClient.Commits> Unable to parse github commits: %s", err)
 				return nil, err
 			}
 
@@ -229,7 +229,7 @@ func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 	url := "/repos/" + repo + "/commits/" + hash
 	status, body, _, err := g.get(ctx, url)
 	if err != nil {
-		log.Warning("githubClient.Commit> Error %s", err)
+		log.Warning(ctx, "githubClient.Commit> Error %s", err)
 		return sdk.VCSCommit{}, err
 	}
 	if status >= 400 {
@@ -246,7 +246,7 @@ func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 		}
 	} else {
 		if err := json.Unmarshal(body, &c); err != nil {
-			log.Warning("githubClient.Commit> Unable to parse github commit: %s", err)
+			log.Warning(ctx, "githubClient.Commit> Unable to parse github commit: %s", err)
 			return sdk.VCSCommit{}, err
 		}
 		//Put the body on cache for one hour and one minute
@@ -277,7 +277,7 @@ func (g *githubClient) CommitsBetweenRefs(ctx context.Context, repo, base, head 
 	url := fmt.Sprintf("/repos/%s/compare/%s...%s", repo, base, head)
 	status, body, _, err := g.get(ctx, url)
 	if err != nil {
-		log.Warning("githubClient.CommitsBetweenRefs> Error %s", err)
+		log.Warning(ctx, "githubClient.CommitsBetweenRefs> Error %s", err)
 		return commits, err
 	}
 	if status >= 400 {
@@ -294,7 +294,7 @@ func (g *githubClient) CommitsBetweenRefs(ctx context.Context, repo, base, head 
 		}
 	} else {
 		if err := json.Unmarshal(body, &diff); err != nil {
-			log.Warning("githubClient.CommitsBetweenRefs> Unable to parse github commit: %s", err)
+			log.Warning(ctx, "githubClient.CommitsBetweenRefs> Unable to parse github commit: %s", err)
 			return commits, err
 		}
 

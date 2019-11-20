@@ -751,7 +751,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 
 		lastWfrID, errID := db.SelectInt(qLastSuccess, wf.ID, wf.HistoryLength, sdk.StatusSuccess)
 		if errID != nil && errID != sql.ErrNoRows {
-			log.Warning("PurgeWorkflowRun> Unable to last success run for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, errID)
+			log.Warning(ctx, "PurgeWorkflowRun> Unable to last success run for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, errID)
 			return errID
 		}
 
@@ -770,7 +770,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 		`
 		res, err := db.Exec(qDelete, wf.ID, lastWfrID, sdk.StatusBuilding, sdk.StatusChecking, sdk.StatusWaiting)
 		if err != nil {
-			log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
+			log.Warning(ctx, "PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
 			return err
 		}
 
@@ -812,7 +812,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 		sdk.StatusPending,
 	)
 	if errS != nil {
-		log.Warning("PurgeWorkflowRun> Unable to get workflow run for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
+		log.Warning(ctx, "PurgeWorkflowRun> Unable to get workflow run for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
 		return errS
 	}
 
@@ -837,7 +837,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 		ID string `db:"id"`
 	}{}
 	if _, errS := db.Select(&successIDs, querySuccessIds, wf.ID, strings.Join(filteredPurgeTags, ","), sdk.StatusSuccess); errS != nil {
-		log.Warning("PurgeWorkflowRun> Unable to get workflow run in success for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
+		log.Warning(ctx, "PurgeWorkflowRun> Unable to get workflow run in success for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
 		return errS
 	}
 
@@ -888,7 +888,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 	queryUpdate := `UPDATE workflow_run SET to_delete = true WHERE workflow_run.id = ANY(string_to_array($1, ',')::bigint[])`
 	res, err := db.Exec(queryUpdate, strings.Join(idsToUpdate, ","))
 	if err != nil {
-		log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
+		log.Warning(ctx, "PurgeWorkflowRun> Unable to update workflow run for purge for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
 		return err
 	}
 
@@ -964,7 +964,7 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 }
 
 // stopRunsBlocked is useful to force stop all workflow that is running more than 24hrs
-func stopRunsBlocked(db *gorp.DbMap) error {
+func stopRunsBlocked(ctx context.Context, db *gorp.DbMap) error {
 	query := `SELECT workflow_run.id
 		FROM workflow_run
 		WHERE (workflow_run.status = $1 or workflow_run.status = $2 or workflow_run.status = $3)
@@ -1051,7 +1051,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 			return sdk.WrapError(err, "cannot unmarshal stages")
 		}
 
-		stopWorkflowNodeRunStages(db, &nr)
+		stopWorkflowNodeRunStages(ctx, db, &nr)
 		if !sdk.StatusIsTerminated(resp[i].Status) {
 			nr.Status = sdk.StatusStopped
 			nr.Done = now

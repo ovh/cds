@@ -243,7 +243,7 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, id string) error {
 		wNodeJob, errL := workflow.LoadNodeJobRun(ctx, tx, nil, jobID.Int64)
 		if errL == nil && wNodeJob.Retry < 3 {
 			if err := workflow.RestartWorkflowNodeJob(context.TODO(), db, *wNodeJob); err != nil {
-				log.Warning("DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)
+				log.Warning(ctx, "DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)
 			} else {
 				log.Info("DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
 			}

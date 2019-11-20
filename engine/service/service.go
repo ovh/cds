@@ -88,7 +88,7 @@ loop:
 	return nil
 }
 
-func (c *Common) Register(cfg sdk.ServiceConfig) error {
+func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
 	log.Info("Registing service %s(%T) %s", c.Type(), c, c.Name())
 
 	// no register for api
@@ -115,7 +115,7 @@ func (c *Common) Register(cfg sdk.ServiceConfig) error {
 		srv.PublicKey = pubKeyPEM
 	}
 
-	srv2, err := c.Client.ServiceRegister(srv)
+	srv2, err := c.Client.ServiceRegister(ctx, srv)
 	if err != nil {
 		return sdk.WrapError(err, "Register>")
 	}
@@ -139,7 +139,7 @@ func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context)
 			return ctx.Err()
 		case <-ticker.C:
 			if err := c.Client.ServiceHeartbeat(status(ctx)); err != nil {
-				log.Warning("%s> Heartbeat failure: %v", c.Name(), err)
+				log.Warning(ctx, "%s> Heartbeat failure: %v", c.Name(), err)
 				heartbeatFailures++
 			}
 

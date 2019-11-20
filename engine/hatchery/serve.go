@@ -50,7 +50,7 @@ func init() {
 			time.Sleep(1 * time.Minute)
 			dir, err := os.Getwd()
 			if err != nil {
-				log.Warning("unable to get working directory: %v", err)
+				log.Warning(context.Background(), "unable to get working directory: %v", err)
 				continue
 			}
 
@@ -59,7 +59,7 @@ func init() {
 
 			files, err := ioutil.ReadDir(path)
 			if err != nil {
-				log.Warning("unable to list files in %s: %v", path, err)
+				log.Warning(context.Background(), "unable to list files in %s: %v", path, err)
 				break
 			}
 
@@ -67,12 +67,12 @@ func init() {
 				filename := filepath.Join(path, f.Name())
 				file, err := os.Stat(filename)
 				if err != nil {
-					log.Warning("unable to get file %s info: %v", f.Name(), err)
+					log.Warning(context.Background(), "unable to get file %s info: %v", f.Name(), err)
 					continue
 				}
 				if file.ModTime().Before(time.Now().Add(-15 * time.Minute)) {
 					if err := os.Remove(filename); err != nil {
-						log.Warning("unable to remove file %s: %v", filename, err)
+						log.Warning(context.Background(), "unable to remove file %s: %v", filename, err)
 					}
 				}
 			}

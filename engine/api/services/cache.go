@@ -134,7 +134,7 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 		case n := <-listener.Notify:
 			e := map[string]interface{}{}
 			if err := json.Unmarshal([]byte(n.Extra), &e); err != nil {
-				log.Warning("unable to unmarshal received event: %v", err)
+				log.Warning(ctx, "unable to unmarshal received event: %v", err)
 				continue
 			}
 

@@ -85,7 +85,7 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 		case <-tick.C:
 			msg, err := store.GetMessageFromSubscription(c, pubSub)
 			if err != nil {
-				log.Warning("events.cacheSubscribe> Cannot get message: %v", err)
+				log.Warning(c, "events.cacheSubscribe> Cannot get message: %v", err)
 				continue
 			}
 			var e sdk.Event

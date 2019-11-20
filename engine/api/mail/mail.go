@@ -72,13 +72,13 @@ func Init(user, password, from, host, port string, tls, disable bool) {
 
 // Status verification of smtp configuration, returns OK or KO
 func Status(ctx context.Context) sdk.MonitoringStatusLine {
-	if _, err := smtpClient(); err != nil {
+	if _, err := smtpClient(ctx); err != nil {
 		return sdk.MonitoringStatusLine{Component: "SMTP Ping", Value: "KO: " + err.Error(), Status: sdk.MonitoringStatusAlert}
 	}
 	return sdk.MonitoringStatusLine{Component: "SMTP Ping", Value: "Connect OK", Status: sdk.MonitoringStatusOK}
 }
 
-func smtpClient() (*smtp.Client, error) {
+func smtpClient(ctx context.Context) (*smtp.Client, error) {
 	if smtpHost == "" || smtpPort == "" || !smtpEnable {
 		return nil, errors.New("No SMTP configuration")
 	}
@@ -100,13 +100,13 @@ func smtpClient() (*smtp.Client, error) {
 		// from the very beginning (no starttls)
 		conn, errc := tls.Dial("tcp", servername, tlsconfig)
 		if errc != nil {
-			log.Warning("Error with c.Dial:%s\n", errc.Error())
+			log.Warning(ctx, "Error with c.Dial:%s\n", errc.Error())
 			return nil, errc
 		}
 
 		c, err = smtp.NewClient(conn, smtpHost)
 		if err != nil {
-			log.Warning("Error with c.NewClient:%s\n", err.Error())
+			log.Warning(ctx, "Error with c.NewClient:%s\n", err.Error())
 			return nil, err
 		}
 		// TLS config
@@ -118,7 +118,7 @@ func smtpClient() (*smtp.Client, error) {
 	} else {
 		c, err = smtp.Dial(servername)
 		if err != nil {
-			log.Warning("Error with c.NewClient:%s\n", err.Error())
+			log.Warning(ctx, "Error with c.NewClient:%s\n", err.Error())
 			return nil, err
 		}
 	}
@@ -127,7 +127,7 @@ func smtpClient() (*smtp.Client, error) {
 	if smtpUser != "" && smtpPassword != "" {
 		auth := smtp.PlainAuth("", smtpUser, smtpPassword, smtpHost)
 		if err = c.Auth(auth); err != nil {
-			log.Warning("Error with c.Auth:%s\n", err.Error())
+			log.Warning(ctx, "Error with c.Auth:%s\n", err.Error())
 			c.Close()
 			return nil, err
 		}
@@ -136,7 +136,7 @@ func smtpClient() (*smtp.Client, error) {
 }
 
 // SendMailVerifyToken send mail to verify user account.
-func SendMailVerifyToken(userMail, username, token, callbackUI, APIURL string) error {
+func SendMailVerifyToken(ctx context.Context, userMail, username, token, callbackUI, APIURL string) error {
 	callbackURL := fmt.Sprintf(callbackUI, token)
 
 	mailContent, err := createTemplate(templateSignedup, callbackURL, APIURL, username, token)
@@ -144,11 +144,11 @@ func SendMailVerifyToken(userMail, username, token, callbackUI, APIURL string) e
 		return err
 	}
 
-	return SendEmail("[CDS] Welcome to CDS", &mailContent, userMail, false)
+	return SendEmail(ctx, "[CDS] Welcome to CDS", &mailContent, userMail, false)
 }
 
 // SendMailAskResetToken send mail to ask reset a user account.
-func SendMailAskResetToken(userMail, username, token, callbackUI, APIURL string) error {
+func SendMailAskResetToken(ctx context.Context, userMail, username, token, callbackUI, APIURL string) error {
 	callbackURL := fmt.Sprintf(callbackUI, token)
 
 	mailContent, err := createTemplate(templateAskReset, callbackURL, APIURL, username, token)
@@ -156,11 +156,11 @@ func SendMailAskResetToken(userMail, username, token, callbackUI, APIURL string)
 		return err
 	}
 
-	return SendEmail("[CDS] Reset your password", &mailContent, userMail, false)
+	return SendEmail(ctx, "[CDS] Reset your password", &mailContent, userMail, false)
 }
 
 // SendMailResetToken send mail to reset a user account.
-func SendMailResetToken(userMail, username, token, callback string) error {
+func SendMailResetToken(ctx context.Context, userMail, username, token, callback string) error {
 	callbackURL := fmt.Sprintf(callback, token)
 
 	mailContent, err := createTemplate(templateReset, callbackURL, "", username, "")
@@ -168,7 +168,7 @@ func SendMailResetToken(userMail, username, token, callback string) error {
 		return err
 	}
 
-	return SendEmail("[CDS] Your password was reset", &mailContent, userMail, false)
+	return SendEmail(ctx, "[CDS] Your password was reset", &mailContent, userMail, false)
 }
 
 func createTemplate(templ, callbackURL, callbackAPIURL, username, token string) (bytes.Buffer, error) {
@@ -189,7 +189,7 @@ func createTemplate(templ, callbackURL, callbackAPIURL, username, token string) 
 }
 
 //SendEmail is the core function to send an email
-func SendEmail(subject string, mailContent *bytes.Buffer, userMail string, isHTML bool) error {
+func SendEmail(ctx context.Context, subject string, mailContent *bytes.Buffer, userMail string, isHTML bool) error {
 	from := mail.Address{
 		Name:    "",
 		Address: smtpFrom,
@@ -224,7 +224,7 @@ func SendEmail(subject string, mailContent *bytes.Buffer, userMail string, isHTM
 		return nil
 	}
 
-	c, err := smtpClient()
+	c, err := smtpClient(ctx)
 	if err != nil {
 		return sdk.WrapError(err, "Cannot get smtp client")
 	}

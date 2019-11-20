@@ -93,7 +93,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			arg.WorkerToken = jwt
 
 			if err := h.SpawnWorker(ctx, arg); err != nil {
-				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, err)
+				log.Warning(ctx, "workerRegister> cannot spawn worker for register:%s err:%v", m.Name, err)
 				var spawnError = sdk.SpawnErrorForm{
 					Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
 				}
@@ -139,7 +139,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	}
 
 	if h.Service() == nil {
-		log.Warning("hatchery> spawnWorkerForJob> %d - job %d %s- hatchery not registered", j.timestamp, j.id, modelName)
+		log.Warning(ctx, "hatchery> spawnWorkerForJob> %d - job %d %s- hatchery not registered", j.timestamp, j.id, modelName)
 		return false
 	}
 

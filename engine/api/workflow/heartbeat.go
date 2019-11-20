@@ -41,7 +41,7 @@ func restartDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.
 			}
 		} else {
 			if err := RestartWorkflowNodeJob(ctx, tx, deadJob); err != nil {
-				log.Warning("restartDeadJob> Cannot restart node job run %d: %v", deadJob.ID, err)
+				log.Warning(ctx, "restartDeadJob> Cannot restart node job run %d: %v", deadJob.ID, err)
 				_ = tx.Rollback()
 				continue
 			}

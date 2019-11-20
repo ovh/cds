@@ -174,7 +174,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAPIConsumer(ctx))
+		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, getAPIConsumer(ctx))
 
 		//Redirect on UI advanced project page
 		url := fmt.Sprintf("%s/project/%s?tab=advanced", api.Config.URL.UI, projectKey)
@@ -245,7 +245,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAPIConsumer(ctx))
+		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 
@@ -315,7 +315,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAPIConsumer(ctx))
+		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
@@ -367,7 +367,7 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteVCSServer(p, vcsServer.Name, getAPIConsumer(ctx))
+		event.PublishDeleteVCSServer(ctx, p, vcsServer.Name, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -587,11 +587,11 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 					return sdk.WrapError(err, "cannot update node context %d", wf.WorkflowData.Node.Context.ID)
 				}
 
-				event.PublishWorkflowUpdate(proj.Key, *wfDB, *wfOld, getAPIConsumer(ctx))
+				event.PublishWorkflowUpdate(ctx, proj.Key, *wfDB, *wfOld, getAPIConsumer(ctx))
 			}
 		}
 
-		event.PublishApplicationRepositoryAdd(projectKey, *app, getAPIConsumer(ctx))
+		event.PublishApplicationRepositoryAdd(ctx, projectKey, *app, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
@@ -634,7 +634,7 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishApplicationRepositoryDelete(projectKey, appName, app.VCSServer, app.RepositoryFullname, u)
+		event.PublishApplicationRepositoryDelete(ctx, projectKey, appName, app.VCSServer, app.RepositoryFullname, u)
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}

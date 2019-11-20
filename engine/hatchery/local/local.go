@@ -287,7 +287,7 @@ func (h *HatcheryLocal) startKillAwolWorkerRoutine(ctx context.Context) {
 	t := time.NewTicker(5 * time.Second)
 	for range t.C {
 		if err := h.killAwolWorkers(); err != nil {
-			log.Warning("Cannot kill awol workers: %s", err)
+			log.Warning(ctx, "Cannot kill awol workers: %s", err)
 		}
 	}
 }
@@ -329,7 +329,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 
 		if kill {
 			if err := h.killWorker(name, workerCmd); err != nil {
-				log.Warning("Error killing worker %s :%s", name, err)
+				log.Warning(ctx, "Error killing worker %s :%s", name, err)
 			}
 			killedWorkers = append(killedWorkers, name)
 		}

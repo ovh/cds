@@ -124,7 +124,7 @@ func (api *API) postTemplateHandler() service.Handler {
 			return err
 		}
 
-		event.PublishWorkflowTemplateAdd(*newTemplate, getAPIConsumer(ctx))
+		event.PublishWorkflowTemplateAdd(ctx, *newTemplate, getAPIConsumer(ctx))
 
 		if err := workflowtemplate.LoadOptions.WithAudits(ctx, api.mustDB(), newTemplate); err != nil {
 			return err
@@ -246,7 +246,7 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
-		event.PublishWorkflowTemplateUpdate(*old, *newTemplate, data.ChangeMessage, getAPIConsumer(ctx))
+		event.PublishWorkflowTemplateUpdate(ctx, *old, *newTemplate, data.ChangeMessage, getAPIConsumer(ctx))
 
 		if err := workflowtemplate.LoadOptions.WithAudits(ctx, api.mustDB(), newTemplate); err != nil {
 			return err
@@ -387,9 +387,9 @@ func (api *API) applyTemplate(ctx context.Context, u sdk.Identifiable, p *sdk.Pr
 	}
 
 	if old != nil {
-		event.PublishWorkflowTemplateInstanceUpdate(*old, *wti, u)
+		event.PublishWorkflowTemplateInstanceUpdate(ctx, *old, *wti, u)
 	} else if !req.Detached {
-		event.PublishWorkflowTemplateInstanceAdd(*wti, u)
+		event.PublishWorkflowTemplateInstanceAdd(ctx, *wti, u)
 	}
 
 	return result, nil

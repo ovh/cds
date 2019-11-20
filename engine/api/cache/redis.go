@@ -239,7 +239,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 }
 
 // Publish a msg in a channel
-func (s *RedisStore) Publish(channel string, value interface{}) error {
+func (s *RedisStore) Publish(ctx context.Context, channel string, value interface{}) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
@@ -259,7 +259,7 @@ func (s *RedisStore) Publish(channel string, value interface{}) error {
 		if errP == nil {
 			break
 		}
-		log.Warning("redis.Publish> Unable to publish in channel %s: %v", channel, errP)
+		log.Warning(ctx, "redis.Publish> Unable to publish in channel %s: %v", channel, errP)
 		time.Sleep(100 * time.Millisecond)
 	}
 	return nil

@@ -12,7 +12,7 @@ import (
 
 // Branches returns list of branches for a repo
 func (client *bitbucketcloudClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
-	repo, err := client.repoByFullname(fullname)
+	repo, err := client.repoByFullname(ctx, fullname)
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot get repo by fullname")
 	}
@@ -64,7 +64,7 @@ func (client *bitbucketcloudClient) Branches(ctx context.Context, fullname strin
 
 // Branch returns only detail of a branch
 func (client *bitbucketcloudClient) Branch(ctx context.Context, fullname, theBranch string) (*sdk.VCSBranch, error) {
-	repo, err := client.repoByFullname(fullname)
+	repo, err := client.repoByFullname(ctx, fullname)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (client *bitbucketcloudClient) Branch(ctx context.Context, fullname, theBra
 
 	var branch Branch
 	if err := json.Unmarshal(body, &branch); err != nil {
-		log.Warning("bitbucketcloudClient.Branch> Unable to parse github branch: %s", err)
+		log.Warning(ctx, "bitbucketcloudClient.Branch> Unable to parse github branch: %s", err)
 		return nil, err
 	}
 

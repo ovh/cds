@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"strings"
 	"sync"
 
@@ -20,7 +21,7 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Application and insert or update the application in database
-func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Message, error) {
 	log.Info("ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, proj.Key, opts.Force)
 	msgList := []sdk.Message{}
 
@@ -194,7 +195,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		}
 	}(&msgList)
 
-	globalError := Import(db, cache, proj, app, eapp.VCSServer, u, msgChan)
+	globalError := Import(ctx, db, cache, proj, app, eapp.VCSServer, u, msgChan)
 	close(msgChan)
 	done.Wait()
 

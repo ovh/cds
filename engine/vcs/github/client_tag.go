@@ -30,7 +30,7 @@ func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag,
 			attempt++
 			status, body, headers, err := g.get(ctx, nextPage, opt)
 			if err != nil {
-				log.Warning("githubClient.Tags> Error %s", err)
+				log.Warning(ctx, "githubClient.Tags> Error %s", err)
 				return nil, err
 			}
 			if status >= 400 {
@@ -58,7 +58,7 @@ func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag,
 				continue
 			} else {
 				if err := json.Unmarshal(body, &nextTags); err != nil {
-					log.Warning("githubClient.Tags> Unable to parse github tags: %s", err)
+					log.Warning(ctx, "githubClient.Tags> Unable to parse github tags: %s", err)
 					return nil, err
 				}
 			}

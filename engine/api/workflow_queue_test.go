@@ -1236,7 +1236,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	wrr, err := workflow.LoadRunByID(db, wrToTest.ID, workflow.LoadRunOptions{})
 	assert.NoError(t, err)
 
-	log.Warning("%s", wrr.Status)
+	log.Warning(context.Background(), "%s", wrr.Status)
 	// Call post coverage report handler
 	// Prepare request
 	vars := map[string]string{

@@ -2,6 +2,7 @@ package notification
 
 import (
 	"bytes"
+	"context"
 	"regexp"
 
 	"github.com/ovh/cds/engine/api/mail"
@@ -12,12 +13,12 @@ import (
 var regexpIsHTML = regexp.MustCompile(`^\w*\n*<[a-z][\s\S]*>`)
 
 // SendMailNotif Send user notification by mail
-func SendMailNotif(notif sdk.EventNotif) {
+func SendMailNotif(ctx context.Context, notif sdk.EventNotif) {
 	log.Info("notification.SendMailNotif> Send notif '%s'", notif.Subject)
 	errors := []string{}
 	for _, recipient := range notif.Recipients {
 		isHTML := regexpIsHTML.MatchString(notif.Body)
-		if err := mail.SendEmail(notif.Subject, bytes.NewBufferString(notif.Body), recipient, isHTML); err != nil {
+		if err := mail.SendEmail(ctx, notif.Subject, bytes.NewBufferString(notif.Body), recipient, isHTML); err != nil {
 			errors = append(errors, err.Error())
 		}
 	}

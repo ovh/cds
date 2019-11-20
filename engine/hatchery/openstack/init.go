@@ -39,15 +39,15 @@ func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 	h.openstackClient = openstackClient
 
 	if err := h.initFlavors(); err != nil {
-		log.Warning("Error getting flavors: %s", err)
+		log.Warning(ctx, "Error getting flavors: %s", err)
 	}
 
 	if err := h.initNetworks(); err != nil {
-		log.Warning("Error getting networks: %s", err)
+		log.Warning(ctx, "Error getting networks: %s", err)
 	}
 
 	if err := h.initIPStatus(ctx); err != nil {
-		log.Warning("Error on initIPStatus(): %s", err)
+		log.Warning(ctx, "Error on initIPStatus(): %s", err)
 	}
 
 	go h.main(ctx)

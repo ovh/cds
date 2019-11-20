@@ -129,7 +129,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 		if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
 			return nil, sdk.WrapError(err, "Cannot update node run")
 		}
-		report.Add(*noderun)
+		report.Add(ctx, *noderun)
 	}
 
 	//Load workflow run
@@ -329,7 +329,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 					// job result already send as job is no more in database
 					// this log is here to stats it and we returns nil for unlock the worker
 					// and avoid a "worker timeout"
-					log.Warning("NodeJobRun not found: %d err:%v", id, errLn)
+					log.Warning(ctx, "NodeJobRun not found: %d err:%v", id, errLn)
 					return nil
 				}
 				return sdk.WrapError(errLn, "Cannot load NodeJobRun %d", id)
@@ -629,7 +629,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 				return sdk.WrapError(errS, "postWorkflowJobStepStatusHandler> unable to sync nodeJobRun. JobID on handler: %d", id)
 			}
 			if !sync {
-				log.Warning("postWorkflowJobStepStatusHandler> sync doesn't find a nodeJobRun. JobID on handler: %d", id)
+				log.Warning(ctx, "postWorkflowJobStepStatusHandler> sync doesn't find a nodeJobRun. JobID on handler: %d", id)
 			}
 			if errU := workflow.UpdateNodeRun(tx, nodeRun); errU != nil {
 				return sdk.WrapError(errU, "postWorkflowJobStepStatusHandler> Cannot update node run. JobID on handler: %d", id)
@@ -645,7 +645,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 				DisableDetailledNodeRun: true,
 			})
 			if errN != nil {
-				log.Warning("postWorkflowJobStepStatusHandler> Unable to load node run for event: %v", errN)
+				log.Warning(ctx, "postWorkflowJobStepStatusHandler> Unable to load node run for event: %v", errN)
 				return nil
 			}
 			nodeRun = *nodeRunP
@@ -653,7 +653,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 
 		work, errW := workflow.LoadWorkflowFromWorkflowRunID(api.mustDB(), nodeRun.WorkflowRunID)
 		if errW != nil {
-			log.Warning("postWorkflowJobStepStatusHandler> Unable to load workflow for event: %v", errW)
+			log.Warning(ctx, "postWorkflowJobStepStatusHandler> Unable to load workflow for event: %v", errW)
 			return nil
 		}
 		nodeRun.Translate(r.Header.Get("Accept-Language"))

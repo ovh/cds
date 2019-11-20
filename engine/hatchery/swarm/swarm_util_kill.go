@@ -142,14 +142,14 @@ func (h *HatcherySwarm) killAndRemoveContainer(ctx context.Context, dockerClient
 	return nil
 }
 
-func (h *HatcherySwarm) killAwolNetworks() error {
+func (h *HatcherySwarm) killAwolNetworks(ctx context.Context) error {
 	for _, dockerClient := range h.dockerClients {
 		//Checking networks
 		ctxDocker, cancelList := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancelList()
 		nets, errLN := dockerClient.NetworkList(ctxDocker, types.NetworkListOptions{})
 		if errLN != nil {
-			log.Warning("hatchery> swarm> killAwolNetworks> Cannot get networks on %s: %s", dockerClient.name, errLN)
+			log.Warning(ctx, "hatchery> swarm> killAwolNetworks> Cannot get networks on %s: %s", dockerClient.name, errLN)
 			return errLN
 		}
 
@@ -158,7 +158,7 @@ func (h *HatcherySwarm) killAwolNetworks() error {
 			defer cancelList()
 			n, err := dockerClient.NetworkInspect(ctxDocker, nets[i].ID, types.NetworkInspectOptions{})
 			if err != nil {
-				log.Warning("hatchery> swarm> killAwolNetworks> Unable to get network info: %v", err)
+				log.Warning(ctx, "hatchery> swarm> killAwolNetworks> Unable to get network info: %v", err)
 				continue
 			}
 
@@ -183,7 +183,7 @@ func (h *HatcherySwarm) killAwolNetworks() error {
 			ctxDocker2, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			if err := dockerClient.NetworkRemove(ctxDocker2, n.ID); err != nil {
-				log.Warning("hatchery> swarm> killAwolNetworks> Unable to delete network %s err:%s", n.Name, err)
+				log.Warning(ctx, "hatchery> swarm> killAwolNetworks> Unable to delete network %s err:%s", n.Name, err)
 			}
 		}
 	}

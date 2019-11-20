@@ -260,7 +260,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			var err error
 			memory, err = strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
-				log.Warning("spawnKubernetesDockerWorker> %s unable to parse memory requirement %d: %v", logJob, memory, err)
+				log.Warning(ctx, "spawnKubernetesDockerWorker> %s unable to parse memory requirement %d: %v", logJob, memory, err)
 				return err
 			}
 		}
@@ -399,7 +399,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		if sm, ok := envm["CDS_SERVICE_MEMORY"]; ok {
 			mq, err := resource.ParseQuantity(sm)
 			if err != nil {
-				log.Warning("hatchery> kubernetes> SpawnWorker> Unable to parse CDS_SERVICE_MEMORY value '%s': %s", sm, err)
+				log.Warning(ctx, "hatchery> kubernetes> SpawnWorker> Unable to parse CDS_SERVICE_MEMORY value '%s': %s", sm, err)
 				continue
 			}
 			servContainer.Resources = apiv1.ResourceRequirements{
@@ -439,7 +439,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 func (h *HatcheryKubernetes) WorkersStarted(ctx context.Context) []string {
 	list, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_HATCHERY_NAME})
 	if err != nil {
-		log.Warning("WorkersStarted> unable to list pods on namespace %s", h.Config.Namespace)
+		log.Warning(ctx, "WorkersStarted> unable to list pods on namespace %s", h.Config.Namespace)
 		return nil
 	}
 	workerNames := make([]string, 0, list.Size())
@@ -472,7 +472,7 @@ func (h *HatcheryKubernetes) WorkersStartedByModel(ctx context.Context, model *s
 }
 
 // NeedRegistration return true if worker model need regsitration
-func (h *HatcheryKubernetes) NeedRegistration(m *sdk.Model) bool {
+func (h *HatcheryKubernetes) NeedRegistration(ctx context.Context, m *sdk.Model) bool {
 	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
 		return true
 	}

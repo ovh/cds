@@ -84,7 +84,7 @@ type Service interface {
 	CheckConfiguration(cfg interface{}) error
 	Start(ctx context.Context, cfg cdsclient.ServiceConfig) error
 	Init(cfg interface{}) (cdsclient.ServiceConfig, error)
-	Register(cfg sdk.ServiceConfig) error
+	Register(ctx context.Context, cfg sdk.ServiceConfig) error
 	Heartbeat(ctx context.Context, status func(ctx context.Context) sdk.MonitoringStatus) error
 	Status(ctx context.Context) sdk.MonitoringStatus
 	NamedService

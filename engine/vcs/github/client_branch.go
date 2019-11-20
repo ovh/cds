@@ -38,7 +38,7 @@ func (g *githubClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 			attempt++
 			status, body, headers, err := g.get(ctx, nextPage, opt)
 			if err != nil {
-				log.Warning("githubClient.Branches> Error %s", err)
+				log.Warning(ctx, "githubClient.Branches> Error %s", err)
 				return nil, err
 			}
 			if status >= 400 {
@@ -63,7 +63,7 @@ func (g *githubClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 				continue
 			} else {
 				if err := json.Unmarshal(body, &nextBranches); err != nil {
-					log.Warning("githubClient.Branches> Unable to parse github branches: %s", err)
+					log.Warning(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
 					return nil, err
 				}
 			}
@@ -134,13 +134,13 @@ func (g *githubClient) Branch(ctx context.Context, fullname, theBranch string) (
 		}
 	} else {
 		if err := json.Unmarshal(body, &branch); err != nil {
-			log.Warning("githubClient.Branch> Unable to parse github branch: %s", err)
+			log.Warning(ctx, "githubClient.Branch> Unable to parse github branch: %s", err)
 			return nil, err
 		}
 	}
 
 	if branch.Name == "" {
-		log.Warning("githubClient.Branch> Cannot find branch %v: %s", branch, theBranch)
+		log.Warning(ctx, "githubClient.Branch> Cannot find branch %v: %s", branch, theBranch)
 		if err := g.Cache.Delete(cacheBranchKey); err != nil {
 			log.Error(ctx, "githubClient.Branch> unable to delete cache key %v: %v", cacheBranchKey, err)
 		}

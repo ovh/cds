@@ -32,22 +32,22 @@ func init() {
 
 // Broker event typed
 type Broker interface {
-	initialize(options interface{}) (Broker, error)
+	initialize(ctx context.Context, options interface{}) (Broker, error)
 	sendEvent(event *sdk.Event) error
 	status() string
-	close()
+	close(ctx context.Context)
 }
 
-func getBroker(t string, option interface{}) (Broker, error) {
+func getBroker(ctx context.Context, t string, option interface{}) (Broker, error) {
 	switch t {
 	case "kafka":
 		k := &KafkaClient{}
-		return k.initialize(option)
+		return k.initialize(ctx, option)
 	}
 	return nil, fmt.Errorf("Invalid Broker Type %s", t)
 }
 
-func ResetPublicIntegrations(db *gorp.DbMap) error {
+func ResetPublicIntegrations(ctx context.Context, db *gorp.DbMap) error {
 	filterType := sdk.IntegrationTypeEvent
 	integrations, err := integration.LoadPublicModelsByType(db, &filterType, true)
 	if err != nil {
@@ -65,7 +65,7 @@ func ResetPublicIntegrations(db *gorp.DbMap) error {
 				MaxMessageByte:  10000000,
 			}
 
-			kafkaBroker, errk := getBroker("kafka", kafkaCfg)
+			kafkaBroker, errk := getBroker(ctx, "kafka", kafkaCfg)
 			if errk != nil {
 				return sdk.WrapError(errk, "cannot get broker for %s and user %s", cfg["broker url"].Value, cfg["username"].Value)
 			}
@@ -84,7 +84,7 @@ func DeleteEventIntegration(eventIntegrationID int64) {
 }
 
 // ResetEventIntegration reset event integration in order to kill existing connection and add/check the new one
-func ResetEventIntegration(db gorp.SqlExecutor, eventIntegrationID int64) error {
+func ResetEventIntegration(ctx context.Context, db gorp.SqlExecutor, eventIntegrationID int64) error {
 	brokerConnectionKey := strconv.FormatInt(eventIntegrationID, 10)
 	brokersConnectionCache.Delete(brokerConnectionKey)
 	projInt, err := integration.LoadProjectIntegrationByID(db, eventIntegrationID, true)
@@ -100,7 +100,7 @@ func ResetEventIntegration(db gorp.SqlExecutor, eventIntegrationID int64) error 
 		Topic:           projInt.Config["topic"].Value,
 		MaxMessageByte:  10000000,
 	}
-	kafkaBroker, errk := getBroker("kafka", kafkaCfg)
+	kafkaBroker, errk := getBroker(ctx, "kafka", kafkaCfg)
 	if errk != nil {
 		return sdk.WrapError(sdk.ErrBadBrokerConfiguration, "cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, errk)
 	}
@@ -111,7 +111,7 @@ func ResetEventIntegration(db gorp.SqlExecutor, eventIntegrationID int64) error 
 }
 
 // Initialize initializes event system
-func Initialize(db *gorp.DbMap, cache cache.Store) error {
+func Initialize(ctx context.Context, db *gorp.DbMap, cache cache.Store) error {
 	store = cache
 	var err error
 	hostname, err = os.Hostname()
@@ -128,7 +128,7 @@ func Initialize(db *gorp.DbMap, cache cache.Store) error {
 		}
 	}
 
-	return ResetPublicIntegrations(db)
+	return ResetPublicIntegrations(ctx, db)
 }
 
 // Subscribe to CDS events
@@ -156,7 +156,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 		// Send into public brokers
 		for _, b := range publicBrokersConnectionCache {
 			if err := b.sendEvent(&e); err != nil {
-				log.Warning("Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
+				log.Warning(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
 			}
 		}
 
@@ -182,7 +182,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 					Topic:           projInt.Config["topic"].Value,
 					MaxMessageByte:  10000000,
 				}
-				kafkaBroker, errk := getBroker("kafka", kafkaCfg)
+				kafkaBroker, errk := getBroker(ctx, "kafka", kafkaCfg)
 				if errk != nil {
 					log.Error(ctx, "Event.DequeueEvent> cannot get broker for %s and user %s : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, errk)
 					continue
@@ -202,7 +202,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 
 			// Send into external brokers
 			if err := broker.sendEvent(&e); err != nil {
-				log.Warning("Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
+				log.Warning(ctx, "Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
 			}
 		}
 	}
@@ -219,9 +219,9 @@ func GetCDSName() string {
 }
 
 // Close closes event system
-func Close() {
+func Close(ctx context.Context) {
 	for _, b := range brokers {
-		b.close()
+		b.close(ctx)
 	}
 }
 

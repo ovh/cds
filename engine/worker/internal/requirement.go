@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -28,7 +29,7 @@ var requirementCheckFuncs = map[string]func(w *CurrentWorker, r sdk.Requirement)
 	sdk.OSArchRequirement:        checkOSArchRequirement,
 }
 
-func checkRequirements(w *CurrentWorker, a *sdk.Action) (bool, []sdk.Requirement) {
+func checkRequirements(ctx context.Context, w *CurrentWorker, a *sdk.Action) (bool, []sdk.Requirement) {
 	requirementsOK := true
 	errRequirements := []sdk.Requirement{}
 
@@ -36,7 +37,7 @@ func checkRequirements(w *CurrentWorker, a *sdk.Action) (bool, []sdk.Requirement
 	for _, r := range a.Requirements {
 		ok, err := checkRequirement(w, r)
 		if err != nil {
-			log.Warning("checkQueue> error on checkRequirement %s", err)
+			log.Warning(ctx, "checkQueue> error on checkRequirement %s", err)
 		}
 		if !ok {
 			requirementsOK = false
@@ -220,7 +221,7 @@ func checkOSArchRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 //  - is not linked to a deployment integration
 //  - is linked to a deployement integration, plugin well downloaded (in this func) and
 //    requirements on the plugins are OK too
-func checkPluginDeployment(w *CurrentWorker, job sdk.WorkflowNodeJobRun) (bool, error) {
+func checkPluginDeployment(ctx context.Context, w *CurrentWorker, job sdk.WorkflowNodeJobRun) (bool, error) {
 	var currentOS = strings.ToLower(sdk.GOOS)
 	var currentARCH = strings.ToLower(sdk.GOARCH)
 	var binary *sdk.GRPCPluginBinary
@@ -247,7 +248,7 @@ func checkPluginDeployment(w *CurrentWorker, job sdk.WorkflowNodeJobRun) (bool, 
 	for _, r := range binary.Requirements {
 		ok, err := checkRequirement(w, r)
 		if err != nil {
-			log.Warning("checkQueue> error on checkRequirement %s", err)
+			log.Warning(ctx, "checkQueue> error on checkRequirement %s", err)
 		}
 		if !ok {
 			return false, fmt.Errorf("plugin requirement %s does not match", r.Name)

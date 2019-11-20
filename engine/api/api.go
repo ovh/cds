@@ -366,10 +366,10 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	}
 
 	if aConfig.DefaultArch == "" {
-		log.Warning(`You should add a default architecture in your configuration (example: defaultArch: "amd64"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this architecture`)
+		log.Warning(context.Background(), `You should add a default architecture in your configuration (example: defaultArch: "amd64"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this architecture`)
 	}
 	if aConfig.DefaultOS == "" {
-		log.Warning(`You should add a default operating system in your configuration (example: defaultOS: "linux"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this OS`)
+		log.Warning(context.Background(), `You should add a default operating system in your configuration (example: defaultOS: "linux"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this OS`)
 	}
 
 	if (aConfig.DefaultOS == "" && aConfig.DefaultArch != "") || (aConfig.DefaultOS != "" && aConfig.DefaultArch == "") {
@@ -660,7 +660,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	log.Info("Initializing event broker...")
-	if err := event.Initialize(a.mustDB(), a.Cache); err != nil {
+	if err := event.Initialize(ctx, a.mustDB(), a.Cache); err != nil {
 		log.Error(ctx, "error while initializing event system: %s", err)
 	} else {
 		go event.DequeueEvent(ctx, a.mustDB())
@@ -817,15 +817,15 @@ func (a *API) Serve(ctx context.Context) error {
 	go func() {
 		select {
 		case <-ctx.Done():
-			log.Warning("Cleanup SQL connections")
+			log.Warning(ctx, "Cleanup SQL connections")
 			s.Shutdown(ctx)
 			a.DBConnectionFactory.Close()
-			event.Publish(sdk.EventEngine{Message: "shutdown"}, nil)
-			event.Close()
+			event.Publish(ctx, sdk.EventEngine{Message: "shutdown"}, nil)
+			event.Close(ctx)
 		}
 	}()
 
-	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)}, nil)
+	event.Publish(ctx, sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)}, nil)
 
 	if err := version.Upsert(a.mustDB()); err != nil {
 		return sdk.WrapError(err, "Cannot upsert cds version")

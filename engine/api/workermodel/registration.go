@@ -158,10 +158,10 @@ func UnbookForRegister(ctx context.Context, store cache.Store, id int64) {
 	}
 }
 
-func UpdateCapabilities(db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, registrationForm sdk.WorkerRegistrationForm) error {
+func UpdateCapabilities(ctx context.Context, db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, registrationForm sdk.WorkerRegistrationForm) error {
 	existingCapas, err := LoadCapabilities(db, spawnArgs.Model.ID)
 	if err != nil {
-		log.Warning("RegisterWorker> Unable to load worker model capabilities: %s", err)
+		log.Warning(ctx, "RegisterWorker> Unable to load worker model capabilities: %s", err)
 		return sdk.WithStack(err)
 	}
 
@@ -209,7 +209,7 @@ func UpdateCapabilities(db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, 
 		query := `DELETE FROM worker_capability WHERE worker_model_id=$1 AND name=ANY(string_to_array($2, ',')::text[]) AND type=$3`
 		if _, err := db.Exec(query, spawnArgs.Model.ID, strings.Join(capaToDelete, ","), string(sdk.BinaryRequirement)); err != nil {
 			//Ignore errors because we let the database to check constraints...
-			log.Warning("registerWorker> Cannot delete from worker_capability: %v", err)
+			log.Warning(ctx, "registerWorker> Cannot delete from worker_capability: %v", err)
 			return sdk.WithStack(err)
 
 		}
@@ -217,7 +217,7 @@ func UpdateCapabilities(db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, 
 
 	if registrationForm.OS != "" && registrationForm.Arch != "" {
 		if err := UpdateOSAndArch(db, spawnArgs.Model.ID, registrationForm.OS, registrationForm.Arch); err != nil {
-			log.Warning("registerWorker> Cannot update os and arch for worker model %d : %s", spawnArgs.Model.ID, err)
+			log.Warning(ctx, "registerWorker> Cannot update os and arch for worker model %d : %s", spawnArgs.Model.ID, err)
 			return sdk.WithStack(err)
 		}
 	}

@@ -106,7 +106,7 @@ func refactorAuthenticationUser(ctx context.Context, db gorp.SqlExecutor, store 
 	}
 
 	// Insert the authentication
-	if err := mail.SendMailAskResetToken(u.Email, newUser.Username, resetToken,
+	if err := mail.SendMailAskResetToken(ctx, u.Email, newUser.Username, resetToken,
 		apiURL+"/auth/reset?token=%s",
 		uiURL,
 	); err != nil {

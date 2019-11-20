@@ -34,7 +34,7 @@ loopModels:
 		if models[k].Type != h.ModelType() {
 			continue
 		}
-		if h.NeedRegistration(&models[k]) || models[k].CheckRegistration {
+		if h.NeedRegistration(ctx, &models[k]) || models[k].CheckRegistration {
 			log.Debug("hatchery> workerRegister> need register")
 		} else {
 			continue
@@ -64,11 +64,11 @@ loopModels:
 
 		// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
 		if models[k].NbSpawnErr > 5 {
-			log.Warning("hatchery> workerRegister> Too many errors on spawn with model %s, please check this worker model", models[k].Name)
+			log.Warning(ctx, "hatchery> workerRegister> Too many errors on spawn with model %s, please check this worker model", models[k].Name)
 			continue
 		}
 
-		if h.NeedRegistration(&models[k]) || models[k].CheckRegistration {
+		if h.NeedRegistration(ctx, &models[k]) || models[k].CheckRegistration {
 			if err := h.CDSClient().WorkerModelBook(models[k].Group.Name, models[k].Name); err != nil {
 				log.Debug("%v", sdk.WrapError(err, "cannot book model %s with id %d", models[k].Name, models[k].ID))
 			} else {

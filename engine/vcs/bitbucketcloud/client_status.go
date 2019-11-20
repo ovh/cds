@@ -27,7 +27,7 @@ type statusData struct {
 //SetStatus Users with push access can create commit statuses for a given ref:
 func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if client.DisableStatus {
-		log.Warning("bitbucketcloud.SetStatus>  ⚠ bitbucketcloud statuses are disabled")
+		log.Warning(ctx, "bitbucketcloud.SetStatus>  ⚠ bitbucketcloud statuses are disabled")
 		return nil
 	}
 

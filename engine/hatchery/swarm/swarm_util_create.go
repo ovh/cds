@@ -103,7 +103,7 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 	// Check the images to know if we had to pull or not
 	images, errl := dockerClient.ImageList(ctx, types.ImageListOptions{All: true})
 	if errl != nil {
-		log.Warning("createAndStartContainer> Unable to list images: %s", errl)
+		log.Warning(ctx, "createAndStartContainer> Unable to list images: %s", errl)
 	}
 	next()
 

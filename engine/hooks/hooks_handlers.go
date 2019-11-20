@@ -662,7 +662,7 @@ func (s *Service) postMaintenanceHandler() service.Handler {
 		if err := s.Dao.store.SetWithTTL(MaintenanceHookKey, enable, 0); err != nil {
 			return sdk.WrapError(err, "unable to save maintenance state")
 		}
-		if err := s.Dao.store.Publish(MaintenanceHookQueue, fmt.Sprintf("%v", enable)); err != nil {
+		if err := s.Dao.store.Publish(ctx, MaintenanceHookQueue, fmt.Sprintf("%v", enable)); err != nil {
 			return sdk.WrapError(err, "unable to publish maintenance state")
 		}
 		s.Maintenance = enable

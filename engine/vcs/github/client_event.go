@@ -29,13 +29,13 @@ func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef t
 
 	status, body, headers, err := g.get(ctx, "/repos/"+fullname+"/events")
 	if err != nil {
-		log.Warning("githubClient.GetEvents> Error %s", err)
+		log.Warning(ctx, "githubClient.GetEvents> Error %s", err)
 		return nil, interval, err
 	}
 
 	if status >= http.StatusBadRequest {
 		err := sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-		log.Warning("githubClient.GetEvents> Error http %s", err)
+		log.Warning(ctx, "githubClient.GetEvents> Error http %s", err)
 		return nil, interval, err
 	}
 
@@ -45,7 +45,7 @@ func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef t
 
 	nextEvents := []Event{}
 	if err := json.Unmarshal(body, &nextEvents); err != nil {
-		log.Warning("githubClient.GetEvents> Unable to parse github events: %s", err)
+		log.Warning(ctx, "githubClient.GetEvents> Unable to parse github events: %s", err)
 		return nil, interval, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
 	}
 
@@ -148,7 +148,7 @@ func (g *githubClient) PushEvents(ctx context.Context, fullname string, iEvents 
 			if strings.Contains(err.Error(), "Branch not found") {
 				log.Debug("githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			} else {
-				log.Warning("githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
+				log.Warning(ctx, "githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			}
 			continue
 		}
@@ -183,7 +183,7 @@ func (g *githubClient) CreateEvents(ctx context.Context, fullname string, iEvent
 		if err != nil || branch == nil {
 			errtxt := fmt.Sprintf("githubClient.CreateEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			if err != nil && !strings.Contains(errtxt, "Branch not found") {
-				log.Warning(errtxt)
+				log.Warning(ctx, errtxt)
 			} else {
 				log.Debug(errtxt)
 			}
@@ -195,7 +195,7 @@ func (g *githubClient) CreateEvents(ctx context.Context, fullname string, iEvent
 
 		c, err := g.Commit(ctx, fullname, branch.LatestCommit)
 		if err != nil {
-			log.Warning("githubClient.CreateEvents> Unable to find commit %s in %s : %s", branch.LatestCommit, fullname, err)
+			log.Warning(ctx, "githubClient.CreateEvents> Unable to find commit %s in %s : %s", branch.LatestCommit, fullname, err)
 			continue
 		}
 		event.Commit = c

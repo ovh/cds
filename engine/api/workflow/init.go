@@ -32,11 +32,11 @@ func Initialize(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Stor
 			}
 		case <-tickHeart.C:
 			if err := restartDeadJob(ctx, DBFunc, store); err != nil {
-				log.Warning("workflow.restartDeadJob> Error on restartDeadJob : %v", err)
+				log.Warning(ctx, "workflow.restartDeadJob> Error on restartDeadJob : %v", err)
 			}
 		case <-tickStop.C:
-			if err := stopRunsBlocked(db); err != nil {
-				log.Warning("workflow.stopRunsBlocked> Error on stopRunsBlocked : %v", err)
+			if err := stopRunsBlocked(ctx, db); err != nil {
+				log.Warning(ctx, "workflow.stopRunsBlocked> Error on stopRunsBlocked : %v", err)
 			}
 		}
 	}

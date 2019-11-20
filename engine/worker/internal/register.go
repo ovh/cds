@@ -15,7 +15,7 @@ func (w *CurrentWorker) Register(ctx context.Context) error {
 
 	requirements, errR := w.client.Requirements()
 	if errR != nil {
-		log.Warning("register> unable to get requirements: %v", errR)
+		log.Warning(ctx, "register> unable to get requirements: %v", errR)
 		return errR
 	}
 
@@ -55,7 +55,7 @@ func (w *CurrentWorker) Register(ctx context.Context) error {
 	}
 
 	if !uptodate {
-		log.Warning("-=-=-=-=- Please update your worker binary - Worker Version %s %s %s -=-=-=-=-", sdk.VERSION, sdk.GOOS, sdk.GOARCH)
+		log.Warning(ctx, "-=-=-=-=- Please update your worker binary - Worker Version %s %s %s -=-=-=-=-", sdk.VERSION, sdk.GOOS, sdk.GOARCH)
 	}
 
 	return nil

@@ -249,7 +249,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				var err error
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
 				if err != nil {
-					log.Warning("hatchery> swarm> SpawnWorker>Unable to parse memory requirement %d :%v", memory, err)
+					log.Warning(ctx, "hatchery> swarm> SpawnWorker>Unable to parse memory requirement %d :%v", memory, err)
 					return err
 				}
 			} else if r.Type == sdk.ServiceRequirement {
@@ -258,7 +258,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					network = name + "-net"
 					networkAlias = "worker"
 					if err := h.createNetwork(ctx, dockerClient, network); err != nil {
-						log.Warning("hatchery> swarm> SpawnWorker> Unable to create network %s on %s for jobID %d : %v", network, dockerClient.name, spawnArgs.JobID, err)
+						log.Warning(ctx, "hatchery> swarm> SpawnWorker> Unable to create network %s on %s for jobID %d : %v", network, dockerClient.name, spawnArgs.JobID, err)
 						next()
 						return err
 					}
@@ -271,7 +271,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				if sm, ok := envm["CDS_SERVICE_MEMORY"]; ok {
 					i, err := strconv.ParseUint(sm, 10, 32)
 					if err != nil {
-						log.Warning("SpawnWorker> Unable to parse service option CDS_SERVICE_MEMORY=%s : %s", sm, err)
+						log.Warning(ctx, "SpawnWorker> Unable to parse service option CDS_SERVICE_MEMORY=%s : %s", sm, err)
 					} else {
 						// too low values are checked in HatcherySwarm.createAndStartContainer() below
 						serviceMemory = int64(i)
@@ -320,7 +320,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				}
 
 				if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
-					log.Warning("hatchery> swarm> SpawnWorker> Unable to start required container on %s: %s", dockerClient.name, err)
+					log.Warning(ctx, "hatchery> swarm> SpawnWorker> Unable to start required container on %s: %s", dockerClient.name, err)
 					return err
 				}
 				services = append(services, serviceName)
@@ -426,7 +426,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	//start the worker
 	if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
-		log.Warning("hatchery> swarm> SpawnWorker> Unable to start container %s on %s with image %s err:%v", args.name, dockerClient.name, spawnArgs.Model.ModelDocker.Image, err)
+		log.Warning(ctx, "hatchery> swarm> SpawnWorker> Unable to start container %s on %s with image %s err:%v", args.name, dockerClient.name, spawnArgs.Model.ModelDocker.Image, err)
 		return err
 	}
 
@@ -664,7 +664,7 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 	for _, dockerClient := range h.dockerClients {
 		oldContainers, err := h.listAwolWorkers(dockerClient)
 		if err != nil {
-			log.Warning("hatchery> swarm> killAwolWorker> Cannot list workers %s on %s", err, dockerClient.name)
+			log.Warning(ctx, "hatchery> swarm> killAwolWorker> Cannot list workers %s on %s", err, dockerClient.name)
 			return err
 		}
 
@@ -678,7 +678,7 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 
 		containers, errC := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
 		if errC != nil {
-			log.Warning("hatchery> swarm> killAwolWorker> Cannot list containers: %s on %s", errC, dockerClient.name)
+			log.Warning(ctx, "hatchery> swarm> killAwolWorker> Cannot list containers: %s on %s", errC, dockerClient.name)
 			return errC
 		}
 
@@ -704,11 +704,11 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 			}
 		}
 	}
-	return h.killAwolNetworks()
+	return h.killAwolNetworks(ctx)
 }
 
 // NeedRegistration return true if worker model need regsitration
-func (h *HatcherySwarm) NeedRegistration(m *sdk.Model) bool {
+func (h *HatcherySwarm) NeedRegistration(ctx context.Context, m *sdk.Model) bool {
 	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
 		return true
 	}

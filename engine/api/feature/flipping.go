@@ -72,7 +72,7 @@ func GetFeatures(ctx context.Context, store cache.Store, projectKey string) map[
 	// get all features from Izanami and store in cache
 	projFeats = ProjectFeatures{Key: projectKey, Features: make(map[string]bool)}
 	for _, f := range List() {
-		projFeats.Features[f] = getStatusFromIzanami(f, projectKey)
+		projFeats.Features[f] = getStatusFromIzanami(ctx, f, projectKey)
 	}
 
 	// no expiration delay is set, the cache is cleared by Izanami calls on /feature/clean
@@ -93,10 +93,10 @@ func IsEnabled(ctx context.Context, store cache.Store, featureID string, project
 
 	// if features not in cache, it means that it's not a key from listed in List() func
 	// try to get a value from Izanami
-	return getStatusFromIzanami(featureID, projectKey)
+	return getStatusFromIzanami(ctx, featureID, projectKey)
 }
 
-func getStatusFromIzanami(featureID string, projectKey string) bool {
+func getStatusFromIzanami(ctx context.Context, featureID string, projectKey string) bool {
 	// no feature flipping always return active.
 	if izanamiClient == nil || izanamiClient.Feature() == nil {
 		return true
@@ -106,7 +106,7 @@ func getStatusFromIzanami(featureID string, projectKey string) bool {
 	resp, errCheck := izanamiClient.Feature().CheckWithContext(featureID, CheckContext{projectKey})
 	if errCheck != nil {
 		if !strings.Contains(errCheck.Error(), "404") {
-			log.Warning("Feature.IsEnabled > Cannot check feature %s: %s", featureID, errCheck)
+			log.Warning(ctx, "Feature.IsEnabled > Cannot check feature %s: %s", featureID, errCheck)
 			return false
 		}
 		resp.Active = true

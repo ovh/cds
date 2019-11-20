@@ -16,7 +16,7 @@ func (g *githubClient) User(ctx context.Context, username string) (User, error) 
 	url := "/users/" + username
 	status, body, _, err := g.get(ctx, url)
 	if err != nil {
-		log.Warning("githubClient.User> Error %s", err)
+		log.Warning(ctx, "githubClient.User> Error %s", err)
 		return User{}, err
 	}
 	if status >= 400 {

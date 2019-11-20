@@ -102,7 +102,7 @@ func (s *Service) Serve(c context.Context) error {
 		return err
 	}
 
-	if err := s.checkStaticFiles(); err != nil {
+	if err := s.checkStaticFiles(c); err != nil {
 		return err
 	}
 
@@ -175,11 +175,11 @@ func (s *Service) checkChecksumFiles() error {
 	return nil
 }
 
-func (s *Service) checkStaticFiles() error {
+func (s *Service) checkStaticFiles(ctx context.Context) error {
 	fs := http.Dir(s.HTMLDir)
 
 	if _, err := fs.Open("index.html"); os.IsNotExist(err) {
-		log.Warning("ui> CDS UI static files were not found in directory %v", s.HTMLDir)
+		log.Warning(ctx, "ui> CDS UI static files were not found in directory %v", s.HTMLDir)
 
 		if err := s.askForGettingStaticFiles(sdk.VERSION); err != nil {
 			return err

@@ -284,7 +284,7 @@ func ListenGerritStreamEvent(ctx context.Context, v sdk.VCSConfiguration, gerrit
 				continue
 			}
 			if errs != nil {
-				log.Warning("ListenGerritStreamEvent> unable to read string")
+				log.Warning(ctx, "ListenGerritStreamEvent> unable to read string")
 				continue
 			}
 			if line == "" {

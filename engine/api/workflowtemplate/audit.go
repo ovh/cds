@@ -43,7 +43,7 @@ func ComputeAudit(ctx context.Context, DBFunc func() *gorp.DbMap) {
 
 			if audit, ok := audits[e.EventType]; ok {
 				if err := audit.Compute(ctx, db, e); err != nil {
-					log.Warning("%v", sdk.WrapError(err, "Unable to compute audit on event %s", e.EventType))
+					log.Warning(ctx, "%v", sdk.WrapError(err, "Unable to compute audit on event %s", e.EventType))
 				}
 			}
 		}

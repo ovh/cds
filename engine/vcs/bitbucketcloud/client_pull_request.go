@@ -16,7 +16,7 @@ func (client *bitbucketcloudClient) PullRequest(ctx context.Context, fullname st
 	url := fmt.Sprintf("/repositories/%s/pullrequests/%d", fullname, id)
 	status, body, _, err := client.get(url)
 	if err != nil {
-		log.Warning("bitbucketcloudClient.Pullrequest> Error %s", err)
+		log.Warning(ctx, "bitbucketcloudClient.Pullrequest> Error %s", err)
 		return sdk.VCSPullRequest{}, err
 	}
 	if status >= 400 {
@@ -24,7 +24,7 @@ func (client *bitbucketcloudClient) PullRequest(ctx context.Context, fullname st
 	}
 	var pullrequest PullRequest
 	if err := json.Unmarshal(body, &pullrequest); err != nil {
-		log.Warning("bitbucketcloudClient.PullRequest> Unable to parse bitbucket cloud commit: %s", err)
+		log.Warning(ctx, "bitbucketcloudClient.PullRequest> Unable to parse bitbucket cloud commit: %s", err)
 		return sdk.VCSPullRequest{}, err
 	}
 
@@ -71,7 +71,7 @@ func (client *bitbucketcloudClient) PullRequests(ctx context.Context, fullname s
 // PullRequestComment push a new comment on a pull request
 func (client *bitbucketcloudClient) PullRequestComment(ctx context.Context, repo string, id int, text string) error {
 	if client.DisableStatus {
-		log.Warning("bitbucketcloud.PullRequestComment>  ⚠ bitbucketcloud statuses are disabled")
+		log.Warning(ctx, "bitbucketcloud.PullRequestComment>  ⚠ bitbucketcloud statuses are disabled")
 		return nil
 	}
 

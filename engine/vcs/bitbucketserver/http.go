@@ -155,7 +155,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	case 401:
 		return sdk.ErrUnauthorized
 	case 400:
-		log.Warning("bitbucketClient.do> %s", string(body))
+		log.Warning(ctx, "bitbucketClient.do> %s", string(body))
 		return sdk.ErrWrongRequest
 	}
 

@@ -70,10 +70,10 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 		if !hasRun {
 			wr.Status = sdk.StatusNeverBuilt
 			wr.LastExecution = time.Now()
-			report.Add(wr)
+			report.Add(ctx, wr)
 			return report, sdk.WithStack(sdk.ErrConditionsNotOk)
 		}
-		report.Merge(r1, nil) // nolint
+		report.Merge(ctx, r1, nil) // nolint
 	}
 	return report, nil
 }
@@ -86,7 +86,7 @@ func manualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	if err != nil {
 		return report, sdk.WrapError(err, "Unable to process workflow run")
 	}
-	_, _ = report.Merge(r1, nil)
+	_, _ = report.Merge(ctx, r1, nil)
 	if !condOk {
 		return report, sdk.WithStack(sdk.ErrConditionsNotOk)
 	}
@@ -121,7 +121,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 		if err != nil {
 			return nil, err
 		}
-		report.Merge(r1, nil) // nolint
+		report.Merge(ctx, r1, nil) // nolint
 	} else {
 		// Manual RUN
 		if opts.Manual == nil {
@@ -149,7 +149,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 			if errmr != nil {
 				return report, errmr
 			}
-			report.Merge(r1, nil) // nolint
+			report.Merge(ctx, r1, nil) // nolint
 		} else {
 			// heck permission fo workflow node on handler layer
 			// MANUAL RUN FROM ROOT NODE
@@ -161,7 +161,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 			if errmr != nil {
 				return nil, errmr
 			}
-			report.Merge(r1, nil) // nolint
+			report.Merge(ctx, r1, nil) // nolint
 		}
 	}
 
@@ -190,7 +190,7 @@ func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 	if errWR != nil {
 		return report, errWR
 	}
-	_, _ = report.Merge(r1, nil)
+	_, _ = report.Merge(ctx, r1, nil)
 	if !hasRun {
 		return report, sdk.ErrConditionsNotOk
 	}

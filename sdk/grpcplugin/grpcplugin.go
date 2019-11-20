@@ -79,7 +79,7 @@ func StartPlugin(ctx context.Context, pluginName string, workdir, cmd string, ar
 		}
 		if errs != nil {
 			if time.Now().Before(tsStart.Add(5 * time.Second)) {
-				log.Warning("plugin:%s error on ReadString, retry in 500ms...", pluginName)
+				log.Warning(ctx, "plugin:%s error on ReadString, retry in 500ms...", pluginName)
 				time.Sleep(500 * time.Millisecond)
 				continue
 			}

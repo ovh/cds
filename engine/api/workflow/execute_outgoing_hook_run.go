@@ -44,7 +44,7 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 		return nil, sdk.WrapError(err, "UpdateOutgoingHookRunStatus> Unable to update callback for outgoing node run")
 	}
 
-	report.Add(nodeRun)
+	report.Add(ctx, nodeRun)
 
 	mapNodes := wr.Workflow.WorkflowData.Maps()
 	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
@@ -62,7 +62,7 @@ loop:
 	}
 
 	report1, _, err := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, nil, node, int(nodeRun.SubNumber), nil)
-	report.Merge(report1, err) //nolint
+	report.Merge(ctx, report1, err) //nolint
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to processNodeOutGoingHook")
 	}
@@ -72,9 +72,9 @@ loop:
 	if err != nil {
 		return report, sdk.WrapError(err, "processNodeOutGoingHook> Unable to compute workflow run status")
 	}
-	report.Merge(r1, nil) // nolint
+	report.Merge(ctx, r1, nil) // nolint
 	if wr.Status != oldStatus {
-		report.Add(wr)
+		report.Add(ctx, wr)
 	}
 	return report, nil
 

@@ -44,9 +44,9 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 		stopHTTPServer()
 
 		if err := ctx.Err(); err != nil {
-			log.Warning("Exiting worker: %v", err)
+			log.Warning(ctx, "Exiting worker: %v", err)
 		} else {
-			log.Warning("Exiting worker")
+			log.Warning(ctx, "Exiting worker")
 		}
 	}
 
@@ -127,13 +127,13 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 			var requirementsOK, pluginsOK bool
 			var t string
 			if bookedJobID == 0 { // If we already check the requirements before and it was OK
-				requirementsOK, _ = checkRequirements(w, &j.Job.Action)
+				requirementsOK, _ = checkRequirements(ctx, w, &j.Job.Action)
 				if j.ID == bookedJobID {
 					t = ", this was my booked job"
 				}
 
 				var errPlugins error
-				pluginsOK, errPlugins = checkPluginDeployment(w, j)
+				pluginsOK, errPlugins = checkPluginDeployment(ctx, w, j)
 				if !pluginsOK {
 					log.Error(ctx, "Plugins doesn't match: %v", errPlugins)
 				}
@@ -171,7 +171,7 @@ func processBookedWJob(ctx context.Context, w *CurrentWorker, wjobs chan<- sdk.W
 		return sdk.WrapError(err, "Unable to load workflow node job %d", bookedWJobID)
 	}
 
-	requirementsOK, errRequirements := checkRequirements(w, &wjob.Job.Action)
+	requirementsOK, errRequirements := checkRequirements(ctx, w, &wjob.Job.Action)
 	if !requirementsOK {
 		var details string
 		for _, r := range errRequirements {
@@ -187,7 +187,7 @@ func processBookedWJob(ctx context.Context, w *CurrentWorker, wjobs chan<- sdk.W
 		return fmt.Errorf("processBookedWJob> the worker have no all requirements")
 	}
 
-	pluginsOK, errPlugins := checkPluginDeployment(w, *wjob)
+	pluginsOK, errPlugins := checkPluginDeployment(ctx, w, *wjob)
 	if !pluginsOK {
 		var details = errPlugins.Error()
 

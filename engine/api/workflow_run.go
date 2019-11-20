@@ -464,7 +464,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 			if errS != nil {
 				return nil, sdk.WrapError(errS, "stopWorkflowRun> Unable to stop workflow node run %d", wnr.ID)
 			}
-			report.Merge(r1, nil) // nolint
+			report.Merge(ctx, r1, nil) // nolint
 			wnr.Status = sdk.StatusStopped
 
 			// If it's a outgoing hook, we stop the child
@@ -504,7 +504,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 						log.Error(ctx, "stopWorkflowRun> Unable to stop workflow %v", err)
 						continue
 					}
-					report.Merge(r2, nil) // nolint
+					report.Merge(ctx, r2, nil) // nolint
 				}
 			}
 		}
@@ -515,7 +515,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 	if errU := workflow.UpdateWorkflowRun(ctx, tx, run); errU != nil {
 		return nil, sdk.WrapError(errU, "Unable to update workflow run %d", run.ID)
 	}
-	report.Add(*run)
+	report.Add(ctx, *run)
 
 	if err := tx.Commit(); err != nil {
 		return nil, sdk.WrapError(err, "Cannot commit transaction")
@@ -739,12 +739,12 @@ func (api *API) stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbM
 		return nil, sdk.WrapError(errLw, "unable to load workflow run %s", workflowName)
 	}
 
-	r1, errR := workflow.ResyncWorkflowRunStatus(tx, wr)
+	r1, errR := workflow.ResyncWorkflowRunStatus(ctx, tx, wr)
 	if errR != nil {
 		return nil, sdk.WrapError(errR, "unable to resync workflow run status")
 	}
 
-	_, _ = report.Merge(r1, nil)
+	_, _ = report.Merge(ctx, r1, nil)
 
 	observability.Current(ctx,
 		observability.Tag(observability.TagProjectKey, p.Key),
@@ -953,19 +953,19 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			tx, err := db.Begin()
 			if err != nil {
 				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to start transaction"))
-				report.Merge(r1, nil) // nolint
+				report.Merge(ctx, r1, nil) // nolint
 				return
 			}
 			if err := workflow.SyncAsCodeEvent(ctx, tx, cache, p, wf, u); err != nil {
 				tx.Rollback() // nolint
 				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to sync as code event"))
-				report.Merge(r1, nil) // nolint
+				report.Merge(ctx, r1, nil) // nolint
 				return
 			}
 			if err := tx.Commit(); err != nil {
 				tx.Rollback() // nolint
 				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to commit transaction as code event"))
-				report.Merge(r1, nil) // nolint
+				report.Merge(ctx, r1, nil) // nolint
 				return
 			}
 		}
@@ -986,7 +986,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 
 			if errp != nil {
 				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errp, "cannot load project for as code workflow creation"))
-				report.Merge(r1, nil) // nolint
+				report.Merge(ctx, r1, nil) // nolint
 				return
 			}
 			// Get workflow from repository
@@ -1003,7 +1003,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 					workflow.AddWorkflowRunInfo(wfRun, false, infos...)
 				}
 				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errCreate, "unable to get workflow from repository."))
-				report.Merge(r1, nil) // nolint
+				report.Merge(ctx, r1, nil) // nolint
 				return
 			}
 		}
@@ -1011,10 +1011,10 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 	}
 
 	r1, errS := workflow.StartWorkflowRun(ctx, db, cache, p, wfRun, opts, u, asCodeInfosMsg)
-	report.Merge(r1, nil) // nolint
+	report.Merge(ctx, r1, nil) // nolint
 	if errS != nil {
 		r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errS, "unable to start workflow %s/%s", p.Key, wf.Name))
-		report.Merge(r1, nil) // nolint
+		report.Merge(ctx, r1, nil) // nolint
 		return
 	}
 
@@ -1052,7 +1052,7 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 	if errU := workflow.UpdateWorkflowRun(ctx, db, wfRun); errU != nil {
 		log.Error(ctx, "unable to fail workflow run %v", errU)
 	}
-	report.Add(wfRun)
+	report.Add(ctx, wfRun)
 	return report
 }
 
@@ -1227,7 +1227,7 @@ func (api *API) getWorkflowNodeRunJobSpawnInfosHandler() service.Handler {
 		}
 		db := api.mustDB()
 
-		spawnInfos, err := workflow.LoadNodeRunJobInfo(db, runJobID)
+		spawnInfos, err := workflow.LoadNodeRunJobInfo(ctx, db, runJobID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load spawn infos for node run job id %d", runJobID)
 		}

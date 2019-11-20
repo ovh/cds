@@ -92,7 +92,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 		}
 
 		// Insert the authentication
-		if err := mail.SendMailVerifyToken(reg.Email, reg.Username, regToken,
+		if err := mail.SendMailVerifyToken(ctx, reg.Email, reg.Username, regToken,
 			api.Config.URL.UI+"/auth/verify?token=%s",
 			api.Config.URL.API,
 		); err != nil {
@@ -114,7 +114,7 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorp.SqlExecu
 		return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given init token"))
 	}
 
-	log.Warning("Magic token detected !: %s", initToken)
+	log.Warning(ctx, "Magic token detected !: %s", initToken)
 
 	if startupConfig.IAT == 0 || startupConfig.IAT > time.Now().Unix() {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given init token, issued at value should be set and can not be in the future")
@@ -391,7 +391,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 		if err != nil {
 			// If there is no contact for given email, return ok to prevent email exploration
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				log.Warning("api.postAuthLocalAskResetHandler> no contact found for email %s: %v", email, err)
+				log.Warning(ctx, "api.postAuthLocalAskResetHandler> no contact found for email %s: %v", email, err)
 				return service.WriteJSON(w, nil, http.StatusOK)
 			}
 			return err
@@ -418,7 +418,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 		}
 
 		// Insert the authentication
-		if err := mail.SendMailAskResetToken(contact.Value, existingLocalConsumer.AuthentifiedUser.Username, resetToken,
+		if err := mail.SendMailAskResetToken(ctx, contact.Value, existingLocalConsumer.AuthentifiedUser.Username, resetToken,
 			api.Config.URL.UI+"/auth/reset?token=%s",
 			api.Config.URL.API,
 		); err != nil {

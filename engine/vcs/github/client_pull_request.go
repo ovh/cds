@@ -51,13 +51,13 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 
 		} else {
 			if err := json.Unmarshal(body, &pr); err != nil {
-				log.Warning("githubClient.PullRequest> Unable to parse github pullrequest: %s", err)
+				log.Warning(ctx, "githubClient.PullRequest> Unable to parse github pullrequest: %s", err)
 				return sdk.VCSPullRequest{}, sdk.WithStack(err)
 			}
 		}
 
 		if pr.Number != id {
-			log.Warning("githubClient.PullRequest> Cannot find pullrequest %d", id)
+			log.Warning(ctx, "githubClient.PullRequest> Cannot find pullrequest %d", id)
 			if err := g.Cache.Delete(cachePullRequestKey); err != nil {
 				log.Error(ctx, "githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
 			}
@@ -85,7 +85,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 		if nextPage != "" {
 			status, body, headers, err := g.get(ctx, nextPage, opts...)
 			if err != nil {
-				log.Warning("githubClient.PullRequests> Error %s", err)
+				log.Warning(ctx, "githubClient.PullRequests> Error %s", err)
 				return nil, err
 			}
 			if status >= 400 {
@@ -109,7 +109,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 				break
 			} else {
 				if err := json.Unmarshal(body, &nextPullRequests); err != nil {
-					log.Warning("githubClient.Branches> Unable to parse github branches: %s", err)
+					log.Warning(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
 					return nil, err
 				}
 			}
@@ -140,7 +140,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 // PullRequestComment push a new comment on a pull request
 func (g *githubClient) PullRequestComment(ctx context.Context, repo string, id int, text string) error {
 	if g.DisableStatus {
-		log.Warning("github.PullRequestComment>  ⚠ Github statuses are disabled")
+		log.Warning(ctx, "github.PullRequestComment>  ⚠ Github statuses are disabled")
 		return nil
 	}
 

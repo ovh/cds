@@ -259,7 +259,7 @@ func Create(ctx context.Context, h Interface) error {
 
 		case <-chanRegister:
 			if err := workerRegister(ctx, hWithModels, workersStartChan); err != nil {
-				log.Warning("Error on workerRegister: %s", err)
+				log.Warning(ctx, "Error on workerRegister: %s", err)
 			}
 		}
 	}
@@ -293,13 +293,13 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 	}
 
 	// If the model needs registration, don't spawn for now
-	if h.NeedRegistration(model) {
+	if h.NeedRegistration(ctx, model) {
 		log.Debug("canRunJob> model %s needs registration", model.Name)
 		return false
 	}
 
 	if model.NbSpawnErr > 5 {
-		log.Warning("canRunJob> Too many errors on spawn with model %s, please check this worker model", model.Name)
+		log.Warning(ctx, "canRunJob> Too many errors on spawn with model %s, please check this worker model", model.Name)
 		return false
 	}
 
@@ -396,6 +396,6 @@ func SendSpawnInfo(ctx context.Context, h Interface, jobID int64, spawnMsg sdk.S
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	if err := h.CDSClient().QueueJobSendSpawnInfo(ctx, jobID, infos); err != nil {
-		log.Warning("spawnWorkerForJob> cannot client.sendSpawnInfo for job %d: %s", jobID, err)
+		log.Warning(ctx, "spawnWorkerForJob> cannot client.sendSpawnInfo for job %d: %s", jobID, err)
 	}
 }

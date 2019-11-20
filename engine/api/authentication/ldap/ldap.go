@@ -94,7 +94,7 @@ func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 
 	//If user doesn't exist and search was'nt successful => exist
 	if err != nil {
-		log.Warning("LDAP> Search error %s", err)
+		log.Warning(ctx, "LDAP> Search error %s", err)
 		return userInfo, sdk.NewError(sdk.ErrUnauthorized, err)
 	}
 

@@ -52,7 +52,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 				jn := &notif.Settings
 				//Get recipents from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
-					u, errPerm := projectPermissionUsers(db, w.ProjectID, sdk.PermissionRead)
+					u, errPerm := projectPermissionUsers(ctx, db, w.ProjectID, sdk.PermissionRead)
 					if errPerm != nil {
 						log.Error(ctx, "notification[Jabber]. error while loading permission:%s", errPerm.Error())
 					}
@@ -78,7 +78,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 				jn := &notif.Settings
 				//Get recipents from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
-					u, errPerm := projectPermissionUsers(db, w.ProjectID, sdk.PermissionRead)
+					u, errPerm := projectPermissionUsers(ctx, db, w.ProjectID, sdk.PermissionRead)
 					if errPerm != nil {
 						log.Error(ctx, "notification[Email].GetUserWorkflowEvents> error while loading permission:%s", errPerm.Error())
 						return nil
@@ -94,7 +94,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 						// Load the user
 						au, err := user.LoadByUsername(ctx, db, author, user.LoadOptions.WithDeprecatedUser)
 						if err != nil {
-							log.Warning("notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
+							log.Warning(ctx, "notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
 							continue
 						}
 						jn.Recipients = append(jn.Recipients, au.GetEmail())
@@ -106,7 +106,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 				if err != nil {
 					log.Error(ctx, "notification.GetUserWorkflowEvents> unable to handle event %+v: %v", jn, err)
 				}
-				go SendMailNotif(notif)
+				go SendMailNotif(ctx, notif)
 			}
 		}
 	}

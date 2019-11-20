@@ -23,14 +23,14 @@ func SendEvent(ctx context.Context, db gorp.SqlExecutor, key string, report *Pro
 		return
 	}
 	for _, wr := range report.workflows {
-		event.PublishWorkflowRun(wr, key)
+		event.PublishWorkflowRun(ctx, wr, key)
 	}
 	for _, wnr := range report.nodes {
 		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, LoadRunOptions{
 			WithLightTests: true,
 		})
 		if errWR != nil {
-			log.Warning("SendEvent.workflow> Cannot load workflow run %d: %s", wnr.WorkflowRunID, errWR)
+			log.Warning(ctx, "SendEvent.workflow> Cannot load workflow run %d: %s", wnr.WorkflowRunID, errWR)
 			continue
 		}
 
@@ -41,7 +41,7 @@ func SendEvent(ctx context.Context, db gorp.SqlExecutor, key string, report *Pro
 			var errN error
 			previousNodeRun, errN = PreviousNodeRun(db, wnr, wnr.WorkflowNodeName, wr.WorkflowID)
 			if errN != nil {
-				log.Warning("SendEvent.workflow> Cannot load previous node run: %s", errN)
+				log.Warning(ctx, "SendEvent.workflow> Cannot load previous node run: %s", errN)
 			}
 		}
 
@@ -51,17 +51,17 @@ func SendEvent(ctx context.Context, db gorp.SqlExecutor, key string, report *Pro
 	for _, jobrun := range report.jobs {
 		noderun, err := LoadNodeRunByID(db, jobrun.WorkflowNodeRunID, LoadRunOptions{})
 		if err != nil {
-			log.Warning("SendEvent.workflow> Cannot load workflow node run %d: %s", jobrun.WorkflowNodeRunID, err)
+			log.Warning(ctx, "SendEvent.workflow> Cannot load workflow node run %d: %s", jobrun.WorkflowNodeRunID, err)
 			continue
 		}
 		wr, errWR := LoadRunByID(db, noderun.WorkflowRunID, LoadRunOptions{
 			WithLightTests: true,
 		})
 		if errWR != nil {
-			log.Warning("SendEvent.workflow> Cannot load workflow run %d: %s", noderun.WorkflowRunID, errWR)
+			log.Warning(ctx, "SendEvent.workflow> Cannot load workflow run %d: %s", noderun.WorkflowRunID, errWR)
 			continue
 		}
-		event.PublishWorkflowNodeJobRun(db, key, *wr, jobrun)
+		event.PublishWorkflowNodeJobRun(ctx, db, key, *wr, jobrun)
 	}
 }
 

@@ -218,7 +218,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 		newWf.Permissions.Executable = true
 		newWf.Permissions.Writable = true
 
-		event.PublishWorkflowUpdate(key, *wf, *newWf, getAPIConsumer(ctx))
+		event.PublishWorkflowUpdate(ctx, key, *wf, *newWf, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, *newWf, http.StatusOK)
 	}
@@ -383,7 +383,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
 
-		event.PublishWorkflowAdd(p.Key, *wf1, getAPIConsumer(ctx))
+		event.PublishWorkflowAdd(ctx, p.Key, *wf1, getAPIConsumer(ctx))
 
 		wf1.Permissions.Readable = true
 		wf1.Permissions.Writable = true
@@ -464,7 +464,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
 
-		event.PublishWorkflowUpdate(p.Key, *wf1, *oldW, getAPIConsumer(ctx))
+		event.PublishWorkflowUpdate(ctx, p.Key, *wf1, *oldW, getAPIConsumer(ctx))
 
 		wf1.Permissions.Readable = true
 		wf1.Permissions.Writable = true
@@ -603,7 +603,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 				if err := txg.Commit(); err != nil {
 					log.Error(ctx, "deleteWorkflowHandler> Cannot commit transaction: %v", err)
 				}
-				event.PublishWorkflowDelete(key, *oldW, getAPIConsumer((ctx)))
+				event.PublishWorkflowDelete(ctx, key, *oldW, getAPIConsumer((ctx)))
 			}, api.PanicDump())
 
 		return service.WriteJSON(w, nil, http.StatusOK)

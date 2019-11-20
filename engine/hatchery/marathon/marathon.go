@@ -267,7 +267,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 				var err error
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
 				if err != nil {
-					log.Warning("spawnMarathonDockerWorker> %s unable to parse memory requirement %d: %v", logJob, memory, err)
+					log.Warning(ctx, "spawnMarathonDockerWorker> %s unable to parse memory requirement %d: %v", logJob, memory, err)
 					return err
 				}
 			}
@@ -380,14 +380,14 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 				// try to delete deployment
 				log.Debug("spawnMarathonDockerWorker> %s timeout (%d) on deployment %s", logJob, h.Config.WorkerSpawnTimeout, id)
 				if _, err := h.marathonClient.DeleteDeployment(id, true); err != nil {
-					log.Warning("spawnMarathonDockerWorker> %s error on delete timeouted deployment %s: %s", logJob, id, err.Error())
+					log.Warning(ctx, "spawnMarathonDockerWorker> %s error on delete timeouted deployment %s: %s", logJob, id, err.Error())
 				}
 				successChan <- false
 				wg.Done()
 			}()
 
 			if err := h.marathonClient.WaitOnDeployment(id, time.Duration(h.Config.WorkerSpawnTimeout)*time.Second); err != nil {
-				log.Warning("spawnMarathonDockerWorker> %s error on deployment %s: %s", logJob, id, err.Error())
+				log.Warning(ctx, "spawnMarathonDockerWorker> %s error on deployment %s: %s", logJob, id, err.Error())
 				successChan <- false
 				return
 			}
@@ -429,7 +429,7 @@ func (h *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {
 func (h *HatcheryMarathon) WorkersStarted(ctx context.Context) []string {
 	apps, err := h.listApplications(h.Config.MarathonIDPrefix)
 	if err != nil {
-		log.Warning("WorkersStarted> error on list applications err:%s", err)
+		log.Warning(ctx, "WorkersStarted> error on list applications err:%s", err)
 		return nil
 	}
 	res := make([]string, len(apps))
@@ -469,7 +469,7 @@ func (h *HatcheryMarathon) startKillAwolWorkerRoutine() {
 		for {
 			time.Sleep(10 * time.Second)
 			if err := h.killDisabledWorkers(); err != nil {
-				log.Warning("Cannot kill disabled workers: %s", err)
+				log.Warning(context.Background(), "Cannot kill disabled workers: %s", err)
 			}
 		}
 	}()
@@ -478,7 +478,7 @@ func (h *HatcheryMarathon) startKillAwolWorkerRoutine() {
 		for {
 			time.Sleep(10 * time.Second)
 			if err := h.killAwolWorkers(); err != nil {
-				log.Warning("Cannot kill awol workers: %s", err)
+				log.Warning(context.Background(), "Cannot kill awol workers: %s", err)
 			}
 		}
 	}()
@@ -507,7 +507,7 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 			if strings.HasSuffix(app, w.Name) {
 				log.Info("killing disabled worker %s id:%s wk:%d ak:%d", app, w.ID, wk, ak)
 				if _, err := h.marathonClient.DeleteApplication(app, true); err != nil {
-					log.Warning("killDisabledWorkers> Error while delete app %s err:%s", app, err)
+					log.Warning(ctx, "killDisabledWorkers> Error while delete app %s err:%s", app, err)
 					// continue to next app
 				}
 			}
@@ -541,7 +541,7 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 
 		t, err := time.Parse(time.RFC3339, app.Version)
 		if err != nil {
-			log.Warning("killAwolWorkers> app %s - Cannot parse last update: %s", app.ID, err)
+			log.Warning(ctx, "killAwolWorkers> app %s - Cannot parse last update: %s", app.ID, err)
 			break
 		}
 
@@ -578,7 +578,7 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 				}
 			}
 			if _, err := h.marathonClient.DeleteApplication(app.ID, true); err != nil {
-				log.Warning("killAwolWorkers> Error while delete app %s err:%s", app.ID, err)
+				log.Warning(ctx, "killAwolWorkers> Error while delete app %s err:%s", app.ID, err)
 				// continue to next app
 			}
 		}
@@ -588,7 +588,7 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 }
 
 // NeedRegistration return true if worker model need regsitration
-func (h *HatcheryMarathon) NeedRegistration(wm *sdk.Model) bool {
+func (h *HatcheryMarathon) NeedRegistration(ctx context.Context, wm *sdk.Model) bool {
 	if wm.NeedRegistration || wm.LastRegistration.Unix() < wm.UserLastModified.Unix() {
 		return true
 	}

@@ -136,8 +136,8 @@ func (h *HatcheryVSphere) Configuration() service.HatcheryCommonConfiguration {
 }
 
 // NeedRegistration return true if worker model need regsitration
-func (h *HatcheryVSphere) NeedRegistration(m *sdk.Model) bool {
-	model, errG := h.getModelByName(m.Name)
+func (h *HatcheryVSphere) NeedRegistration(ctx context.Context, m *sdk.Model) bool {
+	model, errG := h.getModelByName(ctx, m.Name)
 	if errG != nil || model.Config == nil || model.Config.Annotation == "" {
 		return true
 	}
@@ -269,7 +269,7 @@ func (h *HatcheryVSphere) killAwolServers() {
 
 		if annot.ToDelete || (s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn && (!annot.Model || annot.RegisterOnly)) {
 			if err := h.deleteServer(s); err != nil {
-				log.Warning("killAwolServers> cannot delete server %s", s.Name)
+				log.Warning(context.Background(), "killAwolServers> cannot delete server %s", s.Name)
 			}
 		}
 	}

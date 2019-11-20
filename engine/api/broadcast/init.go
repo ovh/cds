@@ -24,7 +24,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap) {
 		case <-tickPurge.C:
 			log.Debug("PurgeBroadcast> Deleting all old broadcast...")
 			if err := deleteOldBroadcasts(DBFunc()); err != nil {
-				log.Warning("broadcast.Purge> Error : %s", err)
+				log.Warning(c, "broadcast.Purge> Error : %s", err)
 			}
 		}
 	}

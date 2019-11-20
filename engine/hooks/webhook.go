@@ -84,7 +84,7 @@ func (s *Service) executeRepositoryWebHook(ctx context.Context, t *sdk.TaskExecu
 			return nil, errG
 		}
 	default:
-		log.Warning("executeRepositoryWebHook> Repository manager not found. Cannot read %s", string(t.WebHook.RequestBody))
+		log.Warning(ctx, "executeRepositoryWebHook> Repository manager not found. Cannot read %s", string(t.WebHook.RequestBody))
 		return nil, fmt.Errorf("Repository manager not found. Cannot read request body")
 	}
 

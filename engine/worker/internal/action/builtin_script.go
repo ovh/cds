@@ -95,7 +95,7 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 
 	tmpscript, err := fs.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
 	if err != nil {
-		log.Warning("writeScriptContent> Cannot create tmp file: %s", err)
+		log.Warning(ctx, "writeScriptContent> Cannot create tmp file: %s", err)
 		return nil, fmt.Errorf("cannot create temporary file, aborting: %v", err)
 	}
 	log.Debug("runScriptAction> writeScriptContent> Writing script to %s", tmpscript.Name())
@@ -104,9 +104,9 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 	n, errw := tmpscript.Write(script.content)
 	if errw != nil || n != len(script.content) {
 		if errw != nil {
-			log.Warning("cannot write script: %s", errw)
+			log.Warning(ctx, "cannot write script: %s", errw)
 		} else {
-			log.Warning("cannot write all script: %d/%d", n, len(script.content))
+			log.Warning(ctx, "cannot write all script: %d/%d", n, len(script.content))
 		}
 		return nil, errors.New("cannot write script in temporary file, aborting")
 	}
@@ -146,7 +146,7 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 
 	// Chmod file
 	if err := fs.Chmod(tmpscript.Name(), 0755); err != nil {
-		log.Warning("runScriptAction> cannot chmod script %s: %s", tmpscript.Name(), err)
+		log.Warning(ctx, "runScriptAction> cannot chmod script %s: %s", tmpscript.Name(), err)
 		return deferFunc, fmt.Errorf("cannot chmod script %s: %v, aborting", tmpscript.Name(), err)
 	}
 

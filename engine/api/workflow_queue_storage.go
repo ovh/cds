@@ -166,7 +166,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 		}
 
 		if fileName == "" {
-			log.Warning("uploadArtifactHandler> %s header is not set", "Content-Disposition")
+			log.Warning(ctx, "uploadArtifactHandler> %s header is not set", "Content-Disposition")
 			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowJobArtifactHandler> %s header is not set", "Content-Disposition")
 		}
 
@@ -375,7 +375,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		for i := 0; i < retryURL; i++ {
 			url, key, errorStoreURL = store.StoreURL(&art, "")
 			if errorStoreURL != nil {
-				log.Warning("Error on store.StoreURL: %v - Try %d/%d", errorStoreURL, i, retryURL)
+				log.Warning(ctx, "Error on store.StoreURL: %v - Try %d/%d", errorStoreURL, i, retryURL)
 			} else {
 				// no error
 				break

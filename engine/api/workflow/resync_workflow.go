@@ -47,7 +47,7 @@ func Resync(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 }
 
 //ResyncWorkflowRunStatus resync the status of workflow if you stop a node run when workflow run is building
-func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*ProcessorReport, error) {
+func ResyncWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
 	var counterStatus statusCounter
 	for _, wnrs := range wr.WorkflowNodeRuns {
@@ -73,7 +73,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 
 	if newStatus != wr.Status {
 		wr.Status = newStatus
-		report.Add(*wr)
+		report.Add(ctx, *wr)
 
 		return report, UpdateWorkflowRunStatus(db, wr)
 	}

@@ -359,7 +359,7 @@ type Interface interface {
 	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)
 	RepositoriesManagerInterface
-	ServiceRegister(sdk.Service) (*sdk.Service, error)
+	ServiceRegister(context.Context, sdk.Service) (*sdk.Service, error)
 	ServiceHeartbeat(sdk.MonitoringStatus) error
 	UserClient
 	WorkerClient

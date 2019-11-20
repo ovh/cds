@@ -89,7 +89,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 	}
 
 	if nodeUpdated {
-		report.Add(*n)
+		report.Add(ctx, *n)
 	}
 
 	// Save the node run in database
@@ -114,7 +114,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	report := new(ProcessorReport)
 	defer func(wNr *sdk.WorkflowNodeRun) {
-		report.Add(*wNr)
+		report.Add(ctx, *wNr)
 	}(nr)
 
 	//If status is not waiting neither build: nothing to do
@@ -149,8 +149,8 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				//Add job to Queue
 				//Insert data in workflow_node_run_job
 				log.Debug("workflow.executeNodeRun> stage %s call addJobsToQueue", stage.Name)
-				var err error
-				report, err = report.Merge(addJobsToQueue(ctx, db, stage, wr, nr))
+				r, err := addJobsToQueue(ctx, db, stage, wr, nr)
+				report, err = report.Merge(ctx, r, err)
 				if err != nil {
 					return report, err
 				}
@@ -266,7 +266,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			if err != nil {
 				return nil, sdk.WrapError(err, "Unable to reprocess workflow !")
 			}
-			report, _ = report.Merge(r1, nil)
+			report, _ = report.Merge(ctx, r1, nil)
 		}
 
 		//Delete the line in workflow_node_run_job
@@ -332,8 +332,8 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			}
 
 			log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
-			var err error
-			report, err = report.Merge(executeNodeRun(ctx, db, store, proj, waitingRun))
+			r, err := executeNodeRun(ctx, db, store, proj, waitingRun)
+			report, err = report.Merge(ctx, r, err)
 			if err != nil {
 				return nil, sdk.WrapError(err, "Unable to reprocess workflow")
 			}
@@ -352,7 +352,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	report := new(ProcessorReport)
 
 	_, next := observability.Span(ctx, "checkCondition")
-	conditionsOK := checkCondition(wr, stage.Conditions, nr.BuildParameters)
+	conditionsOK := checkCondition(ctx, wr, stage.Conditions, nr.BuildParameters)
 	next()
 	if !conditionsOK {
 		stage.Status = sdk.StatusSkipped
@@ -477,7 +477,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		//Put the job run in database
 		stage.RunJobs = append(stage.RunJobs, wjob)
 
-		report.Add(wjob)
+		report.Add(ctx, wjob)
 	}
 
 	if skippedOrDisabledJobs == len(stage.Jobs) {
@@ -553,7 +553,7 @@ func syncStage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, stag
 			if runJobDB.Status == sdk.StatusBuilding || runJobDB.Status == sdk.StatusWaiting {
 				stageEnd = false
 			}
-			spawnInfos, err := LoadNodeRunJobInfo(db, runJob.ID)
+			spawnInfos, err := LoadNodeRunJobInfo(ctx, db, runJob.ID)
 			if err != nil {
 				return false, sdk.WrapError(err, "unable to load spawn infos for runJob: %d", runJob.ID)
 			}
@@ -713,7 +713,7 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	for i := 0; i < stopWorkflowNodeRunNBWorker && i < len(ids); i++ {
 		go func() {
 			//since report is mutable and is a pointer and in this case we can't have any error, we can skip returned values
-			_, _ = report.Merge(stopWorkflowNodeJobRun(ctx, dbFunc, store, proj, nodeRun, stopInfos, chanNjrID, chanErr, chanNodeJobRunDone, &wg), nil)
+			_, _ = report.Merge(ctx, stopWorkflowNodeJobRun(ctx, dbFunc, store, proj, nodeRun, stopInfos, chanNjrID, chanErr, chanNodeJobRunDone, &wg), nil)
 		}()
 	}
 
@@ -739,7 +739,7 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	defer tx.Rollback() //nolint
 
 	// Update stages from node run
-	stopWorkflowNodeRunStages(tx, nodeRun)
+	stopWorkflowNodeRunStages(ctx, tx, nodeRun)
 
 	nodeRun.Status = sdk.StatusStopped
 	nodeRun.Done = time.Now()
@@ -808,22 +808,22 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 		return report, sdk.WrapError(errS, "Unable to stop workflow node run")
 	}
 
-	report.Merge(r1, nil) // nolint
-	report.Add(nodeRun)
+	report.Merge(ctx, r1, nil) // nolint
+	report.Add(ctx, nodeRun)
 
 	return report, nil
 }
 
 // stopWorkflowNodeRunStages mark to stop all stages and step status in struct
-func stopWorkflowNodeRunStages(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun) {
+func stopWorkflowNodeRunStages(ctx context.Context, db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun) {
 	// Update stages from node run
 	for iS := range nodeRun.Stages {
 		stag := &nodeRun.Stages[iS]
 		for iR := range stag.RunJobs {
 			runj := &stag.RunJobs[iR]
-			spawnInfos, err := LoadNodeRunJobInfo(db, runj.ID)
+			spawnInfos, err := LoadNodeRunJobInfo(ctx, db, runj.ID)
 			if err != nil {
-				log.Warning("unable to load spawn infos for runj ID: %d", runj.ID)
+				log.Warning(ctx, "unable to load spawn infos for runj ID: %d", runj.ID)
 			} else {
 				runj.SpawnInfos = spawnInfos
 			}
@@ -877,7 +877,8 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 		}
 
 		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
-		if _, err := report.Merge(UpdateNodeJobRunStatus(ctx, tx, store, proj, njr, sdk.StatusStopped)); err != nil {
+		r, err := UpdateNodeJobRunStatus(ctx, tx, store, proj, njr, sdk.StatusStopped)
+		if _, err := report.Merge(ctx, r, err); err != nil {
 			chanErr <- sdk.WrapError(err, "Cannot update node job run")
 			tx.Rollback()
 			wg.Done()
@@ -908,7 +909,7 @@ func SyncNodeRunRunJob(ctx context.Context, db gorp.SqlExecutor, nodeRun *sdk.Wo
 		for j := range s.RunJobs {
 			runJob := &s.RunJobs[j]
 			if runJob.ID == nodeJobRun.ID {
-				spawnInfos, err := LoadNodeRunJobInfo(db, runJob.ID)
+				spawnInfos, err := LoadNodeRunJobInfo(ctx, db, runJob.ID)
 				if err != nil {
 					return false, sdk.WrapError(err, "unable to load spawn infos for runJobID: %d", runJob.ID)
 				}
@@ -1042,7 +1043,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if vcsInfos.Hash != "" && (vcsInfos.Author == "" || vcsInfos.Message == "") {
 		commit, errCm := client.Commit(ctx, vcsInfos.Repository, vcsInfos.Hash)
 		if errCm != nil {
-			log.Warning("unable to ")
+			log.Warning(ctx, "unable to ")
 			return nil, sdk.WrapError(errCm, "cannot get commit infos for %s %s", vcsInfos.Repository, vcsInfos.Hash)
 		}
 		vcsInfos.Author = commit.Author.Name

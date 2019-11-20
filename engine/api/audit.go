@@ -29,7 +29,7 @@ func auditCleanerRoutine(ctx context.Context, DBFunc func() *gorp.DbMap) {
 			if db != nil {
 				err := actionAuditCleaner(DBFunc())
 				if err != nil {
-					log.Warning("AuditCleanerRoutine> Action clean failed: %s", err)
+					log.Warning(ctx, "AuditCleanerRoutine> Action clean failed: %s", err)
 				}
 			}
 		}

@@ -171,9 +171,9 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		}
 
 		if wf != nil {
-			event.PublishWorkflowUpdate(proj.Key, *wrkflw, *wf, u)
+			event.PublishWorkflowUpdate(ctx, proj.Key, *wrkflw, *wf, u)
 		} else {
-			event.PublishWorkflowAdd(proj.Key, *wrkflw, u)
+			event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, u)
 		}
 
 		if wrkflw != nil {
@@ -266,7 +266,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		}
 
 		if wf != nil {
-			event.PublishWorkflowUpdate(key, *wrkflw, *wf, u)
+			event.PublishWorkflowUpdate(ctx, key, *wrkflw, *wf, u)
 		}
 
 		if wrkflw != nil {
