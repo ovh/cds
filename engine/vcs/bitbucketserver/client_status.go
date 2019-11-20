@@ -25,7 +25,7 @@ type statusData struct {
 
 func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if b.consumer.disableStatus {
-		log.Warning("bitbucketClient.SetStatus>  ⚠ Bitbucket statuses are disabled")
+		log.Warning(ctx, "bitbucketClient.SetStatus>  ⚠ Bitbucket statuses are disabled")
 		return nil
 	}
 

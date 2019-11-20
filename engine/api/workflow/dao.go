@@ -631,7 +631,7 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.ApplicationID != 0 {
 		var err error
 		if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, p, w); err != nil {
-			log.Warning("postWorkflowHandler> Cannot set default payload : %v", err)
+			log.Warning(ctx, "postWorkflowHandler> Cannot set default payload : %v", err)
 		}
 	}
 
@@ -957,7 +957,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.ApplicationID != 0 {
 		var err error
 		if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, p, w); err != nil {
-			log.Warning("putWorkflowHandler> Cannot set default payload : %v", err)
+			log.Warning(ctx, "putWorkflowHandler> Cannot set default payload : %v", err)
 		}
 	}
 
@@ -1389,7 +1389,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	defer end()
 	allMsg := []sdk.Message{}
 
-	data, err := extractFromCDSFiles(tr)
+	data, err := extractFromCDSFiles(ctx, tr)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1430,7 +1430,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		appDB, msgList, err := application.ParseAndImport(tx, store, proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
+		appDB, msgList, err := application.ParseAndImport(ctx, tx, store, proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
 		if err != nil {
 			return nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", proj.Key, app.Name)
 		}
@@ -1524,9 +1524,9 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 
 		if oldWf != nil {
-			event.PublishWorkflowUpdate(proj.Key, *wf, *oldWf, u)
+			event.PublishWorkflowUpdate(ctx, proj.Key, *wf, *oldWf, u)
 		} else {
-			event.PublishWorkflowAdd(proj.Key, *wf, u)
+			event.PublishWorkflowAdd(ctx, proj.Key, *wf, u)
 		}
 
 		log.Debug("workflow %s updated", wf.Name)

@@ -1,6 +1,7 @@
 package warning
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -24,7 +25,7 @@ func (warn unusedProjectKeyWarning) name() string {
 	return sdk.WarningUnusedProjectKey
 }
 
-func (warn unusedProjectKeyWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (warn unusedProjectKeyWarning) compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
 	case fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}):
 		payload, err := e.ToEventProjectKeyAdd()
@@ -32,7 +33,7 @@ func (warn unusedProjectKeyWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyAdd")
 		}
 
-		apps, pips, pipJobs := keyIsUsed(db, e.ProjectKey, payload.Key.Name)
+		apps, pips, pipJobs := keyIsUsed(ctx, db, e.ProjectKey, payload.Key.Name)
 		if len(apps) == 0 && len(pips) == 0 && len(pipJobs) == 0 {
 			w := sdk.Warning{
 				Key:     e.ProjectKey,
@@ -44,7 +45,7 @@ func (warn unusedProjectKeyWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 					"ProjectKey": e.ProjectKey,
 				},
 			}
-			if err := Insert(db, w); err != nil {
+			if err := Insert(ctx, db, w); err != nil {
 				return sdk.WrapError(err, "Unable to Insert warning")
 			}
 		}
@@ -53,7 +54,7 @@ func (warn unusedProjectKeyWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyDelete")
 		}
-		if err := removeProjectWarning(db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectKeyDelete")
 		}
 	}
@@ -73,14 +74,14 @@ func (warn missingProjectKeyPipelineParameterWarning) name() string {
 	return sdk.WarningMissingProjectKeyPipelineParameter
 }
 
-func (warn missingProjectKeyPipelineParameterWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (warn missingProjectKeyPipelineParameterWarning) compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
 	case fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}):
 		payload, err := e.ToEventProjectKeyAdd()
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyAdd")
 		}
-		if err := removeProjectWarning(db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectKeyAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}):
@@ -105,7 +106,7 @@ func (warn missingProjectKeyPipelineParameterWarning) compute(db gorp.SqlExecuto
 					"PipelineName": p,
 				},
 			}
-			if err := Insert(db, w); err != nil {
+			if err := Insert(ctx, db, w); err != nil {
 				return sdk.WrapError(err, "Unable to Insert warning")
 			}
 		}
@@ -126,14 +127,14 @@ func (warn missingProjectKeyPipelineJobWarning) name() string {
 	return sdk.WarningMissingProjectKeyPipelineJob
 }
 
-func (warn missingProjectKeyPipelineJobWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (warn missingProjectKeyPipelineJobWarning) compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
 	case fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}):
 		payload, err := e.ToEventProjectKeyAdd()
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyAdd")
 		}
-		if err := removeProjectWarning(db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectKeyAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}):
@@ -160,7 +161,7 @@ func (warn missingProjectKeyPipelineJobWarning) compute(db gorp.SqlExecutor, e s
 					"JobName":      p.JobName,
 				},
 			}
-			if err := Insert(db, w); err != nil {
+			if err := Insert(ctx, db, w); err != nil {
 				return sdk.WrapError(err, "Unable to Insert warning")
 			}
 		}
@@ -181,14 +182,14 @@ func (warn missingProjectKeyApplicationWarning) name() string {
 	return sdk.WarningMissingProjectKeyApplication
 }
 
-func (warn missingProjectKeyApplicationWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (warn missingProjectKeyApplicationWarning) compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
 	case fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}):
 		payload, err := e.ToEventProjectKeyAdd()
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyAdd")
 		}
-		if err := removeProjectWarning(db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectKeyAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}):
@@ -213,7 +214,7 @@ func (warn missingProjectKeyApplicationWarning) compute(db gorp.SqlExecutor, e s
 					"ApplicationName": a,
 				},
 			}
-			if err := Insert(db, w); err != nil {
+			if err := Insert(ctx, db, w); err != nil {
 				return sdk.WrapError(err, "Unable to Insert warning")
 			}
 		}

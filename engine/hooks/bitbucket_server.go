@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -9,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) generatePayloadFromBitbucketServerRequest(t *sdk.TaskExecution, event string) ([]map[string]interface{}, error) {
+func (s *Service) generatePayloadFromBitbucketServerRequest(ctx context.Context, t *sdk.TaskExecution, event string) ([]map[string]interface{}, error) {
 	payloads := []map[string]interface{}{}
 
 	var request sdk.BitbucketServerWebhookEvent
@@ -23,7 +24,7 @@ func (s *Service) generatePayloadFromBitbucketServerRequest(t *sdk.TaskExecution
 	getVariableFromBitbucketServerAuthor(payload, request.Actor)
 	getVariableFromBitbucketServerPullRequest(payload, request.PullRequest)
 	getVariableFromBitbucketServerParticipant(payload, request.Participant)
-	getPayloadStringVariable(payload, request)
+	getPayloadStringVariable(ctx, payload, request)
 	getPayloadFromBitbucketServerPRComment(payload, request.Comment)
 	getPayloadFromBitbucketServerPreviousTarget(payload, request.PreviousTarget)
 	getVariableFromBitbucketServerRepository(payload, request.Repository)
@@ -48,14 +49,14 @@ func (s *Service) generatePayloadFromBitbucketServerRequest(t *sdk.TaskExecution
 		if pushChange.Type == "DELETE" {
 			err := s.enqueueBranchDeletion(projectKey, workflowName, strings.TrimPrefix(pushChange.RefID, "refs/heads/"))
 			if err != nil {
-				log.Error("cannot enqueue branch deletion: %v", err)
+				log.Error(ctx, "cannot enqueue branch deletion: %v", err)
 			}
 			continue
 		}
 		if !strings.HasPrefix(pushChange.RefID, "refs/tags/") {
 			branch := strings.TrimPrefix(pushChange.RefID, "refs/heads/")
-			if err := s.stopBranchDeletionTask(branch); err != nil {
-				log.Error("cannot stop branch deletion task for branch %s : %v", branch, err)
+			if err := s.stopBranchDeletionTask(ctx, branch); err != nil {
+				log.Error(ctx, "cannot stop branch deletion task for branch %s : %v", branch, err)
 			}
 		}
 

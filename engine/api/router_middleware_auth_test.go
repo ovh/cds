@@ -53,10 +53,10 @@ func Test_authMiddleware_WithAuthConsumerDisabled(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	builtinConsumer, _, err := builtin.NewConsumer(db, "builtin", "", localConsumer, []int64{g.ID},
+	builtinConsumer, _, err := builtin.NewConsumer(context.TODO(), db, "builtin", "", localConsumer, []int64{g.ID},
 		[]sdk.AuthConsumerScope{sdk.AuthConsumerScopeGroup})
 	require.NoError(t, err)
-	builtinSession, err := authentication.NewSession(db, builtinConsumer, time.Second*5, false)
+	builtinSession, err := authentication.NewSession(context.TODO(), db, builtinConsumer, time.Second*5, false)
 	require.NoError(t, err)
 	jwt, err := authentication.NewSessionJWT(builtinSession)
 	require.NoError(t, err)

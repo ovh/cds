@@ -26,7 +26,7 @@ func Test_getConsumersByUserHandler(t *testing.T) {
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	consumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser})
+	consumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser})
 	require.NoError(t, err)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getConsumersByUserHandler, map[string]string{
@@ -114,7 +114,7 @@ func Test_deleteConsumerByUserHandler(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
-	newConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAccessToken})
+	newConsumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeAccessToken})
 	require.NoError(t, err)
 	cs, err := authentication.LoadConsumersByUserID(context.TODO(), db, u.ID)
 	require.NoError(t, err)
@@ -154,9 +154,9 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusForbidden, rec.Code)
 
-	builtinConsumer, signinToken1, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser, sdk.AuthConsumerScopeAccessToken})
+	builtinConsumer, signinToken1, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser, sdk.AuthConsumerScopeAccessToken})
 	require.NoError(t, err)
-	session, err := authentication.NewSession(db, builtinConsumer, 5*time.Minute, false)
+	session, err := authentication.NewSession(context.TODO(), db, builtinConsumer, 5*time.Minute, false)
 	require.NoError(t, err, "cannot create session")
 	jwt2, err := authentication.NewSessionJWT(session)
 	require.NoError(t, err, "cannot create jwt")
@@ -194,7 +194,7 @@ func Test_postConsumerRegenByUserHandler(t *testing.T) {
 
 	t.Logf("%+v", response)
 
-	session, err = authentication.NewSession(db, builtinConsumer, 5*time.Minute, false)
+	session, err = authentication.NewSession(context.TODO(), db, builtinConsumer, 5*time.Minute, false)
 	require.NoError(t, err)
 	jwt3, err := authentication.NewSessionJWT(session)
 	require.NoError(t, err)
@@ -243,11 +243,11 @@ func Test_getSessionsByUserHandler(t *testing.T) {
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	consumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser})
+	consumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser})
 	require.NoError(t, err)
-	s2, err := authentication.NewSession(db, consumer, time.Second, false)
+	s2, err := authentication.NewSession(context.TODO(), db, consumer, time.Second, false)
 	require.NoError(t, err)
-	s3, err := authentication.NewSession(db, consumer, time.Second, false)
+	s3, err := authentication.NewSession(context.TODO(), db, consumer, time.Second, false)
 	require.NoError(t, err)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getSessionsByUserHandler, map[string]string{
@@ -276,9 +276,9 @@ func Test_deleteSessionByUserHandler(t *testing.T) {
 		authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	consumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser})
+	consumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", localConsumer, nil, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeUser})
 	require.NoError(t, err)
-	s2, err := authentication.NewSession(db, consumer, time.Second, false)
+	s2, err := authentication.NewSession(context.TODO(), db, consumer, time.Second, false)
 	require.NoError(t, err)
 
 	ss, err := authentication.LoadSessionsByConsumerIDs(context.TODO(), db, []string{localConsumer.ID, consumer.ID})

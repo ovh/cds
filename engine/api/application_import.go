@@ -63,7 +63,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		newApp, msgList, globalError := application.ParseAndImport(tx, api.Cache, proj, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
+		newApp, msgList, globalError := application.ParseAndImport(ctx, tx, api.Cache, proj, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import application %s", eapp.Name)
@@ -77,7 +77,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
-		event.PublishAddApplication(proj.Key, *newApp, getAPIConsumer(ctx))
+		event.PublishAddApplication(ctx, proj.Key, *newApp, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}

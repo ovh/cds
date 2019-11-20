@@ -47,7 +47,7 @@ func getGitlabStateFromStatus(s string) gitlab.BuildStateValue {
 //SetStatus set build status on Gitlab
 func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if c.disableStatus {
-		log.Warning("disableStatus.SetStatus>  ⚠ Gitlab statuses are disabled")
+		log.Warning(ctx, "disableStatus.SetStatus>  ⚠ Gitlab statuses are disabled")
 		return nil
 	}
 

@@ -63,7 +63,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "Content-Disposition header is not set")
 		}
 
-		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, nodeJobRunID)
+		nodeJobRun, errJ := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, nodeJobRunID)
 		if errJ != nil {
 			return sdk.WrapError(errJ, "Cannot load node job run")
 		}
@@ -82,13 +82,13 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			NodeJobRunID: nodeJobRunID,
 		}
 
-		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
 		if err != nil {
 			return err
 		}
 
 		if staticFile.StaticKey != "" {
-			if err := storageDriver.Delete(&staticFile); err != nil {
+			if err := storageDriver.Delete(ctx, &staticFile); err != nil {
 				return sdk.WrapError(err, "Cannot delete existing static files")
 			}
 		}
@@ -114,7 +114,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 		}
 
 		if err := workflow.InsertStaticFiles(api.mustDB(), &staticFile); err != nil {
-			_ = storageDriver.Delete(&staticFile)
+			_ = storageDriver.Delete(ctx, &staticFile)
 			return sdk.WrapError(err, "Cannot insert static files in database")
 		}
 		return service.WriteJSON(w, staticFile, http.StatusOK)
@@ -166,11 +166,11 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 		}
 
 		if fileName == "" {
-			log.Warning("uploadArtifactHandler> %s header is not set", "Content-Disposition")
+			log.Warning(ctx, "uploadArtifactHandler> %s header is not set", "Content-Disposition")
 			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowJobArtifactHandler> %s header is not set", "Content-Disposition")
 		}
 
-		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, nodeJobRunID)
+		nodeJobRun, errJ := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, nodeJobRunID)
 		if errJ != nil {
 			return sdk.WrapError(errJ, "Cannot load node job run")
 		}
@@ -215,7 +215,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 			Created:           time.Now(),
 		}
 
-		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
 		if err != nil {
 			return err
 		}
@@ -244,7 +244,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
-			_ = storageDriver.Delete(&art)
+			_ = storageDriver.Delete(ctx, &art)
 			return sdk.WrapError(err, "Cannot update workflow node run")
 		}
 		return nil
@@ -259,7 +259,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 		vars := mux.Vars(r)
 
-		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
 		if err != nil {
 			return err
 		}
@@ -277,7 +277,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 		cachedArt := sdk.WorkflowNodeRunArtifact{}
 		find, err := api.Cache.Get(cacheKey, &cachedArt)
 		if err != nil {
-			log.Error("cannot get from cache %s: %v", cacheKey, err)
+			log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 		}
 		if !find {
 			return sdk.WrapError(sdk.ErrNotFound, "postWorkflowJobArtifactWithTempURLCallbackHandler> Unable to find artifact, key:%s", cacheKey)
@@ -299,7 +299,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
-			_ = storageDriver.Delete(&art)
+			_ = storageDriver.Delete(ctx, &art)
 			return sdk.WrapError(err, "Cannot update workflow node run")
 		}
 
@@ -316,7 +316,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		vars := mux.Vars(r)
 		ref := vars["ref"]
 
-		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
 		if err != nil {
 			return err
 		}
@@ -342,7 +342,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, art.WorkflowNodeJobRunID)
+		nodeJobRun, errJ := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, art.WorkflowNodeJobRunID)
 		if errJ != nil {
 			return sdk.WrapError(errJ, "postWorkflowJobArtifacWithTempURLHandler> Cannot load node job run with art.WorkflowNodeJobRunID: %d", art.WorkflowNodeJobRunID)
 		}
@@ -375,7 +375,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		for i := 0; i < retryURL; i++ {
 			url, key, errorStoreURL = store.StoreURL(&art, "")
 			if errorStoreURL != nil {
-				log.Warning("Error on store.StoreURL: %v - Try %d/%d", errorStoreURL, i, retryURL)
+				log.Warning(ctx, "Error on store.StoreURL: %v - Try %d/%d", errorStoreURL, i, retryURL)
 			} else {
 				// no error
 				break
@@ -393,7 +393,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		cacheKey := cache.Key("workflows:artifacts", art.GetPath(), art.GetName())
 		//Put this in cache for 1 hour
 		if err := api.Cache.SetWithTTL(cacheKey, art, 60*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 		}
 
 		return service.WriteJSON(w, art, http.StatusOK)

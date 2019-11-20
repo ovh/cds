@@ -8,7 +8,7 @@ import (
 )
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (s *Service) Status() sdk.MonitoringStatus {
+func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
 	var value, status string
 	if esClient == nil {

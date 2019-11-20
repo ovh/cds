@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"bytes"
+	"context"
 	"text/template"
 	"time"
 
@@ -109,7 +110,7 @@ var MessageFrench = map[string]string{
 	WarningUnusedPipelineParameter:                 `Le paramètre {{index . "ParamName"}} est inutilisé dans le pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}.`,
 }
 
-func (w *Warning) ComputeMessage(language string) {
+func (w *Warning) ComputeMessage(ctx context.Context, language string) {
 	var buffer bytes.Buffer
 
 	var tmplBody string
@@ -123,7 +124,7 @@ func (w *Warning) ComputeMessage(language string) {
 	// Execute template
 	t := template.Must(template.New("warning").Parse(tmplBody))
 	if err := t.Execute(&buffer, w.MessageParams); err != nil {
-		log.Warning("Unable to compute warning message: %+v: %v", w, err)
+		log.Warning(ctx, "Unable to compute warning message: %+v: %v", w, err)
 		return
 	}
 	// Set message value

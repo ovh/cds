@@ -70,7 +70,7 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 	}
 	pubSub, err := store.Subscribe("events_pubsub")
 	if err != nil {
-		log.Error("events.cacheSubscribe> Exiting on error: %v", err)
+		log.Error(c, "events.cacheSubscribe> Exiting on error: %v", err)
 		return
 	}
 	tick := time.NewTicker(50 * time.Millisecond)
@@ -79,13 +79,13 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				log.Error("events.cacheSubscribe> Exiting: %v", c.Err())
+				log.Error(c, "events.cacheSubscribe> Exiting: %v", c.Err())
 				return
 			}
 		case <-tick.C:
 			msg, err := store.GetMessageFromSubscription(c, pubSub)
 			if err != nil {
-				log.Warning("events.cacheSubscribe> Cannot get message: %v", err)
+				log.Warning(c, "events.cacheSubscribe> Cannot get message: %v", err)
 				continue
 			}
 			var e sdk.Event
@@ -125,7 +125,7 @@ func (b *eventsBroker) Start(ctx context.Context, panicCallback func(s string) (
 				observability.Record(b.router.Background, SSEClients, 0)
 			}
 			if ctx.Err() != nil {
-				log.Error("eventsBroker.Start> Exiting: %v", ctx.Err())
+				log.Error(ctx, "eventsBroker.Start> Exiting: %v", ctx.Err())
 				return
 			}
 
@@ -152,7 +152,7 @@ func (b *eventsBroker) Start(ctx context.Context, panicCallback func(s string) (
 										return
 									}
 								}
-								log.Error("eventsBroker> unable to send event to %s: %v", c.UUID, err)
+								log.Error(ctx, "eventsBroker> unable to send event to %s: %v", c.UUID, err)
 							}
 						}
 					}, panicCallback,

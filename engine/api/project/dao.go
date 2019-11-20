@@ -17,12 +17,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func loadAllByRepo(db gorp.SqlExecutor, store cache.Store, query string, args []interface{}, opts ...LoadOptionFunc) (sdk.Projects, error) {
-	return loadprojects(db, store, opts, query, args...)
+func loadAllByRepo(ctx context.Context, db gorp.SqlExecutor, store cache.Store, query string, args []interface{}, opts ...LoadOptionFunc) (sdk.Projects, error) {
+	return loadprojects(ctx, db, store, opts, query, args...)
 }
 
 // LoadAllByRepoAndGroupIDs returns all projects with an application linked to the repo against the groups
-func LoadAllByRepoAndGroupIDs(db gorp.SqlExecutor, store cache.Store, groupIDs []int64, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
+func LoadAllByRepoAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, groupIDs []int64, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	query := `SELECT DISTINCT project.*
 		FROM  project
 		JOIN  application on project.id = application.project_id
@@ -36,18 +36,18 @@ func LoadAllByRepoAndGroupIDs(db gorp.SqlExecutor, store cache.Store, groupIDs [
 				$2 = ANY(string_to_array($1, ',')::int[])
 		)`
 	args := []interface{}{gorpmapping.IDsToQueryString(groupIDs), group.SharedInfraGroup.ID, repo}
-	return loadAllByRepo(db, store, query, args, opts...)
+	return loadAllByRepo(ctx, db, store, query, args, opts...)
 }
 
 // LoadAllByRepo returns all projects with an application linked to the repo
-func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
+func LoadAllByRepo(ctx context.Context, db gorp.SqlExecutor, store cache.Store, repo string, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	query := `SELECT DISTINCT project.*
 	FROM  project
 	JOIN  application on project.id = application.project_id
 	WHERE application.repo_fullname = $1
 	ORDER by project.name, project.projectkey ASC`
 	args := []interface{}{repo}
-	return loadAllByRepo(db, store, query, args, opts...)
+	return loadAllByRepo(ctx, db, store, query, args, opts...)
 }
 
 // LoadAllByGroupIDs returns all projects given groups
@@ -64,13 +64,13 @@ func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	)
 	ORDER by project.name, project.projectkey ASC`
 	args := []interface{}{gorpmapping.IDsToQueryString(IDs), group.SharedInfraGroup.ID}
-	return loadprojects(db, store, opts, query, args...)
+	return loadprojects(ctx, db, store, opts, query, args...)
 }
 
 // LoadAll returns all projects
 func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts ...LoadOptionFunc) (sdk.Projects, error) {
 	query := "select project.* from project ORDER by project.name, project.projectkey ASC"
-	return loadprojects(db, store, opts, query)
+	return loadprojects(ctx, db, store, opts, query)
 }
 
 // LoadPermissions loads all projects where group has access
@@ -260,7 +260,7 @@ func LoadByPipelineID(db gorp.SqlExecutor, store cache.Store, groupIDs []int64, 
 	return load(context.TODO(), db, store, opts, query, pipelineID)
 }
 
-func loadprojects(db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
+func loadprojects(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
 	var res []dbProject
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -273,12 +273,12 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc,
 	for i := range res {
 		p := &res[i]
 		if err := p.PostGet(db); err != nil {
-			log.Error("loadprojects> PostGet error (ID=%d, Key:%s): %v", p.ID, p.Key, err)
+			log.Error(ctx, "loadprojects> PostGet error (ID=%d, Key:%s): %v", p.ID, p.Key, err)
 			continue
 		}
 		proj, err := unwrap(db, store, p, opts)
 		if err != nil {
-			log.Error("loadprojects> unwrap error (ID=%d, Key:%s): %v", p.ID, p.Key, err)
+			log.Error(ctx, "loadprojects> unwrap error (ID=%d, Key:%s): %v", p.ID, p.Key, err)
 			continue
 		}
 		projs = append(projs, *proj)

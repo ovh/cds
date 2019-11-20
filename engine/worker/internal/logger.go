@@ -36,12 +36,12 @@ func (wk *CurrentWorker) logProcessor(ctx context.Context, jobID int64) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			wk.sendHTTPLog(jobID)
+			wk.sendHTTPLog(ctx, jobID)
 		}
 	}
 }
 
-func (wk *CurrentWorker) sendHTTPLog(jobID int64) {
+func (wk *CurrentWorker) sendHTTPLog(ctx context.Context, jobID int64) {
 	var logs []*sdk.Log
 	var currentStepLog *sdk.Log
 	// While list is not empty
@@ -77,7 +77,7 @@ func (wk *CurrentWorker) sendHTTPLog(jobID int64) {
 	for _, l := range logs {
 		log.Debug("LOG: %v", l.Val)
 		if err := wk.Client().QueueSendLogs(wk.currentJob.context, jobID, *l); err != nil {
-			log.Error("error: cannot send logs: %s", err)
+			log.Error(ctx, "error: cannot send logs: %s", err)
 			continue
 		}
 	}

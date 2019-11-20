@@ -74,7 +74,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
-		event.PublishApplicationKeyDelete(key, *app, keyToDelete, getAPIConsumer(ctx))
+		event.PublishApplicationKeyDelete(ctx, key, *app, keyToDelete, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -142,7 +142,7 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishApplicationKeyAdd(key, *app, newKey, getAPIConsumer(ctx))
+		event.PublishApplicationKeyAdd(ctx, key, *app, newKey, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 var _ sdk.AuthDriver = new(AuthDriver)
 
 // NewDriver returns a new initialized driver for local authentication.
-func NewDriver(signupDisabled bool, uiURL, allowedDomains string) sdk.AuthDriver {
+func NewDriver(ctx context.Context, signupDisabled bool, uiURL, allowedDomains string) sdk.AuthDriver {
 	var domains []string
 
 	if allowedDomains != "" {
@@ -115,7 +116,7 @@ func (d AuthDriver) isAllowedDomain(email string) bool {
 }
 
 // GetUserInfo .
-func (d AuthDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
+func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
 	// not used for local auth
 	return sdk.AuthDriverUserInfo{}, nil
 }

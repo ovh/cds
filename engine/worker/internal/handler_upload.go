@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func uploadHandler(wk *CurrentWorker) http.HandlerFunc {
+func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)

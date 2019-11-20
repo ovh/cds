@@ -143,7 +143,7 @@ func (api *API) addEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnvs, "addEnvironmentHandler> Cannot load all environments")
 		}
 
-		event.PublishEnvironmentAdd(key, env, getAPIConsumer(ctx))
+		event.PublishEnvironmentAdd(ctx, key, env, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
@@ -164,7 +164,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
 		if errEnv != nil {
 			if !sdk.ErrorIs(errEnv, sdk.ErrEnvironmentNotFound) {
-				log.Warning("deleteEnvironmentHandler> Cannot load environment %s: %v", environmentName, errEnv)
+				log.Warning(ctx, "deleteEnvironmentHandler> Cannot load environment %s: %v", environmentName, errEnv)
 			}
 			return errEnv
 		}
@@ -183,7 +183,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentDelete(p.Key, *env, getAPIConsumer(ctx))
+		event.PublishEnvironmentDelete(ctx, p.Key, *env, getAPIConsumer(ctx))
 
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key)
@@ -237,7 +237,7 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentUpdate(p.Key, *env, *oldEnv, getAPIConsumer(ctx))
+		event.PublishEnvironmentUpdate(ctx, p.Key, *env, *oldEnv, getAPIConsumer(ctx))
 
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key)
@@ -323,7 +323,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnvs, "cloneEnvironmentHandler> Cannot load environments: %s", errEnvs)
 		}
 
-		event.PublishEnvironmentAdd(p.Key, envPost, getAPIConsumer(ctx))
+		event.PublishEnvironmentAdd(ctx, p.Key, envPost, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}

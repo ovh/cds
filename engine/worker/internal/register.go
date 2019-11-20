@@ -11,11 +11,11 @@ import (
 // Workers need to register to main api so they can run actions
 func (w *CurrentWorker) Register(ctx context.Context) error {
 	var form sdk.WorkerRegistrationForm
-	log.Info("Registering with Token %s on %s", w.register.token[:12], w.register.apiEndpoint)
+	log.Info(ctx, "Registering with Token %s on %s", w.register.token[:12], w.register.apiEndpoint)
 
 	requirements, errR := w.client.Requirements()
 	if errR != nil {
-		log.Warning("register> unable to get requirements: %v", errR)
+		log.Warning(ctx, "register> unable to get requirements: %v", errR)
 		return errR
 	}
 
@@ -55,14 +55,14 @@ func (w *CurrentWorker) Register(ctx context.Context) error {
 	}
 
 	if !uptodate {
-		log.Warning("-=-=-=-=- Please update your worker binary - Worker Version %s %s %s -=-=-=-=-", sdk.VERSION, sdk.GOOS, sdk.GOARCH)
+		log.Warning(ctx, "-=-=-=-=- Please update your worker binary - Worker Version %s %s %s -=-=-=-=-", sdk.VERSION, sdk.GOOS, sdk.GOARCH)
 	}
 
 	return nil
 }
 
-func (w *CurrentWorker) Unregister() error {
-	log.Info("Unregistering worker")
+func (w *CurrentWorker) Unregister(ctx context.Context) error {
+	log.Info(ctx, "Unregistering worker")
 	w.id = ""
 	if err := w.Client().WorkerUnregister(context.TODO()); err != nil {
 		return err

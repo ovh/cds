@@ -79,7 +79,7 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 		}
 
 		buf := new(bytes.Buffer)
-		if err := pull.Tar(buf); err != nil {
+		if err := pull.Tar(ctx, buf); err != nil {
 			return err
 		}
 

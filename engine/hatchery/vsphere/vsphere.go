@@ -70,9 +70,9 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (h *HatcheryVSphere) Status() sdk.MonitoringStatus {
+func (h *HatcheryVSphere) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 
@@ -116,7 +116,7 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
-func (h *HatcheryVSphere) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
 			return false
@@ -136,8 +136,8 @@ func (h *HatcheryVSphere) Configuration() service.HatcheryCommonConfiguration {
 }
 
 // NeedRegistration return true if worker model need regsitration
-func (h *HatcheryVSphere) NeedRegistration(m *sdk.Model) bool {
-	model, errG := h.getModelByName(m.Name)
+func (h *HatcheryVSphere) NeedRegistration(ctx context.Context, m *sdk.Model) bool {
+	model, errG := h.getModelByName(ctx, m.Name)
 	if errG != nil || model.Config == nil || model.Config.Annotation == "" {
 		return true
 	}
@@ -171,7 +171,7 @@ func (h *HatcheryVSphere) WorkersStartedByModel(model *sdk.Model) int {
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryVSphere) WorkersStarted() []string {
+func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) []string {
 	srvs := h.getServers()
 	res := make([]string, len(srvs))
 	for i, s := range srvs {
@@ -238,7 +238,7 @@ func (h *HatcheryVSphere) killDisabledWorkers() {
 
 	workerPoolDisabled, err := hatchery.WorkerPool(ctx, h, sdk.StatusDisabled)
 	if err != nil {
-		log.Error("killDisabledWorkers> Pool> Error: %v", err)
+		log.Error(ctx, "killDisabledWorkers> Pool> Error: %v", err)
 		return
 	}
 
@@ -246,7 +246,7 @@ func (h *HatcheryVSphere) killDisabledWorkers() {
 	for _, w := range workerPoolDisabled {
 		for _, s := range srvs {
 			if s.Name == w.Name {
-				log.Info("killDisabledWorkers> killDisabledWorkers %v", s.Name)
+				log.Info(ctx, "killDisabledWorkers> killDisabledWorkers %v", s.Name)
 				_ = h.deleteServer(s)
 				break
 			}
@@ -269,7 +269,7 @@ func (h *HatcheryVSphere) killAwolServers() {
 
 		if annot.ToDelete || (s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn && (!annot.Model || annot.RegisterOnly)) {
 			if err := h.deleteServer(s); err != nil {
-				log.Warning("killAwolServers> cannot delete server %s", s.Name)
+				log.Warning(context.Background(), "killAwolServers> cannot delete server %s", s.Name)
 			}
 		}
 	}

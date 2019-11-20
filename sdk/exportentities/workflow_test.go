@@ -1,6 +1,7 @@
 package exportentities_test
 
 import (
+	"context"
 	"sort"
 	"strings"
 	"testing"
@@ -1220,7 +1221,7 @@ workflow:
 					}
 				}
 			})
-			exportedWorkflow, err := exportentities.NewWorkflow(*w)
+			exportedWorkflow, err := exportentities.NewWorkflow(context.TODO(), *w)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("NewWorkflow raised an error", err)

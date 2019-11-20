@@ -155,10 +155,10 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, ope.VCSServer)
 		client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, vcsServer)
 		if erra != nil {
-			log.Error("postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", proj.Key, ope.VCSServer, erra)
+			log.Error(ctx, "postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", proj.Key, ope.VCSServer, erra)
 		} else {
 			if err := client.GrantWritePermission(ctx, ope.RepoFullName); err != nil {
-				log.Error("postPerformImportAsCodeHandler> Unable to grant CDS a repository %s/%s collaborator : %v", ope.VCSServer, ope.RepoFullName, err)
+				log.Error(ctx, "postPerformImportAsCodeHandler> Unable to grant CDS a repository %s/%s collaborator : %v", ope.VCSServer, ope.RepoFullName, err)
 			}
 		}
 

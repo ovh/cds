@@ -107,7 +107,7 @@ func (client *bitbucketcloudClient) GetHook(ctx context.Context, fullname, webho
 	}
 
 	for _, h := range hooks {
-		log.Info("hooks: %s (expecting: %s)", h.URL, webhookURL)
+		log.Info(ctx, "hooks: %s (expecting: %s)", h.URL, webhookURL)
 		if h.URL == webhookURL {
 			return sdk.VCSHook{
 				Name:   h.Description,

@@ -27,7 +27,7 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts 
 			return nil, sdk.WrapError(err, "error when checking signature for user %s", us[i].ID)
 		}
 		if !isValid {
-			log.Error("user.getAll> user %s (%s) data corrupted", us[i].Username, us[i].ID)
+			log.Error(ctx, "user.getAll> user %s (%s) data corrupted", us[i].Username, us[i].ID)
 			continue
 		}
 		verifiedUsers = append(verifiedUsers, &us[i].AuthentifiedUser)
@@ -65,7 +65,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 		return nil, err
 	}
 	if !isValid {
-		log.Error("user.get> user %s (%s) data corrupted", u.Username, u.ID)
+		log.Error(ctx, "user.get> user %s (%s) data corrupted", u.Username, u.ID)
 		return nil, sdk.WithStack(sdk.ErrUserNotFound)
 	}
 
@@ -130,7 +130,7 @@ func CountAdmin(db gorp.SqlExecutor) (int64, error) {
 var usernameRegex = regexp.MustCompile("[a-z0-9._-]{3,32}")
 
 // Insert a user in database.
-func Insert(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
+func Insert(ctx context.Context, db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
 	if !usernameRegex.MatchString(au.Username) {
 		return sdk.WithStack(sdk.ErrInvalidUsername)
 	}
@@ -138,7 +138,7 @@ func Insert(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
 	au.ID = sdk.UUID()
 	au.Created = time.Now()
 	u := authentifiedUser{AuthentifiedUser: *au}
-	if err := gorpmapping.InsertAndSign(db, &u); err != nil {
+	if err := gorpmapping.InsertAndSign(ctx, db, &u); err != nil {
 		return err
 	}
 	*au = u.AuthentifiedUser
@@ -157,16 +157,16 @@ func Insert(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
 		}
 		au.OldUserStruct = oldUser
 	}
-	return insertUserMigration(db, &MigrationUser{
+	return insertUserMigration(ctx, db, &MigrationUser{
 		AuthentifiedUserID: u.ID,
 		UserID:             au.OldUserStruct.ID,
 	})
 }
 
 // Update a user in database.
-func Update(db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
+func Update(ctx context.Context, db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
 	u := authentifiedUser{AuthentifiedUser: *au}
-	if err := gorpmapping.UpdateAndSign(db, &u); err != nil {
+	if err := gorpmapping.UpdateAndSign(ctx, db, &u); err != nil {
 		return sdk.WrapError(err, "unable to update authentified user with id: %s", au.ID)
 	}
 	*au = u.AuthentifiedUser

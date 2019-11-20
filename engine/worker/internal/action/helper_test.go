@@ -65,7 +65,7 @@ func (w TestWorker) SendLog(ctx context.Context, level workerruntime.Level, form
 	w.t.Log("SendLog> [" + string(level) + "] " + format)
 
 }
-func (_ TestWorker) Unregister() error {
+func (_ TestWorker) Unregister(ctx context.Context) error {
 	return nil
 }
 

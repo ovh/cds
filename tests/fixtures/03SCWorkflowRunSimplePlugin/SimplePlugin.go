@@ -25,7 +25,7 @@ func (actPlugin *simplePlugin) Manifest(ctx context.Context, _ *empty.Empty) (*a
 func (actPlugin *simplePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	fmt.Println("Hello, I'm the simple plugin")
 	return &actionplugin.ActionResult{
-		Status: sdk.StatusSuccess.String(),
+		Status: sdk.StatusSuccess,
 	}, nil
 }
 

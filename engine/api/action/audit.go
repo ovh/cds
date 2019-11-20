@@ -21,13 +21,13 @@ var (
 )
 
 // ComputeAudit compute audit on action.
-func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap, chanEvent chan sdk.Event) {
+func ComputeAudit(ctx context.Context, DBFunc func() *gorp.DbMap, chanEvent chan sdk.Event) {
 	db := DBFunc()
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("%v", sdk.WithStack(c.Err()))
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", sdk.WithStack(ctx.Err()))
 				return
 			}
 		case e := <-chanEvent:
@@ -36,8 +36,8 @@ func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap, chanEvent chan s
 			}
 
 			if audit, ok := audits[e.EventType]; ok {
-				if err := audit.Compute(db, e); err != nil {
-					log.Warning("%v", sdk.WrapError(err, "unable to compute audit on event %s", e.EventType))
+				if err := audit.Compute(ctx, db, e); err != nil {
+					log.Warning(ctx, "%v", sdk.WrapError(err, "unable to compute audit on event %s", e.EventType))
 				}
 			}
 		}
@@ -46,7 +46,7 @@ func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap, chanEvent chan s
 
 type addActionAudit struct{}
 
-func (a addActionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (a addActionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var aEvent sdk.EventActionAdd
 	if err := mapstructure.Decode(e.Payload, &aEvent); err != nil {
 		return sdk.WrapError(err, "unable to decode payload")
@@ -71,7 +71,7 @@ func (a addActionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 
 type updateActionAudit struct{}
 
-func (a updateActionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (a updateActionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var aEvent sdk.EventActionUpdate
 	if err := mapstructure.Decode(e.Payload, &aEvent); err != nil {
 		return sdk.WrapError(err, "unable to decode payload")

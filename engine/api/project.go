@@ -140,12 +140,12 @@ func (api *API) getProjectsHandler() service.Handler {
 		opts = append(opts, filterByRepoFunc)
 
 		if isMaintainer(ctx) || isAdmin(ctx) {
-			projects, err = project.LoadAllByRepo(api.mustDB(), api.Cache, filterByRepo, opts...)
+			projects, err = project.LoadAllByRepo(ctx, api.mustDB(), api.Cache, filterByRepo, opts...)
 			if err != nil {
 				return err
 			}
 		} else {
-			projects, err = project.LoadAllByRepoAndGroupIDs(api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
+			projects, err = project.LoadAllByRepoAndGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
 			if err != nil {
 				return err
 			}
@@ -199,7 +199,7 @@ func (api *API) updateProjectHandler() service.Handler {
 		if errUp := project.Update(api.mustDB(), api.Cache, proj); errUp != nil {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
-		event.PublishUpdateProject(proj, p, getAPIConsumer(ctx))
+		event.PublishUpdateProject(ctx, proj, p, getAPIConsumer(ctx))
 
 		proj.Permissions.Readable = true
 		proj.Permissions.Writable = true
@@ -386,7 +386,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 		p.Permissions.Readable = true
 		p.Permissions.Writable = true
 
-		event.PublishUpdateProject(p, proj, getAPIConsumer(ctx))
+		event.PublishUpdateProject(ctx, p, proj, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -544,7 +544,7 @@ func (api *API) postProjectHandler() service.Handler {
 
 		for i := range integrationModels {
 			pf := &integrationModels[i]
-			if err := propagatePublicIntegrationModelOnProject(tx, api.Cache, *pf, p, consumer); err != nil {
+			if err := propagatePublicIntegrationModelOnProject(ctx, tx, api.Cache, *pf, p, consumer); err != nil {
 				return sdk.WithStack(err)
 			}
 		}
@@ -553,7 +553,7 @@ func (api *API) postProjectHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		event.PublishAddProject(&p, consumer)
+		event.PublishAddProject(ctx, &p, consumer)
 
 		proj, err := project.Load(api.mustDB(), api.Cache, p.Key,
 			project.LoadOptions.WithLabels,
@@ -609,9 +609,9 @@ func (api *API) deleteProjectHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteProject(p, getAPIConsumer(ctx))
+		event.PublishDeleteProject(ctx, p, getAPIConsumer(ctx))
 
-		log.Info("Project %s deleted.", p.Name)
+		log.Info(ctx, "Project %s deleted.", p.Name)
 
 		return nil
 	}

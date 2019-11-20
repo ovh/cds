@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -15,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
+func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		keyName := vars["key"]
@@ -47,7 +48,7 @@ func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
 				Message: "Cannot find any keys for your job",
 				Status:  http.StatusBadRequest,
 			}
-			log.Error("%v", err)
+			log.Error(ctx, "%v", err)
 			writeJSON(w, err, err.Status)
 			return
 		}
@@ -64,7 +65,7 @@ func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
 				Message: fmt.Sprintf("Key %s not found", keyName),
 				Status:  http.StatusNotFound,
 			}
-			log.Error("%v", err)
+			log.Error(ctx, "%v", err)
 			writeJSON(w, err, err.Status)
 			return
 		}
@@ -82,7 +83,7 @@ func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
 
 		response, err := wk.InstallKey(*key, filename)
 		if err != nil {
-			log.Error("Unable to install key %s: %v", key.Name, err)
+			log.Error(ctx, "Unable to install key %s: %v", key.Name, err)
 			if sdkerr, ok := err.(*sdk.Error); ok {
 				writeJSON(w, sdkerr, sdkerr.Status)
 			} else {
