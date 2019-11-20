@@ -31,7 +31,7 @@ func (s *Service) stopBranchDeletionTask(ctx context.Context, branch string) err
 		if t == nil || t.Type != TypeBranchDeletion {
 			continue
 		}
-		if err := s.stopTask(t); err != nil {
+		if err := s.stopTask(ctx, t); err != nil {
 			log.Error(ctx, "cannot stop task %s : %v", t.UUID, err)
 		}
 	}

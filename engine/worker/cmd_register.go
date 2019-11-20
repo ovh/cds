@@ -29,7 +29,7 @@ func cmdRegisterRun() func(cmd *cobra.Command, args []string) {
 		if err := w.Register(context.Background()); err != nil {
 			log.Error(context.TODO(), "Unable to register worker %v", err)
 		}
-		if err := w.Unregister(); err != nil {
+		if err := w.Unregister(context.Background()); err != nil {
 			log.Error(context.TODO(), "Unable to unregister worker %v", err)
 		}
 	}

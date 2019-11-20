@@ -71,7 +71,7 @@ func CheckSessionJWT(jwtToken string) (*jwt.Token, error) {
 
 // SessionCleaner must be run as a goroutine
 func SessionCleaner(ctx context.Context, dbFunc func() *gorp.DbMap) {
-	log.Info("Initializing session cleaner...")
+	log.Info(ctx, "Initializing session cleaner...")
 	db := dbFunc()
 	tick := time.NewTicker(10 * time.Second)
 

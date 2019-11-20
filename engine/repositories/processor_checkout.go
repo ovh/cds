@@ -66,6 +66,6 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		}
 	}
 
-	log.Info("Repositories> processCheckout> repository %s ready", op.URL)
+	log.Info(ctx, "Repositories> processCheckout> repository %s ready", op.URL)
 	return nil
 }

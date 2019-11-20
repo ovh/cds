@@ -43,7 +43,7 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 		return err
 	}
 
-	log.Info("Export variable HTTP server: %s", listener.Addr().String())
+	log.Info(c, "Export variable HTTP server: %s", listener.Addr().String())
 	r := mux.NewRouter()
 
 	r.HandleFunc("/artifacts", LogMiddleware(artifactsHandler(c, w)))

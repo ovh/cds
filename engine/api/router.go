@@ -138,7 +138,7 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				} else {
 					dur := time.Since(*r.lastPanic)
 					if dur.Minutes() > float64(2) {
-						log.Info("[PANIC_RECOVERY] Last panic was %d seconds ago", int(dur.Seconds()))
+						log.Info(context.Background(), "[PANIC_RECOVERY] Last panic was %d seconds ago", int(dur.Seconds()))
 						r.nbPanic = 0
 					}
 				}
@@ -273,7 +273,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 			if rc.IsDeprecated {
 				log.Error(ctx, "[%-3d] | %-7s | %13v | DEPRECATED ROUTE | %v [%s]", responseWriter.statusCode, req.Method, latency, req.URL, rc.Name)
 			} else {
-				log.Info("[%-3d] | %-7s | %13v | %v [%s]", responseWriter.statusCode, req.Method, latency, req.URL, rc.Name)
+				log.Info(ctx, "[%-3d] | %-7s | %13v | %v [%s]", responseWriter.statusCode, req.Method, latency, req.URL, rc.Name)
 			}
 
 			observability.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))

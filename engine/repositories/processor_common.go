@@ -29,7 +29,7 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (repo.
 
 	gitRepo, err := repo.New(r.Basedir, opts...)
 	if err != nil {
-		log.Info("Repositories> processGitClone> cloning %s into %s", r.URL, r.Basedir)
+		log.Info(ctx, "Repositories> processGitClone> cloning %s into %s", r.URL, r.Basedir)
 		gitRepo, err = repo.Clone(r.Basedir, r.URL, opts...)
 		if err != nil {
 			log.Error(ctx, "Repositories> processGitClone> Clone> [%s] error %v", op.UUID, err)

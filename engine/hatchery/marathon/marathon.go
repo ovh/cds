@@ -177,7 +177,7 @@ func (h *HatcheryMarathon) CanSpawn(ctx context.Context, model *sdk.Model, jobID
 
 	deployments, errd := h.marathonClient.Deployments()
 	if errd != nil {
-		log.Info("CanSpawn> Error on h.marathonClient.Deployments() : %s", errd)
+		log.Info(ctx, "CanSpawn> Error on h.marathonClient.Deployments() : %s", errd)
 		return false
 	}
 	// Do not DOS marathon, if deployment queue is longer than MaxConcurrentProvisioning (default 10)
@@ -187,17 +187,17 @@ func (h *HatcheryMarathon) CanSpawn(ctx context.Context, model *sdk.Model, jobID
 	}
 
 	if len(deployments) >= maxProvisionning {
-		log.Info("CanSpawn> %d item in deployment queue, waiting", len(deployments))
+		log.Info(ctx, "CanSpawn> %d item in deployment queue, waiting", len(deployments))
 		return false
 	}
 
 	apps, err := h.listApplications(h.Config.MarathonIDPrefix)
 	if err != nil {
-		log.Info("CanSpawn> Error on m.listApplications() : %s", errd)
+		log.Info(ctx, "CanSpawn> Error on m.listApplications() : %s", errd)
 		return false
 	}
 	if len(apps) >= h.Configuration().Provision.MaxWorker {
-		log.Info("CanSpawn> max number of containers reached, aborting. Current: %d. Max: %d", len(apps), h.Configuration().Provision.MaxWorker)
+		log.Info(ctx, "CanSpawn> max number of containers reached, aborting. Current: %d. Max: %d", len(apps), h.Configuration().Provision.MaxWorker)
 		return false
 	}
 
@@ -505,7 +505,7 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 		// check that there is a worker matching
 		for ak, app := range apps {
 			if strings.HasSuffix(app, w.Name) {
-				log.Info("killing disabled worker %s id:%s wk:%d ak:%d", app, w.ID, wk, ak)
+				log.Info(ctx, "killing disabled worker %s id:%s wk:%d ak:%d", app, w.ID, wk, ak)
 				if _, err := h.marathonClient.DeleteApplication(app, true); err != nil {
 					log.Warning(ctx, "killDisabledWorkers> Error while delete app %s err:%s", app, err)
 					// continue to next app

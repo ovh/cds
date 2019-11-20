@@ -38,7 +38,7 @@ func (api *API) postPushCacheHandler() service.Handler {
 			Tag:     tag,
 		}
 
-		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars[permProjectKey], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars[permProjectKey], vars["integrationName"])
 		if err != nil {
 			return err
 		}
@@ -72,7 +72,7 @@ func (api *API) getPullCacheHandler() service.Handler {
 			Tag:     tag,
 		}
 
-		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars[permProjectKey], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars[permProjectKey], vars["integrationName"])
 		if err != nil {
 			return err
 		}
@@ -120,7 +120,7 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 			return sdk.ErrInvalidName
 		}
 
-		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars[permProjectKey], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars[permProjectKey], vars["integrationName"])
 		if err != nil {
 			return err
 		}
@@ -162,7 +162,7 @@ func (api *API) getPullCacheWithTempURLHandler() service.Handler {
 			return sdk.ErrInvalidName
 		}
 
-		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars[permProjectKey], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars[permProjectKey], vars["integrationName"])
 		if err != nil {
 			return err
 		}

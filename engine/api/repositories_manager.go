@@ -454,7 +454,7 @@ func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getRepoFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
 
-		log.Info("getRepoFromRepositoriesManagerHandler> Loading repository on %s", vcsServer.Name)
+		log.Info(ctx, "getRepoFromRepositoriesManagerHandler> Loading repository on %s", vcsServer.Name)
 
 		repo, err := client.RepoByFullname(ctx, repoName)
 		if err != nil {

@@ -107,7 +107,7 @@ func (c *Common) CDSClient() cdsclient.Interface {
 
 // CommonServe start the HatcheryLocal server
 func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
-	log.Info("%s> Starting service %s (%s)...", c.Name(), h.Configuration().Name, sdk.VERSION)
+	log.Info(ctx, "%s> Starting service %s (%s)...", c.Name(), h.Configuration().Name, sdk.VERSION)
 	c.StartupTime = time.Now()
 
 	//Init the http server
@@ -126,7 +126,7 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 
 	go func() {
 		//Start the http server
-		log.Info("%s> Starting HTTP Server on port %d", c.Name(), h.Configuration().HTTP.Port)
+		log.Info(ctx, "%s> Starting HTTP Server on port %d", c.Name(), h.Configuration().HTTP.Port)
 		if err := server.ListenAndServe(); err != nil {
 			log.Error(ctx, "%s> Listen and serve failed: %v", c.Name(), err)
 		}
@@ -134,7 +134,7 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 		//Gracefully shutdown the http server
 		select {
 		case <-ctx.Done():
-			log.Info("%s> Shutdown HTTP Server", c.Name())
+			log.Info(ctx, "%s> Shutdown HTTP Server", c.Name())
 			server.Shutdown(ctx)
 		}
 	}()

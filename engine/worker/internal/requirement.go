@@ -155,7 +155,7 @@ func checkServiceRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) 
 		for _, ip := range ips {
 			s += s + ip.String() + " "
 		}
-		log.Info("Service requirement %s is ready %s", r.Name, s)
+		log.Info(context.TODO(), "Service requirement %s is ready %s", r.Name, s)
 		return true, nil
 	}
 
@@ -275,7 +275,7 @@ func checkPluginDeployment(ctx context.Context, w *CurrentWorker, job sdk.Workfl
 		log.Debug("plugin binary is in cache")
 	}
 
-	log.Info("plugin successfully downloaded: %#v", binary.Name)
+	log.Info(ctx, "plugin successfully downloaded: %#v", binary.Name)
 
 	return true, nil
 }

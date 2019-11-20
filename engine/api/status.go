@@ -188,7 +188,7 @@ func (api *API) computeGlobalStatusByNumbers(s computeGlobalNumbers) string {
 
 func (api *API) initMetrics(ctx context.Context) error {
 
-	log.Info("Metrics initialized for %s/%s", api.Type(), api.Name())
+	log.Info(ctx, "Metrics initialized for %s/%s", api.Type(), api.Name())
 
 	// TODO refactor all the metrics name to replace "cds-api" by "api.Type()"
 	api.Metrics.nbUsers = stats.Int64("cds/cds-api/nb_users", "number of users", stats.UnitDimensionless)

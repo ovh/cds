@@ -11,7 +11,7 @@ import (
 // Workers need to register to main api so they can run actions
 func (w *CurrentWorker) Register(ctx context.Context) error {
 	var form sdk.WorkerRegistrationForm
-	log.Info("Registering with Token %s on %s", w.register.token[:12], w.register.apiEndpoint)
+	log.Info(ctx, "Registering with Token %s on %s", w.register.token[:12], w.register.apiEndpoint)
 
 	requirements, errR := w.client.Requirements()
 	if errR != nil {
@@ -61,8 +61,8 @@ func (w *CurrentWorker) Register(ctx context.Context) error {
 	return nil
 }
 
-func (w *CurrentWorker) Unregister() error {
-	log.Info("Unregistering worker")
+func (w *CurrentWorker) Unregister(ctx context.Context) error {
+	log.Info(ctx, "Unregistering worker")
 	w.id = ""
 	if err := w.Client().WorkerUnregister(context.TODO()); err != nil {
 		return err

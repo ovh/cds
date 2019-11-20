@@ -22,7 +22,7 @@ func (s *Service) vacuumCleaner(ctx context.Context) error {
 	for {
 		select {
 		case <-tick.C:
-			log.Info("vacuumCleaner> Run")
+			log.Info(ctx, "vacuumCleaner> Run")
 			if err := s.vacuumFilesystemCleanerRun(ctx); err != nil {
 				log.Error(ctx, "vacuumCleaner> Error cleaning the filesystem: %v", err)
 			}

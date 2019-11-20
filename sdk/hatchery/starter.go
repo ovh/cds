@@ -148,7 +148,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	if err := h.CDSClient().QueueJobBook(ctxQueueJobBook, j.id); err != nil {
 		next()
 		// perhaps already booked by another hatchery
-		log.Info("hatchery> spawnWorkerForJob> %d - cannot book job %d: %s", j.timestamp, j.id, err)
+		log.Info(ctx, "hatchery> spawnWorkerForJob> %d - cannot book job %d: %s", j.timestamp, j.id, err)
 		cancel()
 		return false
 	}
@@ -167,7 +167,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	})
 	next()
 
-	log.Info("hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", modelName, j.id)
+	log.Info(ctx, "hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", modelName, j.id)
 
 	_, next = observability.Span(ctxJob, "hatchery.SpawnWorker")
 	arg := SpawnArguments{

@@ -611,7 +611,7 @@ func (api *API) deleteProjectHandler() service.Handler {
 
 		event.PublishDeleteProject(ctx, p, getAPIConsumer(ctx))
 
-		log.Info("Project %s deleted.", p.Name)
+		log.Info(ctx, "Project %s deleted.", p.Name)
 
 		return nil
 	}

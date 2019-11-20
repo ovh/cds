@@ -22,8 +22,8 @@ type SwiftStore struct {
 
 var swiftServeStaticFileEnabled bool
 
-func newSwiftStore(integration sdk.ProjectIntegration, conf ConfigOptionsOpenstack) (*SwiftStore, error) {
-	log.Info("ObjectStore> Initialize Swift driver on url: %s", conf.Address)
+func newSwiftStore(ctx context.Context, integration sdk.ProjectIntegration, conf ConfigOptionsOpenstack) (*SwiftStore, error) {
+	log.Info(ctx, "ObjectStore> Initialize Swift driver on url: %s", conf.Address)
 	s := &SwiftStore{
 		Connection: swift.Connection{
 			AuthUrl:  conf.Address,
@@ -166,14 +166,14 @@ func (s *SwiftStore) Fetch(ctx context.Context, o Object) (io.ReadCloser, error)
 }
 
 // Delete deletes an object from swift
-func (s *SwiftStore) Delete(o Object) error {
+func (s *SwiftStore) Delete(ctx context.Context, o Object) error {
 	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
 
 	if err := s.ObjectDelete(container, object); err != nil {
 		if err.Error() == swift.ObjectNotFound.Text {
-			log.Info("Delete.SwiftStore: %s/%s: %s", container, object, err)
+			log.Info(ctx, "Delete.SwiftStore: %s/%s: %s", container, object, err)
 			return nil
 		}
 		return sdk.WrapError(err, "Unable to delete object")
@@ -182,13 +182,13 @@ func (s *SwiftStore) Delete(o Object) error {
 }
 
 // DeleteContainer deletes a container from swift
-func (s *SwiftStore) DeleteContainer(containerPath string) error {
+func (s *SwiftStore) DeleteContainer(ctx context.Context, containerPath string) error {
 	container := s.containerPrefix + containerPath
 	escape(container, "")
 
 	if err := s.ContainerDelete(container); err != nil {
 		if err.Error() == swift.ContainerNotFound.Text {
-			log.Info("Delete.SwiftStore: %s: %s", container, err)
+			log.Info(ctx, "Delete.SwiftStore: %s: %s", container, err)
 			return nil
 		}
 		return sdk.WrapError(err, "Unable to delete container")

@@ -19,8 +19,8 @@ type FilesystemStore struct {
 }
 
 // newFilesystemStore creates a new ObjectStore with filesystem driver
-func newFilesystemStore(projectIntegration sdk.ProjectIntegration, conf ConfigOptionsFilesystem) (*FilesystemStore, error) {
-	log.Info("ObjectStore> Initialize Filesystem driver on directory: %s", conf.Basedir)
+func newFilesystemStore(ctx context.Context, projectIntegration sdk.ProjectIntegration, conf ConfigOptionsFilesystem) (*FilesystemStore, error) {
+	log.Info(ctx, "ObjectStore> Initialize Filesystem driver on directory: %s", conf.Basedir)
 	if conf.Basedir == "" {
 		return nil, fmt.Errorf("artifact storage is filesystem, but --artifact-basedir is not provided")
 	}
@@ -76,13 +76,13 @@ func (fss *FilesystemStore) Fetch(ctx context.Context, o Object) (io.ReadCloser,
 }
 
 // Delete deletes data from disk
-func (fss *FilesystemStore) Delete(o Object) error {
+func (fss *FilesystemStore) Delete(ctx context.Context, o Object) error {
 	dst := path.Join(fss.basedir, o.GetPath(), o.GetName())
 	return os.RemoveAll(dst)
 }
 
 // DeleteContainer deletes a directory from disk
-func (fss *FilesystemStore) DeleteContainer(containerPath string) error {
+func (fss *FilesystemStore) DeleteContainer(ctx context.Context, containerPath string) error {
 	// check, just to be sure...
 	if strings.TrimSpace(containerPath) != "" && containerPath != "/" {
 		dst := path.Join(fss.basedir, containerPath)

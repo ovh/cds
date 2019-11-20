@@ -100,7 +100,7 @@ func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, er
 
 	res := map[string]string{}
 	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
-	log.Info("Performing request on %s", path)
+	log.Info(ctx, "Performing request on %s", path)
 	if _, _, err := services.DoJSONRequest(ctx, db, srv, "GET", path, nil, &res); err != nil {
 		return "", "", sdk.WithStack(err)
 	}

@@ -380,7 +380,7 @@ func (s *RedisStore) SetScan(ctx context.Context, key string, members ...interfa
 				if err := s.Client.ZRem(key, values[i]).Err(); err != nil {
 					return sdk.WrapError(err, "redis>SetScan unable to delete member %s", keys[i])
 				}
-				log.Info("redis> member %s deleted", keys[i])
+				log.Info(ctx, "redis> member %s deleted", keys[i])
 				return sdk.WithStack(fmt.Errorf("SetScan member %s not found", keys[i]))
 			}
 

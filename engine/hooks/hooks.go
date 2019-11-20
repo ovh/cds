@@ -135,13 +135,13 @@ func (s *Service) Serve(c context.Context) error {
 	go func() {
 		select {
 		case <-ctx.Done():
-			log.Info("Hooks> Shutdown HTTP Server")
+			log.Info(ctx, "Hooks> Shutdown HTTP Server")
 			server.Shutdown(ctx)
 		}
 	}()
 
 	//Start the http server
-	log.Info("Hooks> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+	log.Info(ctx, "Hooks> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Hooks> Cannot start cds-hooks: %s", err)
 	}

@@ -33,7 +33,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		return ctx, sdk.WithStack(err)
 	}
 	if ok {
-		log.Info("authMiddleware> authentification granted by token")
+		log.Info(ctx, "authMiddleware> authentification granted by token")
 		return ctx, nil
 	}
 

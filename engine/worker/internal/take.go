@@ -18,7 +18,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 		return sdk.WrapError(err, "Unable to take job %d", job.ID)
 	}
 	t := ""
-	log.Info("takeWorkflowJob> Job %d taken%s", job.ID, t)
+	log.Info(ctx, "takeWorkflowJob> Job %d taken%s", job.ID, t)
 
 	w.currentJob.context = workerruntime.SetJobID(ctx, job.ID)
 	w.currentJob.context = ctx
@@ -51,7 +51,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 
 				if j, err = w.Client().QueueJobInfo(ctxGetJSON, jobID); err != nil {
 					if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
-						log.Info("takeWorkflowJob> Unable to load workflow job - Not Found (Request) %d: %v", jobID, err)
+						log.Info(ctx, "takeWorkflowJob> Unable to load workflow job - Not Found (Request) %d: %v", jobID, err)
 						cancel()
 						return
 					}
@@ -70,7 +70,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 				}
 
 				if j == nil || j.Status != sdk.StatusBuilding {
-					log.Info("takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.Status, err)
+					log.Info(ctx, "takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.Status, err)
 					cancel()
 					return
 				}
@@ -92,17 +92,17 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 
 	var lasterr error
 	for try := 1; try <= 10; try++ {
-		log.Info("takeWorkflowJob> Sending build result...")
+		log.Info(ctx, "takeWorkflowJob> Sending build result...")
 		ctxSendResult, cancelSendResult := context.WithTimeout(ctx, 120*time.Second)
 		lasterr = w.client.QueueSendResult(ctxSendResult, job.ID, res)
 		if lasterr == nil {
-			log.Info("takeWorkflowJob> Send build result OK")
+			log.Info(ctx, "takeWorkflowJob> Send build result OK")
 			cancelSendResult()
 			return nil
 		}
 		cancelSendResult()
 		if ctx.Err() != nil {
-			log.Info("takeWorkflowJob> Cannot send build result: HTTP %v - worker cancelled - giving up", lasterr)
+			log.Info(ctx, "takeWorkflowJob> Cannot send build result: HTTP %v - worker cancelled - giving up", lasterr)
 			return nil
 		}
 		log.Warning(ctx, "takeWorkflowJob> Cannot send build result: HTTP %v - try: %d - new try in 15s", lasterr, try)

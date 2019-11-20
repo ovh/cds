@@ -125,7 +125,7 @@ func (s *Service) stopTaskHandler() service.Handler {
 		}
 
 		//Stop the task
-		if err := s.stopTask(t); err != nil {
+		if err := s.stopTask(ctx, t); err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Stop task")
 		}
 		return nil
@@ -238,7 +238,7 @@ func (s *Service) putTaskHandler() service.Handler {
 		}
 
 		//Stop the task
-		if err := s.stopTask(t); err != nil {
+		if err := s.stopTask(ctx, t); err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task")
 		}
 
@@ -292,7 +292,7 @@ func (s *Service) deleteTaskHandler() service.Handler {
 		}
 
 		//Stop the task
-		if err := s.stopTask(t); err != nil {
+		if err := s.stopTask(ctx, t); err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task")
 		}
 
@@ -340,7 +340,7 @@ func (s *Service) deleteAllTaskExecutionsHandler() service.Handler {
 		}
 
 		//Stop the task
-		if err := s.stopTask(t); err != nil {
+		if err := s.stopTask(ctx, t); err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Hooks> deleteAllTaskExecutionsHandler> stop task")
 		}
 
@@ -379,7 +379,7 @@ func (s *Service) deleteTaskBulkHandler() service.Handler {
 			}
 
 			//Stop the task
-			if err := s.stopTask(t); err != nil {
+			if err := s.stopTask(ctx, t); err != nil {
 				return sdk.WrapError(sdk.ErrNotFound, "Stop task %s", err)
 			}
 			if err := s.deleteTask(ctx, t); err != nil {
@@ -467,7 +467,7 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 	}
 
 	task.Config = t.Config
-	_ = s.stopTask(t)
+	_ = s.stopTask(ctx, t)
 	execs, _ := s.Dao.FindAllTaskExecutions(ctx, t)
 	for _, e := range execs {
 		if e.Status == TaskExecutionScheduled {
@@ -641,7 +641,7 @@ func (s *Service) postStopTaskExecutionHandler() service.Handler {
 				e.LastError = TaskExecutionDone
 				e.NbErrors = s.Cfg.RetryError + 1
 				s.Dao.SaveTaskExecution(e)
-				log.Info("Hooks> postStopTaskExecutionHandler> task executions %s:%v has been stoppped", uuid, timestamp)
+				log.Info(ctx, "Hooks> postStopTaskExecutionHandler> task executions %s:%v has been stoppped", uuid, timestamp)
 				return nil
 			}
 		}

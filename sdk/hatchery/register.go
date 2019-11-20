@@ -57,7 +57,7 @@ loopModels:
 		// Check if there is a pending registering worker
 		for _, w := range currentRegistering {
 			if strings.Contains(w.Name, models[k].Name) {
-				log.Info("hatchery> workerRegister> %s is already registering (%s)", models[k].Name, w.Name)
+				log.Info(ctx, "hatchery> workerRegister> %s is already registering (%s)", models[k].Name, w.Name)
 				continue loopModels
 			}
 		}
@@ -72,7 +72,7 @@ loopModels:
 			if err := h.CDSClient().WorkerModelBook(models[k].Group.Name, models[k].Name); err != nil {
 				log.Debug("%v", sdk.WrapError(err, "cannot book model %s with id %d", models[k].Name, models[k].ID))
 			} else {
-				log.Info("hatchery> workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
+				log.Info(ctx, "hatchery> workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
 				//Ask for the creation
 				startWorkerChan <- workerStarterRequest{
 					registerWorkerModel: &models[k],

@@ -90,7 +90,7 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 }
 
 func (s *dbmigservice) BeforeStart(ctx context.Context) error {
-	log.Info("DBMigrate> Starting Database migration...")
+	log.Info(ctx, "DBMigrate> Starting Database migration...")
 	dbConn, err := database.Init(
 		ctx,
 		s.cfg.DB.User,
@@ -116,7 +116,7 @@ func (s *dbmigservice) BeforeStart(ctx context.Context) error {
 		s.currentStatus.err = errDo
 	}
 
-	log.Info("DBMigrate> Retrieving Database migration status...")
+	log.Info(ctx, "DBMigrate> Retrieving Database migration status...")
 	status, errGet := s.getMigrate(dbConn.DB, gorp.PostgresDialect{})
 	if errGet != nil {
 		log.Error(ctx, "DBMigrate> Migration status unavailable %v", errGet)
@@ -134,7 +134,7 @@ func (s *dbmigservice) BeforeStart(ctx context.Context) error {
 }
 
 func (s *dbmigservice) Serve(ctx context.Context) error {
-	log.Info("DBMigrate> Starting service %s %s...", s.cfg.Name, sdk.VERSION)
+	log.Info(ctx, "DBMigrate> Starting service %s %s...", s.cfg.Name, sdk.VERSION)
 	s.StartupTime = time.Now()
 
 	//Init the http server
@@ -149,7 +149,7 @@ func (s *dbmigservice) Serve(ctx context.Context) error {
 
 	go func() {
 		//Start the http server
-		log.Info("DBMigrate> Starting HTTP Server on port %d", s.cfg.HTTP.Port)
+		log.Info(ctx, "DBMigrate> Starting HTTP Server on port %d", s.cfg.HTTP.Port)
 		if err := server.ListenAndServe(); err != nil {
 			log.Error(ctx, "DBMigrate> Listen and serve failed: %s", err)
 		}
@@ -157,7 +157,7 @@ func (s *dbmigservice) Serve(ctx context.Context) error {
 
 	//Gracefully shutdown the http server
 	<-ctx.Done()
-	log.Info("DBMigrate> Shutdown HTTP Server")
+	log.Info(ctx, "DBMigrate> Shutdown HTTP Server")
 	if err := server.Shutdown(ctx); err != nil {
 		return fmt.Errorf("unable to shutdown server: %v", err)
 	}

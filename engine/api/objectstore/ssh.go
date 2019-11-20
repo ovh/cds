@@ -113,7 +113,7 @@ func (s *SSHStore) Fetch(ctx context.Context, o Object) (io.ReadCloser, error) {
 }
 
 // Delete data on disk
-func (s *SSHStore) Delete(o Object) error {
+func (s *SSHStore) Delete(ctx context.Context, o Object) error {
 	session, err := s.client.NewSession()
 	if err != nil {
 		return err
@@ -125,7 +125,7 @@ func (s *SSHStore) Delete(o Object) error {
 }
 
 // DeleteContainer deletes a directory from disk
-func (s *SSHStore) DeleteContainer(containerPath string) error {
+func (s *SSHStore) DeleteContainer(ctx context.Context, containerPath string) error {
 	session, err := s.client.NewSession()
 	if err != nil {
 		return err

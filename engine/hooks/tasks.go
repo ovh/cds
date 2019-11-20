@@ -64,10 +64,10 @@ func (s *Service) runTasks(ctx context.Context) error {
 func (s *Service) synchronizeTasks(ctx context.Context) error {
 	t0 := time.Now()
 	defer func() {
-		log.Info("Hooks> All tasks has been resynchronized (%.3fs)", time.Since(t0).Seconds())
+		log.Info(ctx, "Hooks> All tasks has been resynchronized (%.3fs)", time.Since(t0).Seconds())
 	}()
 
-	log.Info("Hooks> Synchronizing tasks from CDS API (%s)", s.Cfg.API.HTTP.URL)
+	log.Info(ctx, "Hooks> Synchronizing tasks from CDS API (%s)", s.Cfg.API.HTTP.URL)
 
 	//Get all hooks from CDS, and synchronize the tasks in cache
 	hooks, err := s.Client.WorkflowAllHooksList()
@@ -94,7 +94,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 			if err := s.deleteTask(ctx, t); err != nil {
 				log.Error(ctx, "Hook> Error on task %s delete on synchronization: %v", t.UUID, err)
 			} else {
-				log.Info("Hook> Task %s deleted on synchronization", t.UUID)
+				log.Info(ctx, "Hook> Task %s deleted on synchronization", t.UUID)
 			}
 		}
 	}
@@ -243,7 +243,7 @@ func (s *Service) stopTasks(ctx context.Context) error {
 	//Start the tasks
 	for i := range tasks {
 		t := &tasks[i]
-		if err := s.stopTask(t); err != nil {
+		if err := s.stopTask(ctx, t); err != nil {
 			log.Error(ctx, "Hooks> stopTasks> Unable to stop task: %v", err)
 			continue
 		}
@@ -263,9 +263,9 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecutio
 	case TypeScheduler, TypeRepoPoller, TypeBranchDeletion:
 		return nil, s.prepareNextScheduledTaskExecution(ctx, t)
 	case TypeKafka:
-		return nil, s.startKafkaHook(t)
+		return nil, s.startKafkaHook(ctx,t)
 	case TypeRabbitMQ:
-		return nil, s.startRabbitMQHook(t)
+		return nil, s.startRabbitMQHook(ctx, t)
 	case TypeOutgoingWebHook:
 		return s.startOutgoingWebHookTask(t)
 	case TypeOutgoingWorkflow:
@@ -351,8 +351,8 @@ func (s *Service) prepareNextScheduledTaskExecution(ctx context.Context, t *sdk.
 	return nil
 }
 
-func (s *Service) stopTask(t *sdk.Task) error {
-	log.Info("Hooks> Stopping task %s", t.UUID)
+func (s *Service) stopTask(ctx context.Context, t *sdk.Task) error {
+	log.Info(ctx, "Hooks> Stopping task %s", t.UUID)
 	t.Stopped = true
 	if err := s.Dao.SaveTask(t); err != nil {
 		return sdk.WrapError(err, "unable to save task %v", t)

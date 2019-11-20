@@ -61,7 +61,7 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 	}
 
 	log.Debug(buff.String())
-	log.Info("hatchery> swarm> pullImage> pulling image %s on %s - %.3f seconds elapsed", img, dockerClient.name, time.Since(t0).Seconds())
+	log.Info(ctx, "hatchery> swarm> pullImage> pulling image %s on %s - %.3f seconds elapsed", img, dockerClient.name, time.Since(t0).Seconds())
 
 	return nil
 }

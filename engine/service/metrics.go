@@ -190,7 +190,7 @@ func RegisterCommonMetricsView(ctx context.Context) {
 								log.Error(ctx, "unable to send signal: %v", err)
 								return
 							}
-							log.Info("metrics> SIGINFO signal send to %v", os.Getpid())
+							log.Info(ctx, "metrics> SIGINFO signal send to %v", os.Getpid())
 						})
 					}
 				}

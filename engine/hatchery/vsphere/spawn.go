@@ -67,8 +67,8 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WrapError(errCfg, "cannot create VM configuration")
 	}
 
-	log.Info("Create vm to exec worker %s", name)
-	defer log.Info("Terminate to create vm for worker %s", name)
+	log.Info(ctx, "Create vm to exec worker %s", name)
+	defer log.Info(ctx, "Terminate to create vm for worker %s", name)
 	task, errC := vm.Clone(ctx, folder, name, *cloneSpec)
 	if errC != nil {
 		return sdk.WrapError(errC, "cannot clone VM")
@@ -84,8 +84,8 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 // createVMModel create a model for a specific worker model
 func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine, error) {
-	log.Info("Create vm model %s", model.Name)
 	ctx := context.Background()
+	log.Info(ctx, "Create vm model %s", model.Name)
 
 	vm, errV := h.finder.VirtualMachine(ctx, model.ModelVirtualMachine.Image)
 	if errV != nil {
@@ -136,7 +136,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 	if err := vm.WaitForPowerState(ctxTo, types.VirtualMachinePowerStatePoweredOff); err != nil {
 		return nil, sdk.WrapError(err, "cannot wait for power state result")
 	}
-	log.Info("createVMModel> model %s is build", model.Name)
+	log.Info(ctx, "createVMModel> model %s is build", model.Name)
 
 	modelFound, errM := h.getModelByName(ctx, model.Name)
 	if errM == nil {

@@ -159,7 +159,7 @@ func (g *githubClient) GetHook(ctx context.Context, fullname, webhookURL string)
 	}
 
 	for _, h := range hooks {
-		log.Info("hooks: %s (expecting: %s)", h.Config.URL, webhookURL)
+		log.Info(ctx, "hooks: %s (expecting: %s)", h.Config.URL, webhookURL)
 		if h.Config.URL == webhookURL {
 			return sdk.VCSHook{
 				Name:        h.Name,

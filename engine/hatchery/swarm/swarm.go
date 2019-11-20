@@ -61,11 +61,11 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 			MaxContainers: h.Config.MaxContainers,
 			name:          "default",
 		}
-		log.Info("hatchery> swarm> connected to default docker engine")
+		log.Info(ctx, "hatchery> swarm> connected to default docker engine")
 
 	} else {
 		for hostName, cfg := range h.Config.DockerEngines {
-			log.Info("hatchery> swarm> connecting to %s: %s", hostName, cfg.Host)
+			log.Info(ctx, "hatchery> swarm> connecting to %s: %s", hostName, cfg.Host)
 			httpClient := new(http.Client)
 			// max time for a docker pull, but for most of docker request, there is a request with
 			// a lower timeout, using context.WithTimeout
@@ -155,7 +155,7 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 				log.Error(ctx, "hatchery> swarm> unable to ping docker host:%s", errPing)
 				continue
 			}
-			log.Info("hatchery> swarm> connected to %s (%s)", hostName, cfg.Host)
+			log.Info(ctx, "hatchery> swarm> connected to %s (%s)", hostName, cfg.Host)
 
 			h.dockerClients[hostName] = &dockerClient{
 				Client:        *d,

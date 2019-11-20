@@ -239,8 +239,8 @@ func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ *sdk.Model, jobID int64,
 }
 
 // killWorker kill a local process
-func (h *HatcheryLocal) killWorker(name string, workerCmd workerCmd) error {
-	log.Info("KillLocalWorker> Killing %s", name)
+func (h *HatcheryLocal) killWorker(ctx context.Context, name string, workerCmd workerCmd) error {
+	log.Info(ctx, "KillLocalWorker> Killing %s", name)
 	return workerCmd.cmd.Process.Kill()
 }
 
@@ -320,15 +320,15 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 				log.Debug("killAwolWorkers> Avoid killing baby worker %s born at %s", name, workerCmd.created)
 				continue
 			}
-			log.Info("Killing AWOL worker %s", name)
+			log.Info(ctx, "Killing AWOL worker %s", name)
 			kill = true
 		} else if w.Status == sdk.StatusDisabled {
-			log.Info("Killing disabled worker %s", w.Name)
+			log.Info(ctx, "Killing disabled worker %s", w.Name)
 			kill = true
 		}
 
 		if kill {
-			if err := h.killWorker(name, workerCmd); err != nil {
+			if err := h.killWorker(ctx, name, workerCmd); err != nil {
 				log.Warning(ctx, "Error killing worker %s :%s", name, err)
 			}
 			killedWorkers = append(killedWorkers, name)

@@ -23,8 +23,8 @@ type Driver interface {
 	Store(o Object, data io.ReadCloser) (string, error)
 	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error)
 	Fetch(ctx context.Context, o Object) (io.ReadCloser, error)
-	Delete(o Object) error
-	DeleteContainer(containerPath string) error
+	Delete(ctx context.Context, o Object) error
+	DeleteContainer(ctx context.Context, containerPath string) error
 	TemporaryURLSupported() bool
 }
 
@@ -99,9 +99,9 @@ type ConfigOptionsFilesystem struct {
 }
 
 // GetDriver returns the storage driver, integration driver or sharedInfra shared otherwise
-func GetDriver(db gorp.SqlExecutor, sharedStorage Driver, projectKey, integrationName string) (Driver, error) {
+func GetDriver(ctx context.Context, db gorp.SqlExecutor, sharedStorage Driver, projectKey, integrationName string) (Driver, error) {
 	if integrationName != sdk.DefaultStorageIntegrationName {
-		storageDriver, err := initDriver(db, projectKey, integrationName)
+		storageDriver, err := initDriver(ctx, db, projectKey, integrationName)
 		if err != nil {
 			return nil, sdk.WrapError(err, "Cannot load storage driver %s/%s", projectKey, integrationName)
 		}
@@ -111,7 +111,7 @@ func GetDriver(db gorp.SqlExecutor, sharedStorage Driver, projectKey, integratio
 }
 
 // initDriver init a storage driver from a project integration
-func initDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver, error) {
+func initDriver(ctx context.Context, db gorp.SqlExecutor, projectKey, integrationName string) (Driver, error) {
 	projectIntegration, err := integration.LoadProjectIntegrationByName(db, projectKey, integrationName, true)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot load projectIntegration %s/%s", projectKey, integrationName)
@@ -135,9 +135,9 @@ func initDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver
 			cfg.DisableSSL, _ = strconv.ParseBool(projectIntegration.Config["disable_ssl"].Value)
 			cfg.ForcePathStyle, _ = strconv.ParseBool(projectIntegration.Config["force_path_style"].Value)
 		}
-		return newS3Store(projectIntegration, cfg)
+		return newS3Store(ctx, projectIntegration, cfg)
 	case sdk.OpenstackIntegrationModel:
-		return newSwiftStore(projectIntegration, ConfigOptionsOpenstack{
+		return newSwiftStore(ctx, projectIntegration, ConfigOptionsOpenstack{
 			Address:         projectIntegration.Config["address"].Value,
 			Region:          projectIntegration.Config["region"].Value,
 			Tenant:          projectIntegration.Config["tenant_name"].Value,
@@ -156,11 +156,11 @@ func initDriver(db gorp.SqlExecutor, projectKey, integrationName string) (Driver
 func Init(c context.Context, cfg Config) (Driver, error) {
 	switch cfg.Kind {
 	case Openstack, Swift:
-		return newSwiftStore(sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, cfg.Options.Openstack)
+		return newSwiftStore(c, sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, cfg.Options.Openstack)
 	case AWSS3:
-		return newS3Store(sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, cfg.Options.AWSS3)
+		return newS3Store(c, sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, cfg.Options.AWSS3)
 	case Filesystem:
-		return newFilesystemStore(sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, cfg.Options.Filesystem)
+		return newFilesystemStore(c, sdk.ProjectIntegration{Name: sdk.DefaultStorageIntegrationName}, cfg.Options.Filesystem)
 	default:
 		return nil, fmt.Errorf("Invalid flag --artifact-mode")
 	}

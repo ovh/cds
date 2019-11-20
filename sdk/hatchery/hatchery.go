@@ -201,7 +201,7 @@ func Create(ctx context.Context, h Interface) error {
 
 			//Check if hatchery if able to start a new worker
 			if !checkCapacities(ctx, h) {
-				log.Info("hatchery %s is not able to provision new worker", h.Service().Name)
+				log.Info(ctx, "hatchery %s is not able to provision new worker", h.Service().Name)
 				endTrace("no capacities")
 				continue
 			}
@@ -243,7 +243,7 @@ func Create(ctx context.Context, h Interface) error {
 			}
 
 			if !canTakeJob {
-				log.Info("hatchery %s is not able to run the job %d", h.Name(), j.ID)
+				log.Info(ctx, "hatchery %s is not able to run the job %d", h.Name(), j.ID)
 				endTrace("cannot run job")
 				continue
 			}

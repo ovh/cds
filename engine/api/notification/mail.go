@@ -14,7 +14,7 @@ var regexpIsHTML = regexp.MustCompile(`^\w*\n*<[a-z][\s\S]*>`)
 
 // SendMailNotif Send user notification by mail
 func SendMailNotif(ctx context.Context, notif sdk.EventNotif) {
-	log.Info("notification.SendMailNotif> Send notif '%s'", notif.Subject)
+	log.Info(ctx, "notification.SendMailNotif> Send notif '%s'", notif.Subject)
 	errors := []string{}
 	for _, recipient := range notif.Recipients {
 		isHTML := regexpIsHTML.MatchString(notif.Body)

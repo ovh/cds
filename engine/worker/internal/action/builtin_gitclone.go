@@ -170,7 +170,7 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 		Stdout: stdOut,
 	}
 
-	git.LogFunc = log.Info
+	git.LogFunc = log.InfoWithoutCtx
 	//Perform the git clone
 	userLogCommand, err := git.Clone(url, basedir, dir, auth, clone, output)
 

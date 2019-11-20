@@ -214,7 +214,7 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w workerruntime.Run
 	}
 	envs = append(envs, opts.envs...)
 
-	log.Info("Starting GRPC Plugin %s", binary.Name)
+	log.Info(ctx, "Starting GRPC Plugin %s", binary.Name)
 	fileContent, err := afero.ReadFile(w.Workspace(), binary.GetName())
 	if err != nil {
 		return nil, sdk.WrapError(err, "plugin:%s unable to get plugin binary file... Aborting", pluginName)

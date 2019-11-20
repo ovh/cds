@@ -245,11 +245,11 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, id string) error {
 			if err := workflow.RestartWorkflowNodeJob(context.TODO(), db, *wNodeJob); err != nil {
 				log.Warning(ctx, "DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)
 			} else {
-				log.Info("DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
+				log.Info(ctx, "DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
 			}
 		}
 
-		log.Info("DisableWorker> Worker %s crashed while building %d !", name, jobID.Int64)
+		log.Info(ctx, "DisableWorker> Worker %s crashed while building %d !", name, jobID.Int64)
 	}
 
 	if err := worker.SetStatus(tx, id, sdk.StatusDisabled); err != nil {

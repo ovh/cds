@@ -33,12 +33,12 @@ type localWorkerLogger struct {
 
 func (l localWorkerLogger) Logf(fmt string, values ...interface{}) {
 	fmt = strings.TrimSuffix(fmt, "\n")
-	log.Info("hatchery> local> worker> %s> "+fmt, l.name)
+	log.Info(context.Background(), "hatchery> local> worker> %s> "+fmt, l.name)
 }
 
 func (l localWorkerLogger) Errorf(fmt string, values ...interface{}) {
 	fmt = strings.TrimSuffix(fmt, "\n")
-	log.Error(context.TODO(), "hatchery> local> worker> %s> "+fmt, l.name)
+	log.Error(context.Background(), "hatchery> local> worker> %s> "+fmt, l.name)
 }
 
 func (l localWorkerLogger) Fatalf(fmt string, values ...interface{}) {
@@ -64,7 +64,7 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		return err
 	}
 
-	log.Info("HatcheryLocal.SpawnWorker> basedir: %s", basedir)
+	log.Info(ctx, "HatcheryLocal.SpawnWorker> basedir: %s", basedir)
 
 	udataParam := sdk.WorkerArgs{
 		API:               h.Configuration().API.HTTP.URL,

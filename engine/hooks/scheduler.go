@@ -67,7 +67,7 @@ func (s *Service) retryTaskExecutionsRoutine(ctx context.Context) error {
 			}
 
 			if s.Maintenance {
-				log.Info("Hooks> retryTaskExecutionsRoutine> Maintenance enable, wait 1 minute. Queue %d", size)
+				log.Info(ctx, "Hooks> retryTaskExecutionsRoutine> Maintenance enable, wait 1 minute. Queue %d", size)
 				time.Sleep(1 * time.Minute)
 				continue
 			}
@@ -157,14 +157,14 @@ func (s *Service) enqueueScheduledTaskExecutionsRoutine(ctx context.Context) err
 						// update status before enqueue
 						// this will avoid to re-enqueue the same scheduled task execution if the dequeue take more than 30s (ticker of this goroutine)
 						if alreadyEnqueued {
-							log.Info("Hooks> enqueueScheduledTaskExecutionsRoutine > task execution already enqueued for this task %s of type %s- delete it", e.UUID, e.Type)
+							log.Info(ctx, "Hooks> enqueueScheduledTaskExecutionsRoutine > task execution already enqueued for this task %s of type %s- delete it", e.UUID, e.Type)
 							if err := s.Dao.DeleteTaskExecution(&e); err != nil {
 								log.Error(ctx, "Hooks> enqueueScheduledTaskExecutionsRoutine > error on DeleteTaskExecution: %v", err)
 							}
 						} else {
 							e.Status = TaskExecutionEnqueued
 							s.Dao.SaveTaskExecution(&e)
-							log.Info("Hooks> enqueueScheduledTaskExecutionsRoutine > Enqueing %s task %s:%d", e.Type, e.UUID, e.Timestamp)
+							log.Info(ctx, "Hooks> enqueueScheduledTaskExecutionsRoutine > Enqueing %s task %s:%d", e.Type, e.UUID, e.Timestamp)
 							if err := s.Dao.EnqueueTaskExecution(ctx, &e); err != nil {
 								log.Error(ctx, "Hooks> enqueueScheduledTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
 							}
@@ -251,7 +251,7 @@ func (s *Service) dequeueTaskExecutions(ctx context.Context) error {
 		log.Debug("Hooks> dequeueTaskExecutions> current queue size: %d", size)
 
 		if s.Maintenance {
-			log.Info("Maintenance enable, wait 1 minute. Queue %d", size)
+			log.Info(ctx, "Maintenance enable, wait 1 minute. Queue %d", size)
 			time.Sleep(1 * time.Minute)
 			continue
 		}
@@ -292,7 +292,7 @@ func (s *Service) dequeueTaskExecutions(ctx context.Context) error {
 			continue
 
 		} else if t.NbErrors >= s.Cfg.RetryError {
-			log.Info("Hooks> dequeueTaskExecutions> Deleting task execution %s cause: to many errors:%d lastError:%s", t.UUID, t.NbErrors, t.LastError)
+			log.Info(ctx, "Hooks> dequeueTaskExecutions> Deleting task execution %s cause: to many errors:%d lastError:%s", t.UUID, t.NbErrors, t.LastError)
 			if err := s.Dao.DeleteTaskExecution(&t); err != nil {
 				log.Error(ctx, "Hooks> dequeueTaskExecutions > error on DeleteTaskExecution: %v", err)
 			}
@@ -310,7 +310,7 @@ func (s *Service) dequeueTaskExecutions(ctx context.Context) error {
 			if err != nil {
 				if strings.Contains(err.Error(), "Unsupported task type") {
 					// delete this task execution, as it will never work
-					log.Info("Hooks> dequeueTaskExecutions> Deleting task execution %s as err:%v", t.UUID, err)
+					log.Info(ctx, "Hooks> dequeueTaskExecutions> Deleting task execution %s as err:%v", t.UUID, err)
 					if err := s.Dao.DeleteTaskExecution(&t); err != nil {
 						log.Error(ctx, "Hooks> dequeueTaskExecutions > error on DeleteTaskExecution: %v", err)
 					}

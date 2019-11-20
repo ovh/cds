@@ -91,12 +91,12 @@ func (h *HatcheryOpenstack) initNetworks() error {
 // this func is called once, when hatchery is starting
 func (h *HatcheryOpenstack) initIPStatus(ctx context.Context) error {
 	srvs := h.getServers(ctx)
-	log.Info("initIPStatus> %d srvs", len(srvs))
+	log.Info(ctx, "initIPStatus> %d srvs", len(srvs))
 	for ip := range ipsInfos.ips {
-		log.Info("initIPStatus> checking %s", ip)
+		log.Info(ctx, "initIPStatus> checking %s", ip)
 		for _, s := range srvs {
 			if len(s.Addresses) == 0 {
-				log.Info("initIPStatus> server %s - 0 addr", s.Name)
+				log.Info(ctx, "initIPStatus> server %s - 0 addr", s.Name)
 				continue
 			}
 			for k, v := range s.Addresses {
@@ -120,7 +120,7 @@ func (h *HatcheryOpenstack) initIPStatus(ctx context.Context) error {
 						if addr != "" && version == 4 {
 							log.Debug("initIPStatus> server %s - address %s (checking %s)", s.Name, addr, ip)
 							if addr != "" && addr == ip {
-								log.Info("initIPStatus> worker %s - use IP: %s", s.Name, addr)
+								log.Info(ctx, "initIPStatus> worker %s - use IP: %s", s.Name, addr)
 								ipsInfos.ips[ip] = ipInfos{workerName: s.Name}
 							}
 						}

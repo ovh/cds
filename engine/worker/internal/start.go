@@ -11,7 +11,7 @@ import (
 )
 
 func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (mainError error) {
-	log.Info("Starting worker %s", w.Name())
+	log.Info(ctx, "Starting worker %s", w.Name())
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	httpServerCtx, stopHTTPServer := context.WithCancel(ctx)
@@ -34,8 +34,8 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 
 	//Definition of the function which must be called to stop the worker
 	var endFunc = func() {
-		log.Info("Stopping worker %s", w.Name())
-		if err := w.Unregister(); err != nil {
+		log.Info(ctx, "Stopping worker %s", w.Name())
+		if err := w.Unregister(ctx); err != nil {
 			log.Error(ctx, "Unable to unregister: %v", err)
 			mainError = err
 		}
@@ -67,7 +67,7 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 	} else {
 		sdk.GoRoutine(ctx, "worker.QueuePolling", func(ctx context.Context) {
 			if err := w.Client().QueuePolling(ctx, jobsChan, errsChan, 2*time.Second, "", nil); err != nil {
-				log.Info("Queues polling stopped: %v", err)
+				log.Info(ctx, "Queues polling stopped: %v", err)
 			}
 		})
 	}
@@ -146,7 +146,7 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 			if requirementsOK && pluginsOK {
 				log.Debug("checkQueue> Try take the job %d%s", j.ID, t)
 				if err := w.Take(ctx, j); err != nil {
-					log.Info("Unable to run this job  %d. Take info:%s: %v", j.ID, t, err)
+					log.Info(ctx, "Unable to run this job  %d. Take info:%s: %v", j.ID, t, err)
 					bookedJobID = 0
 					errsChan <- err
 				}
@@ -157,7 +157,7 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 			}
 
 			// Unregister from engine
-			log.Info("Job is done. Unregistering...")
+			log.Info(ctx, "Job is done. Unregistering...")
 			defer endFunc()
 			return nil
 		}

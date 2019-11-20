@@ -82,13 +82,13 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			NodeJobRunID: nodeJobRunID,
 		}
 
-		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
 		if err != nil {
 			return err
 		}
 
 		if staticFile.StaticKey != "" {
-			if err := storageDriver.Delete(&staticFile); err != nil {
+			if err := storageDriver.Delete(ctx, &staticFile); err != nil {
 				return sdk.WrapError(err, "Cannot delete existing static files")
 			}
 		}
@@ -114,7 +114,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 		}
 
 		if err := workflow.InsertStaticFiles(api.mustDB(), &staticFile); err != nil {
-			_ = storageDriver.Delete(&staticFile)
+			_ = storageDriver.Delete(ctx, &staticFile)
 			return sdk.WrapError(err, "Cannot insert static files in database")
 		}
 		return service.WriteJSON(w, staticFile, http.StatusOK)
@@ -215,7 +215,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 			Created:           time.Now(),
 		}
 
-		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
 		if err != nil {
 			return err
 		}
@@ -244,7 +244,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
-			_ = storageDriver.Delete(&art)
+			_ = storageDriver.Delete(ctx, &art)
 			return sdk.WrapError(err, "Cannot update workflow node run")
 		}
 		return nil
@@ -259,7 +259,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 		vars := mux.Vars(r)
 
-		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
 		if err != nil {
 			return err
 		}
@@ -299,7 +299,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
-			_ = storageDriver.Delete(&art)
+			_ = storageDriver.Delete(ctx, &art)
 			return sdk.WrapError(err, "Cannot update workflow node run")
 		}
 
@@ -316,7 +316,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		vars := mux.Vars(r)
 		ref := vars["ref"]
 
-		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
+		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars["permProjectKey"], vars["integrationName"])
 		if err != nil {
 			return err
 		}

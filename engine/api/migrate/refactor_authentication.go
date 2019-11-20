@@ -65,7 +65,7 @@ func refactorAuthenticationUser(ctx context.Context, db gorp.SqlExecutor, store 
 		return sdk.WithStack(err)
 	}
 
-	log.Info("migrate.RefactorAuthentication> starting user migration %s - %s", u.Username, u.Fullname)
+	log.Info(ctx, "migrate.RefactorAuthentication> starting user migration %s - %s", u.Username, u.Fullname)
 
 	var newUser = sdk.AuthentifiedUser{
 		Username:      u.Username,
@@ -113,7 +113,7 @@ func refactorAuthenticationUser(ctx context.Context, db gorp.SqlExecutor, store 
 		return sdk.WrapError(err, "cannot send reset token email at %s", contact.Value)
 	}
 
-	log.Info("migrate.RefactorAuthentication> ending user migration %s - %s", newUser.ID, contact.Value)
+	log.Info(ctx, "migrate.RefactorAuthentication> ending user migration %s - %s", newUser.ID, contact.Value)
 
 	return nil
 }

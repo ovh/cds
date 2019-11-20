@@ -19,7 +19,7 @@ func (s *Service) processor(ctx context.Context) error {
 			op := s.dao.loadOperation(ctx, uuid)
 			if err := s.do(ctx, *op); err != nil {
 				if err == errLockUnavailable {
-					log.Info("repositories > processor > lock unavailabe. Retry")
+					log.Info(ctx, "repositories > processor > lock unavailabe. Retry")
 					s.dao.pushOperation(op)
 				} else {
 					log.Error(ctx, "repositories > processor > %v", err)

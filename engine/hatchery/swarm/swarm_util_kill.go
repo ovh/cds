@@ -29,7 +29,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 			log.Debug("hatchery> swarm> killAndRemove> cannot InspectContainer: %v on %s", err, dockerClient.name)
 			return nil
 		}
-		log.Info("hatchery> swarm> killAndRemove> cannot InspectContainer: %v on %s", err, dockerClient.name)
+		log.Info(ctx, "hatchery> swarm> killAndRemove> cannot InspectContainer: %v on %s", err, dockerClient.name)
 	} else {
 		// If its a worker "register", check registration before deleting it
 		if strings.Contains(container.Name, "register-") {
@@ -110,7 +110,7 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 		}
 
 		//Finally remove the network
-		log.Info("hatchery> swarm> remove network %s (%s)", network.Name, network.ID)
+		log.Info(ctx, "hatchery> swarm> remove network %s (%s)", network.Name, network.ID)
 		ctxDocker, cancelList := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancelList()
 		if err := dockerClient.NetworkRemove(ctxDocker, network.ID); err != nil {
@@ -179,7 +179,7 @@ func (h *HatcherySwarm) killAwolNetworks(ctx context.Context) error {
 				continue
 			}
 
-			log.Info("hatchery> swarm> killAwolNetworks> remove network[%s] %s on %s (created on %v)", n.ID, n.Name, dockerClient.name, n.Created)
+			log.Info(ctx, "hatchery> swarm> killAwolNetworks> remove network[%s] %s on %s (created on %v)", n.ID, n.Name, dockerClient.name, n.Created)
 			ctxDocker2, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			if err := dockerClient.NetworkRemove(ctxDocker2, n.ID); err != nil {

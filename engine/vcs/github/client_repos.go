@@ -166,7 +166,7 @@ func (g *githubClient) GrantWritePermission(ctx context.Context, fullname string
 
 	// Response when person is already a collaborator
 	if resp.StatusCode == 204 {
-		log.Info("githubClient.GrantWritePermission> %s is already a collaborator", g.username)
+		log.Info(ctx, "githubClient.GrantWritePermission> %s is already a collaborator", g.username)
 		return nil
 	}
 

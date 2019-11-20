@@ -246,7 +246,7 @@ func (h *HatcheryVSphere) killDisabledWorkers() {
 	for _, w := range workerPoolDisabled {
 		for _, s := range srvs {
 			if s.Name == w.Name {
-				log.Info("killDisabledWorkers> killDisabledWorkers %v", s.Name)
+				log.Info(ctx, "killDisabledWorkers> killDisabledWorkers %v", s.Name)
 				_ = h.deleteServer(s)
 				break
 			}

@@ -183,7 +183,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			chanErr <- err
 		}
 
-		log.Info("runScriptAction> Running command %s %s in %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"), script.dir)
+		log.Info(ctx, "runScriptAction> Running command %s %s in %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"), script.dir)
 		cmd := exec.CommandContext(ctx, script.shell, script.opts...)
 		res.Status = sdk.StatusUnknown
 		cmd.Dir = script.dir
@@ -266,7 +266,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 	case globalErr = <-chanErr:
 	}
 
-	log.Info("runScriptAction> %s %s", res.Status, res.Reason)
+	log.Info(ctx, "runScriptAction> %s %s", res.Status, res.Reason)
 	return res, globalErr
 }
 

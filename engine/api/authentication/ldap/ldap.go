@@ -126,7 +126,7 @@ func (d *AuthDriver) openLDAP(ctx context.Context, conf Config) error {
 
 	address := fmt.Sprintf("%s:%d", d.conf.Host, d.conf.Port)
 
-	log.Info("Auth> Preparing connection to LDAP server: %s", address)
+	log.Info(ctx, "Auth> Preparing connection to LDAP server: %s", address)
 	if !d.conf.SSL {
 		d.conn, err = ldap.Dial("tcp", address)
 		if err != nil {
@@ -141,7 +141,7 @@ func (d *AuthDriver) openLDAP(ctx context.Context, conf Config) error {
 			return sdk.ErrLDAPConn
 		}
 	} else {
-		log.Info("Auth> Connecting to LDAP server")
+		log.Info(ctx, "Auth> Connecting to LDAP server")
 		d.conn, err = ldap.DialTLS("tcp", address, &tls.Config{
 			ServerName:         d.conf.Host,
 			InsecureSkipVerify: false,
@@ -153,9 +153,9 @@ func (d *AuthDriver) openLDAP(ctx context.Context, conf Config) error {
 	}
 
 	if d.conf.ManagerDN != "" {
-		log.Info("LDAP> bind manager %s", d.conf.ManagerDN)
+		log.Info(ctx, "LDAP> bind manager %s", d.conf.ManagerDN)
 		if err := d.conn.Bind(d.conf.ManagerDN, d.conf.ManagerPassword); err != nil {
-			if shoudRetry(err) {
+			if shoudRetry(ctx, err) {
 				if err := d.openLDAP(ctx, d.conf); err != nil {
 					return err
 				}
@@ -177,7 +177,7 @@ func (d *AuthDriver) bind(ctx context.Context, term, password string) error {
 	log.Debug("LDAP> bind user %s", bindRequest)
 
 	if err := d.conn.Bind(bindRequest, password); err != nil {
-		if !shoudRetry(err) {
+		if !shoudRetry(ctx, err) {
 			return err
 		}
 		if err := d.openLDAP(ctx, d.conf); err != nil {
@@ -211,7 +211,7 @@ func (d *AuthDriver) search(ctx context.Context, term string, attributes ...stri
 
 	sr, err := d.conn.Search(searchRequest)
 	if err != nil {
-		if !shoudRetry(err) {
+		if !shoudRetry(ctx, err) {
 			return nil, err
 		}
 		if err := d.openLDAP(ctx, d.conf); err != nil {

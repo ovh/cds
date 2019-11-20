@@ -325,7 +325,7 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 		log.Error(ctx, "%s> Unable to register: %v", serviceName, err)
 		return err
 	}
-	log.Info("%s> Service registered", serviceName)
+	log.Info(ctx, "%s> Service registered", serviceName)
 
 	// finally start the heartbeat goroutine
 	go func() {
@@ -347,7 +347,7 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 	if ctx.Err() != nil {
 		log.Error(ctx, "%s> Service exiting with err: %+v", serviceName, ctx.Err())
 	} else {
-		log.Info("%s> Service exiting", serviceName)
+		log.Info(ctx, "%s> Service exiting", serviceName)
 	}
 	return ctx.Err()
 }

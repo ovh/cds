@@ -89,7 +89,7 @@ loop:
 }
 
 func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
-	log.Info("Registing service %s(%T) %s", c.Type(), c, c.Name())
+	log.Info(ctx, "Registing service %s(%T) %s", c.Type(), c, c.Name())
 
 	// no register for api
 	if c.ServiceType == "api" {

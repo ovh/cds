@@ -49,7 +49,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 				}
 				if mig != nil {
 					if mig.Status == sdk.MigrationStatusDone || mig.Status == sdk.MigrationStatusCanceled {
-						log.Info("Migration> %s> Already done (status: %s)", currentMigration.Name, mig.Status)
+						log.Info(ctx, "Migration> %s> Already done (status: %s)", currentMigration.Name, mig.Status)
 						return
 					}
 
@@ -64,7 +64,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 					}
 				}
 
-				log.Info("Migration [%s]: begin", currentMigration.Name)
+				log.Info(ctx, "Migration [%s]: begin", currentMigration.Name)
 				if err := currentMigration.ExecFunc(contex); err != nil {
 					log.Error(ctx, "migration %s in ERROR : %v", currentMigration.Name, err)
 					currentMigration.Error = err.Error()
@@ -76,7 +76,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 				if err := Update(db, &currentMigration); err != nil {
 					log.Error(ctx, "Cannot update migration %s : %v", currentMigration.Name, err)
 				}
-				log.Info("Migration [%s]: Done", currentMigration.Name)
+				log.Info(ctx, "Migration [%s]: Done", currentMigration.Name)
 			}, panicDump)
 		}(migration)
 	}

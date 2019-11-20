@@ -103,13 +103,13 @@ func (s *Service) Serve(c context.Context) error {
 	go func() {
 		select {
 		case <-ctx.Done():
-			log.Info("ElasticSearch> Shutdown HTTP Server")
+			log.Info(ctx, "ElasticSearch> Shutdown HTTP Server")
 			_ = server.Shutdown(ctx)
 		}
 	}()
 
 	//Start the http server
-	log.Info("ElasticSearch> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+	log.Info(ctx, "ElasticSearch> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
 		log.Error(ctx, "ElasticSearch> Listen and serve failed: %v", err)
 	}

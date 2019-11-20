@@ -64,7 +64,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 
 	for i, r := range res {
 		// Force delete workflow runs if any
-		n, err := workflow.PurgeAllWorkflowRunsByWorkflowID(db, r.ID)
+		n, err := workflow.PurgeAllWorkflowRunsByWorkflowID(ctx, db, r.ID)
 		if err != nil {
 			log.Error(ctx, "unable to mark workflow runs to delete with workflow_id %d: %v", r.ID, err)
 			continue
@@ -84,7 +84,7 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 			continue
 		}
 		if nbWorkflowRuns > 0 {
-			log.Info("skip workflow %d deletion because there are still %d workflow_runs to delete", r.ID, nbWorkflowRuns)
+			log.Info(ctx, "skip workflow %d deletion because there are still %d workflow_runs to delete", r.ID, nbWorkflowRuns)
 			continue
 		}
 
@@ -223,14 +223,14 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 					})
 				}
 
-				storageDriver, err := objectstore.GetDriver(db, sharedStorage, proj.Key, integrationName)
+				storageDriver, err := objectstore.GetDriver(ctx, db, sharedStorage, proj.Key, integrationName)
 				if err != nil {
 					log.Error(ctx, "error while getting driver prj:%v integrationName:%v err:%v", proj.Key, integrationName, err)
 					continue
 				}
 
 				log.Debug("DeleteArtifacts> deleting %+v", art)
-				if err := storageDriver.Delete(&art); err != nil {
+				if err := storageDriver.Delete(ctx, &art); err != nil {
 					log.Error(ctx, "error while deleting container prj:%v wnr:%v name:%v err:%v", proj.Key, wnr.ID, art.GetPath(), err)
 					continue
 				}
@@ -239,13 +239,13 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 	}
 
 	for _, dc := range driversContainers {
-		storageDriver, err := objectstore.GetDriver(db, sharedStorage, dc.projectKey, dc.integrationName)
+		storageDriver, err := objectstore.GetDriver(ctx, db, sharedStorage, dc.projectKey, dc.integrationName)
 		if err != nil {
 			log.Error(ctx, "error while getting driver prj:%v integrationName:%v err:%v", dc.projectKey, dc.integrationName, err)
 			continue
 		}
 
-		if err := storageDriver.DeleteContainer(dc.containerPath); err != nil {
+		if err := storageDriver.DeleteContainer(ctx, dc.containerPath); err != nil {
 			log.Error(ctx, "error while deleting container prj:%v path:%v err:%v", dc.projectKey, dc.containerPath, err)
 			continue
 		}

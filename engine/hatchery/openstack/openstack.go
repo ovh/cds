@@ -130,7 +130,7 @@ func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 	}
 
 	if hconfig.IPRange != "" {
-		ips, err := IPinRanges(hconfig.IPRange)
+		ips, err := IPinRanges(context.Background(), hconfig.IPRange)
 		if err != nil {
 			return fmt.Errorf("flag or environment variable openstack-ip-range error: %s", err)
 		}
@@ -314,7 +314,7 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(ctx context.Context, wor
 		}
 	}
 
-	log.Info("killAwolServersComputeImage> create image before deleting server")
+	log.Info(ctx, "killAwolServersComputeImage> create image before deleting server")
 	imageID, err := servers.CreateImage(h.openstackClient, serverID, servers.CreateImageOpts{
 		Name: "cds_image_" + workerModelName,
 		Metadata: map[string]string{
@@ -328,7 +328,7 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(ctx context.Context, wor
 	if err != nil {
 		log.Error(ctx, "killAwolServersComputeImage> error on create image for worker model %s: %s", workerModelName, err)
 	} else {
-		log.Info("killAwolServersComputeImage> image %s created for worker model %s - waiting %ds for saving created img...", imageID, workerModelName, h.Config.CreateImageTimeout)
+		log.Info(ctx, "killAwolServersComputeImage> image %s created for worker model %s - waiting %ds for saving created img...", imageID, workerModelName, h.Config.CreateImageTimeout)
 
 		startTime := time.Now().Unix()
 		var newImageIsActive bool
@@ -339,7 +339,7 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(ctx context.Context, wor
 			}
 			if newImage.Status == "ACTIVE" {
 				// new image is created, end wait
-				log.Info("killAwolServersComputeImage> image %s created for worker model %s is active", imageID, workerModelName)
+				log.Info(ctx, "killAwolServersComputeImage> image %s created for worker model %s is active", imageID, workerModelName)
 				newImageIsActive = true
 				break
 			}
@@ -347,14 +347,14 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(ctx context.Context, wor
 		}
 
 		if !newImageIsActive {
-			log.Info("killAwolServersComputeImage> timeout while creating new image. Deleting new image for %s with ID %s", workerModelName, imageID)
+			log.Info(ctx, "killAwolServersComputeImage> timeout while creating new image. Deleting new image for %s with ID %s", workerModelName, imageID)
 			if err := images.Delete(h.openstackClient, imageID).ExtractErr(); err != nil {
 				log.Error(ctx, "killAwolServersComputeImage> error while deleting new image %s", imageID)
 			}
 		}
 
 		for _, oldImageID := range oldImagesID {
-			log.Info("killAwolServersComputeImage> deleting old image for %s with ID %s", workerModelName, oldImageID)
+			log.Info(ctx, "killAwolServersComputeImage> deleting old image for %s with ID %s", workerModelName, oldImageID)
 			if err := images.Delete(h.openstackClient, oldImageID).ExtractErr(); err != nil {
 				log.Error(ctx, "killAwolServersComputeImage> error while deleting old image %s", oldImageID)
 			}
@@ -369,14 +369,14 @@ func (h *HatcheryOpenstack) killErrorServers(ctx context.Context) {
 		//Remove server without IP Address
 		if s.Status == "ACTIVE" {
 			if len(s.Addresses) == 0 && time.Since(s.Updated) > 10*time.Minute {
-				log.Info("killErrorServers> len(s.Addresses):%d s.Updated: %v", len(s.Addresses), time.Since(s.Updated))
+				log.Info(ctx, "killErrorServers> len(s.Addresses):%d s.Updated: %v", len(s.Addresses), time.Since(s.Updated))
 				_ = h.deleteServer(ctx, s)
 			}
 		}
 
 		//Remove Error server
 		if s.Status == "ERROR" {
-			log.Info("killErrorServers> s.Status: %s", s.Status)
+			log.Info(ctx, "killErrorServers> s.Status: %s", s.Status)
 			_ = h.deleteServer(ctx, s)
 		}
 	}
@@ -397,7 +397,7 @@ func (h *HatcheryOpenstack) killDisabledWorkers() {
 	for _, w := range workerPoolDisabled {
 		for _, s := range srvs {
 			if s.Name == w.Name {
-				log.Info("killDisabledWorkers> killDisabledWorkers %v", s.Name)
+				log.Info(ctx, "killDisabledWorkers> killDisabledWorkers %v", s.Name)
 				_ = h.deleteServer(ctx, s)
 				break
 			}
@@ -406,7 +406,7 @@ func (h *HatcheryOpenstack) killDisabledWorkers() {
 }
 
 func (h *HatcheryOpenstack) deleteServer(ctx context.Context, s servers.Server) error {
-	log.Info("Deleting worker %s", s.Name)
+	log.Info(ctx, "Deleting worker %s", s.Name)
 
 	// If its a worker "register", check registration before deleting it
 	if strings.Contains(s.Name, "register-") {

@@ -42,7 +42,7 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		defer func() {
-			log.Info("Run signal.Stop")
+			log.Info(ctx, "Run signal.Stop")
 			signal.Stop(c)
 			cancel()
 		}()
