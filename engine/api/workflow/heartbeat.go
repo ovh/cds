@@ -15,7 +15,7 @@ const maxRetry = 3
 // restartDeadJob restart all jobs which are building but without worker
 func restartDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store) error {
 	db := DBFunc()
-	deadJobs, err := LoadDeadNodeJobRun(db, store)
+	deadJobs, err := LoadDeadNodeJobRun(ctx, db, store)
 	if err != nil {
 		return sdk.WrapError(err, "Cannot load dead node job run")
 	}
@@ -23,19 +23,19 @@ func restartDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.
 	for _, deadJob := range deadJobs {
 		tx, errTx := db.Begin()
 		if errTx != nil {
-			log.Error("restartDeadJob> Cannot create transaction : %v", errTx)
+			log.Error(ctx, "restartDeadJob> Cannot create transaction : %v", errTx)
 			continue
 		}
 
 		if deadJob.Retry >= maxRetry {
-			if _, err := UpdateNodeJobRunStatus(ctx, DBFunc, tx, store, nil, &deadJob, sdk.StatusStopped); err != nil {
-				log.Error("restartDeadJob> Cannot update node run job %d : %v", deadJob.ID, err)
+			if _, err := UpdateNodeJobRunStatus(ctx, tx, store, nil, &deadJob, sdk.StatusStopped); err != nil {
+				log.Error(ctx, "restartDeadJob> Cannot update node run job %d : %v", deadJob.ID, err)
 				_ = tx.Rollback()
 				continue
 			}
 
 			if err := DeleteNodeJobRuns(tx, deadJob.WorkflowNodeRunID); err != nil {
-				log.Error("restartDeadJob> Cannot delete node run job %d : %v", deadJob.ID, err)
+				log.Error(ctx, "restartDeadJob> Cannot delete node run job %d : %v", deadJob.ID, err)
 				_ = tx.Rollback()
 				continue
 			}
@@ -48,7 +48,7 @@ func restartDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Error("restartDeadJob> Cannot commit transaction : %v", err)
+			log.Error(ctx, "restartDeadJob> Cannot commit transaction : %v", err)
 		}
 	}
 

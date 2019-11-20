@@ -850,7 +850,7 @@ func PurgeWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow,
 			for i, id := range splittedIds {
 				nu, err := strconv.ParseInt(id, 10, 64)
 				if err != nil {
-					log.Error("PurgeWorkflowRun> Cannot parse int64 %s: %v", id, err)
+					log.Error(ctx, "PurgeWorkflowRun> Cannot parse int64 %s: %v", id, err)
 					return err
 				}
 				idsInt64[i] = nu

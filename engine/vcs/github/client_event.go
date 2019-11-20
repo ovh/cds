@@ -27,7 +27,7 @@ func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef t
 
 	interval := 60 * time.Second
 
-	status, body, headers, err := g.get("/repos/" + fullname + "/events")
+	status, body, headers, err := g.get(ctx, "/repos/"+fullname+"/events")
 	if err != nil {
 		log.Warning("githubClient.GetEvents> Error %s", err)
 		return nil, interval, err

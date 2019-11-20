@@ -405,14 +405,14 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 		go func(ID int64) {
 			wRun, errLw := workflow.LoadRunByID(api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 			if errLw != nil {
-				log.Error("workflow.stopWorkflowNodeRun> Cannot load run for resync commit status %v", errLw)
+				log.Error(ctx, "workflow.stopWorkflowNodeRun> Cannot load run for resync commit status %v", errLw)
 				return
 			}
 			//The function could be called with nil project so we need to test if project is not nil
 			if sdk.StatusIsTerminated(wRun.Status) && proj != nil {
 				wRun.LastExecution = time.Now()
 				if err := workflow.ResyncCommitStatus(context.Background(), api.mustDB(), api.Cache, proj, wRun); err != nil {
-					log.Error("workflow.UpdateNodeJobRunStatus> %v", err)
+					log.Error(ctx, "workflow.UpdateNodeJobRunStatus> %v", err)
 				}
 			}
 		}(run.ID)
@@ -476,7 +476,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 				if !has {
 					m, errM := workflow.LoadOutgoingHookModelByID(dbFunc(), wnr.OutgoingHook.HookModelID)
 					if errM != nil {
-						log.Error("stopWorkflowRun> Unable to load outgoing hook model: %v", errM)
+						log.Error(ctx, "stopWorkflowRun> Unable to load outgoing hook model: %v", errM)
 						continue
 					}
 					model = *m
@@ -489,19 +489,19 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 
 					targetRun, errL := workflow.LoadRun(ctx, dbFunc(), targetProject, targetWorkflow, *wnr.Callback.WorkflowRunNumber, workflow.LoadRunOptions{})
 					if errL != nil {
-						log.Error("stopWorkflowRun> Unable to load last workflow run: %v", errL)
+						log.Error(ctx, "stopWorkflowRun> Unable to load last workflow run: %v", errL)
 						continue
 					}
 
 					targetProj, errP := project.Load(dbFunc(), store, targetProject)
 					if errP != nil {
-						log.Error("stopWorkflowRun> Unable to load project %v", errP)
+						log.Error(ctx, "stopWorkflowRun> Unable to load project %v", errP)
 						continue
 					}
 
 					r2, err := stopWorkflowRun(ctx, dbFunc, store, targetProj, targetRun, ident, run.ID)
 					if err != nil {
-						log.Error("stopWorkflowRun> Unable to stop workflow %v", err)
+						log.Error(ctx, "stopWorkflowRun> Unable to stop workflow %v", err)
 						continue
 					}
 					report.Merge(r2, nil) // nolint
@@ -761,14 +761,14 @@ func (api *API) stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbM
 	go func(ID int64) {
 		wRun, errLw := workflow.LoadRunByID(api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if errLw != nil {
-			log.Error("workflow.stopWorkflowNodeRun> Cannot load run for resync commit status %v", errLw)
+			log.Error(ctx, "workflow.stopWorkflowNodeRun> Cannot load run for resync commit status %v", errLw)
 			return
 		}
 		//The function could be called with nil project so we need to test if project is not nil
 		if sdk.StatusIsTerminated(wRun.Status) && p != nil {
 			wRun.LastExecution = time.Now()
 			if err := workflow.ResyncCommitStatus(context.Background(), api.mustDB(), api.Cache, p, wRun); err != nil {
-				log.Error("workflow.stopWorkflowNodeRun> %v", err)
+				log.Error(ctx, "workflow.stopWorkflowNodeRun> %v", err)
 			}
 		}
 	}(wr.ID)
@@ -1018,12 +1018,12 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 		return
 	}
 
-	workflow.ResyncNodeRunsWithCommits(db, cache, p, report)
+	workflow.ResyncNodeRunsWithCommits(ctx, db, cache, p, report)
 
 	// Purge workflow run
 	sdk.GoRoutine(ctx, "workflow.PurgeWorkflowRun", func(ctx context.Context) {
 		if err := workflow.PurgeWorkflowRun(ctx, db, *wf, api.Metrics.WorkflowRunsMarkToDelete); err != nil {
-			log.Error("workflow.PurgeWorkflowRun> error %v", err)
+			log.Error(ctx, "workflow.PurgeWorkflowRun> error %v", err)
 		}
 	}, api.PanicDump())
 }
@@ -1040,7 +1040,7 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 			wfRun.Status = sdk.StatusNeverBuilt
 		}
 	} else {
-		log.Error("unable to start workflow: %v", err)
+		log.Error(ctx, "unable to start workflow: %v", err)
 		wfRun.Status = sdk.StatusFail
 		info = sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
@@ -1050,7 +1050,7 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 
 	workflow.AddWorkflowRunInfo(wfRun, !sdk.ErrorIs(err, sdk.ErrConditionsNotOk), info)
 	if errU := workflow.UpdateWorkflowRun(ctx, db, wfRun); errU != nil {
-		log.Error("unable to fail workflow run %v", errU)
+		log.Error(ctx, "unable to fail workflow run %v", errU)
 	}
 	report.Add(wfRun)
 	return report
@@ -1069,7 +1069,7 @@ func (api *API) downloadworkflowArtifactDirectHandler() service.Handler {
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-		f, err := api.SharedStorage.Fetch(art)
+		f, err := api.SharedStorage.Fetch(ctx, art)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot fetch artifact")
 		}
@@ -1132,7 +1132,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 			return err
 		}
 
-		f, err := storageDriver.Fetch(art)
+		f, err := storageDriver.Fetch(ctx, art)
 		if err != nil {
 			_ = f.Close()
 			return sdk.WrapError(err, "Cannot fetch artifact")
@@ -1186,7 +1186,7 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 					if art.ProjectIntegrationID != nil && *art.ProjectIntegrationID > 0 {
 						projectIntegration, err := integration.LoadProjectIntegrationByID(api.mustDB(), *art.ProjectIntegrationID, false)
 						if err != nil {
-							log.Error("Cannot load LoadProjectIntegrationByID %s/%d: err: %v", key, *art.ProjectIntegrationID, err)
+							log.Error(ctx, "Cannot load LoadProjectIntegrationByID %s/%d: err: %v", key, *art.ProjectIntegrationID, err)
 							return
 						}
 						integrationName = projectIntegration.Name
@@ -1196,7 +1196,7 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 
 					storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, key, integrationName)
 					if err != nil {
-						log.Error("Cannot load storage driver: %v", err)
+						log.Error(ctx, "Cannot load storage driver: %v", err)
 						return
 					}
 
@@ -1204,7 +1204,7 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 					if temporaryURLSupported { // with temp URL
 						fURL, _, err := s.FetchURL(art)
 						if err != nil {
-							log.Error("Cannot fetch cache object: %v", err)
+							log.Error(ctx, "Cannot fetch cache object: %v", err)
 						} else if fURL != "" {
 							art.TempURL = fURL
 						}

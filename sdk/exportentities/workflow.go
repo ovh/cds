@@ -1,6 +1,7 @@
 package exportentities
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -283,7 +284,7 @@ func joinAsNode(n *sdk.Node) bool {
 }
 
 //NewWorkflow creates a new exportable workflow
-func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
+func NewWorkflow(ctx context.Context, w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 	exportedWorkflow := Workflow{}
 	exportedWorkflow.Name = w.Name
 	exportedWorkflow.Description = w.Description
@@ -387,7 +388,7 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 	}
 
 	//Notifications
-	if err := craftNotifications(w, &exportedWorkflow); err != nil {
+	if err := craftNotifications(ctx, w, &exportedWorkflow); err != nil {
 		return exportedWorkflow, err
 	}
 

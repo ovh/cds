@@ -76,7 +76,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 		}
 
 		// Insert the new user in database
-		if err := local.InsertRegistration(tx, &reg); err != nil {
+		if err := local.InsertRegistration(ctx, tx, &reg); err != nil {
 			return err
 		}
 
@@ -107,7 +107,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 	}
 }
 
-func initBuiltinConsumersFromStartupConfig(tx gorp.SqlExecutor, consumer *sdk.AuthConsumer, initToken string) error {
+func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorp.SqlExecutor, consumer *sdk.AuthConsumer, initToken string) error {
 	// Deserialize the magic token to retrieve the startup configuration
 	var startupConfig StartupConfig
 	if err := authentication.VerifyJWS(initToken, &startupConfig); err != nil {
@@ -146,7 +146,7 @@ func initBuiltinConsumersFromStartupConfig(tx gorp.SqlExecutor, consumer *sdk.Au
 			IssuedAt:           time.Unix(startupConfig.IAT, 0),
 		}
 
-		if err := authentication.InsertConsumer(tx, &c); err != nil {
+		if err := authentication.InsertConsumer(ctx, tx, &c); err != nil {
 			return err
 		}
 	}
@@ -197,7 +197,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(tx, consumer, driver.GetSessionDuration(), false)
+		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(), false)
 		if err != nil {
 			return err
 		}
@@ -288,7 +288,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		}
 
 		// Insert the new user in database
-		if err := user.Insert(tx, &newUser); err != nil {
+		if err := user.Insert(ctx, tx, &newUser); err != nil {
 			return err
 		}
 
@@ -301,25 +301,25 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		}
 
 		// Insert the primary contact for the new user in database
-		if err := user.InsertContact(tx, &userContact); err != nil {
+		if err := user.InsertContact(ctx, tx, &userContact); err != nil {
 			return err
 		}
 
 		// Create new local consumer for new user, set this consumer as pending validation
-		consumer, err := local.NewConsumerWithHash(tx, newUser.ID, reg.Hash)
+		consumer, err := local.NewConsumerWithHash(ctx, tx, newUser.ID, reg.Hash)
 		if err != nil {
 			return err
 		}
 
 		// Check if a magic init token was given for first signup
 		if countAdmins == 0 && hasInitToken {
-			if err := initBuiltinConsumersFromStartupConfig(tx, consumer, initToken); err != nil {
+			if err := initBuiltinConsumersFromStartupConfig(ctx, tx, consumer, initToken); err != nil {
 				return err
 			}
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(tx, consumer, driver.GetSessionDuration(), false)
+		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(), false)
 		if err != nil {
 			return err
 		}
@@ -403,7 +403,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 		}
 		if existingLocalConsumer == nil {
 			// If a user exists for given email but has no local consumer we want to create it.
-			existingLocalConsumer, err = local.NewConsumer(tx, contact.UserID)
+			existingLocalConsumer, err = local.NewConsumer(ctx, tx, contact.UserID)
 			if err != nil {
 				return err
 			}
@@ -482,12 +482,12 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		}
 
 		consumer.Data["hash"] = string(hash)
-		if err := authentication.UpdateConsumer(tx, consumer); err != nil {
+		if err := authentication.UpdateConsumer(ctx, tx, consumer); err != nil {
 			return err
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(tx, consumer, driver.GetSessionDuration(), false)
+		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(), false)
 		if err != nil {
 			return err
 		}

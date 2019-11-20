@@ -100,5 +100,5 @@ func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, accessToken, a
 		}
 		instancesAuthorizedClient[accessToken] = c
 	}
-	return c, c.RateLimit()
+	return c, c.RateLimit(ctx)
 }

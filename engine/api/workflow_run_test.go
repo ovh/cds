@@ -1767,7 +1767,7 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
 
 	u.Ring = ""
-	require.NoError(t, user.Update(api.mustDB(), u))
+	require.NoError(t, user.Update(context.TODO(), api.mustDB(), u))
 
 	//Prepare request
 	vars := map[string]string{
@@ -1923,7 +1923,7 @@ func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 
 	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
 
-	require.NoError(t, user.Update(api.mustDB(), u))
+	require.NoError(t, user.Update(context.TODO(), api.mustDB(), u))
 
 	//Prepare request
 	vars := map[string]string{
@@ -2245,7 +2245,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 	serviceConsumer, err := authentication.LoadConsumerByID(context.TODO(), db, *mockHookService.ConsumerID)
 	require.NoError(t, err)
 
-	session, err := authentication.NewSession(db, serviceConsumer, 5*time.Minute, false)
+	session, err := authentication.NewSession(context.TODO(), db, serviceConsumer, 5*time.Minute, false)
 	require.NoError(t, err)
 
 	jwt, err := authentication.NewSessionJWT(session)

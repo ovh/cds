@@ -191,7 +191,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			var end bool
 
 			_, next := observability.Span(ctx, "workflow.syncStage")
-			end, errSync := syncStage(db, store, stage)
+			end, errSync := syncStage(ctx, db, store, stage)
 			next()
 			if errSync != nil {
 				return report, errSync
@@ -299,7 +299,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			limit 1`
 			waitingRunID, errID := db.SelectInt(mutexQuery, updatedWorkflowRun.WorkflowID, nodeName, string(sdk.StatusWaiting))
 			if errID != nil && errID != sql.ErrNoRows {
-				log.Error("workflow.execute> Unable to load mutex-locked workflow node run ID: %v", errID)
+				log.Error(ctx, "workflow.execute> Unable to load mutex-locked workflow node run ID: %v", errID)
 				return report, nil
 			}
 			//If not more run is found, stop the loop
@@ -308,7 +308,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			}
 			waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, LoadRunOptions{})
 			if errRun != nil && sdk.Cause(errRun) != sql.ErrNoRows {
-				log.Error("workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errRun)
+				log.Error(ctx, "workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errRun)
 				return report, nil
 			}
 			//If not more run is found, stop the loop
@@ -319,7 +319,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			//Here we are loading another workflow run
 			workflowRun, errWRun := LoadRunByID(db, waitingRun.WorkflowRunID, LoadRunOptions{})
 			if errWRun != nil {
-				log.Error("workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errWRun)
+				log.Error(ctx, "workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errWRun)
 				return report, nil
 			}
 			AddWorkflowRunInfo(workflowRun, false, sdk.SpawnMsg{
@@ -535,7 +535,7 @@ func getExecutablesGroups(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) ([]sdk.G
 	return groups, nil
 }
 
-func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, error) {
+func syncStage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, error) {
 	stageEnd := true
 	finalStatus := sdk.StatusBuilding
 
@@ -545,7 +545,7 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 
 		// If job is runnning, sync it
 		if runJob.Status == sdk.StatusBuilding || runJob.Status == sdk.StatusWaiting {
-			runJobDB, errJob := LoadNodeJobRun(db, store, runJob.ID)
+			runJobDB, errJob := LoadNodeJobRun(ctx, db, store, runJob.ID)
 			if errJob != nil {
 				return stageEnd, errJob
 			}
@@ -861,7 +861,7 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 			return report
 		}
 
-		njr, errNRJ := LoadAndLockNodeJobRunWait(tx, store, njrID)
+		njr, errNRJ := LoadAndLockNodeJobRunWait(ctx, tx, store, njrID)
 		if errNRJ != nil {
 			chanErr <- sdk.WrapError(errNRJ, "StopWorkflowNodeRun> Cannot load node job run id")
 			tx.Rollback()
@@ -877,7 +877,7 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 		}
 
 		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
-		if _, err := report.Merge(UpdateNodeJobRunStatus(ctx, dbFunc, tx, store, proj, njr, sdk.StatusStopped)); err != nil {
+		if _, err := report.Merge(UpdateNodeJobRunStatus(ctx, tx, store, proj, njr, sdk.StatusStopped)); err != nil {
 			chanErr <- sdk.WrapError(err, "Cannot update node job run")
 			tx.Rollback()
 			wg.Done()
@@ -970,7 +970,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	cacheKey := cache.Key("api:workflow:getVCSInfos:", applicationVCSServer, applicationRepositoryFullname, vcsInfos.String())
 	find, err := store.Get(cacheKey, &vcsInfos)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", cacheKey, err)
+		log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 	}
 	if find {
 		log.Debug("completeVCSInfos> load from cache: %s", cacheKey)
@@ -1050,7 +1050,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	if err := store.Set(cacheKey, vcsInfos); err != nil {
-		log.Error("unable to cache set %v: %v", cacheKey, err)
+		log.Error(ctx, "unable to cache set %v: %v", cacheKey, err)
 	}
 	return &vcsInfos, nil
 }

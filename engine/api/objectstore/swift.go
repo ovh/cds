@@ -1,6 +1,7 @@
 package objectstore
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"time"
@@ -53,7 +54,7 @@ func (s *SwiftStore) GetProjectIntegration() sdk.ProjectIntegration {
 }
 
 // Status returns the status of swift account
-func (s *SwiftStore) Status() sdk.MonitoringStatusLine {
+func (s *SwiftStore) Status(ctx context.Context) sdk.MonitoringStatusLine {
 	info, _, err := s.Account()
 	if err != nil {
 		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Swift KO" + err.Error(), Status: sdk.MonitoringStatusAlert}
@@ -143,7 +144,7 @@ func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
 }
 
 // Fetch an object from swift
-func (s *SwiftStore) Fetch(o Object) (io.ReadCloser, error) {
+func (s *SwiftStore) Fetch(ctx context.Context, o Object) (io.ReadCloser, error) {
 	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
@@ -155,7 +156,7 @@ func (s *SwiftStore) Fetch(o Object) (io.ReadCloser, error) {
 		log.Debug("SwiftStore> downloading object %s/%s", container, object)
 
 		if _, err := s.ObjectGet(container, object, pipeWriter, false, nil); err != nil {
-			log.Error("SwiftStore> Unable to get object %s/%s: %s", container, object, err)
+			log.Error(ctx, "SwiftStore> Unable to get object %s/%s: %s", container, object, err)
 		}
 
 		log.Debug("SwiftStore> object %s%s downloaded", container, object)

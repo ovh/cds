@@ -1,6 +1,7 @@
 package feature
 
 import (
+	"context"
 	"strings"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -46,13 +47,13 @@ func SetClient(c *izanami.Client) {
 }
 
 // GetFeatures tree for the given project from cache, if not found in cache init from Izanami.
-func GetFeatures(store cache.Store, projectKey string) map[string]bool {
+func GetFeatures(ctx context.Context, store cache.Store, projectKey string) map[string]bool {
 	projFeats := ProjectFeatures{}
 
 	k := cacheFeatureKey + projectKey
 	find, err := store.Get(k, &projFeats)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", k, err)
+		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
 	if find {
 		// if missing features, invalidate cache and rebuild data from Izanami
@@ -76,15 +77,15 @@ func GetFeatures(store cache.Store, projectKey string) map[string]bool {
 
 	// no expiration delay is set, the cache is cleared by Izanami calls on /feature/clean
 	if err := store.Set(cacheFeatureKey+projectKey, projFeats); err != nil {
-		log.Error("unable to cache set %v: %v", cacheFeatureKey+projectKey, err)
+		log.Error(ctx, "unable to cache set %v: %v", cacheFeatureKey+projectKey, err)
 	}
 
 	return projFeats.Features
 }
 
 // IsEnabled check if feature is enabled for the given project.
-func IsEnabled(store cache.Store, featureID string, projectKey string) bool {
-	fs := GetFeatures(store, projectKey)
+func IsEnabled(ctx context.Context, store cache.Store, featureID string, projectKey string) bool {
+	fs := GetFeatures(ctx, store, projectKey)
 
 	if v, ok := fs[featureID]; ok {
 		return v

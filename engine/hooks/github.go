@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
@@ -8,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) generatePayloadFromGithubRequest(t *sdk.TaskExecution, event string) (map[string]interface{}, error) {
+func (s *Service) generatePayloadFromGithubRequest(ctx context.Context, t *sdk.TaskExecution, event string) (map[string]interface{}, error) {
 	projectKey := t.Config["project"].Value
 	workflowName := t.Config["workflow"].Value
 
@@ -26,8 +27,8 @@ func (s *Service) generatePayloadFromGithubRequest(t *sdk.TaskExecution, event s
 			err := s.enqueueBranchDeletion(projectKey, workflowName, branch)
 			return nil, sdk.WrapError(err, "cannot enqueue branch deletion")
 		}
-		if err := s.stopBranchDeletionTask(branch); err != nil {
-			log.Error("cannot stop branch deletion task for branch %s : %v", branch, err)
+		if err := s.stopBranchDeletionTask(ctx, branch); err != nil {
+			log.Error(ctx, "cannot stop branch deletion task for branch %s : %v", branch, err)
 		}
 
 		if !strings.HasPrefix(request.Ref, "refs/tags/") {
@@ -60,7 +61,7 @@ func (s *Service) generatePayloadFromGithubRequest(t *sdk.TaskExecution, event s
 		request.Commits[i].Removed = nil
 		request.Commits[i].Modified = nil
 	}
-	getPayloadStringVariable(payload, request)
+	getPayloadStringVariable(ctx, payload, request)
 
 	return payload, nil
 }

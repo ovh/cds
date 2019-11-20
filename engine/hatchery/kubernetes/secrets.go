@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	"fmt"
 
 	apiv1 "k8s.io/api/core/v1"
@@ -10,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (h *HatcheryKubernetes) deleteSecrets() error {
+func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 	pods, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_SECRET})
 	if err != nil {
 		return sdk.WrapError(err, "cannot get pods with secret")
@@ -31,7 +32,7 @@ func (h *HatcheryKubernetes) deleteSecrets() error {
 		}
 		if !found {
 			if err := h.k8sClient.CoreV1().Secrets(h.Config.Namespace).Delete(secret.Name, nil); err != nil {
-				log.Error("deleteSecrets> Cannot delete secret %s : %v", secret.Name, err)
+				log.Error(ctx, "deleteSecrets> Cannot delete secret %s : %v", secret.Name, err)
 			}
 		}
 	}

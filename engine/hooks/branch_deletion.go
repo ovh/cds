@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"context"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -16,7 +18,7 @@ func (s *Service) doBranchDeletionTaskExecution(t *sdk.TaskExecution) (*sdk.Work
 	return nil, sdk.WrapError(err, "cannot mark to delete workflow runs")
 }
 
-func (s *Service) stopBranchDeletionTask(branch string) error {
+func (s *Service) stopBranchDeletionTask(ctx context.Context, branch string) error {
 	if branch == "" {
 		return nil
 	}
@@ -25,12 +27,12 @@ func (s *Service) stopBranchDeletionTask(branch string) error {
 		return sdk.WrapError(err, "cannot find keys matching pattern %s", branch+"*")
 	}
 	for _, key := range keys {
-		t := s.Dao.FindTask(key)
+		t := s.Dao.FindTask(ctx, key)
 		if t == nil || t.Type != TypeBranchDeletion {
 			continue
 		}
 		if err := s.stopTask(t); err != nil {
-			log.Error("cannot stop task %s : %v", t.UUID, err)
+			log.Error(ctx, "cannot stop task %s : %v", t.UUID, err)
 		}
 	}
 

@@ -131,7 +131,7 @@ func (s *Service) Serve(c context.Context) error {
 	// Start the http server
 	log.Info("ui> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Error("ui> Listen and serve failed: %s", err)
+		log.Error(c, "ui> Listen and serve failed: %s", err)
 	}
 
 	// Gracefully shutdown the http server

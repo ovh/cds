@@ -86,7 +86,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 					Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
 				}
 				if err := h.CDSClient().WorkerModelSpawnError(m.Group.Name, m.Name, spawnError); err != nil {
-					log.Error("workerStarter> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
+					log.Error(ctx, "workerStarter> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
 				}
 				continue
 			}
@@ -98,7 +98,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 					Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
 				}
 				if err := h.CDSClient().WorkerModelSpawnError(m.Group.Name, m.Name, spawnError); err != nil {
-					log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
+					log.Error(ctx, "workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
 				}
 			}
 			atomic.AddInt64(&nbWorkerToStart, -1)
@@ -185,7 +185,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 			Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
 		}
 		if err := h.CDSClient().WorkerModelSpawnError(j.model.Group.Name, j.model.Name, spawnError); err != nil {
-			log.Error("hatchery> spawnWorkerForJob> error on call client.WorkerModelSpawnError on worker model %s for register: %s", j.model.Name, err)
+			log.Error(ctx, "hatchery> spawnWorkerForJob> error on call client.WorkerModelSpawnError on worker model %s for register: %s", j.model.Name, err)
 		}
 		return false
 	}
@@ -200,7 +200,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 			ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
 			Args: []interface{}{h.Service().Name, modelName, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()},
 		})
-		log.Error("hatchery %s cannot spawn worker %s for job %d: %v", h.Service().Name, modelName, j.id, errSpawn)
+		log.Error(ctx, "hatchery %s cannot spawn worker %s for job %d: %v", h.Service().Name, modelName, j.id, errSpawn)
 		next()
 		return false
 	}

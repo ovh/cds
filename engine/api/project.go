@@ -140,12 +140,12 @@ func (api *API) getProjectsHandler() service.Handler {
 		opts = append(opts, filterByRepoFunc)
 
 		if isMaintainer(ctx) || isAdmin(ctx) {
-			projects, err = project.LoadAllByRepo(api.mustDB(), api.Cache, filterByRepo, opts...)
+			projects, err = project.LoadAllByRepo(ctx, api.mustDB(), api.Cache, filterByRepo, opts...)
 			if err != nil {
 				return err
 			}
 		} else {
-			projects, err = project.LoadAllByRepoAndGroupIDs(api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
+			projects, err = project.LoadAllByRepoAndGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
 			if err != nil {
 				return err
 			}

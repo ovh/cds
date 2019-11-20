@@ -14,7 +14,7 @@ import (
 // https://developer.github.com/v3/users/#get-a-single-user
 func (g *githubClient) User(ctx context.Context, username string) (User, error) {
 	url := "/users/" + username
-	status, body, _, err := g.get(url)
+	status, body, _, err := g.get(ctx, url)
 	if err != nil {
 		log.Warning("githubClient.User> Error %s", err)
 		return User{}, err
@@ -29,7 +29,7 @@ func (g *githubClient) User(ctx context.Context, username string) (User, error) 
 		//If repo isn't updated, lets get them from cache
 		k := cache.Key("vcs", "github", "users", g.OAuthToken, url)
 		if _, err := g.Cache.Get(k, &user); err != nil {
-			log.Error("cannot get from cache %s: %v", k, err)
+			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
 		if err := json.Unmarshal(body, &user); err != nil {
@@ -38,7 +38,7 @@ func (g *githubClient) User(ctx context.Context, username string) (User, error) 
 		//Put the body on cache for one hour and one minute
 		k := cache.Key("vcs", "github", "users", g.OAuthToken, url)
 		if err := g.Cache.SetWithTTL(k, user, 61*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", k, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 	}
 

@@ -118,7 +118,7 @@ func (api *API) putUserHandler() service.Handler {
 			log.Debug("putUserHandler> %s change ring of user %s from %s to %s", consumer.AuthentifiedUserID, oldUser.ID, oldUser.Ring, newUser.Ring)
 		}
 
-		if err := user.Update(tx, &newUser); err != nil {
+		if err := user.Update(ctx, tx, &newUser); err != nil {
 			if e, ok := sdk.Cause(err).(*pq.Error); ok && e.Code == database.ViolateUniqueKeyPGCode {
 				return sdk.NewErrorWithStack(e, sdk.ErrUsernamePresent)
 			}

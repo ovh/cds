@@ -215,7 +215,7 @@ func (api *API) postAdminDatabaseSignatureRollEntityByPrimaryKey() service.Handl
 		entity := vars["entity"]
 		pk := vars["pk"]
 
-		if err := gorpmapping.RollSignedTupleByPrimaryKey(api.mustDB(), entity, pk); err != nil {
+		if err := gorpmapping.RollSignedTupleByPrimaryKey(ctx, api.mustDB(), entity, pk); err != nil {
 			return err
 		}
 

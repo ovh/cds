@@ -43,7 +43,7 @@ func init() {
 	log.Initialize(&log.Conf{Level: "debug"})
 }
 
-type Bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
+type Bootstrapf func(context.Context, sdk.DefaultValues, func() *gorp.DbMap) error
 
 var DBConnectionFactory *database.DBConnectionFactory
 
@@ -142,7 +142,7 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	}
 	if DBConnectionFactory == nil {
 		var err error
-		DBConnectionFactory, err = database.Init(dbUser, dbRole, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 10, 2000, 100)
+		DBConnectionFactory, err = database.Init(context.TODO(), dbUser, dbRole, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 10, 2000, 100)
 		if err != nil {
 			t.Fatalf("Cannot open database: %s", err)
 			return nil, nil, func() {}
@@ -150,8 +150,8 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	}
 
 	for _, f := range bootstrapFunc {
-		if err := f(sdk.DefaultValues{}, DBConnectionFactory.GetDBMap); err != nil {
-			log.Error("Error: %v", err)
+		if err := f(context.TODO(), sdk.DefaultValues{}, DBConnectionFactory.GetDBMap); err != nil {
+			log.Error(context.TODO(), "Error: %v", err)
 			return nil, nil, func() {}
 		}
 	}

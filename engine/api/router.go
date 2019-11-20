@@ -126,10 +126,10 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 					}
 				}
 
-				log.Error("[PANIC_RECOVERY] Panic occurred on %s:%s, recover %s", req.Method, req.URL.String(), err)
+				log.Error(context.TODO(), "[PANIC_RECOVERY] Panic occurred on %s:%s, recover %s", req.Method, req.URL.String(), err)
 				trace := make([]byte, 4096)
 				count := runtime.Stack(trace, true)
-				log.Error("[PANIC_RECOVERY] Stacktrace of %d bytes\n%s\n", count, trace)
+				log.Error(context.TODO(), "[PANIC_RECOVERY] Stacktrace of %d bytes\n%s\n", count, trace)
 
 				//Checking if there are two much panics in two minutes
 				//If last panic was more than 2 minutes ago, reinit the panic counter
@@ -149,7 +149,7 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				//If two much panic, change the status of /mon/status with panicked = true
 				if r.nbPanic > nbPanicsBeforeFail {
 					r.panicked = true
-					log.Error("[PANIC_RECOVERY] RESTART NEEDED")
+					log.Error(context.TODO(), "[PANIC_RECOVERY] RESTART NEEDED")
 				}
 
 				service.WriteError(w, req, err)
@@ -252,7 +252,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 		tags := observability.ContextGetTags(r.Background, observability.TagServiceType, observability.TagServiceName)
 		ctx, err = tag.New(ctx, tags...)
 		if err != nil {
-			log.Error("observability.ContextGetTags> %v", err)
+			log.Error(ctx, "observability.ContextGetTags> %v", err)
 		}
 		ctx = observability.ContextWithTag(ctx,
 			observability.Handler, rc.Name,
@@ -271,7 +271,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 			end := time.Now()
 			latency := end.Sub(start)
 			if rc.IsDeprecated {
-				log.Error("[%-3d] | %-7s | %13v | DEPRECATED ROUTE | %v [%s]", responseWriter.statusCode, req.Method, latency, req.URL, rc.Name)
+				log.Error(ctx, "[%-3d] | %-7s | %13v | DEPRECATED ROUTE | %v [%s]", responseWriter.statusCode, req.Method, latency, req.URL, rc.Name)
 			} else {
 				log.Info("[%-3d] | %-7s | %13v | %v [%s]", responseWriter.statusCode, req.Method, latency, req.URL, rc.Name)
 			}
@@ -309,7 +309,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 			var err error
 			ctx, err = m(ctx, responseWriter, req, rc)
 			if err != nil {
-				log.Error("PostMiddlewares > %s", err)
+				log.Error(ctx, "PostMiddlewares > %s", err)
 			}
 		}
 	}
@@ -354,12 +354,12 @@ func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequ
 				myError, ok := err.(sdk.Error)
 				if ok && myError.Status >= 500 {
 					if req.nbErrors > retry {
-						log.Error("Asynchronous Request on Error: %v with status:%d", err, myError.Status)
+						log.Error(ctx, "Asynchronous Request on Error: %v with status:%d", err, myError.Status)
 					} else {
 						chanRequest <- req
 					}
 				} else {
-					log.Error("Asynchronous Request on Error: %v", err)
+					log.Error(ctx, "Asynchronous Request on Error: %v", err)
 				}
 			}
 		case <-ctx.Done():

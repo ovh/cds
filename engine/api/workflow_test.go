@@ -219,7 +219,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
+	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
 
 	u, _ := assets.InsertLambdaUser(t, api.mustDB())
 
@@ -1001,11 +1001,11 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 
 	test.NoError(t, workflow.IsValid(context.Background(), api.Cache, db, wf, proj, workflow.LoadOptions{}))
-	eWf, err := exportentities.NewWorkflow(*wf)
+	eWf, err := exportentities.NewWorkflow(context.TODO(), *wf)
 	test.NoError(t, err)
 	wfBts, err := yaml.Marshal(eWf)
 	test.NoError(t, err)
-	eWfUpdate, err := exportentities.NewWorkflow(*workflow1)
+	eWfUpdate, err := exportentities.NewWorkflow(context.TODO(), *workflow1)
 	test.NoError(t, err)
 	wfUpdatedBts, err := yaml.Marshal(eWfUpdate)
 	test.NoError(t, err)

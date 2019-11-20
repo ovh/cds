@@ -50,10 +50,10 @@ func (s *SpawnArguments) ModelName() string {
 type Interface interface {
 	Name() string
 	Type() string
-	InitHatchery() error
+	InitHatchery(ctx context.Context) error
 	SpawnWorker(ctx context.Context, spawnArgs SpawnArguments) error
-	CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool
-	WorkersStarted() []string
+	CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool
+	WorkersStarted(ctx context.Context) []string
 	Service() *sdk.Service
 	CDSClient() cdsclient.Interface
 	Configuration() service.HatcheryCommonConfiguration

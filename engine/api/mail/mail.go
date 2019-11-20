@@ -2,6 +2,7 @@ package mail
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -70,7 +71,7 @@ func Init(user, password, from, host, port string, tls, disable bool) {
 }
 
 // Status verification of smtp configuration, returns OK or KO
-func Status() sdk.MonitoringStatusLine {
+func Status(ctx context.Context) sdk.MonitoringStatusLine {
 	if _, err := smtpClient(); err != nil {
 		return sdk.MonitoringStatusLine{Component: "SMTP Ping", Value: "KO: " + err.Error(), Status: sdk.MonitoringStatusAlert}
 	}

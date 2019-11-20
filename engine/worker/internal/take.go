@@ -55,7 +55,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 						cancel()
 						return
 					}
-					log.Error("takeWorkflowJob> Unable to load workflow job (Request) %d: %v", jobID, err)
+					log.Error(ctx, "takeWorkflowJob> Unable to load workflow job (Request) %d: %v", jobID, err)
 
 					// If we got a "connection refused", retry 5 times
 					if strings.Contains(err.Error(), "connection refused") {
@@ -108,7 +108,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 		log.Warning("takeWorkflowJob> Cannot send build result: HTTP %v - try: %d - new try in 15s", lasterr, try)
 		time.Sleep(15 * time.Second)
 	}
-	log.Error("takeWorkflowJob> Could not send built result 10 times, giving up. job: %d", job.ID)
+	log.Error(ctx, "takeWorkflowJob> Could not send built result 10 times, giving up. job: %d", job.ID)
 	if lasterr == nil {
 		lasterr = err
 	}

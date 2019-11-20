@@ -61,7 +61,7 @@ func Create(ctx context.Context, h Interface) error {
 	}()
 
 	// Init call hatchery.Register()
-	if err := h.InitHatchery(); err != nil {
+	if err := h.InitHatchery(ctx); err != nil {
 		return fmt.Errorf("Create> Init error: %v", err)
 	}
 
@@ -74,7 +74,7 @@ func Create(ctx context.Context, h Interface) error {
 		var errwm error
 		models, errwm = hWithModels.WorkerModelsEnabled()
 		if errwm != nil {
-			log.Error("error on h.WorkerModelsEnabled() (init call): %v", errwm)
+			log.Error(ctx, "error on h.WorkerModelsEnabled() (init call): %v", errwm)
 			return errwm
 		}
 
@@ -95,7 +95,7 @@ func Create(ctx context.Context, h Interface) error {
 	sdk.GoRoutine(ctx, "queuePolling",
 		func(ctx context.Context) {
 			if err := h.CDSClient().QueuePolling(ctx, wjobs, errs, 20*time.Second, modelType, h.Configuration().Provision.RatioService); err != nil {
-				log.Error("Queues polling stopped: %v", err)
+				log.Error(ctx, "Queues polling stopped: %v", err)
 				cancel()
 			}
 		},
@@ -113,7 +113,7 @@ func Create(ctx context.Context, h Interface) error {
 	// read the errs channel in another goroutine too
 	sdk.GoRoutine(ctx, "checkErrs", func(ctx context.Context) {
 		for err := range errs {
-			log.Error("%v", err)
+			log.Error(ctx, "%v", err)
 		}
 	}, PanicDump(h))
 
@@ -127,7 +127,7 @@ func Create(ctx context.Context, h Interface) error {
 			var errwm error
 			models, errwm = hWithModels.WorkerModelsEnabled()
 			if errwm != nil {
-				log.Error("error on h.WorkerModelsEnabled(): %v", errwm)
+				log.Error(ctx, "error on h.WorkerModelsEnabled(): %v", errwm)
 			}
 		case j := <-wjobs:
 			t0 := time.Now()
@@ -222,7 +222,7 @@ func Create(ctx context.Context, h Interface) error {
 			var canTakeJob bool
 			if isWithModels {
 				for i := range models {
-					if canRunJobWithModel(hWithModels, workerRequest, &models[i]) {
+					if canRunJobWithModel(ctx, hWithModels, workerRequest, &models[i]) {
 						chosenModel = &models[i]
 						canTakeJob = true
 						break
@@ -236,7 +236,7 @@ func Create(ctx context.Context, h Interface) error {
 					continue
 				}
 			} else {
-				if canRunJob(h, workerRequest) {
+				if canRunJob(ctx, h, workerRequest) {
 					log.Debug("hatchery %s can try to spawn a worker for job %d", h.Name(), j.ID)
 					canTakeJob = true
 				}
@@ -265,7 +265,7 @@ func Create(ctx context.Context, h Interface) error {
 	}
 }
 
-func canRunJob(h Interface, j workerStarterRequest) bool {
+func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 	for _, r := range j.requirements {
 		// If requirement is an hostname requirement, it's for a specific worker
 		if r.Type == sdk.HostnameRequirement && r.Value != j.hostname {
@@ -279,14 +279,14 @@ func canRunJob(h Interface, j workerStarterRequest) bool {
 			continue
 		}
 	}
-	return h.CanSpawn(nil, j.id, j.requirements)
+	return h.CanSpawn(ctx, nil, j.id, j.requirements)
 }
 
 // MemoryRegisterContainer is the RAM used for spawning
 // a docker container for register a worker model. 128 Mo
 const MemoryRegisterContainer int64 = 128
 
-func canRunJobWithModel(h InterfaceWithModels, j workerStarterRequest, model *sdk.Model) bool {
+func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, model *sdk.Model) bool {
 	if model.Type != h.ModelType() {
 		log.Debug("canRunJob> model %s type:%s current hatchery modelType: %s", model.Name, model.Type, h.ModelType())
 		return false
@@ -384,7 +384,7 @@ func canRunJobWithModel(h InterfaceWithModels, j workerStarterRequest, model *sd
 		}
 	}
 
-	return h.CanSpawn(model, j.id, j.requirements)
+	return h.CanSpawn(ctx, model, j.id, j.requirements)
 }
 
 // SendSpawnInfo sends a spawnInfo
@@ -398,19 +398,4 @@ func SendSpawnInfo(ctx context.Context, h Interface, jobID int64, spawnMsg sdk.S
 	if err := h.CDSClient().QueueJobSendSpawnInfo(ctx, jobID, infos); err != nil {
 		log.Warning("spawnWorkerForJob> cannot client.sendSpawnInfo for job %d: %s", jobID, err)
 	}
-}
-
-func logTime(h Interface, name string, then time.Time) {
-	d := time.Since(then)
-	if d > time.Duration(h.Configuration().LogOptions.SpawnOptions.ThresholdCritical)*time.Second {
-		log.Error("%s took %s to execute", name, d)
-		return
-	}
-
-	if d > time.Duration(h.Configuration().LogOptions.SpawnOptions.ThresholdWarning)*time.Second {
-		log.Warning("%s took %s to execute", name, d)
-		return
-	}
-
-	log.Debug("%s took %s to execute", name, d)
 }

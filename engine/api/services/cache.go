@@ -116,7 +116,7 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 
 	listener := c.dbConnFactory.NewListener(time.Second, 10*time.Second, eventCallback)
 	if err := listener.Listen("events"); err != nil {
-		log.Error("Unable to %v", err)
+		log.Error(ctx, "Unable to %v", err)
 	}
 
 	for {
@@ -125,7 +125,7 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 			break
 
 		case err := <-chanErr:
-			log.Error("doListenDatabase> %v", err)
+			log.Error(ctx, "doListenDatabase> %v", err)
 			listener := c.dbConnFactory.NewListener(time.Second, 10*time.Second, eventCallback)
 			if err := listener.Listen("events"); err != nil {
 				chanErr <- err
@@ -173,7 +173,7 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 			case "UPDATE", "INSERT":
 				srv, err := LoadByName(ctx, db, name)
 				if err != nil {
-					log.Error("unable to find service %s: %v", name, err)
+					log.Error(ctx, "unable to find service %s: %v", name, err)
 					continue
 				}
 				c.chanEvent <- event{c.updateCache, *srv}

@@ -140,7 +140,7 @@ func writeScriptContent(script *script, fs afero.Fs, basedir afero.File) (func()
 	}
 	deferFunc := func() {
 		if err := fs.Remove(tmpFileName); err != nil {
-			log.Error("unable to remove %s: %v", tmpFileName, err)
+			log.Error(ctx, "unable to remove %s: %v", tmpFileName, err)
 		}
 	}
 
@@ -260,7 +260,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 	// Wait for a result
 	select {
 	case <-ctx.Done():
-		log.Error("CDS Worker execution canceled: %v", ctx.Err())
+		log.Error(ctx, "CDS Worker execution canceled: %v", ctx.Err())
 		return res, errors.New("CDS Worker execution canceled")
 	case res = <-chanRes:
 	case globalErr = <-chanErr:

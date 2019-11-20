@@ -113,7 +113,7 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 	//Init the http server
 	c.initRouter(ctx, h)
 	if err := api.InitRouterMetrics(h); err != nil {
-		log.Error("unable to init router metrics: %v", err)
+		log.Error(ctx, "unable to init router metrics: %v", err)
 	}
 
 	server := &http.Server{
@@ -128,7 +128,7 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 		//Start the http server
 		log.Info("%s> Starting HTTP Server on port %d", c.Name(), h.Configuration().HTTP.Port)
 		if err := server.ListenAndServe(); err != nil {
-			log.Error("%s> Listen and serve failed: %v", c.Name(), err)
+			log.Error(ctx, "%s> Listen and serve failed: %v", c.Name(), err)
 		}
 
 		//Gracefully shutdown the http server
@@ -233,7 +233,7 @@ func getStatusHandler(h hatchery.Interface) service.HandlerFunc {
 			if !ok {
 				return fmt.Errorf("unable to get status from %s", h.Service().Name)
 			}
-			status := srv.Status()
+			status := srv.Status(ctx)
 			return service.WriteJSON(w, status, status.HTTPStatusCode())
 		}
 	}

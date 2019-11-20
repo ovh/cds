@@ -1,6 +1,7 @@
 package ldap
 
 import (
+	"context"
 	"strconv"
 	"testing"
 
@@ -51,7 +52,7 @@ func TestGetUserInfo(t *testing.T) {
 
 	driver, err := NewDriver(false, ldapConfig)
 	require.NoError(t, err)
-	info, err := driver.GetUserInfo(sdk.AuthConsumerSigninRequest{
+	info, err := driver.GetUserInfo(context.TODO(), sdk.AuthConsumerSigninRequest{
 		"bind":     cfg["ldapTestUsername"],
 		"password": cfg["ldapTestPassword"],
 	})

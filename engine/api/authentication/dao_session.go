@@ -26,7 +26,7 @@ func getSessions(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, 
 			return nil, err
 		}
 		if !isValid {
-			log.Error("authentication.getSessions> auth session %s data corrupted", ss[i].ID)
+			log.Error(ctx, "authentication.getSessions> auth session %s data corrupted", ss[i].ID)
 			continue
 		}
 		verifiedSessions = append(verifiedSessions, &ss[i].AuthSession)
@@ -64,7 +64,7 @@ func getSession(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, o
 		return nil, err
 	}
 	if !isValid {
-		log.Error("authentication.getSession> auth session %s data corrupted", session.ID)
+		log.Error(ctx, "authentication.getSession> auth session %s data corrupted", session.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
@@ -108,11 +108,11 @@ func LoadSessionByID(ctx context.Context, db gorp.SqlExecutor, id string, opts .
 }
 
 // InsertSession in database.
-func InsertSession(db gorp.SqlExecutor, as *sdk.AuthSession) error {
+func InsertSession(ctx context.Context, db gorp.SqlExecutor, as *sdk.AuthSession) error {
 	as.ID = sdk.UUID()
 	as.Created = time.Now()
 	s := authSession{AuthSession: *as}
-	if err := gorpmapping.InsertAndSign(db, &s); err != nil {
+	if err := gorpmapping.InsertAndSign(ctx, db, &s); err != nil {
 		return sdk.WrapError(err, "unable to insert auth session")
 	}
 	*as = s.AuthSession
@@ -120,9 +120,9 @@ func InsertSession(db gorp.SqlExecutor, as *sdk.AuthSession) error {
 }
 
 // UpdateSession in database.
-func UpdateSession(db gorp.SqlExecutor, as *sdk.AuthSession) error {
+func UpdateSession(ctx context.Context, db gorp.SqlExecutor, as *sdk.AuthSession) error {
 	s := authSession{AuthSession: *as}
-	if err := gorpmapping.UpdateAndSign(db, &s); err != nil {
+	if err := gorpmapping.UpdateAndSign(ctx, db, &s); err != nil {
 		return sdk.WrapError(err, "unable to update auth session with id: %s", s.ID)
 	}
 	*as = s.AuthSession

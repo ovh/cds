@@ -19,7 +19,7 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalServ
 		select {
 		case <-ctx.Done():
 			if ctx.Err() != nil {
-				log.Error("services.Ping> Exiting scheduler.Cleaner: %v", ctx.Err())
+				log.Error(ctx, "services.Ping> Exiting scheduler.Cleaner: %v", ctx.Err())
 				return
 			}
 		case <-tickPing.C:
@@ -29,8 +29,8 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalServ
 					log.Warning("services.Ping> Unable to start transaction")
 					continue
 				}
-				if err := ping(tx, s); err != nil {
-					log.Error("unable to ping service %s: %v", s.Name, err)
+				if err := ping(ctx, tx, s); err != nil {
+					log.Error(ctx, "unable to ping service %s: %v", s.Name, err)
 					_ = tx.Rollback()
 					continue
 				}
@@ -42,7 +42,7 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalServ
 	}
 }
 
-func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
+func ping(ctx context.Context, db gorp.SqlExecutor, s sdk.ExternalService) error {
 	// Select for update
 	serv, err := LoadByNameForUpdateAndSkipLocked(context.Background(), db, s.Name)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -85,7 +85,7 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 
 	serv.LastHeartbeat = time.Now()
 	serv.MonitoringStatus = mon
-	if err := Update(db, serv); err != nil {
+	if err := Update(ctx, db, serv); err != nil {
 		log.Warning("services.ping> unable to update monitoring status: %v", err)
 		return err
 	}
@@ -111,7 +111,7 @@ func InitExternal(ctx context.Context, db *gorp.DbMap, ss []sdk.ExternalService)
 		if oldSrv == nil {
 			s.Service.LastHeartbeat = time.Now()
 			s.Service.Config = s.ServiceConfig()
-			if err := Insert(tx, &s.Service); err != nil {
+			if err := Insert(ctx, tx, &s.Service); err != nil {
 				_ = tx.Rollback()
 				return sdk.WrapError(err, "Unable to insert external service")
 			}
@@ -120,7 +120,7 @@ func InitExternal(ctx context.Context, db *gorp.DbMap, ss []sdk.ExternalService)
 			s.Service.LastHeartbeat = oldSrv.LastHeartbeat
 			s.Service.MonitoringStatus = oldSrv.MonitoringStatus
 			s.Service.Config = s.ServiceConfig()
-			if err := Update(tx, &s.Service); err != nil {
+			if err := Update(ctx, tx, &s.Service); err != nil {
 				_ = tx.Rollback()
 				return sdk.WrapError(err, "Unable to update external service")
 			}

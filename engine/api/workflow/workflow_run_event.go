@@ -130,11 +130,11 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 		if statusFound == nil || statusFound.State == "" {
 			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
-				log.Error("resyncCommitStatus> Error sending status %s err: %v", details, err)
+				log.Error(ctx, "resyncCommitStatus> Error sending status %s err: %v", details, err)
 			}
 
 			if err := sendVCSPullRequestComment(ctx, db, store, proj, wr, &nodeRun); err != nil {
-				log.Error("resyncCommitStatus> Error sending pr comments %s %s err:%v", statusFound.State, details, err)
+				log.Error(ctx, "resyncCommitStatus> Error sending pr comments %s %s err:%v", statusFound.State, details, err)
 			}
 			continue
 		}
@@ -161,12 +161,12 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 		if !skipStatus {
 			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
-				log.Error("resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
+				log.Error(ctx, "resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
 			}
 		}
 
 		if err := sendVCSPullRequestComment(ctx, db, store, proj, wr, &nodeRun); err != nil {
-			log.Error("resyncCommitStatus> Error sending pr comments %s %s err:%v", statusFound.State, details, err)
+			log.Error(ctx, "resyncCommitStatus> Error sending pr comments %s %s err:%v", statusFound.State, details, err)
 		}
 
 	}
@@ -240,7 +240,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	report, err := nodeRun.Report()
 	if err != nil {
-		log.Error("sendVCSEventStatus> unable to compute node run report%v", err)
+		log.Error(ctx, "sendVCSEventStatus> unable to compute node run report%v", err)
 		return nil
 	}
 
@@ -296,9 +296,9 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	if err := client.SetStatus(ctx, evt); err != nil {
 		if err2 := repositoriesmanager.RetryEvent(&evt, err, store); err2 != nil {
-			log.Error("sendEvent>processEvent> err while retry event: %v", err2)
+			log.Error(ctx, "sendEvent>processEvent> err while retry event: %v", err2)
 		}
-		log.Error("sendEvent> err:%v", err)
+		log.Error(ctx, "sendEvent> err:%v", err)
 	}
 
 	return nil
@@ -330,7 +330,7 @@ func sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, store c
 
 	report, err := nodeRun.Report()
 	if err != nil {
-		log.Error("sendVCSPullRequestComment> unable to compute node run report%v", err)
+		log.Error(ctx, "sendVCSPullRequestComment> unable to compute node run report%v", err)
 		return nil
 	}
 
@@ -355,7 +355,7 @@ func sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, store c
 		//Check if this branch and this commit is a pullrequest
 		prs, err := client.PullRequests(ctx, app.RepositoryFullname)
 		if err != nil {
-			log.Error("sendVCSPullRequestComment> unable to get pull requests on repo %s: %v", app.RepositoryFullname, err)
+			log.Error(ctx, "sendVCSPullRequestComment> unable to get pull requests on repo %s: %v", app.RepositoryFullname, err)
 			return nil
 		}
 
@@ -364,7 +364,7 @@ func sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, store c
 			for _, pr := range prs {
 				if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash && !pr.Merged && !pr.Closed {
 					if err := client.PullRequestComment(ctx, app.RepositoryFullname, pr.ID, report); err != nil {
-						log.Error("sendVCSPullRequestComment> unable to send PR report:%v", err)
+						log.Error(ctx, "sendVCSPullRequestComment> unable to send PR report:%v", err)
 						return nil
 					}
 					// if we found the pull request for head branch we can break (only one PR for the branch should exist)

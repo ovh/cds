@@ -19,7 +19,7 @@ func checkCapacities(ctx context.Context, h Interface) bool {
 
 	workerPool, err := WorkerPool(ctx, h, sdk.StatusChecking, sdk.StatusWaiting, sdk.StatusBuilding, sdk.StatusWorkerPending, sdk.StatusWorkerRegistering)
 	if err != nil {
-		log.Error("hatchery> checkCapacities> Pool> Error: %v", err)
+		log.Error(ctx, "hatchery> checkCapacities> Pool> Error: %v", err)
 		return false
 	}
 

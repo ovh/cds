@@ -164,7 +164,7 @@ func Warning(format string, values ...interface{}) {
 }
 
 // Error prints error informations
-func Error(format string, values ...interface{}) {
+func Error(ctx context.Context, format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[ERROR]    "+format, values...)
 	} else {

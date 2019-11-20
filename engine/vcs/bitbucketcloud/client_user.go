@@ -38,7 +38,7 @@ func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, erro
 
 	find, err := client.Cache.Get(cacheKey, &user)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", cacheKey, err)
+		log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 	}
 	if !find {
 		status, body, _, err := client.get(url)
@@ -54,7 +54,7 @@ func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, erro
 		}
 		//Put the body on cache for 1 hour
 		if err := client.Cache.SetWithTTL(cacheKey, user, 60*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 		}
 	}
 
@@ -69,7 +69,7 @@ func (client *bitbucketcloudClient) Teams(ctx context.Context) (Teams, error) {
 
 	find, err := client.Cache.Get(cacheKey, &teams)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", cacheKey, err)
+		log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 	}
 	if !find {
 		status, body, _, err := client.get(url)
@@ -85,7 +85,7 @@ func (client *bitbucketcloudClient) Teams(ctx context.Context) (Teams, error) {
 		}
 		//Put the body on cache for 1 hour
 		if err := client.Cache.SetWithTTL(cacheKey, teams, 60*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 		}
 	}
 

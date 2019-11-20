@@ -12,13 +12,13 @@ import (
 )
 
 // NewSession returns a new session for a given auth consumer.
-func NewSession(db gorp.SqlExecutor, c *sdk.AuthConsumer, duration time.Duration, mfaEnable bool) (*sdk.AuthSession, error) {
+func NewSession(ctx context.Context, db gorp.SqlExecutor, c *sdk.AuthConsumer, duration time.Duration, mfaEnable bool) (*sdk.AuthSession, error) {
 	s := sdk.AuthSession{
 		ConsumerID: c.ID,
 		ExpireAt:   time.Now().Add(duration),
 	}
 
-	if err := InsertSession(db, &s); err != nil {
+	if err := InsertSession(ctx, db, &s); err != nil {
 		return nil, err
 	}
 
@@ -70,26 +70,26 @@ func CheckSessionJWT(jwtToken string) (*jwt.Token, error) {
 }
 
 // SessionCleaner must be run as a goroutine
-func SessionCleaner(c context.Context, dbFunc func() *gorp.DbMap) {
+func SessionCleaner(ctx context.Context, dbFunc func() *gorp.DbMap) {
 	log.Info("Initializing session cleaner...")
 	db := dbFunc()
 	tick := time.NewTicker(10 * time.Second)
 
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("SessionCleaner> Exiting clean session: %v", c.Err())
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "SessionCleaner> Exiting clean session: %v", ctx.Err())
 				return
 			}
 		case <-tick.C:
-			sessions, err := LoadExpiredSessions(c, db)
+			sessions, err := LoadExpiredSessions(ctx, db)
 			if err != nil {
-				log.Error("SessionCleaner> unable to load expired sessions %v", err)
+				log.Error(ctx, "SessionCleaner> unable to load expired sessions %v", err)
 			}
 			for _, s := range sessions {
 				if err := DeleteSessionByID(db, s.ID); err != nil {
-					log.Error("SessionCleaner> unable to delete session %s: %v", s.ID, err)
+					log.Error(ctx, "SessionCleaner> unable to delete session %s: %v", s.ID, err)
 				}
 				log.Debug("SessionCleaner> expired session %s deleted", s.ID)
 			}

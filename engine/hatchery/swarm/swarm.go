@@ -40,20 +40,20 @@ func New() *HatcherySwarm {
 }
 
 // InitHatchery connect the hatchery to the docker api
-func (h *HatcherySwarm) InitHatchery() error {
+func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 	h.dockerClients = map[string]*dockerClient{}
 
 	if len(h.Config.DockerEngines) == 0 {
 		d, errc := docker.NewClientWithOpts(docker.FromEnv)
 		if errc != nil {
-			log.Error("hatchery> swarm> Please export docker client env variables DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH")
-			log.Error("hatchery> swarm> unable to connect to a docker client:%s", errc)
+			log.Error(ctx, "hatchery> swarm> Please export docker client env variables DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH")
+			log.Error(ctx, "hatchery> swarm> unable to connect to a docker client:%s", errc)
 			return errc
 		}
 		ctxDocker, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if _, errPing := d.Ping(ctxDocker); errPing != nil {
-			log.Error("hatchery> swarm> unable to ping docker host:%s", errPing)
+			log.Error(ctx, "hatchery> swarm> unable to ping docker host:%s", errPing)
 			return errPing
 		}
 		h.dockerClients["default"] = &dockerClient{
@@ -81,25 +81,25 @@ func (h *HatcherySwarm) InitHatchery() error {
 				var err error
 				tlsc, err = tlsconfig.Client(options)
 				if err != nil {
-					log.Error("hatchery> swarm> docker client error (CertPath=%s): %v", cfg.CertPath, err)
+					log.Error(ctx, "hatchery> swarm> docker client error (CertPath=%s): %v", cfg.CertPath, err)
 					continue
 				}
 			} else if cfg.TLSCAPEM != "" && cfg.TLSCERTPEM != "" && cfg.TLSKEYPEM != "" {
 				tempDir, err := ioutil.TempDir("", "cert-"+hostName)
 				if err != nil {
-					log.Error("hatchery> swarm> docker client error: unable to create temp dir: %v", err)
+					log.Error(ctx, "hatchery> swarm> docker client error: unable to create temp dir: %v", err)
 					continue
 				}
 				if err := ioutil.WriteFile(filepath.Join(tempDir, "ca.pem"), []byte(cfg.TLSCAPEM), os.FileMode(0600)); err != nil {
-					log.Error("hatchery> swarm> docker client error: unable to create ca.pem: %v", err)
+					log.Error(ctx, "hatchery> swarm> docker client error: unable to create ca.pem: %v", err)
 					continue
 				}
 				if err := ioutil.WriteFile(filepath.Join(tempDir, "cert.pem"), []byte(cfg.TLSCERTPEM), os.FileMode(0600)); err != nil {
-					log.Error("hatchery> swarm> docker client error: unable to create cert.pem: %v", err)
+					log.Error(ctx, "hatchery> swarm> docker client error: unable to create cert.pem: %v", err)
 					continue
 				}
 				if err := ioutil.WriteFile(filepath.Join(tempDir, "key.pem"), []byte(cfg.TLSKEYPEM), os.FileMode(0600)); err != nil {
-					log.Error("hatchery> swarm> docker client error: unable to create key.pem:  %v", err)
+					log.Error(ctx, "hatchery> swarm> docker client error: unable to create key.pem:  %v", err)
 					continue
 				}
 				options := tlsconfig.Options{
@@ -110,7 +110,7 @@ func (h *HatcherySwarm) InitHatchery() error {
 				}
 				tlsc, err = tlsconfig.Client(options)
 				if err != nil {
-					log.Error("hatchery> swarm> docker client error: unable to set tlsconfig: %v", err)
+					log.Error(ctx, "hatchery> swarm> docker client error: unable to set tlsconfig: %v", err)
 					continue
 				}
 			}
@@ -146,13 +146,13 @@ func (h *HatcherySwarm) InitHatchery() error {
 
 			d, errc := docker.NewClientWithOpts(docker.WithHost(cfg.Host), docker.WithVersion(cfg.APIVersion), docker.WithHTTPClient(httpClient))
 			if errc != nil {
-				log.Error("hatchery> swarm> unable to connect to a docker client:%s for host %s (%s)", hostName, cfg.Host, errc)
+				log.Error(ctx, "hatchery> swarm> unable to connect to a docker client:%s for host %s (%s)", hostName, cfg.Host, errc)
 				continue
 			}
 			ctxDocker, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			if _, errPing := d.Ping(ctxDocker); errPing != nil {
-				log.Error("hatchery> swarm> unable to ping docker host:%s", errPing)
+				log.Error(ctx, "hatchery> swarm> unable to ping docker host:%s", errPing)
 				continue
 			}
 			log.Info("hatchery> swarm> connected to %s (%s)", hostName, cfg.Host)
@@ -164,7 +164,7 @@ func (h *HatcherySwarm) InitHatchery() error {
 			}
 		}
 		if len(h.dockerClients) == 0 {
-			log.Error("hatchery> swarm> no docker host available. Please check errors")
+			log.Error(ctx, "hatchery> swarm> no docker host available. Please check errors")
 			return fmt.Errorf("no docker engine available")
 		}
 	}
@@ -203,7 +203,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 		containers, errc := dclient.ContainerList(ctxList, types.ContainerListOptions{All: true})
 		if errc != nil {
-			log.Error("hatchery> swarm> SpawnWorker> unable to list containers on %s: %v", dname, errc)
+			log.Error(ctx, "hatchery> swarm> SpawnWorker> unable to list containers on %s: %v", dname, errc)
 			continue
 		}
 
@@ -444,12 +444,12 @@ const (
 
 // CanSpawn checks if the model can be spawned by this hatchery
 // it checks on every docker engine is one of the docker has availability
-func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (h *HatcherySwarm) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	for dockerName, dockerClient := range h.dockerClients {
 		//List all containers to check if we can spawn a new one
 		cs, errList := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
 		if errList != nil {
-			log.Error("hatchery> swarm> CanSpawn> Unable to list containers on %s: %s", dockerName, errList)
+			log.Error(ctx, "hatchery> swarm> CanSpawn> Unable to list containers on %s: %s", dockerName, errList)
 			continue
 		}
 
@@ -461,9 +461,9 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		}
 
 		//List all workers
-		ws, errWList := h.getWorkerContainers(dockerClient, cs, types.ContainerListOptions{})
+		ws, errWList := h.getWorkerContainers(ctx, dockerClient, cs, types.ContainerListOptions{})
 		if errWList != nil {
-			log.Error("hatchery> swarm> CanSpawn> Unable to list workers on %s: %s", dockerName, errWList)
+			log.Error(ctx, "hatchery> swarm> CanSpawn> Unable to list workers on %s: %s", dockerName, errWList)
 			continue
 		}
 
@@ -505,13 +505,13 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	return false
 }
 
-func (h *HatcherySwarm) getWorkerContainers(dockerClient *dockerClient, containers []types.Container, option types.ContainerListOptions) ([]types.Container, error) {
+func (h *HatcherySwarm) getWorkerContainers(ctx context.Context, dockerClient *dockerClient, containers []types.Container, option types.ContainerListOptions) ([]types.Container, error) {
 	if containers == nil {
 		var errList error
 		// get only started containers
 		containers, errList = h.getContainers(dockerClient, option)
 		if errList != nil {
-			log.Error("hatchery> swarm> getWorkerContainers> Unable to list containers: %s", errList)
+			log.Error(ctx, "hatchery> swarm> getWorkerContainers> Unable to list containers: %s", errList)
 			return nil, errList
 		}
 	}
@@ -521,7 +521,7 @@ func (h *HatcherySwarm) getWorkerContainers(dockerClient *dockerClient, containe
 	for _, c := range containers {
 		cont, err := h.getContainer(dockerClient, c.Names[0], option)
 		if err != nil {
-			log.Error("hatchery> swarm> getWorkerContainers> Unable to get worker %s: %v", c.Names[0], err)
+			log.Error(ctx, "hatchery> swarm> getWorkerContainers> Unable to get worker %s: %v", c.Names[0], err)
 			continue
 		}
 		// the container could be nil
@@ -539,10 +539,10 @@ func (h *HatcherySwarm) getWorkerContainers(dockerClient *dockerClient, containe
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcherySwarm) WorkersStarted() []string {
+func (h *HatcherySwarm) WorkersStarted(ctx context.Context) []string {
 	res := make([]string, 0)
 	for _, dockerClient := range h.dockerClients {
-		workers, _ := h.getWorkerContainers(dockerClient, nil, types.ContainerListOptions{})
+		workers, _ := h.getWorkerContainers(ctx, dockerClient, nil, types.ContainerListOptions{})
 		for _, w := range workers {
 			res = append(res, w.Labels["worker_name"])
 		}
@@ -551,12 +551,12 @@ func (h *HatcherySwarm) WorkersStarted() []string {
 }
 
 // WorkersStartedByModel returns the number of started workers
-func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
+func (h *HatcherySwarm) WorkersStartedByModel(ctx context.Context, model *sdk.Model) int {
 	list := []string{}
 	for _, dockerClient := range h.dockerClients {
-		workers, errList := h.getWorkerContainers(dockerClient, nil, types.ContainerListOptions{})
+		workers, errList := h.getWorkerContainers(ctx, dockerClient, nil, types.ContainerListOptions{})
 		if errList != nil {
-			log.Error("hatchery> swarm> WorkersStartedByModel> Unable to list containers: %s", errList)
+			log.Error(ctx, "hatchery> swarm> WorkersStartedByModel> Unable to list containers: %s", errList)
 			return 0
 		}
 
@@ -595,16 +595,16 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 		case <-ticker.C:
 			sdk.GoRoutine(ctx, "getServicesLogs", func(ctx context.Context) {
 				if err := h.getServicesLogs(); err != nil {
-					log.Error("Hatchery> swarm> Cannot get service logs : %v", err)
+					log.Error(ctx, "Hatchery> swarm> Cannot get service logs : %v", err)
 				}
 			})
 
 			sdk.GoRoutine(ctx, "killAwolWorker", func(ctx context.Context) {
-				_ = h.killAwolWorker()
+				_ = h.killAwolWorker(ctx)
 			})
 		case <-ctx.Done():
 			if ctx.Err() != nil {
-				log.Error("Hatchery> Swarm> Exiting routines")
+				log.Error(ctx, "Hatchery> Swarm> Exiting routines")
 			}
 			return
 		}
@@ -619,7 +619,7 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClient *dockerClient) ([]types.Con
 		return nil, sdk.WrapError(err, "Cannot get workers on %s", dockerClient.name)
 	}
 
-	containers, errList := h.getWorkerContainers(dockerClient, nil, types.ContainerListOptions{All: true})
+	containers, errList := h.getWorkerContainers(ctx, dockerClient, nil, types.ContainerListOptions{All: true})
 	if errList != nil {
 		return nil, sdk.WrapError(err, "Cannot list containers on %s", dockerClient.name)
 	}
@@ -660,7 +660,7 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClient *dockerClient) ([]types.Con
 	return oldContainers, nil
 }
 
-func (h *HatcherySwarm) killAwolWorker() error {
+func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 	for _, dockerClient := range h.dockerClients {
 		oldContainers, err := h.listAwolWorkers(dockerClient)
 		if err != nil {
@@ -671,7 +671,7 @@ func (h *HatcherySwarm) killAwolWorker() error {
 		// Delete the workers
 		for _, c := range oldContainers {
 			log.Debug("hatchery> swarm> killAwolWorker> Delete worker %s on %s", c.Names[0], dockerClient.name)
-			if err := h.killAndRemove(dockerClient, c.ID); err != nil {
+			if err := h.killAndRemove(ctx, dockerClient, c.ID); err != nil {
 				log.Debug("hatchery> swarm> killAwolWorker> %v", err)
 			}
 		}
@@ -697,8 +697,8 @@ func (h *HatcherySwarm) killAwolWorker() error {
 				}
 
 				log.Debug("hatchery> swarm> killAwolWorker> Delete worker (service) %s on %s", c.Names[0], dockerClient.name)
-				if err := h.killAndRemove(dockerClient, c.ID); err != nil {
-					log.Error("hatchery> swarm> killAwolWorker> service %v on %s", err, dockerClient.name)
+				if err := h.killAndRemove(ctx, dockerClient, c.ID); err != nil {
+					log.Error(ctx, "hatchery> swarm> killAwolWorker> service %v on %s", err, dockerClient.name)
 				}
 				continue
 			}

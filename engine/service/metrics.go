@@ -183,11 +183,11 @@ func RegisterCommonMetricsView(ctx context.Context) {
 						onceMaxMemorySignal.Do(func() {
 							p, err := os.FindProcess(os.Getpid())
 							if err != nil {
-								log.Error("unable to find current process: %v", err)
+								log.Error(ctx, "unable to find current process: %v", err)
 								return
 							}
 							if err := p.Signal(sdk.SIGINFO); err != nil {
-								log.Error("unable to send signal: %v", err)
+								log.Error(ctx, "unable to send signal: %v", err)
 								return
 							}
 							log.Info("metrics> SIGINFO signal send to %v", os.Getpid())

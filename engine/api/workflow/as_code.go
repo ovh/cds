@@ -49,7 +49,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 	}
 
 	buf := new(bytes.Buffer)
-	if err := pull.Tar(buf); err != nil {
+	if err := pull.Tar(ctx, buf); err != nil {
 		return nil, sdk.WrapError(err, "cannot tar pulled workflow")
 	}
 
@@ -107,7 +107,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 	}
 	k := cache.Key(CacheOperationKey, ope.UUID)
 	if err := store.SetWithTTL(k, ope, 300); err != nil {
-		log.Error("cannot SetWithTTL: %s: %v", k, err)
+		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}
 
 	log.Debug("workflow.UpdateAsCode> ope: %+v", ope)
@@ -184,31 +184,31 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 	defer func() {
 		k := cache.Key(CacheOperationKey, ope.UUID)
 		if err := store.SetWithTTL(k, ope, 300); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", k, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 	}()
 	for {
 		counter++
 		if err := GetRepositoryOperation(ctx, db, ope); err != nil {
-			log.Error("unable to get repository operation %s: %v", ope.UUID, err)
+			log.Error(ctx, "unable to get repository operation %s: %v", ope.UUID, err)
 			continue
 		}
 		if ope.Status == sdk.OperationStatusError {
-			log.Error("operation in error %s: %s", ope.UUID, ope.Error)
+			log.Error(ctx, "operation in error %s: %s", ope.UUID, ope.Error)
 			break
 		}
 		if ope.Status == sdk.OperationStatusDone {
 			app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
 			vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
 			if vcsServer == nil {
-				log.Error("postWorkflowAsCodeHandler> No vcsServer found")
+				log.Error(ctx, "postWorkflowAsCodeHandler> No vcsServer found")
 				ope.Status = sdk.OperationStatusError
 				ope.Error = "No vcsServer found"
 				return
 			}
 			client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, p.Key, vcsServer)
 			if errclient != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to create repositories manager client: %v", errclient)
+				log.Error(ctx, "postWorkflowAsCodeHandler> unable to create repositories manager client: %v", errclient)
 				ope.Status = sdk.OperationStatusError
 				ope.Error = "unable to create repositories manager client"
 				return
@@ -231,7 +231,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			}
 			pr, err := client.PullRequestCreate(ctx, app.RepositoryFullname, request)
 			if err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to create pull request: %v", err)
+				log.Error(ctx, "postWorkflowAsCodeHandler> unable to create pull request: %v", err)
 				ope.Status = sdk.OperationStatusError
 				ope.Error = "unable to create pull request"
 				return
@@ -248,7 +248,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 
 			oldW, errOld := LoadByID(ctx, db, store, p, wf.ID, LoadOptions{})
 			if errOld != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to load workflow: %v", err)
+				log.Error(ctx, "postWorkflowAsCodeHandler> unable to load workflow: %v", err)
 				ope.Status = sdk.OperationStatusError
 				ope.Error = "unable to load workflow"
 				return
@@ -256,7 +256,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 
 			tx, err := db.Begin()
 			if err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to start transaction: %v", err)
+				log.Error(ctx, "postWorkflowAsCodeHandler> unable to start transaction: %v", err)
 				ope.Status = sdk.OperationStatusError
 				ope.Error = "unable to start transaction"
 				return
@@ -264,14 +264,14 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			defer tx.Rollback() // nolint
 
 			if err := insertAsCodeEvent(tx, asCodeEvent); err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to insert as code event: %v", err)
+				log.Error(ctx, "postWorkflowAsCodeHandler> unable to insert as code event: %v", err)
 				ope.Status = sdk.OperationStatusError
 				ope.Error = "unable to insert as code event"
 				return
 			}
 
 			if err := tx.Commit(); err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to commit workflow: %v", err)
+				log.Error(ctx, "postWorkflowAsCodeHandler> unable to commit workflow: %v", err)
 				ope.Status = sdk.OperationStatusError
 				ope.Error = "unable to commit transaction"
 				return

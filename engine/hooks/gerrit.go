@@ -34,7 +34,7 @@ func (d *dao) RemoveGerritRepoHook(vcsServer string, repo string, g gerritTaskIn
 }
 
 // FindGerritTasksByRepo get all gerrit hooks on the given repository
-func (d *dao) FindGerritTasksByRepo(vcsServer string, repo string) ([]gerritTaskInfo, error) {
+func (d *dao) FindGerritTasksByRepo(ctx context.Context, vcsServer string, repo string) ([]gerritTaskInfo, error) {
 	key := cache.Key(gerritRepoKey, vcsServer, repo)
 	nbGerritHooks, err := d.store.SetCard(key)
 	if err != nil {
@@ -45,7 +45,7 @@ func (d *dao) FindGerritTasksByRepo(vcsServer string, repo string) ([]gerritTask
 	for i := 0; i < nbGerritHooks; i++ {
 		hooks[i] = &gerritTaskInfo{}
 	}
-	if err := d.store.SetScan(key, sdk.InterfaceSlice(hooks)...); err != nil {
+	if err := d.store.SetScan(ctx, key, sdk.InterfaceSlice(hooks)...); err != nil {
 		return nil, sdk.WrapError(err, "Unable to scan %s", key)
 	}
 
@@ -181,15 +181,15 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 				repo = e.RefUpdate.Project
 			}
 
-			hooks, err := s.Dao.FindGerritTasksByRepo(vcsServer, repo)
+			hooks, err := s.Dao.FindGerritTasksByRepo(ctx, vcsServer, repo)
 			if err != nil {
-				log.Error("ComputeGerritStreamEvent > Unable to list task for repo %s/%s", vcsServer, repo)
+				log.Error(ctx, "ComputeGerritStreamEvent > Unable to list task for repo %s/%s", vcsServer, repo)
 				continue
 			}
 
 			msg, err := json.Marshal(e)
 			if err != nil {
-				log.Error("unable to marshal gerrit event: %v", err)
+				log.Error(ctx, "unable to marshal gerrit event: %v", err)
 			}
 
 			for _, h := range hooks {
@@ -198,9 +198,9 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 				}
 
 				//Load the task
-				gerritHook := s.Dao.FindTask(h.UUID)
+				gerritHook := s.Dao.FindTask(ctx, h.UUID)
 				if gerritHook == nil {
-					log.Error("Unknown uuid %s", h.UUID)
+					log.Error(ctx, "Unknown uuid %s", h.UUID)
 					continue
 				}
 
@@ -218,8 +218,8 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 				s.Dao.SaveTaskExecution(exec)
 
 				//Push the webhook execution in the queue, so it will be executed
-				if err := s.Dao.EnqueueTaskExecution(exec); err != nil {
-					log.Error("ComputeGerritStreamEvent > error on EnqueueTaskExecution %v", err)
+				if err := s.Dao.EnqueueTaskExecution(ctx, exec); err != nil {
+					log.Error(ctx, "ComputeGerritStreamEvent > error on EnqueueTaskExecution %v", err)
 				}
 			}
 		}
@@ -230,7 +230,7 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 func ListenGerritStreamEvent(ctx context.Context, v sdk.VCSConfiguration, gerritEventChan chan<- GerritEvent) {
 	signer, err := ssh.ParsePrivateKey([]byte(v.Password))
 	if err != nil {
-		log.Error("unable to read ssh key: %v", err)
+		log.Error(ctx, "unable to read ssh key: %v", err)
 		return
 	}
 
@@ -248,14 +248,14 @@ func ListenGerritStreamEvent(ctx context.Context, v sdk.VCSConfiguration, gerrit
 	// Dial TCP
 	conn, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", URL.Hostname(), v.SSHPort), config)
 	if err != nil {
-		log.Error("ListenGerritStreamEvent> unable to open ssh connection to gerrit: %v", err)
+		log.Error(ctx, "ListenGerritStreamEvent> unable to open ssh connection to gerrit: %v", err)
 		return
 	}
 	defer conn.Close()
 
 	session, err := conn.NewSession()
 	if err != nil {
-		log.Error("ListenGerritStreamEvent> unable to create new session: %v", err)
+		log.Error(ctx, "ListenGerritStreamEvent> unable to create new session: %v", err)
 		return
 	}
 
@@ -268,7 +268,7 @@ func ListenGerritStreamEvent(ctx context.Context, v sdk.VCSConfiguration, gerrit
 		// Run command
 		log.Debug("Listening to gerrit event stream %s", v.URL)
 		if err := session.Run("gerrit stream-events"); err != nil {
-			log.Error("ListenGerritStreamEvent> unable to run gerrit stream-events command: %v", err)
+			log.Error(ctx, "ListenGerritStreamEvent> unable to run gerrit stream-events command: %v", err)
 		}
 	}()
 
@@ -292,7 +292,7 @@ func ListenGerritStreamEvent(ctx context.Context, v sdk.VCSConfiguration, gerrit
 			}
 			var event GerritEvent
 			if err := json.Unmarshal([]byte(line), &event); err != nil {
-				log.Error("unable to read gerrit event %v: %s", err, line)
+				log.Error(ctx, "unable to read gerrit event %v: %s", err, line)
 				continue
 			}
 			gerritEventChan <- event

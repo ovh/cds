@@ -19,7 +19,7 @@ const (
 	docker0 = "docker0"
 )
 
-func (h *HatcherySwarm) killAndRemove(dockerClient *dockerClient, ID string) error {
+func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerClient, ID string) error {
 	ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancelList()
 	container, err := dockerClient.ContainerInspect(ctxList, ID)
@@ -51,14 +51,14 @@ func (h *HatcherySwarm) killAndRemove(dockerClient *dockerClient, ID string) err
 
 				logsReader, errL := dockerClient.ContainerLogs(ctx, container.ID, logsOpts)
 				if errL != nil {
-					log.Error("hatchery> swarm> killAndRemove> cannot get logs from docker for containers service %s %v : %v", container.ID, container.Name, errL)
+					log.Error(ctx, "hatchery> swarm> killAndRemove> cannot get logs from docker for containers service %s %v : %v", container.ID, container.Name, errL)
 					spawnErr.Logs = []byte(fmt.Sprintf("unable to get container logs: %v", errL))
 
 				} else if logsReader != nil {
 					defer logsReader.Close()
 					logs, errR := ioutil.ReadAll(logsReader)
 					if errR != nil {
-						log.Error("hatchery> swarm> killAndRemove> cannot read logs for containers service %s %v : %v", container.ID, container.Name, errR)
+						log.Error(ctx, "hatchery> swarm> killAndRemove> cannot read logs for containers service %s %v : %v", container.ID, container.Name, errR)
 					} else if logs != nil {
 						spawnErr.Logs = logs
 					}
@@ -66,14 +66,14 @@ func (h *HatcherySwarm) killAndRemove(dockerClient *dockerClient, ID string) err
 
 				tuple := strings.SplitN(modelPath, "/", 2)
 				if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
-					log.Error("hatchery> swarm> killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", modelPath, err)
+					log.Error(ctx, "hatchery> swarm> killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", modelPath, err)
 				}
 			}
 		}
 
 	}
 
-	if err := h.killAndRemoveContainer(dockerClient, ID); err != nil {
+	if err := h.killAndRemoveContainer(ctx, dockerClient, ID); err != nil {
 		return sdk.WrapError(err, "%s on %s", ID[:7], dockerClient.name)
 	}
 
@@ -103,8 +103,8 @@ func (h *HatcherySwarm) killAndRemove(dockerClient *dockerClient, ID string) err
 		if netname, ok := network.Labels["worker_net"]; ok {
 			log.Debug("hatchery> swarm> killAndRemove> Remove network %s", netname)
 			for id := range network.Containers {
-				if err := h.killAndRemoveContainer(dockerClient, id); err != nil {
-					log.Error("hatchery> swarm> killAndRemove> unable to kill and remove container %s on %s err:%s", id[:12], dockerClient.name, err)
+				if err := h.killAndRemoveContainer(ctx, dockerClient, id); err != nil {
+					log.Error(ctx, "hatchery> swarm> killAndRemove> unable to kill and remove container %s on %s err:%s", id[:12], dockerClient.name, err)
 				}
 			}
 		}
@@ -114,13 +114,13 @@ func (h *HatcherySwarm) killAndRemove(dockerClient *dockerClient, ID string) err
 		ctxDocker, cancelList := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancelList()
 		if err := dockerClient.NetworkRemove(ctxDocker, network.ID); err != nil {
-			log.Error("hatchery> swarm> killAndRemove> unable to kill and remove network %s from %s err:%s", network.ID[:12], dockerClient.name, err)
+			log.Error(ctx, "hatchery> swarm> killAndRemove> unable to kill and remove network %s from %s err:%s", network.ID[:12], dockerClient.name, err)
 		}
 	}
 	return nil
 }
 
-func (h *HatcherySwarm) killAndRemoveContainer(dockerClient *dockerClient, ID string) error {
+func (h *HatcherySwarm) killAndRemoveContainer(ctx context.Context, dockerClient *dockerClient, ID string) error {
 	log.Debug("hatchery> swarm> killAndRemove> remove container %s on %s", ID, dockerClient.name)
 	ctxDocker, cancelList := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancelList()
@@ -135,7 +135,7 @@ func (h *HatcherySwarm) killAndRemoveContainer(dockerClient *dockerClient, ID st
 	if err := dockerClient.ContainerRemove(ctxDockerRemove, ID, types.ContainerRemoveOptions{RemoveVolumes: true, Force: true}); err != nil {
 		// container could be already removed by a previous call to docker
 		if !strings.Contains(err.Error(), "No such container") && !strings.Contains(err.Error(), "is already in progress") {
-      log.Error("Unable to remove container %s from %s: %v", ID, dockerClient.name, err)
+			log.Error(ctx, "Unable to remove container %s from %s: %v", ID, dockerClient.name, err)
 		}
 	}
 

@@ -56,7 +56,7 @@ func ExtractInfo(dir string) (Info, error) {
 	// ignore err
 	info.GitDescribe, err = gitRawCommandString(cmdDescribe)
 	if err != nil {
-		log.Error("git describe failed: %v", err)
+		log.Error(ctx, "git describe failed: %v", err)
 	}
 
 	log.Debug("git.ExtractInfo> %+v", info)

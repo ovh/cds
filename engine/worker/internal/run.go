@@ -315,10 +315,10 @@ func setupWorkingDirectory(fs afero.Fs, wd string) (afero.File, error) {
 
 	u, err := user.Current()
 	if err != nil {
-		log.Error("Error while getting current user %v", err)
+		log.Error(ctx, "Error while getting current user %v", err)
 	} else if u != nil && u.HomeDir != "" {
 		if err := os.Setenv("HOME_CDS_PLUGINS", u.HomeDir); err != nil {
-			log.Error("Error while setting home_plugin %v", err)
+			log.Error(ctx, "Error while setting home_plugin %v", err)
 		}
 	}
 
@@ -444,12 +444,12 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	w.logger.logChan = make(chan sdk.Log, 100000)
 	go func() {
 		if err := w.logProcessor(ctx, jobInfo.NodeJobRun.ID); err != nil {
-			log.Error("processJob> Logs processor error: %v", err)
+			log.Error(ctx, "processJob> Logs processor error: %v", err)
 		}
 	}()
 	defer func() {
 		if err := w.drainLogsAndCloseLogger(ctx); err != nil {
-			log.Error("processJob> Drain logs error: %v", err)
+			log.Error(ctx, "processJob> Drain logs error: %v", err)
 		}
 	}()
 
@@ -519,10 +519,10 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	}
 
 	if err := teardownDirectory(w.basedir, wdFile.Name()); err != nil {
-		log.Error("Cannot remove build directory: %s", err)
+		log.Error(ctx, "Cannot remove build directory: %s", err)
 	}
 	if err := teardownDirectory(w.basedir, wdFile.Name()); err != nil {
-		log.Error("Cannot remove keys directory: %s", err)
+		log.Error(ctx, "Cannot remove keys directory: %s", err)
 	}
 	return res, err
 }

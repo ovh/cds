@@ -32,7 +32,7 @@ func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 			}
 
 			attempt++
-			status, body, headers, err := g.get(nextPage, opt)
+			status, body, headers, err := g.get(ctx, nextPage, opt)
 			if err != nil {
 				log.Warning("githubClient.Repos> Error %s", err)
 				return nil, err
@@ -47,7 +47,7 @@ func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 				//If repos aren't updated, lets get them from cache
 				k := cache.Key("vcs", "github", "repos", g.OAuthToken, "/user/repos")
 				if _, err := g.Cache.Get(k, &repos); err != nil {
-					log.Error("cannot get from cache %s: %v", k, err)
+					log.Error(ctx, "cannot get from cache %s: %v", k, err)
 				}
 				if len(repos) != 0 || attempt > 5 {
 					//We found repos, let's exit the loop
@@ -73,7 +73,7 @@ func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	//Put the body on cache for one hour and one minute
 	k := cache.Key("vcs", "github", "repos", g.OAuthToken, "/user/repos")
 	if err := g.Cache.SetWithTTL(k, repos, 61*60); err != nil {
-		log.Error("cannot SetWithTTL: %s: %v", k, err)
+		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}
 
 	responseRepos := []sdk.VCSRepo{}
@@ -96,7 +96,7 @@ func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 // RepoByFullname Get only one repo
 // https://developer.github.com/v3/repos/#list-your-repositories
 func (g *githubClient) RepoByFullname(ctx context.Context, fullname string) (sdk.VCSRepo, error) {
-	repo, err := g.repoByFullname(fullname)
+	repo, err := g.repoByFullname(ctx, fullname)
 	if err != nil {
 		return sdk.VCSRepo{}, err
 	}
@@ -117,9 +117,9 @@ func (g *githubClient) RepoByFullname(ctx context.Context, fullname string) (sdk
 	return r, nil
 }
 
-func (g *githubClient) repoByFullname(fullname string) (Repository, error) {
+func (g *githubClient) repoByFullname(ctx context.Context, fullname string) (Repository, error) {
 	url := "/repos/" + fullname
-	status, body, _, err := g.get(url)
+	status, body, _, err := g.get(ctx, url)
 	if err != nil {
 		log.Warning("githubClient.Repos> Error %s", err)
 		return Repository{}, err
@@ -134,7 +134,7 @@ func (g *githubClient) repoByFullname(fullname string) (Repository, error) {
 		//If repo isn't updated, lets get them from cache
 		k := cache.Key("vcs", "github", "repo", g.OAuthToken, url)
 		if _, err := g.Cache.Get(k, &repo); err != nil {
-			log.Error("cannot get from cache %s: %v", k, err)
+			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
 		if err := json.Unmarshal(body, &repo); err != nil {
@@ -144,7 +144,7 @@ func (g *githubClient) repoByFullname(fullname string) (Repository, error) {
 		//Put the body on cache for one hour and one minute
 		k := cache.Key("vcs", "github", "repo", g.OAuthToken, url)
 		if err := g.Cache.SetWithTTL(k, repo, 61*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", k, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 	}
 

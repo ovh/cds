@@ -124,7 +124,7 @@ func (c *Common) Register(cfg sdk.ServiceConfig) error {
 }
 
 // Heartbeat have to be launch as a goroutine, call DoHeartBeat each 30s
-func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus) error {
+func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context) sdk.MonitoringStatus) error {
 	// no heartbeat for api
 	if c.ServiceType == "api" {
 		return nil
@@ -138,7 +138,7 @@ func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStat
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			if err := c.Client.ServiceHeartbeat(status()); err != nil {
+			if err := c.Client.ServiceHeartbeat(status(ctx)); err != nil {
 				log.Warning("%s> Heartbeat failure: %v", c.Name(), err)
 				heartbeatFailures++
 			}

@@ -153,7 +153,7 @@ func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Paramete
 	if err != nil {
 		t := fmt.Sprintf("failure %s err: %v", pluginDetails, err)
 		actionPluginClientStop(ctx, actionPluginClient, stopLogs)
-		log.Error(t)
+		log.Error(ctx, t)
 		pluginFail(ctx, w, chanRes, fmt.Sprintf("Error running action: %v", err))
 		return
 	}
@@ -258,7 +258,7 @@ func actionPluginClientStop(ctx context.Context, actionPluginClient actionplugin
 	if _, err := actionPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
 		// Transport is closing is a "normal" error, as we requested plugin to stop
 		if !strings.Contains(err.Error(), "transport is closing") {
-			log.Error("Error on actionPluginClient.Stop: %s", err)
+			log.Error(ctx, "Error on actionPluginClient.Stop: %s", err)
 		}
 	}
 	stopLogs()

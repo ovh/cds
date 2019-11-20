@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"database/sql"
 	"encoding/base64"
 
@@ -114,7 +115,7 @@ func LoadAllDecryptedKeys(db gorp.SqlExecutor, app *sdk.Application) error {
 		keys[i] = sdk.ApplicationKey(p)
 		decrypted, err := secret.Decrypt([]byte(keys[i].Private))
 		if err != nil {
-			log.Error("LoadAllDecryptedKeys> Unable to decrypt private key %s/%s: %v", app.Name, keys[i].Name, err)
+			log.Error(context.TODO(), "LoadAllDecryptedKeys> Unable to decrypt private key %s/%s: %v", app.Name, keys[i].Name, err)
 		}
 		keys[i].Private = string(decrypted)
 	}

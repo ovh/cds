@@ -78,9 +78,9 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (h *HatcheryMarathon) Status() sdk.MonitoringStatus {
+func (h *HatcheryMarathon) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 
 	return m
 }
@@ -166,7 +166,7 @@ func (h *HatcheryMarathon) WorkerModelsEnabled() ([]sdk.Model, error) {
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirements services are not supported
-func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (h *HatcheryMarathon) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	//Service requirement are not supported
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement {
@@ -426,7 +426,7 @@ func (h *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryMarathon) WorkersStarted() []string {
+func (h *HatcheryMarathon) WorkersStarted(ctx context.Context) []string {
 	apps, err := h.listApplications(h.Config.MarathonIDPrefix)
 	if err != nil {
 		log.Warning("WorkersStarted> error on list applications err:%s", err)
@@ -459,7 +459,7 @@ func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 }
 
 // InitHatchery only starts killing routine of worker not registered
-func (h *HatcheryMarathon) InitHatchery() error {
+func (h *HatcheryMarathon) InitHatchery(ctx context.Context) error {
 	h.startKillAwolWorkerRoutine()
 	return nil
 }
@@ -573,7 +573,7 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 					}
 					tuple := strings.SplitN(model, "/", 2)
 					if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
-						log.Error("killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", model, err)
+						log.Error(ctx, "killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", model, err)
 					}
 				}
 			}

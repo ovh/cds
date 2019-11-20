@@ -152,7 +152,7 @@ func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
 		// If its a worker "register", check registration before deleting it
 		var annot = annotation{}
 		if err := json.Unmarshal([]byte(s.Config.Annotation), &annot); err != nil {
-			log.Error("deleteServer> unable to get server annotation")
+			log.Error(ctx, "deleteServer> unable to get server annotation")
 		} else {
 			if strings.Contains(s.Name, "register-") {
 				if err := hatchery.CheckWorkerModelRegister(h, annot.WorkerModelPath); err != nil {
@@ -161,7 +161,7 @@ func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
 					}
 					tuple := strings.SplitN(annot.WorkerModelPath, "/", 2)
 					if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
-						log.Error("CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelName, err)
+						log.Error(ctx, "CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelName, err)
 					}
 				}
 			}

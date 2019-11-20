@@ -24,16 +24,16 @@ var (
 )
 
 // ComputeAudit compute audit on workflow template.
-func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap) {
+func ComputeAudit(ctx context.Context, DBFunc func() *gorp.DbMap) {
 	chanEvent := make(chan sdk.Event)
 	event.Subscribe(chanEvent)
 
 	db := DBFunc()
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("%v", sdk.WithStack(c.Err()))
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", sdk.WithStack(ctx.Err()))
 				return
 			}
 		case e := <-chanEvent:
@@ -42,7 +42,7 @@ func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap) {
 			}
 
 			if audit, ok := audits[e.EventType]; ok {
-				if err := audit.Compute(db, e); err != nil {
+				if err := audit.Compute(ctx, db, e); err != nil {
 					log.Warning("%v", sdk.WrapError(err, "Unable to compute audit on event %s", e.EventType))
 				}
 			}
@@ -52,7 +52,7 @@ func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap) {
 
 type addWorkflowTemplateAudit struct{}
 
-func (a addWorkflowTemplateAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (a addWorkflowTemplateAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wtEvent sdk.EventWorkflowTemplateAdd
 	if err := mapstructure.Decode(e.Payload, &wtEvent); err != nil {
 		return sdk.WrapError(err, "Unable to decode payload")
@@ -71,7 +71,7 @@ func (a addWorkflowTemplateAudit) Compute(db gorp.SqlExecutor, e sdk.Event) erro
 
 type updateWorkflowTemplateAudit struct{}
 
-func (a updateWorkflowTemplateAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (a updateWorkflowTemplateAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wtEvent sdk.EventWorkflowTemplateUpdate
 	if err := mapstructure.Decode(e.Payload, &wtEvent); err != nil {
 		return sdk.WrapError(err, "Unable to decode payload")
@@ -92,7 +92,7 @@ func (a updateWorkflowTemplateAudit) Compute(db gorp.SqlExecutor, e sdk.Event) e
 
 type addWorkflowTemplateInstanceAudit struct{}
 
-func (a addWorkflowTemplateInstanceAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (a addWorkflowTemplateInstanceAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wtEvent sdk.EventWorkflowTemplateInstanceAdd
 	if err := mapstructure.Decode(e.Payload, &wtEvent); err != nil {
 		return sdk.WrapError(err, "Unable to decode payload")
@@ -117,7 +117,7 @@ func (a addWorkflowTemplateInstanceAudit) Compute(db gorp.SqlExecutor, e sdk.Eve
 
 type updateWorkflowTemplateInstanceAudit struct{}
 
-func (a updateWorkflowTemplateInstanceAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (a updateWorkflowTemplateInstanceAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wtEvent sdk.EventWorkflowTemplateInstanceUpdate
 	if err := mapstructure.Decode(e.Payload, &wtEvent); err != nil {
 		return sdk.WrapError(err, "Unable to decode payload")

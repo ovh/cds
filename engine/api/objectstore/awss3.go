@@ -2,6 +2,7 @@ package objectstore
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -88,7 +89,7 @@ func (s *AWSS3Store) GetProjectIntegration() sdk.ProjectIntegration {
 	return s.projectIntegration
 }
 
-func (s *AWSS3Store) Status() sdk.MonitoringStatusLine {
+func (s *AWSS3Store) Status(ctx context.Context) sdk.MonitoringStatusLine {
 	out, err := s.account()
 	if err != nil {
 		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "AWSS3 KO" + err.Error(), Status: sdk.MonitoringStatusAlert}
@@ -144,7 +145,7 @@ func (s *AWSS3Store) StoreURL(o Object, contentType string) (string, string, err
 	return urlStr, *key, nil
 }
 
-func (s *AWSS3Store) Fetch(o Object) (io.ReadCloser, error) {
+func (s *AWSS3Store) Fetch(ctx context.Context, o Object) (io.ReadCloser, error) {
 	s3n := s3.New(s.sess)
 	log.Debug("AWS-S3-Store> Fetching object %s from bucket %s", s.getObjectPath(o), s.bucketName)
 	out, err := s3n.GetObject(&s3.GetObjectInput{

@@ -50,11 +50,11 @@ var (
 // runTasks should run as a long-running goroutine
 func (s *Service) runTasks(ctx context.Context) error {
 	if err := s.synchronizeTasks(ctx); err != nil {
-		log.Error("Hook> Unable to synchronize tasks: %v", err)
+		log.Error(ctx, "Hook> Unable to synchronize tasks: %v", err)
 	}
 
 	if err := s.startTasks(ctx); err != nil {
-		log.Error("Hook> Exit running tasks: %v", err)
+		log.Error(ctx, "Hook> Exit running tasks: %v", err)
 		return err
 	}
 	<-ctx.Done()
@@ -75,7 +75,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		return sdk.WrapError(err, "Unable to get hooks")
 	}
 
-	allOldTasks, err := s.Dao.FindAllTasks()
+	allOldTasks, err := s.Dao.FindAllTasks(ctx)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to get allOldTasks")
 	}
@@ -92,7 +92,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		}
 		if !found && t.Type != TypeOutgoingWebHook && t.Type != TypeOutgoingWorkflow {
 			if err := s.deleteTask(ctx, t); err != nil {
-				log.Error("Hook> Error on task %s delete on synchronization: %v", t.UUID, err)
+				log.Error(ctx, "Hook> Error on task %s delete on synchronization: %v", t.UUID, err)
 			} else {
 				log.Info("Hook> Task %s deleted on synchronization", t.UUID)
 			}
@@ -103,16 +103,16 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		confProj := h.Config[sdk.HookConfigProject]
 		confWorkflow := h.Config[sdk.HookConfigWorkflow]
 		if confProj.Value == "" || confWorkflow.Value == "" {
-			log.Error("Hook> Unable to synchronize task %+v: %v", h, err)
+			log.Error(ctx, "Hook> Unable to synchronize task %+v: %v", h, err)
 			continue
 		}
 		t, err := s.hookToTask(&h)
 		if err != nil {
-			log.Error("Hook> Unable to transform hook to task %+v: %v", h, err)
+			log.Error(ctx, "Hook> Unable to transform hook to task %+v: %v", h, err)
 			continue
 		}
 		if err := s.Dao.SaveTask(t); err != nil {
-			log.Error("Hook> Unable to save task %+v: %v", h, err)
+			log.Error(ctx, "Hook> Unable to save task %+v: %v", h, err)
 			continue
 		}
 	}
@@ -214,7 +214,7 @@ func (s *Service) startTasks(ctx context.Context) error {
 	defer cancel()
 
 	//Load all the tasks
-	tasks, err := s.Dao.FindAllTasks()
+	tasks, err := s.Dao.FindAllTasks(ctx)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to find all tasks")
 	}
@@ -226,16 +226,16 @@ func (s *Service) startTasks(ctx context.Context) error {
 			continue
 		}
 		if _, err := s.startTask(c, t); err != nil {
-			log.Error("Hooks> runLongRunningTasks> Unable to start task: %v", err)
+			log.Error(ctx, "Hooks> runLongRunningTasks> Unable to start task: %v", err)
 			continue
 		}
 	}
 	return nil
 }
 
-func (s *Service) stopTasks() error {
+func (s *Service) stopTasks(ctx context.Context) error {
 	//Load all the tasks
-	tasks, err := s.Dao.FindAllTasks()
+	tasks, err := s.Dao.FindAllTasks(ctx)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to find all tasks")
 	}
@@ -244,7 +244,7 @@ func (s *Service) stopTasks() error {
 	for i := range tasks {
 		t := &tasks[i]
 		if err := s.stopTask(t); err != nil {
-			log.Error("Hooks> stopTasks> Unable to stop task: %v", err)
+			log.Error(ctx, "Hooks> stopTasks> Unable to stop task: %v", err)
 			continue
 		}
 	}
@@ -261,7 +261,7 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecutio
 	case TypeWebHook, TypeRepoManagerWebHook, TypeWorkflowHook:
 		return nil, nil
 	case TypeScheduler, TypeRepoPoller, TypeBranchDeletion:
-		return nil, s.prepareNextScheduledTaskExecution(t)
+		return nil, s.prepareNextScheduledTaskExecution(ctx, t)
 	case TypeKafka:
 		return nil, s.startKafkaHook(t)
 	case TypeRabbitMQ:
@@ -277,13 +277,13 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecutio
 	}
 }
 
-func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
+func (s *Service) prepareNextScheduledTaskExecution(ctx context.Context, t *sdk.Task) error {
 	if t.Stopped {
 		return nil
 	}
 
 	//Load the last execution of this task
-	execs, err := s.Dao.FindAllTaskExecutions(t)
+	execs, err := s.Dao.FindAllTaskExecutions(ctx, t)
 	if err != nil {
 		return sdk.WrapError(err, "unable to load last executions")
 	}
@@ -386,17 +386,17 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	case e.GerritEvent != nil:
 		h, err = s.doGerritExecution(e)
 	case e.WebHook != nil && e.Type == TypeOutgoingWebHook:
-		err = s.doOutgoingWebHookExecution(e)
+		err = s.doOutgoingWebHookExecution(ctx, e)
 	case e.Type == TypeOutgoingWorkflow:
-		err = s.doOutgoingWorkflowExecution(e)
+		err = s.doOutgoingWorkflowExecution(ctx, e)
 	case e.WebHook != nil && (e.Type == TypeWebHook || e.Type == TypeRepoManagerWebHook):
-		hs, err = s.doWebHookExecution(e)
+		hs, err = s.doWebHookExecution(ctx, e)
 	case e.ScheduledTask != nil && e.Type == TypeScheduler:
-		h, err = s.doScheduledTaskExecution(e)
+		h, err = s.doScheduledTaskExecution(ctx, e)
 		doRestart = true
 	case e.ScheduledTask != nil && e.Type == TypeRepoPoller:
 		//Populate next execution
-		hs, err = s.doPollerTaskExecution(t, e)
+		hs, err = s.doPollerTaskExecution(ctx, t, e)
 		doRestart = true
 	case e.ScheduledTask != nil && e.Type == TypeBranchDeletion:
 		_, err = s.doBranchDeletionTaskExecution(e)
@@ -426,7 +426,7 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 		run, err := s.Client.WorkflowRunFromHook(confProj.Value, confWorkflow.Value, hEvent)
 		if err != nil {
 			globalErr = err
-			log.Error("Hooks> Unable to run workflow %s", err)
+			log.Error(ctx, "Hooks> Unable to run workflow %s", err)
 		} else {
 			//Save the run number
 			e.WorkflowRun = run.Number
@@ -441,10 +441,10 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	return doRestart, nil
 }
 
-func getPayloadStringVariable(payload map[string]interface{}, msg interface{}) {
+func getPayloadStringVariable(ctx context.Context, payload map[string]interface{}, msg interface{}) {
 	payloadStr, err := json.Marshal(msg)
 	if err != nil {
-		log.Error("Unable to marshal payload: %v", err)
+		log.Error(ctx, "Unable to marshal payload: %v", err)
 	}
 	payload[PAYLOAD] = string(payloadStr)
 }

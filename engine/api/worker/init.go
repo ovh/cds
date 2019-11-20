@@ -21,7 +21,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store)
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				log.Error("Exiting workflow ticker: %v", c.Err())
+				log.Error(c, "Exiting workflow ticker: %v", c.Err())
 				return nil
 			}
 		case <-tickHeart.C:

@@ -34,7 +34,7 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, params []s
 			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("unknown builtin step: %s", a.Name),
 		}
-		log.Error("worker.runBuiltin> %v", res.Reason)
+		log.Error(ctx, "worker.runBuiltin> %v", res.Reason)
 		w.SendLog(ctx, workerruntime.LevelError, res.Reason)
 		return res
 	}
@@ -44,7 +44,7 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, params []s
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Reason = err.Error()
-		log.Error("worker.runBuiltin> %v", err)
+		log.Error(ctx, "worker.runBuiltin> %v", err)
 		w.SendLog(ctx, workerruntime.LevelError, res.Reason)
 	}
 	return res
@@ -59,7 +59,7 @@ func (w *CurrentWorker) runGRPCPlugin(ctx context.Context, a sdk.Action, params 
 
 	select {
 	case <-ctx.Done():
-		log.Error("CDS Worker execution cancelled: %v", ctx.Err())
+		log.Error(ctx, "CDS Worker execution cancelled: %v", ctx.Err())
 		return sdk.Result{
 			Status: sdk.StatusFail,
 			Reason: "CDS Worker execution cancelled",

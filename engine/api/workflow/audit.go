@@ -29,7 +29,7 @@ var (
 )
 
 // ComputeAudit Compute audit on workflow
-func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap) {
+func ComputeAudit(ctx context.Context, DBFunc func() *gorp.DbMap) {
 	chanEvent := make(chan sdk.Event)
 	event.Subscribe(chanEvent)
 	deleteTicker := time.NewTicker(15 * time.Minute)
@@ -38,14 +38,14 @@ func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap) {
 	db := DBFunc()
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("ComputeWorkflowAudit> Exiting: %v", c.Err())
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "ComputeWorkflowAudit> Exiting: %v", ctx.Err())
 				return
 			}
 		case <-deleteTicker.C:
-			if err := purgeAudits(DBFunc()); err != nil {
-				log.Error("ComputeWorkflowAudit> Purge error: %v", c)
+			if err := purgeAudits(ctx, DBFunc()); err != nil {
+				log.Error(ctx, "ComputeWorkflowAudit> Purge error: %v", err)
 			}
 		case e := <-chanEvent:
 			if !strings.HasPrefix(e.EventType, "sdk.EventWorkflow") {
@@ -53,7 +53,7 @@ func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap) {
 			}
 
 			if audit, ok := audits[e.EventType]; ok {
-				if err := audit.Compute(db, e); err != nil {
+				if err := audit.Compute(ctx, db, e); err != nil {
 					log.Warning("ComputeAudit> Unable to compute audit on event %s: %v", e.EventType, err)
 				}
 			}
@@ -63,14 +63,14 @@ func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap) {
 
 type addWorkflowAudit struct{}
 
-func (a addWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (a addWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowAdd
 	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
 		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
 	buffer := bytes.NewBufferString("")
-	if _, err := exportWorkflow(wEvent.Workflow, exportentities.FormatYAML, buffer); err != nil {
+	if _, err := exportWorkflow(ctx, wEvent.Workflow, exportentities.FormatYAML, buffer); err != nil {
 		return sdk.WrapError(err, "Unable to export workflow")
 	}
 
@@ -89,19 +89,19 @@ func (a addWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 
 type updateWorkflowAudit struct{}
 
-func (u updateWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (u updateWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowUpdate
 	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
 		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
 	oldWorkflowBuffer := bytes.NewBufferString("")
-	if _, err := exportWorkflow(wEvent.OldWorkflow, exportentities.FormatYAML, oldWorkflowBuffer); err != nil {
+	if _, err := exportWorkflow(ctx, wEvent.OldWorkflow, exportentities.FormatYAML, oldWorkflowBuffer); err != nil {
 		return sdk.WrapError(err, "Unable to export workflow")
 	}
 
 	newWorkflowBuffer := bytes.NewBufferString("")
-	if _, err := exportWorkflow(wEvent.NewWorkflow, exportentities.FormatYAML, newWorkflowBuffer); err != nil {
+	if _, err := exportWorkflow(ctx, wEvent.NewWorkflow, exportentities.FormatYAML, newWorkflowBuffer); err != nil {
 		return sdk.WrapError(err, "Unable to export workflow")
 	}
 
@@ -121,14 +121,14 @@ func (u updateWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 
 type deleteWorkflowAudit struct{}
 
-func (d deleteWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (d deleteWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowDelete
 	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
 		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
 	oldWorkflowBuffer := bytes.NewBufferString("")
-	if _, err := exportWorkflow(wEvent.Workflow, exportentities.FormatYAML, oldWorkflowBuffer); err != nil {
+	if _, err := exportWorkflow(ctx, wEvent.Workflow, exportentities.FormatYAML, oldWorkflowBuffer); err != nil {
 		return sdk.WrapError(err, "Unable to export workflow")
 	}
 
@@ -147,7 +147,7 @@ func (d deleteWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 
 type addWorkflowPermissionAudit struct{}
 
-func (a addWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (a addWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionAdd
 	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
 		return sdk.WrapError(err, "Unable to decode payload")
@@ -173,7 +173,7 @@ func (a addWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) er
 
 type updateWorkflowPermissionAudit struct{}
 
-func (u updateWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (u updateWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionUpdate
 	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
 		return sdk.WrapError(err, "Unable to decode payload")
@@ -205,7 +205,7 @@ func (u updateWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event)
 
 type deleteWorkflowPermissionAudit struct{}
 
-func (a deleteWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (a deleteWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionDelete
 	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
 		return sdk.WrapError(err, "Unable to decode payload")
@@ -231,7 +231,7 @@ func (a deleteWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event)
 
 const keepAudits = 50
 
-func purgeAudits(db gorp.SqlExecutor) error {
+func purgeAudits(ctx context.Context, db gorp.SqlExecutor) error {
 	var nbAuditsPerWorkflowID = []struct {
 		WorkflowID int64 `db:"workflow_id"`
 		NbAudits   int64 `db:"nb_audits"`
@@ -251,7 +251,7 @@ func purgeAudits(db gorp.SqlExecutor) error {
 		}
 		for _, id := range ids {
 			if err := deleteAudit(db, id); err != nil {
-				log.Error("purgeAudits> unable to delete audit %d: %v", id, err)
+				log.Error(ctx, "purgeAudits> unable to delete audit %d: %v", id, err)
 			}
 		}
 	}

@@ -20,7 +20,7 @@ func returnHTTPError(w http.ResponseWriter, code int, e error) {
 		Message: e.Error(),
 		Status:  code,
 	}
-	log.Error("%v", err)
+	log.Error(ctx, "%v", err)
 	writeJSON(w, err, err.Status)
 }
 
@@ -69,7 +69,7 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	//Start the server
 	go func() {
 		if err := srv.Serve(listener); err != nil {
-			log.Error("%v", err)
+			log.Error(ctx, "%v", err)
 		}
 	}()
 

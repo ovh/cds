@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -12,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func fillPayload(pushEvent sdk.VCSPushEvent) map[string]string {
+func fillPayload(ctx context.Context, pushEvent sdk.VCSPushEvent) map[string]string {
 	payload := make(map[string]string)
 	payload["git.author"] = pushEvent.Commit.Author.Name
 	payload["git.author.email"] = pushEvent.Commit.Author.Email
@@ -31,7 +32,7 @@ func fillPayload(pushEvent sdk.VCSPushEvent) map[string]string {
 
 	payloadStr, err := json.Marshal(pushEvent)
 	if err != nil {
-		log.Error("Unable to marshal payload: %v", err)
+		log.Error(ctx, "Unable to marshal payload: %v", err)
 	}
 	payload["payload"] = string(payloadStr)
 
@@ -42,10 +43,10 @@ func fillPayload(pushEvent sdk.VCSPushEvent) map[string]string {
 	return payload
 }
 
-func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
+func (s *Service) doPollerTaskExecution(ctx context.Context, task *sdk.Task, taskExec *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
 	log.Debug("Hooks> Processing polling task %s:%d", taskExec.UUID, taskExec.Timestamp)
 
-	tExecs, errF := s.Dao.FindAllTaskExecutions(task)
+	tExecs, errF := s.Dao.FindAllTaskExecutions(ctx, task)
 	if errF != nil {
 		return nil, errF
 	}
@@ -81,12 +82,12 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 
 			m1, errm1 := e.ToStringMap(payloadInt)
 			if errm1 != nil {
-				log.Error("Hooks> doPollerTaskExecution> Cannot convert payload to map %s", errm1)
+				log.Error(ctx, "Hooks> doPollerTaskExecution> Cannot convert payload to map %s", errm1)
 			} else {
 				payloadValues = m1
 			}
 		} else {
-			log.Error("Hooks> doPollerTaskExecution> Cannot unmarshall payload %s", err)
+			log.Error(ctx, "Hooks> doPollerTaskExecution> Cannot unmarshall payload %s", err)
 		}
 		payloadValues["payload"] = string(payload.Value)
 	}
@@ -96,7 +97,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 		i := 0
 		hookEvents = make([]sdk.WorkflowNodeRunHookEvent, len(events.PushEvents)+len(events.PullRequestEvents))
 		for _, pushEvent := range events.PushEvents {
-			payload := fillPayload(pushEvent)
+			payload := fillPayload(ctx, pushEvent)
 			hookEvents[i] = sdk.WorkflowNodeRunHookEvent{
 				WorkflowNodeHookUUID: task.UUID,
 				Payload:              sdk.ParametersMapMerge(payloadValues, payload),
@@ -105,7 +106,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 		}
 
 		for _, pullRequestEvent := range events.PullRequestEvents {
-			payload := fillPayload(pullRequestEvent.Head)
+			payload := fillPayload(ctx, pullRequestEvent.Head)
 			hookEvents[i] = sdk.WorkflowNodeRunHookEvent{
 				WorkflowNodeHookUUID: task.UUID,
 				Payload:              sdk.ParametersMapMerge(payloadValues, payload),

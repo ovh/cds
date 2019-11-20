@@ -14,14 +14,14 @@ const (
 	delay      = 1
 )
 
-func auditCleanerRoutine(c context.Context, DBFunc func() *gorp.DbMap) {
+func auditCleanerRoutine(ctx context.Context, DBFunc func() *gorp.DbMap) {
 	tick := time.NewTicker(delay * time.Minute).C
 
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("Exiting auditCleanerRoutine: %v", c.Err())
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "Exiting auditCleanerRoutine: %v", ctx.Err())
 			}
 			return
 		case <-tick:

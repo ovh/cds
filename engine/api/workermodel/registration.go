@@ -1,6 +1,7 @@
 package workermodel
 
 import (
+	"context"
 	"errors"
 	"strconv"
 	"strings"
@@ -100,7 +101,7 @@ func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, spawnError 
 }
 
 // UpdateRegistration updates need_registration to false and last_registration time, reset err registration.
-func UpdateRegistration(db gorp.SqlExecutor, store cache.Store, modelID int64) error {
+func UpdateRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, modelID int64) error {
 	query := `UPDATE worker_model SET need_registration=false, check_registration=false, last_registration = $2, nb_spawn_err=0, last_spawn_err=NULL, last_spawn_err_log=NULL WHERE id = $1`
 	res, err := db.Exec(query, modelID, time.Now())
 	if err != nil {
@@ -112,7 +113,7 @@ func UpdateRegistration(db gorp.SqlExecutor, store cache.Store, modelID int64) e
 		return sdk.WithStack(err)
 	}
 	log.Debug("UpdateRegistration> %d worker model updated", rows)
-	UnbookForRegister(store, modelID)
+	UnbookForRegister(ctx, store, modelID)
 	return nil
 }
 
@@ -150,10 +151,10 @@ func BookForRegister(store cache.Store, id int64, serviceID int64) error {
 }
 
 // UnbookForRegister release the book
-func UnbookForRegister(store cache.Store, id int64) {
+func UnbookForRegister(ctx context.Context, store cache.Store, id int64) {
 	k := KeyBookWorkerModel(id)
 	if err := store.Delete(k); err != nil {
-		log.Error("unable to delete cache key %v: %v", k, err)
+		log.Error(ctx, "unable to delete cache key %v: %v", k, err)
 	}
 }
 

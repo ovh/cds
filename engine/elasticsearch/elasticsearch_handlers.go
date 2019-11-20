@@ -135,7 +135,7 @@ func (s *Service) postMetricsHandler() service.Handler {
 func (s *Service) getStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK
-		return service.WriteJSON(w, s.Status(), status)
+		return service.WriteJSON(w, s.Status(ctx), status)
 	}
 }
 

@@ -39,7 +39,7 @@ type Store interface {
 	SetAdd(rootKey string, memberKey string, member interface{}) error
 	SetRemove(rootKey string, memberKey string, member interface{}) error
 	SetCard(key string) (int, error)
-	SetScan(key string, members ...interface{}) error
+	SetScan(ctx context.Context, key string, members ...interface{}) error
 	ZScan(key, pattern string) ([]string, error)
 	Lock(key string, expiration time.Duration, retryWaitDurationMillisecond int, retryCount int) (bool, error)
 	Unlock(key string) error
@@ -68,7 +68,7 @@ type writerCloser struct {
 
 func (w *writerCloser) Close() error {
 	if err := w.store.SetWithTTL(w.key, w.String(), w.ttl); err != nil {
-		log.Error("cannot SetWithTTL: %s: %v", w.key, err)
+		log.Error(context.TODO(), "cannot SetWithTTL: %s: %v", w.key, err)
 	}
 	return nil
 }

@@ -111,7 +111,7 @@ func (s *Service) Serve(c context.Context) error {
 	//Start the http server
 	log.Info("ElasticSearch> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Error("ElasticSearch> Listen and serve failed: %v", err)
+		log.Error(ctx, "ElasticSearch> Listen and serve failed: %v", err)
 	}
 
 	return ctx.Err()

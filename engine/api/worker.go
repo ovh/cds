@@ -34,9 +34,9 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// Check that the worker can authentify on CDS API
-		workerTokenFromHatchery, err := workerauth.VerifyToken(api.mustDB(), jwt)
+		workerTokenFromHatchery, err := workerauth.VerifyToken(ctx, api.mustDB(), jwt)
 		if err != nil {
-			log.Error("registerWorkerHandler> unauthorized worker jwt token %s: %v", jwt, err)
+			log.Error(ctx, "registerWorkerHandler> unauthorized worker jwt token %s: %v", jwt, err)
 			return sdk.WithStack(sdk.ErrUnauthorized)
 		}
 
@@ -60,7 +60,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 
 		var groupIDs []int64
 		if workerTokenFromHatchery.Worker.JobID != 0 {
-			job, err := workflow.LoadNodeJobRun(tx, api.Cache, workerTokenFromHatchery.Worker.JobID)
+			job, err := workflow.LoadNodeJobRun(ctx, tx, api.Cache, workerTokenFromHatchery.Worker.JobID)
 			if err != nil {
 				return sdk.NewError(sdk.ErrForbidden, err)
 			}
@@ -70,13 +70,13 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// We have to issue a new consumer for the worker
-		workerConsumer, err := authentication.NewConsumerWorker(api.mustDB(), workerTokenFromHatchery.Subject, hatchSrv, hatcheryConsumer, groupIDs)
+		workerConsumer, err := authentication.NewConsumerWorker(ctx, api.mustDB(), workerTokenFromHatchery.Subject, hatchSrv, hatcheryConsumer, groupIDs)
 		if err != nil {
 			return err
 		}
 
 		// Try to register worker
-		wk, err := worker.RegisterWorker(tx, api.Cache, workerTokenFromHatchery.Worker, hatchSrv.ID, workerConsumer, registrationForm)
+		wk, err := worker.RegisterWorker(ctx, tx, api.Cache, workerTokenFromHatchery.Worker, hatchSrv.ID, workerConsumer, registrationForm)
 		if err != nil {
 			err = sdk.NewError(sdk.ErrUnauthorized, err)
 			return sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName)
@@ -84,7 +84,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 
 		log.Debug("New worker: [%s] - %s", wk.ID, wk.Name)
 
-		workerSession, err := authentication.NewSession(tx, workerConsumer, workerauth.SessionDuration, false)
+		workerSession, err := authentication.NewSession(ctx, tx, workerConsumer, workerauth.SessionDuration, false)
 		if err != nil {
 			err = sdk.NewError(sdk.ErrUnauthorized, err)
 			return sdk.WrapError(err, "[%s] Registering failed", workerTokenFromHatchery.Worker.WorkerName)
@@ -156,7 +156,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 			}
 		}
 
-		if err := DisableWorker(api.mustDB(), id); err != nil {
+		if err := DisableWorker(ctx, api.mustDB(), id); err != nil {
 			cause := sdk.Cause(err)
 			if cause == worker.ErrNoWorker || cause == sql.ErrNoRows {
 				return sdk.WrapError(sdk.ErrWrongRequest, "disableWorkerHandler> worker %s does not exists", id)
@@ -188,7 +188,7 @@ func (api *API) postUnregisterWorkerHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if err := DisableWorker(api.mustDB(), wk.ID); err != nil {
+		if err := DisableWorker(ctx, api.mustDB(), wk.ID); err != nil {
 			return sdk.WrapError(err, "cannot delete worker %s", wk.Name)
 		}
 		return nil
@@ -222,7 +222,7 @@ func (api *API) workerWaitingHandler() service.Handler {
 // the package workflow
 
 // DisableWorker disable a worker
-func DisableWorker(db *gorp.DbMap, id string) error {
+func DisableWorker(ctx context.Context, db *gorp.DbMap, id string) error {
 	tx, errb := db.Begin()
 	if errb != nil {
 		return fmt.Errorf("DisableWorker> Cannot start tx: %v", errb)
@@ -240,7 +240,7 @@ func DisableWorker(db *gorp.DbMap, id string) error {
 	if st == sdk.StatusBuilding && jobID.Valid {
 		// Worker is awol while building !
 		// We need to restart this action
-		wNodeJob, errL := workflow.LoadNodeJobRun(tx, nil, jobID.Int64)
+		wNodeJob, errL := workflow.LoadNodeJobRun(ctx, tx, nil, jobID.Int64)
 		if errL == nil && wNodeJob.Retry < 3 {
 			if err := workflow.RestartWorkflowNodeJob(context.TODO(), db, *wNodeJob); err != nil {
 				log.Warning("DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)

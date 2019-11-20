@@ -80,7 +80,7 @@ func (api *API) putSpawnErrorWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		workermodel.UnbookForRegister(api.Cache, model.ID)
+		workermodel.UnbookForRegister(ctx, api.Cache, model.ID)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}

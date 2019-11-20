@@ -586,22 +586,22 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 			func(ctx context.Context) {
 				txg, errT := api.mustDB().Begin()
 				if errT != nil {
-					log.Error("deleteWorkflowHandler> Cannot start transaction: %v", errT)
+					log.Error(ctx, "deleteWorkflowHandler> Cannot start transaction: %v", errT)
 				}
 				defer txg.Rollback() // nolint
 
 				oldW, err := workflow.Load(context.Background(), txg, api.Cache, p, name, workflow.LoadOptions{})
 				if err != nil {
-					log.Error("deleteWorkflowHandler> unable to load workflow: %v", err)
+					log.Error(ctx, "deleteWorkflowHandler> unable to load workflow: %v", err)
 					return
 				}
 
 				if err := workflow.Delete(context.Background(), txg, api.Cache, p, oldW); err != nil {
-					log.Error("deleteWorkflowHandler> unable to delete workflow: %v", err)
+					log.Error(ctx, "deleteWorkflowHandler> unable to delete workflow: %v", err)
 					return
 				}
 				if err := txg.Commit(); err != nil {
-					log.Error("deleteWorkflowHandler> Cannot commit transaction: %v", err)
+					log.Error(ctx, "deleteWorkflowHandler> Cannot commit transaction: %v", err)
 				}
 				event.PublishWorkflowDelete(key, *oldW, getAPIConsumer((ctx)))
 			}, api.PanicDump())

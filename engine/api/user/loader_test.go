@@ -46,7 +46,7 @@ func TestLoadContacts(t *testing.T) {
 		Type:    sdk.UserContactTypeEmail,
 		Value:   u.Username + "@lolcat.host",
 	}
-	assert.NoError(t, user.InsertContact(db, &c))
+	assert.NoError(t, user.InsertContact(context.TODO(), db, &c))
 
 	result, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithContacts)
 	assert.NoError(t, err)

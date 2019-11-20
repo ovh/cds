@@ -89,7 +89,7 @@ func (api *API) getPullCacheHandler() service.Handler {
 			return nil
 		}
 
-		ioread, err := storageDriver.Fetch(&cacheObject)
+		ioread, err := storageDriver.Fetch(ctx, &cacheObject)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "getPullCacheHandler> Cannot fetch artifact cache.tar : %v", err)
 		}

@@ -46,7 +46,7 @@ func tmplHandler(wk *CurrentWorker) http.HandlerFunc {
 
 		res, err := interpolate.Do(string(btes), tmpvars)
 		if err != nil {
-			log.Error("Unable to interpolate: %v", err)
+			log.Error(ctx, "Unable to interpolate: %v", err)
 			newError := sdk.NewError(sdk.ErrWrongRequest, err)
 			writeError(w, r, newError)
 			return

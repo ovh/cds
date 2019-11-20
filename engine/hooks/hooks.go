@@ -99,7 +99,7 @@ func (s *Service) Serve(c context.Context) error {
 	// Listen event on maintenance state
 	go func() {
 		if err := s.listenMaintenance(ctx); err != nil {
-			log.Error("error while initializing listen maintenance routine: %s", err)
+			log.Error(ctx, "error while initializing listen maintenance routine: %s", err)
 		}
 	}()
 
@@ -107,7 +107,7 @@ func (s *Service) Serve(c context.Context) error {
 		//Start all the tasks
 		go func() {
 			if err := s.runTasks(ctx); err != nil {
-				log.Error("%v", err)
+				log.Error(ctx, "%v", err)
 				cancel()
 			}
 		}()
@@ -115,7 +115,7 @@ func (s *Service) Serve(c context.Context) error {
 		//Start the scheduler to execute all the tasks
 		go func() {
 			if err := s.runScheduler(ctx); err != nil {
-				log.Error("%v", err)
+				log.Error(ctx, "%v", err)
 				cancel()
 			}
 		}()

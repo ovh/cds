@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
@@ -8,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) generatePayloadFromBitbucketCloudRequest(t *sdk.TaskExecution, event string) ([]map[string]interface{}, error) {
+func (s *Service) generatePayloadFromBitbucketCloudRequest(ctx context.Context, t *sdk.TaskExecution, event string) ([]map[string]interface{}, error) {
 	payloads := []map[string]interface{}{}
 
 	var request BitbucketCloudWebHookEvent
@@ -23,13 +24,13 @@ func (s *Service) generatePayloadFromBitbucketCloudRequest(t *sdk.TaskExecution,
 	payload[GIT_EVENT] = event
 	getVariableFromBitbucketCloudAuthor(payload, request.Actor)
 	getVariableFromBitbucketCloudRepository(payload, request.Repository)
-	getPayloadStringVariable(payload, request)
+	getPayloadStringVariable(ctx, payload, request)
 
 	for _, pushChange := range request.Push.Changes {
 		if pushChange.Closed {
 			if pushChange.Old.Type == "branch" {
 				if err := s.enqueueBranchDeletion(projectKey, workflowName, strings.TrimPrefix(pushChange.Old.Name, "refs/heads/")); err != nil {
-					log.Error("cannot enqueue branch deletion: %v", err)
+					log.Error(ctx, "cannot enqueue branch deletion: %v", err)
 				}
 			}
 			continue
@@ -37,8 +38,8 @@ func (s *Service) generatePayloadFromBitbucketCloudRequest(t *sdk.TaskExecution,
 
 		if pushChange.New.Type == "branch" {
 			branch := strings.TrimPrefix(pushChange.New.Name, "refs/heads/")
-			if err := s.stopBranchDeletionTask(branch); err != nil {
-				log.Error("cannot stop branch deletion task for branch %s : %v", branch, err)
+			if err := s.stopBranchDeletionTask(ctx, branch); err != nil {
+				log.Error(ctx, "cannot stop branch deletion task for branch %s : %v", branch, err)
 			}
 
 		}

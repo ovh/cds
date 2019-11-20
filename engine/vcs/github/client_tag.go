@@ -28,7 +28,7 @@ func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag,
 			}
 
 			attempt++
-			status, body, headers, err := g.get(nextPage, opt)
+			status, body, headers, err := g.get(ctx, nextPage, opt)
 			if err != nil {
 				log.Warning("githubClient.Tags> Error %s", err)
 				return nil, err
@@ -47,7 +47,7 @@ func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag,
 				//If repos aren't updated, lets get them from cache
 				k := cache.Key("vcs", "github", "tags", g.OAuthToken, "/repos/"+fullname+"/tags")
 				if _, err := g.Cache.Get(k, &tags); err != nil {
-					log.Error("cannot get from cache %s:%v", k, err)
+					log.Error(ctx, "cannot get from cache %s:%v", k, err)
 				}
 				if len(tags) != 0 || attempt > 5 {
 					//We found tags, let's exit the loop
@@ -73,7 +73,7 @@ func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag,
 	//Put the body on cache for one hour and one minute
 	k := cache.Key("vcs", "github", "tags", g.OAuthToken, "/repos/"+fullname+"/tags")
 	if err := g.Cache.SetWithTTL(k, tags, 61*60); err != nil {
-		log.Error("cannot SetWithTTL: %s: %v", k, err)
+		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}
 
 	tagsResult := make([]sdk.VCSTag, len(tags))

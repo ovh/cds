@@ -25,7 +25,7 @@ func workerRegister(ctx context.Context, h InterfaceWithModels, startWorkerChan 
 	// currentRegister contains the register spawned in this ticker
 	currentRegistering, err := WorkerPool(ctx, h, sdk.StatusWorkerRegistering)
 	if err != nil {
-		log.Error("hatchery> workerRegister> worker pool error: %v", err)
+		log.Error(ctx, "hatchery> workerRegister> worker pool error: %v", err)
 	}
 
 	atomic.StoreInt64(&nbRegisteringWorkerModels, int64(len(currentRegistering)))

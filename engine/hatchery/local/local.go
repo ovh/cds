@@ -74,11 +74,11 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (h *HatcheryLocal) Status() sdk.MonitoringStatus {
+func (h *HatcheryLocal) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{
 		Component: "Workers",
-		Value:     fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker),
+		Value:     fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker),
 		Status:    sdk.MonitoringStatusOK,
 	})
 
@@ -214,7 +214,7 @@ func (h *HatcheryLocal) Configuration() service.HatcheryCommonConfiguration {
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
-func (h *HatcheryLocal) CanSpawn(_ *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	for _, r := range requirements {
 		ok, err := h.checkRequirement(r)
 		if err != nil || !ok {
@@ -246,7 +246,7 @@ func (h *HatcheryLocal) killWorker(name string, workerCmd workerCmd) error {
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryLocal) WorkersStarted() []string {
+func (h *HatcheryLocal) WorkersStarted(ctx context.Context) []string {
 	h.Mutex.Lock()
 	defer h.Mutex.Unlock()
 	workers := make([]string, len(h.workers))
@@ -259,7 +259,7 @@ func (h *HatcheryLocal) WorkersStarted() []string {
 }
 
 // InitHatchery register local hatchery with its worker model
-func (h *HatcheryLocal) InitHatchery() error {
+func (h *HatcheryLocal) InitHatchery(ctx context.Context) error {
 	h.workers = make(map[string]workerCmd)
 	sdk.GoRoutine(context.Background(), "startKillAwolWorkerRoutine", h.startKillAwolWorkerRoutine)
 	return nil

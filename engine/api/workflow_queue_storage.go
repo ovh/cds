@@ -63,7 +63,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "Content-Disposition header is not set")
 		}
 
-		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, nodeJobRunID)
+		nodeJobRun, errJ := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, nodeJobRunID)
 		if errJ != nil {
 			return sdk.WrapError(errJ, "Cannot load node job run")
 		}
@@ -170,7 +170,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowJobArtifactHandler> %s header is not set", "Content-Disposition")
 		}
 
-		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, nodeJobRunID)
+		nodeJobRun, errJ := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, nodeJobRunID)
 		if errJ != nil {
 			return sdk.WrapError(errJ, "Cannot load node job run")
 		}
@@ -277,7 +277,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 		cachedArt := sdk.WorkflowNodeRunArtifact{}
 		find, err := api.Cache.Get(cacheKey, &cachedArt)
 		if err != nil {
-			log.Error("cannot get from cache %s: %v", cacheKey, err)
+			log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 		}
 		if !find {
 			return sdk.WrapError(sdk.ErrNotFound, "postWorkflowJobArtifactWithTempURLCallbackHandler> Unable to find artifact, key:%s", cacheKey)
@@ -342,7 +342,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, art.WorkflowNodeJobRunID)
+		nodeJobRun, errJ := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, art.WorkflowNodeJobRunID)
 		if errJ != nil {
 			return sdk.WrapError(errJ, "postWorkflowJobArtifacWithTempURLHandler> Cannot load node job run with art.WorkflowNodeJobRunID: %d", art.WorkflowNodeJobRunID)
 		}
@@ -393,7 +393,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		cacheKey := cache.Key("workflows:artifacts", art.GetPath(), art.GetName())
 		//Put this in cache for 1 hour
 		if err := api.Cache.SetWithTTL(cacheKey, art, 60*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 		}
 
 		return service.WriteJSON(w, art, http.StatusOK)

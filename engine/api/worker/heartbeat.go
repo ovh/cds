@@ -37,7 +37,7 @@ func DeleteDeadWorkers(ctx context.Context, db *gorp.DbMap) error {
 		log.Debug("deleteDeadWorkers> Delete worker %s[%s] LastBeat:%v status:%s", workers[i].Name, workers[i].ID, workers[i].LastBeat, workers[i].Status)
 		tx, err := db.Begin()
 		if err != nil {
-			log.Error("deleteDeadWorkers> Cannot create transaction")
+			log.Error(ctx, "deleteDeadWorkers> Cannot create transaction")
 		}
 
 		if errD := Delete(tx, workers[i].ID); errD != nil {
@@ -53,7 +53,7 @@ func DeleteDeadWorkers(ctx context.Context, db *gorp.DbMap) error {
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Error("deleteDeadWorkers> Cannot commit transaction : %v", err)
+			log.Error(ctx, "deleteDeadWorkers> Cannot commit transaction : %v", err)
 		}
 	}
 

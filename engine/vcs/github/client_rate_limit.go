@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -20,9 +21,9 @@ func isRateLimitReached() bool {
 
 // RateLimit Get your current rate limit status
 // https://developer.github.com/v3/rate_limit/#get-your-current-rate-limit-status
-func (g *githubClient) RateLimit() error {
+func (g *githubClient) RateLimit(ctx context.Context) error {
 	url := "/rate_limit"
-	status, body, _, err := g.get(url)
+	status, body, _, err := g.get(ctx, url)
 	if err != nil {
 		log.Warning("githubClient.RateLimit> Error %s", err)
 		return err
@@ -40,7 +41,7 @@ func (g *githubClient) RateLimit() error {
 		return err
 	}
 	if rateLimit.Rate.Remaining < 100 {
-		log.Error("Github Rate Limit nearly exceeded %v", rateLimit)
+		log.Error(ctx, "Github Rate Limit nearly exceeded %v", rateLimit)
 		return ErrorRateLimit
 	}
 	return nil

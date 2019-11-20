@@ -33,7 +33,7 @@ var warnings = []warn{
 }
 
 // Start starts compute warning from events
-func Start(c context.Context, DBFunc func() *gorp.DbMap, ch <-chan sdk.Event) {
+func Start(ctx context.Context, DBFunc func() *gorp.DbMap, ch <-chan sdk.Event) {
 	var computeMap = make(map[string][]warn)
 	for _, w := range warnings {
 		for _, e := range w.events() {
@@ -47,9 +47,9 @@ func Start(c context.Context, DBFunc func() *gorp.DbMap, ch <-chan sdk.Event) {
 	db := DBFunc()
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("Warning.Start: %v", c.Err())
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "Warning.Start: %v", ctx.Err())
 			}
 			return
 		case e := <-ch:

@@ -46,7 +46,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 	params["cds.status"] = nr.Status
 
 	for _, notif := range w.Notifications {
-		if ShouldSendUserWorkflowNotification(notif, nr, previousWR) {
+		if ShouldSendUserWorkflowNotification(ctx, notif, nr, previousWR) {
 			switch notif.Type {
 			case sdk.JabberUserNotification:
 				jn := &notif.Settings
@@ -54,7 +54,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 				if jn.SendToGroups != nil && *jn.SendToGroups {
 					u, errPerm := projectPermissionUsers(db, w.ProjectID, sdk.PermissionRead)
 					if errPerm != nil {
-						log.Error("notification[Jabber]. error while loading permission:%s", errPerm.Error())
+						log.Error(ctx, "notification[Jabber]. error while loading permission:%s", errPerm.Error())
 					}
 					for i := range u {
 						jn.Recipients = append(jn.Recipients, u[i].Username)
@@ -70,7 +70,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 				removeDuplicates(&jn.Recipients)
 				notif, err := getWorkflowEvent(jn, params)
 				if err != nil {
-					log.Error("notification.GetUserWorkflowEvents> unable to handle event %+v: %v", jn, err)
+					log.Error(ctx, "notification.GetUserWorkflowEvents> unable to handle event %+v: %v", jn, err)
 				}
 				events = append(events, notif)
 
@@ -80,7 +80,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 				if jn.SendToGroups != nil && *jn.SendToGroups {
 					u, errPerm := projectPermissionUsers(db, w.ProjectID, sdk.PermissionRead)
 					if errPerm != nil {
-						log.Error("notification[Email].GetUserWorkflowEvents> error while loading permission:%s", errPerm.Error())
+						log.Error(ctx, "notification[Email].GetUserWorkflowEvents> error while loading permission:%s", errPerm.Error())
 						return nil
 					}
 					for i := range u {
@@ -104,7 +104,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 				removeDuplicates(&jn.Recipients)
 				notif, err := getWorkflowEvent(jn, params)
 				if err != nil {
-					log.Error("notification.GetUserWorkflowEvents> unable to handle event %+v: %v", jn, err)
+					log.Error(ctx, "notification.GetUserWorkflowEvents> unable to handle event %+v: %v", jn, err)
 				}
 				go SendMailNotif(notif)
 			}
@@ -114,7 +114,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 }
 
 // ShouldSendUserWorkflowNotification test if the notificationhas to be sent for the given workflow node run
-func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun sdk.WorkflowNodeRun, previousNodeRun *sdk.WorkflowNodeRun) bool {
+func ShouldSendUserWorkflowNotification(ctx context.Context, notif sdk.WorkflowNotification, nodeRun sdk.WorkflowNodeRun, previousNodeRun *sdk.WorkflowNodeRun) bool {
 	var check = func(s string) bool {
 		switch s {
 		case sdk.UserNotificationAlways:
@@ -143,21 +143,21 @@ func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun 
 
 	switch nodeRun.Status {
 	case sdk.StatusSuccess:
-		if check(notif.Settings.OnSuccess) && checkConditions(notif.Settings.Conditions, nodeRun.BuildParameters) {
+		if check(notif.Settings.OnSuccess) && checkConditions(ctx, notif.Settings.Conditions, nodeRun.BuildParameters) {
 			return true
 		}
 	case sdk.StatusFail:
-		if check(notif.Settings.OnFailure) && checkConditions(notif.Settings.Conditions, nodeRun.BuildParameters) {
+		if check(notif.Settings.OnFailure) && checkConditions(ctx, notif.Settings.Conditions, nodeRun.BuildParameters) {
 			return true
 		}
 	case sdk.StatusWaiting:
-		return notif.Settings.OnStart != nil && *notif.Settings.OnStart && checkConditions(notif.Settings.Conditions, nodeRun.BuildParameters)
+		return notif.Settings.OnStart != nil && *notif.Settings.OnStart && checkConditions(ctx, notif.Settings.Conditions, nodeRun.BuildParameters)
 	}
 
 	return false
 }
 
-func checkConditions(conditions sdk.WorkflowNodeConditions, params []sdk.Parameter) bool {
+func checkConditions(ctx context.Context, conditions sdk.WorkflowNodeConditions, params []sdk.Parameter) bool {
 	var conditionsOK bool
 	var errc error
 	if conditions.LuaScript == "" {
@@ -165,7 +165,7 @@ func checkConditions(conditions sdk.WorkflowNodeConditions, params []sdk.Paramet
 	} else {
 		luacheck, err := luascript.NewCheck()
 		if err != nil {
-			log.Error("notification check condition error: %s", err)
+			log.Error(ctx, "notification check condition error: %s", err)
 			return false
 		}
 		luacheck.SetVariables(sdk.ParametersToMap(params))
@@ -173,7 +173,7 @@ func checkConditions(conditions sdk.WorkflowNodeConditions, params []sdk.Paramet
 		conditionsOK = luacheck.Result
 	}
 	if errc != nil {
-		log.Error("notification check condition error on execution: %s", errc)
+		log.Error(ctx, "notification check condition error on execution: %s", errc)
 		return false
 	}
 	return conditionsOK

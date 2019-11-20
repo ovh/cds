@@ -2,6 +2,7 @@ package objectstore
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -28,7 +29,7 @@ func (s *SSHStore) TemporaryURLSupported() bool {
 }
 
 //Status return filesystem storage status
-func (s *SSHStore) Status() sdk.MonitoringStatusLine {
+func (s *SSHStore) Status(ctx context.Context) sdk.MonitoringStatusLine {
 	if s.client == nil {
 		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "SSH Storage (no client)", Status: sdk.MonitoringStatusAlert}
 	}
@@ -101,7 +102,7 @@ func (s *SSHStore) Store(o Object, data io.ReadCloser) (string, error) {
 }
 
 // Fetch lookup on disk for data
-func (s *SSHStore) Fetch(o Object) (io.ReadCloser, error) {
+func (s *SSHStore) Fetch(ctx context.Context, o Object) (io.ReadCloser, error) {
 	session, err := s.client.NewSession()
 	if err != nil {
 		return nil, err

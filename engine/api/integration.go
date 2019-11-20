@@ -70,7 +70,7 @@ func (api *API) postIntegrationModelHandler() service.Handler {
 		}
 
 		if m.Public {
-			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
+			go propagatePublicIntegrationModel(ctx, api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
 		}
 
 		return service.WriteJSON(w, m, http.StatusCreated)
@@ -120,37 +120,37 @@ func (api *API) putIntegrationModelHandler() service.Handler {
 		}
 
 		if m.Public {
-			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
+			go propagatePublicIntegrationModel(ctx, api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
 		}
 
 		return service.WriteJSON(w, m, http.StatusOK)
 	}
 }
 
-func propagatePublicIntegrationModel(db *gorp.DbMap, store cache.Store, m sdk.IntegrationModel, u sdk.Identifiable) {
+func propagatePublicIntegrationModel(ctx context.Context, db *gorp.DbMap, store cache.Store, m sdk.IntegrationModel, u sdk.Identifiable) {
 	if !m.Public && len(m.PublicConfigurations) > 0 {
 		return
 	}
 
 	projs, err := project.LoadAll(context.Background(), db, store, nil, project.LoadOptions.WithClearIntegrations)
 	if err != nil {
-		log.Error("propagatePublicIntegrationModel> Unable to retrieve all projects: %v", err)
+		log.Error(ctx, "propagatePublicIntegrationModel> Unable to retrieve all projects: %v", err)
 		return
 	}
 
 	for _, p := range projs {
 		tx, err := db.Begin()
 		if err != nil {
-			log.Error("propagatePublicIntegrationModel> error: %v", err)
+			log.Error(ctx, "propagatePublicIntegrationModel> error: %v", err)
 			continue
 		}
 		if err := propagatePublicIntegrationModelOnProject(tx, store, m, p, u); err != nil {
-			log.Error("propagatePublicIntegrationModel> error: %v", err)
+			log.Error(ctx, "propagatePublicIntegrationModel> error: %v", err)
 			_ = tx.Rollback()
 			continue
 		}
 		if err := tx.Commit(); err != nil {
-			log.Error("propagatePublicIntegrationModel> unable to commit: %v", err)
+			log.Error(ctx, "propagatePublicIntegrationModel> unable to commit: %v", err)
 		}
 	}
 }

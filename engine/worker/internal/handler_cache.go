@@ -25,7 +25,7 @@ func cachePushHandler(wk *CurrentWorker) http.HandlerFunc {
 				Message: "worker cache push > Cannot read body : " + errRead.Error(),
 				Status:  http.StatusInternalServerError,
 			}
-			log.Error("%v", errRead)
+			log.Error(ctx, "%v", errRead)
 			writeError(w, r, errRead)
 			return
 		}
@@ -36,7 +36,7 @@ func cachePushHandler(wk *CurrentWorker) http.HandlerFunc {
 				Message: "worker cache push > Cannot unmarshall body : " + err.Error(),
 				Status:  http.StatusInternalServerError,
 			}
-			log.Error("%v", err)
+			log.Error(ctx, "%v", err)
 			writeError(w, r, err)
 			return
 		}
@@ -47,7 +47,7 @@ func cachePushHandler(wk *CurrentWorker) http.HandlerFunc {
 				Message: "worker cache push > Cannot tar : " + errTar.Error(),
 				Status:  http.StatusBadRequest,
 			}
-			log.Error("%v", errTar)
+			log.Error(ctx, "%v", errTar)
 			writeError(w, r, errTar)
 			return
 		}
@@ -58,7 +58,7 @@ func cachePushHandler(wk *CurrentWorker) http.HandlerFunc {
 				Message: "worker cache push > Cannot find project",
 				Status:  http.StatusInternalServerError,
 			}
-			log.Error("%v", errP)
+			log.Error(ctx, "%v", errP)
 			writeError(w, r, errP)
 			return
 		}
@@ -69,14 +69,14 @@ func cachePushHandler(wk *CurrentWorker) http.HandlerFunc {
 				return
 			}
 			time.Sleep(3 * time.Second)
-			log.Error("worker cache push > cannot push cache (retry x%d) : %v", i, errPush)
+			log.Error(ctx, "worker cache push > cannot push cache (retry x%d) : %v", i, errPush)
 		}
 
 		err := sdk.Error{
 			Message: "worker cache push > Cannot push cache: " + errPush.Error(),
 			Status:  http.StatusInternalServerError,
 		}
-		log.Error("%v", err)
+		log.Error(ctx, "%v", err)
 		writeError(w, r, err)
 	}
 }

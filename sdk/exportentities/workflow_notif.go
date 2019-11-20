@@ -1,6 +1,7 @@
 package exportentities
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -22,13 +23,13 @@ type NotificationEntry struct {
 }
 
 // craftNotificationEntry returns the NotificationEntry and the name of the nodeEntries concerned
-func craftNotificationEntry(w sdk.Workflow, notif sdk.WorkflowNotification) ([]string, NotificationEntry, error) {
+func craftNotificationEntry(ctx context.Context, w sdk.Workflow, notif sdk.WorkflowNotification) ([]string, NotificationEntry, error) {
 	entry := NotificationEntry{}
 	nodeNames := make([]string, len(notif.SourceNodeRefs))
 	for i, ref := range notif.SourceNodeRefs {
 		node := w.WorkflowData.NodeByName(ref)
 		if node == nil {
-			log.Error("unable to find workflow node %s", ref)
+			log.Error(ctx, "unable to find workflow node %s", ref)
 			return nil, entry, sdk.ErrWorkflowNodeNotFound
 		}
 		nodeNames[i] = node.Name
@@ -87,9 +88,9 @@ func craftNotificationEntry(w sdk.Workflow, notif sdk.WorkflowNotification) ([]s
 	return nodeNames, entry, nil
 }
 
-func craftNotifications(w sdk.Workflow, exportedWorkflow *Workflow) error {
+func craftNotifications(ctx context.Context, w sdk.Workflow, exportedWorkflow *Workflow) error {
 	for _, notif := range w.Notifications {
-		nodeNames, notifEntry, err := craftNotificationEntry(w, notif)
+		nodeNames, notifEntry, err := craftNotificationEntry(ctx, w, notif)
 		if err != nil {
 			return sdk.WrapError(err, "unable to craft notification")
 		}

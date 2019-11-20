@@ -19,10 +19,10 @@ import (
 // - Filesystem
 type Driver interface {
 	GetProjectIntegration() sdk.ProjectIntegration
-	Status() sdk.MonitoringStatusLine
+	Status(ctx context.Context) sdk.MonitoringStatusLine
 	Store(o Object, data io.ReadCloser) (string, error)
 	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error)
-	Fetch(o Object) (io.ReadCloser, error)
+	Fetch(ctx context.Context, o Object) (io.ReadCloser, error)
 	Delete(o Object) error
 	DeleteContainer(containerPath string) error
 	TemporaryURLSupported() bool

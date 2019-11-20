@@ -18,7 +18,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap) {
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				log.Error("Exiting broadcast.Cleaner: %v", c.Err())
+				log.Error(c, "Exiting broadcast.Cleaner: %v", c.Err())
 				return
 			}
 		case <-tickPurge.C:

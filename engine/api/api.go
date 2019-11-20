@@ -416,14 +416,14 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 	}
 	if !hasEngine {
-		log.Error("engine is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+		log.Error(ctx, "engine is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
 	}
 	if !hasCtl {
-		log.Error("cdsctl is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+		log.Error(ctx, "cdsctl is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
 	}
 	if !hasWorker {
 		// If no worker, let's exit because CDS for run anything
-		log.Error("worker is unavailable for download. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+		log.Error(ctx, "worker is unavailable for download. Please check your configuration file or the %s directory", a.Config.Directories.Download)
 		return errors.New("worker binary unavailabe")
 	}
 
@@ -514,6 +514,7 @@ func (a *API) Serve(ctx context.Context) error {
 	//Intialize database
 	var errDB error
 	a.DBConnectionFactory, errDB = database.Init(
+		ctx,
 		a.Config.Database.User,
 		a.Config.Database.Role,
 		a.Config.Database.Password,
@@ -539,7 +540,7 @@ func (a *API) Serve(ctx context.Context) error {
 	defaultValues := sdk.DefaultValues{
 		DefaultGroupName: a.Config.Auth.DefaultGroup,
 	}
-	if err := bootstrap.InitiliazeDB(defaultValues, a.DBConnectionFactory.GetDBMap); err != nil {
+	if err := bootstrap.InitiliazeDB(ctx, defaultValues, a.DBConnectionFactory.GetDBMap); err != nil {
 		return fmt.Errorf("cannot setup databases: %v", err)
 	}
 
@@ -580,12 +581,12 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 	if err := InitRouterMetrics(a); err != nil {
-		log.Error("unable to init router metrics: %v", err)
+		log.Error(ctx, "unable to init router metrics: %v", err)
 	}
 
 	log.Info("Initializing Metrics")
 	if err := a.initMetrics(ctx); err != nil {
-		log.Error("unable to init api metrics: %v", err)
+		log.Error(ctx, "unable to init api metrics: %v", err)
 	}
 
 	// Intialize notification package
@@ -597,6 +598,7 @@ func (a *API) Serve(ctx context.Context) error {
 	a.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 	if a.Config.Auth.Local.Enabled {
 		a.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(
+			ctx,
 			a.Config.Auth.Local.SignupDisabled,
 			a.Config.URL.UI,
 			a.Config.Auth.Local.SignupAllowedDomains,
@@ -605,6 +607,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	if a.Config.Auth.LDAP.Enabled {
 		a.AuthenticationDrivers[sdk.ConsumerLDAP], err = ldap.NewDriver(
+			ctx,
 			a.Config.Auth.LDAP.SignupDisabled,
 			ldap.Config{
 				Host:            a.Config.Auth.LDAP.Host,
@@ -658,7 +661,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	log.Info("Initializing event broker...")
 	if err := event.Initialize(a.mustDB(), a.Cache); err != nil {
-		log.Error("error while initializing event system: %s", err)
+		log.Error(ctx, "error while initializing event system: %s", err)
 	} else {
 		go event.DequeueEvent(ctx, a.mustDB())
 	}
@@ -669,18 +672,18 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info("Initializing internal routines...")
 	sdk.GoRoutine(ctx, "maintenance.Subscribe", func(ctx context.Context) {
 		if err := a.listenMaintenance(ctx); err != nil {
-			log.Error("error while initializing listen maintenance routine: %s", err)
+			log.Error(ctx, "error while initializing listen maintenance routine: %s", err)
 		}
 	}, a.PanicDump())
 
 	sdk.GoRoutine(ctx, "workermodel.Initialize", func(ctx context.Context) {
 		if err := workermodel.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
-			log.Error("error while initializing worker models routine: %s", err)
+			log.Error(ctx, "error while initializing worker models routine: %s", err)
 		}
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "worker.Initialize", func(ctx context.Context) {
 		if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
-			log.Error("error while initializing workers routine: %s", err)
+			log.Error(ctx, "error while initializing workers routine: %s", err)
 		}
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "action.ComputeAudit", func(ctx context.Context) {
@@ -719,7 +722,7 @@ func (a *API) Serve(ctx context.Context) error {
 		authentication.SessionCleaner(ctx, a.mustDB)
 	}, a.PanicDump())
 
-	migrate.Add(sdk.Migration{Name: "AddDefaultVCSNotifications", Release: "0.41.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+	migrate.Add(ctx, sdk.Migration{Name: "AddDefaultVCSNotifications", Release: "0.41.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.AddDefaultVCSNotifications(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
 
@@ -839,10 +842,10 @@ func (a *API) Serve(ctx context.Context) error {
 		var heapProfile = heapProfile{uuid: sdk.UUID()}
 		s, err := a.SharedStorage.Store(heapProfile, ioutil.NopCloser(buffer))
 		if err != nil {
-			log.Error("unable to upload heap profile: %v", err)
+			log.Error(ctx, "unable to upload heap profile: %v", err)
 			return
 		}
-		log.Error("api> heap dump uploaded to %s", s)
+		log.Error(ctx, "api> heap dump uploaded to %s", s)
 	}()
 
 	log.Info("Starting CDS API HTTP Server on %s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port)
@@ -857,7 +860,7 @@ const panicDumpTTL = 60 * 60 * 24 // 24 hours
 
 func (a *API) PanicDump() func(s string) (io.WriteCloser, error) {
 	return func(s string) (io.WriteCloser, error) {
-		log.Error("API Panic stacktrace: %s", s)
+		log.Error(context.TODO(), "API Panic stacktrace: %s", s)
 		return cache.NewWriteCloser(a.Cache, cache.Key("api", "panic_dump", s), panicDumpTTL), nil
 	}
 }

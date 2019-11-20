@@ -120,7 +120,7 @@ func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 
 	report, err := UpdateOutgoingHookRunStatus(ctx, tx, store, parentProj, parentWR, wr.RootRun().HookEvent.ParentWorkflow.HookRunID, *hookrun.Callback)
 	if err != nil {
-		log.Error("workflow.UpdateParentWorkflowRun> unable to update hook run status run %s/%s#%d: %v",
+		log.Error(ctx, "workflow.UpdateParentWorkflowRun> unable to update hook run status run %s/%s#%d: %v",
 			parentProj.Key,
 			parentWR.Workflow.Name,
 			wr.RootRun().HookEvent.ParentWorkflow.Run,

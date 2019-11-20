@@ -148,7 +148,7 @@ type exportedEntities struct {
 	envs   map[string]exportentities.Environment
 }
 
-func extractFromCDSFiles(tr *tar.Reader) (*exportedEntities, error) {
+func extractFromCDSFiles(ctx context.Context, tr *tar.Reader) (*exportedEntities, error) {
 	var res = exportedEntities{
 		apps: make(map[string]exportentities.Application),
 		pips: make(map[string]exportentities.PipelineV1),
@@ -180,7 +180,7 @@ func extractFromCDSFiles(tr *tar.Reader) (*exportedEntities, error) {
 		case strings.Contains(hdr.Name, ".app."):
 			var app exportentities.Application
 			if err := yaml.Unmarshal(b, &app); err != nil {
-				log.Error("Push> Unable to unmarshal application %s: %v", hdr.Name, err)
+				log.Error(ctx, "Push> Unable to unmarshal application %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("Unable to unmarshal application %s: %v", hdr.Name, err))
 				continue
 			}
@@ -188,7 +188,7 @@ func extractFromCDSFiles(tr *tar.Reader) (*exportedEntities, error) {
 		case strings.Contains(hdr.Name, ".pip."):
 			var pip exportentities.PipelineV1
 			if err := yaml.Unmarshal(b, &pip); err != nil {
-				log.Error("Push> Unable to unmarshal pipeline %s: %v", hdr.Name, err)
+				log.Error(ctx, "Push> Unable to unmarshal pipeline %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("Unable to unmarshal pipeline %s: %v", hdr.Name, err))
 				continue
 			}
@@ -196,7 +196,7 @@ func extractFromCDSFiles(tr *tar.Reader) (*exportedEntities, error) {
 		case strings.Contains(hdr.Name, ".env."):
 			var env exportentities.Environment
 			if err := yaml.Unmarshal(b, &env); err != nil {
-				log.Error("Push> Unable to unmarshal environment %s: %v", hdr.Name, err)
+				log.Error(ctx, "Push> Unable to unmarshal environment %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("Unable to unmarshal environment %s: %v", hdr.Name, err))
 				continue
 			}
@@ -204,12 +204,12 @@ func extractFromCDSFiles(tr *tar.Reader) (*exportedEntities, error) {
 		default:
 			// if a workflow was already found, it's a mistake
 			if workflowFileName != "" {
-				log.Error("two workflows files found: %s and %s", workflowFileName, hdr.Name)
+				log.Error(ctx, "two workflows files found: %s and %s", workflowFileName, hdr.Name)
 				mError.Append(fmt.Errorf("two workflows files found: %s and %s", workflowFileName, hdr.Name))
 				break
 			}
 			if err := yaml.Unmarshal(b, &res.wrkflw); err != nil {
-				log.Error("Push> Unable to unmarshal workflow %s: %v", hdr.Name, err)
+				log.Error(ctx, "Push> Unable to unmarshal workflow %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("Unable to unmarshal workflow %s: %v", hdr.Name, err))
 				continue
 			}

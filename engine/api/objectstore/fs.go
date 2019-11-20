@@ -1,6 +1,7 @@
 package objectstore
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -39,7 +40,7 @@ func (fss *FilesystemStore) GetProjectIntegration() sdk.ProjectIntegration {
 }
 
 //Status return filesystem storage status
-func (fss *FilesystemStore) Status() sdk.MonitoringStatusLine {
+func (fss *FilesystemStore) Status(ctx context.Context) sdk.MonitoringStatusLine {
 	if _, err := os.Stat(fss.basedir); os.IsNotExist(err) {
 		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Filesystem Storage KO (" + err.Error() + ")", Status: sdk.MonitoringStatusAlert}
 	}
@@ -69,7 +70,7 @@ func (fss *FilesystemStore) Store(o Object, data io.ReadCloser) (string, error) 
 }
 
 // Fetch lookup on disk for data
-func (fss *FilesystemStore) Fetch(o Object) (io.ReadCloser, error) {
+func (fss *FilesystemStore) Fetch(ctx context.Context, o Object) (io.ReadCloser, error) {
 	dst := path.Join(fss.basedir, o.GetPath(), o.GetName())
 	return os.Open(dst)
 }

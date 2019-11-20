@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -56,7 +57,7 @@ type TakeForm struct {
 }
 
 // RegisterWorker  Register new worker
-func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.SpawnArguments, hatcheryID int64, consumer *sdk.AuthConsumer, registrationForm sdk.WorkerRegistrationForm) (*sdk.Worker, error) {
+func RegisterWorker(ctx context.Context, db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.SpawnArguments, hatcheryID int64, consumer *sdk.AuthConsumer, registrationForm sdk.WorkerRegistrationForm) (*sdk.Worker, error) {
 	if spawnArgs.WorkerName == "" {
 		return nil, sdk.WithStack(sdk.ErrWrongRequest)
 	}
@@ -104,9 +105,9 @@ func RegisterWorker(db gorp.SqlExecutor, store cache.Store, spawnArgs hatchery.S
 	//If the worker is registered for a model and it gave us BinaryCapabilities...
 	if model != nil && spawnArgs.RegisterOnly && len(registrationForm.BinaryCapabilities) > 0 && spawnArgs.Model.ID != 0 {
 		if err := workermodel.UpdateCapabilities(db, spawnArgs, registrationForm); err != nil {
-			log.Error("updateWorkerModelCapabilities> %v", err)
+			log.Error(ctx, "updateWorkerModelCapabilities> %v", err)
 		}
-		if err := workermodel.UpdateRegistration(db, store, spawnArgs.Model.ID); err != nil {
+		if err := workermodel.UpdateRegistration(ctx, db, store, spawnArgs.Model.ID); err != nil {
 			log.Warning("registerWorker> Unable to update registration: %s", err)
 		}
 	}

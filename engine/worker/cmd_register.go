@@ -27,10 +27,10 @@ func cmdRegisterRun() func(cmd *cobra.Command, args []string) {
 		initFromFlags(cmd, w)
 
 		if err := w.Register(context.Background()); err != nil {
-			log.Error("Unable to register worker %v", err)
+			log.Error(ctx, "Unable to register worker %v", err)
 		}
 		if err := w.Unregister(); err != nil {
-			log.Error("Unable to unregister worker %v", err)
+			log.Error(ctx, "Unable to unregister worker %v", err)
 		}
 	}
 }

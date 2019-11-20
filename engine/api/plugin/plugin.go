@@ -66,7 +66,7 @@ func UpdateBinary(ctx context.Context, db gorp.SqlExecutor, storageDriver object
 	}
 
 	if err := storageDriver.Delete(oldBinary); err != nil {
-		log.Error("UpdateBinary> unable to delete %+v", oldBinary)
+		log.Error(ctx, "UpdateBinary> unable to delete %+v", oldBinary)
 	}
 
 	objectPath, err := storageDriver.Store(b, r)

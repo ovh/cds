@@ -101,7 +101,7 @@ func (r *ProcessorReport) Errors() []error {
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
 // the dbFunc parameter is only used to send status to the repository manager
-func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status string) (*ProcessorReport, error) {
+func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status string) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.UpdateNodeJobRunStatus",
 		observability.Tag(observability.TagWorkflowNodeJobRun, job.ID),
@@ -232,7 +232,7 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 		return nil, nil, sdk.WrapError(errS, "Cannot select status from workflow_node_run_job node job run %d", jobID)
 	}
 
-	if err := checkStatusWaiting(store, jobID, currentStatus); err != nil {
+	if err := checkStatusWaiting(ctx, store, jobID, currentStatus); err != nil {
 		return nil, nil, err
 	}
 
@@ -244,7 +244,7 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 		}
 		return nil, nil, sdk.WrapError(errl, "cannot load node job run (WAIT) %d", jobID)
 	}
-	if err := checkStatusWaiting(store, jobID, job.Status); err != nil {
+	if err := checkStatusWaiting(ctx, store, jobID, job.Status); err != nil {
 		return nil, report, err
 	}
 
@@ -263,7 +263,7 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 	}
 
 	var err error
-	report, err = report.Merge(UpdateNodeJobRunStatus(ctx, dbFunc, db, store, p, job, sdk.StatusBuilding))
+	report, err = report.Merge(UpdateNodeJobRunStatus(ctx, db, store, p, job, sdk.StatusBuilding))
 	if err != nil {
 		log.Debug("TakeNodeJobRun> call UpdateNodeJobRunStatus on job %d set status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
 		return nil, nil, sdk.WrapError(err, "Cannot update node job run %d", jobID)
@@ -272,13 +272,13 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 	return job, report, nil
 }
 
-func checkStatusWaiting(store cache.Store, jobID int64, status string) error {
+func checkStatusWaiting(ctx context.Context, store cache.Store, jobID int64, status string) error {
 	if status != sdk.StatusWaiting {
 		k := keyBookJob(jobID)
 		h := sdk.Service{}
 		find, err := store.Get(k, &h)
 		if err != nil {
-			log.Error("cannot get from cache %s: %v", k, err)
+			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 		if find {
 			return sdk.WrapError(sdk.ErrAlreadyTaken, "job %d is not waiting status and was booked by hatchery %d. Current status:%s", jobID, h.ID, status)
@@ -289,7 +289,7 @@ func checkStatusWaiting(store cache.Store, jobID int64, status string) error {
 }
 
 // LoadNodeJobRunKeys loads all keys for a job run
-func LoadNodeJobRunKeys(db gorp.SqlExecutor, p *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Parameter, []sdk.Variable, error) {
+func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Parameter, []sdk.Variable, error) {
 	var app *sdk.Application
 	var env *sdk.Environment
 
@@ -354,7 +354,7 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, p *sdk.Project, wr *sdk.WorkflowRun
 			}
 			decrypted, errD := secret.Decrypt([]byte(unBase64))
 			if errD != nil {
-				log.Error("LoadNodeJobRunKeys> Unable to decrypt app private key %s/%s: %v", app.Name, k.Name, errD)
+				log.Error(ctx, "LoadNodeJobRunKeys> Unable to decrypt app private key %s/%s: %v", app.Name, k.Name, errD)
 			}
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
@@ -383,7 +383,7 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, p *sdk.Project, wr *sdk.WorkflowRun
 			}
 			decrypted, errD := secret.Decrypt([]byte(unBase64))
 			if errD != nil {
-				log.Error("LoadNodeJobRunKeys> Unable to decrypt env private key %s/%s: %v", env.Name, k.Name, errD)
+				log.Error(ctx, "LoadNodeJobRunKeys> Unable to decrypt env private key %s/%s: %v", env.Name, k.Name, errD)
 			}
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
@@ -514,17 +514,17 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 }
 
 //BookNodeJobRun  Book a job for a hatchery
-func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
+func BookNodeJobRun(ctx context.Context, store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
 	k := keyBookJob(id)
 	h := sdk.Service{}
 	find, err := store.Get(k, &h)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", k, err)
+		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
 	if !find {
 		// job not already booked, book it for 2 min
 		if err := store.SetWithTTL(k, hatchery, 120); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", k, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 		return nil, nil
 	}
@@ -535,16 +535,16 @@ func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Se
 }
 
 //FreeNodeJobRun  Free a job for a hatchery
-func FreeNodeJobRun(store cache.Store, id int64) error {
+func FreeNodeJobRun(ctx context.Context, store cache.Store, id int64) error {
 	k := keyBookJob(id)
 	h := sdk.Service{}
 	find, err := store.Get(k, &h)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", k, err)
+		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
 	if find {
 		if err := store.Delete(k); err != nil {
-			log.Error("error on cache delete %v: %v", k, err)
+			log.Error(ctx, "error on cache delete %v: %v", k, err)
 		}
 		return nil
 	}

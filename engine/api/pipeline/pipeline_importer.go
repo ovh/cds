@@ -216,7 +216,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 	if !ok {
 		if err := importNew(ctx, db, store, proj, pip, u); err != nil {
-			log.Error("pipeline.Import> %s", err)
+			log.Error(ctx, "pipeline.Import> %s", err)
 			if msgChan != nil {
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineCreationAborted, pip.Name)
 			}
