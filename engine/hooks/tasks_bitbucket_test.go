@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/test"
@@ -24,7 +25,7 @@ func Test_doWebHookExecutionBitbucket(t *testing.T) {
 			RequestURL: "",
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	assert.Equal(t, 1, len(hs))
@@ -54,7 +55,7 @@ func Test_doWebHookExecutionBitbucketPRReviewerUpdated(t *testing.T) {
 			},
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
@@ -97,7 +98,7 @@ func Test_doWebHookExecutionBitbucketPRReviewerApproved(t *testing.T) {
 			},
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
@@ -146,7 +147,7 @@ func Test_doWebHookExecutionBitbucketPRReviewerUnapproved(t *testing.T) {
 			},
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
@@ -195,7 +196,7 @@ func Test_doWebHookExecutionBitbucketPRReviewerNeedsWork(t *testing.T) {
 			},
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
@@ -244,7 +245,7 @@ func Test_doWebHookExecutionBitbucketPRCommentAdded(t *testing.T) {
 			},
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
@@ -292,7 +293,7 @@ func Test_doWebHookExecutionBitbucketPRCommentDeleted(t *testing.T) {
 			},
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
@@ -340,7 +341,7 @@ func Test_doWebHookExecutionBitbucketPRCommentModified(t *testing.T) {
 			},
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
@@ -390,7 +391,7 @@ func Test_doWebHookExecutionBitbucketPROpened(t *testing.T) {
 			},
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
@@ -434,7 +435,7 @@ func Test_doWebHookExecutionBitbucketPRModified(t *testing.T) {
 			},
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
@@ -481,7 +482,7 @@ func Test_doWebHookExecutionBitbucketPRMerged(t *testing.T) {
 			},
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
@@ -525,7 +526,7 @@ func Test_doWebHookExecutionBitbucketPRDeleted(t *testing.T) {
 			},
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
@@ -568,7 +569,7 @@ func Test_doWebHookExecutionBitbucketPRDeclined(t *testing.T) {
 			},
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	test.Equal(t, "john.doe", hs[0].Payload[CDS_TRIGGERED_BY_USERNAME])
@@ -606,7 +607,7 @@ func Test_doWebHookExecutionBitbucketMultiple(t *testing.T) {
 			RequestURL: "",
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	assert.Equal(t, 2, len(hs))

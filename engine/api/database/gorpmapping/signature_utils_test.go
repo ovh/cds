@@ -1,6 +1,7 @@
 package gorpmapping_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/test"
@@ -77,6 +78,6 @@ func Test_RollSignedTupleByPrimaryKey(t *testing.T) {
 	ids, err := gorpmapping.ListTupleByCanonicalForm(db, "user.authentifiedUser", res[0].Signer)
 	require.NoError(t, err)
 
-	err = gorpmapping.RollSignedTupleByPrimaryKey(db, "user.authentifiedUser", ids[0])
+	err = gorpmapping.RollSignedTupleByPrimaryKey(context.TODO(), db, "user.authentifiedUser", ids[0])
 	require.NoError(t, err)
 }

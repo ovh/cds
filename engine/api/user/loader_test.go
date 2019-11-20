@@ -20,7 +20,7 @@ func TestLoadDeprecatedUser(t *testing.T) {
 	}
 
 	db, _, _ := test.SetupPG(t)
-	assert.NoError(t, user.Insert(db, &u))
+	assert.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	result, err := user.LoadByID(context.TODO(), db, u.ID, user.LoadOptions.WithDeprecatedUser)
 	require.NoError(t, err)
@@ -38,7 +38,7 @@ func TestLoadContacts(t *testing.T) {
 	}
 
 	db, _, _ := test.SetupPG(t)
-	assert.NoError(t, user.Insert(db, &u))
+	assert.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	c := sdk.UserContact{
 		UserID:  u.ID,

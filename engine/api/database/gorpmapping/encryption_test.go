@@ -37,14 +37,14 @@ func TestEncryption(t *testing.T) {
 		AnotherSensitiveData: "another-sensitive-data",
 	}
 
-	require.NoError(t, gorpmapping.InsertAndSign(db, &d)) //
+	require.NoError(t, gorpmapping.InsertAndSign(context.TODO(), db, &d)) //
 	assert.Equal(t, "", d.SensitiveData)
 	assert.Equal(t, "", d.AnotherSensitiveData)
 
 	d.SensitiveData = "sensitive--data"
 	d.AnotherSensitiveData = "another-sensitive-data"
 
-	require.NoError(t, gorpmapping.UpdateAndSign(db, &d))
+	require.NoError(t, gorpmapping.UpdateAndSign(context.TODO(), db, &d))
 	assert.Equal(t, "", d.SensitiveData)
 	assert.Equal(t, "", d.AnotherSensitiveData)
 
@@ -89,14 +89,14 @@ func TestEncryption_Multiple(t *testing.T) {
 		SensitiveData:        "sensitive-data",
 		AnotherSensitiveData: "another-sensitive-data",
 	}
-	require.NoError(t, gorpmapping.InsertAndSign(db, &d))
+	require.NoError(t, gorpmapping.InsertAndSign(context.TODO(), db, &d))
 
 	var dd = TestEncryptedData{
 		Data:                 "data-2",
 		SensitiveData:        "sensitive-data-2",
 		AnotherSensitiveData: "another-sensitive-data-2",
 	}
-	require.NoError(t, gorpmapping.InsertAndSign(db, &dd))
+	require.NoError(t, gorpmapping.InsertAndSign(context.TODO(), db, &dd))
 
 	query := gorpmapping.NewQuery("select * from test_encrypted_data where id IN ($1, $2) order by id").Args(d.ID, dd.ID)
 	var dslice []TestEncryptedData
