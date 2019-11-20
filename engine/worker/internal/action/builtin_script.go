@@ -71,7 +71,7 @@ func prepareScriptContent(parameters []sdk.Parameter) (*script, error) {
 	return &script, nil
 }
 
-func writeScriptContent(script *script, fs afero.Fs, basedir afero.File) (func(), error) {
+func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedir afero.File) (func(), error) {
 	fi, err := basedir.Stat()
 	if err != nil {
 		return nil, err
@@ -175,7 +175,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			script.dir = workdir.Name()
 		}
 
-		deferFunc, err := writeScriptContent(script, wk.Workspace(), workdir)
+		deferFunc, err := writeScriptContent(ctx, script, wk.Workspace(), workdir)
 		if deferFunc != nil {
 			defer deferFunc()
 		}

@@ -2,6 +2,7 @@ package git
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -23,7 +24,7 @@ type Info struct {
 
 // ExtractInfo returns an info, containing git information (git.Hash, describe)
 // ignore error if a command fails (example: for empty repository)
-func ExtractInfo(dir string) (Info, error) {
+func ExtractInfo(ctx context.Context, dir string) (Info, error) {
 	var info Info
 	var err error
 	dir, err = filepath.Abs(dir)

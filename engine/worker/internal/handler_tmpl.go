@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func tmplHandler(wk *CurrentWorker) http.HandlerFunc {
+func tmplHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)

@@ -307,7 +307,7 @@ func (w *CurrentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 }
 
 // creates a working directory in $HOME/PROJECT/APP/PIP/BN
-func setupWorkingDirectory(fs afero.Fs, wd string) (afero.File, error) {
+func setupWorkingDirectory(ctx context.Context, fs afero.Fs, wd string) (afero.File, error) {
 	log.Debug("creating directory %s in Filesystem %s", wd, fs.Name())
 	if err := fs.MkdirAll(wd, 0755); err != nil {
 		return nil, err
@@ -355,13 +355,13 @@ func workingDirectory(fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes 
 	return dir, nil
 }
 
-func (w *CurrentWorker) setupWorkingDirectory(jobInfo sdk.WorkflowNodeJobRunData) (afero.File, string, error) {
+func (w *CurrentWorker) setupWorkingDirectory(ctx context.Context, jobInfo sdk.WorkflowNodeJobRunData) (afero.File, string, error) {
 	wd, err := workingDirectory(w.basedir, jobInfo, "run")
 	if err != nil {
 		return nil, "", err
 	}
 
-	wdFile, err := setupWorkingDirectory(w.basedir, wd)
+	wdFile, err := setupWorkingDirectory(ctx, w.basedir, wd)
 	if err != nil {
 		log.Debug("processJob> setupWorkingDirectory error:%s", err)
 		return nil, "", err
@@ -453,7 +453,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		}
 	}()
 
-	wdFile, wdAbs, err := w.setupWorkingDirectory(jobInfo)
+	wdFile, wdAbs, err := w.setupWorkingDirectory(ctx, jobInfo)
 	if err != nil {
 		return sdk.Result{
 			Status: sdk.StatusFail,

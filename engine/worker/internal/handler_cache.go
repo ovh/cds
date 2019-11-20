@@ -2,6 +2,7 @@ package internal
 
 import (
 	"archive/tar"
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -15,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func cachePushHandler(wk *CurrentWorker) http.HandlerFunc {
+func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		// Get body
@@ -81,7 +82,7 @@ func cachePushHandler(wk *CurrentWorker) http.HandlerFunc {
 	}
 }
 
-func cachePullHandler(wk *CurrentWorker) http.HandlerFunc {
+func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		path := r.FormValue("path")

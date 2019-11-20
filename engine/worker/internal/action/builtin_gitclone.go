@@ -226,7 +226,7 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir stri
 	authorEmail := sdk.ParameterValue(params, "git.author.email")
 	message := sdk.ParameterValue(params, "git.message")
 
-	info, err := git.ExtractInfo(filepath.Join(dir))
+	info, err := git.ExtractInfo(ctx, filepath.Join(dir))
 	if err != nil {
 		return nil, err
 	}

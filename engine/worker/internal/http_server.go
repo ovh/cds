@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func returnHTTPError(w http.ResponseWriter, code int, e error) {
+func returnHTTPError(ctx context.Context, w http.ResponseWriter, code int, e error) {
 	err := sdk.Error{
 		Message: e.Error(),
 		Status:  code,
@@ -46,18 +46,18 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	log.Info("Export variable HTTP server: %s", listener.Addr().String())
 	r := mux.NewRouter()
 
-	r.HandleFunc("/artifacts", LogMiddleware(artifactsHandler(w)))
-	r.HandleFunc("/cache/{ref}/pull", LogMiddleware(cachePullHandler(w)))
-	r.HandleFunc("/cache/{ref}/push", LogMiddleware(cachePushHandler(w)))
-	r.HandleFunc("/download", LogMiddleware(downloadHandler(w)))
-	r.HandleFunc("/exit", LogMiddleware(exitHandler(w)))
-	r.HandleFunc("/key/{key}/install", LogMiddleware(keyInstallHandler(w)))
-	r.HandleFunc("/tag", LogMiddleware(tagHandler(w)))
-	r.HandleFunc("/tmpl", LogMiddleware(tmplHandler(w)))
-	r.HandleFunc("/upload", LogMiddleware(uploadHandler(w)))
-	r.HandleFunc("/checksecret", LogMiddleware(checkSecretHandler(w)))
-	r.HandleFunc("/var", LogMiddleware(addBuildVarHandler(w)))
-	r.HandleFunc("/vulnerability", LogMiddleware(vulnerabilityHandler(w)))
+	r.HandleFunc("/artifacts", LogMiddleware(artifactsHandler(c, w)))
+	r.HandleFunc("/cache/{ref}/pull", LogMiddleware(cachePullHandler(c, w)))
+	r.HandleFunc("/cache/{ref}/push", LogMiddleware(cachePushHandler(c, w)))
+	r.HandleFunc("/download", LogMiddleware(downloadHandler(c, w)))
+	r.HandleFunc("/exit", LogMiddleware(exitHandler(c, w)))
+	r.HandleFunc("/key/{key}/install", LogMiddleware(keyInstallHandler(c, w)))
+	r.HandleFunc("/tag", LogMiddleware(tagHandler(c, w)))
+	r.HandleFunc("/tmpl", LogMiddleware(tmplHandler(c, w)))
+	r.HandleFunc("/upload", LogMiddleware(uploadHandler(c, w)))
+	r.HandleFunc("/checksecret", LogMiddleware(checkSecretHandler(c, w)))
+	r.HandleFunc("/var", LogMiddleware(addBuildVarHandler(c, w)))
+	r.HandleFunc("/vulnerability", LogMiddleware(vulnerabilityHandler(c, w)))
 
 	srv := &http.Server{
 		Handler:      r,
@@ -69,7 +69,7 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	//Start the server
 	go func() {
 		if err := srv.Serve(listener); err != nil {
-			log.Error(ctx, "%v", err)
+			log.Error(c, "%v", err)
 		}
 	}()
 

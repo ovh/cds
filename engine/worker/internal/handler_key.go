@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -15,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func keyInstallHandler(wk *CurrentWorker) http.HandlerFunc {
+func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		keyName := vars["key"]
