@@ -96,7 +96,7 @@ func TestLoadAllByRepo(t *testing.T) {
 
 	test.NoError(t, application.Insert(db, cache, &proj, app))
 
-	projs, err := project.LoadAllByRepoAndGroupIDs(db, cache, u.GetGroupIDs(), "ovh/cds")
+	projs, err := project.LoadAllByRepoAndGroupIDs(context.TODO(), db, cache, u.GetGroupIDs(), "ovh/cds")
 	assert.NoError(t, err)
 	assert.Len(t, projs, 1)
 }
