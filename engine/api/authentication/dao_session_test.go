@@ -20,19 +20,19 @@ func TestLoadSession(t *testing.T) {
 	defer end()
 
 	u := sdk.AuthentifiedUser{Username: sdk.RandomString(10)}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
-	c1, err := local.NewConsumer(db, u.ID)
-	require.NoError(t, err)
-
-	s1, err := authentication.NewSession(db, c1, time.Second, false)
-	require.NoError(t, err)
-	s2, err := authentication.NewSession(db, c1, time.Second, false)
+	c1, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err)
 
-	c2, err := local.NewConsumer(db, u.ID)
+	s1, err := authentication.NewSession(context.TODO(), db, c1, time.Second, false)
 	require.NoError(t, err)
-	s3, err := authentication.NewSession(db, c2, time.Second, false)
+	s2, err := authentication.NewSession(context.TODO(), db, c1, time.Second, false)
+	require.NoError(t, err)
+
+	c2, err := local.NewConsumer(context.TODO(), db, u.ID)
+	require.NoError(t, err)
+	s3, err := authentication.NewSession(context.TODO(), db, c2, time.Second, false)
 	require.NoError(t, err)
 
 	// LoadSessionByID
@@ -65,12 +65,12 @@ func TestInsertSession(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	test.NoError(t, user.Insert(db, &u))
+	test.NoError(t, user.Insert(context.TODO(), db, &u))
 
-	c, err := local.NewConsumer(db, u.ID)
+	c, err := local.NewConsumer(context.TODO(), db, u.ID)
 	test.NoError(t, err)
 
-	s, err := authentication.NewSession(db, c, time.Second, false)
+	s, err := authentication.NewSession(context.TODO(), db, c, time.Second, false)
 	test.NoError(t, err)
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
@@ -86,16 +86,16 @@ func TestUpdateSession(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	test.NoError(t, user.Insert(db, &u))
+	test.NoError(t, user.Insert(context.TODO(), db, &u))
 
-	c, err := local.NewConsumer(db, u.ID)
+	c, err := local.NewConsumer(context.TODO(), db, u.ID)
 	test.NoError(t, err)
 
-	s, err := authentication.NewSession(db, c, time.Second, false)
+	s, err := authentication.NewSession(context.TODO(), db, c, time.Second, false)
 	test.NoError(t, err)
 
 	s.MFA = true
-	test.NoError(t, authentication.UpdateSession(db, s))
+	test.NoError(t, authentication.UpdateSession(context.TODO(), db, s))
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
 	test.NoError(t, err)
@@ -109,12 +109,12 @@ func TestDeleteSession(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	test.NoError(t, user.Insert(db, &u))
+	test.NoError(t, user.Insert(context.TODO(), db, &u))
 
-	c, err := local.NewConsumer(db, u.ID)
+	c, err := local.NewConsumer(context.TODO(), db, u.ID)
 	test.NoError(t, err)
 
-	s, err := authentication.NewSession(db, c, time.Second, false)
+	s, err := authentication.NewSession(context.TODO(), db, c, time.Second, false)
 	test.NoError(t, err)
 
 	res, err := authentication.LoadSessionByID(context.TODO(), db, s.ID)
