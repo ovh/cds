@@ -31,7 +31,7 @@ TEST_DB_START_DOCKER = docker run -d -p $(TEST_DB_PORT):5432 -e POSTGRES_PASSWOR
 TEST_DB_DROP_DATABASE = psql -d postgres -c "drop database ${TEST_DB_NAME}"
 TEST_DB_CREATE_DATABASE = psql -d postgres -c "create database ${TEST_DB_NAME} owner ${TEST_DB_USER}" 
 TEST_DB_INIT = $(GO_BUILD) && ./engine database upgrade --db-host $(TEST_DB_HOST) --db-port $(TEST_DB_PORT) --db-user $(TEST_DB_USER) --db-password $(TEST_DB_PASSWORD) --db-name $(TEST_DB_NAME) --db-sslmode disable --migrate-dir ./sql && rm -rf ./engine
-TEST_CMD = go test -v -timeout 600s -coverprofile=profile.coverprofile
+TEST_CMD = go get -t >/dev/null && go test -v -timeout 600s -coverprofile=profile.coverprofile
 
 $(TARGET_DIR):
 	$(info create $(TARGET_DIR) directory)
