@@ -20,7 +20,7 @@ type UserToken struct {
 	UserID             int64     `json:"-" db:"user_id"`
 }
 
-// NewAuth instanciate a new Authentification struct
+// NewAuth instantiate a new Authentification struct
 func NewAuth(hashedToken string) *Auth {
 	a := &Auth{
 		HashedTokenVerify: hashedToken,

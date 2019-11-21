@@ -575,7 +575,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 							{
 								Value:   "Fail",
 								Type:    "Assertion error",
-								Message: "Error occured",
+								Message: "Error occurred",
 							},
 						},
 					},

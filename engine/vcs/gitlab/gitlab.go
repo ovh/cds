@@ -24,7 +24,7 @@ type gitlabClient struct {
 	disableStatusDetail bool
 }
 
-// gitlabConsumer implements vcs.Server and it's used to instanciate a gitlabClient
+// gitlabConsumer implements vcs.Server and it's used to instantiate a gitlabClient
 type gitlabConsumer struct {
 	URL                      string `json:"url"`
 	appID                    string
@@ -37,7 +37,7 @@ type gitlabConsumer struct {
 	disableStatusDetail      bool
 }
 
-// New instanciate a new gitlab consumer
+// New instantiate a new gitlab consumer
 func New(appID, clientSecret, URL, callbackURL, uiURL, proxyURL string, store cache.Store, disableStatus bool, disableStatusDetail bool) sdk.VCSServer {
 	return &gitlabConsumer{
 		URL:                      URL,

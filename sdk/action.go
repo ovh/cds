@@ -28,7 +28,7 @@ const (
 	DefaultGitCloneParameterTagValue = "{{.git.tag}}"
 )
 
-// NewAction instanciate a new Action
+// NewAction instantiate a new Action
 func NewAction(name string) *Action {
 	return &Action{
 		Name:    name,

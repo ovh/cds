@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// QueueFilter contains all criterias used to fetch queue
+// QueueFilter contains all criteria used to fetch queue
 type QueueFilter struct {
 	ModelType    []string
 	RatioService *int

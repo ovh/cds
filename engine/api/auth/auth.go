@@ -118,7 +118,7 @@ func GetWorker(db *gorp.DbMap, store cache.Store, workerID, workerName string) (
 //GetService returns the service instance from its hash
 func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, error) {
 	//Load the service from the cache
-	//TODO: this should be embeded in the repository layer
+	//TODO: this should be embedded in the repository layer
 	var srv = &sdk.Service{}
 	key := cache.Key("services", hash)
 	find, err := store.Get(key, srv)
@@ -142,7 +142,7 @@ func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, e
 	return srv, nil
 }
 
-// ContextValues retuns auth values of a context
+// ContextValues returns auth values of a context
 func ContextValues(ctx context.Context) map[interface{}]interface{} {
 	return map[interface{}]interface{}{
 		ContextHatchery: ctx.Value(ContextHatchery),

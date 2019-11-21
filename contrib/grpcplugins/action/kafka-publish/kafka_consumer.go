@@ -102,7 +102,7 @@ func consumeFromKafka(kafka, topic, group, user, password, key string, gpgPrivat
 				continue
 			}
 
-			//If we recieve a "Chunk" Message
+			//If we receive a "Chunk" Message
 			if kafkapublisher.IsChunk(msg) {
 				c, err := kafkapublisher.ReadBytes(msg)
 				if err != nil {

@@ -127,7 +127,7 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	return DBConnectionFactory.GetDBMap(), store, cancel
 }
 
-// LoadTestingConf loads test configuraiton tests.cfg.json
+// LoadTestingConf loads test configuration tests.cfg.json
 func LoadTestingConf(t log.Logger) map[string]string {
 	var f string
 	u, _ := user.Current()

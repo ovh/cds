@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// RepositoryEvents group all repostiory events
+// RepositoryEvents group all repository events
 type RepositoryEvents struct {
 	PushEvents        []VCSPushEvent        `json:"push_events" db:"-"`
 	CreateEvents      []VCSCreateEvent      `json:"create_events" db:"-"`
