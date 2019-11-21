@@ -65,6 +65,7 @@ require (
 	github.com/fsamin/go-dump v1.0.9
 	github.com/fsamin/go-repo v0.1.3
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
+	github.com/fsamin/smtp v0.0.0-20190904085838-54a7c428d4f9 // indirect
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
 	github.com/garyburd/redigo v1.6.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
@@ -125,6 +126,8 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/keybase/go-crypto v0.0.0-20181017165231-e696c8039bba // indirect
 	github.com/kr/fs v0.0.0-20131111012553-2788f0dbd169 // indirect
+	github.com/labstack/echo v3.3.10+incompatible // indirect
+	github.com/labstack/gommon v0.3.0 // indirect
 	github.com/lib/pq v0.0.0-20161014011634-ae8357db35d7
 	github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024 // indirect
 	github.com/magiconair/properties v0.0.0-20160908093658-0723e352fa35 // indirect
@@ -134,8 +137,6 @@ require (
 	github.com/maruel/panicparse v0.0.0-20170227222818-25bcac0d793c // indirect
 	github.com/maruel/ut v1.0.0 // indirect
 	github.com/mattbaird/elastigo v0.0.0-20170123220020-2fe47fd29e4b // indirect
-	github.com/mattn/go-colorable v0.0.5 // indirect
-	github.com/mattn/go-isatty v0.0.0-20160806122752-66b8e73f3f5c // indirect
 	github.com/mattn/go-oci8 v0.0.0-20181017025833-e3e58f4cc797 // indirect
 	github.com/mattn/go-runewidth v0.0.1 // indirect
 	github.com/mattn/go-shellwords v1.0.3 // indirect
@@ -200,7 +201,7 @@ require (
 	github.com/spf13/pflag v0.0.0-20171106142849-4c012f6dcd95 // indirect
 	github.com/spf13/viper v1.0.2
 	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
-	github.com/stretchr/testify v1.2.2
+	github.com/stretchr/testify v1.4.0
 	github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20171017195756-830351dc03c6 // indirect
 	github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926 // indirect
@@ -229,7 +230,7 @@ require (
 	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734
 	golang.org/x/net v0.0.0-20190503192946-f4e77d36d62c
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
-	golang.org/x/sys v0.0.0-20190502175342-a43fa875dd82
+	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	google.golang.org/grpc v1.20.1
