@@ -80,11 +80,11 @@ func configSetDefaults() {
 		var gerrit vcs.GerritServerConfiguration
 		defaults.SetDefaults(&gerrit)
 		conf.VCS.Servers = map[string]vcs.ServerConfiguration{
-			"Github":         vcs.ServerConfiguration{URL: "https://github.com", Github: &github},
-			"Bitbucket":      vcs.ServerConfiguration{URL: "https://mybitbucket.com", Bitbucket: &bitbucket},
-			"bitbucketcloud": vcs.ServerConfiguration{BitbucketCloud: &bitbucketcloud},
-			"Gitlab":         vcs.ServerConfiguration{URL: "https://gitlab.com", Gitlab: &gitlab},
-			"Gerrit":         vcs.ServerConfiguration{URL: "http://localhost:8080", Gerrit: &gerrit},
+			"Github":         {URL: "https://github.com", Github: &github},
+			"Bitbucket":      {URL: "https://mybitbucket.com", Bitbucket: &bitbucket},
+			"bitbucketcloud": {BitbucketCloud: &bitbucketcloud},
+			"Gitlab":         {URL: "https://gitlab.com", Gitlab: &gitlab},
+			"Gerrit":         {URL: "http://localhost:8080", Gerrit: &gerrit},
 		}
 	}
 	if conf.Repositories != nil {
