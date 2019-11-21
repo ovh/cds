@@ -224,7 +224,6 @@ func Test_getProjectHandler_CheckPermission(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projGet))
 	assert.Equal(t, true, projGet.Permissions.Readable, "readable should be true")
 	assert.Equal(t, true, projGet.Permissions.Writable, "writable should be true")
-	assert.Equal(t, true, projGet.Permissions.Executable, "executable should be true")
 
 	userAdmin, passAdmin := assets.InsertAdminUser(t, db)
 	uri = api.Router.GetRoute("GET", api.getProjectHandler, vars)
@@ -241,7 +240,6 @@ func Test_getProjectHandler_CheckPermission(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projGet))
 	assert.Equal(t, true, projGet.Permissions.Readable, "readable should be true")
 	assert.Equal(t, true, projGet.Permissions.Writable, "writable should be true")
-	assert.Equal(t, true, projGet.Permissions.Executable, "executable should be true")
 
 	userMaintainer, passMaintainer := assets.InsertMaintainerUser(t, db)
 	uri = api.Router.GetRoute("GET", api.getProjectHandler, vars)
@@ -258,7 +256,6 @@ func Test_getProjectHandler_CheckPermission(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projGet))
 	assert.Equal(t, true, projGet.Permissions.Readable, "readable should be true")
 	assert.Equal(t, false, projGet.Permissions.Writable, "writable should be false")
-	assert.Equal(t, false, projGet.Permissions.Executable, "executable should be false")
 }
 
 func Test_getProjectsHandler_WithWPermissionShouldReturnOneProject(t *testing.T) {

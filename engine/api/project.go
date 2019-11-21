@@ -297,14 +297,12 @@ func (api *API) getProjectHandler() service.Handler {
 		}
 		p.Permissions = permissions.Permissions(p.Key)
 
-		if !p.Permissions.IsMaxLevel() {
-			if !p.Permissions.Readable {
-				if isMaintainer(ctx) {
-					p.Permissions = sdk.Permissions{Readable: true, Writable: false, Executable: false}
-				}
-				if isAdmin(ctx) {
-					p.Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
-				}
+		if !p.Permissions.IsMaxLevel() && !p.Permissions.Readable {
+			if isMaintainer(ctx) {
+				p.Permissions = sdk.Permissions{Readable: true, Writable: false}
+			}
+			if isAdmin(ctx) {
+				p.Permissions = sdk.Permissions{Readable: true, Writable: true}
 			}
 		}
 

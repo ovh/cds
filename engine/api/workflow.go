@@ -49,6 +49,16 @@ func (api *API) getWorkflowsHandler() service.Handler {
 
 		for i := range ws {
 			ws[i].Permissions = perms.Permissions(ws[i].Name)
+
+			if !ws[i].Permissions.IsMaxLevel() && !ws[i].Permissions.Readable {
+				if isMaintainer(ctx) {
+					ws[i].Permissions = sdk.Permissions{Readable: true, Writable: false, Executable: false}
+				}
+				if isAdmin(ctx) {
+					ws[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+				}
+			}
+
 		}
 
 		return service.WriteJSON(w, ws, http.StatusOK)
@@ -124,6 +134,15 @@ func (api *API) getWorkflowHandler() service.Handler {
 			return err
 		}
 		w1.Permissions = perms.Permissions(w1.Name)
+
+		if !w1.Permissions.IsMaxLevel() && !w1.Permissions.Readable {
+			if isMaintainer(ctx) {
+				w1.Permissions = sdk.Permissions{Readable: true, Writable: false, Executable: false}
+			}
+			if isAdmin(ctx) {
+				w1.Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+			}
+		}
 
 		w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": key, "permWorkflowName": w1.Name})
 		w1.URLs.UIURL = api.Config.URL.UI + "/project/" + key + "/workflow/" + w1.Name
