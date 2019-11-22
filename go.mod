@@ -65,7 +65,6 @@ require (
 	github.com/fsamin/go-dump v1.0.9
 	github.com/fsamin/go-repo v0.1.3
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
-	github.com/fsamin/smtp v0.0.0-20190904085838-54a7c428d4f9 // indirect
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
 	github.com/garyburd/redigo v1.6.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
@@ -169,7 +168,8 @@ require (
 	github.com/opencontainers/selinux v1.0.0-rc1 // indirect
 	github.com/ory-am/common v0.4.0 // indirect
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
-	github.com/ovh/cds/sdk/izanami v0.0.0-20190703101657-683453b50b2a
+	github.com/ovh/cds/sdk/izanami v0.0.0-20190703081656-683453b50b2a
+	github.com/ovh/cds/tools/smtpmock v0.0.0-20191126135034-8af07831263d // indirect
 	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 // indirect
 	github.com/ovh/venom v0.25.0
 	github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c // indirect

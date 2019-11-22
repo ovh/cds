@@ -84,7 +84,7 @@ Depends: one, two
 
 	// copyBinaryFile
 	assert.Equal(t, directory{"target/test/usr/bin", os.FileMode(0755)}, mw.directories[1])
-	assert.Equal(t, copy{targetPath: "target/test", path: "usr/bin", perm: os.FileMode(0644), sources: []string{"/bin/sh"}}, mw.copies[0])
+	assert.Equal(t, copy{targetPath: "target/test", path: "usr/bin", perm: os.FileMode(0744), sources: []string{"/bin/sh"}}, mw.copies[0])
 
 	// copyConfigurationFiles
 	assert.Equal(t, directory{"target/test/etc/test", os.FileMode(0755)}, mw.directories[2])

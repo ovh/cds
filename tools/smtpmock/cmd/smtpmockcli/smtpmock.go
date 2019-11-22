@@ -1,4 +1,4 @@
-package smtpmock
+package main
 
 import (
 	"context"
@@ -11,11 +11,11 @@ type Handler struct {
 	handler smtp.HandlerFunc
 }
 
-func Handle(pattern string, handler smtp.HandlerFunc) Handler {
+func handle(pattern string, handler smtp.HandlerFunc) Handler {
 	return Handler{pattern, handler}
 }
 
-func StartServer(ctx context.Context, address string, handlers ...Handler) error {
+func startServer(ctx context.Context, address string, handlers ...Handler) error {
 	srv := smtp.NewServeMux()
 	for i := range handlers {
 		srv.HandleFunc(handlers[i].pattern, handlers[i].handler)

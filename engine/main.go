@@ -36,6 +36,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/doc"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 var (
@@ -184,44 +185,49 @@ All options
 
 		if h := conf.Hatchery; h != nil {
 			if h.Local != nil {
+				h.Swarm.Name = "local" + namesgenerator.GetRandomNameCDS(10)
 				h.Local.API.Token = sharedInfraToken
 			}
 			if h.Openstack != nil {
+				h.Swarm.Name = "openstack" + namesgenerator.GetRandomNameCDS(10)
 				h.Openstack.API.Token = sharedInfraToken
 			}
 			if h.VSphere != nil {
+				h.Swarm.Name = "vsphere" + namesgenerator.GetRandomNameCDS(10)
 				h.VSphere.API.Token = sharedInfraToken
 			}
 			if h.Swarm != nil {
+				h.Swarm.Name = "swarm_" + namesgenerator.GetRandomNameCDS(10)
 				h.Swarm.API.Token = sharedInfraToken
-				h.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
-					"sample-docker-engine": {
-						Host: "///var/run/docker.sock",
-					},
-				}
 			}
 			if h.Marathon != nil {
+				h.Swarm.Name = "marathon" + namesgenerator.GetRandomNameCDS(10)
 				conf.Hatchery.Marathon.API.Token = sharedInfraToken
 			}
 		}
 
 		if conf.UI != nil {
+			conf.UI.Name = "ui" + namesgenerator.GetRandomNameCDS(10)
 			conf.UI.API.Token = sharedInfraToken
 		}
 
 		if conf.Hooks != nil {
+			conf.Hooks.Name = "hooks" + namesgenerator.GetRandomNameCDS(10)
 			conf.Hooks.API.Token = sharedInfraToken
 		}
 
 		if conf.Repositories != nil {
+			conf.Repositories.Name = "repositories" + namesgenerator.GetRandomNameCDS(10)
 			conf.Repositories.API.Token = sharedInfraToken
 		}
 
 		if conf.DatabaseMigrate != nil {
+			conf.DatabaseMigrate.Name = "dbmigrate" + namesgenerator.GetRandomNameCDS(10)
 			conf.DatabaseMigrate.API.Token = sharedInfraToken
 		}
 
 		if conf.VCS != nil {
+			conf.VCS.Name = "vcs" + namesgenerator.GetRandomNameCDS(10)
 			conf.VCS.API.Token = sharedInfraToken
 		}
 
@@ -450,6 +456,10 @@ See $ engine config command for more details.
 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			args = strings.Split(os.Getenv("CDS_SERVICE"), " ")
+		}
+
 		if len(args) == 0 {
 			cmd.Help()
 			return
