@@ -1,7 +1,16 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    Input,
+    OnInit,
+    ViewChild
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { HookEntry, NodeEntry, WorkflowEntry } from 'app/model/export.entities.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { ThemeStore } from 'app/service/theme/theme.store';
@@ -12,6 +21,8 @@ import { FetchAsCodeWorkflow, GetWorkflow, ImportWorkflow, PreviewWorkflow } fro
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
+declare var CodeMirror: any;
+
 @Component({
     selector: 'app-workflow-sidebar-code',
     templateUrl: './sidebar.code.html',
@@ -19,7 +30,7 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarCodeComponent implements OnInit {
+export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
     @ViewChild('codeMirror', {static: false}) codemirror: any;
 
     // Project that contains the workflow
@@ -86,6 +97,37 @@ export class WorkflowSidebarCodeComponent implements OnInit {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+            }
+        });
+    }
+
+    ngAfterViewInit(): void {
+        this.codemirror.instance.on('keyup', (cm, event) => {
+            if (event.key === '@' || event.keyCode > 46 || event.keyCode === 32) {
+                CodeMirror.showHint(cm, CodeMirror.hint.workflowAsCode, {
+                    completeSingle: true,
+                    closeCharacters: / /,
+                    specialChars: '',
+                    snippets: [
+                        {
+                            'text': new WorkflowEntry().toSnippet(),
+                            'displayText': '@workflow'
+                        },
+                        {
+                            'text': new NodeEntry().toSnippet(),
+                            'displayText': '@node'
+                        },
+                        {
+                            'text': new HookEntry().toSnippet(),
+                            'displayText': '@hooks'
+                        }
+                    ],
+                    suggests: {
+                        pipelines: this.project.pipeline_names.map(n => n.name),
+                        applications: this.project.application_names.map(n => n.name),
+                        environments: this.project.environment_names.map(n => n.name)
+                    }
+                });
             }
         });
     }
