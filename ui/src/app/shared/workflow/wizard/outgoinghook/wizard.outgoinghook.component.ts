@@ -10,7 +10,6 @@ import {
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { PermissionValue } from 'app/model/permission.model';
 import { IdName, Project } from 'app/model/project.model';
 import { WorkflowHookModel } from 'app/model/workflow.hook.model';
 import { WNode, WNodeHook, WNodeOutgoingHook, WNodeType, Workflow } from 'app/model/workflow.model';
@@ -50,7 +49,6 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
     @Output() outgoinghookEvent = new EventEmitter<WNode>();
     @Output() outgoinghookChange = new EventEmitter<boolean>();
 
-    permissionEnum = PermissionValue;
     codeMirrorConfig: any;
     loadingModels = false;
     outgoingHookModels: Array<WorkflowHookModel>;

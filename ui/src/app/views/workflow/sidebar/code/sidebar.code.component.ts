@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, V
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { PermissionValue } from 'app/model/permission.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { ThemeStore } from 'app/service/theme/theme.store';
@@ -55,7 +54,6 @@ export class WorkflowSidebarCodeComponent implements OnInit {
     loading = false;
     loadingGet = true;
     previewMode = false;
-    permissionEnum = PermissionValue;
     themeSubscription: Subscription;
 
     constructor(

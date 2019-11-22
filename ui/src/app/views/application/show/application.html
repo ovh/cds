@@ -53,8 +53,7 @@
                         class="privacy icon"></i>
                     {{ 'common_keys' | translate }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')"
-                    *ngIf="application.permission === perm.READ_WRITE_EXECUTE">
+                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')">
                     <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
                 </a>
             </sm-menu>
@@ -69,14 +68,14 @@
                         </div>
                         <div *ngSwitchCase="'variables'">
                             <ng-container
-                                *ngIf="application.permission === perm.READ_WRITE_EXECUTE && !application.from_repository">
+                                *ngIf="project.permissions.writable === true && !application.from_repository">
                                 <h3>{{ 'application_variable_form_title' | translate}}</h3>
                                 <app-variable-form [loading]="varFormLoading"
                                     (createVariableEvent)="variableEvent($event)"></app-variable-form>
                             </ng-container>
                             <h3>{{ 'application_variable_list_title' | translate}}</h3>
                             <app-variable [variables]="application.variables"
-                                [mode]="(application.permission === perm.READ_WRITE_EXECUTE && !application.from_repository)?'edit':'ro'"
+                                [mode]="(project.permissions.writable === true && !application.from_repository)?'edit':'ro'"
                                 (event)="variableEvent($event)" auditContext="application" [project]="project"
                                 [application]="application"></app-variable>
                             <app-warning-modal [title]="_translate.instant('warning_modal_title')"
@@ -86,7 +85,7 @@
                         <div *ngSwitchCase="'vuln'">
                             <app-vulnerabilities [project]="project" [application]="application"
                                 [vulnerabilities]="application.vulnerabilities"
-                                [edit]="(application.permission === perm.READ_WRITE_EXECUTE && !application.from_repository)">
+                                [edit]="project.permissions.writable === true">
                             </app-vulnerabilities>
                         </div>
 
