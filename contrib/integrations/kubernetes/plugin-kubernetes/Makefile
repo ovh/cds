@@ -26,6 +26,7 @@ TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 
 GO_BUILD = go build -v
+SED_I_OPTION = `test "${OSTYPE}" = "darwin" && echo '-i ""' || echo '-i'`
 
 $(TARGET_DIR):
 	$(info create $(TARGET_DIR) directory)
@@ -46,9 +47,9 @@ build: $(TARGET_DIR)
 			FILENAME=$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 			GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$$FILENAME; \
 			echo "$$PLUGIN_MANIFEST_BINARY" > $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
-			sed -i "" "s/%os%/$$GOOS/" $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
-			sed -i "" "s/%arch%/$$GOARCH/" $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
-			sed -i "" "s/%filename%/$$FILENAME/" $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
+			sed $(SED_I_OPTION) "s/%os%/$$GOOS/" $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
+			sed $(SED_I_OPTION) "s/%arch%/$$GOARCH/" $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
+			sed $(SED_I_OPTION) "s/%filename%/$$FILENAME/" $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
 		done; \
 	done
 
