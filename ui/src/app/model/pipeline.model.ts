@@ -149,6 +149,7 @@ export class PipelineRunRequest {
 export class SpawnInfo {
     api_time: Date;
     remote_time: Date;
+    is_error: boolean;
     user_message: string;
 }
 
