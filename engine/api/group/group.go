@@ -35,12 +35,12 @@ func DeleteUserFromGroup(db gorp.SqlExecutor, groupID, userID int64) error {
 }
 
 // CheckUserInDefaultGroup insert user in default group
-func CheckUserInDefaultGroup(ctx context.Context, db gorp.SqlExecutor, userID int64) error {
-	if DefaultGroup == nil || DefaultGroup.ID == 0 {
+func CheckUserInDefaultGroup(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthentifiedUser) error {
+	if DefaultGroup == nil || DefaultGroup.ID == 0 || u == nil || u.OldUserStruct == nil || u.OldUserStruct.ID == 0 {
 		return nil
 	}
 
-	l, err := LoadLinkGroupUserForGroupIDAndUserID(ctx, db, DefaultGroup.ID, userID)
+	l, err := LoadLinkGroupUserForGroupIDAndUserID(ctx, db, DefaultGroup.ID, u.OldUserStruct.ID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return err
 	}
@@ -49,7 +49,7 @@ func CheckUserInDefaultGroup(ctx context.Context, db gorp.SqlExecutor, userID in
 	if l == nil {
 		return InsertLinkGroupUser(db, &LinkGroupUser{
 			GroupID: DefaultGroup.ID,
-			UserID:  userID,
+			UserID:  u.OldUserStruct.ID,
 			Admin:   false,
 		})
 	}

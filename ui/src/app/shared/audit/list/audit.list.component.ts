@@ -12,6 +12,7 @@ import { Column, ColumnType } from 'app/shared/table/data-table.component';
 export class AuditListComponent {
     @Input() audits: Array<AuditWorkflow>;
     @Input() loading = false;
+    @Input() canRollback = false;
     @Output() rollback: EventEmitter<number> = new EventEmitter();
     selectedAudit: AuditWorkflow;
     items: Array<Item>;
@@ -37,6 +38,7 @@ export class AuditListComponent {
             <Column<AuditWorkflow>>{
                 type: ColumnType.CONFIRM_BUTTON,
                 name: '',
+                disabled: !this.canRollback,
                 selector: (audit: AuditWorkflow) => {
                     return {
                         title: 'common_rollback',

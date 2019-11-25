@@ -147,7 +147,7 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, au *sdk.AuthentifiedUser) 
 	if au.OldUserStruct == nil {
 		oldUser := &sdk.User{
 			Admin:    u.Ring == sdk.UserRingAdmin,
-			Email:    "no-reply-" + u.Username + "@corp.ovh.com",
+			Email:    "no-reply-" + u.Username + "@localhost.local",
 			Username: u.Username,
 			Origin:   "local",
 			Fullname: u.Fullname,

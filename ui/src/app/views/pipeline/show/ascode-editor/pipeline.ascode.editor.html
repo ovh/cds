@@ -8,7 +8,7 @@
         <div class="ui bottomBtnsWrapper segment">
             <div class="ui grid">
                 <div class="sixteen wide column">
-                    <button class="ui fluid blue button" name="previewbtn" [disabled]="loading" [class.loading]="loading"
+                    <button class="ui fluid blue button" name="previewbtn" [disabled]="pipeline.from_repository || loading || !project.permissions.writable" [class.loading]="loading"
                         (click)="preview()">
                         <i class="unhide icon"></i> {{'common_preview' | translate}}
                     </button>

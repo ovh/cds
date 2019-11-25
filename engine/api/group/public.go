@@ -3,7 +3,6 @@ package group
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/go-gorp/gorp"
 
@@ -65,29 +64,10 @@ func InitializeDefaultGroupName(db gorp.SqlExecutor, defaultGrpName string) erro
 	return nil
 }
 
-// IsDefaultGroupName returns true if groupName is the defaultGroupName
-func IsDefaultGroupName(groupName string) bool {
-	if DefaultGroup == nil {
-		return false
-	}
-	return groupName == DefaultGroup.Name
-}
-
 // IsDefaultGroupID returns true if groupID is the defaultGroupID
 func IsDefaultGroupID(groupID int64) bool {
 	if DefaultGroup == nil {
 		return false
 	}
 	return groupID == DefaultGroup.ID
-}
-
-// GetIDByNameInList find id related to the group name in a given group list
-func GetIDByNameInList(groups []sdk.GroupPermission, groupName string) (int64, error) {
-	for _, gr := range groups {
-		if gr.Group.Name == groupName {
-			return gr.Group.ID, nil
-		}
-	}
-
-	return 0, fmt.Errorf("GetIDByNameInList> this group %s doesn't exist in this list", groupName)
 }
