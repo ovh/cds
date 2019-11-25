@@ -39,6 +39,8 @@ func (s *Service) getReverseProxy(path, urlRemote string) *httputil.ReverseProxy
 	origin, _ := url.Parse(urlRemote)
 	director := func(req *http.Request) {
 		reqPath := strings.TrimPrefix(req.URL.Path, path)
+		log.Info("getReverseProxy> reqPath", reqPath)
+		log.Info("getReverseProxy> host", origin.Host)
 		// on proxypass /cdshooks, allow only request on /webhook/ path
 		if path == "/cdshooks" && !strings.HasPrefix(reqPath, "/webhook/") {
 			// return 502 bad gateway
@@ -58,6 +60,8 @@ func (s *Service) uiServe(fs http.FileSystem) http.Handler {
 	fsh := http.FileServer(fs)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := fs.Open(path.Clean(r.URL.Path))
+		log.Info("uiServe> r.URL.Path", r.URL.Path)
+		log.Info("uiServe> err", err)
 		if os.IsNotExist(err) {
 			http.ServeFile(w, r, filepath.Join(s.HTMLDir, "index.html"))
 			return
