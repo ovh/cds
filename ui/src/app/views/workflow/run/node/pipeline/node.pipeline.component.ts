@@ -105,11 +105,11 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             .subscribe(nr => {
                 if (nr.stages) {
                     nr.stages.forEach(s => {
-                       if (s.run_jobs) {
-                           s.run_jobs.forEach(rj => {
-                               this.selectedRunJobParameters[rj.id] = rj.parameters;
-                           })
-                       }
+                        if (s.run_jobs) {
+                            s.run_jobs.forEach(rj => {
+                                this.selectedRunJobParameters[rj.id] = rj.parameters;
+                            })
+                        }
                     });
                 }
             })
@@ -205,6 +205,10 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                             case this.pipelineStatusEnum.SUCCESS:
                             case this.pipelineStatusEnum.FAIL:
                             case this.pipelineStatusEnum.STOPPED:
+                                console.log('run job start: ', rj.start, ', end: ', rj.done);
+                                if (rj.start === '0001-01-01T00:00:00Z') {
+
+                                }
                                 this.jobTime.set(rj.job.pipeline_action_id,
                                     this._durationService.duration(new Date(rj.start), new Date(rj.done)));
                                 break;
@@ -222,6 +226,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         if (!stillRunning) {
             this.deleteInterval();
         }
+        console.log(this.jobTime);
     }
 
     ngOnDestroy(): void {

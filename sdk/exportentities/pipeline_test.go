@@ -596,6 +596,31 @@ jobs:
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[0].Parameters, 1)
 }
 
+func Test_ImportPipelineWithOneStageAndRunConditions(t *testing.T) {
+	in := `version: v1.0
+name: echo
+stages:
+- Stage 1
+options:
+  Stage 1:
+    conditions:
+      check:
+      - variable: git.branch
+        operator: ne
+        value: ""
+jobs:
+- job: New Job
+`
+
+	payload := &exportentities.PipelineV1{}
+	test.NoError(t, yaml.Unmarshal([]byte(in), payload))
+
+	p, err := payload.Pipeline()
+	test.NoError(t, err)
+
+	assert.Len(t, p.Stages, 1)
+}
+
 func TestExportPipelineV1_YAML(t *testing.T) {
 	for _, tc := range testcases {
 		p := exportentities.NewPipelineV1(tc.arg)
