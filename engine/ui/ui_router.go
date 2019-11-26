@@ -52,6 +52,7 @@ func (s *Service) getReverseProxy(path, urlRemote string) *httputil.ReverseProxy
 			req.URL.Scheme = origin.Scheme
 			req.URL.Host = origin.Host
 			req.URL.Path = reqPath
+			req.Host = origin.Host
 		}
 		log.Info("getReverseProxy> url - %+v", req.URL)
 	}
