@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChil
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { GroupPermission } from 'app/model/group.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
@@ -14,6 +15,7 @@ import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node
 import * as actionsWorkflow from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { WorkflowGraphComponent } from 'app/views/workflow/graph/workflow.graph.component';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
@@ -31,6 +33,7 @@ export class WorkflowShowComponent implements OnInit {
     previewWorkflow: Workflow;
     workflowSubscription: Subscription;
     workflowPreviewSubscription: Subscription;
+    groups: Array<GroupPermission>;
     dataSubs: Subscription;
     paramsSubs: Subscription;
     qpsSubs: Subscription;
@@ -77,6 +80,7 @@ export class WorkflowShowComponent implements OnInit {
             if (this.detailedWorkflow) {
                 let from_repository = this.detailedWorkflow.from_repository;
                 this.previewWorkflow = this.detailedWorkflow.preview;
+                this.groups = cloneDeep(this.detailedWorkflow.groups);
                 if (this.detailedWorkflow.preview) {
                     // check to avoid "can't define property "x": "obj" is not extensible"
                     if (this.previewWorkflow.hasOwnProperty('from_repository')) {

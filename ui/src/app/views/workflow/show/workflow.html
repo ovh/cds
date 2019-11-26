@@ -94,7 +94,7 @@
             </div>
             <div *ngSwitchCase="'permissions'" class="padded">
                 <h3>{{ 'workflow_permission_list_title' | translate }}</h3>
-                <app-permission-list [permissions]="detailedWorkflow.groups" (event)="groupManagement($event)" [edit]="(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)?false:detailedWorkflow.permissions.writable"></app-permission-list>
+                <app-permission-list [permissions]="this.groups" (event)="groupManagement($event)" [edit]="detailedWorkflow.permissions.writable && !(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)"></app-permission-list>
                 <ng-container *ngIf="detailedWorkflow.permissions.writable && !(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)">
                     <h3>{{ 'workflow_permission_form_title' | translate }}</h3>
                     <app-permission-form (createGroupPermissionEvent)="groupManagement($event)" [loading]="permFormLoading"></app-permission-form>

@@ -85,7 +85,7 @@
                             <ng-container *ngIf="groups">
                                 <app-permission-list [permissions]="groups" (event)="groupManagement($event)"
                                     (permissionChange)="pushChange($event)"
-                                    [edit]="(workflow.from_repository && workflow.from_repository.length > 0)?false:!readonly">
+                                    [edit]="!readonly && !(workflow.from_repository && workflow.from_repository.length > 0)">
                                 </app-permission-list>
                             </ng-container>
                             <ng-container
