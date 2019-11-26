@@ -53,6 +53,7 @@ func (s *Service) getReverseProxy(path, urlRemote string) *httputil.ReverseProxy
 			req.URL.Host = origin.Host
 			req.URL.Path = reqPath
 		}
+		log.Info("getReverseProxy> url - %+v", req.URL)
 	}
 	return &httputil.ReverseProxy{Director: director}
 }
