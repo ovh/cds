@@ -1,11 +1,11 @@
 package main
 
-type NpmAudit struct {
-	Advisories map[int64]Advisory `json:"advisories"`
+type npmAudit struct {
+	Advisories map[int64]advisory `json:"advisories"`
 }
 
-type Advisory struct {
-	Findings        []Finding `json:"findings"`
+type advisory struct {
+	Findings        []finding `json:"findings"`
 	Title           string    `json:"title"`
 	Overview        string    `json:"overview"`
 	CVES            []string  `json:"cves"`
@@ -16,7 +16,7 @@ type Advisory struct {
 	CWE             string    `json:"cwe"`
 }
 
-type Finding struct {
+type finding struct {
 	Version string   `json:"version"`
 	Paths   []string `json:"paths"`
 }

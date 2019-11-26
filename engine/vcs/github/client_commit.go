@@ -108,7 +108,7 @@ func (g *githubClient) Commits(ctx context.Context, repo, theBranch, since, unti
 	var sinceDate time.Time
 	// Calculate since commit
 	if since == "" {
-		// If no since commit, take from the begining of the branch
+		// If no since commit, take from the beginning of the branch
 		b, errB := g.Branch(ctx, repo, theBranch)
 		if errB != nil {
 			return nil, errB

@@ -26,7 +26,7 @@ type NodeHook struct {
 	Conditions    WorkflowNodeConditions `json:"conditions" db:"conditions"`
 }
 
-//Equals checks functionnal equality between two hooks
+//Equals checks functional equality between two hooks
 func (h NodeHook) Equals(h1 NodeHook) bool {
 	if h.UUID != h1.UUID {
 		return false

@@ -167,7 +167,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			for {
 				select {
 				case err := <-errs:
-					log.Error("An error has occured: %v", err)
+					log.Error("An error has occurred: %v", err)
 					if strings.Contains(err.Error(), "not authenticated") {
 						endFunc()
 						return

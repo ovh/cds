@@ -101,7 +101,7 @@ func IsValid(db gorp.SqlExecutor, jwtToken string) (sdk.AccessToken, bool, error
 		return accessToken, false, sdk.WrapError(sdk.ErrUnauthorized, "unable find access token %s: %v", id, err)
 	}
 
-	// Check groups from the claims againts the groups in the database
+	// Check groups from the claims against the groups in the database
 	ids := sdk.GroupsToIDs(accessToken.Groups)
 	for _, groupID := range claims.Groups {
 		if !sdk.IsInInt64Array(groupID, ids) {

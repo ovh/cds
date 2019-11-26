@@ -26,10 +26,10 @@ type AsynchronousHandler func(ctx context.Context, r *http.Request) error
 // Middleware defines the HTTP Middleware used in CDS engine
 type Middleware func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error)
 
-// HandlerFunc defines the way to instanciate a handler
+// HandlerFunc defines the way to instantiate a handler
 type HandlerFunc func() Handler
 
-// AsynchronousHandlerFunc defines the way to instanciate a handler
+// AsynchronousHandlerFunc defines the way to instantiate a handler
 type AsynchronousHandlerFunc func() AsynchronousHandler
 
 // RouterConfigParam is the type of anonymous function returned by POST, GET and PUT functions

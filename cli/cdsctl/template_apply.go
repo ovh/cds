@@ -326,7 +326,7 @@ func templateApplyRun(v cli.Values) error {
 			return err
 		}
 
-		// store the choosen workflow name to git config
+		// store the chosen workflow name to git config
 		if localRepoName != "" {
 			if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
 				return err

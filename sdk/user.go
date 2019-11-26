@@ -24,7 +24,7 @@ type Favorite struct {
 // UserPermissions is the set of permissions for a user
 //easyjson:json
 type UserPermissions struct {
-	Groups        []string           `json:"Groups,omitempty"` // json key are capitalized to ensure exising data in cache are still valid
+	Groups        []string           `json:"Groups,omitempty"` // json key are capitalized to ensure existing data in cache are still valid
 	GroupsAdmin   []string           `json:"GroupsAdmin,omitempty"`
 	ProjectsPerm  UserPermissionsMap `json:"ProjectsPerm,omitempty"`
 	WorkflowsPerm UserPermissionsMap `json:"WorkflowsPerm,omitempty"`
@@ -85,7 +85,7 @@ type UserAPIResponse struct {
 // UserEmailPattern  pattern for user email address
 const UserEmailPattern = "(\\w[-._\\w]*\\w@\\w[-._\\w]*\\w\\.\\w{2,3})"
 
-// NewUser instanciate a new User
+// NewUser instantiate a new User
 func NewUser(username string) *User {
 	u := &User{
 		Username: username,

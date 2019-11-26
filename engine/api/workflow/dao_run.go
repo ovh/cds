@@ -146,7 +146,7 @@ func (r *Run) PostUpdate(db gorp.SqlExecutor) error {
 }
 
 //PostGet is a db hook on WorkflowRun
-//It loads column workflow wich is in JSONB in table workflow_run
+//It loads column workflow which is in JSONB in table workflow_run
 func (r *Run) PostGet(db gorp.SqlExecutor) error {
 	var res = struct {
 		W sql.NullString `db:"workflow"`
@@ -314,7 +314,7 @@ func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOption
 }
 
 //LoadRuns loads all runs
-//It retuns runs, offset, limit count and an error
+//It returns runs, offset, limit count and an error
 func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limit int, tagFilter map[string]string) ([]sdk.WorkflowRun, int, int, int, error) {
 	var args = []interface{}{projectkey}
 	queryCount := `select count(workflow_run.id)

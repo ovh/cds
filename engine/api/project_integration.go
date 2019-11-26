@@ -78,7 +78,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
-			return sdk.WrapError(errT, "putProjectIntegrationHandler> Cannot strat transaction")
+			return sdk.WrapError(errT, "putProjectIntegrationHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 

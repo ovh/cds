@@ -47,7 +47,8 @@ func CleanSSHKeys(path string, key *sdk.Variable) error {
 	return os.RemoveAll(filepath.Join(path, "cds.key."+key.Name+".priv"))
 }
 
-//TODO: To delete after gitclone migration
+// TODO: To delete after gitclone migration
+
 // SetupSSHKeyDEPRECATED writes all the keys in the path, or just the specified key it not nil
 func SetupSSHKeyDEPRECATED(vars []sdk.Variable, path string, key *sdk.Parameter) error {
 	if key == nil {
@@ -117,7 +118,8 @@ func GetSSHKey(vars []sdk.Variable, path string, key *sdk.Variable) (*SSHKey, er
 	return &SSHKey{Filename: p, Content: b}, nil
 }
 
-//TODO: To delete after gitclone migration
+// TODO: To delete after gitclone migration
+
 // GetSSHKeyDEPRECATED get a key in the path. If the key is nil, it will choose a default key among project, application and env variables
 func GetSSHKeyDEPRECATED(vars []sdk.Parameter, path string, key *sdk.Parameter) (*SSHKey, error) {
 	var k sdk.Parameter

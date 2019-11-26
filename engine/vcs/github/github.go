@@ -23,7 +23,7 @@ type githubClient struct {
 	token               string
 }
 
-//GithubConsumer implements vcs.Server and it's used to instanciate a githubClient
+//GithubConsumer implements vcs.Server and it's used to instantiate a githubClient
 type githubConsumer struct {
 	ClientID            string `json:"client-id"`
 	ClientSecret        string `json:"-"`

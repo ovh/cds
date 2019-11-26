@@ -58,7 +58,7 @@ func (api *API) getAllKeysProjectHandler() service.Handler {
 
 		envKeys, errP := environment.LoadAllEnvironmentKeysByProject(api.mustDB(), p.ID)
 		if errP != nil {
-			return sdk.WrapError(errP, "getAllKeysProjectHandler> Cannot load environemnt keys")
+			return sdk.WrapError(errP, "getAllKeysProjectHandler> Cannot load environment keys")
 		}
 		allkeys.EnvironmentKeys = envKeys
 

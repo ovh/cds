@@ -52,7 +52,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// Configuration is the configuraton structure for CDS API
+// Configuration is the configuration structure for CDS API
 type Configuration struct {
 	URL struct {
 		API string `toml:"api" default:"http://localhost:8081" json:"api"`
@@ -519,7 +519,7 @@ func (a *API) Serve(ctx context.Context) error {
 	if !hasWorker {
 		// If no worker, let's exit because CDS for run anything
 		log.Error("worker is unavailable for download. Please check your configuration file or the %s directory", a.Config.Directories.Download)
-		return errors.New("worker binary unavailabe")
+		return errors.New("worker binary unavailable")
 	}
 
 	//Initialize secret driver

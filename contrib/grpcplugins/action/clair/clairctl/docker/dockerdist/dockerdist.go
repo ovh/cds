@@ -117,7 +117,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		}
 		repository, confirmedV2, err = distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &types.AuthConfig{}, scopes...)
 		if err != nil {
-			fmt.Printf("cannot instanciate new v2 repository on %v\n", endpoint.URL)
+			fmt.Printf("cannot instantiate new v2 repository on %v\n", endpoint.URL)
 			return nil, err
 		}
 

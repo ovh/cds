@@ -136,7 +136,7 @@ func TestVerifyResetExpired(t *testing.T) {
 		t.Fatalf("User shoud not be verified : %s", err)
 	}
 	if err.Error() != "Reset operation expired" {
-		t.Fatalf("Reset sould be expired")
+		t.Fatalf("Reset should be expired")
 	}
 }
 

@@ -1461,7 +1461,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 					PipelineID: pip.ID,
 				},
 				Hooks: []sdk.NodeHook{
-					sdk.NodeHook{
+					{
 						Conditions: sdk.WorkflowNodeConditions{
 							LuaScript: "return false",
 						},
@@ -1618,7 +1618,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 					Mutex:      true,
 				},
 				Hooks: []sdk.NodeHook{
-					sdk.NodeHook{
+					{
 						HookModelName: sdk.WebHookModel.Name,
 						Config:        sdk.WebHookModel.DefaultConfig,
 						Ref:           "root.0",

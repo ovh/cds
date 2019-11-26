@@ -59,6 +59,7 @@ func OSExit(code int) {
 	}
 }
 
+// SubCommands represents an array of cobra.Command
 type SubCommands []*cobra.Command
 
 // NewCommand creates a new cobra command with or without a RunFunc and eventually subCommands

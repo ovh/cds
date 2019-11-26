@@ -137,7 +137,7 @@ func (h *HatcherySwarm) killAndRemoveContainer(dockerClient *dockerClient, ID st
 	if err := dockerClient.ContainerRemove(ctxDockerRemove, ID, types.ContainerRemoveOptions{RemoveVolumes: true, Force: true}); err != nil {
 		// container could be already removed by a previous call to docker
 		if !strings.Contains(err.Error(), "No such container") && !strings.Contains(err.Error(), "is already in progress") {
-      log.Error("Unable to remove container %s from %s: %v", ID, dockerClient.name, err)
+			log.Error("Unable to remove container %s from %s: %v", ID, dockerClient.name, err)
 		}
 	}
 
