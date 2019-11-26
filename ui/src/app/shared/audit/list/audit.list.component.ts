@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { AuditWorkflow } from 'app/model/audit.model';
 import { Item } from 'app/shared/diff/list/diff.list.component';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
@@ -9,7 +9,7 @@ import { Column, ColumnType } from 'app/shared/table/data-table.component';
     styleUrls: ['./audit.list.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AuditListComponent {
+export class AuditListComponent implements OnInit {
     @Input() audits: Array<AuditWorkflow>;
     @Input() loading = false;
     @Input() canRollback = false;
@@ -19,6 +19,9 @@ export class AuditListComponent {
     columns: Column<AuditWorkflow>[];
 
     constructor() {
+    }
+
+    ngOnInit(): void {
         this.columns = [
             <Column<AuditWorkflow>>{
                 type: ColumnType.TEXT,
