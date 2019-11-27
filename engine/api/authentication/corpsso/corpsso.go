@@ -2,6 +2,7 @@ package corpsso
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -132,7 +133,7 @@ func (d authDriver) CheckSigninStateToken(req sdk.AuthConsumerSigninRequest) err
 	return nil
 }
 
-func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
+func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
 	var u sdk.AuthDriverUserInfo
 	var cfg = d.Config.Token
 

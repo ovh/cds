@@ -570,7 +570,7 @@ queueRun:
 		t.Logf("##### work on job : %+v\n", j.Job.Action.Name)
 
 		//BookNodeJobRun
-		_, err = workflow.BookNodeJobRun(cache, j.ID, &sdk.Service{
+		_, err = workflow.BookNodeJobRun(context.TODO(), cache, j.ID, &sdk.Service{
 			CanonicalService: sdk.CanonicalService{
 				Name: "Hatchery",
 				ID:   1,
@@ -642,7 +642,7 @@ queueRun:
 		}
 
 		//TestUpdateNodeJobRunStatus
-		_, err = workflow.UpdateNodeJobRunStatus(context.TODO(), func() *gorp.DbMap { return db }, db, cache, proj, j, sdk.StatusSuccess)
+		_, err = workflow.UpdateNodeJobRunStatus(context.TODO(), db, cache, proj, j, sdk.StatusSuccess)
 		assert.NoError(t, err)
 		if t.Failed() {
 			tx.Rollback()

@@ -8,7 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func tagHandler(wk *CurrentWorker) http.HandlerFunc {
+func tagHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			writeError(w, r, err)

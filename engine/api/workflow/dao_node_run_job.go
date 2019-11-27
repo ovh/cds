@@ -205,10 +205,10 @@ func loadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 
 	jobs := make([]sdk.WorkflowNodeJobRun, 0, len(sqlJobs))
 	for i := range sqlJobs {
-		getHatcheryInfo(store, &sqlJobs[i])
+		getHatcheryInfo(ctx, store, &sqlJobs[i])
 		jr, err := sqlJobs[i].WorkflowNodeRunJob()
 		if err != nil {
-			log.Error("LoadNodeJobRunQueue> WorkflowNodeRunJob error: %v", err)
+			log.Error(ctx, "LoadNodeJobRunQueue> WorkflowNodeRunJob error: %v", err)
 			continue
 		}
 		jobs = append(jobs, jr)
@@ -237,7 +237,7 @@ func LoadNodeJobRunIDByNodeRunID(db gorp.SqlExecutor, runNodeID int64) ([]int64,
 }
 
 //LoadNodeJobRun load a NodeJobRun given its ID
-func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func LoadNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1`
 	if err := db.SelectOne(&j, query, id); err != nil {
@@ -250,7 +250,7 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 		return nil, sdk.WithStack(err)
 	}
 	if store != nil {
-		getHatcheryInfo(store, &j)
+		getHatcheryInfo(ctx, store, &j)
 	}
 	jr, err := j.WorkflowNodeRunJob()
 	if err != nil {
@@ -260,7 +260,7 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 }
 
 //LoadDeadNodeJobRun load a NodeJobRun which is Building but without worker
-func LoadDeadNodeJobRun(db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowNodeJobRun, error) {
+func LoadDeadNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowNodeJobRun, error) {
 	var deadJobsDB []JobRun
 	query := `SELECT workflow_node_run_job.* FROM workflow_node_run_job WHERE status = $1 AND worker_id IS NULL`
 	if _, err := db.Select(&deadJobsDB, query, sdk.StatusBuilding); err != nil {
@@ -273,7 +273,7 @@ func LoadDeadNodeJobRun(db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowN
 	deadJobs := make([]sdk.WorkflowNodeJobRun, len(deadJobsDB))
 	for i, deadJob := range deadJobsDB {
 		if store != nil {
-			getHatcheryInfo(store, &deadJob)
+			getHatcheryInfo(ctx, store, &deadJob)
 		}
 
 		jr, err := deadJob.WorkflowNodeRunJob()
@@ -287,13 +287,13 @@ func LoadDeadNodeJobRun(db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowN
 }
 
 //LoadAndLockNodeJobRunWait load for update a NodeJobRun given its ID
-func LoadAndLockNodeJobRunWait(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func LoadAndLockNodeJobRunWait(ctx context.Context, db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update`
 	if err := db.SelectOne(&j, query, id); err != nil {
 		return nil, err
 	}
-	getHatcheryInfo(store, &j)
+	getHatcheryInfo(ctx, store, &j)
 	jr, err := j.WorkflowNodeRunJob()
 	if err != nil {
 		return nil, err
@@ -315,7 +315,7 @@ func LoadAndLockNodeJobRunSkipLocked(ctx context.Context, db gorp.SqlExecutor, s
 		}
 		return nil, err
 	}
-	getHatcheryInfo(store, &j)
+	getHatcheryInfo(ctx, store, &j)
 	jr, err := j.WorkflowNodeRunJob()
 	if err != nil {
 		return nil, err
@@ -364,12 +364,12 @@ func keyBookJob(id int64) string {
 	return cache.Key("book", "job", strconv.FormatInt(id, 10))
 }
 
-func getHatcheryInfo(store cache.Store, j *JobRun) {
+func getHatcheryInfo(ctx context.Context, store cache.Store, j *JobRun) {
 	h := sdk.Service{}
 	k := keyBookJob(j.ID)
 	find, err := store.Get(k, &h)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", k, err)
+		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
 	if find {
 		j.BookedBy = h

@@ -121,7 +121,6 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 		}
 	}
 	cmd.Aliases = c.Aliases
-
 	for _, f := range c.Flags {
 		switch f.Type {
 		case FlagBool:
@@ -145,6 +144,7 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 	cmd.Long = c.Long
 	cmd.Hidden = c.Hidden
 	cmd.Example = c.Example
+
 	cmd.AddCommand(subCommands...)
 
 	if run == nil || reflect.ValueOf(run).IsNil() {
@@ -235,7 +235,9 @@ func newCommand(c Command, run interface{}, subCommands SubCommands, mods ...Com
 		n, _ := cmd.Flags().GetBool("no-interactive")
 		b, _ := cmd.Flags().GetBool("insecure")
 		v, _ := cmd.Flags().GetBool("verbose")
+		f, _ := cmd.Flags().GetString("file")
 		vals["context"] = append(vals["context"], c)
+		vals["file"] = append(vals["file"], f)
 		vals["no-interactive"] = append(vals["no-interactive"], fmt.Sprintf("%v", n))
 		vals["insecure"] = append(vals["insecure"], fmt.Sprintf("%v", b))
 		vals["verbose"] = append(vals["verbose"], fmt.Sprintf("%v", v))

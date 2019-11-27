@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 
@@ -12,7 +13,7 @@ import (
 )
 
 // projectPermissionUsers Get users that access to given project, without default group
-func projectPermissionUsers(db gorp.SqlExecutor, projectID int64, access int) ([]sdk.User, error) {
+func projectPermissionUsers(ctx context.Context, db gorp.SqlExecutor, projectID int64, access int) ([]sdk.User, error) {
 	var query string
 	users := []sdk.User{}
 	query = `
@@ -40,13 +41,13 @@ func projectPermissionUsers(db gorp.SqlExecutor, projectID int64, access int) ([
 		u := sdk.User{}
 		var data string
 		if err := rows.Scan(&u.ID, &u.Username, &data); err != nil {
-			log.Warning("permission.ApplicationPipelineEnvironmentGroups> error while scanning user : %s", err)
+			log.Warning(ctx, "permission.ApplicationPipelineEnvironmentGroups> error while scanning user : %s", err)
 			continue
 		}
 
 		uTemp := &sdk.User{}
 		if err := json.Unmarshal([]byte(data), uTemp); err != nil {
-			log.Warning("permission.ApplicationPipelineEnvironmentGroups> error while parsing user : %s", err)
+			log.Warning(ctx, "permission.ApplicationPipelineEnvironmentGroups> error while parsing user : %s", err)
 			continue
 		}
 		users = append(users, *uTemp)

@@ -162,7 +162,7 @@ func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})
 	require.NoError(t, err)
 
-	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
+	err = h.killAndRemove(context.TODO(), h.dockerClients["default"], cntr.ID)
 	require.NoError(t, err)
 }
 
@@ -208,7 +208,7 @@ func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
 	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})
 	require.NoError(t, err)
 
-	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
+	err = h.killAndRemove(context.TODO(), h.dockerClients["default"], cntr.ID)
 	require.NoError(t, err)
 }
 
@@ -243,7 +243,7 @@ func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
 	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})
 	require.NoError(t, err)
 
-	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
+	err = h.killAndRemove(context.TODO(), h.dockerClients["default"], cntr.ID)
 	require.NoError(t, err)
 }
 

@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
@@ -56,19 +57,19 @@ func New(token, addr string) (*Secret, error) {
 	}, nil
 }
 
-// Get secret from vault
+// GetFromVault Get secret from vault
 func (secret *Secret) GetFromVault(s string) (string, error) {
 	conf, err := secret.Client.Logical().Read(s)
 	if err != nil {
 		return "", err
 	} else if conf == nil {
-		log.Warning("vault> no value found at %q", s)
+		log.Warning(context.Background(), "vault> no value found at %q", s)
 		return "", nil
 	}
 
 	value, exists := conf.Data["data"]
 	if !exists {
-		log.Warning("vault> no 'data' field found for %q (you must add a field with a key named data)", s)
+		log.Warning(context.Background(), "vault> no 'data' field found for %q (you must add a field with a key named data)", s)
 		return "", nil
 	}
 
@@ -80,7 +81,7 @@ func (secret *Secret) GetFromVault(s string) (string, error) {
 func Encrypt(data []byte) ([]byte, error) {
 	// Check key is ready
 	if key == nil {
-		log.Error("Missing key, init failed?")
+		log.Error(context.TODO(), "Missing key, init failed?")
 		return nil, sdk.ErrSecretKeyFetchFailed
 	}
 	// generate nonce
@@ -115,12 +116,12 @@ func Decrypt(data []byte) ([]byte, error) {
 	data = []byte(strings.TrimPrefix(string(data), prefix))
 
 	if key == nil {
-		log.Error("Missing key, init failed?")
+		log.Error(context.TODO(), "Missing key, init failed?")
 		return nil, sdk.ErrSecretKeyFetchFailed
 	}
 
 	if len(data) < (nonceSize + macSize) {
-		log.Error("cannot decrypt secret, got invalid data")
+		log.Error(context.TODO(), "cannot decrypt secret, got invalid data")
 		return nil, sdk.ErrInvalidSecretFormat
 	}
 
@@ -210,7 +211,7 @@ func EncryptS(ptype string, value string) (sql.NullString, []byte, error) {
 
 	// Check their is no bug and data is not a password placholder
 	if value == sdk.PasswordPlaceholder {
-		log.Error("secret.Encrypt> Don't encrypt PasswordPlaceholder !\n")
+		log.Error(context.TODO(), "secret.Encrypt> Don't encrypt PasswordPlaceholder !\n")
 		return n, nil, sdk.ErrInvalidSecretValue
 	}
 

@@ -70,10 +70,10 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 		s += "\n"
 	}
 	if err != nil {
-		log.Error("SendLog> %v", err)
+		log.Error(ctx, "SendLog> %v", err)
 	}
 	if err := wk.sendLog(jobID, fmt.Sprintf("[%s] ", level)+s, stepOrder, false); err != nil {
-		log.Error("SendLog> %v", err)
+		log.Error(ctx, "SendLog> %v", err)
 	}
 }
 

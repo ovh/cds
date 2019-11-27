@@ -103,7 +103,7 @@ func BenchmarkInsertWithSignature(b *testing.B) {
 			AnotherSensitiveData: "another-sensitive-data",
 		}
 
-		require.NoError(b, gorpmapping.InsertAndSign(db, &d))
+		require.NoError(b, gorpmapping.InsertAndSign(context.TODO(), db, &d))
 	}
 }
 
@@ -119,7 +119,7 @@ func BenchmarkCheckSignature(b *testing.B) {
 		AnotherSensitiveData: "another-sensitive-data",
 	}
 
-	require.NoError(b, gorpmapping.InsertAndSign(db, &d))
+	require.NoError(b, gorpmapping.InsertAndSign(context.TODO(), db, &d))
 
 	for n := 0; n < b.N; n++ {
 		_, _ = gorpmapping.CheckSignature(d, d.GetSignature())

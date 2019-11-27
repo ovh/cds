@@ -42,7 +42,7 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 	}
 	res, err := dockerClient.ImageCreate(ctx, img, opts)
 	if err != nil {
-		log.Warning("hatchery> swarm> pullImage> Unable to pull image %s on %s: %s", img, dockerClient.name, err)
+		log.Warning(ctx, "hatchery> swarm> pullImage> Unable to pull image %s on %s: %s", img, dockerClient.name, err)
 		return sdk.WithStack(err)
 	}
 
@@ -61,7 +61,7 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 	}
 
 	log.Debug(buff.String())
-	log.Info("hatchery> swarm> pullImage> pulling image %s on %s - %.3f seconds elapsed", img, dockerClient.name, time.Since(t0).Seconds())
+	log.Info(ctx, "hatchery> swarm> pullImage> pulling image %s on %s - %.3f seconds elapsed", img, dockerClient.name, time.Since(t0).Seconds())
 
 	return nil
 }

@@ -267,7 +267,7 @@ func (api *API) addApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishAddApplication(proj.Key, app, getAPIConsumer(ctx))
+		event.PublishAddApplication(ctx, proj.Key, app, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
@@ -288,7 +288,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
-				log.Warning("deleteApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
+				log.Warning(ctx, "deleteApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
 			}
 			return err
 		}
@@ -308,7 +308,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteApplication(proj.Key, *app, getAPIConsumer(ctx))
+		event.PublishDeleteApplication(ctx, proj.Key, *app, getAPIConsumer(ctx))
 
 		return nil
 	}
@@ -398,7 +398,7 @@ func cloneApplication(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		}
 	}
 
-	event.PublishAddApplication(proj.Key, *newApp, getAPIConsumer(ctx))
+	event.PublishAddApplication(ctx, proj.Key, *newApp, getAPIConsumer(ctx))
 
 	return nil
 }
@@ -469,7 +469,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishUpdateApplication(p.Key, *app, old, getAPIConsumer(ctx))
+		event.PublishUpdateApplication(ctx, p.Key, *app, old, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 
@@ -514,7 +514,7 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 			return sdk.WrapError(err, "unable to commit tx")
 		}
 
-		event.PublishUpdateApplication(projectKey, *app, oldApp, getAPIConsumer(ctx))
+		event.PublishUpdateApplication(ctx, projectKey, *app, oldApp, getAPIConsumer(ctx))
 
 		return nil
 	}

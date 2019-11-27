@@ -97,7 +97,7 @@ func (api *API) deleteVariableFromProjectHandler() service.Handler {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot commit transaction")
 		}
 
-		event.PublishDeleteProjectVariable(p, *varToDelete, getAPIConsumer(ctx))
+		event.PublishDeleteProjectVariable(ctx, p, *varToDelete, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -141,7 +141,7 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 
 		}
 
-		event.PublishUpdateProjectVariable(p, newVar, *previousVar, getAPIConsumer(ctx))
+		event.PublishUpdateProjectVariable(ctx, p, newVar, *previousVar, getAPIConsumer(ctx))
 
 		if sdk.NeedPlaceholder(newVar.Type) {
 			newVar.Value = sdk.PasswordPlaceholder
@@ -205,7 +205,7 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 		}
 
 		// Send Add variable event
-		event.PublishAddProjectVariable(p, newVar, getAPIConsumer(ctx))
+		event.PublishAddProjectVariable(ctx, p, newVar, getAPIConsumer(ctx))
 
 		if sdk.NeedPlaceholder(newVar.Type) {
 			newVar.Value = sdk.PasswordPlaceholder

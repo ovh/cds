@@ -17,8 +17,8 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/api/workermodel"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -31,16 +31,16 @@ func VersionHandler() service.Handler {
 }
 
 // Status returns status, implements interface service.Service
-func (api *API) Status() sdk.MonitoringStatus {
+func (api *API) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := api.CommonMonitoring()
 
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK})
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK})
 	m.Lines = append(m.Lines, api.Router.StatusPanic())
-	m.Lines = append(m.Lines, event.Status())
-	m.Lines = append(m.Lines, api.SharedStorage.Status())
-	m.Lines = append(m.Lines, mail.Status())
-	m.Lines = append(m.Lines, api.DBConnectionFactory.Status())
+	m.Lines = append(m.Lines, event.Status(ctx))
+	m.Lines = append(m.Lines, api.SharedStorage.Status(ctx))
+	m.Lines = append(m.Lines, mail.Status(ctx))
+	m.Lines = append(m.Lines, api.DBConnectionFactory.Status(ctx))
 	m.Lines = append(m.Lines, workermodel.Status(api.mustDB()))
 	m.Lines = append(m.Lines, migrate.Status(api.mustDB()))
 
@@ -188,7 +188,7 @@ func (api *API) computeGlobalStatusByNumbers(s computeGlobalNumbers) string {
 
 func (api *API) initMetrics(ctx context.Context) error {
 
-	log.Info("Metrics initialized for %s/%s", api.Type(), api.Name())
+	log.Info(ctx, "Metrics initialized for %s/%s", api.Type(), api.Name())
 
 	// TODO refactor all the metrics name to replace "cds-api" by "api.Type()"
 	api.Metrics.nbUsers = stats.Int64("cds/cds-api/nb_users", "number of users", stats.UnitDimensionless)
@@ -264,7 +264,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 			select {
 			case <-ctx.Done():
 				if ctx.Err() != nil {
-					log.Error("Exiting metrics.Initialize: %v", ctx.Err())
+					log.Error(ctx, "Exiting metrics.Initialize: %v", ctx.Err())
 					return
 				}
 			case <-tick:
@@ -312,7 +312,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query string) {
 	n, err := api.mustDB().SelectInt(query)
 	if err != nil {
-		log.Warning("metrics>Errors while fetching count %s: %v", query, err)
+		log.Warning(ctx, "metrics>Errors while fetching count %s: %v", query, err)
 	}
 	observability.Record(ctx, v, n)
 }
@@ -320,7 +320,7 @@ func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query st
 func (api *API) countMetricRange(ctx context.Context, status string, timerange string, v *stats.Int64Measure, query string, args ...interface{}) {
 	n, err := api.mustDB().SelectInt(query, args...)
 	if err != nil {
-		log.Warning("metrics>Errors while fetching count range %s: %v", query, err)
+		log.Warning(ctx, "metrics>Errors while fetching count range %s: %v", query, err)
 	}
 	ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, status), tag.Upsert(tagRange, timerange))
 	observability.Record(ctx, v, n)
@@ -329,7 +329,7 @@ func (api *API) countMetricRange(ctx context.Context, status string, timerange s
 func (api *API) processStatusMetrics(ctx context.Context) {
 	srvs, err := services.LoadAll(ctx, api.mustDB())
 	if err != nil {
-		log.Error("Error while getting services list: %v", err)
+		log.Error(ctx, "Error while getting services list: %v", err)
 		return
 	}
 	mStatus := api.computeGlobalStatus(srvs)
@@ -378,7 +378,7 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 		ctx, _ = tag.New(ctx, tag.Upsert(tagServiceName, service), tag.Upsert(tagService, line.Type))
 		v, err := observability.FindAndRegisterViewLast(item, tagsService)
 		if err != nil {
-			log.Warning("metrics>Errors while FindAndRegisterViewLast %s: %v", item, err)
+			log.Warning(ctx, "metrics>Errors while FindAndRegisterViewLast %s: %v", item, err)
 			continue
 		}
 		observability.Record(ctx, v.Measure, number)

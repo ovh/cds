@@ -71,7 +71,7 @@ func prepareScriptContent(parameters []sdk.Parameter) (*script, error) {
 	return &script, nil
 }
 
-func writeScriptContent(script *script, fs afero.Fs, basedir afero.File) (func(), error) {
+func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedir afero.File) (func(), error) {
 	fi, err := basedir.Stat()
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func writeScriptContent(script *script, fs afero.Fs, basedir afero.File) (func()
 
 	tmpscript, err := fs.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
 	if err != nil {
-		log.Warning("writeScriptContent> Cannot create tmp file: %s", err)
+		log.Warning(ctx, "writeScriptContent> Cannot create tmp file: %s", err)
 		return nil, fmt.Errorf("cannot create temporary file, aborting: %v", err)
 	}
 	log.Debug("runScriptAction> writeScriptContent> Writing script to %s", tmpscript.Name())
@@ -104,9 +104,9 @@ func writeScriptContent(script *script, fs afero.Fs, basedir afero.File) (func()
 	n, errw := tmpscript.Write(script.content)
 	if errw != nil || n != len(script.content) {
 		if errw != nil {
-			log.Warning("cannot write script: %s", errw)
+			log.Warning(ctx, "cannot write script: %s", errw)
 		} else {
-			log.Warning("cannot write all script: %d/%d", n, len(script.content))
+			log.Warning(ctx, "cannot write all script: %d/%d", n, len(script.content))
 		}
 		return nil, errors.New("cannot write script in temporary file, aborting")
 	}
@@ -140,13 +140,13 @@ func writeScriptContent(script *script, fs afero.Fs, basedir afero.File) (func()
 	}
 	deferFunc := func() {
 		if err := fs.Remove(tmpFileName); err != nil {
-			log.Error("unable to remove %s: %v", tmpFileName, err)
+			log.Error(ctx, "unable to remove %s: %v", tmpFileName, err)
 		}
 	}
 
 	// Chmod file
 	if err := fs.Chmod(tmpscript.Name(), 0755); err != nil {
-		log.Warning("runScriptAction> cannot chmod script %s: %s", tmpscript.Name(), err)
+		log.Warning(ctx, "runScriptAction> cannot chmod script %s: %s", tmpscript.Name(), err)
 		return deferFunc, fmt.Errorf("cannot chmod script %s: %v, aborting", tmpscript.Name(), err)
 	}
 
@@ -175,7 +175,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			script.dir = workdir.Name()
 		}
 
-		deferFunc, err := writeScriptContent(script, wk.Workspace(), workdir)
+		deferFunc, err := writeScriptContent(ctx, script, wk.Workspace(), workdir)
 		if deferFunc != nil {
 			defer deferFunc()
 		}
@@ -183,7 +183,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			chanErr <- err
 		}
 
-		log.Info("runScriptAction> Running command %s %s in %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"), script.dir)
+		log.Info(ctx, "runScriptAction> Running command %s %s in %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"), script.dir)
 		cmd := exec.CommandContext(ctx, script.shell, script.opts...)
 		res.Status = sdk.StatusUnknown
 		cmd.Dir = script.dir
@@ -260,13 +260,13 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 	// Wait for a result
 	select {
 	case <-ctx.Done():
-		log.Error("CDS Worker execution canceled: %v", ctx.Err())
+		log.Error(ctx, "CDS Worker execution canceled: %v", ctx.Err())
 		return res, errors.New("CDS Worker execution canceled")
 	case res = <-chanRes:
 	case globalErr = <-chanErr:
 	}
 
-	log.Info("runScriptAction> %s %s", res.Status, res.Reason)
+	log.Info(ctx, "runScriptAction> %s %s", res.Status, res.Reason)
 	return res, globalErr
 }
 

@@ -23,7 +23,7 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 
 	find, err := b.consumer.cache.Get(stashCommitsKey, &stashCommits)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", stashCommitsKey, err)
+		log.Error(ctx, "cannot get from cache %s: %v", stashCommitsKey, err)
 	}
 	if !find {
 		response := CommitsResponse{}
@@ -55,7 +55,7 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 		}
 		//3 hours
 		if err := b.consumer.cache.SetWithTTL(stashCommitsKey, stashCommits, 3*60*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", stashCommitsKey, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", stashCommitsKey, err)
 		}
 	}
 
@@ -125,7 +125,7 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 
 	find, err := b.consumer.cache.Get(stashCommitsKey, &stashCommits)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", stashCommitsKey, err)
+		log.Error(ctx, "cannot get from cache %s: %v", stashCommitsKey, err)
 	}
 	if !find {
 		response := CommitsResponse{}
@@ -157,7 +157,7 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 		}
 		//3 hours
 		if err := b.consumer.cache.SetWithTTL(stashCommitsKey, stashCommits, 3*60*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", stashCommitsKey, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", stashCommitsKey, err)
 		}
 	}
 

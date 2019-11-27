@@ -20,7 +20,7 @@ import (
 func TestInsertStaticFiles(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	_ = event.Initialize(db, cache)
+	_ = event.Initialize(context.Background(), db, cache)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)

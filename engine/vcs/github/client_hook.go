@@ -111,9 +111,9 @@ func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook
 	opts := []getArgFunc{withETag}
 
 	for nextPage != "" {
-		status, body, headers, err := g.get(nextPage, opts...)
+		status, body, headers, err := g.get(ctx, nextPage, opts...)
 		if err != nil {
-			log.Warning("githubClient.PullRequests> Error %s", err)
+			log.Warning(ctx, "githubClient.PullRequests> Error %s", err)
 			return nil, sdk.WithStack(err)
 		}
 		if status >= 400 {
@@ -127,17 +127,17 @@ func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook
 			//If repos aren't updated, lets get them from cache
 			find, err := g.Cache.Get(cacheKey, &webhooks)
 			if err != nil {
-				log.Error("cannot get from cache %s: %v", cacheKey, err)
+				log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 			}
 			if !find {
 				opts[0] = withoutETag
-				log.Error("Unable to get getHooks (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
+				log.Error(ctx, "Unable to get getHooks (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
 				continue
 			}
 			break
 		} else {
 			if err := json.Unmarshal(body, &nextHooks); err != nil {
-				log.Warning("githubClient.getHooks> Unable to parse github hooks: %s", err)
+				log.Warning(ctx, "githubClient.getHooks> Unable to parse github hooks: %s", err)
 				return nil, err
 			}
 		}
@@ -147,7 +147,7 @@ func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook
 
 	//Put the body on cache for one hour and one minute
 	if err := g.Cache.SetWithTTL(cacheKey, webhooks, 61*60); err != nil {
-		log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+		log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 	}
 	return webhooks, nil
 }
@@ -159,7 +159,7 @@ func (g *githubClient) GetHook(ctx context.Context, fullname, webhookURL string)
 	}
 
 	for _, h := range hooks {
-		log.Info("hooks: %s (expecting: %s)", h.Config.URL, webhookURL)
+		log.Info(ctx, "hooks: %s (expecting: %s)", h.Config.URL, webhookURL)
 		if h.Config.URL == webhookURL {
 			return sdk.VCSHook{
 				Name:        h.Name,
@@ -180,9 +180,9 @@ func (g *githubClient) getHookByID(ctx context.Context, fullname, id string) (We
 	cacheKey := cache.Key("vcs", "github", "hooks", id, g.OAuthToken, "/repos/"+fullname+"/hooks/"+id)
 	opts := []getArgFunc{withETag}
 
-	status, body, _, err := g.get(url, opts...)
+	status, body, _, err := g.get(ctx, url, opts...)
 	if err != nil {
-		log.Warning("githubClient.PullRequests> Error %v", err)
+		log.Warning(ctx, "githubClient.PullRequests> Error %v", err)
 		return webhook, sdk.WithStack(err)
 	}
 	if status >= 400 {
@@ -195,21 +195,21 @@ func (g *githubClient) getHookByID(ctx context.Context, fullname, id string) (We
 		//If repos aren't updated, lets get them from cache
 		find, err := g.Cache.Get(cacheKey, &webhook)
 		if err != nil {
-			log.Error("cannot get from cache %s: %v", cacheKey, err)
+			log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 		}
 		if !find {
 			return webhook, sdk.WithStack(fmt.Errorf("unable to get getHooks (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, "")))
 		}
 	} else {
 		if err := json.Unmarshal(body, &webhook); err != nil {
-			log.Warning("githubClient.getHookByID> Unable to parse github hook: %v", err)
+			log.Warning(ctx, "githubClient.getHookByID> Unable to parse github hook: %v", err)
 			return webhook, err
 		}
 	}
 
 	//Put the body on cache for one hour and one minute
 	if err := g.Cache.SetWithTTL(cacheKey, webhook, 61*60); err != nil {
-		log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+		log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 	}
 	return webhook, nil
 }

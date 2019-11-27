@@ -49,7 +49,7 @@ func RunInstallKey(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, 
 
 	response, err := wk.InstallKey(*key, filename)
 	if err != nil {
-		log.Error("Unable to install key %s: %v", key.Name, err)
+		log.Error(ctx, "Unable to install key %s: %v", key.Name, err)
 		if sdkerr, ok := err.(*sdk.Error); ok {
 			return res, fmt.Errorf("%v", *sdkerr)
 		} else {

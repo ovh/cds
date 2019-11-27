@@ -27,7 +27,7 @@ func (api *API) InitRouter() {
 
 	r := api.Router
 
-	log.Info("Initializing Events broker")
+	log.Info(api.Router.Background, "Initializing Events broker")
 	// Initialize event broker
 	api.eventsBroker = &eventsBroker{
 		router:   api.Router,

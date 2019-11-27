@@ -1,6 +1,7 @@
 package event
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -13,7 +14,7 @@ import (
 
 var store cache.Store
 
-func publishEvent(e sdk.Event) error {
+func publishEvent(ctx context.Context, e sdk.Event) error {
 	if store == nil {
 		return nil
 	}
@@ -41,11 +42,11 @@ func publishEvent(e sdk.Event) error {
 	if err != nil {
 		return sdk.WrapError(err, "Cannot marshal event %+v", e)
 	}
-	return store.Publish("events_pubsub", string(b))
+	return store.Publish(ctx, "events_pubsub", string(b))
 }
 
 // Publish sends a event to a queue
-func Publish(payload interface{}, u sdk.Identifiable) {
+func Publish(ctx context.Context, payload interface{}, u sdk.Identifiable) {
 	p := structs.Map(payload)
 	var projectKey, applicationName, pipelineName, environmentName, workflowName string
 	if v, ok := p["ProjectKey"]; ok {
@@ -80,5 +81,5 @@ func Publish(payload interface{}, u sdk.Identifiable) {
 		event.Username = u.GetUsername()
 		event.UserMail = u.GetEmail()
 	}
-	publishEvent(event)
+	publishEvent(ctx, event)
 }

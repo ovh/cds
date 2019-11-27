@@ -63,12 +63,16 @@ func (p Packer) Config() Config { return p.config }
 
 // Config struct.
 type Config struct {
-	PackageName          string               `yaml:"package-name"`
-	Architecture         string               `yaml:"architecture"`
-	BinaryFile           string               `yaml:"binary-file"`
-	Command              string               `yaml:"command,omitempty"`
-	ConfigurationFiles   []string             `yaml:"configuration-files,omitempty"`
-	CopyFiles            []string             `yaml:"copy-files,omitempty"`
+	PackageName        string   `yaml:"package-name"`
+	Architecture       string   `yaml:"architecture"`
+	BinaryFile         string   `yaml:"binary-file"`
+	Command            string   `yaml:"command,omitempty"`
+	ConfigurationFiles []string `yaml:"configuration-files,omitempty"`
+	CopyFiles          []string `yaml:"copy-files,omitempty"`
+	ExtractFiles       []struct {
+		Archive     string `yaml:"archive,omitempty"`
+		Destination string `yaml:"destination,omitempty"`
+	} `yaml:"extract-files,omitempty"`
 	Mkdirs               []string             `yaml:"mkdirs,omitempty"`
 	Version              string               `yaml:"version"`
 	Description          string               `yaml:"description"`
@@ -120,6 +124,10 @@ func (p Packer) Prepare() error {
 	}
 
 	if err := p.copyOtherFiles(); err != nil {
+		return err
+	}
+
+	if err := p.extractOtherFiles(); err != nil {
 		return err
 	}
 
@@ -224,6 +232,25 @@ func (p Packer) copyOtherFiles() error {
 	}
 
 	return p.writer.CopyFiles(p.outputDirectory, path, os.FileMode(0644), p.config.CopyFiles...)
+}
+
+func (p Packer) extractOtherFiles() error {
+	if len(p.config.ExtractFiles) == 0 {
+		return nil
+	}
+
+	path := filepath.Join("var", "lib", p.config.PackageName)
+	if err := p.writer.CreateDirectory(filepath.Join(p.outputDirectory, path), os.FileMode(0755)); err != nil {
+		return err
+	}
+
+	for _, f := range p.config.ExtractFiles {
+		path = filepath.Join("var", "lib", p.config.PackageName, f.Destination)
+		if err := p.writer.ExtractArchive(p.outputDirectory, path, f.Archive); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (p Packer) writeSystemdServiceFile() error {

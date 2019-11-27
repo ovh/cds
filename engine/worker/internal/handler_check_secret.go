@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,23 +12,23 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func checkSecretHandler(wk *CurrentWorker) http.HandlerFunc {
+func checkSecretHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
-			returnHTTPError(w, 400, errRead)
+			returnHTTPError(ctx, w, 400, errRead)
 			return
 		}
 
 		var a workerruntime.FilePath
 		if err := json.Unmarshal(data, &a); err != nil {
-			returnHTTPError(w, 400, fmt.Errorf("failed to unmarshal %s", data))
+			returnHTTPError(ctx, w, 400, fmt.Errorf("failed to unmarshal %s", data))
 			return
 		}
 
 		btes, err := ioutil.ReadFile(a.Path)
 		if err != nil {
-			returnHTTPError(w, 400, fmt.Errorf("failed to read file %s", a.Path))
+			returnHTTPError(ctx, w, 400, fmt.Errorf("failed to read file %s", a.Path))
 			return
 		}
 		sbtes := string(btes)

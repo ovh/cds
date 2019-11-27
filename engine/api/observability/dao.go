@@ -1,6 +1,8 @@
 package observability
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -8,7 +10,7 @@ import (
 )
 
 // findProjetKeyForNodeRunJob load the project key from a workflow_node_run_job ID
-func findProjetKeyForNodeRunJob(db gorp.SqlExecutor, id int64) (string, error) {
+func findProjetKeyForNodeRunJob(ctx context.Context, db gorp.SqlExecutor, id int64) (string, error) {
 	query := `select project.projectkey from project
 	join workflow on workflow.project_id = project.id
 	join workflow_run on workflow_run.workflow_id = workflow.id
@@ -22,6 +24,6 @@ func findProjetKeyForNodeRunJob(db gorp.SqlExecutor, id int64) (string, error) {
 	if pkey.Valid {
 		return pkey.String, nil
 	}
-	log.Warning("FindProjetKeyForNodeRunJob> project key not found for node run job %d", id)
+	log.Warning(ctx, "FindProjetKeyForNodeRunJob> project key not found for node run job %d", id)
 	return "", nil
 }

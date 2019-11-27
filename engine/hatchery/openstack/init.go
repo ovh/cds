@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/gophercloud/gophercloud"
@@ -11,10 +12,10 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// InitHachery fetch uri from nova
+// InitHatchery fetch uri from nova
 // then list available models
 // then list available images
-func (h *HatcheryOpenstack) InitHatchery() error {
+func (h *HatcheryOpenstack) InitHatchery(ctx context.Context) error {
 	workersAlive = map[string]int64{}
 
 	authOpts := gophercloud.AuthOptions{
@@ -38,18 +39,18 @@ func (h *HatcheryOpenstack) InitHatchery() error {
 	h.openstackClient = openstackClient
 
 	if err := h.initFlavors(); err != nil {
-		log.Warning("Error getting flavors: %s", err)
+		log.Warning(ctx, "Error getting flavors: %s", err)
 	}
 
 	if err := h.initNetworks(); err != nil {
-		log.Warning("Error getting networks: %s", err)
+		log.Warning(ctx, "Error getting networks: %s", err)
 	}
 
-	if err := h.initIPStatus(); err != nil {
-		log.Warning("Error on initIPStatus(): %s", err)
+	if err := h.initIPStatus(ctx); err != nil {
+		log.Warning(ctx, "Error on initIPStatus(): %s", err)
 	}
 
-	go h.main()
+	go h.main(ctx)
 
 	return nil
 }
@@ -88,14 +89,14 @@ func (h *HatcheryOpenstack) initNetworks() error {
 // initIPStatus initializes ipsInfos to
 // add workername on ip belong to openstack-ip-range
 // this func is called once, when hatchery is starting
-func (h *HatcheryOpenstack) initIPStatus() error {
-	srvs := h.getServers()
-	log.Info("initIPStatus> %d srvs", len(srvs))
+func (h *HatcheryOpenstack) initIPStatus(ctx context.Context) error {
+	srvs := h.getServers(ctx)
+	log.Info(ctx, "initIPStatus> %d srvs", len(srvs))
 	for ip := range ipsInfos.ips {
-		log.Info("initIPStatus> checking %s", ip)
+		log.Info(ctx, "initIPStatus> checking %s", ip)
 		for _, s := range srvs {
 			if len(s.Addresses) == 0 {
-				log.Info("initIPStatus> server %s - 0 addr", s.Name)
+				log.Info(ctx, "initIPStatus> server %s - 0 addr", s.Name)
 				continue
 			}
 			for k, v := range s.Addresses {
@@ -119,7 +120,7 @@ func (h *HatcheryOpenstack) initIPStatus() error {
 						if addr != "" && version == 4 {
 							log.Debug("initIPStatus> server %s - address %s (checking %s)", s.Name, addr, ip)
 							if addr != "" && addr == ip {
-								log.Info("initIPStatus> worker %s - use IP: %s", s.Name, addr)
+								log.Info(ctx, "initIPStatus> worker %s - use IP: %s", s.Name, addr)
 								ipsInfos.ips[ip] = ipInfos{workerName: s.Name}
 							}
 						}

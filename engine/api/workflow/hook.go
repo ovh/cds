@@ -51,7 +51,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 					ID:       h.Config[sdk.HookConfigWebHookID].Value,
 				}
 				if err := client.DeleteHook(ctx, h.Config["repoFullName"].Value, vcsHook); err != nil {
-					log.Error("deleteHookConfiguration> Cannot delete hook on repository %s", err)
+					log.Error(ctx, "deleteHookConfiguration> Cannot delete hook on repository %s", err)
 				}
 			}
 		}
@@ -67,7 +67,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	if errHooks != nil || code >= 400 {
 		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
 		// so, it's just a warn log
-		log.Error("HookRegistration> unable to delete old hooks [%d]: %s", code, errHooks)
+		log.Error(ctx, "HookRegistration> unable to delete old hooks [%d]: %s", code, errHooks)
 	}
 	return nil
 }

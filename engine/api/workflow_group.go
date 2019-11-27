@@ -63,9 +63,9 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		event.PublishWorkflowPermissionDelete(key, *wf, oldGp, u)
+		event.PublishWorkflowPermissionDelete(ctx, key, *wf, oldGp, u)
 
-		log.Warning("workflow %+v\n", wf)
+		log.Warning(ctx, "workflow %+v\n", wf)
 
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}
@@ -125,7 +125,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishWorkflowPermissionUpdate(key, *wf, gp, oldGp, getAPIConsumer(ctx))
+		event.PublishWorkflowPermissionUpdate(ctx, key, *wf, gp, oldGp, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}
@@ -182,7 +182,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		event.PublishWorkflowPermissionAdd(key, *wf, gp, getAPIConsumer(ctx))
+		event.PublishWorkflowPermissionAdd(ctx, key, *wf, gp, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}

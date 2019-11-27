@@ -100,7 +100,7 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(ws))
 
-	exp, err := exportentities.NewWorkflow(*w1)
+	exp, err := exportentities.NewWorkflow(context.TODO(), *w1)
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
@@ -340,7 +340,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 
 	assertEqualNode(t, &w.WorkflowData.Node, &w1.WorkflowData.Node)
 
-	exp, err := exportentities.NewWorkflow(w)
+	exp, err := exportentities.NewWorkflow(context.TODO(), w)
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
@@ -823,17 +823,17 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	assert.Equal(t, pip3.ID, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Context.PipelineID)
 	assert.Equal(t, pip4.ID, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Triggers[0].ChildNode.Context.PipelineID)
 
-	log.Warning("%d-%d", w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
+	log.Warning(context.Background(), "%d-%d", w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
 		w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Triggers[0].ChildNode.ID)
 
-	log.Warning("%+v", w1.WorkflowData.Joins[0].JoinContext)
+	log.Warning(context.Background(), "%+v", w1.WorkflowData.Joins[0].JoinContext)
 	test.EqualValuesWithoutOrder(t, []int64{
 		w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
 		w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
 	}, []int64{w1.WorkflowData.Joins[0].JoinContext[0].ParentID, w1.WorkflowData.Joins[0].JoinContext[1].ParentID})
 	assert.Equal(t, pip5.ID, w.WorkflowData.Joins[0].Triggers[0].ChildNode.Context.PipelineID)
 
-	exp, err := exportentities.NewWorkflow(*w1)
+	exp, err := exportentities.NewWorkflow(context.TODO(), *w1)
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
@@ -1477,7 +1477,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 
 	assert.Len(t, w.WorkflowData.Node.Hooks, 1)
 
-	exp, err := exportentities.NewWorkflow(*w1)
+	exp, err := exportentities.NewWorkflow(context.TODO(), *w1)
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
@@ -1678,9 +1678,9 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 			},
 		},
 	}
-	assert.NoError(t, pipeline.Import(context.TODO(), db, cache, proj, pip, nil, u))
+	assert.NoError(t, pipeline.Import(context.Background(), db, cache, proj, pip, nil, u))
 	var errPip error
-	pip, errPip = pipeline.LoadPipeline(context.TODO(), db, proj.Key, pip.Name, true)
+	pip, errPip = pipeline.LoadPipeline(context.Background(), db, proj.Key, pip.Name, true)
 	assert.NoError(t, errPip)
 
 	// Add application
@@ -1692,7 +1692,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, globalError := application.ParseAndImport(db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, globalError := application.ParseAndImport(context.Background(), db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
 	proj.Applications = append(proj.Applications, *app)

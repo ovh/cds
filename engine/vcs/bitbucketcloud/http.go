@@ -210,7 +210,7 @@ func (client *bitbucketcloudClient) do(ctx context.Context, method, api, path st
 	case 401:
 		return sdk.WithStack(sdk.ErrUnauthorized)
 	case 400:
-		log.Warning("bitbucketClient.do> %s", string(body))
+		log.Warning(ctx, "bitbucketClient.do> %s", string(body))
 		return sdk.WithStack(sdk.ErrWrongRequest)
 	}
 

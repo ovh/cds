@@ -104,8 +104,8 @@ func (w *CurrentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.
 }
 
 func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
-	log.Info("runJob> start job %s (%d)", a.Name, jobID)
-	defer func() { log.Info("runJob> job %s (%d)", a.Name, jobID) }()
+	log.Info(ctx, "runJob> start job %s (%d)", a.Name, jobID)
+	defer func() { log.Info(ctx, "runJob> job %s (%d)", a.Name, jobID) }()
 
 	var jobResult = sdk.Result{
 		Status:  sdk.StatusSuccess,
@@ -165,8 +165,8 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 }
 
 func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64, params []sdk.Parameter, secrets []sdk.Variable, actionName string) sdk.Result {
-	log.Info("runAction> start action %s %s %d", a.StepName, actionName, jobID)
-	defer func() { log.Info("runAction> end action %s %s run %d", a.StepName, actionName, jobID) }()
+	log.Info(ctx, "runAction> start action %s %s %d", a.StepName, actionName, jobID)
+	defer func() { log.Info(ctx, "runAction> end action %s %s run %d", a.StepName, actionName, jobID) }()
 
 	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step \"%s\"", actionName))
 	var t0 = time.Now()
@@ -232,9 +232,9 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 }
 
 func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.Action, jobID int64, params []sdk.Parameter, secrets []sdk.Variable, stepName string) (sdk.Result, int) {
-	log.Info("runSteps> start action steps %s %d len(steps):%d context=%p", stepName, jobID, len(steps), ctx)
+	log.Info(ctx, "runSteps> start action steps %s %d len(steps):%d context=%p", stepName, jobID, len(steps), ctx)
 	defer func() {
-		log.Info("runSteps> end action steps %s %d len(steps):%d context=%p (%s)", stepName, jobID, len(steps), ctx, ctx.Err())
+		log.Info(ctx, "runSteps> end action steps %s %d len(steps):%d context=%p (%s)", stepName, jobID, len(steps), ctx, ctx.Err())
 	}()
 	var criticalStepFailed bool
 	var nbDisabledChildren int
@@ -292,7 +292,7 @@ func (w *CurrentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 		ctxt, cancel := context.WithTimeout(ctx, 120*time.Second)
 		lasterr := w.Client().QueueSendStepResult(ctxt, buildID, step)
 		if lasterr == nil {
-			log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d", status, buildID, stepOrder)
+			log.Info(ctx, "updateStepStatus> Sending step status %s buildID:%d stepOrder:%d", status, buildID, stepOrder)
 			cancel()
 			return nil
 		}
@@ -300,14 +300,14 @@ func (w *CurrentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 		if ctx.Err() != nil {
 			return fmt.Errorf("updateStepStatus> step:%d job:%d worker is cancelled", stepOrder, buildID)
 		}
-		log.Warning("updateStepStatus> Cannot send step %d result: err: %s - try: %d - new try in 15s", stepOrder, lasterr, try)
+		log.Warning(ctx, "updateStepStatus> Cannot send step %d result: err: %s - try: %d - new try in 15s", stepOrder, lasterr, try)
 		time.Sleep(15 * time.Second)
 	}
 	return fmt.Errorf("updateStepStatus> Could not send built result 10 times on step %d, giving up. job: %d", stepOrder, buildID)
 }
 
 // creates a working directory in $HOME/PROJECT/APP/PIP/BN
-func setupWorkingDirectory(fs afero.Fs, wd string) (afero.File, error) {
+func setupWorkingDirectory(ctx context.Context, fs afero.Fs, wd string) (afero.File, error) {
 	log.Debug("creating directory %s in Filesystem %s", wd, fs.Name())
 	if err := fs.MkdirAll(wd, 0755); err != nil {
 		return nil, err
@@ -315,10 +315,10 @@ func setupWorkingDirectory(fs afero.Fs, wd string) (afero.File, error) {
 
 	u, err := user.Current()
 	if err != nil {
-		log.Error("Error while getting current user %v", err)
+		log.Error(ctx, "Error while getting current user %v", err)
 	} else if u != nil && u.HomeDir != "" {
 		if err := os.Setenv("HOME_CDS_PLUGINS", u.HomeDir); err != nil {
-			log.Error("Error while setting home_plugin %v", err)
+			log.Error(ctx, "Error while setting home_plugin %v", err)
 		}
 	}
 
@@ -337,13 +337,13 @@ func teardownDirectory(fs afero.Fs, wd string) error {
 	return fs.RemoveAll(wd)
 }
 
-func workingDirectory(fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes ...string) (string, error) {
+func workingDirectory(ctx context.Context, fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes ...string) (string, error) {
 	var encodedName = base64.RawStdEncoding.EncodeToString([]byte(jobInfo.NodeJobRun.Job.Job.Action.Name))
 	paths := append([]string{encodedName}, suffixes...)
 	dir := path.Join(paths...)
 
 	if _, err := fs.Stat(dir); os.IsExist(err) {
-		log.Info("cleaning working directory %s", dir)
+		log.Info(ctx, "cleaning working directory %s", dir)
 		_ = fs.RemoveAll(dir)
 	}
 
@@ -355,13 +355,13 @@ func workingDirectory(fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes 
 	return dir, nil
 }
 
-func (w *CurrentWorker) setupWorkingDirectory(jobInfo sdk.WorkflowNodeJobRunData) (afero.File, string, error) {
-	wd, err := workingDirectory(w.basedir, jobInfo, "run")
+func (w *CurrentWorker) setupWorkingDirectory(ctx context.Context, jobInfo sdk.WorkflowNodeJobRunData) (afero.File, string, error) {
+	wd, err := workingDirectory(ctx, w.basedir, jobInfo, "run")
 	if err != nil {
 		return nil, "", err
 	}
 
-	wdFile, err := setupWorkingDirectory(w.basedir, wd)
+	wdFile, err := setupWorkingDirectory(ctx, w.basedir, wd)
 	if err != nil {
 		log.Debug("processJob> setupWorkingDirectory error:%s", err)
 		return nil, "", err
@@ -390,8 +390,8 @@ func (w *CurrentWorker) setupWorkingDirectory(jobInfo sdk.WorkflowNodeJobRunData
 	return wdFile, wdAbs, nil
 }
 
-func (w *CurrentWorker) setupKeysDirectory(jobInfo sdk.WorkflowNodeJobRunData) (afero.File, string, error) {
-	keysDirectory, err := workingDirectory(w.basedir, jobInfo, "keys")
+func (w *CurrentWorker) setupKeysDirectory(ctx context.Context, jobInfo sdk.WorkflowNodeJobRunData) (afero.File, string, error) {
+	keysDirectory, err := workingDirectory(ctx, w.basedir, jobInfo, "keys")
 	if err != nil {
 		return nil, "", err
 	}
@@ -433,9 +433,9 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 
 	// Timeout must be the same as the goroutine which stop jobs in package api/workflow
 	ctx, cancel := context.WithTimeout(ctx, 24*time.Hour)
-	log.Info("processJob> Process Job %s (%d)", jobInfo.NodeJobRun.Job.Action.Name, jobInfo.NodeJobRun.ID)
+	log.Info(ctx, "processJob> Process Job %s (%d)", jobInfo.NodeJobRun.Job.Action.Name, jobInfo.NodeJobRun.ID)
 	defer func() {
-		log.Info("processJob> Process Job Done %s (%d) :%s", jobInfo.NodeJobRun.Job.Action.Name, jobInfo.NodeJobRun.ID, sdk.Round(time.Since(t0), time.Second).String())
+		log.Info(ctx, "processJob> Process Job Done %s (%d) :%s", jobInfo.NodeJobRun.Job.Action.Name, jobInfo.NodeJobRun.ID, sdk.Round(time.Since(t0), time.Second).String())
 	}()
 	defer cancel()
 
@@ -444,16 +444,16 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	w.logger.logChan = make(chan sdk.Log, 100000)
 	go func() {
 		if err := w.logProcessor(ctx, jobInfo.NodeJobRun.ID); err != nil {
-			log.Error("processJob> Logs processor error: %v", err)
+			log.Error(ctx, "processJob> Logs processor error: %v", err)
 		}
 	}()
 	defer func() {
 		if err := w.drainLogsAndCloseLogger(ctx); err != nil {
-			log.Error("processJob> Drain logs error: %v", err)
+			log.Error(ctx, "processJob> Drain logs error: %v", err)
 		}
 	}()
 
-	wdFile, wdAbs, err := w.setupWorkingDirectory(jobInfo)
+	wdFile, wdAbs, err := w.setupWorkingDirectory(ctx, jobInfo)
 	if err != nil {
 		return sdk.Result{
 			Status: sdk.StatusFail,
@@ -463,7 +463,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	ctx = workerruntime.SetWorkingDirectory(ctx, wdFile)
 	log.Debug("processJob> Setup workspace - %s", wdFile.Name())
 
-	kdFile, _, err := w.setupKeysDirectory(jobInfo)
+	kdFile, _, err := w.setupKeysDirectory(ctx, jobInfo)
 	if err != nil {
 		return sdk.Result{
 			Status: sdk.StatusFail,
@@ -494,7 +494,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	// REPLACE ALL VARIABLE EVEN SECRETS HERE
 	processJobParameter(jobParameters, jobInfo.Secrets)
 	if err := w.processActionVariables(&jobInfo.NodeJobRun.Job.Action, nil, jobParameters, jobInfo.Secrets); err != nil {
-		log.Warning("processJob> Cannot process action %s parameters: %s", jobInfo.NodeJobRun.Job.Action.Name, err)
+		log.Warning(ctx, "processJob> Cannot process action %s parameters: %s", jobInfo.NodeJobRun.Job.Action.Name, err)
 		return sdk.Result{
 			Status: sdk.StatusFail,
 			Reason: fmt.Sprintf("Error: cannot process action %s parameters", jobInfo.NodeJobRun.Job.Action.Name),
@@ -519,10 +519,10 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 	}
 
 	if err := teardownDirectory(w.basedir, wdFile.Name()); err != nil {
-		log.Error("Cannot remove build directory: %s", err)
+		log.Error(ctx, "Cannot remove build directory: %s", err)
 	}
 	if err := teardownDirectory(w.basedir, wdFile.Name()); err != nil {
-		log.Error("Cannot remove keys directory: %s", err)
+		log.Error(ctx, "Cannot remove keys directory: %s", err)
 	}
 	return res, err
 }

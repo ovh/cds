@@ -27,7 +27,7 @@ func getRegistration(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Que
 		return nil, err
 	}
 	if !isValid {
-		log.Error("local.getRegistration> user registration %s data corrupted", reg.ID)
+		log.Error(ctx, "local.getRegistration> user registration %s data corrupted", reg.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
@@ -41,13 +41,13 @@ func LoadRegistrationByID(ctx context.Context, db gorp.SqlExecutor, id string) (
 }
 
 // InsertRegistration in database.
-func InsertRegistration(db gorp.SqlExecutor, ur *sdk.UserRegistration) error {
+func InsertRegistration(ctx context.Context, db gorp.SqlExecutor, ur *sdk.UserRegistration) error {
 	if ur.ID == "" {
 		ur.ID = sdk.UUID()
 	}
 	ur.Created = time.Now()
 	r := userRegistration{UserRegistration: *ur}
-	if err := gorpmapping.InsertAndSign(db, &r); err != nil {
+	if err := gorpmapping.InsertAndSign(ctx, db, &r); err != nil {
 		return sdk.WrapError(err, "unable to insert user registration")
 	}
 	*ur = r.UserRegistration

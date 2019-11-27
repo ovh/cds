@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -17,7 +18,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-func downloadHandler(wk *CurrentWorker) http.HandlerFunc {
+func downloadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {

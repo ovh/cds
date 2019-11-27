@@ -147,7 +147,7 @@ func setTemplateData(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project, w
 		return err
 	}
 
-	event.PublishWorkflowTemplateInstanceUpdate(old, *wti, u)
+	event.PublishWorkflowTemplateInstanceUpdate(ctx, old, *wti, u)
 
 	return nil
 }

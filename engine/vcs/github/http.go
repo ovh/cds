@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -64,7 +65,7 @@ func (g *githubConsumer) postForm(path string, data url.Values, headers map[stri
 	return res.StatusCode, resBody, nil
 }
 
-func (c *githubClient) setETag(path string, headers http.Header) {
+func (c *githubClient) setETag(ctx context.Context, path string, headers http.Header) {
 	etag := headers.Get("ETag")
 
 	r, _ := regexp.Compile(".*\"(.*)\".*")
@@ -77,16 +78,16 @@ func (c *githubClient) setETag(path string, headers http.Header) {
 		//Put etag for this path in cache for 15 minutes
 		k := cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1))
 		if err := c.Cache.SetWithTTL(k, etag, 15*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", k, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 	}
 }
 
-func (c *githubClient) getETag(path string) string {
+func (c *githubClient) getETag(ctx context.Context, path string) string {
 	var s string
 	k := cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1))
 	if _, err := c.Cache.Get(k, &s); err != nil {
-		log.Error("cannot get from cache %s: %v", k, err)
+		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
 	return s
 }
@@ -109,15 +110,15 @@ func getNextPage(headers http.Header) string {
 	return ""
 }
 
-type getArgFunc func(c *githubClient, req *http.Request, path string)
+type getArgFunc func(ctx context.Context, c *githubClient, req *http.Request, path string)
 
-func withETag(c *githubClient, req *http.Request, path string) {
-	etag := c.getETag(path)
+func withETag(ctx context.Context, c *githubClient, req *http.Request, path string) {
+	etag := c.getETag(ctx, path)
 	if etag != "" {
 		req.Header.Add("If-None-Match", fmt.Sprintf("W/\"%s\"", etag))
 	}
 }
-func withoutETag(c *githubClient, req *http.Request, path string) {}
+func withoutETag(ctx context.Context, c *githubClient, req *http.Request, path string) {}
 
 type postOptions struct {
 	skipDefaultBaseURL bool
@@ -207,7 +208,7 @@ func (c *githubClient) put(path string, bodyType string, body io.Reader, opts *p
 	return httpClient.Do(req)
 }
 
-func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.Header, error) {
+func (c *githubClient) get(ctx context.Context, path string, opts ...getArgFunc) (int, []byte, http.Header, error) {
 	if isRateLimitReached() {
 		return 0, nil, nil, ErrorRateLimit
 	}
@@ -231,10 +232,10 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 	req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
 
 	if opts == nil {
-		withETag(c, req, path)
+		withETag(ctx, c, req, path)
 	} else {
 		for _, o := range opts {
-			o(c, req, path)
+			o(ctx, c, req, path)
 		}
 	}
 
@@ -253,7 +254,7 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 		location := res.Header.Get("Location")
 		if location != "" {
 			log.Debug("Github API>> Response Follow redirect :%s", location)
-			return c.get(location)
+			return c.get(ctx, location)
 		}
 	case http.StatusUnauthorized:
 		return res.StatusCode, nil, nil, ErrorUnauthorized
@@ -264,7 +265,7 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 		return res.StatusCode, nil, nil, err
 	}
 
-	c.setETag(path, res.Header)
+	c.setETag(ctx, path, res.Header)
 
 	rateLimitLimit := res.Header.Get("X-RateLimit-Limit")
 	rateLimitRemaining := res.Header.Get("X-RateLimit-Remaining")

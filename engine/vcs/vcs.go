@@ -154,7 +154,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 
 // Serve will start the http api server
 func (s *Service) Serve(c context.Context) error {
-	log.Info("VCS> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
+	log.Info(c, "VCS> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
 	s.StartupTime = time.Now()
 
 	//Init the cache
@@ -175,16 +175,16 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	//Start the http server
-	log.Info("VCS> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+	log.Info(c, "VCS> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Error("VCS> Listen and serve failed: %s", err)
+		log.Error(c, "VCS> Listen and serve failed: %s", err)
 	}
 
 	//Gracefully shutdown the http server
 	go func() {
 		select {
 		case <-c.Done():
-			log.Info("VCS> Shutdown HTTP Server")
+			log.Info(c, "VCS> Shutdown HTTP Server")
 			server.Shutdown(c)
 		}
 	}()

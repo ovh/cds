@@ -124,7 +124,7 @@ func (api *API) postTemplateHandler() service.Handler {
 			return err
 		}
 
-		event.PublishWorkflowTemplateAdd(*newTemplate, getAPIConsumer(ctx))
+		event.PublishWorkflowTemplateAdd(ctx, *newTemplate, getAPIConsumer(ctx))
 
 		if err := workflowtemplate.LoadOptions.WithAudits(ctx, api.mustDB(), newTemplate); err != nil {
 			return err
@@ -246,7 +246,7 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
-		event.PublishWorkflowTemplateUpdate(*old, *newTemplate, data.ChangeMessage, getAPIConsumer(ctx))
+		event.PublishWorkflowTemplateUpdate(ctx, *old, *newTemplate, data.ChangeMessage, getAPIConsumer(ctx))
 
 		if err := workflowtemplate.LoadOptions.WithAudits(ctx, api.mustDB(), newTemplate); err != nil {
 			return err
@@ -387,9 +387,9 @@ func (api *API) applyTemplate(ctx context.Context, u sdk.Identifiable, p *sdk.Pr
 	}
 
 	if old != nil {
-		event.PublishWorkflowTemplateInstanceUpdate(*old, *wti, u)
+		event.PublishWorkflowTemplateInstanceUpdate(ctx, *old, *wti, u)
 	} else if !req.Detached {
-		event.PublishWorkflowTemplateInstanceAdd(*wti, u)
+		event.PublishWorkflowTemplateInstanceAdd(ctx, *wti, u)
 	}
 
 	return result, nil
@@ -457,7 +457,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		}
 
 		buf := new(bytes.Buffer)
-		if err := workflowtemplate.Tar(wt, res, buf); err != nil {
+		if err := workflowtemplate.Tar(ctx, wt, res, buf); err != nil {
 			return err
 		}
 
@@ -550,7 +550,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 				if bulk.Operations[i].Status == sdk.OperationStatusPending {
 					bulk.Operations[i].Status = sdk.OperationStatusProcessing
 					if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
-						log.Error("%v", err)
+						log.Error(ctx, "%v", err)
 						return
 					}
 
@@ -576,7 +576,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						project.LoadOptions.WithIntegrations)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
-							log.Error("%v", errD)
+							log.Error(ctx, "%v", errD)
 							return
 						}
 						continue
@@ -586,16 +586,16 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					res, err := api.applyTemplate(ctx, consumer, p, wt, bulk.Operations[i].Request)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
-							log.Error("%v", errD)
+							log.Error(ctx, "%v", errD)
 							return
 						}
 						continue
 					}
 
 					buf := new(bytes.Buffer)
-					if err := workflowtemplate.Tar(wt, res, buf); err != nil {
+					if err := workflowtemplate.Tar(ctx, wt, res, buf); err != nil {
 						if errD := errorDefer(err); errD != nil {
-							log.Error("%v", errD)
+							log.Error(ctx, "%v", errD)
 							return
 						}
 						continue
@@ -606,7 +606,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					_, _, err = workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, consumer, project.DecryptWithBuiltinKey)
 					if err != nil {
 						if errD := errorDefer(sdk.WrapError(err, "cannot push generated workflow")); errD != nil {
-							log.Error("%v", errD)
+							log.Error(ctx, "%v", errD)
 							return
 						}
 						continue
@@ -614,7 +614,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 					bulk.Operations[i].Status = sdk.OperationStatusDone
 					if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
-						log.Error("%v", err)
+						log.Error(ctx, "%v", err)
 						return
 					}
 				}
@@ -815,7 +815,7 @@ func (api *API) postTemplatePullHandler() service.Handler {
 		}
 
 		buf := new(bytes.Buffer)
-		if err := workflowtemplate.Pull(wt, exportentities.FormatYAML, buf); err != nil {
+		if err := workflowtemplate.Pull(ctx, wt, exportentities.FormatYAML, buf); err != nil {
 			return err
 		}
 
@@ -830,7 +830,7 @@ func (api *API) postTemplatePushHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		btes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Error("%v", sdk.WrapError(err, "unable to read body"))
+			log.Error(ctx, "%v", sdk.WrapError(err, "unable to read body"))
 			return sdk.ErrWrongRequest
 		}
 		defer r.Body.Close()

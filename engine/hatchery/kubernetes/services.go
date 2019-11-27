@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (h *HatcheryKubernetes) getServicesLogs() error {
+func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 	pods, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_SERVICE_JOB_ID})
 	if err != nil {
 		return err
@@ -24,13 +24,13 @@ func (h *HatcheryKubernetes) getServicesLogs() error {
 		podName := pod.GetName()
 		labels := pod.GetLabels()
 		if labels == nil {
-			log.Error("getServicesLogs> labels is nil")
+			log.Error(ctx, "getServicesLogs> labels is nil")
 			continue
 		}
 
 		serviceJobID, errPj := strconv.ParseInt(labels[LABEL_SERVICE_JOB_ID], 10, 64)
 		if errPj != nil {
-			log.Error("getServicesLogs> cannot parse service job id for pod service %s, err : %v", podName, errPj)
+			log.Error(ctx, "getServicesLogs> cannot parse service job id for pod service %s, err : %v", podName, errPj)
 			continue
 		}
 
@@ -41,13 +41,13 @@ func (h *HatcheryKubernetes) getServicesLogs() error {
 				continue
 			}
 			if len(subsStr[0]) < 3 {
-				log.Error("getServiceLogs> cannot find service id in the container name (%s) : %v", container.Name, subsStr)
+				log.Error(ctx, "getServiceLogs> cannot find service id in the container name (%s) : %v", container.Name, subsStr)
 				continue
 			}
 			logsOpts := apiv1.PodLogOptions{SinceSeconds: &sinceSeconds, Container: container.Name, Timestamps: true}
 			logs, errLogs := h.k8sClient.CoreV1().Pods(h.Config.Namespace).GetLogs(podName, &logsOpts).DoRaw()
 			if errLogs != nil {
-				log.Error("getServicesLogs> cannot get logs for container %s in pod %s, err : %v", container.Name, podName, errLogs)
+				log.Error(ctx, "getServicesLogs> cannot get logs for container %s in pod %s, err : %v", container.Name, podName, errLogs)
 				continue
 			}
 

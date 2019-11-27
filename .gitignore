@@ -5,6 +5,7 @@
 .DS_Store
 dump.rdb
 dist
+target/
 cli/cds/cds
 engine/engine
 engine/dist

@@ -2,6 +2,7 @@ package gorpmapping
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"fmt"
 	"sync"
@@ -59,19 +60,19 @@ func (fs CanonicalForms) Latest() (*CanonicalForm, CanonicalForms) {
 }
 
 // InsertAndSign a data in database, given data should implement canonicaller interface.
-func InsertAndSign(db gorp.SqlExecutor, i Canonicaller) error {
+func InsertAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) error {
 	if err := Insert(db, i); err != nil {
 		return err
 	}
-	return sdk.WithStack(dbSign(db, i))
+	return sdk.WithStack(dbSign(ctx, db, i))
 }
 
 // UpdateAndSign a data in database, given data should implement canonicaller interface.
-func UpdateAndSign(db gorp.SqlExecutor, i Canonicaller) error {
+func UpdateAndSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) error {
 	if err := Update(db, i); err != nil {
 		return err
 	}
-	return sdk.WithStack(dbSign(db, i))
+	return sdk.WithStack(dbSign(ctx, db, i))
 }
 
 var CanonicalFormTemplates = struct {
@@ -186,7 +187,7 @@ func checkSignature(i Canonicaller, k symmecrypt.Key, f *CanonicalForm, sig []by
 	return res, nil
 }
 
-func dbSign(db gorp.SqlExecutor, i Canonicaller) error {
+func dbSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) error {
 	signer, signature, err := sign(i)
 	if err != nil {
 		return err
@@ -200,7 +201,7 @@ func dbSign(db gorp.SqlExecutor, i Canonicaller) error {
 	query := fmt.Sprintf("UPDATE %s SET sig = $2, signer = $3 WHERE %s = $1", table, key)
 	res, err := db.Exec(query, id, signature, signer)
 	if err != nil {
-		log.Error("error executing query %s with parameters %s, %s: %v", query, table, key, err)
+		log.Error(ctx, "error executing query %s with parameters %s, %s: %v", query, table, key, err)
 		return sdk.WithStack(err)
 	}
 

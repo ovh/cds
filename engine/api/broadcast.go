@@ -38,7 +38,7 @@ func (api *API) addBroadcastHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot add broadcast")
 		}
 
-		event.PublishBroadcastAdd(bc, getAPIConsumer(ctx))
+		event.PublishBroadcastAdd(ctx, bc, getAPIConsumer(ctx))
 		return service.WriteJSON(w, bc, http.StatusCreated)
 	}
 }
@@ -90,7 +90,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to commit transaction")
 		}
 
-		event.PublishBroadcastUpdate(*oldBC, bc, getAPIConsumer(ctx))
+		event.PublishBroadcastUpdate(ctx, *oldBC, bc, getAPIConsumer(ctx))
 		return service.WriteJSON(w, bc, http.StatusOK)
 	}
 }
@@ -138,7 +138,7 @@ func (api *API) deleteBroadcastHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishBroadcastDelete(broadcastID, getAPIConsumer(ctx))
+		event.PublishBroadcastDelete(ctx, broadcastID, getAPIConsumer(ctx))
 		return nil
 	}
 }

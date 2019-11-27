@@ -269,7 +269,7 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, res s
 			return fmt.Errorf("Error while creating file %s: %v", configFile, err)
 		}
 		fi.Close()
-		if !noInteractive {
+		if !noInteractive && contextName == "" {
 			contextName = cli.AskValue("Enter a context name for this login (default):")
 		}
 	} else {
@@ -280,7 +280,7 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, res s
 		cdsConfigFile, err := internal.GetConfigFile(fi)
 		if err != nil {
 			return fmt.Errorf("Error while reading config file %s: %v", configFile, err)
-		} else if !noInteractive {
+		} else if !noInteractive && contextName == "" {
 			opts := []string{}
 			for _, c := range cdsConfigFile.Contexts {
 				line := c.Context

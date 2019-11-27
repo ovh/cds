@@ -123,7 +123,7 @@ require (
 	github.com/lib/pq v1.0.0
 	github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
-	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d
+	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d // indirect
 	github.com/marstr/guid v1.1.0 // indirect
 	github.com/maruel/panicparse v1.3.0
 	github.com/mattbaird/elastigo v0.0.0-20170123220020-2fe47fd29e4b // indirect
@@ -217,8 +217,8 @@ require (
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.etcd.io/bbolt v1.3.3 // indirect
 	go.opencensus.io v0.22.0
-	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
-	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
+	golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5
+	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
 	golang.org/x/text v0.3.2

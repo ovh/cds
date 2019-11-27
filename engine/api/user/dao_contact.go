@@ -27,7 +27,7 @@ func getContacts(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) 
 			return nil, err
 		}
 		if !isValid {
-			log.Error("user.getContacts> user contact %d data corrupted", cs[i].ID)
+			log.Error(ctx, "user.getContacts> user contact %d data corrupted", cs[i].ID)
 			continue
 		}
 		verifiedUserContacts = append(verifiedUserContacts, cs[i].UserContact)
@@ -52,7 +52,7 @@ func getContact(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (
 		return nil, err
 	}
 	if !isValid {
-		log.Error("user.getContact> user contact %d (for user %s) data corrupted", uc.ID, uc.UserID)
+		log.Error(ctx, "user.getContact> user contact %d (for user %s) data corrupted", uc.ID, uc.UserID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
@@ -83,7 +83,7 @@ func LoadContactByTypeAndValue(ctx context.Context, db gorp.SqlExecutor, contact
 var emailRegexp = regexp.MustCompile(`\w[+-._\w]*\w@\w[-._\w]*\w\.\w*`)
 
 // InsertContact in database.
-func InsertContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
+func InsertContact(ctx context.Context, db gorp.SqlExecutor, c *sdk.UserContact) error {
 	if c.Type == sdk.UserContactTypeEmail {
 		if !emailRegexp.MatchString(c.Value) {
 			return sdk.WithStack(sdk.ErrInvalidEmail)
@@ -92,7 +92,7 @@ func InsertContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
 
 	c.Created = time.Now()
 	dbc := userContact{UserContact: *c}
-	if err := gorpmapping.InsertAndSign(db, &dbc); err != nil {
+	if err := gorpmapping.InsertAndSign(ctx, db, &dbc); err != nil {
 		return sdk.WrapError(err, "unable to insert contact userID:%s type:%s value:%s", dbc.UserID, dbc.Type, dbc.Value)
 	}
 	*c = dbc.UserContact
@@ -100,9 +100,9 @@ func InsertContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
 }
 
 // UpdateContact in database.
-func UpdateContact(db gorp.SqlExecutor, c *sdk.UserContact) error {
+func UpdateContact(ctx context.Context, db gorp.SqlExecutor, c *sdk.UserContact) error {
 	dbc := userContact{UserContact: *c}
-	if err := gorpmapping.UpdateAndSign(db, &dbc); err != nil {
+	if err := gorpmapping.UpdateAndSign(ctx, db, &dbc); err != nil {
 		return err
 	}
 	*c = dbc.UserContact

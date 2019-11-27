@@ -36,13 +36,13 @@ func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.S
 			//Keep the subnumber of the previous node in the graph
 			r1, _, errPwnr := processNodeRun(ctx, db, store, proj, wr, mapNodes, &t.ChildNode, int(parentSubNumber), parentNodeRun, nil, nil)
 			if errPwnr != nil {
-				log.Error("processWorkflowRun> Unable to process node ID=%d: %s", t.ChildNode.ID, errPwnr)
+				log.Error(ctx, "processWorkflowRun> Unable to process node ID=%d: %s", t.ChildNode.ID, errPwnr)
 				AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 					ID:   sdk.MsgWorkflowError.ID,
 					Args: []interface{}{errPwnr.Error()},
 				})
 			}
-			_, _ = report.Merge(r1, nil)
+			_, _ = report.Merge(ctx, r1, nil)
 			continue
 		}
 	}
@@ -86,14 +86,14 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		if errT != nil {
 			return nil, false, sdk.WrapError(errT, "Unable to processNode")
 		}
-		report.Merge(r1, nil) // nolint
+		report.Merge(ctx, r1, nil) // nolint
 		return report, conditionOK, nil
 	case sdk.NodeTypeOutGoingHook:
 		r1, conditionOK, errO := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, parentNodeRuns, n, subNumber, manual)
 		if errO != nil {
 			return nil, false, sdk.WrapError(errO, "Unable to processNodeOutGoingHook")
 		}
-		report.Merge(r1, nil) // nolint
+		report.Merge(ctx, r1, nil) // nolint
 		return report, conditionOK, nil
 	}
 	return nil, false, nil
@@ -254,7 +254,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	// CONDITION
-	if !checkCondition(wr, n.Context.Conditions, nr.BuildParameters) {
+	if !checkCondition(ctx, wr, n.Context.Conditions, nr.BuildParameters) {
 		log.Debug("Condition failed on processNode %d/%d %+v", wr.ID, n.ID, nr.BuildParameters)
 		return nil, false, nil
 	}
@@ -331,7 +331,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 	}
 
-	report.Add(*nr)
+	report.Add(ctx, *nr)
 
 	//Update workflow run
 	if wr.WorkflowNodeRuns == nil {
@@ -389,7 +389,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if err != nil {
 		return nil, false, sdk.WrapError(err, "unable to execute workflow run")
 	}
-	_, _ = report.Merge(r1, nil)
+	_, _ = report.Merge(ctx, r1, nil)
 	return report, true, nil
 }
 
@@ -487,7 +487,7 @@ func computeNodeContextBuildParameters(ctx context.Context, proj *sdk.Project, w
 			Args: []interface{}{errParam.Error()},
 		})
 		// if there an error -> display it in workflowRunInfo and not stop the launch
-		log.Error("processNode> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%v", proj.Name, wr.Number, run.SubNumber, wr.Workflow.Name, n.ID, run.Payload, errParam)
+		log.Error(ctx, "processNode> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%v", proj.Name, wr.Number, run.SubNumber, wr.Workflow.Name, n.ID, run.Payload, errParam)
 	}
 	run.BuildParameters = append(run.BuildParameters, nodeRunParams...)
 }

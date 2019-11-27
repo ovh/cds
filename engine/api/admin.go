@@ -36,7 +36,7 @@ func (api *API) postMaintenanceHandler() service.Handler {
 		if err := api.Cache.SetWithTTL(sdk.MaintenanceAPIKey, enable, 0); err != nil {
 			return err
 		}
-		return api.Cache.Publish(sdk.MaintenanceQueueName, fmt.Sprintf("%v", enable))
+		return api.Cache.Publish(ctx, sdk.MaintenanceQueueName, fmt.Sprintf("%v", enable))
 	}
 }
 
@@ -215,7 +215,7 @@ func (api *API) postAdminDatabaseSignatureRollEntityByPrimaryKey() service.Handl
 		entity := vars["entity"]
 		pk := vars["pk"]
 
-		if err := gorpmapping.RollSignedTupleByPrimaryKey(api.mustDB(), entity, pk); err != nil {
+		if err := gorpmapping.RollSignedTupleByPrimaryKey(ctx, api.mustDB(), entity, pk); err != nil {
 			return err
 		}
 

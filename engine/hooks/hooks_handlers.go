@@ -29,7 +29,7 @@ func (s *Service) webhookHandler() service.Handler {
 		}
 
 		//Load the task
-		webHook := s.Dao.FindTask(uuid)
+		webHook := s.Dao.FindTask(ctx, uuid)
 		if webHook == nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Unknown uuid")
 		}
@@ -79,7 +79,7 @@ func (s *Service) startTasksHandler() service.Handler {
 
 func (s *Service) stopTasksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if err := s.stopTasks(); err != nil {
+		if err := s.stopTasks(ctx); err != nil {
 			return sdk.WithStack(err)
 		}
 		return nil
@@ -96,7 +96,7 @@ func (s *Service) startTaskHandler() service.Handler {
 		}
 
 		//Load the task
-		t := s.Dao.FindTask(uuid)
+		t := s.Dao.FindTask(ctx, uuid)
 		if t == nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Unknown uuid")
 		}
@@ -119,13 +119,13 @@ func (s *Service) stopTaskHandler() service.Handler {
 		}
 
 		//Load the task
-		t := s.Dao.FindTask(uuid)
+		t := s.Dao.FindTask(ctx, uuid)
 		if t == nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Unknown uuid")
 		}
 
 		//Stop the task
-		if err := s.stopTask(t); err != nil {
+		if err := s.stopTask(ctx, t); err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Stop task")
 		}
 		return nil
@@ -179,12 +179,12 @@ func (s *Service) getTasksHandler() service.Handler {
 			}
 		}
 
-		tasks, err := s.Dao.FindAllTasks()
+		tasks, err := s.Dao.FindAllTasks(ctx)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 
-		execs, err := s.Dao.FindAllTaskExecutionsForTasks(tasks...)
+		execs, err := s.Dao.FindAllTaskExecutionsForTasks(ctx, tasks...)
 		if err != nil {
 			return sdk.WithStack(err)
 		}
@@ -232,13 +232,13 @@ func (s *Service) putTaskHandler() service.Handler {
 		}
 
 		//Load the task
-		t := s.Dao.FindTask(uuid)
+		t := s.Dao.FindTask(ctx, uuid)
 		if t == nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> unknown uuid")
 		}
 
 		//Stop the task
-		if err := s.stopTask(t); err != nil {
+		if err := s.stopTask(ctx, t); err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task")
 		}
 
@@ -263,12 +263,12 @@ func (s *Service) getTaskHandler() service.Handler {
 		uuid := vars["uuid"]
 
 		//Load the task
-		t := s.Dao.FindTask(uuid)
+		t := s.Dao.FindTask(ctx, uuid)
 		if t != nil {
 			return service.WriteJSON(w, t, http.StatusOK)
 		}
 
-		execs, err := s.Dao.FindAllTaskExecutions(t)
+		execs, err := s.Dao.FindAllTaskExecutions(ctx, t)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load executions")
 		}
@@ -286,13 +286,13 @@ func (s *Service) deleteTaskHandler() service.Handler {
 		uuid := vars["uuid"]
 
 		//Load the task
-		t := s.Dao.FindTask(uuid)
+		t := s.Dao.FindTask(ctx, uuid)
 		if t != nil {
 			return service.WriteJSON(w, t, http.StatusOK)
 		}
 
 		//Stop the task
-		if err := s.stopTask(t); err != nil {
+		if err := s.stopTask(ctx, t); err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task")
 		}
 
@@ -307,13 +307,13 @@ func (s *Service) getTaskExecutionsHandler() service.Handler {
 		uuid := vars["uuid"]
 
 		//Load the task
-		t := s.Dao.FindTask(uuid)
+		t := s.Dao.FindTask(ctx, uuid)
 		if t == nil {
 			return service.WriteJSON(w, t, http.StatusOK)
 		}
 
 		//Load the executions
-		execs, err := s.Dao.FindAllTaskExecutions(t)
+		execs, err := s.Dao.FindAllTaskExecutions(ctx, t)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
 		}
@@ -334,18 +334,18 @@ func (s *Service) deleteAllTaskExecutionsHandler() service.Handler {
 		uuid := vars["uuid"]
 
 		//Load the task
-		t := s.Dao.FindTask(uuid)
+		t := s.Dao.FindTask(ctx, uuid)
 		if t == nil {
 			return service.WriteJSON(w, t, http.StatusOK)
 		}
 
 		//Stop the task
-		if err := s.stopTask(t); err != nil {
+		if err := s.stopTask(ctx, t); err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Hooks> deleteAllTaskExecutionsHandler> stop task")
 		}
 
 		//Load the executions
-		execs, err := s.Dao.FindAllTaskExecutions(t)
+		execs, err := s.Dao.FindAllTaskExecutions(ctx, t)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
 		}
@@ -373,13 +373,13 @@ func (s *Service) deleteTaskBulkHandler() service.Handler {
 
 		for uuid := range hooks {
 			//Load the task
-			t := s.Dao.FindTask(uuid)
+			t := s.Dao.FindTask(ctx, uuid)
 			if t == nil {
 				continue
 			}
 
 			//Stop the task
-			if err := s.stopTask(t); err != nil {
+			if err := s.stopTask(ctx, t); err != nil {
 				return sdk.WrapError(sdk.ErrNotFound, "Stop task %s", err)
 			}
 			if err := s.deleteTask(ctx, t); err != nil {
@@ -461,18 +461,18 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 		return sdk.WrapError(err, "Unable to parse hook")
 	}
 
-	task := s.Dao.FindTask(t.UUID)
+	task := s.Dao.FindTask(ctx, t.UUID)
 	if task == nil {
 		return errNoTask
 	}
 
 	task.Config = t.Config
-	_ = s.stopTask(t)
-	execs, _ := s.Dao.FindAllTaskExecutions(t)
+	_ = s.stopTask(ctx, t)
+	execs, _ := s.Dao.FindAllTaskExecutions(ctx, t)
 	for _, e := range execs {
 		if e.Status == TaskExecutionScheduled {
 			if err := s.Dao.DeleteTaskExecution(&e); err != nil {
-				log.Error("unable to delete previous task execution: %v", err)
+				log.Error(ctx, "unable to delete previous task execution: %v", err)
 			}
 		}
 	}
@@ -493,11 +493,11 @@ func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) error {
 	}
 
 	//Delete the task
-	return s.Dao.DeleteTask(t)
+	return s.Dao.DeleteTask(ctx, t)
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (s *Service) Status() sdk.MonitoringStatus {
+func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
 
 	if s.Dao.store == nil {
@@ -508,7 +508,7 @@ func (s *Service) Status() sdk.MonitoringStatus {
 	status := sdk.MonitoringStatusOK
 	size, errQ := s.Dao.QueueLen()
 	if errQ != nil {
-		log.Error("Status> Unable to retrieve queue len: %v", errQ)
+		log.Error(ctx, "Status> Unable to retrieve queue len: %v", errQ)
 	}
 	if size >= 100 {
 		status = sdk.MonitoringStatusAlert
@@ -519,9 +519,9 @@ func (s *Service) Status() sdk.MonitoringStatus {
 
 	var nbHooksKafkaTotal int64
 
-	tasks, err := s.Dao.FindAllTasks()
+	tasks, err := s.Dao.FindAllTasks(ctx)
 	if err != nil {
-		log.Error("Status> Unable to find all tasks: %v", err)
+		log.Error(ctx, "Status> Unable to find all tasks: %v", err)
 	}
 
 	for _, t := range tasks {
@@ -533,9 +533,9 @@ func (s *Service) Status() sdk.MonitoringStatus {
 			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Task Stopped", Value: t.UUID, Status: sdk.MonitoringStatusWarn})
 		}
 
-		execs, err := s.Dao.FindAllTaskExecutions(&t)
+		execs, err := s.Dao.FindAllTaskExecutions(ctx, &t)
 		if err != nil {
-			log.Error("Status> Unable to find all task executions (%s): %v", t.UUID, err)
+			log.Error(ctx, "Status> Unable to find all task executions (%s): %v", t.UUID, err)
 			continue
 		}
 
@@ -582,7 +582,7 @@ func (s *Service) Status() sdk.MonitoringStatus {
 func (s *Service) statusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK
-		return service.WriteJSON(w, s.Status(), status)
+		return service.WriteJSON(w, s.Status(ctx), status)
 	}
 }
 
@@ -594,13 +594,13 @@ func (s *Service) getTaskExecutionHandler() service.Handler {
 		timestamp := vars["timestamp"]
 
 		//Load the task
-		t := s.Dao.FindTask(uuid)
+		t := s.Dao.FindTask(ctx, uuid)
 		if t == nil {
 			return service.WriteJSON(w, t, http.StatusOK)
 		}
 
 		//Load the executions
-		execs, err := s.Dao.FindAllTaskExecutions(t)
+		execs, err := s.Dao.FindAllTaskExecutions(ctx, t)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
 		}
@@ -623,13 +623,13 @@ func (s *Service) postStopTaskExecutionHandler() service.Handler {
 		timestamp := vars["timestamp"]
 
 		//Load the task
-		t := s.Dao.FindTask(uuid)
+		t := s.Dao.FindTask(ctx, uuid)
 		if t == nil {
 			return service.WriteJSON(w, t, http.StatusOK)
 		}
 
 		//Load the executions
-		execs, err := s.Dao.FindAllTaskExecutions(t)
+		execs, err := s.Dao.FindAllTaskExecutions(ctx, t)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
 		}
@@ -641,7 +641,7 @@ func (s *Service) postStopTaskExecutionHandler() service.Handler {
 				e.LastError = TaskExecutionDone
 				e.NbErrors = s.Cfg.RetryError + 1
 				s.Dao.SaveTaskExecution(e)
-				log.Info("Hooks> postStopTaskExecutionHandler> task executions %s:%v has been stoppped", uuid, timestamp)
+				log.Info(ctx, "Hooks> postStopTaskExecutionHandler> task executions %s:%v has been stoppped", uuid, timestamp)
 				return nil
 			}
 		}
@@ -662,7 +662,7 @@ func (s *Service) postMaintenanceHandler() service.Handler {
 		if err := s.Dao.store.SetWithTTL(MaintenanceHookKey, enable, 0); err != nil {
 			return sdk.WrapError(err, "unable to save maintenance state")
 		}
-		if err := s.Dao.store.Publish(MaintenanceHookQueue, fmt.Sprintf("%v", enable)); err != nil {
+		if err := s.Dao.store.Publish(ctx, MaintenanceHookQueue, fmt.Sprintf("%v", enable)); err != nil {
 			return sdk.WrapError(err, "unable to publish maintenance state")
 		}
 		s.Maintenance = enable

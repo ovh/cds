@@ -47,7 +47,7 @@ func Resync(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 }
 
 //ResyncWorkflowRunStatus resync the status of workflow if you stop a node run when workflow run is building
-func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*ProcessorReport, error) {
+func ResyncWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
 	var counterStatus statusCounter
 	for _, wnrs := range wr.WorkflowNodeRuns {
@@ -73,7 +73,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 
 	if newStatus != wr.Status {
 		wr.Status = newStatus
-		report.Add(*wr)
+		report.Add(ctx, *wr)
 
 		return report, UpdateWorkflowRunStatus(db, wr)
 	}
@@ -82,7 +82,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 }
 
 // ResyncNodeRunsWithCommits load commits build in this node run and save it into node run
-func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, report *ProcessorReport) {
+func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, report *ProcessorReport) {
 	if report == nil {
 		return
 	}
@@ -96,7 +96,7 @@ func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk
 		go func(nr sdk.WorkflowNodeRun) {
 			wr, errL := LoadRunByID(db, nr.WorkflowRunID, LoadRunOptions{})
 			if errL != nil {
-				log.Error("ResyncNodeRuns> Unable to load workflowRun by id %d : %v", nr.WorkflowRunID, errL)
+				log.Error(ctx, "ResyncNodeRuns> Unable to load workflowRun by id %d : %v", nr.WorkflowRunID, errL)
 				return
 			}
 
@@ -106,7 +106,7 @@ func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk
 
 			n := wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
 			if n == nil {
-				log.Error("ResyncNodeRuns> Unable to find node data by id %d in a workflow run id %d", nr.WorkflowNodeID, nr.WorkflowRunID)
+				log.Error(ctx, "ResyncNodeRuns> Unable to find node data by id %d in a workflow run id %d", nr.WorkflowNodeID, nr.WorkflowRunID)
 				return
 			}
 			nodeName = n.Name
@@ -122,14 +122,14 @@ func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk
 			//New context because we are in goroutine
 			commits, curVCSInfos, err := GetNodeRunBuildCommits(context.TODO(), db, store, proj, &wr.Workflow, nodeName, wr.Number, &nr, &app, env)
 			if err != nil {
-				log.Error("ResyncNodeRuns> cannot get build commits on a node run %v", err)
+				log.Error(ctx, "ResyncNodeRuns> cannot get build commits on a node run %v", err)
 			} else if commits != nil {
 				nr.Commits = commits
 			}
 
 			if len(commits) > 0 {
 				if err := updateNodeRunCommits(db, nr.ID, commits); err != nil {
-					log.Error("ResyncNodeRuns> Unable to update node run commits %v", err)
+					log.Error(ctx, "ResyncNodeRuns> Unable to update node run commits %v", err)
 				}
 			}
 
@@ -149,7 +149,7 @@ func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk
 
 			if tagsUpdated {
 				if err := UpdateWorkflowRunTags(db, wr); err != nil {
-					log.Error("ResyncNodeRuns> Unable to update workflow run tags %v", err)
+					log.Error(ctx, "ResyncNodeRuns> Unable to update workflow run tags %v", err)
 				}
 			}
 		}(nodeRun)

@@ -19,7 +19,7 @@ func checkCapacities(ctx context.Context, h Interface) bool {
 
 	workerPool, err := WorkerPool(ctx, h, sdk.StatusChecking, sdk.StatusWaiting, sdk.StatusBuilding, sdk.StatusWorkerPending, sdk.StatusWorkerRegistering)
 	if err != nil {
-		log.Error("hatchery> checkCapacities> Pool> Error: %v", err)
+		log.Error(ctx, "hatchery> checkCapacities> Pool> Error: %v", err)
 		return false
 	}
 
@@ -46,12 +46,12 @@ func checkCapacities(ctx context.Context, h Interface) bool {
 	}
 
 	if nbPending >= maxProv {
-		log.Info("hatchery> checkCapacities> too many pending worker in pool: %d", nbPending)
+		log.Info(ctx, "hatchery> checkCapacities> too many pending worker in pool: %d", nbPending)
 		return false
 	}
 
 	if int(atomic.LoadInt64(&nbWorkerToStart)) >= maxProv {
-		log.Info("hatchery> checkCapacities> too many starting worker in pool: %d", atomic.LoadInt64(&nbWorkerToStart))
+		log.Info(ctx, "hatchery> checkCapacities> too many starting worker in pool: %d", atomic.LoadInt64(&nbWorkerToStart))
 		return false
 	}
 

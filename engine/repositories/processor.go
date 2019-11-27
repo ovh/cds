@@ -12,17 +12,17 @@ func (s *Service) processor(ctx context.Context) error {
 	for {
 		var uuid string
 		if err := s.dao.store.DequeueWithContext(ctx, processorKey, &uuid); err != nil {
-			log.Error("repositories > processor > store.DequeueWithContext err: %v", err)
+			log.Error(ctx, "repositories > processor > store.DequeueWithContext err: %v", err)
 			continue
 		}
 		if uuid != "" {
-			op := s.dao.loadOperation(uuid)
-			if err := s.do(*op); err != nil {
+			op := s.dao.loadOperation(ctx, uuid)
+			if err := s.do(ctx, *op); err != nil {
 				if err == errLockUnavailable {
-					log.Info("repositories > processor > lock unavailabe. Retry")
+					log.Info(ctx, "repositories > processor > lock unavailabe. Retry")
 					s.dao.pushOperation(op)
 				} else {
-					log.Error("repositories > processor > %v", err)
+					log.Error(ctx, "repositories > processor > %v", err)
 				}
 			}
 		}
@@ -32,19 +32,19 @@ func (s *Service) processor(ctx context.Context) error {
 	}
 }
 
-func (s *Service) do(op sdk.Operation) error {
+func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	log.Debug("repositories > processing > %v", op.UUID)
 
 	r := s.Repo(op)
 	if s.dao.lock(r.ID()) == errLockUnavailable {
 		return errLockUnavailable
 	}
-	defer s.dao.unlock(r.ID(), 24*time.Hour*time.Duration(s.Cfg.RepositoriesRentention))
+	defer s.dao.unlock(ctx, r.ID(), 24*time.Hour*time.Duration(s.Cfg.RepositoriesRentention))
 
 	switch {
 	// Load workflow as code file
 	case op.Setup.Checkout.Branch != "" || op.Setup.Checkout.Tag != "":
-		if err := s.processCheckout(&op); err != nil {
+		if err := s.processCheckout(ctx, &op); err != nil {
 			op.Error = sdk.Cause(err).Error()
 			op.Status = sdk.OperationStatusError
 		} else {
@@ -52,7 +52,7 @@ func (s *Service) do(op sdk.Operation) error {
 			op.Status = sdk.OperationStatusDone
 			switch {
 			case op.LoadFiles.Pattern != "":
-				if err := s.processLoadFiles(&op); err != nil {
+				if err := s.processLoadFiles(ctx, &op); err != nil {
 					op.Error = sdk.Cause(err).Error()
 					op.Status = sdk.OperationStatusError
 				} else {
@@ -66,7 +66,7 @@ func (s *Service) do(op sdk.Operation) error {
 		}
 	// Push workflow as code file
 	case op.Setup.Push.FromBranch != "":
-		if err := s.processPush(&op); err != nil {
+		if err := s.processPush(ctx, &op); err != nil {
 			op.Error = sdk.Cause(err).Error()
 			op.Status = sdk.OperationStatusError
 		} else {

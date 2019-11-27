@@ -50,7 +50,7 @@ func init() {
 			time.Sleep(1 * time.Minute)
 			dir, err := os.Getwd()
 			if err != nil {
-				log.Warning("unable to get working directory: %v", err)
+				log.Warning(context.Background(), "unable to get working directory: %v", err)
 				continue
 			}
 
@@ -59,7 +59,7 @@ func init() {
 
 			files, err := ioutil.ReadDir(path)
 			if err != nil {
-				log.Warning("unable to list files in %s: %v", path, err)
+				log.Warning(context.Background(), "unable to list files in %s: %v", path, err)
 				break
 			}
 
@@ -67,12 +67,12 @@ func init() {
 				filename := filepath.Join(path, f.Name())
 				file, err := os.Stat(filename)
 				if err != nil {
-					log.Warning("unable to get file %s info: %v", f.Name(), err)
+					log.Warning(context.Background(), "unable to get file %s info: %v", f.Name(), err)
 					continue
 				}
 				if file.ModTime().Before(time.Now().Add(-15 * time.Minute)) {
 					if err := os.Remove(filename); err != nil {
-						log.Warning("unable to remove file %s: %v", filename, err)
+						log.Warning(context.Background(), "unable to remove file %s: %v", filename, err)
 					}
 				}
 			}
@@ -107,13 +107,13 @@ func (c *Common) CDSClient() cdsclient.Interface {
 
 // CommonServe start the HatcheryLocal server
 func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
-	log.Info("%s> Starting service %s (%s)...", c.Name(), h.Configuration().Name, sdk.VERSION)
+	log.Info(ctx, "%s> Starting service %s (%s)...", c.Name(), h.Configuration().Name, sdk.VERSION)
 	c.StartupTime = time.Now()
 
 	//Init the http server
 	c.initRouter(ctx, h)
 	if err := api.InitRouterMetrics(h); err != nil {
-		log.Error("unable to init router metrics: %v", err)
+		log.Error(ctx, "unable to init router metrics: %v", err)
 	}
 
 	server := &http.Server{
@@ -126,15 +126,15 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 
 	go func() {
 		//Start the http server
-		log.Info("%s> Starting HTTP Server on port %d", c.Name(), h.Configuration().HTTP.Port)
+		log.Info(ctx, "%s> Starting HTTP Server on port %d", c.Name(), h.Configuration().HTTP.Port)
 		if err := server.ListenAndServe(); err != nil {
-			log.Error("%s> Listen and serve failed: %v", c.Name(), err)
+			log.Error(ctx, "%s> Listen and serve failed: %v", c.Name(), err)
 		}
 
 		//Gracefully shutdown the http server
 		select {
 		case <-ctx.Done():
-			log.Info("%s> Shutdown HTTP Server", c.Name())
+			log.Info(ctx, "%s> Shutdown HTTP Server", c.Name())
 			server.Shutdown(ctx)
 		}
 	}()
@@ -233,7 +233,7 @@ func getStatusHandler(h hatchery.Interface) service.HandlerFunc {
 			if !ok {
 				return fmt.Errorf("unable to get status from %s", h.Service().Name)
 			}
-			status := srv.Status()
+			status := srv.Status(ctx)
 			return service.WriteJSON(w, status, status.HTTPStatusCode())
 		}
 	}

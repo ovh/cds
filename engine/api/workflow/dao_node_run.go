@@ -621,13 +621,13 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 
 	//Get the commit hash for the node run number and the hash for the previous node run for the same branch and same remote
-	prev, errcurr := PreviousNodeRunVCSInfos(db, p.Key, wf, wNodeName, cur, app.ID, envID)
+	prev, errcurr := PreviousNodeRunVCSInfos(ctx, db, p.Key, wf, wNodeName, cur, app.ID, envID)
 	if errcurr != nil {
 		return nil, cur, sdk.WrapError(errcurr, "GetNodeRunBuildCommits> Cannot get build number and hashes (buildNumber=%d, nodeName=%s, applicationID=%d)", number, wNodeName, app.ID)
 	}
 
 	if prev.Hash == "" {
-		log.Warning("GetNodeRunBuildCommits> No previous build was found for branch %s", cur.Branch)
+		log.Warning(ctx, "GetNodeRunBuildCommits> No previous build was found for branch %s", cur.Branch)
 	}
 
 	if prev.Hash != "" && cur.Hash == prev.Hash {
@@ -725,7 +725,7 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, nodeName strin
 //for the current node run and the previous one on the same branch.
 //Returned value may be zero if node run are not found
 //If you don't have environment linked set envID to 0 or -1
-func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, projectKey string, wf *sdk.Workflow, nodeName string, current sdk.BuildNumberAndHash, appID int64, envID int64) (sdk.BuildNumberAndHash, error) {
+func PreviousNodeRunVCSInfos(ctx context.Context, db gorp.SqlExecutor, projectKey string, wf *sdk.Workflow, nodeName string, current sdk.BuildNumberAndHash, appID int64, envID int64) (sdk.BuildNumberAndHash, error) {
 	var previous sdk.BuildNumberAndHash
 	var prevHash, prevBranch, prevTag, prevRepository sql.NullString
 	var previousBuildNumber sql.NullInt64
@@ -749,7 +749,7 @@ func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, projectKey string, wf *sdk.Wor
 
 	errPrev := db.QueryRow(queryPrevious, argPrevious...).Scan(&prevBranch, &prevTag, &prevHash, &prevRepository, &previousBuildNumber)
 	if errPrev == sql.ErrNoRows {
-		log.Warning("PreviousNodeRunVCSInfos> no result with previous %d %s , arguments %v", current.BuildNumber, nodeName, argPrevious)
+		log.Warning(ctx, "PreviousNodeRunVCSInfos> no result with previous %d %s , arguments %v", current.BuildNumber, nodeName, argPrevious)
 		return previous, nil
 	}
 	if errPrev != nil {
