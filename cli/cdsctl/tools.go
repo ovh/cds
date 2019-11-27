@@ -107,7 +107,7 @@ func toolsYamlSchemaRun(v cli.Values) error {
 	results := make([]string, len(types))
 	for i := range types {
 		r := jsonschema.Reflector{
-			AllowAdditionalProperties:  true,
+			AllowAdditionalProperties:  false,
 			RequiredFromJSONSchemaTags: true,
 		}
 		sch := r.ReflectFromType(types[i])
