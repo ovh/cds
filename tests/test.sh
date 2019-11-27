@@ -28,6 +28,7 @@ CDS_HOOKS_URL="${CDS_HOOKS_URL:-http://localhost:8083}"
 CDSCTL="${CDSCTL:-`which cdsctl`}"
 CDSCTL_CONFIG="${CDSCTL_CONFIG:-.cdsrc}"
 SMTP_MOCK_URL="${SMTP_MOCK_URL:-http://localhost:2024}"
+INIT_TOKEN="${INIT_TOKEN:}"
 
 # The default values below fit to default minio installation.
 # Run "make minio_start" to start a minio docker container 

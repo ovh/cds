@@ -125,7 +125,7 @@ func signupFunc(v cli.Values) error {
 
 var signupVerifyCmd = cli.Command{
 	Name:  "verify",
-	Short: "Verify local CDS signup",
+	Short: "Verify local CDS signup.\nFor admin signup INIT_TOKEN environment variable must be set",
 	Args: []cli.Arg{
 		{
 			Name:       "token",
@@ -143,9 +143,6 @@ var signupVerifyCmd = cli.Command{
 			Usage: "Display the commands to set up the environment for the cds client.",
 			Type:  cli.FlagBool,
 		},
-		{
-			Name: "init-token",
-		},
 	},
 }
 
@@ -161,7 +158,7 @@ func signupVerifyFunc(v cli.Values) error {
 	})
 
 	signupresponse, err := client.AuthConsumerLocalSignupVerify(v.GetString("token"),
-		v.GetString("init-token"))
+		os.Getenv("INIT_TOKEN"))
 	if err != nil {
 		return err
 	}
