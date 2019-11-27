@@ -36,7 +36,7 @@ func DeleteUserFromGroup(db gorp.SqlExecutor, groupID, userID int64) error {
 
 // CheckUserInDefaultGroup insert user in default group
 func CheckUserInDefaultGroup(ctx context.Context, db gorp.SqlExecutor, userID int64) error {
-	if DefaultGroup == nil || DefaultGroup.ID == 0 {
+	if DefaultGroup == nil || DefaultGroup.ID == 0 || userID == 0 {
 		return nil
 	}
 

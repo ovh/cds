@@ -9,7 +9,6 @@ import {
     TemplateModalConfig
 } from '@richardlt/ng2-semantic-ui';
 import { GroupPermission } from 'app/model/group.model';
-import { PermissionValue } from 'app/model/permission.model';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeHook, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
@@ -48,8 +47,6 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     selected: string;
     hasModification = false;
 
-
-    permissionEnum = PermissionValue;
     loading = false;
 
     projectSubscriber: Subscription;

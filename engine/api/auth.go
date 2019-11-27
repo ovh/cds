@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -167,6 +168,9 @@ func (api *API) postAuthSigninHandler() service.Handler {
 						return err
 					}
 				}
+				if err := group.CheckUserInDefaultGroup(ctx, tx, u.OldUserStruct.ID); err != nil {
+					return err
+				}
 			} else {
 				// Check if a user already exists for external username
 				u, err = user.LoadByUsername(ctx, tx, userInfo.Username, user.LoadOptions.WithContacts)
@@ -229,6 +233,10 @@ func (api *API) postAuthSigninHandler() service.Handler {
 							Value:    userInfo.Email,
 							Verified: true,
 						}); err != nil {
+							return err
+						}
+
+						if err := group.CheckUserInDefaultGroup(ctx, tx, u.OldUserStruct.ID); err != nil {
 							return err
 						}
 

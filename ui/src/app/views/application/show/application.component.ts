@@ -11,7 +11,6 @@ import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
 import { Application } from '../../../model/application.model';
 import { Environment } from '../../../model/environment.model';
-import { PermissionValue } from '../../../model/permission.model';
 import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
 import { AuthentifiedUser } from '../../../model/user.model';
@@ -66,7 +65,6 @@ export class ApplicationShowComponent implements OnInit {
     environments: Array<Environment> = new Array<Environment>();
     currentUser: AuthentifiedUser;
     usageCount = 0;
-    perm = PermissionValue;
 
     constructor(
         private _applicationStore: ApplicationStore,

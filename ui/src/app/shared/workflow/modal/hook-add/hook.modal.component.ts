@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
-import { PermissionValue } from 'app/model/permission.model';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeHook, Workflow } from 'app/model/workflow.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -32,8 +31,6 @@ export class WorkflowHookModalComponent {
 
     @ViewChild('hookFormComponent', {static: false})
     hookFormComponent: WorkflowNodeHookFormComponent;
-
-    permissionEnum = PermissionValue;
 
     constructor(private _modalService: SuiModalService) {
     }

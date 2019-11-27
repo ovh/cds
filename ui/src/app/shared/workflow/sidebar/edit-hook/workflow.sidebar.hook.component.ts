@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
-import { PermissionValue } from 'app/model/permission.model';
 import { Project } from 'app/model/project.model';
 import { HookStatus, TaskExecution, WorkflowHookTask } from 'app/model/workflow.hook.model';
 import { WNode, WNodeHook, Workflow } from 'app/model/workflow.model';
@@ -33,7 +32,6 @@ export class WorkflowSidebarHookComponent implements OnInit {
     @ViewChild('workflowDetailsHook', {static: false})
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
-    permissionEnum = PermissionValue;
     hookStatus = HookStatus;
 
     constructor(

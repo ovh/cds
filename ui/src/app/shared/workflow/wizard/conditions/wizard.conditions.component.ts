@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 // tslint:disable-next-line: max-line-length
@@ -80,7 +79,6 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
 
     codeMirrorConfig: any;
     loadingConditions = false;
-    permission = PermissionValue;
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
     loading = false;
     previousValue: string;

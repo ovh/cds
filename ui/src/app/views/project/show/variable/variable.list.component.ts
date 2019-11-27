@@ -9,7 +9,6 @@ import {
 } from 'app/store/project.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
-import { PermissionValue } from '../../../../model/permission.model';
 import { Project } from '../../../../model/project.model';
 import { Warning } from '../../../../model/warning.model';
 import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
@@ -47,7 +46,6 @@ export class ProjectVariablesComponent implements OnInit {
     @ViewChild('varWarning', {static: false})
     varWarningModal: WarningModalComponent;
 
-    permissionEnum = PermissionValue;
     loading = true;
     varFormLoading = false;
 

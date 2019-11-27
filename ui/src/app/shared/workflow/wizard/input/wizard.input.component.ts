@@ -11,7 +11,6 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
-import { PermissionValue } from 'app/model/permission.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
@@ -62,7 +61,6 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
     suggest: string[] = [];
     payloadString: string;
     branches: string[] = [];
-    permissionEnum = PermissionValue;
     invalidJSON = false;
     loadingBranches = false;
     codeMirrorConfig: any;
