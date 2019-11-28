@@ -133,7 +133,7 @@ func TestPull(t *testing.T) {
 	test.NoError(t, err)
 
 	buff := new(bytes.Buffer)
-	test.NoError(t, pull.Tar(buff))
+	test.NoError(t, pull.Tar(context.TODO(), buff))
 
 	// Open the tar archive for reading.
 	r := bytes.NewReader(buff.Bytes())

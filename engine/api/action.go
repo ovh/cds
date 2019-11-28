@@ -169,7 +169,7 @@ func (api *API) postActionHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionAdd(*newAction, getAPIConsumer(ctx))
+		event.PublishActionAdd(ctx, *newAction, getAPIConsumer(ctx))
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
@@ -292,7 +292,7 @@ func (api *API) putActionHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionUpdate(*old, *newAction, getAPIConsumer(ctx))
+		event.PublishActionUpdate(ctx, *old, *newAction, getAPIConsumer(ctx))
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
@@ -385,14 +385,14 @@ func (api *API) getActionAuditHandler() service.Handler {
 			if clone.DataBefore != "" {
 				var before sdk.Action
 				if err := json.Unmarshal([]byte(clone.DataBefore), &before); err != nil {
-					log.Error("%+v", sdk.WrapError(err, "cannot parse action audit"))
+					log.Error(ctx, "%+v", sdk.WrapError(err, "cannot parse action audit"))
 					continue
 				}
 
 				ea := exportentities.NewAction(before)
 				buf, err := yaml.Marshal(ea)
 				if err != nil {
-					log.Error("%+v", sdk.WrapError(err, "cannot parse action audit"))
+					log.Error(ctx, "%+v", sdk.WrapError(err, "cannot parse action audit"))
 					continue
 				}
 
@@ -402,14 +402,14 @@ func (api *API) getActionAuditHandler() service.Handler {
 			if clone.DataAfter != "" {
 				var after sdk.Action
 				if err := json.Unmarshal([]byte(clone.DataAfter), &after); err != nil {
-					log.Error("%+v", sdk.WrapError(err, "cannot parse action audit"))
+					log.Error(ctx, "%+v", sdk.WrapError(err, "cannot parse action audit"))
 					continue
 				}
 
 				ea := exportentities.NewAction(after)
 				buf, err := yaml.Marshal(ea)
 				if err != nil {
-					log.Error("%+v", sdk.WrapError(err, "cannot parse action audit"))
+					log.Error(ctx, "%+v", sdk.WrapError(err, "cannot parse action audit"))
 					continue
 				}
 
@@ -541,7 +541,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionUpdate(*old, *newAction, getAPIConsumer(ctx))
+		event.PublishActionUpdate(ctx, *old, *newAction, getAPIConsumer(ctx))
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {
 			return err
@@ -735,9 +735,9 @@ func (api *API) importActionHandler() service.Handler {
 		}
 
 		if exists {
-			event.PublishActionUpdate(*old, *newAction, getAPIConsumer(ctx))
+			event.PublishActionUpdate(ctx, *old, *newAction, getAPIConsumer(ctx))
 		} else {
-			event.PublishActionAdd(*newAction, getAPIConsumer(ctx))
+			event.PublishActionAdd(ctx, *newAction, getAPIConsumer(ctx))
 		}
 
 		if err := action.LoadOptions.WithAudits(ctx, api.mustDB(), newAction); err != nil {

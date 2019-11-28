@@ -1,12 +1,14 @@
 package ldap
 
 import (
+	"context"
+
 	"gopkg.in/ldap.v2"
 
 	"github.com/ovh/cds/sdk/log"
 )
 
-func shoudRetry(err error) bool {
+func shoudRetry(ctx context.Context, err error) bool {
 	if err == nil {
 		return false
 	}
@@ -15,7 +17,7 @@ func shoudRetry(err error) bool {
 		return false
 	}
 	if ldapErr.ResultCode == ldap.ErrorNetwork {
-		log.Info("LDAP> Retry")
+		log.Info(ctx, "LDAP> Retry")
 		return true
 	}
 	return false

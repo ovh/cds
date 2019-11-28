@@ -26,7 +26,7 @@ func Push(ctx context.Context, db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u 
 			return nil, err
 		}
 
-		event.PublishWorkflowTemplateAdd(*newTemplate, u)
+		event.PublishWorkflowTemplateAdd(ctx, *newTemplate, u)
 
 		return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedInserted, newTemplate.Group.Name, newTemplate.Slug)}, nil
 	}
@@ -48,7 +48,7 @@ func Push(ctx context.Context, db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u 
 		return nil, err
 	}
 
-	event.PublishWorkflowTemplateUpdate(*old, *newTemplate, "", u)
+	event.PublishWorkflowTemplateUpdate(ctx, *old, *newTemplate, "", u)
 
 	return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedUpdated, newTemplate.Group.Name, newTemplate.Slug)}, nil
 }

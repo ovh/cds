@@ -10,7 +10,7 @@
         <div class="ui bottomBtnsWrapper segment">
             <div class="ui grid">
                 <div class="sixteen wide column">
-                    <button class="ui fluid blue button" name="previewbtn" [disabled]="loading" [class.loading]="loading" (click)="preview()">
+                    <button class="ui fluid blue button" name="previewbtn" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0) || !workflow.permissions.writable" [class.loading]="loading" (click)="preview()">
                         <i class="unhide icon"></i> {{'common_preview' | translate}}
                     </button>
                 </div>

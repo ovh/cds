@@ -13,7 +13,7 @@ import (
 var baseUIURL, defaultOS, defaultArch string
 
 //Initialize starts goroutines for workflows
-func Initialize(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store, uiURL, confDefaultOS, confDefaultArch string) {
+func Initialize(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, uiURL, confDefaultOS, confDefaultArch string) {
 	baseUIURL = uiURL
 	defaultOS = confDefaultOS
 	defaultArch = confDefaultArch
@@ -25,18 +25,18 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store,
 
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("Exiting workflow ticker: %v", c.Err())
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "Exiting workflow ticker: %v", ctx.Err())
 				return
 			}
 		case <-tickHeart.C:
-			if err := restartDeadJob(c, DBFunc, store); err != nil {
-				log.Warning("workflow.restartDeadJob> Error on restartDeadJob : %v", err)
+			if err := restartDeadJob(ctx, DBFunc, store); err != nil {
+				log.Warning(ctx, "workflow.restartDeadJob> Error on restartDeadJob : %v", err)
 			}
 		case <-tickStop.C:
-			if err := stopRunsBlocked(db); err != nil {
-				log.Warning("workflow.stopRunsBlocked> Error on stopRunsBlocked : %v", err)
+			if err := stopRunsBlocked(ctx, db); err != nil {
+				log.Warning(ctx, "workflow.stopRunsBlocked> Error on stopRunsBlocked : %v", err)
 			}
 		}
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func NewConsumerWorker(db gorp.SqlExecutor, name string, hatcherySrv *sdk.Service, hatcheryConsumer *sdk.AuthConsumer, groupIDs []int64) (*sdk.AuthConsumer, error) {
+func NewConsumerWorker(ctx context.Context, db gorp.SqlExecutor, name string, hatcherySrv *sdk.Service, hatcheryConsumer *sdk.AuthConsumer, groupIDs []int64) (*sdk.AuthConsumer, error) {
 	c := sdk.AuthConsumer{
 		Name:               name,
 		AuthentifiedUserID: hatcheryConsumer.AuthentifiedUserID,
@@ -26,7 +26,7 @@ func NewConsumerWorker(db gorp.SqlExecutor, name string, hatcherySrv *sdk.Servic
 		IssuedAt: time.Now(),
 	}
 
-	if err := InsertConsumer(db, &c); err != nil {
+	if err := InsertConsumer(ctx, db, &c); err != nil {
 		return nil, err
 	}
 
@@ -34,7 +34,7 @@ func NewConsumerWorker(db gorp.SqlExecutor, name string, hatcherySrv *sdk.Servic
 }
 
 // NewConsumerExternal returns a new local consumer for given data.
-func NewConsumerExternal(db gorp.SqlExecutor, userID string, consumerType sdk.AuthConsumerType, userInfo sdk.AuthDriverUserInfo) (*sdk.AuthConsumer, error) {
+func NewConsumerExternal(ctx context.Context, db gorp.SqlExecutor, userID string, consumerType sdk.AuthConsumerType, userInfo sdk.AuthDriverUserInfo) (*sdk.AuthConsumer, error) {
 	c := sdk.AuthConsumer{
 		Name:               string(consumerType),
 		AuthentifiedUserID: userID,
@@ -48,7 +48,7 @@ func NewConsumerExternal(db gorp.SqlExecutor, userID string, consumerType sdk.Au
 		IssuedAt: time.Now(),
 	}
 
-	if err := InsertConsumer(db, &c); err != nil {
+	if err := InsertConsumer(ctx, db, &c); err != nil {
 		return nil, err
 	}
 
@@ -56,7 +56,7 @@ func NewConsumerExternal(db gorp.SqlExecutor, userID string, consumerType sdk.Au
 }
 
 // ConsumerRegen updates a consumer issue date to invalidate old signin token.
-func ConsumerRegen(db gorp.SqlExecutor, consumer *sdk.AuthConsumer) error {
+func ConsumerRegen(ctx context.Context, db gorp.SqlExecutor, consumer *sdk.AuthConsumer) error {
 	if consumer.Type != sdk.ConsumerBuiltin {
 		return sdk.NewErrorFrom(sdk.ErrForbidden, "can't regen a no builtin consumer")
 	}
@@ -70,7 +70,7 @@ func ConsumerRegen(db gorp.SqlExecutor, consumer *sdk.AuthConsumer) error {
 
 	// Update the IAT attribute in database
 	consumer.IssuedAt = time.Now()
-	if err := UpdateConsumer(db, consumer); err != nil {
+	if err := UpdateConsumer(ctx, db, consumer); err != nil {
 		return err
 	}
 
@@ -111,7 +111,7 @@ func ConsumerRemoveGroup(ctx context.Context, db gorp.SqlExecutor, g *sdk.Group)
 			cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningLastGroupRemoved())
 		}
 
-		if err := UpdateConsumer(db, &cs[i]); err != nil {
+		if err := UpdateConsumer(ctx, db, &cs[i]); err != nil {
 			return err
 		}
 	}
@@ -147,7 +147,7 @@ func ConsumerInvalidateGroupForUser(ctx context.Context, db gorp.SqlExecutor, g 
 			cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningLastGroupRemoved())
 		}
 
-		if err := UpdateConsumer(db, &cs[i]); err != nil {
+		if err := UpdateConsumer(ctx, db, &cs[i]); err != nil {
 			return err
 		}
 	}
@@ -185,7 +185,7 @@ func ConsumerRestoreInvalidatedGroupForUser(ctx context.Context, db gorp.SqlExec
 		}
 		cs[i].Warnings = filteredWarnings
 
-		if err := UpdateConsumer(db, &cs[i]); err != nil {
+		if err := UpdateConsumer(ctx, db, &cs[i]); err != nil {
 			return err
 		}
 	}
@@ -223,7 +223,7 @@ func ConsumerInvalidateGroupsForUser(ctx context.Context, db gorp.SqlExecutor, u
 			cs[i].Warnings = append(cs[i].Warnings, sdk.NewConsumerWarningLastGroupRemoved())
 		}
 
-		if err := UpdateConsumer(db, &cs[i]); err != nil {
+		if err := UpdateConsumer(ctx, db, &cs[i]); err != nil {
 			return err
 		}
 	}
@@ -259,7 +259,7 @@ func ConsumerRestoreInvalidatedGroupsForUser(ctx context.Context, db gorp.SqlExe
 		}
 		cs[i].Warnings = filteredWarnings
 
-		if err := UpdateConsumer(db, &cs[i]); err != nil {
+		if err := UpdateConsumer(ctx, db, &cs[i]); err != nil {
 			return err
 		}
 	}

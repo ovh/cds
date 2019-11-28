@@ -78,6 +78,7 @@ export class PipelineAuditComponent implements OnInit {
             <Column<PipelineAudit>>{
                 type: ColumnType.CONFIRM_BUTTON,
                 name: '',
+                disabled: !this.project.permissions.writable,
                 selector: (audit: PipelineAudit) => {
                     return {
                         title: 'common_rollback',

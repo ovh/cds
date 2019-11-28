@@ -25,7 +25,7 @@ func getUserMigrations(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Q
 			return nil, err
 		}
 		if !isValid {
-			log.Error("user.getUserMigrations> user migration for authentified user %s and user %d data corrupted", ms[i].AuthentifiedUserID, ms[i].UserID)
+			log.Error(ctx, "user.getUserMigrations> user migration for authentified user %s and user %d data corrupted", ms[i].AuthentifiedUserID, ms[i].UserID)
 			continue
 		}
 		verifiedUserMigrations = append(verifiedUserMigrations, ms[i].MigrationUser)
@@ -54,9 +54,9 @@ func LoadMigrationUsersByDeprecatedUserIDs(ctx context.Context, db gorp.SqlExecu
 	return getUserMigrations(ctx, db, query)
 }
 
-func insertUserMigration(db gorp.SqlExecutor, m *MigrationUser) error {
+func insertUserMigration(ctx context.Context, db gorp.SqlExecutor, m *MigrationUser) error {
 	mi := migrationUser{MigrationUser: *m}
-	if err := gorpmapping.InsertAndSign(db, &mi); err != nil {
+	if err := gorpmapping.InsertAndSign(ctx, db, &mi); err != nil {
 		return sdk.WrapError(err, "unable to insert into table authentified_user_migration")
 	}
 	*m = mi.MigrationUser

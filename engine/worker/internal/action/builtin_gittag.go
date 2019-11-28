@@ -137,7 +137,7 @@ func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, para
 		Stdout: stdOut,
 	}
 
-	git.LogFunc = log.Info
+	git.LogFunc = log.InfoWithoutCtx
 
 	if path != nil {
 		tagOpts.Path = path.Value

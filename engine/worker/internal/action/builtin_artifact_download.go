@@ -80,7 +80,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 			if err != nil {
 				res.Status = sdk.StatusFail
 				res.Reason = err.Error()
-				log.Warning("Cannot download artifact (OpenFile) %s: %s", destFile, err)
+				log.Warning(ctx, "Cannot download artifact (OpenFile) %s: %s", destFile, err)
 				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
 				return
 			}
@@ -88,14 +88,14 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 			if err := wk.Client().WorkflowNodeRunArtifactDownload(project, workflow, *a, f); err != nil {
 				res.Status = sdk.StatusFail
 				res.Reason = err.Error()
-				log.Warning("Cannot download artifact %s: %s", destFile, err)
+				log.Warning(ctx, "Cannot download artifact %s: %s", destFile, err)
 				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
 				return
 			}
 			if err := f.Close(); err != nil {
 				res.Status = sdk.StatusFail
 				res.Reason = err.Error()
-				log.Warning("Cannot download artifact %s: %s", destFile, err)
+				log.Warning(ctx, "Cannot download artifact %s: %s", destFile, err)
 				wk.SendLog(ctx, workerruntime.LevelError, res.Reason)
 				return
 			}

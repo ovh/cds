@@ -221,8 +221,8 @@ func Test_getActions(t *testing.T) {
 	req = assets.NewJWTAuthentifiedRequest(t, jwtGroupMember, http.MethodGet, uri, nil)
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-  assert.Equal(t, 200, w.Code)
-  results = []sdk.Action{}
+	assert.Equal(t, 200, w.Code)
+	results = []sdk.Action{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &results))
 	require.True(t, len(results) >= 2)
 	for _, r := range results {

@@ -20,7 +20,7 @@ func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	if eventNR.GerritChange == nil {
-		log.Warning("gerrit.setStatus> no gerrit change provided: %s/%s", eventNR.Status, eventNR.NodeName)
+		log.Warning(ctx, "gerrit.setStatus> no gerrit change provided: %s/%s", eventNR.Status, eventNR.NodeName)
 		return nil
 	}
 
@@ -69,6 +69,8 @@ func (c *gerritClient) buildMessage(eventNR sdk.EventRunWorkflowNode) string {
 	switch eventNR.Status {
 	case sdk.StatusSuccess:
 		message += fmt.Sprintf("Build Success on %s\n%s", eventNR.NodeName, eventNR.GerritChange.URL)
+	case sdk.StatusSkipped:
+		message += fmt.Sprintf("Build Skipped on %s\n%s", eventNR.NodeName, eventNR.GerritChange.URL)
 	case sdk.StatusFail, sdk.StatusStopped:
 		message += fmt.Sprintf("Build Failed on %s\n%s \n%s", eventNR.NodeName, eventNR.GerritChange.URL, eventNR.GerritChange.Report)
 	case sdk.StatusWaiting, sdk.StatusDisabled:

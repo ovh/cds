@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func artifactsHandler(wk *CurrentWorker) http.HandlerFunc {
+func artifactsHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {

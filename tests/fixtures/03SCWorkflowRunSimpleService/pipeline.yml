@@ -1,0 +1,23 @@
+version: v1.0
+name: 03SCWorkflowRunSimpleService-PIPELINE
+stages:
+- Build
+jobs:
+- job: Run Plugin
+  stage: Build
+  description: Run Plugin
+  steps:
+    - script:
+      - '#!/bin/bash'
+      - set -ex
+      - apt-get update
+      - apt-get install -y postgresql-client
+      - PGPASSWORD=bar psql -U foo -h mypg <<EOF
+      - \x
+      - SELECT version();
+      - EOF
+  requirements:
+  - service:
+      name: mypg
+      value: postgres:9.5.3 POSTGRES_USER=foo POSTGRES_PASSWORD=bar
+  - os-architecture: linux/amd64

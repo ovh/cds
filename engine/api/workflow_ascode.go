@@ -24,7 +24,7 @@ func (api *API) getWorkflowAsCodeHandler() service.Handler {
 		k := cache.Key(workflow.CacheOperationKey, uuid)
 		b, err := api.Cache.Get(k, &ope)
 		if err != nil {
-			log.Error("cannot get from cache %s: %v", k, err)
+			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 		if !b {
 			return sdk.ErrNotFound

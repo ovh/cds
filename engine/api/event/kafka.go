@@ -1,6 +1,7 @@
 package event
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -28,7 +29,7 @@ type KafkaConfig struct {
 }
 
 // initialize returns broker, isInit and err if
-func (c *KafkaClient) initialize(options interface{}) (Broker, error) {
+func (c *KafkaClient) initialize(ctx context.Context, options interface{}) (Broker, error) {
 	conf, ok := options.(KafkaConfig)
 	if !ok {
 		return nil, fmt.Errorf("Invalid Kafka Initialization")
@@ -50,10 +51,10 @@ func (c *KafkaClient) initialize(options interface{}) (Broker, error) {
 }
 
 // close closes producer
-func (c *KafkaClient) close() {
+func (c *KafkaClient) close(ctx context.Context) {
 	if c.producer != nil {
 		if err := c.producer.Close(); err != nil {
-			log.Warning("closeKafka> Error while closing kafka producer:%s", err.Error())
+			log.Warning(ctx, "closeKafka> Error while closing kafka producer:%s", err.Error())
 		}
 	}
 }

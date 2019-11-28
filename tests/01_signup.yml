@@ -1,0 +1,44 @@
+name: signup tests
+
+vars:
+  api.url: 'http://localhost:8081'
+  ui.url: 'http://localhost:4200'
+  cdsctl : 'cdsctl'
+  cdsctl.config : './cdsrc'
+  smtpmock.url: 'http://localhost:2024'
+  username: cds.integration.tests.rw
+  email: it-user-rw@localhost.local
+  fullname: cds.integration.tests.rw
+  password: "123456&éçà(§"
+  init.token:
+
+testcases:
+- name: create-admin-user
+  steps:
+  - type: http
+    method: POST
+    url: '{{.api.url}}/auth/consumer/local/signup'
+    headers: 
+      "Content-Type": "application/json"
+    body: |-
+      { "username": "{{.username}}", "fullname": "{{.fullname}}", "email":"{{.email}}", "password": "{{.password}}" }
+
+
+- name: post-create-user
+  steps:
+  - type: http
+    method: GET
+    url: '{{.smtpmock.url}}/messages/{{.email}}/latest'
+    assertions:
+    - result.statuscode ShouldEqual 200
+    vars:
+      verify: 
+        from: result.bodyjson.content
+        regex: cdsctl signup verify --api-url (?:.*) (.*)
+
+
+- name: prepare-cdsctl-config-file
+  steps:
+  - script: "rm -f {{.cdsctl.config}}"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} -c test signup verify {{.post-create-user.verify}} --api-url {{.api.url}} "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} -c test user me"

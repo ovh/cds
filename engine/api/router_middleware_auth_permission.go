@@ -56,13 +56,13 @@ func (api *API) checkJobIDPermissions(ctx context.Context, permID string, perm i
 
 	id, err := strconv.ParseInt(permID, 10, 64)
 	if err != nil {
-		log.Error("checkJobIDPermissions> Unable to parse permID:%s err:%v", permID, err)
+		log.Error(ctx, "checkJobIDPermissions> Unable to parse permID:%s err:%v", permID, err)
 		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", permID)
 	}
 
-	runNodeJob, err := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+	runNodeJob, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, id)
 	if err != nil {
-		log.Error("checkWorkerPermission> Unable to load job %d err:%v", id, err)
+		log.Error(ctx, "checkWorkerPermission> Unable to load job %d err:%v", id, err)
 		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", permID)
 	}
 

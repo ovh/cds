@@ -10,7 +10,6 @@ import * as immutable from 'immutable';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
-import { PermissionValue } from '../../../model/permission.model';
 import { LoadOpts, Project } from '../../../model/project.model';
 import { AuthentifiedUser } from '../../../model/user.model';
 import { Warning } from '../../../model/warning.model';
@@ -35,8 +34,6 @@ export class ProjectShowComponent implements OnInit {
 
     tabs: Array<Tab>;
     selectedTab: Tab;
-
-    permissionEnum = PermissionValue;
 
     // queryparam for breadcrum
     workflowName: string;

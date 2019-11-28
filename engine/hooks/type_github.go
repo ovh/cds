@@ -112,7 +112,6 @@ type GithubRepository struct {
 	NotificationsURL string      `json:"notifications_url"`
 	LabelsURL        string      `json:"labels_url"`
 	ReleasesURL      string      `json:"releases_url"`
-	CreatedAt        int         `json:"created_at"`
 	UpdatedAt        time.Time   `json:"updated_at"`
 	PushedAt         int         `json:"pushed_at"`
 	GitURL           string      `json:"git_url"`

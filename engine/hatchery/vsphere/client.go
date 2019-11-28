@@ -44,7 +44,7 @@ func (h *HatcheryVSphere) getServers() []mo.VirtualMachine {
 
 	v, errC := m.CreateContainerView(ctxC, h.vclient.ServiceContent.RootFolder, []string{"VirtualMachine"}, true)
 	if errC != nil {
-		log.Warning("Unable to create container view for vsphere api %s", errC)
+		log.Warning(ctx, "Unable to create container view for vsphere api %s", errC)
 		return lservers.list
 	}
 	defer v.Destroy(ctx)
@@ -54,7 +54,7 @@ func (h *HatcheryVSphere) getServers() []mo.VirtualMachine {
 	// Retrieve summary property for all machines
 	// Reference: http://pubs.vmware.com/vsphere-60/topic/com.vmware.wssdk.apiref.doc/vim.VirtualMachine.html
 	if err := v.Retrieve(ctxR, []string{"VirtualMachine"}, []string{"name", "summary", "config"}, &vms); err != nil {
-		log.Warning("Unable to retrieve virtual machines from vsphere %s", err)
+		log.Warning(ctx, "Unable to retrieve virtual machines from vsphere %s", err)
 		return lservers.list
 	}
 
@@ -82,12 +82,12 @@ var lmodels = struct {
 }
 
 // get all servers tagged with model on our host
-func (h *HatcheryVSphere) getModels() []mo.VirtualMachine {
+func (h *HatcheryVSphere) getModels(ctx context.Context) []mo.VirtualMachine {
 	srvs := h.getServers()
 	models := make([]mo.VirtualMachine, len(srvs))
 
 	if len(srvs) == 0 {
-		log.Warning("getModels> no servers found")
+		log.Warning(ctx, "getModels> no servers found")
 		return lmodels.list
 	}
 
@@ -95,7 +95,7 @@ func (h *HatcheryVSphere) getModels() []mo.VirtualMachine {
 		var annot annotation
 
 		if srv.Config == nil || srv.Config.Annotation == "" {
-			log.Warning("getModels> config or annotation are empty for server %s", srv.Name)
+			log.Warning(ctx, "getModels> config or annotation are empty for server %s", srv.Name)
 			continue
 		}
 		if err := json.Unmarshal([]byte(srv.Config.Annotation), &annot); err == nil {
@@ -120,8 +120,8 @@ func (h *HatcheryVSphere) getModels() []mo.VirtualMachine {
 }
 
 // Get a model by name
-func (h *HatcheryVSphere) getModelByName(name string) (mo.VirtualMachine, error) {
-	models := h.getModels()
+func (h *HatcheryVSphere) getModelByName(ctx context.Context, name string) (mo.VirtualMachine, error) {
+	models := h.getModels(ctx)
 
 	if len(models) == 0 {
 		return mo.VirtualMachine{}, fmt.Errorf("no models list found")
@@ -152,7 +152,7 @@ func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
 		// If its a worker "register", check registration before deleting it
 		var annot = annotation{}
 		if err := json.Unmarshal([]byte(s.Config.Annotation), &annot); err != nil {
-			log.Error("deleteServer> unable to get server annotation")
+			log.Error(ctx, "deleteServer> unable to get server annotation")
 		} else {
 			if strings.Contains(s.Name, "register-") {
 				if err := hatchery.CheckWorkerModelRegister(h, annot.WorkerModelPath); err != nil {
@@ -161,7 +161,7 @@ func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
 					}
 					tuple := strings.SplitN(annot.WorkerModelPath, "/", 2)
 					if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
-						log.Error("CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelName, err)
+						log.Error(ctx, "CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelName, err)
 					}
 				}
 			}
@@ -214,7 +214,7 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 	}
 
 	if card == nil {
-		log.Warning("createVMConfig> no network device found")
+		log.Warning(ctx, "createVMConfig> no network device found")
 		return nil, folder, fmt.Errorf("no network device found")
 	}
 
@@ -291,7 +291,7 @@ func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, script strin
 		return -1, sdk.WrapError(errT, "launchClientOp> cannot fetch if tools are running")
 	}
 	if !running {
-		log.Warning("launchClientOp> VmTools is not running")
+		log.Warning(ctx, "launchClientOp> VmTools is not running")
 	}
 
 	opman := guest.NewOperationsManager(h.vclient.Client, vm.Reference())

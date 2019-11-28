@@ -27,7 +27,7 @@ type statusData struct {
 //SetStatus Users with push access can create commit statuses for a given ref:
 func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if client.DisableStatus {
-		log.Warning("bitbucketcloud.SetStatus>  ⚠ bitbucketcloud statuses are disabled")
+		log.Warning(ctx, "bitbucketcloud.SetStatus>  ⚠ bitbucketcloud statuses are disabled")
 		return nil
 	}
 
@@ -37,7 +37,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
 		data, err = processEventWorkflowNodeRun(event, client.uiURL, client.DisableStatusDetail)
 	default:
-		log.Error("bitbucketcloud.SetStatus> Unknown event %v", event)
+		log.Error(ctx, "bitbucketcloud.SetStatus> Unknown event %v", event)
 		return nil
 	}
 	if err != nil {
@@ -150,7 +150,7 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatu
 	switch eventNR.Status {
 	case sdk.StatusFail:
 		data.status = "FAILED"
-	case sdk.StatusSuccess:
+	case sdk.StatusSuccess, sdk.StatusSkipped:
 		data.status = "SUCCESSFUL"
 	case sdk.StatusStopped:
 		data.status = "STOPPED"

@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"database/sql/driver"
 	json "encoding/json"
 	"time"
@@ -14,7 +15,7 @@ type AuthDriver interface {
 	GetManifest() AuthDriverManifest
 	GetSessionDuration() time.Duration
 	CheckSigninRequest(AuthConsumerSigninRequest) error
-	GetUserInfo(AuthConsumerSigninRequest) (AuthDriverUserInfo, error)
+	GetUserInfo(context.Context, AuthConsumerSigninRequest) (AuthDriverUserInfo, error)
 }
 
 type AuthDriverWithRedirect interface {

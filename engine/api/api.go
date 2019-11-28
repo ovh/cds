@@ -323,7 +323,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		if err := os.MkdirAll(aConfig.Directories.Download, os.FileMode(0700)); err != nil {
 			return fmt.Errorf("Unable to create directory %s: %v", aConfig.Directories.Download, err)
 		}
-		log.Info("Directory %s has been created", aConfig.Directories.Download)
+		log.Info(context.Background(), "Directory %s has been created", aConfig.Directories.Download)
 	} else if err != nil {
 		return fmt.Errorf("Invalid download directory %s: %v", aConfig.Directories.Download, err)
 	}
@@ -336,7 +336,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		if err := os.MkdirAll(aConfig.Directories.Keys, os.FileMode(0700)); err != nil {
 			return fmt.Errorf("Unable to create directory %s: %v", aConfig.Directories.Keys, err)
 		}
-		log.Info("Directory %s has been created", aConfig.Directories.Keys)
+		log.Info(context.Background(), "Directory %s has been created", aConfig.Directories.Keys)
 	} else if err != nil {
 		return fmt.Errorf("Invalid keys directory: %v", err)
 	}
@@ -355,7 +355,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 			if err := os.MkdirAll(aConfig.Artifact.Local.BaseDirectory, os.FileMode(0700)); err != nil {
 				return fmt.Errorf("Unable to create directory %s: %v", aConfig.Artifact.Local.BaseDirectory, err)
 			}
-			log.Info("Directory %s has been created", aConfig.Artifact.Local.BaseDirectory)
+			log.Info(context.Background(), "Directory %s has been created", aConfig.Artifact.Local.BaseDirectory)
 		} else if err != nil {
 			return fmt.Errorf("Invalid artifact local base directory %s: %v", aConfig.Artifact.Local.BaseDirectory, err)
 		}
@@ -366,10 +366,10 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	}
 
 	if aConfig.DefaultArch == "" {
-		log.Warning(`You should add a default architecture in your configuration (example: defaultArch: "amd64"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this architecture`)
+		log.Warning(context.Background(), `You should add a default architecture in your configuration (example: defaultArch: "amd64"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this architecture`)
 	}
 	if aConfig.DefaultOS == "" {
-		log.Warning(`You should add a default operating system in your configuration (example: defaultOS: "linux"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this OS`)
+		log.Warning(context.Background(), `You should add a default operating system in your configuration (example: defaultOS: "linux"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this OS`)
 	}
 
 	if (aConfig.DefaultOS == "" && aConfig.DefaultArch != "") || (aConfig.DefaultOS != "" && aConfig.DefaultArch == "") {
@@ -396,7 +396,7 @@ type StartupConfigService struct {
 
 // Serve will start the http api server
 func (a *API) Serve(ctx context.Context) error {
-	log.Info("Starting CDS API Server %s", sdk.VERSION)
+	log.Info(ctx, "Starting CDS API Server %s", sdk.VERSION)
 
 	a.StartupTime = time.Now()
 
@@ -416,14 +416,14 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 	}
 	if !hasEngine {
-		log.Error("engine is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+		log.Error(ctx, "engine is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
 	}
 	if !hasCtl {
-		log.Error("cdsctl is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+		log.Error(ctx, "cdsctl is unavailable for download, this may lead to a poor user experience. Please check your configuration file or the %s directory", a.Config.Directories.Download)
 	}
 	if !hasWorker {
 		// If no worker, let's exit because CDS for run anything
-		log.Error("worker is unavailable for download. Please check your configuration file or the %s directory", a.Config.Directories.Download)
+		log.Error(ctx, "worker is unavailable for download. Please check your configuration file or the %s directory", a.Config.Directories.Download)
 		return errors.New("worker binary unavailabe")
 	}
 
@@ -436,7 +436,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	// Initialize mail package
-	log.Info("Initializing mail driver...")
+	log.Info(ctx, "Initializing mail driver...")
 	mail.Init(a.Config.SMTP.User,
 		a.Config.SMTP.Password,
 		a.Config.SMTP.From,
@@ -446,7 +446,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.Disable)
 
 	// Initialize feature packages
-	log.Info("Initializing feature flipping with izanami %s", a.Config.Features.Izanami.APIURL)
+	log.Info(ctx, "Initializing feature flipping with izanami %s", a.Config.Features.Izanami.APIURL)
 	if a.Config.Features.Izanami.APIURL != "" {
 		if err := feature.Init(a.Config.Features.Izanami.APIURL, a.Config.Features.Izanami.ClientID, a.Config.Features.Izanami.ClientSecret); err != nil {
 			return errors.Wrap(err, "feature flipping not enabled with izanami: %v")
@@ -454,7 +454,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	//Initialize artifacts storage
-	log.Info("Initializing %s objectstore...", a.Config.Artifact.Mode)
+	log.Info(ctx, "Initializing %s objectstore...", a.Config.Artifact.Mode)
 	var objectstoreKind objectstore.Kind
 	switch a.Config.Artifact.Mode {
 	case "openstack":
@@ -510,10 +510,11 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot initialize storage: %v", errStorage)
 	}
 
-	log.Info("Initializing database connection...")
+	log.Info(ctx, "Initializing database connection...")
 	//Intialize database
 	var errDB error
 	a.DBConnectionFactory, errDB = database.Init(
+		ctx,
 		a.Config.Database.User,
 		a.Config.Database.Role,
 		a.Config.Database.Password,
@@ -528,18 +529,18 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot connect to database: %v", errDB)
 	}
 
-	log.Info("Setting up database keys...")
+	log.Info(ctx, "Setting up database keys...")
 	encryptionKeyConfig := a.Config.Database.EncryptionKey.GetKeys(gorpmapping.KeyEcnryptionIdentifier)
 	signatureKeyConfig := a.Config.Database.SignatureKey.GetKeys(gorpmapping.KeySignIdentifier)
 	if err := gorpmapping.ConfigureKeys(&signatureKeyConfig, &encryptionKeyConfig); err != nil {
 		return fmt.Errorf("cannot setup database keys: %v", err)
 	}
 
-	log.Info("Bootstrapping database...")
+	log.Info(ctx, "Bootstrapping database...")
 	defaultValues := sdk.DefaultValues{
 		DefaultGroupName: a.Config.Auth.DefaultGroup,
 	}
-	if err := bootstrap.InitiliazeDB(defaultValues, a.DBConnectionFactory.GetDBMap); err != nil {
+	if err := bootstrap.InitiliazeDB(ctx, defaultValues, a.DBConnectionFactory.GetDBMap); err != nil {
 		return fmt.Errorf("cannot setup databases: %v", err)
 	}
 
@@ -560,9 +561,9 @@ func (a *API) Serve(ctx context.Context) error {
 		return sdk.WrapError(err, "Unable to export public signing key")
 	}
 
-	log.Info("API Public Key: \n%s", string(pubKey))
+	log.Info(ctx, "API Public Key: \n%s", string(pubKey))
 
-	log.Info("Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
+	log.Info(ctx, "Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
 	// Init the cache
 	var errCache error
 	a.Cache, errCache = cache.New(
@@ -573,30 +574,31 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot connect to cache store: %v", errCache)
 	}
 
-	log.Info("Initializing HTTP router")
+	log.Info(ctx, "Initializing HTTP router")
 	a.Router = &Router{
 		Mux:        mux.NewRouter(),
 		Background: ctx,
 	}
 	a.InitRouter()
 	if err := InitRouterMetrics(a); err != nil {
-		log.Error("unable to init router metrics: %v", err)
+		log.Error(ctx, "unable to init router metrics: %v", err)
 	}
 
-	log.Info("Initializing Metrics")
+	log.Info(ctx, "Initializing Metrics")
 	if err := a.initMetrics(ctx); err != nil {
-		log.Error("unable to init api metrics: %v", err)
+		log.Error(ctx, "unable to init api metrics: %v", err)
 	}
 
 	// Intialize notification package
 	notification.Init(a.Config.URL.UI)
 
-	log.Info("Initializing Authentication drivers...")
+	log.Info(ctx, "Initializing Authentication drivers...")
 	a.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
 
 	a.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 	if a.Config.Auth.Local.Enabled {
 		a.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(
+			ctx,
 			a.Config.Auth.Local.SignupDisabled,
 			a.Config.URL.UI,
 			a.Config.Auth.Local.SignupAllowedDomains,
@@ -605,6 +607,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	if a.Config.Auth.LDAP.Enabled {
 		a.AuthenticationDrivers[sdk.ConsumerLDAP], err = ldap.NewDriver(
+			ctx,
 			a.Config.Auth.LDAP.SignupDisabled,
 			ldap.Config{
 				Host:            a.Config.Auth.LDAP.Host,
@@ -656,9 +659,9 @@ func (a *API) Serve(ctx context.Context) error {
 		a.AuthenticationDrivers[sdk.ConsumerCorporateSSO] = corpsso.NewDriver(driverConfig)
 	}
 
-	log.Info("Initializing event broker...")
-	if err := event.Initialize(a.mustDB(), a.Cache); err != nil {
-		log.Error("error while initializing event system: %s", err)
+	log.Info(ctx, "Initializing event broker...")
+	if err := event.Initialize(ctx, a.mustDB(), a.Cache); err != nil {
+		log.Error(ctx, "error while initializing event system: %s", err)
 	} else {
 		go event.DequeueEvent(ctx, a.mustDB())
 	}
@@ -666,21 +669,21 @@ func (a *API) Serve(ctx context.Context) error {
 	a.warnChan = make(chan sdk.Event)
 	event.Subscribe(a.warnChan)
 
-	log.Info("Initializing internal routines...")
+	log.Info(ctx, "Initializing internal routines...")
 	sdk.GoRoutine(ctx, "maintenance.Subscribe", func(ctx context.Context) {
 		if err := a.listenMaintenance(ctx); err != nil {
-			log.Error("error while initializing listen maintenance routine: %s", err)
+			log.Error(ctx, "error while initializing listen maintenance routine: %s", err)
 		}
 	}, a.PanicDump())
 
 	sdk.GoRoutine(ctx, "workermodel.Initialize", func(ctx context.Context) {
 		if err := workermodel.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
-			log.Error("error while initializing worker models routine: %s", err)
+			log.Error(ctx, "error while initializing worker models routine: %s", err)
 		}
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "worker.Initialize", func(ctx context.Context) {
 		if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
-			log.Error("error while initializing workers routine: %s", err)
+			log.Error(ctx, "error while initializing workers routine: %s", err)
 		}
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "action.ComputeAudit", func(ctx context.Context) {
@@ -719,7 +722,7 @@ func (a *API) Serve(ctx context.Context) error {
 		authentication.SessionCleaner(ctx, a.mustDB)
 	}, a.PanicDump())
 
-	migrate.Add(sdk.Migration{Name: "AddDefaultVCSNotifications", Release: "0.41.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+	migrate.Add(ctx, sdk.Migration{Name: "AddDefaultVCSNotifications", Release: "0.41.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.AddDefaultVCSNotifications(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
 
@@ -755,7 +758,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	externalServices := make([]sdk.ExternalService, 0, len(a.Config.Services))
 	for _, s := range a.Config.Services {
-		log.Info("Managing external service %s %s", s.Name, s.Type)
+		log.Info(ctx, "Managing external service %s %s", s.Name, s.Type)
 		serv := sdk.ExternalService{
 			Service: sdk.Service{
 				CanonicalService: sdk.CanonicalService{
@@ -814,15 +817,15 @@ func (a *API) Serve(ctx context.Context) error {
 	go func() {
 		select {
 		case <-ctx.Done():
-			log.Warning("Cleanup SQL connections")
+			log.Warning(ctx, "Cleanup SQL connections")
 			s.Shutdown(ctx)
 			a.DBConnectionFactory.Close()
-			event.Publish(sdk.EventEngine{Message: "shutdown"}, nil)
-			event.Close()
+			event.Publish(ctx, sdk.EventEngine{Message: "shutdown"}, nil)
+			event.Close(ctx)
 		}
 	}()
 
-	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)}, nil)
+	event.Publish(ctx, sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)}, nil)
 
 	if err := version.Upsert(a.mustDB()); err != nil {
 		return sdk.WrapError(err, "Cannot upsert cds version")
@@ -839,13 +842,13 @@ func (a *API) Serve(ctx context.Context) error {
 		var heapProfile = heapProfile{uuid: sdk.UUID()}
 		s, err := a.SharedStorage.Store(heapProfile, ioutil.NopCloser(buffer))
 		if err != nil {
-			log.Error("unable to upload heap profile: %v", err)
+			log.Error(ctx, "unable to upload heap profile: %v", err)
 			return
 		}
-		log.Error("api> heap dump uploaded to %s", s)
+		log.Error(ctx, "api> heap dump uploaded to %s", s)
 	}()
 
-	log.Info("Starting CDS API HTTP Server on %s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port)
+	log.Info(ctx, "Starting CDS API HTTP Server on %s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {
 		return fmt.Errorf("Cannot start HTTP server: %v", err)
 	}
@@ -857,7 +860,7 @@ const panicDumpTTL = 60 * 60 * 24 // 24 hours
 
 func (a *API) PanicDump() func(s string) (io.WriteCloser, error) {
 	return func(s string) (io.WriteCloser, error) {
-		log.Error("API Panic stacktrace: %s", s)
+		log.Error(context.TODO(), "API Panic stacktrace: %s", s)
 		return cache.NewWriteCloser(a.Cache, cache.Key("api", "panic_dump", s), panicDumpTTL), nil
 	}
 }

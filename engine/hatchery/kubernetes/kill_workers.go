@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (h *HatcheryKubernetes) killAwolWorkers() error {
+func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 	pods, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_WORKER})
 	if err != nil {
 		return err
@@ -41,14 +42,14 @@ func (h *HatcheryKubernetes) killAwolWorkers() error {
 					}
 					tuple := strings.SplitN(modelPath, "/", 2)
 					if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
-						log.Error("killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", modelPath, err)
+						log.Error(ctx, "killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", modelPath, err)
 					}
 				}
 
 			}
 			if err := h.k8sClient.CoreV1().Pods(pod.Namespace).Delete(pod.Name, nil); err != nil {
 				globalErr = err
-				log.Error("hatchery:kubernetes> killAwolWorkers> Cannot delete pod %s (%s)", pod.Name, err)
+				log.Error(ctx, "hatchery:kubernetes> killAwolWorkers> Cannot delete pod %s (%s)", pod.Name, err)
 			}
 		}
 	}

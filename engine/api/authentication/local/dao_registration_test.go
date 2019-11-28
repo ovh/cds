@@ -23,7 +23,7 @@ func TestInsertRegistration(t *testing.T) {
 		Email:    sdk.RandomString(10),
 		Hash:     sdk.RandomString(10),
 	}
-	require.NoError(t, local.InsertRegistration(db, &r1))
+	require.NoError(t, local.InsertRegistration(context.TODO(), db, &r1))
 
 	r2 := sdk.UserRegistration{
 		Username: r1.Username,
@@ -31,7 +31,7 @@ func TestInsertRegistration(t *testing.T) {
 		Email:    r1.Email,
 		Hash:     sdk.RandomString(10),
 	}
-	require.Error(t, local.InsertRegistration(db, &r2))
+	require.Error(t, local.InsertRegistration(context.TODO(), db, &r2))
 
 	res, err := local.LoadRegistrationByID(context.TODO(), db, r1.ID)
 	require.NoError(t, err)

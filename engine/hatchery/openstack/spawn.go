@@ -32,13 +32,13 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		log.Debug("spawnWorker> spawning worker %s model:%s", name, spawnArgs.Model.Name)
 	}
 
-	if len(h.getServers()) == h.Configuration().Provision.MaxWorker {
+	if len(h.getServers(ctx)) == h.Configuration().Provision.MaxWorker {
 		log.Debug("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker)
 		return nil
 	}
 
 	// Get image ID
-	imageID, erri := h.imageID(spawnArgs.Model.ModelVirtualMachine.Image)
+	imageID, erri := h.imageID(ctx, spawnArgs.Model.ModelVirtualMachine.Image)
 	if erri != nil {
 		return erri
 	}
@@ -52,7 +52,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	var withExistingImage bool
 	if !spawnArgs.Model.NeedRegistration && !spawnArgs.RegisterOnly {
 		start := time.Now()
-		imgs := h.getImages()
+		imgs := h.getImages(ctx)
 		log.Debug("spawnWorker> call images.List on openstack took %fs, nbImages:%d", time.Since(start).Seconds(), len(imgs))
 		for _, img := range imgs {
 			workerModelName, _ := img.Metadata["worker_model_name"]
@@ -117,7 +117,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		var ip string
 		if len(ipsInfos.ips) > 0 {
 			var errai error
-			ip, errai = h.findAvailableIP(name)
+			ip, errai = h.findAvailableIP(ctx, name)
 			if errai != nil {
 				return errai
 			}
@@ -137,7 +137,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		server, err := r.Extract()
 		if err != nil {
 			if strings.Contains(err.Error(), "is already in use on instance") && try < maxTries { // Fixed IP address X.X.X.X is already in use on instance
-				log.Warning("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%v body:%s - Try %d/%d", name, flavorID, imageID, meta, networks, err, r.Body, try, maxTries)
+				log.Warning(ctx, "SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%v body:%s - Try %d/%d", name, flavorID, imageID, meta, networks, err, r.Body, try, maxTries)
 				continue
 			}
 			return fmt.Errorf("SpawnWorker> Unable to create server: name:%s flavor:%s image:%s metadata:%v networks:%s err:%v body:%s", name, flavorID, imageID, meta, networks, err, r.Body)

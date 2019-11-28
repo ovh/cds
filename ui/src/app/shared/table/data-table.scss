@@ -26,3 +26,25 @@ th.descending:after {
         margin-left: 5px;
     }
 }
+
+img {
+    width: 48px;
+    height: 48px;
+    float: left;
+}
+
+.vcenter {
+    display: flex;
+    align-items: center;
+}
+
+.author {
+    padding-top: 5px;
+    padding-left: 10px;
+}
+
+pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Lato', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+}

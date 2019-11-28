@@ -2,6 +2,7 @@ package objectstore
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -26,8 +27,8 @@ type AWSS3Store struct {
 	sess               *session.Session
 }
 
-func newS3Store(integration sdk.ProjectIntegration, conf ConfigOptionsAWSS3) (*AWSS3Store, error) {
-	log.Info("ObjectStore> Initialize AWS S3 driver for bucket: %s in region %s", conf.BucketName, conf.Region)
+func newS3Store(ctx context.Context, integration sdk.ProjectIntegration, conf ConfigOptionsAWSS3) (*AWSS3Store, error) {
+	log.Info(ctx, "ObjectStore> Initialize AWS S3 driver for bucket: %s in region %s", conf.BucketName, conf.Region)
 	aConf := aws.NewConfig()
 	aConf.Region = aws.String(conf.Region)
 	if conf.AuthFromEnvironment {
@@ -88,7 +89,7 @@ func (s *AWSS3Store) GetProjectIntegration() sdk.ProjectIntegration {
 	return s.projectIntegration
 }
 
-func (s *AWSS3Store) Status() sdk.MonitoringStatusLine {
+func (s *AWSS3Store) Status(ctx context.Context) sdk.MonitoringStatusLine {
 	out, err := s.account()
 	if err != nil {
 		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "AWSS3 KO" + err.Error(), Status: sdk.MonitoringStatusAlert}
@@ -144,7 +145,7 @@ func (s *AWSS3Store) StoreURL(o Object, contentType string) (string, string, err
 	return urlStr, *key, nil
 }
 
-func (s *AWSS3Store) Fetch(o Object) (io.ReadCloser, error) {
+func (s *AWSS3Store) Fetch(ctx context.Context, o Object) (io.ReadCloser, error) {
 	s3n := s3.New(s.sess)
 	log.Debug("AWS-S3-Store> Fetching object %s from bucket %s", s.getObjectPath(o), s.bucketName)
 	out, err := s3n.GetObject(&s3.GetObjectInput{
@@ -159,7 +160,7 @@ func (s *AWSS3Store) Fetch(o Object) (io.ReadCloser, error) {
 }
 
 // Delete deletes an artifact from a bucket
-func (s *AWSS3Store) Delete(o Object) error {
+func (s *AWSS3Store) Delete(ctx context.Context, o Object) error {
 	s3n := s3.New(s.sess)
 	log.Debug("AWS-S3-Store> Deleting object %s from bucket %s", s.getObjectPath(o), s.bucketName)
 	_, err := s3n.DeleteObject(&s3.DeleteObjectInput{
@@ -174,7 +175,7 @@ func (s *AWSS3Store) Delete(o Object) error {
 }
 
 // DeleteContainer deletes an artifact container (= directory) from a bucket
-func (s *AWSS3Store) DeleteContainer(path string) error {
+func (s *AWSS3Store) DeleteContainer(ctx context.Context, path string) error {
 	s3n := s3.New(s.sess)
 	log.Debug("AWS-S3-Store> Deleting container %s from bucket %s", s.getContainerPath(path), s.bucketName)
 	_, err := s3n.DeleteObject(&s3.DeleteObjectInput{

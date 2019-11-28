@@ -30,7 +30,7 @@ type statusData struct {
 //https://developer.github.com/v3/repos/statuses/#create-a-status
 func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if g.DisableStatus {
-		log.Warning("github.SetStatus>  ⚠ Github statuses are disabled")
+		log.Warning(ctx, "github.SetStatus>  ⚠ Github statuses are disabled")
 		return nil
 	}
 
@@ -40,7 +40,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
 		data, err = processEventWorkflowNodeRun(event, g.uiURL, g.DisableStatusDetail)
 	default:
-		log.Error("github.SetStatus> Unknown event %v", event)
+		log.Error(ctx, "github.SetStatus> Unknown event %v", event)
 		return nil
 	}
 	if err != nil {
@@ -95,7 +95,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 
 func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	url := "/repos/" + repo + "/statuses/" + ref
-	status, body, _, err := g.get(url)
+	status, body, _, err := g.get(ctx, url)
 	if err != nil {
 		return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "githubClient.ListStatuses")
 	}
@@ -109,7 +109,7 @@ func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string
 		//If repo isn't updated, lets get them from cache
 		k := cache.Key("vcs", "github", "statuses", g.OAuthToken, url)
 		if _, err := g.Cache.Get(k, &ss); err != nil {
-			log.Error("cannot get from cache %s: %v", k, err)
+			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
 		if err := json.Unmarshal(body, &ss); err != nil {
@@ -118,7 +118,7 @@ func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string
 		//Put the body on cache for one hour and one minute
 		k := cache.Key("vcs", "github", "statuses", g.OAuthToken, url)
 		if err := g.Cache.SetWithTTL(k, ss, 61*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", k, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 	}
 

@@ -312,7 +312,7 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 
 	// first signin
 	if err := s.Start(ctx, x); err != nil {
-		log.Error("%s> Unable to start service: %v", serviceName, err)
+		log.Error(ctx, "%s> Unable to start service: %v", serviceName, err)
 		return err
 	}
 
@@ -321,23 +321,23 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 	json.Unmarshal(b, &srvConfig) // nolint
 
 	// then register
-	if err := s.Register(srvConfig); err != nil {
-		log.Error("%s> Unable to register: %v", serviceName, err)
+	if err := s.Register(c, srvConfig); err != nil {
+		log.Error(ctx, "%s> Unable to register: %v", serviceName, err)
 		return err
 	}
-	log.Info("%s> Service registered", serviceName)
+	log.Info(ctx, "%s> Service registered", serviceName)
 
 	// finally start the heartbeat goroutine
 	go func() {
 		if err := s.Heartbeat(ctx, s.Status); err != nil {
-			log.Error("%v", err)
+			log.Error(ctx, "%v", err)
 			cancel()
 		}
 	}()
 
 	go func() {
 		if err := s.Serve(ctx); err != nil {
-			log.Error("%s> Serve: %+v", serviceName, err)
+			log.Error(ctx, "%s> Serve: %+v", serviceName, err)
 			cancel()
 		}
 	}()
@@ -345,9 +345,9 @@ func serve(c context.Context, s service.Service, serviceName string, cfg interfa
 	<-ctx.Done()
 
 	if ctx.Err() != nil {
-		log.Error("%s> Service exiting with err: %+v", serviceName, ctx.Err())
+		log.Error(ctx, "%s> Service exiting with err: %+v", serviceName, ctx.Err())
 	} else {
-		log.Info("%s> Service exiting", serviceName)
+		log.Info(ctx, "%s> Service exiting", serviceName)
 	}
 	return ctx.Err()
 }

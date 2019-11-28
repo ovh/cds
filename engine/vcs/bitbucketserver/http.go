@@ -126,7 +126,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	if v != nil && method == "GET" {
 		find, err := c.consumer.cache.Get(cacheKey, v)
 		if err != nil {
-			log.Error("cannot get from cache %s: %v", cacheKey, err)
+			log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 		}
 		if find {
 			return nil
@@ -155,13 +155,13 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	case 401:
 		return sdk.ErrUnauthorized
 	case 400:
-		log.Warning("bitbucketClient.do> %s", string(body))
+		log.Warning(ctx, "bitbucketClient.do> %s", string(body))
 		return sdk.ErrWrongRequest
 	}
 
 	if method != "GET" {
 		if err := c.consumer.cache.Delete(cacheKey); err != nil {
-			log.Error("bitbucketClient.do> unable to delete cache key %v: %v", cacheKey, err)
+			log.Error(ctx, "bitbucketClient.do> unable to delete cache key %v: %v", cacheKey, err)
 		}
 	}
 
@@ -183,7 +183,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		}
 		if method == "GET" {
 			if err := c.consumer.cache.Set(cacheKey, v); err != nil {
-				log.Error("unable to cache set %v: %v", cacheKey, err)
+				log.Error(ctx, "unable to cache set %v: %v", cacheKey, err)
 			}
 		}
 	}

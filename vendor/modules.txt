@@ -249,8 +249,6 @@ github.com/gin-gonic/gin
 github.com/gin-gonic/gin/binding
 github.com/gin-gonic/gin/json
 github.com/gin-gonic/gin/render
-# github.com/gizak/termui v2.3.0+incompatible
-github.com/gizak/termui
 # github.com/go-gorp/gorp v2.0.0+incompatible => github.com/yesnault/gorp v2.0.1-0.20190906143353-6210446a0d92+incompatible
 github.com/go-gorp/gorp
 # github.com/go-redis/redis v6.15.2+incompatible
@@ -423,8 +421,6 @@ github.com/miscreant/miscreant-go/cmac
 github.com/miscreant/miscreant-go/pmac
 # github.com/mitchellh/go-homedir v0.0.0-20161203194507-b8bc1bf76747
 github.com/mitchellh/go-homedir
-# github.com/mitchellh/go-wordwrap v1.0.0
-github.com/mitchellh/go-wordwrap
 # github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
 github.com/mitchellh/hashstructure
 # github.com/mitchellh/mapstructure v1.1.2
@@ -435,6 +431,31 @@ github.com/mndrix/tap-go
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1
 github.com/modern-go/reflect2
+# github.com/mum4k/termdash v0.10.0
+github.com/mum4k/termdash
+github.com/mum4k/termdash/align
+github.com/mum4k/termdash/cell
+github.com/mum4k/termdash/container
+github.com/mum4k/termdash/internal/alignfor
+github.com/mum4k/termdash/internal/area
+github.com/mum4k/termdash/internal/button
+github.com/mum4k/termdash/internal/canvas
+github.com/mum4k/termdash/internal/canvas/braille
+github.com/mum4k/termdash/internal/canvas/buffer
+github.com/mum4k/termdash/internal/draw
+github.com/mum4k/termdash/internal/event
+github.com/mum4k/termdash/internal/event/eventqueue
+github.com/mum4k/termdash/internal/numbers
+github.com/mum4k/termdash/internal/numbers/trig
+github.com/mum4k/termdash/internal/runewidth
+github.com/mum4k/termdash/internal/wrap
+github.com/mum4k/termdash/keyboard
+github.com/mum4k/termdash/linestyle
+github.com/mum4k/termdash/mouse
+github.com/mum4k/termdash/terminal/termbox
+github.com/mum4k/termdash/terminal/terminalapi
+github.com/mum4k/termdash/widgetapi
+github.com/mum4k/termdash/widgets/text
 # github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d
 github.com/nbutton23/zxcvbn-go
 github.com/nbutton23/zxcvbn-go/adjacency
@@ -513,7 +534,7 @@ github.com/pelletier/go-toml
 github.com/peterbourgon/diskv
 # github.com/phayes/permbits v0.0.0-20160816172359-32459f104210
 github.com/phayes/permbits
-# github.com/pierrec/lz4 v2.0.5+incompatible
+# github.com/pierrec/lz4 v2.3.0+incompatible
 github.com/pierrec/lz4
 github.com/pierrec/lz4/internal/xxh32
 # github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
@@ -535,7 +556,7 @@ github.com/prometheus/common/model
 # github.com/prometheus/procfs v0.0.3
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
-# github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a
+# github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563
 github.com/rcrowley/go-metrics
 # github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 github.com/rubenv/sql-migrate
@@ -556,8 +577,6 @@ github.com/shirou/gopsutil/internal/common
 github.com/shirou/gopsutil/mem
 # github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
-# github.com/skratchdot/open-golang v0.0.0-20160302144031-75fb7ed4208c
-github.com/skratchdot/open-golang/open
 # github.com/smartystreets/assertions v0.0.0-20170213163019-15adfb6b24e2
 github.com/smartystreets/assertions
 github.com/smartystreets/assertions/internal/go-render/render
@@ -661,7 +680,7 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
-# golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
+# golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/cast5
@@ -682,7 +701,7 @@ golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
+# golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http/httpguts
@@ -802,7 +821,7 @@ gopkg.in/square/go-jose.v2/jwt
 gopkg.in/testfixtures.v2
 # gopkg.in/urfave/cli.v1 v1.18.1
 gopkg.in/urfave/cli.v1
-# gopkg.in/yaml.v2 v2.2.2
+# gopkg.in/yaml.v2 v2.2.4
 gopkg.in/yaml.v2
 # k8s.io/api v0.0.0-20181204000039-89a74a8d264d
 k8s.io/api/admissionregistration/v1alpha1

@@ -1212,7 +1212,7 @@ func (s *Service) getListForks() service.Handler {
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (s *Service) Status() sdk.MonitoringStatus {
+func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
 
 	if s.Cfg.Servers["github"].URL != "" {
@@ -1225,7 +1225,7 @@ func (s *Service) Status() sdk.MonitoringStatus {
 func (s *Service) statusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK
-		return service.WriteJSON(w, s.Status(), status)
+		return service.WriteJSON(w, s.Status(ctx), status)
 	}
 }
 

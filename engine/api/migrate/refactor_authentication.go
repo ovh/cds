@@ -27,18 +27,18 @@ func RefactorAuthentication(ctx context.Context, db *gorp.DbMap, store cache.Sto
 	for _, u := range usrs {
 		tx, err := db.Begin()
 		if err != nil {
-			log.Error("migrate.RefactorAuthentication> %v", err)
+			log.Error(ctx, "migrate.RefactorAuthentication> %v", err)
 			continue
 		}
 
 		if err := refactorAuthenticationUser(ctx, tx, store, u, apiURL, uiURL); err != nil {
-			log.Error("migrate.RefactorAuthentication> %v", err)
+			log.Error(ctx, "migrate.RefactorAuthentication> %v", err)
 			tx.Rollback() // nolint
 			continue
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Error("migrate.RefactorAuthentication> %v", err)
+			log.Error(ctx, "migrate.RefactorAuthentication> %v", err)
 			tx.Rollback() // nolint
 			continue
 		}
@@ -65,7 +65,7 @@ func refactorAuthenticationUser(ctx context.Context, db gorp.SqlExecutor, store 
 		return sdk.WithStack(err)
 	}
 
-	log.Info("migrate.RefactorAuthentication> starting user migration %s - %s", u.Username, u.Fullname)
+	log.Info(ctx, "migrate.RefactorAuthentication> starting user migration %s - %s", u.Username, u.Fullname)
 
 	var newUser = sdk.AuthentifiedUser{
 		Username:      u.Username,
@@ -79,7 +79,7 @@ func refactorAuthenticationUser(ctx context.Context, db gorp.SqlExecutor, store 
 		newUser.Ring = sdk.UserRingUser
 	}
 
-	if err := user.Insert(db, &newUser); err != nil {
+	if err := user.Insert(ctx, db, &newUser); err != nil {
 		return sdk.WithStack(err)
 	}
 
@@ -91,11 +91,11 @@ func refactorAuthenticationUser(ctx context.Context, db gorp.SqlExecutor, store 
 		Primary:  true,
 	}
 
-	if err := user.InsertContact(db, &contact); err != nil {
+	if err := user.InsertContact(ctx, db, &contact); err != nil {
 		return sdk.WithStack(err)
 	}
 
-	consumer, err := local.NewConsumer(db, newUser.ID)
+	consumer, err := local.NewConsumer(ctx, db, newUser.ID)
 	if err != nil {
 		return err
 	}
@@ -106,14 +106,14 @@ func refactorAuthenticationUser(ctx context.Context, db gorp.SqlExecutor, store 
 	}
 
 	// Insert the authentication
-	if err := mail.SendMailAskResetToken(u.Email, newUser.Username, resetToken,
+	if err := mail.SendMailAskResetToken(ctx, u.Email, newUser.Username, resetToken,
 		apiURL+"/auth/reset?token=%s",
 		uiURL,
 	); err != nil {
 		return sdk.WrapError(err, "cannot send reset token email at %s", contact.Value)
 	}
 
-	log.Info("migrate.RefactorAuthentication> ending user migration %s - %s", newUser.ID, contact.Value)
+	log.Info(ctx, "migrate.RefactorAuthentication> ending user migration %s - %s", newUser.ID, contact.Value)
 
 	return nil
 }

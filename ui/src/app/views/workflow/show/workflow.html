@@ -60,7 +60,7 @@
                                                     </i>
                                                 </div>
                                                 <div *ngIf="previewWorkflow" class="ui green button" (click)="savePreview()"
-                                                    [class.disabled]="loading || (detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0) || detailedWorkflow.permission < permissionEnum.READ_WRITE_EXECUTE"
+                                                    [class.disabled]="loading || (detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0) || !detailedWorkflow.permission.writable"
                                                     [class.loading]="loading">
                                                     <i class="save icon"></i> {{'btn_save' |
                                                     translate}}
@@ -94,7 +94,7 @@
             </div>
             <div *ngSwitchCase="'permissions'" class="padded">
                 <h3>{{ 'workflow_permission_list_title' | translate }}</h3>
-                <app-permission-list [permissions]="detailedWorkflow.groups" (event)="groupManagement($event)" [edit]="(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)?false:detailedWorkflow.permissions.writable"></app-permission-list>
+                <app-permission-list [permissions]="this.groups" (event)="groupManagement($event)" [edit]="detailedWorkflow.permissions.writable && !(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)"></app-permission-list>
                 <ng-container *ngIf="detailedWorkflow.permissions.writable && !(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)">
                     <h3>{{ 'workflow_permission_form_title' | translate }}</h3>
                     <app-permission-form (createGroupPermissionEvent)="groupManagement($event)" [loading]="permFormLoading"></app-permission-form>
@@ -111,7 +111,7 @@
                 </app-usage>
             </div>
             <div *ngSwitchCase="'audits'" class="padded">
-                <app-audit-list [audits]="detailedWorkflow.audits" [loading]="loading" (rollback)="rollback($event)"></app-audit-list>
+                <app-audit-list [audits]="detailedWorkflow.audits" [loading]="loading" (rollback)="rollback($event)" [canRollback]="detailedWorkflow.permissions.writable"></app-audit-list>
             </div>
         </app-scrollview>
         <ng-container>

@@ -9,11 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/sdk/jws"
-
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/jws"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
@@ -48,7 +47,6 @@ func TestHatcheryLocal(t *testing.T) {
 	cfg.API.HTTP.URL = "http://lolcat.host"
 	cfg.API.Token = "xxxxxxxx"
 	cfg.API.MaxHeartbeatFailures = 0
-	cfg.Provision.Frequency = 1
 	cfg.Provision.RegisterFrequency = 1
 	cfg.Provision.MaxWorker = 1
 	privKey, _ := jws.NewRandomRSAKey()
@@ -60,7 +58,6 @@ func TestHatcheryLocal(t *testing.T) {
 
 	srvCfg, err := h.Init(cfg)
 	require.NotNil(t, srvCfg)
-	// srvCfg.Verbose = true
 	t.Logf("service config: %+v", srvCfg)
 
 	srvCfg.Hook = func(client cdsclient.Interface) error {
@@ -77,7 +74,7 @@ func TestHatcheryLocal(t *testing.T) {
 	b, _ := json.Marshal(cfg)
 	json.Unmarshal(b, &srvConfig) // nolint
 
-	err = h.Register(srvConfig)
+	err = h.Register(context.Background(), srvConfig)
 	require.NoError(t, err)
 
 	heartbeatCtx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
@@ -91,6 +88,8 @@ func TestHatcheryLocal(t *testing.T) {
 	require.Contains(t, "context deadline exceeded", err.Error())
 
 	// Mock assertions
+
+	t.Logf("Checking mock assertions")
 
 	if !gock.IsDone() {
 		pending := gock.Pending()

@@ -16,7 +16,9 @@ const DESC: direction = 'desc';
 
 export enum ColumnType {
     TEXT = 'text',
+    TEXT_HTML = 'text-html',
     ICON = 'icon',
+    IMG_TEXT = 'img-text',
     LINK_CLICK = 'link-click',
     LINK = 'link',
     ROUTER_LINK = 'router-link',
@@ -28,7 +30,8 @@ export enum ColumnType {
     LABEL = 'label',
     TEXT_COPY = 'text-copy',
     TEXT_LABELS = 'text-labels',
-    TEXT_ICONS = 'text-icons'
+    TEXT_ICONS = 'text-icons',
+    TIME_AGO = 'time-ago'
 }
 
 export type SelectorType<T> = (d: T) => ColumnType;
@@ -115,7 +118,7 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
     dataForCurrentPage: any;
     pagesCount: number;
     filterFunc: Filter<T>;
-    filter: string;
+    @Input() filter: string;
     filteredData: Array<T>;
     indexSelected: number;
     columnsCount: number;

@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"context"
 	"database/sql"
 	"encoding/base64"
 
@@ -99,7 +100,7 @@ func LoadAllBase64Keys(db gorp.SqlExecutor, env *sdk.Environment) error {
 }
 
 // LoadAllDecryptedKeys load all keys for the given environment
-func LoadAllDecryptedKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
+func LoadAllDecryptedKeys(ctx context.Context, db gorp.SqlExecutor, env *sdk.Environment) error {
 	var res []dbEnvironmentKey
 	if _, err := db.Select(&res, "SELECT * FROM environment_key WHERE environment_id = $1", env.ID); err != nil {
 		if err == sql.ErrNoRows {
@@ -114,7 +115,7 @@ func LoadAllDecryptedKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
 		keys[i] = sdk.EnvironmentKey(p)
 		decrypted, err := secret.Decrypt([]byte(keys[i].Private))
 		if err != nil {
-			log.Error("LoadAllDecryptedKeys> Unable to decrypt private key %s/%s: %v", env.Name, keys[i].Name, err)
+			log.Error(ctx, "LoadAllDecryptedKeys> Unable to decrypt private key %s/%s: %v", env.Name, keys[i].Name, err)
 		}
 		keys[i].Private = string(decrypted)
 	}

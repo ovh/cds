@@ -54,9 +54,9 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (h *HatcherySwarm) Status() sdk.MonitoringStatus {
+func (h *HatcherySwarm) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	for dockerName, dockerClient := range h.dockerClients {
 		//Check images
 		status := sdk.MonitoringStatusOK
@@ -64,7 +64,7 @@ func (h *HatcherySwarm) Status() sdk.MonitoringStatus {
 		defer cancelList()
 		images, err := dockerClient.ImageList(ctxList, types.ImageListOptions{All: true})
 		if err != nil {
-			log.Warning("hatchery> swarm> %s> Status> Unable to list images on %s: %s", h.Name(), dockerName, err)
+			log.Warning(ctx, "hatchery> swarm> %s> Status> Unable to list images on %s: %s", h.Name(), dockerName, err)
 			status = sdk.MonitoringStatusAlert
 		}
 		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Images-" + dockerName, Value: fmt.Sprintf("%d", len(images)), Status: status})
@@ -72,7 +72,7 @@ func (h *HatcherySwarm) Status() sdk.MonitoringStatus {
 		status = sdk.MonitoringStatusOK
 		cs, err := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
 		if err != nil {
-			log.Warning("hatchery> swarm> %s> Status> Unable to list containers on %s: %s", h.Name(), dockerName, err)
+			log.Warning(ctx, "hatchery> swarm> %s> Status> Unable to list containers on %s: %s", h.Name(), dockerName, err)
 			status = sdk.MonitoringStatusAlert
 		}
 		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Containers-" + dockerName, Value: fmt.Sprintf("%d", len(cs)), Status: status})

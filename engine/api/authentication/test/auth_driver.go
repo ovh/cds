@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -37,7 +38,7 @@ func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 	return nil
 }
 
-func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
+func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
 	var u sdk.AuthDriverUserInfo
 	var username = req["username"]
 

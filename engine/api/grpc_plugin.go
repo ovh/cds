@@ -154,7 +154,7 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load old plugin")
 		}
 
-		if err := plugin.Delete(api.mustDB(), api.SharedStorage, old); err != nil {
+		if err := plugin.Delete(ctx, api.mustDB(), api.SharedStorage, old); err != nil {
 			return sdk.WrapError(err, "unable to delete plugin")
 		}
 
@@ -235,7 +235,7 @@ func (api *API) getGRPCluginBinaryHandler() service.Handler {
 			return nil
 		}
 
-		f, err := api.SharedStorage.Fetch(b)
+		f, err := api.SharedStorage.Fetch(ctx, b)
 		if err != nil {
 			return sdk.WrapError(err, "unable to get object")
 		}

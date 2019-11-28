@@ -1,0 +1,5 @@
+*cdsrc*
+*.output
+results
+*.exported
+*.csv

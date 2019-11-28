@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -211,7 +212,7 @@ func databaseDowngradeCmdFunc(cmd *cobra.Command, args []string) {
 
 func databaseStatusCmdFunc(cmd *cobra.Command, args []string) {
 	var err error
-	connFactory, err = database.Init(connFactory.DBUser, connFactory.DBRole, connFactory.DBPassword, connFactory.DBName, connFactory.DBHost, connFactory.DBPort, connFactory.DBSSLMode, connFactory.DBConnectTimeout, connFactory.DBTimeout, connFactory.DBMaxConn)
+	connFactory, err = database.Init(context.TODO(), connFactory.DBUser, connFactory.DBRole, connFactory.DBPassword, connFactory.DBName, connFactory.DBHost, connFactory.DBPort, connFactory.DBSSLMode, connFactory.DBConnectTimeout, connFactory.DBTimeout, connFactory.DBMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %v\n", err)
 	}
@@ -278,7 +279,7 @@ func databaseStatusCmdFunc(cmd *cobra.Command, args []string) {
 //ApplyMigrations applies migration (or not depending on dryrun flag)
 func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) error {
 	var err error
-	connFactory, err = database.Init(connFactory.DBUser, connFactory.DBRole, connFactory.DBPassword, connFactory.DBName, connFactory.DBHost, connFactory.DBPort, connFactory.DBSSLMode, connFactory.DBConnectTimeout, connFactory.DBTimeout, connFactory.DBMaxConn)
+	connFactory, err = database.Init(context.TODO(), connFactory.DBUser, connFactory.DBRole, connFactory.DBPassword, connFactory.DBName, connFactory.DBHost, connFactory.DBPort, connFactory.DBSSLMode, connFactory.DBConnectTimeout, connFactory.DBTimeout, connFactory.DBMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %v\n", err)
 	}

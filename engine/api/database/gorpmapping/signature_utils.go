@@ -81,7 +81,7 @@ func ListTupleByCanonicalForm(db gorp.SqlExecutor, entity, signer string) ([]str
 	return res, nil
 }
 
-func RollSignedTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}) error {
+func RollSignedTupleByPrimaryKey(ctx context.Context, db gorp.SqlExecutor, entity string, pk interface{}) error {
 	e, ok := Mapping[entity]
 	if !ok {
 		return errors.New("unknown entity")
@@ -96,7 +96,7 @@ func RollSignedTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interfac
 		return err
 	}
 
-	if err := UpdateAndSign(db, tuple.(Canonicaller)); err != nil {
+	if err := UpdateAndSign(ctx, db, tuple.(Canonicaller)); err != nil {
 		return err
 	}
 

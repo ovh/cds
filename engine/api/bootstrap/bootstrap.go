@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -9,13 +10,13 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/integration"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
 //InitiliazeDB inits the database
-func InitiliazeDB(defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) error {
+func InitiliazeDB(ctx context.Context, defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) error {
 	dbGorp := DBFunc()
 
 	if err := group.CreateDefaultGroup(dbGorp, sdk.SharedInfraGroupName); err != nil {

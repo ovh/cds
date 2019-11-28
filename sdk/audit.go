@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -33,7 +34,7 @@ type AuditWorkflow struct {
 
 // Audit represents audit interface.
 type Audit interface {
-	Compute(db gorp.SqlExecutor, e Event) error
+	Compute(ctx context.Context, db gorp.SqlExecutor, e Event) error
 }
 
 // AuditWorkflowTemplate represents an audit data on a workflow template.

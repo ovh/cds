@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -9,19 +10,19 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func addBuildVarHandler(wk *CurrentWorker) http.HandlerFunc {
+func addBuildVarHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Get body
 		data, errra := ioutil.ReadAll(r.Body)
 		if errra != nil {
-			log.Error("addBuildVarHandler> Cannot ReadAll err: %s", errra)
+			log.Error(ctx, "addBuildVarHandler> Cannot ReadAll err: %s", errra)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
 		var v sdk.Variable
 		if err := json.Unmarshal(data, &v); err != nil {
-			log.Error("addBuildVarHandler> Cannot Unmarshal err: %s", err)
+			log.Error(ctx, "addBuildVarHandler> Cannot Unmarshal err: %s", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}

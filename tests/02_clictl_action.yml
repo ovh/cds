@@ -1,0 +1,53 @@
+name: Action Command TestSuite with cdsctl
+version: "2"
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./fixtures/action_enabled.yml ]'
+    assertions:
+      - result.code ShouldEqual 0
+  - script: '[ -f ./fixtures/action_disabled.yml ]'
+    assertions:
+      - result.code ShouldEqual 0
+- name: test unknowned action
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} action delete --force shared.infra/CDS_TestIT_unknowned
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring "action does not exist"
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} action delete shared.infra/CDS_TestIT_unknowned
+    assertions:
+      - result.code ShouldEqual 50
+      - result.systemout ShouldContainSubstring "action does not exist"
+- name: prepare test
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} action delete --force shared.infra/CDS_TestIT_Enabled
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} action delete --force shared.infra/CDS_TestIT_Disabled
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} action delete --force shared.infra/CDS_TestIT_GitClone
+- name: action import
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} action import ./fixtures/action_enabled.yml
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring successfully
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} action import ./fixtures/action_disabled.yml
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring successfully
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} action import ./fixtures/action_git_clone.yml
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring successfully
+- name: action export
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} action export shared.infra/CDS_TestIT_Disabled > ./fixtures/clictl_action_CDS_TestIT_Disabled.exported
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} action export shared.infra/CDS_TestIT_Enabled > ./fixtures/clictl_action_CDS_TestIT_Enabled.exported
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} action export shared.infra/CDS_TestIT_GitClone > ./fixtures/clictl_action_CDS_TestIT_GitClone.exported
+  - script: diff ./fixtures/clictl_action_CDS_TestIT_Disabled.exported ./fixtures/action_disabled_expected.yml
+  - script: diff ./fixtures/clictl_action_CDS_TestIT_Enabled.exported ./fixtures/action_enabled_expected.yml
+  - script: diff ./fixtures/clictl_action_CDS_TestIT_GitClone.exported ./fixtures/action_git_clone_expected.yml
+- name: action list
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} action list
+    assertions:
+      - result.code ShouldEqual 0

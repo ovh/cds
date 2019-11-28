@@ -132,15 +132,15 @@ func InsertAdminUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedUser, 
 		Fullname: sdk.RandomString(10),
 		Ring:     sdk.UserRingAdmin,
 	}
-	require.NoError(t, user.Insert(db, &data), "unable to insert user")
+	require.NoError(t, user.Insert(context.TODO(), db, &data), "unable to insert user")
 
 	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
 	require.NoError(t, err, "user cannot be load for id %s", data.ID)
 
-	consumer, err := local.NewConsumer(db, u.ID)
+	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err, "cannot create auth consumer")
 
-	session, err := authentication.NewSession(db, consumer, 5*time.Minute, false)
+	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute, false)
 	require.NoError(t, err, "cannot create auth session")
 
 	jwt, err := authentication.NewSessionJWT(session)
@@ -171,15 +171,15 @@ func InsertMaintainerUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedU
 		Fullname: sdk.RandomString(10),
 		Ring:     sdk.UserRingMaintainer,
 	}
-	require.NoError(t, user.Insert(db, &data), "unable to insert user")
+	require.NoError(t, user.Insert(context.TODO(), db, &data), "unable to insert user")
 
 	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
 	require.NoErrorf(t, err, "user cannot be load for id %s", data.ID)
 
-	consumer, err := local.NewConsumer(db, u.ID)
+	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err, "cannot create auth consumer")
 
-	session, err := authentication.NewSession(db, consumer, 5*time.Minute, false)
+	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute, false)
 	require.NoError(t, err, "cannot create auth session")
 
 	jwt, err := authentication.NewSessionJWT(session)
@@ -195,7 +195,7 @@ func InsertLambdaUser(t *testing.T, db gorp.SqlExecutor, groups ...*sdk.Group) (
 		Fullname: sdk.RandomString(10),
 		Ring:     sdk.UserRingUser,
 	}
-	require.NoError(t, user.Insert(db, u))
+	require.NoError(t, user.Insert(context.TODO(), db, u))
 
 	u, err := user.LoadByID(context.Background(), db, u.ID, user.LoadOptions.WithDeprecatedUser)
 	require.NoError(t, err)
@@ -220,10 +220,10 @@ func InsertLambdaUser(t *testing.T, db gorp.SqlExecutor, groups ...*sdk.Group) (
 	require.NoError(t, err)
 	log.Debug("lambda user: %s", string(btes))
 
-	consumer, err := local.NewConsumer(db, u.ID)
+	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
 	require.NoError(t, err, "cannot create auth consumer")
 
-	session, err := authentication.NewSession(db, consumer, 5*time.Minute, false)
+	session, err := authentication.NewSession(context.TODO(), db, consumer, 5*time.Minute, false)
 	require.NoError(t, err, "cannot create session")
 
 	jwt, err := authentication.NewSessionJWT(session)
@@ -438,7 +438,7 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 	consumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, usr1.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", consumer, []int64{grp.ID}, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution})
+	hConsumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", consumer, []int64{grp.ID}, []sdk.AuthConsumerScope{sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution})
 	require.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()
@@ -455,9 +455,9 @@ func InsertHatchery(t *testing.T, db gorp.SqlExecutor, grp sdk.Group) (*sdk.Serv
 		},
 	}
 
-	require.NoError(t, services.Insert(db, &srv))
+	require.NoError(t, services.Insert(context.TODO(), db, &srv))
 
-	session, err := authentication.NewSession(db, hConsumer, 5*time.Minute, false)
+	session, err := authentication.NewSession(context.TODO(), db, hConsumer, 5*time.Minute, false)
 	require.NoError(t, err)
 
 	jwt, err := authentication.NewSessionJWT(session)
@@ -474,7 +474,7 @@ func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string, 
 
 	sharedGroup, err := group.LoadByName(context.TODO(), db, sdk.SharedInfraGroupName)
 	require.NoError(t, err)
-	hConsumer, _, err := builtin.NewConsumer(db, sdk.RandomString(10), "", consumer, []int64{sharedGroup.ID}, append(scopes, sdk.AuthConsumerScopeProject))
+	hConsumer, _, err := builtin.NewConsumer(context.TODO(), db, sdk.RandomString(10), "", consumer, []int64{sharedGroup.ID}, append(scopes, sdk.AuthConsumerScopeProject))
 	require.NoError(t, err)
 
 	privateKey, err := jws.NewRandomRSAKey()
@@ -491,7 +491,7 @@ func InsertService(t *testing.T, db gorp.SqlExecutor, name, serviceType string, 
 		},
 	}
 
-	require.NoError(t, services.Insert(db, &srv))
+	require.NoError(t, services.Insert(context.TODO(), db, &srv))
 
 	return &srv, privateKey
 }

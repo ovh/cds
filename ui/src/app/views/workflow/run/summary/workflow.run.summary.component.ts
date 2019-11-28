@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
-import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
@@ -40,7 +39,6 @@ export class WorkflowRunSummaryComponent {
     subWR: Subscription;
     @Input() workflowName: string;
     @Output() directionChange = new EventEmitter();
-    @Output() relaunch = new EventEmitter();
 
     _direction: string;
     author: string;
@@ -50,7 +48,6 @@ export class WorkflowRunSummaryComponent {
     ansi_up = new AU.default;
 
     pipelineStatusEnum = PipelineStatus;
-    permissionEnum = PermissionValue;
 
     constructor(
         private _workflowRunService: WorkflowRunService,

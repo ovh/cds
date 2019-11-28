@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowNodeCondition, WorkflowNodeConditions, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
@@ -67,7 +66,6 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
     loadingConditions = false;
     operators: Array<any>;
     conditionNames: Array<string>;
-    permission = PermissionValue;
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
     loading = false;
     previousValue: string;
@@ -134,9 +132,18 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
         this.conditionsChange.emit(this.conditions);
     }
 
+    filterConditionVariables(opts: string[], query: string) {
+        let result: Array<string> = opts.filter((opt) => opt.indexOf(query) > -1);
+        if (result.indexOf(query) === -1) {
+            result.push(query);
+        }
+        return result;
+    }
+
     pushChange(event: string, e?: string): void {
         if (event !== 'codemirror') {
             this.conditionsChange.emit(this.conditions);
+            this.conditions.lua_script = '';
             return;
         }
         if (event === 'codemirror' && e && e !== this.previousValue) {
@@ -144,15 +151,6 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
             this.conditionsChange.emit(this.conditions);
         }
         return;
-
-    }
-
-    filterConditionVariables(opts: string[], query: string) {
-        let result: Array<string> = opts.filter((opt) => opt.indexOf(query) > -1);
-        if (result.indexOf(query) === -1) {
-            result.push(query);
-        }
-        return result;
     }
 
     changeCodeMirror(): void {

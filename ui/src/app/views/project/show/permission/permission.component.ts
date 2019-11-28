@@ -3,7 +3,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AddGroupInProject, DeleteGroupInProject, UpdateGroupInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
-import { PermissionValue } from '../../../../model/permission.model';
 import { Project } from '../../../../model/project.model';
 import { Warning } from '../../../../model/warning.model';
 import { ConfirmModalComponent } from '../../../../shared/modal/confirm/confirm.component';
@@ -26,7 +25,6 @@ export class ProjectPermissionsComponent {
     @ViewChild('confirmPropagationModal', {static: false})
     confirmPropagationModal: ConfirmModalComponent;
 
-    permissionEnum = PermissionValue;
     loading = false;
     permFormLoading = false;
     currentPermEvent: PermissionEvent;

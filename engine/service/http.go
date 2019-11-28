@@ -73,7 +73,8 @@ func Accepted(w http.ResponseWriter) error {
 func Write(w http.ResponseWriter, btes []byte, status int, contentType string) error {
 	w.Header().Add("Content-Type", contentType)
 	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(btes)))
-	WriteProcessTime(w)
+
+	WriteProcessTime(context.TODO(), w)
 	w.WriteHeader(status)
 	_, err := w.Write(btes)
 	return sdk.WithStack(err)
@@ -89,11 +90,11 @@ func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
 }
 
 // WriteProcessTime writes the duration of the call in the responsewriter
-func WriteProcessTime(w http.ResponseWriter) {
+func WriteProcessTime(ctx context.Context, w http.ResponseWriter) {
 	if h := w.Header().Get(cdsclient.ResponseAPINanosecondsTimeHeader); h != "" {
 		start, err := strconv.ParseInt(h, 10, 64)
 		if err != nil {
-			log.Error("WriteProcessTime> error on ParseInt header ResponseAPINanosecondsTimeHeader: %s", err)
+			log.Error(ctx, "WriteProcessTime> error on ParseInt header ResponseAPINanosecondsTimeHeader: %s", err)
 		}
 		w.Header().Add(cdsclient.ResponseProcessTimeHeader, fmt.Sprintf("%d", time.Now().UnixNano()-start))
 	}

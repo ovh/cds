@@ -68,7 +68,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineUpdate(key, p.Name, oldName, getAPIConsumer(ctx))
+		event.PublishPipelineUpdate(ctx, key, p.Name, oldName, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pipelineDB, http.StatusOK)
 	}
@@ -136,7 +136,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineUpdate(key, audit.Pipeline.Name, name, u)
+		event.PublishPipelineUpdate(ctx, key, audit.Pipeline.Name, name, u)
 
 		return service.WriteJSON(w, *audit.Pipeline, http.StatusOK)
 	}
@@ -191,7 +191,7 @@ func (api *API) addPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineAdd(key, p, getAPIConsumer(ctx))
+		event.PublishPipelineAdd(ctx, key, p, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -251,7 +251,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 		project, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNoProject) {
-				log.Warning("getPipelinesHandler: Cannot load %s: %s\n", key, err)
+				log.Warning(ctx, "getPipelinesHandler: Cannot load %s: %s\n", key, err)
 			}
 			return err
 		}
@@ -259,7 +259,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 		pip, err := pipeline.LoadPipelines(api.mustDB(), project.ID, true)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
-				log.Warning("getPipelinesHandler>Cannot load pipelines: %s\n", err)
+				log.Warning(ctx, "getPipelinesHandler>Cannot load pipelines: %s\n", err)
 			}
 			return err
 		}
@@ -312,7 +312,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineDelete(key, *p, getAPIConsumer(ctx))
+		event.PublishPipelineDelete(ctx, key, *p, getAPIConsumer(ctx))
 		return nil
 	}
 }

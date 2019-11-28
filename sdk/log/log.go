@@ -117,7 +117,7 @@ func Initialize(conf *Conf) {
 	}
 	go func() {
 		<-conf.Ctx.Done()
-		log.Info("Draining logs")
+		log.Info(conf.Ctx, "Draining logs")
 		if hook != nil {
 			hook.Flush()
 		}
@@ -138,12 +138,25 @@ func Debug(format string, values ...interface{}) {
 }
 
 // Info prints information log
-func Info(format string, values ...interface{}) {
+func Info(ctx context.Context, format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[INFO]    "+format, values...)
 	} else {
 		if len(values) == 0 {
-			log.Info(format)
+			log.Info(ctx, format)
+		} else {
+			log.Infof(format, values...)
+		}
+	}
+}
+
+// InfoWithoutCtx prints information log
+func InfoWithoutCtx(format string, values ...interface{}) {
+	if logger != nil {
+		logger.Logf("[INFO]    "+format, values...)
+	} else {
+		if len(values) == 0 {
+			log.Info(context.Background(), format)
 		} else {
 			log.Infof(format, values...)
 		}
@@ -151,7 +164,7 @@ func Info(format string, values ...interface{}) {
 }
 
 // Warning prints warnings for user
-func Warning(format string, values ...interface{}) {
+func Warning(ctx context.Context, format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[WARN]    "+format, values...)
 	} else {
@@ -164,7 +177,7 @@ func Warning(format string, values ...interface{}) {
 }
 
 // Error prints error informations
-func Error(format string, values ...interface{}) {
+func Error(ctx context.Context, format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[ERROR]    "+format, values...)
 	} else {

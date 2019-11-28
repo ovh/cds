@@ -18,13 +18,13 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap) {
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				log.Error("Exiting broadcast.Cleaner: %v", c.Err())
+				log.Error(c, "Exiting broadcast.Cleaner: %v", c.Err())
 				return
 			}
 		case <-tickPurge.C:
 			log.Debug("PurgeBroadcast> Deleting all old broadcast...")
 			if err := deleteOldBroadcasts(DBFunc()); err != nil {
-				log.Warning("broadcast.Purge> Error : %s", err)
+				log.Warning(c, "broadcast.Purge> Error : %s", err)
 			}
 		}
 	}

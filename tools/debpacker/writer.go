@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	zglob "github.com/mattn/go-zglob"
+	"github.com/mholt/archiver"
 	"github.com/pkg/errors"
 )
 
@@ -14,9 +15,12 @@ type Writer interface {
 	CreateDirectory(path string, perm os.FileMode) error
 	CreateFile(path string, content []byte, perm os.FileMode) error
 	CopyFiles(targetPath string, path string, perm os.FileMode, sources ...string) error
+	ExtractArchive(targetPath, path, archive string) error
 }
 
-type fileSystemWriter struct{}
+type fileSystemWriter struct {
+	workdir string
+}
 
 func (f fileSystemWriter) CreateDirectory(path string, perm os.FileMode) error {
 	return errors.Wrapf(os.MkdirAll(path, os.FileMode(0755)), "Cannot mkdir all at %s", path)
@@ -31,6 +35,18 @@ func (f fileSystemWriter) CreateFile(path string, content []byte, perm os.FileMo
 
 	_, err = fi.Write(content)
 	return errors.Wrapf(err, "Cannot write file at %s", path)
+}
+
+func (f fileSystemWriter) ExtractArchive(targetPath, path, archive string) error {
+	path = filepath.Join(targetPath, path)
+	if err := f.CreateDirectory(path, os.FileMode(0755)); err != nil {
+		return err
+	}
+
+	if err := archiver.Unarchive(filepath.Join(f.workdir, archive), path); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (f fileSystemWriter) CopyFiles(targetPath string, path string, perm os.FileMode, sources ...string) error {
@@ -52,7 +68,7 @@ func (f fileSystemWriter) CopyFiles(targetPath string, path string, perm os.File
 			dest = filepath.Join(targetPath, path)
 		}
 
-		matches, err := zglob.Glob(source)
+		matches, err := zglob.Glob(filepath.Join(f.workdir, source))
 		if err != nil && err.Error() != "file does not exist" {
 			return errors.Wrapf(err, "Error glob for path %s", source)
 		}

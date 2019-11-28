@@ -3,6 +3,7 @@ package workflowtemplate
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -203,11 +204,11 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 }
 
 // Tar returns in buffer the a tar file that contains all generated stuff in template result.
-func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) error {
+func Tar(ctx context.Context, wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) error {
 	tw := tar.NewWriter(w)
 	defer func() {
 		if err := tw.Close(); err != nil {
-			log.Error("%v", sdk.WrapError(err, "Unable to close tar writer"))
+			log.Error(ctx, "%v", sdk.WrapError(err, "Unable to close tar writer"))
 		}
 	}()
 

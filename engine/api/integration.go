@@ -70,7 +70,7 @@ func (api *API) postIntegrationModelHandler() service.Handler {
 		}
 
 		if m.Public {
-			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
+			go propagatePublicIntegrationModel(ctx, api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
 		}
 
 		return service.WriteJSON(w, m, http.StatusCreated)
@@ -120,42 +120,42 @@ func (api *API) putIntegrationModelHandler() service.Handler {
 		}
 
 		if m.Public {
-			go propagatePublicIntegrationModel(api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
+			go propagatePublicIntegrationModel(ctx, api.mustDB(), api.Cache, *m, getAPIConsumer(ctx))
 		}
 
 		return service.WriteJSON(w, m, http.StatusOK)
 	}
 }
 
-func propagatePublicIntegrationModel(db *gorp.DbMap, store cache.Store, m sdk.IntegrationModel, u sdk.Identifiable) {
+func propagatePublicIntegrationModel(ctx context.Context, db *gorp.DbMap, store cache.Store, m sdk.IntegrationModel, u sdk.Identifiable) {
 	if !m.Public && len(m.PublicConfigurations) > 0 {
 		return
 	}
 
 	projs, err := project.LoadAll(context.Background(), db, store, nil, project.LoadOptions.WithClearIntegrations)
 	if err != nil {
-		log.Error("propagatePublicIntegrationModel> Unable to retrieve all projects: %v", err)
+		log.Error(ctx, "propagatePublicIntegrationModel> Unable to retrieve all projects: %v", err)
 		return
 	}
 
 	for _, p := range projs {
 		tx, err := db.Begin()
 		if err != nil {
-			log.Error("propagatePublicIntegrationModel> error: %v", err)
+			log.Error(ctx, "propagatePublicIntegrationModel> error: %v", err)
 			continue
 		}
-		if err := propagatePublicIntegrationModelOnProject(tx, store, m, p, u); err != nil {
-			log.Error("propagatePublicIntegrationModel> error: %v", err)
+		if err := propagatePublicIntegrationModelOnProject(ctx, tx, store, m, p, u); err != nil {
+			log.Error(ctx, "propagatePublicIntegrationModel> error: %v", err)
 			_ = tx.Rollback()
 			continue
 		}
 		if err := tx.Commit(); err != nil {
-			log.Error("propagatePublicIntegrationModel> unable to commit: %v", err)
+			log.Error(ctx, "propagatePublicIntegrationModel> unable to commit: %v", err)
 		}
 	}
 }
 
-func propagatePublicIntegrationModelOnProject(db gorp.SqlExecutor, store cache.Store, m sdk.IntegrationModel, p sdk.Project, u sdk.Identifiable) error {
+func propagatePublicIntegrationModelOnProject(ctx context.Context, db gorp.SqlExecutor, store cache.Store, m sdk.IntegrationModel, p sdk.Project, u sdk.Identifiable) error {
 	if !m.Public {
 		return nil
 	}
@@ -174,7 +174,7 @@ func propagatePublicIntegrationModelOnProject(db gorp.SqlExecutor, store cache.S
 			if err := integration.InsertIntegration(db, &pp); err != nil {
 				return sdk.WrapError(err, "Unable to insert integration %s", pp.Name)
 			}
-			event.PublishAddProjectIntegration(&p, pp, u)
+			event.PublishAddProjectIntegration(ctx, &p, pp, u)
 			continue
 		}
 
@@ -190,7 +190,7 @@ func propagatePublicIntegrationModelOnProject(db gorp.SqlExecutor, store cache.S
 		if err := integration.UpdateIntegration(db, pp); err != nil {
 			return err
 		}
-		event.PublishUpdateProjectIntegration(&p, oldPP, pp, u)
+		event.PublishUpdateProjectIntegration(ctx, &p, oldPP, pp, u)
 	}
 	return nil
 }

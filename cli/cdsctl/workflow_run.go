@@ -105,17 +105,37 @@ func workflowRunManualRun(v cli.Values) error {
 		if err != nil {
 			return fmt.Errorf("Unable to get current path: %s", err)
 		}
-		var gitBranch string
-		r, errP := repo.New(dir)
-		if errP == nil {
-			gitBranch, _ = r.CurrentBranch()
+		var gitBranch, currentBranch, remoteURL string
+		r, err := repo.New(dir)
+		if err == nil { // If the directory is a git repository
+			currentBranch, _ = r.CurrentBranch()
+			remoteURL, err = r.FetchURL()
+			if err != nil {
+				return sdk.WrapError(err, "cannot fetch the remote url")
+			}
 		}
+
+		wf, err := client.WorkflowGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
+		if err != nil {
+			return sdk.WrapError(err, "cannot load workflow")
+		}
+
+		// Check if we are on the same repository and if we have a git.branch in the default payload
+		if wf.WorkflowData != nil && wf.WorkflowData.Node.Context != nil && wf.WorkflowData.Node.Context.ApplicationID != 0 {
+			app := wf.GetApplication(wf.WorkflowData.Node.Context.ApplicationID)
+			if remoteURL != "" && strings.Contains(remoteURL, app.RepositoryFullname) && currentBranch != "" {
+				defaultPayload, err := wf.WorkflowData.Node.Context.DefaultPayloadToMap()
+				if err == nil && defaultPayload["git.branch"] != "" {
+					gitBranch = currentBranch
+				}
+			}
+		}
+
 		if gitBranch != "" {
 			m := map[string]string{}
 			m["git.branch"] = gitBranch
 			manual.Payload = m
 		}
-
 	}
 
 	pipParams := v.GetStringSlice("parameter")

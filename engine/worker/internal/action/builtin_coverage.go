@@ -14,7 +14,6 @@ import (
 func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
 	var res sdk.Result
 	res.Status = sdk.StatusFail
-
 	p := sdk.ParameterValue(a.Parameters, "path")
 	if p == "" {
 		return res, fmt.Errorf("coverage parser: path not provided")

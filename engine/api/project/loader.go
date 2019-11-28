@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
@@ -13,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadOptionFunc is used as options to loadProject functions
@@ -153,7 +153,7 @@ func loadIntegrations(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project)
 
 func loadFeatures(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 	// Loads features into a project from the feature flipping provider
-	proj.Features = feature.GetFeatures(store, proj.Key)
+	proj.Features = feature.GetFeatures(context.TODO(), store, proj.Key)
 	return nil
 }
 
@@ -169,7 +169,7 @@ func loadClearIntegrations(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pro
 func loadWorkflows(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 	workflows, err := workflow.LoadAll(db, proj.Key)
 	if err != nil {
-		log.Error("Unable to load workflows for project %s: %v", proj.Key, err)
+		return sdk.WithStack(err)
 	}
 	proj.Workflows = workflows
 	return nil

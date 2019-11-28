@@ -116,7 +116,7 @@ func integrationPluginClientStop(ctx context.Context, integrationPluginClient in
 	if _, err := integrationPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
 		// Transport is closing is a "normal" error, as we requested plugin to stop
 		if !strings.Contains(err.Error(), "transport is closing") {
-			log.Error("Error on integrationPluginClient.Stop: %s", err)
+			log.Error(ctx, "Error on integrationPluginClient.Stop: %s", err)
 		}
 	}
 	stopLogs()

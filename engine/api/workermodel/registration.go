@@ -1,6 +1,7 @@
 package workermodel
 
 import (
+	"context"
 	"errors"
 	"strconv"
 	"strings"
@@ -80,7 +81,6 @@ func updateAllToCheckRegistration(db gorp.SqlExecutor) error {
 
 // UpdateSpawnErrorWorkerModel updates worker model error registration
 func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, spawnError sdk.SpawnErrorForm) error {
-
 	spawnError.Error = sdk.RemoveNotPrintableChar(spawnError.Error)
 	spawnError.Logs = []byte(sdk.RemoveNotPrintableChar(string(spawnError.Logs)))
 
@@ -101,7 +101,7 @@ func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, spawnError 
 }
 
 // UpdateRegistration updates need_registration to false and last_registration time, reset err registration.
-func UpdateRegistration(db gorp.SqlExecutor, store cache.Store, modelID int64) error {
+func UpdateRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, modelID int64) error {
 	query := `UPDATE worker_model SET need_registration=false, check_registration=false, last_registration = $2, nb_spawn_err=0, last_spawn_err=NULL, last_spawn_err_log=NULL WHERE id = $1`
 	res, err := db.Exec(query, modelID, time.Now())
 	if err != nil {
@@ -113,7 +113,7 @@ func UpdateRegistration(db gorp.SqlExecutor, store cache.Store, modelID int64) e
 		return sdk.WithStack(err)
 	}
 	log.Debug("UpdateRegistration> %d worker model updated", rows)
-	UnbookForRegister(store, modelID)
+	UnbookForRegister(ctx, store, modelID)
 	return nil
 }
 
@@ -151,17 +151,17 @@ func BookForRegister(store cache.Store, id int64, serviceID int64) error {
 }
 
 // UnbookForRegister release the book
-func UnbookForRegister(store cache.Store, id int64) {
+func UnbookForRegister(ctx context.Context, store cache.Store, id int64) {
 	k := KeyBookWorkerModel(id)
 	if err := store.Delete(k); err != nil {
-		log.Error("unable to delete cache key %v: %v", k, err)
+		log.Error(ctx, "unable to delete cache key %v: %v", k, err)
 	}
 }
 
-func UpdateCapabilities(db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, registrationForm sdk.WorkerRegistrationForm) error {
+func UpdateCapabilities(ctx context.Context, db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, registrationForm sdk.WorkerRegistrationForm) error {
 	existingCapas, err := LoadCapabilities(db, spawnArgs.Model.ID)
 	if err != nil {
-		log.Warning("RegisterWorker> Unable to load worker model capabilities: %s", err)
+		log.Warning(ctx, "RegisterWorker> Unable to load worker model capabilities: %s", err)
 		return sdk.WithStack(err)
 	}
 
@@ -209,7 +209,7 @@ func UpdateCapabilities(db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, 
 		query := `DELETE FROM worker_capability WHERE worker_model_id=$1 AND name=ANY(string_to_array($2, ',')::text[]) AND type=$3`
 		if _, err := db.Exec(query, spawnArgs.Model.ID, strings.Join(capaToDelete, ","), string(sdk.BinaryRequirement)); err != nil {
 			//Ignore errors because we let the database to check constraints...
-			log.Warning("registerWorker> Cannot delete from worker_capability: %v", err)
+			log.Warning(ctx, "registerWorker> Cannot delete from worker_capability: %v", err)
 			return sdk.WithStack(err)
 
 		}
@@ -217,7 +217,7 @@ func UpdateCapabilities(db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, 
 
 	if registrationForm.OS != "" && registrationForm.Arch != "" {
 		if err := UpdateOSAndArch(db, spawnArgs.Model.ID, registrationForm.OS, registrationForm.Arch); err != nil {
-			log.Warning("registerWorker> Cannot update os and arch for worker model %d : %s", spawnArgs.Model.ID, err)
+			log.Warning(ctx, "registerWorker> Cannot update os and arch for worker model %d : %s", spawnArgs.Model.ID, err)
 			return sdk.WithStack(err)
 		}
 	}

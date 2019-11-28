@@ -170,7 +170,7 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 		Stdout: stdOut,
 	}
 
-	git.LogFunc = log.Info
+	git.LogFunc = log.InfoWithoutCtx
 	//Perform the git clone
 	userLogCommand, err := git.Clone(url, basedir, dir, auth, clone, output)
 
@@ -226,7 +226,7 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir stri
 	authorEmail := sdk.ParameterValue(params, "git.author.email")
 	message := sdk.ParameterValue(params, "git.message")
 
-	info, err := git.ExtractInfo(filepath.Join(dir))
+	info, err := git.ExtractInfo(ctx, filepath.Join(dir))
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -41,7 +42,7 @@ func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) 
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitServer, sdk.StringParameter, vcsInfos.Server)
 }
 
-func checkCondition(wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, params []sdk.Parameter) bool {
+func checkCondition(ctx context.Context, wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, params []sdk.Parameter) bool {
 	var conditionsOK bool
 	var errc error
 	if conditions.LuaScript == "" {
@@ -49,7 +50,7 @@ func checkCondition(wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, 
 	} else {
 		luacheck, err := luascript.NewCheck()
 		if err != nil {
-			log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", err)
+			log.Warning(ctx, "processWorkflowNodeRun> WorkflowCheckConditions error: %s", err)
 			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowError.ID,
 				Args: []interface{}{fmt.Sprintf("Error init LUA System: %v", err)},
@@ -60,7 +61,7 @@ func checkCondition(wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, 
 		conditionsOK = luacheck.Result
 	}
 	if errc != nil {
-		log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
+		log.Warning(ctx, "processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
 		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
 			Args: []interface{}{fmt.Sprintf("Error on LUA Condition: %v", errc)},

@@ -1,6 +1,10 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { TestCase, TestSuite } from '../../../../../../model/pipeline.model';
-import { Table } from '../../../../../../shared/table/table';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Failure, TestCase, Tests } from '../../../../../../model/pipeline.model';
+
+import { ThemeStore } from 'app/service/services.module';
+import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-test-table',
@@ -8,81 +12,149 @@ import { Table } from '../../../../../../shared/table/table';
     styleUrls: ['./test.table.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkflowRunTestTableComponent extends Table<TestCase> {
+export class WorkflowRunTestTableComponent implements OnInit {
+    @ViewChild('codemirror1', { static: false }) codemirror1: any;
+    @ViewChild('codemirror2', { static: false }) codemirror2: any;
+    @ViewChild('codemirror3', { static: false }) codemirror3: any;
 
-    filteredTests: Array<TestCase>;
-    filter: string;
+    codeMirrorConfig: any;
+    columns: Array<Column<TestCase>>;
+    filter: Filter<TestCase>;
+    filterInput: string;
+    testCaseSelected: TestCase;
+    @Input() tests: Tests;
+    themeSubscription: Subscription;
+    testcases = new Array<TestCase>();
 
-    @Input() tests: Array<TestSuite>;
-    @Input('statusFilter')
-    set statusFilter(status: string) {
-        this.filter = status;
-        this.currentPage = 1;
-        this.updateFilteredTests();
-    }
-
-    constructor() {
-        super();
-        this.nbElementsByPage = 20;
-    }
-
-    getData(): Array<TestCase> {
-        if (!this.filteredTests) {
-            this.updateFilteredTests();
+    statusFilter(status: string) {
+        this.testCaseSelected = null;
+        if (status === 'all') {
+            this.filterInput = '';
+        } else if (status !== '') {
+            this.filterInput = 'status:' + status;
         }
-        return this.filteredTests;
     }
 
-    updateFilteredTests(): void {
-        this.filteredTests = new Array<TestCase>();
-        if (!this.tests) {
+    getTestCases() {
+        let testcases = new Array<TestCase>();
+        if (!this.tests || !this.tests.test_suites) {
             return;
         }
-        switch (this.filter) {
-            case 'error':
-                for (let ts of this.tests) {
-                    if (ts.errors > 0 || ts.failures > 0) {
-                        if (ts.tests) {
-                            let testCases = ts.tests
-                                .filter(tc => (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0))
-                                .map(tc => {
-                                    tc.fullname = ts.name + ' / ' + tc.name;
-                                    return tc;
-                                });
-                            this.filteredTests.push(...testCases);
-                        } else {
-                            let ftc = new TestCase();
-                            ftc.fullname = ts.name + ': testsuite in error, please read the raw xml file';
-                            this.filteredTests.push(ftc);
-                        }
+        for (let ts of this.tests.test_suites) {
+            if (ts.tests) {
+                let testCase = ts.tests.map(tc => {
+                    tc.fullname = ts.name + ' / ' + tc.name;
+                    if (!tc.errors && !tc.failures) {
+                        tc.status = 'success';
+                    } else if ( (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0)) {
+                        tc.status = 'failed';
+                    } else {
+                        tc.status = 'skipped';
                     }
-                };
-                break;
-            case 'skipped':
-                for (let ts of this.tests) {
-                    if (ts.skipped > 0) {
-                        if (ts.tests) {
-                            let testCases = ts.tests
-                                .filter(tc => (tc.skipped && tc.skipped.length > 0))
-                                .map(tc => {
-                                    tc.fullname = ts.name + ' / ' + tc.name;
-                                    return tc;
-                                });
-                            this.filteredTests.push(...testCases);
-                        }
-                    }
-                };
-                break;
-            default:
-                for (let ts of this.tests) {
-                    if (ts.tests) {
-                        let testCases = ts.tests.map(tc => {
-                            tc.fullname = ts.name + ' / ' + tc.name;
-                            return tc;
-                        });
-                        this.filteredTests.push(...testCases);
-                    }
-                }
+
+                    return tc;
+                });
+                testcases.push(...testCase);
+            }
         }
+        return testcases;
     }
+
+    ngOnInit(): void {
+        this.themeSubscription = this._theme.get()
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(t => {
+                this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+                if (this.codemirror1 && this.codemirror1.instance) {
+                    this.codemirror1.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+                if (this.codemirror2 && this.codemirror2.instance) {
+                    this.codemirror2.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+                if (this.codemirror3 && this.codemirror3.instance) {
+                    this.codemirror3.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+                this._cd.markForCheck();
+            });
+    }
+
+    constructor(private _theme: ThemeStore, private _cd: ChangeDetectorRef) {
+        this.codeMirrorConfig = {
+            lineWrapping: false,
+            lineNumbers: true,
+            autoRefresh: true,
+            readOnly: true
+        };
+
+        this.filter = f => {
+            const lowerFilter = f.toLowerCase();
+            return d => {
+                if (lowerFilter.indexOf('status:') === 0) {
+                    return lowerFilter.indexOf(d.status) >= 7;
+                }
+                return d.fullname.toLowerCase().indexOf(lowerFilter) !== -1;
+            }
+        };
+
+        this.columns = [
+            <Column<TestCase>>{
+                type: ColumnType.ICON,
+                class: 'one',
+                selector: (tc: TestCase) => {
+                    if (tc.status === 'success') {
+                        return ['green', 'check', 'icon'];
+                    } else if (tc.status === 'failed') {
+                        return ['red', 'remove', 'circle', 'icon'];
+                    }
+                    return ['grey', 'ban', 'icon'];
+                }
+            },
+            <Column<TestCase>>{
+                class: 'ten',
+                selector: (tc: TestCase) => tc.fullname
+            },
+            <Column<TestCase>>{
+                type: ColumnType.BUTTON,
+                name: '',
+                class: 'two right aligned',
+                selector: (tc: TestCase) => {
+                    return {
+                        icon: 'eye',
+                        class: 'icon small',
+                        click: () => this.clickTestCase(tc)
+                    };
+                },
+            },
+        ];
+    }
+
+    clickTestCase(tc: TestCase): void {
+        if (this.testCaseSelected && this.testCaseSelected.fullname === tc.fullname) {
+            this.testCaseSelected = undefined;
+            this.filterInput = '';
+            return
+        }
+        this.filterInput = tc.fullname;
+        tc.errorsAndFailures = this.getFailureString(tc.errors)
+        tc.errorsAndFailures += this.getFailureString(tc.failures)
+        this.testCaseSelected = tc;
+    }
+
+    getFailureString(fs: Array<Failure>): string {
+        if (!fs) {
+            return '';
+        }
+        let r = '';
+        for (const f of fs) {
+            if (f.message) {
+                r += f.message + '<hr>';
+            }
+            if (f.value) {
+                r += f.value;
+            }
+            r += '\n';
+        }
+        return r;
+    }
+
 }

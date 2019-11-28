@@ -65,6 +65,6 @@ func TestInsertUpdateLoadDelete(t *testing.T) {
 	storage, errO := objectstore.Init(context.Background(), cfg)
 	test.NoError(t, errO)
 
-	test.NoError(t, Delete(db, storage, &p))
+	test.NoError(t, Delete(context.TODO(), db, storage, &p))
 
 }

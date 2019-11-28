@@ -1,6 +1,7 @@
 package event
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func publishBroadcastEvent(payload interface{}, key string, u sdk.Identifiable) {
+func publishBroadcastEvent(ctx context.Context, payload interface{}, key string, u sdk.Identifiable) {
 	p := structs.Map(payload)
 
 	event := sdk.Event{
@@ -24,30 +25,30 @@ func publishBroadcastEvent(payload interface{}, key string, u sdk.Identifiable) 
 		event.Username = u.GetUsername()
 		event.UserMail = u.GetEmail()
 	}
-	publishEvent(event)
+	publishEvent(ctx, event)
 }
 
 // PublishBroadcastAdd publish event when adding a broadcast
-func PublishBroadcastAdd(bc sdk.Broadcast, u sdk.Identifiable) {
+func PublishBroadcastAdd(ctx context.Context, bc sdk.Broadcast, u sdk.Identifiable) {
 	e := sdk.EventBroadcastAdd{
 		Broadcast: bc,
 	}
-	publishBroadcastEvent(e, bc.ProjectKey, u)
+	publishBroadcastEvent(ctx, e, bc.ProjectKey, u)
 }
 
 // PublishBroadcastUpdate publish event when updating a broadcast
-func PublishBroadcastUpdate(oldBc sdk.Broadcast, bc sdk.Broadcast, u sdk.Identifiable) {
+func PublishBroadcastUpdate(ctx context.Context, oldBc sdk.Broadcast, bc sdk.Broadcast, u sdk.Identifiable) {
 	e := sdk.EventBroadcastUpdate{
 		NewBroadcast: bc,
 		OldBroadcast: oldBc,
 	}
-	publishBroadcastEvent(e, bc.ProjectKey, u)
+	publishBroadcastEvent(ctx, e, bc.ProjectKey, u)
 }
 
 // PublishBroadcastDelete publish event when deleting a broadcast
-func PublishBroadcastDelete(id int64, u sdk.Identifiable) {
+func PublishBroadcastDelete(ctx context.Context, id int64, u sdk.Identifiable) {
 	e := sdk.EventBroadcastDelete{
 		BroadcastID: id,
 	}
-	publishBroadcastEvent(e, "", u)
+	publishBroadcastEvent(ctx, e, "", u)
 }

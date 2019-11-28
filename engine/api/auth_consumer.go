@@ -73,7 +73,7 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		}
 
 		// Create the new built in consumer from request data
-		newConsumer, token, err := builtin.NewConsumer(api.mustDB(), reqData.Name, reqData.Description,
+		newConsumer, token, err := builtin.NewConsumer(ctx, api.mustDB(), reqData.Name, reqData.Description,
 			consumer, reqData.GroupIDs, reqData.Scopes)
 		if err != nil {
 			return err
@@ -144,7 +144,7 @@ func (api *API) postConsumerRegenByUserHandler() service.Handler {
 			return err
 		}
 
-		if err := authentication.ConsumerRegen(tx, consumer); err != nil {
+		if err := authentication.ConsumerRegen(ctx, tx, consumer); err != nil {
 			return err
 		}
 

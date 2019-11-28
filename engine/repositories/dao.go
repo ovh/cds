@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -32,12 +33,12 @@ func (d *dao) deleteOperation(o *sdk.Operation) error {
 	return d.store.SetRemove(rootKey, o.UUID, o)
 }
 
-func (d *dao) loadOperation(uuid string) *sdk.Operation {
+func (d *dao) loadOperation(ctx context.Context, uuid string) *sdk.Operation {
 	key := cache.Key(rootKey, uuid)
 	o := new(sdk.Operation)
 	find, err := d.store.Get(key, o)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", key, err)
+		log.Error(ctx, "cannot get from cache %s: %v", key, err)
 	}
 	if find {
 		return o
@@ -45,7 +46,7 @@ func (d *dao) loadOperation(uuid string) *sdk.Operation {
 	return nil
 }
 
-func (d *dao) loadAllOperations() ([]*sdk.Operation, error) {
+func (d *dao) loadAllOperations(ctx context.Context) ([]*sdk.Operation, error) {
 	n, err := d.store.SetCard(rootKey)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to setCard %v", rootKey)
@@ -54,7 +55,7 @@ func (d *dao) loadAllOperations() ([]*sdk.Operation, error) {
 	for i := 0; i < n; i++ {
 		opes[i] = &sdk.Operation{}
 	}
-	if err := d.store.SetScan(rootKey, sdk.InterfaceSlice(opes)...); err != nil {
+	if err := d.store.SetScan(ctx, rootKey, sdk.InterfaceSlice(opes)...); err != nil {
 		return nil, err
 	}
 	return opes, nil
@@ -76,17 +77,17 @@ func (d *dao) lock(uuid string) error {
 	return nil
 }
 
-func (d *dao) deleteLock(uuid string) error {
+func (d *dao) deleteLock(ctx context.Context, uuid string) error {
 	k := cache.Key(locksKey, uuid)
 	if err := d.store.Delete(k); err != nil {
-		log.Error("unable to cache delete %s: %v", k, err)
+		log.Error(ctx, "unable to cache delete %s: %v", k, err)
 	}
 	return nil
 }
 
-func (d *dao) unlock(uuid string, retention time.Duration) error {
+func (d *dao) unlock(ctx context.Context, uuid string, retention time.Duration) error {
 	if err := d.store.Unlock(cache.Key(locksKey, uuid)); err != nil {
-		log.Error("error on unlock uuid %s: %v", uuid, err)
+		log.Error(ctx, "error on unlock uuid %s: %v", uuid, err)
 	}
 	if _, err := d.store.Lock(cache.Key(lastAccessKey, uuid), retention, -1, -1); err != nil {
 		return sdk.WrapError(err, "error on cache.lock uuid:%s", uuid)
@@ -94,12 +95,12 @@ func (d *dao) unlock(uuid string, retention time.Duration) error {
 	return nil
 }
 
-func (d *dao) isExpired(uuid string) bool {
+func (d *dao) isExpired(ctx context.Context, uuid string) bool {
 	k := cache.Key(lastAccessKey, uuid)
 	var b bool
 	find, err := d.store.Get(k, &b)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", k, err)
+		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
 	if find {
 		return false

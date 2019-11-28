@@ -113,3 +113,17 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 	tm.Flush()
 	return nil
 }
+
+func statusShort(status string) (string, string) {
+	switch status {
+	case sdk.StatusWaiting:
+		return "w", "fg-cyan"
+	case sdk.StatusBuilding:
+		return "b", "fg-blue"
+	case sdk.StatusDisabled:
+		return "d", "fg-white"
+	case sdk.StatusChecking:
+		return "c", "fg-yellow"
+	}
+	return status, "fg-default"
+}

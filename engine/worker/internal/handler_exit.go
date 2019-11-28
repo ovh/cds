@@ -1,10 +1,11 @@
 package internal
 
 import (
+	"context"
 	"net/http"
 )
 
-func exitHandler(wk *CurrentWorker) http.HandlerFunc {
+func exitHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		wk.manualExit = true
 		w.Header().Add("Content-Type", "application/json")
