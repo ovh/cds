@@ -74,7 +74,7 @@ func TestHatcherySwarm_KillAwolNetwork(t *testing.T) {
 	// JUJST DELETE NET-5
 	gock.New("https://lolcat.host").Delete("/v6.66/networks/net-5").Reply(http.StatusOK).JSON(nil)
 
-	err := h.killAwolWorker()
+	err := h.killAwolWorker(context.TODO())
 	require.NoError(t, err)
 	require.True(t, gock.IsDone())
 }
@@ -224,7 +224,7 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 	// Must keep: swarmy-model1-w2, swarmy-model1-w3, swarmy2-model1-w4
 	// Must delete: swarmy-model1-w1, swarmy-model1-w4
 	// Must delete only network net-2 and containers
-	err := h.killAwolWorker()
+	err := h.killAwolWorker(context.TODO())
 	require.NoError(t, err)
 	require.True(t, gock.IsDone())
 }
@@ -258,7 +258,7 @@ func TestHatcherySwarm_WorkersStarted(t *testing.T) {
 	}
 	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
-	s := h.WorkersStarted()
+	s := h.WorkersStarted(context.TODO())
 	require.Equal(t, 2, len(s))
 	require.Equal(t, "w1", s[0])
 	require.Equal(t, "w2", s[1])
@@ -388,7 +388,7 @@ func TestHatcherySwarm_CanSpawn(t *testing.T) {
 	}
 	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
-	b := h.CanSpawn(&m, jobID, []sdk.Requirement{})
+	b := h.CanSpawn(context.TODO(), &m, jobID, []sdk.Requirement{})
 	assert.True(t, b)
 	assert.True(t, gock.IsDone())
 }
@@ -423,7 +423,7 @@ func TestHatcherySwarm_MaxContainerReached(t *testing.T) {
 	}
 
 	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
-	b := h.CanSpawn(&m, jobID, []sdk.Requirement{})
+	b := h.CanSpawn(context.TODO(), &m, jobID, []sdk.Requirement{})
 	assert.False(t, b)
 	assert.True(t, gock.IsDone())
 }
@@ -449,7 +449,7 @@ func TestHatcherySwarm_MaxContainerRatioService100(t *testing.T) {
 
 	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
-	b := h.CanSpawn(&m, jobID, []sdk.Requirement{})
+	b := h.CanSpawn(context.TODO(), &m, jobID, []sdk.Requirement{})
 	assert.False(t, b)
 	assert.True(t, gock.IsDone())
 }
@@ -504,7 +504,7 @@ func TestHatcherySwarm_MaxContainerRatioPercentReached(t *testing.T) {
 	}
 
 	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
-	b := h.CanSpawn(&m, jobID, []sdk.Requirement{})
+	b := h.CanSpawn(context.TODO(), &m, jobID, []sdk.Requirement{})
 	assert.False(t, b)
 	assert.True(t, gock.IsDone())
 }
@@ -543,7 +543,7 @@ func TestHatcherySwarm_MaxContainerRatioPercentOK(t *testing.T) {
 	}
 
 	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
-	b := h.CanSpawn(&m, jobID, []sdk.Requirement{{Name: "pg", Type: sdk.ServiceRequirement, Value: "postgresql"}})
+	b := h.CanSpawn(context.TODO(), &m, jobID, []sdk.Requirement{{Name: "pg", Type: sdk.ServiceRequirement, Value: "postgresql"}})
 	assert.True(t, b)
 	assert.True(t, gock.IsDone())
 }
@@ -561,7 +561,7 @@ func TestHatcherySwarm_CanSpawnNoDockerClient(t *testing.T) {
 		},
 	}
 	jobID := int64(1)
-	b := h.CanSpawn(&m, jobID, []sdk.Requirement{})
+	b := h.CanSpawn(context.TODO(), &m, jobID, []sdk.Requirement{})
 	assert.False(t, b)
 	assert.True(t, gock.IsDone())
 }

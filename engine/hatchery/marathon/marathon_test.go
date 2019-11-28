@@ -36,7 +36,7 @@ func TestWorkerStarted(t *testing.T) {
 	}
 
 	gock.New("http://mara.thon").Get("/v2/apps").Reply(200).JSON(apps)
-	wkrs := h.WorkersStarted()
+	wkrs := h.WorkersStarted(context.TODO())
 	t.Logf("%+v", wkrs)
 	assert.Equal(t, 2, len(wkrs))
 	assert.Equal(t, "w1", wkrs[0])
@@ -333,7 +333,7 @@ func TestCanSpawn(t *testing.T) {
 	gock.New("http://mara.thon").Get("/v2/apps").Reply(200).JSON(marathon.Applications{})
 	m := &sdk.Model{Name: "fake"}
 	jobID := 1
-	assert.True(t, h.CanSpawn(m, int64(jobID), nil))
+	assert.True(t, h.CanSpawn(context.TODO(), m, int64(jobID), nil))
 	assert.True(t, gock.IsDone())
 }
 
@@ -351,7 +351,7 @@ func TestCanSpawnMaxProvisionReached(t *testing.T) {
 	gock.New("http://mara.thon").Get("/v2/deployments").Reply(200).JSON(deps)
 
 	m := &sdk.Model{Name: "fake"}
-	canSpawn := h.CanSpawn(m, int64(1), nil)
+	canSpawn := h.CanSpawn(context.TODO(), m, int64(1), nil)
 	assert.False(t, canSpawn)
 	assert.True(t, gock.IsDone())
 }
@@ -386,7 +386,7 @@ func TestCanSpawnMaxContainerReached(t *testing.T) {
 	gock.New("http://mara.thon").Get("/v2/apps").Reply(200).JSON(apps)
 
 	m := &sdk.Model{Name: "fake"}
-	canSpawn := h.CanSpawn(m, int64(1), nil)
+	canSpawn := h.CanSpawn(context.TODO(), m, int64(1), nil)
 	assert.False(t, canSpawn)
 	assert.True(t, gock.IsDone())
 }
@@ -394,6 +394,6 @@ func TestCanSpawnMaxContainerReached(t *testing.T) {
 func TestCanSpawnWithService(t *testing.T) {
 	h := InitMarathonMarathonTest(marathonJDD{})
 	m := &sdk.Model{Name: "fake"}
-	canSpawn := h.CanSpawn(m, int64(1), []sdk.Requirement{{Name: "pg", Type: sdk.ServiceRequirement, Value: "postgres:9.5.4"}})
+	canSpawn := h.CanSpawn(context.TODO(), m, int64(1), []sdk.Requirement{{Name: "pg", Type: sdk.ServiceRequirement, Value: "postgres:9.5.4"}})
 	assert.False(t, canSpawn)
 }

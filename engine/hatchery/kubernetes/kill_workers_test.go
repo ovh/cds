@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
 	v1 "k8s.io/api/core/v1"
@@ -81,7 +82,7 @@ func TestHatcheryKubernetes_KillAwolWorkers(t *testing.T) {
 	gock.New("http://lolcat.kube").Delete("/api/v1/namespaces/kyubi/pods/w2").Reply(http.StatusOK).JSON(nil)
 	gock.New("http://lolcat.kube").Delete("/api/v1/namespaces/kyubi/pods/w3").Reply(http.StatusOK).JSON(nil)
 
-	err := h.killAwolWorkers()
+	err := h.killAwolWorkers(context.TODO())
 	require.NoError(t, err)
 	require.True(t, gock.IsDone())
 }
