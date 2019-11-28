@@ -17,6 +17,10 @@ You need two HTTP Headers to request CDS API:
 curl -H "Authorization: Bearer your-cds-token" https://your-cds-api/project
 ```
 
+{{< note >}}
+To generate the CDS token please check [here]({{< relref "/development/sdk/token.md" >}})
+{{< /note >}}
+
 ## About CDS Token
 
 If you want to play with CDS API, you probably need a CDS consumer token.
