@@ -20,7 +20,7 @@
         var cur = cm.getCursor(0);
 
         // Get current line
-        var line = cm.doc.children[0].lines[cur.line]
+        var line = cm.doc.children[0].lines[cur.line];
         var text = '';
 
         if (!line) {

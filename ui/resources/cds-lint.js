@@ -7,16 +7,10 @@
         mod(CodeMirror);
 })(function(CodeMirror) {
     "use strict";
-    CodeMirror.registerHelper("lint", "yaml", function(text) {
-        let errors = [];
-        try { jsyaml.loadAll(text); }
-        catch(e) {
-            let loc = e.mark,
-                from = loc ? CodeMirror.Pos(loc.line, loc.column) : CodeMirror.Pos(0, 0),
-                to = from;
-            errors.push({ from: from, to: to, message: e.message });
-        }
-        return errors;
+    CodeMirror.registerHelper("lint", "workflow-schema", function(text, options) {
+        let v = new Validator();
+        const yamlData = yaml.load(text);
+        let result = v.validate(yamlData, options.schema);
+        return result.errors;
     });
-
 });

@@ -82,6 +82,8 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
             lineWrapping: true,
             lineNumbers: true,
             autoRefresh: true,
+            gutters: ['CodeMirror-lint-markers'],
+            lint: true
         };
     }
 
