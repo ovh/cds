@@ -54,7 +54,7 @@ func TestHatcheryKubernetes_WorkersStarted(t *testing.T) {
 	}
 	gock.New("http://lolcat.kube").Get("/api/v1/namespaces/hachibi/pods").Reply(http.StatusOK).JSON(podsList)
 
-	ws := h.WorkersStarted()
+	ws := h.WorkersStarted(context.TODO())
 	require.Equal(t, 2, len(ws))
 	require.Equal(t, "w1", ws[0])
 	require.Equal(t, "w2", ws[1])
