@@ -1,10 +1,43 @@
 ---
-title: "Example of Code - Workers List"
+title: "SDK Golang"
 card: 
   name: rest-sdk
 ---
 
-Create a file `main.go` with this content:
+## How to use it?
+
+You have to initialize a cdsclient:
+
+```go
+cfg := cdsclient.Config{
+    Host:  host,
+    Token: token,
+    User:  username,
+}
+client := cdsclient.New(cfg)
+```
+
+and then, you can use it:
+
+```go
+
+// list workers
+workers, err := client.WorkerList()
+
+// list users
+users, err := client.UserList()
+
+// list workflow runs
+runs, err := client.WorkflowRunList(...)
+
+```
+
+Go on https://godoc.org/github.com/ovh/cds/sdk/cdsclient to see all available funcs.
+	
+
+## Example
+
++ Create a file `main.go` with this content:
 
 ```go
 
@@ -53,7 +86,7 @@ func main() {
 
 ```
 
-Build & run it: 
++ Build & run it: 
 
 ```bash
 go run main.go --username admin --token xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx --api http://localhost:8081
