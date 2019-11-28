@@ -142,7 +142,7 @@ func KeyBookWorkerModel(id int64) string {
 func BookForRegister(store cache.Store, id int64, serviceID int64) error {
 	k := KeyBookWorkerModel(id)
 	var bookedByServiceID int64
-	if ok, _ := store.Get(k, &bookedByServiceID); ok {
+	if ok, _ := store.Get(k, &bookedByServiceID); !ok {
 		// worker model not already booked, book it for 6 min
 		store.SetWithTTL(k, serviceID, bookRegisterTTLInSeconds)
 		return nil
