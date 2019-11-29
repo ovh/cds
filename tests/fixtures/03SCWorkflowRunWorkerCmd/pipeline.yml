@@ -1,0 +1,100 @@
+version: v1.0
+name: 03SCWorkflowRunWorkerCmd-PIPELINE
+stages:
+- Stage1
+- Stage2
+
+jobs:
+- job: CHECKSECRET
+  stage: Stage1
+  steps:
+    - optional: true
+      script:
+      - '#!/bin/bash'
+      - cat << EOF > myFile
+      - this a a line in the file, with a CDS variable of type password {{.cds.app.password}}
+      - EOF
+      - worker check-secret {{.cds.workspace}}/myFile
+- job: EXIT
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - worker exit 0
+- job: EXPORT
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - worker export foo bar
+- job: CACHEPUSH
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - cat << EOF > fileCache
+      - cache push file content
+      - EOF
+      - worker cache push latest fileCache
+- job: TAG
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - worker tag tag1=value1 tag2=value2
+- job: TMPL
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - cat << EOF > myFile
+      - this a a line in the file, with a CDS variable {{.cds.version}}
+      - EOF
+      - worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile
+      - cat {{.cds.workspace}}/outputFile
+- job: UPLOAD
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - cat << EOF > myFileUploaded
+      - Je suis un artifact
+      - EOF
+      - worker upload --tag={{.cds.version}} {{.cds.workspace}}/myFileUploaded
+- job: KEY
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - worker key install --env proj-ssh-03scworkflowrunworkercmd --file id_rsa
+      - cat id_rsa
+
+- job: ARTIFACTLIST
+  stage: Stage2
+  steps:
+    - script:
+      - set -ex
+      - worker artifacts
+
+- job: CACHEPULL
+  stage: Stage2
+  steps:
+    - script:
+      - set -ex
+      - worker cache pull latest
+      - cat fileCache
+
+- job: DOWNLOAD
+  stage: Stage2
+  steps:
+    - script:
+      - set -ex
+      - worker download
+      - cat myFileUploaded
+
+- job: EXPORT
+  stage: Stage2
+  steps:
+    - script:
+      - set -ex
+      - echo "Export value {{.cds.build.foo}}"

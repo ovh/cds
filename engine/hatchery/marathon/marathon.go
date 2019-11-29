@@ -443,7 +443,7 @@ func (h *HatcheryMarathon) WorkersStarted(ctx context.Context) []string {
 
 // WorkersStartedByModel returns the number of instances of given model started but
 // not necessarily register on CDS yet
-func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
+func (h *HatcheryMarathon) WorkersStartedByModel(ctx context.Context, model *sdk.Model) int {
 	apps, err := h.listApplications(h.Config.MarathonIDPrefix)
 	if err != nil {
 		return 0

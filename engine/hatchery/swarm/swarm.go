@@ -508,9 +508,6 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model *sdk.Model, jobID in
 				}
 			}
 		}
-
-		//Ready to spawn
-		log.Debug("hatchery> swarm> CanSpawn> %s can be spawned", model.Name)
 		return true
 	}
 	return false
