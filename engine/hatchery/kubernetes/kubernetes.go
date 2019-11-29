@@ -233,6 +233,10 @@ func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, model *sdk.Model, job
 
 // SpawnWorker starts a new worker process
 func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
+	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
+		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
+	}
+
 	name := fmt.Sprintf("k8s-%s", spawnArgs.WorkerName)
 	label := "execution"
 	if spawnArgs.RegisterOnly {

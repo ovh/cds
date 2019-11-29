@@ -75,10 +75,13 @@ func NewConsumer(ctx context.Context, db gorp.SqlExecutor, name, description str
 	// When the parent is a builtin consumer even if it was created by an admin we should check groups to prevent
 	// creating child with more permission than parents.
 	if parentConsumer.Type == sdk.ConsumerBuiltin || !parentConsumer.Admin() {
-		parentGroupIDs := parentConsumer.GetGroupIDs()
-		for i := range groupIDs {
-			if !sdk.IsInInt64Array(groupIDs[i], parentGroupIDs) {
-				return nil, "", sdk.WrapError(sdk.ErrWrongRequest, "invalid given group id %d", groupIDs[i])
+		// Only if parentGroupIDs aren't empty. Because empty means all groups access
+		if len(parentConsumer.GroupIDs) > 0 {
+			parentGroupIDs := parentConsumer.GetGroupIDs()
+			for i := range groupIDs {
+				if !sdk.IsInInt64Array(groupIDs[i], parentGroupIDs) {
+					return nil, "", sdk.WrapError(sdk.ErrWrongRequest, "invalid given group id %d", groupIDs[i])
+				}
 			}
 		}
 	}
