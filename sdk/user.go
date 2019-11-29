@@ -76,9 +76,9 @@ type UserRegistration struct {
 
 // AuthentifiedUser struct contains all information about a cds user.
 type AuthentifiedUser struct {
-	ID       string    `json:"id" yaml:"id" cli:"id,key" db:"id"`
+	ID       string    `json:"id" yaml:"id" cli:"id" db:"id"`
 	Created  time.Time `json:"created" yaml:"created" cli:"created" db:"created"`
-	Username string    `json:"username" yaml:"username" cli:"username" db:"username"`
+	Username string    `json:"username" yaml:"username" cli:"username,key" db:"username"`
 	Fullname string    `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
 	Ring     string    `json:"ring" yaml:"ring,omitempty" cli:"ring" db:"ring"`
 	// aggregates

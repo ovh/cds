@@ -475,7 +475,7 @@ func (api *API) postProjectHandler() service.Handler {
 				return err
 			}
 			if existingGroop != nil {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot create a new group for given project name")
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot create a new group %s for given project name", groupSlug)
 			}
 
 			newGroup := sdk.Group{Name: groupSlug}

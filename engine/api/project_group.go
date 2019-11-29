@@ -280,7 +280,7 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 			data[i].Group = *grp
 		}
 
-		if !forceUpdate {
+		if forceUpdate {
 			if err := group.DeleteLinksGroupProjectForProjectID(tx, proj.ID); err != nil {
 				return sdk.WrapError(err, "cannot delete all groups for project %s", proj.Name)
 			}

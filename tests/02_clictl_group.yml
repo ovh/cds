@@ -30,19 +30,17 @@ testcases:
 
 - name: group add user
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group user add ITCLIGRP_TEST_2 $({{.cdsctl}} -f {{.cdsctl.config}} user me --quiet)
-
-- name: group set admin
-  steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group user setAdmin ITCLIGRP_TEST_2 $({{.cdsctl}} -f {{.cdsctl.config}} user me --quiet)
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group member add ITCLIGRP_TEST_2 $({{.cdsctl}} -f {{.cdsctl.config}} user me --quiet) true
 
 - name: group remove admin
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group user removeAdmin ITCLIGRP_TEST_2 $({{.cdsctl}} -f {{.cdsctl.config}} user me --quiet)
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group member add ITCLIGRP_TEST_2 $({{.cdsctl}} -f {{.cdsctl.config}} user me --quiet) false
+    assertions:
+      - result.code ShouldEqual 50
 
 - name: group remove user, can't delete last user from a group
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group user delete ITCLIGRP_TEST_2 $({{.cdsctl}} -f {{.cdsctl.config}} user me --quiet)
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group member delete ITCLIGRP_TEST_2 $({{.cdsctl}} -f {{.cdsctl.config}} user me --quiet)
     assertions:
       - result.code ShouldEqual 1
 
