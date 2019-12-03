@@ -4,3 +4,5 @@ jobs:
 - job: New Job
   steps:
   - deploy: '{{.cds.application}}'
+  requirements:
+  - os-architecture: linux/amd64

@@ -18,7 +18,7 @@ testcases:
 - name: prepare test
   steps:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW12"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW12 "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw12 "
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW12 ITSCWRKFLW12"
 
 - name: import integration

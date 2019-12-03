@@ -13,3 +13,4 @@ jobs:
 
   requirements:
   - plugin: plugin-simple
+  - os-architecture: linux/amd64

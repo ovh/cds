@@ -9,7 +9,7 @@ testcases:
 - name: prepare test
   steps:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW2"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW2 "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw2 "
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW2 ITSCWRKFLW2"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} application add ITSCWRKFLW2 ITSCWRKFLW2-APPLICATION"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml"

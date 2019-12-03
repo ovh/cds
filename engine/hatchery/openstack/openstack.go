@@ -409,7 +409,7 @@ func (h *HatcheryOpenstack) deleteServer(ctx context.Context, s servers.Server) 
 	log.Info(ctx, "Deleting worker %s", s.Name)
 
 	// If its a worker "register", check registration before deleting it
-	if strings.Contains(s.Name, "register-") {
+	if strings.HasPrefix(s.Name, "register-") {
 		modelPath := s.Metadata["worker_model_path"]
 		//Send registering logs....
 		consoleLog, err := h.getConsoleLog(s)

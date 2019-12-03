@@ -28,7 +28,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 		}
 		if toDelete {
 			// If its a worker "register", check registration before deleting it
-			if strings.Contains(pod.Name, "register-") {
+			if strings.HasPrefix(pod.Name, "register-") {
 				var modelPath string
 				for _, e := range pod.Spec.Containers[0].Env {
 					if e.Name == "CDS_MODEL_PATH" {

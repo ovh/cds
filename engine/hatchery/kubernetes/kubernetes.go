@@ -237,21 +237,17 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
-	name := fmt.Sprintf("k8s-%s", spawnArgs.WorkerName)
 	label := "execution"
 	if spawnArgs.RegisterOnly {
 		label = "register"
 	}
 
+	podName := spawnArgs.WorkerName
 	// Kubernetes pod name must not be > 63 chars
-	if len(name) > 63 {
-		name = name[:60]
+	if len(podName) > 63 {
+		podName = podName[:60]
 	}
-
-	name = strings.Replace(name, "/", "-", -1)
-	name = strings.Replace(name, ".", "-", -1)
-
-	log.Debug("hatchery> kubernetes> SpawnWorker> %s", name)
+	podName = strings.Replace(podName, ".", "-", -1)
 
 	var logJob string
 	if spawnArgs.JobID > 0 {
@@ -274,7 +270,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		API:               h.Configuration().API.HTTP.URL,
 		Token:             spawnArgs.WorkerToken,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
-		Name:              name,
+		Name:              spawnArgs.WorkerName,
 		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		HatcheryName:      h.Name(),
 		TTL:               h.Config.WorkerTTL,
@@ -338,7 +334,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	var gracePeriodSecs int64
 	podSchema := apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:                       name,
+			Name:                       spawnArgs.WorkerName,
 			Namespace:                  h.Config.Namespace,
 			DeletionGracePeriodSeconds: &gracePeriodSecs,
 			Labels: map[string]string{
@@ -352,7 +348,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			TerminationGracePeriodSeconds: &gracePeriodSecs,
 			Containers: []apiv1.Container{
 				{
-					Name:    name,
+					Name:    spawnArgs.WorkerName,
 					Image:   spawnArgs.Model.ModelDocker.Image,
 					Env:     envs,
 					Command: strings.Fields(spawnArgs.Model.ModelDocker.Shell),
@@ -433,7 +429,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 
 	_, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).Create(&podSchema)
 
-	log.Debug("hatchery> kubernetes> SpawnWorker> %s > Pod created", name)
+	log.Debug("hatchery> kubernetes> SpawnWorker> %s > Pod created", spawnArgs.WorkerName)
 
 	return err
 }

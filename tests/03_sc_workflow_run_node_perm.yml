@@ -9,7 +9,7 @@ testcases:
 - name: prepare test
   steps:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW10"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW10"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw10"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW10-ro"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group add ITSCWRKFLW10-ro"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW10 ITSCWRKFLW10"

@@ -173,8 +173,10 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 
 	jwt, err := authentication.CheckSessionJWT(jwtRaw)
 	if err != nil {
-		// If the given JWT is not valid log the error and return
-		log.Warning(ctx, "jwtMiddleware> invalid given jwt token: %+v", err)
+		if rc.NeedAuth {
+			// If the given JWT is not valid log the error and return
+			log.Warning(ctx, "jwtMiddleware> invalid given jwt token [%s]: %+v", req.URL.String(), err)
+		}
 		return ctx, nil
 	}
 

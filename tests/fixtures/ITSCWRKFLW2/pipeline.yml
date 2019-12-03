@@ -34,6 +34,7 @@ jobs:
   requirements:
   - binary: git
   - binary: go
+  - os-architecture: linux/amd64
 
 - job: Worker Build linux amd64
   stage: Build
@@ -64,6 +65,7 @@ jobs:
   requirements:
   - binary: git
   - binary: go
+  - os-architecture: linux/amd64
 
 - job: Package Engine
   stage: Package
@@ -83,3 +85,4 @@ jobs:
     - docker build
   requirements:
   - binary: docker
+  - os-architecture: linux/amd64
