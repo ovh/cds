@@ -10,6 +10,8 @@ import (
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
+
+	"github.com/spf13/afero"
 )
 
 func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
@@ -31,8 +33,20 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	}
 	staticKey := sdk.ParameterValue(a.Parameters, "static-key")
 
+	workdir, err := workerruntime.WorkingDirectory(ctx)
+	if err != nil {
+		return res, sdk.WrapError(err, "cannot get working directory")
+	}
+	var abs string
+	if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+		abs, _ = x.RealPath(workdir.Name())
+	} else {
+		abs = workdir.Name()
+	}
+	wkDirFS := afero.NewBasePathFs(afero.NewOsFs(), abs)
+
 	// Global all files matching filePath
-	filesPath, err := filepath.Glob(path)
+	filesPath, err := afero.Glob(wkDirFS, path)
 	if err != nil {
 		return res, fmt.Errorf("cannot perform globbing of pattern '%s': %s", path, err)
 	}
@@ -61,8 +75,8 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 		entrypoint.Value = "index.html"
 	}
 
-	wk.SendLog(ctx,workerruntime.LevelInfo, "Fetching files in progress...")
-	file, _, err := sdk.CreateTarFromPaths(wk.Workspace(), path, filesPath, &sdk.TarOptions{TrimDirName: filepath.Dir(path)})
+	wk.SendLog(ctx, workerruntime.LevelInfo, "Fetching files in progress...")
+	file, _, err := sdk.CreateTarFromPaths(wkDirFS, path, filesPath, &sdk.TarOptions{TrimDirName: filepath.Dir(path)})
 	if err != nil {
 		return res, fmt.Errorf("cannot tar files: %v", err)
 	}
@@ -70,14 +84,14 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	integrationName := sdk.DefaultIfEmptyStorage(strings.TrimSpace(sdk.ParameterValue(a.Parameters, "destination")))
 	projectKey := sdk.ParameterValue(params, "cds.project")
 
-	wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf(`Upload and serving files in progress... with entrypoint "%s"`, entrypoint.Value))
+	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf(`Upload and serving files in progress... with entrypoint "%s"`, entrypoint.Value))
 	publicURL, _, _, err := wk.Client().QueueStaticFilesUpload(ctx, projectKey, integrationName, jobID, name.Value, entrypoint.Value, staticKey, file)
 	if err != nil {
 		return res, fmt.Errorf("Cannot upload static files: %v", err)
 	}
 
-	wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("Your files are serving at this URL: %s", publicURL))
-	wk.SendLog(ctx,workerruntime.LevelInfo, "If you are in the CDS UI you can find all your static files in the artifact tab")
+	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Your files are serving at this URL: %s", publicURL))
+	wk.SendLog(ctx, workerruntime.LevelInfo, "If you are in the CDS UI you can find all your static files in the artifact tab")
 
 	return res, nil
 }

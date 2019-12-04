@@ -4,16 +4,20 @@ import (
 	"archive/tar"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/spf13/afero"
 )
 
 func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
@@ -42,10 +46,32 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		res, size, errTar := sdk.CreateTarFromPaths(wk.Workspace(), c.WorkingDirectory, c.Files, nil)
+		workdir, errWk := workerruntime.WorkingDirectory(wk.currentJob.context)
+		if errWk != nil {
+			err := sdk.Error{
+				Message: "worker cache push > Cannot get worker working directory : " + errWk.Error(),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error(ctx, "%v", err)
+			writeError(w, r, err)
+			return
+		}
+		var abs string
+		if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+			abs, _ = x.RealPath(workdir.Name())
+		} else {
+			abs = workdir.Name()
+		}
+		wkDirFS := afero.NewBasePathFs(afero.NewOsFs(), abs)
+
+		for i := range c.Files {
+			c.Files[i] = strings.TrimPrefix(c.Files[i], abs)
+		}
+
+		res, size, errTar := sdk.CreateTarFromPaths(wkDirFS, c.WorkingDirectory, c.Files, nil)
 		if errTar != nil {
 			errTar = sdk.Error{
-				Message: "worker cache push > Cannot tar : " + errTar.Error(),
+				Message: fmt.Sprintf("worker cache push > Cannot tar (%+v) : %v", c.Files, errTar.Error()),
 				Status:  http.StatusBadRequest,
 			}
 			log.Error(ctx, "%v", errTar)

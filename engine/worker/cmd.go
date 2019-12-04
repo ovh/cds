@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -159,6 +160,12 @@ func initFromFlags(cmd *cobra.Command, w *internal.CurrentWorker) {
 	if token == "" {
 		log.Error(context.TODO(), "--token not provided, aborting.")
 		os.Exit(4)
+	}
+
+	basedir, err := filepath.EvalSymlinks(basedir)
+	if err != nil {
+		log.Error(context.TODO(), "symlink error: %v", err)
+		os.Exit(6)
 	}
 
 	fs := afero.NewOsFs()

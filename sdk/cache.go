@@ -102,7 +102,7 @@ func CreateTarFromPaths(fs afero.Fs, cwd string, paths []string, opts *TarOption
 			}
 
 			// open files for taring
-			f, err := os.Open(file)
+			f, err := fs.Open(file)
 			if err != nil {
 				return err
 			}
