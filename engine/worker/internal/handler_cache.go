@@ -14,10 +14,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/spf13/afero"
+
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/spf13/afero"
 )
 
 func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
