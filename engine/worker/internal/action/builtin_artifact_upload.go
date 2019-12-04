@@ -43,6 +43,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 		return res, errors.New("tag variable is empty. aborting")
 	}
 
+	path = strings.TrimPrefix(path, abs)
 	// Global all files matching filePath
 	filesPath, err := afero.Glob(wkDirFS, path)
 	if err != nil {
@@ -72,7 +73,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	wg.Add(len(filesPath))
 	for _, p := range filesPath {
 		go func(path string) {
-			absFile := abs + "/" + path
+			absFile := abs + "/" + strings.TrimPrefix(path, abs)
 			log.Debug("Uploading %s projectKey:%v integrationName:%v job:%d", absFile, projectKey, integrationName, jobID)
 			defer wg.Done()
 			throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, absFile)
