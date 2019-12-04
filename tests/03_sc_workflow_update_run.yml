@@ -49,8 +49,8 @@ testcases:
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1
     - script: grep "ITSCWRKFLW2-APPLICATION" *.log
-    assertions:
-    - result.code ShouldEqual 0
+      assertions:
+      - result.code ShouldEqual 0
 
 - name: import an updated workflow
   steps:
@@ -80,7 +80,7 @@ testcases:
 
 - name: check log 2
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 2
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 2
     - script: grep "ITSCWRKFLW2-ANOTHER-APPLICATION" *.log
-    assertions:
+      assertions:
       - result.code ShouldEqual 0
