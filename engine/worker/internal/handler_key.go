@@ -72,7 +72,7 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 
 		filename := mapBody["file"]
 
-		basePath, isBasePathFS := wk.Workspace().(*afero.BasePathFs)
+		basePath, isBasePathFS := wk.BaseDir().(*afero.BasePathFs)
 		if isBasePathFS {
 			realPath, _ := basePath.RealPath("/")
 			filename = strings.TrimPrefix(filename, realPath)

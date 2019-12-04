@@ -128,9 +128,6 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 			var t string
 			if bookedJobID == 0 { // If we already check the requirements before and it was OK
 				requirementsOK, _ = checkRequirements(ctx, w, &j.Job.Action)
-				if j.ID == bookedJobID {
-					t = ", this was my booked job"
-				}
 
 				var errPlugins error
 				pluginsOK, errPlugins = checkPluginDeployment(ctx, w, j)

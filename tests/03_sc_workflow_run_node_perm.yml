@@ -29,11 +29,11 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config_ro_user}} workflow run ITSCWRKFLW10 ITSCWRKFLW10-WORKFLOW
     assertions:
     - result.code ShouldNotEqual 0
-    - "result.systemout ShouldContainSubstring you don't have execution right"
+    - "result.systemout ShouldContainSubstring forbidden"
 
 - name: add user in right group
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group user add ITSCWRKFLW10 {{.ro_username}}
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group member add itscwrkflw10 {{.ro_username}} false
   - script: {{.cdsctl}} -f {{.cdsctl.config_ro_user}} group create TESTITSCWRKFLW10
   - script: {{.cdsctl}} -f {{.cdsctl.config_ro_user}} group delete TESTITSCWRKFLW10 --force
 

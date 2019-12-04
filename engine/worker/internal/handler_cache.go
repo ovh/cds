@@ -42,7 +42,7 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		res, size, errTar := sdk.CreateTarFromPaths(wk.Workspace(), c.WorkingDirectory, c.Files, nil)
+		res, size, errTar := sdk.CreateTarFromPaths(wk.BaseDir(), c.WorkingDirectory, c.Files, nil)
 		if errTar != nil {
 			errTar = sdk.Error{
 				Message: "worker cache push > Cannot tar : " + errTar.Error(),

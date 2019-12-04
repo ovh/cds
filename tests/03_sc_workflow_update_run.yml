@@ -42,8 +42,15 @@ testcases:
     - result.systemoutjson.start ShouldNotBeEmpty
     - result.systemoutjson.payload ShouldNotBeEmpty
     - result.systemoutjson.num ShouldContainSubstring 1
-    - result.systemoutjson.status ShouldEqual Building
+    - result.systemoutjson.status ShouldEqual Success
     - result.systemoutjson.tags ShouldContainSubstring triggered_by
+
+- name: check log
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1
+    - script: grep "ITSCWRKFLW2-APPLICATION" *.log
+    assertions:
+    - result.code ShouldEqual 0
 
 - name: import an updated workflow
   steps:
@@ -52,7 +59,7 @@ testcases:
   
 - name: run workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW2-WORKFLOW #2 has been launched"
@@ -68,5 +75,12 @@ testcases:
     - result.systemoutjson.start ShouldNotBeEmpty
     - result.systemoutjson.payload ShouldBeEmpty
     - result.systemoutjson.num ShouldContainSubstring 2
-    - result.systemoutjson.status ShouldEqual Building
+    - result.systemoutjson.status ShouldEqual Success
     - result.systemoutjson.tags ShouldContainSubstring triggered_by
+
+- name: check log 2
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 2
+    - script: grep "ITSCWRKFLW2-ANOTHER-APPLICATION" *.log
+    assertions:
+      - result.code ShouldEqual 0

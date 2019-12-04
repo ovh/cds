@@ -42,7 +42,7 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable, destinationPath string) (*
 				return nil, sdk.WithStack(errSetup)
 			}
 
-			if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+			if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
 				installedKeyPath, _ = x.RealPath(installedKeyPath)
 			}
 
@@ -54,7 +54,7 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable, destinationPath string) (*
 
 		}
 
-		if err := vcs.WriteKey(wk.Workspace(), destinationPath, key.Value); err != nil {
+		if err := vcs.WriteKey(wk.BaseDir(), destinationPath, key.Value); err != nil {
 			errSetup := sdk.Error{
 				Message: fmt.Sprintf("Cannot setup ssh key %s : %v", key.Name, err),
 				Status:  http.StatusInternalServerError,
@@ -62,7 +62,7 @@ func (wk *CurrentWorker) InstallKey(key sdk.Variable, destinationPath string) (*
 			return nil, sdk.WithStack(errSetup)
 		}
 
-		if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+		if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
 			destinationPath, _ = x.RealPath(destinationPath)
 		}
 

@@ -15,12 +15,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
 	res := sdk.Result{Status: sdk.StatusSuccess}
 
-	project := sdk.ParameterValue(params, "cds.project")
-	workflow := sdk.ParameterValue(params, "cds.workflow")
-	number := sdk.ParameterValue(params, "cds.run.number")
+	project := sdk.ParameterValue(wk.Parameters(), "cds.project")
+	workflow := sdk.ParameterValue(wk.Parameters(), "cds.workflow")
+	number := sdk.ParameterValue(wk.Parameters(), "cds.run.number")
 	pattern := sdk.ParameterValue(a.Parameters, "pattern")
 
 	destPath := sdk.ParameterValue(a.Parameters, "path")

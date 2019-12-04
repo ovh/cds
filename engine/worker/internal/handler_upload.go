@@ -49,10 +49,18 @@ func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		}
 
 		ctx := workerruntime.SetJobID(ctx, wk.currentJob.wJob.ID)
-		result, err := action.RunArtifactUpload(ctx, wk, a, wk.currentJob.wJob.Parameters, wk.currentJob.secrets)
+		workingDir, err := workerruntime.WorkingDirectory(wk.currentJob.context)
 		if err != nil {
 			wk.SendLog(ctx, workerruntime.LevelError, fmt.Sprintf("Artifact upload failed: %v", err))
-			log.Error(ctx, "Artifact upload failed: %v", err)
+			log.Error(ctx, "Artifact upload failed: No woorking directory: %v", err)
+			writeError(w, r, err)
+			return
+		}
+		ctx = workerruntime.SetWorkingDirectory(ctx, workingDir)
+		result, err := action.RunArtifactUpload(ctx, wk, a, wk.currentJob.secrets)
+		if err != nil {
+			wk.SendLog(ctx, workerruntime.LevelError, fmt.Sprintf("Artifact upload failed: %v", err))
+			log.Error(ctx, "unable to upload artifacts: %v", err)
 			writeError(w, r, err)
 			return
 		}

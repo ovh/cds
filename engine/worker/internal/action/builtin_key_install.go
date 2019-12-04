@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func RunInstallKey(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunInstallKey(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
 	var res sdk.Result
 	keyName := sdk.ParameterFind(a.Parameters, "key")
 	if keyName.Value == "" {
@@ -38,7 +38,7 @@ func RunInstallKey(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, 
 	}
 
 	var filename string
-	basePath, isBasePathFS := wk.Workspace().(*afero.BasePathFs)
+	basePath, isBasePathFS := wk.BaseDir().(*afero.BasePathFs)
 	if isBasePathFS {
 		realPath, _ := basePath.RealPath("/")
 		filename = strings.TrimPrefix(filename, realPath)

@@ -27,7 +27,7 @@ func init() {
 	mapBuiltinActions[sdk.InstallKeyAction] = action.RunInstallKey
 }
 
-func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) sdk.Result {
+func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, secrets []sdk.Variable) sdk.Result {
 	f, ok := mapBuiltinActions[a.Name]
 	if !ok {
 		res := sdk.Result{
@@ -40,7 +40,7 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, params []s
 	}
 
 	log.Debug("running builin action %s %s", a.StepName, a.Name)
-	res, err := f(ctx, w, a, params, secrets)
+	res, err := f(ctx, w, a, secrets)
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Reason = err.Error()
@@ -50,11 +50,11 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, params []s
 	return res
 }
 
-func (w *CurrentWorker) runGRPCPlugin(ctx context.Context, a sdk.Action, params []sdk.Parameter) sdk.Result {
+func (w *CurrentWorker) runGRPCPlugin(ctx context.Context, a sdk.Action) sdk.Result {
 	chanRes := make(chan sdk.Result, 1)
 	done := make(chan struct{})
 	sdk.GoRoutine(ctx, "runGRPCPlugin", func(ctx context.Context) {
-		action.RunGRPCPlugin(ctx, a.Name, params, w, chanRes, done)
+		action.RunGRPCPlugin(ctx, a.Name, w.currentJob.params, w, chanRes, done)
 	})
 
 	select {

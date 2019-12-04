@@ -4,18 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
+	"github.com/spf13/afero"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
 	res := sdk.Result{Status: sdk.StatusSuccess}
 
 	jobID, err := workerruntime.JobID(ctx)
@@ -28,19 +28,29 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 		path = "."
 	}
 
+	workdir, err := workerruntime.WorkingDirectory(ctx)
+	var abs string
+	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
+		abs, _ = x.RealPath(workdir.Name())
+	} else {
+		abs = workdir.Name()
+	}
+
+	wkDirFS := afero.NewBasePathFs(afero.NewOsFs(), abs)
+
 	tag := sdk.ParameterFind(a.Parameters, "tag")
 	if tag == nil {
 		return res, errors.New("tag variable is empty. aborting")
 	}
 
 	// Global all files matching filePath
-	filesPath, err := filepath.Glob(path)
+	filesPath, err := afero.Glob(wkDirFS, path)
 	if err != nil {
 		return res, fmt.Errorf("cannot perform globbing of pattern '%s': %s", path, err)
 	}
 
 	if len(filesPath) == 0 {
-		return res, fmt.Errorf("Pattern '%s' matched no file", path)
+		return res, fmt.Errorf("pattern '%s' matched no file", path)
 	}
 
 	var globalError = &sdk.MultiError{}
@@ -57,24 +67,24 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	}()
 
 	integrationName := sdk.DefaultIfEmptyStorage(strings.TrimSpace(sdk.ParameterValue(a.Parameters, "destination")))
-	projectKey := sdk.ParameterValue(params, "cds.project")
+	projectKey := sdk.ParameterValue(wk.Parameters(), "cds.project")
 
 	wg.Add(len(filesPath))
 	for _, p := range filesPath {
-		filename := filepath.Base(p)
 		go func(path string) {
-			log.Debug("Uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, jobID)
+			absFile := abs + "/" + path
+			log.Debug("Uploading %s projectKey:%v integrationName:%v job:%d", absFile, projectKey, integrationName, jobID)
 			defer wg.Done()
-			throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, path)
+			throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, absFile)
 			if err != nil {
-				chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
+				chanError <- sdk.WrapError(err, "Error while uploading artifact %s", absFile)
 				wgErrors.Add(1)
 				return
 			}
 			if throughTempURL {
-				wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to object store", filename, duration.Seconds()))
+				wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to object store", path, duration.Seconds()))
 			} else {
-				wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS API", filename, duration.Seconds()))
+				wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("File '%s' uploaded in %.2fs to CDS API", path, duration.Seconds()))
 			}
 		}(p)
 		if len(filesPath) > 1 {

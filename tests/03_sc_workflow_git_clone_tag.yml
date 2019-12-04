@@ -28,7 +28,7 @@ testcases:
 
 - name: run workflow
   steps:
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW6 ITSCWRKFLW6-WORKFLOW -d '{\"git.tag\": \"0.38.1\"}'"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW6 ITSCWRKFLW6-WORKFLOW -d '{\"git.tag\": \"v0.27.0\"}'"
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW6-WORKFLOW #1 has been launched"

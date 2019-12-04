@@ -153,7 +153,7 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 	return deferFunc, nil
 }
 
-func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
 	chanRes := make(chan sdk.Result)
 	chanErr := make(chan error)
 
@@ -169,13 +169,13 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 			chanErr <- err
 		}
 
-		if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+		if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
 			script.dir, _ = x.RealPath(workdir.Name())
 		} else {
 			script.dir = workdir.Name()
 		}
 
-		deferFunc, err := writeScriptContent(ctx, script, wk.Workspace(), workdir)
+		deferFunc, err := writeScriptContent(ctx, script, wk.BaseDir(), workdir)
 		if deferFunc != nil {
 			defer deferFunc()
 		}

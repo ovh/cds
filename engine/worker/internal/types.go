@@ -51,7 +51,7 @@ type CurrentWorker struct {
 }
 
 // BuiltInAction defines builtin action signature
-type BuiltInAction func(context.Context, workerruntime.Runtime, sdk.Action, []sdk.Parameter, []sdk.Variable) (sdk.Result, error)
+type BuiltInAction func(context.Context, workerruntime.Runtime, sdk.Action, []sdk.Variable) (sdk.Result, error)
 
 func (wk *CurrentWorker) Init(name, hatcheryName, apiEndpoint, token string, model string, insecure bool, workspace afero.Fs) error {
 	wk.status.Name = name
@@ -61,6 +61,10 @@ func (wk *CurrentWorker) Init(name, hatcheryName, apiEndpoint, token string, mod
 	wk.register.apiEndpoint = apiEndpoint
 	wk.client = cdsclient.NewWorker(apiEndpoint, name, cdsclient.NewHTTPClient(time.Second*360, insecure))
 	return nil
+}
+
+func (wk *CurrentWorker) Parameters() []sdk.Parameter {
+	return wk.currentJob.params
 }
 
 func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level, s string) {
@@ -85,7 +89,7 @@ func (wk *CurrentWorker) Client() cdsclient.WorkerInterface {
 	return wk.client
 }
 
-func (wk *CurrentWorker) Workspace() afero.Fs {
+func (wk *CurrentWorker) BaseDir() afero.Fs {
 	return wk.basedir
 }
 
