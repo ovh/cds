@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/afero"
+
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
@@ -31,8 +33,20 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	}
 	staticKey := sdk.ParameterValue(a.Parameters, "static-key")
 
+	workdir, err := workerruntime.WorkingDirectory(ctx)
+	if err != nil {
+		return res, sdk.WrapError(err, "cannot get working directory")
+	}
+	var abs string
+	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
+		abs, _ = x.RealPath(workdir.Name())
+	} else {
+		abs = workdir.Name()
+	}
+	wkDirFS := afero.NewBasePathFs(afero.NewOsFs(), abs)
+
 	// Global all files matching filePath
-	filesPath, err := filepath.Glob(path)
+	filesPath, err := afero.Glob(wkDirFS, path)
 	if err != nil {
 		return res, fmt.Errorf("cannot perform globbing of pattern '%s': %s", path, err)
 	}
@@ -62,7 +76,7 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	}
 
 	wk.SendLog(ctx, workerruntime.LevelInfo, "Fetching files in progress...")
-	file, _, err := sdk.CreateTarFromPaths(wk.BaseDir(), path, filesPath, &sdk.TarOptions{TrimDirName: filepath.Dir(path)})
+	file, _, err := sdk.CreateTarFromPaths(wkDirFS, path, filesPath, &sdk.TarOptions{TrimDirName: filepath.Dir(path)})
 	if err != nil {
 		return res, fmt.Errorf("cannot tar files: %v", err)
 	}
