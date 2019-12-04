@@ -3,15 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"sort"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/google/gops/agent"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
 	"github.com/yesnault/go-toml"
 	"go.opencensus.io/tag"
@@ -73,6 +76,7 @@ func init() {
 
 	configCmd.AddCommand(configNewCmd)
 	configCmd.AddCommand(configCheckCmd)
+	configCmd.AddCommand(configEditCmd)
 
 	//Download command
 	mainCmd.AddCommand(downloadCmd)
@@ -351,6 +355,74 @@ var configCheckCmd = &cobra.Command{
 		if !hasError {
 			fmt.Println("Configuration file OK")
 		}
+	},
+}
+
+var configEditCmd = &cobra.Command{
+	Use:     "edit",
+	Short:   "Edit a CDS configuration file",
+	Long:    `$ engine config edit <path-toml-file> key=value key=value`,
+	Example: `$ engine config edit conf.toml log.level=debug hatchery.swarm.commonConfiguration.name=hatchery-swarm-name`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 2 {
+			cmd.Help()
+			sdk.Exit("Wrong usage")
+		}
+
+		cfgFile = args[0]
+
+		if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
+			sdk.Exit("File %s doesn't exist", cfgFile)
+		}
+
+		btes, err := ioutil.ReadFile(cfgFile)
+		if err != nil {
+			sdk.Exit("Error while read content of file %s - err:%v", cfgFile, err)
+		}
+
+		tomlConf, err := toml.Load(string(btes))
+		if err != nil {
+			sdk.Exit("Error while load toml content of file %s - err:%v", cfgFile, err)
+		}
+
+		for _, vk := range args[1:] {
+			t := strings.Split(vk, "=")
+			if len(t) != 2 {
+				sdk.Exit("Invalid key=value: %v", vk)
+			}
+			// check if value is bool, float, int or else string
+			if v, err := strconv.ParseBool(t[1]); err == nil {
+				tomlConf.Set(t[0], "", false, v)
+			} else if v, err := strconv.ParseFloat(t[1], 10); err == nil {
+				tomlConf.Set(t[0], "", false, v)
+			} else if v, err := strconv.ParseInt(t[1], 10, 64); err == nil {
+				tomlConf.Set(t[0], "", false, v)
+			} else {
+				tomlConf.Set(t[0], "", false, t[1])
+			}
+		}
+
+		tmpFile := "cds.tmp.toml"
+		if err := ioutil.WriteFile(tmpFile, []byte(tomlConf.String()), os.FileMode(0640)); err != nil {
+			sdk.Exit("Error while create tempfile: %v", err)
+		}
+
+		defer os.Remove(tmpFile)
+
+		viper.SetConfigFile(tmpFile)
+		if err := viper.ReadInConfig(); err != nil {
+			sdk.Exit(err.Error())
+		}
+
+		if err := viper.Unmarshal(conf); err != nil {
+			sdk.Exit("Unable to parse config: %v", err.Error())
+		}
+
+		btesOutput, err := toml.Marshal(*conf)
+		if err != nil {
+			sdk.Exit("%v", err)
+		}
+		fmt.Println(string(btesOutput))
 	},
 }
 
