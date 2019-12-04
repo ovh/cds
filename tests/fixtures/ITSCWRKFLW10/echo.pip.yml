@@ -6,3 +6,5 @@ jobs:
   - name: "echo"
     script:
     - echo hello
+  requirements:
+  - os-architecture: linux/amd64

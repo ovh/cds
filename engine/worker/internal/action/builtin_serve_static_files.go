@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/afero"
 )
 
-func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
 	res := sdk.Result{Status: sdk.StatusSuccess}
 
 	jobID, err := workerruntime.JobID(ctx)
@@ -38,7 +38,7 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 		return res, sdk.WrapError(err, "cannot get working directory")
 	}
 	var abs string
-	if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
 		abs, _ = x.RealPath(workdir.Name())
 	} else {
 		abs = workdir.Name()
@@ -82,7 +82,7 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	}
 
 	integrationName := sdk.DefaultIfEmptyStorage(strings.TrimSpace(sdk.ParameterValue(a.Parameters, "destination")))
-	projectKey := sdk.ParameterValue(params, "cds.project")
+	projectKey := sdk.ParameterValue(wk.Parameters(), "cds.project")
 
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf(`Upload and serving files in progress... with entrypoint "%s"`, entrypoint.Value))
 	publicURL, _, _, err := wk.Client().QueueStaticFilesUpload(ctx, projectKey, integrationName, jobID, name.Value, entrypoint.Value, staticKey, file)

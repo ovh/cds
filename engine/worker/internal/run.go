@@ -103,7 +103,7 @@ func (w *CurrentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.
 	return nil
 }
 
-func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, secrets []sdk.Variable) (sdk.Result, error) {
 	log.Info(ctx, "runJob> start job %s (%d)", a.Name, jobID)
 	defer func() { log.Info(ctx, "runJob> job %s (%d)", a.Name, jobID) }()
 
@@ -125,11 +125,11 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 			BuildID: jobID,
 		}
 		if nCriticalFailed == 0 || step.AlwaysExecuted {
-			stepResult = w.runAction(ctx, step, jobID, params, secrets, step.Name)
+			stepResult = w.runAction(ctx, step, jobID, secrets, step.Name)
 
 			for _, newVariable := range stepResult.NewVariables {
 				// append the new variable from a step to the following steps
-				params = append(params, newVariable.ToParameter("cds.build"))
+				w.currentJob.params = append(w.currentJob.params, newVariable.ToParameter("cds.build"))
 				// Propagate new variables from step result to jobs result
 				w.currentJob.newVariables = append(w.currentJob.newVariables, newVariable)
 			}
@@ -164,7 +164,7 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 	return jobResult, nil
 }
 
-func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64, params []sdk.Parameter, secrets []sdk.Variable, actionName string) sdk.Result {
+func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64, secrets []sdk.Variable, actionName string) sdk.Result {
 	log.Info(ctx, "runAction> start action %s %s %d", a.StepName, actionName, jobID)
 	defer func() { log.Info(ctx, "runAction> end action %s %s run %d", a.StepName, actionName, jobID) }()
 
@@ -183,7 +183,7 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	}
 
 	// Replace variable placeholder that may have been added by last step
-	if err := w.replaceVariablesPlaceholder(&a, params); err != nil {
+	if err := w.replaceVariablesPlaceholder(&a, w.currentJob.params); err != nil {
 		return sdk.Result{
 			Status:  sdk.StatusFail,
 			BuildID: jobID,
@@ -207,10 +207,10 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	//If the action if a edge of the action tree; run it
 	switch a.Type {
 	case sdk.BuiltinAction:
-		return w.runBuiltin(ctx, a, params, secrets)
+		return w.runBuiltin(ctx, a, secrets)
 	case sdk.PluginAction:
 		//Run the plugin
-		return w.runGRPCPlugin(ctx, a, params)
+		return w.runGRPCPlugin(ctx, a)
 	}
 
 	// There is is no children actions (action is empty) to do, success !
@@ -222,7 +222,7 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	}
 
 	//Run children actions
-	r, nDisabled := w.runSteps(ctx, a.Actions, a, jobID, params, secrets, actionName)
+	r, nDisabled := w.runSteps(ctx, a.Actions, a, jobID, secrets, actionName)
 	//If all steps are disabled, set action status to disabled
 	if nDisabled >= len(a.Actions) {
 		r.Status = sdk.StatusDisabled
@@ -231,7 +231,7 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	return r
 }
 
-func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.Action, jobID int64, params []sdk.Parameter, secrets []sdk.Variable, stepName string) (sdk.Result, int) {
+func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.Action, jobID int64, secrets []sdk.Variable, stepName string) (sdk.Result, int) {
 	log.Info(ctx, "runSteps> start action steps %s %d len(steps):%d context=%p", stepName, jobID, len(steps), ctx)
 	defer func() {
 		log.Info(ctx, "runSteps> end action steps %s %d len(steps):%d context=%p (%s)", stepName, jobID, len(steps), ctx, ctx.Err())
@@ -255,7 +255,7 @@ func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.
 		}
 
 		if !criticalStepFailed || child.AlwaysExecuted {
-			r = w.runAction(ctx, child, jobID, params, secrets, childName)
+			r = w.runAction(ctx, child, jobID, secrets, childName)
 			if r.Status != sdk.StatusSuccess && !child.Optional {
 				criticalStepFailed = true
 			}
@@ -265,7 +265,7 @@ func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.
 
 		for _, newVariable := range r.NewVariables {
 			// append the new variable from a chile to the following children
-			params = append(params, newVariable.ToParameter("cds.build"))
+			w.currentJob.params = append(w.currentJob.params, newVariable.ToParameter("cds.build"))
 			// Propagate new variables from child result to action
 			r.NewVariables = append(r.NewVariables, newVariable)
 		}
@@ -512,7 +512,9 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		jobParameters = append(jobParameters, p)
 	}
 
-	res, err := w.runJob(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobParameters, jobInfo.Secrets)
+	w.currentJob.params = jobParameters
+
+	res, err := w.runJob(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobInfo.Secrets)
 
 	if len(res.NewVariables) > 0 {
 		log.Debug("processJob> new variables: %v", res.NewVariables)

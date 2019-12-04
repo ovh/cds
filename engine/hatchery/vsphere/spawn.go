@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"strings"
 	"time"
 
 	"github.com/vmware/govmomi/object"
@@ -15,7 +14,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 type annotation struct {
@@ -34,11 +32,6 @@ type annotation struct {
 func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	var vm *object.VirtualMachine
 	var errV error
-	name := "worker-" + spawnArgs.Model.Name + "-" + strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)
-	if spawnArgs.RegisterOnly {
-		name = "register-" + name
-	}
-
 	_, errM := h.getModelByName(ctx, spawnArgs.Model.Name)
 
 	if errM != nil || spawnArgs.Model.NeedRegistration {
@@ -55,7 +48,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 	annot := annotation{
 		HatcheryName:            h.Name(),
-		WorkerName:              name,
+		WorkerName:              spawnArgs.WorkerName,
 		RegisterOnly:            spawnArgs.RegisterOnly,
 		WorkerModelLastModified: fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
 		WorkerModelName:         spawnArgs.ModelName(),
@@ -67,9 +60,9 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WrapError(errCfg, "cannot create VM configuration")
 	}
 
-	log.Info(ctx, "Create vm to exec worker %s", name)
-	defer log.Info(ctx, "Terminate to create vm for worker %s", name)
-	task, errC := vm.Clone(ctx, folder, name, *cloneSpec)
+	log.Info(ctx, "Create vm to exec worker %s", spawnArgs.WorkerName)
+	defer log.Info(ctx, "Terminate to create vm for worker %s", spawnArgs.WorkerName)
+	task, errC := vm.Clone(ctx, folder, spawnArgs.WorkerName, *cloneSpec)
 	if errC != nil {
 		return sdk.WrapError(errC, "cannot clone VM")
 	}
@@ -79,7 +72,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WrapError(errW, "state in error")
 	}
 
-	return h.launchScriptWorker(name, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
+	return h.launchScriptWorker(spawnArgs.WorkerName, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
 }
 
 // createVMModel create a model for a specific worker model

@@ -10,7 +10,7 @@ testcases:
 - name: prepare test
   steps:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW14"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW14 "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw14 "
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW14 ITSCWRKFLW14"
 
 - name: import integration

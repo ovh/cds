@@ -69,6 +69,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 					continue // do not kill the worker here, could be a timeout
 				}
 
+				nbConnrefused = 0
 				if j == nil || j.Status != sdk.StatusBuilding {
 					log.Info(ctx, "takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.Status, err)
 					cancel()

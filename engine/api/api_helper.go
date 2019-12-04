@@ -118,7 +118,7 @@ func (a *API) isService(ctx context.Context) (*sdk.Service, bool) {
 
 	s, err := services.LoadByConsumerID(ctx, db, session.ConsumerID)
 	if err != nil {
-		log.Warning(ctx, "unable to get service from session %s: %v", session.ID, err)
+		log.Info(ctx, "unable to get service from session %s: %v", session.ID, err)
 		return nil, false
 	}
 	return s, true

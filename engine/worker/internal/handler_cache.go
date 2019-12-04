@@ -57,7 +57,7 @@ func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 		var abs string
-		if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+		if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
 			abs, _ = x.RealPath(workdir.Name())
 		} else {
 			abs = workdir.Name()

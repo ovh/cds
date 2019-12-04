@@ -154,7 +154,7 @@ func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
 		if err := json.Unmarshal([]byte(s.Config.Annotation), &annot); err != nil {
 			log.Error(ctx, "deleteServer> unable to get server annotation")
 		} else {
-			if strings.Contains(s.Name, "register-") {
+			if strings.HasPrefix(s.Name, "register-") {
 				if err := hatchery.CheckWorkerModelRegister(h, annot.WorkerModelPath); err != nil {
 					var spawnErr = sdk.SpawnErrorForm{
 						Error: err.Error(),

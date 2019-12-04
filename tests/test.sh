@@ -123,8 +123,8 @@ workflow_with_integration_tests() {
 rm -rf ./results
 mkdir results
 
-smoke_tests
 initialization_tests
+smoke_tests
 cli_tests
 workflow_tests
 

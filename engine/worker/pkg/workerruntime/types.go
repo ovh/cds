@@ -61,10 +61,11 @@ type Runtime interface {
 	InstallKey(key sdk.Variable, destinationPath string) (*KeyResponse, error)
 	Unregister(ctx context.Context) error
 	Client() cdsclient.WorkerInterface
-	Workspace() afero.Fs
+	BaseDir() afero.Fs
 	Environ() []string
 	Blur(interface{}) error
 	HTTPPort() int32
+	Parameters() []sdk.Parameter
 }
 
 func JobID(ctx context.Context) (int64, error) {

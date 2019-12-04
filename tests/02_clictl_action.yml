@@ -14,11 +14,11 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} action delete --force shared.infra/CDS_TestIT_unknowned
     assertions:
       - result.code ShouldEqual 0
-      - result.systemout ShouldContainSubstring "action does not exist"
+      - result.systemout ShouldContainSubstring "resource not found"
   - script: {{.cdsctl}} -f {{.cdsctl.config}} action delete shared.infra/CDS_TestIT_unknowned
     assertions:
       - result.code ShouldEqual 50
-      - result.systemout ShouldContainSubstring "action does not exist"
+      - result.systemout ShouldContainSubstring "resource not found"
 - name: prepare test
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} action delete --force shared.infra/CDS_TestIT_Enabled

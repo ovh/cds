@@ -1,12 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    Input,
-    OnDestroy,
-    OnInit,
-    ViewChild
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import * as pipelineActions from 'app/store/pipelines.action';
@@ -79,7 +71,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     }
     @Input() queryParams: {};
 
-    @ViewChild('editStageModal', {static: false})
+    @ViewChild('editStageModal', { static: false })
     editStageModal: SemanticModalComponent;
 
     pipeline: Pipeline;
@@ -195,7 +187,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
             })
         ).subscribe((pip) => {
             this._toast.success('', this._translate.instant('stage_added'));
-            this.selectedStage = pip.stages[pip.stages.length - 1];
+            this.selectedStage = cloneDeep(pip.stages[pip.stages.length - 1]);
             this.addJob(this.selectedStage);
         });
     }

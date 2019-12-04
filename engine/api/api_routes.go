@@ -107,6 +107,9 @@ func (api *API) InitRouter() {
 
 	// Download file
 	r.Handle("/download", ScopeNone(), r.GET(api.downloadsHandler))
+	r.Handle("/download/plugin/{name}/binary/{os}/{arch}", ScopeNone(), r.GET(api.getGRPCluginBinaryHandler, Auth(false)))
+	r.Handle("/download/plugin/{name}/binary/{os}/{arch}/infos", ScopeNone(), r.GET(api.getGRPCluginBinaryInfosHandler))
+
 	r.Handle("/download/{name}/{os}/{arch}", ScopeNone(), r.GET(api.downloadHandler, Auth(false)))
 
 	// Group

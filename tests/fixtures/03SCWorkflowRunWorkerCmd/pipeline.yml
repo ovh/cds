@@ -1,0 +1,124 @@
+version: v1.0
+name: 03SCWorkflowRunWorkerCmd-PIPELINE
+stages:
+- Stage1
+- Stage2
+
+jobs:
+- job: CHECKSECRET
+  stage: Stage1
+  steps:
+    - optional: true
+      script:
+      - '#!/bin/bash'
+      - cat << EOF > myFile
+      - this a a line in the file, with a CDS variable of type password {{.cds.app.password}}
+      - EOF
+      - worker check-secret {{.cds.workspace}}/myFile
+  requirements:
+  - os-architecture: linux/amd64
+- job: EXIT
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - worker exit 0
+  requirements:
+  - os-architecture: linux/amd64
+- job: EXPORT
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - worker export foo bar
+  requirements:
+  - os-architecture: linux/amd64
+- job: CACHEPUSH
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - cat << EOF > fileCache
+      - cache push file content
+      - EOF
+      - worker cache push latest fileCache
+  requirements:
+  - os-architecture: linux/amd64
+- job: TAG
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - worker tag tag1=value1 tag2=value2
+  requirements:
+  - os-architecture: linux/amd64
+- job: TMPL
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - cat << EOF > myFile
+      - this a a line in the file, with a CDS variable {{.cds.version}}
+      - EOF
+      - worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile
+      - cat {{.cds.workspace}}/outputFile
+  requirements:
+  - os-architecture: linux/amd64
+- job: UPLOAD
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - cat << EOF > myFileUploaded
+      - Je suis un artifact
+      - EOF
+      - worker upload --tag={{.cds.version}} {{.cds.workspace}}/myFileUploaded
+  requirements:
+  - os-architecture: linux/amd64
+- job: KEY
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - worker key install --env proj-ssh-03scworkflowrunworkercmd --file id_rsa
+      - cat id_rsa
+  requirements:
+  - os-architecture: linux/amd64
+
+- job: ARTIFACTLIST
+  stage: Stage2
+  steps:
+    - script:
+      - set -ex
+      - worker artifacts
+  requirements:
+  - os-architecture: linux/amd64
+
+- job: CACHEPULL
+  stage: Stage2
+  steps:
+    - script:
+      - set -ex
+      - worker cache pull latest
+      - cat fileCache
+  requirements:
+  - os-architecture: linux/amd64
+
+- job: DOWNLOAD
+  stage: Stage2
+  steps:
+    - script:
+      - set -ex
+      - worker download
+      - cat myFileUploaded
+  requirements:
+  - os-architecture: linux/amd64
+
+- job: EXPORT
+  stage: Stage2
+  steps:
+    - script:
+      - set -ex
+      - echo "Export value {{.cds.build.foo}}"
+  requirements:
+  - os-architecture: linux/amd64

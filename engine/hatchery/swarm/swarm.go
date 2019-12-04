@@ -16,18 +16,17 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 
-	types "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
 	"github.com/gorilla/mux"
-	context "golang.org/x/net/context"
+	"golang.org/x/net/context"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // New instanciates a new Hatchery Swarm
@@ -185,14 +184,8 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		return sdk.WithStack(fmt.Errorf("unable to spawn worker, no Job ID and no Register."))
 	}
 
-	//name is the name of the worker and the name of the container
-	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1))
-	if spawnArgs.RegisterOnly {
-		name = "register-" + name
-	}
-
-	observability.Current(ctx, observability.Tag(observability.TagWorker, name))
-	log.Debug("hatchery> swarm> SpawnWorker> Spawning worker %s", name)
+	observability.Current(ctx, observability.Tag(observability.TagWorker, spawnArgs.WorkerName))
+	log.Debug("hatchery> swarm> SpawnWorker> Spawning worker %s", spawnArgs.WorkerName)
 
 	// Choose a dockerEngine
 	var dockerClient *dockerClient
@@ -266,7 +259,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 			} else if r.Type == sdk.ServiceRequirement {
 				//Create a network if not already created
 				if network == "" {
-					network = name + "-net"
+					network = spawnArgs.WorkerName + "-net"
 					networkAlias = "worker"
 					if err := h.createNetwork(ctx, dockerClient, network); err != nil {
 						log.Warning(ctx, "hatchery> swarm> SpawnWorker> Unable to create network %s on %s for jobID %d : %v", network, dockerClient.name, spawnArgs.JobID, err)
@@ -302,11 +295,11 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					env = append(env, key+"="+val)
 				}
 
-				serviceName := r.Name + "-" + name
+				serviceName := r.Name + "-" + spawnArgs.WorkerName
 
 				//labels are used to make container cleanup easier. We "link" the service to its worker this way.
 				labels := map[string]string{
-					"service_worker": name,
+					"service_worker": spawnArgs.WorkerName,
 					"service_name":   serviceName,
 					"hatchery":       h.Config.Name,
 				}
@@ -347,7 +340,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	//labels are used to make container cleanup easier
 	labels := map[string]string{
 		"worker_model_path":   spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
-		"worker_name":         name,
+		"worker_name":         spawnArgs.WorkerName,
 		"worker_requirements": strings.Join(services, ","),
 		"hatchery":            h.Config.Name,
 	}
@@ -362,7 +355,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		API:               h.Config.API.HTTP.URL,
 		Token:             spawnArgs.WorkerToken,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
-		Name:              name,
+		Name:              spawnArgs.WorkerName,
 		Model:             spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
 		TTL:               h.Config.WorkerTTL,
 		HatcheryName:      h.Name(),
@@ -423,7 +416,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	}
 
 	args := containerArgs{
-		name:         name,
+		name:         spawnArgs.WorkerName,
 		image:        spawnArgs.Model.ModelDocker.Image,
 		network:      network,
 		networkAlias: networkAlias,
@@ -508,9 +501,6 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model *sdk.Model, jobID in
 				}
 			}
 		}
-
-		//Ready to spawn
-		log.Debug("hatchery> swarm> CanSpawn> %s can be spawned", model.Name)
 		return true
 	}
 	return false

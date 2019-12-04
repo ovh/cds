@@ -73,7 +73,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			// this counter is reset with func workerRegister
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
 			arg := SpawnArguments{
-				WorkerName:   fmt.Sprintf("register-%s-%s", strings.ToLower(m.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+				WorkerName:   fmt.Sprintf("register-%s-%s-%s", h.Service().Name, strings.Replace(strings.ToLower(m.Name), "/", "-", -1), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
 				Model:        m,
 				RegisterOnly: true,
 				HatcheryName: h.Service().Name,
@@ -171,7 +171,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 
 	_, next = observability.Span(ctxJob, "hatchery.SpawnWorker")
 	arg := SpawnArguments{
-		WorkerName:   fmt.Sprintf("%s-%s", strings.ToLower(modelName), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+		WorkerName:   fmt.Sprintf("%s-%s-%s", h.Service().Name, strings.Replace(strings.ToLower(modelName), "/", "-", -1), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
 		Model:        j.model,
 		JobID:        j.id,
 		Requirements: j.requirements,

@@ -36,7 +36,7 @@ func enablePluginLogger(ctx context.Context, done chan struct{}, c *pluginClient
 	var shouldExit bool
 	defer func() {
 		if accumulator != "" {
-			w.SendLog(ctx,workerruntime.LevelInfo, accumulator)
+			w.SendLog(ctx, workerruntime.LevelInfo, accumulator)
 		}
 		close(done)
 	}()
@@ -63,7 +63,7 @@ func enablePluginLogger(ctx context.Context, done chan struct{}, c *pluginClient
 			continue
 		case "\n":
 			accumulator += content
-			w.SendLog(ctx,workerruntime.LevelInfo, accumulator)
+			w.SendLog(ctx, workerruntime.LevelInfo, accumulator)
 			accumulator = ""
 			continue
 		default:
@@ -135,7 +135,7 @@ func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Paramete
 	}
 	log.Debug("plugin successfully initialized: %#v", manifest)
 
-	w.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s version %s is ready", manifest.Name, manifest.Version))
+	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s version %s is ready", manifest.Name, manifest.Version))
 
 	jobID, err := workerruntime.JobID(ctx)
 	if err != nil {
@@ -183,10 +183,10 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w workerruntime.Run
 
 	// then try to download the plugin
 	pluginBinary := binary.Name
-	if _, err := w.Workspace().Stat(pluginBinary); os.IsNotExist(err) {
+	if _, err := w.BaseDir().Stat(pluginBinary); os.IsNotExist(err) {
 		log.Debug("Downloading the plugin %s", binary.PluginName)
 		//If the file doesn't exist. Download it.
-		fi, err := w.Workspace().OpenFile(pluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
+		fi, err := w.BaseDir().OpenFile(pluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
 		if err != nil {
 			return nil, sdk.WrapError(err, "unable to create the file %s", pluginBinary)
 		}
@@ -215,33 +215,38 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w workerruntime.Run
 	envs = append(envs, opts.envs...)
 
 	log.Info(ctx, "Starting GRPC Plugin %s", binary.Name)
-	fileContent, err := afero.ReadFile(w.Workspace(), binary.GetName())
+	fileContent, err := afero.ReadFile(w.BaseDir(), binary.GetName())
 	if err != nil {
 		return nil, sdk.WrapError(err, "plugin:%s unable to get plugin binary file... Aborting", pluginName)
 	}
 
 	switch {
 	case sdk.IsTar(fileContent):
-		if err := sdk.Untar(w.Workspace(), "", bytes.NewReader(fileContent)); err != nil {
+		if err := sdk.Untar(w.BaseDir(), "", bytes.NewReader(fileContent)); err != nil {
 			return nil, sdk.WrapError(err, "plugin:%s unable to untar binary file", pluginName)
 		}
 	case sdk.IsGz(fileContent):
-		if err := sdk.UntarGz(w.Workspace(), "", bytes.NewReader(fileContent)); err != nil {
+		if err := sdk.UntarGz(w.BaseDir(), "", bytes.NewReader(fileContent)); err != nil {
 			return nil, sdk.WrapError(err, "plugin:%s unable to untarGz binary file", pluginName)
 		}
 	}
 
 	cmd := binary.Cmd
-	if _, err := sdk.LookPath(w.Workspace(), cmd); err != nil {
+	if _, err := sdk.LookPath(w.BaseDir(), cmd); err != nil {
 		return nil, sdk.WrapError(err, "plugin:%s unable to start GRPC plugin, binary command not found.", pluginName)
 	}
 	args := append(binary.Entrypoints, binary.Args...)
 	var errstart error
-	dir := w.Workspace().Name()
+
+	var dir string
+	if x, ok := w.BaseDir().(*afero.BasePathFs); ok {
+		dir, _ = x.RealPath(".")
+	} else {
+		dir = w.BaseDir().Name()
+	}
 	if c.StdPipe, c.Socket, errstart = grpcplugin.StartPlugin(ctx, pluginName, dir, cmd, args, envs); errstart != nil {
 		return nil, sdk.WrapError(errstart, "plugin:%s unable to start GRPC plugin... Aborting", pluginName)
 	}
-
 	return &c, nil
 }
 
@@ -250,7 +255,7 @@ func pluginFail(ctx context.Context, w workerruntime.Runtime, chanRes chan<- sdk
 		Reason: reason,
 		Status: sdk.StatusFail,
 	}
-	w.SendLog(ctx,workerruntime.LevelError, res.Reason)
+	w.SendLog(ctx, workerruntime.LevelError, res.Reason)
 	chanRes <- res
 }
 

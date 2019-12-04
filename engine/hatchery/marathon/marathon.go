@@ -25,7 +25,6 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // New instanciates a new Hatchery Marathon
@@ -220,17 +219,13 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	memory := int64(h.Config.DefaultMemory)
 
 	instance := 1
-	workerName := fmt.Sprintf("%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1))
-	if spawnArgs.RegisterOnly {
-		workerName = "register-" + workerName
-	}
 	forcePull := strings.HasSuffix(spawnArgs.Model.ModelDocker.Image, ":latest")
 
 	udataParam := sdk.WorkerArgs{
 		API:               h.Configuration().API.HTTP.URL,
 		Token:             spawnArgs.WorkerToken,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
-		Name:              workerName,
+		Name:              spawnArgs.WorkerName,
 		TTL:               h.Config.WorkerTTL,
 		Model:             spawnArgs.Model.GetPath(spawnArgs.Model.Group.Name),
 		HatcheryName:      h.Name(),
@@ -303,7 +298,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	}
 
 	application := &marathon.Application{
-		ID:  fmt.Sprintf("%s/%s", h.Config.MarathonIDPrefix, workerName),
+		ID:  fmt.Sprintf("%s/%s", h.Config.MarathonIDPrefix, spawnArgs.WorkerName),
 		Cmd: &cmd,
 		Container: &marathon.Container{
 			Docker: &marathon.Docker{
@@ -443,7 +438,7 @@ func (h *HatcheryMarathon) WorkersStarted(ctx context.Context) []string {
 
 // WorkersStartedByModel returns the number of instances of given model started but
 // not necessarily register on CDS yet
-func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
+func (h *HatcheryMarathon) WorkersStartedByModel(ctx context.Context, model *sdk.Model) int {
 	apps, err := h.listApplications(h.Config.MarathonIDPrefix)
 	if err != nil {
 		return 0
@@ -548,7 +543,7 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 
 		// We let 2 minutes to worker to start and 5 minutes to a worker to register
 		var maxDeploymentDuration = time.Duration(2) * time.Minute
-		if strings.Contains(app.ID, "register-") {
+		if strings.HasPrefix(app.ID, "register-") {
 			maxDeploymentDuration = time.Duration(5) * time.Minute
 		}
 
@@ -566,7 +561,7 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 		if !found && time.Since(t) > maxDeploymentDuration {
 			log.Debug("killAwolWorkers> killing awol worker %s", app.ID)
 			// If its a worker "register", check registration before deleting it
-			if strings.Contains(app.ID, "register-") && app.Env != nil {
+			if strings.HasPrefix(app.ID, "register-") && app.Env != nil {
 				model := (*app.Env)["CDS_MODEL_PATH"]
 				if err := hatchery.CheckWorkerModelRegister(h, model); err != nil {
 					var spawnErr = sdk.SpawnErrorForm{

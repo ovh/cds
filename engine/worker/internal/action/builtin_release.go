@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
 	var res sdk.Result
 	res.Status = sdk.StatusFail
 	jobID, err := workerruntime.JobID(ctx)
@@ -24,9 +24,9 @@ func RunRelease(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, par
 	title := sdk.ParameterFind(a.Parameters, "title")
 	releaseNote := sdk.ParameterFind(a.Parameters, "releaseNote")
 
-	pkey := sdk.ParameterFind(params, "cds.project")
-	wName := sdk.ParameterFind(params, "cds.workflow")
-	workflowNum := sdk.ParameterFind(params, "cds.run.number")
+	pkey := sdk.ParameterFind(wk.Parameters(), "cds.project")
+	wName := sdk.ParameterFind(wk.Parameters(), "cds.workflow")
+	workflowNum := sdk.ParameterFind(wk.Parameters(), "cds.run.number")
 
 	if pkey == nil {
 		return res, errors.New("cds.project variable not found")

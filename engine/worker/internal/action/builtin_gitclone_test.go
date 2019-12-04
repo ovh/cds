@@ -221,6 +221,38 @@ func TestRunGitCloneInHTTPSWithoutAuth(t *testing.T) {
 					Name:  "url",
 					Value: "https://github.com/fsamin/dummy-empty-repo.git",
 				},
+				{
+					Name:  "privateKey",
+					Value: "",
+				},
+				{
+					Name:  "user",
+					Value: "",
+				},
+				{
+					Name:  "password",
+					Value: "",
+				},
+				{
+					Name:  "branch",
+					Value: "",
+				},
+				{
+					Name:  "commit",
+					Value: "",
+				},
+				{
+					Name:  "directory",
+					Value: "",
+				},
+				{
+					Name:  "depth",
+					Value: "",
+				},
+				{
+					Name:  "submodules",
+					Value: "",
+				},
 			},
 		}, nil, nil)
 	assert.NoError(t, err)

@@ -13,6 +13,7 @@ engine/api/.secrets
 engine/api/config.toml
 engine/config.*toml
 engine/worker/worker
+engine/docs
 *.out
 *.coverprofile
 *.log

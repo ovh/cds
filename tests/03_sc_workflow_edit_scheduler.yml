@@ -12,7 +12,7 @@ testcases:
 - name: prepare test
   steps:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW16"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW16 "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw16 "
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW16 ITSCWRKFLW16"
     assertions:
     - result.code ShouldEqual 0
