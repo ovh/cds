@@ -1517,7 +1517,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	if !isDefaultBranch {
 		_ = tx.Rollback()
-		log.Debug("workflow %s rollbacked because it's not comming from the default branch", wf.Name)
+		log.Debug("workflow %s rollbacked because it's not coming from the default branch", wf.Name)
 	} else {
 		if err := tx.Commit(); err != nil {
 			return nil, nil, sdk.WrapError(err, "Cannot commit transaction")

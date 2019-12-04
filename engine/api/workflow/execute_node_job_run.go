@@ -484,12 +484,12 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 				if err != nil {
 					return nil, sdk.WrapError(err, "LoadSecrets> Cannot load application deployment strategies %d", app.ID)
 				}
-				strat, has := strats[pp.Name]
+				start, has := strats[pp.Name]
 
 				// Application deployment strategies variables
 				apv := []sdk.Variable{}
 				if has {
-					for k, v := range strat {
+					for k, v := range start {
 						apv = append(apv, sdk.Variable{
 							Name:  k,
 							Type:  v.Type,

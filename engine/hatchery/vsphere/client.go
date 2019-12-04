@@ -21,7 +21,7 @@ import (
 
 const reqTimeout = 7 * time.Second
 
-//This a embeded cache for servers list
+//This a embedded cache for servers list
 var lservers = struct {
 	mu   sync.RWMutex
 	list []mo.VirtualMachine
@@ -72,7 +72,7 @@ func (h *HatcheryVSphere) getServers() []mo.VirtualMachine {
 	return lservers.list
 }
 
-//This a embeded cache for images list
+//This a embedded cache for images list
 var lmodels = struct {
 	mu   sync.RWMutex
 	list []mo.VirtualMachine
@@ -280,7 +280,7 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 	return cloneSpec, folder, nil
 }
 
-// launchClientOp launch a script on the virtual machine given in paramters
+// launchClientOp launch a script on the virtual machine given in parameters
 func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, script string, env []string) (int64, error) {
 	ctx := context.Background()
 	ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)

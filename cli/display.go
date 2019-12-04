@@ -50,6 +50,8 @@ func (d *Display) Do(ctx context.Context) {
 	}(d)
 }
 
+// Ellipsis return a trunckated string
+// if i parameter is < of string length
 func Ellipsis(s string, i int) string {
 	if len(s) > i {
 		return s[:i] + "…"

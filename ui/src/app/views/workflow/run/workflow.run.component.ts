@@ -40,6 +40,7 @@ export class WorkflowRunComponent implements OnInit {
     paramsSubs: Subscription;
     loadingRun = true;
     errorsMap = ErrorMessageMap;
+    displayError = false;
 
     // id, status, workflows, infos, num
     workflowRunData: {};
@@ -113,6 +114,10 @@ export class WorkflowRunComponent implements OnInit {
                 this.workflowRunData['infos'] = s.workflowRun.infos;
                 this.workflowRunData['num'] = s.workflowRun.num;
 
+                if (s.workflowRun.infos && s.workflowRun.infos.length > 0) {
+                    this.displayError = s.workflowRun.infos.some((info) => info.is_error);
+                }
+
                 this.updateTitle(s.workflowRun);
                 this._cd.markForCheck();
             } else {
@@ -135,17 +140,17 @@ export class WorkflowRunComponent implements OnInit {
                 this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_success', {
                     workflowName: this.workflowName,
                 }), {
-                        icon: 'assets/images/checked.png',
-                        tag: `${this.workflowName}-${wr.num}.${wr.last_subnumber}`
-                    }).subscribe();
+                    icon: 'assets/images/checked.png',
+                    tag: `${this.workflowName}-${wr.num}.${wr.last_subnumber}`
+                }).subscribe();
                 break;
             case PipelineStatus.FAIL:
                 this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_failing', {
                     workflowName: this.workflowName
                 }), {
-                        icon: 'assets/images/close.png',
-                        tag: `${this.workflowName}-${wr.num}.${wr.last_subnumber}`
-                    }).subscribe();
+                    icon: 'assets/images/close.png',
+                    tag: `${this.workflowName}-${wr.num}.${wr.last_subnumber}`
+                }).subscribe();
                 break;
         }
     }

@@ -22,7 +22,7 @@ type bitbucketcloudClient struct {
 	proxyURL            string
 }
 
-//bitbucketcloudConsumer implements vcs.Server and it's used to instanciate a githubClient
+//bitbucketcloudConsumer implements vcs.Server and it's used to instantiate a githubClient
 type bitbucketcloudConsumer struct {
 	ClientID            string `json:"client-id"`
 	ClientSecret        string `json:"-"`

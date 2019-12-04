@@ -255,7 +255,7 @@ const (
 	ParameterTypeJSON       TemplateParameterType = "json"
 )
 
-// IsValid returns paramter type validity.
+// IsValid returns parameter type validity.
 func (t TemplateParameterType) IsValid() bool {
 	switch t {
 	case ParameterTypeString, ParameterTypeBoolean, ParameterTypeRepository, ParameterTypeJSON:

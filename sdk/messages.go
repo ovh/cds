@@ -74,7 +74,7 @@ var (
 	MsgSpawnInfoWorkerForJobError          = &Message{"MsgSpawnInfoWorkerForJobError", trad{FR: "⚠ Ce worker %s a été créé pour lancer ce job, mais ne possède pas tous les pré-requis. Vérifiez que les prérequis suivants:%s", EN: "⚠ This worker %s was created to take this action, but does not have all prerequisites. Please verify the following prerequisites:%s"}, nil}
 	MsgSpawnInfoJobError                   = &Message{"MsgSpawnInfoJobError", trad{FR: "⚠ Impossible de lancer ce job : %s", EN: "⚠ Unable to run this job: %s"}, nil}
 	MsgWorkflowStarting                    = &Message{"MsgWorkflowStarting", trad{FR: "Le workflow %s#%s a été démarré", EN: "Workflow %s#%s has been started"}, nil}
-	MsgWorkflowError                       = &Message{"MsgWorkflowError", trad{FR: "⚠ Une erreur est survenue: %v", EN: "⚠ An error has occured: %v"}, nil}
+	MsgWorkflowError                       = &Message{"MsgWorkflowError", trad{FR: "⚠ Une erreur est survenue: %v", EN: "⚠ An error has occurred: %v"}, nil}
 	MsgWorkflowConditionError              = &Message{"MsgWorkflowConditionError", trad{FR: "Les conditions de lancement ne sont pas respectées.", EN: "Run conditions aren't ok."}, nil}
 	MsgWorkflowNodeStop                    = &Message{"MsgWorkflowNodeStop", trad{FR: "Le pipeline a été arrété par %s", EN: "The pipeline has been stopped by %s"}, nil}
 	MsgWorkflowNodeMutex                   = &Message{"MsgWorkflowNodeMutex", trad{FR: "Le pipeline %s est mis en attente tant qu'il est en cours sur un autre run", EN: "The pipeline %s is waiting while it's running on another run"}, nil}
@@ -89,7 +89,7 @@ var (
 	MsgWorkflowErrorBadApplicationName     = &Message{"MsgWorkflowErrorBadApplicationName", trad{FR: "L'application %s indiquée dans votre fichier yaml de workflow n'existe pas ou ne correspond pas aux normes ^[a-zA-Z0-9._-]{1,}$", EN: "The application %s mentioned in your workflow's yaml file doesn't exist or is incorrect with ^[a-zA-Z0-9._-]{1,}$"}, nil}
 	MsgWorkflowErrorBadEnvironmentName     = &Message{"MsgWorkflowErrorBadEnvironmentName", trad{FR: "L'environnement %s indiqué dans votre fichier yaml de workflow n'existe pas", EN: "The environment %s mentioned in your workflow's yaml file doesn't exist"}, nil}
 	MsgWorkflowErrorBadIntegrationName     = &Message{"MsgWorkflowErrorBadIntegrationName", trad{FR: "L'intégration %s indiquée dans votre fichier yaml n'existe pas", EN: "The integration %s mentioned in your yaml file doesn't exist"}, nil}
-	MsgWorkflowErrorBadCdsDir              = &Message{"MsgWorkflowErrorBadCdsDir", trad{FR: "Un problème est survenu avec votre répertoire .cds", EN: "A problem occured about your .cds directory"}, nil}
+	MsgWorkflowErrorBadCdsDir              = &Message{"MsgWorkflowErrorBadCdsDir", trad{FR: "Un problème est survenu avec votre répertoire .cds", EN: "A problem occurred about your .cds directory"}, nil}
 	MsgWorkflowErrorUnknownKey             = &Message{"MsgWorkflowErrorUnknownKey", trad{FR: "La clé '%s' est incorrecte ou n'existe pas", EN: "The key '%s' is incorrect or doesn't exist"}, nil}
 	MsgWorkflowErrorBadVCSStrategy         = &Message{"MsgWorkflowErrorBadVCSStrategy", trad{FR: "Vos informations vcs_* sont incorrectes", EN: "Your vcs_* fields are incorrects"}, nil}
 )

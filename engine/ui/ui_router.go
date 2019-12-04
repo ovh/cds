@@ -49,9 +49,10 @@ func (s *Service) getReverseProxy(path, urlRemote string) *httputil.ReverseProxy
 		} else {
 			req.Header.Add("X-Forwarded-Host", req.Host)
 			req.Header.Add("X-Origin-Host", origin.Host)
-			req.URL.Scheme = "http"
+			req.URL.Scheme = origin.Scheme
 			req.URL.Host = origin.Host
 			req.URL.Path = reqPath
+			req.Host = origin.Host
 		}
 	}
 	return &httputil.ReverseProxy{Director: director}

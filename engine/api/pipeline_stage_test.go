@@ -349,12 +349,12 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 		Enabled:    true,
 		Conditions: sdk.WorkflowNodeConditions{
 			PlainConditions: []sdk.WorkflowNodeCondition{
-				sdk.WorkflowNodeCondition{
+				{
 					Variable: ".git.branch",
 					Operator: "regex",
 					Value:    "master",
 				},
-				sdk.WorkflowNodeCondition{
+				{
 					Variable: ".git.author",
 					Operator: "regex",
 					Value:    "someone@somewhere.com",
@@ -460,7 +460,7 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 		Enabled:    true,
 		Conditions: sdk.WorkflowNodeConditions{
 			PlainConditions: []sdk.WorkflowNodeCondition{
-				sdk.WorkflowNodeCondition{
+				{
 					Variable: ".git.banch",
 					Operator: "regex",
 					Value:    "master",
@@ -521,7 +521,7 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 		Enabled:    true,
 		Conditions: sdk.WorkflowNodeConditions{
 			PlainConditions: []sdk.WorkflowNodeCondition{
-				sdk.WorkflowNodeCondition{
+				{
 					Variable: ".git.banch",
 					Operator: "regex",
 					Value:    "master",
@@ -536,12 +536,12 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 
 	stage.Conditions = sdk.WorkflowNodeConditions{
 		PlainConditions: []sdk.WorkflowNodeCondition{
-			sdk.WorkflowNodeCondition{
+			{
 				Variable: "param1",
 				Operator: "regex",
 				Value:    "value1",
 			},
-			sdk.WorkflowNodeCondition{
+			{
 				Variable: "param2",
 				Operator: "regex",
 				Value:    "value2",
@@ -581,7 +581,7 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 	// we update plan AND lua -> must record lua only
 	stage.Conditions = sdk.WorkflowNodeConditions{
 		PlainConditions: []sdk.WorkflowNodeCondition{
-			sdk.WorkflowNodeCondition{
+			{
 				Variable: "param1",
 				Operator: "regex",
 				Value:    "value1",

@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
 
 	"github.com/ovh/cds/sdk"
@@ -25,7 +27,7 @@ func init() {
 func main() {
 	mainCmd.Execute()
 }
-
+ 
 var mainCmd = &cobra.Command{
 	Use:   "engine",
 	Short: "CDS Engine",

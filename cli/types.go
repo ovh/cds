@@ -116,7 +116,7 @@ func (s args) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-// Command represents the way to instanciate a cobra.Command
+// Command represents the way to instantiate a cobra.Command
 type Command struct {
 	Name         string
 	Ctx          []Arg

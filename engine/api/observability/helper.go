@@ -66,7 +66,7 @@ func Current(ctx context.Context, tags ...trace.Attribute) *trace.Span {
 	return span
 }
 
-// Tag is helper function to instanciate trace.Attribute
+// Tag is helper function to instantiate trace.Attribute
 func Tag(key string, value interface{}) trace.Attribute {
 	return trace.StringAttribute(key, fmt.Sprintf("%v", value))
 }
