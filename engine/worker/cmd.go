@@ -164,7 +164,7 @@ func initFromFlags(cmd *cobra.Command, w *internal.CurrentWorker) {
 
 	basedir, err := filepath.EvalSymlinks(basedir)
 	if err != nil {
-		log.Error(context.TODO(), "symlink error: %v", err)
+		log.Error(context.Background(), "symlink error: %v", err)
 		os.Exit(6)
 	}
 
