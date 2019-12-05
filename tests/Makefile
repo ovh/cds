@@ -28,6 +28,6 @@ minio_reset_bucket:
 		while ! nc -z minio 9000; do echo 'Wait minio to startup...' && sleep 0.1; done; \
 		sleep 5 && \
 		mc config host add myminio http://minio:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY && \
-		mc rm -r --force myminio/test-it  || true && \
-		mc mb myminio/test-it || true \
+		mc rm -r --force myminio/cds-it  || true && \
+		mc mb myminio/cds-it || true \
 		"
