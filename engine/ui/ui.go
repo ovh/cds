@@ -283,13 +283,6 @@ func (s *Service) buildFromSource(ctx context.Context) error {
 		return fmt.Errorf("You must have the directory ../ui with the ui source code")
 	}
 
-	log.Info(ctx, "ui> checking node version")
-	if output, err := s.execCommand("node --version"); err != nil {
-		return err
-	} else if !strings.HasPrefix(output, "v12.4.") {
-		return fmt.Errorf("You must have node version > v12.4.0 to build CDS UI. Your version: %s", output)
-	}
-
 	if _, err := s.execCommand("npm install --no-audit"); err != nil {
 		return err
 	}
@@ -327,9 +320,6 @@ func (s *Service) execCommand(command string) (string, error) {
 	}()
 	if err := cmd.Run(); err != nil {
 		return "", sdk.WrapError(err, "could not run command")
-	}
-	if err := cmd.Wait(); err != nil {
-		return "", sdk.WrapError(err, "could not wait for command")
 	}
 	return output, nil
 }

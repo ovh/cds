@@ -40,7 +40,7 @@ func (actPlugin *npmAuditParserActionPlugin) Run(ctx context.Context, q *actionp
 	if err != nil {
 		return actionplugin.Fail("Unable to read file %s: %v", file, err)
 	}
-	var npmAudit NpmAudit
+	var npmAudit npmAudit
 	if err := json.Unmarshal(b, &npmAudit); err != nil {
 		return actionplugin.Fail("Unable to read npm report: %v", err)
 	}

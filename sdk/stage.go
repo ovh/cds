@@ -64,7 +64,7 @@ func (s *Stage) PlainConditions() []WorkflowNodeCondition {
 	return res
 }
 
-// NewStage instanciate a new Stage
+// NewStage instantiate a new Stage
 func NewStage(name string) *Stage {
 	s := &Stage{
 		Name: name,

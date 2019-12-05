@@ -284,7 +284,7 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 	}
 
 	// First collect all PGP and SSSH Keys/
-	// And try to find teh chosen key
+	// And try to find the chosen key
 	projectPGPKeys := make([]sdk.ProjectKey, 0, len(proj.Keys))
 	projectSSHKeys := make([]sdk.ProjectKey, 0, len(proj.Keys))
 	for i := range proj.Keys {

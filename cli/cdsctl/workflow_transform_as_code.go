@@ -54,7 +54,7 @@ func workflowTransformAsCodeRun(v cli.Values) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot read id from pull request URL %s: %v", ope.Setup.Push.PRLink, err)
 	}
-	reponse := struct {
+	response := struct {
 		URL string `cli:"url" json:"url"`
 		ID  int    `cli:"id" json:"id"`
 	}{
@@ -65,5 +65,5 @@ func workflowTransformAsCodeRun(v cli.Values) (interface{}, error) {
 	case sdk.OperationStatusError:
 		return nil, fmt.Errorf("cannot perform operation: %s", ope.Error)
 	}
-	return reponse, nil
+	return response, nil
 }

@@ -153,7 +153,7 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatu
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
-		return data, sdk.WrapError(err, "Error durring consumption")
+		return data, sdk.WrapError(err, "Error during consumption")
 	}
 	//We only manage status Success and Failure
 	if eventNR.Status == sdk.StatusChecking ||
