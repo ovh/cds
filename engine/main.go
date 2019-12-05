@@ -389,10 +389,8 @@ var configEditCmd = &cobra.Command{
 			if len(t) != 2 {
 				sdk.Exit("Invalid key=value: %v", vk)
 			}
-			// check if value is bool, float, int or else string
+			// check if value is bool, int or else string
 			if v, err := strconv.ParseBool(t[1]); err == nil {
-				tomlConf.Set(t[0], "", false, v)
-			} else if v, err := strconv.ParseFloat(t[1], 10); err == nil {
 				tomlConf.Set(t[0], "", false, v)
 			} else if v, err := strconv.ParseInt(t[1], 10, 64); err == nil {
 				tomlConf.Set(t[0], "", false, v)
