@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
+	"os" 
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
 
 	"github.com/ovh/cds/sdk"
