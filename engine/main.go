@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/gops/agent"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
 	"github.com/yesnault/go-toml"
 	"go.opencensus.io/tag"
@@ -402,27 +401,7 @@ var configEditCmd = &cobra.Command{
 			}
 		}
 
-		tmpFile := "cds.tmp.toml"
-		if err := ioutil.WriteFile(tmpFile, []byte(tomlConf.String()), os.FileMode(0640)); err != nil {
-			sdk.Exit("Error while create tempfile: %v", err)
-		}
-
-		defer os.Remove(tmpFile)
-
-		viper.SetConfigFile(tmpFile)
-		if err := viper.ReadInConfig(); err != nil {
-			sdk.Exit(err.Error())
-		}
-
-		if err := viper.Unmarshal(conf); err != nil {
-			sdk.Exit("Unable to parse config: %v", err.Error())
-		}
-
-		btesOutput, err := toml.Marshal(*conf)
-		if err != nil {
-			sdk.Exit("%v", err)
-		}
-		fmt.Println(string(btesOutput))
+		fmt.Println(tomlConf.String())
 	},
 }
 
