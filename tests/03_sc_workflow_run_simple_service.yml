@@ -9,7 +9,7 @@ testcases:
 - name: prepare test
   steps:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 03SCWORKFLOWRUNSIMPLESERVICE"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 03SCWorkflowRunSimpleService "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 03scworkflowrunsimpleservice "
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add 03SCWORKFLOWRUNSIMPLESERVICE 03SCWorkflowRunSimpleService"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml"
 

@@ -10,7 +10,7 @@ testcases:
 - name: prepare test
   steps:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 03SCWORKFLOWRUNWORKERCMD"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 03SCWorkflowRunWorkerCmd "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 03scworkflowrunworkercmd "
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add 03SCWORKFLOWRUNWORKERCMD 03SCWorkflowRunWorkerCmd"
 
 - name: import pipeline and workflow
