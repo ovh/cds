@@ -62,7 +62,6 @@ build:
 	$(MAKE) build -C contrib OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
 	$(MAKE) package -C contrib TARGET_DIST="$(abspath $(TARGET_DIR))"
 
-
 define get_dist_from_target
 $(filter %/$(notdir $(1)), $(ALL_DIST))
 endef

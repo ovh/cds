@@ -28,12 +28,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/coreos/clair/api/v1"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/distribution/reference"
+	"github.com/prometheus/client_golang/prometheus"
+	v1 "github.com/quay/clair/v2/api/v1"
 )
+
+var _ = prometheus.Handler()
 
 //Analyze return Clair Image analysis
 func Analyze(image reference.NamedTagged, manifest distribution.Manifest) (ImageAnalysis, error) {
