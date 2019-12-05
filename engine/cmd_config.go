@@ -28,17 +28,17 @@ func init() {
 	configCmd.AddCommand(configCheckCmd)
 	configCmd.AddCommand(configRegenCmd)
 	configCmd.AddCommand(configEditCmd)
-	configCmd.AddCommand(configInitMagicTokenCmd)
+	configCmd.AddCommand(configInitTokenCmd)
 
 	configNewCmd.Flags().BoolVar(&flagConfigNewAsEnv, "env", false, "Print configuration as environment variable")
 	configRegenCmd.Flags().BoolVar(&flagConfigRegenAsEnv, "env", false, "Print configuration as environment variable")
 	configEditCmd.Flags().BoolVar(&flagConfigRegenAsEnv, "env", false, "Print configuration as environment variable")
 
-	configInitMagicTokenCmd.Flags().StringVar(&flagInitTokenConfigFile, "config", "", "config file")
-	configInitMagicTokenCmd.Flags().StringVar(&flagInitTokenRemoteConfig, "remote-config", "", "(optional) consul configuration store")
-	configInitMagicTokenCmd.Flags().StringVar(&flagInitTokenRemoteConfigKey, "remote-config-key", "cds/config.api.toml", "(optional) consul configuration store key")
-	configInitMagicTokenCmd.Flags().StringVar(&flagInitTokenVaultAddr, "vault-addr", "", "(optional) Vault address to fetch secrets from vault (example: https://vault.mydomain.net:8200)")
-	configInitMagicTokenCmd.Flags().StringVar(&flagInitTokenVaultToken, "vault-token", "", "(optional) Vault token to fetch secrets from vault")
+	configInitTokenCmd.Flags().StringVar(&flagInitTokenConfigFile, "config", "", "config file")
+	configInitTokenCmd.Flags().StringVar(&flagInitTokenRemoteConfig, "remote-config", "", "(optional) consul configuration store")
+	configInitTokenCmd.Flags().StringVar(&flagInitTokenRemoteConfigKey, "remote-config-key", "cds/config.api.toml", "(optional) consul configuration store key")
+	configInitTokenCmd.Flags().StringVar(&flagInitTokenVaultAddr, "vault-addr", "", "(optional) Vault address to fetch secrets from vault (example: https://vault.mydomain.net:8200)")
+	configInitTokenCmd.Flags().StringVar(&flagInitTokenVaultToken, "vault-token", "", "(optional) Vault token to fetch secrets from vault")
 }
 
 var (
@@ -78,7 +78,7 @@ All options
 
 	Run: func(cmd *cobra.Command, args []string) {
 		conf := configBootstrap(args)
-		magicToken, err := configSetStartupData(&conf)
+		initToken, err := configSetStartupData(&conf)
 		if err != nil {
 			sdk.Exit("%v", err)
 		}
@@ -94,7 +94,7 @@ All options
 		}
 
 		fmt.Println("# On first login, you will be asked to enter the following token:")
-		fmt.Println("# " + magicToken)
+		fmt.Println("# " + initToken)
 	},
 }
 
@@ -218,7 +218,7 @@ var configRegenCmd = &cobra.Command{
 
 		oldConf := configImport(nil, args[0], "", "", "", "", true)
 
-		magicToken, err := configSetStartupData(&oldConf)
+		initToken, err := configSetStartupData(&oldConf)
 		if err != nil {
 			sdk.Exit("%v", err)
 		}
@@ -249,7 +249,7 @@ var configRegenCmd = &cobra.Command{
 		}
 
 		fmt.Fprintln(writer, "# On first login, you will be asked to enter the following token:")
-		fmt.Fprintln(writer, "# "+magicToken)
+		fmt.Fprintln(writer, "# "+initToken)
 	},
 }
 
@@ -301,7 +301,7 @@ var configEditCmd = &cobra.Command{
 	},
 }
 
-var configInitMagicTokenCmd = &cobra.Command{
+var configInitTokenCmd = &cobra.Command{
 	Use:   "init-token",
 	Short: "Generate/Regenerate an init token for a given CDS configuration file",
 	Long:  `$ engine config init-token`,
@@ -309,11 +309,11 @@ var configInitMagicTokenCmd = &cobra.Command{
 
 		conf := configImport(args, flagInitTokenConfigFile, flagInitTokenRemoteConfig, flagInitTokenRemoteConfigKey, flagInitTokenVaultAddr, flagInitTokenVaultToken, false)
 
-		magicToken, err := getMagicTokenFromExistingConfiguration(conf)
+		initToken, err := getInitTokenFromExistingConfiguration(conf)
 		if err != nil {
 			sdk.Exit("error: %v", err)
 		}
 
-		fmt.Println(magicToken)
+		fmt.Println(initToken)
 	},
 }

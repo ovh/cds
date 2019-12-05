@@ -601,7 +601,7 @@ func configSetStartupData(conf *Configuration) (string, error) {
 	return authentication.SignJWS(startupCfg, time.Hour)
 }
 
-func getMagicTokenFromExistingConfiguration(conf Configuration) (string, error) {
+func getInitTokenFromExistingConfiguration(conf Configuration) (string, error) {
 	if conf.API == nil {
 		return "", fmt.Errorf("cannot load configuration")
 	}
