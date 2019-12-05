@@ -19,7 +19,7 @@ type bitbucketClient struct {
 	token             string
 }
 
-//bitbucketConsumer implements vcs.Server and it's used to instanciate a bitbucketClient
+//bitbucketConsumer implements vcs.Server and it's used to instantiate a bitbucketClient
 type bitbucketConsumer struct {
 	ConsumerKey      string `json:"consumer_key"`
 	PrivateKey       []byte `json:"-"`

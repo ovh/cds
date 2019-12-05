@@ -71,7 +71,7 @@ func (e Environment) PGPKeys() []EnvironmentKey {
 	return keys
 }
 
-// NewEnvironment instanciate a new Environment
+// NewEnvironment instantiate a new Environment
 func NewEnvironment(name string) *Environment {
 	e := &Environment{
 		Name: name,

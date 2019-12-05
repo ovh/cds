@@ -33,7 +33,7 @@ func (h *HatcheryOpenstack) flavorID(flavor string) (string, error) {
 	return "", fmt.Errorf("flavorID> flavor '%s' not found", flavor)
 }
 
-//This a embeded cache for images list
+//This a embedded cache for images list
 var limages = struct {
 	mu   sync.RWMutex
 	list []images.Image
@@ -90,7 +90,7 @@ func (h *HatcheryOpenstack) resetImagesCache() {
 	limages.mu.Unlock()
 }
 
-//This a embeded cache for servers list
+//This a embedded cache for servers list
 var lservers = struct {
 	mu   sync.RWMutex
 	list []servers.Server
