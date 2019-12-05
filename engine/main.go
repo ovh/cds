@@ -394,8 +394,12 @@ var configEditCmd = &cobra.Command{
 				tomlConf.Set(t[0], "", false, v)
 			} else if v, err := strconv.ParseInt(t[1], 10, 64); err == nil {
 				tomlConf.Set(t[0], "", false, v)
-			} else {
-				tomlConf.Set(t[0], "", false, t[1])
+			} else { // string
+				if strings.Contains(t[0], "rsaPrivateKey") {
+					tomlConf.Set(t[0], "", false, strings.Replace(string(t[1]), "\\n", "\n", -1))
+				} else {
+					tomlConf.Set(t[0], "", false, t[1])
+				}
 			}
 		}
 
