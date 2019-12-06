@@ -96,7 +96,6 @@ func TestRunScriptAction(t *testing.T) {
 				},
 			},
 		},
-		nil,
 		[]sdk.Variable{
 			{
 				Name:  "password",

@@ -19,7 +19,6 @@ import (
 
 func TestRunCoverageWrongFormat(t *testing.T) {
 	wk, ctx := setupTest(t)
-
 	res, err := RunParseCoverageResultAction(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
@@ -36,8 +35,7 @@ func TestRunCoverageWrongFormat(t *testing.T) {
 					Value: "10",
 				},
 			},
-		},
-		[]sdk.Parameter{}, nil)
+		}, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "coverage parser: unknown format")
 	assert.Equal(t, sdk.StatusFail, res.Status)
@@ -91,8 +89,7 @@ func TestRunCoverage(t *testing.T) {
 					Value: "10",
 				},
 			},
-		},
-		[]sdk.Parameter{}, nil)
+		}, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, sdk.StatusSuccess, res.Status)
 }
@@ -145,8 +142,7 @@ func TestRunCoverageMinimumFail(t *testing.T) {
 					Value: "100",
 				},
 			},
-		},
-		[]sdk.Parameter{}, nil)
+		}, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "coverage: minimum coverage failed")
 	assert.Equal(t, sdk.StatusFail, res.Status)
