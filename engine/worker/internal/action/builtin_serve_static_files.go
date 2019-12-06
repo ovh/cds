@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -62,7 +61,7 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 
 	// To set entrypoint dynamically when the path is a single file
 	if entrypoint.Value == "" && len(filesPath) == 1 {
-		fileStat, errS := os.Stat(filesPath[0])
+		fileStat, errS := wkDirFS.Stat(filesPath[0])
 		if errS != nil {
 			return res, fmt.Errorf("cannot stat file %s : %v", filesPath[0], errS)
 		}
