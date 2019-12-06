@@ -96,9 +96,9 @@ type Configuration struct {
 			RootDN          string `toml:"rootDN" default:"dc=myorganization,dc=com" json:"rootDN"`
 			UserSearchBase  string `toml:"userSearchBase" default:"ou=people" json:"userSearchBase"`
 			UserSearch      string `toml:"userSearch" default:"uid={0}" json:"userSearch"`
-			UserFullname    string `toml:"fullname" default:"{{.givenName}} {{.sn}}" json:"fullname"`
-			ManagerDN       string `toml:"ManagerDN" default:"cn=admin,dc=myorganization,dc=com" comment:"Define it if ldapsearch need to be authenticated" json:"ManagerDN"`
-			ManagerPassword string `toml:"ManagerPassword" default:"SECRET_PASSWORD_MANAGER" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
+			UserFullname    string `toml:"userFullname" default:"{{.givenName}} {{.sn}}" json:"userFullname"`
+			ManagerDN       string `toml:"managerDN" default:"cn=admin,dc=myorganization,dc=com" comment:"Define it if ldapsearch need to be authenticated" json:"managerDN"`
+			ManagerPassword string `toml:"managerPassword" default:"SECRET_PASSWORD_MANAGER" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
 		} `toml:"ldap" json:"ldap"`
 		Local struct {
 			Enabled              bool   `toml:"enabled" default:"true" json:"enabled"`

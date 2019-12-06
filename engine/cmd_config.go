@@ -276,7 +276,7 @@ var configEditCmd = &cobra.Command{
 			}
 			// check if value is bool, float, int or else string
 			if v, err := strconv.ParseBool(t[1]); err == nil {
-				tomlConf.Set(t[0], "", false, v)
+				tomlConf.Set(t[0], "", false, "", v)
 			} else if v, err := strconv.ParseInt(t[1], 10, 64); err == nil {
 				tomlConf.Set(t[0], "", false, "", v)
 			} else {
@@ -289,7 +289,7 @@ var configEditCmd = &cobra.Command{
 			sdk.Exit("Error while create tempfile: %v", err)
 		}
 
-		//defer os.Remove(tmpFile)
+		defer os.Remove(tmpFile)
 
 		viper.SetConfigFile(tmpFile)
 		if err := viper.ReadInConfig(); err != nil {
