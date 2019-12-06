@@ -6,11 +6,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
- 
+
 	"github.com/spf13/cobra"
 	toml "github.com/yesnault/go-toml"
 
-	"github.com/ovh/cds/engine/api" 
+	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
@@ -28,7 +28,6 @@ func init() {
 	configCmd.AddCommand(configCheckCmd)
 	configCmd.AddCommand(configRegenCmd)
 	configCmd.AddCommand(configEditCmd)
-	
 
 	configNewCmd.Flags().BoolVar(&flagConfigNewAsEnv, "env", false, "Print configuration as environment variable")
 	configRegenCmd.Flags().BoolVar(&flagConfigRegenAsEnv, "env", false, "Print configuration as environment variable")
@@ -253,31 +252,29 @@ var configEditCmd = &cobra.Command{
 			sdk.Exit("Wrong usage")
 		}
 
- 		cfgFile := args[0]
+		cfgFile := args[0]
 
- 		if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
+		if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
 			sdk.Exit("File %s doesn't exist", cfgFile)
 		}
 
- 		btes, err := ioutil.ReadFile(cfgFile)
+		btes, err := ioutil.ReadFile(cfgFile)
 		if err != nil {
 			sdk.Exit("Error while read content of file %s - err:%v", cfgFile, err)
 		}
 
- 		tomlConf, err := toml.Load(string(btes))
+		tomlConf, err := toml.Load(string(btes))
 		if err != nil {
 			sdk.Exit("Error while load toml content of file %s - err:%v", cfgFile, err)
 		}
 
- 		for _, vk := range args[1:] {
+		for _, vk := range args[1:] {
 			t := strings.Split(vk, "=")
 			if len(t) != 2 {
 				sdk.Exit("Invalid key=value: %v", vk)
 			}
 			// check if value is bool, float, int or else string
 			if v, err := strconv.ParseBool(t[1]); err == nil {
-				tomlConf.Set(t[0], "", false, v)
-			} else if v, err := strconv.ParseFloat(t[1], 10); err == nil {
 				tomlConf.Set(t[0], "", false, v)
 			} else if v, err := strconv.ParseInt(t[1], 10, 64); err == nil {
 				tomlConf.Set(t[0], "", false, v)
