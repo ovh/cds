@@ -3,7 +3,8 @@
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 CDS_VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
-GIT_VERSION := $(if ${GIT_DESCRIBE},${GIT_DESCRIBE},$(shell git describe))
+GIT_DESCRIBE := $(shell git describe)
+GIT_VERSION := $(if ${GIT_DESCRIBE},${GIT_DESCRIBE},0.42.0-99-snapshot) #TODO fixme
 
 TARGET_ENGINE = engine
 TARGET_WORKER = worker

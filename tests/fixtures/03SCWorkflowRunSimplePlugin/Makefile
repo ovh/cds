@@ -12,7 +12,7 @@ plugin-simple-darwin-amd64:
 
 build-plugin:
 	@docker run \
-	--mount type=bind,source=$$GOPATH,dst=/go \
+	--mount type=bind,source=$$(pwd)/../../../,dst=/go/src/github.com/ovh/cds \
 	--mount type=bind,source=$$(pwd),dst=/go/src/plugin/build \
 	--rm \
 	-e "GO111MODULE=off" \

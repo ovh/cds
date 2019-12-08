@@ -25,3 +25,6 @@ config:
   tenant_name:
     value: "$TENANT_NAME"
     type: string
+  domain:
+    value: "Default"
+    type: string
