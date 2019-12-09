@@ -15,16 +15,16 @@ replace github.com/prometheus/client_golang v1.1.0 => github.com/prometheus/clie
 replace github.com/opencontainers/runc v0.1.1 => github.com/opencontainers/runc v1.0.0-rc9
 
 require (
-	github.com/Sirupsen/logrus v1.4.0 // indirect
-	github.com/artyom/untar v1.0.0
 	github.com/containerd/containerd v1.3.2 // indirect
 	github.com/containerd/continuity v0.0.0-20191127005431-f65d91d395eb // indirect
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-metrics v0.0.1 // indirect
+	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/jgsqware/xnet v0.0.0-20170203143001-13630f0737d2
 	github.com/mattn/go-shellwords v1.0.6 // indirect
+	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/opencontainers/go-digest v1.0.0-rc1
 	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/opencontainers/runtime-spec v1.0.1 // indirect
