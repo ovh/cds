@@ -32,7 +32,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/coreos/clair/api/v1"
+	v1 "github.com/quay/clair/v2/api/v1"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"

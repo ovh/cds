@@ -14,7 +14,6 @@ extract-files:
   - archive: ui.tar.gz
     destination: ui/
 mkdirs:
-  - "keys"
   - "artifacts"
 version: "{{.version}}"
 description: "Enterprise-Grade Continuous Delivery and DevOps Automation Open Source Platform"
@@ -23,7 +22,6 @@ systemd-configuration:
   after: network.target
   args: 
     - "start"
-    - "${CDS_SERVICE}"
     - "--config"
     - "/etc/cds-engine/cds-engine.toml"
   stop-command: /bin/kill $MAINPID

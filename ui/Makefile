@@ -11,10 +11,9 @@ reset:
 	@rm -rf semantic\\
 	@rm -f package-lock.json
 
-install: $(NG)
-	npm install
-
 NG = node_modules/@angular/cli/bin/ng
+$(NG):
+	npm install
 
 stats: $(NG)
 	@node --max_old_space_size=4096 node_modules/@angular/cli/bin/ng build --prod --stats-json

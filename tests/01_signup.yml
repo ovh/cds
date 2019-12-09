@@ -29,6 +29,8 @@ testcases:
     url: '{{.smtpmock.url}}/messages/{{.email}}/latest'
     assertions:
     - result.statuscode ShouldEqual 200
+    retry: 10
+    delay: 3
     vars:
       verify: 
         from: result.bodyjson.content

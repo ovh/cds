@@ -142,7 +142,12 @@ func (h *HatcherySwarm) Init() error {
 				}
 			}
 
-			d, errc := docker.NewClientWithOpts(docker.WithHost(cfg.Host), docker.WithVersion(cfg.APIVersion), docker.WithHTTPClient(httpClient))
+			var opts = []func(*docker.Client) error{docker.WithHost(cfg.Host), docker.WithVersion(cfg.APIVersion), docker.WithHTTPClient(httpClient)}
+			if strings.HasPrefix(cfg.Host, "unix:///") {
+				opts = []func(*docker.Client) error{docker.WithHost(cfg.Host)}
+			}
+
+			d, errc := docker.NewClientWithOpts(opts...)
 			if errc != nil {
 				log.Error("hatchery> swarm> unable to connect to a docker client:%s for host %s (%s)", hostName, cfg.Host, errc)
 				continue

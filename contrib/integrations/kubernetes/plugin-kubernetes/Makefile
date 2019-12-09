@@ -46,9 +46,9 @@ build: $(TARGET_DIR)
 			FILENAME=$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 			GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$$FILENAME; \
 			echo "$$PLUGIN_MANIFEST_BINARY" > $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
-			sed -i "" "s/%os%/$$GOOS/" $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
-			sed -i "" "s/%arch%/$$GOARCH/" $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
-			sed -i "" "s/%filename%/$$FILENAME/" $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
+			perl -pi -e s,%os%,$$GOOS,g $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
+			perl -pi -e s,%arch%,$$GOARCH,g $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
+			perl -pi -e s,%filename%,$$FILENAME,g $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
 		done; \
 	done
 
