@@ -5,7 +5,7 @@ GITHASH := $(if ${GIT_HASH},${GIT_HASH},`git log -1 --format="%H"`)
 BUILDTIME := `date "+%m/%d/%y-%H:%M:%S"`
 
 TARGET_DIR = ./dist
-TARGET_NAME = arsenal
+TARGET_NAME = plugin-arsenal
 
 PLUGIN_MANIFEST=`echo plugin.yml`
 export PLUGIN_MANIFEST
@@ -21,7 +21,7 @@ TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X githu
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 
-GO_BUILD = go build -v
+GO_BUILD = go build
 
 $(TARGET_DIR):
 	$(info create $(TARGET_DIR) directory)
@@ -33,7 +33,7 @@ clean:
 	@rm -rf $(TARGET_DIR)
 
 build: $(TARGET_DIR)
-	@cp plugin.yml $(TARGET_DIR)/plugin.yml
+	@cp $(TARGET_NAME).yml $(TARGET_DIR)/$(TARGET_NAME).yml
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
 			EXTENSION=""; \
