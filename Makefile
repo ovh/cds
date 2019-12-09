@@ -60,8 +60,11 @@ build:
 	$(MAKE) build -C engine OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
 	$(MAKE) build -C engine/worker OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
 	$(MAKE) build -C cli/cdsctl OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
+	$(info Building CDS Contrib Components for $(TARGET_OS) - $(TARGET_ARCH))
 	$(MAKE) build -C contrib OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
+	$(info Packaging CDS Contrib Components for $(TARGET_OS) - $(TARGET_ARCH))
 	$(MAKE) package -C contrib TARGET_DIST="$(abspath $(TARGET_DIR))"
+	$(info Build End)
 
 define get_dist_from_target
 $(filter %/$(notdir $(1)), $(ALL_DIST))
