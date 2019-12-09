@@ -47,3 +47,5 @@ testcases:
   - type: http
     method: GET
     url: '{{.smtpmock.url}}'
+    retry: 5
+    delay: 5

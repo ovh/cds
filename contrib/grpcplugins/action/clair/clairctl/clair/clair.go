@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/coreos/clair/api/v1"
+	v1 "github.com/quay/clair/v2/api/v1"
 	"github.com/spf13/viper"
 )
 

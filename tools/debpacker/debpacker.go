@@ -186,7 +186,7 @@ func (p Packer) copyBinaryFile() error {
 		return err
 	}
 
-	return p.writer.CopyFiles(p.outputDirectory, path, os.FileMode(0644), p.config.BinaryFile)
+	return p.writer.CopyFiles(p.outputDirectory, path, os.FileMode(0744), p.config.BinaryFile)
 }
 
 func (p Packer) copyConfigurationFiles() error {

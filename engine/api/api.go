@@ -81,8 +81,7 @@ type Configuration struct {
 		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################\n" json:"cache"`
 	Directories struct {
-		Download string `toml:"download" default:"/tmp/cds/download" json:"download"`
-		Keys     string `toml:"keys" default:"/tmp/cds/keys" json:"keys"`
+		Download string `toml:"download" default:"/var/lib/cds-engine" json:"download"`
 	} `toml:"directories" json:"directories"`
 	Auth struct {
 		DefaultGroup  string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
@@ -137,9 +136,9 @@ type Configuration struct {
 		} `toml:"gitlab" json:"gitlab"`
 	} `toml:"auth" comment:"##############################\n CDS Authentication Settings#\n#############################" json:"auth"`
 	SMTP struct {
-		Disable  bool   `toml:"disable" default:"true" json:"disable"`
-		Host     string `toml:"host" json:"host"`
-		Port     string `toml:"port" json:"port"`
+		Disable  bool   `toml:"disable" default:"true" json:"disable" comment:"Set to false to enable the internal SMTP client"`
+		Host     string `toml:"host" json:"host" comment:"smtp host"`
+		Port     string `toml:"port" json:"port" comment:"smtp port"`
 		TLS      bool   `toml:"tls" json:"tls"`
 		User     string `toml:"user" json:"user"`
 		Password string `toml:"password" json:"-"`
@@ -148,7 +147,7 @@ type Configuration struct {
 	Artifact struct {
 		Mode  string `toml:"mode" default:"local" comment:"swift, awss3 or local" json:"mode"`
 		Local struct {
-			BaseDirectory string `toml:"baseDirectory" default:"/tmp/cds/artifacts" json:"baseDirectory"`
+			BaseDirectory string `toml:"baseDirectory" default:"/var/lib/cds-engine/artifacts" json:"baseDirectory"`
 		} `toml:"local"`
 		Openstack struct {
 			URL             string `toml:"url" comment:"Authentication Endpoint, generally value of $OS_AUTH_URL" json:"url"`
@@ -326,19 +325,6 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		log.Info(context.Background(), "Directory %s has been created", aConfig.Directories.Download)
 	} else if err != nil {
 		return fmt.Errorf("Invalid download directory %s: %v", aConfig.Directories.Download, err)
-	}
-
-	if aConfig.Directories.Keys == "" {
-		return fmt.Errorf("Invalid keys directory")
-	}
-
-	if ok, err := sdk.DirectoryExists(aConfig.Directories.Keys); !ok {
-		if err := os.MkdirAll(aConfig.Directories.Keys, os.FileMode(0700)); err != nil {
-			return fmt.Errorf("Unable to create directory %s: %v", aConfig.Directories.Keys, err)
-		}
-		log.Info(context.Background(), "Directory %s has been created", aConfig.Directories.Keys)
-	} else if err != nil {
-		return fmt.Errorf("Invalid keys directory: %v", err)
 	}
 
 	switch aConfig.Artifact.Mode {

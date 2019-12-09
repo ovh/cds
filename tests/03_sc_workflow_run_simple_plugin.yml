@@ -15,8 +15,7 @@ testcases:
 
 - name: build and deploy plugin
   steps:
-  - script: "cd ./fixtures/03SCWorkflowRunSimplePlugin && GOOS=darwin GOARCH=amd64 go build -o plugin-simple-darwin-amd64"
-  - script: "cd ./fixtures/03SCWorkflowRunSimplePlugin && GOOS=linux GOARCH=amd64 go build -o plugin-simple-linux-amd64"
+  - script: "cd ./fixtures/03SCWorkflowRunSimplePlugin && make build"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins import ./fixtures/03SCWorkflowRunSimplePlugin/plugin-simple.yml"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add plugin-simple ./fixtures/03SCWorkflowRunSimplePlugin/plugin-darwin-amd64.yml ./fixtures/03SCWorkflowRunSimplePlugin/plugin-simple-darwin-amd64"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add plugin-simple ./fixtures/03SCWorkflowRunSimplePlugin/plugin-linux-amd64.yml ./fixtures/03SCWorkflowRunSimplePlugin/plugin-simple-linux-amd64"

@@ -38,7 +38,7 @@ import (
 	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
-const (
+var (
 	vaultConfKey = "/secret/cds/conf"
 )
 
