@@ -31,7 +31,6 @@ require (
 	github.com/circonus-labs/circonus-gometrics v2.2.4+incompatible // indirect
 	github.com/circonus-labs/circonusllhist v0.0.0-20180430145027-5eb751da55c6 // indirect
 	github.com/coreos/bbolt v1.3.0 // indirect
-	github.com/coreos/clair v2.1.0+incompatible // indirect
 	github.com/coreos/etcd v3.3.10+incompatible // indirect
 	github.com/coreos/go-etcd v0.0.0-20151026160318-003851be7bb0 // indirect
 	github.com/coreos/go-semver v0.2.0 // indirect
@@ -46,14 +45,12 @@ require (
 	github.com/docker/docker-credential-helpers v0.6.1
 	github.com/docker/go-connections v0.3.0
 	github.com/docker/go-units v0.3.2 // indirect
-	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/donovanhide/eventsource v0.0.0-20170630084216-b8f31a59085e // indirect
 	github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76 // indirect
 	github.com/duosecurity/duo_api_golang v0.0.0-20180315112207-d0530c80e49a // indirect
 	github.com/eapache/go-resiliency v1.1.0
 	github.com/fatih/color v0.0.0-20161018201348-a360acfe359f
 	github.com/fatih/structs v1.0.0
-	github.com/fernet/fernet-go v0.0.0-20191111064656-eff2850e6001 // indirect
 	github.com/fortytw2/leaktest v1.2.0 // indirect
 	github.com/fsamin/go-dump v1.0.9
 	github.com/fsamin/go-repo v0.1.3
@@ -162,8 +159,6 @@ require (
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.8.0
 	github.com/pkg/sftp v0.0.0-20160930220758-4d0e916071f6 // indirect
-	github.com/quay/clair v2.1.0+incompatible // indirect
-	github.com/quay/clair/v2 v2.1.1 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/samuel/go-zookeeper v0.0.0-20180130194729-c4fab1ac1bec // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
