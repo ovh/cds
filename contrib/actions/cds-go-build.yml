@@ -85,7 +85,7 @@ steps:
   - ./preRun.sh
   - fi;
   - ""
-  - go build -v {{.flags}} ${GOARGS}
+  - go build {{.flags}} ${GOARGS}
   - ""
   - if [ "xtrue" == "x{{.artifactUpload}}" ]; then
   - "\tif [ ! -f ${GOPATH}/src/{{.package}}/{{.binary}} ]; then"
