@@ -1,6 +1,6 @@
 .PHONY: clean build package copy
 
-TARGET_DIST := $(if ${TARGET_DIST},${TARGET_DIST},/dist)
+TARGET_DIST := $(if ${TARGET_DIST},${TARGET_DIST},./dist)
 
 clean:
 	$(MAKE) clean -C grpcplugins/action
