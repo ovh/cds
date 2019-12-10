@@ -327,9 +327,7 @@ var configInitTokenCmd = &cobra.Command{
 	Short: "Generate/Regenerate an init token for a given CDS configuration file",
 	Long:  `$ engine config init-token`,
 	Run: func(cmd *cobra.Command, args []string) {
-
-		conf := configImport(args, flagInitTokenConfigFile, flagInitTokenRemoteConfig, flagInitTokenRemoteConfigKey, flagInitTokenVaultAddr, flagInitTokenVaultToken, false)
-
+		conf := configImport(args, flagInitTokenConfigFile, flagInitTokenRemoteConfig, flagInitTokenRemoteConfigKey, flagInitTokenVaultAddr, flagInitTokenVaultToken, true)
 		initToken, err := getInitTokenFromExistingConfiguration(conf)
 		if err != nil {
 			sdk.Exit("error: %v", err)
