@@ -94,6 +94,10 @@ See $ engine config command for more details.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
+			args = strings.Split(os.Getenv("CDS_SERVICE"), " ")
+		}
+
+		if len(args) == 0 {
 			cmd.Help() // nolint
 			return
 		}

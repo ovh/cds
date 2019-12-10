@@ -141,12 +141,14 @@ func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context)
 			if err := c.Client.ServiceHeartbeat(status(ctx)); err != nil {
 				log.Warning(ctx, "%s> Heartbeat failure: %v", c.Name(), err)
 				heartbeatFailures++
-			}
 
-			// if register failed too many time, stop heartbeat
-			if heartbeatFailures > c.MaxHeartbeatFailures {
-				return fmt.Errorf("%s> Heartbeat> Register failed excedeed", c.Name())
+				// if register failed too many time, stop heartbeat
+				if heartbeatFailures > c.MaxHeartbeatFailures {
+					return fmt.Errorf("%s> Heartbeat> Register failed excedeed", c.Name())
+				}
+				continue
 			}
+			heartbeatFailures = 0
 		}
 	}
 }
