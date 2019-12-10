@@ -149,7 +149,7 @@ require (
 	github.com/ory-am/common v0.4.0 // indirect
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
 
-	github.com/ovh/cds/sdk/izanami v0.0.0-20190703101657-683453b50b2a
+	github.com/ovh/cds/sdk/izanami v0.0.0-20190703081656-683453b50b2a
 	github.com/ovh/configstore v0.3.2
 	github.com/ovh/symmecrypt v0.4.0
 
