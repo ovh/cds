@@ -7,8 +7,11 @@ import (
 	"path"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
@@ -30,7 +33,18 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 		destPath = "."
 	}
 
-	if err := os.MkdirAll(destPath, os.FileMode(0744)); err != nil {
+	workdir, err := workerruntime.WorkingDirectory(ctx)
+	var abs string
+	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
+		abs, _ = x.RealPath(workdir.Name())
+	} else {
+		abs = workdir.Name()
+	}
+	wkDirFS := afero.NewBasePathFs(afero.NewOsFs(), abs)
+
+	destPath = strings.TrimPrefix(destPath, abs)
+
+	if err := wkDirFS.MkdirAll(destPath, os.FileMode(0744)); err != nil {
 		return res, fmt.Errorf("Unable to create %s: %v", destPath, err)
 	}
 
@@ -76,7 +90,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 			defer wg.Done()
 
 			destFile := path.Join(destPath, a.Name)
-			f, err := os.OpenFile(destFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(a.Perm))
+			f, err := wkDirFS.OpenFile(destFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(a.Perm))
 			if err != nil {
 				res.Status = sdk.StatusFail
 				res.Reason = err.Error()

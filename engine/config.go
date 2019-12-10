@@ -38,7 +38,7 @@ import (
 	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
-const (
+var (
 	vaultConfKey = "/secret/cds/conf"
 )
 
@@ -133,11 +133,11 @@ func configBootstrap(args []string) Configuration {
 			var gerrit vcs.GerritServerConfiguration
 			defaults.SetDefaults(&gerrit)
 			conf.VCS.Servers = map[string]vcs.ServerConfiguration{
-				"Github":         vcs.ServerConfiguration{URL: "https://github.com", Github: &github},
-				"Bitbucket":      vcs.ServerConfiguration{URL: "https://mybitbucket.com", Bitbucket: &bitbucket},
+				"github":         vcs.ServerConfiguration{URL: "https://github.com", Github: &github},
+				"bitbucket":      vcs.ServerConfiguration{URL: "https://mybitbucket.com", Bitbucket: &bitbucket},
 				"bitbucketcloud": vcs.ServerConfiguration{BitbucketCloud: &bitbucketcloud},
-				"Gitlab":         vcs.ServerConfiguration{URL: "https://gitlab.com", Gitlab: &gitlab},
-				"Gerrit":         vcs.ServerConfiguration{URL: "http://localhost:8080", Gerrit: &gerrit},
+				"gitlab":         vcs.ServerConfiguration{URL: "https://gitlab.com", Gitlab: &gitlab},
+				"gerrit":         vcs.ServerConfiguration{URL: "http://localhost:8080", Gerrit: &gerrit},
 			}
 			conf.VCS.Name = "cds-vcs-" + namesgenerator.GetRandomNameCDS(0)
 		case "repositories":

@@ -27,7 +27,7 @@ func TestRunInstallKeyAction(t *testing.T) {
 			Type:  sdk.KeyTypeSSH,
 		},
 	}
-	res, err := RunInstallKey(ctx, wk, keyInstallAction, nil, secrets)
+	res, err := RunInstallKey(ctx, wk, keyInstallAction, secrets)
 	assert.NoError(t, err)
 	assert.Equal(t, sdk.StatusSuccess, res.Status)
 }

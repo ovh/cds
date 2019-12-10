@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/fsamin/smtp"
-	"github.com/ovh/cds/tools/smtpmock"
 
 	"github.com/labstack/echo"
 )
@@ -41,10 +40,10 @@ func main() {
 	flag.Parse()
 
 	go func() {
-		if err := smtpmock.StartServer(
+		if err := startServer(
 			context.Background(),
 			flagSMTPAddress,
-			smtpmock.Handle("*@*", smtpHandler),
+			handle("*@*", smtpHandler),
 		); err != nil {
 			log.Fatal(err)
 		}

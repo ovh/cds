@@ -45,6 +45,20 @@ func TestRunRelease(t *testing.T) {
 
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
 	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPSSEClient())
+	wk.Params = append(wk.Params, []sdk.Parameter{
+		{
+			Name:  "cds.project",
+			Value: "projKey",
+		},
+		{
+			Name:  "cds.workflow",
+			Value: "workflowName",
+		},
+		{
+			Name:  "cds.run.number",
+			Value: "999",
+		},
+	}...)
 	res, err := RunRelease(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
@@ -64,20 +78,6 @@ func TestRunRelease(t *testing.T) {
 					Name:  "releaseNote",
 					Value: "My description",
 				},
-			},
-		},
-		[]sdk.Parameter{
-			{
-				Name:  "cds.project",
-				Value: "projKey",
-			},
-			{
-				Name:  "cds.workflow",
-				Value: "workflowName",
-			},
-			{
-				Name:  "cds.run.number",
-				Value: "999",
 			},
 		}, nil)
 	assert.NoError(t, err)
@@ -89,7 +89,20 @@ func TestRunReleaseMissingTag(t *testing.T) {
 	defer gock.Off()
 
 	wk, ctx := setupTest(t)
-
+	wk.Params = append(wk.Params, []sdk.Parameter{
+		{
+			Name:  "cds.project",
+			Value: "projKey",
+		},
+		{
+			Name:  "cds.workflow",
+			Value: "workflowName",
+		},
+		{
+			Name:  "cds.run.number",
+			Value: "999",
+		},
+	}...)
 	res, err := RunRelease(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
@@ -106,20 +119,6 @@ func TestRunReleaseMissingTag(t *testing.T) {
 					Value: "My description",
 				},
 			},
-		},
-		[]sdk.Parameter{
-			{
-				Name:  "cds.project",
-				Value: "projKey",
-			},
-			{
-				Name:  "cds.workflow",
-				Value: "workflowName",
-			},
-			{
-				Name:  "cds.run.number",
-				Value: "999",
-			},
 		}, nil)
 	assert.Error(t, err)
 	assert.Contains(t, "tag name is not set. Nothing to perform", err.Error())
@@ -130,7 +129,20 @@ func TestRunReleaseMissingTitle(t *testing.T) {
 	defer gock.Off()
 
 	wk, ctx := setupTest(t)
-
+	wk.Params = append(wk.Params, []sdk.Parameter{
+		{
+			Name:  "cds.project",
+			Value: "projKey",
+		},
+		{
+			Name:  "cds.workflow",
+			Value: "workflowName",
+		},
+		{
+			Name:  "cds.run.number",
+			Value: "999",
+		},
+	}...)
 	res, err := RunRelease(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
@@ -146,20 +158,6 @@ func TestRunReleaseMissingTitle(t *testing.T) {
 					Name:  "releaseNote",
 					Value: "My description",
 				},
-			},
-		},
-		[]sdk.Parameter{
-			{
-				Name:  "cds.project",
-				Value: "projKey",
-			},
-			{
-				Name:  "cds.workflow",
-				Value: "workflowName",
-			},
-			{
-				Name:  "cds.run.number",
-				Value: "999",
 			},
 		}, nil)
 	assert.Error(t, err)
@@ -171,7 +169,20 @@ func TestRunReleaseMissingReleaseNote(t *testing.T) {
 	defer gock.Off()
 
 	wk, ctx := setupTest(t)
-
+	wk.Params = append(wk.Params, []sdk.Parameter{
+		{
+			Name:  "cds.project",
+			Value: "projKey",
+		},
+		{
+			Name:  "cds.workflow",
+			Value: "workflowName",
+		},
+		{
+			Name:  "cds.run.number",
+			Value: "999",
+		},
+	}...)
 	res, err := RunRelease(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
@@ -187,20 +198,6 @@ func TestRunReleaseMissingReleaseNote(t *testing.T) {
 					Name:  "title",
 					Value: "My title",
 				},
-			},
-		},
-		[]sdk.Parameter{
-			{
-				Name:  "cds.project",
-				Value: "projKey",
-			},
-			{
-				Name:  "cds.workflow",
-				Value: "workflowName",
-			},
-			{
-				Name:  "cds.run.number",
-				Value: "999",
 			},
 		}, nil)
 	assert.Error(t, err)
@@ -212,7 +209,16 @@ func TestRunReleaseMissingProjectKey(t *testing.T) {
 	defer gock.Off()
 
 	wk, ctx := setupTest(t)
-
+	wk.Params = append(wk.Params, []sdk.Parameter{
+		{
+			Name:  "cds.workflow",
+			Value: "workflowName",
+		},
+		{
+			Name:  "cds.run.number",
+			Value: "999",
+		},
+	}...)
 	res, err := RunRelease(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
@@ -232,16 +238,6 @@ func TestRunReleaseMissingProjectKey(t *testing.T) {
 					Name:  "releaseNote",
 					Value: "My description",
 				},
-			},
-		},
-		[]sdk.Parameter{
-			{
-				Name:  "cds.workflow",
-				Value: "workflowName",
-			},
-			{
-				Name:  "cds.run.number",
-				Value: "999",
 			},
 		}, nil)
 	assert.Error(t, err)
@@ -253,7 +249,16 @@ func TestRunReleaseMissingWorkflowName(t *testing.T) {
 	defer gock.Off()
 
 	wk, ctx := setupTest(t)
-
+	wk.Params = append(wk.Params, []sdk.Parameter{
+		{
+			Name:  "cds.project",
+			Value: "projKey",
+		},
+		{
+			Name:  "cds.run.number",
+			Value: "999",
+		},
+	}...)
 	res, err := RunRelease(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
@@ -273,16 +278,6 @@ func TestRunReleaseMissingWorkflowName(t *testing.T) {
 					Name:  "releaseNote",
 					Value: "My description",
 				},
-			},
-		},
-		[]sdk.Parameter{
-			{
-				Name:  "cds.project",
-				Value: "projKey",
-			},
-			{
-				Name:  "cds.run.number",
-				Value: "999",
 			},
 		}, nil)
 	assert.Error(t, err)
@@ -294,7 +289,16 @@ func TestRunReleaseMissingWorkflowRunNumber(t *testing.T) {
 	defer gock.Off()
 
 	wk, ctx := setupTest(t)
-
+	wk.Params = append(wk.Params, []sdk.Parameter{
+		{
+			Name:  "cds.project",
+			Value: "projKey",
+		},
+		{
+			Name:  "cds.workflow",
+			Value: "workflow Name",
+		},
+	}...)
 	res, err := RunRelease(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
@@ -314,16 +318,6 @@ func TestRunReleaseMissingWorkflowRunNumber(t *testing.T) {
 					Name:  "releaseNote",
 					Value: "My description",
 				},
-			},
-		},
-		[]sdk.Parameter{
-			{
-				Name:  "cds.project",
-				Value: "projKey",
-			},
-			{
-				Name:  "cds.workflow",
-				Value: "workflow Name",
 			},
 		}, nil)
 	assert.Error(t, err)

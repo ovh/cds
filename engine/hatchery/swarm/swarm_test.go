@@ -268,6 +268,7 @@ func TestHatcherySwarm_WorkersStarted(t *testing.T) {
 func TestHatcherySwarm_Spawn(t *testing.T) {
 	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
+	h.Config.Name = "swarmy"
 	h.dockerClients["default"].MaxContainers = 2
 
 	m := sdk.Model{
@@ -313,8 +314,9 @@ func TestHatcherySwarm_Spawn(t *testing.T) {
 	gock.New("https://lolcat.host").Post("/v6.66/containers/workerIDContainer/start").Reply(http.StatusOK).JSON(nil)
 
 	err := h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{
-		JobID: 1,
-		Model: &m,
+		JobID:      1,
+		Model:      &m,
+		WorkerName: "swarmy-worker1",
 		Requirements: []sdk.Requirement{
 			{
 				Name:  "Mem",
@@ -357,8 +359,9 @@ func TestHatcherySwarm_SpawnMaxContainerReached(t *testing.T) {
 	gock.New("https://lolcat.host").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
 	err := h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{
-		JobID: 666,
-		Model: &m,
+		JobID:      666,
+		Model:      &m,
+		WorkerName: "swarmy-workerReached",
 	})
 	assert.Error(t, err)
 	require.Contains(t, "unable to found suitable docker engine", err.Error())

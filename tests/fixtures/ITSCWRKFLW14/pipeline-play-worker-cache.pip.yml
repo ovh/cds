@@ -16,3 +16,5 @@ jobs:
     - mkdir -p .m2
     - echo "foo"> .m2/bar
     - worker cache push --destination={{.cds.pip.integration}} $tag .m2/
+  requirements:
+  - os-architecture: linux/amd64

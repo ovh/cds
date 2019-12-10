@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/coreos/clair/api/v1"
+	v1 "github.com/quay/clair/v2/api/v1"
 	"github.com/docker/distribution/reference"
 	"github.com/ovh/cds/contrib/grpcplugins/action/clair/clairctl/config"
 	"github.com/ovh/cds/contrib/grpcplugins/action/clair/clairctl/docker/dockerdist"
@@ -38,7 +38,7 @@ type layering struct {
 	digests        []string
 	parentID, hURL string
 }
-
+ 
 func newLayering(image reference.NamedTagged) (*layering, error) {
 	layer := layering{
 		parentID: "",

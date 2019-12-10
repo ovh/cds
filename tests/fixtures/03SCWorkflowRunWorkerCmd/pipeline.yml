@@ -91,6 +91,7 @@ jobs:
     - script:
       - set -ex
       - worker artifacts
+      - sleep 5
   requirements:
   - os-architecture: linux/amd64
 
@@ -101,6 +102,7 @@ jobs:
       - set -ex
       - worker cache pull latest
       - cat fileCache
+      - sleep 5
   requirements:
   - os-architecture: linux/amd64
 
@@ -111,6 +113,7 @@ jobs:
       - set -ex
       - worker download
       - cat myFileUploaded
+      - sleep 5
   requirements:
   - os-architecture: linux/amd64
 
@@ -120,5 +123,6 @@ jobs:
     - script:
       - set -ex
       - echo "Export value {{.cds.build.foo}}"
+      - sleep 5
   requirements:
   - os-architecture: linux/amd64

@@ -112,7 +112,7 @@ func loginRun(v cli.Values) error {
 		if noInteractive {
 			return fmt.Errorf("Cannot signin with %s driver in no interactive mode", driverType)
 		}
-		req, err = loginRunExternal(v, driverType)
+		req, err = loginRunExternal(v, driverType, apiURL)
 	}
 	if err != nil {
 		return err
@@ -192,10 +192,8 @@ func loginRunBuiltin(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
 	return req, nil
 }
 
-func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType) (sdk.AuthConsumerSigninRequest, error) {
+func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType, apiURL string) (sdk.AuthConsumerSigninRequest, error) {
 	req := sdk.AuthConsumerSigninRequest{}
-
-	apiURL := v.GetString("api-url")
 
 	client := cdsclient.New(cdsclient.Config{
 		Host:    apiURL,

@@ -25,6 +25,7 @@ type TestWorker struct {
 	workingDirectory *afero.BasePathFile
 	keyDirectory     *afero.BasePathFile
 	client           cdsclient.WorkerInterface
+	Params           []sdk.Parameter
 }
 
 func (w TestWorker) Blur(i interface{}) error {
@@ -33,7 +34,7 @@ func (w TestWorker) Blur(i interface{}) error {
 }
 
 func (w TestWorker) Parameters() []sdk.Parameter {
-	return nil
+	return w.Params
 }
 
 func (w TestWorker) Client() cdsclient.WorkerInterface {
