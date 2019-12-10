@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // Info contains some Information about a git repository
@@ -18,7 +19,14 @@ type Info struct {
 
 // ExtractInfo returns an info, containing git information (git.Hash, describe)
 // ignore error if a command fails (example: for empty repository)
-func ExtractInfo(dir string) Info {
+func ExtractInfo(dir string, opts *CloneOpts) Info {
+	if verbose {
+		t1 := time.Now()
+		defer func(start time.Time) {
+			LogFunc("ExtractInfo in %ss", int(time.Since(start).Seconds()))
+		}(t1)
+	}
+
 	info := Info{}
 	cmdHash := []cmd{{dir: dir, cmd: "git", args: []string{"rev-parse", "HEAD"}}}
 	cmdDescribe := []cmd{{dir: dir, cmd: "git", args: []string{"describe", "--tags"}}}
@@ -26,6 +34,8 @@ func ExtractInfo(dir string) Info {
 	cmdAuthor := []cmd{{dir: dir, cmd: "git", args: []string{"log", "--format=%an", "-1"}}}
 	cmdAuthorEmail := []cmd{{dir: dir, cmd: "git", args: []string{"log", "--format=%ae", "-1"}}}
 	cmdCurrentBranch := []cmd{{dir: dir, cmd: "git", args: []string{"rev-parse", "--abbrev-ref", "HEAD"}}}
+	cmdlsRemoteTags := []cmd{{dir: dir, cmd: "git", args: []string{"ls-remote", "--tags"}}}
+	cmdFetchTags := []cmd{{dir: dir, cmd: "git", args: []string{"fetch", "--tags", "--unshallow"}}}
 
 	// git rev-parse HEAD can fail with
 	// "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree."
@@ -45,10 +55,27 @@ func ExtractInfo(dir string) Info {
 	// "fatal: No names found, cannot describe anything."
 	// ignore err
 	info.GitDescribe, _ = gitRawCommandString(cmdDescribe)
+
+	if info.GitDescribe == "" && opts.ForceGetGitDescribe {
+		tagsRemote, tagsRemoteErr := gitRawCommandString(cmdlsRemoteTags)
+		// check the output of stdout and stderr -> git outpout some standard logs on stderr
+		if strings.Contains(tagsRemote, "refs/tags") || strings.Contains(tagsRemoteErr.Error(), "refs/tags") {
+			tagsfetched, tagsfetchedErr := gitRawCommandString(cmdFetchTags)
+			if strings.Contains(tagsfetched, "new tag") || strings.Contains(tagsfetchedErr.Error(), "new tag") {
+				info.GitDescribe, _ = gitRawCommandString(cmdDescribe)
+			}
+		}
+	}
 	return info
 }
 
 func gitRawCommandString(c cmds) (string, error) {
+	if verbose {
+		t1 := time.Now()
+		defer func(start time.Time) {
+			LogFunc("gitRawCommandString: %v (%v s)", c, int(time.Since(start).Seconds()))
+		}(t1)
+	}
 	stdErr := new(bytes.Buffer)
 	stdOut := new(bytes.Buffer)
 
@@ -62,7 +89,7 @@ func gitRawCommandString(c cmds) (string, error) {
 	}
 
 	if len(stdErr.Bytes()) > 0 {
-		return "", fmt.Errorf("Error while running git command (stdErr): %s", stdErr.String())
+		return stdOut.String(), fmt.Errorf("Error while running git command (stdErr): %s", stdErr.String())
 	}
 
 	if len(stdOut.Bytes()) > 0 {
