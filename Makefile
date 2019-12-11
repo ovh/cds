@@ -59,7 +59,7 @@ build:
 	$(MAKE) build -C ui
 	$(MAKE) build -C engine OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
 	$(MAKE) build -C engine/worker OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
-	$(MAKE) build -C cli/cdsctl OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
+	$(MAKE) build -C cli/cdsctl OS="$(foreach OS,${TARGET_OS},${OS}/%)" ARCH="$(foreach ARCH,${TARGET_ARCH},%/${ARCH})"
 	$(MAKE) build -C contrib OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
 	$(MAKE) package -C contrib TARGET_DIST="$(abspath $(TARGET_DIR))"
 
