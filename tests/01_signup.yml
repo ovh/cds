@@ -10,7 +10,8 @@ vars:
   email: it-user-rw@localhost.local
   fullname: cds.integration.tests.rw
   password: "123456&éçà(§"
-  init.token:
+  ring:
+
 
 testcases:
 - name: create-admin-user
@@ -43,4 +44,6 @@ testcases:
   steps:
   - script: "rm -f {{.cdsctl.config}}"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} -c test signup verify {{.post-create-user.verify}} --api-url {{.api.url}} "
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} -c test user me"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} -c test user me --fields ring --format json"
+    assertions:
+    - result.systemoutjson.ring ShouldEqual {{.ring}}
