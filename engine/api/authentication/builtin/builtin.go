@@ -40,7 +40,7 @@ func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 		return userInfo, sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid authentication token")
 	}
 
-	consumerID, err := CheckSigninConsumerToken(token)
+	consumerID, _, err := CheckSigninConsumerToken(token)
 	if err != nil {
 		return userInfo, err
 	}
@@ -59,7 +59,7 @@ func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid authentication token")
 	}
 
-	_, err := CheckSigninConsumerToken(token)
+	_, _, err := CheckSigninConsumerToken(token)
 	return err
 }
 
