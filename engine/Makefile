@@ -12,14 +12,17 @@ TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 
 GO_BUILD = go build
-GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 
 PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 
+<<<<<<< HEAD
 TEST_PKGS = $(shell go list ../... | grep -v vendor | grep -v github.com/ovh/cds/contrib | grep -v github.com/ovh/cds/tools/smtpmock)
+=======
+TEST_PKGS = $(shell go list ./... | grep -v vendor | grep -v github.com/ovh/cds/cli/cds | grep -v github.com/ovh/cds/contrib)
+>>>>>>> master
 TEST_DB_HOST = $(if ${CDS_API_DATABASE_HOST},${CDS_API_DATABASE_HOST},localhost)
 TEST_DB_PORT = $(if ${CDS_API_DATABASE_PORT},${CDS_API_DATABASE_PORT},5432)
 TEST_DB_USER = $(if ${CDS_API_DATABASE_USER},${CDS_API_DATABASE_USER},cds)
@@ -37,11 +40,7 @@ TEST_CMD = go test -tags skipkeychaintests -v -timeout 600s -coverprofile=profil
 
 
 $(TARGET_DIR):
-	$(info create $(TARGET_DIR) directory)
 	@mkdir -p $(TARGET_DIR)
-
-$(GO_LINT):
-	go get -u github.com/alecthomas/gometalinter
 
 $(GO_COV_MERGE):
 	go get -u github.com/wadey/gocovmerge
@@ -56,10 +55,10 @@ default: build
 
 clean:
 	@rm -rf $(TARGET_DIR)
-	@for TST in `find ../ -name "tests.log"`; do \
+	@for TST in `find ./ -name "tests.log"`; do \
 		rm $$TST; \
 	done;
-	@for profile in `find ../ -name "*.coverprofile"`; do \
+	@for profile in `find ./ -name "*.coverprofile"`; do \
 		rm $$profile; \
 	done;
 
@@ -121,7 +120,7 @@ test: test-config clean
 
 test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@echo "Generating unit tests coverage..."
-	@$(GO_COV_MERGE) `find ../ -name "*.coverprofile"` > $(TARGET_DIR)/cover.out
+	@$(GO_COV_MERGE) `find ./ -name "*.coverprofile"` > $(TARGET_DIR)/cover.out
 	@$(GO_COBERTURA) < $(TARGET_DIR)/cover.out > $(TARGET_DIR)/coverage.xml
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
 	@if [ ! -z "${CDS_VERSION}" ]; then \
@@ -132,7 +131,7 @@ test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 #  <testsuite name="github.com/ovh/cds/engine/api" tests="133" errors="0" failures="2" skip="0">
 test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 	@echo "Generating xUnit Report..."
-	@for TST in `find .. -name "tests.log"`; do \
+	@for TST in `find . -name "tests.log"`; do \
 		if [ -s $$TST ]; then \
 			FAILED=`grep -E '(FAIL)+\s([a-z\.\/]*)\s\[build failed\]' $$TST | wc -l`; \
 			if [ $$FAILED -gt 0 ]; then \
@@ -145,7 +144,7 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 				else \
 					if [ ! -z "${CDS_VERSION}" ]; then \
 						echo "Sending $$TST to CDS"; \
-						worker upload --tag `echo $$TST | sed 's|../||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
+						worker upload --tag `echo $$TST | sed 's|./||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
 					fi; \
 					echo "Generating xUnit report \t$$TST.xml"; \
 					cat $$TST | $(GO_GOJUNIT) > $$TST.xml; \
@@ -155,15 +154,15 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 			echo "Ignoring empty file \t\t$$TST"; \
 		fi; \
 	done; \
-	for XML in `find .. -name "tests.log.xml"`; do \
+	for XML in `find . -name "tests.log.xml"`; do \
 		if [ "$$XML" =  "./tests.log.xml" ]; then \
       		PWD=`pwd`; \
 		 	mv $$XML $(TARGET_DIR)/`basename $(PWD)`.xml; \
 		else \
-			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|../||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
+			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
 		fi; \
 	done; \
-	for XML in `find .. -name "*.xml" -not -path "../ui/*"`; do \
+	for XML in `find . -name "*.xml" -not -path "./ui/*"`; do \
 		if [ -s $$XML ]; then \
 			if grep -q 'name' $$XML; then \
 				echo "Generating report: " $$XML; \
@@ -180,7 +179,7 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 		cat $(TARGET_DIR)/report; \
 	fi; \
 	echo "#########################"; \
-	for XML in `find .. -name "*.xml" -not -path "../ui/*"`; do \
+	for XML in `find . -name "*.xml" -not -path "./ui/*"`; do \
 		if [ -s $$XML ]; then \
 			if grep -q 'errors' $$XML; then \
 				if [ "`xmllint --xpath "//testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'`" -gt "0" ]; then  \
@@ -204,3 +203,4 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 lint: $(GO_LINT)
 	$(GO_LINT) --install --force
 	$(GO_LINT) --fast --tests --vendor --disable=gas --disable=gotype ./...
+	fi;
