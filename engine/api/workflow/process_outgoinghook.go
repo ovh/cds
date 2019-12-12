@@ -48,7 +48,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 			return report, false, nil
 		}
 	}
-	engine/worker/cmd_download.go
+
 	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
 	if err != nil {
 		return nil, false, sdk.WrapError(err, "Cannot get hooks service")
