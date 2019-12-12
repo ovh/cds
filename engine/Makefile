@@ -18,11 +18,7 @@ GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 
 PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 
-<<<<<<< HEAD
-TEST_PKGS = $(shell go list ../... | grep -v vendor | grep -v github.com/ovh/cds/contrib | grep -v github.com/ovh/cds/tools/smtpmock)
-=======
-TEST_PKGS = $(shell go list ./... | grep -v vendor | grep -v github.com/ovh/cds/cli/cds | grep -v github.com/ovh/cds/contrib)
->>>>>>> master
+TEST_PKGS = $(shell go list ./...)
 TEST_DB_HOST = $(if ${CDS_API_DATABASE_HOST},${CDS_API_DATABASE_HOST},localhost)
 TEST_DB_PORT = $(if ${CDS_API_DATABASE_PORT},${CDS_API_DATABASE_PORT},5432)
 TEST_DB_USER = $(if ${CDS_API_DATABASE_USER},${CDS_API_DATABASE_USER},cds)
