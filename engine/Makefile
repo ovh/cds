@@ -12,7 +12,6 @@ TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 
 GO_BUILD = go build
-GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
@@ -37,9 +36,6 @@ TEST_CMD = go test -v -timeout 600s -coverprofile=profile.coverprofile
 
 $(TARGET_DIR):
 	@mkdir -p $(TARGET_DIR)
-
-$(GO_LINT):
-	go get -u github.com/alecthomas/gometalinter
 
 $(GO_COV_MERGE):
 	go get -u github.com/wadey/gocovmerge
@@ -198,7 +194,3 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 		cat $(TARGET_DIR)/fail; \
 		exit 1; \
 	fi;
-
-lint: $(GO_LINT)
-	$(GO_LINT) --install --force
-	$(GO_LINT) --fast --tests --vendor --disable=gas --disable=gotype ./...
