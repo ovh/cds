@@ -15,18 +15,28 @@ testcases:
   - type: http
     method: GET
     url: '{{.api.url}}/mon/version'
+    retry: 5
+    delay: 5
   - type: http
     method: GET
     url: '{{.api.url}}/mon/status'
+    retry: 5
+    delay: 5
   - type: http
     method: GET
     url: '{{.ui.url}}'
+    retry: 5
+    delay: 5
   - type: http
     method: GET
     url: '{{.hatchery.url}}/mon/status'
+    retry: 5
+    delay: 5
   - type: http
     method: GET
     url: '{{.hooks.url}}/mon/status'
+    retry: 5
+    delay: 5
 
 - name: Check CLI binary is available
   steps:  
@@ -37,3 +47,5 @@ testcases:
   - type: http
     method: GET
     url: '{{.smtpmock.url}}'
+    retry: 5
+    delay: 5

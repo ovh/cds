@@ -205,13 +205,11 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 		a := &artifacts[i]
 
 		if reqArgs.Pattern != "" && !regexp.MatchString(a.Name) {
-			sendLog(fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, reqArgs.Pattern))
 			wg.Done()
 			continue
 		}
 
 		if reqArgs.Tag != "" && a.Tag != reqArgs.Tag {
-			sendLog(fmt.Sprintf("%s does not match tag %s - skipped", a.Name, reqArgs.Tag))
 			wg.Done()
 			continue
 		}

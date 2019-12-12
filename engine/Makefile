@@ -19,7 +19,7 @@ GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 
 PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 
-TEST_PKGS = $(shell go list ../... | grep -v vendor | grep -v github.com/ovh/cds/cli/cds | grep -v github.com/ovh/cds/contrib)
+TEST_PKGS = $(shell go list ./... | grep -v vendor | grep -v github.com/ovh/cds/cli/cds | grep -v github.com/ovh/cds/contrib)
 TEST_DB_HOST = $(if ${CDS_API_DATABASE_HOST},${CDS_API_DATABASE_HOST},localhost)
 TEST_DB_PORT = $(if ${CDS_API_DATABASE_PORT},${CDS_API_DATABASE_PORT},5432)
 TEST_DB_USER = $(if ${CDS_API_DATABASE_USER},${CDS_API_DATABASE_USER},cds)
@@ -32,11 +32,10 @@ TEST_REDIS_START_DOCKER = docker run -d -p $(TEST_REDIS_PORT):6379 --name redis-
 TEST_DB_START_DOCKER = docker run -d -p $(TEST_DB_PORT):5432 -e POSTGRES_PASSWORD=$(TEST_DB_PASSWORD) -e POSTGRES_USER=$(TEST_DB_USER) -e POSTGRES_DB=$(TEST_DB_NAME) --name postgres-cds postgres
 TEST_DB_DROP_DATABASE = psql -d postgres -c "drop database ${TEST_DB_NAME}"
 TEST_DB_CREATE_DATABASE = psql -d postgres -c "create database ${TEST_DB_NAME} owner ${TEST_DB_USER}" 
-TEST_DB_INIT = $(GO_BUILD) && ./engine database upgrade --db-host $(TEST_DB_HOST) --db-port $(TEST_DB_PORT) --db-user $(TEST_DB_USER) --db-password $(TEST_DB_PASSWORD) --db-name $(TEST_DB_NAME) --db-sslmode disable --migrate-dir ./sql && rm -rf ./engine
+TEST_DB_INIT = ./engine database upgrade --db-host $(TEST_DB_HOST) --db-port $(TEST_DB_PORT) --db-user $(TEST_DB_USER) --db-password $(TEST_DB_PASSWORD) --db-name $(TEST_DB_NAME) --db-sslmode disable --migrate-dir ./sql && rm -rf ./engine
 TEST_CMD = go test -v -timeout 600s -coverprofile=profile.coverprofile
 
 $(TARGET_DIR):
-	$(info create $(TARGET_DIR) directory)
 	@mkdir -p $(TARGET_DIR)
 
 $(GO_LINT):
@@ -55,14 +54,17 @@ default: build
 
 clean:
 	@rm -rf $(TARGET_DIR)
-	@for TST in `find ../ -name "tests.log"`; do \
+	@for TST in `find ./ -name "tests.log"`; do \
 		rm $$TST; \
 	done;
-	@for profile in `find ../ -name "*.coverprofile"`; do \
+	@for profile in `find ./ -name "*.coverprofile"`; do \
 		rm $$profile; \
 	done;
 
-build:
+build: $(TARGET_DIR)
+	$(MAKE) lint -C sql
+	$(MAKE) build -C sql
+	@cp sql/sql.tar.gz $(TARGET_DIR)/
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
 			if go tool dist list | grep "$$GOOS" | grep "$$GOARCH" > /dev/null; then \
@@ -73,7 +75,6 @@ build:
 			fi; \
 		done; \
 	done
-	@tar czf dist/sql.tar.gz sql/*
 	$(MAKE) build -C worker
 
 test-redis-start-docker:
@@ -118,7 +119,7 @@ test: test-config clean
 
 test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@echo "Generating unit tests coverage..."
-	@$(GO_COV_MERGE) `find ../ -name "*.coverprofile"` > $(TARGET_DIR)/cover.out
+	@$(GO_COV_MERGE) `find ./ -name "*.coverprofile"` > $(TARGET_DIR)/cover.out
 	@$(GO_COBERTURA) < $(TARGET_DIR)/cover.out > $(TARGET_DIR)/coverage.xml
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
 	@if [ ! -z "${CDS_VERSION}" ]; then \
@@ -129,7 +130,7 @@ test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 #  <testsuite name="github.com/ovh/cds/engine/api" tests="133" errors="0" failures="2" skip="0">
 test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 	@echo "Generating xUnit Report..."
-	@for TST in `find .. -name "tests.log"`; do \
+	@for TST in `find . -name "tests.log"`; do \
 		if [ -s $$TST ]; then \
 			FAILED=`grep -E '(FAIL)+\s([a-z\.\/]*)\s\[build failed\]' $$TST | wc -l`; \
 			if [ $$FAILED -gt 0 ]; then \
@@ -142,7 +143,7 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 				else \
 					if [ ! -z "${CDS_VERSION}" ]; then \
 						echo "Sending $$TST to CDS"; \
-						worker upload --tag `echo $$TST | sed 's|../||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
+						worker upload --tag `echo $$TST | sed 's|./||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
 					fi; \
 					echo "Generating xUnit report \t$$TST.xml"; \
 					cat $$TST | $(GO_GOJUNIT) > $$TST.xml; \
@@ -152,15 +153,15 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 			echo "Ignoring empty file \t\t$$TST"; \
 		fi; \
 	done; \
-	for XML in `find .. -name "tests.log.xml"`; do \
+	for XML in `find . -name "tests.log.xml"`; do \
 		if [ "$$XML" =  "./tests.log.xml" ]; then \
       		PWD=`pwd`; \
 		 	mv $$XML $(TARGET_DIR)/`basename $(PWD)`.xml; \
 		else \
-			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|../||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
+			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
 		fi; \
 	done; \
-	for XML in `find .. -name "*.xml" -not -path "../ui/*"`; do \
+	for XML in `find . -name "*.xml" -not -path "./ui/*"`; do \
 		if [ -s $$XML ]; then \
 			if grep -q 'name' $$XML; then \
 				echo "Generating report: " $$XML; \
@@ -177,7 +178,7 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 		cat $(TARGET_DIR)/report; \
 	fi; \
 	echo "#########################"; \
-	for XML in `find .. -name "*.xml" -not -path "../ui/*"`; do \
+	for XML in `find . -name "*.xml" -not -path "./ui/*"`; do \
 		if [ -s $$XML ]; then \
 			if grep -q 'errors' $$XML; then \
 				if [ "`xmllint --xpath "//testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'`" -gt "0" ]; then  \

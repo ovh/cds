@@ -9,8 +9,8 @@ TARGET_BINARY = cdsctl
 TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_BINARY)"
 
 split = $(word $2,$(subst /, ,$1))
-TARGET_OS := $(if ${OS},${OS}/%, linux/% darwin/% windows/% freebsd/% openbsd/%)
-TARGET_ARCH := $(if ${ARCH}, %/${ARCH}, %/amd64 %/arm %/386 %/arm64)
+TARGET_OS := $(if ${OS},${OS}, linux/% darwin/% windows/% freebsd/% openbsd/%)
+TARGET_ARCH := $(if ${ARCH}, ${ARCH}, %/amd64 %/arm %/386 %/arm64)
 TARGET_DISTS := $(filter $(TARGET_OS), $(filter $(TARGET_ARCH), $(shell go tool dist list)))
 isWindows = $(filter $1,windows)
 TARGET_BINARIES := $(foreach DIST, $(filter-out darwin/arm% darwin/386,$(TARGET_DISTS)), $(TARGET_DIR)/cdsctl-$(call split,$(DIST),1)-$(call split,$(DIST),2)$(if $(call isWindows, $(call split,$(DIST),1)),.exe))
