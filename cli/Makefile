@@ -30,6 +30,7 @@ clean:
 	done;
 
 test: clean
+	$(info $(TEST_PKGS))
 	@for PKG in $(TEST_PKGS); do \
 		echo "Running tests in package $$PKG"; \
 		cd ${GOPATH}/src/$$PKG; \
