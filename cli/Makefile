@@ -40,7 +40,8 @@ test: clean
     else \
 		  $(TEST_CMD) > ${GOPATH}/src/$$PKG/tests.log; \
     fi; \
-	done;
+	done; \
+	echo "Lancement du coverage"
 	$(MAKE) test-coverage
 	$(MAKE) test-xunit-report
 
