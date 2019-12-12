@@ -199,8 +199,3 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 		cat $(TARGET_DIR)/fail; \
 		exit 1; \
 	fi;
-
-lint: $(GO_LINT)
-	$(GO_LINT) --install --force
-	$(GO_LINT) --fast --tests --vendor --disable=gas --disable=gotype ./...
-	fi;
