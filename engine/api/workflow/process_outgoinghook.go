@@ -49,13 +49,6 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		}
 	}
 
-	//FIX: For the moment, we trigger outgoing hooks on success
-	for _, p := range parentNodeRun {
-		if p.Status != sdk.StatusSuccess.String() {
-			return report, false, nil
-		}
-	}
-
 	srvs, err := services.FindByType(db, services.TypeHooks)
 	if err != nil {
 		return nil, false, sdk.WrapError(err, "Cannot get hooks service")
