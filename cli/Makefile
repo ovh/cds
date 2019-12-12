@@ -1,45 +1,12 @@
 .PHONY: clean
 
-VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
-GITHASH := $(if ${GIT_HASH},${GIT_HASH},`git log -1 --format="%H"`)
-BUILDTIME := `date "+%m/%d/%y-%H:%M:%S"`
-
 TARGET_DIR = ./dist
-TARGET_ENGINE = cds-engine
-DBMIGRATE = $(words $(wildcard sql/*.sql))
-TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_ENGINE) -X github.com/ovh/cds/sdk.DBMIGRATE=$(DBMIGRATE)"
-TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
-TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
-
-GO_BUILD = go build
-GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
-
 PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
-
-TEST_PKGS = $(shell go list ./... | grep -v vendor | grep -v github.com/ovh/cds/cli/cds | grep -v github.com/ovh/cds/contrib)
-TEST_DB_HOST = $(if ${CDS_API_DATABASE_HOST},${CDS_API_DATABASE_HOST},localhost)
-TEST_DB_PORT = $(if ${CDS_API_DATABASE_PORT},${CDS_API_DATABASE_PORT},5432)
-TEST_DB_USER = $(if ${CDS_API_DATABASE_USER},${CDS_API_DATABASE_USER},cds)
-TEST_DB_PASSWORD = $(if ${CDS_API_DATABASE_PASSWORD},${CDS_API_DATABASE_PASSWORD},cds)
-TEST_DB_NAME = $(if ${CDS_API_DATABASE_NAME},${CDS_API_DATABASE_NAME},cds)
-TEST_REDIS_PORT = 6379
-TEST_REDIS_HOST = $(if ${CDS_API_CACHE_REDIS_HOST},${CDS_API_CACHE_REDIS_HOST},localhost:$(TEST_REDIS_PORT))
-TEST_REDIS_PASSWORD = $(if ${CDS_API_CACHE_REDIS_PASSWORD},${CDS_API_CACHE_REDIS_PASSWORD},)
-TEST_REDIS_START_DOCKER = docker run -d -p $(TEST_REDIS_PORT):6379 --name redis-cds redis
-TEST_DB_START_DOCKER = docker run -d -p $(TEST_DB_PORT):5432 -e POSTGRES_PASSWORD=$(TEST_DB_PASSWORD) -e POSTGRES_USER=$(TEST_DB_USER) -e POSTGRES_DB=$(TEST_DB_NAME) --name postgres-cds postgres
-TEST_DB_DROP_DATABASE = psql -d postgres -c "drop database ${TEST_DB_NAME}"
-TEST_DB_CREATE_DATABASE = psql -d postgres -c "create database ${TEST_DB_NAME} owner ${TEST_DB_USER}" 
-TEST_DB_INIT = ./engine database upgrade --db-host $(TEST_DB_HOST) --db-port $(TEST_DB_PORT) --db-user $(TEST_DB_USER) --db-password $(TEST_DB_PASSWORD) --db-name $(TEST_DB_NAME) --db-sslmode disable --migrate-dir ./sql && rm -rf ./engine
+TEST_PKGS = $(shell go list ./...)
 TEST_CMD = go test -v -timeout 600s -coverprofile=profile.coverprofile
-
-$(TARGET_DIR):
-	@mkdir -p $(TARGET_DIR)
-
-$(GO_LINT):
-	go get -u github.com/alecthomas/gometalinter
 
 $(GO_COV_MERGE):
 	go get -u github.com/wadey/gocovmerge
@@ -50,7 +17,8 @@ $(GO_GOJUNIT):
 $(GO_COBERTURA):
 	go get -u github.com/t-yuki/gocover-cobertura
 
-default: build
+$(TARGET_DIR):
+	@mkdir -p $(TARGET_DIR)
 
 clean:
 	@rm -rf $(TARGET_DIR)
@@ -61,49 +29,7 @@ clean:
 		rm $$profile; \
 	done;
 
-build: $(TARGET_DIR)
-	$(MAKE) lint -C sql
-	$(MAKE) build -C sql
-	@cp sql/sql.tar.gz $(TARGET_DIR)/
-	@for GOOS in $(TARGET_OS); do \
-		for GOARCH in $(TARGET_ARCH); do \
-			if go tool dist list | grep "$$GOOS" | grep "$$GOARCH" > /dev/null; then \
-				EXTENSION=""; \
-				if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
-				echo Compiling $(TARGET_DIR)/$(TARGET_ENGINE)-$$GOOS-$$GOARCH$$EXTENSION $(VERSION); \
-				GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_ENGINE)-$$GOOS-$$GOARCH$$EXTENSION; \
-			fi; \
-		done; \
-	done
-	$(MAKE) build -C worker
-
-test-redis-start-docker:
-	$(TEST_REDIS_START_DOCKER)
-
-test-db-start-docker:
-	$(TEST_DB_START_DOCKER)
-	@sleep 5
-	$(TEST_DB_INIT)
-
-test-db-create:
-	$(TEST_DB_CREATE_DATABASE)
-	$(TEST_DB_INIT)
-
-test-db-recreate:
-	$(TEST_DB_DROP_DATABASE)
-	$(TEST_DB_CREATE_DATABASE)
-	$(TEST_DB_INIT)
-
-test-db-init: test-config
-	$(TEST_DB_INIT)
-
-test-config: ${HOME}/.cds/tests.cfg.json
-
-${HOME}/.cds/tests.cfg.json:
-		@mkdir -p ${HOME}/.cds
-		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_DB_USER)\",  \"dbPassword\" :\"$(TEST_DB_PASSWORD)\"  ,\"dbName\": \"$(TEST_DB_NAME)\", \"dbHost\": \"$(TEST_DB_HOST)\", \"dbPort\" : \"$(TEST_DB_PORT)\", \"sslMode\": \"disable\", \"redisHost\" : \"$(TEST_REDIS_HOST)\", \"redisPassword\" : \"$(TEST_REDIS_PASSWORD)\"}" > ${HOME}/.cds/tests.cfg.json
-
-test: test-config clean
+test: clean
 	@for PKG in $(TEST_PKGS); do \
 		echo "Running tests in package $$PKG"; \
 		cd ${GOPATH}/src/$$PKG; \
@@ -116,6 +42,7 @@ test: test-config clean
 	done;
 	$(MAKE) test-coverage
 	$(MAKE) test-xunit-report
+
 
 test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@echo "Generating unit tests coverage..."
@@ -143,7 +70,7 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 				else \
 					if [ ! -z "${CDS_VERSION}" ]; then \
 						echo "Sending $$TST to CDS"; \
-						worker upload --tag `echo $$TST | sed 's|./||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
+						worker upload --tag `echo $$TST | sed 's|../||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
 					fi; \
 					echo "Generating xUnit report \t$$TST.xml"; \
 					cat $$TST | $(GO_GOJUNIT) > $$TST.xml; \
@@ -161,7 +88,7 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
 		fi; \
 	done; \
-	for XML in `find . -name "*.xml" -not -path "./ui/*"`; do \
+	for XML in `find . -name "*.xml" -not -path "../ui/*"`; do \
 		if [ -s $$XML ]; then \
 			if grep -q 'name' $$XML; then \
 				echo "Generating report: " $$XML; \
@@ -178,7 +105,7 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 		cat $(TARGET_DIR)/report; \
 	fi; \
 	echo "#########################"; \
-	for XML in `find . -name "*.xml" -not -path "./ui/*"`; do \
+	for XML in `find .. -name "*.xml" -not -path "../ui/*"`; do \
 		if [ -s $$XML ]; then \
 			if grep -q 'errors' $$XML; then \
 				if [ "`xmllint --xpath "//testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'`" -gt "0" ]; then  \
@@ -198,7 +125,3 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 		cat $(TARGET_DIR)/fail; \
 		exit 1; \
 	fi;
-
-lint: $(GO_LINT)
-	$(GO_LINT) --install --force
-	$(GO_LINT) --fast --tests --vendor --disable=gas --disable=gotype ./...
