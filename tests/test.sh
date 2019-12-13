@@ -77,7 +77,7 @@ check_failure() {
 smoke_tests() {
     echo "Running smoke tests:"
     for f in $(ls -1 00_*.yml); do
-        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL} --var hatchery.url=${CDS_HATCHERY_URL} --var hooks.url=${CDS_HOOKS_URL}"
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var hatchery.url=${CDS_HATCHERY_URL} --var hooks.url=${CDS_HOOKS_URL}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
         check_failure $? ${f}.output
