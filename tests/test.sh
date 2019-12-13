@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# script usage definition
+usage() { 
+    echo "Usage: ./test.sh <target...>" 
+    echo "   Available targets: smoke, initialization, cli, workflow, workflow_with_integration, workflow_with_third_parties"
+} 
+
+# Arguments are mandatory
+[[ $# -lt 1 ]] && usage && exit 1 
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 NOCOLOR='\033[0m'
 RED='\033[0;31m'
@@ -28,6 +37,11 @@ CDS_HOOKS_URL="${CDS_HOOKS_URL:-http://localhost:8083}"
 CDSCTL="${CDSCTL:-`which cdsctl`}"
 CDSCTL_CONFIG="${CDSCTL_CONFIG:-.cdsrc}"
 SMTP_MOCK_URL="${SMTP_MOCK_URL:-http://localhost:2024}"
+
+# If you want to run some tests with a specific model requirements, set CDS_MODEL_REQ
+CDS_MODEL_REQ="${CDS_MODEL_REQ:-buildpack-deps}"
+# If you want to run some tests with a specific network requirements, set CDS_NETWORK_REQ
+CDS_NETWORK_REQ="${CDS_NETWORK_REQ:-$CDS_API_URL}" 
 
 # The default values below fit to default minio installation.
 # Run "make minio_start" to start a minio docker container 
@@ -119,18 +133,44 @@ workflow_with_integration_tests() {
     done
 }
 
+workflow_with_third_parties() {
+    if [ -z "$CDS_MODEL_REQ" ]; then echo "missing CDS_MODEL_REQ variable"; exit 1; fi
+    if [ -z "$CDS_NETWORK_REQ" ]; then echo "missing CDS_NETWORK_REQ variable"; exit 1; fi
+    echo "Running Workflow with third parties:"
+    for f in $(ls -1 05_*.yml); do
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL}"
+        echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
+        ${CMD} >${f}.output 2>&1
+        check_failure $? ${f}.output
+    done
+}
+
 rm -rf ./results
 mkdir results
 
-smoke_tests
-initialization_tests
-cli_tests
-workflow_tests
-
-export AWS_DEFAULT_REGION
-export S3_BUCKET
-export AWS_ACCESS_KEY_ID
-export AWS_SECRET_ACCESS_KEY
-export AWS_ENDPOINT_URL
-
-workflow_with_integration_tests
+for target in $@; do
+    case $target in
+        smoke) 
+            smoke_tests;;
+        initialization) 
+            initialization_tests;;
+        cli) 
+            cli_tests;;
+        workflow) 
+            workflow_tests;;
+        workflow_with_integration) 
+            export AWS_DEFAULT_REGION
+            export S3_BUCKET
+            export AWS_ACCESS_KEY_ID
+            export AWS_SECRET_ACCESS_KEY
+            export AWS_ENDPOINT_URL
+            workflow_with_integration_tests;;
+        workflow_with_third_parties)
+            export CDS_MODEL_REQ
+            export CDS_NETWORK_REQ
+            workflow_with_third_parties;;
+        *) echo -e "${RED}Error: unknown target: $target${NOCOLOR}"
+            usage
+            exit 1;;
+    esac    
+done
