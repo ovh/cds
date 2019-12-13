@@ -6,7 +6,7 @@ testcases:
   steps:
   - script: '[ -f ./fixtures/ITSCWRKFLW17/pipeline.yml ]'
   - script: '[ -f ./fixtures/ITSCWRKFLW17/workflow.yml ]'
-  - script: '[ -z "${CDS_MODEL_REQ}"" ] && exit 1'
+  - script: '[ -z "${CDS_MODEL_REQ}" ] && exit 1'
   - script: '[ -z "${CDS_NETWORK_REQ}" ] && exit 1'
 
 - name: prepare_tests
