@@ -47,6 +47,7 @@ var (
 	vaultToken   string
 	vaultConfKey = "/secret/cds/conf"
 	conf         = &Configuration{}
+	output       string
 )
 
 func init() {
@@ -76,6 +77,7 @@ func init() {
 
 	configCmd.AddCommand(configNewCmd)
 	configCmd.AddCommand(configCheckCmd)
+	configEditCmd.Flags().StringVar(&output, "output", "", "output file")
 	configCmd.AddCommand(configEditCmd)
 
 	//Download command
@@ -366,8 +368,8 @@ var configCheckCmd = &cobra.Command{
 var configEditCmd = &cobra.Command{
 	Use:     "edit",
 	Short:   "Edit a CDS configuration file",
-	Long:    `$ engine config edit <path-toml-file> key=value key=value`,
-	Example: `$ engine config edit conf.toml log.level=debug hatchery.swarm.commonConfiguration.name=hatchery-swarm-name`,
+	Long:    `$ engine config edit --output <path-toml-file-dst> <path-toml-file-src> key=value key=value`,
+	Example: `$ engine config edit --output new.conf conf.toml log.level=debug hatchery.swarm.commonConfiguration.name=hatchery-swarm-name`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 2 {
 			cmd.Help()
@@ -405,7 +407,21 @@ var configEditCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Println(tomlConf.String())
+		writer := os.Stdout
+		if output != "" {
+			if _, err := os.Stat(output); err == nil {
+				if err := os.Remove(output); err != nil {
+					sdk.Exit("%v", err)
+				}
+			}
+			writer, err = os.Create(output)
+			if err != nil {
+				sdk.Exit("%v", err)
+			}
+		}
+		defer writer.Close()
+
+		fmt.Fprint(writer, tomlConf.String())
 	},
 }
 
