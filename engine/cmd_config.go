@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	toml "github.com/yesnault/go-toml"
 
 	"github.com/ovh/cds/engine/api"
@@ -33,7 +32,8 @@ func init() {
 
 	configNewCmd.Flags().BoolVar(&flagConfigNewAsEnv, "env", false, "Print configuration as environment variable")
 	configRegenCmd.Flags().BoolVar(&flagConfigRegenAsEnv, "env", false, "Print configuration as environment variable")
-	configEditCmd.Flags().BoolVar(&flagConfigRegenAsEnv, "env", false, "Print configuration as environment variable")
+	configEditCmd.Flags().BoolVar(&flagConfigEditAsEnv, "env", false, "Print configuration as environment variable")
+	configEditCmd.Flags().StringVar(&flagConfigEditOutput, "output", "", "output file")
 
 	configInitTokenCmd.Flags().StringVar(&flagInitTokenConfigFile, "config", "", "config file")
 	configInitTokenCmd.Flags().StringVar(&flagInitTokenRemoteConfig, "remote-config", "", "(optional) consul configuration store")
@@ -45,6 +45,8 @@ func init() {
 var (
 	flagConfigNewAsEnv           bool
 	flagConfigRegenAsEnv         bool
+	flagConfigEditAsEnv          bool
+	flagConfigEditOutput         string
 	flagInitTokenConfigFile      string
 	flagInitTokenRemoteConfig    string
 	flagInitTokenRemoteConfigKey string
@@ -300,25 +302,33 @@ var configEditCmd = &cobra.Command{
 		if err := ioutil.WriteFile(tmpFile, []byte(tomlConf.String()), os.FileMode(0640)); err != nil {
 			sdk.Exit("Error while create tempfile: %v", err)
 		}
-
 		defer os.Remove(tmpFile)
 
-		viper.SetConfigFile(tmpFile)
-		if err := viper.ReadInConfig(); err != nil {
-			sdk.Exit(err.Error())
-		}
+		conf := configImport(nil, tmpFile, "", "", "", "", true)
 
-		var conf Configuration
-		if err := viper.Unmarshal(&conf); err != nil {
-			sdk.Exit("Unable to parse config: %v", err.Error())
+		writer := os.Stdout
+		if flagConfigEditOutput != "" {
+			if _, err := os.Stat(flagConfigEditOutput); err == nil {
+				if err := os.Remove(flagConfigEditOutput); err != nil {
+					sdk.Exit("%v", err)
+				}
+			}
+			writer, err = os.Create(flagConfigEditOutput)
+			if err != nil {
+				sdk.Exit("%v", err)
+			}
 		}
+		defer writer.Close()
 
-		btesOutput, err := toml.Marshal(conf)
-		if err != nil {
-			sdk.Exit("%v", err)
+		if !flagConfigEditAsEnv {
+			btes, err := toml.Marshal(conf)
+			if err != nil {
+				sdk.Exit("%v", err)
+			}
+			fmt.Fprintln(writer, string(btes))
+		} else {
+			configPrintToEnv(conf, writer)
 		}
-		fmt.Println(string(btesOutput))
-
 	},
 }
 
