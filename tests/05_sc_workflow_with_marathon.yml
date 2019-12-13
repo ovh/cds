@@ -40,8 +40,8 @@ testcases:
     - result.systemoutjson.status ShouldEqual Building
 
 - name: check_workflow_is_success
-    steps:
-    - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW17 ITSCWRKFLW17-WORKFLOW 1 --format json
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW17 ITSCWRKFLW17-WORKFLOW 1 --format json
       retry: 3
       delay: 30
       assertions:
