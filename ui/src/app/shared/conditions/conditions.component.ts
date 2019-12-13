@@ -6,6 +6,7 @@ import { WorkflowNodeCondition, WorkflowNodeConditions, WorkflowTriggerCondition
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Table } from 'app/shared/table/table';
+import { cloneDeep } from 'lodash-es';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -42,7 +43,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
         return this._triggerCondition;
     }
     @Input('conditions') set conditions(conditions: WorkflowNodeConditions) {
-        this._conditions = conditions;
+        this._conditions = cloneDeep(conditions);
         if (this._conditions.lua_script && this._conditions.lua_script !== '') {
             this.isAdvanced = true;
         } else {

@@ -93,21 +93,15 @@ func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID 
 	// Process action build arguments
 	var project, workflow, node, job string
 	for _, abp := range *params {
-		// Process build variable for root action
-		for j := range a.Parameters {
-			if abp.Name == a.Parameters[j].Name {
-				a.Parameters[j].Value = abp.Value
-			}
-			switch abp.Name {
-			case "cds.project":
-				project = abp.Value
-			case "cds.workflow":
-				workflow = abp.Value
-			case "cds.node":
-				node = abp.Value
-			case "cds.job":
-				job = abp.Value
-			}
+		switch abp.Name {
+		case "cds.project":
+			project = abp.Value
+		case "cds.workflow":
+			workflow = abp.Value
+		case "cds.node":
+			node = abp.Value
+		case "cds.job":
+			job = abp.Value
 		}
 	}
 
