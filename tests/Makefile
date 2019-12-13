@@ -1,6 +1,6 @@
 define MINIO_CONFIG
 export AWS_DEFAULT_REGION=us-east-1
-export S3_BUCKET=test-it
+export S3_BUCKET=cds-it
 export MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
 export MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 export AWS_ENDPOINT_URL=http://$$(hostname):9000
