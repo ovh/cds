@@ -45,5 +45,5 @@ func New(URL string, store cache.Store, disableStatus bool, disableStatusDetail 
 }
 
 func (c *gerritClient) GetAccessToken(_ context.Context) string {
-	return c.reviewerToken
+	return c.username
 }
