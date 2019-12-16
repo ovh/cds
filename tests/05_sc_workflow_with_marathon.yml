@@ -42,7 +42,7 @@ testcases:
 - name: check_workflow_is_success
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW17 ITSCWRKFLW17-WORKFLOW 1 --format json
-    retry: 3
+    retry: 10
     delay: 30
     assertions:
     - result.code ShouldEqual 0
