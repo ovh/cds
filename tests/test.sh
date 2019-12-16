@@ -138,7 +138,7 @@ workflow_with_third_parties() {
     if [ -z "$CDS_NETWORK_REQ" ]; then echo "missing CDS_NETWORK_REQ variable"; exit 1; fi
     echo "Running Workflow with third parties:"
     for f in $(ls -1 05_*.yml); do
-        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL}"
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
         check_failure $? ${f}.output
