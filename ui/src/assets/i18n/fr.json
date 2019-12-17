@@ -791,7 +791,7 @@
   "workflow_node_trigger_condition_no": "Il n'y a aucune condition de déclenchement",
   "workflow_node_trigger_title": "Trigger à partir de {{pip}}",
   "workflow_node_type_outgoing_hook": "Hook Sortant",
-  "workflow_node_permissions_form_title": "Ajouter une permission sur le nœud {{node}} du workflow",
+  "workflow_node_permissions_form_title": "Ajouter une permission sur le nœud du workflow",
   "workflow_permission_list_title": "Liste des permissions sur le workflow",
   "workflow_permission_form_title": "Ajouter une permission sur le workflow",
   "workflow_history_length_title": "Nombre de builds à conserver par tag",
