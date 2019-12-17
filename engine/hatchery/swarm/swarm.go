@@ -653,7 +653,7 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClient *dockerClient) ([]types.Con
 	//Checking workers
 	oldContainers := []types.Container{}
 	for _, c := range containers {
-		if !strings.Contains(c.Status, "Exited") && time.Now().Add(-1*time.Minute).Unix() < c.Created {
+		if !strings.Contains(c.Status, "Exited") && time.Now().Add(-5*time.Minute).Unix() < c.Created {
 			log.Debug("hatchery> swarm> listAwolWorkers> container %s(status=%s) is too young", c.Names[0], c.Status)
 			continue
 		}
