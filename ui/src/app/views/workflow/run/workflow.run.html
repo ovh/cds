@@ -2,7 +2,7 @@
     <app-workflow-run-summary [(direction)]="direction" [project]="project" [workflowName]="workflowName"
         [class.above]="workflowRunData['status'] === pipelineStatusEnum.PENDING">
     </app-workflow-run-summary>
-    <ng-container *ngIf="workflowRunData['id'] !== pipelineStatusEnum.PENDING; else pendingBlock">
+    <ng-container *ngIf="workflowRunData['status'] !== pipelineStatusEnum.PENDING; else pendingBlock">
         <ng-container *ngIf="workflowRunData['workflow'] && workflowRunData['workflow'].workflow_data && !displayError">
             <app-workflow-graph class="graph" [direction]="direction" [project]="project"
                 [workflowData]="workflowRunData['workflow']">
