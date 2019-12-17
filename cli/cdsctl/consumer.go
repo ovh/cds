@@ -94,12 +94,12 @@ func authConsumerNewRun(v cli.Values) error {
 	}
 
 	name := v.GetString("name")
-	if name == "" {
+	if name == "" && !v.GetBool("no-interactive") {
 		name = cli.AskValue("Name")
 	}
 
 	description := v.GetString("description")
-	if description == "" {
+	if description == "" && !v.GetBool("no-interactive") {
 		description = cli.AskValue("Description")
 	}
 
@@ -121,7 +121,7 @@ func authConsumerNewRun(v cli.Values) error {
 			return errors.Errorf("invalid given group name: '%s'", g)
 		}
 	}
-	if len(groupIDs) == 0 {
+	if len(groupIDs) == 0 && !v.GetBool("no-interactive") {
 		opts := make([]string, len(allGroups))
 		for i := range allGroups {
 			opts[i] = allGroups[i].Name
@@ -140,7 +140,7 @@ func authConsumerNewRun(v cli.Values) error {
 		}
 		scopes = append(scopes, scope)
 	}
-	if len(scopes) == 0 {
+	if len(scopes) == 0 && !v.GetBool("no-interactive") {
 		opts := make([]string, len(sdk.AuthConsumerScopes))
 		for i := range sdk.AuthConsumerScopes {
 			opts[i] = string(sdk.AuthConsumerScopes[i])

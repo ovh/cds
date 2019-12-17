@@ -4,10 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -50,11 +48,11 @@ func RefactorAuthentication(ctx context.Context, db *gorp.DbMap, store cache.Sto
 func refactorAuthenticationUser(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u sdk.User, apiURL, uiURL string) error {
 	// Lock the user if it has not been migrated
 	_, err := db.Exec(`
-	SELECT * 
-	FROM "user" 
-	WHERE id = $1 
+	SELECT *
+	FROM "user"
+	WHERE id = $1
 	AND id NOT IN (
-		SELECT user_id 
+		SELECT user_id
 		FROM authentified_user_migration
 	)
 	FOR UPDATE SKIP LOCKED`, u.ID)
@@ -95,23 +93,24 @@ func refactorAuthenticationUser(ctx context.Context, db gorp.SqlExecutor, store 
 		return sdk.WithStack(err)
 	}
 
-	consumer, err := local.NewConsumer(ctx, db, newUser.ID)
-	if err != nil {
-		return err
-	}
+	// TODO create manual migration to send mails
+	//consumer, err := local.NewConsumer(ctx, db, newUser.ID)
+	//if err != nil {
+	//	return err
+	//}
 
-	resetToken, err := local.NewResetConsumerToken(store, consumer.ID)
-	if err != nil {
-		return err
-	}
+	//resetToken, err := local.NewResetConsumerToken(store, consumer.ID)
+	//if err != nil {
+	//	return err
+	//}
 
 	// Insert the authentication
-	if err := mail.SendMailAskResetToken(ctx, u.Email, newUser.Username, resetToken,
-		apiURL+"/auth/reset?token=%s",
-		uiURL,
-	); err != nil {
-		return sdk.WrapError(err, "cannot send reset token email at %s", contact.Value)
-	}
+	//if err := mail.SendMailAskResetToken(ctx, u.Email, newUser.Username, resetToken,
+	//	apiURL+"/auth/reset?token=%s",
+	//	uiURL,
+	//); err != nil {
+	//	return sdk.WrapError(err, "cannot send reset token email at %s", contact.Value)
+	//}
 
 	log.Info(ctx, "migrate.RefactorAuthentication> ending user migration %s - %s", newUser.ID, contact.Value)
 

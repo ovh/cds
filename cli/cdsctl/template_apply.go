@@ -33,7 +33,7 @@ func templateApplyCmd(name string) cli.Command {
 				Type:      cli.FlagArray,
 				Name:      "params",
 				ShortHand: "p",
-				Usage:     "Specify params for template like --params paramKey:paramValue",
+				Usage:     "Specify params for template like --params paramKey=paramValue",
 				Default:   "",
 			},
 			{
