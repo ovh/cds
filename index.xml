@@ -1859,6 +1859,17 @@ worker download worker download --workflow={{.cds.workflow}} --number={{.cds.run
     </item>
     
     <item>
+      <title>edit</title>
+      <link>https://ovh.github.io/cds/docs/components/engine/config/edit/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/engine/config/edit/</guid>
+      <description> engine config edit Edit a CDS configuration file
+Synopsis $ engine config edit &amp;ndash;output   key=value key=value
+engine config edit [flags]  Examples $ engine config edit --output new.conf conf.toml log.level=debug hatchery.swarm.commonConfiguration.name=hatchery-swarm-name  Options  --output string output file  SEE ALSO  engine config - Manage CDS Configuration  </description>
+    </item>
+    
+    <item>
       <title>enable</title>
       <link>https://ovh.github.io/cds/docs/components/cdsctl/admin/maintenance/enable/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

@@ -1124,7 +1124,7 @@
 	"title": "config",
 	"tags": [],
 	"description": "",
-	"content": " engine config Manage CDS Configuration\nSynopsis Manage CDS Configuration\nSEE ALSO  engine - CDS Engine engine config check - Check CDS configuration file engine config new - CDS configuration file assistant  "
+	"content": " engine config Manage CDS Configuration\nSynopsis Manage CDS Configuration\nSEE ALSO  engine - CDS Engine engine config check - Check CDS configuration file engine config edit - Edit a CDS configuration file engine config new - CDS configuration file assistant  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/components/cdsctl/user/confirm/",
@@ -1454,6 +1454,13 @@
 	"tags": [],
 	"description": "",
 	"content": " worker download worker download [--workflow=\u0026lt;workflow-name\u0026gt;] [--number=\u0026lt;run-number\u0026gt;] [--tag=\u0026lt;tag\u0026gt;] [--pattern=\u0026lt;pattern\u0026gt;]\nSynopsis Inside a job, there are two ways to download an artifact:\n with a step using action Download Artifacts with a step script (https://ovh.github.io/cds/docs/actions/builtin-script/), using the worker command.  Worker Command:\nworker download --tag=\u0026lt;tag\u0026gt; \u0026lt;path\u0026gt;  Example:\nworker download --pattern=\u0026quot;files.*.yml\u0026quot;  Theses two commands have the same result:\nworker download worker download --workflow={{.cds.workflow}} --number={{.cds.run.number}}  worker download [flags]  Options  --number string Workflow Number to download from. Optional, default: current workflow run --pattern string Pattern matching files to download. Optional, default: * --tag string Tag matching files to download. Optional --workflow string Workflow name to download from. Optional, default: current workflow  SEE ALSO  worker - CDS Worker  "
+},
+{
+	"uri": "https://ovh.github.io/cds/docs/components/engine/config/edit/",
+	"title": "edit",
+	"tags": [],
+	"description": "",
+	"content": " engine config edit Edit a CDS configuration file\nSynopsis $ engine config edit \u0026ndash;output   key=value key=value\nengine config edit [flags]  Examples $ engine config edit --output new.conf conf.toml log.level=debug hatchery.swarm.commonConfiguration.name=hatchery-swarm-name  Options  --output string output file  SEE ALSO  engine config - Manage CDS Configuration  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/components/cdsctl/admin/maintenance/enable/",

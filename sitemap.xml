@@ -835,6 +835,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/engine/config/edit/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/maintenance/enable/</loc>
   </url>
   
