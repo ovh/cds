@@ -962,6 +962,162 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 	assert.Equal(t, "New awesome stage", workflowRun.Workflow.Pipelines[pip.ID].Stages[0].Name)
 }
 
+func Test_resyncWorkflowRunHandlerError(t *testing.T) {
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, pass := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	pipeline.InsertStage(db, s)
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(db, j, s.ID, &pip)
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	pipeline.InsertStage(db, s)
+	j = &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	s.Jobs = append(s.Jobs, *j)
+
+	// Create Application
+	app := sdk.Application{
+		Name:               sdk.RandomString(10),
+		ProjectID:          proj.ID,
+		RepositoryFullname: "foo/myrepo",
+		VCSServer:          "github",
+	}
+	assert.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+
+	w := sdk.Workflow{
+		Name:           "test_1",
+		ProjectID:      proj.ID,
+		ProjectKey:     proj.Key,
+		FromRepository: "foo/myrepo",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "child",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj2, u))
+	w1, err := workflow.Load(context.TODO(), db, api.Cache, proj2, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, err)
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			Payload: map[string]string{
+				"git.branch": "master",
+			},
+		},
+	}
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 202, rec.Code)
+
+	wr := &sdk.WorkflowRun{}
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
+	assert.Equal(t, int64(1), wr.Number)
+
+	cpt := 0
+	for {
+		varsGet := map[string]string{
+			"key":              proj.Key,
+			"permWorkflowName": w1.Name,
+			"number":           "1",
+		}
+		uriGet := router.GetRoute("GET", api.getWorkflowRunHandler, varsGet)
+		reqGet := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGet, nil)
+		recGet := httptest.NewRecorder()
+		router.Mux.ServeHTTP(recGet, reqGet)
+
+		var wrGet sdk.WorkflowRun
+		assert.NoError(t, json.Unmarshal(recGet.Body.Bytes(), &wrGet))
+
+		if wrGet.Status != sdk.StatusPending.String() {
+			assert.Equal(t, sdk.StatusBuilding.String(), wrGet.Status)
+			break
+		}
+		t.Logf("workflow run response %+v\n", wrGet)
+		cpt++
+		if cpt > 10 {
+			break
+		}
+	}
+
+	pip.Stages[0].Name = "New awesome stage"
+	errS := pipeline.UpdateStage(db, &pip.Stages[0])
+	test.NoError(t, errS)
+
+	//Prepare request
+	vars = map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+		"number":           fmt.Sprintf("%d", wr.Number),
+	}
+	uri = router.GetRoute("POST", api.resyncWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 403, rec.Code)
+}
+
 func Test_postWorkflowRunHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()

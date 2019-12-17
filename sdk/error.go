@@ -198,6 +198,7 @@ var (
 	ErrBadBrokerConfiguration                        = Error{ID: 181, Status: http.StatusBadRequest}
 	ErrInvalidJobRequirementNetworkAccess            = Error{ID: 182, Status: http.StatusBadRequest}
 	ErrInvalidWorkerModelNamePattern                 = Error{ID: 183, Status: http.StatusBadRequest}
+	ErrWorkflowAsCodeResync                          = Error{ID: 184, Status: http.StatusForbidden}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -378,6 +379,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrIntegrationtNotFound.ID:                          "integration not found",
 	ErrBadBrokerConfiguration.ID:                        "Cannot connect to the broker of your event integration. Check your configuration",
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Invalid job requirement: network requirement must contains ':'. Example: golang.org:http, golang.org:443",
+	ErrWorkflowAsCodeResync.ID:                          "You cannot resynchronize an as-code workflow",
 }
 
 var errorsFrench = map[int]string{
@@ -557,6 +559,7 @@ var errorsFrench = map[int]string{
 	ErrEnvironmentNotFound.ID:                           "l'environnement n'existe pas",
 	ErrBadBrokerConfiguration.ID:                        "Impossible de se connecter à votre intégration de type évènement. Veuillez vérifier votre configuration",
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Pré-requis de job invalide: Le pré-requis network doit contenir un ':'. Exemple: golang.org:http, golang.org:443",
+	ErrWorkflowAsCodeResync.ID:                          "Impossible de resynchroniser un workflow en mode as-code",
 }
 
 var errorsLanguages = []map[int]string{
