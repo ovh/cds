@@ -9,8 +9,17 @@ vars:
   username: cds.integration.tests.rw
   email: it-user-rw@localhost.local
   fullname: cds.integration.tests.rw 
+  smtpmock.url: 'http://localhost:2024'
 
 testcases:
+- name: Check SMTP mock
+  steps:  
+  - type: http
+    method: GET
+    url: '{{.smtpmock.url}}'
+    retry: 5
+    delay: 5
+    
 - name: create-admin-user
   steps:
   - type: http
