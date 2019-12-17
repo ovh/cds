@@ -99,7 +99,7 @@ export class WorkflowRunComponent implements OnInit {
                 if (!this.workflowRunData) {
                     this.workflowRunData = {};
                 }
-                if (!this.workflowRunData['workflow']) {
+                if (!this.workflowRunData['workflow'] || !this.workflowRunData['workflow'].workflow_data) {
                     this.workflowRunData['workflow'] = s.workflowRun.workflow;
                     this.workflowName = s.workflowRun.workflow.name;
                 }
