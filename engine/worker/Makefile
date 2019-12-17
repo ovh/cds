@@ -49,7 +49,7 @@ build: clean $(TARGET_DIR)
 				EXTENSION=""; \
 				if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 				echo Compiling $(TARGET_DIR)/$(TARGET_BINARY)-$$GOOS-$$GOARCH$$EXTENSION $(VERSION); \
-				GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_BINARY)-$$GOOS-$$GOARCH$$EXTENSION; \
+				GOOS=$$GOOS GOARCH=$$GOARCH CGO_ENABLED=0 $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_BINARY)-$$GOOS-$$GOARCH$$EXTENSION; \
 			fi; \
 		done; \
 	done
