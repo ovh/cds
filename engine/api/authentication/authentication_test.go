@@ -24,7 +24,7 @@ func TestSignJWS(t *testing.T) {
 
 	p := myPayload{
 		RandomID: sdk.UUID(),
-		Nonce:    time.Now().UnixNano(),
+		Nonce:    time.Now().Unix(),
 	}
 
 	token, err := authentication.SignJWS(p, time.Hour)

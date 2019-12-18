@@ -877,7 +877,6 @@ func (a *API) setCookie(w http.ResponseWriter, c *http.Cookie) {
 		// ignore parse error, this have been checked at service start
 		uiURL, _ := url.Parse(a.Config.URL.UI)
 		c.Path = uiURL.Path
-		c.Domain = uiURL.Hostname()
 		if c.Path == "" {
 			c.Path = "/"
 		}
