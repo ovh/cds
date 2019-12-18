@@ -17,7 +17,7 @@ func cmdJunitParser(w *currentWorker) *cobra.Command {
 		Use:   "junit-parser",
 		Short: "worker junit-parser",
 		Long: `
-worker junit command helps you to parse junit files and print a summary. 
+worker junit-parser command helps you to parse junit files and print a summary. 
 
 It displays the number of tests, the number of passed tests, the number of failed tests and the number of skipped tests.
 
