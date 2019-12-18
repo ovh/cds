@@ -6,16 +6,16 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/ovh/venom"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/venom"
 )
 
-func cmdJunit(w *currentWorker) *cobra.Command {
+func cmdJunitParser(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
-		Use:   "junit",
-		Short: "worker junit",
+		Use:   "junit-parser",
+		Short: "worker junit-parser",
 		Long: `
 worker junit command helps you to parse junit files and print a summary. 
 
@@ -24,18 +24,17 @@ It displays the number of tests, the number of passed tests, the number of faile
 Examples:
 	$ ls 
 	result1.xml		result2.xml
-	$ worker junit result1.xml
+	$ worker junit-parser result1.xml
 	10 10 0 0
-	$ worker junit *.xml
+	$ worker junit-parser *.xml
 	20 20 0 0
-
 `,
-		RunE: junitCmd(w),
+		RunE: junitParserCmd(w),
 	}
 	return c
 }
 
-func junitCmd(w *currentWorker) func(cmd *cobra.Command, args []string) error {
+func junitParserCmd(w *currentWorker) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		var filepaths []string
 		for _, arg := range args {
