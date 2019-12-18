@@ -30,7 +30,7 @@ type Configuration struct {
 		HTTP struct {
 			URL string `toml:"url" default:"http://localhost:2015" json:"url"`
 		} `toml:"http" json:"http"`
-	}
+	} `toml:"ui" json:"ui"`
 	API   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60" json:"ttl"`
@@ -54,7 +54,7 @@ type ServerConfiguration struct {
 
 // GithubServerConfiguration represents the github configuration
 type GithubServerConfiguration struct {
-	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/ \n#######\n Github OAuth Application Client ID"`
+	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/docs/integrations/github/ \n#######\n Github OAuth Application Client ID"`
 	ClientSecret string `toml:"clientSecret" json:"-" default:"xxxxx" comment:"Github OAuth Application Client Secret"`
 	APIURL       string `toml:"apiUrl" json:"-" default:"https://api.github.com" comment:"The URL for the GitHub API."`
 	Status       struct {
