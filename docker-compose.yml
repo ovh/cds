@@ -71,6 +71,8 @@ services:
             vcs.cache.redis.password=cds \
             repositories.basedir=/app/repositories \
             repositories.api.http.url=http://cds-api:8081 \
+            repositories.cache.redis.host=cds-cache:6379 \
+            repositories.cache.redis.password=cds \
             elasticsearch.api.http.url=http://cds-api:8081 \
             elasticsearch.name=cds-elasticsearch \
             elasticsearch.elasticsearch.indexEvents=cds-indexEvents \
