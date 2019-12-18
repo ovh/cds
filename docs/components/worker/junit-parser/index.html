@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>download - CDS - Continuous Delivery Service</title>
+<title>junit-parser - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
@@ -17,20 +17,26 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="cdsctl workflow artifact download Download artifacts of one Workflow Run
-Synopsis Download artifacts of one Workflow Run
-cdsctl workflow artifact download [ PROJECT-KEY WORKFLOW-NAME ] NUMBER [ARTEFACT-NAME] [flags]  Options  --exclude string exclude files from download - could be a regex: *.log  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.">
+    content=" worker junit-parser worker junit-parser
+Synopsis worker junit-parser command helps you to parse junit files and print a summary.
+It displays the number of tests, the number of passed tests, the number of failed tests and the number of skipped tests.
+Examples: $ ls result1.xml result2.xml $ worker junit-parser result1.xml 10 10 0 0 $ worker junit-parser *.xml 20 20 0 0
+worker junit-parser  SEE ALSO  worker - CDS Worker  ">
 <meta property="og:description"
-    content="cdsctl workflow artifact download Download artifacts of one Workflow Run
-Synopsis Download artifacts of one Workflow Run
-cdsctl workflow artifact download [ PROJECT-KEY WORKFLOW-NAME ] NUMBER [ARTEFACT-NAME] [flags]  Options  --exclude string exclude files from download - could be a regex: *.log  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.">
+    content=" worker junit-parser worker junit-parser
+Synopsis worker junit-parser command helps you to parse junit files and print a summary.
+It displays the number of tests, the number of passed tests, the number of failed tests and the number of skipped tests.
+Examples: $ ls result1.xml result2.xml $ worker junit-parser result1.xml 10 10 0 0 $ worker junit-parser *.xml 20 20 0 0
+worker junit-parser  SEE ALSO  worker - CDS Worker  ">
 <meta name="twitter:description"
-    content="cdsctl workflow artifact download Download artifacts of one Workflow Run
-Synopsis Download artifacts of one Workflow Run
-cdsctl workflow artifact download [ PROJECT-KEY WORKFLOW-NAME ] NUMBER [ARTEFACT-NAME] [flags]  Options  --exclude string exclude files from download - could be a regex: *.log  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/components/cdsctl/workflow/artifact/download/">
-<meta property="og:title" content="download">
-<meta name="twitter:title" content="download">
+    content=" worker junit-parser worker junit-parser
+Synopsis worker junit-parser command helps you to parse junit files and print a summary.
+It displays the number of tests, the number of passed tests, the number of failed tests and the number of skipped tests.
+Examples: $ ls result1.xml result2.xml $ worker junit-parser result1.xml 10 10 0 0 $ worker junit-parser *.xml 20 20 0 0
+worker junit-parser  SEE ALSO  worker - CDS Worker  ">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/components/worker/junit-parser/">
+<meta property="og:title" content="junit-parser">
+<meta name="twitter:title" content="junit-parser">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
@@ -2411,33 +2417,31 @@ cdsctl workflow artifact download [ PROJECT-KEY WORKFLOW-NAME ] NUMBER [ARTEFACT
 
 
 
-<h1 id="cdsctl-workflow-artifact-download">cdsctl workflow artifact download</h1>
+<h1 id="worker-junit-parser">worker junit-parser</h1>
 
-<p><code>Download artifacts of one Workflow Run</code></p>
+<p><code>worker junit-parser</code></p>
 
 <h2 id="synopsis">Synopsis</h2>
 
-<p><code>Download artifacts of one Workflow Run</code></p>
+<p>worker junit-parser command helps you to parse junit files and print a summary.</p>
 
-<pre><code>cdsctl workflow artifact download [ PROJECT-KEY WORKFLOW-NAME ] NUMBER [ARTEFACT-NAME] [flags]
-</code></pre>
+<p>It displays the number of tests, the number of passed tests, the number of failed tests and the number of skipped tests.</p>
 
-<h2 id="options">Options</h2>
+<p>Examples:
+    $ ls
+    result1.xml     result2.xml
+    $ worker junit-parser result1.xml
+    10 10 0 0
+    $ worker junit-parser *.xml
+    20 20 0 0</p>
 
-<pre><code>      --exclude string   exclude files from download - could be a regex: *.log
-</code></pre>
-
-<h2 id="options-inherited-from-parent-commands">Options inherited from parent commands</h2>
-
-<pre><code>  -f, --file string   set configuration file
-      --insecure      (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.
-      --verbose       verbose output
+<pre><code>worker junit-parser
 </code></pre>
 
 <h2 id="see-also">SEE ALSO</h2>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/docs/components/cdsctl/workflow/artifact/">cdsctl workflow artifact</a>     - <code>Manage Workflow Artifact</code></li>
+<li><a href="https://ovh.github.io/cds/docs/components/worker/worker/">worker</a>  - CDS Worker</li>
 </ul>
 
 

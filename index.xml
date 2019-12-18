@@ -2362,6 +2362,19 @@ cdsctl template instances [TEMPLATE-PATH] [flags]  Examples cdsctl template inst
     </item>
     
     <item>
+      <title>junit-parser</title>
+      <link>https://ovh.github.io/cds/docs/components/worker/junit-parser/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/worker/junit-parser/</guid>
+      <description> worker junit-parser worker junit-parser
+Synopsis worker junit-parser command helps you to parse junit files and print a summary.
+It displays the number of tests, the number of passed tests, the number of failed tests and the number of skipped tests.
+Examples: $ ls result1.xml result2.xml $ worker junit-parser result1.xml 10 10 0 0 $ worker junit-parser *.xml 20 20 0 0
+worker junit-parser  SEE ALSO  worker - CDS Worker  </description>
+    </item>
+    
+    <item>
       <title>list</title>
       <link>https://ovh.github.io/cds/docs/components/cdsctl/action/builtin/list/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
