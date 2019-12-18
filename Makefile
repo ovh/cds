@@ -80,3 +80,6 @@ $(TARGET_DIR)/config.toml.sample:
 
 target/cds-engine.deb: $(TARGET_DIR)/config.toml.sample
 	debpacker make --workdir dist --config .debpacker.yml --var version=$(GIT_VERSION)
+
+docker:
+	docker build --tag ovhcom/cds-engine:$(CDS_VERSION) .
