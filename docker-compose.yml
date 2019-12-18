@@ -63,7 +63,7 @@ services:
             hatchery.swarm.ratioService=50 \
             hatchery.swarm.dockerEngines.default.host=unix:///var/run/docker.sock \
             hatchery.swarm.dockerEngines.default.maxContainers=4 \
-            hooks.url=http://cds-vcs:8083 \
+            hooks.url=http://cds-hooks:8083 \
             hooks.api.http.url=http://cds-api:8081 \
             hooks.cache.redis.host=cds-cache:6379 \
             hooks.cache.redis.password=cds \
@@ -76,7 +76,7 @@ services:
             repositories.api.http.url=http://cds-api:8081 \
             repositories.cache.redis.host=cds-cache:6379 \
             repositories.cache.redis.password=cds \
-            elasticsearch.url=http://cds-api:8088 \
+            elasticsearch.url=http://cds-elasticsearch:8088 \
             elasticsearch.api.http.url=http://cds-api:8081 \
             elasticsearch.name=cds-elasticsearch \
             elasticsearch.elasticsearch.indexEvents=cds-indexEvents \
