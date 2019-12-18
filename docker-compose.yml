@@ -63,16 +63,20 @@ services:
             hatchery.swarm.ratioService=50 \
             hatchery.swarm.dockerEngines.default.host=unix:///var/run/docker.sock \
             hatchery.swarm.dockerEngines.default.maxContainers=4 \
+            hooks.url=http://cds-vcs:8083 \
             hooks.api.http.url=http://cds-api:8081 \
             hooks.cache.redis.host=cds-cache:6379 \
             hooks.cache.redis.password=cds \
+            vcs.url=http://cds-vcs:8084 \
             vcs.api.http.url=http://cds-api:8081 \
             vcs.cache.redis.host=cds-cache:6379 \
             vcs.cache.redis.password=cds \
+            repositories.url=http://cds-repositories:8085 \
             repositories.basedir=/app/repositories \
             repositories.api.http.url=http://cds-api:8081 \
             repositories.cache.redis.host=cds-cache:6379 \
             repositories.cache.redis.password=cds \
+            elasticsearch.url=http://cds-api:8088 \
             elasticsearch.api.http.url=http://cds-api:8081 \
             elasticsearch.name=cds-elasticsearch \
             elasticsearch.elasticsearch.indexEvents=cds-indexEvents \
@@ -182,6 +186,11 @@ services:
     links:
        - cds-api
        - cds-cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/mon/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
 
   cds-vcs:
     image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
@@ -192,7 +201,7 @@ services:
        - cds-api
        - cds-cache
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/mon/version"]
+      test: ["CMD", "curl", "-f", "http://localhost:8084/mon/version"]
       interval: 30s
       timeout: 10s
       retries: 6
