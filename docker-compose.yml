@@ -229,7 +229,7 @@ services:
     command: >
         sh -c "
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml \
-            log.level=debug";
+            ${CDS_EDIT_CONFIG}";
     volumes:
       - cds-conf-volume:/app/conf
 
