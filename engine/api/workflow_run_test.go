@@ -976,9 +976,9 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 func Test_resyncWorkflowRunHandlerError(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -986,7 +986,7 @@ func Test_resyncWorkflowRunHandlerError(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -1019,7 +1019,7 @@ func Test_resyncWorkflowRunHandlerError(t *testing.T) {
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	w := sdk.Workflow{
@@ -1050,11 +1050,11 @@ func Test_resyncWorkflowRunHandlerError(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(context.TODO(), db, api.Cache, proj2, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, proj2))
+	w1, err := workflow.Load(context.TODO(), db, api.Cache, proj2, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -1098,8 +1098,8 @@ func Test_resyncWorkflowRunHandlerError(t *testing.T) {
 		var wrGet sdk.WorkflowRun
 		assert.NoError(t, json.Unmarshal(recGet.Body.Bytes(), &wrGet))
 
-		if wrGet.Status != sdk.StatusPending.String() {
-			assert.Equal(t, sdk.StatusBuilding.String(), wrGet.Status)
+		if wrGet.Status != sdk.StatusPending {
+			assert.Equal(t, sdk.StatusBuilding, wrGet.Status)
 			break
 		}
 		t.Logf("workflow run response %+v\n", wrGet)
