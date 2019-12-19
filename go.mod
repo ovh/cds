@@ -53,7 +53,7 @@ require (
 	github.com/fatih/structs v1.0.0
 	github.com/fortytw2/leaktest v1.2.0 // indirect
 	github.com/fsamin/go-dump v1.0.9
-	github.com/fsamin/go-repo v0.1.3
+	github.com/fsamin/go-repo v0.1.4
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
 	github.com/garyburd/redigo v1.6.0 // indirect
@@ -125,7 +125,7 @@ require (
 	github.com/mattn/go-isatty v0.0.9 // indirect
 	github.com/mattn/go-runewidth v0.0.1 // indirect
 	github.com/mattn/go-sqlite3 v1.9.0 // indirect
-	github.com/mattn/go-zglob v0.0.0-20171230104132-4959821b4817
+	github.com/mattn/go-zglob v0.0.1
 	github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
 	github.com/mgutz/ansi v0.0.0-20150914162238-c286dcecd19f
 	github.com/mgutz/logxi v0.0.0-20161027140823-aebf8a7d67ab // indirect
