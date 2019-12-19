@@ -5,7 +5,7 @@ pay attention to a few things:
 
 1. your code must follow the coding style rules
 2. your code must be fully documented
-3. your work must be signed
+3. your work must respect the Developer Certificate of Origin explained below
 4. GitHub Pull Requests
 
 ## Coding and documentation Style:
@@ -36,9 +36,6 @@ Since it has been decided to squash all the commits of a pull request, we ask yo
 
 CDS is licensed under a (modified) BSD license. Anything contributed to
 CDS must be released under this license.
-
-When introducing a new file into the project, please make sure it has a
-copyright header making clear under which license it''s being released.
 
 ## Developer Certificate of Origin:
 

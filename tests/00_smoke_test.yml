@@ -6,7 +6,6 @@ vars:
   hatchery.url: 'http://localhost:8086'
   hooks.url: 'http://localhost:8083'
   cdsctl : 'cdsctl'
-  smtpmock.url: 'http://localhost:2024'
 
 
 testcases:
@@ -41,11 +40,3 @@ testcases:
 - name: Check CLI binary is available
   steps:  
   - script: '[ -f {{.cdsctl}} ]'
-
-- name: Check SMTP mock
-  steps:  
-  - type: http
-    method: GET
-    url: '{{.smtpmock.url}}'
-    retry: 10
-    delay: 10

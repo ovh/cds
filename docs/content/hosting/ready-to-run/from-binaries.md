@@ -23,7 +23,7 @@ mkdir $HOME/cds
 cd cds
 
 LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d '"' -f 4)
-OS=linux # could be linux, darwin, windows
+OS=linux # could be linux, darwin, windows, freebsd
 ARCH=amd64 # could be 386, arm, amd64, arm64
 
 # GET Binaries from GitHub
@@ -54,7 +54,7 @@ Generate a **[Configuration File]({{<relref "/hosting/configuration.md" >}})**
 cd $HOME/cds
 
 ./cds-engine-linux-amd64 config new > $HOME/cds/conf.toml
-./cds-engine-linux-amd64 download workers -f $HOME/cds/conf.toml
+./cds-engine-linux-amd64 download workers --config $HOME/cds/conf.toml
 ./cds-engine-linux-amd64 start api --config $HOME/cds/conf.toml
 ```
 

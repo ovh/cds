@@ -58,7 +58,7 @@ $(TARGET_PLUGINS_DIST):
 gobuild:
 	@if go tool dist list | grep "$$GOOS" | grep "$$GOARCH" > /dev/null; then \
 		if [ -f $(PACKAGE)/go.mod ]; then \
-			cd $(abspath $(PACKAGE)) && GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(abspath $(OUTPUT)); \
+			cd $(abspath $(PACKAGE)) && GOOS=$$GOOS GOARCH=$$GOARCH CGO_ENABLED=0 $(GO_BUILD) $(TARGET_LDFLAGS) -o $(abspath $(OUTPUT)); \
 		fi; \
 	fi
 

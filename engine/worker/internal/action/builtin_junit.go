@@ -46,7 +46,7 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 		var vf venom.Tests
 		if err := xml.Unmarshal(data, &vf); err != nil {
 			// Check if file contains testsuite only (and no testsuites)
-			if s, ok := parseTestsuiteAlone(data); ok {
+			if s, ok := ParseTestsuiteAlone(data); ok {
 				ftests.TestSuites = append(ftests.TestSuites, s)
 			}
 			tests.TestSuites = append(tests.TestSuites, ftests.TestSuites...)
@@ -56,7 +56,7 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 	}
 
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("%d", len(tests.TestSuites))+" Total Testsuite(s)")
-	reasons := computeStats(&res, &tests)
+	reasons := ComputeStats(&res, &tests)
 	for _, r := range reasons {
 		wk.SendLog(ctx, workerruntime.LevelInfo, r)
 	}
@@ -72,9 +72,9 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 	return res, nil
 }
 
-// computeStats computes failures / errors on testSuites,
+// ComputeStats computes failures / errors on testSuites,
 // set result.Status and return a list of log to send to API
-func computeStats(res *sdk.Result, v *venom.Tests) []string {
+func ComputeStats(res *sdk.Result, v *venom.Tests) []string {
 	// update global stats
 	for _, ts := range v.TestSuites {
 		nSkipped := 0
@@ -171,7 +171,7 @@ func computeStats(res *sdk.Result, v *venom.Tests) []string {
 	return reasons
 }
 
-func parseTestsuiteAlone(data []byte) (venom.TestSuite, bool) {
+func ParseTestsuiteAlone(data []byte) (venom.TestSuite, bool) {
 	var s venom.TestSuite
 	err := xml.Unmarshal([]byte(data), &s)
 	if err != nil {

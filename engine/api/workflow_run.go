@@ -277,6 +277,14 @@ func (api *API) resyncWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, workflow.LoadOptions{Minimal: true, DeepPipeline: false})
+		if err != nil {
+			return sdk.WrapError(err, "cannot load workflow %s/%s", key, name)
+		}
+		if wf.FromRepository != "" {
+			return sdk.ErrWorkflowAsCodeResync
+		}
+
 		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run [%s/%d]", name, number)
