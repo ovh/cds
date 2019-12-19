@@ -5,7 +5,6 @@ RUN apt-get update && \
 COPY dist/cds-engine-* /app/
 COPY dist/cdsctl-* /app/
 COPY dist/cds-worker-* /app/
-COPY dist/schema-* /app/
 COPY dist/sql.tar.gz /app/
 COPY dist/ui.tar.gz /app/
 
