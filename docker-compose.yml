@@ -14,58 +14,124 @@ services:
   cds-cache:
     image: redis:alpine
     command: redis-server --requirepass cds
-    ports:
-      - "6379:6379"
+    restart: always
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.7.2
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - cds-elasticsearch-volume:/usr/share/elasticsearch/data
+    restart: always
 
   cds-migrate:
-    image: ovhcom/cds-engine:latest
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
     command: /app/cds-engine-linux-amd64 database upgrade --db-host cds-db --db-user cds --db-password cds --db-name cds --db-sslmode disable  --migrate-dir /app/sql
     links:
        - cds-db
 
-  cds-api:
-    image: ovhcom/cds-engine:latest
-    command: sh -c "/app/cds-engine-linux-amd64 start api"
+  cds-prepare:
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    command: >
+        sh -c "
+        /app/cds-engine-linux-amd64 config new > /app/conf/conf.toml;
+        mkdir -p /app/artifacts /app/repositories /app/hatchery-local;
+        chown -R cds:cds /app/conf /app/artifacts /app/repositories /app/hatchery-local;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml \
+            api.artifact.local.baseDirectory=/app/artifacts \
+            api.cache.redis.host=cds-cache:6379 \
+            api.cache.redis.password=cds \
+            api.database.connectTimeout=10 \
+            api.database.host=cds-db \
+            api.database.name=cds \
+            api.database.user=cds \
+            api.database.password=cds \
+            api.database.sslmode=disable \
+            api.directories.download=/app \
+            api.url.api=http://${HOSTNAME}:8081 \
+            api.url.ui=http://${HOSTNAME}:8080 \
+            api.log.level=info \
+            api.smtp.disable=true \
+            hatchery.local.commonConfiguration.api.http.url=http://cds-api:8081 \
+            hatchery.local.basedir=/app/hatchery-local \
+            hatchery.swarm.commonConfiguration.api.http.url=http://cds-api:8081 \
+            hatchery.swarm.ratioService=50 \
+            hatchery.swarm.dockerEngines.default.host=unix:///var/run/docker.sock \
+            hatchery.swarm.dockerEngines.default.maxContainers=4 \
+            hooks.url=http://cds-hooks:8083 \
+            hooks.api.http.url=http://cds-api:8081 \
+            hooks.cache.redis.host=cds-cache:6379 \
+            hooks.cache.redis.password=cds \
+            vcs.url=http://cds-vcs:8084 \
+            vcs.api.http.url=http://cds-api:8081 \
+            vcs.cache.redis.host=cds-cache:6379 \
+            vcs.cache.redis.password=cds \
+            repositories.url=http://cds-repositories:8085 \
+            repositories.basedir=/app/repositories \
+            repositories.api.http.url=http://cds-api:8081 \
+            repositories.cache.redis.host=cds-cache:6379 \
+            repositories.cache.redis.password=cds \
+            elasticsearch.url=http://cds-elasticsearch:8088 \
+            elasticsearch.api.http.url=http://cds-api:8081 \
+            elasticsearch.name=cds-elasticsearch \
+            elasticsearch.elasticsearch.indexEvents=cds-indexEvents \
+            elasticsearch.elasticsearch.indexMetrics=cds-indexEvents \
+            elasticsearch.elasticsearch.url=http://elasticsearch:9200 \
+            ui.url=http://${HOSTNAME}:8080 \
+            ui.api.http.url=http://cds-api:8081 \
+            ui.hooksURL=http://cds-hooks:8081;
+            echo '';
+            echo '/!\ Please run the export command BELOW, this will be usefull to create admin user';
+            echo '';
+            TOKEN=`/app/cds-engine-linux-amd64 config init-token --config /app/conf/conf.toml`;
+            echo 'export INIT_TOKEN='$$TOKEN;
+            echo '';
+            echo '/!\ Please run the export command ABOVE, this will be usefull to create admin user';
+            echo '';"
+    user: root
     volumes:
-      # Replace /tmp with a consistent and backuped directory or use a cloud storage
-      - /tmp:/app/artifacts
-    environment:
-      CDS_API_DATABASE_HOST: cds-db
-      CDS_API_URL_API: http://${HOSTNAME}:8081
-      CDS_API_URL_UI: http://${HOSTNAME}:2015
-      CDS_API_AUTH_DEFAULTGROUP: cdsdemo
-      CDS_LOG_LEVEL: info
-      CDS_API_CACHE_MODE: redis
-      CDS_API_CACHE_REDIS_HOST: cds-cache:6379
-      CDS_API_CACHE_REDIS_PASSWORD: cds
-      CDS_API_DIRECTORIES_DOWNLOAD: /app
-      CDS_API_DIRECTORIES_KEYS: /app/keys
-      CDS_API_ARTIFACT_LOCAL_BASEDIRECTORY: /app/artifacts
-      CDS_API_AUTH_SHAREDINFRATOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
-      CDS_API_SECRETS_KEY: changeitchangeitchangeitchangeit
-      # This is a test key, you MUST change it
-      # ssh-keygen -t rsa -C "your_email@example.com"
-      CDS_API_AUTH_RSAPRIVATEKEY: "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAKCAQEAj3YCi33CaIiWfhsYz3lxOGjDSxxtA+LM4dDjIFe3Xq+gntcg\n1WKFoAsnHFgC3sOoZKSeIjuBIsGXvfOzOs10EdlU388bAOP51NmsGLtVwBSpYQkQ\nFGb1QricuZy6BZB0JiBM9raz5ikszG3m52opS3pibw19ZyvUSSjHAiXEaJpML0m/\nYiKowrf2bO2cFbSATCDEhK5pDhzllRhLOkST/VH3QSrKL0xydKNjGmmJDlpM2xKT\n7Vbb2DkMPl4kVnYf/XveojS0GSbsQaIS17WEMayP4ch9g27E5GMp0+IZ7w9Dq/ai\n7T+hMqlkFfajB97zTqHFRD4hMITckjpPlPx8WwIDAQABAoIBABpC8xJP8i+qmUn6\ncd9BDu3Rl7Z/PKGSegj4cStxgzrNEa0iGnuVbnqur/krT1MyI/hQfjYsCGaxY7K9\nEtk31QCTdUsHIZ1XHlvNgQiB+p+P6LW/r/bcJheRrfb4bsEoAWsdTJl5NpNyhCXk\nFHnWYDrV64ECyisBxfmiglOtUDgJht1IKgIp9vULWJPQ7/PYRc7R7kpfiSGTPgmP\nLV/20edWfBsbxPR/2rL5azpL3YIkJgNDRrnieDHzuOJ86FzICWq8gLhta9j5FARG\n0PSs0Myy9ucfAu+lVi4S5/GsyfEiljXznGyQxFwR9EZp+BZEBvdFtkIod48d0DQy\nt7xmrEECgYEA8KU+9O1pC/B8/61ZLLMEgq7EQ1qUDZ5cNSIJoTf9vvCQD+hCbtwY\nWgq+MIYR0dNn8MxAmwsZeAFfu9USJNiDKzc7yYSQ4OJXHXk33895UllsZdpaj5cc\nhGkxnr8JMdWLIsmeCF8F9mIQywV+QLmjPQVW8VBYFY4+0dbrfmtIYSECgYEAmJ1U\n6klHtEWv+Msc8Yjg/d5oPQuBy9ilRv97g5ilaHQ4aMDvsiV1HCxER0NA85jjCP+/\nulYwoLWgV+WObbEGeg+B929oHRSFp/XTvEWhoOxAAICMrVwQ6qX5yPOAKtPKmkop\nm6PbzM+QrIRw0cYXEZEVG3Cme8x+sHKQ54CAIfsCgYBGzig3Ar+8zpbI1+V8HHRA\nS1HeC4GyfBzfWVOCByp3CusocwtQ+RuFKtIJDvmhRlW36TE9LUfiIm1bo/bBtp7p\nkUfbJFFIifBd8LO6+53T2BHn6hZpV2oBn74E2mrHKfDVXINOLT9g3jvYsJYUT0qz\ngqWxPRWdygu7zEPgH4rdYQKBgBzvDy9P71k9MQyhLX6ZbdaTuP2B1fzYuRUJ0Nf1\nM77m8d7iXU9QDLDnr5Y3KPRGEx0cp7PjLVr6tEiVy/f97PVtRT2tEHca8fATCi6S\noP8Ka2Ps+z7OyqJCD2ZKzAzSlIHF97d7TGu7Gnmqrl0HCk6ZTAAkzluAPLClN9W8\nJg7LAoGAFxXOBXuGB+Lsbgioka0vM1mGYWEKjobPcQRkMq37b6GdkhMl2A5fH4C+\nuhOrSSJ8cK0UO9ET6DV6V5MuQoEAMVYt8v39fxOnrH7sX2OwTqXOqK7b27vfcY+g\nG6f1bOI7lNhA4uAqZICcXO8cxwEa8xoeuPFT2I0R8tzAD5GhIto=\n-----END RSA PRIVATE KEY-----"
+      - cds-conf-volume:/app/conf
+      - cds-artifacts-volume:/app/artifacts
+      - cds-repositories-volume:/app/repositories
+      - cds-hatchery-local-volume:/app/hatchery-local
+
+  cds-api:
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    command: sh -c "/app/cds-engine-linux-amd64 start api --config /app/conf/conf.toml"
+    volumes:
+      - cds-artifacts-volume:/app/artifacts
+      - cds-conf-volume:/app/conf
     ports:
-      - "8081:8081"
-      - "8082:8082"
+      - "127.0.0.1:8081:8081"
     links:
        - cds-db
        - cds-cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/mon/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
 
   cds-ui:
-    image: ovhcom/cds-engine:latest
-    command: sh -c "/app/cds-engine-linux-amd64 start ui"
-    environment:
-      CDS_UI_HOOKSURL: http://cds-hooks:8083
-      CDS_UI_NAME: cds-ui
-      CDS_UI_API_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
-      CDS_UI_API_HTTP_URL: http://cds-api:8081
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    command: sh -c "/app/cds-engine-linux-amd64 start ui --config /app/conf/conf.toml"
+    volumes:
+      - cds-conf-volume:/app/conf
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     links:
        - cds-api
        - cds-hooks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/mon/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
 
   # The docker engine must be accessible from this container
   # The hatchery swarm uses standard docker environment variables like
@@ -73,60 +139,114 @@ services:
   # DOCKER_CERT_PATH: /Users/me/.docker/machines/.client
   # DOCKER_TLS_VERIFY: 1
   #
-  # If you don't want to open the docker tcp post, you can bind the docker socket in the volumes section 
+  # If you don't want to open the docker tcp post, you can bind the docker socket in the volumes section
   # and set DOCKER_HOST to unix://var/run/docker.sock
   #
-  # If your are a Docker for Desktop user (Docker4Mac or Docker4Windows) you will probably have to bind 
+  # If your are a Docker for Desktop user (Docker4Mac or Docker4Windows) you will probably have to bind
   # your docker socket to a tcp port with a socat like
   # docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 2375:2375 bobrik/socat TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
   cds-hatchery-swarm:
-    image: ovhcom/cds-engine:latest
-    command: /app/cds-engine-linux-amd64 start hatchery:swarm
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    command: sh -c "/app/cds-engine-linux-amd64 start hatchery:swarm --config /app/conf/conf.toml"
+    volumes:
+      - cds-conf-volume:/app/conf
     environment:
-      CDS_HATCHERY_SWARM_COMMONCONFIGURATION_NAME: hatchery-swarm
-      CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
       DOCKER_HOST: tcp://${HOSTNAME}:2375
-      # CDS_LOG_LEVEL: debug
       # DOCKER_HOST: unix://var/run/docker.sock
       # DOCKER_CERT_PATH: /Users/me/.docker/machines/.client
       # DOCKER_TLS_VERIFY: 1
-      # CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_HTTP_URL will be use by hatchery to communicate with cds-api
-      # and by container spawned by hatchery to download the binary worker from api.
-      CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_HTTP_URL: http://${HOSTNAME}:8081
-      CDS_HATCHERY_SWARM_MAXCONTAINERS: 4
     #volumes:
        # Uncomment this to bind the docker socket
        # - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/mon/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
 
   cds-hatchery-local:
-    image: ovhcom/cds-engine:latest
-    command: sh -c "PATH=$PATH:/app /app/cds-engine-linux-amd64 start hatchery:local"
-    environment:
-      CDS_HATCHERY_LOCAL_COMMONCONFIGURATION_NAME: hatchery-local
-      CDS_HATCHERY_LOCAL_COMMONCONFIGURATION_API_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
-      CDS_HATCHERY_LOCAL_COMMONCONFIGURATION_URL: http://cds-hatchery-local:8086
-      CDS_HATCHERY_LOCAL_COMMONCONFIGURATION_API_HTTP_URL: http://cds-api:8081
-      CDS_HATCHERY_LOCAL_NBPROVISION: 5
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    command: sh -c "/app/cds-engine-linux-amd64 start hatchery:local --config /app/conf/conf.toml"
+    volumes:
+      - cds-conf-volume:/app/conf
+      - cds-hatchery-local-volume:/app/hatchery-local
     links:
        - cds-api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/mon/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
 
   cds-hooks:
-    image: ovhcom/cds-engine:latest
-    command: sh -c "PATH=$PATH:/app /app/cds-engine-linux-amd64 start hooks"
-    environment:
-      CDS_HOOKS_NAME: hooks
-      CDS_HOOKS_URL: http://cds-hooks:8083
-      CDS_HOOKS_URLPUBLIC: http://${HOSTNAME}:8083
-      CDS_HOOKS_API_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
-      CDS_HOOKS_API_HTTP_URL: http://cds-api:8081
-      CDS_HOOKS_CACHE_REDIS_HOST: cds-cache:6379
-      CDS_HOOKS_CACHE_REDIS_PASSWORD: cds
-    ports:
-      - "8083:8083"
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    command: sh -c "/app/cds-engine-linux-amd64 start hooks --config /app/conf/conf.toml"
+    volumes:
+      - cds-conf-volume:/app/conf
     links:
        - cds-api
        - cds-cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/mon/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+
+  cds-vcs:
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    command: sh -c "/app/cds-engine-linux-amd64 start vcs --config /app/conf/conf.toml"
+    volumes:
+      - cds-conf-volume:/app/conf
+    links:
+       - cds-api
+       - cds-cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/mon/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+
+  cds-repositories:
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    command: sh -c "/app/cds-engine-linux-amd64 start repositories --config /app/conf/conf.toml"
+    volumes:
+      - cds-conf-volume:/app/conf
+      - cds-repositories-volume:/app/repositories
+    links:
+       - cds-api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/mon/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+
+  cds-elasticsearch:
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    command: sh -c "/app/cds-engine-linux-amd64 start elasticsearch --config /app/conf/conf.toml"
+    volumes:
+      - cds-conf-volume:/app/conf
+    links:
+      - cds-api
+      - elasticsearch
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/mon/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+
+  cds-edit-config:
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    command: >
+        sh -c "
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml \
+            ${CDS_EDIT_CONFIG}";
+    volumes:
+      - cds-conf-volume:/app/conf
 
 volumes:
   cds-artifacts-volume:
-    driver: local
+  cds-repositories-volume:
+  cds-hatchery-local-volume:
+  cds-conf-volume:
+  cds-elasticsearch-volume:

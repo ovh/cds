@@ -31,7 +31,7 @@ type Configuration struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
 		Port int    `toml:"port" default:"8083" json:"port"`
 	} `toml:"http" comment:"######################\n CDS Hooks HTTP Configuration \n######################" json:"http"`
-	URL              string                          `default:"http://localhost:8083" json:"url"`
+	URL              string                          `toml:"url" default:"http://localhost:8083" json:"url"`
 	URLPublic        string                          `toml:"urlPublic" comment:"Public url for external call (webhook)" json:"urlPublic"`
 	RetryDelay       int64                           `toml:"retryDelay" default:"120" comment:"Execution retry delay in seconds" json:"retryDelay"`
 	RetryError       int64                           `toml:"retryError" default:"3" comment:"Retry execution while this number of error is not reached" json:"retryError"`

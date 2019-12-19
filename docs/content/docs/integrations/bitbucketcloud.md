@@ -53,12 +53,12 @@ Edit the toml file:
   name = "cds-vcs"
 ```
 
-- section `[vcs.UI.http]`
+- section `[vcs.ui.http]`
   - URL of CDS UI. This URL will be used by Bitbucket Cloud as a callback on Oauth2. This url must be accessible by users' browsers.
   
 ```toml
-    [vcs.UI.http]
-      url = "http://localhost:4200"
+    [vcs.ui.http]
+      url = "http://localhost:8080"
 ```
 
 - section `[vcs.api]`
