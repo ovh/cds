@@ -11,7 +11,7 @@ The [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.y
 
 - cds-db service with a PostgreSQL
 - cds-cache service with a Redis
-- elasticsearch service with a Elasticsearch
+- elasticsearch service with an Elasticsearch
 - cds-migrate service to prepare DB tables
 - cds-api service
 - cds-ui service
