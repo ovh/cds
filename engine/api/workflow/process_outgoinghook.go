@@ -113,7 +113,13 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		for k, v := range node.OutGoingHookContext.Config {
 			// If payload run interpolate
 			if k == sdk.Payload {
-				result, err := interpolate.Do(v.Value, sdk.ParametersToMap(hookRun.BuildParameters))
+				// Take all parent parameters without any exceptions
+				allParentParams := make([]sdk.Parameter, 0, len(hookRun.BuildParameters))
+				for _, parentNodeRun := range parentNodeRun {
+					allParentParams = append(allParentParams, parentNodeRun.BuildParameters...)
+				}
+
+				result, err := interpolate.Do(v.Value, sdk.ParametersToMap(allParentParams))
 				if err != nil {
 					return nil, true, sdk.WrapError(err, "unable to interpolate payload %s", v.Value)
 				}
