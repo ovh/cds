@@ -18,13 +18,13 @@
 
 <meta name="description"
     content="This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&quot;&#39; -f 4) OS=linux # could be linux, darwin, windows ARCH=amd64 # could be 386, arm, amd64, arm64 # GET Binaries from GitHub wget https://github.">
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&quot;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd ARCH=amd64 # could be 386, arm, amd64, arm64 # GET Binaries from GitHub wget https://github.">
 <meta property="og:description"
     content="This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&quot;&#39; -f 4) OS=linux # could be linux, darwin, windows ARCH=amd64 # could be 386, arm, amd64, arm64 # GET Binaries from GitHub wget https://github.">
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&quot;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd ARCH=amd64 # could be 386, arm, amd64, arm64 # GET Binaries from GitHub wget https://github.">
 <meta name="twitter:description"
     content="This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&quot;&#39; -f 4) OS=linux # could be linux, darwin, windows ARCH=amd64 # could be 386, arm, amd64, arm64 # GET Binaries from GitHub wget https://github.">
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&quot;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd ARCH=amd64 # could be 386, arm, amd64, arm64 # GET Binaries from GitHub wget https://github.">
 <meta property="og:url" content="https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/">
 <meta property="og:title" content="Run with binaries">
 <meta name="twitter:title" content="Run with binaries">
@@ -270,7 +270,7 @@
 cd cds
 
 LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d '&quot;' -f 4)
-OS=linux # could be linux, darwin, windows
+OS=linux # could be linux, darwin, windows, freebsd
 ARCH=amd64 # could be 386, arm, amd64, arm64
 
 # GET Binaries from GitHub
@@ -299,7 +299,7 @@ tar xzf sql.tar.gz
 <pre><code class="language-bash">cd $HOME/cds
 
 ./cds-engine-linux-amd64 config new &gt; $HOME/cds/conf.toml
-./cds-engine-linux-amd64 download workers -f $HOME/cds/conf.toml
+./cds-engine-linux-amd64 download workers --config $HOME/cds/conf.toml
 ./cds-engine-linux-amd64 start api --config $HOME/cds/conf.toml
 </code></pre>
 

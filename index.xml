@@ -347,7 +347,7 @@ CDS pipelines can be parametrized. This allows you to reuse the same pipeline wh
       
       <guid>https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/</guid>
       <description>This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&amp;quot;&#39; -f 4) OS=linux # could be linux, darwin, windows ARCH=amd64 # could be 386, arm, amd64, arm64 # GET Binaries from GitHub wget https://github.</description>
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&amp;quot;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd ARCH=amd64 # could be 386, arm, amd64, arm64 # GET Binaries from GitHub wget https://github.</description>
     </item>
     
     <item>
