@@ -35,8 +35,8 @@ config.*.toml
 
 # TEST
 tests/fixtures/ITSCWRKFLW1/output
-tests/fixtures/03SCWorkflowRunSimplePlugin/plugin-simple-darwin-amd64
-tests/fixtures/03SCWorkflowRunSimplePlugin/plugin-simple-linux-amd64
+tests/fixtures/04SCWorkflowRunSimplePlugin/plugin-simple-darwin-amd64
+tests/fixtures/04SCWorkflowRunSimplePlugin/plugin-simple-linux-amd64
 
 # UI
 ui/node_modules

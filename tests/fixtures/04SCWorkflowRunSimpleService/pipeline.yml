@@ -1,5 +1,5 @@
 version: v1.0
-name: 03SCWorkflowRunSimpleService-PIPELINE
+name: 04SCWorkflowRunSimpleService-PIPELINE
 stages:
 - Build
 jobs:

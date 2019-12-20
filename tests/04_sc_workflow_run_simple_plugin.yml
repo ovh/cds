@@ -1,16 +1,16 @@
-name: Deploy a plugin and Create a simple workflow (03SCWorkflowRunSimplePlugin) that use  it and run it
+name: Deploy a plugin and Create a simple workflow (04SCWorkflowRunSimplePlugin) that use  it and run it
 version: "2"
 testcases:
 - name: assert filepath, your current directory must be at the root of this project
   steps:
-  - script: '[ -f ./fixtures/03SCWorkflowRunSimplePlugin/pipeline.yml ]'
-  - script: '[ -f ./fixtures/03SCWorkflowRunSimplePlugin/workflow.yml ]'
+  - script: '[ -f ./fixtures/04SCWorkflowRunSimplePlugin/pipeline.yml ]'
+  - script: '[ -f ./fixtures/04SCWorkflowRunSimplePlugin/workflow.yml ]'
 
 - name: prepare test
   steps:
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 03SCWORKFLOWRUNSIMPLEPLUGIN"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 03scworkflowrunsimpleplugin "
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add 03SCWORKFLOWRUNSIMPLEPLUGIN 03SCWorkflowRunSimplePlugin"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWRUNSIMPLEPLUGIN"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowrunsimpleplugin "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add 04SCWORKFLOWRUNSIMPLEPLUGIN 04SCWorkflowRunSimplePlugin"
   - script: |-
       {{.cdsctl}} -f {{.cdsctl.config}} worker model show buildpack-deps
       if [ $? -ne 0 ]; then
@@ -19,26 +19,26 @@ testcases:
 
 - name: build and deploy plugin
   steps:
-  - script: "cd ./fixtures/03SCWorkflowRunSimplePlugin && make build"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins import ./fixtures/03SCWorkflowRunSimplePlugin/plugin-simple.yml"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add plugin-simple ./fixtures/03SCWorkflowRunSimplePlugin/plugin-darwin-amd64.yml ./fixtures/03SCWorkflowRunSimplePlugin/plugin-simple-darwin-amd64"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add plugin-simple ./fixtures/03SCWorkflowRunSimplePlugin/plugin-linux-amd64.yml ./fixtures/03SCWorkflowRunSimplePlugin/plugin-simple-linux-amd64"
+  - script: "cd ./fixtures/04SCWorkflowRunSimplePlugin && make build"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins import ./fixtures/04SCWorkflowRunSimplePlugin/plugin-simple.yml"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add plugin-simple ./fixtures/04SCWorkflowRunSimplePlugin/plugin-darwin-amd64.yml ./fixtures/04SCWorkflowRunSimplePlugin/plugin-simple-darwin-amd64"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} admin plugins binary-add plugin-simple ./fixtures/04SCWorkflowRunSimplePlugin/plugin-linux-amd64.yml ./fixtures/04SCWorkflowRunSimplePlugin/plugin-simple-linux-amd64"
 
 - name: import pipeline and workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force 03SCWORKFLOWRUNSIMPLEPLUGIN ./fixtures/03SCWorkflowRunSimplePlugin/pipeline.yml
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 03SCWORKFLOWRUNSIMPLEPLUGIN ./fixtures/03SCWorkflowRunSimplePlugin/workflow.yml
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force 04SCWORKFLOWRUNSIMPLEPLUGIN ./fixtures/04SCWorkflowRunSimplePlugin/pipeline.yml
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 04SCWORKFLOWRUNSIMPLEPLUGIN ./fixtures/04SCWorkflowRunSimplePlugin/workflow.yml
 
 - name: run workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run 03SCWORKFLOWRUNSIMPLEPLUGIN 03SCWorkflowRunSimplePlugin-WORKFLOW
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run 04SCWORKFLOWRUNSIMPLEPLUGIN 04SCWorkflowRunSimplePlugin-WORKFLOW
     assertions:
     - result.code ShouldEqual 0
-    - "result.systemout ShouldContainSubstring Workflow 03SCWorkflowRunSimplePlugin-WORKFLOW #1 has been launched"
+    - "result.systemout ShouldContainSubstring Workflow 04SCWorkflowRunSimplePlugin-WORKFLOW #1 has been launched"
 
 - name: check workflow
   steps:
-  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 03SCWORKFLOWRUNSIMPLEPLUGIN 03SCWorkflowRunSimplePlugin-WORKFLOW 1 --format json
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNSIMPLEPLUGIN 04SCWorkflowRunSimplePlugin-WORKFLOW 1 --format json
     retry: 10
     delay: 10
     assertions:
@@ -51,5 +51,5 @@ testcases:
 
 - name: check workflow log
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 03SCWORKFLOWRUNSIMPLEPLUGIN 03SCWorkflowRunSimplePlugin-WORKFLOW 1 --pattern Build
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNSIMPLEPLUGIN 04SCWorkflowRunSimplePlugin-WORKFLOW 1 --pattern Build
     - script: grep "Hello, I'm the simple plugin" *.log

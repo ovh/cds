@@ -1,5 +1,5 @@
 version: v1.0
-name: 03SCWorkflowRunWorkerCmd-PIPELINE
+name: 04SCWorkflowRunWorkerCmd-PIPELINE
 stages:
 - Stage1
 - Stage2
@@ -80,7 +80,7 @@ jobs:
   steps:
     - script:
       - set -ex
-      - worker key install --env proj-ssh-03scworkflowrunworkercmd --file id_rsa
+      - worker key install --env proj-ssh-04scworkflowrunworkercmd --file id_rsa
       - cat id_rsa
   requirements:
   - os-architecture: linux/amd64
