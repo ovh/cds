@@ -3,7 +3,7 @@
 # script usage definition
 usage() { 
     echo "Usage: ./test.sh <target...>" 
-    echo "   Available targets: smoke, initialization, cli, workflow, workflow_with_integration, workflow_with_third_parties"
+    echo "   Available targets: smoke_api, smoke_services, initialization, cli, workflow, workflow_with_integration, workflow_with_third_parties"
 } 
 
 # Arguments are mandatory
