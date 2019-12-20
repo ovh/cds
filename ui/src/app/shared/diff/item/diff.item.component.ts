@@ -104,7 +104,9 @@ export class DiffItemComponent implements OnInit, OnChanges {
         if (this.original || this.updated) {
             this.refresh();
         }
-        this.codeMirrorConfig.mode = this.type;
+        if (this.codeMirrorConfig) {
+            this.codeMirrorConfig.mode = this.type;
+        }
     }
 
     refresh() {
@@ -126,7 +128,7 @@ export class DiffItemComponent implements OnInit, OnChanges {
             } catch (e) { }
         }
 
-        let diff = JsDiff.diffLines(original, updated);
+        let diff = JsDiff.diffLines(original + '', updated + '');
 
         if (!Array.isArray(diff)) {
             return;

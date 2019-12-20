@@ -4,12 +4,13 @@
     <button class="ui button" (click)="setSplit()" [class.active]="mode === 'split'">{{'common_split'
         | translate}}</button>
 </div>
-<ng-container *ngFor="let i of items">
+<ng-container *ngFor="let i of items;let idx = index">
     <h4 class="ui top attached header">
         <ng-container *ngIf="i.name">{{i.name}}</ng-container>
         <ng-container *ngIf="i.translate">{{i.translate | translate: i.translateData}}</ng-container>
     </h4>
     <div class="ui attached segment">
-        <app-diff-item [mode]="mode" [type]="i.type" [original]="i.before" [updated]="i.after"></app-diff-item>
+        <app-diff-item *ngIf="idx < 10" [mode]="mode" [type]="i.type" [original]="i.before" [updated]="i.after"></app-diff-item>
+        <ng-container *ngIf="idx >= 10">{{'common_diff_to_much_item' | translate}}</ng-container>
     </div>
 </ng-container>
