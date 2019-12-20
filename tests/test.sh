@@ -75,10 +75,10 @@ check_failure() {
     fi
 }
 
-smoke_tests() {
-    echo "Running smoke tests:"
+smoke_tests_api() {
+    echo "Running smoke tests api:"
     for f in $(ls -1 00_*.yml); do
-        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var hatchery.url=${CDS_HATCHERY_URL} --var hooks.url=${CDS_HOOKS_URL}"
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
         check_failure $? ${f}.output
@@ -99,9 +99,19 @@ initialization_tests() {
     check_failure $? 01_signup_user.yml.output
 }
 
+smoke_tests_services() {
+    echo "Running smoke tests services:"
+    for f in $(ls -1 02_*.yml); do
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL}--var ui.url=${CDS_UI_URL} --var hatchery.url=${CDS_HATCHERY_URL} --var hooks.url=${CDS_HOOKS_URL}"
+        echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
+        ${CMD} >${f}.output 2>&1
+        check_failure $? ${f}.output
+    done
+}
+
 cli_tests() {
     echo "Running CLI tests:"
-    for f in $(ls -1 02_cli*.yml); do
+    for f in $(ls -1 03_cli*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
@@ -111,7 +121,7 @@ cli_tests() {
 
 workflow_tests() {
     echo "Running Workflow tests:"
-    for f in $(ls -1 03_*.yml); do
+    for f in $(ls -1 04_*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
@@ -126,7 +136,7 @@ workflow_with_integration_tests() {
     if [ -z "$OS_USERNAME" ]; then echo "missing OS_* variables"; exit 1; fi
     if [ -z "$OS_PASSWORD" ]; then echo "missing OS_* variables"; exit 1; fi
     echo "Running Workflow with Storage integration tests:"
-    for f in $(ls -1 04_*.yml); do
+    for f in $(ls -1 05_*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL}  --var smtpmock.url=${SMTP_MOCK_URL}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
@@ -138,7 +148,7 @@ workflow_with_third_parties() {
     if [ -z "$CDS_MODEL_REQ" ]; then echo "missing CDS_MODEL_REQ variable"; exit 1; fi
     if [ -z "$CDS_NETWORK_REQ" ]; then echo "missing CDS_NETWORK_REQ variable"; exit 1; fi
     echo "Running Workflow with third parties:"
-    for f in $(ls -1 05_*.yml); do
+    for f in $(ls -1 06_*.yml); do
         CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         ${CMD} >${f}.output 2>&1
@@ -151,10 +161,12 @@ mkdir results
 
 for target in $@; do
     case $target in
-        smoke) 
-            smoke_tests;;
+        smoke_api) 
+            smoke_tests_api;;
         initialization) 
             initialization_tests;;
+        smoke_services) 
+            smoke_tests_services;;
         cli) 
             cli_tests;;
         workflow) 
