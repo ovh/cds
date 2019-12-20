@@ -92,6 +92,7 @@ func runArtifactUpload(wk *currentWorker) BuiltInAction {
 		if !globalError.IsEmpty() {
 			res.Status = sdk.StatusFail.String()
 			res.Reason = fmt.Sprintf("Error: %v", globalError.Error())
+			log.Error("Error while uploading artifact: %v", globalError.Error())
 			return res
 		}
 
