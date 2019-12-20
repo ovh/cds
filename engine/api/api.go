@@ -708,14 +708,14 @@ func (a *API) Serve(ctx context.Context) error {
 		authentication.SessionCleaner(ctx, a.mustDB)
 	}, a.PanicDump())
 
-	migrate.Add(ctx, sdk.Migration{Name: "AddDefaultVCSNotifications", Release: "0.41.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+	migrate.Add(ctx, sdk.Migration{Name: "AddDefaultVCSNotifications", Release: "0.41.0", Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.AddDefaultVCSNotifications(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 	}})
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorAuthenticationUser", Release: "0.41.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+	migrate.Add(ctx, sdk.Migration{Name: "RefactorAuthenticationUser", Release: "0.41.0", Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.RefactorAuthenticationUser(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache)
 	}})
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorAuthenticationAuth", Release: "0.41.0", Mandatory: false, ExecFunc: func(ctx context.Context) error {
-		//return migrate.RefactorAuthenticationAuth(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache, a.Config.URL.API, a.Config.URL.UI)
+	migrate.Add(ctx, sdk.Migration{Name: "RefactorAuthenticationAuth", Release: "0.41.0", Automatic: false, ExecFunc: func(ctx context.Context) error {
+		return migrate.RefactorAuthenticationAuth(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache, a.Config.URL.API, a.Config.URL.UI)
 		return nil
 	}})
 

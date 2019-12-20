@@ -48,20 +48,29 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 					return
 				}
 				if mig != nil {
-					if mig.Status == sdk.MigrationStatusDone || mig.Status == sdk.MigrationStatusCanceled {
+					if mig.Status == sdk.MigrationStatusDone || mig.Status == sdk.MigrationStatusCanceled || mig.Status == sdk.MigrationStatusNotExecuted {
 						log.Info(ctx, "Migration> %s> Already done (status: %s)", currentMigration.Name, mig.Status)
 						return
 					}
 
 					// set the previous migration id for for the case where the migration was reset
 					currentMigration.ID = mig.ID
-				} else {
-					currentMigration.Progress = "Begin"
 					currentMigration.Status = sdk.MigrationStatusInProgress
+				} else {
+					if !migration.Automatic {
+						currentMigration.Status = sdk.MigrationStatusNotExecuted
+					} else {
+						currentMigration.Status = sdk.MigrationStatusInProgress
+						currentMigration.Progress = "Begin"
+					}
 					if err := Insert(db, &currentMigration); err != nil {
 						log.Error(ctx, "Cannot insert migration %s : %v", currentMigration.Name, err)
 						return
 					}
+				}
+
+				if currentMigration.Status != sdk.MigrationStatusInProgress {
+					return
 				}
 
 				log.Info(ctx, "Migration [%s]: begin", currentMigration.Name)
