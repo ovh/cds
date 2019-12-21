@@ -5,6 +5,7 @@ TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 CDS_VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
 GIT_DESCRIBE := $(shell git describe)
 GIT_VERSION := $(if ${GIT_DESCRIBE},${GIT_DESCRIBE},0.42.0-99-snapshot) #TODO fixme
+SHA512 := $(if ifeq ${UNAME} "Darwin",shasum -a 512,sha512sum)
 
 TARGET_ENGINE = engine
 TARGET_WORKER = worker
@@ -41,6 +42,7 @@ WORKER_DIST = $(wildcard engine/worker/dist/*)
 CLI_DIST = $(wildcard cli/cdsctl/dist/*)
 CONTRIB_DIST = $(wildcard contrib/dist/*)
 UI_DIST = ui/ui.tar.gz
+FILES = dist/FILES
 
 TARGET_DIR := dist/
 ALL_DIST = $(ENGINE_DIST) 
@@ -73,16 +75,20 @@ $(ALL_TARGETS):
 	@cp -f $(call get_dist_from_target, $@) $@
 
 dist: $(ALL_TARGETS)
+	$(info sha512 = ${SHA512})
+	rm -f $(FILES)
+	cd dist/ && for i in `ls -p | grep -v /|grep -v FILES`; do echo "$$i;`${SHA512} $$i|cut -d ' ' -f1`" >> FILES; done;
 
 clean: 
 	@rm -rf target
+	@rm -rf dist
 	$(MAKE) clean -C engine
 	$(MAKE) clean -C engine/worker
 	$(MAKE) clean -C cli/cdsctl
 	$(MAKE) clean -C ui
 	$(MAKE) clean -C contrib
 
-deb: $(ALL_TARGETS) target/cds-engine.deb
+deb: dist target/cds-engine.deb
 	
 $(TARGET_DIR)/config.toml.sample:
 	$(TARGET_DIR)/cds-engine-linux-amd64 config new > $(TARGET_DIR)/config.toml.sample
