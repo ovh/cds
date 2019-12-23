@@ -163,5 +163,5 @@ func signupVerifyFunc(v cli.Values) error {
 		return err
 	}
 
-	return doAfterLogin(client, v, signupresponse.APIURL, signupresponse)
+	return doAfterLogin(client, v, signupresponse.APIURL, sdk.ConsumerLocal, signupresponse)
 }

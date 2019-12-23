@@ -37,8 +37,10 @@ func refactorAuthenticationAuth(ctx context.Context, db *gorp.DbMap, store cache
 		return sdk.WithStack(err)
 	}
 
+	var res interface{}
+
 	// Lock the user if it has not been migrated
-	if _, err := db.Exec(`
+	if err := tx.SelectOne(&res, `
 		SELECT *
 		FROM "authentified_user"
 		WHERE id = $1
@@ -50,6 +52,7 @@ func refactorAuthenticationAuth(ctx context.Context, db *gorp.DbMap, store cache
 		FOR UPDATE SKIP LOCKED
 	`, u.ID); err != nil {
 		if err == sql.ErrNoRows {
+			log.Info(ctx, "migrate.RefactorAuthenticationAuth> local auth consumer already exists for %s(%s)", u.Username, u.ID)
 			return nil
 		}
 		return sdk.WithStack(err)

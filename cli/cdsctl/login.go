@@ -132,7 +132,7 @@ func loginRun(v cli.Values) error {
 		return fmt.Errorf("cannot signin: %v", err)
 	}
 
-	return doAfterLogin(client, v, apiURL, res)
+	return doAfterLogin(client, v, apiURL, driverType, res)
 }
 
 func loginRunLocal(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
@@ -224,7 +224,7 @@ func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType, apiURL st
 	return req, nil
 }
 
-func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, res sdk.AuthConsumerSigninResponse) error {
+func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, driverType sdk.AuthConsumerType, res sdk.AuthConsumerSigninResponse) error {
 	noInteractive := v.GetBool("no-interactive")
 	insecureSkipVerifyTLS := v.GetBool("insecure")
 	if insecureSkipVerifyTLS {
@@ -236,9 +236,16 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, res s
 		contextName = os.Getenv("CDS_CONTEXT")
 	}
 
-	signinToken, sessionToken, err := createOrRegenConsumer(apiURL, res.User.Username, res.Token)
-	if err != nil {
-		return err
+	var signinToken, sessionToken string
+	if driverType == sdk.ConsumerBuiltin {
+		signinToken = v.GetString("signin-token")
+		sessionToken = res.Token
+	} else {
+		var err error
+		signinToken, sessionToken, err = createOrRegenConsumer(apiURL, res.User.Username, res.Token)
+		if err != nil {
+			return err
+		}
 	}
 
 	env := v.GetBool("env")

@@ -31,7 +31,7 @@ func RefactorAuthenticationUser(ctx context.Context, db *gorp.DbMap, store cache
 
 	for _, u := range usrs {
 		if err := refactorAuthenticationUser(ctx, db, store, u); err != nil {
-			log.Error(ctx, "migrate.RefactorAuthentication> %v", err)
+			log.Error(ctx, "migrate.refactorAuthenticationUser> %v", err)
 		}
 	}
 
@@ -45,7 +45,8 @@ func refactorAuthenticationUser(ctx context.Context, db *gorp.DbMap, store cache
 	}
 
 	// Lock the user if it has not been migrated
-	query := `
+	var res interface{}
+	if err := tx.SelectOne(&res, `
 		SELECT *
 		FROM "user"
 		WHERE id = $1
@@ -54,13 +55,12 @@ func refactorAuthenticationUser(ctx context.Context, db *gorp.DbMap, store cache
 			FROM authentified_user_migration
 		)
 		FOR UPDATE SKIP LOCKED
-	`
-
-	if _, err := db.Exec(query, u.ID); err != nil {
+	`, u.ID); err != nil {
 		if err == sql.ErrNoRows {
-			return sdk.WithStack(err)
+			log.Info(ctx, "migrate.RefactorAuthenticationUser> authentified_user_migration already exists for %s(%d)", u.Username, u.ID)
+			return nil
 		}
-		return nil
+		return sdk.WithStack(err)
 	}
 
 	log.Info(ctx, "migrate.RefactorAuthenticationUser> starting user migration %s - %s", u.Username, u.Fullname)

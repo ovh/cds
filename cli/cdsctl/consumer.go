@@ -145,7 +145,7 @@ func authConsumerNewRun(v cli.Values) error {
 		for i := range sdk.AuthConsumerScopes {
 			opts[i] = string(sdk.AuthConsumerScopes[i])
 		}
-		choices := cli.AskSelect("Select groups availables for the new consumer", opts...)
+		choices := cli.AskSelect("Select scopes availables for the new consumer", opts...)
 		for _, choice := range choices {
 			scopes = append(scopes, sdk.AuthConsumerScopes[choice])
 		}
