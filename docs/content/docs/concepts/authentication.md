@@ -43,19 +43,19 @@ Other: service
 Scopes list:
 
 - User: access to handlers for user profile and contact management.
-- AccessToken: access to handlers for user authentication management.
+- AccessToken: access to handlers for user authentication management, create new consumers, revoke sessions...
 - Action: access to handlers for action management. 
-- Admin: 
+- Admin: access to admin handlers.
 - Group: access to handlers for group management.
 - Template: access to handlers for workflow template management.
 - Project: access to handlers for project management.
-- Run: 
-- RunExecution: 
-- Hooks: 
-- Worker: 
+- Run: access to handlers for workflow run management.
+- RunExecution.
+- Hooks.
+- Worker. 
 - WorkerModel: access to handlers for worker model management.
-- Hatchery: 
-- Service: 
+- Hatchery.
+- Service.
 
 ## Builtin consumer regen
 

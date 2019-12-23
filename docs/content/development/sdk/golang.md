@@ -9,12 +9,16 @@ card:
 You have to initialize a cdsclient:
 
 ```go
-cfg := cdsclient.Config{
-    Host:  host,
-    Token: token,
-    User:  username,
-}
-client := cdsclient.New(cfg)
+client := cdsclient.New(cdsclient.Config{
+	Host:    host,
+})
+res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{
+	"token": "<signin-token-value>",
+})
+client = cdsclient.New(cdsclient.Config{
+	Host:  host,
+	SessionToken: res.Token,
+})
 ```
 
 and then, you can use it:
@@ -49,24 +53,34 @@ import (
 	"os"
 
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk"
 )
 
 var host, token, username string
 
 func init() {
 	flag.StringVar(&host, "api", "http://localhost:8081", "CDS API URL, ex: http://localhost:8081")
-	flag.StringVar(&token, "token", "", "CDS Token")
+	flag.StringVar(&token, "token", "", "CDS signin token")
 	flag.StringVar(&username, "username", "", "CDS Username")
 }
 
 func main() {
 	flag.Parse()
-	cfg := cdsclient.Config{
-		Host:  host,
-		Token: token,
-		User:  username,
+
+	client := cdsclient.New(cdsclient.Config{
+		Host:    host,
+	})
+	res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{
+		"token": token,
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error while signin:%s", err)
+		os.Exit(1)
 	}
-	client := cdsclient.New(cfg)
+	client = cdsclient.New(cdsclient.Config{
+		Host:  host,
+		SessionToken: res.Token,
+	})
 
 	workers, err := client.WorkerList()
 	if err != nil {
