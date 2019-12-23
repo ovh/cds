@@ -195,6 +195,11 @@ func (api *API) deleteBookWorkflowJobHandler() service.Handler {
 			return err
 		}
 
+		_, ok := api.isHatchery(ctx)
+		if !ok {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		if err := workflow.FreeNodeJobRun(ctx, api.Cache, id); err != nil {
 			return sdk.WrapError(err, "job not booked")
 		}
@@ -265,6 +270,11 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
 			return sdk.WrapError(errc, "invalid id")
+		}
+
+		_, ok := api.isHatchery(ctx)
+		if !ok {
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		observability.Current(ctx, observability.Tag(observability.TagWorkflowNodeJobRun, id))
@@ -529,6 +539,11 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 
 func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
+		_, ok := api.isHatchery(ctx)
+		if !ok {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		var logs []sdk.ServiceLog
 		if err := service.UnmarshalBody(r, &logs); err != nil {
 			return sdk.WrapError(err, "Unable to parse body")
