@@ -216,7 +216,7 @@ steps:
   - '            with open(raw_output_file, "w") as raw_f:'
   - '                for line in lint_result:'
   - '                    raw_f.write(line)'
-  - '            LOG.info("Wrote raw pylint ouput to %s" % raw_output_file)'
+  - '            LOG.info("Wrote raw pylint output to %s" % raw_output_file)'
   - '        else:'
   - '            LOG.info("Pylint result : \n %s" % "\n".join(lint_result))'
   - '        with open(xml_output_file, "w") as xml_f:'

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -150,20 +152,26 @@ func initFromFlags(cmd *cobra.Command, w *internal.CurrentWorker) {
 	hatcheryName := FlagString(cmd, flagHatcheryName)
 	apiEndpoint := FlagString(cmd, flagAPI)
 	if apiEndpoint == "" {
-		log.Error("--api not provided, aborting.")
+		log.Error(context.TODO(), "--api not provided, aborting.")
 		os.Exit(3)
 	}
 
 	token := FlagString(cmd, flagToken)
 	if token == "" {
-		log.Error("--token not provided, aborting.")
+		log.Error(context.TODO(), "--token not provided, aborting.")
 		os.Exit(4)
+	}
+
+	basedir, err := filepath.EvalSymlinks(basedir)
+	if err != nil {
+		log.Error(context.Background(), "symlink error: %v", err)
+		os.Exit(6)
 	}
 
 	fs := afero.NewOsFs()
 	log.Debug("creating basedir %s", basedir)
 	if err := fs.MkdirAll(basedir, os.FileMode(0755)); err != nil {
-		log.Error("basedir error: %v", err)
+		log.Error(context.TODO(), "basedir error: %v", err)
 		os.Exit(5)
 	}
 
@@ -174,7 +182,7 @@ func initFromFlags(cmd *cobra.Command, w *internal.CurrentWorker) {
 		FlagString(cmd, flagModel),
 		FlagBool(cmd, flagInsecure),
 		afero.NewBasePathFs(fs, basedir)); err != nil {
-		log.Error("Cannot init worker: %v", err)
+		log.Error(context.TODO(), "Cannot init worker: %v", err)
 		os.Exit(1)
 	}
 }

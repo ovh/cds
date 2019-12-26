@@ -20,7 +20,7 @@ type gerritClient struct {
 	reviewerToken       string
 }
 
-// gerritConsumer implements vcs.Server and it's used to instanciate a gerritClient
+// gerritConsumer implements vcs.Server and it's used to instantiate a gerritClient
 type gerritConsumer struct {
 	URL                 string `json:"url"`
 	cache               cache.Store
@@ -31,7 +31,7 @@ type gerritConsumer struct {
 	reviewerToken       string
 }
 
-// New instanciate a new gerrit consumer
+// New instantiate a new gerrit consumer
 func New(URL string, store cache.Store, disableStatus bool, disableStatusDetail bool, sshPort int, reviewerName, reviewerToken string) sdk.VCSServer {
 	return &gerritConsumer{
 		URL:                 URL,
@@ -45,5 +45,5 @@ func New(URL string, store cache.Store, disableStatus bool, disableStatusDetail 
 }
 
 func (c *gerritClient) GetAccessToken(_ context.Context) string {
-	return c.reviewerToken
+	return c.username
 }

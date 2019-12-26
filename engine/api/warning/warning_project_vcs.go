@@ -1,6 +1,7 @@
 package warning
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -25,14 +26,14 @@ func (warn unusedProjectVCSWarning) name() string {
 	return sdk.WarningUnusedProjectVCSServer
 }
 
-func (warn unusedProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (warn unusedProjectVCSWarning) compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
 	case fmt.Sprintf("%T", sdk.EventApplicationRepositoryAdd{}):
 		payload, err := e.ToEventApplicationRepositoryAdd()
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventApplicationRepositoryAdd")
 		}
-		if err := removeProjectWarning(db, warn.name(), payload.VCSServer, e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), payload.VCSServer, e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventApplicationRepositoryAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventApplicationRepositoryDelete{}):
@@ -55,7 +56,7 @@ func (warn unusedProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 					"ProjectKey": e.ProjectKey,
 				},
 			}
-			if err := Insert(db, w); err != nil {
+			if err := Insert(ctx, db, w); err != nil {
 				return sdk.WrapError(err, "Unable to insert warning from EventApplicationRepositoryDelete")
 			}
 		}
@@ -80,7 +81,7 @@ func (warn unusedProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 					"ProjectKey": e.ProjectKey,
 				},
 			}
-			if err := Insert(db, w); err != nil {
+			if err := Insert(ctx, db, w); err != nil {
 				return sdk.WrapError(err, "Unable to insert warning from EventProjectVCSServerAdd")
 			}
 		}
@@ -89,7 +90,7 @@ func (warn unusedProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyDelete")
 		}
-		if err := removeProjectWarning(db, warn.name(), payload.VCSServerName, e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), payload.VCSServerName, e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectKeyDelete")
 		}
 	}
@@ -109,14 +110,14 @@ func (warn missingProjectVCSWarning) name() string {
 	return sdk.WarningMissingProjectVCSServer
 }
 
-func (warn missingProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (warn missingProjectVCSWarning) compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
 	case fmt.Sprintf("%T", sdk.EventProjectVCSServerAdd{}):
 		payload, err := e.ToEventProjectVCSServerAdd()
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from ToEventProjectVCSServerAdd")
 		}
-		if err := removeProjectWarning(db, warn.name(), payload.VCSServerName, e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), payload.VCSServerName, e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectVCSServerDelete{}):
@@ -142,7 +143,7 @@ func (warn missingProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) e
 					"ApplicationName": app,
 				},
 			}
-			if err := Insert(db, w); err != nil {
+			if err := Insert(ctx, db, w); err != nil {
 				return sdk.WrapError(err, "Unable to insert warning")
 			}
 		}

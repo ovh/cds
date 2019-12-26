@@ -69,6 +69,11 @@ func (p Permissions) Level() int {
 	return i
 }
 
+// IsMaxLevel returns true if permissions has level 7 (writable + readable + executable)
+func (p Permissions) IsMaxLevel() bool {
+	return p.Level() == 7
+}
+
 type URL struct {
 	APIURL string `json:"api_url"`
 	UIURL  string `json:"ui_url"`

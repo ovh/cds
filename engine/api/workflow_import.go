@@ -67,7 +67,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, errw)
 		}
 
-		wf, globalError := workflow.Parse(proj, ew)
+		wf, globalError := workflow.Parse(ctx, proj, ew)
 		if globalError != nil {
 			return sdk.WrapError(globalError, "postWorkflowPreviewHandler> Unable import workflow %s", ew.Name)
 		}
@@ -155,6 +155,14 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, getAPIConsumer(ctx), workflow.ImportOptions{Force: force})
 		msgListString := translate(r, msgList)
 		if globalError != nil {
+			if len(msgListString) != 0 {
+				sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
+				return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
+			}
+			if len(msgListString) != 0 {
+				sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
+				return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
+			}
 			return sdk.WrapError(globalError, "Unable to import workflow %s", ew.Name)
 		}
 
@@ -163,9 +171,9 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		}
 
 		if wf != nil {
-			event.PublishWorkflowUpdate(proj.Key, *wrkflw, *wf, u)
+			event.PublishWorkflowUpdate(ctx, proj.Key, *wrkflw, *wf, u)
 		} else {
-			event.PublishWorkflowAdd(proj.Key, *wrkflw, u)
+			event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, u)
 		}
 
 		if wrkflw != nil {
@@ -246,6 +254,10 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, u, workflow.ImportOptions{Force: true, WorkflowName: wfName})
 		msgListString := translate(r, msgList)
 		if globalError != nil {
+			if len(msgListString) != 0 {
+				sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
+				return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
+			}
 			return sdk.WrapError(globalError, "Unable to import workflow %s", ew.Name)
 		}
 
@@ -254,7 +266,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		}
 
 		if wf != nil {
-			event.PublishWorkflowUpdate(key, *wrkflw, *wf, u)
+			event.PublishWorkflowUpdate(ctx, key, *wrkflw, *wf, u)
 		}
 
 		if wrkflw != nil {
@@ -283,7 +295,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 
 		btes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Error("postWorkflowPushHandler> Unable to read body: %v", err)
+			log.Error(ctx, "postWorkflowPushHandler> Unable to read body: %v", err)
 			return sdk.ErrWrongRequest
 		}
 		defer r.Body.Close()

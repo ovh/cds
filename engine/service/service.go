@@ -88,8 +88,8 @@ loop:
 	return nil
 }
 
-func (c *Common) Register(cfg sdk.ServiceConfig) error {
-	log.Info("Registing service %s(%T) %s", c.Type(), c, c.Name())
+func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
+	log.Info(ctx, "Registing service %s(%T) %s", c.Type(), c, c.Name())
 
 	// no register for api
 	if c.ServiceType == "api" {
@@ -115,7 +115,7 @@ func (c *Common) Register(cfg sdk.ServiceConfig) error {
 		srv.PublicKey = pubKeyPEM
 	}
 
-	srv2, err := c.Client.ServiceRegister(srv)
+	srv2, err := c.Client.ServiceRegister(ctx, srv)
 	if err != nil {
 		return sdk.WrapError(err, "Register>")
 	}
@@ -124,7 +124,7 @@ func (c *Common) Register(cfg sdk.ServiceConfig) error {
 }
 
 // Heartbeat have to be launch as a goroutine, call DoHeartBeat each 30s
-func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus) error {
+func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context) sdk.MonitoringStatus) error {
 	// no heartbeat for api
 	if c.ServiceType == "api" {
 		return nil
@@ -138,15 +138,17 @@ func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStat
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			if err := c.Client.ServiceHeartbeat(status()); err != nil {
-				log.Warning("%s> Heartbeat failure: %v", c.Name(), err)
+			if err := c.Client.ServiceHeartbeat(status(ctx)); err != nil {
+				log.Warning(ctx, "%s> Heartbeat failure: %v", c.Name(), err)
 				heartbeatFailures++
-			}
 
-			// if register failed too many time, stop heartbeat
-			if heartbeatFailures > c.MaxHeartbeatFailures {
-				return fmt.Errorf("%s> Heartbeat> Register failed excedeed", c.Name())
+				// if register failed too many time, stop heartbeat
+				if heartbeatFailures > c.MaxHeartbeatFailures {
+					return fmt.Errorf("%s> Heartbeat> Register failed excedeed", c.Name())
+				}
+				continue
 			}
+			heartbeatFailures = 0
 		}
 	}
 }

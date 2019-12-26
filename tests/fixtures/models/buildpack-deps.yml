@@ -1,0 +1,7 @@
+name: buildpack-deps
+group: shared.infra
+image: buildpack-deps:buster
+description: ""
+type: docker
+shell: sh -c
+cmd: curl {{.API}}/download/worker/linux/x86_64 -o worker --retry 10 --retry-max-time 120 -C - && chmod +x worker && exec ./worker

@@ -105,11 +105,11 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             .subscribe(nr => {
                 if (nr.stages) {
                     nr.stages.forEach(s => {
-                       if (s.run_jobs) {
-                           s.run_jobs.forEach(rj => {
-                               this.selectedRunJobParameters[rj.id] = rj.parameters;
-                           })
-                       }
+                        if (s.run_jobs) {
+                            s.run_jobs.forEach(rj => {
+                                this.selectedRunJobParameters[rj.id] = rj.parameters;
+                            })
+                        }
                     });
                 }
             })

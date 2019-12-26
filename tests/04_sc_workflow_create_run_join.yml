@@ -1,0 +1,64 @@
+name: Create a simple workflow (ITSCWRKFLW3) and run it
+version: "2"
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./fixtures/ITSCWRKFLW3/ITSCWRKFLW3.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW3/build_api.pip.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW3/build_front.pip.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW3/deploy.pip.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW3/root.pip.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW3/tests.pip.yml ]'
+  - script: |-
+      {{.cdsctl}} -f {{.cdsctl.config}} worker model show buildpack-deps
+      if [ $? -ne 0 ]; then
+          {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml
+      fi
+
+
+- name: Create workflow ITSCWRKFLW3 and run it
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW3"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw3"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW3 ITSCWRKFLW3"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} environment add ITSCWRKFLW3 ITSCWRKFLW3-ENV-PREPROD"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} environment add ITSCWRKFLW3 ITSCWRKFLW3-ENV-PROD"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} application add ITSCWRKFLW3 ITSCWRKFLW3-APP"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW3 ./fixtures/ITSCWRKFLW3/*.yml --skip-update-files"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW"
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW3-WORKFLOW #1 has been launched"
+  - script: "sleep 1"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 1 --format json"
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.payload ShouldBeEmpty
+    - result.systemoutjson.num ShouldEqual 1
+    - result.systemoutjson.status ShouldEqual 'Never Built'
+    - result.systemoutjson.tags ShouldContainSubstring triggered_by
+  - script:  "{{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW -d '{\"git.branch\": \"master\"}'"
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW3-WORKFLOW #2 has been launched"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2 --format json"
+    retry: 10
+    delay: 3
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.status ShouldEqual Building
+    - result.systemoutjson.num ShouldContainSubstring 2
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow stop ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2"
+    retry: 10
+    delay: 3
+    assertions:
+      - result.code ShouldEqual 0
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2 --format json"
+    retry: 10
+    delay: 3
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.status ShouldEqual Stopped
+      - result.systemoutjson.num ShouldContainSubstring 2

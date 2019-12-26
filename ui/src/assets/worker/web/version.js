@@ -1,6 +1,6 @@
 importScripts('../common.js');
 
-onmessage = function (e) {
+onmessage = function () {
     loadVersion();
 };
 

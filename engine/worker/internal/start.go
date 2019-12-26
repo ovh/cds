@@ -11,7 +11,7 @@ import (
 )
 
 func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (mainError error) {
-	log.Info("Starting worker %s", w.Name())
+	log.Info(ctx, "Starting worker %s", w.Name())
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	httpServerCtx, stopHTTPServer := context.WithCancel(ctx)
@@ -34,9 +34,9 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 
 	//Definition of the function which must be called to stop the worker
 	var endFunc = func() {
-		log.Info("Stopping worker %s", w.Name())
-		if err := w.Unregister(); err != nil {
-			log.Error("Unable to unregister: %v", err)
+		log.Info(ctx, "Stopping worker %s", w.Name())
+		if err := w.Unregister(ctx); err != nil {
+			log.Error(ctx, "Unable to unregister: %v", err)
 			mainError = err
 		}
 		refreshTick.Stop()
@@ -44,9 +44,9 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 		stopHTTPServer()
 
 		if err := ctx.Err(); err != nil {
-			log.Warning("Exiting worker: %v", err)
+			log.Warning(ctx, "Exiting worker: %v", err)
 		} else {
-			log.Warning("Exiting worker")
+			log.Warning(ctx, "Exiting worker")
 		}
 	}
 
@@ -54,7 +54,7 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 		if err := processBookedWJob(ctx, w, jobsChan, bookedJobID); err != nil {
 			// Unbook job
 			if errR := w.Client().QueueJobRelease(ctx, bookedJobID); errR != nil {
-				log.Error("runCmd> QueueJobRelease> Cannot release job")
+				log.Error(ctx, "runCmd> QueueJobRelease> Cannot release job")
 			}
 			bookedJobID = 0
 			// this worker was spawned for a job
@@ -67,19 +67,19 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 	} else {
 		sdk.GoRoutine(ctx, "worker.QueuePolling", func(ctx context.Context) {
 			if err := w.Client().QueuePolling(ctx, jobsChan, errsChan, 2*time.Second, "", nil); err != nil {
-				log.Info("Queues polling stopped: %v", err)
+				log.Info(ctx, "Queues polling stopped: %v", err)
 			}
 		})
 	}
 
 	if err := w.Client().WorkerSetStatus(ctx, sdk.StatusWaiting); err != nil {
-		log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %s", err)
+		log.Error(ctx, "WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %s", err)
 	}
 
 	// Errors check loops
 	go func() {
 		for err := range errsChan {
-			log.Error("An error has occured: %v", err)
+			log.Error(ctx, "An error has occured: %v", err)
 			if strings.Contains(err.Error(), "not authenticated") {
 				endFunc()
 				return
@@ -96,7 +96,7 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 				return
 			case <-refreshTick.C:
 				if err := w.Client().WorkerRefresh(ctx); err != nil {
-					log.Error("Heartbeat failed: %v", err)
+					log.Error(ctx, "Heartbeat failed: %v", err)
 					nbErrors++
 					if nbErrors == 5 {
 						errsChan <- err
@@ -127,15 +127,12 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 			var requirementsOK, pluginsOK bool
 			var t string
 			if bookedJobID == 0 { // If we already check the requirements before and it was OK
-				requirementsOK, _ = checkRequirements(w, &j.Job.Action)
-				if j.ID == bookedJobID {
-					t = ", this was my booked job"
-				}
+				requirementsOK, _ = checkRequirements(ctx, w, &j.Job.Action)
 
 				var errPlugins error
-				pluginsOK, errPlugins = checkPluginDeployment(w, j)
+				pluginsOK, errPlugins = checkPluginDeployment(ctx, w, j)
 				if !pluginsOK {
-					log.Error("Plugins doesn't match: %v", errPlugins)
+					log.Error(ctx, "Plugins doesn't match: %v", errPlugins)
 				}
 			} else { // Because already checked previously
 				requirementsOK = true
@@ -146,18 +143,18 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 			if requirementsOK && pluginsOK {
 				log.Debug("checkQueue> Try take the job %d%s", j.ID, t)
 				if err := w.Take(ctx, j); err != nil {
-					log.Info("Unable to run this job  %d. Take info:%s: %v", j.ID, t, err)
+					log.Info(ctx, "Unable to run this job  %d. Take info:%s: %v", j.ID, t, err)
 					bookedJobID = 0
 					errsChan <- err
 				}
 			}
 
 			if err := w.Client().WorkerSetStatus(ctx, sdk.StatusWaiting); err != nil {
-				log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %s", err)
+				log.Error(ctx, "WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %s", err)
 			}
 
 			// Unregister from engine
-			log.Info("Job is done. Unregistering...")
+			log.Info(ctx, "Job is done. Unregistering...")
 			defer endFunc()
 			return nil
 		}
@@ -171,7 +168,7 @@ func processBookedWJob(ctx context.Context, w *CurrentWorker, wjobs chan<- sdk.W
 		return sdk.WrapError(err, "Unable to load workflow node job %d", bookedWJobID)
 	}
 
-	requirementsOK, errRequirements := checkRequirements(w, &wjob.Job.Action)
+	requirementsOK, errRequirements := checkRequirements(ctx, w, &wjob.Job.Action)
 	if !requirementsOK {
 		var details string
 		for _, r := range errRequirements {
@@ -187,7 +184,7 @@ func processBookedWJob(ctx context.Context, w *CurrentWorker, wjobs chan<- sdk.W
 		return fmt.Errorf("processBookedWJob> the worker have no all requirements")
 	}
 
-	pluginsOK, errPlugins := checkPluginDeployment(w, *wjob)
+	pluginsOK, errPlugins := checkPluginDeployment(ctx, w, *wjob)
 	if !pluginsOK {
 		var details = errPlugins.Error()
 

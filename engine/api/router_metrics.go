@@ -1,6 +1,6 @@
 package api
 
-// A part of this file is comming from https://github.com/census-instrumentation/opencensus-go/blob/master/plugin/ochttp/server.go
+// A part of this file is coming from https://github.com/census-instrumentation/opencensus-go/blob/master/plugin/ochttp/server.go
 
 // Copyright 2018, OpenCensus Authors
 //

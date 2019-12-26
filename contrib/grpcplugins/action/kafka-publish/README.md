@@ -115,7 +115,7 @@ After that, the listener should receive files. Every file should be printed in y
     Context 1220 successfully closed
 ```
 
-Note that the context is mark as **closed**. It means that all file have been received and are availabe.
+Note that the context is mark as **closed**. It means that all file have been received and are available.
 In the current directory. a new file and a new directory have been created :
 
 ```shell
@@ -168,7 +168,7 @@ with, for instance `myScript.sh` as following :
     cat $1
 ```
 
-It run this script with the context file as first argument. So you can get the json file, parse it and do what you whant with all the files and artifacts.
+It run this script with the context file as first argument. So you can get the json file, parse it and do what you want with all the files and artifacts.
 
 Our example will prompt:
 

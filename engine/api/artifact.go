@@ -16,7 +16,7 @@ func (api *API) getArtifactsStoreHandler() service.Handler {
 		projectKey := vars["permProjectKey"]
 		integrationName := vars["integrationName"]
 
-		storageDriver, err := objectstore.GetDriver(api.mustDB(), api.SharedStorage, projectKey, integrationName)
+		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, projectKey, integrationName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot init storage driver")
 		}

@@ -25,7 +25,7 @@ func TestLoadConsumer(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	c1 := sdk.AuthConsumer{
 		Name:               sdk.RandomString(10),
@@ -36,7 +36,7 @@ func TestLoadConsumer(t *testing.T) {
 		AuthentifiedUserID: u.ID,
 		IssuedAt:           time.Now(),
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c1))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c1))
 
 	c2 := sdk.AuthConsumer{
 		Name:               sdk.RandomString(10),
@@ -47,7 +47,7 @@ func TestLoadConsumer(t *testing.T) {
 		AuthentifiedUserID: u.ID,
 		IssuedAt:           time.Now(),
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c2))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c2))
 
 	// LoadConsumerByID
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, sdk.RandomString(10))
@@ -95,14 +95,14 @@ func TestInsertConsumer(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	c := sdk.AuthConsumer{
 		Name:               sdk.RandomString(10),
 		AuthentifiedUserID: u.ID,
 		IssuedAt:           time.Now(),
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	require.NoError(t, err)
@@ -117,17 +117,17 @@ func TestUpdateConsumer(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	c := sdk.AuthConsumer{
 		Name:               sdk.RandomString(10),
 		AuthentifiedUserID: u.ID,
 		IssuedAt:           time.Now(),
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	c.Description = sdk.RandomString(10)
-	assert.NoError(t, authentication.UpdateConsumer(db, &c))
+	assert.NoError(t, authentication.UpdateConsumer(context.TODO(), db, &c))
 
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	assert.NoError(t, err)
@@ -141,14 +141,14 @@ func TestDeleteConsumer(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	c := sdk.AuthConsumer{
 		Name:               sdk.RandomString(10),
 		AuthentifiedUserID: u.ID,
 		IssuedAt:           time.Now(),
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	_, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)
 	assert.NoError(t, err)

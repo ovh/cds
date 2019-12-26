@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -28,7 +29,7 @@ var requirementCheckFuncs = map[string]func(w *CurrentWorker, r sdk.Requirement)
 	sdk.OSArchRequirement:        checkOSArchRequirement,
 }
 
-func checkRequirements(w *CurrentWorker, a *sdk.Action) (bool, []sdk.Requirement) {
+func checkRequirements(ctx context.Context, w *CurrentWorker, a *sdk.Action) (bool, []sdk.Requirement) {
 	requirementsOK := true
 	errRequirements := []sdk.Requirement{}
 
@@ -36,7 +37,7 @@ func checkRequirements(w *CurrentWorker, a *sdk.Action) (bool, []sdk.Requirement
 	for _, r := range a.Requirements {
 		ok, err := checkRequirement(w, r)
 		if err != nil {
-			log.Warning("checkQueue> error on checkRequirement %s", err)
+			log.Warning(ctx, "checkQueue> error on checkRequirement %s", err)
 		}
 		if !ok {
 			requirementsOK = false
@@ -67,15 +68,13 @@ func checkPluginRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 	}
 
 	// then try to download the plugin
-	pluginBinary := path.Join(w.Workspace().Name(), binary.Name)
-	if _, err := w.Workspace().Stat(pluginBinary); os.IsNotExist(err) {
+	if _, err := w.BaseDir().Stat(binary.Name); os.IsNotExist(err) {
 		log.Debug("Downloading the plugin %s", binary.Name)
 		//If the file doesn't exist. Download it.
-		fi, err := os.OpenFile(pluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
+		fi, err := w.BaseDir().OpenFile(binary.Name, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
 		if err != nil {
 			return false, err
 		}
-
 		log.Debug("Get the binary plugin %s", r.Name)
 		if err := w.client.PluginGetBinary(r.Name, currentOS, currentARCH, fi); err != nil {
 			_ = fi.Close()
@@ -84,7 +83,7 @@ func checkPluginRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 		//It's downloaded. Close the file
 		_ = fi.Close()
 	} else {
-		log.Debug("plugin binary is in cache %s", pluginBinary)
+		log.Debug("plugin binary is in cache %s", binary.Name)
 	}
 
 	return true, nil
@@ -154,7 +153,7 @@ func checkServiceRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) 
 		for _, ip := range ips {
 			s += s + ip.String() + " "
 		}
-		log.Info("Service requirement %s is ready %s", r.Name, s)
+		log.Info(context.TODO(), "Service requirement %s is ready %s", r.Name, s)
 		return true, nil
 	}
 
@@ -172,7 +171,6 @@ func checkMemoryRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 	// Check env variables in a docker is safer than mem.VirtualMemory
 	case sdk.Docker:
 		var err error
-		// Useful for provisioned worker
 		memoryEnv := os.Getenv("CDS_MODEL_MEMORY")
 		totalMemory, err = strconv.ParseInt(memoryEnv, 10, 64)
 		if err != nil {
@@ -221,7 +219,7 @@ func checkOSArchRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 //  - is not linked to a deployment integration
 //  - is linked to a deployement integration, plugin well downloaded (in this func) and
 //    requirements on the plugins are OK too
-func checkPluginDeployment(w *CurrentWorker, job sdk.WorkflowNodeJobRun) (bool, error) {
+func checkPluginDeployment(ctx context.Context, w *CurrentWorker, job sdk.WorkflowNodeJobRun) (bool, error) {
 	var currentOS = strings.ToLower(sdk.GOOS)
 	var currentARCH = strings.ToLower(sdk.GOARCH)
 	var binary *sdk.GRPCPluginBinary
@@ -248,7 +246,7 @@ func checkPluginDeployment(w *CurrentWorker, job sdk.WorkflowNodeJobRun) (bool, 
 	for _, r := range binary.Requirements {
 		ok, err := checkRequirement(w, r)
 		if err != nil {
-			log.Warning("checkQueue> error on checkRequirement %s", err)
+			log.Warning(ctx, "checkQueue> error on checkRequirement %s", err)
 		}
 		if !ok {
 			return false, fmt.Errorf("plugin requirement %s does not match", r.Name)
@@ -256,8 +254,8 @@ func checkPluginDeployment(w *CurrentWorker, job sdk.WorkflowNodeJobRun) (bool, 
 	}
 
 	// then try to download the plugin
-	integrationPluginBinary := path.Join(w.Workspace().Name(), binary.Name)
-	if _, err := w.Workspace().Stat(integrationPluginBinary); os.IsNotExist(err) {
+	integrationPluginBinary := path.Join(w.BaseDir().Name(), binary.Name)
+	if _, err := w.BaseDir().Stat(integrationPluginBinary); os.IsNotExist(err) {
 		log.Debug("Downloading the plugin %s", binary.PluginName)
 		//If the file doesn't exist. Download it.
 		fi, err := os.OpenFile(integrationPluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
@@ -275,7 +273,7 @@ func checkPluginDeployment(w *CurrentWorker, job sdk.WorkflowNodeJobRun) (bool, 
 		log.Debug("plugin binary is in cache")
 	}
 
-	log.Info("plugin successfully downloaded: %#v", binary.Name)
+	log.Info(ctx, "plugin successfully downloaded: %#v", binary.Name)
 
 	return true, nil
 }

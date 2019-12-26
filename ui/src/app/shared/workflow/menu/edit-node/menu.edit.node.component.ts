@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { IPopup } from '@richardlt/ng2-semantic-ui';
-import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
@@ -48,7 +47,6 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
     @Input() popup: IPopup;
     @Input() readonly = true;
     @Output() event = new EventEmitter<string>();
-    permissionEnum = PermissionValue;
     runnable: boolean;
     storeSubscription: Subscription;
     workflow: Workflow;

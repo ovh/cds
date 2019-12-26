@@ -12,9 +12,7 @@ import (
 )
 
 // InitHatchery create new client for vsphere
-func (h *HatcheryVSphere) InitHatchery() error {
-	ctx := context.Background()
-
+func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	// Connect and login to ESX or vCenter
 	c, errNc := h.newClient(ctx)
 	if errNc != nil {

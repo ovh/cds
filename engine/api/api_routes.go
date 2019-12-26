@@ -27,7 +27,7 @@ func (api *API) InitRouter() {
 
 	r := api.Router
 
-	log.Info("Initializing Events broker")
+	log.Info(api.Router.Background, "Initializing Events broker")
 	// Initialize event broker
 	api.eventsBroker = &eventsBroker{
 		router:   api.Router,
@@ -43,15 +43,15 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/me", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getAuthMe))
 	r.Handle("/auth/scope", ScopeNone(), r.GET(api.getAuthScopesHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/signup", ScopeNone(), r.POST(api.postAuthLocalSignupHandler, Auth(false)))
-	r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.postAuthLocalSigninHandler, Auth(false)))
+	r.Handle("/auth/consumer/local/signin", ScopeNone(), r.POST(api.postAuthLocalSigninHandler, Auth(false), MaintenanceAware()))
 	r.Handle("/auth/consumer/local/verify", ScopeNone(), r.POST(api.postAuthLocalVerifyHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/askReset", ScopeNone(), r.POST(api.postAuthLocalAskResetHandler, Auth(false)))
 	r.Handle("/auth/consumer/local/reset", ScopeNone(), r.POST(api.postAuthLocalResetHandler, Auth(false)))
-	r.Handle("/auth/consumer/builtin/signin", ScopeNone(), r.POST(api.postAuthBuiltinSigninHandler, Auth(false)))
+	r.Handle("/auth/consumer/builtin/signin", ScopeNone(), r.POST(api.postAuthBuiltinSigninHandler, Auth(false), MaintenanceAware()))
 	r.Handle("/auth/consumer/worker/signin", ScopeNone(), r.POST(api.postRegisterWorkerHandler, Auth(false), MaintenanceAware()))
 	r.Handle("/auth/consumer/worker/signout", ScopeNone(), r.POST(api.postUnregisterWorkerHandler, MaintenanceAware()))
 	r.Handle("/auth/consumer/{consumerType}/askSignin", ScopeNone(), r.GET(api.getAuthAskSigninHandler, Auth(false)))
-	r.Handle("/auth/consumer/{consumerType}/signin", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postAuthSigninHandler, Auth(false)))
+	r.Handle("/auth/consumer/{consumerType}/signin", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postAuthSigninHandler, Auth(false), MaintenanceAware()))
 	r.Handle("/auth/consumer/{consumerType}/detach", Scope(sdk.AuthConsumerScopeAccessToken), r.POST(api.postAuthDetachHandler))
 	r.Handle("/auth/consumer/signout", ScopeNone(), r.POST(api.postAuthSignoutHandler))
 
@@ -107,6 +107,9 @@ func (api *API) InitRouter() {
 
 	// Download file
 	r.Handle("/download", ScopeNone(), r.GET(api.downloadsHandler))
+	r.Handle("/download/plugin/{name}/binary/{os}/{arch}", ScopeNone(), r.GET(api.getGRPCluginBinaryHandler, Auth(false)))
+	r.Handle("/download/plugin/{name}/binary/{os}/{arch}/infos", ScopeNone(), r.GET(api.getGRPCluginBinaryInfosHandler))
+
 	r.Handle("/download/{name}/{os}/{arch}", ScopeNone(), r.GET(api.downloadHandler, Auth(false)))
 
 	// Group
@@ -297,7 +300,7 @@ func (api *API) InitRouter() {
 	// Project storage
 	r.Handle("/project/{permProjectKey}/storage/{integrationName}", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.getArtifactsStoreHandler))
 	r.Handle("/project/{permProjectKey}/storage/{integrationName}/artifact/{ref}/url", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, EnableTracing(), MaintenanceAware()))
-	r.Handle("/project/{permProjectKey}/storage/{integrationName}/artifact/{ref}/url/callback", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobArtifactCallbackHandler, EnableTracing(), MaintenanceAware()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/artifact/{ref}/url/callback", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, EnableTracing(), MaintenanceAware()))
 	r.Handle("/project/{permProjectKey}/storage/{integrationName}/staticfiles/{name}", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobStaticFilesHandler, EnableTracing(), MaintenanceAware()))
 
 	// Cache

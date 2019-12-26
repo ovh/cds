@@ -78,14 +78,14 @@ func TestMissingProjectVariablePipelineJob(t *testing.T) {
 
 	// Compute event
 	warnToTest := missingProjectVariablePipelineJob{}
-	test.NoError(t, warnToTest.compute(db, eDelete))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eDelete))
 
 	// Check warning exist
 	warnsDelete, errAfter := GetByProject(db, proj.Key)
 	test.NoError(t, errAfter)
 	assert.Equal(t, 1, len(warnsDelete))
 
-	(&warnsDelete[0]).ComputeMessage("en")
+	(&warnsDelete[0]).ComputeMessage(context.TODO(), "en")
 	t.Logf("%s", warnsDelete[0].Message)
 
 	// Create update var event
@@ -98,14 +98,14 @@ func TestMissingProjectVariablePipelineJob(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadUpdate),
 		Payload:    structs.Map(ePayloadUpdate),
 	}
-	test.NoError(t, warnToTest.compute(db, eUpdate))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eUpdate))
 	// Check warning exist
 	warnsUpdate, errUpdate := GetByProject(db, proj.Key)
 	test.NoError(t, errUpdate)
 	assert.Equal(t, 0, len(warnsUpdate))
 
 	// Recreate warning
-	test.NoError(t, warnToTest.compute(db, eDelete))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eDelete))
 
 	// Check warning exist
 	warnsDelete2, errAfter2 := GetByProject(db, proj.Key)
@@ -121,7 +121,7 @@ func TestMissingProjectVariablePipelineJob(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadAdd),
 		Payload:    structs.Map(ePayloadAdd),
 	}
-	test.NoError(t, warnToTest.compute(db, eAdd))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eAdd))
 	// Check warning exist
 	warnsAdd, errAdd := GetByProject(db, proj.Key)
 	test.NoError(t, errAdd)
@@ -167,14 +167,14 @@ func TestMissingProjectVariablePipelineParameter(t *testing.T) {
 
 	// Compute event
 	warnToTest := missingProjectVariablePipelineParameter{}
-	test.NoError(t, warnToTest.compute(db, eDelete))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eDelete))
 
 	// Check warning exist
 	warnsDelete, errAfter := GetByProject(db, proj.Key)
 	test.NoError(t, errAfter)
 	assert.Equal(t, 1, len(warnsDelete))
 
-	(&warnsDelete[0]).ComputeMessage("en")
+	(&warnsDelete[0]).ComputeMessage(context.TODO(), "en")
 	t.Logf("%s", warnsDelete[0].Message)
 
 	// Create update var event
@@ -187,14 +187,14 @@ func TestMissingProjectVariablePipelineParameter(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadUpdate),
 		Payload:    structs.Map(ePayloadUpdate),
 	}
-	test.NoError(t, warnToTest.compute(db, eUpdate))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eUpdate))
 	// Check warning exist
 	warnsUpdate, errUpdate := GetByProject(db, proj.Key)
 	test.NoError(t, errUpdate)
 	assert.Equal(t, 0, len(warnsUpdate))
 
 	// Recreate warning
-	test.NoError(t, warnToTest.compute(db, eDelete))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eDelete))
 
 	// Check warning exist
 	warnsDelete2, errAfter2 := GetByProject(db, proj.Key)
@@ -210,7 +210,7 @@ func TestMissingProjectVariablePipelineParameter(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadAdd),
 		Payload:    structs.Map(ePayloadAdd),
 	}
-	test.NoError(t, warnToTest.compute(db, eAdd))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eAdd))
 	// Check warning exist
 	warnsAdd, errAdd := GetByProject(db, proj.Key)
 	test.NoError(t, errAdd)
@@ -256,14 +256,14 @@ func TestMissingProjectVariableApplication(t *testing.T) {
 
 	// Compute event
 	warnToTest := missingProjectVariableApplication{}
-	test.NoError(t, warnToTest.compute(db, eDelete))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eDelete))
 
 	// Check warning exist
 	warnsDelete, errAfter := GetByProject(db, proj.Key)
 	test.NoError(t, errAfter)
 	assert.Equal(t, 1, len(warnsDelete))
 
-	(&warnsDelete[0]).ComputeMessage("en")
+	(&warnsDelete[0]).ComputeMessage(context.TODO(), "en")
 	t.Logf("%s", warnsDelete[0].Message)
 
 	// Create update var event
@@ -276,14 +276,14 @@ func TestMissingProjectVariableApplication(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadUpdate),
 		Payload:    structs.Map(ePayloadUpdate),
 	}
-	test.NoError(t, warnToTest.compute(db, eUpdate))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eUpdate))
 	// Check warning exist
 	warnsUpdate, errUpdate := GetByProject(db, proj.Key)
 	test.NoError(t, errUpdate)
 	assert.Equal(t, 0, len(warnsUpdate))
 
 	// Recreate warning
-	test.NoError(t, warnToTest.compute(db, eDelete))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eDelete))
 
 	// Check warning exist
 	warnsDelete2, errAfter2 := GetByProject(db, proj.Key)
@@ -299,7 +299,7 @@ func TestMissingProjectVariableApplication(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadAdd),
 		Payload:    structs.Map(ePayloadAdd),
 	}
-	test.NoError(t, warnToTest.compute(db, eAdd))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eAdd))
 	// Check warning exist
 	warnsAdd, errAdd := GetByProject(db, proj.Key)
 	test.NoError(t, errAdd)
@@ -372,14 +372,14 @@ func TestMissingProjectVariableWorkflow(t *testing.T) {
 
 	// Compute event
 	warnToTest := missingProjectVariableWorkflow{}
-	test.NoError(t, warnToTest.compute(db, eDelete))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eDelete))
 
 	// Check warning exist
 	warnsDelete, errAfter := GetByProject(db, proj.Key)
 	test.NoError(t, errAfter)
 	assert.Equal(t, 1, len(warnsDelete))
 
-	(&warnsDelete[0]).ComputeMessage("en")
+	(&warnsDelete[0]).ComputeMessage(context.TODO(), "en")
 	t.Logf("%s", warnsDelete[0].Message)
 
 	// Create update var event
@@ -392,14 +392,14 @@ func TestMissingProjectVariableWorkflow(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadUpdate),
 		Payload:    structs.Map(ePayloadUpdate),
 	}
-	test.NoError(t, warnToTest.compute(db, eUpdate))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eUpdate))
 	// Check warning exist
 	warnsUpdate, errUpdate := GetByProject(db, proj.Key)
 	test.NoError(t, errUpdate)
 	assert.Equal(t, 0, len(warnsUpdate))
 
 	// Recreate warning
-	test.NoError(t, warnToTest.compute(db, eDelete))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eDelete))
 
 	// Check warning exist
 	warnsDelete2, errAfter2 := GetByProject(db, proj.Key)
@@ -415,7 +415,7 @@ func TestMissingProjectVariableWorkflow(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadAdd),
 		Payload:    structs.Map(ePayloadAdd),
 	}
-	test.NoError(t, warnToTest.compute(db, eAdd))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eAdd))
 	// Check warning exist
 	warnsAdd, errAdd := GetByProject(db, proj.Key)
 	test.NoError(t, errAdd)
@@ -460,14 +460,14 @@ func TestMissingProjectVariableEnv(t *testing.T) {
 
 	// Compute event
 	warnToTest := missingProjectVariableEnv{}
-	test.NoError(t, warnToTest.compute(db, eDelete))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eDelete))
 
 	// Check warning exist
 	warnsDelete, errAfter := GetByProject(db, proj.Key)
 	test.NoError(t, errAfter)
 	assert.Equal(t, 1, len(warnsDelete))
 
-	(&warnsDelete[0]).ComputeMessage("en")
+	(&warnsDelete[0]).ComputeMessage(context.TODO(), "en")
 	t.Logf("%s", warnsDelete[0].Message)
 
 	// Create update var event
@@ -480,14 +480,14 @@ func TestMissingProjectVariableEnv(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadUpdate),
 		Payload:    structs.Map(ePayloadUpdate),
 	}
-	test.NoError(t, warnToTest.compute(db, eUpdate))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eUpdate))
 	// Check warning exist
 	warnsUpdate, errUpdate := GetByProject(db, proj.Key)
 	test.NoError(t, errUpdate)
 	assert.Equal(t, 0, len(warnsUpdate))
 
 	// Recreate warning
-	test.NoError(t, warnToTest.compute(db, eDelete))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eDelete))
 
 	// Check warning exist
 	warnsDelete2, errAfter2 := GetByProject(db, proj.Key)
@@ -503,7 +503,7 @@ func TestMissingProjectVariableEnv(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadAdd),
 		Payload:    structs.Map(ePayloadAdd),
 	}
-	test.NoError(t, warnToTest.compute(db, eAdd))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eAdd))
 	// Check warning exist
 	warnsAdd, errAdd := GetByProject(db, proj.Key)
 	test.NoError(t, errAdd)
@@ -538,14 +538,14 @@ func TestUnusedProjectVariableWarningOnApplicationEvent(t *testing.T) {
 
 	// Compute event
 	warnToTest := unusedProjectVariableWarning{}
-	test.NoError(t, warnToTest.compute(db, e))
+	test.NoError(t, warnToTest.compute(context.Background(), db, e))
 
 	// Check warning exist
 	warnsDeleteVar, errDelVar := GetByProject(db, proj.Key)
 	test.NoError(t, errDelVar)
 	assert.Equal(t, 1, len(warnsDeleteVar))
 
-	(&warnsDeleteVar[0]).ComputeMessage("en")
+	(&warnsDeleteVar[0]).ComputeMessage(context.TODO(), "en")
 	t.Logf("%s", warnsDeleteVar[0].Message)
 	t.Logf("%+v", warnsDeleteVar[0])
 
@@ -562,7 +562,7 @@ func TestUnusedProjectVariableWarningOnApplicationEvent(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadAdd),
 		Payload:    structs.Map(ePayloadAdd),
 	}
-	test.NoError(t, warnToTest.compute(db, eAdd))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eAdd))
 
 	// Check warning
 	warnsAddVar, errAddVar := GetByProject(db, proj.Key)
@@ -587,7 +587,7 @@ func TestUnusedProjectVariableWarningOnApplicationEvent(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadUpdate),
 		Payload:    structs.Map(ePayloadUpdate),
 	}
-	test.NoError(t, warnToTest.compute(db, eUpdate))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eUpdate))
 
 	// Check warning
 	warnsUpdateVar, errUpdateVar := GetByProject(db, proj.Key)
@@ -619,14 +619,14 @@ func TestUnusedProjectVariableWarning(t *testing.T) {
 
 	// Compute event
 	warnToTest := unusedProjectVariableWarning{}
-	test.NoError(t, warnToTest.compute(db, e))
+	test.NoError(t, warnToTest.compute(context.Background(), db, e))
 
 	// Check warning exist
 	warnsAfter, errAfter := GetByProject(db, proj.Key)
 	test.NoError(t, errAfter)
 	assert.Equal(t, 1, len(warnsAfter))
 
-	(&warnsAfter[0]).ComputeMessage("en")
+	(&warnsAfter[0]).ComputeMessage(context.TODO(), "en")
 	t.Logf("%s", warnsAfter[0].Message)
 
 	vAfter := sdk.Variable{
@@ -644,7 +644,7 @@ func TestUnusedProjectVariableWarning(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadUpdate),
 		Payload:    structs.Map(ePayloadUpdate),
 	}
-	test.NoError(t, warnToTest.compute(db, eUpdate))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eUpdate))
 
 	// Check that warning disapears
 	warnsUpdate, errAfterUpdate := GetByProject(db, proj.Key)
@@ -661,7 +661,7 @@ func TestUnusedProjectVariableWarning(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadDelete),
 		Payload:    structs.Map(ePayloadDelete),
 	}
-	test.NoError(t, warnToTest.compute(db, eDelete))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eDelete))
 	warnsDelete, errAfterDelete := GetByProject(db, proj.Key)
 	test.NoError(t, errAfterDelete)
 	assert.Equal(t, 0, len(warnsDelete))

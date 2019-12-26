@@ -371,7 +371,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
-	run, err := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, ctx.job.ID)
+	run, err := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, err)
 	require.Equal(t, "Building", run.Status)
 }
@@ -575,7 +575,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 							{
 								Value:   "Fail",
 								Type:    "Assertion error",
-								Message: "Error occured",
+								Message: "Error occurred",
 							},
 						},
 					},
@@ -604,7 +604,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 204, rec.Code)
 
-	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, ctx.job.ID)
+	wNodeJobRun, errJ := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, errJ)
 	nodeRun, errN := workflow.LoadNodeRunByID(api.mustDB(), wNodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
 	require.NoError(t, errN)
@@ -1088,7 +1088,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	wrr, err := workflow.LoadRunByID(db, wrToTest.ID, workflow.LoadRunOptions{})
 	assert.NoError(t, err)
 
-	log.Warning("%s", wrr.Status)
+	log.Warning(context.Background(), "%s", wrr.Status)
 	// Call post coverage report handler
 	// Prepare request
 	vars := map[string]string{

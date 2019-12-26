@@ -18,9 +18,10 @@ onmessage = function (e) {
 
 function loadBuild (user, session, api) {
     loop(2, function () {
-        var url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '?withArtifacts=true&withTests=true&envName=' + encodeURIComponent(envName);
+        var url = `/project/${key}/application/${appName}/pipeline/${pipName}/build/${buildNumber}?withArtifacts=true&withTests=true&envName=${encodeURIComponent(envName)}`;
 
-        var xhr = httpCall(url, api, user, session);
+        var xhr = httpCall(url, api, user, session);ccccccgcdvhvtvcivbbhvrnjdfuegftnfihkiidggikd
+
         if (xhr.status >= 400) {
             return true;
         }

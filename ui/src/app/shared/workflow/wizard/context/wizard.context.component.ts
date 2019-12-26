@@ -11,7 +11,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Environment } from 'app/model/environment.model';
-import { PermissionValue } from 'app/model/permission.model';
 import { IdName, Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { ApplicationService } from 'app/service/application/application.service';
@@ -54,7 +53,6 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     environments: Environment[];
     applications: IdName[];
     integrations: Array<IdName>;
-    permissionEnum = PermissionValue;
     loading: boolean;
     showCheckStatus = false;
 

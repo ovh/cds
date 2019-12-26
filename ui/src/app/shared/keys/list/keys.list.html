@@ -5,7 +5,7 @@
                 <th class="two wide">{{ 'keys_name' | translate }}</th>
                 <th class="two wide">{{ 'keys_type' | translate }}</th>
                 <th class="ten wide">{{ 'keys_public' | translate }}</th>
-                <th class="two wide" *ngIf="edit === permission.READ_WRITE_EXECUTE"></th>
+                <th class="two wide" *ngIf="edit"></th>
             </tr>
         </thead>
         <tbody>
@@ -22,7 +22,7 @@
                 <td>
                     <pre>{{ k.public }}</pre>
                 </td>
-                <td *ngIf="edit === permission.READ_WRITE_EXECUTE">
+                <td *ngIf="edit">
                     <app-delete-button [loading]="loading" (event)="deleteKey(k)"></app-delete-button>
                 </td>
             </tr>

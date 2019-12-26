@@ -118,7 +118,7 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 		}
 
 		if err := application.DeleteVariable(tx, api.Cache, app, varToDelete, getAPIConsumer(ctx)); err != nil {
-			log.Warning("deleteVariableFromApplicationHandler: Cannot delete %s: %s\n", varName, err)
+			log.Warning(ctx, "deleteVariableFromApplicationHandler: Cannot delete %s: %s\n", varName, err)
 			return sdk.WrapError(err, "Cannot delete %s", varName)
 		}
 
@@ -126,7 +126,7 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteVariableApplication(key, *app, *varToDelete, getAPIConsumer(ctx))
+		event.PublishDeleteVariableApplication(ctx, key, *app, *varToDelete, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -174,7 +174,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishUpdateVariableApplication(key, *app, newVar, *variableBefore, getAPIConsumer(ctx))
+		event.PublishUpdateVariableApplication(ctx, key, *app, newVar, *variableBefore, getAPIConsumer(ctx))
 
 		if sdk.NeedPlaceholder(newVar.Type) {
 			newVar.Value = sdk.PasswordPlaceholder
@@ -230,7 +230,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishAddVariableApplication(key, *app, newVar, getAPIConsumer(ctx))
+		event.PublishAddVariableApplication(ctx, key, *app, newVar, getAPIConsumer(ctx))
 
 		if sdk.NeedPlaceholder(newVar.Type) {
 			newVar.Value = sdk.PasswordPlaceholder

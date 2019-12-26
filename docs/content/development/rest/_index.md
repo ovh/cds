@@ -10,23 +10,24 @@ card:
 
 You need two HTTP Headers to request CDS API:
 
-- `Session-Token: your-cds-token`
-- `X-Requested-With: X-CDS-SDK`
+- `Authorization: Bearer your-cds-token`
 
 ```bash
 # List CDS Project
-curl -H "Session-Token: your-cds-token" -H "X-Requested-With: X-CDS-SDK" https://your-cds-api/project
+curl -H "Authorization: Bearer your-cds-token" https://your-cds-api/project
 ```
+
+{{< note >}}
+To generate the CDS token please check [here]({{< relref "/development/sdk/token.md" >}})
+{{< /note >}}
 
 ## About CDS Token
 
-The CDS UI uses a non-persistent token. If you want to play with CDS API, you probably need a persistent token.
+If you want to play with CDS API, you probably need a CDS consumer token.
 
 You can generate it with:
 
-- [cdsctl login]({{< relref "/docs/components/cdsctl/login.md" >}})
-- Code it with the [Go SDK]({{< relref "/development/sdk/golang/_index.md" >}})
-- Call CDS API: POST `/login` with body `{"username":"your-username","password":"your-password"}` and header `-H "X-Requested-With: X-CDS-SDK"`
+- [cdsctl consumer new]({{< relref "/docs/components/cdsctl/consumer/new.md" >}})
 
 ## CDS HTTP Routes
 

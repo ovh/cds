@@ -66,7 +66,7 @@ func Current(ctx context.Context, tags ...trace.Attribute) *trace.Span {
 	return span
 }
 
-// Tag is helper function to instanciate trace.Attribute
+// Tag is helper function to instantiate trace.Attribute
 func Tag(key string, value interface{}) trace.Attribute {
 	return trace.StringAttribute(key, fmt.Sprintf("%v", value))
 }
@@ -79,7 +79,7 @@ func ContextWithTag(ctx context.Context, s ...interface{}) context.Context {
 	for i := 0; i < len(s)-1; i = i + 2 {
 		k, err := tag.NewKey(s[i].(string))
 		if err != nil {
-			log.Error("ContextWithTag> %v", err)
+			log.Error(ctx, "ContextWithTag> %v", err)
 			continue
 		}
 		tags = append(tags, tag.Upsert(k, fmt.Sprintf("%v", s[i+1])))
@@ -95,7 +95,7 @@ func ContextGetTags(ctx context.Context, s ...string) []tag.Mutator {
 	for i := 0; i < len(s); i++ {
 		k, err := tag.NewKey(s[i])
 		if err != nil {
-			log.Error("ContextGetTags> %v", err)
+			log.Error(ctx, "ContextGetTags> %v", err)
 			continue
 		}
 		val, ok := m.Value(k)
@@ -120,7 +120,7 @@ func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Co
 	return ctx, span.End
 }
 
-func findPrimaryKeyFromRequest(req *http.Request, db gorp.SqlExecutor, store cache.Store) (string, bool) {
+func findPrimaryKeyFromRequest(ctx context.Context, req *http.Request, db gorp.SqlExecutor, store cache.Store) (string, bool) {
 	vars := mux.Vars(req)
 	pkey := vars["key"]
 	if pkey == "" {
@@ -138,16 +138,16 @@ func findPrimaryKeyFromRequest(req *http.Request, db gorp.SqlExecutor, store cac
 			cacheKey := cache.Key("api:FindProjetKeyForNodeRunJob:", fmt.Sprintf("%v", id))
 			find, errGet := store.Get(cacheKey, &pkey)
 			if errGet != nil {
-				log.Error("cannot get from cache %s: %v", cacheKey, errGet)
+				log.Error(ctx, "cannot get from cache %s: %v", cacheKey, errGet)
 			}
 			if !find {
-				pkey, err = findProjetKeyForNodeRunJob(db, id)
+				pkey, err = findProjetKeyForNodeRunJob(ctx, db, id)
 				if err != nil {
-					log.Error("tracingMiddleware> %v", err)
+					log.Error(ctx, "tracingMiddleware> %v", err)
 					return "", false
 				}
 				if err := store.SetWithTTL(cacheKey, pkey, 60*15); err != nil {
-					log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+					log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 				}
 			}
 		}

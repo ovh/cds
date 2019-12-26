@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) postApplicationImportHandler() service.Handler {
@@ -64,14 +63,13 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		newApp, msgList, globalError := application.ParseAndImport(tx, api.Cache, proj, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
+		newApp, msgList, globalError := application.ParseAndImport(ctx, tx, api.Cache, proj, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import application %s", eapp.Name)
 			if sdk.ErrorIsUnknown(globalError) {
 				return globalError
 			}
-			log.Warning("%v", globalError)
 			sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
 			return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
 		}
@@ -79,7 +77,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
-		event.PublishAddApplication(proj.Key, *newApp, getAPIConsumer(ctx))
+		event.PublishAddApplication(ctx, proj.Key, *newApp, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}

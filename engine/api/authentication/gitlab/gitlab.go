@@ -79,7 +79,7 @@ func (d authDriver) CheckSigninStateToken(req sdk.AuthConsumerSigninRequest) err
 	return authentication.CheckDefaultSigninStateToken(state)
 }
 
-func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
+func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
 	var info sdk.AuthDriverUserInfo
 
 	config := &oauth2.Config{
@@ -88,8 +88,8 @@ func (d authDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 		},
 	}
 
-	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, http.DefaultClient)
-	t, err := config.Exchange(ctx, req["code"],
+	ctx2 := context.WithValue(ctx, oauth2.HTTPClient, http.DefaultClient)
+	t, err := config.Exchange(ctx2, req["code"],
 		oauth2.SetAuthURLParam("client_id", d.applicationID),
 		oauth2.SetAuthURLParam("client_secret", d.secret),
 		oauth2.SetAuthURLParam("grant_type", "authorization_code"),

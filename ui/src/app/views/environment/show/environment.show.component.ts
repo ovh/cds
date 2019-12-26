@@ -3,7 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Environment } from 'app/model/environment.model';
-import { PermissionValue } from 'app/model/permission.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { AuthentifiedUser } from 'app/model/user.model';
@@ -59,7 +58,6 @@ export class EnvironmentShowComponent implements OnInit {
     environments: Array<Environment> = new Array<Environment>();
     currentUser: AuthentifiedUser;
     usageCount = 0;
-    perm = PermissionValue;
 
     constructor(
         private _route: ActivatedRoute,

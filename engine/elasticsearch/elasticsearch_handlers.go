@@ -35,7 +35,7 @@ func (s *Service) getEventsHandler() service.Handler {
 		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.IndexEvents).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("timestamp", false).From(filters.CurrentItem).Size(15).Do(context.Background())
 		if errR != nil {
 			if strings.Contains(errR.Error(), indexNotFoundException) {
-				log.Warning("elasticsearch> getEventsHandler> %v", errR.Error())
+				log.Warning(ctx, "elasticsearch> getEventsHandler> %v", errR.Error())
 				return service.WriteJSON(w, nil, http.StatusOK)
 			}
 			esReq := fmt.Sprintf(`esClient.Search().Index(%+v).Type("sdk.EventRunWorkflow").Query(%+v).Sort("timestamp", false).From(%+v).Size(15)`, s.Cfg.ElasticSearch.IndexEvents, boolQuery, filters.CurrentItem)
@@ -92,7 +92,7 @@ func (s *Service) getMetricsHandler() service.Handler {
 			Do(context.Background())
 		if errR != nil {
 			if strings.Contains(errR.Error(), indexNotFoundException) {
-				log.Warning("elasticsearch> getMetricsHandler> %v", errR.Error())
+				log.Warning(ctx, "elasticsearch> getMetricsHandler> %v", errR.Error())
 				return service.WriteJSON(w, nil, http.StatusOK)
 			}
 			return sdk.WrapError(errR, "Unable to get result")
@@ -116,7 +116,7 @@ func (s *Service) postMetricsHandler() service.Handler {
 		id := fmt.Sprintf("%s-%d-%d-%d-%s", metric.ProjectKey, metric.WorkflowID, metric.ApplicationID, metric.Num, metric.Key)
 
 		// Get metrics if already exists
-		existingMetric, err := s.loadMetric(id)
+		existingMetric, err := s.loadMetric(ctx, id)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load metric")
 		}
@@ -135,11 +135,11 @@ func (s *Service) postMetricsHandler() service.Handler {
 func (s *Service) getStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK
-		return service.WriteJSON(w, s.Status(), status)
+		return service.WriteJSON(w, s.Status(ctx), status)
 	}
 }
 
-func (s *Service) loadMetric(ID string) (sdk.Metric, error) {
+func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error) {
 	var m sdk.Metric
 	results, errR := esClient.Search().
 		Index(s.Cfg.ElasticSearch.IndexMetrics).
@@ -151,7 +151,7 @@ func (s *Service) loadMetric(ID string) (sdk.Metric, error) {
 		Do(context.Background())
 	if errR != nil {
 		if strings.Contains(errR.Error(), indexNotFoundException) {
-			log.Warning("elasticsearch> loadMetric> %v", errR.Error())
+			log.Warning(ctx, "elasticsearch> loadMetric> %v", errR.Error())
 			return m, nil
 		}
 		return m, sdk.WrapError(errR, "unable to get result")

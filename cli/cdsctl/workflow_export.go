@@ -49,9 +49,6 @@ func workflowExportRun(c cli.Values) error {
 	}
 
 	btes, err := client.WorkflowExport(c.GetString(_ProjectKey), c.GetString(_WorkflowName), mods...)
-	if err != nil {
-		return err
-	}
 	fmt.Println(string(btes))
-	return nil
+	return err
 }

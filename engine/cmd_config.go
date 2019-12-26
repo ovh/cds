@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"reflect"
 	"strconv"
-	"unsafe"
+	"strings"
 
 	"github.com/spf13/cobra"
 	toml "github.com/yesnault/go-toml"
@@ -29,16 +28,31 @@ func init() {
 	configCmd.AddCommand(configNewCmd)
 	configCmd.AddCommand(configCheckCmd)
 	configCmd.AddCommand(configRegenCmd)
-	configCmd.AddCommand(configSetCmd)
+	configCmd.AddCommand(configEditCmd)
+	configCmd.AddCommand(configInitTokenCmd)
 
 	configNewCmd.Flags().BoolVar(&flagConfigNewAsEnv, "env", false, "Print configuration as environment variable")
 	configRegenCmd.Flags().BoolVar(&flagConfigRegenAsEnv, "env", false, "Print configuration as environment variable")
-	configSetCmd.Flags().BoolVar(&flagConfigRegenAsEnv, "env", false, "Print configuration as environment variable")
+	configEditCmd.Flags().BoolVar(&flagConfigEditAsEnv, "env", false, "Print configuration as environment variable")
+	configEditCmd.Flags().StringVar(&flagConfigEditOutput, "output", "", "output file")
+
+	configInitTokenCmd.Flags().StringVar(&flagInitTokenConfigFile, "config", "", "config file")
+	configInitTokenCmd.Flags().StringVar(&flagInitTokenRemoteConfig, "remote-config", "", "(optional) consul configuration store")
+	configInitTokenCmd.Flags().StringVar(&flagInitTokenRemoteConfigKey, "remote-config-key", "cds/config.api.toml", "(optional) consul configuration store key")
+	configInitTokenCmd.Flags().StringVar(&flagInitTokenVaultAddr, "vault-addr", "", "(optional) Vault address to fetch secrets from vault (example: https://vault.mydomain.net:8200)")
+	configInitTokenCmd.Flags().StringVar(&flagInitTokenVaultToken, "vault-token", "", "(optional) Vault token to fetch secrets from vault")
 }
 
 var (
-	flagConfigNewAsEnv   bool
-	flagConfigRegenAsEnv bool
+	flagConfigNewAsEnv           bool
+	flagConfigRegenAsEnv         bool
+	flagConfigEditAsEnv          bool
+	flagConfigEditOutput         string
+	flagInitTokenConfigFile      string
+	flagInitTokenRemoteConfig    string
+	flagInitTokenRemoteConfigKey string
+	flagInitTokenVaultAddr       string
+	flagInitTokenVaultToken      string
 )
 
 var configCmd = &cobra.Command{
@@ -68,7 +82,7 @@ All options
 
 	Run: func(cmd *cobra.Command, args []string) {
 		conf := configBootstrap(args)
-		magicToken, err := configSetStartupData(&conf)
+		initToken, err := configSetStartupData(&conf)
 		if err != nil {
 			sdk.Exit("%v", err)
 		}
@@ -84,7 +98,7 @@ All options
 		}
 
 		fmt.Println("# On first login, you will be asked to enter the following token:")
-		fmt.Println("# " + magicToken)
+		fmt.Println("# " + initToken)
 	},
 }
 
@@ -216,7 +230,7 @@ var configRegenCmd = &cobra.Command{
 
 		oldConf := configImport(nil, args[0], "", "", "", "", true)
 
-		magicToken, err := configSetStartupData(&oldConf)
+		initToken, err := configSetStartupData(&oldConf)
 		if err != nil {
 			sdk.Exit("%v", err)
 		}
@@ -247,79 +261,97 @@ var configRegenCmd = &cobra.Command{
 		}
 
 		fmt.Fprintln(writer, "# On first login, you will be asked to enter the following token:")
-		fmt.Fprintln(writer, "# "+magicToken)
+		fmt.Fprintln(writer, "# "+initToken)
 	},
 }
 
-var configSetCmd = &cobra.Command{
-	Use:   "set",
-	Short: "set value in a given CDS configuration file",
-	Long:  `$ engine config set <path> [key value]... `,
+var configEditCmd = &cobra.Command{
+	Use:     "edit",
+	Short:   "Edit a CDS configuration file",
+	Long:    `$ engine config edit <path-toml-file> key=value key=value`,
+	Example: `$ engine config edit conf.toml log.level=debug hatchery.swarm.commonConfiguration.name=hatchery-swarm-name`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) < 3 || len(args)%2 == 0 {
-			cmd.Help() // nolint
+		if len(args) < 2 {
+			cmd.Help()
 			sdk.Exit("Wrong usage")
 		}
 
-		oldConf := configImport(nil, args[0], "", "", "", "", true)
-		for i := 1; i < len(args)-1; i = i + 2 {
-			field := sdk.ReflectFieldByTag(&oldConf, "toml", args[i])
-			if field == nil {
-				sdk.Exit("unable to found %s in configuration", args[i])
-			}
+		cfgFile := args[0]
 
-			// Try to parse teh value as: Bool, Int, Uint, Float, String
-			var newValue interface{}
-			if x, err := strconv.ParseBool(args[i+1]); err == nil {
-				newValue = x
-				goto next
-			}
-
-			if x, err := strconv.ParseInt(args[i+1], 10, 64); err == nil {
-				newValue = x
-				goto next
-			}
-
-			if x, err := strconv.ParseUint(args[i+1], 10, 64); err == nil {
-				newValue = x
-				goto next
-			}
-
-			if x, err := strconv.ParseFloat(args[i+1], 64); err == nil {
-				newValue = x
-				goto next
-			}
-
-			newValue = args[i+1]
-
-		next:
-			// We need to create a new reflect.Value at exact same memory adress (pointer) of the element pointer returned by ReflectFieldByTag
-			// Create a unsafe.Pointer from the pointer - so, it's not unsafe
-			ptr := unsafe.Pointer(reflect.ValueOf(field).Pointer())
-			// Create a new reflect.Value at this pointer
-			val := reflect.NewAt(reflect.ValueOf(field).Elem().Type(), ptr)
-
-			if val.Elem().Type() == reflect.TypeOf(int(0)) && reflect.TypeOf(newValue) == reflect.TypeOf(int64(0)) {
-				newValue = int(newValue.(int64))
-			}
-
-			// Set the value pointed by this pointer to the new value
-			val.Elem().Set(reflect.ValueOf(newValue))
-
+		if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
+			sdk.Exit("File %s doesn't exist", cfgFile)
 		}
 
-		btes, err := toml.Marshal(oldConf)
+		btes, err := ioutil.ReadFile(cfgFile)
 		if err != nil {
-			sdk.Exit("%v", err)
+			sdk.Exit("Error while read content of file %s - err:%v", cfgFile, err)
 		}
 
-		if flagConfigRegenAsEnv {
-			fmt.Fprintln(os.Stdout, string(btes))
-			return
+		tomlConf, err := toml.Load(string(btes))
+		if err != nil {
+			sdk.Exit("Error while load toml content of file %s - err:%v", cfgFile, err)
 		}
 
-		if err := ioutil.WriteFile(args[0], btes, os.FileMode(0644)); err != nil {
-			sdk.Exit("%v", err)
+		for _, vk := range args[1:] {
+			t := strings.Split(vk, "=")
+			if len(t) != 2 {
+				sdk.Exit("Invalid key=value: %v", vk)
+			}
+			// check if value is bool, float, int or else string
+			if v, err := strconv.ParseBool(t[1]); err == nil {
+				tomlConf.Set(t[0], "", false, "", v)
+			} else if v, err := strconv.ParseInt(t[1], 10, 64); err == nil {
+				tomlConf.Set(t[0], "", false, "", v)
+			} else {
+				tomlConf.Set(t[0], "", false, "", t[1])
+			}
 		}
+
+		tmpFile := "cds.tmp.toml"
+		if err := ioutil.WriteFile(tmpFile, []byte(tomlConf.String()), os.FileMode(0640)); err != nil {
+			sdk.Exit("Error while create tempfile: %v", err)
+		}
+		defer os.Remove(tmpFile)
+
+		conf := configImport(nil, tmpFile, "", "", "", "", true)
+
+		writer := os.Stdout
+		if flagConfigEditOutput != "" {
+			if _, err := os.Stat(flagConfigEditOutput); err == nil {
+				if err := os.Remove(flagConfigEditOutput); err != nil {
+					sdk.Exit("%v", err)
+				}
+			}
+			writer, err = os.Create(flagConfigEditOutput)
+			if err != nil {
+				sdk.Exit("%v", err)
+			}
+		}
+		defer writer.Close()
+
+		if !flagConfigEditAsEnv {
+			btes, err := toml.Marshal(conf)
+			if err != nil {
+				sdk.Exit("%v", err)
+			}
+			fmt.Fprintln(writer, string(btes))
+		} else {
+			configPrintToEnv(conf, writer)
+		}
+	},
+}
+
+var configInitTokenCmd = &cobra.Command{
+	Use:   "init-token",
+	Short: "Generate/Regenerate an init token for a given CDS configuration file",
+	Long:  `$ engine config init-token`,
+	Run: func(cmd *cobra.Command, args []string) {
+		conf := configImport(args, flagInitTokenConfigFile, flagInitTokenRemoteConfig, flagInitTokenRemoteConfigKey, flagInitTokenVaultAddr, flagInitTokenVaultToken, true)
+		initToken, err := getInitTokenFromExistingConfiguration(conf)
+		if err != nil {
+			sdk.Exit("error: %v", err)
+		}
+
+		fmt.Println(initToken)
 	},
 }

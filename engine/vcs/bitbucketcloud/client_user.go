@@ -16,14 +16,14 @@ func (client *bitbucketcloudClient) User(ctx context.Context, username string) (
 	url := fmt.Sprintf("/users/%s", username)
 	status, body, _, err := client.get(url)
 	if err != nil {
-		log.Warning("bitbucketcloudClient.User> Error %s", err)
+		log.Warning(ctx, "bitbucketcloudClient.User> Error %s", err)
 		return user, err
 	}
 	if status >= 400 {
 		return user, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
 	}
 	if err := json.Unmarshal(body, &user); err != nil {
-		log.Warning("bitbucketcloudClient.User> Unable to parse bitbucket cloud commit: %s", err)
+		log.Warning(ctx, "bitbucketcloudClient.User> Unable to parse bitbucket cloud commit: %s", err)
 		return user, err
 	}
 
@@ -38,12 +38,12 @@ func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, erro
 
 	find, err := client.Cache.Get(cacheKey, &user)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", cacheKey, err)
+		log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 	}
 	if !find {
 		status, body, _, err := client.get(url)
 		if err != nil {
-			log.Warning("bitbucketcloudClient.CurrentUser> Error %s", err)
+			log.Warning(ctx, "bitbucketcloudClient.CurrentUser> Error %s", err)
 			return user, sdk.WithStack(err)
 		}
 		if status >= 400 {
@@ -54,7 +54,7 @@ func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, erro
 		}
 		//Put the body on cache for 1 hour
 		if err := client.Cache.SetWithTTL(cacheKey, user, 60*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 		}
 	}
 
@@ -69,12 +69,12 @@ func (client *bitbucketcloudClient) Teams(ctx context.Context) (Teams, error) {
 
 	find, err := client.Cache.Get(cacheKey, &teams)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", cacheKey, err)
+		log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 	}
 	if !find {
 		status, body, _, err := client.get(url)
 		if err != nil {
-			log.Warning("bitbucketcloudClient.Teams> Error %s", err)
+			log.Warning(ctx, "bitbucketcloudClient.Teams> Error %s", err)
 			return teams, sdk.WithStack(err)
 		}
 		if status >= 400 {
@@ -85,7 +85,7 @@ func (client *bitbucketcloudClient) Teams(ctx context.Context) (Teams, error) {
 		}
 		//Put the body on cache for 1 hour
 		if err := client.Cache.SetWithTTL(cacheKey, teams, 60*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 		}
 	}
 

@@ -631,7 +631,7 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.ApplicationID != 0 {
 		var err error
 		if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, p, w); err != nil {
-			log.Warning("postWorkflowHandler> Cannot set default payload : %v", err)
+			log.Warning(ctx, "postWorkflowHandler> Cannot set default payload : %v", err)
 		}
 	}
 
@@ -957,7 +957,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.ApplicationID != 0 {
 		var err error
 		if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, p, w); err != nil {
-			log.Warning("putWorkflowHandler> Cannot set default payload : %v", err)
+			log.Warning(ctx, "putWorkflowHandler> Cannot set default payload : %v", err)
 		}
 	}
 
@@ -997,9 +997,16 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 }
 
 // MarkAsDelete marks a workflow to be deleted
-func MarkAsDelete(db gorp.SqlExecutor, w *sdk.Workflow) error {
-	if _, err := db.Exec("update workflow set to_delete = true where id = $1", w.ID); err != nil {
-		return sdk.WrapError(err, "Unable to mark as delete workflow id %d", w.ID)
+func MarkAsDelete(db gorp.SqlExecutor, key, name string) error {
+	query := `UPDATE workflow 
+			SET to_delete = true 
+			FROM project
+			WHERE 
+				workflow.name = $1 AND 
+				project.id = workflow.project_id AND
+				project.projectkey = $2`
+	if _, err := db.Exec(query, name, key); err != nil {
+		return sdk.WrapError(err, "Unable to mark as delete workflow %s/%s", key, name)
 	}
 	return nil
 }
@@ -1013,6 +1020,14 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.
 
 	if err := DeleteWorkflowData(db, *w); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to delete workflow data")
+	}
+
+	query := `DELETE FROM w_node_trigger
+					WHERE parent_node_id IN
+					(SELECT id FROM w_node WHERE workflow_id = $1)
+		`
+	if _, err := db.Exec(query, w.ID); err != nil {
+		return sdk.WrapError(err, "unable to delete node trigger")
 	}
 
 	//Delete workflow
@@ -1029,6 +1044,10 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 	//Check project is not empty
 	if w.ProjectKey == "" {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
+	}
+
+	if w.WorkflowData == nil {
+		return sdk.WithStack(fmt.Errorf("bad workflow, workflow data must not be null"))
 	}
 
 	if w.Icon != "" {
@@ -1370,7 +1389,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	defer end()
 	allMsg := []sdk.Message{}
 
-	data, err := ExtractFromCDSFiles(tr)
+	data, err := extractFromCDSFiles(ctx, tr)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1411,7 +1430,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		appDB, msgList, err := application.ParseAndImport(tx, store, proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
+		appDB, msgList, err := application.ParseAndImport(ctx, tx, store, proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
 		if err != nil {
 			return nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", proj.Key, app.Name)
 		}
@@ -1498,16 +1517,16 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	if !isDefaultBranch {
 		_ = tx.Rollback()
-		log.Debug("workflow %s rollbacked because it's not comming from the default branch", wf.Name)
+		log.Debug("workflow %s rollbacked because it's not coming from the default branch", wf.Name)
 	} else {
 		if err := tx.Commit(); err != nil {
 			return nil, nil, sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		if oldWf != nil {
-			event.PublishWorkflowUpdate(proj.Key, *wf, *oldWf, u)
+			event.PublishWorkflowUpdate(ctx, proj.Key, *wf, *oldWf, u)
 		} else {
-			event.PublishWorkflowAdd(proj.Key, *wf, u)
+			event.PublishWorkflowAdd(ctx, proj.Key, *wf, u)
 		}
 
 		log.Debug("workflow %s updated", wf.Name)

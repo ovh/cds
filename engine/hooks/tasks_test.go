@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,7 +27,7 @@ func Test_doWebHookExecution(t *testing.T) {
 			RequestURL:  "uid=42413e87905b813a375c7043ce9d4047b7e265ae3730b60180cad02ae81cc62385e5b05b9e7c758b15bb3872498a5e88963f3deac308f636baf345ed9cf1b259&project=IRTM&name=rtm-packaging&branch=master&hash=123456789&message=monmessage&author=sguiheux",
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	assert.Equal(t, 1, len(hs))

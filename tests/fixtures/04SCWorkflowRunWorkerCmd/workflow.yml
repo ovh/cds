@@ -1,0 +1,4 @@
+name: 04SCWorkflowRunWorkerCmd-WORKFLOW
+version: v1.0
+pipeline: 04SCWorkflowRunWorkerCmd-PIPELINE
+application: 04SCWorkflowRunWorkerCmd-APPLICATION

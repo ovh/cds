@@ -83,8 +83,6 @@ export class WorkflowServiceLogComponent implements OnDestroy {
             this.worker = new CDSWebWorker('./assets/worker/web/workflow-service-log.js');
             this.worker.start({
                 user: this._store.selectSnapshot(AuthenticationState.user),
-                // TODO
-                // session: this._authStore.getSessionToken(),
                 api: '/cdsapi',
                 key: this.project.key,
                 workflowName: this.workflowName,

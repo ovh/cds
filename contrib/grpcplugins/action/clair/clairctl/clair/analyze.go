@@ -28,12 +28,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/coreos/clair/api/v1"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/distribution/reference"
+	"github.com/prometheus/client_golang/prometheus"
+	v1 "github.com/quay/clair/v2/api/v1"
 )
+
+var _ = prometheus.Handler()
 
 //Analyze return Clair Image analysis
 func Analyze(image reference.NamedTagged, manifest distribution.Manifest) (ImageAnalysis, error) {
@@ -82,7 +85,7 @@ func analyzeLayer(id string) (v1.LayerEnvelope, error) {
 		return v1.LayerEnvelope{}, fmt.Errorf("reading layer analysis: %v", err)
 	}
 	if response.StatusCode != 200 {
-		//TODO(jgsqware): should I show reponse body in case of error?
+		//TODO(jgsqware): should I show response body in case of error?
 		return v1.LayerEnvelope{}, fmt.Errorf("receiving http error: %d", response.StatusCode)
 	}
 

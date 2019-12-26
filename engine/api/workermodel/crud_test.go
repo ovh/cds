@@ -40,10 +40,8 @@ func TestCreateModel(t *testing.T) {
 		Name:        sdk.RandomString(10),
 		PatternName: pattern.Name,
 		GroupID:     g.ID,
-		Provision:   5,
 	}, u)
 	require.NoError(t, err)
-	assert.Equal(t, int64(5), res.Provision)
 	assert.Equal(t, sdk.Docker, res.Type)
 	assert.Equal(t, pattern.Model.Cmd, res.ModelDocker.Cmd)
 	assert.Equal(t, u.Username, res.CreatedBy.Username)
@@ -70,10 +68,9 @@ func TestUpdateModel(t *testing.T) {
 
 	model1Name := sdk.RandomString(10)
 	model1, err := workermodel.Create(context.TODO(), db, sdk.Model{
-		Type:      sdk.Docker,
-		Name:      model1Name,
-		GroupID:   g1.ID,
-		Provision: 5,
+		Type:    sdk.Docker,
+		Name:    model1Name,
+		GroupID: g1.ID,
 		ModelDocker: sdk.ModelDocker{
 			Cmd:      "cmd",
 			Private:  true,
@@ -100,14 +97,12 @@ func TestUpdateModel(t *testing.T) {
 		Name:        model1Name,
 		PatternName: pattern.Name,
 		GroupID:     g1.ID,
-		Provision:   10,
 		ModelDocker: sdk.ModelDocker{
 			Private:  true,
 			Password: sdk.PasswordPlaceholder,
 		},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, int64(10), res.Provision)
 	assert.Equal(t, sdk.Docker, res.Type)
 	assert.Equal(t, u.Username, res.CreatedBy.Username)
 	assert.Equal(t, pattern.Model.Cmd, res.ModelDocker.Cmd)

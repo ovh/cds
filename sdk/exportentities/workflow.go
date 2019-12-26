@@ -1,6 +1,7 @@
 package exportentities
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -283,7 +284,7 @@ func joinAsNode(n *sdk.Node) bool {
 }
 
 //NewWorkflow creates a new exportable workflow
-func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
+func NewWorkflow(ctx context.Context, w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 	exportedWorkflow := Workflow{}
 	exportedWorkflow.Name = w.Name
 	exportedWorkflow.Description = w.Description
@@ -370,18 +371,24 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 				if m == nil {
 					return exportedWorkflow, sdk.WrapError(sdk.ErrNotFound, "unable to find hook model %s", h.HookModelName)
 				}
+				pipHook := HookEntry{
+					Model:      h.HookModelName,
+					Ref:        h.Ref,
+					Config:     h.Config.Values(m.DefaultConfig),
+					Conditions: &h.Conditions,
+				}
 
-				exportedWorkflow.Hooks[n.Name] = append(exportedWorkflow.Hooks[n.Name], HookEntry{
-					Model:  h.HookModelName,
-					Ref:    h.Ref,
-					Config: h.Config.Values(m.DefaultConfig),
-				})
+				if h.Conditions.LuaScript == "" && len(h.Conditions.PlainConditions) == 0 {
+					pipHook.Conditions = nil
+				}
+
+				exportedWorkflow.Hooks[n.Name] = append(exportedWorkflow.Hooks[n.Name], pipHook)
 			}
 		}
 	}
 
 	//Notifications
-	if err := craftNotifications(w, &exportedWorkflow); err != nil {
+	if err := craftNotifications(ctx, w, &exportedWorkflow); err != nil {
 		return exportedWorkflow, err
 	}
 
@@ -537,7 +544,7 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	entries := w.Entries()
 	var attempt int
 	fakeID := rand.Int63n(5000)
-	// attempt is there to avoid infinit loop, but it should not happend becase we check validty and dependencies earlier
+	// attempt is there to avoid infinite loop, but it should not happened becase we check validty and dependencies earlier
 	for len(entries) != 0 && attempt < 10000 {
 		for name, entry := range entries {
 			entry.ID = fakeID

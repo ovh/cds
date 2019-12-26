@@ -49,6 +49,16 @@ func (api *API) getWorkflowsHandler() service.Handler {
 
 		for i := range ws {
 			ws[i].Permissions = perms.Permissions(ws[i].Name)
+
+			if !ws[i].Permissions.IsMaxLevel() && !ws[i].Permissions.Readable {
+				if isMaintainer(ctx) {
+					ws[i].Permissions = sdk.Permissions{Readable: true, Writable: false, Executable: false}
+				}
+				if isAdmin(ctx) {
+					ws[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+				}
+			}
+
 		}
 
 		return service.WriteJSON(w, ws, http.StatusOK)
@@ -124,6 +134,15 @@ func (api *API) getWorkflowHandler() service.Handler {
 			return err
 		}
 		w1.Permissions = perms.Permissions(w1.Name)
+
+		if !w1.Permissions.IsMaxLevel() && !w1.Permissions.Readable {
+			if isMaintainer(ctx) {
+				w1.Permissions = sdk.Permissions{Readable: true, Writable: false, Executable: false}
+			}
+			if isAdmin(ctx) {
+				w1.Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+			}
+		}
 
 		w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": key, "permWorkflowName": w1.Name})
 		w1.URLs.UIURL = api.Config.URL.UI + "/project/" + key + "/workflow/" + w1.Name
@@ -218,7 +237,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 		newWf.Permissions.Executable = true
 		newWf.Permissions.Writable = true
 
-		event.PublishWorkflowUpdate(key, *wf, *newWf, getAPIConsumer(ctx))
+		event.PublishWorkflowUpdate(ctx, key, *wf, *newWf, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, *newWf, http.StatusOK)
 	}
@@ -383,7 +402,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
 
-		event.PublishWorkflowAdd(p.Key, *wf1, getAPIConsumer(ctx))
+		event.PublishWorkflowAdd(ctx, p.Key, *wf1, getAPIConsumer(ctx))
 
 		wf1.Permissions.Readable = true
 		wf1.Permissions.Writable = true
@@ -464,7 +483,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
 
-		event.PublishWorkflowUpdate(p.Key, *wf1, *oldW, getAPIConsumer(ctx))
+		event.PublishWorkflowUpdate(ctx, p.Key, *wf1, *oldW, getAPIConsumer(ctx))
 
 		wf1.Permissions.Readable = true
 		wf1.Permissions.Writable = true
@@ -560,9 +579,12 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, workflow.LoadOptions{})
+		b, errW := workflow.Exists(api.mustDB(), key, name)
 		if errW != nil {
-			return sdk.WrapError(errW, "Cannot load Workflow %s", key)
+			return sdk.WrapError(errW, "Cannot check Workflow %s", key)
+		}
+		if !b {
+			return sdk.WithStack(sdk.ErrWorkflowNotFound)
 		}
 
 		tx, errT := api.mustDB().Begin()
@@ -571,7 +593,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.MarkAsDelete(tx, oldW); err != nil {
+		if err := workflow.MarkAsDelete(tx, key, name); err != nil {
 			return sdk.WrapError(err, "Cannot delete workflow")
 		}
 
@@ -579,22 +601,28 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 			return sdk.WrapError(errT, "Cannot commit transaction")
 		}
 
-		event.PublishWorkflowDelete(key, *oldW, getAPIConsumer(ctx))
-
 		sdk.GoRoutine(ctx, "deleteWorkflowHandler",
 			func(ctx context.Context) {
 				txg, errT := api.mustDB().Begin()
 				if errT != nil {
-					log.Error("deleteWorkflowHandler> Cannot start transaction: %v", errT)
+					log.Error(ctx, "deleteWorkflowHandler> Cannot start transaction: %v", errT)
 				}
 				defer txg.Rollback() // nolint
+
+				oldW, err := workflow.Load(context.Background(), txg, api.Cache, p, name, workflow.LoadOptions{})
+				if err != nil {
+					log.Error(ctx, "deleteWorkflowHandler> unable to load workflow: %v", err)
+					return
+				}
+
 				if err := workflow.Delete(context.Background(), txg, api.Cache, p, oldW); err != nil {
-					log.Error("deleteWorkflowHandler> unable to delete workflow: %v", err)
+					log.Error(ctx, "deleteWorkflowHandler> unable to delete workflow: %v", err)
 					return
 				}
 				if err := txg.Commit(); err != nil {
-					log.Error("deleteWorkflowHandler> Cannot commit transaction: %v", err)
+					log.Error(ctx, "deleteWorkflowHandler> Cannot commit transaction: %v", err)
 				}
+				event.PublishWorkflowDelete(ctx, key, *oldW, getAPIConsumer((ctx)))
 			}, api.PanicDump())
 
 		return service.WriteJSON(w, nil, http.StatusOK)

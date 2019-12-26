@@ -1,22 +1,9 @@
-import {
-    AfterViewInit,
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    ComponentFactoryResolver,
-    ComponentRef,
-    EventEmitter,
-    HostListener,
-    Input,
-    Output,
-    ViewChild,
-    ViewContainerRef
-} from '@angular/core';
+// tslint:disable-next-line: max-line-length
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ComponentFactoryResolver, ComponentRef, EventEmitter, HostListener, Input, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
 import { Project } from '../../../model/project.model';
 import { WNode, Workflow } from '../../../model/workflow.model';
-import { WorkflowRun } from '../../../model/workflow.run.model';
 import { WorkflowCoreService } from '../../../service/workflow/workflow.core.service';
 import { WorkflowStore } from '../../../service/workflow/workflow.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
@@ -49,17 +36,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.changeDisplay();
     }
 
-    _workflowRun: WorkflowRun;
-    @Input('workflowRun')
-    set workflowRun(data: WorkflowRun) {
-        if (data) {
-            this._workflowRun = data;
-            this.workflow = data.workflow;
-            this.previousWorkflowRunId = data.id;
-            this.changeDisplay();
-        }
-    }
-
     @Input() project: Project;
 
     @Input('direction')
@@ -81,7 +57,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
     render = new dagreD3.render();
 
     linkWithJoin = false;
-    previousWorkflowRunId = 0;
 
     nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
     hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();
@@ -113,7 +88,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
     initWorkflow() {
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
         this.g = new dagreD3.graphlib.Graph().setGraph({ rankdir: this.direction, nodesep: 10, ranksep: 15, edgesep: 5 });
-
         // Create all nodes
         if (this.workflow.workflow_data && this.workflow.workflow_data.node) {
             this.createNode(this.workflow.workflow_data.node);
@@ -138,7 +112,10 @@ export class WorkflowGraphComponent implements AfterViewInit {
             WorkflowGraphComponent.minScale,
             WorkflowGraphComponent.maxScale
         ]).on('zoom', () => {
-            g.attr('transform', d3.event.transform);
+            if (d3.event.transform && d3.event.transform.x && d3.event.transform.x !== Number.POSITIVE_INFINITY
+                && d3.event.transform.y && d3.event.transform.y !== Number.POSITIVE_INFINITY) {
+                g.attr('transform', d3.event.transform);
+            }
         });
 
         this.svg.call(this.zoom);

@@ -25,14 +25,14 @@ func Init(ctx context.Context, DBFunc func() *gorp.DbMap) {
 		select {
 		case <-ctx.Done():
 			if ctx.Err() != nil {
-				log.Error("metrics.pushInElasticSearch> Exiting: %v", ctx.Err())
+				log.Error(ctx, "metrics.pushInElasticSearch> Exiting: %v", ctx.Err())
 				return
 			}
 		case e := <-metricsChan:
 			db := DBFunc()
 			esServices, errS := services.LoadAllByType(ctx, db, services.TypeElasticsearch)
 			if errS != nil {
-				log.Error("metrics.pushInElasticSearch> Unable to get elasticsearch service: %v", errS)
+				log.Error(ctx, "metrics.pushInElasticSearch> Unable to get elasticsearch service: %v", errS)
 				continue
 			}
 
@@ -42,7 +42,7 @@ func Init(ctx context.Context, DBFunc func() *gorp.DbMap) {
 
 			_, code, errD := services.DoJSONRequest(context.Background(), DBFunc(), esServices, "POST", "/metrics", e, nil)
 			if code >= 400 || errD != nil {
-				log.Error("metrics.pushInElasticSearch> Unable to send metrics to elasticsearch [%d]: %v", code, errD)
+				log.Error(ctx, "metrics.pushInElasticSearch> Unable to send metrics to elasticsearch [%d]: %v", code, errD)
 				continue
 			}
 		}

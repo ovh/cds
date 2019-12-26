@@ -87,11 +87,11 @@ func Sign(signer jose.Signer, content interface{}) (string, error) {
 func Verify(publicKey *rsa.PublicKey, s string, i interface{}) error {
 	object, err := jose.ParseSigned(s)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	output, err := object.Verify(publicKey)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	return json.Unmarshal(output, i)
 }

@@ -21,20 +21,30 @@ func NewSigninConsumerToken(c *sdk.AuthConsumer) (string, error) {
 	return authentication.SignJWS(payload, 0) // 0 means no expiration time
 }
 
-func CheckSigninConsumerToken(signature string) (string, error) {
-	return CheckSigninConsumerTokenIssuedAt(signature, time.Time{})
+func CheckSigninConsumerToken(signature string) (string, int64, error) {
+	payload, err := parseSigninConsumerToken(signature)
+	if err != nil {
+		return "", 0, err
+	}
+	return payload.ConsumerID, payload.IAT, nil
+}
+
+func parseSigninConsumerToken(signature string) (signinBuiltinConsumerToken, error) {
+	var payload signinBuiltinConsumerToken
+	if err := authentication.VerifyJWS(signature, &payload); err != nil {
+		return payload, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid signin token"))
+	}
+	return payload, nil
 }
 
 func CheckSigninConsumerTokenIssuedAt(signature string, iat time.Time) (string, error) {
-	var payload signinBuiltinConsumerToken
-	if err := authentication.VerifyJWS(signature, &payload); err != nil {
-		return "", sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid signin token"))
+	payload, err := parseSigninConsumerToken(signature)
+	if err != nil {
+		return "", err
 	}
-	if !iat.IsZero() {
-		iatUnix := iat.Unix()
-		if payload.IAT != iatUnix {
-			return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid signin token")
-		}
+	iatUnix := iat.Unix()
+	if payload.IAT != iatUnix {
+		return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid signin token")
 	}
 	return payload.ConsumerID, nil
 }

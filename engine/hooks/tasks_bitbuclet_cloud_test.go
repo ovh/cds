@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/test"
@@ -24,7 +25,7 @@ func Test_doWebHookExecutionBitbucketCloud(t *testing.T) {
 			RequestURL: "",
 		},
 	}
-	hs, err := s.doWebHookExecution(task)
+	hs, err := s.doWebHookExecution(context.TODO(), task)
 	test.NoError(t, err)
 
 	assert.Equal(t, 1, len(hs))

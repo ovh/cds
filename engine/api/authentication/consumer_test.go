@@ -26,7 +26,7 @@ func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroup(t *testing.T)
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	g1 := &sdk.Group{ID: 5, Name: "A"}
 	g2 := &sdk.Group{ID: 10, Name: "B"}
@@ -40,7 +40,7 @@ func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroup(t *testing.T)
 		AuthentifiedUserID: u.ID,
 		IssuedAt:           time.Now(),
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	// Invalidate group 1 should move the group id to invalid slice and add a warning
 	require.NoError(t, authentication.ConsumerInvalidateGroupForUser(context.TODO(), db, g1, &u))
@@ -67,7 +67,7 @@ func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroupForAdmin(t *te
 		Username: sdk.RandomString(10),
 		Ring:     sdk.UserRingAdmin,
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	g1 := &sdk.Group{ID: 5, Name: "A"}
 	g2 := &sdk.Group{ID: 10, Name: "B"}
@@ -81,7 +81,7 @@ func TestConsumerInvalidateGroupForUser_InvalidateOneConsumerGroupForAdmin(t *te
 		AuthentifiedUserID: u.ID,
 		IssuedAt:           time.Now(),
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	// Invalidate group 1 should move the group id to invalid slice and add a warning
 	require.NoError(t, authentication.ConsumerInvalidateGroupForUser(context.TODO(), db, g1, &u))
@@ -104,7 +104,7 @@ func TestConsumerInvalidateGroupForUser_InvalidateLastConsumerGroup(t *testing.T
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	g1 := &sdk.Group{ID: 5, Name: "A"}
 
@@ -117,7 +117,7 @@ func TestConsumerInvalidateGroupForUser_InvalidateLastConsumerGroup(t *testing.T
 		AuthentifiedUserID: u.ID,
 		IssuedAt:           time.Now(),
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	// Invalidate group 1 should move the group id to invalid slice, disable the consumer and add warnings
 	require.NoError(t, authentication.ConsumerInvalidateGroupForUser(context.TODO(), db, g1, &u))
@@ -144,7 +144,7 @@ func TestConsumerRemoveGroup_RemoveOneConsumerGroup(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	g1 := &sdk.Group{ID: 5, Name: "A"}
 	g2 := &sdk.Group{ID: 10, Name: "B"}
@@ -158,7 +158,7 @@ func TestConsumerRemoveGroup_RemoveOneConsumerGroup(t *testing.T) {
 		AuthentifiedUserID: u.ID,
 		IssuedAt:           time.Now(),
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	// Remove group 1 should remove the group from the consumer, remove previous warning
 	require.NoError(t, authentication.ConsumerRemoveGroup(context.TODO(), db, g1))
@@ -183,7 +183,7 @@ func TestConsumerRemoveGroup_RemoveOneInvalidConsumerGroup(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	g1 := &sdk.Group{ID: 5, Name: "A"}
 	g2 := &sdk.Group{ID: 10, Name: "B"}
@@ -203,7 +203,7 @@ func TestConsumerRemoveGroup_RemoveOneInvalidConsumerGroup(t *testing.T) {
 			GroupName: g1.Name,
 		}},
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	// Remove group 1 should remove the group from the consumer, remove previous warning
 	require.NoError(t, authentication.ConsumerRemoveGroup(context.TODO(), db, g1))
@@ -228,7 +228,7 @@ func TestConsumerRemoveGroup_RemoveLastConsumerGroup(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	g1 := &sdk.Group{ID: 5, Name: "A"}
 
@@ -241,7 +241,7 @@ func TestConsumerRemoveGroup_RemoveLastConsumerGroup(t *testing.T) {
 		AuthentifiedUserID: u.ID,
 		IssuedAt:           time.Now(),
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	// Remove group 1 should remove the group from the consumer, remove previous warning
 	require.NoError(t, authentication.ConsumerRemoveGroup(context.TODO(), db, g1))
@@ -267,7 +267,7 @@ func TestConsumerRemoveGroup_RemoveLastInvalidConsumerGroup(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	g1 := &sdk.Group{ID: 5, Name: "A"}
 
@@ -291,7 +291,7 @@ func TestConsumerRemoveGroup_RemoveLastInvalidConsumerGroup(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	// Remove group 1 should remove the group from the consumer, remove previous warning
 	require.NoError(t, authentication.ConsumerRemoveGroup(context.TODO(), db, g1))
@@ -317,7 +317,7 @@ func TestConsumerRestoreInvalidatedGroupForUser_RestoreInvalidatedGroup(t *testi
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	g1 := &sdk.Group{ID: 5, Name: "A"}
 	g2 := &sdk.Group{ID: 10, Name: "B"}
@@ -339,7 +339,7 @@ func TestConsumerRestoreInvalidatedGroupForUser_RestoreInvalidatedGroup(t *testi
 			},
 		},
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	// Restore group 1 should remove warnings then move group 1 to valid ones
 	require.NoError(t, authentication.ConsumerRestoreInvalidatedGroupForUser(context.TODO(), db, g1.ID, u.ID))
@@ -363,7 +363,7 @@ func TestConsumerLifecycle_RestoreInvalidatedLastGroup(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	g1 := &sdk.Group{ID: 5, Name: "Five"}
 
@@ -387,7 +387,7 @@ func TestConsumerLifecycle_RestoreInvalidatedLastGroup(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	// Restore group 1 should remove warnings then move group 1 to valid ones
 	require.NoError(t, authentication.ConsumerRestoreInvalidatedGroupForUser(context.TODO(), db, g1.ID, u.ID))
@@ -409,7 +409,7 @@ func TestConsumerInvalidateGroupsForUser_InvalidateLastGroups(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	g1 := assets.InsertGroup(t, db)
 	g2 := assets.InsertGroup(t, db)
@@ -431,7 +431,7 @@ func TestConsumerInvalidateGroupsForUser_InvalidateLastGroups(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	// Should invalidate g2
 	require.NoError(t, authentication.ConsumerInvalidateGroupsForUser(context.TODO(), db, u.ID, []int64{}))
@@ -461,7 +461,7 @@ func TestConsumerRestoreInvalidatedGroupsForUser(t *testing.T) {
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
 	}
-	require.NoError(t, user.Insert(db, &u))
+	require.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	g1 := assets.InsertGroup(t, db)
 	g2 := assets.InsertGroup(t, db)
@@ -491,7 +491,7 @@ func TestConsumerRestoreInvalidatedGroupsForUser(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, authentication.InsertConsumer(db, &c))
+	require.NoError(t, authentication.InsertConsumer(context.TODO(), db, &c))
 
 	require.NoError(t, authentication.ConsumerRestoreInvalidatedGroupsForUser(context.TODO(), db, u.ID))
 	res, err := authentication.LoadConsumerByID(context.TODO(), db, c.ID)

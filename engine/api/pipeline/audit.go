@@ -12,20 +12,20 @@ import (
 )
 
 // ComputeAudit Compute audit on workflow
-func ComputeAudit(c context.Context, DBFunc func() *gorp.DbMap) {
+func ComputeAudit(ctx context.Context, DBFunc func() *gorp.DbMap) {
 	deleteTicker := time.NewTicker(15 * time.Minute)
 	defer deleteTicker.Stop()
 
 	for {
 		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("pipeline.ComputeAudit> Exiting: %v", c.Err())
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "pipeline.ComputeAudit> Exiting: %v", ctx.Err())
 				return
 			}
 		case <-deleteTicker.C:
-			if err := purgeAudits(DBFunc()); err != nil {
-				log.Error("pipeline.ComputeAudit> Purge error: %v", err)
+			if err := purgeAudits(ctx, DBFunc()); err != nil {
+				log.Error(ctx, "pipeline.ComputeAudit> Purge error: %v", err)
 			}
 		}
 	}
@@ -134,7 +134,7 @@ func (p *PipelineAudit) PostInsert(s gorp.SqlExecutor) error {
 
 const keepAudits = 50
 
-func purgeAudits(db gorp.SqlExecutor) error {
+func purgeAudits(ctx context.Context, db gorp.SqlExecutor) error {
 	var nbAuditsPerPipelinewID = []struct {
 		PipelineD int64 `db:"pipeline_id"`
 		NbAudits  int64 `db:"nb_audits"`
@@ -148,13 +148,13 @@ func purgeAudits(db gorp.SqlExecutor) error {
 	for _, r := range nbAuditsPerPipelinewID {
 		log.Debug("purgeAudits> deleting audits for pipeline %d (%d audits)", r.PipelineD, r.NbAudits)
 		var ids []int64
-		query = `select id from pipeline_audit where pipeline_id = $1 order by versionned asc offset $2`
+		query = `select id from pipeline_audit where pipeline_id = $1 order by versionned desc offset $2`
 		if _, err := db.Select(&ids, query, r.PipelineD, keepAudits); err != nil {
 			return sdk.WithStack(err)
 		}
 		for _, id := range ids {
 			if err := deleteAudit(db, id); err != nil {
-				log.Error("purgeAudits> unable to delete audit %d: %v", id, err)
+				log.Error(ctx, "purgeAudits> unable to delete audit %d: %v", id, err)
 			}
 		}
 	}

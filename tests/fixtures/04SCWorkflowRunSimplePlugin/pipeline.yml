@@ -1,0 +1,16 @@
+version: v1.0
+name: 04SCWorkflowRunSimplePlugin-PIPELINE
+stages:
+- Build
+
+jobs:
+
+- job: Run Plugin
+  stage: Build
+  description: Run Plugin
+  steps:
+  - plugin-simple:
+
+  requirements:
+  - plugin: plugin-simple
+  - os-architecture: linux/amd64

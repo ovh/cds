@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
-import { PermissionValue } from 'app/model/permission.model';
 import { Label, Project } from 'app/model/project.model';
 import { SaveLabelsInProject } from 'app/store/project.action';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -32,7 +31,6 @@ export class LabelsEditComponent {
 
     labels: Label[];
     newLabel: Label;
-    permission = PermissionValue;
     loading = false;
 
     constructor(

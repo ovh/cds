@@ -22,9 +22,7 @@ onmessage = function (e) {
 
 function loadLog (user, session, api) {
     loop(2, function () {
-        var url = '/project/' + key + '/application/' + appName +
-            '/pipeline/' + pipName + '/build/' + buildNumber +
-            '/action/' + jobID + '/step/' + stepOrder + '/log';
+        var url = `/project/${key}/application/${appName}/pipeline/${pipName}/build/${buildNumber}/action/${jobID}/step/${stepOrder}/log`;
         if (envName !== '') {
             url += '?envName=' + encodeURIComponent(envName);
         }

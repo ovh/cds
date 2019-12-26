@@ -18,7 +18,7 @@ import (
 var SessionDuration = 24 * time.Hour
 
 // VerifyToken checks token technical validity
-func VerifyToken(db gorp.SqlExecutor, s string) (*hatchery.WorkerJWTClaims, error) {
+func VerifyToken(ctx context.Context, db gorp.SqlExecutor, s string) (*hatchery.WorkerJWTClaims, error) {
 	// First we try to parse the token without checking the its validity.
 	// The goal is to be able to get information about the worker
 	// We need to know with is the hatchery involved to be able to checks the token signature
@@ -37,7 +37,7 @@ func VerifyToken(db gorp.SqlExecutor, s string) (*hatchery.WorkerJWTClaims, erro
 
 	h, err := services.LoadByNameAndType(context.Background(), db, claims.Worker.HatcheryName, services.TypeHatchery)
 	if err != nil {
-		log.Error("worker.VerifyToken> unable to load hatchery %s: %v", claims.Worker.HatcheryName, err)
+		log.Error(ctx, "worker.VerifyToken> unable to load hatchery %s: %v", claims.Worker.HatcheryName, err)
 		return nil, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}
 

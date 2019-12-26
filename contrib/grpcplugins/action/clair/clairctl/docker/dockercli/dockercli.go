@@ -23,25 +23,22 @@ CODE FROM https://github.com/jgsqware/clairctl
 package dockercli
 
 import (
-	"compress/bzip2"
-	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"strings"
-	"syscall"
 
-	"github.com/artyom/untar"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/layer"
+	"github.com/mholt/archiver"
 	"github.com/opencontainers/go-digest"
+
 	"github.com/ovh/cds/contrib/grpcplugins/action/clair/clairctl/config"
 )
 
@@ -202,31 +199,5 @@ func historyFromCommand(imageName string) (schema1.SignedManifest, error) {
 }
 
 func openAndUntar(name, dst string) error {
-	var rd io.Reader
-	f, err := os.Open(name)
-	defer f.Close()
-
-	if err != nil {
-		return err
-	}
-	rd = f
-	if strings.HasSuffix(name, ".gz") || strings.HasSuffix(name, ".tgz") {
-		gr, err := gzip.NewReader(f)
-		if err != nil {
-			return err
-		}
-		defer gr.Close()
-		rd = gr
-	} else if strings.HasSuffix(name, ".bz2") {
-		rd = bzip2.NewReader(f)
-	}
-	if err := os.MkdirAll(dst, os.ModeDir|os.ModePerm); err != nil {
-		return err
-	}
-	// resetting umask is essential to have exact permissions on unpacked
-	// files; it's not not put inside untar function as it changes
-	// process-wide umask
-	mask := syscall.Umask(0)
-	defer syscall.Umask(mask)
-	return untar.Untar(rd, dst)
+	return archiver.Unarchive(name, dst)
 }

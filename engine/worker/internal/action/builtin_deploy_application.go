@@ -14,18 +14,18 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
 	jobID, err := workerruntime.JobID(ctx)
 	if err != nil {
 		return sdk.Result{}, err
 	}
 
-	pfName := sdk.ParameterFind(params, "cds.integration")
+	pfName := sdk.ParameterFind(wk.Parameters(), "cds.integration")
 	if pfName == nil {
 		return sdk.Result{}, errors.New("Unable to retrieve deployment integration... Aborting")
 	}
 
-	pkey := sdk.ParameterFind(params, "cds.project")
+	pkey := sdk.ParameterFind(wk.Parameters(), "cds.project")
 	pf, err := wk.Client().ProjectIntegrationGet(pkey.Value, pfName.Value, true)
 	if err != nil {
 		return sdk.Result{}, fmt.Errorf("unable to retrieve deployment integration (%v)... Aborting", err)
@@ -82,10 +82,10 @@ func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.A
 		return sdk.Result{}, fmt.Errorf("unable to retrieve retrieve plugin manifest: %v", err)
 	}
 
-	wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
+	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
 
 	query := integrationplugin.DeployQuery{
-		Options: sdk.ParametersToMap(params),
+		Options: sdk.ParametersToMap(wk.Parameters()),
 	}
 
 	res, err := integrationPluginClient.Deploy(ctx, &query)
@@ -94,8 +94,8 @@ func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.A
 		return sdk.Result{}, fmt.Errorf("Error deploying application: %v", err)
 	}
 
-	wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("# Details: %s", res.Details))
-	wk.SendLog(ctx,workerruntime.LevelInfo, fmt.Sprintf("# Status: %s", res.Status))
+	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Details: %s", res.Details))
+	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Status: %s", res.Status))
 
 	if strings.ToUpper(res.Status) == strings.ToUpper(sdk.StatusSuccess) {
 		integrationPluginClientStop(ctx, integrationPluginClient, done, stopLogs)
@@ -116,7 +116,7 @@ func integrationPluginClientStop(ctx context.Context, integrationPluginClient in
 	if _, err := integrationPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
 		// Transport is closing is a "normal" error, as we requested plugin to stop
 		if !strings.Contains(err.Error(), "transport is closing") {
-			log.Error("Error on integrationPluginClient.Stop: %s", err)
+			log.Error(ctx, "Error on integrationPluginClient.Stop: %s", err)
 		}
 	}
 	stopLogs()

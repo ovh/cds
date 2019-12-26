@@ -16,11 +16,17 @@ jobs:
       destination: "{{.cds.pip.integration}}"
       path: bar
       tag: '{{.cds.version}}'
+  requirements:
+  - os-architecture: linux/amd64
 - job: DownloadJob
   stage: Stage 2
   steps:
   - artifactDownload:
-      path: ""
+      path: "."
       tag: ""
   - script:
+    - ls -l
+    - pwd
     - grep foo bar
+  requirements:
+  - os-architecture: linux/amd64

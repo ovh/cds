@@ -26,7 +26,7 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 
 	wctx := testRunWorkflow(t, api, api.Router)
 
-	consumer, err := local.NewConsumer(api.mustDB(), wctx.user.ID)
+	consumer, err := local.NewConsumer(context.TODO(), api.mustDB(), wctx.user.ID)
 	require.NoError(t, err)
 
 	consumer.AuthentifiedUser = wctx.user
@@ -386,12 +386,12 @@ func Test_checkSessionPermissions(t *testing.T) {
 	authUser, _ := assets.InsertLambdaUser(t, db)
 	authUserConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUser.ID)
 	require.NoError(t, err)
-	authUserSession, err := authentication.NewSession(db, authUserConsumer, 10*time.Second, false)
+	authUserSession, err := authentication.NewSession(context.TODO(), db, authUserConsumer, 10*time.Second, false)
 	require.NoError(t, err)
 	authUserMaintainer, _ := assets.InsertMaintainerUser(t, db)
 	authUserMaintainerConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, authUserMaintainer.ID)
 	require.NoError(t, err)
-	authUserMaintainerSession, err := authentication.NewSession(db, authUserMaintainerConsumer, 10*time.Second, false)
+	authUserMaintainerSession, err := authentication.NewSession(context.TODO(), db, authUserMaintainerConsumer, 10*time.Second, false)
 	require.NoError(t, err)
 	authUserAdmin, _ := assets.InsertAdminUser(t, db)
 
@@ -863,12 +863,12 @@ func Test_checkGroupPermissions(t *testing.T) {
 				currentUser.Ring = sdk.UserRingUser
 			}
 
-			require.NoError(t, user.Insert(api.mustDB(), &currentUser))
+			require.NoError(t, user.Insert(context.TODO(), api.mustDB(), &currentUser))
 
 			groupAdmin := &sdk.AuthentifiedUser{
 				Username: prefix + "auto-group-admin",
 			}
-			require.NoError(t, user.Insert(api.mustDB(), groupAdmin))
+			require.NoError(t, user.Insert(context.TODO(), api.mustDB(), groupAdmin))
 
 			var err error
 			groupAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), groupAdmin.ID, user.LoadOptions.WithDeprecatedUser)
@@ -890,7 +890,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 						Username: adm,
 						Ring:     sdk.UserRingUser,
 					}
-					require.NoError(t, user.Insert(api.mustDB(), uAdm))
+					require.NoError(t, user.Insert(context.TODO(), api.mustDB(), uAdm))
 					defer assert.NoError(t, user.DeleteByID(api.mustDB(), uAdm.ID))
 
 				}
@@ -911,7 +911,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 						Username: member,
 						Ring:     sdk.UserRingUser,
 					}
-					require.NoError(t, user.Insert(api.mustDB(), uMember))
+					require.NoError(t, user.Insert(context.TODO(), api.mustDB(), uMember))
 					defer assert.NoError(t, user.DeleteByID(api.mustDB(), uMember.ID))
 
 				}
@@ -924,7 +924,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 				}))
 			}
 
-			consumer, err := local.NewConsumer(api.mustDB(), currentUser.ID)
+			consumer, err := local.NewConsumer(context.TODO(), api.mustDB(), currentUser.ID)
 			require.NoError(t, err)
 			consumer, err = authentication.LoadConsumerByID(context.TODO(), api.mustDB(), consumer.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 			require.NoError(t, err)
@@ -1010,7 +1010,7 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 				groupAdmin := &sdk.AuthentifiedUser{
 					Username: prefix + "auto-group-admin",
 				}
-				require.NoError(t, user.Insert(api.mustDB(), groupAdmin))
+				require.NoError(t, user.Insert(context.TODO(), api.mustDB(), groupAdmin))
 
 				var err error
 				groupAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), groupAdmin.ID, user.LoadOptions.WithDeprecatedUser)

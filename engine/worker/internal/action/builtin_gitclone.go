@@ -20,13 +20,13 @@ import (
 	"github.com/ovh/cds/sdk/vcs/git"
 )
 
-func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
 	url := sdk.ParameterFind(a.Parameters, "url")
 	privateKey := sdk.ParameterFind(a.Parameters, "privateKey")
 	user := sdk.ParameterFind(a.Parameters, "user")
 	password := sdk.ParameterFind(a.Parameters, "password")
 	branch := sdk.ParameterFind(a.Parameters, "branch")
-	defaultBranch := sdk.ParameterValue(params, "git.default_branch")
+	defaultBranch := sdk.ParameterValue(wk.Parameters(), "git.default_branch")
 	tag := sdk.ParameterValue(a.Parameters, "tag")
 	commit := sdk.ParameterFind(a.Parameters, "commit")
 	directory := sdk.ParameterFind(a.Parameters, "directory")
@@ -34,7 +34,7 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, pa
 	submodules := sdk.ParameterFind(a.Parameters, "submodules")
 
 	var key *vcs.SSHKey
-	if privateKey != nil {
+	if privateKey != nil && privateKey.Value != "" {
 		// The private key parameter, contains the name of the private key to use.
 		// Let's look up in the secret list to find the content of the private key
 		privateKeyContent := sdk.VariableFind(secrets, privateKey.Value)
@@ -85,7 +85,7 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, pa
 	if gitURL == "" && (auth == nil || (auth.Username == "" && auth.Password == "" && len(auth.PrivateKey.Content) == 0)) {
 		wk.SendLog(ctx, workerruntime.LevelInfo, "no url and auth parameters, trying to use VCS Strategy from application")
 		var err error
-		gitURL, auth, err = vcsStrategy(ctx, wk, params, secrets)
+		gitURL, auth, err = vcsStrategy(ctx, wk, wk.Parameters(), secrets)
 		if err != nil {
 			return sdk.Result{}, fmt.Errorf("Could not use VCS Auth Strategy from application: %v", err)
 		}
@@ -153,11 +153,11 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, pa
 	}
 
 	workdirPath := workdir.Name()
-	if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
 		workdirPath, _ = x.RealPath(workdirPath)
 	}
 
-	return gitClone(ctx, wk, params, gitURL, workdirPath, dir, auth, opts)
+	return gitClone(ctx, wk, wk.Parameters(), gitURL, workdirPath, dir, auth, opts)
 }
 
 func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Parameter, url, basedir, dir string, auth *git.AuthOpts, clone *git.CloneOpts) (sdk.Result, error) {
@@ -170,7 +170,7 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 		Stdout: stdOut,
 	}
 
-	git.LogFunc = log.Info
+	git.LogFunc = log.InfoWithoutCtx
 	//Perform the git clone
 	userLogCommand, err := git.Clone(url, basedir, dir, auth, clone, output)
 
@@ -226,7 +226,7 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir stri
 	authorEmail := sdk.ParameterValue(params, "git.author.email")
 	message := sdk.ParameterValue(params, "git.message")
 
-	info, err := git.ExtractInfo(filepath.Join(dir))
+	info, err := git.ExtractInfo(ctx, filepath.Join(dir))
 	if err != nil {
 		return nil, err
 	}

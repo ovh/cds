@@ -19,7 +19,7 @@ type resetLocalConsumerToken struct {
 func NewResetConsumerToken(store cache.Store, consumerID string) (string, error) {
 	payload := resetLocalConsumerToken{
 		ConsumerID: consumerID,
-		Nonce:      time.Now().UnixNano(),
+		Nonce:      time.Now().Unix(),
 	}
 
 	cacheKey := cache.Key("authentication:consumer:reset", consumerID)

@@ -8,9 +8,11 @@ jobs:
       commit: '{{.git.hash}}'
       directory: '{{.cds.workspace}}'
       tag: '{{.git.tag}}'
-      url: https://github.com/ovh/cds.git
+      url: https://github.com/ovh/venom.git
   - script:
     - git log
     - cat README.md
   requirements:
   - binary: git
+  - os-architecture: linux/amd64
+  - model: buildpack-deps

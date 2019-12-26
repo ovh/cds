@@ -47,7 +47,7 @@ func vcsStrategy(ctx context.Context, wk workerruntime.Runtime, params []sdk.Par
 			return "", nil, sdk.WithStack(err)
 		}
 
-		if err := vcs.SetupSSHKey(wk.Workspace(), aferoKeyDir.Name(), privateKeyVar); err != nil {
+		if err := vcs.SetupSSHKey(wk.BaseDir(), aferoKeyDir.Name(), privateKeyVar); err != nil {
 			return gitURL, nil, sdk.WithStack(fmt.Errorf("unable to setup ssh key. %s", err))
 		}
 

@@ -11,6 +11,6 @@ workflow:
   root:
     pipeline: echo
     permissions:
-      ITSCWRKFLW10: 7
+      itscwrkflw10: 7
 permissions:
-      ITSCWRKFLW10: 7
+      itscwrkflw10: 7

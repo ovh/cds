@@ -54,7 +54,6 @@ type Model struct {
 	CheckRegistration      bool                `json:"check_registration"  db:"check_registration" cli:"-"`
 	UserLastModified       time.Time           `json:"user_last_modified"  db:"user_last_modified" cli:"-"`
 	CreatedBy              User                `json:"created_by" db:"-" cli:"-"`
-	Provision              int64               `json:"provision" db:"provision" cli:"provision"`
 	GroupID                int64               `json:"group_id" db:"group_id" cli:"-"`
 	NbSpawnErr             int64               `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
 	LastSpawnErr           string              `json:"last_spawn_err" db:"-" cli:"-"`
@@ -78,7 +77,6 @@ func (m *Model) Update(data Model) {
 	m.IsOfficial = data.IsOfficial
 	m.GroupID = data.GroupID
 	m.Type = data.Type
-	m.Provision = data.Provision
 	m.ModelDocker = ModelDocker{}
 	m.ModelVirtualMachine = ModelVirtualMachine{}
 	switch m.Type {
@@ -92,9 +90,10 @@ func (m *Model) Update(data Model) {
 
 // IsValid returns error if the model is not valid.
 func (m Model) IsValid() error {
-	if m.Name == "" {
-		return WrapError(ErrWrongRequest, "invalid worker model name")
+	if !NamePatternRegex.MatchString(m.Name) {
+		return WrapError(ErrInvalidWorkerModelNamePattern, "worker model name %s does not respect pattern %s", m.Name, NamePattern)
 	}
+
 	if m.GroupID == 0 {
 		return WrapError(ErrWrongRequest, "missing worker model group data")
 	}

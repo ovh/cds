@@ -515,9 +515,7 @@ func (s Step) isScript() bool { return s.Script != nil }
 func (s Step) asScript() (sdk.Action, error) {
 	var a sdk.Action
 	// TODO use typed value for script
-	/*
-		val := strings.Join(*s.Script, "\n")
-	*/
+	// val := strings.Join(*s.Script, "\n")
 
 	var val string
 	if script, ok := s.Script.([]interface{}); ok {

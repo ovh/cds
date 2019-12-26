@@ -22,16 +22,16 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 	for {
 		url := fmt.Sprintf("/repos/%s/pulls/%d", fullname, id)
 
-		status, body, _, err := g.get(url, opts...)
+		status, body, _, err := g.get(ctx, url, opts...)
 		if err != nil {
 			if err := g.Cache.Delete(cachePullRequestKey); err != nil {
-				log.Error("githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
+				log.Error(ctx, "githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
 			}
 			return sdk.VCSPullRequest{}, err
 		}
 		if status >= 400 {
 			if err := g.Cache.Delete(cachePullRequestKey); err != nil {
-				log.Error("githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
+				log.Error(ctx, "githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
 			}
 			return sdk.VCSPullRequest{}, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 		}
@@ -41,32 +41,32 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 			//If repos aren't updated, lets get them from cache
 			find, err := g.Cache.Get(cachePullRequestKey, &pr)
 			if err != nil {
-				log.Error("cannot get from cache %s: %v", cachePullRequestKey, err)
+				log.Error(ctx, "cannot get from cache %s: %v", cachePullRequestKey, err)
 			}
 			if !find {
 				opts = []getArgFunc{withoutETag}
-				log.Error("Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cachePullRequestKey, g.OAuthToken, ""))
+				log.Error(ctx, "Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cachePullRequestKey, g.OAuthToken, ""))
 				continue
 			}
 
 		} else {
 			if err := json.Unmarshal(body, &pr); err != nil {
-				log.Warning("githubClient.PullRequest> Unable to parse github pullrequest: %s", err)
+				log.Warning(ctx, "githubClient.PullRequest> Unable to parse github pullrequest: %s", err)
 				return sdk.VCSPullRequest{}, sdk.WithStack(err)
 			}
 		}
 
 		if pr.Number != id {
-			log.Warning("githubClient.PullRequest> Cannot find pullrequest %d", id)
+			log.Warning(ctx, "githubClient.PullRequest> Cannot find pullrequest %d", id)
 			if err := g.Cache.Delete(cachePullRequestKey); err != nil {
-				log.Error("githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
+				log.Error(ctx, "githubclient.PullRequest > unable to delete cache key %v: %v", cachePullRequestKey, err)
 			}
 			return sdk.VCSPullRequest{}, sdk.WithStack(fmt.Errorf("cannot find pullrequest %d", id))
 		}
 
 		//Put the body on cache for one hour and one minute
 		if err := g.Cache.SetWithTTL(cachePullRequestKey, pr, 61*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", cachePullRequestKey, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", cachePullRequestKey, err)
 		}
 		break
 	}
@@ -83,9 +83,9 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 
 	for {
 		if nextPage != "" {
-			status, body, headers, err := g.get(nextPage, opts...)
+			status, body, headers, err := g.get(ctx, nextPage, opts...)
 			if err != nil {
-				log.Warning("githubClient.PullRequests> Error %s", err)
+				log.Warning(ctx, "githubClient.PullRequests> Error %s", err)
 				return nil, err
 			}
 			if status >= 400 {
@@ -99,17 +99,17 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 				//If repos aren't updated, lets get them from cache
 				find, err := g.Cache.Get(cacheKey, &pullRequests)
 				if err != nil {
-					log.Error("cannot get from cache %s: %v", cacheKey, err)
+					log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 				}
 				if !find {
 					opts[0] = withoutETag
-					log.Error("Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
+					log.Error(ctx, "Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
 					continue
 				}
 				break
 			} else {
 				if err := json.Unmarshal(body, &nextPullRequests); err != nil {
-					log.Warning("githubClient.Branches> Unable to parse github branches: %s", err)
+					log.Warning(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
 					return nil, err
 				}
 			}
@@ -125,7 +125,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 	//Put the body on cache for one hour and one minute
 	k := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls")
 	if err := g.Cache.SetWithTTL(k, pullRequests, 61*60); err != nil {
-		log.Error("cannot SetWithTTL: %s: %v", k, err)
+		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}
 
 	prResults := []sdk.VCSPullRequest{}
@@ -140,7 +140,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 // PullRequestComment push a new comment on a pull request
 func (g *githubClient) PullRequestComment(ctx context.Context, repo string, id int, text string) error {
 	if g.DisableStatus {
-		log.Warning("github.PullRequestComment>  ⚠ Github statuses are disabled")
+		log.Warning(ctx, "github.PullRequestComment>  ⚠ Github statuses are disabled")
 		return nil
 	}
 

@@ -51,7 +51,7 @@ type CurrentWorker struct {
 }
 
 // BuiltInAction defines builtin action signature
-type BuiltInAction func(context.Context, workerruntime.Runtime, sdk.Action, []sdk.Parameter, []sdk.Variable) (sdk.Result, error)
+type BuiltInAction func(context.Context, workerruntime.Runtime, sdk.Action, []sdk.Variable) (sdk.Result, error)
 
 func (wk *CurrentWorker) Init(name, hatcheryName, apiEndpoint, token string, model string, insecure bool, workspace afero.Fs) error {
 	wk.status.Name = name
@@ -63,6 +63,10 @@ func (wk *CurrentWorker) Init(name, hatcheryName, apiEndpoint, token string, mod
 	return nil
 }
 
+func (wk *CurrentWorker) Parameters() []sdk.Parameter {
+	return wk.currentJob.params
+}
+
 func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level, s string) {
 	jobID, _ := workerruntime.JobID(ctx)
 	stepOrder, err := workerruntime.StepOrder(ctx)
@@ -70,10 +74,10 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 		s += "\n"
 	}
 	if err != nil {
-		log.Error("SendLog> %v", err)
+		log.Error(ctx, "SendLog> %v", err)
 	}
 	if err := wk.sendLog(jobID, fmt.Sprintf("[%s] ", level)+s, stepOrder, false); err != nil {
-		log.Error("SendLog> %v", err)
+		log.Error(ctx, "SendLog> %v", err)
 	}
 }
 
@@ -85,7 +89,7 @@ func (wk *CurrentWorker) Client() cdsclient.WorkerInterface {
 	return wk.client
 }
 
-func (wk *CurrentWorker) Workspace() afero.Fs {
+func (wk *CurrentWorker) BaseDir() afero.Fs {
 	return wk.basedir
 }
 

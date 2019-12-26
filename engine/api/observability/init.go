@@ -44,7 +44,7 @@ func Init(ctx context.Context, cfg Configuration, s service) (context.Context, e
 				DefaultSampler: trace.ProbabilitySampler(cfg.Exporters.Jaeger.SamplingProbability),
 			},
 		)
-		log.Info("observability> initializing jaeger exporter for %s/%s", s.Type(), s.Name())
+		log.Info(ctx, "observability> initializing jaeger exporter for %s/%s", s.Type(), s.Name())
 		e, err := jaeger.NewExporter(jaeger.Options{
 			Endpoint:    cfg.Exporters.Jaeger.HTTPCollectorEndpoint, //"http://localhost:14268"
 			ServiceName: serviceName(s),
@@ -62,7 +62,7 @@ func Init(ctx context.Context, cfg Configuration, s service) (context.Context, e
 		}
 		view.SetReportingPeriod(time.Duration(cfg.Exporters.Prometheus.ReporteringPeriod) * time.Second)
 
-		log.Info("observability> initializing prometheus exporter for %s/%s", s.Type(), s.Name())
+		log.Info(ctx, "observability> initializing prometheus exporter for %s/%s", s.Type(), s.Name())
 
 		e, err := prometheus.NewExporter(prometheus.Options{})
 		if err != nil {

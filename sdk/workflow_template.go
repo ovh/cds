@@ -255,7 +255,7 @@ const (
 	ParameterTypeJSON       TemplateParameterType = "json"
 )
 
-// IsValid returns paramter type validity.
+// IsValid returns parameter type validity.
 func (t TemplateParameterType) IsValid() bool {
 	switch t {
 	case ParameterTypeString, ParameterTypeBoolean, ParameterTypeRepository, ParameterTypeJSON:
@@ -421,7 +421,7 @@ func WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis []*WorkflowTemplateInst
 // WorkflowTemplateBulk contains info about a template bulk task.
 type WorkflowTemplateBulk struct {
 	ID                 int64                          `json:"id" db:"id"`
-	UserID             int64                          `json:"user_id" db:"user_id"` //TODO
+	UserID             int64                          `json:"user_id" db:"user_id"`
 	WorkflowTemplateID int64                          `json:"workflow_template_id" db:"workflow_template_id"`
 	Operations         WorkflowTemplateBulkOperations `json:"operations" db:"operations"`
 }
