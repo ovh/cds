@@ -64,7 +64,7 @@ func (api *API) addStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load pipeline stages")
 		}
 
-		event.PublishPipelineStageAdd(projectKey, pipelineKey, *stageData, getAPIConsumer(ctx))
+		event.PublishPipelineStageAdd(ctx, projectKey, pipelineKey, *stageData, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pipelineData, http.StatusCreated)
 	}
@@ -165,7 +165,7 @@ func (api *API) moveStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineStageMove(projectKey, pipelineKey, *stageData, oldStage.BuildOrder, getAPIConsumer(ctx))
+		event.PublishPipelineStageMove(ctx, projectKey, pipelineKey, *stageData, oldStage.BuildOrder, getAPIConsumer(ctx))
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
@@ -234,7 +234,7 @@ func (api *API) updateStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
 
-		event.PublishPipelineStageUpdate(projectKey, pipelineKey, *s, *stageData, getAPIConsumer(ctx))
+		event.PublishPipelineStageUpdate(ctx, projectKey, pipelineKey, *s, *stageData, getAPIConsumer(ctx))
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
@@ -293,7 +293,7 @@ func (api *API) deleteStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
 
-		event.PublishPipelineStageDelete(projectKey, pipelineKey, *s, getAPIConsumer(ctx))
+		event.PublishPipelineStageDelete(ctx, projectKey, pipelineKey, *s, getAPIConsumer(ctx))
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }

@@ -58,7 +58,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		// Load job run
-		pbj, errl := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		pbj, errl := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, id)
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load job nodeJobRunID:%d", id)
 		}
@@ -80,7 +80,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(errT, "Cannot takeJob nodeJobRunID:%d", id)
 		}
 
-		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, report)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, report)
 		go workflow.SendEvent(context.Background(), api.mustDB(), p.Key, report)
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
@@ -129,7 +129,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 		if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
 			return nil, sdk.WrapError(err, "Cannot update node run")
 		}
-		report.Add(*noderun)
+		report.Add(ctx, *noderun)
 	}
 
 	//Load workflow run
@@ -155,7 +155,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.SubNumber = noderun.SubNumber
 	wnjri.Secrets = secrets
 
-	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, p, workflowRun, noderun)
+	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(ctx, tx, p, workflowRun, noderun)
 	if errK != nil {
 		return nil, sdk.WrapError(errK, "Cannot load keys")
 	}
@@ -181,7 +181,7 @@ func (api *API) postBookWorkflowJobHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		if _, err := workflow.BookNodeJobRun(api.Cache, id, s); err != nil {
+		if _, err := workflow.BookNodeJobRun(ctx, api.Cache, id, s); err != nil {
 			return sdk.WrapError(err, "Job already booked")
 		}
 		return service.WriteJSON(w, nil, http.StatusOK)
@@ -195,7 +195,7 @@ func (api *API) deleteBookWorkflowJobHandler() service.Handler {
 			return err
 		}
 
-		if err := workflow.FreeNodeJobRun(api.Cache, id); err != nil {
+		if err := workflow.FreeNodeJobRun(ctx, api.Cache, id); err != nil {
 			return sdk.WrapError(err, "job not booked")
 		}
 		return service.WriteJSON(w, nil, http.StatusOK)
@@ -208,7 +208,7 @@ func (api *API) getWorkflowJobHandler() service.Handler {
 		if errc != nil {
 			return sdk.WrapError(errc, "getWorkflowJobHandler> invalid id")
 		}
-		j, err := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		j, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, id)
 		if err != nil {
 			return sdk.WrapError(err, "job not found")
 		}
@@ -280,7 +280,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 		}
 		defer tx.Rollback() // nolint
 
-		if _, err := workflow.LoadNodeJobRun(tx, api.Cache, id); err != nil {
+		if _, err := workflow.LoadNodeJobRun(ctx, tx, api.Cache, id); err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
 				return err
 			}
@@ -324,12 +324,12 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		next()
 		if errP != nil {
 			if sdk.ErrorIs(errP, sdk.ErrNoProject) {
-				_, errLn := workflow.LoadNodeJobRun(dbWithCtx, api.Cache, id)
+				_, errLn := workflow.LoadNodeJobRun(ctx, dbWithCtx, api.Cache, id)
 				if sdk.ErrorIs(errLn, sdk.ErrWorkflowNodeRunJobNotFound) {
 					// job result already send as job is no more in database
 					// this log is here to stats it and we returns nil for unlock the worker
 					// and avoid a "worker timeout"
-					log.Warning("NodeJobRun not found: %d err:%v", id, errLn)
+					log.Warning(ctx, "NodeJobRun not found: %d err:%v", id, errLn)
 					return nil
 				}
 				return sdk.WrapError(errLn, "Cannot load NodeJobRun %d", id)
@@ -357,7 +357,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		}
 
 		_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
-		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, proj, report)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, proj, report)
 		next()
 
 		go workflow.SendEvent(context.Background(), api.mustDB(), proj.Key, report)
@@ -456,7 +456,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	newDBFunc := func() *gorp.DbMap {
 		return dbFunc(context.Background())
 	}
-	report, err := workflow.UpdateNodeJobRunStatus(ctx, newDBFunc, tx, store, proj, job, res.Status)
+	report, err := workflow.UpdateNodeJobRunStatus(ctx, tx, store, proj, job, res.Status)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot update NodeJobRun %d status", job.ID)
 	}
@@ -479,7 +479,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 				if sdk.StatusIsTerminated(wRun.Status) && proj != nil {
 					wRun.LastExecution = time.Now()
 					if err := workflow.ResyncCommitStatus(context.Background(), dbFunc(context.Background()), store, proj, wRun); err != nil {
-						log.Error("workflow.UpdateNodeJobRunStatus> %v", err)
+						log.Error(ctx, "workflow.UpdateNodeJobRunStatus> %v", err)
 					}
 				}
 			}(run)
@@ -496,7 +496,7 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 			return sdk.WrapError(errr, "Invalid id")
 		}
 
-		pbJob, errJob := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		pbJob, errJob := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, id)
 		if errJob != nil {
 			return sdk.WrapError(errJob, "Cannot get job run %d", id)
 		}
@@ -538,7 +538,7 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 		globalErr := &sdk.MultiError{}
 		errorOccured := false
 		for _, log := range logs {
-			nodeRunJob, errJob := workflow.LoadNodeJobRun(db, api.Cache, log.WorkflowNodeJobRunID)
+			nodeRunJob, errJob := workflow.LoadNodeJobRun(ctx, db, api.Cache, log.WorkflowNodeJobRunID)
 			if errJob != nil {
 				errorOccured = true
 				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot get job run %d : %v", log.WorkflowNodeJobRunID, errJob))
@@ -561,7 +561,7 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 		}
 
 		if errorOccured {
-			log.Error(globalErr.Error())
+			log.Error(ctx, globalErr.Error())
 			return globalErr
 		}
 
@@ -581,7 +581,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 		}
 		dbWithCtx := api.mustDBWithCtx(ctx)
 
-		nodeJobRun, errJob := workflow.LoadNodeJobRun(dbWithCtx, api.Cache, id)
+		nodeJobRun, errJob := workflow.LoadNodeJobRun(ctx, dbWithCtx, api.Cache, id)
 		if errJob != nil {
 			return sdk.WrapError(errJob, "Cannot get job run %d", id)
 		}
@@ -629,7 +629,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 				return sdk.WrapError(errS, "postWorkflowJobStepStatusHandler> unable to sync nodeJobRun. JobID on handler: %d", id)
 			}
 			if !sync {
-				log.Warning("postWorkflowJobStepStatusHandler> sync doesn't find a nodeJobRun. JobID on handler: %d", id)
+				log.Warning(ctx, "postWorkflowJobStepStatusHandler> sync doesn't find a nodeJobRun. JobID on handler: %d", id)
 			}
 			if errU := workflow.UpdateNodeRun(tx, nodeRun); errU != nil {
 				return sdk.WrapError(errU, "postWorkflowJobStepStatusHandler> Cannot update node run. JobID on handler: %d", id)
@@ -645,7 +645,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 				DisableDetailledNodeRun: true,
 			})
 			if errN != nil {
-				log.Warning("postWorkflowJobStepStatusHandler> Unable to load node run for event: %v", errN)
+				log.Warning(ctx, "postWorkflowJobStepStatusHandler> Unable to load node run for event: %v", errN)
 				return nil
 			}
 			nodeRun = *nodeRunP
@@ -653,7 +653,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 
 		work, errW := workflow.LoadWorkflowFromWorkflowRunID(api.mustDB(), nodeRun.WorkflowRunID)
 		if errW != nil {
-			log.Warning("postWorkflowJobStepStatusHandler> Unable to load workflow for event: %v", errW)
+			log.Warning(ctx, "postWorkflowJobStepStatusHandler> Unable to load workflow for event: %v", errW)
 			return nil
 		}
 		nodeRun.Translate(r.Header.Get("Accept-Language"))
@@ -852,7 +852,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 			return err
 		}
 
-		nodeRunJob, errJobRun := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		nodeRunJob, errJobRun := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, id)
 		if errJobRun != nil {
 			return sdk.WrapError(errJobRun, "postWorkflowJobTestsResultsHandler> Cannot load node run job")
 		}
@@ -908,7 +908,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 		if nr.VCSServer != "" && nr.VCSBranch != "" {
 			p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id)
 			if errP != nil {
-				log.Error("postWorkflowJobTestsResultsHandler> Cannot load project by nodeJobRunID %d: %v", id, errP)
+				log.Error(ctx, "postWorkflowJobTestsResultsHandler> Cannot load project by nodeJobRunID %d: %v", id, errP)
 				return nil
 			}
 
@@ -916,13 +916,13 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 			projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, nr.VCSServer)
 			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, p.Key, projectVCSServer)
 			if erra != nil {
-				log.Error("postWorkflowJobTestsResultsHandler> Cannot get repo client %s : %v", nr.VCSServer, erra)
+				log.Error(ctx, "postWorkflowJobTestsResultsHandler> Cannot get repo client %s : %v", nr.VCSServer, erra)
 				return nil
 			}
 
 			defaultBranch, errB := repositoriesmanager.DefaultBranch(ctx, client, nr.VCSRepository)
 			if errB != nil {
-				log.Error("postWorkflowJobTestsResultsHandler> Unable to get default branch: %v", errB)
+				log.Error(ctx, "postWorkflowJobTestsResultsHandler> Unable to get default branch: %v", errB)
 				return nil
 			}
 

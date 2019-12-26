@@ -19,14 +19,14 @@ func TestAuthenticatedUserDAO(t *testing.T) {
 		Fullname: sdk.RandomString(10),
 		Ring:     sdk.UserRingAdmin,
 	}
-	test.NoError(t, user.Insert(db, &u))
+	test.NoError(t, user.Insert(context.TODO(), db, &u))
 
 	u1, err := user.LoadByID(context.TODO(), db, u.ID)
 	test.NoError(t, err)
 	test.Equal(t, u.Username, u1.Username)
 
 	u.Username = sdk.RandomString(10)
-	test.NoError(t, user.Update(db, &u))
+	test.NoError(t, user.Update(context.TODO(), db, &u))
 
 	u1, err = user.LoadByID(context.TODO(), db, u.ID)
 	test.NoError(t, err)
@@ -53,7 +53,7 @@ func TestLoadAll(t *testing.T) {
 			Ring:     sdk.UserRingAdmin,
 		}
 
-		assert.NoError(t, user.Insert(db, &u))
+		assert.NoError(t, user.Insert(context.TODO(), db, &u))
 	}
 
 	users, err := user.LoadAll(context.TODO(), db)
@@ -74,7 +74,7 @@ func TestLoadAllByIDs(t *testing.T) {
 			Ring:     sdk.UserRingAdmin,
 		}
 
-		assert.NoError(t, user.Insert(db, &u))
+		assert.NoError(t, user.Insert(context.TODO(), db, &u))
 
 		ids[i] = u.ID
 	}

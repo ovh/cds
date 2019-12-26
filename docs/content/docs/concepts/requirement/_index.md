@@ -18,7 +18,7 @@ Requirement types:
 
 A [Job]({{< relref "/docs/concepts/job.md" >}}) will be executed by a **worker**.
 
-CDS will choose and provision a worker dependending on the **requirements** you define for your job.
+CDS will choose a worker dependending on the **requirements** you define for your job.
 
 You can set as many requirements as you want, following these rules:
 

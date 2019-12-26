@@ -94,6 +94,12 @@ const NamePattern = "^[a-zA-Z0-9._-]{1,}$"
 // NamePatternRegex  Pattern regexp
 var NamePatternRegex = regexp.MustCompile(NamePattern)
 
+// NamePatternSpace  Pattern for stage name
+const NamePatternSpace = `^[\sa-zA-Z0-9._-]{1,}$`
+
+// NamePatternSpaceRegex  Pattern regexp
+var NamePatternSpaceRegex = regexp.MustCompile(NamePatternSpace)
+
 // InterfaceSlice cast a untyped slice into a slice of untypes things. It will panic if the parameter is not a slice
 func InterfaceSlice(slice interface{}) []interface{} {
 	s := reflect.ValueOf(slice)
@@ -241,10 +247,25 @@ func (s *Int64Slice) Remove(v int64) {
 
 func RemoveNotPrintableChar(in string) string {
 	m := func(r rune) rune {
-		if unicode.IsPrint(r) || unicode.IsSpace(r) || unicode.IsPunct(r) {
+		switch {
+		case unicode.IsLetter(r),
+			unicode.IsSpace(r),
+			unicode.IsDigit(r),
+			unicode.IsNumber(r),
+			unicode.In(r, unicode.Pd, // Filter some punctuation categories
+				unicode.Pe,
+				unicode.Pf,
+				unicode.Pi,
+				unicode.Po,
+				unicode.Ps,
+			),
+			unicode.IsSpace(r),
+			unicode.IsTitle(r),
+			unicode.IsUpper(r):
 			return r
+		default:
+			return ' '
 		}
-		return ' '
 	}
 	return strings.Map(m, in)
 }

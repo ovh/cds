@@ -81,14 +81,14 @@ func TestMissingProjectPermissionWorkflowWarning(t *testing.T) {
 
 	// Compute event
 	warnToTest := missingProjectPermissionWorkflowWarning{}
-	test.NoError(t, warnToTest.compute(db, e))
+	test.NoError(t, warnToTest.compute(context.Background(), db, e))
 
 	// Check warning exist
 	warnsAfter, errAfter := GetByProject(db, proj.Key)
 	test.NoError(t, errAfter)
 	assert.Equal(t, 1, len(warnsAfter))
 
-	(&warnsAfter[0]).ComputeMessage("en")
+	(&warnsAfter[0]).ComputeMessage(context.TODO(), "en")
 	t.Logf("%s", warnsAfter[0].Message)
 
 	// Create Add key event
@@ -100,7 +100,7 @@ func TestMissingProjectPermissionWorkflowWarning(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadAdd),
 		Payload:    structs.Map(ePayloadAdd),
 	}
-	test.NoError(t, warnToTest.compute(db, eAdd))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eAdd))
 
 	// Check that warning disapears
 	warnsAdd, errAfterDelete := GetByProject(db, proj.Key)
@@ -108,7 +108,7 @@ func TestMissingProjectPermissionWorkflowWarning(t *testing.T) {
 	assert.Equal(t, 0, len(warnsAdd))
 
 	// add warning
-	test.NoError(t, warnToTest.compute(db, e))
+	test.NoError(t, warnToTest.compute(context.Background(), db, e))
 
 	// Check warning exist
 	warnsAfter2, errAfter2 := GetByProject(db, proj.Key)
@@ -125,7 +125,7 @@ func TestMissingProjectPermissionWorkflowWarning(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadDelWorkflow),
 		Payload:    structs.Map(ePayloadDelWorkflow),
 	}
-	test.NoError(t, warnToTest.compute(db, eDelWorkflow))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eDelWorkflow))
 
 	warnsDelEnv, errDelEnv := GetByProject(db, proj.Key)
 	test.NoError(t, errDelEnv)

@@ -63,7 +63,7 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 
 	wm, err := processNodeJobRunRequirementsGetModel(ctx, db, model, execsGroupIDs)
 	if err != nil {
-		log.Error("getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
+		log.Error(ctx, "getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
 		errm.Append(err)
 	}
 	if wm != nil {

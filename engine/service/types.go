@@ -40,7 +40,6 @@ type HatcheryCommonConfiguration struct {
 	} `toml:"api" json:"api"`
 	Provision struct {
 		Disabled                  bool `toml:"disabled" default:"false" comment:"Disabled provisioning. Format:true or false" json:"disabled"`
-		Frequency                 int  `toml:"frequency" default:"30" comment:"Check provisioning each n Seconds" json:"frequency"`
 		RatioService              *int `toml:"ratioService" default:"50" commented:"true" comment:"Percent reserved for spawning worker with service requirement" json:"ratioService,omitempty" mapstructure:"ratioService"`
 		MaxWorker                 int  `toml:"maxWorker" default:"10" comment:"Maximum allowed simultaneous workers" json:"maxWorker"`
 		MaxConcurrentProvisioning int  `toml:"maxConcurrentProvisioning" default:"10" comment:"Maximum allowed simultaneous workers provisioning" json:"maxConcurrentProvisioning"`
@@ -85,9 +84,9 @@ type Service interface {
 	CheckConfiguration(cfg interface{}) error
 	Start(ctx context.Context, cfg cdsclient.ServiceConfig) error
 	Init(cfg interface{}) (cdsclient.ServiceConfig, error)
-	Register(cfg sdk.ServiceConfig) error
-	Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus) error
-	Status() sdk.MonitoringStatus
+	Register(ctx context.Context, cfg sdk.ServiceConfig) error
+	Heartbeat(ctx context.Context, status func(ctx context.Context) sdk.MonitoringStatus) error
+	Status(ctx context.Context) sdk.MonitoringStatus
 	NamedService
 }
 

@@ -115,7 +115,7 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteProjectKey(p, deletedKey, getAPIConsumer(ctx))
+		event.PublishDeleteProjectKey(ctx, p, deletedKey, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -178,7 +178,7 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishAddProjectKey(p, newKey, getAPIConsumer(ctx))
+		event.PublishAddProjectKey(ctx, p, newKey, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

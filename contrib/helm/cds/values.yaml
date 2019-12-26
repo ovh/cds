@@ -5,7 +5,7 @@
 image:
   registry: docker.io
   repository: ovhcom/cds-engine
-  cdstag: 0.41.0
+  cdstag: 0.42.0
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -172,7 +172,7 @@ ui:
   image:
     registry: docker.io
     repository: ovhcom/cds-ui
-    cdstag: 0.41.0
+    cdstag: 0.42.0
   logLevel: info
   baseUrl: /
   api.livenessProbe:
@@ -187,7 +187,7 @@ ui:
     initialDelaySeconds: 30
 
   ## Service configuration
-  # For minikube set this to NodePort. On docker for windows set this to ClusterIP and use port-foward
+  # For minikube set this to NodePort. On docker for windows set this to ClusterIP and use port-forward
   # Elsewhere use LoadBalancer or use ClusterIP if your setup includes ingress controller
   serviceType: LoadBalancer
 

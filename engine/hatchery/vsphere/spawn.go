@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"strings"
 	"time"
 
 	"github.com/vmware/govmomi/object"
@@ -15,7 +14,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 type annotation struct {
@@ -34,12 +32,7 @@ type annotation struct {
 func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	var vm *object.VirtualMachine
 	var errV error
-	name := "worker-" + spawnArgs.Model.Name + "-" + strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)
-	if spawnArgs.RegisterOnly {
-		name = "register-" + name
-	}
-
-	_, errM := h.getModelByName(spawnArgs.Model.Name)
+	_, errM := h.getModelByName(ctx, spawnArgs.Model.Name)
 
 	if errM != nil || spawnArgs.Model.NeedRegistration {
 		// Generate worker model vm
@@ -55,7 +48,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 	annot := annotation{
 		HatcheryName:            h.Name(),
-		WorkerName:              name,
+		WorkerName:              spawnArgs.WorkerName,
 		RegisterOnly:            spawnArgs.RegisterOnly,
 		WorkerModelLastModified: fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
 		WorkerModelName:         spawnArgs.ModelName(),
@@ -67,9 +60,9 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WrapError(errCfg, "cannot create VM configuration")
 	}
 
-	log.Info("Create vm to exec worker %s", name)
-	defer log.Info("Terminate to create vm for worker %s", name)
-	task, errC := vm.Clone(ctx, folder, name, *cloneSpec)
+	log.Info(ctx, "Create vm to exec worker %s", spawnArgs.WorkerName)
+	defer log.Info(ctx, "Terminate to create vm for worker %s", spawnArgs.WorkerName)
+	task, errC := vm.Clone(ctx, folder, spawnArgs.WorkerName, *cloneSpec)
 	if errC != nil {
 		return sdk.WrapError(errC, "cannot clone VM")
 	}
@@ -79,13 +72,13 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WrapError(errW, "state in error")
 	}
 
-	return h.launchScriptWorker(name, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
+	return h.launchScriptWorker(spawnArgs.WorkerName, spawnArgs.JobID, spawnArgs.WorkerToken, *spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
 }
 
 // createVMModel create a model for a specific worker model
 func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine, error) {
-	log.Info("Create vm model %s", model.Name)
 	ctx := context.Background()
+	log.Info(ctx, "Create vm model %s", model.Name)
 
 	vm, errV := h.finder.VirtualMachine(ctx, model.ModelVirtualMachine.Image)
 	if errV != nil {
@@ -122,7 +115,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 	}
 
 	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine.PreCmd+"; \n"+model.ModelVirtualMachine.Cmd+"; \n"+model.ModelVirtualMachine.PostCmd, nil); errS != nil {
-		log.Warning("createVMModel> cannot start program %s", errS)
+		log.Warning(ctx, "createVMModel> cannot start program %s", errS)
 		annot := annotation{ToDelete: true}
 		if annotStr, err := json.Marshal(annot); err == nil {
 			vm.Reconfigure(ctx, types.VirtualMachineConfigSpec{
@@ -136,12 +129,12 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 	if err := vm.WaitForPowerState(ctxTo, types.VirtualMachinePowerStatePoweredOff); err != nil {
 		return nil, sdk.WrapError(err, "cannot wait for power state result")
 	}
-	log.Info("createVMModel> model %s is build", model.Name)
+	log.Info(ctx, "createVMModel> model %s is build", model.Name)
 
-	modelFound, errM := h.getModelByName(model.Name)
+	modelFound, errM := h.getModelByName(ctx, model.Name)
 	if errM == nil {
 		if errD := h.deleteServer(modelFound); errD != nil {
-			log.Warning("createVMModel> Cannot delete previous model %s : %s", model.Name, errD)
+			log.Warning(ctx, "createVMModel> Cannot delete previous model %s : %s", model.Name, errD)
 		}
 	}
 
@@ -213,7 +206,7 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, token str
 	}
 
 	if _, errS := h.launchClientOp(vm, buffer.String(), env); errS != nil {
-		log.Warning("launchScript> cannot start program %s", errS)
+		log.Warning(ctx, "launchScript> cannot start program %s", errS)
 
 		// tag vm to delete
 		annot := annotation{ToDelete: true}

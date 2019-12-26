@@ -54,7 +54,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		event.PublishDeleteProjectPermission(proj, sdk.GroupPermission{
+		event.PublishDeleteProjectPermission(ctx, proj, sdk.GroupPermission{
 			Group:      *grp,
 			Permission: link.Role,
 		})
@@ -142,7 +142,7 @@ func (api *API) putGroupRoleOnProjectHandler() service.Handler {
 		}
 
 		newGroupPermission := sdk.GroupPermission{Permission: newLink.Role, Group: *grp}
-		event.PublishUpdateProjectPermission(proj, newGroupPermission,
+		event.PublishUpdateProjectPermission(ctx, proj, newGroupPermission,
 			sdk.GroupPermission{Permission: oldLink.Role, Group: *grp},
 			getAPIConsumer(ctx))
 
@@ -221,7 +221,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 		}
 
 		newGroupPermission := sdk.GroupPermission{Permission: newLink.Role, Group: *grp}
-		event.PublishAddProjectPermission(proj, newGroupPermission, getAPIConsumer(ctx))
+		event.PublishAddProjectPermission(ctx, proj, newGroupPermission, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, newGroupPermission, http.StatusOK)
 	}
@@ -280,7 +280,7 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 			data[i].Group = *grp
 		}
 
-		if !forceUpdate {
+		if forceUpdate {
 			if err := group.DeleteLinksGroupProjectForProjectID(tx, proj.ID); err != nil {
 				return sdk.WrapError(err, "cannot delete all groups for project %s", proj.Name)
 			}

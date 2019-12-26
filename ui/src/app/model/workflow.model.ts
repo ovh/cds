@@ -368,9 +368,6 @@ export class WorkflowNodeHookConfigValue {
     configurable: boolean;
     type: string;
     multiple_choice_list: Array<string>;
-
-    //
-    temp: {};
 }
 
 // WorkflowTriggerConditions is either a lua script to check conditions or a set of WorkflowTriggerCondition

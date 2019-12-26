@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/vcs/git"
 )
 
-func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
 	tagPrerelease := sdk.ParameterFind(a.Parameters, "tagPrerelease")
 	tagMetadata := sdk.ParameterFind(a.Parameters, "tagMetadata")
 	tagLevel := sdk.ParameterFind(a.Parameters, "tagLevel")
@@ -36,7 +36,7 @@ func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, para
 		return sdk.Result{}, errors.New("tag level is mandatory. It must be: 'major' or 'minor' or 'patch'")
 	}
 
-	gitURL, auth, err := vcsStrategy(ctx, wk, params, secrets)
+	gitURL, auth, err := vcsStrategy(ctx, wk, wk.Parameters(), secrets)
 	if err != nil {
 		return sdk.Result{}, err
 	}
@@ -46,7 +46,7 @@ func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, para
 		msg = tagMessage.Value
 	}
 
-	cdsSemver := sdk.ParameterFind(params, "cds.semver")
+	cdsSemver := sdk.ParameterFind(wk.Parameters(), "cds.semver")
 	if cdsSemver == nil || cdsSemver.Value == "" {
 		return sdk.Result{}, errors.New("cds.semver is empty")
 	}
@@ -89,11 +89,11 @@ func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, para
 	}
 
 	var userTag string
-	userTrig := sdk.ParameterFind(params, "cds.triggered_by.username")
+	userTrig := sdk.ParameterFind(wk.Parameters(), "cds.triggered_by.username")
 	if userTrig != nil && userTrig.Value != "" {
 		userTag = userTrig.Value
 	} else {
-		gitAuthor := sdk.ParameterFind(params, "git.author")
+		gitAuthor := sdk.ParameterFind(wk.Parameters(), "git.author")
 		if gitAuthor != nil && gitAuthor.Value != "" {
 			userTag = gitAuthor.Value
 		}
@@ -137,7 +137,7 @@ func RunGitTag(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, para
 		Stdout: stdOut,
 	}
 
-	git.LogFunc = log.Info
+	git.LogFunc = log.InfoWithoutCtx
 
 	if path != nil {
 		tagOpts.Path = path.Value

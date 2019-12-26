@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -10,18 +11,18 @@ import (
 )
 
 // NewConsumer returns a new local consumer for given data.
-func NewConsumer(db gorp.SqlExecutor, userID string) (*sdk.AuthConsumer, error) {
-	return newConsumerWithData(db, userID, nil)
+func NewConsumer(ctx context.Context, db gorp.SqlExecutor, userID string) (*sdk.AuthConsumer, error) {
+	return newConsumerWithData(ctx, db, userID, nil)
 }
 
 // NewConsumerWithHash returns a new local consumer with given hash.
-func NewConsumerWithHash(db gorp.SqlExecutor, userID, hash string) (*sdk.AuthConsumer, error) {
-	return newConsumerWithData(db, userID, map[string]string{
+func NewConsumerWithHash(ctx context.Context, db gorp.SqlExecutor, userID, hash string) (*sdk.AuthConsumer, error) {
+	return newConsumerWithData(ctx, db, userID, map[string]string{
 		"hash": hash,
 	})
 }
 
-func newConsumerWithData(db gorp.SqlExecutor, userID string, data map[string]string) (*sdk.AuthConsumer, error) {
+func newConsumerWithData(ctx context.Context, db gorp.SqlExecutor, userID string, data map[string]string) (*sdk.AuthConsumer, error) {
 	c := sdk.AuthConsumer{
 		Name:               string(sdk.ConsumerLocal),
 		AuthentifiedUserID: userID,
@@ -38,7 +39,7 @@ func newConsumerWithData(db gorp.SqlExecutor, userID string, data map[string]str
 		}
 	}
 
-	if err := authentication.InsertConsumer(db, &c); err != nil {
+	if err := authentication.InsertConsumer(ctx, db, &c); err != nil {
 		return nil, sdk.WrapError(err, "unable to insert consumer for user %s", userID)
 	}
 

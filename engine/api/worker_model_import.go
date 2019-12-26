@@ -78,13 +78,6 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 			return err
 		}
 
-		if !isAdmin(ctx) {
-			// provision is allowed only for CDS Admin or by user with a restricted model
-			if !data.Restricted {
-				data.Provision = 0
-			}
-		}
-
 		var newModel *sdk.Model
 
 		// check if a model already exists for given info, if exists but not force update returns an error

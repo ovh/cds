@@ -108,13 +108,13 @@ func (s *Service) Serve(c context.Context) error {
 	go func() {
 		select {
 		case <-ctx.Done():
-			log.Info("CDN> Shutdown HTTP Server")
+			log.Info(ctx, "CDN> Shutdown HTTP Server")
 			server.Shutdown(ctx)
 		}
 	}()
 
 	//Start the http server
-	log.Info("CDN> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+	log.Info(ctx, "CDN> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("CDN> Cannot start cds-cdn: %s", err)
 	}
@@ -141,7 +141,7 @@ func (s *Service) initDefaultDrivers(ctx context.Context) error {
 		}
 
 		if name == defaultBackendName {
-			log.Info("Init default backend...")
+			log.Info(ctx, "Init default backend...")
 			var errDriver error
 			s.DefaultDriver, errDriver = objectstore.Init(ctx, driverCfg)
 			if errDriver != nil {

@@ -239,7 +239,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 }
 
 // Publish a msg in a channel
-func (s *RedisStore) Publish(channel string, value interface{}) error {
+func (s *RedisStore) Publish(ctx context.Context, channel string, value interface{}) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
@@ -259,7 +259,7 @@ func (s *RedisStore) Publish(channel string, value interface{}) error {
 		if errP == nil {
 			break
 		}
-		log.Warning("redis.Publish> Unable to publish in channel %s: %v", channel, errP)
+		log.Warning(ctx, "redis.Publish> Unable to publish in channel %s: %v", channel, errP)
 		time.Sleep(100 * time.Millisecond)
 	}
 	return nil
@@ -348,7 +348,7 @@ func (s *RedisStore) SetCard(key string) (int, error) {
 }
 
 // SetScan scans a ZSet
-func (s *RedisStore) SetScan(key string, members ...interface{}) error {
+func (s *RedisStore) SetScan(ctx context.Context, key string, members ...interface{}) error {
 	values, err := s.Client.ZRangeByScore(key, redis.ZRangeBy{
 		Min: "-inf",
 		Max: "+inf",
@@ -376,11 +376,11 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 			if res[i] == nil {
 				//If the member is not found, return an error because the members are inconsistents
 				// but try to delete the member from the Redis ZSET
-				log.Error("redis>SetScan member %s not found", keys[i])
+				log.Error(ctx, "redis>SetScan member %s not found", keys[i])
 				if err := s.Client.ZRem(key, values[i]).Err(); err != nil {
 					return sdk.WrapError(err, "redis>SetScan unable to delete member %s", keys[i])
 				}
-				log.Info("redis> member %s deleted", keys[i])
+				log.Info(ctx, "redis> member %s deleted", keys[i])
 				return sdk.WithStack(fmt.Errorf("SetScan member %s not found", keys[i]))
 			}
 

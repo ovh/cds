@@ -45,14 +45,14 @@ func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.
 		return nil, conditionOK, sdk.WrapError(errP, "processWorkflowRun> Unable to processNodeRun")
 	}
 
-	report, _ = report.Merge(r1, nil)
+	report, _ = report.Merge(ctx, r1, nil)
 	wr.Status = sdk.StatusWaiting
 
 	return report, conditionOK, nil
 }
 
 func processStartFromRootNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
-	log.Debug("processWorkflowRun> starting from the root : %d (pipeline %s)", wr.Workflow.WorkflowData.Node.ID, wr.Workflow.Pipelines[wr.Workflow.WorkflowData.Node.Context.ID].Name)
+	log.Debug("processWorkflowRun> starting from the root: %d (pipeline %s)", wr.Workflow.WorkflowData.Node.ID, wr.Workflow.Pipelines[wr.Workflow.WorkflowData.Node.Context.PipelineID].Name)
 	report := new(ProcessorReport)
 	//Run the root: manual or from an event
 	AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{
@@ -67,7 +67,7 @@ func processStartFromRootNode(ctx context.Context, db gorp.SqlExecutor, store ca
 	if errP != nil {
 		return nil, false, sdk.WrapError(errP, "Unable to process workflow node run")
 	}
-	report, _ = report.Merge(r1, nil)
+	report, _ = report.Merge(ctx, r1, nil)
 	return report, conditionOK, nil
 }
 
@@ -83,7 +83,7 @@ func processAllNodesTriggers(ctx context.Context, db gorp.SqlExecutor, store cac
 			//Find the node in the workflow
 			node := mapNodes[nodeRun.WorkflowNodeID]
 			r1, _ := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, []*sdk.WorkflowNodeRun{nodeRun}, node, int(nodeRun.SubNumber))
-			_, _ = report.Merge(r1, nil)
+			_, _ = report.Merge(ctx, r1, nil)
 		}
 	}
 	return report, nil
@@ -141,7 +141,7 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 			if err != nil {
 				return report, sdk.WrapError(err, "processAllJoins> Unable to process join node")
 			}
-			_, _ = report.Merge(r1, nil)
+			_, _ = report.Merge(ctx, r1, nil)
 		}
 	}
 	return report, nil

@@ -1,6 +1,7 @@
 package objectstore
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"time"
@@ -21,8 +22,8 @@ type SwiftStore struct {
 
 var swiftServeStaticFileEnabled bool
 
-func newSwiftStore(integration sdk.ProjectIntegration, conf ConfigOptionsOpenstack) (*SwiftStore, error) {
-	log.Info("ObjectStore> Initialize Swift driver on url: %s", conf.Address)
+func newSwiftStore(ctx context.Context, integration sdk.ProjectIntegration, conf ConfigOptionsOpenstack) (*SwiftStore, error) {
+	log.Info(ctx, "ObjectStore> Initialize Swift driver on url: %s", conf.Address)
 	s := &SwiftStore{
 		Connection: swift.Connection{
 			AuthUrl:  conf.Address,
@@ -53,7 +54,7 @@ func (s *SwiftStore) GetProjectIntegration() sdk.ProjectIntegration {
 }
 
 // Status returns the status of swift account
-func (s *SwiftStore) Status() sdk.MonitoringStatusLine {
+func (s *SwiftStore) Status(ctx context.Context) sdk.MonitoringStatusLine {
 	info, _, err := s.Account()
 	if err != nil {
 		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Swift KO" + err.Error(), Status: sdk.MonitoringStatusAlert}
@@ -143,7 +144,7 @@ func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
 }
 
 // Fetch an object from swift
-func (s *SwiftStore) Fetch(o Object) (io.ReadCloser, error) {
+func (s *SwiftStore) Fetch(ctx context.Context, o Object) (io.ReadCloser, error) {
 	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
@@ -155,7 +156,7 @@ func (s *SwiftStore) Fetch(o Object) (io.ReadCloser, error) {
 		log.Debug("SwiftStore> downloading object %s/%s", container, object)
 
 		if _, err := s.ObjectGet(container, object, pipeWriter, false, nil); err != nil {
-			log.Error("SwiftStore> Unable to get object %s/%s: %s", container, object, err)
+			log.Error(ctx, "SwiftStore> Unable to get object %s/%s: %s", container, object, err)
 		}
 
 		log.Debug("SwiftStore> object %s%s downloaded", container, object)
@@ -164,19 +165,35 @@ func (s *SwiftStore) Fetch(o Object) (io.ReadCloser, error) {
 	return pipeReader, nil
 }
 
-// Delete an object from swift
-func (s *SwiftStore) Delete(o Object) error {
+// Delete deletes an object from swift
+func (s *SwiftStore) Delete(ctx context.Context, o Object) error {
 	container := s.containerPrefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
 
 	if err := s.ObjectDelete(container, object); err != nil {
-		if err.Error() == "Object Not Found" {
-			log.Info("Delete.SwiftStore: %s/%s: %s", container, object, err)
+		if err.Error() == swift.ObjectNotFound.Text {
+			log.Info(ctx, "Delete.SwiftStore: %s/%s: %s", container, object, err)
 			return nil
 		}
 		return sdk.WrapError(err, "Unable to delete object")
 	}
+	return nil
+}
+
+// DeleteContainer deletes a container from swift
+func (s *SwiftStore) DeleteContainer(ctx context.Context, containerPath string) error {
+	container := s.containerPrefix + containerPath
+	escape(container, "")
+
+	if err := s.ContainerDelete(container); err != nil {
+		if err.Error() == swift.ContainerNotFound.Text {
+			log.Info(ctx, "Delete.SwiftStore: %s: %s", container, err)
+			return nil
+		}
+		return sdk.WrapError(err, "Unable to delete container")
+	}
+	log.Debug("Delete.SwiftStore: %s is deleted", container)
 	return nil
 }
 

@@ -10,12 +10,12 @@ func main() {
 	cmd.AddCommand(cmdCheckSecret())
 	cmd.AddCommand(cmdTag())
 	cmd.AddCommand(cmdRun())
-	cmd.AddCommand(cmdUpdate())
 	cmd.AddCommand(cmdExit())
 	cmd.AddCommand(cmdVersion)
 	cmd.AddCommand(cmdRegister())
 	cmd.AddCommand(cmdCache())
 	cmd.AddCommand(cmdKey())
+	cmd.AddCommand(cmdJunitParser())
 
 	// last command: doc, this command is hidden
 	cmd.AddCommand(cmdDoc(cmd))

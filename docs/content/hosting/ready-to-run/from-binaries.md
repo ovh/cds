@@ -23,7 +23,7 @@ mkdir $HOME/cds
 cd cds
 
 LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d '"' -f 4)
-OS=linux # could be linux, darwin, windows
+OS=linux # could be linux, darwin, windows, freebsd
 ARCH=amd64 # could be 386, arm, amd64, arm64
 
 # GET Binaries from GitHub
@@ -54,7 +54,7 @@ Generate a **[Configuration File]({{<relref "/hosting/configuration.md" >}})**
 cd $HOME/cds
 
 ./cds-engine-linux-amd64 config new > $HOME/cds/conf.toml
-./cds-engine-linux-amd64 download workers -f $HOME/cds/conf.toml
+./cds-engine-linux-amd64 download workers --config $HOME/cds/conf.toml
 ./cds-engine-linux-amd64 start api --config $HOME/cds/conf.toml
 ```
 
@@ -97,7 +97,7 @@ chmod +x caddy-linux-amd64
 ./caddy-linux-amd64
 ```
 
-Then, open a browser on http://localhost:2015/ . You have to signup your first CDS user. It will be an administrator on CDS. In order to do that, just go on UI and click on signup or use `cdsctl signup`. If you don't have email service configured you just have to check your CDS API logs to have the confirmation link.
+Then, open a browser on http://localhost:8080/ . You have to signup your first CDS user. It will be an administrator on CDS. In order to do that, just go on UI and click on signup or use `cdsctl signup`. If you don't have email service configured you just have to check your CDS API logs to have the confirmation link.
 
 ## Launch CDS Local Hatchery
 
@@ -112,9 +112,6 @@ To be able to start a local hatchery, enter a hatchery name in the section `hatc
 
     # BaseDir for worker workspace
     basedir = "/tmp"
-
-    # Nb Workers to provision
-    nbProvision = 1
 
     [hatchery.local.commonConfiguration]
 

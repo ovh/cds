@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -39,9 +40,14 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, p
 
 	}
 
+	rx := sdk.NamePatternSpaceRegex
 	pip.ID = oldPipeline.ID
 	for i := range pip.Stages {
 		s := &pip.Stages[i]
+		// stage name mandatory if there are many stages
+		if len(pip.Stages) > 1 && !rx.MatchString(s.Name) {
+			return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid stage name '%s'. It should match %s", s.Name, sdk.NamePatternSpace))
+		}
 		var stageFound bool
 		var oldStage *sdk.Stage
 		for _, os := range oldPipeline.Stages {
@@ -191,7 +197,7 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, p
 	errU := UpdatePipeline(db, pip)
 
 	if oldPipeline.Name != pip.Name {
-		event.PublishPipelineUpdate(proj.Key, pip.Name, oldPipeline.Name, u)
+		event.PublishPipelineUpdate(ctx, proj.Key, pip.Name, oldPipeline.Name, u)
 	}
 
 	return sdk.WrapError(errU, "ImportUpdate> cannot update pipeline")
@@ -210,7 +216,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 	if !ok {
 		if err := importNew(ctx, db, store, proj, pip, u); err != nil {
-			log.Error("pipeline.Import> %s", err)
+			log.Error(ctx, "pipeline.Import> %s", err)
 			if msgChan != nil {
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineCreationAborted, pip.Name)
 			}
@@ -270,7 +276,7 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 			jobAction.Enabled = true
 			jobAction.Action.Enabled = true
 			if errs := CheckJob(ctx, db, jobAction); errs != nil {
-				log.Warning("pipeline.importNew.CheckJob > %s", errs)
+				log.Warning(ctx, "pipeline.importNew.CheckJob > %s", errs)
 				return errs
 			}
 			if err := action.CheckChildrenForGroupIDs(ctx, db, &jobAction.Action, groupIDs); err != nil {
@@ -285,7 +291,7 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 		}
 	}
 
-	event.PublishPipelineAdd(proj.Key, *pip, u)
+	event.PublishPipelineAdd(ctx, proj.Key, *pip, u)
 
 	return nil
 }

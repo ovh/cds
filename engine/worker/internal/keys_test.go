@@ -61,8 +61,8 @@ func TestInstallKey_SSHKeyWithoutDesination(t *testing.T) {
 		t.Fatalf("worker init failed: %v", err)
 	}
 
-	require.NoError(t, w.Workspace().Mkdir("keys", os.FileMode(0700)))
-	keyDir, err := w.Workspace().Open("keys")
+	require.NoError(t, w.BaseDir().Mkdir("keys", os.FileMode(0700)))
+	keyDir, err := w.BaseDir().Open("keys")
 	require.NoError(t, err)
 
 	w.currentJob.context = workerruntime.SetKeysDirectory(context.TODO(), keyDir)
@@ -93,8 +93,8 @@ func TestInstallKey_SSHKeyWithDesination(t *testing.T) {
 		t.Fatalf("worker init failed: %v", err)
 	}
 
-	require.NoError(t, w.Workspace().Mkdir("keys", os.FileMode(0700)))
-	keyDir, err := w.Workspace().Open("keys")
+	require.NoError(t, w.BaseDir().Mkdir("keys", os.FileMode(0700)))
+	keyDir, err := w.BaseDir().Open("keys")
 	require.NoError(t, err)
 
 	w.currentJob.context = workerruntime.SetKeysDirectory(context.TODO(), keyDir)

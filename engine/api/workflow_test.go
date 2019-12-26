@@ -1,12 +1,19 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/service"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,31 +36,102 @@ import (
 )
 
 func Test_getWorkflowsHandler(t *testing.T) {
-
-	api, db, router, end := newTestAPI(t)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
+	u, pass := assets.InsertLambdaUser(t, api.mustDB())
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
 
-	// Init user
-	u, pass := assets.InsertAdminUser(t, api.mustDB())
-	// Init project
-	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-	//Prepare request
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+
+	wf := sdk.Workflow{
+		Name:       "workflow1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
+		},
+	}
+
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &wf, proj))
+
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
 	}
-	uri := router.GetRoute("GET", api.getWorkflowsHandler, vars)
+	uri := api.Router.GetRoute("GET", api.getWorkflowsHandler, vars)
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
+	api.Router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
+
+	wfList := []sdk.Workflow{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfList))
+	for _, w := range wfList {
+		assert.Equal(t, true, w.Permissions.Readable, "readable should be true")
+		assert.Equal(t, true, w.Permissions.Writable, "writable should be true")
+		assert.Equal(t, true, w.Permissions.Executable, "writable should be true")
+	}
+
+	var err error
+
+	userAdmin, passAdmin := assets.InsertAdminUser(t, db)
+	uri = api.Router.GetRoute("GET", api.getWorkflowsHandler, vars)
+	req, err = http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, userAdmin, passAdmin)
+
+	// Do the request
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	wfList = []sdk.Workflow{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfList))
+	for _, w := range wfList {
+		assert.Equal(t, true, w.Permissions.Readable, "readable should be true")
+		assert.Equal(t, true, w.Permissions.Writable, "writable should be true")
+		assert.Equal(t, true, w.Permissions.Executable, "executable should be true")
+	}
+
+	userMaintainer, passMaintainer := assets.InsertMaintainerUser(t, db)
+	uri = api.Router.GetRoute("GET", api.getWorkflowsHandler, vars)
+	req, err = http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, userMaintainer, passMaintainer)
+
+	// Do the request
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	wfList = []sdk.Workflow{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfList))
+	for _, w := range wfList {
+		assert.Equal(t, true, w.Permissions.Readable, "readable should be true")
+		assert.Equal(t, false, w.Permissions.Writable, "writable should be false")
+		assert.Equal(t, false, w.Permissions.Executable, "executable should be false")
+	}
 }
 
 func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
-
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, db)
@@ -180,7 +258,6 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 }
 
 func Test_getWorkflowHandler(t *testing.T) {
-
 	api, db, router, end := newTestAPI(t)
 	defer end()
 
@@ -204,6 +281,98 @@ func Test_getWorkflowHandler(t *testing.T) {
 	assert.Equal(t, 404, w.Code)
 }
 
+func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, pass := assets.InsertLambdaUser(t, api.mustDB())
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+
+	wf := sdk.Workflow{
+		Name:       "workflow1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
+		},
+	}
+
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &wf, proj))
+
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": "workflow1",
+	}
+	uri := api.Router.GetRoute("GET", api.getWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	wfGet := sdk.Workflow{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfGet))
+	assert.Equal(t, true, wfGet.Permissions.Readable, "readable should be true")
+	assert.Equal(t, true, wfGet.Permissions.Writable, "writable should be true")
+	assert.Equal(t, true, wfGet.Permissions.Executable, "writable should be true")
+
+	var err error
+
+	userAdmin, passAdmin := assets.InsertAdminUser(t, db)
+	uri = api.Router.GetRoute("GET", api.getWorkflowHandler, vars)
+	req, err = http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, userAdmin, passAdmin)
+
+	// Do the request
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	wfGet = sdk.Workflow{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfGet))
+	assert.Equal(t, true, wfGet.Permissions.Readable, "readable should be true")
+	assert.Equal(t, true, wfGet.Permissions.Writable, "writable should be true")
+	assert.Equal(t, true, wfGet.Permissions.Executable, "executable should be true")
+
+	userMaintainer, passMaintainer := assets.InsertMaintainerUser(t, db)
+	uri = api.Router.GetRoute("GET", api.getWorkflowHandler, vars)
+	req, err = http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, userMaintainer, passMaintainer)
+
+	// Do the request
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	wfGet = sdk.Workflow{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfGet))
+	assert.Equal(t, true, wfGet.Permissions.Readable, "readable should be true")
+	assert.Equal(t, false, wfGet.Permissions.Writable, "writable should be false")
+	assert.Equal(t, false, wfGet.Permissions.Executable, "executable should be false")
+
+}
+
 func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 	api, tsURL, tsClose := newTestServer(t)
 	defer tsClose()
@@ -212,7 +381,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
+	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
 
 	u, _ := assets.InsertLambdaUser(t, api.mustDB())
 
@@ -268,7 +437,6 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 }
 
 func Test_getWorkflowHandler_withUsage(t *testing.T) {
-
 	api, db, router, end := newTestAPI(t)
 	defer end()
 
@@ -332,7 +500,6 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 }
 
 func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
-
 	api, db, router, end := newTestAPI(t)
 	defer end()
 
@@ -480,9 +647,96 @@ func Test_putWorkflowHandler(t *testing.T) {
 
 	// Init user
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
+
+	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+
+	repoHookModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModel.Name)
+	assert.NoError(t, err)
+
+	mockVCSservice, _ := assets.InsertService(t, db, "Test_putWorkflowHandler_TypeVCS", services.TypeVCS)
+	defer func() {
+		_ = services.Delete(db, mockVCSservice)
+	}()
+	mockHookservice, _ := assets.InsertService(t, db, "Test_putWorkflowHandler_TypeHooks", services.TypeHooks)
+	defer func() {
+		_ = services.Delete(db, mockHookservice)
+	}()
+
+	updatehookCalled := false
+
+	//This is a mock for the repositories service
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+
+			switch r.URL.String() {
+			case "/vcs/github/repos/foo/bar/branches":
+				bs := []sdk.VCSBranch{}
+				b := sdk.VCSBranch{
+					DisplayID: "master",
+					Default:   true,
+				}
+				bs = append(bs, b)
+				if err := enc.Encode(bs); err != nil {
+					return writeError(w, err)
+				}
+			case "/task/bulk":
+				hooks := map[string]sdk.NodeHook{}
+				if err := service.UnmarshalBody(r, &hooks); err != nil {
+					return nil, sdk.WithStack(err)
+				}
+				if err := enc.Encode(hooks); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/webhooks":
+				hookInfo := repositoriesmanager.WebhooksInfos{
+					WebhooksSupported: true,
+					WebhooksDisabled:  false,
+				}
+				if err := enc.Encode(hookInfo); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/foo/bar/hooks":
+				hook := sdk.VCSHook{}
+				if err := service.UnmarshalBody(r, &hook); err != nil {
+					return nil, sdk.WithStack(err)
+				}
+				hook.ID = "666"
+				hook.Events = []string{"push"}
+				if err := enc.Encode(hook); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/foo/bar/hooks?url=&id=666":
+				updatehookCalled = true
+				hook := sdk.VCSHook{}
+				if err := service.UnmarshalBody(r, &hook); err != nil {
+					return nil, sdk.WithStack(err)
+				}
+				assert.Equal(t, len(hook.Events), 2)
+				if err := enc.Encode(hook); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				t.Fatalf("unknown route %s", r.URL.String())
+			}
+
+			return w, nil
+		},
+	)
+
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
+		Name: "github",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
 
 	// Init pipeline
 	pip := sdk.Pipeline{
@@ -490,6 +744,16 @@ func Test_putWorkflowHandler(t *testing.T) {
 		ProjectID: proj.ID,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+
+	// Create application
+	app := sdk.Application{
+		ProjectID:          proj.ID,
+		Name:               sdk.RandomString(10),
+		RepositoryFullname: "foo/bar",
+		VCSServer:          "github",
+	}
+	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	//Prepare request
 	vars := map[string]string{
@@ -505,7 +769,15 @@ func Test_putWorkflowHandler(t *testing.T) {
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
-					PipelineID: pip.ID,
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+				},
+				Hooks: []sdk.NodeHook{
+					{
+						Config:        repoHookModel.DefaultConfig,
+						HookModelName: repoHookModel.Name,
+						HookModelID:   repoHookModel.ID,
+					},
 				},
 			},
 		},
@@ -518,6 +790,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 201, w.Code)
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflow))
+	assert.False(t, updatehookCalled)
 
 	//Prepare request
 	vars = map[string]string{
@@ -526,14 +799,6 @@ func Test_putWorkflowHandler(t *testing.T) {
 	}
 	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
-
-	// Insert application
-	app := sdk.Application{
-		Name:               "app1",
-		RepositoryFullname: "test/app1",
-		VCSServer:          "github",
-	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, &app))
 
 	model := sdk.IntegrationModel{
 		Name:  sdk.RandomString(10),
@@ -566,9 +831,21 @@ func Test_putWorkflowHandler(t *testing.T) {
 					PipelineID:    pip.ID,
 					ApplicationID: app.ID,
 				},
+				Hooks: []sdk.NodeHook{
+					{
+						Config:        repoHookModel.DefaultConfig,
+						HookModelName: repoHookModel.Name,
+						HookModelID:   repoHookModel.ID,
+					},
+				},
 			},
 		},
 		EventIntegrations: []sdk.ProjectIntegration{projInt},
+	}
+	workflow1.WorkflowData.Node.Hooks[0].Config[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
+		Value:        "push;create",
+		Configurable: true,
+		Type:         sdk.HookConfigTypeMultiChoice,
 	}
 
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &workflow1)
@@ -589,6 +866,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 
 	payload, err := workflow1.WorkflowData.Node.Context.DefaultPayloadToMap()
 	test.NoError(t, err)
+	assert.True(t, updatehookCalled)
 
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 }
@@ -883,11 +1161,11 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 
 	test.NoError(t, workflow.IsValid(context.Background(), api.Cache, db, wf, proj, workflow.LoadOptions{}))
-	eWf, err := exportentities.NewWorkflow(*wf)
+	eWf, err := exportentities.NewWorkflow(context.TODO(), *wf)
 	test.NoError(t, err)
 	wfBts, err := yaml.Marshal(eWf)
 	test.NoError(t, err)
-	eWfUpdate, err := exportentities.NewWorkflow(*workflow1)
+	eWfUpdate, err := exportentities.NewWorkflow(context.TODO(), *workflow1)
 	test.NoError(t, err)
 	wfUpdatedBts, err := yaml.Marshal(eWfUpdate)
 	test.NoError(t, err)
@@ -1139,6 +1417,13 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
+
+	// wait a little to let the goroutine in deleteWorkflowHandler
+	// to terminate before terminate the test.
+	// otherwise, this log can append:
+	// panic: Log in goroutine after Test_deleteWorkflowHandler has completed [recovered]
+	// panic: Log in goroutine after Test_deleteWorkflowHandler has completed
+	time.Sleep(5 * time.Second)
 }
 
 func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {

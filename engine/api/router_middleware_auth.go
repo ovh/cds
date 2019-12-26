@@ -33,7 +33,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		return ctx, sdk.WithStack(err)
 	}
 	if ok {
-		log.Info("authMiddleware> authentification granted by token")
+		log.Info(ctx, "authMiddleware> authentification granted by token")
 		return ctx, nil
 	}
 
@@ -57,7 +57,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		// Check for session based on jwt from context
 		session, err = authentication.CheckSession(ctx, api.mustDB(), sessionID)
 		if err != nil {
-			log.Warning("authMiddleware> cannot find a valid session for given JWT: %v", err)
+			log.Warning(ctx, "authMiddleware> cannot find a valid session for given JWT: %v", err)
 		}
 	}
 
@@ -173,8 +173,10 @@ func (api *API) jwtMiddleware(ctx context.Context, w http.ResponseWriter, req *h
 
 	jwt, err := authentication.CheckSessionJWT(jwtRaw)
 	if err != nil {
-		// If the given JWT is not valid log the error and return
-		log.Warning("jwtMiddleware> invalid given jwt token: %+v", err)
+		if rc.NeedAuth {
+			// If the given JWT is not valid log the error and return
+			log.Warning(ctx, "jwtMiddleware> invalid given jwt token [%s]: %+v", req.URL.String(), err)
+		}
 		return ctx, nil
 	}
 

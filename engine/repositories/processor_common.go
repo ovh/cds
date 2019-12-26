@@ -1,18 +1,20 @@
 package repositories
 
 import (
+	"context"
+
 	"github.com/fsamin/go-repo"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) processGitClone(op *sdk.Operation) (repo.Repo, string, string, error) {
+func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (repo.Repo, string, string, error) {
 	var gitRepo repo.Repo
 
 	r := s.Repo(*op)
 	if err := s.checkOrCreateFS(r); err != nil {
-		log.Error("Repositories> processGitClone> checkOrCreateFS> [%s] Error %v", op.UUID, err)
+		log.Error(ctx, "Repositories> processGitClone> checkOrCreateFS> [%s] Error %v", op.UUID, err)
 		return gitRepo, "", "", err
 	}
 
@@ -27,23 +29,23 @@ func (s *Service) processGitClone(op *sdk.Operation) (repo.Repo, string, string,
 
 	gitRepo, err := repo.New(r.Basedir, opts...)
 	if err != nil {
-		log.Info("Repositories> processGitClone> cloning %s into %s", r.URL, r.Basedir)
+		log.Info(ctx, "Repositories> processGitClone> cloning %s into %s", r.URL, r.Basedir)
 		gitRepo, err = repo.Clone(r.Basedir, r.URL, opts...)
 		if err != nil {
-			log.Error("Repositories> processGitClone> Clone> [%s] error %v", op.UUID, err)
+			log.Error(ctx, "Repositories> processGitClone> Clone> [%s] error %v", op.UUID, err)
 			return gitRepo, "", "", err
 		}
 	}
 
 	f, err := gitRepo.FetchURL()
 	if err != nil {
-		log.Error("Repositories> processGitClone> gitRepo.FetchURL> [%s] Error: %v", op.UUID, err)
+		log.Error(ctx, "Repositories> processGitClone> gitRepo.FetchURL> [%s] Error: %v", op.UUID, err)
 		return gitRepo, "", "", err
 	}
 
 	d, err := gitRepo.DefaultBranch()
 	if err != nil {
-		log.Error("Repositories> processGitClone> DefaultBranch> [%s] Error: %v", op.UUID, err)
+		log.Error(ctx, "Repositories> processGitClone> DefaultBranch> [%s] Error: %v", op.UUID, err)
 		return gitRepo, "", "", err
 	}
 
@@ -56,7 +58,7 @@ func (s *Service) processGitClone(op *sdk.Operation) (repo.Repo, string, string,
 	//Check branch
 	currentBranch, err := gitRepo.CurrentBranch()
 	if err != nil {
-		log.Error("Repositories> processGitClone> CurrentBranch> [%s] error %v", op.UUID, err)
+		log.Error(ctx, "Repositories> processGitClone> CurrentBranch> [%s] error %v", op.UUID, err)
 		return gitRepo, "", "", err
 	}
 	return gitRepo, r.Basedir, currentBranch, nil

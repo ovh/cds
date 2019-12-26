@@ -103,7 +103,7 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot commit transaction")
 		}
-		event.PublishEnvironmentVariableDelete(key, *env, *varToDelete, getAPIConsumer(ctx))
+		event.PublishEnvironmentVariableDelete(ctx, key, *env, *varToDelete, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -151,7 +151,7 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentVariableUpdate(key, *env, newVar, varBefore, getAPIConsumer(ctx))
+		event.PublishEnvironmentVariableUpdate(ctx, key, *env, newVar, varBefore, getAPIConsumer(ctx))
 
 		if sdk.NeedPlaceholder(newVar.Type) {
 			newVar.Value = sdk.PasswordPlaceholder
@@ -206,7 +206,7 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: cannot commit tx")
 		}
 
-		event.PublishEnvironmentVariableAdd(key, *env, newVar, getAPIConsumer(ctx))
+		event.PublishEnvironmentVariableAdd(ctx, key, *env, newVar, getAPIConsumer(ctx))
 
 		if sdk.NeedPlaceholder(newVar.Type) {
 			newVar.Value = sdk.PasswordPlaceholder

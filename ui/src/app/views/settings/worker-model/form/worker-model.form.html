@@ -98,7 +98,7 @@
                         </div>
                         <div class="ui icon message" *ngIf="workerModel.nb_spawn_err > 0">
                             <i class="exclamation triangle icon large red"></i>
-                            <div class="content">
+                            <div class="content error">
                                 <h3>{{ 'worker_model_error' | translate }}</h3>
                                 <p>{{workerModel.last_spawn_err}}</p>
                                 <div>
@@ -136,12 +136,6 @@
                             </sm-select>
                             <input *ngIf="!workerModel.editable" class="ui input" type="text" name="type"
                                 [ngModel]="workerModel.type" [readonly]="true">
-                        </div>
-                        <div class="four wide field">
-                            <label>{{'worker_model_provision' | translate}}</label>
-                            <input class="ui input" type="number" name="provision" [(ngModel)]="workerModel.provision"
-                                [disabled]="!(currentUser.admin || workerModel.restricted)"
-                                [readonly]="!workerModel.editable">
                         </div>
                     </div>
                     <ng-container *ngIf="workerModel.type === 'docker'">

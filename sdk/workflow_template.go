@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk/slug"
-	"github.com/pkg/errors"
 )
 
 // WorkflowTemplateRequest struct use for execution request.
@@ -26,9 +25,12 @@ func (w WorkflowTemplateRequest) Value() (driver.Value, error) {
 
 // Scan workflow template request.
 func (w *WorkflowTemplateRequest) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
 	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(errors.New("type assertion .([]byte) failed"))
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplateRequest")
 }
@@ -71,9 +73,12 @@ func (w WorkflowTemplate) Value() (driver.Value, error) {
 
 // Scan workflow template.
 func (w *WorkflowTemplate) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
 	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(errors.New("type assertion .([]byte) failed"))
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplate")
 }
@@ -250,7 +255,7 @@ const (
 	ParameterTypeJSON       TemplateParameterType = "json"
 )
 
-// IsValid returns paramter type validity.
+// IsValid returns parameter type validity.
 func (t TemplateParameterType) IsValid() bool {
 	switch t {
 	case ParameterTypeString, ParameterTypeBoolean, ParameterTypeRepository, ParameterTypeJSON:
@@ -277,9 +282,12 @@ func (w WorkflowTemplateParameters) Value() (driver.Value, error) {
 
 // Scan workflow template parameters.
 func (w *WorkflowTemplateParameters) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
 	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(errors.New("type assertion .([]byte) failed"))
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplateParameters")
 }
@@ -295,9 +303,12 @@ func (p PipelineTemplates) Value() (driver.Value, error) {
 
 // Scan pipeline templates.
 func (p *PipelineTemplates) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
 	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(errors.New("type assertion .([]byte) failed"))
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, p), "cannot unmarshal PipelineTemplates")
 }
@@ -313,9 +324,12 @@ func (a ApplicationTemplates) Value() (driver.Value, error) {
 
 // Scan application templates.
 func (a *ApplicationTemplates) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
 	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(errors.New("type assertion .([]byte) failed"))
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, a), "cannot unmarshal ApplicationTemplates")
 }
@@ -331,9 +345,12 @@ func (e EnvironmentTemplates) Value() (driver.Value, error) {
 
 // Scan environment templates.
 func (e *EnvironmentTemplates) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
 	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(errors.New("type assertion .([]byte) failed"))
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, e), "cannot unmarshal EnvironmentTemplates")
 }
@@ -404,7 +421,7 @@ func WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis []*WorkflowTemplateInst
 // WorkflowTemplateBulk contains info about a template bulk task.
 type WorkflowTemplateBulk struct {
 	ID                 int64                          `json:"id" db:"id"`
-	UserID             int64                          `json:"user_id" db:"user_id"` //TODO
+	UserID             int64                          `json:"user_id" db:"user_id"`
 	WorkflowTemplateID int64                          `json:"workflow_template_id" db:"workflow_template_id"`
 	Operations         WorkflowTemplateBulkOperations `json:"operations" db:"operations"`
 }
@@ -437,9 +454,12 @@ func (w WorkflowTemplateBulkOperations) Value() (driver.Value, error) {
 
 // Scan pipeline templates.
 func (w *WorkflowTemplateBulkOperations) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
 	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(errors.New("type assertion .([]byte) failed"))
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplateBulkOperations")
 }

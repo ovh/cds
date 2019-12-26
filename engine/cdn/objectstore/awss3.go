@@ -2,6 +2,7 @@ package objectstore
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -27,7 +28,7 @@ type AWSS3Store struct {
 }
 
 func newS3Store(integration sdk.ProjectIntegration, conf ConfigOptionsAWSS3) (*AWSS3Store, error) {
-	log.Info("ObjectStore> Initialize AWS S3 driver for bucket: %s in region %s", conf.BucketName, conf.Region)
+	log.Info(context.Background(), "ObjectStore> Initialize AWS S3 driver for bucket: %s in region %s", conf.BucketName, conf.Region)
 	aConf := aws.NewConfig()
 	aConf.Region = aws.String(conf.Region)
 	if conf.AuthFromEnvironment {

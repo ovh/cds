@@ -22,12 +22,12 @@ func (s *Service) vacuumCleaner(ctx context.Context) error {
 	for {
 		select {
 		case <-tick.C:
-			log.Info("vacuumCleaner> Run")
-			if err := s.vacuumFilesystemCleanerRun(); err != nil {
-				log.Error("vacuumCleaner> Error cleaning the filesystem: %v", err)
+			log.Info(ctx, "vacuumCleaner> Run")
+			if err := s.vacuumFilesystemCleanerRun(ctx); err != nil {
+				log.Error(ctx, "vacuumCleaner> Error cleaning the filesystem: %v", err)
 			}
-			if err := s.vacuumStoreCleanerRun(); err != nil {
-				log.Error("vacuumCleaner> Error cleaning the store: %v", err)
+			if err := s.vacuumStoreCleanerRun(ctx); err != nil {
+				log.Error(ctx, "vacuumCleaner> Error cleaning the store: %v", err)
 			}
 		case <-ctx.Done():
 			return ctx.Err()
@@ -35,8 +35,8 @@ func (s *Service) vacuumCleaner(ctx context.Context) error {
 	}
 }
 
-func (s *Service) vacuumStoreCleanerRun() error {
-	ops, err := s.dao.loadAllOperations()
+func (s *Service) vacuumStoreCleanerRun(ctx context.Context) error {
+	ops, err := s.dao.loadAllOperations(ctx)
 	if err != nil {
 		return err
 	}
@@ -46,14 +46,14 @@ func (s *Service) vacuumStoreCleanerRun() error {
 		}
 		if time.Since(*o.Date) > 24*time.Hour*time.Duration(s.Cfg.OperationRetention) {
 			if err := s.dao.deleteOperation(o); err != nil {
-				log.Error("vacuumStoreCleanerRun> unable to delete operation %s: %v", o.UUID, err)
+				log.Error(ctx, "vacuumStoreCleanerRun> unable to delete operation %s: %v", o.UUID, err)
 			}
 		}
 	}
 	return nil
 }
 
-func (s *Service) vacuumFilesystemCleanerRun() error {
+func (s *Service) vacuumFilesystemCleanerRun(ctx context.Context) error {
 	fi, err := os.Open(s.Cfg.Basedir)
 	if err != nil {
 		return err
@@ -68,15 +68,15 @@ func (s *Service) vacuumFilesystemCleanerRun() error {
 	sort.Strings(names)
 
 	for _, n := range names {
-		if err := s.vacuumFileSystemCleanerFunc(n); err != nil {
-			log.Error("vacuumFilesystemCleanerRun> %v ", err)
+		if err := s.vacuumFileSystemCleanerFunc(ctx, n); err != nil {
+			log.Error(context.TODO(), "vacuumFilesystemCleanerRun> %v ", err)
 		}
 	}
 
 	return nil
 }
 
-func (s *Service) vacuumFileSystemCleanerFunc(repoUUID string) error {
+func (s *Service) vacuumFileSystemCleanerFunc(ctx context.Context, repoUUID string) error {
 	log.Debug("vacuumFileSystemCleanerFunc> Checking %s", repoUUID)
 
 	if err := s.dao.lock(repoUUID); err == errLockUnavailable {
@@ -84,9 +84,9 @@ func (s *Service) vacuumFileSystemCleanerFunc(repoUUID string) error {
 		return nil
 	}
 
-	if !s.dao.isExpired(repoUUID) {
+	if !s.dao.isExpired(ctx, repoUUID) {
 		log.Debug("vacuumFileSystemCleanerFunc> %s is not expired. skipping", repoUUID)
-		s.dao.unlock(repoUUID, 24*time.Hour*time.Duration(s.Cfg.RepositoriesRentention))
+		s.dao.unlock(ctx, repoUUID, 24*time.Hour*time.Duration(s.Cfg.RepositoriesRetention))
 		return nil
 	}
 
@@ -97,8 +97,8 @@ func (s *Service) vacuumFileSystemCleanerFunc(repoUUID string) error {
 		return err
 	}
 
-	if err := s.dao.deleteLock(repoUUID); err != nil {
-		log.Error("unable to deleteLock %v: %v", repoUUID, err)
+	if err := s.dao.deleteLock(ctx, repoUUID); err != nil {
+		log.Error(ctx, "unable to deleteLock %v: %v", repoUUID, err)
 	}
 
 	return nil

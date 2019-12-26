@@ -30,7 +30,7 @@ type Configuration struct {
 		HTTP struct {
 			URL string `toml:"url" default:"http://localhost:2015" json:"url"`
 		} `toml:"http" json:"http"`
-	}
+	} `toml:"ui" json:"ui"`
 	API   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60" json:"ttl"`
@@ -54,7 +54,7 @@ type ServerConfiguration struct {
 
 // GithubServerConfiguration represents the github configuration
 type GithubServerConfiguration struct {
-	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/ \n#######\n Github OAuth Application Client ID"`
+	ClientID     string `toml:"clientId" json:"-" default:"xxxxx" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/docs/integrations/github/ \n#######\n Github OAuth Application Client ID"`
 	ClientSecret string `toml:"clientSecret" json:"-" default:"xxxxx" comment:"Github OAuth Application Client Secret"`
 	APIURL       string `toml:"apiUrl" json:"-" default:"https://api.github.com" comment:"The URL for the GitHub API."`
 	Status       struct {
@@ -63,7 +63,7 @@ type GithubServerConfiguration struct {
 	}
 	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
 	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
-	ProxyWebhook    string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
+	ProxyWebhook    string `toml:"proxyWebhook" default:"" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
 	Username        string `toml:"username" comment:"optional. Github username, used to add comment on Pull Request on failed build." json:"username"`
 	Token           string `toml:"token" comment:"optional, Github Token associated to username, used to add comment on Pull Request" json:"-"`
 }
@@ -94,7 +94,7 @@ type GitlabServerConfiguration struct {
 	}
 	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
 	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
-	ProxyWebhook    string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
+	ProxyWebhook    string `toml:"proxyWebhook" default:"" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
 }
 
 func (s GitlabServerConfiguration) check() error {
@@ -113,7 +113,7 @@ type BitbucketServerConfiguration struct {
 	}
 	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
 	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
-	ProxyWebhook    string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
+	ProxyWebhook    string `toml:"proxyWebhook" default:"" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
 	Username        string `toml:"username" comment:"optional. Bitbucket username, used to add comment on Pull Request on failed build." json:"username"`
 	Token           string `toml:"token" comment:"optional, Bitbucket Token associated to username, used to add comment on Pull Request" json:"-"`
 }
@@ -135,7 +135,7 @@ type BitbucketCloudConfiguration struct {
 	}
 	DisableWebHooks bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
 	// DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
-	ProxyWebhook string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
+	ProxyWebhook string `toml:"proxyWebhook" default:"" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
 	// Username        string `toml:"username" comment:"optional. Github username, used to add comment on Pull Request on failed build." json:"username"`
 	// Token           string `toml:"token" comment:"optional, Bitbucket Cloud Token associated to username, used to add comment on Pull Request" json:"-"`
 }
@@ -205,13 +205,13 @@ type GerritServerConfiguration struct {
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
 	}
 	DisableGerritEvent bool `toml:"disableGerritEvent" comment:"Does gerrit event stream are supported by VCS Server" json:"disable_gerrit_event"`
-	SSHPort            int  `toml:"sshport" default:"29418" commented:"true" comment:"SSH port of gerrit"`
+	SSHPort            int  `toml:"sshport" default:"" commented:"true" comment:"SSH port of gerrit, example: 29418"`
 	EventStream        struct {
-		User       string `toml:"user" default:"myuser" commented:"true" comment:"User to access to gerrit event stream"`
+		User       string `toml:"user" default:"" commented:"true" comment:"User to access to gerrit event stream"`
 		PrivateKey string `toml:"privateKey" default:"" commented:"true" comment:"Private key of the user who access to gerrit event stream"`
 	}
 	Reviewer struct {
-		User  string `toml:"user" default:"myreviewer" commented:"true" comment:"User that review changes"`
+		User  string `toml:"user" default:"" commented:"true" comment:"User that review changes"`
 		Token string `toml:"token" default:"" commented:"true" comment:"Token of the reviewer"`
 	}
 }

@@ -128,14 +128,12 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			case sdk.RepositoryWebHookModelName:
 				if repoWebHookEnable {
 					m[i].Icon = webHookInfo.Icon
-					/*  UNCOMMENT WHEN DEVELOP EVENT SUBSCRIPTION
 					m[i].DefaultConfig[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
 						Type:               sdk.HookConfigTypeMultiChoice,
 						Value:              webHookInfo.Events[0],
 						Configurable:       true,
 						MultipleChoiceList: webHookInfo.Events,
 					}
-					*/
 					models = append(models, m[i])
 				}
 			case sdk.GitPollerModelName:

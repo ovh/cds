@@ -1,6 +1,25 @@
+//! All models about CDS
 use chrono::prelude::*;
 use serde_json;
 use std::collections::HashMap;
+
+#[derive(Serialize, Deserialize, Default, Debug)]
+#[serde(default)]
+pub struct AuthConsumerSigninResponse {
+    pub api_url: String,
+    pub token: String,
+    pub user: Option<AuthentifiedUser>,
+}
+
+#[derive(Serialize, Deserialize, Default, Debug)]
+#[serde(default)]
+pub struct AuthentifiedUser {
+    pub id: String,
+    pub created: Option<DateTime<Utc>>,
+    pub username: String,
+    pub fullname: String,
+    pub ring: String,
+}
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(default)]
@@ -41,14 +60,11 @@ pub struct Permissions {
 #[derive(Serialize, Deserialize, Default, Debug)]
 #[serde(default)]
 pub struct User {
-    pub id: i64,
+    pub id: String,
     pub username: String,
     pub fullname: String,
-    pub email: String,
-    pub admin: bool,
-    pub groups: Option<Vec<Group>>,
-    pub origin: String,
-    pub permissions: Permissions,
+    pub ring: String,
+    pub created: Option<DateTime<Utc>>,
 }
 
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -58,10 +74,10 @@ pub struct Project {
     pub name: String,
     pub description: String,
     pub icon: String,
-    pub permission: u8,
+    pub permissions: HashMap<String, bool>,
     pub created: String,
     pub last_modified: String,
-    pub metadata: serde_json::Value,
+    pub metadata: Option<serde_json::Value>,
     pub keys: Option<Vec<Key>>,
     pub vcs_servers: Option<Vec<VcsServer>>,
     pub integrations: Option<Vec<Integration>>,

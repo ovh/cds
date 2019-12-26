@@ -33,7 +33,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 		Cache:               cache,
 	}
 	api.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
-	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(false, "http://localhost:4200", "")
+	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(context.TODO(), false, "http://localhost:4200", "")
 	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 	api.AuthenticationDrivers[sdk.ConsumerTest] = authdrivertest.NewDriver(t)
 	api.AuthenticationDrivers[sdk.ConsumerTest2] = authdrivertest.NewDriver(t)
@@ -72,7 +72,7 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string
 		Cache:               cache,
 	}
 	api.AuthenticationDrivers = make(map[sdk.AuthConsumerType]sdk.AuthDriver)
-	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(false, "http://localhost:4200", "")
+	api.AuthenticationDrivers[sdk.ConsumerLocal] = local.NewDriver(context.TODO(), false, "http://localhost:4200", "")
 	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 
 	api.InitRouter()

@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"net"
@@ -11,8 +12,8 @@ import (
 )
 
 // for each ip in the range, look for the first free ones
-func (h *HatcheryOpenstack) findAvailableIP(workerName string) (string, error) {
-	srvs := h.getServers()
+func (h *HatcheryOpenstack) findAvailableIP(ctx context.Context, workerName string) (string, error) {
+	srvs := h.getServers(ctx)
 
 	ipsInfos.mu.Lock()
 	defer ipsInfos.mu.Unlock()
@@ -90,12 +91,12 @@ func (h *HatcheryOpenstack) findAvailableIP(workerName string) (string, error) {
 
 // IPinRanges returns a slice of all IP in all given IP ranges
 // i.e 72.44.1.240/28,72.42.1.23/27
-func IPinRanges(IPranges string) ([]string, error) {
+func IPinRanges(ctx context.Context, IPranges string) ([]string, error) {
 	var ips []string
 
 	ranges := strings.Split(IPranges, ",")
 	for _, r := range ranges {
-		i, err := IPinRange(r)
+		i, err := IPinRange(ctx, r)
 		if err != nil {
 			return nil, err
 		}
@@ -106,7 +107,7 @@ func IPinRanges(IPranges string) ([]string, error) {
 
 // IPinRange returns a slice of all IP in given IP range
 // i.e 10.35.11.240/28
-func IPinRange(IPrange string) ([]string, error) {
+func IPinRange(ctx context.Context, IPrange string) ([]string, error) {
 	ip, ipnet, err := net.ParseCIDR(IPrange)
 	if err != nil {
 		return nil, err
@@ -114,7 +115,7 @@ func IPinRange(IPrange string) ([]string, error) {
 
 	var ips []string
 	for ip2 := ip.Mask(ipnet.Mask); ipnet.Contains(ip2); inc(ip2) {
-		log.Info("Adding %s to IP pool", ip2)
+		log.Info(ctx, "Adding %s to IP pool", ip2)
 		ips = append(ips, ip2.String())
 	}
 

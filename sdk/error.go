@@ -198,6 +198,8 @@ var (
 	ErrSignupDisabled                                = Error{ID: 182, Status: http.StatusForbidden}
 	ErrUsernamePresent                               = Error{ID: 183, Status: http.StatusBadRequest}
 	ErrInvalidJobRequirementNetworkAccess            = Error{ID: 184, Status: http.StatusBadRequest}
+	ErrInvalidWorkerModelNamePattern                 = Error{ID: 185, Status: http.StatusBadRequest}
+	ErrWorkflowAsCodeResync                          = Error{ID: 186, Status: http.StatusForbidden}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -237,6 +239,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrNotEnoughAdmin.ID:                                "not enough group admin left",
 	ErrInvalidProjectName.ID:                            "project name must not be empty",
 	ErrInvalidApplicationPattern.ID:                     "application name must respect '^[a-zA-Z0-9.-_-]{1,}$'",
+	ErrInvalidWorkerModelNamePattern.ID:                 "worker model name must respect '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrInvalidPipelinePattern.ID:                        "pipeline name must respect '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrNotFound.ID:                                      "resource not found",
 	ErrNoWorkerModelCapa.ID:                             "capability not found",
@@ -371,13 +374,14 @@ var errorsAmericanEnglish = map[int]string{
 	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "An application linked to a git repository is mandatory on the workflow root",
 	ErrInvalidPayloadVariable.ID:                        "Your payload cannot contain keys like cds.*",
 	ErrInvalidPassword.ID:                               "Your value of type password isn't correct",
-	ErrRepositoryUsedByHook.ID:                          "There is still a hook on this repository",
+	ErrRepositoryUsedByHook.ID:                          "There is still a repository webhook on this repository",
 	ErrResourceNotInProject.ID:                          "The resource is not attached to the project",
 	ErrEnvironmentNotFound.ID:                           "environment not found",
 	ErrIntegrationtNotFound.ID:                          "integration not found",
 	ErrSignupDisabled.ID:                                "Sign up is disabled for target consumer type",
 	ErrBadBrokerConfiguration.ID:                        "Cannot connect to the broker of your event integration. Check your configuration",
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Invalid job requirement: network requirement must contains ':'. Example: golang.org:http, golang.org:443",
+	ErrWorkflowAsCodeResync.ID:                          "You cannot resynchronize an as-code workflow",
 }
 
 var errorsFrench = map[int]string{
@@ -417,6 +421,7 @@ var errorsFrench = map[int]string{
 	ErrNotEnoughAdmin.ID:                                "pas assez d'admin restant",
 	ErrInvalidProjectName.ID:                            "nom de project vide non autorisé",
 	ErrInvalidApplicationPattern.ID:                     "nom de l'application invalide '^[a-zA-Z0-9.-_-]{1,}$'",
+	ErrInvalidWorkerModelNamePattern.ID:                 "nom du worker model invalide '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrInvalidPipelinePattern.ID:                        "nom du pipeline invalide '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrNotFound.ID:                                      "la ressource n'existe pas",
 	ErrNoWorkerModelCapa.ID:                             "la capacité n'existe pas",
@@ -551,12 +556,13 @@ var errorsFrench = map[int]string{
 	ErrApplicationMandatoryOnWorkflowAsCode.ID:          "Une application liée à un dépôt git est obligatoire à la racine du workflow",
 	ErrInvalidPayloadVariable.ID:                        "Le payload du workflow ne peut pas contenir de clés nommées cds.*",
 	ErrInvalidPassword.ID:                               "Votre valeur de type mot de passe n'est pas correct",
-	ErrRepositoryUsedByHook.ID:                          "Il y a encore un hook sur ce dépôt",
+	ErrRepositoryUsedByHook.ID:                          "Il y a encore un repository webhook sur ce dépôt",
 	ErrResourceNotInProject.ID:                          "La ressource n'est pas lié au projet",
 	ErrEnvironmentNotFound.ID:                           "l'environnement n'existe pas",
 	ErrSignupDisabled.ID:                                "La création de compte est désactivée pour ce mode d'authentification.",
 	ErrBadBrokerConfiguration.ID:                        "Impossible de se connecter à votre intégration de type évènement. Veuillez vérifier votre configuration",
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Pré-requis de job invalide: Le pré-requis network doit contenir un ':'. Exemple: golang.org:http, golang.org:443",
+	ErrWorkflowAsCodeResync.ID:                          "Impossible de resynchroniser un workflow en mode as-code",
 }
 
 var errorsLanguages = []map[int]string{

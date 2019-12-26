@@ -11,7 +11,7 @@ import { AuthenticationService } from 'app/service/authentication/authentication
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
-import { UserService } from 'app/service/user/user.service';
+import { MonitoringService, UserService } from 'app/service/services.module';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { NgxsStoreModule } from 'app/store/store.module';
@@ -48,6 +48,7 @@ describe('CDS: Pipeline Admin Component', () => {
                 TranslateParser,
                 UserService,
                 AuthenticationService,
+                MonitoringService,
                 ProjectStore,
                 ProjectService
             ],

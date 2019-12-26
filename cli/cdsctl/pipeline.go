@@ -130,13 +130,10 @@ func pipelineImportRun(v cli.Values) error {
 	}
 
 	msgs, err := client.PipelineImport(v.GetString(_ProjectKey), reader, format, v.GetBool("force"))
-	if err != nil {
-		return err
-	}
 	for _, m := range msgs {
 		fmt.Println(m)
 	}
-	return nil
+	return err
 }
 
 var pipelineDeleteCmd = cli.Command{

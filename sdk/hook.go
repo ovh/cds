@@ -16,6 +16,7 @@ const (
 	HookConfigTargetWorkflow      = "target_workflow"
 	HookConfigTargetHook          = "target_hook"
 	HookConfigWorkflowID          = "workflow_id"
+	HookConfigWebHookID           = "webHookID"
 	HookConfigVCSServer           = "vcsServer"
 	HookConfigEventFilter         = "eventFilter"
 	HookConfigRepoFullName        = "repoFullName"
@@ -66,11 +67,6 @@ var (
 				Value:        "",
 				Configurable: true,
 				Type:         HookConfigTypeIntegration,
-			},
-			KafkaHookModelConsumerGroup: {
-				Value:        "",
-				Configurable: false,
-				Type:         HookConfigTypeString,
 			},
 			KafkaHookModelTopic: {
 				Value:        "",

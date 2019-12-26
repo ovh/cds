@@ -29,10 +29,10 @@ type AsynchronousHandler func(ctx context.Context, r *http.Request) error
 // Middleware defines the HTTP Middleware used in CDS engine
 type Middleware func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error)
 
-// HandlerFunc defines the way to instanciate a handler
+// HandlerFunc defines the way to instantiate a handler
 type HandlerFunc func() Handler
 
-// AsynchronousHandlerFunc defines the way to instanciate a handler
+// AsynchronousHandlerFunc defines the way to instantiate a handler
 type AsynchronousHandlerFunc func() AsynchronousHandler
 
 // RouterConfigParam is the type of anonymous function returned by POST, GET and PUT functions
@@ -73,7 +73,8 @@ func Accepted(w http.ResponseWriter) error {
 func Write(w http.ResponseWriter, btes []byte, status int, contentType string) error {
 	w.Header().Add("Content-Type", contentType)
 	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(btes)))
-	WriteProcessTime(w)
+
+	WriteProcessTime(context.TODO(), w)
 	w.WriteHeader(status)
 	_, err := w.Write(btes)
 	return sdk.WithStack(err)
@@ -89,11 +90,11 @@ func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
 }
 
 // WriteProcessTime writes the duration of the call in the responsewriter
-func WriteProcessTime(w http.ResponseWriter) {
+func WriteProcessTime(ctx context.Context, w http.ResponseWriter) {
 	if h := w.Header().Get(cdsclient.ResponseAPINanosecondsTimeHeader); h != "" {
 		start, err := strconv.ParseInt(h, 10, 64)
 		if err != nil {
-			log.Error("WriteProcessTime> error on ParseInt header ResponseAPINanosecondsTimeHeader: %s", err)
+			log.Error(ctx, "WriteProcessTime> error on ParseInt header ResponseAPINanosecondsTimeHeader: %s", err)
 		}
 		w.Header().Add(cdsclient.ResponseProcessTimeHeader, fmt.Sprintf("%d", time.Now().UnixNano()-start))
 	}

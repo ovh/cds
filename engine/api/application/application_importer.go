@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -13,7 +14,7 @@ import (
 )
 
 //Import is able to create a new application and all its components
-func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, repomanager string, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
+func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, repomanager string, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
 	doUpdate, erre := Exists(db, proj.Key, app.Name)
 	if erre != nil {
 		return sdk.WrapError(erre, "application.Import> Unable to check if application exists")
@@ -106,7 +107,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		}
 	}
 
-	event.PublishAddApplication(proj.Key, *app, u)
+	event.PublishAddApplication(ctx, proj.Key, *app, u)
 
 	return nil
 }

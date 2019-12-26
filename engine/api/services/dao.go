@@ -28,7 +28,7 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]sd
 			return nil, err
 		}
 		if !isValid {
-			log.Error("service.getAll> service %d data corrupted", ss[i].ID)
+			log.Error(ctx, "service.getAll> service %d data corrupted", ss[i].ID)
 			continue
 		}
 		verifiedServices = append(verifiedServices, ss[i].Service)
@@ -53,7 +53,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.Se
 		return nil, err
 	}
 	if !isValid {
-		log.Error("service.get> service %d data corrupted", s.ID)
+		log.Error(ctx, "service.get> service %d data corrupted", s.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
@@ -116,9 +116,9 @@ func FindDeadServices(ctx context.Context, db gorp.SqlExecutor, t time.Duration)
 }
 
 // Insert a service in database.
-func Insert(db gorp.SqlExecutor, s *sdk.Service) error {
+func Insert(ctx context.Context, db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service{Service: *s}
-	if err := gorpmapping.InsertAndSign(db, &sdb); err != nil {
+	if err := gorpmapping.InsertAndSign(ctx, db, &sdb); err != nil {
 		return err
 	}
 	*s = sdb.Service
@@ -126,9 +126,9 @@ func Insert(db gorp.SqlExecutor, s *sdk.Service) error {
 }
 
 // Update a service in database.
-func Update(db gorp.SqlExecutor, s *sdk.Service) error {
+func Update(ctx context.Context, db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service{Service: *s}
-	if err := gorpmapping.UpdateAndSign(db, &sdb); err != nil {
+	if err := gorpmapping.UpdateAndSign(ctx, db, &sdb); err != nil {
 		return err
 	}
 	*s = sdb.Service

@@ -1,0 +1,6 @@
+name: User Command TestSuite
+version: "2"
+testcases:
+- name: cds user
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} user list

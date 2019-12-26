@@ -22,13 +22,13 @@ func PushInElasticSearch(ctx context.Context, db gorp.SqlExecutor, store cache.S
 		select {
 		case <-ctx.Done():
 			if ctx.Err() != nil {
-				log.Error("PushInElasticSearch> Exiting: %v", ctx.Err())
+				log.Error(ctx, "PushInElasticSearch> Exiting: %v", ctx.Err())
 				return
 			}
 		case e := <-eventChan:
 			esServices, errS := services.LoadAllByType(ctx, db, services.TypeElasticsearch)
 			if errS != nil {
-				log.Error("PushInElasticSearch> Unable to get elasticsearch service: %v", errS)
+				log.Error(ctx, "PushInElasticSearch> Unable to get elasticsearch service: %v", errS)
 				continue
 			}
 
@@ -43,7 +43,7 @@ func PushInElasticSearch(ctx context.Context, db gorp.SqlExecutor, store cache.S
 			e.Payload = nil
 			_, code, errD := services.DoJSONRequest(context.Background(), db, esServices, "POST", "/events", e, nil)
 			if code >= 400 || errD != nil {
-				log.Error("PushInElasticSearch> Unable to send event %s to elasticsearch [%d]: %v", e.EventType, code, errD)
+				log.Error(ctx, "PushInElasticSearch> Unable to send event %s to elasticsearch [%d]: %v", e.EventType, code, errD)
 				continue
 			}
 		}

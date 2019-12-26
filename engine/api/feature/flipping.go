@@ -1,6 +1,7 @@
 package feature
 
 import (
+	"context"
 	"strings"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -46,13 +47,13 @@ func SetClient(c *izanami.Client) {
 }
 
 // GetFeatures tree for the given project from cache, if not found in cache init from Izanami.
-func GetFeatures(store cache.Store, projectKey string) map[string]bool {
+func GetFeatures(ctx context.Context, store cache.Store, projectKey string) map[string]bool {
 	projFeats := ProjectFeatures{}
 
 	k := cacheFeatureKey + projectKey
 	find, err := store.Get(k, &projFeats)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", k, err)
+		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
 	if find {
 		// if missing features, invalidate cache and rebuild data from Izanami
@@ -71,20 +72,20 @@ func GetFeatures(store cache.Store, projectKey string) map[string]bool {
 	// get all features from Izanami and store in cache
 	projFeats = ProjectFeatures{Key: projectKey, Features: make(map[string]bool)}
 	for _, f := range List() {
-		projFeats.Features[f] = getStatusFromIzanami(f, projectKey)
+		projFeats.Features[f] = getStatusFromIzanami(ctx, f, projectKey)
 	}
 
 	// no expiration delay is set, the cache is cleared by Izanami calls on /feature/clean
 	if err := store.Set(cacheFeatureKey+projectKey, projFeats); err != nil {
-		log.Error("unable to cache set %v: %v", cacheFeatureKey+projectKey, err)
+		log.Error(ctx, "unable to cache set %v: %v", cacheFeatureKey+projectKey, err)
 	}
 
 	return projFeats.Features
 }
 
 // IsEnabled check if feature is enabled for the given project.
-func IsEnabled(store cache.Store, featureID string, projectKey string) bool {
-	fs := GetFeatures(store, projectKey)
+func IsEnabled(ctx context.Context, store cache.Store, featureID string, projectKey string) bool {
+	fs := GetFeatures(ctx, store, projectKey)
 
 	if v, ok := fs[featureID]; ok {
 		return v
@@ -92,10 +93,10 @@ func IsEnabled(store cache.Store, featureID string, projectKey string) bool {
 
 	// if features not in cache, it means that it's not a key from listed in List() func
 	// try to get a value from Izanami
-	return getStatusFromIzanami(featureID, projectKey)
+	return getStatusFromIzanami(ctx, featureID, projectKey)
 }
 
-func getStatusFromIzanami(featureID string, projectKey string) bool {
+func getStatusFromIzanami(ctx context.Context, featureID string, projectKey string) bool {
 	// no feature flipping always return active.
 	if izanamiClient == nil || izanamiClient.Feature() == nil {
 		return true
@@ -105,7 +106,7 @@ func getStatusFromIzanami(featureID string, projectKey string) bool {
 	resp, errCheck := izanamiClient.Feature().CheckWithContext(featureID, CheckContext{projectKey})
 	if errCheck != nil {
 		if !strings.Contains(errCheck.Error(), "404") {
-			log.Warning("Feature.IsEnabled > Cannot check feature %s: %s", featureID, errCheck)
+			log.Warning(ctx, "Feature.IsEnabled > Cannot check feature %s: %s", featureID, errCheck)
 			return false
 		}
 		resp.Active = true

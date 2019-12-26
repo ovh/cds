@@ -5,11 +5,13 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/urfave/cli"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/interpolate"
 )
 
 func main() {
@@ -45,11 +47,24 @@ func main() {
 					return err
 				}
 
-				var config Config
-				if err := yaml.Unmarshal(b, &config); err != nil {
+				rawVars := c.StringSlice("var")
+				mapVars := make(map[string]string, len(rawVars))
+				for _, v := range rawVars {
+					tuple := strings.SplitN(v, "=", 2)
+					mapVars[tuple[0]] = tuple[1]
+				}
+
+				s, err := interpolate.Do(string(b), mapVars)
+				if err != nil {
 					return err
 				}
 
+				var config Config
+				if err := yaml.Unmarshal([]byte(s), &config); err != nil {
+					return err
+				}
+
+				workdir := c.String("workdir")
 				target := c.String("target")
 				if ok, _ := isDirEmpty(target); !ok {
 					if !c.Bool("force") {
@@ -64,7 +79,7 @@ func main() {
 					}
 				}
 
-				p := New(&fileSystemWriter{}, config, target)
+				p := New(&fileSystemWriter{workdir: workdir}, config, target)
 
 				if err := p.Prepare(); err != nil {
 					return err
@@ -86,6 +101,14 @@ func main() {
 				cli.BoolFlag{
 					Name:  "force",
 					Usage: "Force override of existing target folder",
+				},
+				cli.StringSliceFlag{
+					Name:  "var",
+					Usage: "variable=value",
+				},
+				cli.StringFlag{
+					Name:  "workdir",
+					Usage: "debpacker working directory",
 				},
 			},
 		},

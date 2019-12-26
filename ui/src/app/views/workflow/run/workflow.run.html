@@ -1,13 +1,15 @@
-<div *ngIf="workflowRun" class="workflowRun">
+<div *ngIf="workflowRunData && workflowRunData['id']" class="workflowRun">
     <app-workflow-run-summary [(direction)]="direction" [project]="project" [workflowName]="workflowName"
-        (relaunch)="relaunch()" [class.above]="workflowRun.status === pipelineStatusEnum.PENDING">
+        [class.above]="workflowRunData['status'] === pipelineStatusEnum.PENDING">
     </app-workflow-run-summary>
-    <ng-container *ngIf="workflowRun.status !== pipelineStatusEnum.PENDING; else pendingBlock">
-        <ng-container *ngIf="workflowRun.workflow && workflowRun.workflow.workflow_data">
-            <app-workflow-graph class="graph" [direction]="direction" [project]="project" [workflowRun]="workflowRun">
+    <ng-container *ngIf="workflowRunData['status'] !== pipelineStatusEnum.PENDING; else pendingBlock">
+        <ng-container *ngIf="workflowRunData['workflow'] && workflowRunData['workflow'].workflow_data && !displayError">
+            <app-workflow-graph class="graph" [direction]="direction" [project]="project"
+                [workflowData]="workflowRunData['workflow']">
             </app-workflow-graph>
         </ng-container>
-        <ng-container *ngIf="!workflowRun.workflow || !workflowRun.workflow.workflow_data">
+        <ng-container
+            *ngIf="!workflowRunData['workflow'] || !workflowRunData['workflow'].workflow_data || displayError">
             <div class="ui grid">
                 <div class="ui row">
                     <div class="ui one wide column mt">
@@ -15,9 +17,8 @@
                     <div class="ui fourteen wide column mt">
                         <!-- ERRORS PANEL -->
                         <sui-accordion class="styled fluid">
-                            <ng-container *ngFor="let info of workflowRun.infos; let first = first">
-                                <sui-accordion-panel [isOpen]="first"
-                                    *ngIf="info.message.id !== 'MsgWorkflowError' || workflowRun.infos.length === 1">
+                            <ng-container *ngFor="let info of workflowRunData['infos']; let first = first">
+                                <sui-accordion-panel [isOpen]="first" *ngIf="info.is_error">
                                     <div title>
                                         <i class="dropdown icon"></i>
                                         <i class="red exclamation triangle icon"></i>
@@ -58,7 +59,5 @@
         </div>
     </ng-template>
 </div>
-<div class="ui text active loader" *ngIf="!workflowRun">{{ 'workflow_loading' | translate }}</div>
-<app-workflow-node-run-param *ngIf="workflowRun" #workflowRunParam [project]="project" [workflow]="workflowRun.workflow"
-    [workflowRun]="workflowRun" [num]="workflowRun.num" [nodeToRun]="nodeToRun">
-</app-workflow-node-run-param>
+<div class="ui text active loader" *ngIf="!workflowRunData || !workflowRunData['id']">
+    {{ 'workflow_loading' | translate }}</div>

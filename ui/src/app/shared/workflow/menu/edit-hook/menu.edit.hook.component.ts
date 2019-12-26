@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { IPopup } from '@richardlt/ng2-semantic-ui';
-import { PermissionValue } from 'app/model/permission.model';
 import { WNodeHook, Workflow } from 'app/model/workflow.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 
@@ -19,7 +18,6 @@ export class WorkflowHookMenuEditComponent {
     @Input() popup: IPopup;
     @Input() readonly = true;
     @Output() event = new EventEmitter<string>();
-    permissionEnum = PermissionValue;
 
     constructor() {}
 

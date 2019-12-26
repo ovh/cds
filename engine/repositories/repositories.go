@@ -105,13 +105,13 @@ func (s *Service) Serve(c context.Context) error {
 
 	go func() {
 		if err := s.processor(ctx); err != nil {
-			log.Info("Repositories> Shutdown processor")
+			log.Info(ctx, "Repositories> Shutdown processor")
 		}
 	}()
 
 	go func() {
 		if err := s.vacuumCleaner(ctx); err != nil {
-			log.Info("Repositories> Shutdown vacuumCleaner")
+			log.Info(ctx, "Repositories> Shutdown vacuumCleaner")
 		}
 	}()
 
@@ -119,15 +119,15 @@ func (s *Service) Serve(c context.Context) error {
 	go func() {
 		select {
 		case <-ctx.Done():
-			log.Info("Repositories> Shutdown HTTP Server")
+			log.Info(ctx, "Repositories> Shutdown HTTP Server")
 			server.Shutdown(ctx)
 		}
 	}()
 
 	//Start the http server
-	log.Info("Repositories> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+	log.Info(ctx, "Repositories> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Error("Repositories> Listen and serve failed: %s", err)
+		log.Error(ctx, "Repositories> Listen and serve failed: %s", err)
 	}
 
 	return ctx.Err()

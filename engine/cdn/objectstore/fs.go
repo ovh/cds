@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"golang.org/x/net/context"
 )
 
 // FilesystemStore implements ObjectStore interface with filesystem driver
@@ -18,7 +19,7 @@ type FilesystemStore struct {
 
 // newFilesystemStore creates a new ObjectStore with filesystem driver
 func NewFilesystemStore(projectIntegration sdk.ProjectIntegration, conf ConfigOptionsFilesystem) (*FilesystemStore, error) {
-	log.Info("ObjectStore> Initialize Filesystem driver on directory: %s", conf.BaseDirectory)
+	log.Info(context.Background(), "ObjectStore> Initialize Filesystem driver on directory: %s", conf.BaseDirectory)
 	if conf.BaseDirectory == "" {
 		return nil, fmt.Errorf("artifact storage is filesystem, but --artifact-basedir is not provided")
 	}

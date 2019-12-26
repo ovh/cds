@@ -57,12 +57,12 @@ func StartPlugin(ctx context.Context, pluginName string, workdir, cmd string, ar
 
 	go func() {
 		if err := c.Wait(); err != nil {
-			log.Info("GRPC Plugin %s wait failed:%+v", cmd, err)
+			log.Info(ctx, "GRPC Plugin %s wait failed:%+v", cmd, err)
 		}
-		log.Info("GRPC Plugin %s end", cmd)
+		log.Info(ctx, "GRPC Plugin %s end", cmd)
 	}()
 
-	log.Info("GRPC Plugin %s started", cmd)
+	log.Info(ctx, "GRPC Plugin %s started", cmd)
 
 	//Sleep a while, to let the plugin write on stdout the socket address
 	time.Sleep(500 * time.Millisecond)
@@ -79,7 +79,7 @@ func StartPlugin(ctx context.Context, pluginName string, workdir, cmd string, ar
 		}
 		if errs != nil {
 			if time.Now().Before(tsStart.Add(5 * time.Second)) {
-				log.Warning("plugin:%s error on ReadString, retry in 500ms...", pluginName)
+				log.Warning(ctx, "plugin:%s error on ReadString, retry in 500ms...", pluginName)
 				time.Sleep(500 * time.Millisecond)
 				continue
 			}
@@ -88,7 +88,7 @@ func StartPlugin(ctx context.Context, pluginName string, workdir, cmd string, ar
 		}
 		if strings.HasSuffix(line, readyString) {
 			socket = strings.TrimSpace(strings.Replace(line, fmt.Sprintf(" %s", readyString), "", 1))
-			log.Info("socket %s ready", socket)
+			log.Info(ctx, "socket %s ready", socket)
 			break
 		}
 	}

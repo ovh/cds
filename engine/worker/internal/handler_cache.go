@@ -2,20 +2,26 @@ package internal
 
 import (
 	"archive/tar"
+	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/spf13/afero"
+
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func cachePushHandler(wk *CurrentWorker) http.HandlerFunc {
+func cachePushHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		// Get body
@@ -25,7 +31,7 @@ func cachePushHandler(wk *CurrentWorker) http.HandlerFunc {
 				Message: "worker cache push > Cannot read body : " + errRead.Error(),
 				Status:  http.StatusInternalServerError,
 			}
-			log.Error("%v", errRead)
+			log.Error(ctx, "%v", errRead)
 			writeError(w, r, errRead)
 			return
 		}
@@ -36,18 +42,40 @@ func cachePushHandler(wk *CurrentWorker) http.HandlerFunc {
 				Message: "worker cache push > Cannot unmarshall body : " + err.Error(),
 				Status:  http.StatusInternalServerError,
 			}
-			log.Error("%v", err)
+			log.Error(ctx, "%v", err)
 			writeError(w, r, err)
 			return
 		}
 
-		res, size, errTar := sdk.CreateTarFromPaths(wk.Workspace(), c.WorkingDirectory, c.Files, nil)
+		workdir, errWk := workerruntime.WorkingDirectory(wk.currentJob.context)
+		if errWk != nil {
+			err := sdk.Error{
+				Message: "worker cache push > Cannot get worker working directory : " + errWk.Error(),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error(ctx, "%v", err)
+			writeError(w, r, err)
+			return
+		}
+		var abs string
+		if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
+			abs, _ = x.RealPath(workdir.Name())
+		} else {
+			abs = workdir.Name()
+		}
+		wkDirFS := afero.NewBasePathFs(afero.NewOsFs(), abs)
+
+		for i := range c.Files {
+			c.Files[i] = strings.TrimPrefix(c.Files[i], abs)
+		}
+
+		res, size, errTar := sdk.CreateTarFromPaths(wkDirFS, c.WorkingDirectory, c.Files, nil)
 		if errTar != nil {
 			errTar = sdk.Error{
-				Message: "worker cache push > Cannot tar : " + errTar.Error(),
+				Message: fmt.Sprintf("worker cache push > Cannot tar (%+v) : %v", c.Files, errTar.Error()),
 				Status:  http.StatusBadRequest,
 			}
-			log.Error("%v", errTar)
+			log.Error(ctx, "%v", errTar)
 			writeError(w, r, errTar)
 			return
 		}
@@ -58,7 +86,7 @@ func cachePushHandler(wk *CurrentWorker) http.HandlerFunc {
 				Message: "worker cache push > Cannot find project",
 				Status:  http.StatusInternalServerError,
 			}
-			log.Error("%v", errP)
+			log.Error(ctx, "%v", errP)
 			writeError(w, r, errP)
 			return
 		}
@@ -69,19 +97,19 @@ func cachePushHandler(wk *CurrentWorker) http.HandlerFunc {
 				return
 			}
 			time.Sleep(3 * time.Second)
-			log.Error("worker cache push > cannot push cache (retry x%d) : %v", i, errPush)
+			log.Error(ctx, "worker cache push > cannot push cache (retry x%d) : %v", i, errPush)
 		}
 
 		err := sdk.Error{
 			Message: "worker cache push > Cannot push cache: " + errPush.Error(),
 			Status:  http.StatusInternalServerError,
 		}
-		log.Error("%v", err)
+		log.Error(ctx, "%v", err)
 		writeError(w, r, err)
 	}
 }
 
-func cachePullHandler(wk *CurrentWorker) http.HandlerFunc {
+func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		path := r.FormValue("path")

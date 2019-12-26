@@ -63,7 +63,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorize> Cannot load project")
 		}
 
-		vcsServer, errVcsServer := repositoriesmanager.NewVCSServerConsumer(api.mustDB, api.Cache, rmName)
+		vcsServer, errVcsServer := repositoriesmanager.NewVCSServerConsumer(api.mustDBWithCtx, api.Cache, rmName)
 		if errVcsServer != nil {
 			return sdk.WrapError(errVcsServer, "repositoriesManagerAuthorize> Cannot start transaction")
 		}
@@ -91,7 +91,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 
 		keyr := cache.Key("reposmanager", "oauth", token)
 		if err := api.Cache.Set(keyr, data); err != nil {
-			log.Error("unable to cache set %v: %v", keyr, err)
+			log.Error(ctx, "unable to cache set %v: %v", keyr, err)
 		}
 		return service.WriteJSON(w, data, http.StatusOK)
 	}
@@ -104,7 +104,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		errURI := r.FormValue("error_uri")
 
 		if cberr != "" {
-			log.Error("Callback Error: %s - %s - %s", cberr, errDescription, errURI)
+			log.Error(ctx, "Callback Error: %s - %s - %s", cberr, errDescription, errURI)
 			return fmt.Errorf("OAuth Error %s", cberr)
 		}
 
@@ -116,7 +116,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		key := cache.Key("reposmanager", "oauth", state)
 		find, err := api.Cache.Get(key, &data)
 		if err != nil {
-			log.Error("cannot get from cache %s: %v", key, err)
+			log.Error(ctx, "cannot get from cache %s: %v", key, err)
 		}
 		if !find {
 			return sdk.WrapError(sdk.ErrForbidden, "repositoriesManagerAuthorizeCallback> Error")
@@ -135,7 +135,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
 
-		vcsServer, errVCSServer := repositoriesmanager.NewVCSServerConsumer(api.mustDB, api.Cache, rmName)
+		vcsServer, errVCSServer := repositoriesmanager.NewVCSServerConsumer(api.mustDBWithCtx, api.Cache, rmName)
 		if errVCSServer != nil {
 			return sdk.WrapError(errVCSServer, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
@@ -174,7 +174,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAPIConsumer(ctx))
+		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, getAPIConsumer(ctx))
 
 		//Redirect on UI advanced project page
 		url := fmt.Sprintf("%s/project/%s?tab=advanced", api.Config.URL.UI, projectKey)
@@ -245,7 +245,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAPIConsumer(ctx))
+		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 
@@ -280,7 +280,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
 
-		vcsServer, errVCSServer := repositoriesmanager.NewVCSServerConsumer(api.mustDB, api.Cache, rmName)
+		vcsServer, errVCSServer := repositoriesmanager.NewVCSServerConsumer(api.mustDBWithCtx, api.Cache, rmName)
 		if errVCSServer != nil {
 			return sdk.WrapError(errVCSServer, "repositoriesManagerAuthorizeCallback> Cannot create VCS Server Consumer project:%s repoManager:%s", proj.Key, rmName)
 		}
@@ -315,7 +315,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
-		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getAPIConsumer(ctx))
+		event.PublishAddVCSServer(ctx, proj, vcsServerForProject.Name, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
@@ -367,7 +367,7 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteVCSServer(p, vcsServer.Name, getAPIConsumer(ctx))
+		event.PublishDeleteVCSServer(ctx, p, vcsServer.Name, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -403,20 +403,20 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 		cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
 		if sync {
 			if err := api.Cache.Delete(cacheKey); err != nil {
-				log.Error("getReposFromRepositoriesManagerHandler> error on delete cache key %v: %s", cacheKey, err)
+				log.Error(ctx, "getReposFromRepositoriesManagerHandler> error on delete cache key %v: %s", cacheKey, err)
 			}
 		}
 
 		var repos []sdk.VCSRepo
 		find, err := api.Cache.Get(cacheKey, &repos)
 		if err != nil {
-			log.Error("cannot get from cache %s: %v", cacheKey, err)
+			log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 		}
 		if !find || len(repos) == 0 {
 			var errRepos error
 			repos, errRepos = client.Repos(ctx)
 			if err := api.Cache.SetWithTTL(cacheKey, repos, 0); err != nil {
-				log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+				log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 			}
 			if errRepos != nil {
 				return sdk.WrapError(errRepos, "getReposFromRepositoriesManagerHandler> Cannot get repos: %v", errRepos)
@@ -454,7 +454,7 @@ func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getRepoFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
 
-		log.Info("getRepoFromRepositoriesManagerHandler> Loading repository on %s", vcsServer.Name)
+		log.Info(ctx, "getRepoFromRepositoriesManagerHandler> Loading repository on %s", vcsServer.Name)
 
 		repo, err := client.RepoByFullname(ctx, repoName)
 		if err != nil {
@@ -544,7 +544,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 
 		// Update default payload of linked workflow root
 		if len(usage.Workflows) > 0 {
-			proj, errP := project.Load(db, api.Cache, projectKey)
+			proj, errP := project.Load(db, api.Cache, projectKey, project.LoadOptions.WithIntegrations)
 			if errP != nil {
 				return sdk.WrapError(errP, "attachRepositoriesManager> Cannot load project")
 			}
@@ -587,11 +587,11 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 					return sdk.WrapError(err, "cannot update node context %d", wf.WorkflowData.Node.Context.ID)
 				}
 
-				event.PublishWorkflowUpdate(proj.Key, *wfDB, *wfOld, getAPIConsumer(ctx))
+				event.PublishWorkflowUpdate(ctx, proj.Key, *wfDB, *wfOld, getAPIConsumer(ctx))
 			}
 		}
 
-		event.PublishApplicationRepositoryAdd(projectKey, *app, getAPIConsumer(ctx))
+		event.PublishApplicationRepositoryAdd(ctx, projectKey, *app, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
@@ -611,11 +611,11 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 		}
 
 		// Check if there is hooks on this application
-		hooksCount, err := workflow.CountHooksByApplication(db, app.ID)
+		repositoryWebHooksCount, err := workflow.CountRepositoryWebHooksByApplication(db, app.ID)
 		if err != nil {
 			return err
 		}
-		if hooksCount > 0 {
+		if repositoryWebHooksCount > 0 {
 			return sdk.WithStack(sdk.ErrRepositoryUsedByHook)
 		}
 
@@ -634,7 +634,7 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishApplicationRepositoryDelete(projectKey, appName, app.VCSServer, app.RepositoryFullname, u)
+		event.PublishApplicationRepositoryDelete(ctx, projectKey, appName, app.VCSServer, app.RepositoryFullname, u)
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}

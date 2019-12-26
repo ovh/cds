@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -22,13 +23,13 @@ func Test_getUserContactsHandler(t *testing.T) {
 	u, jwtRaw := assets.InsertLambdaUser(t, db)
 
 	seed := sdk.RandomString(20)
-	require.NoError(t, user.InsertContact(db, &sdk.UserContact{
+	require.NoError(t, user.InsertContact(context.TODO(), db, &sdk.UserContact{
 		Primary: true,
 		Type:    sdk.UserContactTypeEmail,
 		UserID:  u.ID,
 		Value:   seed + "@lolcat.host",
 	}))
-	require.NoError(t, user.InsertContact(db, &sdk.UserContact{
+	require.NoError(t, user.InsertContact(context.TODO(), db, &sdk.UserContact{
 		Primary: false,
 		Type:    sdk.UserContactTypeEmail,
 		UserID:  u.ID,

@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -13,8 +14,8 @@ import (
 )
 
 // Find image ID from image name
-func (h *HatcheryOpenstack) imageID(img string) (string, error) {
-	for _, i := range h.getImages() {
+func (h *HatcheryOpenstack) imageID(ctx context.Context, img string) (string, error) {
+	for _, i := range h.getImages(ctx) {
 		if i.Name == img {
 			return i.ID, nil
 		}
@@ -32,7 +33,7 @@ func (h *HatcheryOpenstack) flavorID(flavor string) (string, error) {
 	return "", fmt.Errorf("flavorID> flavor '%s' not found", flavor)
 }
 
-//This a embeded cache for images list
+//This a embedded cache for images list
 var limages = struct {
 	mu   sync.RWMutex
 	list []images.Image
@@ -41,7 +42,7 @@ var limages = struct {
 	list: []images.Image{},
 }
 
-func (h *HatcheryOpenstack) getImages() []images.Image {
+func (h *HatcheryOpenstack) getImages(ctx context.Context) []images.Image {
 	t := time.Now()
 	defer log.Debug("getImages(): %fs", time.Since(t).Seconds())
 
@@ -52,12 +53,12 @@ func (h *HatcheryOpenstack) getImages() []images.Image {
 	if nbImages == 0 {
 		all, err := images.ListDetail(h.openstackClient, nil).AllPages()
 		if err != nil {
-			log.Error("getImages> error on listDetail: %s", err)
+			log.Error(ctx, "getImages> error on listDetail: %s", err)
 			return limages.list
 		}
 		imgs, err := images.ExtractImages(all)
 		if err != nil {
-			log.Error("getImages> error on images.ExtractImages: %s", err)
+			log.Error(ctx, "getImages> error on images.ExtractImages: %s", err)
 			return limages.list
 		}
 
@@ -89,7 +90,7 @@ func (h *HatcheryOpenstack) resetImagesCache() {
 	limages.mu.Unlock()
 }
 
-//This a embeded cache for servers list
+//This a embedded cache for servers list
 var lservers = struct {
 	mu   sync.RWMutex
 	list []servers.Server
@@ -98,7 +99,7 @@ var lservers = struct {
 	list: []servers.Server{},
 }
 
-func (h *HatcheryOpenstack) getServers() []servers.Server {
+func (h *HatcheryOpenstack) getServers(ctx context.Context) []servers.Server {
 	t := time.Now()
 	defer log.Debug("getServers() : %fs", time.Since(t).Seconds())
 
@@ -109,12 +110,12 @@ func (h *HatcheryOpenstack) getServers() []servers.Server {
 	if nbServers == 0 {
 		all, err := servers.List(h.openstackClient, nil).AllPages()
 		if err != nil {
-			log.Error("getServers> error on servers.List: %s", err)
+			log.Error(ctx, "getServers> error on servers.List: %s", err)
 			return lservers.list
 		}
 		serverList, err := servers.ExtractServers(all)
 		if err != nil {
-			log.Error("getServers> error on servers.ExtractServers: %s", err)
+			log.Error(ctx, "getServers> error on servers.ExtractServers: %s", err)
 			return lservers.list
 		}
 

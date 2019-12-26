@@ -1,6 +1,7 @@
 package exportentities_test
 
 import (
+	"context"
 	"sort"
 	"strings"
 	"testing"
@@ -297,6 +298,80 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 										Value:        "{}",
 										Configurable: true,
 										Type:         sdk.HookConfigTypeString,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		// hook conditions
+		{
+			name: "Workflow with multiple nodes should display hook conditions",
+			fields: fields{
+				Workflow: map[string]exportentities.NodeEntry{
+					"root": {
+						PipelineName: "pipeline-root",
+					},
+					"child": {
+						PipelineName: "pipeline-child",
+						DependsOn:    []string{"root"},
+						OneAtATime:   &exportentities.True,
+					},
+				},
+				Hooks: map[string][]exportentities.HookEntry{
+					"root": []exportentities.HookEntry{{
+						Model: "Scheduler",
+						Config: map[string]string{
+							"crontab": "* * * * *",
+							"payload": "{}",
+						},
+						Conditions: &sdk.WorkflowNodeConditions{
+							LuaScript: "return true",
+						},
+					}},
+				},
+			},
+			wantErr: false,
+			want: sdk.Workflow{
+				HistoryLength: sdk.DefaultHistoryLength,
+				WorkflowData: &sdk.WorkflowData{
+					Node: sdk.Node{
+						Name: "root",
+						Type: "pipeline",
+						Hooks: []sdk.NodeHook{
+							{
+								HookModelName: "Scheduler",
+								Conditions: sdk.WorkflowNodeConditions{
+									LuaScript: "return true",
+								},
+								Config: sdk.WorkflowNodeHookConfig{
+									"crontab": sdk.WorkflowNodeHookConfigValue{
+										Value:        "* * * * *",
+										Configurable: true,
+										Type:         sdk.HookConfigTypeString,
+									},
+									"payload": sdk.WorkflowNodeHookConfigValue{
+										Value:        "{}",
+										Configurable: true,
+										Type:         sdk.HookConfigTypeString,
+									},
+								},
+							},
+						},
+						Context: &sdk.NodeContext{
+							PipelineName: "pipeline-root",
+						},
+						Triggers: []sdk.NodeTrigger{
+							{
+								ChildNode: sdk.Node{
+									Name: "child",
+									Ref:  "child",
+									Type: "pipeline",
+									Context: &sdk.NodeContext{
+										PipelineName: "pipeline-child",
+										Mutex:        true,
 									},
 								},
 							},
@@ -1146,7 +1221,7 @@ workflow:
 					}
 				}
 			})
-			exportedWorkflow, err := exportentities.NewWorkflow(*w)
+			exportedWorkflow, err := exportentities.NewWorkflow(context.TODO(), *w)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("NewWorkflow raised an error", err)

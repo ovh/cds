@@ -29,7 +29,7 @@ func WorkerPool(ctx context.Context, h Interface, status ...string) ([]sdk.Worke
 	}
 
 	// Then: get all workers in the orchestrator queue
-	startedWorkers := h.WorkersStarted()
+	startedWorkers := h.WorkersStarted(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get started workers: %v", err)
 	}
@@ -53,9 +53,9 @@ func WorkerPool(ctx context.Context, h Interface, status ...string) ([]sdk.Worke
 			}
 		}
 		if !found && w.Status != sdk.StatusDisabled {
-			log.Error("Hatchery > WorkerPool> Worker %s (status = %s) inconsistency", w.Name, w.Status)
+			log.Error(ctx, "Hatchery > WorkerPool> Worker %s (status = %s) inconsistency", w.Name, w.Status)
 			if err := h.CDSClient().WorkerDisable(ctx, w.ID); err != nil {
-				log.Error("Hatchery > WorkerPool> Unable to disable worker [%s]%s", w.ID, w.Name)
+				log.Error(ctx, "Hatchery > WorkerPool> Unable to disable worker [%s]%s", w.ID, w.Name)
 			}
 			registeredWorkers[k].Status = sdk.StatusDisabled
 		}

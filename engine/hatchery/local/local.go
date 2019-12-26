@@ -4,18 +4,20 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
+	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ovh/cds/engine/service"
-
 	"github.com/gorilla/mux"
-
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -72,11 +74,11 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (h *HatcheryLocal) Status() sdk.MonitoringStatus {
+func (h *HatcheryLocal) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{
 		Component: "Workers",
-		Value:     fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker),
+		Value:     fmt.Sprintf("%d/%d", len(h.WorkersStarted(ctx)), h.Config.Provision.MaxWorker),
 		Status:    sdk.MonitoringStatusOK,
 	})
 
@@ -116,7 +118,93 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 
 // Serve start the hatchery server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
+	h.BasedirDedicated = filepath.Dir(filepath.Join(h.Config.Basedir, h.Configuration().Name))
+	if ok, err := sdk.DirectoryExists(h.BasedirDedicated); !ok {
+		log.Debug("creating directory %s", h.BasedirDedicated)
+		if err := os.MkdirAll(h.BasedirDedicated, 0700); err != nil {
+			return sdk.WrapError(err, "error while creating directory %s", h.BasedirDedicated)
+		}
+	} else if err != nil {
+		return fmt.Errorf("Invalid basedir: %v", err)
+	}
+
+	if err := h.downloadWorker(); err != nil {
+		return fmt.Errorf("Cannot download worker binary from api: %v", err)
+	}
+
 	return h.CommonServe(ctx, h)
+}
+
+func (h *HatcheryLocal) downloadWorker() error {
+	urlBinary := h.Client.DownloadURLFromAPI("worker", sdk.GOOS, sdk.GOARCH, "")
+
+	log.Debug("Downloading worker binary from %s", urlBinary)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+
+	body, headers, _, err := h.Client.(cdsclient.Raw).Request(ctx, http.MethodGet, urlBinary, nil)
+	if err != nil {
+		return sdk.WrapError(err, "error while getting binary from CDS API")
+	}
+
+	if contentType := headers.Get("Content-Type"); contentType != "application/octet-stream" {
+		return fmt.Errorf("invalid Binary (Content-Type: %s). Please try again or download it manually from %s", contentType, sdk.URLGithubReleases)
+	}
+
+	workerFullPath := path.Join(h.BasedirDedicated, h.getWorkerBinaryName())
+
+	if _, err := os.Stat(workerFullPath); err == nil {
+		log.Debug("removing existing worker binary from %s", workerFullPath)
+		if err := os.Remove(workerFullPath); err != nil {
+			return sdk.WrapError(err, "error while removing existing worker binary %s", workerFullPath)
+		}
+	}
+
+	log.Debug("copy worker binary into %s", workerFullPath)
+	fp, err := os.OpenFile(workerFullPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0700)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if _, err := fp.Write(body); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	return sdk.WithStack(fp.Close())
+}
+
+func (h *HatcheryLocal) getWorkerBinaryName() string {
+	workerName := "worker"
+
+	if sdk.GOOS == "windows" {
+		workerName += ".exe"
+	}
+	return workerName
+}
+
+// checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
+// returns an error "Exit status X" if current host misses one requirement
+func (h *HatcheryLocal) checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
+	var tmp map[string]sdk.Requirement
+
+	tmp = make(map[string]sdk.Requirement)
+	for _, r := range req {
+		ok, err := h.checkRequirement(r)
+		if err != nil {
+			return nil, err
+		}
+
+		if ok {
+			tmp[r.Name] = r
+		}
+	}
+
+	capa := make([]sdk.Requirement, 0, len(tmp))
+	for _, r := range tmp {
+		capa = append(capa, r)
+	}
+
+	return capa, nil
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -126,7 +214,7 @@ func (h *HatcheryLocal) Configuration() service.HatcheryCommonConfiguration {
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
-func (h *HatcheryLocal) CanSpawn(_ *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	for _, r := range requirements {
 		ok, err := h.checkRequirement(r)
 		if err != nil || !ok {
@@ -151,14 +239,14 @@ func (h *HatcheryLocal) CanSpawn(_ *sdk.Model, jobID int64, requirements []sdk.R
 }
 
 // killWorker kill a local process
-func (h *HatcheryLocal) killWorker(name string, workerCmd workerCmd) error {
-	log.Info("KillLocalWorker> Killing %s", name)
+func (h *HatcheryLocal) killWorker(ctx context.Context, name string, workerCmd workerCmd) error {
+	log.Info(ctx, "KillLocalWorker> Killing %s", name)
 	return workerCmd.cmd.Process.Kill()
 }
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryLocal) WorkersStarted() []string {
+func (h *HatcheryLocal) WorkersStarted(ctx context.Context) []string {
 	h.Mutex.Lock()
 	defer h.Mutex.Unlock()
 	workers := make([]string, len(h.workers))
@@ -171,7 +259,7 @@ func (h *HatcheryLocal) WorkersStarted() []string {
 }
 
 // InitHatchery register local hatchery with its worker model
-func (h *HatcheryLocal) InitHatchery() error {
+func (h *HatcheryLocal) InitHatchery(ctx context.Context) error {
 	h.workers = make(map[string]workerCmd)
 	sdk.GoRoutine(context.Background(), "startKillAwolWorkerRoutine", h.startKillAwolWorkerRoutine)
 	return nil
@@ -199,7 +287,7 @@ func (h *HatcheryLocal) startKillAwolWorkerRoutine(ctx context.Context) {
 	t := time.NewTicker(5 * time.Second)
 	for range t.C {
 		if err := h.killAwolWorkers(); err != nil {
-			log.Warning("Cannot kill awol workers: %s", err)
+			log.Warning(ctx, "Cannot kill awol workers: %s", err)
 		}
 	}
 }
@@ -232,16 +320,16 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 				log.Debug("killAwolWorkers> Avoid killing baby worker %s born at %s", name, workerCmd.created)
 				continue
 			}
-			log.Info("Killing AWOL worker %s", name)
+			log.Info(ctx, "Killing AWOL worker %s", name)
 			kill = true
 		} else if w.Status == sdk.StatusDisabled {
-			log.Info("Killing disabled worker %s", w.Name)
+			log.Info(ctx, "Killing disabled worker %s", w.Name)
 			kill = true
 		}
 
 		if kill {
-			if err := h.killWorker(name, workerCmd); err != nil {
-				log.Warning("Error killing worker %s :%s", name, err)
+			if err := h.killWorker(ctx, name, workerCmd); err != nil {
+				log.Warning(ctx, "Error killing worker %s :%s", name, err)
 			}
 			killedWorkers = append(killedWorkers, name)
 		}

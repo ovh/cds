@@ -148,6 +148,7 @@ export class PipelineRunRequest {
 export class SpawnInfo {
     api_time: Date;
     remote_time: Date;
+    is_error: boolean;
     user_message: string;
 }
 
@@ -231,6 +232,7 @@ export class TestCase {
     skipped: Array<Skipped>;
     systemout: InnerResult;
     systemerr: InnerResult;
+    errorsAndFailures: string;
 
     // UI param
     displayed: boolean;

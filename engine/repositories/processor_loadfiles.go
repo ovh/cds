@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 
@@ -10,18 +11,18 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) processLoadFiles(op *sdk.Operation) error {
+func (s *Service) processLoadFiles(ctx context.Context, op *sdk.Operation) error {
 	r := s.Repo(*op)
 
 	gitRepo, err := repo.New(r.Basedir)
 	if err != nil {
-		log.Error("Repositories> processLoadFiles> repo.New > [%s] Error: %v", op.UUID, err)
+		log.Error(ctx, "Repositories> processLoadFiles> repo.New > [%s] Error: %v", op.UUID, err)
 		return err
 	}
 
 	files, err := gitRepo.Glob(op.LoadFiles.Pattern)
 	if err != nil {
-		log.Error("Repositories> processLoadFiles> Glob> [%s] Error: %v", op.UUID, err)
+		log.Error(ctx, "Repositories> processLoadFiles> Glob> [%s] Error: %v", op.UUID, err)
 		return err
 	}
 

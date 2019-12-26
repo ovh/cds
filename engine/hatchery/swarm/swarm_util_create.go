@@ -61,7 +61,7 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 	if cArgs.memory <= 4 {
 		cArgs.memory = 1024
 	}
-	log.Info("hatchery> swarm> createAndStartContainer> Create container %s on %s from %s (memory=%dMB)", cArgs.name, dockerClient.name, cArgs.image, cArgs.memory)
+	log.Info(ctx, "hatchery> swarm> createAndStartContainer> Create container %s on %s from %s (memory=%dMB)", cArgs.name, dockerClient.name, cArgs.image, cArgs.memory)
 
 	var exposedPorts nat.PortSet
 
@@ -103,7 +103,7 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 	// Check the images to know if we had to pull or not
 	images, errl := dockerClient.ImageList(ctx, types.ImageListOptions{All: true})
 	if errl != nil {
-		log.Warning("createAndStartContainer> Unable to list images: %s", errl)
+		log.Warning(ctx, "createAndStartContainer> Unable to list images: %s", errl)
 	}
 	next()
 

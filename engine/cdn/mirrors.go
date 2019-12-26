@@ -2,6 +2,7 @@ package cdn
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"io/ioutil"
 
@@ -18,7 +19,7 @@ func (s *Service) mirroring(object objectstore.Object, body io.Closer, reader io
 		tee := io.TeeReader(reader, &buf)
 		_, err := mirror.Store(object, ioutil.NopCloser(tee))
 		if err != nil {
-			log.Error("Cannot mirror artifact : %v", err)
+			log.Error(context.Background(), "Cannot mirror artifact : %v", err)
 		}
 		reader = &buf
 	}

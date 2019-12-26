@@ -74,15 +74,15 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		oldSrv, errOldSrv := services.LoadByName(ctx, tx, srv.Name)
 		if oldSrv != nil {
 			srv.ID = oldSrv.ID
-			if err := services.Update(tx, &srv); err != nil {
+			if err := services.Update(ctx, tx, &srv); err != nil {
 				return sdk.WithStack(err)
 			}
 			log.Debug("postServiceRegisterHandler> service %s(%d) registered for consumer %v", srv.Name, srv.ID, *srv.ConsumerID)
 		} else if !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
-			log.Error("postServiceRegisterHandler> unable to find service by name %s: %v", srv.Name, errOldSrv)
+			log.Error(ctx, "postServiceRegisterHandler> unable to find service by name %s: %v", srv.Name, errOldSrv)
 			return sdk.WithStack(errOldSrv)
 		} else {
-			if err := services.Insert(tx, &srv); err != nil {
+			if err := services.Insert(ctx, tx, &srv); err != nil {
 				return sdk.WithStack(err)
 			}
 			log.Debug("postServiceRegisterHandler> new service %s(%d) registered for consumer %v", srv.Name, srv.ID, *srv.ConsumerID)
@@ -133,7 +133,7 @@ func (api *API) postServiceHearbeatHandler() service.Handler {
 		srv.LastHeartbeat = time.Now()
 		srv.MonitoringStatus = mon
 
-		if err := services.Update(tx, srv); err != nil {
+		if err := services.Update(ctx, tx, srv); err != nil {
 			return err
 		}
 
@@ -155,7 +155,7 @@ func (api *API) serviceAPIHeartbeat(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			if ctx.Err() != nil {
-				log.Error("Exiting serviceAPIHeartbeat: %v", ctx.Err())
+				log.Error(ctx, "Exiting serviceAPIHeartbeat: %v", ctx.Err())
 				return
 			}
 		case <-tick:
@@ -167,7 +167,7 @@ func (api *API) serviceAPIHeartbeat(ctx context.Context) {
 func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 	tx, err := db.Begin()
 	if err != nil {
-		log.Error("serviceAPIHeartbeat> error on repo.Begin:%v", err)
+		log.Error(ctx, "serviceAPIHeartbeat> error on repo.Begin:%v", err)
 		return
 	}
 	defer tx.Rollback() // nolint
@@ -182,32 +182,32 @@ func (api *API) serviceAPIHeartbeatUpdate(ctx context.Context, db *gorp.DbMap) {
 			Type:   services.TypeAPI,
 			Config: srvConfig,
 		},
-		MonitoringStatus: api.Status(),
+		MonitoringStatus: api.Status(ctx),
 		LastHeartbeat:    time.Now(),
 	}
 
 	//Try to find the service, and keep; else generate a new one
 	oldSrv, errOldSrv := services.LoadByName(ctx, tx, srv.Name)
 	if errOldSrv != nil && !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
-		log.Error("serviceAPIHeartbeat> Unable to find by name:%v", errOldSrv)
+		log.Error(ctx, "serviceAPIHeartbeat> Unable to find by name:%v", errOldSrv)
 		return
 	}
 
 	if oldSrv != nil {
 		srv.ID = oldSrv.ID
-		if err := services.Update(tx, srv); err != nil {
-			log.Error("serviceAPIHeartbeat> Unable to update service %s: %v", srv.Name, err)
+		if err := services.Update(ctx, tx, srv); err != nil {
+			log.Error(ctx, "serviceAPIHeartbeat> Unable to update service %s: %v", srv.Name, err)
 			return
 		}
 	} else {
-		if err := services.Insert(tx, srv); err != nil {
-			log.Error("serviceAPIHeartbeat> Unable to insert service %s: %v", srv.Name, err)
+		if err := services.Insert(ctx, tx, srv); err != nil {
+			log.Error(ctx, "serviceAPIHeartbeat> Unable to insert service %s: %v", srv.Name, err)
 			return
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Error("serviceAPIHeartbeat> error on repo.Commit: %v", err)
+		log.Error(ctx, "serviceAPIHeartbeat> error on repo.Commit: %v", err)
 		return
 	}
 }

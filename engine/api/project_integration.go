@@ -78,7 +78,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
-			return sdk.WrapError(errT, "putProjectIntegrationHandler> Cannot strat transaction")
+			return sdk.WrapError(errT, "putProjectIntegrationHandler> Cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
@@ -108,7 +108,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 		}
 
 		if projectIntegration.Model.Event {
-			if err := event.ResetEventIntegration(tx, projectIntegration.ID); err != nil {
+			if err := event.ResetEventIntegration(ctx, tx, projectIntegration.ID); err != nil {
 				return sdk.WrapError(err, "cannot connect to event broker")
 			}
 		}
@@ -117,7 +117,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishUpdateProjectIntegration(p, projectIntegration, ppDB, getAPIConsumer(ctx))
+		event.PublishUpdateProjectIntegration(ctx, p, projectIntegration, ppDB, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, projectIntegration, http.StatusOK)
 	}
@@ -162,7 +162,7 @@ func (api *API) deleteProjectIntegrationHandler() service.Handler {
 		if deletedIntegration.Model.Event {
 			event.DeleteEventIntegration(deletedIntegration.ID)
 		}
-		event.PublishDeleteProjectIntegration(p, deletedIntegration, getAPIConsumer(ctx))
+		event.PublishDeleteProjectIntegration(ctx, p, deletedIntegration, getAPIConsumer(ctx))
 		return nil
 	}
 }
@@ -236,7 +236,7 @@ func (api *API) postProjectIntegrationHandler() service.Handler {
 		}
 
 		if pp.Model.Event {
-			if err := event.ResetEventIntegration(tx, pp.ID); err != nil {
+			if err := event.ResetEventIntegration(ctx, tx, pp.ID); err != nil {
 				return sdk.WrapError(err, "cannot connect to event broker")
 			}
 		}
@@ -245,7 +245,7 @@ func (api *API) postProjectIntegrationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishAddProjectIntegration(p, pp, getAPIConsumer(ctx))
+		event.PublishAddProjectIntegration(ctx, p, pp, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pp, http.StatusOK)
 	}

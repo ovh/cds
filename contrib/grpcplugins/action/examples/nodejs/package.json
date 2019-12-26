@@ -17,7 +17,8 @@
     "google-protobuf": "^3.6.1",
     "grpc": "^1.15.1",
     "atob": "^2.1.2",
-    "lodash": "4.17.13"
+    "lodash": "4.17.13",
+    "serialize-javascript": ">=2.1.1"
   },
   "devDependencies": {
     "webpack": "^4.12.0",

@@ -32,7 +32,6 @@ Create a file project-configuration.yml:
 name: MyAWS
 model:
   name: AWS
-  public: false
 config:
   region:
     value: your-region
@@ -91,4 +90,54 @@ Import the integration with :
 
 ```bash
 cdsctl admin integration-model import public-configuration.yml
+```
+
+### Using min.io as an alternative
+
+[Minio](https://min.io) is a Open Source, Enterprise-Grade, Amazon S3 Compatible Object Storage.
+
+According to https://docs.min.io/docs/how-to-use-aws-sdk-for-go-with-minio-server.html, you can define `endpoint`, `disable_ssl`, `force_path_style` to link CDS to a Minio server.
+
+For example, you can run a minio local server with the following docker command.
+
+```bash
+docker run -p 9000:9000 --name minio1 \
+  -e "MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE" \
+  -e "MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" \
+  -v /mnt/data:/data \
+  minio/minio server /data
+```
+
+Then you can import the following content to you project with the `cdsctl project integration import` command.
+
+```yaml
+name: local min.io
+model:
+  name: AWS
+storage: true
+config:
+  region:
+    value: us-east-1
+    type: string
+  bucket_name:
+    value: cds-storage
+    type: string
+  prefix:
+    value: cds-prefix-
+    type: string
+  access_key_id:
+    value: 'AKIAIOSFODNN7EXAMPLE'
+    type: string
+  secret_access_key:
+    value: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+    type: password
+  endpoint:
+    value: 'http://localhost:9000'
+    type: string
+  disable_ssl:
+    value: 'true'
+    type: boolean
+  force_path_style:
+    value: 'true'
+    type: boolean
 ```

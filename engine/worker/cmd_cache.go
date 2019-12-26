@@ -77,7 +77,7 @@ Inside a project, you can create a cache from your worker with a tag (useful for
 You can use you storage integration: 
 	worker cache push --destination=MyStorageIntegration  <tagValue> dir/file
 		`,
-		Example: "worker cache push {{.cds.workflow}}-{{.cds.version}} {{.cds.workspace}}/pathToUpload",
+		Example: "worker cache push {{.cds.workflow}}-{{.cds.version}} ./pathToUpload",
 		Run:     cachePushCmd(),
 	}
 	c.Flags().StringVar(&cmdStorageIntegrationName, "destination", "", "optional. Your storage integration name")

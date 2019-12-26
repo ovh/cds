@@ -1,0 +1,24 @@
+name: Smoke tests
+
+vars:
+  api.url: 'http://localhost:8081'
+  cdsctl : 'cdsctl'
+
+
+testcases:
+- name: Check API is UP and RUNNING
+  steps:
+  - type: http
+    method: GET
+    url: '{{.api.url}}/mon/version'
+    retry: 10
+    delay: 10
+  - type: http
+    method: GET
+    url: '{{.api.url}}/mon/status'
+    retry: 10
+    delay: 10
+
+- name: Check CLI binary is available
+  steps:  
+  - script: '[ -f {{.cdsctl}} ]'

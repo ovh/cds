@@ -86,7 +86,7 @@ Email of the maintener
 
 **Type:** *string[]*
 
-List of dependancies
+List of dependencies
 
 ### systemd-configuration
 

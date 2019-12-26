@@ -24,11 +24,11 @@ var migrations = []sdk.Migration{}
 // migrate.Add(sdk.Migration{Name: "MyMigration", Release: "0.39.3", Mandatory: true, ExecFunc: func(ctx context.Context) error {
 //	return migrate.MyMigration(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 // }})
-func Add(migration sdk.Migration) {
+func Add(ctx context.Context, migration sdk.Migration) {
 	if migration.Major == 0 && migration.Minor == 0 && migration.Patch == 0 && migration.Release != "" && !strings.HasPrefix(migration.Release, "snapshot") {
 		v, err := semver.Parse(migration.Release)
 		if err != nil {
-			log.Error("Cannot parse your release reference : %v", err)
+			log.Error(ctx, "Cannot parse your release reference : %v", err)
 		}
 		migration.Major = v.Major
 		migration.Minor = v.Minor
@@ -44,29 +44,38 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 			sdk.GoRoutine(ctx, "migrate_"+migration.Name, func(contex context.Context) {
 				mig, errMig := GetByName(db, currentMigration.Name)
 				if errMig != nil {
-					log.Error("Cannot get migration %s : %v", currentMigration.Name, errMig)
+					log.Error(ctx, "Cannot get migration %s : %v", currentMigration.Name, errMig)
 					return
 				}
 				if mig != nil {
-					if mig.Status == sdk.MigrationStatusDone || mig.Status == sdk.MigrationStatusCanceled {
-						log.Info("Migration> %s> Already done (status: %s)", currentMigration.Name, mig.Status)
+					if mig.Status == sdk.MigrationStatusDone || mig.Status == sdk.MigrationStatusCanceled || mig.Status == sdk.MigrationStatusNotExecuted {
+						log.Info(ctx, "Migration> %s> Already done (status: %s)", currentMigration.Name, mig.Status)
 						return
 					}
 
 					// set the previous migration id for for the case where the migration was reset
 					currentMigration.ID = mig.ID
-				} else {
-					currentMigration.Progress = "Begin"
 					currentMigration.Status = sdk.MigrationStatusInProgress
+				} else {
+					if !migration.Automatic {
+						currentMigration.Status = sdk.MigrationStatusNotExecuted
+					} else {
+						currentMigration.Status = sdk.MigrationStatusInProgress
+						currentMigration.Progress = "Begin"
+					}
 					if err := Insert(db, &currentMigration); err != nil {
-						log.Error("Cannot insert migration %s : %v", currentMigration.Name, err)
+						log.Error(ctx, "Cannot insert migration %s : %v", currentMigration.Name, err)
 						return
 					}
 				}
 
-				log.Info("Migration [%s]: begin", currentMigration.Name)
+				if currentMigration.Status != sdk.MigrationStatusInProgress {
+					return
+				}
+
+				log.Info(ctx, "Migration [%s]: begin", currentMigration.Name)
 				if err := currentMigration.ExecFunc(contex); err != nil {
-					log.Error("migration %s in ERROR : %v", currentMigration.Name, err)
+					log.Error(ctx, "migration %s in ERROR : %v", currentMigration.Name, err)
 					currentMigration.Error = err.Error()
 				}
 				currentMigration.Progress = "Migration done"
@@ -74,9 +83,9 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 				currentMigration.Status = sdk.MigrationStatusDone
 
 				if err := Update(db, &currentMigration); err != nil {
-					log.Error("Cannot update migration %s : %v", currentMigration.Name, err)
+					log.Error(ctx, "Cannot update migration %s : %v", currentMigration.Name, err)
 				}
-				log.Info("Migration [%s]: Done", currentMigration.Name)
+				log.Info(ctx, "Migration [%s]: Done", currentMigration.Name)
 			}, panicDump)
 		}(migration)
 	}

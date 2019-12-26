@@ -45,7 +45,7 @@ func Start(ctx context.Context, s service, w http.ResponseWriter, req *http.Requ
 	var pkey string
 	var ok bool
 	if db != nil && store != nil {
-		pkey, ok = findPrimaryKeyFromRequest(req, db, store)
+		pkey, ok = findPrimaryKeyFromRequest(ctx, req, db, store)
 		if pkey != "" {
 			tags = append(tags, trace.StringAttribute("project_key", pkey))
 		}
@@ -57,7 +57,7 @@ func Start(ctx context.Context, s service, w http.ResponseWriter, req *http.Requ
 
 	var sampler trace.Sampler
 	switch {
-	case ok && feature.IsEnabled(store, feature.FeatEnableTracing, pkey):
+	case ok && feature.IsEnabled(ctx, store, feature.FeatEnableTracing, pkey):
 		sampler = trace.AlwaysSample()
 	case hasSpanContext && rootSpanContext.IsSampled():
 		sampler = trace.AlwaysSample()

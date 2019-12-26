@@ -35,21 +35,21 @@ func GoRoutine(c context.Context, name string, fn func(ctx context.Context), wri
 				buf := make([]byte, 1<<16)
 				runtime.Stack(buf, false)
 				uuid := UUID()
-				log.Error("[PANIC][%s] %s Failed (%s)", hostname, name, uuid)
-				log.Error("%s", string(buf))
+				log.Error(ctx, "[PANIC][%s] %s Failed (%s)", hostname, name, uuid)
+				log.Error(ctx, "%s", string(buf))
 
 				for _, f := range writerFactories {
 					w, err := f(uuid)
 					if err != nil {
-						log.Error("unable open writer %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
+						log.Error(ctx, "unable open writer %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
 						continue
 					}
 					if _, err := io.Copy(w, bytes.NewReader(buf)); err != nil {
-						log.Error("unable to write %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
+						log.Error(ctx, "unable to write %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
 						continue
 					}
 					if err := w.Close(); err != nil {
-						log.Error("unable to close %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
+						log.Error(ctx, "unable to close %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
 					}
 				}
 			}

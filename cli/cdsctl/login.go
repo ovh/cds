@@ -112,7 +112,7 @@ func loginRun(v cli.Values) error {
 		if noInteractive {
 			return fmt.Errorf("Cannot signin with %s driver in no interactive mode", driverType)
 		}
-		req, err = loginRunExternal(v, driverType)
+		req, err = loginRunExternal(v, driverType, apiURL)
 	}
 	if err != nil {
 		return err
@@ -132,7 +132,7 @@ func loginRun(v cli.Values) error {
 		return fmt.Errorf("cannot signin: %v", err)
 	}
 
-	return doAfterLogin(client, v, apiURL, res)
+	return doAfterLogin(client, v, apiURL, driverType, res)
 }
 
 func loginRunLocal(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
@@ -192,10 +192,8 @@ func loginRunBuiltin(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
 	return req, nil
 }
 
-func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType) (sdk.AuthConsumerSigninRequest, error) {
+func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType, apiURL string) (sdk.AuthConsumerSigninRequest, error) {
 	req := sdk.AuthConsumerSigninRequest{}
-
-	apiURL := v.GetString("api-url")
 
 	client := cdsclient.New(cdsclient.Config{
 		Host:    apiURL,
@@ -226,7 +224,7 @@ func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType) (sdk.Auth
 	return req, nil
 }
 
-func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, res sdk.AuthConsumerSigninResponse) error {
+func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, driverType sdk.AuthConsumerType, res sdk.AuthConsumerSigninResponse) error {
 	noInteractive := v.GetBool("no-interactive")
 	insecureSkipVerifyTLS := v.GetBool("insecure")
 	if insecureSkipVerifyTLS {
@@ -238,9 +236,16 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, res s
 		contextName = os.Getenv("CDS_CONTEXT")
 	}
 
-	signinToken, sessionToken, err := createOrRegenConsumer(apiURL, res.User.Username, res.Token)
-	if err != nil {
-		return err
+	var signinToken, sessionToken string
+	if driverType == sdk.ConsumerBuiltin {
+		signinToken = v.GetString("signin-token")
+		sessionToken = res.Token
+	} else {
+		var err error
+		signinToken, sessionToken, err = createOrRegenConsumer(apiURL, res.User.Username, res.Token)
+		if err != nil {
+			return err
+		}
 	}
 
 	env := v.GetBool("env")
@@ -269,7 +274,7 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, res s
 			return fmt.Errorf("Error while creating file %s: %v", configFile, err)
 		}
 		fi.Close()
-		if !noInteractive {
+		if !noInteractive && contextName == "" {
 			contextName = cli.AskValue("Enter a context name for this login (default):")
 		}
 	} else {
@@ -280,7 +285,7 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, res s
 		cdsConfigFile, err := internal.GetConfigFile(fi)
 		if err != nil {
 			return fmt.Errorf("Error while reading config file %s: %v", configFile, err)
-		} else if !noInteractive {
+		} else if !noInteractive && contextName == "" {
 			opts := []string{}
 			for _, c := range cdsConfigFile.Contexts {
 				line := c.Context

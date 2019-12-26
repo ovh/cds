@@ -1,6 +1,7 @@
 package builtin
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -31,7 +32,7 @@ func (d AuthDriver) GetSessionDuration() time.Duration {
 	return time.Hour // 1 hour session
 }
 
-func (d AuthDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
+func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
 	var userInfo sdk.AuthDriverUserInfo
 
 	token, has := req["token"]
@@ -39,7 +40,7 @@ func (d AuthDriver) GetUserInfo(req sdk.AuthConsumerSigninRequest) (sdk.AuthDriv
 		return userInfo, sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid authentication token")
 	}
 
-	consumerID, err := CheckSigninConsumerToken(token)
+	consumerID, _, err := CheckSigninConsumerToken(token)
 	if err != nil {
 		return userInfo, err
 	}
@@ -58,13 +59,13 @@ func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid authentication token")
 	}
 
-	_, err := CheckSigninConsumerToken(token)
+	_, _, err := CheckSigninConsumerToken(token)
 	return err
 }
 
 // NewConsumer returns a new builtin consumer for given data.
 // The parent consumer should be given with all data loaded including the authentified user.
-func NewConsumer(db gorp.SqlExecutor, name, description string, parentConsumer *sdk.AuthConsumer,
+func NewConsumer(ctx context.Context, db gorp.SqlExecutor, name, description string, parentConsumer *sdk.AuthConsumer,
 	groupIDs []int64, scopes []sdk.AuthConsumerScope) (*sdk.AuthConsumer, string, error) {
 	if name == "" {
 		return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "name should be given to create a built in consumer")
@@ -74,10 +75,13 @@ func NewConsumer(db gorp.SqlExecutor, name, description string, parentConsumer *
 	// When the parent is a builtin consumer even if it was created by an admin we should check groups to prevent
 	// creating child with more permission than parents.
 	if parentConsumer.Type == sdk.ConsumerBuiltin || !parentConsumer.Admin() {
-		parentGroupIDs := parentConsumer.GetGroupIDs()
-		for i := range groupIDs {
-			if !sdk.IsInInt64Array(groupIDs[i], parentGroupIDs) {
-				return nil, "", sdk.WrapError(sdk.ErrWrongRequest, "invalid given group id %d", groupIDs[i])
+		// Only if parentGroupIDs aren't empty. Because empty means all groups access
+		if len(parentConsumer.GroupIDs) > 0 {
+			parentGroupIDs := parentConsumer.GetGroupIDs()
+			for i := range groupIDs {
+				if !sdk.IsInInt64Array(groupIDs[i], parentGroupIDs) {
+					return nil, "", sdk.WrapError(sdk.ErrWrongRequest, "invalid given group id %d", groupIDs[i])
+				}
 			}
 		}
 	}
@@ -114,7 +118,7 @@ func NewConsumer(db gorp.SqlExecutor, name, description string, parentConsumer *
 		IssuedAt:           time.Now(),
 	}
 
-	if err := authentication.InsertConsumer(db, &c); err != nil {
+	if err := authentication.InsertConsumer(ctx, db, &c); err != nil {
 		return nil, "", err
 	}
 

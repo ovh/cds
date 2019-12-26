@@ -76,7 +76,7 @@ func TestRegister(t *testing.T) {
 	h, _, c, _ := assets.InsertHatchery(t, db, *g)
 	m := assets.InsertWorkerModel(t, db, sdk.RandomString(5), g.ID)
 
-	w, err := worker.RegisterWorker(db, store, hatchery.SpawnArguments{
+	w, err := worker.RegisterWorker(context.TODO(), db, store, hatchery.SpawnArguments{
 		HatcheryName: h.Name,
 		Model:        m,
 		RegisterOnly: true,

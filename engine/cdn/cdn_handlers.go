@@ -13,7 +13,7 @@ import (
 )
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
-func (s *Service) Status() sdk.MonitoringStatus {
+func (s *Service) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
 
 	status := sdk.MonitoringStatusOK
@@ -35,7 +35,7 @@ func (s *Service) Status() sdk.MonitoringStatus {
 func (s *Service) statusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK
-		return service.WriteJSON(w, s.Status(), status)
+		return service.WriteJSON(w, s.Status(ctx), status)
 	}
 }
 

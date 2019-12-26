@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -30,7 +31,7 @@ func (s *Service) saveKafkaExecution(t *sdk.Task, error string, nbError int64) {
 	s.Dao.SaveTaskExecution(exec)
 }
 
-func (s *Service) startKafkaHook(t *sdk.Task) error {
+func (s *Service) startKafkaHook(ctx context.Context, t *sdk.Task) error {
 	var kafkaIntegration, kafkaUser, projectKey, topic string
 	for k, v := range t.Config {
 		switch k {
@@ -44,7 +45,7 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 	}
 	pf, err := s.Client.ProjectIntegrationGet(projectKey, kafkaIntegration, true)
 	if err != nil {
-		_ = s.stopTask(t)
+		_ = s.stopTask(ctx, t)
 		return sdk.WrapError(err, "Cannot get kafka configuration for %s/%s", projectKey, kafkaIntegration)
 	}
 
@@ -83,13 +84,9 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 		clusterConfig)
 
 	if errConsumer != nil {
-		_ = s.stopTask(t)
+		_ = s.stopTask(ctx, t)
 		return fmt.Errorf("startKafkaHook>Error creating consumer: (%s %s %s %s): %v", broker, consumerGroup, topic, kafkaUser, errConsumer)
 	}
-
-	vConsumer := t.Config[sdk.KafkaHookModelConsumerGroup]
-	vConsumer.Value = consumerGroup
-	t.Config[sdk.KafkaHookModelConsumerGroup] = vConsumer
 
 	// Consume errors
 	go func() {
@@ -104,7 +101,7 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 		defer atomic.AddInt64(&nbKafkaConsumers, -1)
 		for msg := range consumer.Messages() {
 			exec := sdk.TaskExecution{
-				Status:    TaskExecutionDoing,
+				Status:    TaskExecutionScheduled,
 				Config:    t.Config,
 				Type:      TypeKafka,
 				UUID:      t.UUID,
@@ -112,9 +109,6 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 				Kafka:     &sdk.KafkaTaskExecution{Message: msg.Value},
 			}
 			s.Dao.SaveTaskExecution(&exec)
-			if err := s.Dao.EnqueueTaskExecution(&exec); err != nil {
-				log.Error("startKafkaHook > error on EnqueueTaskExecution: %v", err)
-			}
 			consumer.MarkOffset(msg, "delivered")
 		}
 	}()

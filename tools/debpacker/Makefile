@@ -10,7 +10,7 @@ TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X githu
 TARGET_OS = linux
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
 
-GO_BUILD = go build -v
+GO_BUILD = go build
 GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GO2XUNIT = ${GOPATH}/bin/go2xunit

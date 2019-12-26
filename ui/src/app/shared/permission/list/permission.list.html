@@ -1,67 +1,66 @@
 <div class="permission">
     <table class="ui fixed single line celled table">
         <thead>
-        <tr>
-            <th class="seven wide">{{ 'group_name' | translate }}</th>
-            <th class="seven wide">{{ 'group_permission' | translate }}</th>
-            <th class="two wide"></th>
-        </tr>
+            <tr>
+                <th class="four wide">{{ 'group_name' | translate }}</th>
+                <th class="four wide">{{ 'group_permission' | translate }}</th>
+                <th class="two wide"></th>
+            </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let gp of getDataForCurrentPage()">
-            <td class="middle-aligned">
-                <a [routerLink]="['/settings/group', gp.group.name]">{{ gp.group.name }}</a>
-            </td>
-            <td>
-                <div *ngIf="edit;then wPermission;else rPermission"></div>
-                <ng-template #wPermission>
-                    <div class="ui form">
-                        <sui-select class="selection"
-                            [isDisabled]="gp.updating"
-                            [(ngModel)]="gp.permission"
-                            (ngModelChange)="pushChange()"
-                            (selectedOptionChange)="gp.hasChanged = true"
-                            [optionFormatter]="formatPermission()"
-                            [hasLabels]="true"
-                            [options]="permissionsList"
-                            labelField="name"
-                            valueField="value">
-                            <sui-select-option *ngFor="let p of permissionsList" [value]="p"></sui-select-option>
-                        </sui-select>
-                    </div>
-                </ng-template>
-                <ng-template #rPermission>
-                    <div class="ui fluid input">
-                        {{ getPermissionName(gp.permission) | translate }}
-                    </div>
-                </ng-template>
-            </td>
-            <td class="center">
-                <ng-container *ngIf="edit">
-                    <button *ngIf="mode === 'submit' && gp.hasChanged" class="ui green button" [class.loading]="gp.updating" [class.disabled]="gp.updating" name="btnupdateperm" (click)="sendEvent('update', gp)">
-                        <i class="save icon"></i>
-                        {{ 'btn_save' | translate}}
-                    </button>
-                    <app-delete-button *ngIf="mode === 'submit' && !gp.hasChanged" [loading]="gp.updating" (event)="sendEvent('delete', gp)"></app-delete-button>
-                    <button *ngIf="mode === 'form'" class="ui icon blue button" (click)="sendEvent('delete', gp)"><i class="trash icon"></i></button>
-                </ng-container>
-            </td>
-        </tr>
+            <tr *ngFor="let gp of getDataForCurrentPage()">
+                <td class="middle-aligned">
+                    <a [routerLink]="['/settings/group', gp.group.name]">{{ gp.group.name }}</a>
+                </td>
+                <td>
+                    <div *ngIf="edit;then wPermission;else rPermission"></div>
+                    <ng-template #wPermission>
+                        <div class="ui form">
+                            <sui-select class="selection" [isDisabled]="gp.updating" [(ngModel)]="gp.permission"
+                                (ngModelChange)="pushChange()" (selectedOptionChange)="gp.hasChanged = true"
+                                [optionFormatter]="formatPermission()" [hasLabels]="true" [options]="permissionsList"
+                                labelField="name" valueField="value">
+                                <sui-select-option *ngFor="let p of permissionsList" [value]="p"></sui-select-option>
+                            </sui-select>
+                        </div>
+                    </ng-template>
+                    <ng-template #rPermission>
+                        <div class="ui fluid input">
+                            {{ getPermissionName(gp.permission) | translate }}
+                        </div>
+                    </ng-template>
+                </td>
+                <td class="center">
+                    <ng-container *ngIf="edit">
+                        <button *ngIf="mode === 'submit' && gp.hasChanged" class="ui green button"
+                            [class.loading]="gp.updating" [class.disabled]="gp.updating" name="btnupdateperm"
+                            (click)="sendEvent('update', gp)">
+                            <i class="save icon"></i>
+                            {{ 'btn_save' | translate}}
+                        </button>
+                        <app-delete-button *ngIf="mode === 'submit' && !gp.hasChanged" [loading]="gp.updating"
+                            (event)="sendEvent('delete', gp)"></app-delete-button>
+                        <button *ngIf="mode === 'form'" class="ui icon blue button" (click)="sendEvent('delete', gp)"><i
+                                class="trash icon"></i></button>
+                    </ng-container>
+                </td>
+            </tr>
         </tbody>
         <tfoot *ngIf="getNbOfPages() > 1">
-        <tr>
-            <th colspan="4">
-                <div class="ui right floated pagination menu" >
-                    <a class="icon item" (click)="downPage()">
-                        <i class="left chevron icon"></i>
-                    </a>
-                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
-                    <a class="icon item" (click)="upPage()">
-                        <i class="right chevron icon"></i>
-                    </a>
-                </div>
-            </th>
-        </tr>
+            <tr>
+                <th colspan="4">
+                    <div class="ui right floated pagination menu">
+                        <a class="icon item" (click)="downPage()">
+                            <i class="left chevron icon"></i>
+                        </a>
+                        <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)"
+                            [class.active]="currentPage === page">{{page}}</a>
+                        <a class="icon item" (click)="upPage()">
+                            <i class="right chevron icon"></i>
+                        </a>
+                    </div>
+                </th>
+            </tr>
         </tfoot>
     </table>
 </div>

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -115,7 +116,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load stages")
 		}
 
-		event.PublishPipelineJobAdd(projectKey, pipelineName, stage, job, getAPIConsumer(ctx))
+		event.PublishPipelineJobAdd(ctx, projectKey, pipelineName, stage, job, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pip, http.StatusOK)
 	}
@@ -181,6 +182,12 @@ func (api *API) updateJobHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "job not found in pipeline")
 		}
 
+		rx := sdk.NamePatternSpaceRegex
+		// stage name mandatory if there are many stages
+		if len(pipelineData.Stages) > 1 && !rx.MatchString(stage.Name) {
+			return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid stage name '%s'. It should match %s", stage.Name, sdk.NamePatternSpace))
+		}
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
@@ -230,7 +237,7 @@ func (api *API) updateJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load stages")
 		}
 
-		event.PublishPipelineJobUpdate(key, pipName, stage, oldJob, job, getAPIConsumer(ctx))
+		event.PublishPipelineJobUpdate(ctx, key, pipName, stage, oldJob, job, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
@@ -306,7 +313,7 @@ func (api *API) deleteJobHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
 
-		event.PublishPipelineJobDelete(key, pipName, stage, jobToDelete, getAPIConsumer(ctx))
+		event.PublishPipelineJobDelete(ctx, key, pipName, stage, jobToDelete, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}

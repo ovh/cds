@@ -13,30 +13,30 @@ import (
 )
 
 //ReceiveEvents has to be launched as a goroutine.
-func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
+func ReceiveEvents(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	for {
 		e := sdk.Event{}
-		if err := store.DequeueWithContext(c, "events_repositoriesmanager", &e); err != nil {
-			log.Error("repositoriesmanager.ReceiveEvents > store.DequeueWithContext err: %v", err)
+		if err := store.DequeueWithContext(ctx, "events_repositoriesmanager", &e); err != nil {
+			log.Error(ctx, "repositoriesmanager.ReceiveEvents > store.DequeueWithContext err: %v", err)
 			continue
 		}
-		if err := c.Err(); err != nil {
-			log.Error("Exiting repositoriesmanager.ReceiveEvents: %v", err)
+		if err := ctx.Err(); err != nil {
+			log.Error(ctx, "Exiting repositoriesmanager.ReceiveEvents: %v", err)
 			return
 		}
 
 		db := DBFunc()
 		if db != nil {
-			if err := processEvent(c, db, e, store); err != nil {
-				log.Error("ReceiveEvents> err while processing error: %v", err)
+			if err := processEvent(ctx, db, e, store); err != nil {
+				log.Error(ctx, "ReceiveEvents> err while processing error: %v", err)
 				if err2 := RetryEvent(&e, err, store); err2 != nil {
-					log.Error("ReceiveEvents> err while processing error on retry: %v", err2)
+					log.Error(ctx, "ReceiveEvents> err while processing error on retry: %v", err2)
 				}
 			}
 			continue
 		}
 		if err := RetryEvent(&e, nil, store); err != nil {
-			log.Error("ReceiveEvents> err while retry event: %v", err)
+			log.Error(ctx, "ReceiveEvents> err while retry event: %v", err)
 		}
 	}
 }
@@ -78,7 +78,7 @@ func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store ca
 
 	if err := c.SetStatus(ctx, event); err != nil {
 		if err2 := RetryEvent(&event, err, store); err2 != nil {
-			log.Error("repositoriesmanager>processEvent> err while retry event: %v", err2)
+			log.Error(ctx, "repositoriesmanager>processEvent> err while retry event: %v", err2)
 		}
 		return fmt.Errorf("repositoriesmanager>processEvent> SetStatus > event.EventType:%s err:%s", event.EventType, err)
 	}

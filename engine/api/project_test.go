@@ -128,6 +128,7 @@ func Test_addProjectHandler(t *testing.T) {
 	projCreated := sdk.Project{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projCreated))
 	assert.Equal(t, proj.Key, projCreated.Key)
+	assert.Equal(t, true, projCreated.Permissions.Writable)
 
 	gr, err := group.LoadByName(context.TODO(), db, proj.Name)
 	assert.NotNil(t, gr)
@@ -195,6 +196,68 @@ func Test_getProjectsHandler_WithWPermissionShouldReturnNoProjects(t *testing.T)
 	assert.Len(t, projs, 0, "too much project")
 }
 
+func Test_getProjectHandler_CheckPermission(t *testing.T) {
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, pass := assets.InsertLambdaUser(t, api.mustDB())
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
+
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := api.Router.GetRoute("GET", api.getProjectHandler, vars)
+	req, err := http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	projGet := sdk.Project{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projGet))
+	assert.Equal(t, true, projGet.Permissions.Readable, "readable should be true")
+	assert.Equal(t, true, projGet.Permissions.Writable, "writable should be true")
+
+	userAdmin, passAdmin := assets.InsertAdminUser(t, db)
+	uri = api.Router.GetRoute("GET", api.getProjectHandler, vars)
+	req, err = http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, userAdmin, passAdmin)
+
+	// Do the request
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	projGet = sdk.Project{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projGet))
+	assert.Equal(t, true, projGet.Permissions.Readable, "readable should be true")
+	assert.Equal(t, true, projGet.Permissions.Writable, "writable should be true")
+
+	userMaintainer, passMaintainer := assets.InsertMaintainerUser(t, db)
+	uri = api.Router.GetRoute("GET", api.getProjectHandler, vars)
+	req, err = http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, userMaintainer, passMaintainer)
+
+	// Do the request
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	projGet = sdk.Project{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projGet))
+	assert.Equal(t, true, projGet.Permissions.Readable, "readable should be true")
+	assert.Equal(t, false, projGet.Permissions.Writable, "writable should be false")
+}
+
 func Test_getProjectsHandler_WithWPermissionShouldReturnOneProject(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
@@ -231,7 +294,7 @@ func Test_getprojectsHandler_AsProvider(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
+	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
 	require.NoError(t, err)
 
 	u, _ := assets.InsertLambdaUser(t, api.mustDB())
@@ -261,7 +324,7 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 	localConsumer, err := authentication.LoadConsumerByTypeAndUserID(context.TODO(), api.mustDB(), sdk.ConsumerLocal, admin.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	_, jws, err := builtin.NewConsumer(api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
+	_, jws, err := builtin.NewConsumer(context.TODO(), api.mustDB(), sdk.RandomString(10), sdk.RandomString(10), localConsumer, admin.GetGroupIDs(), Scope(sdk.AuthConsumerScopeProject))
 
 	u, _ := assets.InsertLambdaUser(t, api.mustDB())
 

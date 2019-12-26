@@ -33,7 +33,7 @@ func templateApplyCmd(name string) cli.Command {
 				Type:      cli.FlagArray,
 				Name:      "params",
 				ShortHand: "p",
-				Usage:     "Specify params for template like --params paramKey:paramValue",
+				Usage:     "Specify params for template like --params paramKey=paramValue",
 				Default:   "",
 			},
 			{
@@ -320,7 +320,7 @@ func templateApplyRun(v cli.Values) error {
 			return err
 		}
 
-		// store the choosen workflow name to git config
+		// store the chosen workflow name to git config
 		if localRepoName != "" {
 			if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
 				return err

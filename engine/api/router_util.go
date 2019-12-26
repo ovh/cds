@@ -29,7 +29,7 @@ func writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, re
 			return ctx, nil
 		}
 	}
-	service.WriteProcessTime(w)
+	service.WriteProcessTime(ctx, w)
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 	return ctx, nil

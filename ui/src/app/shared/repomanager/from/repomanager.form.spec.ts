@@ -6,6 +6,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { ToasterService } from 'angular2-toaster/angular2-toaster';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { MonitoringService } from 'app/service/services.module';
 import { UserService } from 'app/service/user/user.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -21,6 +22,7 @@ import { RepoManagerService } from '../../../service/repomanager/project.repoman
 import { VariableService } from '../../../service/variable/variable.service';
 import { SharedModule } from '../../shared.module';
 import { RepoManagerFormComponent } from './repomanager.form.component';
+
 
 describe('CDS: Project RepoManager Form Component', () => {
 
@@ -44,7 +46,9 @@ describe('CDS: Project RepoManager Form Component', () => {
                 WorkflowService,
                 WorkflowRunService,
                 UserService,
-                AuthenticationService
+                AuthenticationService,
+                MonitoringService,
+                WorkflowRunService
             ],
             imports: [
                 SharedModule,

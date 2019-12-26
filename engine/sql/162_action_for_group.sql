@@ -33,7 +33,7 @@ SELECT create_foreign_key_idx_cascade('FK_ACTION_REQUIREMENT_ACTION', 'action_re
 SELECT create_foreign_key_idx_cascade('FK_ACTION_EDGE_PARENT_ACTION', 'action_edge', 'action', 'parent_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_ACTION_EDGE_PARAMETER_ACTION_EDGE', 'action_edge_parameter', 'action_edge', 'action_edge_id', 'id');
 
--- change type for column name and type and add indexes (usefull to check if action exists)
+-- change type for column name and type and add indexes (useful to check if action exists)
 ALTER TABLE "action" ALTER COLUMN "name" TYPE VARCHAR(100) USING "name"::VARCHAR(100);
 CREATE INDEX idx_action_name ON "action" ("name");
 ALTER TABLE "action" ALTER COLUMN "type" TYPE VARCHAR(100) USING "type"::VARCHAR(100);

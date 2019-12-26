@@ -349,12 +349,12 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 		Enabled:    true,
 		Conditions: sdk.WorkflowNodeConditions{
 			PlainConditions: []sdk.WorkflowNodeCondition{
-				sdk.WorkflowNodeCondition{
+				{
 					Variable: ".git.branch",
 					Operator: "regex",
 					Value:    "master",
 				},
-				sdk.WorkflowNodeCondition{
+				{
 					Variable: ".git.author",
 					Operator: "regex",
 					Value:    "someone@somewhere.com",
@@ -460,7 +460,7 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 		Enabled:    true,
 		Conditions: sdk.WorkflowNodeConditions{
 			PlainConditions: []sdk.WorkflowNodeCondition{
-				sdk.WorkflowNodeCondition{
+				{
 					Variable: ".git.banch",
 					Operator: "regex",
 					Value:    "master",
@@ -521,7 +521,7 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 		Enabled:    true,
 		Conditions: sdk.WorkflowNodeConditions{
 			PlainConditions: []sdk.WorkflowNodeCondition{
-				sdk.WorkflowNodeCondition{
+				{
 					Variable: ".git.banch",
 					Operator: "regex",
 					Value:    "master",
@@ -536,12 +536,12 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 
 	stage.Conditions = sdk.WorkflowNodeConditions{
 		PlainConditions: []sdk.WorkflowNodeCondition{
-			sdk.WorkflowNodeCondition{
+			{
 				Variable: "param1",
 				Operator: "regex",
 				Value:    "value1",
 			},
-			sdk.WorkflowNodeCondition{
+			{
 				Variable: "param2",
 				Operator: "regex",
 				Value:    "value2",
@@ -561,6 +561,7 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 	assert.NotNil(t, loadedPip)
 	assert.Equal(t, 1, len(loadedPip.Stages))
 	assert.Equal(t, 2, len(loadedPip.Stages[0].Conditions.PlainConditions))
+	assert.Equal(t, "", loadedPip.Stages[0].Conditions.LuaScript)
 
 	var foundParam1, foundParam2 bool
 	for _, p := range loadedPip.Stages[0].Conditions.PlainConditions {
@@ -576,6 +577,32 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 
 	assert.True(t, foundParam1)
 	assert.True(t, foundParam2)
+
+	// we update plan AND lua -> must record lua only
+	stage.Conditions = sdk.WorkflowNodeConditions{
+		PlainConditions: []sdk.WorkflowNodeCondition{
+			{
+				Variable: "param1",
+				Operator: "regex",
+				Value:    "value1",
+			},
+		},
+		LuaScript: "return true",
+	}
+
+	t.Logf("Update Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
+	test.NoError(t, pipeline.UpdateStage(api.mustDB(), stage))
+
+	//Loading Pipeline
+	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
+	loadedPip, err = pipeline.LoadPipeline(context.TODO(), api.mustDB(), proj.Key, pip.Name, true)
+	test.NoError(t, err)
+
+	//Check all the things
+	assert.NotNil(t, loadedPip)
+	assert.Equal(t, 1, len(loadedPip.Stages))
+	assert.Equal(t, 0, len(loadedPip.Stages[0].Conditions.PlainConditions))
+	assert.Equal(t, "return true", loadedPip.Stages[0].Conditions.LuaScript)
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)

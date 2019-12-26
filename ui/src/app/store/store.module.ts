@@ -6,6 +6,7 @@ import { NgxsModule } from '@ngxs/store';
 import { ServicesModule } from 'app/service/services.module';
 import { SharedModule } from 'app/shared/shared.module';
 import { ApplicationsState } from 'app/store/applications.state';
+import { CDSState } from 'app/store/cds.state';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { environment as env } from '../../environments/environment';
 import { AuthenticationState } from './authentication.state';
@@ -22,6 +23,7 @@ import { WorkflowState } from './workflow.state';
         NgxsModule.forRoot([
             AuthenticationState,
             ApplicationsState,
+            CDSState,
             ProjectState,
             PipelinesState,
             WorkflowState

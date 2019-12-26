@@ -81,7 +81,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 
 	// HookRegistration after workflow.Update.  It needs hooks to be created on DB
 	// Hook registration must only be done on default branch in case of workflow as-code
-	// The derivation branch is set in workflow parser it is not comming from the default branch
+	// The derivation branch is set in workflow parser it is not coming from the default branch
 	uptOptions := UpdateOptions{
 		DisableHookManagement: w.DerivationBranch != "",
 		OldWorkflow:           oldW,
@@ -147,7 +147,7 @@ func setTemplateData(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project, w
 		return err
 	}
 
-	event.PublishWorkflowTemplateInstanceUpdate(old, *wti, u)
+	event.PublishWorkflowTemplateInstanceUpdate(ctx, old, *wti, u)
 
 	return nil
 }

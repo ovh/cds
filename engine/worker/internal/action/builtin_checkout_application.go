@@ -11,17 +11,17 @@ import (
 	"github.com/spf13/afero"
 )
 
-func RunCheckoutApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunCheckoutApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
 	// Load action param
 	directory := sdk.ParameterFind(a.Parameters, "directory")
 
 	// Load build param
-	branch := sdk.ParameterFind(params, "git.branch")
-	defaultBranch := sdk.ParameterValue(params, "git.default_branch")
-	tag := sdk.ParameterValue(params, "git.tag")
-	commit := sdk.ParameterFind(params, "git.hash")
+	branch := sdk.ParameterFind(wk.Parameters(), "git.branch")
+	defaultBranch := sdk.ParameterValue(wk.Parameters(), "git.default_branch")
+	tag := sdk.ParameterValue(wk.Parameters(), "git.tag")
+	commit := sdk.ParameterFind(wk.Parameters(), "git.hash")
 
-	gitURL, auth, err := vcsStrategy(ctx, wk, params, secrets)
+	gitURL, auth, err := vcsStrategy(ctx, wk, wk.Parameters(), secrets)
 	if err != nil {
 		return sdk.Result{}, err
 	}
@@ -60,8 +60,8 @@ func RunCheckoutApplication(ctx context.Context, wk workerruntime.Runtime, a sdk
 		return sdk.Result{}, fmt.Errorf("Unable to find current working directory: %v", err)
 	}
 	workdirPath := workdir.Name()
-	if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
 		workdirPath, _ = x.RealPath(workdirPath)
 	}
-	return gitClone(ctx, wk, params, gitURL, workdirPath, dir, auth, opts)
+	return gitClone(ctx, wk, wk.Parameters(), gitURL, workdirPath, dir, auth, opts)
 }

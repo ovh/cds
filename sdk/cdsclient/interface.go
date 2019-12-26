@@ -192,7 +192,7 @@ type PipelineClient interface {
 
 // MaintenanceClient manage maintenance mode on CDS
 type MaintenanceClient interface {
-	Maintenance(enable bool) error
+	Maintenance(enable bool, hooks bool) error
 }
 
 // ProjectClient exposes project related functions
@@ -359,7 +359,7 @@ type Interface interface {
 	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)
 	RepositoriesManagerInterface
-	ServiceRegister(sdk.Service) (*sdk.Service, error)
+	ServiceRegister(context.Context, sdk.Service) (*sdk.Service, error)
 	ServiceHeartbeat(sdk.MonitoringStatus) error
 	UserClient
 	WorkerClient

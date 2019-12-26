@@ -234,8 +234,8 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 
 		req.Header.Set("Connection", "close")
 
-		//No auth on signing routes
-		if !signinRouteRegexp.MatchString(path) {
+		//No auth on signing routes or on url that is not cds configured in config.Host
+		if strings.HasPrefix(url, c.config.Host) && !signinRouteRegexp.MatchString(path) {
 			if _, _, err := new(jwt.Parser).ParseUnverified(c.config.SessionToken, &sdk.AuthSessionJWTClaims{}); err == nil {
 				if c.config.Verbose {
 					fmt.Println("JWT recognized")

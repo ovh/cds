@@ -18,7 +18,7 @@ func TestHatcherySwarm_getContainer(t *testing.T) {
 	cs, err := h.getContainers(h.dockerClients["default"], types.ContainerListOptions{})
 	assert.NoError(t, err)
 	if len(cs) > 0 {
-		c, err := h.getContainer(h.dockerClients["default"], cs[0].Names[0], types.ContainerListOptions{})
+		c, err := getContainer(h.dockerClients["default"], cs, cs[0].Names[0], types.ContainerListOptions{})
 		assert.NoError(t, err)
 		t.Logf("container found: %+v", c)
 	}

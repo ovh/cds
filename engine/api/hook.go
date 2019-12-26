@@ -55,7 +55,7 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 		if info, err := repositoriesmanager.GetPollingInfos(ctx, client, *proj); err != nil {
 			return sdk.WrapError(err, "cannot check if polling is enabled")
 		} else if info.PollingDisabled || !info.PollingSupported {
-			log.Info("getHookPollingVCSEvents> %s polling is disabled", vcsServer.Name)
+			log.Info(ctx, "getHookPollingVCSEvents> %s polling is disabled", vcsServer.Name)
 			return service.WriteJSON(w, nil, http.StatusOK)
 		}
 

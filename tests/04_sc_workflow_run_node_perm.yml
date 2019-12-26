@@ -1,0 +1,45 @@
+name: Create a simple workflow (ITSCWRKFLW10) and try to run it
+version: "2"
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./fixtures/ITSCWRKFLW10/echo.pip.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW10/ITSCWRKFLW10.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW10"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw10"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW10-ro"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group add ITSCWRKFLW10-ro"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW10 ITSCWRKFLW10"
+
+- name: push workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW10 ./fixtures/ITSCWRKFLW10/*.yml --skip-update-files
+
+- name: grant new group in workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group user add ITSCWRKFLW10-ro {{.ro_username}}
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group grant ITSCWRKFLW10 ITSCWRKFLW10-ro 4 --only-project
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group grant ITSCWRKFLW10 ITSCWRKFLW10-ro 7 --workflow ITSCWRKFLW10-WORKFLOW
+
+- name: run workflow should fail
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config_ro_user}} workflow run ITSCWRKFLW10 ITSCWRKFLW10-WORKFLOW
+    assertions:
+    - result.code ShouldNotEqual 0
+    - "result.systemout ShouldContainSubstring forbidden"
+
+- name: add user in right group
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group member add itscwrkflw10 {{.ro_username}} false
+  - script: {{.cdsctl}} -f {{.cdsctl.config_ro_user}} group create TESTITSCWRKFLW10
+  - script: {{.cdsctl}} -f {{.cdsctl.config_ro_user}} group delete TESTITSCWRKFLW10 --force
+
+- name: run workflow should success
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config_ro_user}} workflow run ITSCWRKFLW10 ITSCWRKFLW10-WORKFLOW
+    assertions:
+    - result.code ShouldEqual 0
+

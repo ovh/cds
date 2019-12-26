@@ -558,8 +558,9 @@ queueRun:
 	filter3 := workflow.NewQueueFilter()
 	filter3.Rights = sdk.PermissionReadExecute
 
-	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter3, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)).ToIDs())
+	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter3, sdk.Groups(append(u.OldUserStruct.Groups, g0)).ToIDs())
 	require.NoError(t, err)
+	t.Logf("##### nb job in queue : %d\n", len(jobs))
 	require.True(t, len(jobs) > 0)
 
 	for i := range jobs {
@@ -569,7 +570,7 @@ queueRun:
 		t.Logf("##### work on job : %+v\n", j.Job.Action.Name)
 
 		//BookNodeJobRun
-		_, err = workflow.BookNodeJobRun(cache, j.ID, &sdk.Service{
+		_, err = workflow.BookNodeJobRun(context.TODO(), cache, j.ID, &sdk.Service{
 			CanonicalService: sdk.CanonicalService{
 				Name: "Hatchery",
 				ID:   1,
@@ -641,7 +642,7 @@ queueRun:
 		}
 
 		//TestUpdateNodeJobRunStatus
-		_, err = workflow.UpdateNodeJobRunStatus(context.TODO(), func() *gorp.DbMap { return db }, db, cache, proj, j, sdk.StatusSuccess)
+		_, err = workflow.UpdateNodeJobRunStatus(context.TODO(), db, cache, proj, j, sdk.StatusSuccess)
 		assert.NoError(t, err)
 		if t.Failed() {
 			tx.Rollback()

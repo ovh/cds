@@ -20,13 +20,13 @@ import (
 	"github.com/ovh/cds/sdk/vcs/git"
 )
 
-func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, params []sdk.Parameter, secrets []sdk.Variable) (sdk.Result, error) {
+func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
 	url := sdk.ParameterFind(a.Parameters, "url")
 	privateKey := sdk.ParameterFind(a.Parameters, "privateKey")
 	user := sdk.ParameterFind(a.Parameters, "user")
 	password := sdk.ParameterFind(a.Parameters, "password")
 	branch := sdk.ParameterFind(a.Parameters, "branch")
-	defaultBranch := sdk.ParameterValue(params, "git.default_branch")
+	defaultBranch := sdk.ParameterValue(wk.Parameters(), "git.default_branch")
 	tag := sdk.ParameterValue(a.Parameters, "tag")
 	commit := sdk.ParameterFind(a.Parameters, "commit")
 	directory := sdk.ParameterFind(a.Parameters, "directory")
@@ -34,7 +34,7 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, pa
 	submodules := sdk.ParameterFind(a.Parameters, "submodules")
 
 	var key *vcs.SSHKey
-	if privateKey != nil {
+	if privateKey != nil && privateKey.Value != "" {
 		// The private key parameter, contains the name of the private key to use.
 		// Let's look up in the secret list to find the content of the private key
 		privateKeyContent := sdk.VariableFind(secrets, privateKey.Value)
@@ -85,7 +85,7 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, pa
 	if gitURL == "" && (auth == nil || (auth.Username == "" && auth.Password == "" && len(auth.PrivateKey.Content) == 0)) {
 		wk.SendLog(ctx, workerruntime.LevelInfo, "no url and auth parameters, trying to use VCS Strategy from application")
 		var err error
-		gitURL, auth, err = vcsStrategy(ctx, wk, params, secrets)
+		gitURL, auth, err = vcsStrategy(ctx, wk, wk.Parameters(), secrets)
 		if err != nil {
 			return sdk.Result{}, fmt.Errorf("Could not use VCS Auth Strategy from application: %v", err)
 		}
@@ -153,11 +153,11 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, pa
 	}
 
 	workdirPath := workdir.Name()
-	if x, ok := wk.Workspace().(*afero.BasePathFs); ok {
+	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
 		workdirPath, _ = x.RealPath(workdirPath)
 	}
 
-	return gitClone(ctx, wk, params, gitURL, workdirPath, dir, auth, opts)
+	return gitClone(ctx, wk, wk.Parameters(), gitURL, workdirPath, dir, auth, opts)
 }
 
 func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Parameter, url, basedir, dir string, auth *git.AuthOpts, clone *git.CloneOpts) (sdk.Result, error) {
@@ -170,7 +170,7 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 		Stdout: stdOut,
 	}
 
-	git.LogFunc = log.Info
+	git.LogFunc = log.InfoWithoutCtx
 	//Perform the git clone
 	userLogCommand, err := git.Clone(url, basedir, dir, auth, clone, output)
 
@@ -226,7 +226,7 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir stri
 	authorEmail := sdk.ParameterValue(params, "git.author.email")
 	message := sdk.ParameterValue(params, "git.message")
 
-	info, err := git.ExtractInfo(filepath.Join(dir))
+	info, err := git.ExtractInfo(ctx, filepath.Join(dir))
 	if err != nil {
 		return nil, err
 	}
@@ -245,41 +245,10 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir stri
 		}
 		res = append(res, gitDescribe)
 
-		smver, err := semver.ParseTolerant(info.GitDescribe)
-		if err != nil {
-			w.SendLog(ctx, workerruntime.LevelError, fmt.Sprintf("!! WARNING !! git describe %s is not semver compatible, we can't create cds.semver variable", info.GitDescribe))
-		} else {
-			// Prerelease versions
-			// for 0.31.1-4-g595de235a, smver.Pre = 4-g595de235a
-			if len(smver.Pre) == 1 {
-				tuple := strings.Split(smver.Pre[0].String(), "-")
-				// we split 4-g595de235a, g595de235a is the sha1
-				if len(tuple) == 2 {
-					cdsSemver = fmt.Sprintf("%d.%d.%d-%s+sha.%s.cds.%s",
-						smver.Major,
-						smver.Minor,
-						smver.Patch,
-						tuple[0],
-						tuple[1],
-						cdsVersion.Value,
-					)
-				}
-			}
-		}
-
-		if cdsSemver == "" {
-			// here, there is no prerelease version, it's a tag
-			cdsSemver = fmt.Sprintf("%d.%d.%d+cds.%s",
-				smver.Major,
-				smver.Minor,
-				smver.Patch,
-				cdsVersion.Value,
-			)
-		}
-
-		// if git.describe contains a prefix 'v', we keep it
-		if strings.HasPrefix(info.GitDescribe, "v") {
-			cdsSemver = fmt.Sprintf("v%s", cdsSemver)
+		var errS error
+		cdsSemver, errS = computeSemver(info.GitDescribe, cdsVersion.Value)
+		if errS != nil {
+			w.SendLog(ctx, workerruntime.LevelError, errS.Error())
 		}
 
 	} else {
@@ -394,4 +363,52 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir stri
 		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.author.email: %s", authorEmail))
 	}
 	return res, nil
+}
+
+func computeSemver(gitDescribe, cdsVersionValue string) (string, error) {
+	var cdsSemver string
+	smver, errT := semver.ParseTolerant(gitDescribe)
+	if errT != nil {
+		return "", fmt.Errorf("!! WARNING !! git describe %s is not semver compatible, we can't create cds.semver variable", gitDescribe)
+	}
+	// Prerelease versions
+	// for 0.31.1-4-g595de235a, smver.Pre = 4-g595de235a
+	if len(smver.Pre) == 1 {
+		tuple := strings.Split(smver.Pre[0].String(), "-")
+		// we split 4-g595de235a, g595de235a is the sha1
+		if len(tuple) == 2 {
+			cdsSemver = fmt.Sprintf("%d.%d.%d-%s+sha.%s.cds.%s",
+				smver.Major,
+				smver.Minor,
+				smver.Patch,
+				tuple[0],
+				tuple[1],
+				cdsVersionValue,
+			)
+		} else if len(tuple) == 1 {
+			cdsSemver = fmt.Sprintf("%d.%d.%d-%s+cds.%s",
+				smver.Major,
+				smver.Minor,
+				smver.Patch,
+				tuple[0],
+				cdsVersionValue,
+			)
+		}
+	}
+
+	if cdsSemver == "" {
+		// here, there is no prerelease version, it's a tag
+		cdsSemver = fmt.Sprintf("%d.%d.%d+cds.%s",
+			smver.Major,
+			smver.Minor,
+			smver.Patch,
+			cdsVersionValue,
+		)
+	}
+
+	// if git.describe contains a prefix 'v', we keep it
+	if strings.HasPrefix(gitDescribe, "v") {
+		cdsSemver = fmt.Sprintf("v%s", cdsSemver)
+	}
+	return cdsSemver, nil
 }

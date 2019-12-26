@@ -51,7 +51,7 @@ func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) (map[string
 type vcsConsumer struct {
 	name   string
 	proj   *sdk.Project
-	dbFunc func() *gorp.DbMap
+	dbFunc func(ctx context.Context) *gorp.DbMap
 }
 
 type vcsClient struct {
@@ -87,12 +87,12 @@ func GetProjectVCSServer(p *sdk.Project, name string) *sdk.ProjectVCSServer {
 }
 
 // NewVCSServerConsumer returns a sdk.VCSServer wrapping vcs µServices calls
-func NewVCSServerConsumer(dbFunc func() *gorp.DbMap, store cache.Store, name string) (sdk.VCSServer, error) {
+func NewVCSServerConsumer(dbFunc func(ctx context.Context) *gorp.DbMap, store cache.Store, name string) (sdk.VCSServer, error) {
 	return &vcsConsumer{name: name, dbFunc: dbFunc}, nil
 }
 
 func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
-	db := c.dbFunc()
+	db := c.dbFunc(ctx)
 	srv, err := services.LoadAllByType(ctx, db, services.TypeVCS)
 	if err != nil {
 		return "", "", sdk.WithStack(err)
@@ -100,7 +100,7 @@ func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, er
 
 	res := map[string]string{}
 	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
-	log.Info("Performing request on %s", path)
+	log.Info(ctx, "Performing request on %s", path)
 	if _, _, err := services.DoJSONRequest(ctx, db, srv, "GET", path, nil, &res); err != nil {
 		return "", "", sdk.WithStack(err)
 	}
@@ -109,7 +109,7 @@ func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, er
 }
 
 func (c *vcsConsumer) AuthorizeToken(ctx context.Context, token string, secret string) (string, string, error) {
-	db := c.dbFunc()
+	db := c.dbFunc(ctx)
 	srv, err := services.LoadAllByType(ctx, db, services.TypeVCS)
 	if err != nil {
 		return "", "", sdk.WithStack(err)
@@ -135,7 +135,7 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret str
 		return nil, sdk.ErrNoReposManagerClientAuth
 	}
 
-	srvs, err := services.LoadAllByType(ctx, c.dbFunc(), services.TypeVCS)
+	srvs, err := services.LoadAllByType(ctx, c.dbFunc(ctx), services.TypeVCS)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -148,7 +148,7 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret str
 		secret:     secret,
 		srvs:       srvs,
 		cache:      gocache.New(5*time.Second, 60*time.Second),
-		db:         c.dbFunc(),
+		db:         c.dbFunc(ctx),
 	}, nil
 }
 
@@ -416,8 +416,18 @@ func (c *vcsClient) CreateHook(ctx context.Context, fullname string, hook *sdk.V
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
 	_, err := c.doJSONRequest(ctx, "POST", path, hook, hook)
 	if err != nil {
-		log.Error("CreateHook> %v", err)
+		log.Error(ctx, "CreateHook> %v", err)
 		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to create hook on repository %s from %s", fullname, c.name)
+	}
+	return nil
+}
+
+func (c *vcsClient) UpdateHook(ctx context.Context, fullname string, hook *sdk.VCSHook) error {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
+	_, err := c.doJSONRequest(ctx, "PUT", path, hook, hook)
+	if err != nil {
+		log.Error(ctx, "UpdateHook> %v", err)
+		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to update hook %s on repository %s from %s", hook.ID, fullname, c.name)
 	}
 	return nil
 }
@@ -427,10 +437,6 @@ func (c *vcsClient) GetHook(ctx context.Context, fullname, u string) (sdk.VCSHoo
 	hook := &sdk.VCSHook{}
 	_, err := c.doJSONRequest(ctx, "GET", path, nil, hook)
 	return *hook, sdk.WrapError(err, "unable to get hook %s on repository %s from %s", u, fullname, c.name)
-}
-
-func (c *vcsClient) UpdateHook(ctx context.Context, fullname, url string, hook sdk.VCSHook) error {
-	return nil
 }
 
 func (c *vcsClient) DeleteHook(ctx context.Context, fullname string, hook sdk.VCSHook) error {

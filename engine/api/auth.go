@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -118,7 +119,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		}
 
 		// Convert code to external user info
-		userInfo, err := driver.GetUserInfo(req)
+		userInfo, err := driver.GetUserInfo(ctx, req)
 		if err != nil {
 			return err
 		}
@@ -157,7 +158,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 				}
 				if existingContact == nil {
 					// Insert a secondary contact for the existing user in database
-					if err := user.InsertContact(tx, &sdk.UserContact{
+					if err := user.InsertContact(ctx, tx, &sdk.UserContact{
 						Primary:  false,
 						Type:     sdk.UserContactTypeEmail,
 						UserID:   u.ID,
@@ -166,6 +167,9 @@ func (api *API) postAuthSigninHandler() service.Handler {
 					}); err != nil {
 						return err
 					}
+				}
+				if err := group.CheckUserInDefaultGroup(ctx, tx, u.OldUserStruct.ID); err != nil {
+					return err
 				}
 			} else {
 				// Check if a user already exists for external username
@@ -217,12 +221,12 @@ func (api *API) postAuthSigninHandler() service.Handler {
 						}
 
 						// Insert the new user in database
-						if err := user.Insert(tx, u); err != nil {
+						if err := user.Insert(ctx, tx, u); err != nil {
 							return err
 						}
 
 						// Insert the primary contact for the new user in database
-						if err := user.InsertContact(tx, &sdk.UserContact{
+						if err := user.InsertContact(ctx, tx, &sdk.UserContact{
 							Primary:  true,
 							Type:     sdk.UserContactTypeEmail,
 							UserID:   u.ID,
@@ -232,13 +236,17 @@ func (api *API) postAuthSigninHandler() service.Handler {
 							return err
 						}
 
+						if err := group.CheckUserInDefaultGroup(ctx, tx, u.OldUserStruct.ID); err != nil {
+							return err
+						}
+
 						signupDone = true
 					}
 				}
 			}
 
 			// Create a new consumer for the new user
-			consumer, err = authentication.NewConsumerExternal(tx, u.ID, consumerType, userInfo)
+			consumer, err = authentication.NewConsumerExternal(ctx, tx, u.ID, consumerType, userInfo)
 			if err != nil {
 				return err
 			}
@@ -247,13 +255,13 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		// If a new user has been created and a first admin has been create,
 		// let's init the builtin consumers from the magix token
 		if signupDone && hasInitToken {
-			if err := initBuiltinConsumersFromStartupConfig(tx, consumer, initToken); err != nil {
+			if err := initBuiltinConsumersFromStartupConfig(ctx, tx, consumer, initToken); err != nil {
 				return err
 			}
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(tx, consumer, driver.GetSessionDuration(), userInfo.MFA)
+		session, err := authentication.NewSession(ctx, tx, consumer, driver.GetSessionDuration(), userInfo.MFA)
 		if err != nil {
 			return err
 		}

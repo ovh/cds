@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
@@ -47,10 +48,10 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 					Method:   "POST",
 					URL:      h.Config["webHookURL"].Value,
 					Workflow: true,
-					ID:       h.Config["webHookID"].Value,
+					ID:       h.Config[sdk.HookConfigWebHookID].Value,
 				}
 				if err := client.DeleteHook(ctx, h.Config["repoFullName"].Value, vcsHook); err != nil {
-					log.Error("deleteHookConfiguration> Cannot delete hook on repository %s", err)
+					log.Error(ctx, "deleteHookConfiguration> Cannot delete hook on repository %s", err)
 				}
 			}
 		}
@@ -66,7 +67,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	if errHooks != nil || code >= 400 {
 		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
 		// so, it's just a warn log
-		log.Error("HookRegistration> unable to delete old hooks [%d]: %s", code, errHooks)
+		log.Error(ctx, "HookRegistration> unable to delete old hooks [%d]: %s", code, errHooks)
 	}
 	return nil
 }
@@ -172,9 +173,16 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		for i := range wf.WorkflowData.Node.Hooks {
 			h := &wf.WorkflowData.Node.Hooks[i]
 			v, ok := h.Config["webHookID"]
-			if h.HookModelName == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" && (!ok || v.Value == "") {
-				if err := createVCSConfiguration(ctx, db, store, p, h); err != nil {
-					return sdk.WrapError(err, "Cannot update vcs configuration")
+			if h.HookModelName == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" {
+				if !ok || v.Value == "" {
+					if err := createVCSConfiguration(ctx, db, store, p, h); err != nil {
+						return sdk.WrapError(err, "Cannot create vcs configuration")
+					}
+				}
+				if ok && v.Value != "" {
+					if err := updateVCSConfiguration(ctx, db, store, p, h); err != nil {
+						return sdk.WrapError(err, "Cannot update vcs configuration")
+					}
 				}
 			}
 		}
@@ -270,9 +278,16 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 	if !webHookInfo.WebhooksSupported || webHookInfo.WebhooksDisabled {
 		return sdk.WrapError(sdk.ErrForbidden, "createVCSConfiguration> hook creation are forbidden")
 	}
+	var valueSlitted []string
+	if _, ok := h.Config[sdk.HookConfigEventFilter]; ok {
+		valueEvent := h.Config[sdk.HookConfigEventFilter].Value
+		valueSlitted = strings.Split(valueEvent, ";")
+	}
+
 	vcsHook := sdk.VCSHook{
 		Method:   "POST",
 		URL:      h.Config["webHookURL"].Value,
+		Events:   valueSlitted,
 		Workflow: true,
 	}
 	if err := client.CreateHook(ctx, h.Config["repoFullName"].Value, &vcsHook); err != nil {
@@ -288,7 +303,58 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 		Configurable: false,
 		Type:         sdk.HookConfigTypeString,
 	}
+	h.Config[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
+		Type:         sdk.HookConfigTypeMultiChoice,
+		Configurable: true,
+		Value:        strings.Join(vcsHook.Events, ";"),
+	}
+	return nil
+}
 
+func updateVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, h *sdk.NodeHook) error {
+	ctx, end := observability.Span(ctx, "workflow.updateVCSConfiguration", observability.Tag("UUID", h.UUID))
+	defer end()
+	// Call VCS to know if repository allows webhook and get the configuration fields
+	projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
+	if projectVCSServer == nil {
+		return nil
+	}
+
+	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, p.Key, projectVCSServer)
+	if errclient != nil {
+		return sdk.WrapError(errclient, "cannot get vcs client")
+	}
+	webHookInfo, errWH := repositoriesmanager.GetWebhooksInfos(ctx, client)
+	if errWH != nil {
+		return sdk.WrapError(errWH, "cannot get vcs web hook info")
+	}
+
+	var valueSlitted []string
+	if _, ok := h.Config[sdk.HookConfigEventFilter]; ok {
+		valueEvent := h.Config[sdk.HookConfigEventFilter].Value
+		valueSlitted = strings.Split(valueEvent, ";")
+	}
+
+	vcsHook := sdk.VCSHook{
+		ID:       h.Config[sdk.HookConfigWebHookID].Value,
+		Method:   "POST",
+		URL:      h.Config["webHookURL"].Value,
+		Events:   valueSlitted,
+		Workflow: true,
+	}
+	if err := client.UpdateHook(ctx, h.Config["repoFullName"].Value, &vcsHook); err != nil {
+		return sdk.WrapError(err, "Cannot update hook on repository: %+v", vcsHook)
+	}
+	h.Config[sdk.HookConfigIcon] = sdk.WorkflowNodeHookConfigValue{
+		Value:        webHookInfo.Icon,
+		Configurable: false,
+		Type:         sdk.HookConfigTypeString,
+	}
+	h.Config[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
+		Type:         sdk.HookConfigTypeMultiChoice,
+		Configurable: true,
+		Value:        strings.Join(vcsHook.Events, ";"),
+	}
 	return nil
 }
 

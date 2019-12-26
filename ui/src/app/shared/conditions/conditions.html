@@ -36,14 +36,9 @@
                         <td class="middle-aligned">
                             <div class="field">
                                 <ng-container *ngIf="conditionNames">
-                                    <sui-select class="fluid selection" [(ngModel)]="c.variable"
-                                        (ngModelChange)="pushChange('name')" [options]="conditionNames"
-                                        [optionsFilter]="filterConditionVariables" [isSearchable]="true"
-                                        [isDisabled]="readonly" #selectName>
-                                        <sui-select-option *ngFor="let option of selectName.filteredOptions"
-                                            [value]="option">
-                                        </sui-select-option>
-                                    </sui-select>
+                                    <app-select-filter [disabled]="readonly" [searchable]="true"
+                                    [(value)]="c.variable" [options]="conditionNames"
+                                    (valueChange)="pushChange('name')"></app-select-filter>
                                 </ng-container>
                             </div>
                         </td>

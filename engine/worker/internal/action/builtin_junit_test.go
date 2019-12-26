@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func Test_computeStats(t *testing.T) {
+func Test_ComputeStats(t *testing.T) {
 	type args struct {
 		res *sdk.Result
 		v   *venom.Tests
@@ -195,8 +195,8 @@ func Test_computeStats(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := computeStats(tt.args.res, tt.args.v); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("computeStats() = %v, want %v", got, tt.want)
+			if got := ComputeStats(tt.args.res, tt.args.v); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ComputeStats() = %v, want %v", got, tt.want)
 			}
 			if tt.args.res.Status != tt.status {
 				t.Errorf("status = %v, want %v", tt.args.res.Status, tt.status)

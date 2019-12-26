@@ -16,7 +16,7 @@ import { WorkflowRun, WorkflowRunTags } from 'app/model/workflow.run.model';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
-import { CleanWorkflowRun } from 'app/store/workflow.action';
+import { CleanWorkflowRun, GetWorkflowRuns } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
@@ -80,6 +80,12 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                     return b.num - a.num;
                 });
                 this.refreshRun();
+                this.selectedTags = new Array<string>();
+                for (const key in s.filters) {
+                    if (s.filters.hasOwnProperty(key)) {
+                        this.selectedTags.push(key + ':' + s.filters[key]);
+                    }
+                }
             }
             this.ready = !s.loadingWorkflowRuns;
             this._cd.markForCheck();
@@ -157,12 +163,9 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             }, {});
         }
 
-        this._workflowRunService.runs(this.project.key, this.workflow.name, '50', null, filters)
-            .pipe(finalize(() => this._cd.markForCheck()))
-            .subscribe((runs) => {
-            this.workflowRuns = runs;
-            this.refreshRun();
-        });
+        this._store.dispatch(new GetWorkflowRuns(
+            {projectKey: this.project.key, workflowName: this.workflow.name, limit: '50', offset: '0', filters})
+        );
     }
 
     refreshRun(): void {
@@ -180,6 +183,9 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     refreshDuration(): void {
         if (this.workflowRuns) {
             let stillWorking = false;
+            if (this.workflow && this.workflow.metadata && this.workflow.metadata['default_tags']) {
+                this.tagToDisplay = this.workflow.metadata['default_tags'].split(',');
+            }
             this.workflowRuns.forEach((r) => {
                 if (PipelineStatus.isActive(r.status)) {
                     stillWorking = true;
