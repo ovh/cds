@@ -1,0 +1,9 @@
+name: plugin-rust
+type: action
+author: Benjamin COENEN <benjamin.coenen@corp.ovh.com>
+description: This is an example plugin in Rust to print a log
+parameters:
+  log:
+    type: text
+    description: The value of log to display
+    default: Hello this is my default value
