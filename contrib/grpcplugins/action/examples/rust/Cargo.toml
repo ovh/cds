@@ -1,0 +1,15 @@
+[package]
+name = "rust"
+version = "0.1.0"
+authors = ["Benjamin Coenen <5719034+bnjjj@users.noreply.github.com>"]
+edition = "2018"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tonic = "0.1.0-beta.1"
+bytes = "0.4"
+prost = "0.5"
+tokio = { version = "0.2", features = ["macros"] }
+
+[build-dependencies]
+tonic-build = "0.1.0-beta.1"
