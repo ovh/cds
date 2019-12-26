@@ -99,7 +99,8 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	wgErrors.Wait()
 
 	if !globalError.IsEmpty() {
-		return res, fmt.Errorf("Error: %v", globalError.Error())
+		log.Error(ctx, "Error while uploading artifact: %v", globalError.Error())
+		return res, fmt.Errorf("error: %v", globalError.Error())
 	}
 
 	return res, nil

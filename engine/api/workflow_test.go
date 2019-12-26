@@ -1383,7 +1383,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
 
-	var workflow = &sdk.Workflow{
+	var wkf = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
 		WorkflowData: &sdk.WorkflowData{
@@ -1396,13 +1396,13 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 		},
 	}
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &workflow)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wkf)
 
 	//Do the request
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 201, w.Code)
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflow))
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wkf))
 
 	vars = map[string]string{
 		"key":              proj.Key,
@@ -1418,12 +1418,26 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	// wait a little to let the goroutine in deleteWorkflowHandler
-	// to terminate before terminate the test.
-	// otherwise, this log can append:
-	// panic: Log in goroutine after Test_deleteWorkflowHandler has completed [recovered]
-	// panic: Log in goroutine after Test_deleteWorkflowHandler has completed
-	time.Sleep(5 * time.Second)
+	// Waiting until the deletion is over
+	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
+	defer cancel()
+
+	tickCheck := time.NewTicker(1 * time.Second)
+	defer tickCheck.Stop()
+
+loop:
+	for {
+		select {
+		case <-ctx.Done():
+			t.Fatal(ctx.Err())
+		case <-tickCheck.C:
+			wk, _ := workflow.Load(ctx, db, api.Cache, proj, wkf.Name, u, workflow.LoadOptions{Minimal: true})
+			if wk == nil {
+				break loop
+			}
+		}
+	}
+
 }
 
 func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
