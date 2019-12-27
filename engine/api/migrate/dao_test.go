@@ -14,9 +14,8 @@ func TestInsert(t *testing.T) {
 	defer end()
 
 	mig1 := sdk.Migration{
-		Name:      "firstOne",
-		Release:   "0.35.0",
-		Mandatory: true,
+		Name:    "firstOne",
+		Release: "0.35.0",
 	}
 	test.NoError(t, migrate.Insert(db, &mig1))
 	defer func() {
@@ -27,9 +26,8 @@ func TestInsert(t *testing.T) {
 	test.Equal(t, uint64(0), mig1.Patch)
 
 	mig2 := sdk.Migration{
-		Name:      "thirdOne",
-		Release:   "snapshot",
-		Mandatory: true,
+		Name:    "thirdOne",
+		Release: "snapshot",
 	}
 	test.NoError(t, migrate.Insert(db, &mig2))
 	defer func() {
@@ -40,9 +38,8 @@ func TestInsert(t *testing.T) {
 	test.Equal(t, uint64(0), mig2.Patch)
 
 	mig3 := sdk.Migration{
-		Name:      "fourthOne",
-		Release:   "1.39.3",
-		Mandatory: true,
+		Name:    "fourthOne",
+		Release: "1.39.3",
 	}
 	test.NoError(t, migrate.Insert(db, &mig3))
 	defer func() {
