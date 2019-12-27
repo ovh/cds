@@ -960,7 +960,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 		if wf.FromRepository == "" && len(wf.AsCodeEvent) > 0 {
 			if wf.WorkflowData.Node.Context.ApplicationID == 0 {
 				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(sdk.ErrApplicationNotFound, "unable to find application on root node"))
-				report.Merge(r1, nil) // nolint
+				report.Merge(ctx, r1, nil) // nolint
 				return
 			}
 			app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
@@ -983,7 +983,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 				if err := workflow.UpdateFromRepository(tx, wf.ID, wf.FromRepository); err != nil {
 					tx.Rollback() // nolint
 					r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to save repository on workflow"))
-					report.Merge(r1, nil) // nolint
+					report.Merge(ctx, r1, nil) // nolint
 					return
 				}
 			}

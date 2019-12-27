@@ -100,25 +100,25 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	for {
 		counter++
 		if err := operation.GetRepositoryOperation(ctx, db, ed.Operation); err != nil {
-			log.Error("unable to get repository operation %s: %v", ed.Operation.UUID, err)
+			log.Error(ctx, "unable to get repository operation %s: %v", ed.Operation.UUID, err)
 			continue
 		}
 
 		if ed.Operation.Status == sdk.OperationStatusError {
-			log.Error("operation in error %s: %s", ed.Operation.UUID, ed.Operation.Error)
+			log.Error(ctx, "operation in error %s: %s", ed.Operation.UUID, ed.Operation.Error)
 			break
 		}
 		if ed.Operation.Status == sdk.OperationStatusDone {
 			vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
 			if vcsServer == nil {
-				log.Error("postWorkflowAsCodeHandler> No vcsServer found")
+				log.Error(ctx, "postWorkflowAsCodeHandler> No vcsServer found")
 				ed.Operation.Status = sdk.OperationStatusError
 				ed.Operation.Error = "No vcsServer found"
 				return
 			}
 			client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, p.Key, vcsServer)
 			if errclient != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to create repositories manager client: %v", errclient)
+				log.Error(ctx, "postWorkflowAsCodeHandler> unable to create repositories manager client: %v", errclient)
 				ed.Operation.Status = sdk.OperationStatusError
 				ed.Operation.Error = "unable to create repositories manager client"
 				return
@@ -141,7 +141,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 			}
 			pr, err := client.PullRequestCreate(ctx, app.RepositoryFullname, request)
 			if err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to create pull request: %v", err)
+				log.Error(ctx, "postWorkflowAsCodeHandler> unable to create pull request: %v", err)
 				ed.Operation.Status = sdk.OperationStatusError
 				ed.Operation.Error = "unable to create pull request"
 				return
@@ -149,7 +149,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 			if pr.URL == "" {
 				prs, err := client.PullRequests(ctx, app.RepositoryFullname)
 				if err != nil {
-					log.Error("postWorkflowAsCodeHandler> unable to list pull request: %v", err)
+					log.Error(ctx, "postWorkflowAsCodeHandler> unable to list pull request: %v", err)
 					ed.Operation.Status = sdk.OperationStatusError
 					ed.Operation.Error = "unable to list pull request"
 					return
@@ -166,7 +166,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 			// Find existing ascode event with this pullrequest
 			asCodeEvent, err := LoadAsCodeByPRID(db, int64(pr.ID))
 			if err != nil && err != sdk.ErrNotFound {
-				log.Error("UpdateAsCodeResult> unable to save pull request: %v", err)
+				log.Error(ctx, "UpdateAsCodeResult> unable to save pull request: %v", err)
 				return
 			}
 			if asCodeEvent.ID == 0 {
@@ -211,7 +211,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 				}
 			}
 			if err := insertOrUpdateAsCodeEvent(db, &asCodeEvent); err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to insert as code event: %v", err)
+				log.Error(ctx, "postWorkflowAsCodeHandler> unable to insert as code event: %v", err)
 				ed.Operation.Status = sdk.OperationStatusError
 				ed.Operation.Error = "unable to insert as code event"
 				return
