@@ -119,7 +119,7 @@ require (
 	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/mattn/go-isatty v0.0.9 // indirect
 	github.com/mattn/go-runewidth v0.0.1 // indirect
-	github.com/mattn/go-sqlite3 v1.9.0 // indirect
+	github.com/mattn/go-sqlite3 v1.9.0
 	github.com/mattn/go-zglob v0.0.1
 	github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b

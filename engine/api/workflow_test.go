@@ -1431,7 +1431,7 @@ loop:
 		case <-ctx.Done():
 			t.Fatal(ctx.Err())
 		case <-tickCheck.C:
-			wk, _ := workflow.Load(ctx, db, api.Cache, proj, wkf.Name, u, workflow.LoadOptions{Minimal: true})
+			wk, _ := workflow.Load(ctx, db, api.Cache, proj, wkf.Name, workflow.LoadOptions{Minimal: true})
 			if wk == nil {
 				break loop
 			}
