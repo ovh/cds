@@ -215,7 +215,7 @@ func (s *Service) doOutgoingWorkflowExecution(ctx context.Context, t *sdk.TaskEx
 			}
 
 			if err := json.Unmarshal([]byte(payloadstr), &payloadValues); err != nil {
-				return sdk.WrapError(handleError(err), "cannot unmarshall payload")
+				return sdk.WrapError(handleError(ctx, err), "cannot unmarshall payload")
 			}
 		}
 	}
