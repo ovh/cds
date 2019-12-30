@@ -227,7 +227,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 			return sdk.ErrForbidden
 		}
 
-		id, errc := requestVarInt(r, "permID")
+		id, errc := requestVarInt(r, "permJobID")
 		if errc != nil {
 			return sdk.WrapError(errc, "Invalid id")
 		}
@@ -310,7 +310,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 
 func (api *API) postWorkflowJobResultHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, err := requestVarInt(r, "permID")
+		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
 			return err
 		}
@@ -501,7 +501,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 
 func (api *API) postWorkflowJobLogsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, errr := requestVarInt(r, "permID")
+		id, errr := requestVarInt(r, "permJobID")
 		if errr != nil {
 			return sdk.WrapError(errr, "Invalid id")
 		}
@@ -590,7 +590,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 			return sdk.ErrForbidden
 		}
 
-		id, err := requestVarInt(r, "permID")
+		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
 			return err
 		}
@@ -805,7 +805,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 		}
 
 		// Load and lock Existing workflow Run Job
-		id, err := requestVarInt(r, "permID")
+		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
 			return err
 		}
@@ -862,7 +862,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 		}
 
 		// Load and lock Existing workflow Run Job
-		id, err := requestVarInt(r, "permID")
+		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
 			return err
 		}
@@ -957,7 +957,7 @@ func (api *API) postWorkflowJobTagsHandler() service.Handler {
 			return sdk.ErrForbidden
 		}
 
-		id, err := requestVarInt(r, "permID")
+		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
 			return err
 		}

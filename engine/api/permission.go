@@ -7,14 +7,14 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 		return false
 	}
 
-	idS, ok := routeVar["permID"]
+	idS, ok := routeVar["permJobID"]
 	if !ok {
 		return true
 	}
 
 	id, err := strconv.ParseInt(idS, 10, 64)
 	if err != nil {
-		log.Error(ctx, "checkWorkerPermission> Unable to parse permID:%s err:%v", idS, err)
+		log.Error(ctx, "checkWorkerPermission> Unable to parse permJobID:%s err:%v", idS, err)
 		return false
 	}
 

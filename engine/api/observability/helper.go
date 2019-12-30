@@ -131,7 +131,7 @@ func findPrimaryKeyFromRequest(ctx context.Context, req *http.Request, db gorp.S
 		id, _ := strconv.ParseInt(vars["id"], 10, 64)
 		//The ID found may be a node run job, let's try to find the project key behing
 		if id <= 0 {
-			id, _ = strconv.ParseInt(vars["permID"], 10, 64)
+			id, _ = strconv.ParseInt(vars["permJobID"], 10, 64)
 		}
 		if id != 0 {
 			var err error

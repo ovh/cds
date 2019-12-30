@@ -19,17 +19,17 @@ func (api *API) postEncryptVariableHandler() service.Handler {
 
 		p, errp := project.Load(api.mustDB(), api.Cache, key)
 		if errp != nil {
-			return sdk.WrapError(errp, "postEncryptVariableHandler> unable to load project")
+			return sdk.WrapError(errp, "unable to load project")
 		}
 
 		variable := new(sdk.Variable)
 		if err := service.UnmarshalBody(r, variable); err != nil {
-			return sdk.WrapError(err, "Unable to read body")
+			return sdk.WrapError(err, "unable to read body")
 		}
 
 		encryptedValue, erre := project.EncryptWithBuiltinKey(api.mustDB(), p.ID, variable.Name, variable.Value)
 		if erre != nil {
-			return sdk.WrapError(erre, "postEncryptVariableHandler> unable to encrypte content %s", variable.Name)
+			return sdk.WrapError(erre, "unable to encrypte content %s", variable.Name)
 		}
 
 		variable.Value = encryptedValue
@@ -40,13 +40,14 @@ func (api *API) postEncryptVariableHandler() service.Handler {
 func (api *API) getVariablesAuditInProjectnHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
+		key := vars[permProjectKey]
 
 		audits, err := project.GetVariableAudit(api.mustDB(), key)
 		if err != nil {
-			return sdk.WrapError(err, "getVariablesAuditInProjectnHandler: Cannot get variable audit for project %s", key)
+			return sdk.WrapError(err, "cannot get variable audit for project %s", key)
 
 		}
+
 		return service.WriteJSON(w, audits, http.StatusOK)
 	}
 }
@@ -59,7 +60,7 @@ func (api *API) getVariablesInProjectHandler() service.Handler {
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithVariables)
 		if err != nil {
-			return sdk.WrapError(err, "deleteVariableFromProject: Cannot load %s", key)
+			return sdk.WrapError(err, "cannot load %s", key)
 		}
 
 		return service.WriteJSON(w, p.Variable, http.StatusOK)

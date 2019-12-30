@@ -18,7 +18,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// postAuthLocalSignupHandler create a new authentified user and a not verified consumer.
+// postAuthLocalSignupHandler creates a new registration that need to be verified to create a new user.
 func (api *API) postAuthLocalSignupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		driver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]

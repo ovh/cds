@@ -35,7 +35,7 @@ func permissionFunc(api *API) map[string]PermCheckFunc {
 		"permUsername":          api.checkUserPermissions,
 		"permConsumerID":        api.checkConsumerPermissions,
 		"permSessionID":         api.checkSessionPermissions,
-		"permID":                api.checkJobIDPermissions,
+		"permJobID":             api.checkJobIDPermissions,
 	}
 }
 
@@ -50,27 +50,27 @@ func (api *API) checkPermission(ctx context.Context, routeVar map[string]string,
 	return nil
 }
 
-func (api *API) checkJobIDPermissions(ctx context.Context, permID string, perm int, routeVars map[string]string) error {
+func (api *API) checkJobIDPermissions(ctx context.Context, jobID string, perm int, routeVars map[string]string) error {
 	ctx, end := observability.Span(ctx, "api.checkJobIDPermissions")
 	defer end()
 
-	id, err := strconv.ParseInt(permID, 10, 64)
+	id, err := strconv.ParseInt(jobID, 10, 64)
 	if err != nil {
-		log.Error(ctx, "checkJobIDPermissions> Unable to parse permID:%s err:%v", permID, err)
-		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", permID)
+		log.Error(ctx, "checkJobIDPermissions> Unable to parse job id:%s err:%v", jobID, err)
+		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
 	}
 
 	runNodeJob, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, id)
 	if err != nil {
 		log.Error(ctx, "checkWorkerPermission> Unable to load job %d err:%v", id, err)
-		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", permID)
+		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
 	}
 
 	// If the expected permission if >= RX and the consumer is a worker
 	// We check that the worker has took this job
 	if wk, isWorker := api.isWorker(ctx); isWorker && perm >= sdk.PermissionReadExecute {
 		var ok bool
-		k := cache.Key("api:workers", getAPIConsumer(ctx).ID, "perm", permID)
+		k := cache.Key("api:workers", getAPIConsumer(ctx).ID, "perm", jobID)
 		if has, _ := api.Cache.Get(k, &ok); ok && has {
 			return nil
 		}
@@ -80,14 +80,14 @@ func (api *API) checkJobIDPermissions(ctx context.Context, permID string, perm i
 		}
 		api.Cache.SetWithTTL(k, ok, 60*60)
 		if !ok {
-			return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", permID)
+			return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
 		}
 		return nil
 	}
 
 	// Else we check the exec groups
 	if !runNodeJob.ExecGroups.HasOneOf(getAPIConsumer(ctx).GetGroupIDs()...) && !isAdmin(ctx) {
-		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", permID)
+		return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
 	}
 
 	return nil

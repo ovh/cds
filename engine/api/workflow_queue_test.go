@@ -460,7 +460,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	vars = map[string]string{
 		"key":              ctx.project.Key,
 		"permWorkflowName": ctx.workflow.Name,
-		"permID":           fmt.Sprintf("%d", ctx.job.ID),
+		"permJobID":        fmt.Sprintf("%d", ctx.job.ID),
 	}
 
 	uri = router.GetRoute("POST", api.postWorkflowJobResultHandler, vars)
@@ -546,7 +546,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	require.Equal(t, 200, rec.Code)
 
 	vars = map[string]string{
-		"permID": fmt.Sprintf("%d", ctx.job.ID),
+		"permJobID": fmt.Sprintf("%d", ctx.job.ID),
 	}
 
 	//Send test
@@ -931,7 +931,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	// Call post coverage report handler
 	// Prepare request
 	vars := map[string]string{
-		"permID": fmt.Sprintf("%d", wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID),
+		"permJobID": fmt.Sprintf("%d", wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID),
 	}
 
 	ctx := testRunWorkflowCtx{
@@ -1240,7 +1240,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Call post coverage report handler
 	// Prepare request
 	vars := map[string]string{
-		"permID": fmt.Sprintf("%d", wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID),
+		"permJobID": fmt.Sprintf("%d", wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID),
 	}
 
 	request := coverage.Report{
