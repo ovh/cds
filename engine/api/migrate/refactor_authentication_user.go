@@ -43,6 +43,7 @@ func refactorAuthenticationUser(ctx context.Context, db *gorp.DbMap, store cache
 	if err != nil {
 		return sdk.WithStack(err)
 	}
+	defer tx.Rollback() // nolint
 
 	// Lock the user if it has not been migrated
 	var res interface{}

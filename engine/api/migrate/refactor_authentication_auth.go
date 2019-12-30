@@ -36,6 +36,7 @@ func refactorAuthenticationAuth(ctx context.Context, db *gorp.DbMap, store cache
 	if err != nil {
 		return sdk.WithStack(err)
 	}
+	defer tx.Rollback() // nolint
 
 	var res interface{}
 
