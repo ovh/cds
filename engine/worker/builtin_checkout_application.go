@@ -36,6 +36,7 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 			NoStrictHostKeyChecking: true,
 			Depth:                   50,
 			Tag:                     tag,
+			ForceGetGitDescribe:     true,
 		}
 		if branch != nil {
 			opts.Branch = branch.Value

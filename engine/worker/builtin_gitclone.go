@@ -162,6 +162,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			NoStrictHostKeyChecking: true,
 			Depth:                   50,
 			Tag:                     tag,
+			ForceGetGitDescribe:     false,
 		}
 		if branch != nil {
 			opts.Branch = branch.Value
@@ -241,7 +242,7 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 	gitURLSSH := sdk.ParameterValue(*params, "git.url")
 	gitURLHTTP := sdk.ParameterValue(*params, "git.http_url")
 	if gitURLSSH == url || gitURLHTTP == url {
-		_ = extractInfo(w, dir, params, clone.Tag, clone.Branch, clone.CheckoutCommit, sendLog)
+		_ = extractInfo(w, dir, params, clone.Tag, clone.Branch, clone.CheckoutCommit, sendLog, clone)
 	}
 
 	stdTaglistErr := new(bytes.Buffer)
@@ -317,12 +318,12 @@ func computeSemver(gitDescribe, cdsVersionValue string) (string, error) {
 	return cdsSemver, nil
 }
 
-func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, branch, commit string, sendLog LoggerFunc) error {
+func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, branch, commit string, sendLog LoggerFunc, opts *git.CloneOpts) error {
 	author := sdk.ParameterValue(*params, "git.author")
 	authorEmail := sdk.ParameterValue(*params, "git.author.email")
 	message := sdk.ParameterValue(*params, "git.message")
 
-	info := git.ExtractInfo(dir)
+	info := git.ExtractInfo(dir, opts)
 
 	cdsVersion := sdk.ParameterFind(params, "cds.version")
 	if cdsVersion == nil || cdsVersion.Value == "" {
