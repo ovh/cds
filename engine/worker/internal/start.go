@@ -56,9 +56,9 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 			if errR := w.Client().QueueJobRelease(ctx, bookedJobID); errR != nil {
 				log.Error(ctx, "runCmd> QueueJobRelease> Cannot release job")
 			}
-			bookedJobID = 0
+			bookedJobID = 0 // nolint
 			// this worker was spawned for a job
-			// this job can't be process (errP != nil)
+			// this job can't be process (err != nil)
 			// so, call endFunc() now, this worker don't have to work
 			// on another job
 			endFunc()
@@ -144,7 +144,7 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 				log.Debug("checkQueue> Try take the job %d%s", j.ID, t)
 				if err := w.Take(ctx, j); err != nil {
 					log.Info(ctx, "Unable to run this job  %d. Take info:%s: %v", j.ID, t, err)
-					bookedJobID = 0
+					bookedJobID = 0 // nolint
 					errsChan <- err
 				}
 			}

@@ -22,7 +22,7 @@ func publishActionEvent(ctx context.Context, payload interface{}, u sdk.Identifi
 		event.Username = u.GetUsername()
 		event.UserMail = u.GetEmail()
 	}
-	publishEvent(ctx, event)
+	_ = publishEvent(ctx, event)
 }
 
 // PublishActionAdd publishes an event for the creation of the given action.

@@ -333,7 +333,7 @@ func (s *Service) dequeueTaskExecutions(ctx context.Context) error {
 
 		//Start (or restart) the task
 		if restartTask {
-			s.startTask(ctx, task)
+			_, _ = s.startTask(ctx, task)
 		}
 	}
 }

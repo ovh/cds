@@ -52,5 +52,5 @@ func CheckRegistrationToken(store cache.Store, signature string) (string, error)
 // CleanVerifyConsumerToken deletes a consumer verify token from cache if exists.
 func CleanVerifyConsumerToken(store cache.Store, consumerID string) {
 	cacheKey := cache.Key("authentication:registration:verify", consumerID)
-	store.Delete(cacheKey)
+	_ = store.Delete(cacheKey)
 }

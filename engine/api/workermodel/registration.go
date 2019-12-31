@@ -144,7 +144,9 @@ func BookForRegister(store cache.Store, id int64, serviceID int64) error {
 	var bookedByServiceID int64
 	if ok, _ := store.Get(k, &bookedByServiceID); !ok {
 		// worker model not already booked, book it for 6 min
-		store.SetWithTTL(k, serviceID, bookRegisterTTLInSeconds)
+		if err := store.SetWithTTL(k, serviceID, bookRegisterTTLInSeconds); err != nil {
+			return err
+		}
 		return nil
 	}
 	return sdk.WrapError(sdk.ErrWorkerModelAlreadyBooked, "worker model %d already booked by service %d", id, bookedByServiceID)

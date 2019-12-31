@@ -9,11 +9,13 @@ import (
 var XSRFTokenDuration = 60 * 10
 
 // NewSessionXSRFToken generate and store a XSRF token for a given session id.
-func NewSessionXSRFToken(store cache.Store, sessionID string) string {
+func NewSessionXSRFToken(store cache.Store, sessionID string) (string, error) {
 	var XSRFToken = sdk.UUID()
 	var k = cache.Key("token", "xsrf", sessionID)
-	store.SetWithTTL(k, &XSRFToken, XSRFTokenDuration)
-	return XSRFToken
+	if err := store.SetWithTTL(k, &XSRFToken, XSRFTokenDuration); err != nil {
+		return "", err
+	}
+	return XSRFToken, nil
 }
 
 // GetSessionXSRFToken returns a XSRF token from cache if exists for given session.

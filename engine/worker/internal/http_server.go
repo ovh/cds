@@ -76,7 +76,7 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	//Handle shutdown
 	go func() {
 		<-c.Done()
-		srv.Shutdown(c)
+		_ = srv.Shutdown(c)
 	}()
 
 	w.httpPort = int32(port)
@@ -93,7 +93,7 @@ func writeJSON(w http.ResponseWriter, data interface{}, status int) {
 	b, _ := json.Marshal(data)
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
-	w.Write(b)
+	_ = w.Write(b)
 }
 
 func writeError(w http.ResponseWriter, r *http.Request, err error) {

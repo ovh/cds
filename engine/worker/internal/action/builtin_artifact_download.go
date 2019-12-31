@@ -34,6 +34,10 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	}
 
 	workdir, err := workerruntime.WorkingDirectory(ctx)
+	if err != nil {
+		return err
+	}
+
 	var abs string
 	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
 		abs, _ = x.RealPath(workdir.Name())

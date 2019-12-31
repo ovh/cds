@@ -49,5 +49,5 @@ func CheckResetConsumerToken(store cache.Store, signature string) (string, error
 // CleanResetConsumerToken deletes a consumer reset token from cache if exists.
 func CleanResetConsumerToken(store cache.Store, consumerID string) {
 	cacheKey := cache.Key("authentication:consumer:reset", consumerID)
-	store.Delete(cacheKey)
+	_ = store.Delete(cacheKey)
 }

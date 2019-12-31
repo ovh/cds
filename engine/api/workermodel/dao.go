@@ -48,26 +48,6 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts 
 	return ms, nil
 }
 
-func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Model, error) {
-	var m sdk.Model
-
-	found, err := gorpmapping.Get(ctx, db, q, &m)
-	if err != nil {
-		return nil, sdk.WrapError(err, "cannot get worker model")
-	}
-	if !found {
-		return nil, nil
-	}
-
-	for i := range opts {
-		if err := opts[i](ctx, db, &m); err != nil {
-			return nil, err
-		}
-	}
-
-	return &m, nil
-}
-
 // LoadAll retrieves worker models from database.
 func LoadAll(ctx context.Context, db gorp.SqlExecutor, filter *LoadFilter, opts ...LoadOptionFunc) ([]sdk.Model, error) {
 	var query gorpmapping.Query

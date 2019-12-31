@@ -20,9 +20,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func processJobParameter(params []sdk.Parameter, secrets []sdk.Variable) {
-	parameters := params
-
+func processJobParameter(parameters []sdk.Parameter, secrets []sdk.Variable) {
 	for i := range parameters {
 		keepReplacing := true
 		for keepReplacing {
@@ -42,8 +40,6 @@ func processJobParameter(params []sdk.Parameter, secrets []sdk.Variable) {
 			}
 		}
 	}
-
-	params = parameters
 }
 
 // ProcessActionVariables replaces all placeholders inside action recursively using

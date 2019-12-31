@@ -78,7 +78,7 @@ func (api *API) checkJobIDPermissions(ctx context.Context, jobID string, perm in
 		if wk.JobRunID != nil && runNodeJob.ID == *wk.JobRunID {
 			ok = true
 		}
-		api.Cache.SetWithTTL(k, ok, 60*60)
+		_ = api.Cache.SetWithTTL(k, ok, 60*60)
 		if !ok {
 			return sdk.WrapError(sdk.ErrForbidden, "not authorized for job %s", jobID)
 		}

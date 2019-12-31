@@ -25,7 +25,7 @@ func publishApplicationEvent(ctx context.Context, payload interface{}, key, appN
 		event.Username = u.GetUsername()
 		event.UserMail = u.GetEmail()
 	}
-	publishEvent(ctx, event)
+	_ = publishEvent(ctx, event)
 }
 
 // PublishAddApplication publishes an event for the creation of the given application

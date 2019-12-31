@@ -81,5 +81,5 @@ func Publish(ctx context.Context, payload interface{}, u sdk.Identifiable) {
 		event.Username = u.GetUsername()
 		event.UserMail = u.GetEmail()
 	}
-	publishEvent(ctx, event)
+	_ = publishEvent(ctx, event)
 }

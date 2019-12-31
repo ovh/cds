@@ -39,7 +39,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	if s.dao.lock(r.ID()) == errLockUnavailable {
 		return errLockUnavailable
 	}
-	defer s.dao.unlock(ctx, r.ID(), 24*time.Hour*time.Duration(s.Cfg.RepositoriesRetention))
+	defer s.dao.unlock(ctx, r.ID(), 24*time.Hour*time.Duration(s.Cfg.RepositoriesRetention)) // nolint
 
 	switch {
 	// Load workflow as code file

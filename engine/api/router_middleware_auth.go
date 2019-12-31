@@ -214,13 +214,20 @@ func (api *API) xsrfMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 		}
 
-		newXSRFToken := authentication.NewSessionXSRFToken(api.Cache, sessionID)
+		newXSRFToken, err := authentication.NewSessionXSRFToken(api.Cache, sessionID)
+		if err != nil {
+			return ctx, err
+		}
 		// Set a cookie with the jwt token
 		api.SetCookie(w, xsrfCookieName, newXSRFToken,
 			time.Now().Add(time.Duration(authentication.XSRFTokenDuration)*time.Second))
 	} else {
 		if !existXSRFTokenInCache {
-			existingXSRFToken = authentication.NewSessionXSRFToken(api.Cache, sessionID)
+			var err error
+			existingXSRFToken, err = authentication.NewSessionXSRFToken(api.Cache, sessionID)
+			if err != nil {
+				return ctx, err
+			}
 		}
 
 		// Set a cookie with the jwt token

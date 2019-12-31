@@ -98,7 +98,7 @@ func WorkingDirectory(ctx context.Context) (afero.File, error) {
 	wdi := ctx.Value(workDir)
 	wd, ok := wdi.(afero.File)
 	if !ok {
-		return nil, errors.New("unable to get working directory")
+		return nil, sdk.WithStack(errors.New("unable to get working directory"))
 	}
 	log.Debug("WorkingDirectory> working directory is : %s", wd.Name())
 	return wd, nil

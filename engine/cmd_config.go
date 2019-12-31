@@ -263,7 +263,7 @@ var configEditCmd = &cobra.Command{
 	Example: `$ engine config edit conf.toml log.level=debug hatchery.swarm.commonConfiguration.name=hatchery-swarm-name`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 2 {
-			cmd.Help()
+			cmd.Help() // nolint
 			sdk.Exit("Wrong usage")
 		}
 

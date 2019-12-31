@@ -29,6 +29,10 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	}
 
 	workdir, err := workerruntime.WorkingDirectory(ctx)
+	if err != nil {
+		return err
+	}
+
 	var abs string
 	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
 		abs, _ = x.RealPath(workdir.Name())

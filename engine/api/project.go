@@ -69,9 +69,9 @@ func (api *API) getProjectsHandler() service.Handler {
 		case isMaintainer(ctx) && requestedUser == nil:
 			projects, err = project.LoadAll(ctx, api.mustDB(), api.Cache, opts...)
 		case isMaintainer(ctx) && requestedUser != nil:
-			groups, err := group.LoadAllByDeprecatedUserID(context.TODO(), api.mustDB(), requestedUser.OldUserStruct.ID)
-			if err != nil {
-				return sdk.WrapError(err, "unable to load user '%s' groups", requestedUserName)
+			groups, errG := group.LoadAllByDeprecatedUserID(context.TODO(), api.mustDB(), requestedUser.OldUserStruct.ID)
+			if errG != nil {
+				return sdk.WrapError(errG, "unable to load user '%s' groups", requestedUserName)
 			}
 			requestedUser.OldUserStruct.Groups = groups
 			log.Debug("load all projects for user %s", requestedUser.Fullname)
