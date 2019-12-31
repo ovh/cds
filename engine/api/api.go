@@ -716,7 +716,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}})
 	migrate.Add(ctx, sdk.Migration{Name: "RefactorAuthenticationAuth", Release: "0.41.0", Automatic: false, ExecFunc: func(ctx context.Context) error {
 		return migrate.RefactorAuthenticationAuth(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache, a.Config.URL.API, a.Config.URL.UI)
-		return nil
 	}})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
