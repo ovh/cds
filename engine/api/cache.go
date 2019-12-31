@@ -15,7 +15,7 @@ import (
 func (api *API) postPushCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if _, isWorker := api.isWorker(ctx); !isWorker {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		vars := mux.Vars(r)
@@ -54,7 +54,7 @@ func (api *API) postPushCacheHandler() service.Handler {
 func (api *API) getPullCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if _, isWorker := api.isWorker(ctx); !isWorker {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		vars := mux.Vars(r)
@@ -81,7 +81,7 @@ func (api *API) getPullCacheHandler() service.Handler {
 		if storageDriver.TemporaryURLSupported() && temporaryURLSupported { // with temp URL
 			fURL, _, err := s.FetchURL(&cacheObject)
 			if err != nil {
-				return sdk.WrapError(err, "Cannot fetch cache object")
+				return sdk.WrapError(err, "cannot fetch cache object")
 			}
 			w.Header().Add("Content-Type", "application/x-tar")
 			w.Header().Add("Content-Disposition", "attachment; filename=\"cache.tar\"")
@@ -91,15 +91,15 @@ func (api *API) getPullCacheHandler() service.Handler {
 
 		ioread, err := storageDriver.Fetch(ctx, &cacheObject)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "getPullCacheHandler> Cannot fetch artifact cache.tar : %v", err)
+			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNotFound, "cannot fetch artifact cache.tar"))
 		}
 		if _, err := io.Copy(w, ioread); err != nil {
 			_ = ioread.Close()
-			return sdk.WrapError(err, "Cannot stream artifact")
+			return sdk.WrapError(err, "cannot stream artifact")
 		}
 
 		if err := ioread.Close(); err != nil {
-			return sdk.WrapError(err, "Cannot close artifact")
+			return sdk.WrapError(err, "cannot close artifact")
 		}
 		return nil
 	}
@@ -108,7 +108,7 @@ func (api *API) getPullCacheHandler() service.Handler {
 func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if _, isWorker := api.isWorker(ctx); !isWorker {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		vars := mux.Vars(r)
@@ -117,7 +117,7 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 		// check tag name pattern
 		regexp := sdk.NamePatternRegex
 		if !regexp.MatchString(tag) {
-			return sdk.ErrInvalidName
+			return sdk.WithStack(sdk.ErrInvalidName)
 		}
 
 		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars[permProjectKey], vars["integrationName"])
@@ -127,7 +127,7 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 
 		store, ok := storageDriver.(objectstore.DriverWithRedirect)
 		if !ok {
-			return sdk.WrapError(sdk.ErrNotImplemented, "postPushCacheWithTempURLHandler> cast error")
+			return sdk.WrapError(sdk.ErrNotImplemented, "cast error")
 		}
 
 		cacheObject := sdk.Cache{
@@ -136,9 +136,9 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 			Tag:     tag,
 		}
 
-		url, key, errO := store.StoreURL(&cacheObject, "application/tar")
-		if errO != nil {
-			return sdk.WrapError(errO, "postPushCacheWithTempURLHandler>Cannot store cache")
+		url, key, err := store.StoreURL(&cacheObject, "application/tar")
+		if err != nil {
+			return sdk.WrapError(err, "cannot store cache")
 		}
 		cacheObject.TmpURL = url
 		cacheObject.SecretKey = key
@@ -150,7 +150,7 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 func (api *API) getPullCacheWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if _, isWorker := api.isWorker(ctx); !isWorker {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		vars := mux.Vars(r)
@@ -159,7 +159,7 @@ func (api *API) getPullCacheWithTempURLHandler() service.Handler {
 		// check tag name pattern
 		regexp := sdk.NamePatternRegex
 		if !regexp.MatchString(tag) {
-			return sdk.ErrInvalidName
+			return sdk.WithStack(sdk.ErrInvalidName)
 		}
 
 		storageDriver, err := objectstore.GetDriver(ctx, api.mustDB(), api.SharedStorage, vars[permProjectKey], vars["integrationName"])
@@ -169,7 +169,7 @@ func (api *API) getPullCacheWithTempURLHandler() service.Handler {
 
 		store, ok := storageDriver.(objectstore.DriverWithRedirect)
 		if !ok {
-			return sdk.WrapError(sdk.ErrNotImplemented, "getPullCacheWithTempURLHandler> cast error")
+			return sdk.WrapError(sdk.ErrNotImplemented, "cast error")
 		}
 
 		cacheObject := sdk.Cache{
@@ -178,9 +178,9 @@ func (api *API) getPullCacheWithTempURLHandler() service.Handler {
 			Tag:     tag,
 		}
 
-		url, key, errF := store.FetchURL(&cacheObject)
-		if errF != nil {
-			return sdk.WrapError(errF, "getPullCacheWithTempURLHandler> Cannot get tmp URL")
+		url, key, err := store.FetchURL(&cacheObject)
+		if err != nil {
+			return sdk.WrapError(err, "cannot get tmp URL")
 		}
 		cacheObject.TmpURL = url
 		cacheObject.SecretKey = key
