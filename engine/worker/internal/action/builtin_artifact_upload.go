@@ -30,7 +30,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 
 	workdir, err := workerruntime.WorkingDirectory(ctx)
 	if err != nil {
-		return err
+		return res, err
 	}
 
 	var abs string

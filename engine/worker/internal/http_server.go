@@ -93,7 +93,7 @@ func writeJSON(w http.ResponseWriter, data interface{}, status int) {
 	b, _ := json.Marshal(data)
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = w.Write(b)
+	_, _ = w.Write(b)
 }
 
 func writeError(w http.ResponseWriter, r *http.Request, err error) {

@@ -35,7 +35,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 
 	workdir, err := workerruntime.WorkingDirectory(ctx)
 	if err != nil {
-		return err
+		return res, err
 	}
 
 	var abs string
