@@ -44,8 +44,8 @@ func ExtractInfo(ctx context.Context, dir string, opts *CloneOpts) (Info, error)
 	cmdAuthor := []cmd{{workdir: dir, cmd: "git", args: []string{"log", "--format=%an", "-1"}}}
 	cmdAuthorEmail := []cmd{{workdir: dir, cmd: "git", args: []string{"log", "--format=%ae", "-1"}}}
 	cmdCurrentBranch := []cmd{{workdir: dir, cmd: "git", args: []string{"rev-parse", "--abbrev-ref", "HEAD"}}}
-	cmdlsRemoteTags := []cmd{{dir: dir, cmd: "git", args: []string{"ls-remote", "--tags"}}}
-	cmdFetchTags := []cmd{{dir: dir, cmd: "git", args: []string{"fetch", "--tags", "--unshallow"}}}
+	cmdlsRemoteTags := []cmd{{workdir: dir, cmd: "git", args: []string{"ls-remote", "--tags"}}}
+	cmdFetchTags := []cmd{{workdir: dir, cmd: "git", args: []string{"fetch", "--tags", "--unshallow"}}}
 
 	// git rev-parse HEAD can fail with
 	// "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree."

@@ -28,7 +28,8 @@ func (api *API) getExternalServiceHandler() service.Handler {
 				return service.WriteJSON(w, s, http.StatusOK)
 			}
 		}
-		return sdk.WrapError(sdk.ErrNotFound, "getExternalServiceHandler> Service %s not found", typeService)
+
+		return sdk.WrapError(sdk.ErrNotFound, "service %s not found", typeService)
 	}
 }
 
