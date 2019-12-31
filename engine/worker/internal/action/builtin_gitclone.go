@@ -109,6 +109,7 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, se
 		NoStrictHostKeyChecking: true,
 		Depth:                   50,
 		Tag:                     tag,
+		ForceGetGitDescribe:     false,
 	}
 	if branch != nil {
 		opts.Branch = branch.Value
@@ -193,7 +194,7 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 	gitURLHTTP := sdk.ParameterValue(params, "git.http_url")
 	var vars []sdk.Variable
 	if gitURLSSH == url || gitURLHTTP == url {
-		vars, err = extractInfo(ctx, w, basedir, dir, params, clone.Tag, clone.Branch, clone.CheckoutCommit)
+		vars, err = extractInfo(ctx, w, basedir, dir, params, clone.Tag, clone.Branch, clone.CheckoutCommit, clone)
 	}
 
 	if err != nil {
@@ -220,13 +221,13 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 	return sdk.Result{Status: sdk.StatusSuccess, NewVariables: vars}, nil
 }
 
-func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir string, params []sdk.Parameter, tag, branch, commit string) ([]sdk.Variable, error) {
+func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir string, params []sdk.Parameter, tag, branch, commit string, opts *git.CloneOpts) ([]sdk.Variable, error) {
 	var res []sdk.Variable
 	author := sdk.ParameterValue(params, "git.author")
 	authorEmail := sdk.ParameterValue(params, "git.author.email")
 	message := sdk.ParameterValue(params, "git.message")
 
-	info, err := git.ExtractInfo(ctx, filepath.Join(dir))
+	info, err := git.ExtractInfo(ctx, filepath.Join(dir), opts)
 	if err != nil {
 		return nil, err
 	}

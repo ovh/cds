@@ -20,6 +20,7 @@ type CloneOpts struct {
 	Quiet                   bool
 	CheckoutCommit          string
 	NoStrictHostKeyChecking bool
+	ForceGetGitDescribe     bool
 }
 
 // Clone make a git clone
@@ -29,7 +30,9 @@ func Clone(repo, workdirPath, path string, auth *AuthOpts, opts *CloneOpts, outp
 		if opts != nil && opts.CheckoutCommit != "" {
 			defer LogFunc("Checkout commit %s", opts.CheckoutCommit)
 		}
-		defer LogFunc("Git clone %s (%v s)", path, int(time.Since(t1).Seconds()))
+		defer func(start time.Time) {
+			LogFunc("Git clone %s (%v s)", path, int(time.Since(start).Seconds()))
+		}(t1)
 	}
 
 	var commands []cmd

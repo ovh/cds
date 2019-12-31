@@ -32,6 +32,7 @@ func RunCheckoutApplication(ctx context.Context, wk workerruntime.Runtime, a sdk
 		NoStrictHostKeyChecking: true,
 		Depth:                   50,
 		Tag:                     tag,
+		ForceGetGitDescribe:     true,
 	}
 	if branch != nil {
 		opts.Branch = branch.Value

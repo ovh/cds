@@ -1,4 +1,4 @@
-// +build nokeychain freebsd openbsd 386
+// +build nokeychain freebsd openbsd 386 arm arm64 windows
 
 package internal
 
