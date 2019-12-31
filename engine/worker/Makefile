@@ -42,7 +42,7 @@ clean:
 		rm $$profile; \
 	done;
 
-build: clean $(TARGET_DIR)
+build: $(TARGET_DIR)
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
 			if go tool dist list | grep "$$GOOS" | grep "$$GOARCH" > /dev/null; then \
