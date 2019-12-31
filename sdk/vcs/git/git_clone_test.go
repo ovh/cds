@@ -2,11 +2,13 @@ package git
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestExtractInfo(t *testing.T) {
@@ -32,10 +34,11 @@ func TestExtractInfo(t *testing.T) {
 	LogFunc = t.Logf
 	verbose = true
 
-	_, err := Clone(repo, myrepo, nil, opts, output)
+	_, err := Clone(repo, myrepo, ".", nil, opts, output)
 	assert.NoError(t, err)
 
-	info := ExtractInfo(myrepo, &CloneOpts{ForceGetGitDescribe: true})
+	info, err := ExtractInfo(context.TODO(), myrepo, &CloneOpts{ForceGetGitDescribe: true})
+	require.NoError(t, err)
 	assert.NotEmpty(t, info.GitDescribe)
 	assert.Equal(t, "0.41.0-119-gf57e4c840", info.GitDescribe)
 }
