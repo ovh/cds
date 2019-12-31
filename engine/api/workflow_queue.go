@@ -167,7 +167,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 
 func (api *API) postBookWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, err := requestVarInt(r, "id")
+		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
 			return err
 		}
@@ -186,7 +186,7 @@ func (api *API) postBookWorkflowJobHandler() service.Handler {
 
 func (api *API) deleteBookWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, err := requestVarInt(r, "id")
+		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
 			return err
 		}
@@ -205,7 +205,7 @@ func (api *API) deleteBookWorkflowJobHandler() service.Handler {
 
 func (api *API) getWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, err := requestVarInt(r, "id")
+		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
 			return sdk.WrapError(err, "invalid id")
 		}
@@ -265,7 +265,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 
 func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
-		id, err := requestVarInt(r, "id")
+		id, err := requestVarInt(r, "permJobID")
 		if err != nil {
 			return sdk.WrapError(err, "invalid id")
 		}

@@ -385,18 +385,13 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 	testGetWorkflowJobAsHatchery(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
-	//Prepare request
-	vars := map[string]string{
-		"key":              ctx.project.Key,
-		"permWorkflowName": ctx.workflow.Name,
-		"id":               fmt.Sprintf("%d", ctx.job.ID),
-	}
-
 	//Register the hatchery
 	testRegisterHatchery(t, api, router, &ctx)
 
 	//TakeBook
-	uri := router.GetRoute("POST", api.postBookWorkflowJobHandler, vars)
+	uri := router.GetRoute("POST", api.postBookWorkflowJobHandler, map[string]string{
+		"permJobID": fmt.Sprintf("%d", ctx.job.ID),
+	})
 	test.NotEmpty(t, uri)
 
 	req := assets.NewJWTAuthentifiedRequest(t, ctx.hatcheryToken, "POST", uri, nil)
@@ -412,18 +407,13 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
-	//Prepare request
-	vars := map[string]string{
-		"key":              ctx.project.Key,
-		"permWorkflowName": ctx.workflow.Name,
-		"id":               fmt.Sprintf("%d", ctx.job.ID),
-	}
-
 	//Register the worker
 	testRegisterWorker(t, api, router, &ctx)
 
 	//Take
-	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
+	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, map[string]string{
+		"id": fmt.Sprintf("%d", ctx.job.ID),
+	})
 	test.NotEmpty(t, uri)
 
 	req := assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, nil)
@@ -457,13 +447,9 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 		},
 	}
 
-	vars = map[string]string{
-		"key":              ctx.project.Key,
-		"permWorkflowName": ctx.workflow.Name,
-		"permJobID":        fmt.Sprintf("%d", ctx.job.ID),
-	}
-
-	uri = router.GetRoute("POST", api.postWorkflowJobResultHandler, vars)
+	uri = router.GetRoute("POST", api.postWorkflowJobResultHandler, map[string]string{
+		"permJobID": fmt.Sprintf("%d", ctx.job.ID),
+	})
 	test.NotEmpty(t, uri)
 
 	req = assets.NewJWTAuthentifiedRequest(t, ctx.workerToken, "POST", uri, res)
@@ -471,13 +457,11 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 204, rec.Code)
 
-	vars = map[string]string{
+	uri = router.GetRoute("GET", api.getWorkflowRunHandler, map[string]string{
 		"key":              ctx.project.Key,
 		"permWorkflowName": ctx.workflow.Name,
 		"number":           fmt.Sprintf("%d", ctx.run.Number),
-	}
-
-	uri = router.GetRoute("GET", api.getWorkflowRunHandler, vars)
+	})
 	req = assets.NewJWTAuthentifiedRequest(t, ctx.password, "GET", uri+"?withDetails=true", res)
 
 	rec = httptest.NewRecorder()
@@ -488,7 +472,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	require.NoError(t, json.Unmarshal(btes, ctx.run))
 	assert.Contains(t, ctx.run.RootRun().BuildParameters, sdk.Parameter{Name: "cds.build.newVar", Type: sdk.StringParameter, Value: "newVal"})
 
-	vars = map[string]string{
+	vars := map[string]string{
 		"key":              ctx.project.Key,
 		"permWorkflowName": ctx.workflow.Name,
 		"number":           fmt.Sprintf("%d", ctx.run.Number),
