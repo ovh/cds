@@ -1,4 +1,4 @@
-// +build nokeychain freebsd openbsd 386 arm arm64
+// +build nokeychain windows freebsd openbsd 386 arm arm64
 
 package main
 
