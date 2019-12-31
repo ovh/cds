@@ -54,7 +54,7 @@ testcases:
     - script: grep "\"name\":\"myFileUploaded\"" *.log
     - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern DOWNLOAD
     - script: grep "Je suis un artifact" *.log
-    - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern EXPORT
+    - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern EXPORTECHO
     - script: grep "Export value bar" *.log
     - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNWORKERCMD 04SCWorkflowRunWorkerCmd-WORKFLOW 1 --pattern CACHEPULL
     - script: grep "cache push file content" *.log

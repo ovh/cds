@@ -84,7 +84,6 @@ jobs:
       - cat id_rsa
   requirements:
   - os-architecture: linux/amd64
-
 - job: ARTIFACTLIST
   stage: Stage2
   steps:
@@ -94,7 +93,6 @@ jobs:
       - sleep 5
   requirements:
   - os-architecture: linux/amd64
-
 - job: CACHEPULL
   stage: Stage2
   steps:
@@ -105,7 +103,6 @@ jobs:
       - sleep 5
   requirements:
   - os-architecture: linux/amd64
-
 - job: DOWNLOAD
   stage: Stage2
   steps:
@@ -116,8 +113,7 @@ jobs:
       - sleep 5
   requirements:
   - os-architecture: linux/amd64
-
-- job: EXPORT
+- job: EXPORTECHO
   stage: Stage2
   steps:
     - script:
