@@ -41,7 +41,7 @@ func Add(ctx context.Context, migration sdk.Migration) {
 func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.WriteCloser, error)) {
 	for _, migration := range migrations {
 		func(currentMigration sdk.Migration) {
-			sdk.GoRoutine(ctx, "migrate_"+migration.Name, func(contex context.Context) {
+			sdk.GoRoutine(ctx, "migrate_"+currentMigration.Name, func(contex context.Context) {
 				mig, errMig := GetByName(db, currentMigration.Name)
 				if errMig != nil {
 					log.Error(ctx, "Cannot get migration %s : %v", currentMigration.Name, errMig)
@@ -57,7 +57,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 					currentMigration.ID = mig.ID
 					currentMigration.Status = sdk.MigrationStatusInProgress
 				} else {
-					if !migration.Automatic {
+					if !currentMigration.Automatic {
 						currentMigration.Status = sdk.MigrationStatusNotExecuted
 					} else {
 						currentMigration.Status = sdk.MigrationStatusInProgress
