@@ -2,7 +2,6 @@ package migrate
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/go-gorp/gorp"
 
@@ -53,7 +52,7 @@ func refactorAuthenticationAuth(ctx context.Context, db *gorp.DbMap, store cache
 	`).Args(u.ID)
 
 	if _, err := user.Get(ctx, tx, query); err != nil {
-		if err == sql.ErrNoRows {
+		if sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 			log.Info(ctx, "migrate.RefactorAuthenticationAuth> local auth consumer already exists for %s(%s)", u.Username, u.ID)
 			return nil
 		}

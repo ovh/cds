@@ -2,7 +2,6 @@ package migrate
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -58,7 +57,7 @@ func refactorAuthenticationUser(ctx context.Context, db *gorp.DbMap, store cache
 	`).Args(u.ID)
 
 	if _, err := user.GetDeprecatedUser(ctx, tx, query); err != nil {
-		if err == sql.ErrNoRows {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			log.Info(ctx, "migrate.RefactorAuthenticationUser> authentified_user_migration already exists for %s(%d)", u.Username, u.ID)
 			return nil
 		}
@@ -79,7 +78,7 @@ func refactorAuthenticationUser(ctx context.Context, db *gorp.DbMap, store cache
 		newUser.Ring = sdk.UserRingUser
 	}
 
-	if err := user.Insert(ctx, db, &newUser); err != nil {
+	if err := user.Insert(ctx, tx, &newUser); err != nil {
 		return sdk.WithStack(err)
 	}
 
@@ -91,7 +90,7 @@ func refactorAuthenticationUser(ctx context.Context, db *gorp.DbMap, store cache
 		Primary:  true,
 	}
 
-	if err := user.InsertContact(ctx, db, &contact); err != nil {
+	if err := user.InsertContact(ctx, tx, &contact); err != nil {
 		return sdk.WithStack(err)
 	}
 

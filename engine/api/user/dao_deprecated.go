@@ -50,7 +50,7 @@ func GetDeprecatedUser(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Q
 		return nil, sdk.WrapError(err, "cannot get deprecated user")
 	}
 	if !found {
-		return nil, nil
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	pu := &du.Data
