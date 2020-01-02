@@ -207,6 +207,10 @@ export class WorkflowNodeRunParamComponent implements OnInit, AfterViewInit {
             }
             this.payloadString = JSON.stringify(currentPayload, undefined, 4);
         }
+        if ((this.payloadString && this.payloadString.split('\n').length >= 10)
+            || this.parameters.length >= 5 || this.commits.length >= 5) {
+            config.isCentered = false;
+        }
 
         this.modal = this._modalService.open(config);
         this.modal.onApprove(() => { this.open = false; });

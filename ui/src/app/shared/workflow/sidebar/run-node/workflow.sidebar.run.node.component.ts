@@ -1,12 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    Input,
-    OnDestroy,
-    OnInit,
-    ViewChild
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
@@ -44,7 +36,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     wNodeType = WNodeType;
 
     // Modal
-    @ViewChild('workflowRunNode', {static: false})
+    @ViewChild('workflowRunNode', { static: false })
     workflowRunNode: WorkflowNodeRunParamComponent;
     loading = true;
 

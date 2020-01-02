@@ -328,6 +328,12 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 	}
 
 	if model.IsDeprecated && !containsModelRequirement {
+		SendSpawnInfo(ctx, h, j.id, sdk.SpawnMsg{
+			ID: sdk.MsgSpawnInfoDeprecatedModel.ID,
+			Args: []interface{}{
+				model.Name,
+			},
+		})
 		log.Debug("canRunJob> %d - job %d - Cannot launch this model because it is deprecated", j.timestamp, j.id)
 		return false
 	}
