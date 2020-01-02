@@ -564,23 +564,18 @@ func findCommand(cmd *cobra.Command, key string) *cobra.Command {
 }
 
 func (s *shellCurrent) openBrowser() {
-	var baseURL string
 	configUser, err := client.ConfigUser()
 	if err != nil {
 		fmt.Printf("Error while getting URL UI: %s", err)
 		return
 	}
 
-	if b, ok := configUser[sdk.ConfigURLUIKey]; ok {
-		baseURL = b
-	}
-
-	if baseURL == "" {
+	if configUser.URLUI == "" {
 		fmt.Println("Unable to retrieve webui uri")
 		return
 	}
 
-	_ = browser.OpenURL(baseURL + s.path)
+	_ = browser.OpenURL(configUser.URLUI + s.path)
 }
 
 func shellASCII() {

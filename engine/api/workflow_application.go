@@ -36,7 +36,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			return errU
 		}
 
-		proj, errprod := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
+		proj, errprod := project.Load(api.mustDB(), api.Cache, key)
 		if errprod != nil {
 			return sdk.WrapError(errprod, "releaseApplicationWorkflowHandler")
 		}
@@ -105,7 +105,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 		}
 
 		for _, a := range artifactToUpload {
-			f, err := api.SharedStorage.Fetch(&a)
+			f, err := api.SharedStorage.Fetch(ctx, &a)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot fetch artifact")
 			}

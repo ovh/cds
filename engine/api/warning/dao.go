@@ -1,6 +1,7 @@
 package warning
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -12,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func removeProjectWarning(db gorp.SqlExecutor, warningType string, element string, key string) error {
+func removeProjectWarning(ctx context.Context, db gorp.SqlExecutor, warningType string, element string, key string) error {
 	result, err := db.Exec("DELETE FROM warning where type = $1 and element = $2 and project_key = $3", warningType, element, key)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to remove warning %s/%s", warningType, element)
@@ -22,13 +23,13 @@ func removeProjectWarning(db gorp.SqlExecutor, warningType string, element strin
 		return sdk.WrapError(errR, "removeProjectWarning> Unable to read result")
 	}
 	if nb == 1 {
-		event.PublishDeleteWarning(warningType, element, key, "", "", "", "")
+		event.PublishDeleteWarning(ctx, warningType, element, key, "", "", "", "")
 	}
 	return err
 }
 
 // Insert a warning
-func Insert(db gorp.SqlExecutor, w sdk.Warning) error {
+func Insert(ctx context.Context, db gorp.SqlExecutor, w sdk.Warning) error {
 	h, err := hashstructure.Hash(w, nil)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to calculate hash")
@@ -39,7 +40,7 @@ func Insert(db gorp.SqlExecutor, w sdk.Warning) error {
 		return sdk.WrapError(err, "Unable to insert warning")
 	}
 	w = sdk.Warning(warn)
-	event.PublishAddWarning(w)
+	event.PublishAddWarning(ctx, w)
 	return nil
 }
 

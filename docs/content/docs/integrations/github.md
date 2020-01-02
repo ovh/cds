@@ -37,12 +37,12 @@ This integration enables some features:
 Go to https://github.com/settings/developers and **Register a new OAuth application**. Set :
 
 - an `application name`, example: `CDS company name`
-- the `Homepage URL`: `http(s)://<your-cds-webui>` (with a local webui, it will be: `http://localhost:4200`)
+- the `Homepage URL`: `http(s)://<your-cds-webui>` (with a local webui, it will be: `http://localhost:8080`)
 - the `Authorization callback URL`: `http(s)://<your-cds-api>/repositories_manager/oauth2/callback`
 
 Example for a local configuration:
 
-- with WebUI default port (4200), Homepage URL will be `http://localhost:4200`
+- with WebUI default port (8080), Homepage URL will be `http://localhost:8080`
 - with API default port (8081), callback URL will be `http://localhost:8081/repositories_manager/oauth2/callback`
 
 ![Integration Github New OAuth App](../images/github-new-oauth-app.png?height=500px)
@@ -77,12 +77,12 @@ Edit the toml file:
   name = "cds-vcs"
 ```
 
-- section `[vcs.UI.http]`
+- section `[vcs.ui.http]`
   - URL of CDS UI. This URL will be used by GitHub as a callback on Oauth2. This url must be accessible by users' browsers.
   
 ```toml
-    [vcs.UI.http]
-      url = "http://localhost:4200"
+    [vcs.ui.http]
+      url = "http://localhost:8080"
 ```
 
 - section `[vcs.api]`

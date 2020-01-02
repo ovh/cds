@@ -54,14 +54,14 @@ func (c client) PluginDeleteBinary(name, os, arch string) error {
 }
 
 func (c client) PluginGetBinaryInfos(name, os, arch string) (*sdk.GRPCPluginBinary, error) {
-	path := fmt.Sprintf("/admin/plugin/%s/binary/%s/%s/infos", name, os, arch)
+	path := fmt.Sprintf("/download/plugin/%s/binary/%s/%s/infos", name, os, arch)
 	var res sdk.GRPCPluginBinary
 	_, err := c.GetJSON(context.Background(), path, &res)
 	return &res, err
 }
 
 func (c client) PluginGetBinary(name, os, arch string, w io.Writer) error {
-	path := fmt.Sprintf("/admin/plugin/%s/binary/%s/%s?accept-redirect=true", name, os, arch)
+	path := fmt.Sprintf("/download/plugin/%s/binary/%s/%s?accept-redirect=true", name, os, arch)
 	var reader io.ReadCloser
 	var err error
 

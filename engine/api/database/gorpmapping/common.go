@@ -2,12 +2,11 @@ package gorpmapping
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
-
-	"github.com/ovh/cds/engine/api/observability"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -53,6 +52,22 @@ func (q Query) String() string {
 	return fmt.Sprintf("query: %s - args: %v", q.query, q.arguments)
 }
 
+// ToQueryString returns a comma separated list of given ids.
+func ToQueryString(target interface{}) string {
+
+	val := reflect.ValueOf(target)
+	if reflect.ValueOf(target).Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	res := make([]string, val.Len())
+	for i := 0; i < val.Len(); i++ {
+		res[i] = fmt.Sprintf("%v", val.Index(i).Interface())
+	}
+
+	return strings.Join(res, ",")
+}
+
 // IDsToQueryString returns a comma separated list of given ids.
 func IDsToQueryString(ids []int64) string {
 	res := make([]string, len(ids))
@@ -62,57 +77,127 @@ func IDsToQueryString(ids []int64) string {
 	return strings.Join(res, ",")
 }
 
-// Insert value in given db.
-func Insert(db gorp.SqlExecutor, i interface{}) error {
-	err := db.Insert(i)
-	if e, ok := err.(*pq.Error); ok {
-		switch e.Code {
-		case ViolateUniqueKeyPGCode:
-			err = sdk.NewError(sdk.ErrInvalidData, e)
-		case StringDataRightTruncation:
-			err = sdk.NewError(sdk.ErrConflict, e)
+// IDStringsToQueryString returns a comma separated list of given string ids.
+func IDStringsToQueryString(ids []string) string {
+	return strings.Join(ids, ",")
+}
+
+func reflectFindFieldTagValue(i interface{}, field, tagKey string) string {
+	val := reflect.ValueOf(i)
+	if reflect.ValueOf(i).Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	valueField := val.FieldByName(field)
+	typeField, _ := val.Type().FieldByName(field)
+	if typeField.Anonymous {
+		res := reflectFindFieldTagValue(valueField.Interface(), field, tagKey)
+		if res != "" {
+			return res
 		}
 	}
-	return sdk.WithStack(err)
+	tag := typeField.Tag
+	column := tag.Get(tagKey)
+	return column
+
 }
 
-// Update value in given db.
-func Update(db gorp.SqlExecutor, i interface{}) error {
-	_, err := db.Update(i)
-	if e, ok := err.(*pq.Error); ok {
-		switch e.Code {
-		case ViolateUniqueKeyPGCode:
-			err = sdk.NewError(sdk.ErrInvalidData, e)
-		case StringDataRightTruncation:
-			err = sdk.NewError(sdk.ErrInvalidData, e)
+func reflectFindValueByTag(i interface{}, tagKey, tagValue string) interface{} {
+	val := reflect.ValueOf(i)
+	if reflect.ValueOf(i).Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	var res interface{}
+	for i := 0; i < val.NumField(); i++ {
+		valueField := val.Field(i)
+		typeField := val.Type().Field(i)
+		if typeField.Anonymous {
+			res = reflectFindValueByTag(valueField.Interface(), tagKey, tagValue)
+			if res != nil {
+				return res
+			}
+		}
+		tag := typeField.Tag
+		column := tag.Get(tagKey)
+		column = strings.SplitN(column, ",", 2)[0]
+		if column == tagValue {
+			return valueField.Interface()
 		}
 	}
-	return sdk.WithStack(err)
+	return res
 }
 
-// Delete value in given db.
-func Delete(db gorp.SqlExecutor, i interface{}) error {
-	_, err := db.Delete(i)
-	return sdk.WithStack(err)
-}
-
-// GetAll values from database.
-func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}) error {
-	_, end := observability.Span(ctx, fmt.Sprintf("database.GetAll(%T)", i), observability.Tag("query", q.String()))
-	defer end()
-	_, err := db.Select(i, q.query, q.arguments...)
-	return sdk.WithStack(err)
-}
-
-// Get a value from database.
-func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}) (bool, error) {
-	_, end := observability.Span(ctx, fmt.Sprintf("database.Get(%T)", i), observability.Tag("query", q.String()))
-	defer end()
-	if err := db.SelectOne(i, q.query, q.arguments...); err != nil {
-		if err == sql.ErrNoRows {
-			return false, nil
-		}
-		return false, sdk.WithStack(err)
+func dbMappingPKey(i interface{}) (string, string, interface{}, error) {
+	mapping, has := getTabbleMapping(i)
+	if !has {
+		return "", "", nil, sdk.WithStack(fmt.Errorf("unkown entity %T", i))
 	}
-	return true, nil
+
+	if len(mapping.Keys) > 1 {
+		return "", "", nil, sdk.WithStack(errors.New("multiple primary key not supported"))
+	}
+
+	id := reflectFindValueByTag(i, "db", mapping.Keys[0])
+
+	return mapping.Name, mapping.Keys[0], id, nil
+}
+
+type IDs pq.Int64Array
+
+// And returns a new AND expression from given ones.
+func And(es ...string) string {
+	if len(es) == 0 {
+		return "true"
+	}
+	return "(" + strings.Join(es, " AND ") + ")"
+}
+
+// ArgsMap represents the map of named sql args.
+type ArgsMap map[string]interface{}
+
+// Merge returns a merged map from current and another.
+func (a ArgsMap) Merge(other ArgsMap) ArgsMap {
+	if a == nil {
+		a = make(ArgsMap)
+	}
+	for k, v := range other {
+		a[k] = v
+	}
+	return a
+}
+
+func LoadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}) (interface{}, error) {
+	e, ok := Mapping[entity]
+	if !ok {
+		return nil, sdk.WithStack(errors.New("unknown entity"))
+	}
+
+	newTargetPtr := reflect.New(reflect.TypeOf(e.Target))
+
+	query := NewQuery(fmt.Sprintf("select * from %s where %s::text = $1::text", e.Name, e.Keys[0])).Args(pk)
+	found, err := Get(context.Background(), db, query, newTargetPtr.Interface())
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	val := newTargetPtr.Interface()
+
+	if e.SignedEntity {
+		s, ok := val.(Signed)
+		if !ok {
+			return nil, sdk.WithStack(errors.New("invalid signed entity"))
+		}
+
+		isValid, err := CheckSignature(val.(Canonicaller), s.GetSignature())
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			return nil, sdk.WithStack(errors.New("corrupted signed entity"))
+		}
+	}
+
+	return val, nil
 }

@@ -1,5 +1,3 @@
-/* tslint:disable:no-unused-variable */
-
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Injector } from '@angular/core';
@@ -9,6 +7,8 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Variable } from 'app/model/variable.model';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { UserService } from 'app/service/user/user.service';
 import { VariableEvent } from 'app/shared/variable/variable.event.model';
 import { AddApplicationVariable, DeleteApplicationVariable, UpdateApplicationVariable } from 'app/store/applications.action';
 import { NgxsStoreModule } from 'app/store/store.module';
@@ -20,7 +20,6 @@ import { Usage } from '../../../model/usage.model';
 import { ApplicationService } from '../../../service/application/application.service';
 import { ApplicationStore } from '../../../service/application/application.store';
 import { ApplicationWorkflowService } from '../../../service/application/application.workflow.service';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
 import { EnvironmentService } from '../../../service/environment/environment.service';
 import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../service/pipeline/pipeline.service';
@@ -47,7 +46,6 @@ describe('CDS: Application', () => {
             declarations: [
             ],
             providers: [
-                AuthentificationStore,
                 ApplicationStore,
                 ApplicationService,
                 ProjectStore,
@@ -67,7 +65,9 @@ describe('CDS: Application', () => {
                 WorkflowStore,
                 WorkflowService,
                 WorkflowRunService,
-                Store
+                Store,
+                UserService,
+                AuthenticationService
             ],
             imports: [
                 ApplicationModule,

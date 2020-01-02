@@ -11,10 +11,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// Init create new client for vsphere
-func (h *HatcheryVSphere) Init() error {
-	ctx := context.Background()
-
+// InitHatchery create new client for vsphere
+func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	// Connect and login to ESX or vCenter
 	c, errNc := h.newClient(ctx)
 	if errNc != nil {

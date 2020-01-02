@@ -8,13 +8,17 @@ import (
 
 	"go.opencensus.io/stats"
 
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // WorkerPool returns all the worker owned by the hatchery h, registered or not on the CDS API
-func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
-	ctx = WithTags(ctx, h)
+func WorkerPool(ctx context.Context, h Interface, status ...string) ([]sdk.Worker, error) {
+	ctx = observability.ContextWithTag(ctx,
+		observability.TagServiceName, h.Name(),
+		observability.TagServiceType, h.Type(),
+	)
 
 	// First: call API
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -25,7 +29,7 @@ func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.W
 	}
 
 	// Then: get all workers in the orchestrator queue
-	startedWorkers := h.WorkersStarted()
+	startedWorkers := h.WorkersStarted(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get started workers: %v", err)
 	}
@@ -49,9 +53,9 @@ func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.W
 			}
 		}
 		if !found && w.Status != sdk.StatusDisabled {
-			log.Error("Hatchery > WorkerPool> Worker %s (status = %s) inconsistency", w.Name, w.Status.String())
+			log.Error(ctx, "Hatchery > WorkerPool> Worker %s (status = %s) inconsistency", w.Name, w.Status)
 			if err := h.CDSClient().WorkerDisable(ctx, w.ID); err != nil {
-				log.Error("Hatchery > WorkerPool> Unable to disable worker [%s]%s", w.ID, w.Name)
+				log.Error(ctx, "Hatchery > WorkerPool> Unable to disable worker [%s]%s", w.ID, w.Name)
 			}
 			registeredWorkers[k].Status = sdk.StatusDisabled
 		}
@@ -61,7 +65,7 @@ func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.W
 	// And add the other worker with status pending of registering
 	for _, w := range startedWorkers {
 		name := w
-		var status sdk.Status
+		var status string
 
 		var found bool
 		for _, wr := range registeredWorkers {
@@ -87,18 +91,18 @@ func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.W
 		})
 	}
 
-	nbPerStatus := map[sdk.Status]int{}
+	nbPerStatus := map[string]int{}
 	for _, w := range allWorkers {
 		nbPerStatus[w.Status] = nbPerStatus[w.Status] + 1
 	}
 
 	measures := []stats.Measurement{
-		h.Metrics().PendingWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
-		h.Metrics().RegisteringWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
-		h.Metrics().WaitingWorkers.M(int64(nbPerStatus[sdk.StatusWaiting])),
-		h.Metrics().CheckingWorkers.M(int64(nbPerStatus[sdk.StatusChecking])),
-		h.Metrics().BuildingWorkers.M(int64(nbPerStatus[sdk.StatusBuilding])),
-		h.Metrics().DisabledWorkers.M(int64(nbPerStatus[sdk.StatusDisabled])),
+		GetMetrics().PendingWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
+		GetMetrics().RegisteringWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
+		GetMetrics().WaitingWorkers.M(int64(nbPerStatus[sdk.StatusWaiting])),
+		GetMetrics().CheckingWorkers.M(int64(nbPerStatus[sdk.StatusChecking])),
+		GetMetrics().BuildingWorkers.M(int64(nbPerStatus[sdk.StatusBuilding])),
+		GetMetrics().DisabledWorkers.M(int64(nbPerStatus[sdk.StatusDisabled])),
 	}
 	stats.Record(ctx, measures...)
 

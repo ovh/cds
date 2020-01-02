@@ -1,6 +1,7 @@
 package warning
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -20,11 +21,10 @@ func TestUnusedProjectKeyWarningEventProjectKeyAdd(t *testing.T) {
 	// INIT
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	_ = event.Initialize(db, cache)
+	_ = event.Initialize(context.Background(), db, cache)
 
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	// Projecr KEY to test Event
 	pKey := sdk.ProjectKey{
@@ -46,14 +46,14 @@ func TestUnusedProjectKeyWarningEventProjectKeyAdd(t *testing.T) {
 
 	// Compute event
 	warnToTest := unusedProjectKeyWarning{}
-	test.NoError(t, warnToTest.compute(db, e))
+	test.NoError(t, warnToTest.compute(context.Background(), db, e))
 
 	// Check warning exist
 	warnsAfter, errAfter := GetByProject(db, proj.Key)
 	test.NoError(t, errAfter)
 	assert.Equal(t, 1, len(warnsAfter))
 
-	(&warnsAfter[0]).ComputeMessage("en")
+	(&warnsAfter[0]).ComputeMessage(context.TODO(), "en")
 	t.Logf("%s", warnsAfter[0].Message)
 
 	// Create Key deletion event
@@ -67,7 +67,7 @@ func TestUnusedProjectKeyWarningEventProjectKeyAdd(t *testing.T) {
 	}
 
 	// Compute event
-	test.NoError(t, warnToTest.compute(db, eDelete))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eDelete))
 
 	// Check that warning disapears
 	warnsAfterDelete, errAfterDelete := GetByProject(db, proj.Key)
@@ -78,9 +78,8 @@ func TestUnusedProjectKeyWarningEventProjectKeyAdd(t *testing.T) {
 func TestMissingProjectKeyPipelineParameterWarning(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	// Project KEY to test Event
 	pKey := sdk.ProjectKey{
@@ -95,7 +94,7 @@ func TestMissingProjectKeyPipelineParameterWarning(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	// Add a parameter that use project key
 	pa := sdk.Parameter{
@@ -117,14 +116,14 @@ func TestMissingProjectKeyPipelineParameterWarning(t *testing.T) {
 
 	// Compute event
 	warnToTest := missingProjectKeyPipelineParameterWarning{}
-	test.NoError(t, warnToTest.compute(db, e))
+	test.NoError(t, warnToTest.compute(context.Background(), db, e))
 
 	// Check warning exist
 	warnsAfter, errAfter := GetByProject(db, proj.Key)
 	test.NoError(t, errAfter)
 	assert.Equal(t, 1, len(warnsAfter))
 
-	(&warnsAfter[0]).ComputeMessage("en")
+	(&warnsAfter[0]).ComputeMessage(context.TODO(), "en")
 	t.Logf("%s", warnsAfter[0].Message)
 
 	// Create Add key event
@@ -136,7 +135,7 @@ func TestMissingProjectKeyPipelineParameterWarning(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadAdd),
 		Payload:    structs.Map(ePayloadAdd),
 	}
-	test.NoError(t, warnToTest.compute(db, eAdd))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eAdd))
 
 	// Check that warning disapears
 	warnsAdd, errAfterDelete := GetByProject(db, proj.Key)
@@ -147,9 +146,8 @@ func TestMissingProjectKeyPipelineParameterWarning(t *testing.T) {
 func TestMissingProjectKeyPipelineJobWarning(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	// Project KEY to test Event
 	pKey := sdk.ProjectKey{
@@ -167,7 +165,7 @@ func TestMissingProjectKeyPipelineJobWarning(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 	s := sdk.Stage{Name: "MyStage", PipelineID: pip.ID}
 	test.NoError(t, pipeline.InsertStage(db, &s))
 	j := sdk.Job{PipelineStageID: s.ID, Action: sdk.Action{
@@ -199,14 +197,14 @@ func TestMissingProjectKeyPipelineJobWarning(t *testing.T) {
 
 	// Compute event
 	warnToTest := missingProjectKeyPipelineJobWarning{}
-	test.NoError(t, warnToTest.compute(db, e))
+	test.NoError(t, warnToTest.compute(context.Background(), db, e))
 
 	// Check warning exist
 	warnsAfter, errAfter := GetByProject(db, proj.Key)
 	test.NoError(t, errAfter)
 	assert.Equal(t, 1, len(warnsAfter))
 
-	(&warnsAfter[0]).ComputeMessage("en")
+	(&warnsAfter[0]).ComputeMessage(context.TODO(), "en")
 	t.Logf("%s", warnsAfter[0].Message)
 
 	// Create Add key event
@@ -218,7 +216,7 @@ func TestMissingProjectKeyPipelineJobWarning(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadAdd),
 		Payload:    structs.Map(ePayloadAdd),
 	}
-	test.NoError(t, warnToTest.compute(db, eAdd))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eAdd))
 
 	// Check that warning disapears
 	warnsAdd, errAfterDelete := GetByProject(db, proj.Key)
@@ -229,9 +227,8 @@ func TestMissingProjectKeyPipelineJobWarning(t *testing.T) {
 func TestMissingProjectKeyApplicationWarning(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	// Project KEY to test Event
 	pKey := sdk.ProjectKey{
@@ -246,7 +243,7 @@ func TestMissingProjectKeyApplicationWarning(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	assert.NoError(t, application.Insert(db, cache, proj, &app, u))
+	assert.NoError(t, application.Insert(db, cache, proj, &app))
 
 	// Setup ssh key
 	app.RepositoryStrategy = sdk.RepositoryStrategy{
@@ -266,14 +263,14 @@ func TestMissingProjectKeyApplicationWarning(t *testing.T) {
 
 	// Compute event
 	warnToTest := missingProjectKeyApplicationWarning{}
-	test.NoError(t, warnToTest.compute(db, e))
+	test.NoError(t, warnToTest.compute(context.Background(), db, e))
 
 	// Check warning exist
 	warnsAfter, errAfter := GetByProject(db, proj.Key)
 	test.NoError(t, errAfter)
 	assert.Equal(t, 1, len(warnsAfter))
 
-	(&warnsAfter[0]).ComputeMessage("en")
+	(&warnsAfter[0]).ComputeMessage(context.TODO(), "en")
 	t.Logf("%s", warnsAfter[0].Message)
 
 	// Create Add key event
@@ -285,7 +282,7 @@ func TestMissingProjectKeyApplicationWarning(t *testing.T) {
 		EventType:  fmt.Sprintf("%T", ePayloadAdd),
 		Payload:    structs.Map(ePayloadAdd),
 	}
-	test.NoError(t, warnToTest.compute(db, eAdd))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eAdd))
 
 	// Check that warning disapears
 	warnsAdd, errAfterDelete := GetByProject(db, proj.Key)

@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -24,6 +25,20 @@ func New() *Service {
 	return s
 }
 
+func (s *Service) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(Configuration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid repositories service configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
+}
+
 // ApplyConfiguration apply an object of type repositories.Configuration after checking it
 func (s *Service) ApplyConfiguration(config interface{}) error {
 	if err := s.CheckConfiguration(config); err != nil {
@@ -35,12 +50,9 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid Repositories configuration")
 	}
 
-	s.Client = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second, s.Cfg.API.HTTP.Insecure)
-	s.API = s.Cfg.API.HTTP.URL
-	s.Name = s.Cfg.Name
+	s.ServiceName = s.Cfg.Name
+	s.ServiceType = services.TypeRepositories
 	s.HTTPURL = s.Cfg.URL
-	s.Token = s.Cfg.API.Token
-	s.Type = services.TypeRepositories
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 	s.ServiceName = "cds-repositories"
 
@@ -93,13 +105,13 @@ func (s *Service) Serve(c context.Context) error {
 
 	go func() {
 		if err := s.processor(ctx); err != nil {
-			log.Info("Repositories> Shutdown processor")
+			log.Info(ctx, "Repositories> Shutdown processor")
 		}
 	}()
 
 	go func() {
 		if err := s.vacuumCleaner(ctx); err != nil {
-			log.Info("Repositories> Shutdown vacuumCleaner")
+			log.Info(ctx, "Repositories> Shutdown vacuumCleaner")
 		}
 	}()
 
@@ -107,15 +119,15 @@ func (s *Service) Serve(c context.Context) error {
 	go func() {
 		select {
 		case <-ctx.Done():
-			log.Info("Repositories> Shutdown HTTP Server")
+			log.Info(ctx, "Repositories> Shutdown HTTP Server")
 			server.Shutdown(ctx)
 		}
 	}()
 
 	//Start the http server
-	log.Info("Repositories> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+	log.Info(ctx, "Repositories> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Error("Repositories> Listen and serve failed: %s", err)
+		log.Error(ctx, "Repositories> Listen and serve failed: %s", err)
 	}
 
 	return ctx.Err()

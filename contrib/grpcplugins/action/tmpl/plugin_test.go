@@ -46,7 +46,7 @@ age=42`
 		t.Error("should not return error")
 		return
 	}
-	if res.GetStatus() != sdk.StatusSuccess.String() {
+	if res.GetStatus() != sdk.StatusSuccess {
 		t.Errorf("unexpected error on Run")
 		return
 	}

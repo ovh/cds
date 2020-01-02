@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { WorkflowHookTask } from 'app/model/workflow.hook.model';
+import { HookService } from 'app/service/hook/hook.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { finalize } from 'rxjs/operators';
-import { WorkflowHookTask } from '../../../../model/workflow.hook.model';
-import { HookService } from '../../../../service/services.module';
-import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { Column, ColumnType, Filter } from '../../../../shared/table/data-table.component';
 
 @Component({
     selector: 'app-hook-task-list',
@@ -19,7 +19,10 @@ export class HookTaskListComponent {
     dataCount: number;
     path: Array<PathItem>;
 
-    constructor(private _hookService: HookService, private _cd: ChangeDetectorRef) {
+    constructor(
+        private _hookService: HookService,
+        private _cd: ChangeDetectorRef
+        ) {
         this.filter = f => {
             const lowerFilter = f.toLowerCase();
             return d => {

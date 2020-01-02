@@ -1,6 +1,7 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { CanActivateAuthAdminRoute } from '../../service/auth/authenAdminRouteActivate';
+import { AdminGuard } from 'app/guard/admin.guard';
+import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { AdminComponent } from './admin.component';
 import { BroadcastAddComponent } from './broadcast/add/broadcast.add.component';
 import { BroadcastEditComponent } from './broadcast/edit/broadcast.edit.component';
@@ -17,8 +18,8 @@ const routes: Routes = [
     {
         path: '',
         component: AdminComponent,
-        canActivateChild: [CanActivateAuthAdminRoute],
-        canActivate: [CanActivateAuthAdminRoute],
+        canActivateChild: [AuthenticationGuard, AdminGuard],
+        canActivate: [AuthenticationGuard, AdminGuard],
         children: [
             {
                 path: 'worker-model-pattern',

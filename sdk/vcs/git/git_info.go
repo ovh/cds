@@ -2,9 +2,14 @@ package git
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
+
 	"time"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // Info contains some Information about a git repository
@@ -19,7 +24,7 @@ type Info struct {
 
 // ExtractInfo returns an info, containing git information (git.Hash, describe)
 // ignore error if a command fails (example: for empty repository)
-func ExtractInfo(dir string, opts *CloneOpts) Info {
+func ExtractInfo(ctx context.Context, dir string, opts *CloneOpts) (Info, error) {
 	if verbose {
 		t1 := time.Now()
 		defer func(start time.Time) {
@@ -27,15 +32,20 @@ func ExtractInfo(dir string, opts *CloneOpts) Info {
 		}(t1)
 	}
 
-	info := Info{}
-	cmdHash := []cmd{{dir: dir, cmd: "git", args: []string{"rev-parse", "HEAD"}}}
-	cmdDescribe := []cmd{{dir: dir, cmd: "git", args: []string{"describe", "--tags"}}}
-	cmdMessage := []cmd{{dir: dir, cmd: "git", args: []string{"log", "--format=%B", "-1"}}}
-	cmdAuthor := []cmd{{dir: dir, cmd: "git", args: []string{"log", "--format=%an", "-1"}}}
-	cmdAuthorEmail := []cmd{{dir: dir, cmd: "git", args: []string{"log", "--format=%ae", "-1"}}}
-	cmdCurrentBranch := []cmd{{dir: dir, cmd: "git", args: []string{"rev-parse", "--abbrev-ref", "HEAD"}}}
-	cmdlsRemoteTags := []cmd{{dir: dir, cmd: "git", args: []string{"ls-remote", "--tags"}}}
-	cmdFetchTags := []cmd{{dir: dir, cmd: "git", args: []string{"fetch", "--tags", "--unshallow"}}}
+	var info Info
+	var err error
+	dir, err = filepath.Abs(dir)
+	if err != nil {
+		return info, sdk.WithStack(err)
+	}
+	cmdHash := []cmd{{workdir: dir, cmd: "git", args: []string{"rev-parse", "HEAD"}}}
+	cmdDescribe := []cmd{{workdir: dir, cmd: "git", args: []string{"describe", "--tags"}}}
+	cmdMessage := []cmd{{workdir: dir, cmd: "git", args: []string{"log", "--format=%B", "-1"}}}
+	cmdAuthor := []cmd{{workdir: dir, cmd: "git", args: []string{"log", "--format=%an", "-1"}}}
+	cmdAuthorEmail := []cmd{{workdir: dir, cmd: "git", args: []string{"log", "--format=%ae", "-1"}}}
+	cmdCurrentBranch := []cmd{{workdir: dir, cmd: "git", args: []string{"rev-parse", "--abbrev-ref", "HEAD"}}}
+	cmdlsRemoteTags := []cmd{{workdir: dir, cmd: "git", args: []string{"ls-remote", "--tags"}}}
+	cmdFetchTags := []cmd{{workdir: dir, cmd: "git", args: []string{"fetch", "--tags", "--unshallow"}}}
 
 	// git rev-parse HEAD can fail with
 	// "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree."
@@ -66,7 +76,7 @@ func ExtractInfo(dir string, opts *CloneOpts) Info {
 			}
 		}
 	}
-	return info
+	return info, nil
 }
 
 func gitRawCommandString(c cmds) (string, error) {

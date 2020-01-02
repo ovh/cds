@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"context"
 	"encoding/json"
 
 	dump "github.com/fsamin/go-dump"
@@ -8,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) doScheduledTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
+func (s *Service) doScheduledTaskExecution(ctx context.Context, t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
 	log.Debug("Hooks> Processing scheduled task %s", t.UUID)
 
 	// Prepare a struct to send to CDS API
@@ -32,13 +33,13 @@ func (s *Service) doScheduledTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowN
 
 			m1, errm1 := e.ToStringMap(payloadInt)
 			if errm1 != nil {
-				log.Error("Hooks> doScheduledTaskExecution> Cannot convert payload to map %s", errm1)
+				log.Error(ctx, "Hooks> doScheduledTaskExecution> Cannot convert payload to map %s", errm1)
 			} else {
 				payloadValues = m1
 			}
 			payloadValues["payload"] = payload.Value
 		} else {
-			log.Error("Hooks> doScheduledTaskExecution> Cannot unmarshall payload %s", err)
+			log.Error(ctx, "Hooks> doScheduledTaskExecution> Cannot unmarshall payload %s", err)
 		}
 	}
 	for k, v := range t.Config {

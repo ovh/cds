@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Service } from 'app/model/service.model';
-import { ServiceService, ThemeStore } from 'app/service/services.module';
+import { ServiceService } from 'app/service/service/service.service';
+import { ThemeStore } from 'app/service/theme/theme.store';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { finalize } from 'rxjs/operators';

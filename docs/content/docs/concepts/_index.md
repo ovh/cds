@@ -23,4 +23,7 @@ cards:
 - name: concept_organization
   title: "Organization & Permissions"
   description: "Understand the project concept and the self-service permissions management."
+- name: concept_authentication
+  title: "Authentication"
+  description: "Understand CDS authentication concepts."
 ---

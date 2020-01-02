@@ -2,52 +2,153 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	"github.com/ovh/cds/engine/api/observability"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/jws"
+	"github.com/ovh/cds/sdk/log"
 )
 
-// APIServiceConfiguration is an exposed type for CDS API
-type APIServiceConfiguration struct {
-	HTTP struct {
-		URL      string `toml:"url" default:"http://localhost:8081" json:"url"`
-		Insecure bool   `toml:"insecure" commented:"true" json:"insecure"`
-	} `toml:"http" json:"http"`
-	GRPC struct {
-		URL      string `toml:"url" default:"http://localhost:8082" json:"url"`
-		Insecure bool   `toml:"insecure" commented:"true" json:"insecure"`
-	} `toml:"grpc" json:"grpc"`
-	Token                string `toml:"token" default:"************" json:"-"`
-	RequestTimeout       int    `toml:"requestTimeout" default:"10" json:"requestTimeout"`
-	MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" json:"maxHeartbeatFailures"`
+// CommonMonitoring returns common part of MonitoringStatus
+func (c *Common) CommonMonitoring() sdk.MonitoringStatus {
+	t := time.Now()
+	return sdk.MonitoringStatus{
+		Now: t,
+		Lines: []sdk.MonitoringStatusLine{{
+			Component: "Version",
+			Value:     sdk.VERSION,
+			Status:    sdk.MonitoringStatusOK,
+		}, {
+			Component: "Uptime",
+			Value:     time.Since(c.StartupTime).String(),
+			Status:    sdk.MonitoringStatusOK,
+		}, {
+			Component: "Time",
+			Value:     fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()),
+			Status:    sdk.MonitoringStatusOK,
+		}},
+	}
 }
 
-// Common is the struct representing a CDS µService
-type Common struct {
-	Client               cdsclient.Interface
-	Hash                 string
-	StartupTime          time.Time
-	API                  string
-	Name                 string
-	HTTPURL              string
-	Token                string
-	Type                 string
-	MaxHeartbeatFailures int
-	ServiceName          string
+func (c *Common) Type() string {
+	return c.ServiceType
 }
 
-// Service is the interface for a engine service
-type Service interface {
-	ApplyConfiguration(cfg interface{}) error
-	Serve(ctx context.Context) error
-	CheckConfiguration(cfg interface{}) error
-	Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus, cfg interface{}) error
-	Register(status func() sdk.MonitoringStatus, cfg interface{}) error
-	Status() sdk.MonitoringStatus
+func (c *Common) Name() string {
+	return c.ServiceName
 }
 
-// BeforeStart has to be implemented if you want to run some code after the ApplyConfiguration and before the Serve of a Service
-type BeforeStart interface {
-	BeforeStart() error
+func (c *Common) Start(ctx context.Context, cfg cdsclient.ServiceConfig) error {
+	// no register for api
+	if c.ServiceType == "api" {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+	var err error
+	var firstAttempt = true
+loop:
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println()
+			return err
+		default:
+			c.Client, c.APIPublicKey, err = cdsclient.NewServiceClient(cfg)
+			if err == nil {
+				fmt.Println()
+				break loop
+			}
+			if firstAttempt {
+				fmt.Print("Waiting for CDS API..")
+				firstAttempt = false
+			}
+			fmt.Print(".")
+			time.Sleep(10 * time.Second)
+		}
+	}
+
+	c.ParsedAPIPublicKey, err = jws.NewPublicKeyFromPEM(c.APIPublicKey)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	ctx = observability.ContextWithTag(ctx,
+		observability.TagServiceType, c.Type(),
+		observability.TagServiceName, c.Name(),
+	)
+
+	RegisterCommonMetricsView(ctx)
+
+	return nil
+}
+
+func (c *Common) Register(ctx context.Context, cfg sdk.ServiceConfig) error {
+	log.Info(ctx, "Registing service %s(%T) %s", c.Type(), c, c.Name())
+
+	// no register for api
+	if c.ServiceType == "api" {
+		return nil
+	}
+
+	var srv = sdk.Service{
+		CanonicalService: sdk.CanonicalService{
+			Name:    c.ServiceName,
+			HTTPURL: c.HTTPURL,
+			Type:    c.ServiceType,
+			Config:  cfg,
+		},
+		LastHeartbeat: time.Time{},
+		Version:       sdk.VERSION,
+	}
+
+	if c.PrivateKey != nil {
+		pubKeyPEM, err := jws.ExportPublicKey(c.PrivateKey)
+		if err != nil {
+			return fmt.Errorf("unable get public key from private key: %v", err)
+		}
+		srv.PublicKey = pubKeyPEM
+	}
+
+	srv2, err := c.Client.ServiceRegister(ctx, srv)
+	if err != nil {
+		return sdk.WrapError(err, "Register>")
+	}
+	c.ServiceInstance = srv2
+	return nil
+}
+
+// Heartbeat have to be launch as a goroutine, call DoHeartBeat each 30s
+func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context) sdk.MonitoringStatus) error {
+	// no heartbeat for api
+	if c.ServiceType == "api" {
+		return nil
+	}
+
+	ticker := time.NewTicker(30 * time.Second)
+
+	var heartbeatFailures int
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			if err := c.Client.ServiceHeartbeat(status(ctx)); err != nil {
+				log.Warning(ctx, "%s> Heartbeat failure: %v", c.Name(), err)
+				heartbeatFailures++
+
+				// if register failed too many time, stop heartbeat
+				if heartbeatFailures > c.MaxHeartbeatFailures {
+					return fmt.Errorf("%s> Heartbeat> Register failed excedeed", c.Name())
+				}
+				continue
+			}
+			heartbeatFailures = 0
+		}
+	}
 }

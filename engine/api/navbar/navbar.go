@@ -12,18 +12,18 @@ import (
 )
 
 // LoadNavbarData returns just the needed data for the ui navbar
-func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data []sdk.NavbarProjectData, err error) {
+func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
 	// Admin can gets all project
 	// Users can gets only their projects
 
-	if u == nil || u.Admin {
+	if u.Admin() {
 		return loadNavbarAsAdmin(db, store, u)
 	}
 
 	return loadNavbarAsUser(db, store, u)
 }
 
-func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data []sdk.NavbarProjectData, err error) {
+func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
 	query := `
 	(
 		SELECT DISTINCT
@@ -61,7 +61,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (dat
 	)
 	`
 
-	rows, err := db.Query(query, u.ID)
+	rows, err := db.Query(query, u.OldUserStruct.ID)
 	if err != nil {
 		return data, err
 	}
@@ -98,7 +98,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (dat
 	return data, nil
 }
 
-func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data []sdk.NavbarProjectData, err error) {
+func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
 	query := `
 	(
 		SELECT DISTINCT
@@ -160,9 +160,9 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data
 	)
   `
 
-	rows, err := db.Query(query, u.ID, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID)
+	rows, err := db.Query(query, u.OldUserStruct.ID, gorpmapping.IDsToQueryString(u.OldUserStruct.Groups.ToIDs()), group.SharedInfraGroup.ID)
 	if err != nil {
-		return data, err
+		return data, sdk.WithStack(err)
 	}
 	defer rows.Close()
 

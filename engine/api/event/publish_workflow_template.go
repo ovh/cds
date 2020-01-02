@@ -1,6 +1,7 @@
 package event
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func publishWorkflowTemplateEvent(payload interface{}, u *sdk.User) {
+func publishWorkflowTemplateEvent(ctx context.Context, payload interface{}, u sdk.Identifiable) {
 	event := sdk.Event{
 		Timestamp: time.Now(),
 		Hostname:  hostname,
@@ -18,20 +19,20 @@ func publishWorkflowTemplateEvent(payload interface{}, u *sdk.User) {
 		Payload:   structs.Map(payload),
 	}
 	if u != nil {
-		event.Username = u.Username
-		event.UserMail = u.Email
+		event.Username = u.GetUsername()
+		event.UserMail = u.GetEmail()
 	}
-	publishEvent(event)
+	publishEvent(ctx, event)
 }
 
 // PublishWorkflowTemplateAdd publishes an event for the creation of the given workflow template.
-func PublishWorkflowTemplateAdd(wt sdk.WorkflowTemplate, u *sdk.User) {
-	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateAdd{WorkflowTemplate: wt}, u)
+func PublishWorkflowTemplateAdd(ctx context.Context, wt sdk.WorkflowTemplate, u sdk.Identifiable) {
+	publishWorkflowTemplateEvent(ctx, sdk.EventWorkflowTemplateAdd{WorkflowTemplate: wt}, u)
 }
 
 // PublishWorkflowTemplateUpdate publishes an event for the update of the given workflow template.
-func PublishWorkflowTemplateUpdate(old, new sdk.WorkflowTemplate, changeMessage string, u *sdk.User) {
-	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateUpdate{
+func PublishWorkflowTemplateUpdate(ctx context.Context, old, new sdk.WorkflowTemplate, changeMessage string, u sdk.Identifiable) {
+	publishWorkflowTemplateEvent(ctx, sdk.EventWorkflowTemplateUpdate{
 		OldWorkflowTemplate: old,
 		NewWorkflowTemplate: new,
 		ChangeMessage:       changeMessage,
@@ -39,13 +40,13 @@ func PublishWorkflowTemplateUpdate(old, new sdk.WorkflowTemplate, changeMessage 
 }
 
 // PublishWorkflowTemplateInstanceAdd publishes an event for the creation of the given workflow template instance.
-func PublishWorkflowTemplateInstanceAdd(wti sdk.WorkflowTemplateInstance, u *sdk.User) {
-	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateInstanceAdd{WorkflowTemplateInstance: wti}, u)
+func PublishWorkflowTemplateInstanceAdd(ctx context.Context, wti sdk.WorkflowTemplateInstance, u sdk.Identifiable) {
+	publishWorkflowTemplateEvent(ctx, sdk.EventWorkflowTemplateInstanceAdd{WorkflowTemplateInstance: wti}, u)
 }
 
 // PublishWorkflowTemplateInstanceUpdate publishes an event for the update of the given workflow template instance.
-func PublishWorkflowTemplateInstanceUpdate(old, new sdk.WorkflowTemplateInstance, u *sdk.User) {
-	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateInstanceUpdate{
+func PublishWorkflowTemplateInstanceUpdate(ctx context.Context, old, new sdk.WorkflowTemplateInstance, u sdk.Identifiable) {
+	publishWorkflowTemplateEvent(ctx, sdk.EventWorkflowTemplateInstanceUpdate{
 		OldWorkflowTemplateInstance: old,
 		NewWorkflowTemplateInstance: new,
 	}, u)

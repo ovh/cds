@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -41,7 +42,7 @@ func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) 
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitServer, sdk.StringParameter, vcsInfos.Server)
 }
 
-func checkCondition(wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, params []sdk.Parameter) bool {
+func checkCondition(ctx context.Context, wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, params []sdk.Parameter) bool {
 	var conditionsOK bool
 	var errc error
 	if conditions.LuaScript == "" {
@@ -49,7 +50,7 @@ func checkCondition(wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, 
 	} else {
 		luacheck, err := luascript.NewCheck()
 		if err != nil {
-			log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", err)
+			log.Warning(ctx, "processWorkflowNodeRun> WorkflowCheckConditions error: %s", err)
 			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowError.ID,
 				Args: []interface{}{fmt.Sprintf("Error init LUA System: %v", err)},
@@ -60,7 +61,7 @@ func checkCondition(wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, 
 		conditionsOK = luacheck.Result
 	}
 	if errc != nil {
-		log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
+		log.Warning(ctx, "processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
 		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
 			Args: []interface{}{fmt.Sprintf("Error on LUA Condition: %v", errc)},
@@ -91,35 +92,35 @@ type statusCounter struct {
 func getRunStatus(counter statusCounter) string {
 	switch {
 	case counter.building > 0:
-		return sdk.StatusBuilding.String()
+		return sdk.StatusBuilding
 	case counter.failed > 0:
-		return sdk.StatusFail.String()
+		return sdk.StatusFail
 	case counter.stoppped > 0:
-		return sdk.StatusStopped.String()
+		return sdk.StatusStopped
 	case counter.success > 0:
-		return sdk.StatusSuccess.String()
+		return sdk.StatusSuccess
 	case counter.skipped > 0:
-		return sdk.StatusSkipped.String()
+		return sdk.StatusSkipped
 	case counter.disabled > 0:
-		return sdk.StatusDisabled.String()
+		return sdk.StatusDisabled
 	default:
-		return sdk.StatusNeverBuilt.String()
+		return sdk.StatusNeverBuilt
 	}
 }
 
 func computeRunStatus(status string, counter *statusCounter) {
 	switch status {
-	case sdk.StatusSuccess.String():
+	case sdk.StatusSuccess:
 		counter.success++
-	case sdk.StatusBuilding.String(), sdk.StatusWaiting.String():
+	case sdk.StatusBuilding, sdk.StatusWaiting:
 		counter.building++
-	case sdk.StatusFail.String():
+	case sdk.StatusFail:
 		counter.failed++
-	case sdk.StatusStopped.String():
+	case sdk.StatusStopped:
 		counter.stoppped++
-	case sdk.StatusSkipped.String():
+	case sdk.StatusSkipped:
 		counter.skipped++
-	case sdk.StatusDisabled.String():
+	case sdk.StatusDisabled:
 		counter.disabled++
 	}
 }

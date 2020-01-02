@@ -18,14 +18,14 @@ import (
 // than a tick.
 var nbRegisteringWorkerModels int64
 
-func workerRegister(ctx context.Context, h Interface, startWorkerChan chan<- workerStarterRequest) error {
+func workerRegister(ctx context.Context, h InterfaceWithModels, startWorkerChan chan<- workerStarterRequest) error {
 	if len(models) == 0 {
 		return fmt.Errorf("hatchery> workerRegister> No model returned by GetWorkerModels")
 	}
 	// currentRegister contains the register spawned in this ticker
 	currentRegistering, err := WorkerPool(ctx, h, sdk.StatusWorkerRegistering)
 	if err != nil {
-		log.Error("hatchery> workerRegister> %v", err)
+		log.Error(ctx, "hatchery> workerRegister> worker pool error: %v", err)
 	}
 
 	atomic.StoreInt64(&nbRegisteringWorkerModels, int64(len(currentRegistering)))
@@ -34,7 +34,7 @@ loopModels:
 		if models[k].Type != h.ModelType() {
 			continue
 		}
-		if h.NeedRegistration(&models[k]) || models[k].CheckRegistration {
+		if h.NeedRegistration(ctx, &models[k]) || models[k].CheckRegistration {
 			log.Debug("hatchery> workerRegister> need register")
 		} else {
 			continue
@@ -57,22 +57,22 @@ loopModels:
 		// Check if there is a pending registering worker
 		for _, w := range currentRegistering {
 			if strings.Contains(w.Name, models[k].Name) {
-				log.Info("hatchery> workerRegister> %s is already registering (%s)", models[k].Name, w.Name)
+				log.Info(ctx, "hatchery> workerRegister> %s is already registering (%s)", models[k].Name, w.Name)
 				continue loopModels
 			}
 		}
 
 		// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
-		if models[k].NbSpawnErr > 5 && *h.Service().GroupID != models[k].ID {
-			log.Warning("hatchery> workerRegister> Too many errors on spawn with model %s, please check this worker model", models[k].Name)
+		if models[k].NbSpawnErr > 5 {
+			log.Warning(ctx, "hatchery> workerRegister> Too many errors on spawn with model %s, please check this worker model", models[k].Name)
 			continue
 		}
 
-		if h.NeedRegistration(&models[k]) || models[k].CheckRegistration {
-			if err := h.CDSClient().WorkerModelBook(models[k].ID); err != nil {
+		if h.NeedRegistration(ctx, &models[k]) || models[k].CheckRegistration {
+			if err := h.CDSClient().WorkerModelBook(models[k].Group.Name, models[k].Name); err != nil {
 				log.Debug("%v", sdk.WrapError(err, "cannot book model %s with id %d", models[k].Name, models[k].ID))
 			} else {
-				log.Info("hatchery> workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
+				log.Info(ctx, "hatchery> workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
 				//Ask for the creation
 				startWorkerChan <- workerStarterRequest{
 					registerWorkerModel: &models[k],
@@ -84,13 +84,13 @@ loopModels:
 }
 
 // CheckWorkerModelRegister checks if a model has been registered, if not it raises an error on the API
-func CheckWorkerModelRegister(h Interface, modelID int64) error {
+func CheckWorkerModelRegister(h Interface, modelPath string) error {
 	var sendError bool
 	var m *sdk.Model
 	for i := range models {
 		m = &models[i]
 		year, month, day := m.LastRegistration.Date()
-		if m.ID == modelID {
+		if m.Group.Name+"/"+m.Name == modelPath {
 			sendError = year == 1 && month == 1 && day == 1
 			log.Debug("checking last registration date of %s: %v (%v)", m.Name, m.LastRegistration, sendError)
 			break

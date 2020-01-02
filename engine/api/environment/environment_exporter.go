@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -12,7 +13,7 @@ import (
 )
 
 // Export an environment
-func Export(db gorp.SqlExecutor, cache cache.Store, key string, envName string, f exportentities.Format, u *sdk.User, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
+func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, key string, envName string, f exportentities.Format, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
 	// Load app
 	env, errload := LoadEnvironmentByName(db, key, envName)
 	if errload != nil {
@@ -27,7 +28,7 @@ func Export(db gorp.SqlExecutor, cache cache.Store, key string, envName string, 
 	env.Variable = variables
 
 	// Reload key
-	if errE := LoadAllDecryptedKeys(db, env); errE != nil {
+	if errE := LoadAllDecryptedKeys(ctx, db, env); errE != nil {
 		return 0, sdk.WrapError(errE, "environment.Export> Cannot load env %s keys", envName)
 	}
 

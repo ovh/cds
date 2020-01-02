@@ -1,6 +1,7 @@
 package objectstore
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -18,8 +19,8 @@ type FilesystemStore struct {
 }
 
 // newFilesystemStore creates a new ObjectStore with filesystem driver
-func newFilesystemStore(projectIntegration sdk.ProjectIntegration, conf ConfigOptionsFilesystem) (*FilesystemStore, error) {
-	log.Info("ObjectStore> Initialize Filesystem driver on directory: %s", conf.Basedir)
+func newFilesystemStore(ctx context.Context, projectIntegration sdk.ProjectIntegration, conf ConfigOptionsFilesystem) (*FilesystemStore, error) {
+	log.Info(ctx, "ObjectStore> Initialize Filesystem driver on directory: %s", conf.Basedir)
 	if conf.Basedir == "" {
 		return nil, fmt.Errorf("artifact storage is filesystem, but --artifact-basedir is not provided")
 	}
@@ -39,7 +40,7 @@ func (fss *FilesystemStore) GetProjectIntegration() sdk.ProjectIntegration {
 }
 
 //Status return filesystem storage status
-func (fss *FilesystemStore) Status() sdk.MonitoringStatusLine {
+func (fss *FilesystemStore) Status(ctx context.Context) sdk.MonitoringStatusLine {
 	if _, err := os.Stat(fss.basedir); os.IsNotExist(err) {
 		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Filesystem Storage KO (" + err.Error() + ")", Status: sdk.MonitoringStatusAlert}
 	}
@@ -69,19 +70,19 @@ func (fss *FilesystemStore) Store(o Object, data io.ReadCloser) (string, error) 
 }
 
 // Fetch lookup on disk for data
-func (fss *FilesystemStore) Fetch(o Object) (io.ReadCloser, error) {
+func (fss *FilesystemStore) Fetch(ctx context.Context, o Object) (io.ReadCloser, error) {
 	dst := path.Join(fss.basedir, o.GetPath(), o.GetName())
 	return os.Open(dst)
 }
 
 // Delete deletes data from disk
-func (fss *FilesystemStore) Delete(o Object) error {
+func (fss *FilesystemStore) Delete(ctx context.Context, o Object) error {
 	dst := path.Join(fss.basedir, o.GetPath(), o.GetName())
 	return os.RemoveAll(dst)
 }
 
 // DeleteContainer deletes a directory from disk
-func (fss *FilesystemStore) DeleteContainer(containerPath string) error {
+func (fss *FilesystemStore) DeleteContainer(ctx context.Context, containerPath string) error {
 	// check, just to be sure...
 	if strings.TrimSpace(containerPath) != "" && containerPath != "/" {
 		dst := path.Join(fss.basedir, containerPath)

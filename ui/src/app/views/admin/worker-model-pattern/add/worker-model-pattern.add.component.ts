@@ -1,14 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import omit from 'lodash-es/omit';
+import { ModelPattern } from 'app/model/worker-model.model';
+import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { finalize } from 'rxjs/operators';
-import { User } from '../../../../model/user.model';
-import { ModelPattern } from '../../../../model/worker-model.model';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
-import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
-import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-worker-model-pattern-add',
@@ -17,14 +14,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkerModelPatternAddComponent {
-    loading = false;
-    addLoading = false;
+    loading: boolean;
     pattern: ModelPattern;
-    workerModelTypes: Array<string>;
-    currentUser: User;
-    envNames: Array<string> = [];
-    newEnvName: string;
-    newEnvValue: string;
     path: Array<PathItem>;
 
     constructor(
@@ -32,19 +23,9 @@ export class WorkerModelPatternAddComponent {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _router: Router,
-        private _authentificationStore: AuthentificationStore,
         private _cd: ChangeDetectorRef
     ) {
-        this.currentUser = this._authentificationStore.getUser();
-        this.loading = true;
-        this._workerModelService.getTypes()
-            .pipe(finalize(() => {
-                this.loading = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe(wmt => this.workerModelTypes = wmt);
         this.pattern = new ModelPattern();
-
         this.path = [<PathItem>{
             translate: 'common_admin'
         }, <PathItem>{
@@ -55,38 +36,17 @@ export class WorkerModelPatternAddComponent {
         }];
     }
 
-    clickSaveButton(): void {
-        if (this.addLoading || !this.pattern || !this.pattern.name) {
-            return;
-        }
-
-        this.addLoading = true;
-        this._workerModelService.createWorkerModelPattern(this.pattern)
+    onSave(m: ModelPattern): void {
+        this.loading = true;
+        this._workerModelService.createPattern(m)
             .pipe(finalize(() => {
-                this.addLoading = false;
+                this.loading = false;
                 this._cd.markForCheck();
             }))
             .subscribe((pattern) => {
+                this.pattern = m;
                 this._toast.success('', this._translate.instant('worker_model_pattern_saved'));
                 this._router.navigate(['admin', 'worker-model-pattern', pattern.type, pattern.name]);
             });
-    }
-
-    addEnv(newEnvName: string, newEnvValue: string) {
-        if (!newEnvName) {
-            return;
-        }
-        if (!this.pattern.model.envs) {
-            this.pattern.model.envs = {};
-        }
-        this.pattern.model.envs[newEnvName] = newEnvValue;
-        this.envNames.push(newEnvName);
-        this.newEnvName = '';
-        this.newEnvValue = '';
-    }
-
-    deleteEnv(envName: string, index: number) {
-        this.envNames.splice(index, 1);
-        this.pattern.model.envs = omit(this.pattern.model.envs, envName);
     }
 }

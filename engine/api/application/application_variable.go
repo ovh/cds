@@ -203,7 +203,7 @@ func GetAllVariableByID(db gorp.SqlExecutor, applicationID int64, fargs ...FuncA
 }
 
 // InsertVariable Insert a new variable in the given application
-func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, u *sdk.User) error {
+func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable sdk.Variable, u sdk.Identifiable) error {
 	//Check variable name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
@@ -231,8 +231,8 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	ava := &sdk.ApplicationVariableAudit{
 		ApplicationID: app.ID,
 		Type:          sdk.AuditAdd,
-		Author:        u.Username,
-		VariableAfter: variable,
+		Author:        u.GetUsername(),
+		VariableAfter: &variable,
 		VariableID:    variable.ID,
 		Versionned:    time.Now(),
 	}
@@ -244,7 +244,7 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 }
 
 // UpdateVariable Update a variable in the given application
-func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, variableBefore *sdk.Variable, u *sdk.User) error {
+func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, variableBefore *sdk.Variable, u sdk.Identifiable) error {
 
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
@@ -275,7 +275,7 @@ func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	ava := &sdk.ApplicationVariableAudit{
 		ApplicationID:  app.ID,
 		Type:           sdk.AuditUpdate,
-		Author:         u.Username,
+		Author:         u.GetUsername(),
 		VariableAfter:  variable,
 		VariableBefore: variableBefore,
 		VariableID:     variable.ID,
@@ -289,7 +289,7 @@ func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 }
 
 // DeleteVariable Delete a variable from the given pipeline
-func DeleteVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, u *sdk.User) error {
+func DeleteVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, u sdk.Identifiable) error {
 	query := `DELETE FROM application_variable
 		  WHERE application_variable.application_id = $1 AND application_variable.var_name = $2`
 	result, err := db.Exec(query, app.ID, variable.Name)
@@ -308,7 +308,7 @@ func DeleteVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	ava := &sdk.ApplicationVariableAudit{
 		ApplicationID:  app.ID,
 		Type:           sdk.AuditDelete,
-		Author:         u.Username,
+		Author:         u.GetUsername(),
 		VariableBefore: variable,
 		VariableID:     variable.ID,
 		Versionned:     time.Now(),
@@ -330,12 +330,12 @@ func DeleteAllVariable(db gorp.SqlExecutor, applicationID int64) error {
 	return nil
 }
 
-// AddKeyPairToApplication generate a ssh key pair and add them as application variables
+// AddKeyPairToApplication_DEPRECATED generate a ssh key pair and add them as application variables
 // DEPCRECATED
-func AddKeyPairToApplication(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, keyname string, u *sdk.User) error {
+func AddKeyPairToApplication_DEPRECATED(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, keyname string, u sdk.Identifiable) error {
 	k, errGenerate := keys.GenerateSSHKey(keyname)
 	if errGenerate != nil {
-		return sdk.WrapError(errGenerate, "AddKeyPairToApplication> Cannot generate key")
+		return sdk.WrapError(errGenerate, "AddKeyPairToApplication_DEPRECATED> Cannot generate key")
 	}
 
 	v := sdk.Variable{
@@ -344,7 +344,7 @@ func AddKeyPairToApplication(db gorp.SqlExecutor, store cache.Store, app *sdk.Ap
 		Value: k.Private,
 	}
 
-	if err := InsertVariable(db, store, app, &v, u); err != nil {
+	if err := InsertVariable(db, store, app, v, u); err != nil {
 		return err
 	}
 
@@ -354,7 +354,7 @@ func AddKeyPairToApplication(db gorp.SqlExecutor, store cache.Store, app *sdk.Ap
 		Value: k.Public,
 	}
 
-	return InsertVariable(db, store, app, &p, u)
+	return InsertVariable(db, store, app, p, u)
 }
 
 // insertAudit  insert an application variable audit

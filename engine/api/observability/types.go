@@ -16,17 +16,17 @@ const (
 
 // Configuration is the global tracing configuration
 type Configuration struct {
-	Enable   bool `json:"enable"`
-	Exporter struct {
+	MetricsEnabled bool `toml:"metricsEnabled" json:"metricsEnabled"`
+	TracingEnabled bool `toml:"tracingEnabled" json:"tracingEnabled"`
+	Exporters      struct {
 		Jaeger struct {
-			HTTPCollectorEndpoint string `toml:"HTTPCollectorEndpoint" default:"http://localhost:14268" json:"httpCollectorEndpoint"`
+			HTTPCollectorEndpoint string  `toml:"HTTPCollectorEndpoint" default:"http://localhost:14268" json:"httpCollectorEndpoint"`
+			SamplingProbability   float64 `toml:"samplingProbability" json:"metricSamplingProbability"`
 		} `json:"jaeger"`
 		Prometheus struct {
 			ReporteringPeriod int `toml:"ReporteringPeriod" default:"10" json:"reporteringPeriod"`
 		} `json:"prometheus"`
 	} `json:"exporter"`
-	SamplingProbability float64 `json:"samplingProbability"`
-	Name                string  `toml:"name" default:"cdsinstance" comment:"Name of this CDS Instance. This value is added to /mon/metrics as label named 'cds' on each series" json:"name"`
 }
 
 //Options is the options struct for a new tracing span

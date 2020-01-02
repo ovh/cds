@@ -11,7 +11,6 @@ type Environment struct {
 	Variable       []Variable       `json:"variables,omitempty" yaml:"variables"`
 	ProjectID      int64            `json:"-" yaml:"-"`
 	ProjectKey     string           `json:"project_key" yaml:"-"`
-	Permission     int              `json:"permission"`
 	LastModified   int64            `json:"last_modified"`
 	Keys           []EnvironmentKey `json:"keys"`
 	Usage          *Usage           `json:"usage,omitempty"`

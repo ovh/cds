@@ -1,6 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { CanActivateAuthRoute } from '../../service/auth/authenRouteActivate';
+import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { ProjectAddComponent } from './add/project.add.component';
 import { ProjectListComponent } from './list/project.list.component';
 import { ProjectShowComponent } from './show/project.component';
@@ -8,8 +8,8 @@ import { ProjectShowComponent } from './show/project.component';
 const projectRoutes: Routes = [
     {
         path: '',
-        canActivate: [CanActivateAuthRoute],
-        canActivateChild: [CanActivateAuthRoute],
+        canActivate: [AuthenticationGuard],
+        canActivateChild: [AuthenticationGuard],
         children: [
             { path: '', component: ProjectAddComponent, data: { title: 'Add • Project' } },
             { path: 'list/all', component: ProjectListComponent, data: { title: 'List • Project' } },

@@ -104,7 +104,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             this.selectedTags = this._workflow.metadata['default_tags'].split(',');
         }
 
-        if (this.project.permission !== 7) {
+        if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
         }
         this.oldName = this.workflow.name;

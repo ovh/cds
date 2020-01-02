@@ -1,5 +1,5 @@
 <div class="ProjectIntegration">
-    <ng-container *ngIf="project.permission === 7">
+    <ng-container *ngIf="project.permissions.writable">
       <h3>{{ 'integration_add_title' | translate }}</h3>
       <app-project-integration-form [project]="project"></app-project-integration-form>
     </ng-container>

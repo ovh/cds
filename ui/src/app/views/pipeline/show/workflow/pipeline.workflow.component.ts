@@ -1,12 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    Input,
-    OnDestroy,
-    OnInit,
-    ViewChild
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import * as pipelineActions from 'app/store/pipelines.action';
@@ -18,7 +10,6 @@ import { Subscription } from 'rxjs';
 import { finalize, first, flatMap } from 'rxjs/operators';
 import { Job } from '../../../../model/job.model';
 import { AllKeys } from '../../../../model/keys.model';
-import { PermissionValue } from '../../../../model/permission.model';
 import { Pipeline } from '../../../../model/pipeline.model';
 import { Project } from '../../../../model/project.model';
 import { Stage } from '../../../../model/stage.model';
@@ -80,14 +71,13 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     }
     @Input() queryParams: {};
 
-    @ViewChild('editStageModal', {static: false})
+    @ViewChild('editStageModal', { static: false })
     editStageModal: SemanticModalComponent;
 
     pipeline: Pipeline;
     selectedStage: Stage;
     selectedJob: Job;
     suggest: Array<string>;
-    permissionValue = PermissionValue;
     originalPipeline: Pipeline;
     keys: AllKeys;
     previewMode = false;
@@ -197,7 +187,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
             })
         ).subscribe((pip) => {
             this._toast.success('', this._translate.instant('stage_added'));
-            this.selectedStage = pip.stages[pip.stages.length - 1];
+            this.selectedStage = cloneDeep(pip.stages[pip.stages.length - 1]);
             this.addJob(this.selectedStage);
         });
     }

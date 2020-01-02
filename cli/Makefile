@@ -6,7 +6,7 @@ GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 TEST_PKGS = $(shell go list ./...)
-TEST_CMD = go test -v -timeout 600s -coverprofile=profile.coverprofile
+TEST_CMD = go test -tags skipkeychaintests -v -timeout 600s -coverprofile=profile.coverprofile
 
 $(GO_COV_MERGE):
 	go get -u github.com/wadey/gocovmerge
@@ -30,6 +30,7 @@ clean:
 	done;
 
 test: clean
+	$(info $(TEST_PKGS))
 	@for PKG in $(TEST_PKGS); do \
 		echo "Running tests in package $$PKG"; \
 		cd ${GOPATH}/src/$$PKG; \
@@ -39,7 +40,8 @@ test: clean
     else \
 		  $(TEST_CMD) > ${GOPATH}/src/$$PKG/tests.log; \
     fi; \
-	done;
+	done; \
+	echo "Lancement du coverage"
 	$(MAKE) test-coverage
 	$(MAKE) test-xunit-report
 

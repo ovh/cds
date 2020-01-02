@@ -10,21 +10,22 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/pipeline"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -36,14 +37,14 @@ type mockServiceClient struct {
 func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	webHookModel, err := workflow.LoadHookModelByName(db, sdk.WebHookModelName)
 	assert.NoError(t, err)
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -52,14 +53,22 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
-	_, err = db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
 
-	mockVCSSservice := &sdk.Service{Name: "TestHookRunWithoutPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithoutPayloadProcessNodeBuildParameter_VCS", services.TypeVCS)
+	defer func() {
+		_ = services.Delete(db, mockVCSSservice) // nolint
+	}()
 
-	mockHookServices := &sdk.Service{Name: "TestHookRunWithoutPayloadProcessNodeBuildParameter", Type: services.TypeHooks}
-	test.NoError(t, services.Insert(db, mockHookServices))
+	mockHooksService, _ := assets.InsertService(t, db, "TestHookRunWithoutPayloadProcessNodeBuildParameter_HOOKS", services.TypeHooks)
+	defer func() {
+		_ = services.Delete(db, mockHooksService) // nolint
+	}()
 
 	//This is a mock for the vcs service
 	services.HTTPClient = mock(
@@ -179,7 +188,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 		"git.repository": "sguiheux/demo",
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var hookEvent sdk.WorkflowNodeRunHookEvent
@@ -192,8 +201,9 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
@@ -210,14 +220,14 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	webHookModel, err := workflow.LoadHookModelByName(db, sdk.WebHookModelName)
 	assert.NoError(t, err)
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -226,13 +236,22 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
-	_, err = db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
-	mockVCSSservice := &sdk.Service{Name: "TestHookRunWithHashOnlyProcessNodeBuildParameter", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
 
-	mockHookServices := &sdk.Service{Name: "TestHookRunWithHashOnlyProcessNodeBuildParameter", Type: services.TypeHooks}
-	test.NoError(t, services.Insert(db, mockHookServices))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestHookRunWithHashOnlyProcessNodeBuildParameter_VCS", services.TypeVCS)
+	defer func() {
+		_ = services.Delete(db, mockVCSSservice) // nolint
+	}()
+
+	mockHooksService, _ := assets.InsertService(t, db, "TestHookRunWithHashOnlyProcessNodeBuildParameter_HOOKS", services.TypeHooks)
+	defer func() {
+		_ = services.Delete(db, mockHooksService) // nolint
+	}()
 
 	//This is a mock for the vcs service
 	services.HTTPClient = mock(
@@ -342,7 +361,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 		"git.repository": "sguiheux/demo",
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var hookEvent sdk.WorkflowNodeRunHookEvent
@@ -357,8 +376,9 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
@@ -375,11 +395,11 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -388,10 +408,14 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunWithPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunWithPayloadProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -491,7 +515,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -505,8 +529,9 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
@@ -523,11 +548,11 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -536,10 +561,13 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	srvs, err := services.LoadAll(context.Background(), db)
+	require.NoError(t, err)
+	for _, srv := range srvs {
+		require.NoError(t, services.Delete(db, &srv))
+	}
+
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -632,7 +660,7 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -647,8 +675,9 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 1, len(wr.WorkflowNodeRuns))
@@ -665,11 +694,11 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -678,8 +707,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 		},
 	}))
 
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -859,7 +887,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -875,11 +903,9 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
-
-	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))
-	assert.Equal(t, 1, len(wr.WorkflowNodeRuns[w.WorkflowData.Node.ID]))
 
 	mapParams := sdk.ParametersToMap(wr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].BuildParameters)
 	assert.Equal(t, "feat/branchForked", mapParams["git.branch"])
@@ -900,11 +926,11 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -920,10 +946,14 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -1091,7 +1121,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -1106,7 +1136,9 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	assert.NoError(t, err)
 	wr.Workflow = w
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 3, len(wr.WorkflowNodeRuns))
@@ -1140,11 +1172,11 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -1160,10 +1192,14 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -1277,7 +1313,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -1291,8 +1327,9 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
 
 	// Load run
@@ -1321,11 +1358,11 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -1341,10 +1378,14 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -1457,7 +1498,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -1471,8 +1512,9 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))
@@ -1496,11 +1538,11 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -1516,10 +1558,14 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice)
 	}()
@@ -1647,7 +1693,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -1662,8 +1708,9 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))
@@ -1691,11 +1738,11 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 func TestGitParamWithJoin(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -1711,10 +1758,14 @@ func TestGitParamWithJoin(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -1852,7 +1903,7 @@ func TestGitParamWithJoin(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -1867,8 +1918,9 @@ func TestGitParamWithJoin(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 3, len(wr.WorkflowNodeRuns))
@@ -1904,11 +1956,11 @@ func TestGitParamWithJoin(t *testing.T) {
 func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -1924,10 +1976,14 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) //nolint
 	}()
@@ -2064,7 +2120,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -2079,8 +2135,9 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 3, len(wr.WorkflowNodeRuns))
@@ -2115,11 +2172,11 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -2128,10 +2185,14 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 		},
 	}))
 
-	_, err := db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
-	mockVCSSservice := &sdk.Service{Name: "TestManualRunWithPayloadProcessNodeBuildParameter", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	allSrv, err := services.LoadAll(context.TODO(), db)
+	for _, s := range allSrv {
+		if err := services.Delete(db, &s); err != nil {
+			t.Fatalf("unable to delete service: %v", err)
+		}
+	}
+
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunWithPayloadProcessNodeBuildParameter", services.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
@@ -2251,7 +2312,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 		},
 	}
 
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// CREATE RUN
 	var manualEvent sdk.WorkflowNodeRunManual
@@ -2265,8 +2326,9 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	wr, err := workflow.CreateRun(db, &w, opts, u)
 	assert.NoError(t, err)
 	wr.Workflow = w
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, u, nil)
+	_, errR := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, opts, consumer, nil)
 	assert.NoError(t, errR)
 
 	assert.Equal(t, 2, len(wr.WorkflowNodeRuns))
@@ -2281,7 +2343,7 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	assert.Equal(t, "mylastcommit", wr.WorkflowNodeRuns[w.WorkflowData.Node.Triggers[0].ChildNode.ID][0].VCSHash)
 }
 
-func createEmptyPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.User) *sdk.Pipeline {
+func createEmptyPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Pipeline {
 	pip := &sdk.Pipeline{
 		Name: "empty",
 		Stages: []sdk.Stage{
@@ -2294,12 +2356,12 @@ func createEmptyPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, p
 	}
 	assert.NoError(t, pipeline.Import(context.TODO(), db, cache, proj, pip, nil, u))
 	var errPip error
-	pip, errPip = pipeline.LoadPipeline(db, proj.Key, pip.Name, true)
+	pip, errPip = pipeline.LoadPipeline(context.TODO(), db, proj.Key, pip.Name, true)
 	assert.NoError(t, errPip)
 	return pip
 }
 
-func createBuildPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.User) *sdk.Pipeline {
+func createBuildPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Pipeline {
 	pip := &sdk.Pipeline{
 		Name: "build",
 		Stages: []sdk.Stage{
@@ -2362,12 +2424,12 @@ func createBuildPipeline(t *testing.T, db gorp.SqlExecutor, cache cache.Store, p
 	}
 	assert.NoError(t, pipeline.Import(context.TODO(), db, cache, proj, pip, nil, u))
 	var errPip error
-	pip, errPip = pipeline.LoadPipeline(db, proj.Key, pip.Name, true)
+	pip, errPip = pipeline.LoadPipeline(context.TODO(), db, proj.Key, pip.Name, true)
 	assert.NoError(t, errPip)
 	return pip
 }
 
-func createApplication1(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.User) *sdk.Application {
+func createApplication1(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 	// Add application
 	appS := `version: v1.0
 name: blabla
@@ -2377,12 +2439,12 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, globalError := application.ParseAndImport(db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, globalError := application.ParseAndImport(context.Background(), db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 	return app
 }
 
-func createApplication2(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.User) *sdk.Application {
+func createApplication2(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 	// Add application
 	appS := `version: v1.0
 name: bloublou
@@ -2392,12 +2454,12 @@ vcs_ssh_key: proj-bloublou
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, globalError := application.ParseAndImport(db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, globalError := application.ParseAndImport(context.Background(), db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 	return app
 }
 
-func createApplication3WithSameRepoAsA(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.User) *sdk.Application {
+func createApplication3WithSameRepoAsA(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 	// Add application
 	appS := `version: v1.0
 name: blabla2
@@ -2407,24 +2469,24 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, globalError := application.ParseAndImport(db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, globalError := application.ParseAndImport(context.Background(), db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 	return app
 }
 
-func createApplicationWithoutRepo(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.User) *sdk.Application {
+func createApplicationWithoutRepo(t *testing.T, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, u *sdk.AuthentifiedUser) *sdk.Application {
 	// Add application
 	appS := `version: v1.0
 name: app-no-repo
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, globalError := application.ParseAndImport(db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, globalError := application.ParseAndImport(context.Background(), db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 	return app
 }
 
-func mock(f func(r *http.Request) (*http.Response, error)) sdk.HTTPClient {
+func mock(f func(r *http.Request) (*http.Response, error)) cdsclient.HTTPClient {
 	return &mockServiceClient{f}
 }
 

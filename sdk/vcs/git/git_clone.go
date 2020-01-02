@@ -2,6 +2,7 @@ package git
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -23,7 +24,7 @@ type CloneOpts struct {
 }
 
 // Clone make a git clone
-func Clone(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *OutputOpts) (string, error) {
+func Clone(repo, workdirPath, path string, auth *AuthOpts, opts *CloneOpts, output *OutputOpts) (string, error) {
 	if verbose {
 		t1 := time.Now()
 		if opts != nil && opts.CheckoutCommit != "" {
@@ -41,15 +42,24 @@ func Clone(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *Ou
 	}
 
 	var userLogCommand string
-	userLogCommand, commands = prepareGitCloneCommands(repoURL, path, opts)
+	userLogCommand, commands, err = prepareGitCloneCommands(repoURL, workdirPath, path, opts)
+	if err != nil {
+		return "", err
+	}
 	return userLogCommand, runGitCommands(repo, commands, auth, output)
 }
 
-func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string, cmds) {
+func prepareGitCloneCommands(repo, workdirPath, path string, opts *CloneOpts) (string, cmds, error) {
 	allCmd := []cmd{}
+	var err error
+	workdirPath, err = filepath.Abs(workdirPath)
+	if err != nil {
+		return "", nil, sdk.WithStack(err)
+	}
 	gitcmd := cmd{
-		cmd:  "git",
-		args: []string{"clone"},
+		cmd:     "git",
+		workdir: workdirPath,
+		args:    []string{"clone"},
 	}
 
 	if opts != nil {
@@ -78,7 +88,7 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string,
 		}
 	}
 
-	userLogCommand := "Executing: git " + strings.Join(gitcmd.args, " ") + " ...  "
+	userLogCommand := "Executing: git " + strings.Join(gitcmd.args, " ") + "...  "
 	gitcmd.args = append(gitcmd.args, repo)
 
 	if path != "" {
@@ -101,9 +111,9 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string,
 			//Locate the git reset cmd to the right directory
 			if path == "" {
 				t := strings.Split(repo, "/")
-				fetchCmd.dir = strings.TrimSuffix(t[len(t)-1], ".git")
+				fetchCmd.workdir = filepath.Join(workdirPath, strings.TrimSuffix(t[len(t)-1], ".git"))
 			} else {
-				fetchCmd.dir = path
+				fetchCmd.workdir = filepath.Join(workdirPath, path)
 			}
 
 			allCmd = append(allCmd, fetchCmd)
@@ -118,13 +128,13 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string,
 		// locate the git reset cmd to the right directory
 		if path == "" {
 			t := strings.Split(repo, "/")
-			resetCmd.dir = strings.TrimSuffix(t[len(t)-1], ".git")
+			resetCmd.workdir = filepath.Join(workdirPath, strings.TrimSuffix(t[len(t)-1], ".git"))
 		} else {
-			resetCmd.dir = path
+			resetCmd.workdir = filepath.Join(workdirPath, path)
 		}
 
 		allCmd = append(allCmd, resetCmd)
 	}
 
-	return userLogCommand, cmds(allCmd)
+	return userLogCommand, cmds(allCmd), nil
 }

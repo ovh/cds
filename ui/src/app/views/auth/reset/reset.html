@@ -1,0 +1,36 @@
+<div class="ui grid">
+    <div class="column">
+        <h3 class="ui top block attached header">
+            {{ 'account_password_title' | translate }}
+        </h3>
+        <div class="ui bottom attached segment">
+            <div *ngIf="showErrorMessage" class="ui red message">
+                <p>{{ 'auth_reset_error' | translate }}</p>
+            </div>
+            <div *ngIf="showSuccessMessage" class="ui green message">
+                <p>{{ 'auth_reset_success' | translate }}</p>
+            </div>
+            <form *ngIf="!showSuccessMessage" class="ui form" (ngSubmit)="resetPassword(loginForm)" #loginForm="ngForm">
+                <div class="field">
+                    <label>{{ 'user_label_new_password' | translate }}</label>
+                    <input type="password" name="password" (keyup)="onChangeSignupPassword($event)" ngModel required
+                        [disabled]="loading">
+                    <sui-progress *ngIf="!passwordError && passwordLevel !== null"
+                        class="bottom attached indicating active" [maximum]="5" [value]="passwordLevel + 1">
+                    </sui-progress>
+                </div>
+                <div *ngIf="passwordError" class="ui error message">
+                    <p>{{ passwordError | translate }}</p>
+                </div>
+                <div class="field right aligned">
+                    <button class="ui green button" type="submit"
+                        [disabled]="loading">{{ 'account_password_btn_reset_validate' | translate }}</button>
+                </div>
+            </form>
+            <div *ngIf="showSuccessMessage" class="field right aligned">
+                <button class="fluid ui green button"
+                    (click)="navigateToHome()">{{ 'auth_btn_go_to_home' | translate }}</button>
+            </div>
+        </div>
+    </div>
+</div>

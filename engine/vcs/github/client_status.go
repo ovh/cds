@@ -30,7 +30,7 @@ type statusData struct {
 //https://developer.github.com/v3/repos/statuses/#create-a-status
 func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if g.DisableStatus {
-		log.Warning("github.SetStatus>  ⚠ Github statuses are disabled")
+		log.Warning(ctx, "github.SetStatus>  ⚠ Github statuses are disabled")
 		return nil
 	}
 
@@ -40,7 +40,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
 		data, err = processEventWorkflowNodeRun(event, g.uiURL, g.DisableStatusDetail)
 	default:
-		log.Error("github.SetStatus> Unknown event %v", event)
+		log.Error(ctx, "github.SetStatus> Unknown event %v", event)
 		return nil
 	}
 	if err != nil {
@@ -95,7 +95,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 
 func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	url := "/repos/" + repo + "/statuses/" + ref
-	status, body, _, err := g.get(url)
+	status, body, _, err := g.get(ctx, url)
 	if err != nil {
 		return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "githubClient.ListStatuses")
 	}
@@ -109,7 +109,7 @@ func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string
 		//If repo isn't updated, lets get them from cache
 		k := cache.Key("vcs", "github", "statuses", g.OAuthToken, url)
 		if _, err := g.Cache.Get(k, &ss); err != nil {
-			log.Error("cannot get from cache %s: %v", k, err)
+			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
 		if err := json.Unmarshal(body, &ss); err != nil {
@@ -118,7 +118,7 @@ func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string
 		//Put the body on cache for one hour and one minute
 		k := cache.Key("vcs", "github", "statuses", g.OAuthToken, url)
 		if err := g.Cache.SetWithTTL(k, ss, 61*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", k, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 	}
 
@@ -141,11 +141,11 @@ func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string
 func processGithubState(s Status) string {
 	switch s.State {
 	case "success":
-		return sdk.StatusSuccess.String()
+		return sdk.StatusSuccess
 	case "error", "failure":
-		return sdk.StatusFail.String()
+		return sdk.StatusFail
 	default:
-		return sdk.StatusBuilding.String()
+		return sdk.StatusDisabled
 	}
 }
 
@@ -156,19 +156,19 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatu
 		return data, sdk.WrapError(err, "Error during consumption")
 	}
 	//We only manage status Success and Failure
-	if eventNR.Status == sdk.StatusChecking.String() ||
-		eventNR.Status == sdk.StatusDisabled.String() ||
-		eventNR.Status == sdk.StatusNeverBuilt.String() ||
-		eventNR.Status == sdk.StatusSkipped.String() ||
-		eventNR.Status == sdk.StatusUnknown.String() ||
-		eventNR.Status == sdk.StatusWaiting.String() {
+	if eventNR.Status == sdk.StatusChecking ||
+		eventNR.Status == sdk.StatusDisabled ||
+		eventNR.Status == sdk.StatusNeverBuilt ||
+		eventNR.Status == sdk.StatusSkipped ||
+		eventNR.Status == sdk.StatusUnknown ||
+		eventNR.Status == sdk.StatusWaiting {
 		return data, nil
 	}
 
 	switch eventNR.Status {
-	case sdk.StatusFail.String():
+	case sdk.StatusFail:
 		data.status = "error"
-	case sdk.StatusSuccess.String():
+	case sdk.StatusSuccess:
 		data.status = "success"
 	default:
 		data.status = "pending"

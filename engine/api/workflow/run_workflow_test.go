@@ -6,12 +6,11 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
@@ -20,14 +19,16 @@ import (
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestManualRun1(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	ctx := context.Background()
 
 	//First pipeline
@@ -36,7 +37,7 @@ func TestManualRun1(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -59,7 +60,7 @@ func TestManualRun1(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -73,7 +74,7 @@ func TestManualRun1(t *testing.T) {
 	pipeline.InsertJob(db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -103,44 +104,46 @@ func TestManualRun1(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
-			User: *u,
+			Username: u.Username,
 			Payload: map[string]string{
 				"git.branch": "master",
 			},
 		},
-	}, u, nil)
-	test.NoError(t, errS)
+	}, consumer, nil)
+	require.NoError(t, errS)
 
 	wr2, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr2.Workflow = *w1
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr2, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
-			User: *u,
+			Username: u.Username,
 		},
-	}, u, nil)
-	test.NoError(t, errS)
+	}, consumer, nil)
+	require.NoError(t, errS)
 
 	//LoadLastRun
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
-	test.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, int64(2), lastrun.Number)
 
 	//TestLoadNodeRun
 	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{WithArtifacts: true})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	//don't want to compare queueSeconds attributes and spawn infos attributes
 	nodeRun.Stages[0].RunJobs[0].QueuedSeconds = 0
@@ -152,23 +155,23 @@ func TestManualRun1(t *testing.T) {
 
 	//TestLoadNodeJobRun
 	filter := workflow.NewQueueFilter()
-	filter.Rights = permission.PermissionReadExecute
-	jobs, err := workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group))
-	test.NoError(t, err)
+	filter.Rights = sdk.PermissionReadExecute
+	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)).ToIDs())
+	require.NoError(t, err)
 	test.Equal(t, 2, len(jobs))
 
 	//TestprocessWorkflowRun
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr2, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
-			User: *u,
+			Username: u.Username,
 		},
 		FromNodeIDs: []int64{wr2.Workflow.WorkflowData.Node.ID},
-	}, u, nil)
-	test.NoError(t, errS)
+	}, consumer, nil)
+	require.NoError(t, errS)
 
 	//TestLoadRuns
 	runs, offset, limit, count, err := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 50, nil)
-	test.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 0, offset)
 	assert.Equal(t, 50, limit)
 	assert.Equal(t, 2, count)
@@ -176,15 +179,15 @@ func TestManualRun1(t *testing.T) {
 
 	//TestLoadRunByID
 	_, err = workflow.LoadRunByIDAndProjectKey(db, proj.Key, wr2.ID, workflow.LoadRunOptions{})
-	test.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestManualRun2(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	ctx := context.Background()
 
 	//First pipeline
@@ -193,7 +196,7 @@ func TestManualRun2(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -216,7 +219,7 @@ func TestManualRun2(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -230,7 +233,7 @@ func TestManualRun2(t *testing.T) {
 	pipeline.InsertJob(db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -260,39 +263,40 @@ func TestManualRun2(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{User: *u},
-	}, u, nil)
-	test.NoError(t, errS)
+		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
+	}, consumer, nil)
+	require.NoError(t, errS)
 
 	wr2, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr2.Workflow = *w1
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr2, &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{User: *u},
-	}, u, nil)
-	test.NoError(t, errS)
+		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
+	}, consumer, nil)
+	require.NoError(t, errS)
 
 	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
-		Manual:      &sdk.WorkflowNodeRunManual{User: *u},
+		Manual:      &sdk.WorkflowNodeRunManual{Username: u.Username},
 		FromNodeIDs: []int64{wr.Workflow.WorkflowData.Node.ID},
-	}, u, nil)
-	test.NoError(t, errS)
+	}, consumer, nil)
+	require.NoError(t, errS)
 
 	filter := workflow.NewQueueFilter()
-	filter.Rights = permission.PermissionReadExecute
-	jobs, err := workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group))
-	test.NoError(t, err)
+	filter.Rights = sdk.PermissionReadExecute
+	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)).ToIDs())
+	require.NoError(t, err)
 
 	assert.Len(t, jobs, 3)
 }
@@ -300,30 +304,50 @@ func TestManualRun2(t *testing.T) {
 func TestManualRun3(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
-	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	u, _ := assets.InsertAdminUser(t, db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
+	// Remove all job in queue
+	filterClean := workflow.NewQueueFilter()
+	nrj, _ := workflow.LoadNodeJobRunQueue(context.TODO(), db, cache, filterClean)
+	for _, j := range nrj {
+		_ = workflow.DeleteNodeJobRuns(db, j.WorkflowNodeRunID)
+	}
+
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	ctx := context.Background()
 
-	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
+	require.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
 	g0 := sdk.Group{Name: "g0"}
 	g1 := sdk.Group{Name: "g1"}
 	for _, g := range []sdk.Group{g0, g1} {
-		oldg, _ := group.LoadGroup(db, g.Name)
+		oldg, _ := group.LoadByName(context.TODO(), db, g.Name)
 		if oldg != nil {
-			test.NoError(t, group.DeleteGroupAndDependencies(db, oldg))
+			links, err := group.LoadLinksGroupProjectForGroupID(context.TODO(), db, oldg.ID)
+			require.NoError(t, err)
+			for _, l := range links {
+				require.NoError(t, group.DeleteLinkGroupProject(db, &l))
+			}
+			require.NoError(t, group.Delete(context.TODO(), db, oldg))
 		}
 	}
 
-	test.NoError(t, group.InsertGroup(db, &g0))
-	test.NoError(t, group.InsertGroup(db, &g1))
+	require.NoError(t, group.Insert(db, &g0))
+	require.NoError(t, group.Insert(db, &g1))
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   g0.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}))
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   g1.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}))
 
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g0.ID, permission.PermissionReadWriteExecute))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g1.ID, permission.PermissionReadWriteExecute))
-
-	g, err := group.LoadGroup(db, "shared.infra")
+	g, err := group.LoadByName(context.TODO(), db, "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -332,7 +356,7 @@ func TestManualRun3(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		Deployment: true,
 	}
-	test.NoError(t, integration.InsertModel(db, &modelIntegration))
+	require.NoError(t, integration.InsertModel(db, &modelIntegration))
 	t.Logf("### Integration model %s created with id: %d\n", modelIntegration.Name, modelIntegration.ID)
 
 	projInt := sdk.ProjectIntegration{
@@ -348,7 +372,7 @@ func TestManualRun3(t *testing.T) {
 		Model:              modelIntegration,
 		IntegrationModelID: modelIntegration.ID,
 	}
-	test.NoError(t, integration.InsertIntegration(db, &projInt))
+	require.NoError(t, integration.InsertIntegration(db, &projInt))
 	t.Logf("### Integration %s created with id: %d\n", projInt.Name, projInt.ID)
 
 	p := sdk.GRPCPlugin{
@@ -367,7 +391,7 @@ func TestManualRun3(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, plugin.Insert(db, &p))
+	require.NoError(t, plugin.Insert(db, &p))
 	assert.NotEqual(t, 0, p.ID)
 
 	model, _ := workermodel.LoadByNameAndGroupID(db, "TestManualRun", g.ID)
@@ -399,7 +423,7 @@ func TestManualRun3(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	// one pipeline with two stages
 	s := sdk.NewStage("stage1-pipeline1")
@@ -408,8 +432,8 @@ func TestManualRun3(t *testing.T) {
 	s2.Enabled = true
 	s.PipelineID = pip.ID
 	s2.PipelineID = pip.ID
-	test.NoError(t, pipeline.InsertStage(db, s))
-	test.NoError(t, pipeline.InsertStage(db, s2))
+	require.NoError(t, pipeline.InsertStage(db, s))
+	require.NoError(t, pipeline.InsertStage(db, s2))
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -425,8 +449,8 @@ func TestManualRun3(t *testing.T) {
 			Name:    "job11",
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip))
-	test.NoError(t, pipeline.InsertJob(db, j2, s2.ID, &pip))
+	require.NoError(t, pipeline.InsertJob(db, j, s.ID, &pip))
+	require.NoError(t, pipeline.InsertJob(db, j2, s2.ID, &pip))
 	s.Jobs = append(s.Jobs, *j)
 	s2.Jobs = append(s.Jobs, *j2)
 
@@ -439,8 +463,8 @@ func TestManualRun3(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
-	s = sdk.NewStage("stage1-pipeline2")
+	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
+	s = sdk.NewStage("stage 1-pipeline2")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
 	pipeline.InsertStage(db, s)
@@ -496,27 +520,28 @@ func TestManualRun3(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys, project.LoadOptions.WithIntegrations)
+	proj, err = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys, project.LoadOptions.WithIntegrations)
+	require.NoError(t, err)
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{User: *u},
-	}, u, nil)
-	test.NoError(t, errS)
+		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
+	}, consumer, nil)
+	require.NoError(t, errS)
 
 	filter := workflow.NewQueueFilter()
 	// test nil since/until
-	_, err = workflow.CountNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group, g0, g1))
-	test.NoError(t, err)
+	_, err = workflow.CountNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)).ToIDs())
+	require.NoError(t, err)
 
 	// queue should be empty with since 0,0 until 0,0
 	t0 := time.Unix(0, 0)
@@ -525,23 +550,18 @@ func TestManualRun3(t *testing.T) {
 	filter.Since = &t0
 	filter.Until = &t1
 
-	countAlreadyInQueueNone, err := workflow.CountNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group, g0, g1))
-	test.NoError(t, err)
+	countAlreadyInQueueNone, err := workflow.CountNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)).ToIDs())
+	require.NoError(t, err)
 	assert.Equal(t, 0, int(countAlreadyInQueueNone.Count))
 
 queueRun:
 	filter3 := workflow.NewQueueFilter()
-	filter3.Rights = permission.PermissionReadExecute
+	filter3.Rights = sdk.PermissionReadExecute
 
-	var jobs []sdk.WorkflowNodeJobRun
-	// this group must return nothing (execGroups)
-	jobs, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, proj.ProjectGroups[0].Group, g0, g1))
-	test.NoError(t, err)
-	assert.Equal(t, 0, len(jobs))
-
-	// this group must return first job (execGroups)
-	jobs, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter3, append(u.Groups, g0))
-	test.NoError(t, err)
+	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter3, sdk.Groups(append(u.OldUserStruct.Groups, g0)).ToIDs())
+	require.NoError(t, err)
+	t.Logf("##### nb job in queue : %d\n", len(jobs))
+	require.True(t, len(jobs) > 0)
 
 	for i := range jobs {
 		j := &jobs[i]
@@ -550,9 +570,11 @@ queueRun:
 		t.Logf("##### work on job : %+v\n", j.Job.Action.Name)
 
 		//BookNodeJobRun
-		_, err = workflow.BookNodeJobRun(cache, j.ID, &sdk.Service{
-			Name: "Hatchery",
-			ID:   1,
+		_, err = workflow.BookNodeJobRun(context.TODO(), cache, j.ID, &sdk.Service{
+			CanonicalService: sdk.CanonicalService{
+				Name: "Hatchery",
+				ID:   1,
+			},
 		})
 		assert.NoError(t, err)
 		if t.Failed() {
@@ -620,7 +642,7 @@ queueRun:
 		}
 
 		//TestUpdateNodeJobRunStatus
-		_, err = workflow.UpdateNodeJobRunStatus(context.TODO(), func() *gorp.DbMap { return db }, db, cache, proj, j, sdk.StatusSuccess)
+		_, err = workflow.UpdateNodeJobRunStatus(context.TODO(), db, cache, proj, j, sdk.StatusSuccess)
 		assert.NoError(t, err)
 		if t.Failed() {
 			tx.Rollback()
@@ -663,9 +685,9 @@ queueRun:
 	}
 
 	filter = workflow.NewQueueFilter()
-	filter.Rights = permission.PermissionReadExecute
-	jobs, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
-	test.NoError(t, err)
+	filter.Rights = sdk.PermissionReadExecute
+	jobs, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+	require.NoError(t, err)
 	assert.Equal(t, 1, len(jobs))
 
 	if len(jobs) == 1 {
@@ -679,11 +701,11 @@ queueRun:
 		t0 := since.Add(-2 * time.Minute)
 		t1 := since.Add(-1 * time.Minute)
 		filter := workflow.NewQueueFilter()
-		filter.Rights = permission.PermissionReadExecute
+		filter.Rights = sdk.PermissionReadExecute
 		filter.Since = &t0
 		filter.Until = &t1
-		jobsSince, err := workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
-		test.NoError(t, err)
+		jobsSince, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+		require.NoError(t, err)
 		for _, job := range jobsSince {
 			if jobs[0].ID == job.ID {
 				assert.Fail(t, " this job should not be in queue since/until")
@@ -691,10 +713,10 @@ queueRun:
 		}
 
 		filter = workflow.NewQueueFilter()
-		filter.Rights = permission.PermissionReadExecute
+		filter.Rights = sdk.PermissionReadExecute
 		filter.Since = &t0
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
-		test.NoError(t, err)
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+		require.NoError(t, err)
 		var found bool
 		for _, job := range jobsSince {
 			if jobs[0].ID == job.ID {
@@ -708,11 +730,11 @@ queueRun:
 		t0 = since.Add(10 * time.Second)
 		t1 = since.Add(15 * time.Second)
 		filter = workflow.NewQueueFilter()
-		filter.Rights = permission.PermissionReadExecute
+		filter.Rights = sdk.PermissionReadExecute
 		filter.Since = &t0
 		filter.Until = &t1
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
-		test.NoError(t, err)
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+		require.NoError(t, err)
 		for _, job := range jobsSince {
 			if jobs[0].ID == job.ID {
 				assert.Fail(t, " this job should not be in queue since/until")
@@ -724,10 +746,10 @@ queueRun:
 		// If we get a job without a service, it's a failure
 		cent := 100
 		filter = workflow.NewQueueFilter()
-		filter.Rights = permission.PermissionReadExecute
+		filter.Rights = sdk.PermissionReadExecute
 		filter.RatioService = &cent
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
-		test.NoError(t, err)
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+		require.NoError(t, err)
 		for _, job := range jobsSince {
 			if !job.ContainsService {
 				assert.Fail(t, " this job should not be in queue !job.ContainsService: job")
@@ -739,10 +761,10 @@ queueRun:
 		// If we get a job with a service, it's a failure
 		zero := 0
 		filter = workflow.NewQueueFilter()
-		filter.Rights = permission.PermissionReadExecute
+		filter.Rights = sdk.PermissionReadExecute
 		filter.RatioService = &zero
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
-		test.NoError(t, err)
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+		require.NoError(t, err)
 		for _, job := range jobsSince {
 			if job.ContainsService {
 				assert.Fail(t, " this job should not be in queue job.ContainsService")
@@ -753,10 +775,10 @@ queueRun:
 		// we get the queue with a modelType openstack : we don't want
 		// job with worker model type docker in result
 		filter = workflow.NewQueueFilter()
-		filter.Rights = permission.PermissionReadExecute
+		filter.Rights = sdk.PermissionReadExecute
 		filter.ModelType = []string{sdk.Openstack}
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroups(ctx, db, cache, filter, append(u.Groups, g1))
-		test.NoError(t, err)
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+		require.NoError(t, err)
 		// we don't want the job with the worker model "TestManualRun"
 		for _, job := range jobsSince {
 			if job.ModelType == sdk.Docker {
@@ -769,9 +791,9 @@ queueRun:
 func TestNoStage(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -779,9 +801,9 @@ func TestNoStage(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -811,36 +833,39 @@ func TestNoStage(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{User: *u},
-	}, u, nil)
-	test.NoError(t, errS)
+		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
+	}, consumer, nil)
+	require.NoError(t, errS)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	//TestLoadNodeRun
 	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 1, lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{WithArtifacts: true})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, sdk.StatusSuccess.String(), nodeRun.Status)
+	assert.Equal(t, sdk.StatusSuccess, nodeRun.Status)
 }
 
 func TestNoJob(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -848,14 +873,14 @@ func TestNoJob(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	test.NoError(t, pipeline.InsertStage(db, s))
+	require.NoError(t, pipeline.InsertStage(db, s))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -885,26 +910,26 @@ func TestNoJob(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
 	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{User: *u},
-	}, u, nil)
-	test.NoError(t, errS)
+		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
+	}, consumer, nil)
+	require.NoError(t, errS)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	//TestLoadNodeRun
 	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 1, lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{WithArtifacts: true})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, sdk.StatusSuccess.String(), nodeRun.Status)
+	assert.Equal(t, sdk.StatusSuccess, nodeRun.Status)
 }

@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { forkJoin } from 'rxjs/internal/observable/forkJoin';
 import { finalize } from 'rxjs/operators';
 import { Group } from '../../../../model/group.model';
-import { User } from '../../../../model/user.model';
+import { AuthentifiedUser } from '../../../../model/user.model';
 import { ModelPattern, WorkerModel } from '../../../../model/worker-model.model';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
 import { GroupService } from '../../../../service/group/group.service';
 import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
@@ -22,11 +23,10 @@ export class WorkerModelAddComponent implements OnInit {
     loading = false;
     workerModel: WorkerModel;
     types: Array<string>;
-    communications: Array<string>;
     groups: Array<Group>;
     patterns: Array<ModelPattern>;
     patternSelected: ModelPattern;
-    currentUser: User;
+    currentUser: AuthentifiedUser;
     path: Array<PathItem>;
 
     constructor(
@@ -35,7 +35,7 @@ export class WorkerModelAddComponent implements OnInit {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _router: Router,
-        private _authentificationStore: AuthentificationStore,
+        private _store: Store,
         private _cd: ChangeDetectorRef
     ) { }
 
@@ -51,14 +51,14 @@ export class WorkerModelAddComponent implements OnInit {
 
         this.workerModel = new WorkerModel();
         this.workerModel.editable = true;
-        this.currentUser = this._authentificationStore.getUser();
+        this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
         this.getGroups();
         this.getWorkerModelComponents();
     }
 
     getGroups() {
         this.loading = true;
-        this._groupService.getGroups()
+        this._groupService.getAll()
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();
@@ -72,8 +72,7 @@ export class WorkerModelAddComponent implements OnInit {
         this.loading = true;
         forkJoin([
             this._workerModelService.getPatterns(),
-            this._workerModelService.getTypes(),
-            this._workerModelService.getCommunications()
+            this._workerModelService.getTypes()
         ])
             .pipe(finalize(() => {
                 this.loading = false;
@@ -82,7 +81,6 @@ export class WorkerModelAddComponent implements OnInit {
             .subscribe(results => {
                 this.patterns = results[0];
                 this.types = results[1];
-                this.communications = results[2];
             });
     }
 

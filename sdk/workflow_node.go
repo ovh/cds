@@ -248,32 +248,6 @@ func (n *Node) ancestorNames(name string) ([]string, bool) {
 	return res, false
 }
 
-func (n *Node) ancestor(id int64, deep bool) (map[int64]bool, bool) {
-	res := map[int64]bool{}
-	if id == n.ID {
-		return res, true
-	}
-	for _, t := range n.Triggers {
-		if t.ChildNode.ID == id {
-			res[n.ID] = true
-			return res, true
-		}
-		ids, ok := (&t.ChildNode).ancestor(id, deep)
-		if ok {
-			if len(ids) == 1 || deep {
-				for k := range ids {
-					res[k] = true
-				}
-			}
-			if deep {
-				res[n.ID] = true
-			}
-			return res, true
-		}
-	}
-	return res, false
-}
-
 // IsLinkedToRepo returns boolean to know if the node is linked to an application which is also linked to a repository
 func (n *Node) IsLinkedToRepo(w *Workflow) bool {
 	if n == nil {

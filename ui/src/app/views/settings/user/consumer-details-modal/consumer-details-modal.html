@@ -1,0 +1,91 @@
+<ng-template let-context let-modal="modal" #consumerDetailsModal>
+    <div class="header">
+        {{ 'auth_consumer_details_modal_title' | translate: { name: consumer.name } }} <div *ngIf="consumer.disabled"
+            class="ui red label">
+            {{'user_auth_consumer_disabled' | translate}}</div>
+    </div>
+    <div class="content">
+        <div class="ui grid">
+            <div class="ui wide column">
+                <div class="ui form">
+                    <div class="three fields">
+                        <div class="field">
+                            <label>{{'common_description' | translate}}</label>
+                            {{consumer.description}}
+                        </div>
+                        <div class="field">
+                            <label>{{'user_auth_scopes' | translate}}</label>
+                            {{scopes}}
+                        </div>
+                        <div class="field">
+                            <label>{{'user_auth_groups' | translate}}</label>
+                            {{groups}}
+                            <span *ngIf="consumer.warnings" suiPopup [popupText]="warningText">
+                                {{' '}}<i class="info exclamation triangle icon yellow link"
+                                    title="{{warningText}}"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <app-menu class="menu" [items]="menuItems" (onSelect)="selectMenuItem($event)"></app-menu>
+                    </div>
+                    <div class="field" [ngSwitch]="selectedItem.key">
+                        <app-data-table *ngSwitchCase="'sessions'" [withFilter]="filterSessions" [withPagination]="5"
+                            [columns]="columnsSessions" [data]="consumer.sessions">
+                        </app-data-table>
+                        <ng-container *ngSwitchCase="'parent'">
+                            <app-data-table *ngIf="consumer.parent" [columns]="columnsConsumers"
+                                [data]="[consumer.parent]">
+                            </app-data-table>
+                        </ng-container>
+                        <app-data-table *ngSwitchCase="'children'" [withFilter]="filterChildren" [withPagination]="5"
+                            [columns]="columnsConsumers" [data]="consumer.children">
+                        </app-data-table>
+                    </div>
+                    <div class="wide field">
+                        <div class="ui wide field">
+                            <ng-container *ngIf="user.id === currentUser.id || currentUser.isAdmin()"
+                                [ngSwitch]="consumer.type">
+                                <ng-container *ngSwitchCase="'local'">
+                                    <button *ngIf="user.id === currentUser.id" class="ui button green left floated"
+                                        (click)="clickResetPassword()">{{'account_password_btn_reset' | translate }}</button>
+                                </ng-container>
+                                <ng-container *ngSwitchCase="'builtin'">
+                                    <app-delete-button class="left floated" (event)="clickDelete()"
+                                        [title]="'user_auth_consumer_delete_btn'">
+                                    </app-delete-button>
+                                    <div *ngIf="!consumer.disabled" class="ui green right floated buttons">
+                                        <div class="ui button" (click)="clickRegen(false)">
+                                            {{'auth_consumer_regen' | translate }}</div>
+                                        <div class="ui floating icon dropdown button" suiDropdown>
+                                            <i class="dropdown icon"></i>
+                                            <div class="menu" suiDropdownMenu>
+                                                <div class="ui item" (click)="clickRegen(true)">
+                                                    {{'auth_consumer_regen_revoke' | translate }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-container>
+                                <ng-container *ngSwitchDefault>
+                                    <app-delete-button *ngIf="user.id === currentUser.id" class="left floated"
+                                        (event)="clickDetach()" [loading]="loading"
+                                        [title]="'user_auth_consumer_detach_btn'">
+                                    </app-delete-button>
+                                </ng-container>
+                            </ng-container>
+                            <button class="ui secondary button right floated"
+                                (click)="clickClose()">{{'btn_close' | translate }}</button>
+                        </div>
+                    </div>
+                    <div *ngIf="regenConsumerSigninToken" class="wide field">
+                        <div class="ui wide field">
+                            <app-consumer-display-signin-token [consumer]="consumer"
+                                [signinToken]="regenConsumerSigninToken">
+                            </app-consumer-display-signin-token>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>

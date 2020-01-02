@@ -50,6 +50,10 @@ type containerArgs struct {
 
 //shortcut to create+start(=run) a container
 func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClient *dockerClient, cArgs containerArgs, spawnArgs hatchery.SpawnArguments) error {
+	if spawnArgs.Model == nil {
+		return sdk.WithStack(sdk.ErrNoWorkerModel)
+	}
+
 	ctx, end := observability.Span(ctx, "swarm.createAndStartContainer", observability.Tag(observability.TagWorker, cArgs.name))
 	defer end()
 
@@ -57,7 +61,7 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 	if cArgs.memory <= 4 {
 		cArgs.memory = 1024
 	}
-	log.Info("hatchery> swarm> createAndStartContainer> Create container %s on %s from %s (memory=%dMB)", cArgs.name, dockerClient.name, cArgs.image, cArgs.memory)
+	log.Info(ctx, "hatchery> swarm> createAndStartContainer> Create container %s on %s from %s (memory=%dMB)", cArgs.name, dockerClient.name, cArgs.image, cArgs.memory)
 
 	var exposedPorts nat.PortSet
 
@@ -99,7 +103,7 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 	// Check the images to know if we had to pull or not
 	images, errl := dockerClient.ImageList(ctx, types.ImageListOptions{All: true})
 	if errl != nil {
-		log.Warning("createAndStartContainer> Unable to list images: %s", errl)
+		log.Warning(ctx, "createAndStartContainer> Unable to list images: %s", errl)
 	}
 	next()
 
@@ -121,15 +125,18 @@ checkImage:
 	if !imageFound {
 		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryStartDockerPull.ID,
-			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
+			Args: []interface{}{h.Name, cArgs.image},
 		})
 
 		_, next := observability.Span(ctx, "swarm.dockerClient.pullImage", observability.Tag("image", cArgs.image))
-		if err := h.pullImage(dockerClient, cArgs.image, timeoutPullImage, spawnArgs.Model); err != nil {
+		if err := h.pullImage(dockerClient,
+			cArgs.image,
+			timeoutPullImage,
+			*spawnArgs.Model); err != nil {
 			next()
 			hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 				ID:   sdk.MsgSpawnInfoHatcheryEndDockerPullErr.ID,
-				Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image, err},
+				Args: []interface{}{h.Name, cArgs.image, err},
 			})
 			return sdk.WrapError(err, "Unable to pull image %s on %s", cArgs.image, dockerClient.name)
 		}
@@ -137,7 +144,7 @@ checkImage:
 
 		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryEndDockerPull.ID,
-			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
+			Args: []interface{}{h.Name, cArgs.image},
 		})
 	}
 
@@ -167,7 +174,7 @@ type dockerOpts struct {
 	extraHosts []string
 }
 
-func (h *HatcherySwarm) computeDockerOpts(isSharedInfra bool, requirements []sdk.Requirement) (*dockerOpts, error) {
+func (h *HatcherySwarm) computeDockerOpts(requirements []sdk.Requirement) (*dockerOpts, error) {
 	dockerOpts := &dockerOpts{}
 
 	// support for add-host on hatchery configuration
@@ -184,11 +191,11 @@ func (h *HatcherySwarm) computeDockerOpts(isSharedInfra bool, requirements []sdk
 	for _, r := range requirements {
 		switch r.Type {
 		case sdk.ModelRequirement:
-			if err := dockerOpts.computeDockerOptsOnModelRequirement(isSharedInfra, r); err != nil {
+			if err := h.computeDockerOptsOnModelRequirement(dockerOpts, r); err != nil {
 				return nil, err
 			}
 		case sdk.VolumeRequirement:
-			if err := dockerOpts.computeDockerOptsOnVolumeRequirement(isSharedInfra, r); err != nil {
+			if err := h.computeDockerOptsOnVolumeRequirement(dockerOpts, r); err != nil {
 				return nil, err
 			}
 		}
@@ -197,16 +204,18 @@ func (h *HatcherySwarm) computeDockerOpts(isSharedInfra bool, requirements []sdk
 	return dockerOpts, nil
 }
 
-func (d *dockerOpts) computeDockerOptsOnModelRequirement(isSharedInfra bool, req sdk.Requirement) error {
+func (h *HatcherySwarm) computeDockerOptsOnModelRequirement(d *dockerOpts, req sdk.Requirement) error {
 	// args are separated by a space
 	// example: myGroup/golang:1.9.1 --port=8080:8080/tcp
 	for idx, opt := range strings.Split(req.Value, " ") {
 		if idx == 0 || strings.TrimSpace(opt) == "" {
 			continue // it's image name
 		}
-		if isSharedInfra {
+
+		if h.Config.DisableDockerOptsOnRequirements {
 			return fmt.Errorf("you could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option", opt)
 		}
+
 		if strings.HasPrefix(opt, "--port=") {
 			if err := d.computeDockerOptsPorts(opt); err != nil {
 				return err
@@ -224,11 +233,11 @@ func (d *dockerOpts) computeDockerOptsOnModelRequirement(isSharedInfra bool, req
 	return nil
 }
 
-func (d *dockerOpts) computeDockerOptsOnVolumeRequirement(isSharedInfra bool, req sdk.Requirement) error {
+func (h *HatcherySwarm) computeDockerOptsOnVolumeRequirement(d *dockerOpts, req sdk.Requirement) error {
 	// args are separated by a space
 	// example: type=bind,source=/hostDir/sourceDir,destination=/dirInJob
 	for idx, opt := range strings.Split(req.Value, " ") {
-		if isSharedInfra {
+		if h.Config.DisableDockerOptsOnRequirements {
 			return fmt.Errorf("you could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option", opt)
 		}
 

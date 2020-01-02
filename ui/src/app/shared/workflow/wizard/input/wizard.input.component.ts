@@ -11,12 +11,13 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
-import { PermissionValue } from 'app/model/permission.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
-import { ApplicationWorkflowService, ThemeStore, VariableService } from 'app/service/services.module';
+import { ApplicationWorkflowService } from 'app/service/application/application.workflow.service';
+import { ThemeStore } from 'app/service/theme/theme.store';
+import { VariableService } from 'app/service/variable/variable.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -60,7 +61,6 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
     suggest: string[] = [];
     payloadString: string;
     branches: string[] = [];
-    permissionEnum = PermissionValue;
     invalidJSON = false;
     loadingBranches = false;
     codeMirrorConfig: any;

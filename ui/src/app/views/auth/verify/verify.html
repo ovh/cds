@@ -1,0 +1,54 @@
+<div class="ui centered grid verify">
+    <div class="row">
+        <div class="column">
+            <div *ngIf="loading;then load;else loaded"></div>
+            <ng-template #load>
+                <div class="loading">
+                    <div class="ui active small inline loader"></div>
+                    <div>{{ 'common_loading' | translate }}</div>
+                </div>
+            </ng-template>
+            <ng-template #loaded>
+                <div *ngIf="showInitTokenForm" class="ui bottom attached segment">
+                    <div class="ui info message">
+                        <p>{{ 'auth_message_init_token' | translate }}</p>
+                    </div>
+                    <form class="ui form" (ngSubmit)="verify(verifyForm)" #verifyForm="ngForm">
+                        <div class="field">
+                            <label>{{ 'account_signup_init_token' | translate }}</label>
+                            <input type="password" name="init_token" ngModel required>
+                        </div>
+                        <div class="field right aligned">
+                            <button class="ui green button"
+                                type="submit">{{ 'account_login_btn_verify' | translate }}</button>
+                        </div>
+                    </form>
+                </div>
+                <div *ngIf="showSuccessMessage" class="column">
+                    <h3 class="ui top block attached header">
+                        {{ 'account_verify_title' | translate }}
+                    </h3>
+                    <div class="ui bottom attached segment">
+                        <div class="ui green message">
+                            <p>{{ 'auth_verify_success' | translate: {username: user.username} }}</p>
+                        </div>
+                        <button id="loginButton" class="fluid ui button green" type="button"
+                            (click)="navigateToHome()">{{ 'auth_btn_go_to_home' | translate }}</button>
+                    </div>
+                </div>
+                <div *ngIf="showErrorMessage" class="ui bottom attached segment">
+                    <div class="ui red message">
+                        <p>{{ 'auth_verify_error' | translate }}</p>
+                    </div>
+                    <form class="ui form">
+                        <div class="field">
+                            <button class="fluid ui button primary" (click)="navigateToSignin()">
+                                {{ 'account_btn_signin' | translate }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </ng-template>
+        </div>
+    </div>
+</div>

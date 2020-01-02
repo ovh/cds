@@ -87,7 +87,7 @@ func interactiveChooseProject(gitRepo repo.Repo, defaultValue string) (string, e
 	for i := range projs {
 		opts[i] = fmt.Sprintf("%s - %s", projs[i].Key, projs[i].Name)
 	}
-	selected := cli.MultiChoice("Choose the CDS project:", opts...)
+	selected := cli.AskChoice("Choose the CDS project:", opts...)
 	chosenProj = &projs[selected]
 
 	if err := gitRepo.LocalConfigSet("cds", "project", chosenProj.Key); err != nil {
@@ -142,7 +142,7 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 		repoManagerNames[i] = s.Name
 	}
 
-	selected := cli.MultiChoice("Choose the repository manager:", repoManagerNames...)
+	selected := cli.AskChoice("Choose the repository manager:", repoManagerNames...)
 	return proj.VCSServers[selected].Name, nil
 }
 
@@ -160,7 +160,7 @@ func interactiveChooseApplication(pkey, repoFullname, repoName string) (string, 
 		} else if a.Name == repoName {
 			fmt.Printf(" * application %s/%s found in CDS.\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name))
 			fmt.Println(cli.Red(" * but it's not linked to repository"), cli.Red(repoFullname))
-			if !cli.AskForConfirmation(cli.Red("Do you want to overwrite it?")) {
+			if !cli.AskConfirm(cli.Red("Do you want to overwrite it?")) {
 				return "", nil, fmt.Errorf("operation aborted")
 			}
 			return a.Name, nil, nil
@@ -227,7 +227,7 @@ func interactiveChoosePipeline(pkey, defaultPipeline string) (string, *sdk.Pipel
 		pipelineNames[i] = p.Name
 	}
 	pipelineNames = append([]string{"new pipeline"}, pipelineNames...)
-	selected := cli.MultiChoice("Choose your pipeline:", pipelineNames...)
+	selected := cli.AskChoice("Choose your pipeline:", pipelineNames...)
 
 	if selected == 0 {
 		fmt.Print("Enter your pipeline name: ")
@@ -323,7 +323,7 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 				for i := range projectPGPKeys {
 					opts[i+1] = projectPGPKeys[i].Name
 				}
-				selected := cli.MultiChoice("Select a PGP key to use in application VCS strategy", opts...)
+				selected := cli.AskChoice("Select a PGP key to use in application VCS strategy", opts...)
 				if selected > 0 {
 					app.VCSPGPKey = opts[selected]
 				} else {
@@ -363,7 +363,7 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 					for i := range projectSSHKeys {
 						opts = append(opts, projectSSHKeys[i].Name)
 					}
-					selected := cli.MultiChoice("Select a SSH key to use in application VCS strategy", opts...)
+					selected := cli.AskChoice("Select a SSH key to use in application VCS strategy", opts...)
 					if selected > 0 {
 						app.VCSSSHKey = opts[selected]
 					} else {
@@ -553,7 +553,7 @@ func workflowInitRun(c cli.Values) error {
 		}
 	}
 
-	if !c.GetBool("yes") && !cli.AskForConfirmation(cli.Red("CDS Files are ready, continue ?")) {
+	if !c.GetBool("yes") && !cli.AskConfirm(cli.Red("CDS Files are ready, continue ?")) {
 		return nil
 	}
 

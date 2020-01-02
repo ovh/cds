@@ -87,7 +87,7 @@ func (api *API) getPanicDumpHandler() service.Handler {
 		var data string
 		find, err := api.Cache.Get(k, &data)
 		if err != nil {
-			log.Error("cannot get from cache %s: %v", k, err)
+			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 		if !find {
 			return sdk.ErrNotFound

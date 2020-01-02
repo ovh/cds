@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AppService } from 'app/app.service';
-import { AuthentificationStore } from 'app/service/services.module';
 import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Event } from '../../../model/event.model';
@@ -36,14 +35,10 @@ export class HomeTimelineComponent implements OnInit {
         private _translate: TranslateService,
         private _toast: ToastService,
         private _appService: AppService,
-        private _authStore: AuthentificationStore,
-        private _cd: ChangeDetectorRef) {
-    }
+        private _cd: ChangeDetectorRef
+    ) { }
 
     ngOnInit(): void {
-        if (!this._authStore.isConnected) {
-            return;
-        }
         this.filterSub = this._timelineStore.getFilter().subscribe(f => {
             this.filter = f;
             this._appService.initFilter(this.filter);
@@ -91,7 +86,7 @@ export class HomeTimelineComponent implements OnInit {
         this._timelineStore.saveFilter(this.filter)
             .pipe(first(), finalize(() => this._cd.markForCheck()))
             .subscribe(() => {
-            this._toast.success('', this._translate.instant('timeline_filter_updated'));
-        });
+                this._toast.success('', this._translate.instant('timeline_filter_updated'));
+            });
     }
 }

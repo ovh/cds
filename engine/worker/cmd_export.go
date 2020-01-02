@@ -4,17 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var cmdExport = &cobra.Command{
@@ -44,9 +41,9 @@ You can use the build variable in :
 }
 
 func exportCmd(cmd *cobra.Command, args []string) {
-	portS := os.Getenv(WorkerServerPort)
+	portS := os.Getenv(internal.WorkerServerPort)
 	if portS == "" {
-		sdk.Exit("%s not found, are you running inside a CDS worker job?\n", WorkerServerPort)
+		sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
 	}
 
 	port, err := strconv.Atoi(portS)
@@ -82,64 +79,4 @@ func exportCmd(cmd *cobra.Command, args []string) {
 	if resp.StatusCode >= 300 {
 		sdk.Exit("cannot add variable: HTTP %d\n", resp.StatusCode)
 	}
-}
-
-func (wk *currentWorker) addBuildVarHandler(w http.ResponseWriter, r *http.Request) {
-	// Get body
-	data, errra := ioutil.ReadAll(r.Body)
-	if errra != nil {
-		log.Error("addBuildVarHandler> Cannot ReadAll err: %s", errra)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	var v sdk.Variable
-	if err := json.Unmarshal(data, &v); err != nil {
-		log.Error("addBuildVarHandler> Cannot Unmarshal err: %s", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	v.Name = "cds.build." + v.Name
-
-	errstatus, err := wk.addVariableInPipelineBuild(v, nil)
-	if err != nil {
-		w.WriteHeader(errstatus)
-	}
-}
-
-func (wk *currentWorker) addVariableInPipelineBuild(v sdk.Variable, params *[]sdk.Parameter) (int, error) {
-	// OK, so now we got our new variable. We need to:
-	// - add it as a build var in API
-	if strings.HasPrefix(v.Name, "cds.build") {
-		wk.currentJob.buildVariables = append(wk.currentJob.buildVariables, v)
-	} else if params != nil {
-		*params = append(*params, sdk.Parameter{
-			Name:  v.Name,
-			Type:  v.Type,
-			Value: v.Value,
-		})
-	}
-
-	// - add it in current building Action
-	data, errm := json.Marshal(v)
-	if errm != nil {
-		log.Error("addBuildVarHandler> Cannot Marshal err: %s", errm)
-		return http.StatusBadRequest, fmt.Errorf("addBuildVarHandler> Cannot Marshal err: %s", errm)
-	}
-
-	uri := fmt.Sprintf("/queue/workflows/%d/variable", wk.currentJob.wJob.ID)
-
-	var lasterr error
-	var code int
-	for try := 1; try <= 10; try++ {
-		log.Info("addBuildVarHandler> Sending export variable...")
-		_, code, lasterr = sdk.Request("POST", uri, data)
-		if lasterr == nil && code < 300 {
-			log.Info("addBuildVarHandler> Send step export variable OK")
-			return http.StatusOK, nil
-		}
-		log.Warning("addBuildVarHandler> Cannot send export variable result: HTTP %d err: %s - try: %d - new try in 5s", code, lasterr, try)
-		time.Sleep(5 * time.Second)
-	}
-	return http.StatusServiceUnavailable, fmt.Errorf("addBuildVarHandler> Cannot export variable: %s code: %d", lasterr, code)
 }

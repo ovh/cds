@@ -3,7 +3,6 @@ package cdsclient
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,8 +10,12 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"regexp"
 	"runtime/pprof"
 	"strings"
+	"time"
+
+	"github.com/ovh/cds/cli"
 
 	"github.com/dgrijalva/jwt-go"
 
@@ -21,19 +24,8 @@ import (
 )
 
 const (
-	//SessionTokenHeader is user as HTTP header
-	SessionTokenHeader = "Session-Token"
-	// AuthHeader is used as HTTP header
-	AuthHeader = "X_AUTH_HEADER"
-	// RequestedWithHeader is used as HTTP header
-	RequestedWithHeader = "X-Requested-With"
-	// RequestedWithValue is used as HTTP header
-	RequestedWithValue = "X-CDS-SDK"
-	// RequestedNameHeader is used as HTTP header
-	RequestedNameHeader = "X-Requested-Name"
 	// RequestedIfModifiedSinceHeader is used as HTTP header
 	RequestedIfModifiedSinceHeader = "If-Modified-Since"
-
 	// ResponseAPITimeHeader is used as HTTP header
 	ResponseAPITimeHeader = "X-Api-Time"
 	// ResponseAPINanosecondsTimeHeader is used as HTTP header
@@ -97,7 +89,7 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 	if in != nil {
 		b, err = json.Marshal(in)
 		if err != nil {
-			return nil, nil, 0, err
+			return nil, nil, 0, sdk.WithStack(err)
 		}
 	}
 
@@ -108,19 +100,19 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 
 	res, header, code, err := c.Request(ctx, method, path, body, mods...)
 	if err != nil {
-		return nil, nil, code, err
+		return nil, nil, code, sdk.WithStack(err)
 	}
 
 	if code >= 400 {
 		if err := sdk.DecodeError(res); err != nil {
 			return res, nil, code, err
 		}
-		return res, nil, code, fmt.Errorf("HTTP %d", code)
+		return res, nil, code, sdk.WithStack(fmt.Errorf("HTTP %d", code))
 	}
 
 	if out != nil {
 		if err := json.Unmarshal(res, out); err != nil {
-			return res, nil, code, err
+			return res, nil, code, sdk.WithStack(err)
 		}
 	}
 
@@ -131,7 +123,7 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 func (c *client) Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error) {
 	respBody, respHeader, code, err := c.Stream(ctx, method, path, body, false, mods...)
 	if err != nil {
-		return nil, nil, 0, err
+		return nil, nil, 0, sdk.WithStack(err)
 	}
 	defer func() {
 		// Drain and close the body to let the Transport reuse the connection
@@ -142,7 +134,7 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 	var bodyBtes []byte
 	bodyBtes, err = ioutil.ReadAll(respBody)
 	if err != nil {
-		return nil, nil, code, err
+		return nil, nil, code, sdk.WithStack(err)
 	}
 
 	if c.config.Verbose {
@@ -153,17 +145,43 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 
 	if code >= 400 {
 		if err := sdk.DecodeError(bodyBtes); err != nil {
-			return bodyBtes, nil, code, err
+			return bodyBtes, nil, code, sdk.WithStack(err)
 		}
-		return bodyBtes, nil, code, fmt.Errorf("HTTP %d", code)
+		return bodyBtes, nil, code, sdk.WithStack(fmt.Errorf("HTTP %d", code))
 	}
 
 	return bodyBtes, respHeader, code, nil
 }
 
+// signin route pattern
+
+var signinRouteRegexp = regexp.MustCompile(`\/auth\/consumer\/.*\/signin`)
+
 // Stream makes an authenticated http request and return io.ReadCloser
 func (c *client) Stream(ctx context.Context, method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
-	labels := pprof.Labels("user-agent", c.config.userAgent, "path", path, "method", method)
+	// Checks that current session_token is still valid
+	// If not, challenge a new one against the authenticationToken
+	var checkToken = !strings.Contains(path, "/auth/consumer/builtin/signin") &&
+		!strings.Contains(path, "/auth/consumer/local/signin") &&
+		!strings.Contains(path, "/auth/consumer/local/signup") &&
+		!strings.Contains(path, "/auth/consumer/local/verify") &&
+		!strings.Contains(path, "/auth/consumer/worker/signin")
+
+	if checkToken && !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+		if c.config.Verbose {
+			fmt.Printf("session token invalid: (%s). Relogin...\n", c.config.SessionToken)
+		}
+		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
+		if err != nil {
+			return nil, nil, -1, sdk.WithStack(err)
+		}
+		if c.config.Verbose {
+			fmt.Println("jwt: ", resp.Token[:12])
+		}
+		c.config.SessionToken = resp.Token
+	}
+
+	labels := pprof.Labels("path", path, "method", method)
 	ctx = pprof.WithLabels(ctx, labels)
 	pprof.SetGoroutineLabels(ctx)
 	var savederror error
@@ -173,13 +191,15 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 	if body != nil {
 		bodyContent, err = ioutil.ReadAll(body)
 		if err != nil {
-			return nil, nil, 0, err
+			return nil, nil, 0, sdk.WithStack(err)
 		}
 	}
 
-	url := c.config.Host + path
+	var url string
 	if strings.HasPrefix(path, "http") {
 		url = path
+	} else {
+		url = c.config.Host + path
 	}
 
 	for i := 0; i <= c.config.Retry; i++ {
@@ -190,14 +210,14 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 
 		req = req.WithContext(ctx)
+		date := sdk.FormatDateRFC5322(time.Now())
+		req.Header.Set("Date", date)
+		req.Header.Set("X-CDS-RemoteTime", date)
 
 		if c.config.Verbose {
 			log.Printf("Stream > context> %s\n", tracingutils.DumpContext(ctx))
 		}
 		spanCtx, ok := tracingutils.ContextToSpanContext(ctx)
-		if c.config.Verbose {
-			log.Printf("setup tracing = %v (%v) on request to %s\n", ok, spanCtx, req.URL.String())
-		}
 		if ok {
 			tracingutils.DefaultFormat.SpanContextToRequest(spanCtx, req)
 		}
@@ -212,74 +232,56 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			req.Header.Set("Content-Type", "application/json")
 		}
 
-		req.Header.Set("User-Agent", c.config.userAgent)
 		req.Header.Set("Connection", "close")
-		req.Header.Add(RequestedWithHeader, RequestedWithValue)
-		if c.name != "" {
-			req.Header.Add(RequestedNameHeader, c.name)
-		}
-		if c.isProvider {
-			req.Header.Add("X-Provider-Name", c.config.User)
-			req.Header.Add("X-Provider-Token", c.config.Token)
-		}
 
-		var addAuth bool
-		//No auth on /login route or on url that is not cds configured in config.Host
-		if strings.HasPrefix(url, c.config.Host) && !strings.HasPrefix(path, "/login") {
-			addAuth = true
-		}
-
-		if addAuth {
-			if c.config.Hash != "" {
-				basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
-				req.Header.Set(AuthHeader, basedHash)
-			}
-
-			if _, _, err := new(jwt.Parser).ParseUnverified(c.config.AccessToken, &sdk.AccessTokenJWTClaims{}); err == nil {
+		//No auth on signing routes or on url that is not cds configured in config.Host
+		if strings.HasPrefix(url, c.config.Host) && !signinRouteRegexp.MatchString(path) {
+			if _, _, err := new(jwt.Parser).ParseUnverified(c.config.SessionToken, &sdk.AuthSessionJWTClaims{}); err == nil {
 				if c.config.Verbose {
 					fmt.Println("JWT recognized")
 				}
-				auth := "Bearer " + c.config.AccessToken
+				auth := "Bearer " + c.config.SessionToken
 				req.Header.Add("Authorization", auth)
-			} else {
-				// TEMPORARY CODE TO HANDLE OLD TOKEN
-				if c.config.User != "" && c.config.Token != "" {
-					req.Header.Add(SessionTokenHeader, c.config.Token)
-					req.SetBasicAuth(c.config.User, c.config.Token)
-				}
-				// TEMPORARY CODE - END
 			}
 		}
 
 		if c.config.Verbose {
-			log.Println("********REQUEST**********")
+			log.Println(cli.Green("********REQUEST**********"))
 			dmp, _ := httputil.DumpRequestOut(req, true)
 			log.Printf("%s", string(dmp))
+			log.Println(cli.Green("**************************"))
 		}
 
 		var errDo error
 		var resp *http.Response
 		if noTimeout {
-			resp, errDo = c.HTTPSSEClient.Do(req)
+			resp, errDo = c.httpSSEClient.Do(req)
 		} else {
-			resp, errDo = c.HTTPClient.Do(req)
+			resp, errDo = c.httpClient.Do(req)
+		}
+		if errDo != nil {
+			return nil, nil, 0, sdk.WithStack(errDo)
 		}
 
-		if errDo == nil && c.config.Verbose {
-			log.Println("********RESPONSE**********")
+		if c.config.Verbose {
+			log.Println(cli.Yellow("********RESPONSE**********"))
 			dmp, _ := httputil.DumpResponse(resp, true)
 			log.Printf("%s", string(dmp))
-			log.Println("**************************")
+			log.Println(cli.Yellow("**************************"))
+		}
+
+		if resp.StatusCode == 401 {
+			c.config.SessionToken = ""
 		}
 
 		// if everything is fine, return body
-		if errDo == nil && resp.StatusCode < 500 {
+		if resp.StatusCode < 500 {
 			return resp.Body, resp.Header, resp.StatusCode, nil
 		}
 
 		// if no request error by status > 500, check CDS error
 		// if there is a CDS errors, return it
-		if errDo == nil && resp.StatusCode == 500 {
+		if resp.StatusCode == 500 {
 			var body []byte
 			var errRead error
 			body, errRead = ioutil.ReadAll(resp.Body)
@@ -287,9 +289,9 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 				resp.Body.Close()
 				continue
 			}
-			if cdserr := sdk.DecodeError(body); cdserr != nil {
+			if err := sdk.DecodeError(body); err != nil {
 				resp.Body.Close()
-				return nil, resp.Header, resp.StatusCode, cdserr
+				return nil, resp.Header, resp.StatusCode, sdk.WithStack(err)
 			}
 		}
 
@@ -301,27 +303,26 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			continue
 		}
 
-		if errDo != nil && (strings.Contains(errDo.Error(), "connection reset by peer") ||
-			strings.Contains(errDo.Error(), "unexpected EOF")) {
-			savederror = errDo
-			if resp != nil && resp.Body != nil {
-				resp.Body.Close()
-			}
-			continue
-		}
 		if resp != nil && resp.Body != nil {
 			resp.Body.Close()
 		}
-		if errDo != nil {
-			return nil, nil, 0, errDo
-		}
 	}
 
-	return nil, nil, 0, fmt.Errorf("x%d: %s", c.config.Retry, savederror)
+	return nil, nil, 0, sdk.WithStack(fmt.Errorf("x%d: %s", c.config.Retry, savederror))
 }
 
 // UploadMultiPart upload multipart
 func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...RequestModifier) ([]byte, int, error) {
+	// Checks that current session_token is still valid
+	// If not, challenge a new one against the authenticationToken
+	if !c.config.HasValidSessionToken() && c.config.BuitinConsumerAuthenticationToken != "" {
+		resp, err := c.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{"token": c.config.BuitinConsumerAuthenticationToken})
+		if err != nil {
+			return nil, -1, err
+		}
+		c.config.SessionToken = resp.Token
+	}
+
 	var req *http.Request
 	req, errRequest := http.NewRequest(method, c.config.Host+path, body)
 	if errRequest != nil {
@@ -329,31 +330,24 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 	}
 
 	req.Header.Set("Content-Type", "application/octet-stream")
-	req.Header.Set("User-Agent", c.config.userAgent)
 	req.Header.Set("Connection", "close")
-	req.Header.Add(RequestedWithHeader, RequestedWithValue)
-	if c.isProvider {
-		req.Header.Add("X-Provider-Name", c.config.User)
-		req.Header.Add("X-Provider-Token", c.config.Token)
-	}
 
 	for i := range mods {
 		mods[i](req)
 	}
 
-	//No auth on /login route
-	if !strings.HasPrefix(path, "/login") {
-		if c.config.Hash != "" {
-			basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
-			req.Header.Set(AuthHeader, basedHash)
-		}
-		if !c.isProvider && c.config.User != "" && c.config.Token != "" {
-			req.Header.Add(SessionTokenHeader, c.config.Token)
-			req.SetBasicAuth(c.config.User, c.config.Token)
+	//No auth on signing routes
+	if !signinRouteRegexp.MatchString(path) {
+		if _, _, err := new(jwt.Parser).ParseUnverified(c.config.SessionToken, &sdk.AuthSessionJWTClaims{}); err == nil {
+			if c.config.Verbose {
+				fmt.Println("JWT recognized")
+			}
+			auth := "Bearer " + c.config.SessionToken
+			req.Header.Add("Authorization", auth)
 		}
 	}
 
-	resp, err := c.HTTPSSEClient.Do(req)
+	resp, err := c.httpSSEClient.Do(req)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -364,6 +358,10 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 		fmt.Printf("Request path: %s\n", c.config.Host+path)
 		fmt.Printf("Request Headers: %s\n", req.Header)
 		fmt.Printf("Response Headers: %s\n", resp.Header)
+	}
+
+	if resp.StatusCode == 401 {
+		c.config.SessionToken = ""
 	}
 
 	var respBody []byte

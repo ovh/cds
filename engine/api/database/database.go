@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"sync"
@@ -36,15 +37,15 @@ func (f *DBConnectionFactory) DB() *sql.DB {
 		if f.DBName == "" {
 			return nil
 		}
-		newF, err := Init(f.DBUser, f.DBRole, f.DBPassword, f.DBName, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout, f.DBTimeout, f.DBMaxConn)
+		newF, err := Init(context.TODO(), f.DBUser, f.DBRole, f.DBPassword, f.DBName, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout, f.DBTimeout, f.DBMaxConn)
 		if err != nil {
-			log.Error("Database> cannot init db connection : %s", err)
+			log.Error(context.TODO(), "Database> cannot init db connection : %s", err)
 			return nil
 		}
 		*f = *newF
 	}
 	if err := f.Database.Ping(); err != nil {
-		log.Error("Database> cannot ping db : %s", err)
+		log.Error(context.TODO(), "Database> cannot ping db : %s", err)
 		f.Database = nil
 		return nil
 	}
@@ -62,7 +63,7 @@ func (f *DBConnectionFactory) Set(d *sql.DB) {
 }
 
 // Init initialize sql.DB object by checking environment variables and connecting to database
-func Init(user, role, password, name, host string, port int, sslmode string, connectTimeout, timeout, maxconn int) (*DBConnectionFactory, error) {
+func Init(ctx context.Context, user, role, password, name, host string, port int, sslmode string, connectTimeout, timeout, maxconn int) (*DBConnectionFactory, error) {
 	f := &DBConnectionFactory{
 		DBDriver:         "postgres",
 		DBRole:           role,
@@ -84,7 +85,7 @@ func Init(user, role, password, name, host string, port int, sslmode string, con
 	// Try to close before reinit
 	if f.Database != nil {
 		if err := f.Database.Close(); err != nil {
-			log.Error("Cannot close connection to DB : %s", err)
+			log.Error(ctx, "Cannot close connection to DB : %s", err)
 		}
 	}
 
@@ -112,7 +113,7 @@ func Init(user, role, password, name, host string, port int, sslmode string, con
 	f.Database, err = sql.Open(f.DBDriver, dsn)
 	if err != nil {
 		f.Database = nil
-		log.Error("cannot open database: %s", err)
+		log.Error(ctx, "cannot open database: %s", err)
 		return nil, err
 	}
 
@@ -124,9 +125,8 @@ func Init(user, role, password, name, host string, port int, sslmode string, con
 	f.Database.SetMaxOpenConns(f.DBMaxConn)
 	f.Database.SetMaxIdleConns(int(f.DBMaxConn / 2))
 
-	log.Debug("database> setting statement_timeout %d on database", f.DBTimeout)
 	if _, err := f.Database.Exec(fmt.Sprintf("SET statement_timeout = %d", f.DBTimeout)); err != nil {
-		log.Error("unable to set statement_timeout with %d on database: %s", f.DBTimeout, err)
+		log.Error(ctx, "unable to set statement_timeout with %d on database: %s", f.DBTimeout, err)
 		return nil, sdk.WrapError(err, "unable to set statement_timeout with %d", f.DBTimeout)
 	}
 
@@ -134,7 +134,7 @@ func Init(user, role, password, name, host string, port int, sslmode string, con
 	if role != "" {
 		log.Debug("database> setting role %s on database", role)
 		if _, err := f.Database.Exec("SET ROLE '" + role + "'"); err != nil {
-			log.Error("unable to set role %s on database: %s", role, err)
+			log.Error(ctx, "unable to set role %s on database: %s", role, err)
 			return nil, sdk.WrapError(err, "unable to set role %s", role)
 		}
 	}
@@ -147,7 +147,7 @@ func (f *DBConnectionFactory) dsn() string {
 }
 
 // Status returns database driver and status in a printable string
-func (f *DBConnectionFactory) Status() sdk.MonitoringStatusLine {
+func (f *DBConnectionFactory) Status(ctx context.Context) sdk.MonitoringStatusLine {
 	if f.Database == nil {
 		return sdk.MonitoringStatusLine{Component: "Database Conns", Value: "No Connection", Status: sdk.MonitoringStatusAlert}
 	}

@@ -80,7 +80,7 @@ func (client *bitbucketcloudClient) Commit(ctx context.Context, repo, hash strin
 	url := fmt.Sprintf("/repositories/%s/commit/%s", repo, hash)
 	status, body, _, err := client.get(url)
 	if err != nil {
-		log.Warning("bitbucketcloudClient.Commit> Error %s", err)
+		log.Warning(ctx, "bitbucketcloudClient.Commit> Error %s", err)
 		return commit, err
 	}
 	if status >= 400 {
@@ -88,7 +88,7 @@ func (client *bitbucketcloudClient) Commit(ctx context.Context, repo, hash strin
 	}
 	var c Commit
 	if err := json.Unmarshal(body, &c); err != nil {
-		log.Warning("bitbucketcloudClient.Commit> Unable to parse bitbucket cloud commit: %s", err)
+		log.Warning(ctx, "bitbucketcloudClient.Commit> Unable to parse bitbucket cloud commit: %s", err)
 		return sdk.VCSCommit{}, err
 	}
 

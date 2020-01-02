@@ -25,5 +25,5 @@ export class VariableAudit {
     variable_before: Variable;
     variable_after: Variable;
     versionned: Date;
-    author; string;
+    author: string;
 }

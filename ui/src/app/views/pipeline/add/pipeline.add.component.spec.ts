@@ -1,5 +1,3 @@
-/* tslint:disable:no-unused-variable */
-
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Injector } from '@angular/core';
 import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
@@ -9,6 +7,9 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router'
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { MonitoringService } from 'app/service/monitoring/monitoring.service';
+import { UserService } from 'app/service/user/user.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AddPipeline } from 'app/store/pipelines.action';
@@ -18,7 +19,6 @@ import 'rxjs/add/observable/of';
 import { Application } from '../../../model/application.model';
 import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
 import { EnvironmentService } from '../../../service/environment/environment.service';
 import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../service/pipeline/pipeline.service';
@@ -29,7 +29,6 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineAddComponent } from './pipeline.add.component';
-import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 describe('CDS: Pipeline Add Component', () => {
 
     let injector: Injector;
@@ -44,7 +43,6 @@ describe('CDS: Pipeline Add Component', () => {
             providers: [
                 MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
-                AuthentificationStore,
                 ProjectStore,
                 ProjectService,
                 MonitoringService,
@@ -59,7 +57,9 @@ describe('CDS: Pipeline Add Component', () => {
                 EnvironmentService,
                 VariableService,
                 WorkflowService,
-                WorkflowRunService
+                WorkflowRunService,
+                UserService,
+                AuthenticationService
             ],
             imports: [
                 PipelineModule,

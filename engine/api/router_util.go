@@ -10,25 +10,10 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-func (api *API) deleteUserPermissionCache(ctx context.Context, store cache.Store) {
-	if deprecatedGetUser(ctx) != nil {
-		username := deprecatedGetUser(ctx).Username
-		kp := cache.Key("users", username, "perms")
-		kg := cache.Key("users", username, "groups")
-		if err := store.Delete(kp); err != nil {
-			log.Error("error on delete cache perms %v: %v", kp, err)
-		}
-		if err := store.Delete(kg); err != nil {
-			log.Error("error on delete cache groups %v: %v", kg, err)
-		}
-	}
-}
 
 // writeNoContentPostMiddleware writes StatusNoContent (204) for each response with No Header Content-Type
 // this is a PostMiddlewaare, launch if there no error in handler.
@@ -44,7 +29,7 @@ func writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, re
 			return ctx, nil
 		}
 	}
-	service.WriteProcessTime(w)
+	service.WriteProcessTime(ctx, w)
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 	return ctx, nil
@@ -94,6 +79,16 @@ func FormBool(r *http.Request, s string) bool {
 // FormString return a string
 func FormString(r *http.Request, s string) string {
 	return r.FormValue(s)
+}
+
+// QueryString return a string from a query parameter
+func QueryString(r *http.Request, s string) string {
+	return r.FormValue(s)
+}
+
+// QueryBool return a boolean from a query parameter
+func QueryBool(r *http.Request, s string) bool {
+	return FormBool(r, s)
 }
 
 // QueryStrings returns the list of values for given query param key or nil if key no values.
@@ -183,9 +178,9 @@ func requestVarInt(r *http.Request, s string) (int64, error) {
 	if err != nil {
 		err = sdk.WrapError(err, "%s is not an integer: %s", s, vars[s])
 		if s == "id" {
-			return 0, sdk.NewError(sdk.ErrInvalidID, err)
+			return 0, sdk.NewErrorWithStack(err, sdk.ErrInvalidID)
 		}
-		return 0, sdk.NewError(sdk.ErrWrongRequest, err)
+		return 0, sdk.NewErrorWithStack(err, sdk.ErrWrongRequest)
 	}
 
 	return id, nil

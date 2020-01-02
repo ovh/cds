@@ -1,10 +1,5 @@
 package sdk
 
-// This constant are the types of the kind of job of CDS: legacy and workflow
-const (
-	JobTypeWorkflowNode = "workflow_node_run_job"
-)
-
 // Job is the element of a stage
 type Job struct {
 	PipelineActionID int64                  `json:"pipeline_action_id"`

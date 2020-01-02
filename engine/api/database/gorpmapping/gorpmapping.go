@@ -1,31 +1,161 @@
 package gorpmapping
 
 import (
+	"crypto/sha1"
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"reflect"
+	"strings"
+	"sync"
+	"text/template"
+	"time"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // TableMapping represents a table mapping with gorp
 type TableMapping struct {
-	Target        interface{}
-	Name          string
-	AutoIncrement bool
-	Keys          []string
+	Target          interface{}
+	Name            string
+	AutoIncrement   bool
+	SignedEntity    bool
+	Keys            []string
+	EncryptedEntity bool
+	EncryptedFields []EncryptedField
 }
 
-// New initialize a TableMapping
+type EncryptedField struct {
+	Name   string
+	Column string
+	Extras []string
+}
+
+// New initialize a TableMapping.
 func New(target interface{}, name string, autoIncrement bool, keys ...string) TableMapping {
-	return TableMapping{Target: target, Name: name, AutoIncrement: autoIncrement, Keys: keys}
+	v := sdk.ValueFromInterface(target)
+
+	if v.Kind() != reflect.Struct {
+		err := fmt.Errorf("TableMapping error: target (%T) must be a struct", target)
+		panic(err)
+	}
+
+	var (
+		encryptedEntity bool
+		encryptedFields []EncryptedField
+	)
+	var signedEntity bool
+	for i := 0; i < v.NumField(); i++ {
+		gmTag, ok := v.Type().Field(i).Tag.Lookup("gorpmapping")
+		if ok {
+			tagValues := strings.Split(gmTag, ",")
+			if len(tagValues) == 0 {
+				continue
+			}
+
+			dbTag, ok := v.Type().Field(i).Tag.Lookup("db")
+			if !ok {
+				continue
+			}
+			column := strings.SplitN(dbTag, ",", 2)[0]
+
+			if tagValues[0] == "encrypted" {
+				encryptedEntity = true
+				encryptedFields = append(encryptedFields,
+					EncryptedField{
+						Name:   v.Type().Field(i).Name,
+						Extras: tagValues[1:],
+						Column: column,
+					})
+			}
+		}
+
+		if v.Type().Field(i).Name == reflect.TypeOf(SignedEntity{}).Name() {
+			signedEntity = true
+		}
+	}
+
+	if signedEntity {
+		x, ok := target.(Canonicaller)
+		if !ok {
+			err := fmt.Errorf("TableMapping error: target (%T) must implement Canonicaller interface because it's a signed entity", target)
+			panic(err)
+		}
+
+		if _, ok := target.(Signed); !ok {
+			err := fmt.Errorf("TableMapping error: target (%T) must implement Signed interface because it's a signed entity", target)
+			panic(err)
+		}
+
+		tmplStrFuncs := x.Canonical()
+		for _, f := range tmplStrFuncs {
+			h := sha1.New()
+			_, _ = h.Write(f.Bytes())
+			bs := h.Sum(nil)
+			sha := fmt.Sprintf("%x", bs)
+
+			t := template.New(sha)
+			var err error
+
+			t = t.Funcs(template.FuncMap{
+				"print": func(i interface{}) string {
+					return fmt.Sprintf("%v", err)
+				},
+				"printDate": func(i time.Time) string {
+					return i.In(time.UTC).Format(time.RFC3339)
+				},
+			})
+
+			t, err = t.Parse(f.String())
+			if err != nil {
+				err := fmt.Errorf("TableMapping error: target (%T) canonical function \"%s\" is invalid: %v", target, f.String(), err)
+				panic(err)
+			}
+			CanonicalFormTemplates.l.Lock()
+			CanonicalFormTemplates.m[sha] = t
+			CanonicalFormTemplates.l.Unlock()
+		}
+
+	}
+
+	var m = TableMapping{
+		Target:          target,
+		Name:            name,
+		AutoIncrement:   autoIncrement,
+		Keys:            keys,
+		SignedEntity:    signedEntity,
+		EncryptedEntity: encryptedEntity,
+		EncryptedFields: encryptedFields,
+	}
+
+	return m
 }
 
 // Mapping is the global var for all registered mapping
-var Mapping []TableMapping
+var (
+	Mapping      = map[string]TableMapping{}
+	mappingMutex sync.Mutex
+)
 
 //Register intialiaze gorp mapping
 func Register(m ...TableMapping) {
+	mappingMutex.Lock()
+	defer mappingMutex.Unlock()
 	for _, t := range m {
-		Mapping = append(Mapping, t)
+		k := fmt.Sprintf("%T", t.Target)
+		Mapping[k] = t
 	}
+}
+
+func getTabbleMapping(i interface{}) (TableMapping, bool) {
+	if reflect.ValueOf(i).Kind() == reflect.Ptr {
+		i = reflect.ValueOf(i).Elem().Interface()
+	}
+	mappingMutex.Lock()
+	defer mappingMutex.Unlock()
+	k := fmt.Sprintf("%T", i)
+	mapping, has := Mapping[k]
+	return mapping, has
 }
 
 //JSONToNullString returns a valid sql.NullString with json-marshalled i

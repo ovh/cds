@@ -10,3 +10,11 @@ type DatabaseMigrationStatus struct {
 	Migrated  bool       `json:"migrated" db:"-" cli:"migrated"`
 	AppliedAt *time.Time `json:"applied_at" db:"applied_at" cli:"applied_at"`
 }
+
+type CanonicalFormUsage struct {
+	Signer string `json:"signer" db:"signer"`
+	Number int64  `json:"number" db:"number"`
+	Latest bool   `json:"latest"`
+}
+
+type CanonicalFormUsageResume map[string][]CanonicalFormUsage

@@ -23,8 +23,6 @@ type WorkerModel sdk.Model
 //PostInsert is a DB Hook on WorkerModel
 func (m *WorkerModel) PostInsert(s gorp.SqlExecutor) error {
 	m.CreatedBy.Groups = nil
-	m.CreatedBy.Permissions = sdk.UserPermissions{}
-	m.CreatedBy.Auth = sdk.Auth{}
 	btes, err := json.Marshal(m.CreatedBy)
 	if err != nil {
 		return err
@@ -158,8 +156,6 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 	}
 
 	m.CreatedBy.Groups = nil
-	m.CreatedBy.Permissions = sdk.UserPermissions{}
-	m.CreatedBy.Auth = sdk.Auth{}
 
 	if m.GroupID == group.SharedInfraGroup.ID {
 		m.IsOfficial = true

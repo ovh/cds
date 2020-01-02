@@ -1,6 +1,10 @@
 package sdk
 
-import "time"
+import (
+	"fmt"
+	"strings"
+	"time"
+)
 
 // Variable represent a variable for a project or pipeline
 type Variable struct {
@@ -8,6 +12,14 @@ type Variable struct {
 	Name  string `json:"name" cli:"name,key"`
 	Value string `json:"value" cli:"value"`
 	Type  string `json:"type" cli:"type"`
+}
+
+func (v Variable) ToParameter(prefix string) Parameter {
+	return Parameter{
+		Name:  "." + prefix + "." + v.Name,
+		Value: v.Value,
+		Type:  v.Type,
+	}
 }
 
 // VariableAudit represent audit for a variable
@@ -124,4 +136,21 @@ func VariablesPrefix(vars []Variable, prefix string) []Variable {
 		res[i] = s
 	}
 	return res
+}
+
+func EnvVartoENV(p Parameter) []string {
+	var env []string
+	if !strings.HasPrefix(p.Name, "cds.env.") {
+		return nil
+	}
+
+	pName := strings.TrimPrefix(p.Name, "cds.env.")
+
+	envName := strings.Replace(pName, ".", "_", -1)
+	envName = strings.Replace(envName, "-", "_", -1)
+	env = append(env, fmt.Sprintf("CDS_ENV_%s=%s", strings.ToUpper(envName), p.Value)) // CDS_ENV_MYSTRINGVARIABLE
+	env = append(env, fmt.Sprintf("CDS_ENV_%s=%s", pName, p.Value))                    //CDS_ENV_MyStringVariable
+	env = append(env, fmt.Sprintf("%s=%s", pName, p.Value))                            // MyStringVariable
+	env = append(env, fmt.Sprintf("%s=%s", strings.ToUpper(envName), p.Value))         // MYSTRINGVARIABLE
+	return env
 }

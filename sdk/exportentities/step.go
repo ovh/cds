@@ -1,12 +1,15 @@
 package exportentities
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/ovh/cds/sdk"
+
+	"github.com/fsamin/go-dump"
 )
 
 func newStep(act sdk.Action) Step {
@@ -28,182 +31,189 @@ func newStep(act sdk.Action) Step {
 	case sdk.BuiltinAction:
 		switch act.Name {
 		case sdk.ScriptAction:
-			script := sdk.ParameterFind(&act.Parameters, "script")
+			script := sdk.ParameterFind(act.Parameters, "script")
 			if script != nil {
 				s.Script = strings.SplitN(script.Value, "\n", -1)
 			}
 		case sdk.CoverageAction:
 			s.Coverage = &StepCoverage{}
-			path := sdk.ParameterFind(&act.Parameters, "path")
+			path := sdk.ParameterFind(act.Parameters, "path")
 			if path != nil {
 				s.Coverage.Path = path.Value
 			}
-			format := sdk.ParameterFind(&act.Parameters, "format")
+			format := sdk.ParameterFind(act.Parameters, "format")
 			if format != nil {
 				s.Coverage.Format = format.Value
 			}
-			minimum := sdk.ParameterFind(&act.Parameters, "minimum")
+			minimum := sdk.ParameterFind(act.Parameters, "minimum")
 			if minimum != nil {
 				s.Coverage.Minimum = minimum.Value
 			}
 		case sdk.ArtifactDownload:
 			s.ArtifactDownload = &StepArtifactDownload{}
-			path := sdk.ParameterFind(&act.Parameters, "path")
+			path := sdk.ParameterFind(act.Parameters, "path")
 			if path != nil {
 				s.ArtifactDownload.Path = path.Value
 			}
-			tag := sdk.ParameterFind(&act.Parameters, "tag")
+			tag := sdk.ParameterFind(act.Parameters, "tag")
 			if tag != nil {
 				s.ArtifactDownload.Tag = tag.Value
 			}
-			pattern := sdk.ParameterFind(&act.Parameters, "pattern")
+			pattern := sdk.ParameterFind(act.Parameters, "pattern")
 			if pattern != nil {
 				s.ArtifactDownload.Pattern = pattern.Value
 			}
-			enabled := sdk.ParameterFind(&act.Parameters, "enabled")
-			if enabled != nil && enabled.Value != "true" {
-				s.ArtifactDownload.Enabled = enabled.Value
-			}
 		case sdk.ArtifactUpload:
 			s.ArtifactUpload = &StepArtifactUpload{}
-			path := sdk.ParameterFind(&act.Parameters, "path")
+			path := sdk.ParameterFind(act.Parameters, "path")
 			if path != nil {
 				s.ArtifactUpload.Path = path.Value
 			}
-			tag := sdk.ParameterFind(&act.Parameters, "tag")
+			tag := sdk.ParameterFind(act.Parameters, "tag")
 			if tag != nil {
 				s.ArtifactUpload.Tag = tag.Value
 			}
-			destination := sdk.ParameterFind(&act.Parameters, "destination")
+			destination := sdk.ParameterFind(act.Parameters, "destination")
 			if destination != nil {
 				s.ArtifactUpload.Destination = destination.Value
 			}
-			enabled := sdk.ParameterFind(&act.Parameters, "enabled")
-			if enabled != nil && enabled.Value != "true" {
-				s.ArtifactUpload.Enabled = enabled.Value
-			}
 		case sdk.ServeStaticFiles:
 			s.ServeStaticFiles = &StepServeStaticFiles{}
-			name := sdk.ParameterFind(&act.Parameters, "name")
+			name := sdk.ParameterFind(act.Parameters, "name")
 			if name != nil {
 				s.ServeStaticFiles.Name = name.Value
 			}
-			path := sdk.ParameterFind(&act.Parameters, "path")
+			path := sdk.ParameterFind(act.Parameters, "path")
 			if path != nil {
 				s.ServeStaticFiles.Path = path.Value
 			}
-			entrypoint := sdk.ParameterFind(&act.Parameters, "entrypoint")
+			entrypoint := sdk.ParameterFind(act.Parameters, "entrypoint")
 			if entrypoint != nil {
 				s.ServeStaticFiles.Entrypoint = entrypoint.Value
 			}
-			staticKey := sdk.ParameterFind(&act.Parameters, "static-key")
+			staticKey := sdk.ParameterFind(act.Parameters, "static-key")
 			if staticKey != nil {
 				s.ServeStaticFiles.StaticKey = staticKey.Value
 			}
-			destination := sdk.ParameterFind(&act.Parameters, "destination")
+			destination := sdk.ParameterFind(act.Parameters, "destination")
 			if destination != nil {
 				s.ServeStaticFiles.Destination = destination.Value
 			}
 		case sdk.GitCloneAction:
 			s.GitClone = &StepGitClone{}
-			branch := sdk.ParameterFind(&act.Parameters, "branch")
+			branch := sdk.ParameterFind(act.Parameters, "branch")
 			if branch != nil {
 				s.GitClone.Branch = branch.Value
 			}
-			commit := sdk.ParameterFind(&act.Parameters, "commit")
+			commit := sdk.ParameterFind(act.Parameters, "commit")
 			if commit != nil {
 				s.GitClone.Commit = commit.Value
 			}
-			directory := sdk.ParameterFind(&act.Parameters, "directory")
+			directory := sdk.ParameterFind(act.Parameters, "directory")
 			if directory != nil {
 				s.GitClone.Directory = directory.Value
 			}
-			password := sdk.ParameterFind(&act.Parameters, "password")
+			password := sdk.ParameterFind(act.Parameters, "password")
 			if password != nil {
 				s.GitClone.Password = password.Value
 			}
-			privateKey := sdk.ParameterFind(&act.Parameters, "privateKey")
+			privateKey := sdk.ParameterFind(act.Parameters, "privateKey")
 			if privateKey != nil {
 				s.GitClone.PrivateKey = privateKey.Value
 			}
-			url := sdk.ParameterFind(&act.Parameters, "url")
+			url := sdk.ParameterFind(act.Parameters, "url")
 			if url != nil {
 				s.GitClone.URL = url.Value
 			}
-			user := sdk.ParameterFind(&act.Parameters, "user")
+			user := sdk.ParameterFind(act.Parameters, "user")
 			if user != nil {
 				s.GitClone.User = user.Value
 			}
-			depth := sdk.ParameterFind(&act.Parameters, "depth")
+			depth := sdk.ParameterFind(act.Parameters, "depth")
 			if depth != nil && depth.Value != "50" {
 				s.GitClone.Depth = depth.Value
 			}
-			submodules := sdk.ParameterFind(&act.Parameters, "submodules")
+			submodules := sdk.ParameterFind(act.Parameters, "submodules")
 			if submodules != nil && submodules.Value != "true" {
 				s.GitClone.SubModules = submodules.Value
 			}
-			tag := sdk.ParameterFind(&act.Parameters, "tag")
+			tag := sdk.ParameterFind(act.Parameters, "tag")
 			if tag != nil && tag.Value != sdk.DefaultGitCloneParameterTagValue {
 				s.GitClone.Tag = tag.Value
 			}
 		case sdk.GitTagAction:
 			s.GitTag = &StepGitTag{}
-			path := sdk.ParameterFind(&act.Parameters, "path")
+			path := sdk.ParameterFind(act.Parameters, "path")
 			if path != nil {
 				s.GitTag.Path = path.Value
 			}
-			tagLevel := sdk.ParameterFind(&act.Parameters, "tagLevel")
+			tagLevel := sdk.ParameterFind(act.Parameters, "tagLevel")
 			if tagLevel != nil {
 				s.GitTag.TagLevel = tagLevel.Value
 			}
-			tagMessage := sdk.ParameterFind(&act.Parameters, "tagMessage")
+			tagMessage := sdk.ParameterFind(act.Parameters, "tagMessage")
 			if tagMessage != nil {
 				s.GitTag.TagMessage = tagMessage.Value
 			}
-			tagMetadata := sdk.ParameterFind(&act.Parameters, "tagMetadata")
+			tagMetadata := sdk.ParameterFind(act.Parameters, "tagMetadata")
 			if tagMetadata != nil {
 				s.GitTag.TagMetadata = tagMetadata.Value
 			}
-			tagPrerelease := sdk.ParameterFind(&act.Parameters, "tagPrerelease")
+			tagPrerelease := sdk.ParameterFind(act.Parameters, "tagPrerelease")
 			if tagPrerelease != nil {
 				s.GitTag.TagPrerelease = tagPrerelease.Value
 			}
-			prefix := sdk.ParameterFind(&act.Parameters, "prefix")
+			prefix := sdk.ParameterFind(act.Parameters, "prefix")
 			if prefix != nil {
 				s.GitTag.Prefix = prefix.Value
 			}
 		case sdk.ReleaseAction:
 			s.Release = &StepRelease{}
-			artifacts := sdk.ParameterFind(&act.Parameters, "artifacts")
+			artifacts := sdk.ParameterFind(act.Parameters, "artifacts")
 			if artifacts != nil {
 				s.Release.Artifacts = artifacts.Value
 			}
-			releaseNote := sdk.ParameterFind(&act.Parameters, "releaseNote")
+			releaseNote := sdk.ParameterFind(act.Parameters, "releaseNote")
 			if releaseNote != nil {
 				s.Release.ReleaseNote = releaseNote.Value
 			}
-			tag := sdk.ParameterFind(&act.Parameters, "tag")
+			tag := sdk.ParameterFind(act.Parameters, "tag")
 			if tag != nil {
 				s.Release.Tag = tag.Value
 			}
-			title := sdk.ParameterFind(&act.Parameters, "title")
+			title := sdk.ParameterFind(act.Parameters, "title")
 			if title != nil {
 				s.Release.Title = title.Value
 			}
 		case sdk.JUnitAction:
 			var step StepJUnitReport
-			path := sdk.ParameterFind(&act.Parameters, "path")
+			path := sdk.ParameterFind(act.Parameters, "path")
 			if path != nil {
 				step = StepJUnitReport(path.Value)
 			}
 			s.JUnitReport = &step
 		case sdk.CheckoutApplicationAction:
 			var step StepCheckout
-			directory := sdk.ParameterFind(&act.Parameters, "directory")
+			directory := sdk.ParameterFind(act.Parameters, "directory")
 			if directory != nil {
 				step = StepCheckout(directory.Value)
 			}
 			s.Checkout = &step
+		case sdk.InstallKeyAction:
+			key := sdk.ParameterFind(act.Parameters, "key")
+			file := sdk.ParameterFind(act.Parameters, "file")
+			switch {
+			case key != nil && file != nil && file.Value != "":
+				step := StepInstallKey(map[string]string{
+					"name": key.Value,
+					"file": file.Value,
+				})
+				s.InstallKey = &step
+
+			case key != nil:
+				step := StepInstallKey(string(key.Value))
+				s.InstallKey = &step
+			}
 		case sdk.DeployApplicationAction:
 			step := StepDeploy("{{.cds.application}}")
 			s.Deploy = &step
@@ -244,7 +254,6 @@ type StepCoverage struct {
 
 // StepArtifactDownload represents exported artifact download step.
 type StepArtifactDownload struct {
-	Enabled string `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Path    string `json:"path,omitempty" yaml:"path,omitempty" jsonschema:"required"`
 	Pattern string `json:"pattern,omitempty" yaml:"pattern,omitempty"`
 	Tag     string `json:"tag,omitempty" yaml:"tag,omitempty" jsonschema:"required"`
@@ -252,7 +261,6 @@ type StepArtifactDownload struct {
 
 // StepArtifactUpload represents exported artifact upload step.
 type StepArtifactUpload struct {
-	Enabled     string `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Destination string `json:"destination,omitempty" yaml:"destination,omitempty"`
 	Path        string `json:"path,omitempty" yaml:"path,omitempty" jsonschema:"required"`
 	Tag         string `json:"tag,omitempty" yaml:"tag,omitempty" jsonschema:"required"`
@@ -305,6 +313,9 @@ type StepJUnitReport string
 // StepCheckout represents exported checkout step.
 type StepCheckout string
 
+// StepInstallKey represents exported installKey step.
+type StepInstallKey interface{}
+
 // StepDeploy represents exported deploy step.
 type StepDeploy string
 
@@ -327,6 +338,7 @@ type Step struct {
 	Release          *StepRelease          `json:"release,omitempty" yaml:"release,omitempty" jsonschema_description:"Release an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-release"`
 	JUnitReport      *StepJUnitReport      `json:"jUnitReport,omitempty" yaml:"jUnitReport,omitempty" jsonschema_description:"Parse JUnit report.\nhttps://ovh.github.io/cds/docs/actions/builtin-junit"`
 	Checkout         *StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty" jsonschema_description:"Checkout repository for an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-checkoutapplication"`
+	InstallKey       *StepInstallKey       `json:"installKey,omitempty" yaml:"installKey,omitempty" jsonschema_description:"Install a key (GPG, SSH) in your current workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-installkey"`
 	Deploy           *StepDeploy           `json:"deploy,omitempty" yaml:"deploy,omitempty" jsonschema_description:"Deploy an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-deployapplication"`
 }
 
@@ -435,6 +447,9 @@ func (s Step) IsValid() bool {
 	if s.isCheckout() {
 		count++
 	}
+	if s.isInstallKey() {
+		count++
+	}
 	if s.isDeploy() {
 		count++
 	}
@@ -472,6 +487,8 @@ func (s Step) toAction() (*sdk.Action, error) {
 		a, err = s.asRelease()
 	} else if s.isCheckout() {
 		a = s.asCheckoutApplication()
+	} else if s.isInstallKey() {
+		a = s.asInstallKey()
 	} else if s.isDeploy() {
 		a = s.asDeployApplication()
 	} else if s.isCoverage() {
@@ -498,9 +515,7 @@ func (s Step) isScript() bool { return s.Script != nil }
 func (s Step) asScript() (sdk.Action, error) {
 	var a sdk.Action
 	// TODO use typed value for script
-	/*
-		val := strings.Join(*s.Script, "\n")
-	*/
+	// val := strings.Join(*s.Script, "\n")
 
 	var val string
 	if script, ok := s.Script.([]interface{}); ok {
@@ -563,6 +578,49 @@ func (s Step) asCheckoutApplication() sdk.Action {
 		},
 	}
 }
+
+func (s Step) asInstallKey() sdk.Action {
+	switch v := (*s.InstallKey).(type) {
+	case string:
+		return sdk.Action{
+			Name: sdk.InstallKeyAction,
+			Type: sdk.BuiltinAction,
+			Parameters: []sdk.Parameter{
+				{
+					Name:  "key",
+					Value: v,
+					Type:  sdk.KeyParameter,
+				},
+			},
+		}
+	case map[string]string:
+		params := make([]sdk.Parameter, 0, len(v))
+
+		for paramName, paramValue := range v {
+			paramType := sdk.StringParameter
+			if paramName == "name" {
+				paramType = sdk.KeyParameter
+			}
+			params = append(params, sdk.Parameter{
+				Name:  paramName,
+				Value: paramValue,
+				Type:  paramType,
+			})
+		}
+		return sdk.Action{
+			Name:       sdk.InstallKeyAction,
+			Type:       sdk.BuiltinAction,
+			Parameters: params,
+		}
+	}
+
+	return sdk.Action{
+		Name: sdk.InstallKeyAction,
+		Type: sdk.BuiltinAction,
+	}
+}
+
+func (s Step) isInstallKey() bool { return s.InstallKey != nil }
 
 func (s Step) isCoverage() bool { return s.Coverage != nil }
 
@@ -718,4 +776,11 @@ func stepToMap(i interface{}) (map[string]string, error) {
 		return nil, sdk.WithStack(err)
 	}
 	return m, nil
+}
+
+func (s Step) String() string {
+	buf := new(bytes.Buffer)
+	dump := dump.NewEncoder(buf)
+	_ = dump.Fdump(s)
+	return buf.String()
 }

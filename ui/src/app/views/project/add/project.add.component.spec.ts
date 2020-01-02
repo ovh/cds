@@ -1,4 +1,3 @@
-/* tslint:disable:no-unused-variable */
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, Injector } from '@angular/core';
 import { getTestBed, TestBed } from '@angular/core/testing';
@@ -9,6 +8,11 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ToasterService } from 'angular2-toaster/angular2-toaster';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { MonitoringService } from 'app/service/monitoring/monitoring.service';
+import { UserService } from 'app/service/user/user.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AddProject } from 'app/store/project.action';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
@@ -27,9 +31,6 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { ProjectModule } from '../project.module';
 import { ProjectAddComponent } from './project.add.component';
-import {WorkflowService} from 'app/service/workflow/workflow.service';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
-import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 describe('CDS: Project Show Component', () => {
 
     let injector: Injector;
@@ -44,6 +45,8 @@ describe('CDS: Project Show Component', () => {
                 TranslateLoader,
                 RepoManagerService,
                 ProjectStore,
+                WorkflowRunService,
+                AuthenticationService,
                 NavbarService,
                 ProjectService,
                 PipelineService,
@@ -54,8 +57,8 @@ describe('CDS: Project Show Component', () => {
                 TranslateService,
                 TranslateParser,
                 GroupService,
+                UserService,
                 WorkflowService,
-                WorkflowRunService,
                 { provide: ToastService, useClass: MockToast }
             ],
             imports: [
@@ -72,7 +75,6 @@ describe('CDS: Project Show Component', () => {
         });
         injector = getTestBed();
         backend = injector.get(MockBackend);
-
     });
 
     afterEach(() => {

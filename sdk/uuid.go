@@ -1,9 +1,9 @@
 package sdk
 
 import (
-	"crypto/rand"
 	"fmt"
 	"io"
+	"crypto/rand"
 
 	"github.com/pborman/uuid"
 )

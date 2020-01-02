@@ -23,8 +23,6 @@ func (api *API) postGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var p sdk.GRPCPlugin
 		db := api.mustDB()
-		u := deprecatedGetUser(ctx)
-
 		if err := service.UnmarshalBody(r, &p); err != nil {
 			return sdk.WithStack(err)
 		}
@@ -51,7 +49,7 @@ func (api *API) postGRPCluginHandler() service.Handler {
 				return sdk.WithStack(err)
 			}
 			if old != nil {
-				if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Parameters, u.ID); err != nil {
+				if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Parameters); err != nil {
 					return sdk.WrapError(err, "error while updating action %s in database", p.Name)
 				}
 			} else {
@@ -131,7 +129,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		}
 
 		if p.Type == sdk.GRPCPluginAction {
-			if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Parameters, deprecatedGetUser(ctx).ID); err != nil {
+			if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Parameters); err != nil {
 				return sdk.WrapError(err, "Error while updating action %s in database", p.Name)
 			}
 		}
@@ -156,7 +154,7 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load old plugin")
 		}
 
-		if err := plugin.Delete(api.mustDB(), api.SharedStorage, old); err != nil {
+		if err := plugin.Delete(ctx, api.mustDB(), api.SharedStorage, old); err != nil {
 			return sdk.WrapError(err, "unable to delete plugin")
 		}
 
@@ -179,7 +177,7 @@ func (api *API) postGRPCluginBinaryHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "unable to start tx")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		name := mux.Vars(r)["name"]
 		p, err := plugin.LoadByName(tx, name)
@@ -237,7 +235,7 @@ func (api *API) getGRPCluginBinaryHandler() service.Handler {
 			return nil
 		}
 
-		f, err := api.SharedStorage.Fetch(b)
+		f, err := api.SharedStorage.Fetch(ctx, b)
 		if err != nil {
 			return sdk.WrapError(err, "unable to get object")
 		}

@@ -59,11 +59,12 @@ export class WorkflowTemplateBulkModalComponent {
         this.columnsInstances = [
             <Column<WorkflowTemplateInstance>>{
                 name: 'common_workflow',
+                class: 'ten',
                 selector: (i: WorkflowTemplateInstance) => i.key()
             }, <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.LABEL,
                 name: 'common_status',
-                class: 'right aligned',
+                class: 'five right aligned',
                 selector: (i: WorkflowTemplateInstance) => {
                     let status = i.status(this.workflowTemplate);
                     return {

@@ -3,19 +3,19 @@ package openstack
 import (
 	"time"
 
+	"github.com/ovh/cds/engine/service"
+
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/hatchery"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
 type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
+	service.HatcheryCommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
 
 	// Tenant openstack-tenant
 	Tenant string `mapstructure:"tenant" toml:"tenant" default:"" commented:"false" comment:"Openstack Tenant, generally value of $OS_TENANT_NAME, v2 auth only" json:"tenant,omitempty"`
@@ -56,7 +56,6 @@ type HatcheryConfiguration struct {
 type HatcheryOpenstack struct {
 	hatcheryCommon.Common
 	Config          HatcheryConfiguration
-	hatch           *sdk.Hatchery
 	flavors         []flavors.Flavor
 	networks        []tenantnetworks.Network
 	images          []images.Image

@@ -23,7 +23,7 @@ func CreateBuiltinModels(db *gorp.DbMap) error {
 	if err != nil {
 		return sdk.WrapError(err, "Unable to start transaction")
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() // nolint
 
 	if _, err := tx.Exec("LOCK TABLE integration_model IN ACCESS EXCLUSIVE MODE"); err != nil {
 		return sdk.WrapError(err, "Unable to lock table")

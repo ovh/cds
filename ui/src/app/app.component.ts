@@ -3,20 +3,18 @@ import localeEN from '@angular/common/locales/en';
 import localeFR from '@angular/common/locales/fr';
 import { Component, ElementRef, NgZone, OnInit, ViewChild } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute, NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, NavigationStart, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { User } from 'app/model/user.model';
 import { GetCDSStatus } from 'app/store/cds.action';
 import { CDSState } from 'app/store/cds.state';
 import { Observable } from 'rxjs';
 import { bufferTime, filter, map, mergeMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
-import { environment } from '../environments/environment';
 import { AppService } from './app.service';
 import { Event, EventType } from './model/event.model';
-import { AuthentificationStore } from './service/auth/authentification.store';
+import { AuthentifiedUser } from './model/user.model';
 import { LanguageStore } from './service/language/language.store';
 import { NotificationService } from './service/notification/notification.service';
 import { ThemeStore } from './service/theme/theme.store';
@@ -25,6 +23,7 @@ import { ToastService } from './shared/toast/ToastService';
 import { CDSSharedWorker } from './shared/worker/shared.worker';
 import { CDSWebWorker } from './shared/worker/web.worker';
 import { CDSWorker } from './shared/worker/worker';
+import { AuthenticationState } from './store/authentication.state';
 
 declare var PACMAN: any;
 
@@ -36,26 +35,28 @@ declare var PACMAN: any;
 @AutoUnsubscribe()
 export class AppComponent implements OnInit {
     open: boolean;
-    isConnected = false;
+    isConnected: boolean;
+    hideNavBar: boolean;
     versionWorker: CDSWebWorker;
     sseWorker: CDSWorker;
     heartbeatToken: number;
     zone: NgZone;
     currentVersion = 0;
-    showUIUpdatedBanner = false;
+    showUIUpdatedBanner: boolean;
     languageSubscriber: Subscription;
     themeSubscriber: Subscription;
     versionWorkerSubscription: Subscription;
     _routerSubscription: Subscription;
     _routerNavEndSubscription: Subscription;
     _sseSubscription: Subscription;
-    displayResolver = false;
+    displayResolver: boolean;
     toasterConfig: any;
     lastPing: number;
     currentTheme: string;
+    eventsRouteSubscription: Subscription;
     maintenance: boolean;
     cdsstateSub: Subscription;
-    user: User;
+    user: AuthentifiedUser;
 
     @ViewChild('gamification', {static: false})
     eltGamification: ElementRef;
@@ -67,7 +68,6 @@ export class AppComponent implements OnInit {
         private _theme: ThemeStore,
         private _activatedRoute: ActivatedRoute,
         private _titleService: Title,
-        private _authStore: AuthentificationStore,
         private _router: Router,
         private _notification: NotificationService,
         private _appService: AppService,
@@ -99,13 +99,19 @@ export class AppComponent implements OnInit {
         });
 
         this._notification.requestPermission();
+
+        this.eventsRouteSubscription = this._router.events.subscribe(e => {
+            if (e instanceof NavigationStart) {
+                this.hideNavBar = (e.url.indexOf('/auth') !== -1)
+            }
+        });
     }
 
 
 
     ngOnInit(): void {
         this._store.dispatch(new GetCDSStatus());
-        this._authStore.getUserlst().subscribe(user => {
+        this._store.select(AuthenticationState.user).subscribe(user => {
             if (!user) {
                 delete this.user;
                 this.isConnected = false;
@@ -157,7 +163,7 @@ export class AppComponent implements OnInit {
 
         this.cdsstateSub = this._store.select(CDSState.getCurrentState()).subscribe( m => {
             // Switch maintenance ON
-            if (!this.maintenance && m.maintenance && !this.gameInit && this.isConnected && !this.user.admin) {
+            if (!this.maintenance && m.maintenance && !this.gameInit && this.isConnected && !this.user.isAdmin()) {
                 setTimeout(() => {
                     this.gameInit = true;
                     PACMAN.init(this.eltGamification.nativeElement, '/assets/js/');
@@ -182,15 +188,7 @@ export class AppComponent implements OnInit {
         }
         let authKey: string;
         let authValue: string;
-        // ADD user AUTH
-        let sessionToken = this._authStore.getSessionToken();
-        if (sessionToken) {
-            authKey = this._authStore.localStorageSessionKey;
-            authValue = sessionToken;
-        } else if (this.user) {
-            authKey = 'Authorization';
-            authValue = 'Basic ' + this.user.token;
-        } else {
+        if (!this.user) {
             return;
         }
 
@@ -214,10 +212,10 @@ export class AppComponent implements OnInit {
         this.sseWorker.start({
             headAuthKey: authKey,
             headAuthValue: authValue,
-            urlSubscribe: environment.apiURL + '/events/subscribe',
-            urlUnsubscribe: environment.apiURL + 'events/unsubscribe',
-            sseURL: environment.apiURL + '/events',
-            pingURL: environment.apiURL + '/user/logged'
+            urlSubscribe: '/cdsapi/events/subscribe',
+            urlUnsubscribe: '/cdsapi/events/unsubscribe',
+            sseURL: '/cdsapi/events',
+            pingURL: '/cdsapi/user/me'
         });
         this._sseSubscription = this.sseWorker.response()
             .pipe(
@@ -260,9 +258,7 @@ export class AppComponent implements OnInit {
     startVersionWorker(): void {
         this.stopWorker(this.versionWorker, this.versionWorkerSubscription);
         this.versionWorker = new CDSWebWorker('./assets/worker/web/version.js');
-        this.versionWorker.start({
-            mode: environment.name
-        });
+        this.versionWorker.start({});
         this.versionWorker.response().subscribe(msg => {
             if (msg) {
                 this.zone.run(() => {

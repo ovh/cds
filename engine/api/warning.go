@@ -26,7 +26,7 @@ func (api *API) getWarningsHandler() service.Handler {
 
 		for i := range warnings {
 			w := &warnings[i]
-			w.ComputeMessage(al)
+			w.ComputeMessage(ctx, al)
 		}
 		return service.WriteJSON(w, warnings, http.StatusOK)
 	}
@@ -54,7 +54,7 @@ func (api *API) putWarningsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to update warning")
 		}
 
-		event.PublishUpdateWarning(warn, deprecatedGetUser(ctx))
+		event.PublishUpdateWarning(ctx, warn, getAPIConsumer(ctx))
 		warn.Message = wa.Message
 		return service.WriteJSON(w, warn, http.StatusOK)
 	}

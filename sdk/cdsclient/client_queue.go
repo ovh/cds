@@ -19,6 +19,8 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/venom"
+	"github.com/sguiheux/go-coverage"
 )
 
 // shrinkQueue is used to shrink the polled queue 200% of the channel capacity (l)
@@ -51,7 +53,7 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error {
+func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, modelType string, ratioService *int) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the SSE route
@@ -86,28 +88,25 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			if apiEvent.EventType == "sdk.EventRunWorkflowJob" {
 				jobRunID, ok := apiEvent.Payload["ID"].(float64)
 				status, okStatus := apiEvent.Payload["Status"].(string)
-				if ok && okStatus && status == sdk.StatusWaiting.String() {
-					// wait for the grace time before pushing the job in the channel
-					go func() {
-						time.Sleep(time.Duration(graceTime) * time.Second)
-						job, err := c.QueueJobInfo(int64(jobRunID))
+				if ok && okStatus && status == sdk.StatusWaiting {
+					job, err := c.QueueJobInfo(ctx, int64(jobRunID))
 
-						// Do not log the error if the job does not exist
-						if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
-							return
-						}
+					// Do not log the error if the job does not exist
+					if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
+						continue
+					}
 
-						if err != nil {
-							errs <- fmt.Errorf("unable to get job %v info: %v", jobRunID, err)
-							return
-						}
+					if err != nil {
+						errs <- fmt.Errorf("unable to get job %v info: %v", jobRunID, err)
+						continue
+					}
 
-						// push the job in the channel
-						if job.Status == sdk.StatusWaiting.String() && job.BookedBy.Name == "" {
-							job.Header["SSE"] = "true"
-							jobs <- *job
-						}
-					}()
+					// push the job in the channel
+					if job.Status == sdk.StatusWaiting && job.BookedBy.Name == "" {
+						job.Header["SSE"] = "true"
+						jobs <- *job
+					}
+
 				}
 			}
 
@@ -131,8 +130,15 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 
 			ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
 			queue := sdk.WorkflowQueue{}
-			if _, err := c.GetJSON(ctxt, "/queue/workflows?"+urlValues.Encode(), &queue, nil); err != nil {
+			var urlSuffix = urlValues.Encode()
+			if urlSuffix != "" {
+				urlSuffix = "?" + urlSuffix
+			}
+			if _, err := c.GetJSON(ctxt, "/queue/workflows"+urlSuffix, &queue, nil); err != nil && !sdk.ErrorIs(err, sdk.ErrUnauthorized) {
 				errs <- sdk.WrapError(err, "Unable to load jobs")
+				cancel()
+				continue
+			} else if sdk.ErrorIs(err, sdk.ErrUnauthorized) {
 				cancel()
 				continue
 			}
@@ -152,14 +158,14 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 	}
 }
 
-func (c *client) QueueWorkflowNodeJobRun(status ...sdk.Status) ([]sdk.WorkflowNodeJobRun, error) {
+func (c *client) QueueWorkflowNodeJobRun(status ...string) ([]sdk.WorkflowNodeJobRun, error) {
 	wJobs := []sdk.WorkflowNodeJobRun{}
 
 	url, _ := url.Parse("/queue/workflows")
 	if len(status) > 0 {
 		q := url.Query()
 		for _, s := range status {
-			q.Add("status", s.String())
+			q.Add("status", s)
 		}
 		url.RawQuery = q.Encode()
 	}
@@ -196,28 +202,17 @@ func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time
 	return countWJobs, err
 }
 
-func (c *client) QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun, isBooked bool) (*sdk.WorkflowNodeJobRunData, error) {
-	in := sdk.WorkerTakeForm{
-		Time:    time.Now(),
-		Version: sdk.VERSION,
-		OS:      sdk.GOOS,
-		Arch:    sdk.GOARCH,
-	}
-	if isBooked {
-		in.BookedJobID = job.ID
-	}
-
+func (c *client) QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (*sdk.WorkflowNodeJobRunData, error) {
 	path := fmt.Sprintf("/queue/workflows/%d/take", job.ID)
 	var info sdk.WorkflowNodeJobRunData
-
-	if _, err := c.PostJSON(ctx, path, &in, &info); err != nil {
+	if _, err := c.PostJSON(ctx, path, nil, &info); err != nil {
 		return nil, err
 	}
 	return &info, nil
 }
 
 // QueueJobInfo returns information about a job
-func (c *client) QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error) {
+func (c *client) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	path := fmt.Sprintf("/queue/workflows/%d/infos", id)
 	var job sdk.WorkflowNodeJobRun
 
@@ -242,7 +237,7 @@ func (c *client) QueueJobBook(ctx context.Context, id int64) error {
 }
 
 // QueueJobRelease release a job for a worker
-func (c *client) QueueJobRelease(id int64) error {
+func (c *client) QueueJobRelease(ctx context.Context, id int64) error {
 	path := fmt.Sprintf("/queue/workflows/%d/book", id)
 	_, err := c.DeleteJSON(context.Background(), path, nil)
 	return err
@@ -250,6 +245,36 @@ func (c *client) QueueJobRelease(id int64) error {
 
 func (c *client) QueueSendResult(ctx context.Context, id int64, res sdk.Result) error {
 	path := fmt.Sprintf("/queue/workflows/%d/result", id)
+	_, err := c.PostJSON(ctx, path, res, nil)
+	return err
+}
+
+func (c *client) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
+	path := fmt.Sprintf("/queue/workflows/%d/coverage", id)
+	_, err := c.PostJSON(ctx, path, report, nil)
+	return err
+}
+
+func (c *client) QueueSendUnitTests(ctx context.Context, id int64, report venom.Tests) error {
+	path := fmt.Sprintf("/queue/workflows/%d/test", id)
+	_, err := c.PostJSON(ctx, path, report, nil)
+	return err
+}
+
+func (c *client) QueueSendLogs(ctx context.Context, id int64, log sdk.Log) error {
+	path := fmt.Sprintf("/queue/workflows/%d/log", id)
+	_, err := c.PostJSON(ctx, path, log, nil)
+	return err
+}
+
+func (c *client) QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error {
+	path := fmt.Sprintf("/queue/workflows/%d/vulnerability", id)
+	_, err := c.PostJSON(ctx, path, report, nil)
+	return err
+}
+
+func (c *client) QueueSendStepResult(ctx context.Context, id int64, res sdk.StepStatus) error {
+	path := fmt.Sprintf("/queue/workflows/%d/step", id)
 	_, err := c.PostJSON(ctx, path, res, nil)
 	return err
 }

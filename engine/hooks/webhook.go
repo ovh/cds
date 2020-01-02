@@ -14,11 +14,11 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) doWebHookExecution(e *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
+func (s *Service) doWebHookExecution(ctx context.Context, e *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
 	log.Debug("Hooks> Processing webhook %s %s", e.UUID, e.Type)
 
 	if e.Type == TypeRepoManagerWebHook {
-		return s.executeRepositoryWebHook(e)
+		return s.executeRepositoryWebHook(ctx, e)
 	}
 	event, err := executeWebHook(e)
 	if err != nil {
@@ -41,7 +41,7 @@ func getRepositoryHeader(whe *sdk.WebHookExecution, events []string) string {
 	return ""
 }
 
-func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
+func (s *Service) executeRepositoryWebHook(ctx context.Context, t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
 	// Prepare a struct to send to CDS API
 	payloads := []map[string]interface{}{}
 
@@ -53,7 +53,7 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 	switch getRepositoryHeader(t.WebHook, events) {
 	case GithubHeader:
 		headerValue := t.WebHook.RequestHeader[GithubHeader][0]
-		payload, err := s.generatePayloadFromGithubRequest(t, headerValue)
+		payload, err := s.generatePayloadFromGithubRequest(ctx, t, headerValue)
 		if err != nil {
 			return nil, err
 		}
@@ -62,7 +62,7 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 		}
 	case GitlabHeader:
 		headerValue := t.WebHook.RequestHeader[GitlabHeader][0]
-		payload, err := s.generatePayloadFromGitlabRequest(t, headerValue)
+		payload, err := s.generatePayloadFromGitlabRequest(ctx, t, headerValue)
 		if err != nil {
 			return nil, err
 		}
@@ -72,19 +72,19 @@ func (s *Service) executeRepositoryWebHook(t *sdk.TaskExecution) ([]sdk.Workflow
 	case BitbucketHeader:
 		headerValue := t.WebHook.RequestHeader[BitbucketHeader][0]
 		var errG error
-		payloads, errG = s.generatePayloadFromBitbucketServerRequest(t, headerValue)
+		payloads, errG = s.generatePayloadFromBitbucketServerRequest(ctx, t, headerValue)
 		if errG != nil {
 			return nil, errG
 		}
 	case BitbucketCloudHeader:
 		headerValue := t.WebHook.RequestHeader[BitbucketHeader][0]
 		var errG error
-		payloads, errG = s.generatePayloadFromBitbucketCloudRequest(t, headerValue)
+		payloads, errG = s.generatePayloadFromBitbucketCloudRequest(ctx, t, headerValue)
 		if errG != nil {
 			return nil, errG
 		}
 	default:
-		log.Warning("executeRepositoryWebHook> Repository manager not found. Cannot read %s", string(t.WebHook.RequestBody))
+		log.Warning(ctx, "executeRepositoryWebHook> Repository manager not found. Cannot read %s", string(t.WebHook.RequestBody))
 		return nil, fmt.Errorf("Repository manager not found. Cannot read request body")
 	}
 

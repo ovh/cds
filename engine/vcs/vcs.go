@@ -30,6 +30,20 @@ func New() *Service {
 	return s
 }
 
+func (s *Service) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(Configuration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid vcs configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
+}
+
 // ApplyConfiguration apply an object of type hooks.Configuration after checking it
 func (s *Service) ApplyConfiguration(config interface{}) error {
 	if err := s.CheckConfiguration(config); err != nil {
@@ -41,12 +55,9 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	s.Client = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second, s.Cfg.API.HTTP.Insecure)
-	s.API = s.Cfg.API.HTTP.URL
-	s.Name = s.Cfg.Name
+	s.ServiceName = s.Cfg.Name
+	s.ServiceType = services.TypeVCS
 	s.HTTPURL = s.Cfg.URL
-	s.Token = s.Cfg.API.Token
-	s.Type = services.TypeVCS
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 	s.ServiceName = "cds-vcs"
 
@@ -143,7 +154,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 
 // Serve will start the http api server
 func (s *Service) Serve(c context.Context) error {
-	log.Info("VCS> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
+	log.Info(c, "VCS> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
 	s.StartupTime = time.Now()
 
 	//Init the cache
@@ -164,16 +175,16 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	//Start the http server
-	log.Info("VCS> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+	log.Info(c, "VCS> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Error("VCS> Listen and serve failed: %s", err)
+		log.Error(c, "VCS> Listen and serve failed: %s", err)
 	}
 
 	//Gracefully shutdown the http server
 	go func() {
 		select {
 		case <-c.Done():
-			log.Info("VCS> Shutdown HTTP Server")
+			log.Info(c, "VCS> Shutdown HTTP Server")
 			server.Shutdown(c)
 		}
 	}()

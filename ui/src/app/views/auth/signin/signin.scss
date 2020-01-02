@@ -1,0 +1,20 @@
+@import "../../../../common";
+
+.signin {
+    .loading {
+        text-align: center;
+        color: white;
+    }
+
+    .ui.tabular.menu .item {
+        color: white;
+
+        &.active {
+            color: black;
+        }
+
+        :host-context(.night) & {
+            color: inherit;
+        }
+    }
+}

@@ -1,12 +1,12 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
@@ -15,66 +15,57 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func Test_DeleteAllWorkerModel(t *testing.T) {
+func Test_DeleteAllWorkerModels(t *testing.T) {
 	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	//Loading all models
-	models, err := workermodel.LoadAll(api.mustDB())
-	if err != nil {
-		t.Fatalf("Error getting models : %s", err)
+	// Load and delete all worker
+	workers, err := worker.LoadAll(context.Background(), api.mustDB())
+	require.NoError(t, err, "unable to load workers")
+	for _, w := range workers {
+		assert.NoError(t, worker.Delete(api.mustDB(), w.ID))
 	}
 
-	//Delete all of them
+	// Load and delete all worker models
+	models, err := workermodel.LoadAll(context.Background(), api.mustDB(), nil)
+	require.NoError(t, err)
+
 	for _, m := range models {
-		if err := workermodel.Delete(api.mustDB(), m.ID); err != nil {
-			t.Fatalf("Error deleting model : %s", err)
-		}
+		assert.NoError(t, workermodel.Delete(api.mustDB(), m.ID))
 	}
 
+	// Load and delete all worker model patterns
 	modelPatterns, err := workermodel.LoadPatterns(api.mustDB())
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	for _, wmp := range modelPatterns {
-		test.NoError(t, workermodel.DeletePattern(api.mustDB(), wmp.ID))
+		assert.NoError(t, workermodel.DeletePattern(api.mustDB(), wmp.ID))
 	}
 }
 
 func Test_postWorkerModelAsAdmin(t *testing.T) {
+	Test_DeleteAllWorkerModels(t)
+
 	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	//Loading all models
-	models, errlw := workermodel.LoadAll(api.mustDB())
-	if errlw != nil {
-		t.Fatalf("Error getting models : %s", errlw)
-	}
+	_, jwtRaw := assets.InsertAdminUser(t, api.mustDB())
 
-	//Delete all of them
-	for _, m := range models {
-		if err := workermodel.Delete(api.mustDB(), m.ID); err != nil {
-			t.Fatalf("Error deleting model : %s", err)
-		}
-	}
-
-	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
-	if err != nil {
-		t.Fatalf("Error getting group : %s", err)
-	}
+	groupShared, err := group.LoadByName(context.TODO(), api.mustDB(), sdk.SharedInfraGroupName)
+	require.NoError(t, err)
 
 	model := sdk.Model{
 		Name:    "Test1",
-		GroupID: g.ID,
+		GroupID: groupShared.ID,
 		Type:    sdk.Docker,
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
@@ -86,23 +77,20 @@ func Test_postWorkerModelAsAdmin(t *testing.T) {
 		},
 	}
 
-	//Prepare request
+	// Send POST model request
 	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
-
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
-
-	//Do the request
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, "POST", uri, model)
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-
 	assert.Equal(t, 200, w.Code)
 
 	var newModel sdk.Model
-	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &newModel))
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &newModel))
 
-	test.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
-	test.Equal(t, "THIS IS A TEST", newModel.ModelDocker.Envs["CDS_TEST"], "Worker model envs are not good")
+	assert.Equal(t, groupShared.ID, newModel.GroupID)
+	assert.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
+	assert.Equal(t, "THIS IS A TEST", newModel.ModelDocker.Envs["CDS_TEST"], "Worker model envs are not good")
 }
 
 func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
@@ -110,7 +98,7 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 	defer end()
 
 	//Loading all models
-	models, errlw := workermodel.LoadAll(api.mustDB())
+	models, errlw := workermodel.LoadAll(context.Background(), api.mustDB(), nil)
 	if errlw != nil {
 		t.Fatalf("Error getting models : %s", errlw)
 	}
@@ -123,11 +111,11 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 	}
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, jwt := assets.InsertAdminUser(t, api.mustDB())
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -160,7 +148,7 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -177,11 +165,12 @@ func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {
 }
 
 func Test_WorkerModelUsage(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
+	Test_DeleteAllWorkerModels(t)
+
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	u, jwt := assets.InsertAdminUser(t, db)
 	assert.NotZero(t, u)
 
 	grName := sdk.RandomString(10)
@@ -204,8 +193,12 @@ func Test_WorkerModelUsage(t *testing.T) {
 	test.NoError(t, workermodel.Insert(db, &model))
 
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
-	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.ID, true))
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
+	require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -213,7 +206,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -250,7 +243,12 @@ func Test_WorkerModelUsage(t *testing.T) {
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
-	proj, _ = project.LoadByID(db, api.Cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, api.Cache, proj.ID,
+		project.LoadOptions.WithApplications,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithEnvironments,
+		project.LoadOptions.WithGroups,
+	)
 
 	wf := sdk.Workflow{
 		Name:       "workflow1",
@@ -266,16 +264,16 @@ func Test_WorkerModelUsage(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, api.Cache, &wf, proj, u))
+	test.NoError(t, workflow.Insert(context.Background(), db, api.Cache, &wf, proj))
 
 	//Prepare request
 	vars := map[string]string{
-		"groupName":     gr.Name,
+		"permGroupName": gr.Name,
 		"permModelName": model.Name,
 	}
 	uri := router.GetRoute("GET", api.getWorkerModelUsageHandler, vars)
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, vars)
 	//Do the request
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
@@ -291,16 +289,17 @@ func Test_WorkerModelUsage(t *testing.T) {
 }
 
 func Test_postWorkerModelWithWrongRequest(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
+	Test_DeleteAllWorkerModels(t)
+
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, jwt := assets.InsertAdminUser(t, api.mustDB())
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -318,13 +317,9 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	//Prepare request
 	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
-
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
-
-	//Do the request
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-
 	assert.Equal(t, 400, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
@@ -336,7 +331,7 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	}
 
 	//Prepare request
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -357,7 +352,7 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	}
 
 	//Prepare request
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -377,7 +372,7 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	}
 
 	//Prepare request
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -390,7 +385,7 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 	//SendBadRequest
 
 	//Prepare request
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, "blabla")
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, "blabla")
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -402,7 +397,8 @@ func Test_postWorkerModelWithWrongRequest(t *testing.T) {
 }
 
 func Test_postWorkerModelAsAGroupMember(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
+	Test_DeleteAllWorkerModels(t)
+
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -412,9 +408,9 @@ func Test_postWorkerModelAsAGroupMember(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -431,7 +427,7 @@ func Test_postWorkerModelAsAGroupMember(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri, "Route route found")
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -443,7 +439,8 @@ func Test_postWorkerModelAsAGroupMember(t *testing.T) {
 }
 
 func Test_postWorkerModelAsAGroupAdmin(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
+	Test_DeleteAllWorkerModels(t)
+
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -453,10 +450,8 @@ func Test_postWorkerModelAsAGroupAdmin(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
+	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -473,7 +468,7 @@ func Test_postWorkerModelAsAGroupAdmin(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -485,7 +480,8 @@ func Test_postWorkerModelAsAGroupAdmin(t *testing.T) {
 }
 
 func Test_postWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
+	Test_DeleteAllWorkerModels(t)
+
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -495,10 +491,8 @@ func Test_postWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
+	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -516,7 +510,7 @@ func Test_postWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -531,7 +525,8 @@ func Test_postWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 }
 
 func Test_postWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
+	Test_DeleteAllWorkerModels(t)
+
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -541,10 +536,10 @@ func Test_postWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
+	assert.NotZero(t, jwt)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
 
 	pattern := sdk.ModelPattern{
 		Name: "test",
@@ -573,7 +568,7 @@ func Test_postWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -588,89 +583,9 @@ func Test_postWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	test.Equal(t, "apt-get install curl -y", newModel.ModelVirtualMachine.PreCmd, "Pre worker command is not good")
 }
 
-// Test_postWorkerModelAsAGroupAdminWithProvision test the provioning
-// For a group Admin, it is allowed to set a provision only for restricted model
-func Test_postWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
-	defer end()
-
-	//Create group
-	g := &sdk.Group{Name: sdk.RandomString(10)}
-
-	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
-
-	model := sdk.Model{
-		Name:       "Test-with-provision",
-		GroupID:    g.ID,
-		Type:       sdk.Docker,
-		Restricted: true,
-		Provision:  1,
-		ModelDocker: sdk.ModelDocker{
-			Image: "buildpack-deps:jessie",
-			Shell: "sh -c",
-			Cmd:   "worker",
-		},
-	}
-
-	//Prepare request
-	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
-	test.NotEmpty(t, uri)
-
-	//Do the request
-	w := httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model))
-
-	assert.Equal(t, 200, w.Code, "Status code should equal 200")
-
-	t.Logf("Body: %s", w.Body.String())
-
-	var wm sdk.Model
-	json.Unmarshal(w.Body.Bytes(), &wm)
-	assert.Equal(t, 1, int(wm.Provision))
-
-	// update restricted flag -> provioning will be reset
-
-	pattern := sdk.ModelPattern{
-		Name: "test",
-		Type: sdk.Docker,
-		Model: sdk.ModelCmds{
-			Cmd:   "./worker",
-			Shell: "sh -c",
-		},
-	}
-
-	test.NoError(t, workermodel.InsertPattern(api.mustDB(), &pattern))
-
-	vars := map[string]string{
-		"groupName":     g.Name,
-		"permModelName": model.Name,
-	}
-	uri = router.GetRoute("PUT", api.putWorkerModelHandler, vars)
-	test.NotEmpty(t, uri)
-
-	// API will set provisioning to 0 for a non-restricted model
-	wm.Restricted = false
-	wm.PatternName = "test"
-	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, wm)
-
-	//Do the request
-	w = httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-
-	assert.Equal(t, 200, w.Code)
-	var wmUpdated sdk.Model
-	json.Unmarshal(w.Body.Bytes(), &wmUpdated)
-	assert.Equal(t, 0, int(wmUpdated.Provision))
-	assert.Equal(t, "./worker", wmUpdated.ModelDocker.Cmd)
-}
-
 func Test_postWorkerModelAsAWrongGroupMember(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
+	Test_DeleteAllWorkerModels(t)
+
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -684,18 +599,11 @@ func Test_postWorkerModelAsAWrongGroupMember(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	if err := group.InsertGroup(api.mustDB(), g1); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, group.Insert(api.mustDB(), g1))
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
-		t.Fatal(err)
-	}
+	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -712,7 +620,7 @@ func Test_postWorkerModelAsAWrongGroupMember(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -724,7 +632,8 @@ func Test_postWorkerModelAsAWrongGroupMember(t *testing.T) {
 }
 
 func Test_putWorkerModel(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
+	Test_DeleteAllWorkerModels(t)
+
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -734,13 +643,8 @@ func Test_putWorkerModel(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
-		t.Fatal(err)
-	}
+	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -758,7 +662,7 @@ func Test_putWorkerModel(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -784,13 +688,13 @@ func Test_putWorkerModel(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"groupName":     g.Name,
+		"permGroupName": g.Name,
 		"permModelName": model.Name,
 	}
 	uri = router.GetRoute("PUT", api.putWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model2)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "PUT", uri, model2)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -802,7 +706,8 @@ func Test_putWorkerModel(t *testing.T) {
 }
 
 func Test_putWorkerModelWithPassword(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
+	Test_DeleteAllWorkerModels(t)
+
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -812,13 +717,8 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
-		t.Fatal(err)
-	}
+	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -846,7 +746,7 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -887,13 +787,13 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"groupName":     g.Name,
+		"permGroupName": g.Name,
 		"permModelName": model.Name,
 	}
 	uri = router.GetRoute("PUT", api.putWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model2)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "PUT", uri, model2)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -914,7 +814,8 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 }
 
 func Test_deleteWorkerModel(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
+	Test_DeleteAllWorkerModels(t)
+
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -924,13 +825,8 @@ func Test_deleteWorkerModel(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
-		t.Fatal(err)
-	}
+	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -948,7 +844,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -962,13 +858,13 @@ func Test_deleteWorkerModel(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"groupName":     g.Name,
+		"permGroupName": g.Name,
 		"permModelName": model.Name,
 	}
 	uri = router.GetRoute("DELETE", api.deleteWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "DELETE", uri, nil)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -980,16 +876,17 @@ func Test_deleteWorkerModel(t *testing.T) {
 }
 
 func Test_getWorkerModel(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
+	Test_DeleteAllWorkerModels(t)
+
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, jwt := assets.InsertAdminUser(t, api.mustDB())
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadByName(context.TODO(), api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -1009,7 +906,7 @@ func Test_getWorkerModel(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -1023,7 +920,7 @@ func Test_getWorkerModel(t *testing.T) {
 	uri = router.GetRoute("GET", api.getWorkerModelsHandler, nil)
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri+"?name=Test1", nil)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri+"?name=Test1", nil)
 
 	//Do the request
 	w = httptest.NewRecorder()
@@ -1035,71 +932,83 @@ func Test_getWorkerModel(t *testing.T) {
 }
 
 func Test_getWorkerModels(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
-	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	Test_DeleteAllWorkerModels(t)
+
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	_, jwtAdmin := assets.InsertAdminUser(t, api.mustDB())
 
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
-	if err != nil {
-		t.Fatalf("Error getting group : %s", err)
-	}
+	g1 := &sdk.Group{Name: sdk.RandomString(10)}
+	g2 := assets.InsertGroup(t, db)
+	_, jwtGroupMember := assets.InsertLambdaUser(t, api.mustDB(), g1)
 
-	model := sdk.Model{
-		Name:    "Test1",
-		GroupID: g.ID,
+	m1 := sdk.Model{
+		Name:    "A" + sdk.RandomString(10),
+		GroupID: g1.ID,
 		Type:    sdk.Docker,
-		ModelDocker: sdk.ModelDocker{
-			Image: "buildpack-deps:jessie",
-			Shell: "sh -c",
-			Cmd:   "worker",
-		},
 	}
+	require.NoError(t, workermodel.Insert(db, &m1))
 
-	//Prepare request
-	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
+	m2 := sdk.Model{
+		Name:    "B" + sdk.RandomString(10),
+		GroupID: g1.ID,
+		Type:    sdk.Docker,
+	}
+	require.NoError(t, workermodel.Insert(db, &m2))
+
+	m3 := sdk.Model{
+		Name:    "C" + sdk.RandomString(10),
+		GroupID: g2.ID,
+		Type:    sdk.Docker,
+	}
+	require.NoError(t, workermodel.Insert(db, &m3))
+
+	// getWorkerModelsHandler by admin
+	uri := router.GetRoute(http.MethodGet, api.getWorkerModelsHandler, nil)
 	test.NotEmpty(t, uri)
-
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
-
-	//Do the request
+	req := assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodGet, uri, nil)
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-
 	assert.Equal(t, 200, w.Code)
-
-	t.Logf("Body: %s", w.Body.String())
-
-	//Prepare request
-	uri = router.GetRoute("GET", api.getWorkerModelsHandler, nil)
-	test.NotEmpty(t, uri)
-
-	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
-
-	//Do the request
-	w = httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-
-	assert.Equal(t, 200, w.Code)
-
-	t.Logf("Body: %s", w.Body.String())
-
 	results := []sdk.Model{}
 	json.Unmarshal(w.Body.Bytes(), &results)
+	require.Equal(t, 3, len(results))
+	assert.Equal(t, m1.Name, results[0].Name)
+	assert.Equal(t, m2.Name, results[1].Name)
+	assert.Equal(t, m3.Name, results[2].Name)
 
-	assert.Equal(t, 1, len(results))
-	assert.Equal(t, "Test1", results[0].Name)
-	assert.Equal(t, u.Fullname, results[0].CreatedBy.Fullname)
+	// getWorkerModelsHandler by group member
+	uri = router.GetRoute(http.MethodGet, api.getWorkerModelsHandler, nil)
+	test.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtGroupMember, http.MethodGet, uri, nil)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+	json.Unmarshal(w.Body.Bytes(), &results)
+	require.Equal(t, 2, len(results))
+	assert.Equal(t, m1.Name, results[0].Name)
+	assert.Equal(t, m2.Name, results[1].Name)
+
+	// getWorkerModelsForGroupHandler
+	uri = router.GetRoute(http.MethodGet, api.getWorkerModelsForGroupHandler, map[string]string{
+		"permGroupName": g2.Name,
+	})
+	test.NotEmpty(t, uri)
+	req = assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodGet, uri, nil)
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+	json.Unmarshal(w.Body.Bytes(), &results)
+	require.Equal(t, 1, len(results))
+	assert.Equal(t, m3.Name, results[0].Name)
 }
 
 // This test create a worker model then an action that will use it.
 // Next the model group and name will be updated and we want to check if the requirement was updated.
 func Test_renameWorkerModel(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
+	Test_DeleteAllWorkerModels(t)
+
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -1110,16 +1019,16 @@ func Test_renameWorkerModel(t *testing.T) {
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	// create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, jwt := assets.InsertAdminUser(t, api.mustDB())
 	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	assert.NotZero(t, jwt)
 
 	// prepare post model request
 	uri := router.GetRoute("POST", api.postWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	initialName := sdk.RandomString(10)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.Model{
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, sdk.Model{
 		Name:    initialName,
 		GroupID: g1.ID,
 		Type:    sdk.Docker,
@@ -1147,7 +1056,7 @@ func Test_renameWorkerModel(t *testing.T) {
 
 	actionName := sdk.RandomString(10)
 	modelPath := fmt.Sprintf("%s/%s --privileged", result.Group.Name, result.Name)
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.Action{
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, sdk.Action{
 		Name:    actionName,
 		GroupID: &g1.ID,
 		Requirements: []sdk.Requirement{{
@@ -1172,7 +1081,7 @@ func Test_renameWorkerModel(t *testing.T) {
 
 	// prepare put model request
 	uri = router.GetRoute("PUT", api.putWorkerModelHandler, map[string]string{
-		"groupName":     result.Group.Name,
+		"permGroupName": result.Group.Name,
 		"permModelName": result.Name,
 	})
 	test.NotEmpty(t, uri)
@@ -1180,7 +1089,7 @@ func Test_renameWorkerModel(t *testing.T) {
 	newName := sdk.RandomString(10)
 	result.Name = newName
 	result.GroupID = g2.ID
-	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, result)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "PUT", uri, result)
 
 	// send put model request
 	w = httptest.NewRecorder()
@@ -1194,12 +1103,12 @@ func Test_renameWorkerModel(t *testing.T) {
 
 	// prepare get action request
 	uri = router.GetRoute("GET", api.getActionHandler, map[string]string{
-		"groupName":      action.Group.Name,
+		"permGroupName":  action.Group.Name,
 		"permActionName": action.Name,
 	})
 	test.NotEmpty(t, uri)
 
-	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 
 	// send get action request
 	w = httptest.NewRecorder()

@@ -16,14 +16,14 @@ func Test_getApplicationExportHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(db, api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(db, api.Cache, proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -33,7 +33,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 		Type:  sdk.StringVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(db, api.Cache, app, &v1, u))
+	test.NoError(t, application.InsertVariable(db, api.Cache, app, v1, u))
 
 	v2 := sdk.Variable{
 		Name:  "var2",
@@ -41,7 +41,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 		Type:  sdk.SecretVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(db, api.Cache, app, &v2, u))
+	test.NoError(t, application.InsertVariable(db, api.Cache, app, v2, u))
 
 	//Insert ssh and gpg keys
 	k := &sdk.ApplicationKey{

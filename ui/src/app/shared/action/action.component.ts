@@ -18,7 +18,7 @@ import { Requirement } from 'app/model/requirement.model';
 import { Stage } from 'app/model/stage.model';
 import { WorkerModel } from 'app/model/worker-model.model';
 import { ActionService } from 'app/service/action/action.service';
-import { WorkerModelService } from 'app/service/services.module';
+import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
 import { ActionEvent } from 'app/shared/action/action.event.model';
 import { StepEvent } from 'app/shared/action/step/step.event';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
@@ -48,16 +48,18 @@ export class ActionComponent implements OnDestroy, OnInit {
 
     @Input()
     set action(data: Action) {
-        this.editableAction = cloneDeep(data);
-        this.editableAction.showAddStep = false;
-        if (!this.editableAction.requirements) {
-            this.editableAction.requirements = new Array<Requirement>();
-        } else {
-            this.prepareEditRequirements();
-        }
-        this.steps = new Array<Action>();
-        if (this.editableAction.actions) {
-            this.steps = cloneDeep(this.editableAction.actions);
+        if (data) {
+            this.editableAction = cloneDeep(data);
+            this.editableAction.showAddStep = false;
+            if (!this.editableAction.requirements) {
+                this.editableAction.requirements = new Array<Requirement>();
+            } else {
+                this.prepareEditRequirements();
+            }
+            this.steps = new Array<Action>();
+            if (this.editableAction.actions) {
+                this.steps = cloneDeep(this.editableAction.actions);
+            }
         }
     }
 
@@ -99,12 +101,14 @@ export class ActionComponent implements OnDestroy, OnInit {
     }
 
     ngOnInit() {
-        this._actionService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(as => {
-            this.publicActions = as;
-        });
-        this._workerModelService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(wms => {
-            this.workerModels = wms;
-        });
+        if (this.project) {
+            this._actionService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(as => {
+                this.publicActions = as;
+            });
+            this._workerModelService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(wms => {
+                this.workerModels = wms;
+            });
+        }
     }
 
     ngOnDestroy() {

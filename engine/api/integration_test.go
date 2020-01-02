@@ -16,7 +16,7 @@ import (
 func Test_getIntegrationModelsHandler(t *testing.T) {
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	vars := map[string]string{}
 
@@ -32,7 +32,7 @@ func Test_getIntegrationModelsHandler(t *testing.T) {
 func Test_postIntegrationModelHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	vars := map[string]string{}
 	model := sdk.IntegrationModel{
@@ -54,7 +54,7 @@ func Test_postIntegrationModelHandler(t *testing.T) {
 func Test_putIntegrationModelHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	model := sdk.IntegrationModel{
 		Name: "my-model",
@@ -80,7 +80,7 @@ func Test_putIntegrationModelHandler(t *testing.T) {
 func Test_deleteIntegrationModelHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 
 	model := sdk.IntegrationModel{
 		Name: "my-model",

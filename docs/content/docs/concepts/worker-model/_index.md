@@ -32,7 +32,7 @@ All registered CDS [hatcheries]({{< relref "/docs/components/hatchery/_index.md"
 
 A user can add a worker model by setting an owner group if user is administrator of group.
 
-A CDS administrator can add a worker model, a [worker model pattern]({{< relref "/docs/concepts/worker-model/patterns.md" >}}), attach it to 'shared.infra' group and set provision as he wants.
+A CDS administrator can add a worker model, a [worker model pattern]({{< relref "/docs/concepts/worker-model/patterns.md" >}}) and attach it to 'shared.infra' group.
 
 ## What's a worker model pattern?
 
@@ -44,14 +44,3 @@ A `shared.infra` hatchery can launch all worker models, except 'restricted' work
 
 **Use case**: users can launch their own [hatchery]({{< relref "/docs/components/hatchery/_index.md" >}}).
 To use their worker models only with their hatchery, they have to set worker model as 'restricted'.
-
-## What's workers provisioning?
-
-A [hatchery]({{< relref "/docs/components/hatchery/_index.md" >}}) can start workers based on worker models with provisioning > 0.
-
-On 'restricted' worker models, users can set provisioning, as they launch CDS Workers on their infrastructure.
-
-Otherwise, provisioning is only editable by CDS Administrators.
-
-**Notice**: if you use [Service Requirement]({{< relref "/docs/concepts/requirement/requirement_service.md" >}}), you can't
-use provisioned workers.

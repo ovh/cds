@@ -32,7 +32,7 @@ func TestWorkflowRunReport(t *testing.T) {
 								},
 							},
 						},
-						Status: StatusSuccess.String(),
+						Status: StatusSuccess,
 					},
 					{
 						Job: ExecutedJob{
@@ -42,7 +42,7 @@ func TestWorkflowRunReport(t *testing.T) {
 								},
 							},
 						},
-						Status: StatusFail.String(),
+						Status: StatusFail,
 					},
 				},
 			},
@@ -87,7 +87,7 @@ func TestWorkflowRunReport(t *testing.T) {
 								},
 							},
 						},
-						Status: StatusSuccess.String(),
+						Status: StatusSuccess,
 					},
 					{
 						Job: ExecutedJob{
@@ -97,13 +97,13 @@ func TestWorkflowRunReport(t *testing.T) {
 								},
 							},
 						},
-						Status: StatusFail.String(),
+						Status: StatusFail,
 					},
 				},
 			},
 		},
 		Tests:  nil,
-		Status: StatusSuccess.String(),
+		Status: StatusSuccess,
 	}
 
 	s, err = wfr.Report()

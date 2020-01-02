@@ -1,4 +1,3 @@
-/* tslint:disable:no-unused-variable */
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed } from '@angular/core/testing';
@@ -6,6 +5,9 @@ import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { MonitoringService } from 'app/service/monitoring/monitoring.service';
+import { UserService } from 'app/service/user/user.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AddPipelineParameter, DeletePipelineParameter, FetchPipeline, UpdatePipelineParameter } from 'app/store/pipelines.action';
@@ -15,7 +17,6 @@ import 'rxjs/add/observable/of';
 import { Parameter } from '../../../model/parameter.model';
 import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
 import { KeyService } from '../../../service/keys/keys.service';
 import { NavbarService } from '../../../service/navbar/navbar.service';
 import { PipelineCoreService } from '../../../service/pipeline/pipeline.core.service';
@@ -27,7 +28,6 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ToastService } from '../../../shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineShowComponent } from './pipeline.show.component';
-import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 describe('CDS: Pipeline Show', () => {
 
     beforeEach(() => {
@@ -48,7 +48,8 @@ describe('CDS: Pipeline Show', () => {
                 TranslateParser,
                 WorkflowService,
                 WorkflowRunService,
-                AuthentificationStore
+                UserService,
+                AuthenticationService
             ],
             imports: [
                 PipelineModule,

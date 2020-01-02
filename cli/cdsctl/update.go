@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/cli/cdsctl/internal"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -31,7 +32,7 @@ func update() *cobra.Command {
 func updateRun(v cli.Values) error {
 	fmt.Println(sdk.VersionString())
 	var variant string
-	if !keychainEnabled {
+	if !internal.IsKeychainEnabled() {
 		variant = "nokeychain"
 	}
 	var urlBinary string

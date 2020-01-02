@@ -1,5 +1,3 @@
-/* tslint:disable:no-unused-variable */
-
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, Injector } from '@angular/core';
 import { getTestBed, TestBed } from '@angular/core/testing';
@@ -9,27 +7,27 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { ToasterService } from 'angular2-toaster/angular2-toaster';
+import { Project } from 'app/model/project.model';
+import { RepositoriesManager } from 'app/model/repositories.model';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { EnvironmentService } from 'app/service/environment/environment.service';
+import { MonitoringService } from 'app/service/monitoring/monitoring.service';
+import { NavbarService } from 'app/service/navbar/navbar.service';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
+import { ProjectService } from 'app/service/project/project.service';
+import { ProjectStore } from 'app/service/project/project.store';
+import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { UserService } from 'app/service/user/user.service';
+import { VariableService } from 'app/service/variable/variable.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
+import { SharedModule } from 'app/shared/shared.module';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { DisconnectRepositoryManagerInProject } from 'app/store/project.action';
 import { NgxsStoreModule } from 'app/store/store.module';
-import 'rxjs/add/observable/of';
-import { Observable } from 'rxjs/Observable';
-import { Project } from '../../../../../../model/project.model';
-import { RepositoriesManager } from '../../../../../../model/repositories.model';
-import { EnvironmentService } from '../../../../../../service/environment/environment.service';
-import { NavbarService } from '../../../../../../service/navbar/navbar.service';
-import { PipelineService } from '../../../../../../service/pipeline/pipeline.service';
-import { ProjectService } from '../../../../../../service/project/project.service';
-import { ProjectStore } from '../../../../../../service/project/project.store';
-import { RepoManagerService } from '../../../../../../service/repomanager/project.repomanager.service';
-import { VariableService } from '../../../../../../service/variable/variable.service';
-import { SharedModule } from '../../../../../../shared/shared.module';
-import { ToastService } from '../../../../../../shared/toast/ToastService';
-import { ProjectModule } from '../../../../project.module';
-import { ProjectRepoManagerComponent } from './project.repomanager.list.component';
-import { WorkflowService } from 'app/service/workflow/workflow.service';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
-import { MonitoringService } from 'app/service/monitoring/monitoring.service';
+import { ProjectModule } from 'app/views/project/project.module';
 import { of } from 'rxjs';
+import { ProjectRepoManagerComponent } from './project.repomanager.list.component';
 describe('CDS: Project RepoManager List Component', () => {
 
     let injector: Injector;
@@ -57,7 +55,9 @@ describe('CDS: Project RepoManager List Component', () => {
                 NavbarService,
                 WorkflowService,
                 WorkflowRunService,
-                { provide: ToastService, useClass: MockToast }
+                { provide: ToastService, useClass: MockToast },
+                UserService,
+                AuthenticationService
             ],
             imports: [
                 ProjectModule,
@@ -90,14 +90,17 @@ describe('CDS: Project RepoManager List Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        let p: Project = new Project();
-        p.key = 'key1';
-        fixture.componentInstance.project = p;
-
-        let reposMans = new Array<RepositoriesManager>();
-        let r: RepositoriesManager = { name: 'stash' };
-        reposMans.push(r);
-        fixture.componentInstance.reposmanagers = reposMans;
+        fixture.componentInstance.project = <Project>{
+            key: 'key1',
+            permissions: {
+                readable: true,
+                writable: true,
+                executable: true
+            }
+        };
+        fixture.componentInstance.reposmanagers = [
+            <RepositoriesManager>{ name: 'stash' }
+        ];
 
         fixture.detectChanges(true);
 

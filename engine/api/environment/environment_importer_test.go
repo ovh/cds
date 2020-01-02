@@ -3,19 +3,19 @@ package environment_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestImportInto_Variable(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
 
-	u := &sdk.User{
+	u := &sdk.AuthentifiedUser{
 		Username: "foo",
 	}
 
@@ -26,7 +26,7 @@ func TestImportInto_Variable(t *testing.T) {
 
 	project.Delete(db, cache, proj.Key)
 
-	test.NoError(t, project.Insert(db, cache, &proj, nil))
+	test.NoError(t, project.Insert(db, cache, &proj))
 
 	env := sdk.Environment{
 		Name:      "testenv",
@@ -140,7 +140,7 @@ func TestImportInto_Group(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
 
-	u := &sdk.User{
+	u := &sdk.AuthentifiedUser{
 		Username: "foo",
 	}
 
@@ -151,7 +151,7 @@ func TestImportInto_Group(t *testing.T) {
 
 	project.Delete(db, cache, proj.Key)
 
-	test.NoError(t, project.Insert(db, cache, &proj, nil))
+	test.NoError(t, project.Insert(db, cache, &proj))
 
 	oldEnv, _ := environment.LoadEnvironmentByName(db, proj.Key, "testenv")
 	if oldEnv != nil {
@@ -164,23 +164,6 @@ func TestImportInto_Group(t *testing.T) {
 	}
 
 	test.NoError(t, environment.InsertEnvironment(db, &env))
-
-	g0 := sdk.Group{Name: "g0"}
-	g1 := sdk.Group{Name: "g1"}
-	g2 := sdk.Group{Name: "g2"}
-	g3 := sdk.Group{Name: "g3"}
-
-	for _, g := range []sdk.Group{g0, g1, g2, g3} {
-		oldg, _ := group.LoadGroup(db, g.Name)
-		if oldg != nil {
-			group.DeleteGroupAndDependencies(db, oldg)
-		}
-	}
-
-	test.NoError(t, group.InsertGroup(db, &g0))
-	test.NoError(t, group.InsertGroup(db, &g1))
-	test.NoError(t, group.InsertGroup(db, &g2))
-	test.NoError(t, group.InsertGroup(db, &g3))
 
 	var err error
 	env.Variable, err = environment.GetAllVariableByID(db, env.ID)

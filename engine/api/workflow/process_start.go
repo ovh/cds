@@ -11,7 +11,9 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, startingFromNode *int64, maxsn int64, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project,
+	wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, startingFromNode *int64, maxsn int64,
+	hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
 	start := mapNodes[*startingFromNode]
 	if start == nil {
@@ -43,8 +45,8 @@ func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.
 		return nil, conditionOK, sdk.WrapError(errP, "processWorkflowRun> Unable to processNodeRun")
 	}
 
-	report, _ = report.Merge(r1, nil)
-	wr.Status = sdk.StatusWaiting.String()
+	report, _ = report.Merge(ctx, r1, nil)
+	wr.Status = sdk.StatusWaiting
 
 	return report, conditionOK, nil
 }
@@ -65,7 +67,7 @@ func processStartFromRootNode(ctx context.Context, db gorp.SqlExecutor, store ca
 	if errP != nil {
 		return nil, false, sdk.WrapError(errP, "Unable to process workflow node run")
 	}
-	report, _ = report.Merge(r1, nil)
+	report, _ = report.Merge(ctx, r1, nil)
 	return report, conditionOK, nil
 }
 
@@ -77,11 +79,11 @@ func processAllNodesTriggers(ctx context.Context, db gorp.SqlExecutor, store cac
 		nodeRun := &wr.WorkflowNodeRuns[k][0]
 
 		//Trigger only if the node is over (successful or not)
-		if sdk.StatusIsTerminated(nodeRun.Status) && nodeRun.Status != sdk.StatusNeverBuilt.String() {
+		if sdk.StatusIsTerminated(nodeRun.Status) && nodeRun.Status != sdk.StatusNeverBuilt {
 			//Find the node in the workflow
 			node := mapNodes[nodeRun.WorkflowNodeID]
 			r1, _ := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, []*sdk.WorkflowNodeRun{nodeRun}, node, int(nodeRun.SubNumber))
-			_, _ = report.Merge(r1, nil)
+			_, _ = report.Merge(ctx, r1, nil)
 		}
 	}
 	return report, nil
@@ -104,7 +106,7 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		//we have to check noderun for every sources
 		for _, nodeJoin := range j.JoinContext {
 			if _, okF := wr.WorkflowNodeRuns[nodeJoin.ParentID]; okF {
-				// Get lastest run on parent
+				// Get latest run on parent
 				sources = append(sources, &wr.WorkflowNodeRuns[nodeJoin.ParentID][0])
 			}
 		}
@@ -119,7 +121,7 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 				break
 			}
 
-			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusFail.String() || nodeRun.Status == sdk.StatusNeverBuilt.String() || nodeRun.Status == sdk.StatusStopped.String() {
+			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusFail || nodeRun.Status == sdk.StatusNeverBuilt || nodeRun.Status == sdk.StatusStopped {
 				ok = false
 				break
 			}
@@ -139,7 +141,7 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 			if err != nil {
 				return report, sdk.WrapError(err, "processAllJoins> Unable to process join node")
 			}
-			_, _ = report.Merge(r1, nil)
+			_, _ = report.Merge(ctx, r1, nil)
 		}
 	}
 	return report, nil

@@ -2,6 +2,9 @@ package git
 
 import (
 	"fmt"
+	"path/filepath"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // TagOpts represents options for git tag command
@@ -21,21 +24,14 @@ func TagCreate(repo string, auth *AuthOpts, opts *TagOpts, output *OutputOpts) e
 	if err != nil {
 		return err
 	}
-	commands = prepareGitTagCreateCommands(repoURL, opts)
-	return runGitCommands(repo, commands, auth, output)
-}
-
-// TagList List tag from given git directory
-func TagList(repo, dir string, auth *AuthOpts, output *OutputOpts) error {
-	repoURL, err := getRepoURL(repo, auth)
+	commands, err = prepareGitTagCreateCommands(repoURL, opts)
 	if err != nil {
 		return err
 	}
-	commands := prepareGitTagListCommands(repoURL, dir)
 	return runGitCommands(repo, commands, auth, output)
 }
 
-func prepareGitTagCreateCommands(repo string, opts *TagOpts) cmds {
+func prepareGitTagCreateCommands(repo string, opts *TagOpts) (cmds, error) {
 	allCmd := []cmd{}
 
 	if opts != nil && opts.SignKey != "" {
@@ -67,8 +63,15 @@ func prepareGitTagCreateCommands(repo string, opts *TagOpts) cmds {
 
 	if opts != nil {
 		if opts.Path != "" {
-			gitcmd.dir = opts.Path
-			optPush.Directory = opts.Path
+			var err error
+			gitcmd.workdir, err = filepath.Abs(opts.Path)
+			if err != nil {
+				return nil, err
+			}
+			optPush.Directory, err = filepath.Abs(opts.Path)
+			if err != nil {
+				return nil, err
+			}
 		}
 		gitcmd.args = append(gitcmd.args, "-a", opts.Name)
 
@@ -83,18 +86,38 @@ func prepareGitTagCreateCommands(repo string, opts *TagOpts) cmds {
 
 	allCmd = append(allCmd, gitcmd)
 	allCmd = append(allCmd, prepareGitPushCommands(repo, optPush)...)
-	return cmds(allCmd)
+	return cmds(allCmd), nil
 }
 
-func prepareGitTagListCommands(repo, dir string) cmds {
+// TagList List tag from given git directory
+func TagList(repo, workdirPath, dir string, auth *AuthOpts, output *OutputOpts) error {
+	repoURL, err := getRepoURL(repo, auth)
+	if err != nil {
+		return err
+	}
+	commands, err := prepareGitTagListCommands(repoURL, workdirPath, dir)
+	if err != nil {
+		return err
+	}
+	return runGitCommands(repo, commands, auth, output)
+}
+
+func prepareGitTagListCommands(repo, workdirPath, dir string) (cmds, error) {
 	allCmd := []cmd{}
 
 	gitcmd := cmd{
 		cmd:  "git",
 		args: []string{"ls-remote", "--tags", "--refs", repo},
-		dir:  dir,
 	}
 
+	var err error
+	workdirPath, err = filepath.Abs(workdirPath)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+
+	gitcmd.workdir = workdirPath
+
 	allCmd = append(allCmd, gitcmd)
-	return cmds(allCmd)
+	return cmds(allCmd), nil
 }

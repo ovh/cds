@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -15,7 +16,7 @@ import (
 )
 
 // LoadNodeRunJobInfo load infos (workflow_node_run_job_infos) for a job (workflow_node_run_job)
-func LoadNodeRunJobInfo(db gorp.SqlExecutor, jobID int64) ([]sdk.SpawnInfo, error) {
+func LoadNodeRunJobInfo(ctx context.Context, db gorp.SqlExecutor, jobID int64) ([]sdk.SpawnInfo, error) {
 	res := []struct {
 		Bytes sql.NullString `db:"spawninfos"`
 	}{}
@@ -32,7 +33,7 @@ func LoadNodeRunJobInfo(db gorp.SqlExecutor, jobID int64) ([]sdk.SpawnInfo, erro
 		spInfos := []sdk.SpawnInfo{}
 		if err := gorpmapping.JSONNullString(res[i].Bytes, &spInfos); err != nil {
 			// should never append, but log error
-			log.Warning("wrong spawnInfos format: res: %v for id: %v err: %v", res[i].Bytes, jobID, err)
+			log.Warning(ctx, "wrong spawnInfos format: res: %v for id: %v err: %v", res[i].Bytes, jobID, err)
 			continue
 		}
 		spawnInfos = append(spawnInfos, spInfos...)

@@ -15,8 +15,8 @@ func Test_getPipelineExportHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 	pipName := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
@@ -24,7 +24,7 @@ func Test_getPipelineExportHandler(t *testing.T) {
 		Name:      pipName,
 	}
 
-	if err := pipeline.InsertPipeline(db, api.Cache, proj, pip, u); err != nil {
+	if err := pipeline.InsertPipeline(db, api.Cache, proj, pip); err != nil {
 		t.Fatal(err)
 	}
 

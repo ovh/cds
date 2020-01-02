@@ -34,7 +34,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			}
 			logsReader, errL := dockerClient.ContainerLogs(ctx, cnt.ID, logsOpts)
 			if errL != nil {
-				log.Error("hatchery> swarm> getServicesLogs> cannot get logs from docker for containers service %s %v : %v", cnt.ID, cnt.Names, errL)
+				log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot get logs from docker for containers service %s %v : %v", cnt.ID, cnt.Names, errL)
 				cancel()
 				continue
 			}
@@ -42,7 +42,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			logs, errR := ioutil.ReadAll(logsReader)
 			defer logsReader.Close()
 			if errR != nil {
-				log.Error("hatchery> swarm> getServicesLogs> cannot read logs for containers service %s %v : %v", cnt.ID, cnt.Names, errR)
+				log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot read logs for containers service %s %v : %v", cnt.ID, cnt.Names, errR)
 				cancel()
 				continue
 			}
@@ -52,18 +52,18 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			if len(logs) > 0 {
 				serviceID, ok := cnt.Labels["service_id"]
 				if !ok {
-					log.Error("hatchery> swarm> getServicesLogs> cannot find label service id for containers service %s %v", cnt.ID, cnt.Names)
+					log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot find label service id for containers service %s %v", cnt.ID, cnt.Names)
 					continue
 				}
 
 				reqServiceID, errP := strconv.ParseInt(serviceID, 10, 64)
 				if errP != nil {
-					log.Error("hatchery> swarm> getServicesLogs> cannot parse service id for containers service %s %v id : %s, err : %v", cnt.ID, cnt.Names, serviceID, errP)
+					log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot parse service id for containers service %s %v id : %s, err : %v", cnt.ID, cnt.Names, serviceID, errP)
 					continue
 				}
 				serviceJobID, errPj := strconv.ParseInt(serviceJobIDStr, 10, 64)
 				if errPj != nil {
-					log.Error("hatchery> swarm> getServicesLogs> cannot parse service job id for containers service %s %v id : %s, err : %v", cnt.ID, cnt.Names, serviceJobIDStr, errPj)
+					log.Error(ctx, "hatchery> swarm> getServicesLogs> cannot parse service job id for containers service %s %v id : %s, err : %v", cnt.ID, cnt.Names, serviceJobIDStr, errPj)
 					continue
 				}
 
@@ -79,7 +79,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 				// Do call api
 				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				if err := h.Client.QueueServiceLogs(ctx, servicesLogs); err != nil {
-					log.Error("Hatchery> Swarm> Cannot send service logs : %v", err)
+					log.Error(ctx, "Hatchery> Swarm> Cannot send service logs : %v", err)
 				}
 				cancel()
 			}

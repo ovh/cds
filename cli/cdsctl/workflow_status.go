@@ -122,9 +122,9 @@ func workflowRunFormatDisplay(run *sdk.WorkflowRun, commit repo.Commit, currentD
 
 		nodeRun := nodeRuns[0]
 		switch nodeRun.Status {
-		case sdk.StatusSuccess.String():
+		case sdk.StatusSuccess:
 			output += cli.Green("%s %s", cli.OKChar, cli.Green(nodeRun.WorkflowNodeName))
-		case sdk.StatusFail.String():
+		case sdk.StatusFail:
 			output += cli.Red("%s %s", cli.KOChar, cli.Red(nodeRun.WorkflowNodeName))
 		default:
 			output += cli.Blue("%s %s", cli.BuildingChar, cli.Blue(nodeRun.WorkflowNodeName))

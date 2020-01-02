@@ -99,7 +99,7 @@ func TestRun(t *testing.T) {
 	}
 	defer os.Remove(outputfile)
 
-	if res.GetStatus() != sdk.StatusSuccess.String() {
+	if res.GetStatus() != sdk.StatusSuccess {
 		t.Errorf("unexpected error on Run: %s", res.GetDetails())
 		return
 	}

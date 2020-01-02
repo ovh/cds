@@ -16,20 +16,21 @@ func KillDeadServices(ctx context.Context, dbFunc func() *gorp.DbMap) {
 	for {
 		select {
 		case <-tick.C:
-			services, errdead := FindDeadServices(db, 3*60*time.Second)
+			services, errdead := FindDeadServices(ctx, db, 3*60*time.Second)
 			if errdead != nil {
-				log.Error("KillDeadServices> Unable to find dead services: %v", errdead)
+				log.Error(ctx, "KillDeadServices> Unable to find dead services: %v", errdead)
 				continue
 			}
+			log.Debug("services.KillDeadServices> %d services to remove", len(services))
 			for i := range services {
 				if err := Delete(db, &services[i]); err != nil {
-					log.Error("KillDeadServices> Unable to find dead services: %v", err)
+					log.Error(ctx, "KillDeadServices> Unable to find dead services: %v", err)
 					continue
 				}
 			}
 		case <-ctx.Done():
 			if err := ctx.Err(); err != nil {
-				log.Error("Exiting KillDeadServices: %v", err)
+				log.Error(ctx, "Exiting KillDeadServices: %v", err)
 				return
 			}
 		}

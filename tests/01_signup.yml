@@ -8,7 +8,9 @@ vars:
   smtpmock.url: 'http://localhost:2024'
   username: cds.integration.tests.rw
   email: it-user-rw@localhost.local
-  fullname: cds.integration.tests.rw 
+  fullname: cds.integration.tests.rw
+  password: "123456&éçà(§"
+  ring:
   smtpmock.url: 'http://localhost:2024'
 
 testcases:
@@ -24,11 +26,11 @@ testcases:
   steps:
   - type: http
     method: POST
-    url: '{{.api.url}}/user/signup'
+    url: '{{.api.url}}/auth/consumer/local/signup'
     headers: 
       "Content-Type": "application/json"
     body: |-
-      {"user" : {"username": "{{.username}}", "fullname": "{{.fullname}}", "email":"{{.email}}"}, "callback" : "cdsctl user confirm %s %s"}
+      { "username": "{{.username}}", "fullname": "{{.fullname}}", "email":"{{.email}}", "password": "{{.password}}" }
 
 
 - name: post-create-user
@@ -43,10 +45,13 @@ testcases:
     vars:
       verify: 
         from: result.bodyjson.content
-        regex: cdsctl user confirm (?:(?:\w+)\.*)+ ([a-zA-Z0-9]*)
+        regex: cdsctl signup verify --api-url (?:.*) (.*)
+
 
 - name: prepare-cdsctl-config-file
   steps:
   - script: "rm -f {{.cdsctl.config}}"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} user confirm --api-url {{.api.url}} {{.username}} {{.post-create-user.verify}}"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} user me"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} -c test signup verify {{.post-create-user.verify}} --api-url {{.api.url}} "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} -c test user me --fields ring --format json"
+    assertions:
+    - result.systemoutjson.ring ShouldEqual {{.ring}}

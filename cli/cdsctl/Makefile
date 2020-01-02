@@ -14,7 +14,7 @@ TARGET_ARCH := $(if ${ARCH}, ${ARCH}, %/amd64 %/arm %/386 %/arm64)
 TARGET_DISTS := $(filter $(TARGET_OS), $(filter $(TARGET_ARCH), $(shell go tool dist list)))
 isWindows = $(filter $1,windows)
 TARGET_BINARIES := $(foreach DIST, $(filter-out darwin/arm% darwin/386,$(TARGET_DISTS)), $(TARGET_DIR)/cdsctl-$(call split,$(DIST),1)-$(call split,$(DIST),2)$(if $(call isWindows, $(call split,$(DIST),1)),.exe))
-TARGET_BINARIES_VARIANT := $(addsuffix -nokeychain, $(TARGET_BINARIES))
+TARGET_BINARIES_VARIANT := $(addsuffix -nokeychain, $(filter %linux-amd64 %darwin-amd64,$(TARGET_BINARIES)))
 
 GO_BUILD = go build
 GO_LINT = ${GOPATH}/bin/gometalinter
@@ -31,7 +31,7 @@ endef
 
 
 TEST_PKGS = $(shell go list ./... | grep -v vendor)
-TEST_CMD = go test -v -timeout 180s -coverprofile=profile.coverprofile
+TEST_CMD = go test -tags skipkeychaintests -v -timeout 180s -coverprofile=profile.coverprofile
 
 $(TARGET_DIR):
 	$(info create $(TARGET_DIR) directory)

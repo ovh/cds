@@ -1,0 +1,27 @@
+<div class="ui grid">
+  <div class="column">
+    <h3 class="ui top block attached header">
+      {{ 'account_password_title' | translate }}
+    </h3>
+    <div class="ui bottom attached segment">
+      <div *ngIf="showErrorMessage" class="ui red message">
+        <p>{{ 'auth_ask_reset_error' | translate }}</p>
+      </div>
+      <div *ngIf="showSuccessMessage" class="ui green message">
+        <p>{{ 'auth_ask_reset_success' | translate }}</p>
+      </div>
+      <form class="ui form" (ngSubmit)="askReset(askResetForm)" #askResetForm="ngForm">
+        <div *ngIf="!showSuccessMessage" class="field">
+          <label>{{ 'user_label_email' | translate }}</label>
+          <input type="email" name="email" ngModel required [disabled]="loading">
+        </div>
+        <div class="field right aligned">
+          <a class="pointing" (click)="navigateToSignin()">{{ 'account_login_title' | translate }}</a>
+          &nbsp;&nbsp;&nbsp;
+          <button *ngIf="!showSuccessMessage" class="ui green button" [disabled]="loading"
+            type="submit">{{ 'account_password_btn_reset' | translate }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

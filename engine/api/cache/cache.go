@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -26,6 +25,7 @@ type Store interface {
 	Get(key string, value interface{}) (bool, error)
 	Set(key string, value interface{}) error
 	SetWithTTL(key string, value interface{}, ttl int) error
+	SetWithDuration(key string, value interface{}, duration time.Duration) error
 	UpdateTTL(key string, ttl int) error
 	Delete(key string) error
 	DeleteAll(key string) error
@@ -33,14 +33,13 @@ type Store interface {
 	DequeueWithContext(c context.Context, queueName string, value interface{}) error
 	QueueLen(queueName string) (int, error)
 	RemoveFromQueue(queueName string, memberKey string) error
-	Publish(queueName string, value interface{}) error
+	Publish(ctx context.Context, queueName string, value interface{}) error
 	Subscribe(queueName string) (PubSub, error)
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
-	Status() sdk.MonitoringStatusLine
 	SetAdd(rootKey string, memberKey string, member interface{}) error
 	SetRemove(rootKey string, memberKey string, member interface{}) error
 	SetCard(key string) (int, error)
-	SetScan(key string, members ...interface{}) error
+	SetScan(ctx context.Context, key string, members ...interface{}) error
 	ZScan(key, pattern string) ([]string, error)
 	Lock(key string, expiration time.Duration, retryWaitDurationMillisecond int, retryCount int) (bool, error)
 	Unlock(key string) error
@@ -69,7 +68,7 @@ type writerCloser struct {
 
 func (w *writerCloser) Close() error {
 	if err := w.store.SetWithTTL(w.key, w.String(), w.ttl); err != nil {
-		log.Error("cannot SetWithTTL: %s: %v", w.key, err)
+		log.Error(context.TODO(), "cannot SetWithTTL: %s: %v", w.key, err)
 	}
 	return nil
 }

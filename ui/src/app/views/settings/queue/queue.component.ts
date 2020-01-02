@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngxs/store';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { AuthentifiedUser } from 'app/model/user.model';
+import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { ToastService } from 'app/shared/toast/ToastService';
+import { CDSWebWorker } from 'app/shared/worker/web.worker';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { environment } from '../../../../environments/environment';
-import { PipelineStatus } from '../../../model/pipeline.model';
-import { User } from '../../../model/user.model';
-import { WorkflowNodeJobRun } from '../../../model/workflow.run.model';
-import { AuthentificationStore } from '../../../service/auth/authentification.store';
-import { WorkflowRunService } from '../../../service/workflow/run/workflow.run.service';
-import { PathItem } from '../../../shared/breadcrumb/breadcrumb.component';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { ToastService } from '../../../shared/toast/ToastService';
-import { CDSWebWorker } from '../../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-queue',
@@ -24,7 +24,7 @@ export class QueueComponent implements OnDestroy {
     queueWorker: CDSWebWorker;
     zone: NgZone;
     queueSubscription: Subscription;
-    user: User;
+    user: AuthentifiedUser;
     nodeJobRuns: Array<WorkflowNodeJobRun> = [];
     parametersMaps: Array<{}> = [];
     requirementsList: Array<string> = [];
@@ -35,7 +35,7 @@ export class QueueComponent implements OnDestroy {
     path: Array<PathItem>;
 
     constructor(
-        private _authStore: AuthentificationStore,
+        private _store: Store,
         private _wfRunService: WorkflowRunService,
         private _toast: ToastService,
         private _translate: TranslateService,
@@ -44,7 +44,7 @@ export class QueueComponent implements OnDestroy {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this.loading = true;
         this.status = [this.statusOptions[0]];
-        this.user = this._authStore.getUser();
+        this.user = this._store.selectSnapshot(AuthenticationState.user);
         this.startWorker();
 
         this.path = [<PathItem>{
@@ -67,9 +67,9 @@ export class QueueComponent implements OnDestroy {
 
     getQueueWorkerParams(): any {
         return {
-            'user': this._authStore.getUser(),
-            'session': this._authStore.getSessionToken(),
-            'api': environment.apiURL,
+            'user': this._store.selectSnapshot(AuthenticationState.user),
+            // 'session': this._authStore.getSessionToken(),
+            'api': '/cdsapi',
             'status': this.status.length > 0 ? this.status : this.statusOptions
         };
     }
@@ -97,7 +97,7 @@ export class QueueComponent implements OnDestroy {
                     this.requirementsList = [];
                     this.bookedOrBuildingByList = [];
                     this.parametersMaps = this.nodeJobRuns.map((nj) => {
-                        if (this.user.admin && nj.job && nj.job.action && nj.job.action.requirements) {
+                        if (this.user.ring === 'ADMIN' && nj.job && nj.job.action && nj.job.action.requirements) {
                             let requirements = nj.job.action.requirements
                                 .reduce((reqs, req) => `type: ${req.type}, value: ${req.value}; ${reqs}`, '');
                             this.requirementsList.push(requirements);

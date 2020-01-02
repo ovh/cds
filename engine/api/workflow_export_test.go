@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -24,11 +24,15 @@ import (
 func Test_getWorkflowExportHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
-	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
+	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
+	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -36,7 +40,7 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
 
@@ -97,12 +101,15 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
+	test.NoError(t, workflow.RenameNode(context.Background(), db, &w))
 
-	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithGroups,
+	)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -145,17 +152,21 @@ workflow:
 func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
-	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
+	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
+	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
 
 	group2 := &sdk.Group{
 		Name: "Test_getWorkflowExportHandlerWithPermissions-Group2",
 	}
-	group.InsertGroup(api.mustDB(), group2)
-	group2, _ = group.LoadGroup(api.mustDB(), "Test_getWorkflowExportHandlerWithPermissions-Group2")
+	require.NoError(t, group.Insert(api.mustDB(), group2))
+	group2, _ = group.LoadByName(context.TODO(), api.mustDB(), "Test_getWorkflowExportHandlerWithPermissions-Group2")
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -163,7 +174,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
 
@@ -185,7 +196,11 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 
 	pip.Stages = append(pip.Stages, *s)
 
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, group2.ID, permission.PermissionReadWriteExecute))
+	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+		GroupID:   group2.ID,
+		ProjectID: proj.ID,
+		Role:      sdk.PermissionReadWriteExecute,
+	}))
 
 	w := sdk.Workflow{
 		Name:          "test_1",
@@ -218,13 +233,16 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 
-	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithGroups,
+	)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -263,11 +281,15 @@ history_length: 25
 func Test_getWorkflowPullHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
-	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
+	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
+		GroupID: proj.ProjectGroups[0].Group.ID,
+		UserID:  u.OldUserStruct.ID,
+		Admin:   true,
+	}))
+	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -275,7 +297,7 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
 
 	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
 
@@ -321,12 +343,15 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
 
-	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithGroups,
+	)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request

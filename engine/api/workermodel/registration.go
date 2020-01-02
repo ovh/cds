@@ -1,14 +1,17 @@
 package workermodel
 
 import (
+	"context"
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -82,7 +85,7 @@ func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, spawnError 
 	spawnError.Logs = []byte(sdk.RemoveNotPrintableChar(string(spawnError.Logs)))
 
 	query := `UPDATE worker_model SET nb_spawn_err=nb_spawn_err+1, last_spawn_err=$3, last_spawn_err_log=$4, date_last_spawn_err=$2 WHERE id = $1`
-	res, err := db.Exec(query, modelID, time.Now(), spawnError.Error, spawnError.Logs)
+	res, err := db.Exec(query, modelID, time.Now(), spawnError.Error, string(spawnError.Logs))
 	if err != nil {
 		return sdk.WithStack(err)
 	}
@@ -98,7 +101,7 @@ func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, spawnError 
 }
 
 // UpdateRegistration updates need_registration to false and last_registration time, reset err registration.
-func UpdateRegistration(db gorp.SqlExecutor, modelID int64) error {
+func UpdateRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, modelID int64) error {
 	query := `UPDATE worker_model SET need_registration=false, check_registration=false, last_registration = $2, nb_spawn_err=0, last_spawn_err=NULL, last_spawn_err_log=NULL WHERE id = $1`
 	res, err := db.Exec(query, modelID, time.Now())
 	if err != nil {
@@ -110,6 +113,7 @@ func UpdateRegistration(db gorp.SqlExecutor, modelID int64) error {
 		return sdk.WithStack(err)
 	}
 	log.Debug("UpdateRegistration> %d worker model updated", rows)
+	UnbookForRegister(ctx, store, modelID)
 	return nil
 }
 
@@ -135,27 +139,90 @@ func KeyBookWorkerModel(id int64) string {
 }
 
 // BookForRegister books a worker model for register, used by hatcheries
-func BookForRegister(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
+func BookForRegister(store cache.Store, id int64, serviceID int64) error {
 	k := KeyBookWorkerModel(id)
-	h := sdk.Service{}
-	find, err := store.Get(k, &h)
-	if err != nil {
-		log.Error("cannot get from cache %s: %v", k, err)
-	}
-	if !find {
+	var bookedByServiceID int64
+	if ok, _ := store.Get(k, &bookedByServiceID); !ok {
 		// worker model not already booked, book it for 6 min
-		if err := store.SetWithTTL(k, hatchery, bookRegisterTTLInSeconds); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", k, err)
+		if err := store.SetWithTTL(k, serviceID, bookRegisterTTLInSeconds); err != nil {
+			return err
 		}
-		return nil, nil
+		return nil
 	}
-	return &h, sdk.WrapError(sdk.ErrWorkerModelAlreadyBooked, "worker model %d already booked by %s (%d)", id, h.Name, h.ID)
+	return sdk.WrapError(sdk.ErrWorkerModelAlreadyBooked, "worker model %d already booked by service %d", id, bookedByServiceID)
 }
 
 // UnbookForRegister release the book
-func UnbookForRegister(store cache.Store, id int64) {
+func UnbookForRegister(ctx context.Context, store cache.Store, id int64) {
 	k := KeyBookWorkerModel(id)
 	if err := store.Delete(k); err != nil {
-		log.Error("unable to delete cache key %v: %v", k, err)
+		log.Error(ctx, "unable to delete cache key %v: %v", k, err)
 	}
+}
+
+func UpdateCapabilities(ctx context.Context, db gorp.SqlExecutor, spawnArgs hatchery.SpawnArguments, registrationForm sdk.WorkerRegistrationForm) error {
+	existingCapas, err := LoadCapabilities(db, spawnArgs.Model.ID)
+	if err != nil {
+		log.Warning(ctx, "RegisterWorker> Unable to load worker model capabilities: %s", err)
+		return sdk.WithStack(err)
+	}
+
+	var newCapas []string
+	for _, b := range registrationForm.BinaryCapabilities {
+		var found bool
+		for _, c := range existingCapas {
+			if b == c.Value {
+				found = true
+				break
+			}
+		}
+		if !found {
+			newCapas = append(newCapas, b)
+		}
+	}
+	if len(newCapas) > 0 {
+		log.Debug("Updating model %d binary capabilities with %d capabilities", spawnArgs.Model.ID, len(newCapas))
+		for _, b := range newCapas {
+			query := `insert into worker_capability (worker_model_id, name, argument, type) values ($1, $2, $3, $4)`
+			if _, err := db.Exec(query, spawnArgs.Model.ID, b, b, string(sdk.BinaryRequirement)); err != nil {
+				//Ignore errors because we let the database to check constraints...
+				log.Debug("registerWorker> Cannot insert into worker_capability: %v", err)
+				return sdk.WithStack(err)
+			}
+		}
+	}
+
+	var capaToDelete []string
+	for _, existingCapa := range existingCapas {
+		var found bool
+		for _, currentCapa := range registrationForm.BinaryCapabilities {
+			if existingCapa.Value == currentCapa {
+				found = true
+				break
+			}
+		}
+		if !found {
+			capaToDelete = append(capaToDelete, existingCapa.Value)
+		}
+	}
+
+	if len(capaToDelete) > 0 {
+		log.Debug("Updating model %d binary capabilities with %d capabilities to delete", spawnArgs.Model.ID, len(capaToDelete))
+		query := `DELETE FROM worker_capability WHERE worker_model_id=$1 AND name=ANY(string_to_array($2, ',')::text[]) AND type=$3`
+		if _, err := db.Exec(query, spawnArgs.Model.ID, strings.Join(capaToDelete, ","), string(sdk.BinaryRequirement)); err != nil {
+			//Ignore errors because we let the database to check constraints...
+			log.Warning(ctx, "registerWorker> Cannot delete from worker_capability: %v", err)
+			return sdk.WithStack(err)
+
+		}
+	}
+
+	if registrationForm.OS != "" && registrationForm.Arch != "" {
+		if err := UpdateOSAndArch(db, spawnArgs.Model.ID, registrationForm.OS, registrationForm.Arch); err != nil {
+			log.Warning(ctx, "registerWorker> Cannot update os and arch for worker model %d : %s", spawnArgs.Model.ID, err)
+			return sdk.WithStack(err)
+		}
+	}
+
+	return nil
 }

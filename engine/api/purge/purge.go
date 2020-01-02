@@ -27,18 +27,18 @@ func Initialize(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMa
 		select {
 		case <-ctx.Done():
 			if ctx.Err() != nil {
-				log.Error("Exiting purge: %v", ctx.Err())
+				log.Error(ctx, "Exiting purge: %v", ctx.Err())
 				return
 			}
 		case <-tickPurge.C:
 			log.Debug("purge> Deleting all workflow run marked to delete...")
 			if err := deleteWorkflowRunsHistory(ctx, DBFunc(), store, sharedStorage, workflowRunsDeleted); err != nil {
-				log.Warning("purge> Error on deleteWorkflowRunsHistory : %v", err)
+				log.Warning(ctx, "purge> Error on deleteWorkflowRunsHistory : %v", err)
 			}
 
 			log.Debug("purge> Deleting all workflow marked to delete....")
 			if err := workflows(ctx, DBFunc(), store, workflowRunsMarkToDelete); err != nil {
-				log.Warning("purge> Error on workflows : %v", err)
+				log.Warning(ctx, "purge> Error on workflows : %v", err)
 			}
 		}
 	}
@@ -64,9 +64,9 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 
 	for i, r := range res {
 		// Force delete workflow runs if any
-		n, err := workflow.PurgeAllWorkflowRunsByWorkflowID(db, r.ID)
+		n, err := workflow.PurgeAllWorkflowRunsByWorkflowID(ctx, db, r.ID)
 		if err != nil {
-			log.Error("unable to mark workflow runs to delete with workflow_id %d: %v", r.ID, err)
+			log.Error(ctx, "unable to mark workflow runs to delete with workflow_id %d: %v", r.ID, err)
 			continue
 		}
 		if n > 0 {
@@ -80,38 +80,38 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 		// Checks if there is any workflow_runs
 		nbWorkflowRuns, err := db.SelectInt("select count(1) from workflow_run where workflow_id = $1", r.ID)
 		if err != nil {
-			log.Error("unable to count workflow runs for workflow_id %d: %v", r.ID, err)
+			log.Error(ctx, "unable to count workflow runs for workflow_id %d: %v", r.ID, err)
 			continue
 		}
 		if nbWorkflowRuns > 0 {
-			log.Info("skip workflow %d deletion because there are still %d workflow_runs to delete", r.ID, nbWorkflowRuns)
+			log.Info(ctx, "skip workflow %d deletion because there are still %d workflow_runs to delete", r.ID, nbWorkflowRuns)
 			continue
 		}
 
 		proj, has := projects[r.ProjectID]
 		if !has {
-			p, err := project.LoadByID(db, store, r.ProjectID, nil)
+			p, err := project.LoadByID(db, store, r.ProjectID)
 			if err != nil {
-				log.Error("purge.Workflows> unable to load project %d: %v", r.ProjectID, err)
+				log.Error(ctx, "purge.Workflows> unable to load project %d: %v", r.ProjectID, err)
 				continue
 			}
 			projects[r.ProjectID] = *p
 			proj = *p
 		}
 
-		w, err := workflow.LoadByID(db, store, &proj, r.ID, nil, workflow.LoadOptions{})
+		w, err := workflow.LoadByID(ctx, db, store, &proj, r.ID, workflow.LoadOptions{})
 		if err != nil {
-			log.Warning("unable to load workflow %d due to error %v, we try to delete it", r.ID, err)
+			log.Warning(ctx, "unable to load workflow %d due to error %v, we try to delete it", r.ID, err)
 			if _, err := db.Exec("delete from w_node_trigger where child_node_id IN (SELECT id from w_node where workflow_id = $1)", r.ID); err != nil {
-				log.Error("Unable to delete from w_node_trigger for workflow %d: %v", r.ID, err)
+				log.Error(ctx, "Unable to delete from w_node_trigger for workflow %d: %v", r.ID, err)
 			}
 			if _, err := db.Exec("delete from w_node where workflow_id = $1", r.ID); err != nil {
-				log.Error("Unable to delete from w_node for workflow %d: %v", r.ID, err)
+				log.Error(ctx, "Unable to delete from w_node for workflow %d: %v", r.ID, err)
 			}
 			if _, err := db.Exec("delete from workflow where id = $1", r.ID); err != nil {
-				log.Error("Unable to delete from workflow with id %d: %v", r.ID, err)
+				log.Error(ctx, "Unable to delete from workflow with id %d: %v", r.ID, err)
 			} else {
-				log.Warning("workflow with id %d is deleted", r.ID)
+				log.Warning(ctx, "workflow with id %d is deleted", r.ID)
 			}
 			continue
 		}
@@ -130,13 +130,13 @@ func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store, workflowR
 		}
 
 		if err := workflow.Delete(ctx, tx, store, &proj, &w); err != nil {
-			log.Error("purge.Workflows> unable to delete workflow %d: %v", w.ID, err)
+			log.Error(ctx, "purge.Workflows> unable to delete workflow %d: %v", w.ID, err)
 			_ = tx.Rollback()
 			continue
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Error("purge.Workflows> unable to commit tx: %v", err)
+			log.Error(ctx, "purge.Workflows> unable to commit tx: %v", err)
 			_ = tx.Rollback()
 			continue
 		}
@@ -154,13 +154,13 @@ func deleteWorkflowRunsHistory(ctx context.Context, db gorp.SqlExecutor, store c
 
 	for _, workflowRunID := range workflowRunIDs {
 		if err := DeleteArtifacts(ctx, db, store, sharedStorage, workflowRunID); err != nil {
-			log.Error("DeleteArtifacts> error while deleting artifacts: %v", err)
+			log.Error(ctx, "DeleteArtifacts> error while deleting artifacts: %v", err)
 			continue
 		}
 
 		res, err := db.Exec("DELETE FROM workflow_run WHERE workflow_run.id = $1", workflowRunID)
 		if err != nil {
-			log.Error("deleteWorkflowRunsHistory> unable to delete workflow run %d: %v", workflowRunID, err)
+			log.Error(ctx, "deleteWorkflowRunsHistory> unable to delete workflow run %d: %v", workflowRunID, err)
 			continue
 		}
 		n, _ := res.RowsAffected()
@@ -179,9 +179,9 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		return sdk.WrapError(err, "error on load LoadRunByID:%d", workflowRunID)
 	}
 
-	proj, errprj := project.LoadProjectByWorkflowID(db, store, nil, wr.WorkflowID)
+	proj, errprj := project.LoadProjectByWorkflowID(db, store, wr.WorkflowID)
 	if errprj != nil {
-		return sdk.WrapError(errprj, "error while load project %d", wr.WorkflowID)
+		return sdk.WrapError(errprj, "error while load project for workflow %d", wr.WorkflowID)
 	}
 
 	type driversContainersT struct {
@@ -198,7 +198,7 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 				if art.ProjectIntegrationID != nil && *art.ProjectIntegrationID > 0 {
 					projectIntegration, err := integration.LoadProjectIntegrationByID(db, *art.ProjectIntegrationID, false)
 					if err != nil {
-						log.Error("Cannot load LoadProjectIntegrationByID %s/%d", proj.Key, *art.ProjectIntegrationID)
+						log.Error(ctx, "Cannot load LoadProjectIntegrationByID %s/%d", proj.Key, *art.ProjectIntegrationID)
 						continue
 					}
 					integrationName = projectIntegration.Name
@@ -223,14 +223,15 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 					})
 				}
 
-				storageDriver, err := objectstore.GetDriver(db, sharedStorage, proj.Key, integrationName)
+				storageDriver, err := objectstore.GetDriver(ctx, db, sharedStorage, proj.Key, integrationName)
 				if err != nil {
-					log.Error("error while getting driver prj:%v integrationName:%v err:%v", proj.Key, integrationName, err)
+					log.Error(ctx, "error while getting driver prj:%v integrationName:%v err:%v", proj.Key, integrationName, err)
 					continue
 				}
 
-				if err := storageDriver.Delete(&art); err != nil {
-					log.Error("error while deleting container prj:%v wnr:%v name:%v err:%v", proj.Key, wnr.ID, art.GetPath(), err)
+				log.Debug("DeleteArtifacts> deleting %+v", art)
+				if err := storageDriver.Delete(ctx, &art); err != nil {
+					log.Error(ctx, "error while deleting container prj:%v wnr:%v name:%v err:%v", proj.Key, wnr.ID, art.GetPath(), err)
 					continue
 				}
 			}
@@ -238,14 +239,14 @@ func DeleteArtifacts(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 	}
 
 	for _, dc := range driversContainers {
-		storageDriver, err := objectstore.GetDriver(db, sharedStorage, dc.projectKey, dc.integrationName)
+		storageDriver, err := objectstore.GetDriver(ctx, db, sharedStorage, dc.projectKey, dc.integrationName)
 		if err != nil {
-			log.Error("error while getting driver prj:%v integrationName:%v err:%v", dc.projectKey, dc.integrationName, err)
+			log.Error(ctx, "error while getting driver prj:%v integrationName:%v err:%v", dc.projectKey, dc.integrationName, err)
 			continue
 		}
 
-		if err := storageDriver.DeleteContainer(dc.containerPath); err != nil {
-			log.Error("error while deleting container prj:%v path:%v err:%v", dc.projectKey, dc.containerPath, err)
+		if err := storageDriver.DeleteContainer(ctx, dc.containerPath); err != nil {
+			log.Error(ctx, "error while deleting container prj:%v path:%v err:%v", dc.projectKey, dc.containerPath, err)
 			continue
 		}
 	}

@@ -113,9 +113,6 @@ To be able to start a local hatchery, enter a hatchery name in the section `hatc
     # BaseDir for worker workspace
     basedir = "/tmp"
 
-    # Nb Workers to provision
-    nbProvision = 1
-
     [hatchery.local.commonConfiguration]
 
       # Name of Hatchery

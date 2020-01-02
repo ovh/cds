@@ -37,4 +37,4 @@ Then start hatchery:
 engine start hatchery:local --config config.toml
 ```
 
-This hatchery will now start worker binary on your host. You can manage settings, as `max workers` and `provision` in the hatchery configuration file.
+This hatchery will now start worker binary on your host. You can manage settings, as `max workers` in the hatchery configuration file.

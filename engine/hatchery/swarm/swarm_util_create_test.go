@@ -2,14 +2,16 @@ package swarm
 
 import (
 	"reflect"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	types "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
 	context "golang.org/x/net/context"
 
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 )
@@ -122,7 +124,7 @@ func Test_computeDockerOpts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &HatcherySwarm{}
-			got, err := h.computeDockerOpts(tt.args.isSharedInfra, tt.args.requirements)
+			got, err := h.computeDockerOpts(tt.args.requirements)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("computeDockerOpts() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -145,15 +147,23 @@ func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 	}
 
 	// RegisterOnly = true, this will pull image if image is not found
-	spawnArgs := hatchery.SpawnArguments{RegisterOnly: true}
+	spawnArgs := hatchery.SpawnArguments{
+		RegisterOnly: true,
+		Model: &sdk.Model{
+			Image: args.image,
+		},
+	}
 	err := h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
-	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
-	test.NoError(t, err)
+	containers, err := h.getContainers(h.dockerClients["default"], types.ContainerListOptions{})
+	require.NoError(t, err)
 
-	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
-	test.NoError(t, err)
+	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})
+	require.NoError(t, err)
+
+	err = h.killAndRemove(context.TODO(), h.dockerClients["default"], cntr.ID)
+	require.NoError(t, err)
 }
 
 func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
@@ -181,17 +191,25 @@ func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
 	}
 
 	err := h.pullImage(h.dockerClients["default"], args.image, timeoutPullImage, sdk.Model{})
-	test.NoError(t, err)
+	require.NoError(t, err)
 
-	spawnArgs := hatchery.SpawnArguments{RegisterOnly: false}
+	spawnArgs := hatchery.SpawnArguments{
+		RegisterOnly: false,
+		Model: &sdk.Model{
+			Image: args.image,
+		},
+	}
 	err = h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
-	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
-	test.NoError(t, err)
+	containers, err := h.getContainers(h.dockerClients["default"], types.ContainerListOptions{})
+	require.NoError(t, err)
 
-	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
-	test.NoError(t, err)
+	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})
+	require.NoError(t, err)
+
+	err = h.killAndRemove(context.TODO(), h.dockerClients["default"], cntr.ID)
+	require.NoError(t, err)
 }
 
 func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
@@ -208,15 +226,33 @@ func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
 	}
 
 	err := h.createNetwork(context.TODO(), h.dockerClients["default"], args.network)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
-	spawnArgs := hatchery.SpawnArguments{RegisterOnly: false}
+	spawnArgs := hatchery.SpawnArguments{
+		RegisterOnly: false,
+		Model: &sdk.Model{
+			Image: args.image,
+		},
+	}
 	err = h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
-	test.NoError(t, err)
+	require.NoError(t, err)
 
-	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
-	test.NoError(t, err)
+	containers, err := h.getContainers(h.dockerClients["default"], types.ContainerListOptions{})
+	require.NoError(t, err)
 
-	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
-	test.NoError(t, err)
+	cntr, err := getContainer(h.dockerClients["default"], containers, args.name, types.ContainerListOptions{})
+	require.NoError(t, err)
+
+	err = h.killAndRemove(context.TODO(), h.dockerClients["default"], cntr.ID)
+	require.NoError(t, err)
+}
+
+func getContainer(dockerClient *dockerClient, containers []types.Container, name string, options types.ContainerListOptions) (*types.Container, error) {
+	for i := range containers {
+		if strings.Replace(containers[i].Names[0], "/", "", 1) == strings.Replace(name, "/", "", 1) {
+			return &containers[i], nil
+		}
+	}
+
+	return nil, nil
 }

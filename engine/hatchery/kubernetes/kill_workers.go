@@ -1,7 +1,7 @@
 package kubernetes
 
 import (
-	"strconv"
+	"context"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (h *HatcheryKubernetes) killAwolWorkers() error {
+func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 	pods, err := h.k8sClient.CoreV1().Pods(h.Config.Namespace).List(metav1.ListOptions{LabelSelector: LABEL_WORKER})
 	if err != nil {
 		return err
@@ -28,30 +28,28 @@ func (h *HatcheryKubernetes) killAwolWorkers() error {
 		}
 		if toDelete {
 			// If its a worker "register", check registration before deleting it
-			if strings.Contains(pod.Name, "register-") {
-				var modelIDS string
+			if strings.HasPrefix(pod.Name, "register-") {
+				var modelPath string
 				for _, e := range pod.Spec.Containers[0].Env {
-					if e.Name == "CDS_MODEL" {
-						modelIDS = e.Value
+					if e.Name == "CDS_MODEL_PATH" {
+						modelPath = e.Value
 					}
 				}
-				modelID, err := strconv.ParseInt(modelIDS, 10, 64)
-				if err != nil {
-					log.Error("killAndRemove> unable to get model from registering container %s", pod.Name)
-				} else {
-					if err := hatchery.CheckWorkerModelRegister(h, modelID); err != nil {
-						var spawnErr = sdk.SpawnErrorForm{
-							Error: err.Error(),
-						}
-						if err := h.CDSClient().WorkerModelSpawnError(modelID, spawnErr); err != nil {
-							log.Error("killAndRemove> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelID, err)
-						}
+
+				if err := hatchery.CheckWorkerModelRegister(h, modelPath); err != nil {
+					var spawnErr = sdk.SpawnErrorForm{
+						Error: err.Error(),
+					}
+					tuple := strings.SplitN(modelPath, "/", 2)
+					if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
+						log.Error(ctx, "killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", modelPath, err)
 					}
 				}
+
 			}
 			if err := h.k8sClient.CoreV1().Pods(pod.Namespace).Delete(pod.Name, nil); err != nil {
 				globalErr = err
-				log.Error("hatchery:kubernetes> killAwolWorkers> Cannot delete pod %s (%s)", pod.Name, err)
+				log.Error(ctx, "hatchery:kubernetes> killAwolWorkers> Cannot delete pod %s (%s)", pod.Name, err)
 			}
 		}
 	}

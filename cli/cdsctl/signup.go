@@ -4,13 +4,22 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 
-	"github.com/howeyc/gopass"
-	"github.com/spf13/cobra"
+	"github.com/ovh/cds/sdk"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/spf13/cobra"
 )
+
+func signup() *cobra.Command {
+	return cli.NewCommand(signupCmd, signupFunc, cli.SubCommands{signupVerify()}, cli.CommandWithoutExtraFlags)
+}
+
+func signupVerify() *cobra.Command {
+	return cli.NewCommand(signupVerifyCmd, signupVerifyFunc, nil, cli.CommandWithoutExtraFlags)
+}
 
 var signupCmd = cli.Command{
 	Name:  "signup",
@@ -19,94 +28,140 @@ var signupCmd = cli.Command{
 		{
 			Name:      "api-url",
 			ShortHand: "H",
-			Usage:     "CDS API URL",
-			IsValid: func(s string) bool {
-				match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
-				return match
-			},
-		}, {
-			Name:  "username",
-			Usage: "CDS Username",
-		}, {
-			Name:  "fullname",
-			Usage: "Fullname",
-		}, {
-			Name:  "email",
-			Usage: "Email",
+			Usage:     "Url to your CDS api.",
+		},
+		{
+			Name: "username",
+		},
+		{
+			Name: "fullname",
+		},
+		{
+			Name: "email",
+		},
+		{
+			Name: "password",
 		},
 	},
 }
 
-func signup() *cobra.Command {
-	return cli.NewCommand(signupCmd, signupRun, nil, cli.CommandWithoutExtraFlags)
+func getAPIURL(v cli.Values) (string, error) {
+	noInteractive := v.GetBool("no-interactive")
+
+	// Checks that an URL is given
+	apiURL := v.GetString("api-url")
+	if apiURL == "" && !noInteractive {
+		apiURL = cli.AskValue("api-url")
+	}
+	if apiURL == "" {
+		return "", fmt.Errorf("Please set api url")
+	}
+	match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, apiURL)
+	if !match {
+		return "", fmt.Errorf("Invalid given api url")
+	}
+	apiURL = strings.TrimSuffix(apiURL, "/")
+	return apiURL, nil
 }
 
-func signupRun(v cli.Values) error {
-	url := v.GetString("api-url")
-	username := v.GetString("username")
-	fullname := v.GetString("fullname")
-	email := v.GetString("email")
-	insecureSkipVerifyTLS := v.GetBool("insecure")
+func signupFunc(v cli.Values) error {
+	noInteractive := v.GetBool("no-interactive")
 
-	fmt.Println("CDS API URL:", url)
-
-	//Take the user from flags or ask for on command line
-	if username == "" {
-		fmt.Printf("Username: ")
-		username = cli.ReadLine()
-	} else {
-		fmt.Println("Username:", username)
+	apiURL, err := getAPIURL(v)
+	if err != nil {
+		return err
 	}
 
-	//Take fullname user from flags or ask for on command line
-	if fullname == "" {
-		fmt.Printf("Fullname: ")
-		fullname = cli.ReadLine()
-	} else {
-		fmt.Println("Fullname:", fullname)
-	}
-
-	//Take email user from flags or ask for on command line
-	if email == "" {
-		fmt.Printf("Email: ")
-		email = cli.ReadLine()
-	} else {
-		fmt.Println("Email:", email)
-	}
-
-	conf := cdsclient.Config{
-		Host:    url,
+	// Load all drivers from given CDS instance
+	client := cdsclient.New(cdsclient.Config{
+		Host:    apiURL,
 		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+	})
+	drivers, err := client.AuthDriverList()
+	if err != nil {
+		return fmt.Errorf("Cannot list auth drivers: %v", err)
 	}
-	client = cdsclient.New(conf)
+	if len(drivers.Drivers) == 0 {
+		return fmt.Errorf("No authentication driver configured")
+	}
 
-	if err := client.UserSignup(username, fullname, email, "your username:%s, your confirmation code:%s"); err != nil {
+	var localConsumerDriverEnable bool
+	for _, d := range drivers.Drivers {
+		if d.Type == sdk.ConsumerLocal {
+			localConsumerDriverEnable = true
+			break
+		}
+	}
+
+	if !localConsumerDriverEnable {
+		return fmt.Errorf("No authentication driver configured")
+	}
+
+	signupRequest, err := loginRunLocal(v)
+	if err != nil {
 		return err
 	}
 
-	fmt.Println("Please check your mail box to activate your account...")
+	fullname := v.GetString("fullname")
+	if fullname == "" && !noInteractive {
+		fullname = cli.AskValue("Fullname")
+	}
 
-	return doConfirm(username, insecureSkipVerifyTLS)
+	email := v.GetString("email")
+	if email == "" && !noInteractive {
+		email = cli.AskValue("Email")
+	}
+
+	signupRequest["email"] = email
+	signupRequest["fullname"] = fullname
+
+	if err := client.AuthConsumerLocalSignup(signupRequest); err != nil {
+		return err
+	}
+
+	fmt.Println("Signup successful. Instuctions have been sent to your email address.")
+	return nil
 }
 
-func doConfirm(username string, insecureSkipVerifyTLS bool) error {
-	fmt.Printf("Enter your verification code: ")
-	b, err := gopass.GetPasswd()
+var signupVerifyCmd = cli.Command{
+	Name:  "verify",
+	Short: "Verify local CDS signup.\nFor admin signup INIT_TOKEN environment variable must be set",
+	Args: []cli.Arg{
+		{
+			Name:       "token",
+			AllowEmpty: false,
+		},
+	},
+	Flags: []cli.Flag{
+		{
+			Name:      "api-url",
+			ShortHand: "H",
+			Usage:     "Url to your CDS api.",
+		},
+		{
+			Name:  "env",
+			Usage: "Display the commands to set up the environment for the cds client.",
+			Type:  cli.FlagBool,
+		},
+	},
+}
+
+func signupVerifyFunc(v cli.Values) error {
+	apiURL, err := getAPIURL(v)
 	if err != nil {
 		return err
 	}
-	token := string(b)
 
-	ok, password, err := client.UserConfirm(username, token)
+	client := cdsclient.New(cdsclient.Config{
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+		Host:    apiURL,
+	})
+
+	signupresponse, err := client.AuthConsumerLocalSignupVerify(v.GetString("token"),
+		os.Getenv("INIT_TOKEN"))
 	if err != nil {
 		return err
 	}
-	if !ok {
-		return fmt.Errorf("verification failed")
-	}
 
-	fmt.Println("All is fine. Here is your new password:")
-	fmt.Println(password)
-
-	return doLogin(client.APIURL(), username, password, false, insecureSkipVerifyTLS)
+	return doAfterLogin(client, v, signupresponse.APIURL, sdk.ConsumerLocal, signupresponse)
 }

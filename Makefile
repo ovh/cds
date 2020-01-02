@@ -2,7 +2,7 @@
 
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
-CDS_VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
+VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
 GIT_DESCRIBE := $(shell git describe)
 GIT_VERSION := $(if ${GIT_DESCRIBE},${GIT_DESCRIBE},0.42.0-99-snapshot) #TODO fixme
 SHA512 := $(if ifeq ${UNAME} "Darwin",shasum -a 512,sha512sum)
@@ -22,19 +22,10 @@ endif
 	cd docs && ./build.sh
 
 modclean:
-	@echo "removing vendor directory... " && rm -rf vendor
 	@echo "cleaning modcache... " && GO111MODULE=off go clean -modcache || true
 
 mod:
 	@echo "running go mod tidy... " && GO111MODULE=on go mod tidy
-	@echo "running go mod vendor..." && GO111MODULE=on go mod vendor
-	@echo "doing some clean in vendor directory..." && find vendor -type f ! \( -name 'modules.txt' -o -name '*.sum' -o -name '*.mod' -o -name '*.rst' -o -name '*.go' -o -name '*.y' -o -name '*.h' -o -name '*.c' -o -name '*.proto' -o -name '*.tmpl' -o -name '*.s' -o -name '*.pl' \) -exec rm {} \;
-	# two calls to RegisterManifestSchema(ocispec.MediaTypeImageIndex -> panic
-	# file oci.go is in conflict with file /vendor/github.com/docker/distribution/manifest/manifestlist/manifestlist.go
-	# when docker update their vendor, it will be possible to remove this line.
-	# this will fix the plugin-clair for the moment
-	@echo "removing file /vendor/github.com/docker/docker/distribution/oci.go..." && rm -f vendor/github.com/docker/docker/distribution/oci.go
-	@echo "removing subpackages vendors" &&  rm -rf vendor/github.com/ovh/cds
 
 
 ENGINE_DIST = $(wildcard engine/dist/*)
@@ -95,3 +86,6 @@ $(TARGET_DIR)/config.toml.sample:
 
 target/cds-engine.deb: $(TARGET_DIR)/config.toml.sample
 	debpacker make --workdir dist --config .debpacker.yml --var version=$(GIT_VERSION)
+
+docker:
+	docker build --tag ovhcom/cds-engine:$(VERSION) .

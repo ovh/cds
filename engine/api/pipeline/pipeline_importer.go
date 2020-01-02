@@ -16,12 +16,12 @@ import (
 )
 
 //ImportUpdate import and update the pipeline in the project
-func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.User) error {
+func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	t := time.Now()
 	log.Debug("ImportUpdate> Begin")
 	defer log.Debug("ImportUpdate> End (%d ns)", time.Since(t).Nanoseconds())
 
-	oldPipeline, err := LoadPipeline(db,
+	oldPipeline, err := LoadPipeline(ctx, db,
 		proj.Key,
 		pip.Name, true)
 	if err != nil {
@@ -162,7 +162,7 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, p
 					msgChan <- sdk.NewMessage(sdk.MsgPipelineJobDeleted, j.Action.Name, os.Name)
 				}
 			}
-			if err := DeleteStageByID(ctx, db, &os, u.ID); err != nil {
+			if err := DeleteStageByID(ctx, db, &os); err != nil {
 				return sdk.WrapError(err, "unable to delete stage %d", os.ID)
 			}
 			if msgChan != nil {
@@ -197,14 +197,14 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, p
 	errU := UpdatePipeline(db, pip)
 
 	if oldPipeline.Name != pip.Name {
-		event.PublishPipelineUpdate(proj.Key, pip.Name, oldPipeline.Name, u)
+		event.PublishPipelineUpdate(ctx, proj.Key, pip.Name, oldPipeline.Name, u)
 	}
 
 	return sdk.WrapError(errU, "ImportUpdate> cannot update pipeline")
 }
 
 //Import insert the pipeline in the project
-func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.User) error {
+func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	//Set projectID and Key in pipeline
 	pip.ProjectID = proj.ID
 	pip.ProjectKey = proj.Key
@@ -216,7 +216,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 	if !ok {
 		if err := importNew(ctx, db, store, proj, pip, u); err != nil {
-			log.Error("pipeline.Import> %s", err)
+			log.Error(ctx, "pipeline.Import> %s", err)
 			if msgChan != nil {
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineCreationAborted, pip.Name)
 			}
@@ -228,7 +228,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 
 	//Reload the pipeline
-	pip2, err := LoadPipeline(db, proj.Key, pip.Name, false)
+	pip2, err := LoadPipeline(ctx, db, proj.Key, pip.Name, false)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load imported pipeline project:%s pipeline:%s", proj.Name, pip.Name)
 	}
@@ -241,7 +241,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	return nil
 }
 
-func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, u *sdk.User) error {
+func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.Pipeline, u sdk.Identifiable) error {
 	// check that action used by job can be used by pipeline's project
 	groupIDs := make([]int64, 0, len(proj.ProjectGroups)+1)
 	groupIDs = append(groupIDs, group.SharedInfraGroup.ID)
@@ -251,7 +251,7 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 
 	log.Debug("pipeline.importNew> Creating pipeline %s", pip.Name)
 	//Insert pipeline
-	if err := InsertPipeline(db, store, proj, pip, u); err != nil {
+	if err := InsertPipeline(db, store, proj, pip); err != nil {
 		return err
 	}
 
@@ -276,7 +276,7 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 			jobAction.Enabled = true
 			jobAction.Action.Enabled = true
 			if errs := CheckJob(ctx, db, jobAction); errs != nil {
-				log.Warning("pipeline.importNew.CheckJob > %s", errs)
+				log.Warning(ctx, "pipeline.importNew.CheckJob > %s", errs)
 				return errs
 			}
 			if err := action.CheckChildrenForGroupIDs(ctx, db, &jobAction.Action, groupIDs); err != nil {
@@ -290,6 +290,8 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 			}
 		}
 	}
+
+	event.PublishPipelineAdd(ctx, proj.Key, *pip, u)
 
 	return nil
 }

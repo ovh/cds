@@ -57,7 +57,7 @@ func (actPlugin *marathonActionPlugin) Run(ctx context.Context, q *actionplugin.
 	//Parse arguments
 	waitForDeployment, err := strconv.ParseBool(waitForDeploymentStr)
 	if err != nil {
-		return fail("Error parsing waitForDeployment value : %s\n", err.Error())
+		return actionplugin.Fail("Error parsing waitForDeployment value : %s\n", err.Error())
 	}
 
 	insecureSkipVerify := false
@@ -65,7 +65,7 @@ func (actPlugin *marathonActionPlugin) Run(ctx context.Context, q *actionplugin.
 		var errb error
 		insecureSkipVerify, errb = strconv.ParseBool(insecureSkipVerifyStr)
 		if err != nil {
-			return fail("Error parsing insecureSkipVerify value : %s\n", errb.Error())
+			return actionplugin.Fail("Error parsing insecureSkipVerify value : %s\n", errb.Error())
 		}
 	}
 
@@ -75,7 +75,7 @@ func (actPlugin *marathonActionPlugin) Run(ctx context.Context, q *actionplugin.
 
 	timeout, err := strconv.Atoi(timeoutStr)
 	if err != nil {
-		return fail("Error parsing timeout value :  %s\n", err.Error())
+		return actionplugin.Fail("Error parsing timeout value :  %s\n", err.Error())
 	}
 
 	httpClient := cdsclient.NewHTTPClient(time.Minute, insecureSkipVerify)
@@ -90,13 +90,13 @@ func (actPlugin *marathonActionPlugin) Run(ctx context.Context, q *actionplugin.
 	//Connecting to marathon
 	client, err := marathon.NewClient(config)
 	if err != nil {
-		return fail("Connection failed on %s\n", URL)
+		return actionplugin.Fail("Connection failed on %s\n", URL)
 	}
 
 	//Run tmpl on configuration file to replace all cds variables
 	conf, err := tmplApplicationConfigFile(q, tmplConf)
 	if err != nil {
-		return fail("Templating Configuration File KO (tmplApplicationConfigFile): %s\n", err.Error())
+		return actionplugin.Fail("Templating Configuration File KO (tmplApplicationConfigFile): %s\n", err.Error())
 	}
 	defer os.RemoveAll(conf)
 	fmt.Printf("Templating Configuration File: OK\n")
@@ -104,7 +104,7 @@ func (actPlugin *marathonActionPlugin) Run(ctx context.Context, q *actionplugin.
 	//Validate json file and load application
 	appConfig, err := parseApplicationConfigFile(conf)
 	if err != nil {
-		return fail("Templating Configuration File KO (parseApplicationConfigFile): %s\n", err.Error())
+		return actionplugin.Fail("Templating Configuration File KO (parseApplicationConfigFile): %s\n", err.Error())
 	}
 	fmt.Printf("Parsing Configuration File: OK\n")
 
@@ -149,7 +149,7 @@ func (actPlugin *marathonActionPlugin) Run(ctx context.Context, q *actionplugin.
 	val := url.Values{"id": []string{appConfig.ID}}
 	applications, err := client.Applications(val)
 	if err != nil {
-		return fail("Failed to list applications: %s\n", err.Error())
+		return actionplugin.Fail("Failed to list applications: %s\n", err.Error())
 	}
 
 	var appExists bool
@@ -160,12 +160,12 @@ func (actPlugin *marathonActionPlugin) Run(ctx context.Context, q *actionplugin.
 	//Update or create application
 	if appExists {
 		if _, err := client.UpdateApplication(appConfig, true); err != nil {
-			return fail("Application %s update failed:%s\n", appConfig.ID, err)
+			return actionplugin.Fail("Application %s update failed:%s\n", appConfig.ID, err)
 		}
 		fmt.Printf("Application updated %s: OK\n", appConfig.ID)
 	} else {
 		if _, err := client.CreateApplication(appConfig); err != nil {
-			return fail("Application %s creation failed:%s\n", appConfig.ID, err)
+			return actionplugin.Fail("Application %s creation failed:%s\n", appConfig.ID, err)
 		}
 		fmt.Printf("Application creation %s: OK\n", appConfig.ID)
 	}
@@ -185,13 +185,13 @@ func (actPlugin *marathonActionPlugin) Run(ctx context.Context, q *actionplugin.
 		deployments, err := client.ApplicationDeployments(appConfig.ID)
 		if err != nil {
 			ticker.Stop()
-			return fail("Failed to list deployments : %s\n", err.Error())
+			return actionplugin.Fail("Failed to list deployments : %s\n", err.Error())
 		}
 
 		if len(deployments) == 0 {
 			ticker.Stop()
 			return &actionplugin.ActionResult{
-				Status: sdk.StatusSuccess.String(),
+				Status: sdk.StatusSuccess,
 			}, nil
 		}
 
@@ -236,20 +236,15 @@ func (actPlugin *marathonActionPlugin) Run(ctx context.Context, q *actionplugin.
 
 		if success {
 			return &actionplugin.ActionResult{
-				Status: sdk.StatusSuccess.String(),
+				Status: sdk.StatusSuccess,
 			}, nil
 		}
-		return fail("")
+		return actionplugin.Fail("")
 	}
 
 	return &actionplugin.ActionResult{
-		Status: sdk.StatusSuccess.String(),
+		Status: sdk.StatusSuccess,
 	}, nil
-}
-
-func (actPlugin *marathonActionPlugin) WorkerHTTPPort(ctx context.Context, q *actionplugin.WorkerHTTPPortQuery) (*empty.Empty, error) {
-	actPlugin.HTTPPort = q.Port
-	return &empty.Empty{}, nil
 }
 
 func main() {
@@ -259,15 +254,6 @@ func main() {
 	}
 	return
 
-}
-
-func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error) {
-	msg := fmt.Sprintf(format, args...)
-	fmt.Println(msg)
-	return &actionplugin.ActionResult{
-		Details: msg,
-		Status:  sdk.StatusFail.String(),
-	}, nil
 }
 
 func tmplApplicationConfigFile(q *actionplugin.ActionQuery, filepath string) (string, error) {

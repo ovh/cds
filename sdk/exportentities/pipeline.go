@@ -318,13 +318,21 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 	//Compute Jobs
 	for _, j := range p.Jobs {
 		s := mapStages[j.Stage]
-		if s == nil { //If the stage is not found; it's only if there is one stage
-			mapStages[j.Stage] = &sdk.Stage{
-				Name:       j.Stage,
-				BuildOrder: len(mapStages) + 1,
-				Enabled:    true,
+		if s == nil { //If the stage is not found
+			if len(mapStages) != 1 || j.Stage != "" { // if there isn't only one stage
+				mapStages[j.Stage] = &sdk.Stage{
+					Name:       j.Stage,
+					BuildOrder: len(mapStages) + 1,
+					Enabled:    true,
+				}
+				s = mapStages[j.Stage]
+			} else {
+				// choose the only one stage
+				for _, stage := range mapStages {
+					s = stage
+					break
+				}
 			}
-			s = mapStages[j.Stage]
 		}
 
 		job, err := computeJob(j.Name, j)

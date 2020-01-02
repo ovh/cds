@@ -27,7 +27,7 @@ export class NotificationService {
 
     create(title: string, options?: NotificationOpts): any {
         options = Object.assign({}, {
-            icon: 'assets/images/cds.png',
+            icon: './assets/images/cds.png',
             requireInteraction: false
         }, options);
 

@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
@@ -49,7 +50,7 @@ func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
 
 		if len(clearVCSServer) > 0 {
 			if err := yaml.Unmarshal(clearVCSServer, &p.VCSServers); err != nil {
-				log.Error("Unable to load project %d: %v", p.ID, err)
+				log.Error(context.TODO(), "Unable to load project %d: %v", p.ID, err)
 				p.VCSServers = nil
 				db.Update(p)
 			}

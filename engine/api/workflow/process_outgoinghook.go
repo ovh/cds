@@ -36,20 +36,20 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		if exitingNodeRun != nil && !sdk.StatusIsTerminated(exitingNodeRun.Status) {
 			log.Debug("hook %d already processed", node.ID)
 			return nil, false, nil
-		} else if exitingNodeRun != nil && exitingNodeRun.Status != sdk.StatusStopped.String() {
+		} else if exitingNodeRun != nil && exitingNodeRun.Status != sdk.StatusStopped {
 			log.Debug("hook %d is over, we have to reprocess al the things", node.ID)
 			r1, _, err := processWorkflowDataRun(ctx, db, store, proj, wr, nil, nil, nil)
 			if err != nil {
 				return nil, false, sdk.WrapError(err, "Unable to process workflow run after outgoing hooks")
 			}
-			report.Merge(r1, nil) // nolint
+			report.Merge(ctx, r1, nil) // nolint
 			return report, false, nil
-		} else if exitingNodeRun != nil && exitingNodeRun.Status == sdk.StatusStopped.String() {
+		} else if exitingNodeRun != nil && exitingNodeRun.Status == sdk.StatusStopped {
 			return report, false, nil
 		}
 	}
 
-	srvs, err := services.FindByType(db, services.TypeHooks)
+	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
 	if err != nil {
 		return nil, false, sdk.WrapError(err, "Cannot get hooks service")
 	}
@@ -76,7 +76,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		WorkflowNodeName: node.Name,
 		Number:           wr.Number,
 		SubNumber:        int64(subNumber),
-		Status:           sdk.StatusWaiting.String(),
+		Status:           sdk.StatusWaiting,
 		Start:            time.Now(),
 		LastModified:     time.Now(),
 		SourceNodeRuns:   parentsIDs,
@@ -129,15 +129,15 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		}
 	}
 
-	if !checkCondition(wr, node.Context.Conditions, hookRun.BuildParameters) {
+	if !checkCondition(ctx, wr, node.Context.Conditions, hookRun.BuildParameters) {
 		log.Debug("Condition failed on processNodeOutGoingHook %d/%d %+v", wr.ID, node.ID, hookRun.BuildParameters)
 		return report, false, nil
 	}
 
 	var task sdk.Task
-	if _, _, err := services.DoJSONRequest(ctx, srvs, "POST", "/task/execute", hookRun, &task); err != nil {
-		log.Warning("outgoing hook execution failed: %v", err)
-		hookRun.Status = sdk.StatusFail.String()
+	if _, _, err := services.DoJSONRequest(ctx, db, srvs, "POST", "/task/execute", hookRun, &task); err != nil {
+		log.Warning(ctx, "outgoing hook execution failed: %v", err)
+		hookRun.Status = sdk.StatusFail
 	}
 
 	if len(task.Executions) > 0 {
@@ -162,7 +162,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		return nil, false, sdk.WrapError(err, "unable to update workflow node run build parameters")
 	}
 
-	report.Add(hookRun)
+	report.Add(ctx, hookRun)
 
 	//Update workflow run
 	if wr.WorkflowNodeRuns == nil {

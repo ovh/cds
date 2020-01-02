@@ -14,17 +14,18 @@ import (
 
 // Conf contains log configuration
 type Conf struct {
-	Level                  string
-	GraylogHost            string
-	GraylogPort            string
-	GraylogProtocol        string
-	GraylogExtraKey        string
-	GraylogExtraValue      string
-	GraylogFieldCDSName    string
-	GraylogFieldCDSVersion string
-	GraylogFieldCDSOS      string
-	GraylogFieldCDSArch    string
-	Ctx                    context.Context
+	Level                      string
+	GraylogHost                string
+	GraylogPort                string
+	GraylogProtocol            string
+	GraylogExtraKey            string
+	GraylogExtraValue          string
+	GraylogFieldCDSServiceType string
+	GraylogFieldCDSServiceName string
+	GraylogFieldCDSVersion     string
+	GraylogFieldCDSOS          string
+	GraylogFieldCDSArch        string
+	Ctx                        context.Context
 }
 
 var (
@@ -80,8 +81,11 @@ func Initialize(conf *Conf) {
 			}
 		}
 
-		if conf.GraylogFieldCDSName != "" {
-			extra["CDSName"] = conf.GraylogFieldCDSName
+		if conf.GraylogFieldCDSServiceName != "" {
+			extra["CDSName"] = conf.GraylogFieldCDSServiceName
+		}
+		if conf.GraylogFieldCDSServiceName != "" {
+			extra["CDSService"] = conf.GraylogFieldCDSServiceType
 		}
 		if conf.GraylogFieldCDSVersion != "" {
 			extra["CDSVersion"] = conf.GraylogFieldCDSVersion
@@ -113,7 +117,7 @@ func Initialize(conf *Conf) {
 	}
 	go func() {
 		<-conf.Ctx.Done()
-		log.Info("Draining logs")
+		log.Info(conf.Ctx, "Draining logs")
 		if hook != nil {
 			hook.Flush()
 		}
@@ -125,34 +129,63 @@ func Debug(format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[DEBUG]    "+format, values...)
 	} else {
-		log.Debugf(format, values...)
+		if len(values) == 0 {
+			log.Debug(format)
+		} else {
+			log.Debugf(format, values...)
+		}
 	}
 }
 
 // Info prints information log
-func Info(format string, values ...interface{}) {
+func Info(ctx context.Context, format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[INFO]    "+format, values...)
 	} else {
-		log.Infof(format, values...)
+		if len(values) == 0 {
+			log.Info(ctx, format)
+		} else {
+			log.Infof(format, values...)
+		}
+	}
+}
+
+// InfoWithoutCtx prints information log
+func InfoWithoutCtx(format string, values ...interface{}) {
+	if logger != nil {
+		logger.Logf("[INFO]    "+format, values...)
+	} else {
+		if len(values) == 0 {
+			log.Info(context.Background(), format)
+		} else {
+			log.Infof(format, values...)
+		}
 	}
 }
 
 // Warning prints warnings for user
-func Warning(format string, values ...interface{}) {
+func Warning(ctx context.Context, format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[WARN]    "+format, values...)
 	} else {
-		log.Warnf(format, values...)
+		if len(values) == 0 {
+			log.Warn(format)
+		} else {
+			log.Warnf(format, values...)
+		}
 	}
 }
 
 // Error prints error informations
-func Error(format string, values ...interface{}) {
+func Error(ctx context.Context, format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[ERROR]    "+format, values...)
 	} else {
-		log.Errorf(format, values...)
+		if len(values) == 0 {
+			log.Errorf(format)
+		} else {
+			log.Errorf(format, values...)
+		}
 	}
 }
 
@@ -161,6 +194,10 @@ func Fatalf(format string, values ...interface{}) {
 	if logger != nil {
 		logger.Logf("[FATAL]    "+format, values...)
 	} else {
-		log.Fatalf(format, values...)
+		if len(values) == 0 {
+			log.Fatalf(format)
+		} else {
+			log.Fatalf(format, values...)
+		}
 	}
 }

@@ -1,6 +1,7 @@
 package event
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 )
 
 // PublishWarningEvent publish application event
-func PublishWarningEvent(payload interface{}, key, appName, pipName, envName, workflowName string, u *sdk.User) {
+func PublishWarningEvent(ctx context.Context, payload interface{}, key, appName, pipName, envName, workflowName string, u sdk.Identifiable) {
 	event := sdk.Event{
 		Timestamp:       time.Now(),
 		Hostname:        hostname,
@@ -24,33 +25,33 @@ func PublishWarningEvent(payload interface{}, key, appName, pipName, envName, wo
 		WorkflowName:    workflowName,
 	}
 	if u != nil {
-		event.Username = u.Username
-		event.UserMail = u.Email
+		event.Username = u.GetUsername()
+		event.UserMail = u.GetEmail()
 	}
-	publishEvent(event)
+	publishEvent(ctx, event)
 }
 
 // PublishAddWarning publishes an event for the creation of the given warning
-func PublishAddWarning(w sdk.Warning) {
+func PublishAddWarning(ctx context.Context, w sdk.Warning) {
 	e := sdk.EventWarningAdd{
 		Warning: w,
 	}
-	PublishWarningEvent(e, w.Key, w.AppName, w.PipName, w.EnvName, w.WorkflowName, nil)
+	PublishWarningEvent(ctx, e, w.Key, w.AppName, w.PipName, w.EnvName, w.WorkflowName, nil)
 }
 
 // PublishUpdateWarning publishes an event for the edition of the given warning
-func PublishUpdateWarning(w sdk.Warning, u *sdk.User) {
+func PublishUpdateWarning(ctx context.Context, w sdk.Warning, u sdk.Identifiable) {
 	e := sdk.EventWarningUpdate{
 		Warning: w,
 	}
-	PublishWarningEvent(e, w.Key, w.AppName, w.PipName, w.EnvName, w.WorkflowName, u)
+	PublishWarningEvent(ctx, e, w.Key, w.AppName, w.PipName, w.EnvName, w.WorkflowName, u)
 }
 
 // PublishDeleteWarning publishes an event for the deletion of the given warning
-func PublishDeleteWarning(t string, element string, projectKey, appName, pipName, envName, workflowName string) {
+func PublishDeleteWarning(ctx context.Context, t string, element string, projectKey, appName, pipName, envName, workflowName string) {
 	e := sdk.EventWarningDelete{
 		Type:    t,
 		Element: element,
 	}
-	PublishWarningEvent(e, projectKey, appName, pipName, envName, workflowName, nil)
+	PublishWarningEvent(ctx, e, projectKey, appName, pipName, envName, workflowName, nil)
 }

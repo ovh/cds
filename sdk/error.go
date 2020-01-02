@@ -35,7 +35,6 @@ var (
 	ErrEnvironmentExist                              = Error{ID: 17, Status: http.StatusConflict}
 	ErrNoPipelineBuild                               = Error{ID: 18, Status: http.StatusNotFound}
 	ErrApplicationNotFound                           = Error{ID: 19, Status: http.StatusNotFound}
-	ErrGroupNotFound                                 = Error{ID: 20, Status: http.StatusNotFound}
 	ErrInvalidUsername                               = Error{ID: 21, Status: http.StatusBadRequest}
 	ErrInvalidEmail                                  = Error{ID: 22, Status: http.StatusBadRequest}
 	ErrGroupPresent                                  = Error{ID: 23, Status: http.StatusBadRequest}
@@ -196,9 +195,11 @@ var (
 	ErrEnvironmentNotFound                           = Error{ID: 179, Status: http.StatusBadRequest}
 	ErrIntegrationtNotFound                          = Error{ID: 180, Status: http.StatusBadRequest}
 	ErrBadBrokerConfiguration                        = Error{ID: 181, Status: http.StatusBadRequest}
-	ErrInvalidJobRequirementNetworkAccess            = Error{ID: 182, Status: http.StatusBadRequest}
-	ErrInvalidWorkerModelNamePattern                 = Error{ID: 183, Status: http.StatusBadRequest}
-	ErrWorkflowAsCodeResync                          = Error{ID: 184, Status: http.StatusForbidden}
+	ErrSignupDisabled                                = Error{ID: 182, Status: http.StatusForbidden}
+	ErrUsernamePresent                               = Error{ID: 183, Status: http.StatusBadRequest}
+	ErrInvalidJobRequirementNetworkAccess            = Error{ID: 184, Status: http.StatusBadRequest}
+	ErrInvalidWorkerModelNamePattern                 = Error{ID: 185, Status: http.StatusBadRequest}
+	ErrWorkflowAsCodeResync                          = Error{ID: 186, Status: http.StatusForbidden}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -221,8 +222,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrEnvironmentExist.ID:                              "environment already exists",
 	ErrNoPipelineBuild.ID:                               "this pipeline build does not exist",
 	ErrApplicationNotFound.ID:                           "application does not exist",
-	ErrGroupNotFound.ID:                                 "group does not exist",
 	ErrInvalidUsername.ID:                               "invalid username",
+	ErrUsernamePresent.ID:                               "username already present",
 	ErrInvalidEmail.ID:                                  "invalid email",
 	ErrGroupPresent.ID:                                  "group already present",
 	ErrInvalidName.ID:                                   "invalid name",
@@ -377,6 +378,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrResourceNotInProject.ID:                          "The resource is not attached to the project",
 	ErrEnvironmentNotFound.ID:                           "environment not found",
 	ErrIntegrationtNotFound.ID:                          "integration not found",
+	ErrSignupDisabled.ID:                                "Sign up is disabled for target consumer type",
 	ErrBadBrokerConfiguration.ID:                        "Cannot connect to the broker of your event integration. Check your configuration",
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Invalid job requirement: network requirement must contains ':'. Example: golang.org:http, golang.org:443",
 	ErrWorkflowAsCodeResync.ID:                          "You cannot resynchronize an as-code workflow",
@@ -402,8 +404,8 @@ var errorsFrench = map[int]string{
 	ErrEnvironmentExist.ID:                              "l'environnement existe",
 	ErrNoPipelineBuild.ID:                               "ce build n'existe pas",
 	ErrApplicationNotFound.ID:                           "l'application n'existe pas",
-	ErrGroupNotFound.ID:                                 "le groupe n'existe pas",
 	ErrInvalidUsername.ID:                               "nom d'utilisateur invalide",
+	ErrUsernamePresent.ID:                               "le nom d'utilisateur est déjà présent",
 	ErrInvalidEmail.ID:                                  "addresse email invalide",
 	ErrGroupPresent.ID:                                  "le groupe est déjà présent",
 	ErrInvalidName.ID:                                   "le nom est invalide",
@@ -557,6 +559,7 @@ var errorsFrench = map[int]string{
 	ErrRepositoryUsedByHook.ID:                          "Il y a encore un repository webhook sur ce dépôt",
 	ErrResourceNotInProject.ID:                          "La ressource n'est pas lié au projet",
 	ErrEnvironmentNotFound.ID:                           "l'environnement n'existe pas",
+	ErrSignupDisabled.ID:                                "La création de compte est désactivée pour ce mode d'authentification.",
 	ErrBadBrokerConfiguration.ID:                        "Impossible de se connecter à votre intégration de type évènement. Veuillez vérifier votre configuration",
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Pré-requis de job invalide: Le pré-requis network doit contenir un ':'. Exemple: golang.org:http, golang.org:443",
 	ErrWorkflowAsCodeResync.ID:                          "Impossible de resynchroniser un workflow en mode as-code",
@@ -621,7 +624,17 @@ func (e Error) Translate(al string) string {
 // NewErrorWithStack returns an error with stack.
 func NewErrorWithStack(root error, err error) error {
 	errWithStack := WithStack(root).(errorWithStack)
-	errWithStack.httpError = ExtractHTTPError(err, "")
+
+	// try to recognize http error from source
+	switch e := err.(type) {
+	case errorWithStack:
+		errWithStack.httpError = e.httpError
+	case Error:
+		errWithStack.httpError = e
+	default:
+		errWithStack.httpError = ExtractHTTPError(err, "")
+	}
+
 	return errWithStack
 }
 

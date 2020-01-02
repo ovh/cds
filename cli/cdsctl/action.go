@@ -142,7 +142,7 @@ func actionDeleteRun(v cli.Values) error {
 	}
 
 	err = client.ActionDelete(groupName, actionName)
-	if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNoAction) {
+	if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNotFound) {
 		fmt.Println(err)
 		return nil
 	}

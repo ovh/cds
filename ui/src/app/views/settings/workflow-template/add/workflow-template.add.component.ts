@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { GroupService } from 'app/service/group/group.service';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/internal/operators/finalize';
 import { Group } from '../../../../model/group.model';
 import { PipelineTemplate, WorkflowTemplate, WorkflowTemplateError } from '../../../../model/workflow-template.model';
-import { GroupService } from '../../../../service/services.module';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
 import { WorkflowService } from '../../../../service/workflow/workflow.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
@@ -89,7 +89,7 @@ export class WorkflowTemplateAddComponent implements OnInit {
 
     getGroups() {
         this.loading = true;
-        this._groupService.getGroups()
+        this._groupService.getAll()
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();

@@ -58,7 +58,7 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 	}
 
 	if user == "" || password == "" || kafka == "" || topic == "" {
-		return fail("Kafka is not configured: missing kafkaUser, kafkaPassword, kafkaAddresses or kafkaTopic")
+		return actionplugin.Fail("Kafka is not configured: missing kafkaUser, kafkaPassword, kafkaAddresses or kafkaTopic")
 	}
 
 	waitForAckString := q.GetOptions()["waitForAck"]
@@ -70,14 +70,14 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 
 		timeout, _ = strconv.Atoi(timeoutStr)
 		if ackTopic == "" && timeout == 0 {
-			return fail("Error: ackTopic and waitForAckTimeout parameters are mandatory")
+			return actionplugin.Fail("Error: ackTopic and waitForAckTimeout parameters are mandatory")
 		}
 	}
 
 	message := q.GetOptions()["message"]
 	messageFile, err := tmplMessage(q, []byte(message))
 	if err != nil {
-		return fail("Error on tmpMessage: %v", err)
+		return actionplugin.Fail("Error on tmpMessage: %v", err)
 	}
 	files := []string{messageFile}
 
@@ -90,13 +90,13 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 			artifacts := strings.Split(artifactsList, ",")
 			for _, f := range artifacts {
 				if _, err := os.Stat(f); os.IsNotExist(err) {
-					return fail("%s : no such file", f)
+					return actionplugin.Fail("%s : no such file", f)
 				}
 			}
 		} else {
 			filesPath, err := filepath.Glob(artifactsList)
 			if err != nil {
-				return fail("Unable to parse files %s: %v", artifactsList, err)
+				return actionplugin.Fail("Unable to parse files %s: %v", artifactsList, err)
 			}
 			artifacts = filesPath
 		}
@@ -109,16 +109,16 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 
 	producer, err := initKafkaProducer(kafka, user, password)
 	if err != nil {
-		return fail("Unable to connect to kafka: %v", err)
+		return actionplugin.Fail("Unable to connect to kafka: %v", err)
 	}
 
 	btes, err := json.Marshal(ctx)
 	if err != nil {
-		return fail("Error: %v", err)
+		return actionplugin.Fail("Error: %v", err)
 	}
 
 	if _, _, err := sendDataOnKafka(producer, topic, [][]byte{btes}); err != nil {
-		return fail("Unable to send on kafka: %v", err)
+		return actionplugin.Fail("Unable to send on kafka: %v", err)
 	}
 
 	pubKey := q.GetOptions()["publicKey"]
@@ -127,7 +127,7 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 	for _, f := range files {
 		aes, err := getAESEncryptionOptions(key)
 		if err != nil {
-			return fail("Unable to shred file %s: %s", f, err)
+			return actionplugin.Fail("Unable to shred file %s: %s", f, err)
 		}
 		var opts = &shredder.Opts{
 			ChunkSize:     512 * 1024,
@@ -144,15 +144,15 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 
 		chunks, err := shredder.ShredFile(f, fmt.Sprintf("%d", q.GetJobID()), opts)
 		if err != nil {
-			return fail("Unable to shred file %s : %s", f, err)
+			return actionplugin.Fail("Unable to shred file %s : %s", f, err)
 		}
 
 		datas, err := kafkapublisher.KafkaMessages(chunks)
 		if err != nil {
-			return fail("Unable to compute chunks for file %s: %v", f, err)
+			return actionplugin.Fail("Unable to compute chunks for file %s: %v", f, err)
 		}
 		if _, _, err := sendDataOnKafka(producer, topic, datas); err != nil {
-			return fail("Unable to send chunks through kafka: %v", err)
+			return actionplugin.Fail("Unable to send chunks through kafka: %v", err)
 		}
 	}
 
@@ -161,7 +161,7 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 	//Don't wait for ack
 	if waitForAckString != "true" {
 		return &actionplugin.ActionResult{
-			Status: sdk.StatusSuccess.String(),
+			Status: sdk.StatusSuccess,
 		}, nil
 	}
 
@@ -188,7 +188,7 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 	//Wait for ack
 	ack, err := ackFromKafka(kafka, ackTopic, group, user, password, key, time.Duration(timeout)*time.Second, q.GetJobID())
 	if err != nil {
-		return fail("Failed to get ack on topic %s: %v", ackTopic, err)
+		return actionplugin.Fail("Failed to get ack on topic %s: %v", ackTopic, err)
 	}
 
 	//Check the ack
@@ -198,18 +198,13 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 	}
 	if ack.Result == "OK" {
 		return &actionplugin.ActionResult{
-			Status: sdk.StatusSuccess.String(),
+			Status: sdk.StatusSuccess,
 		}, nil
 	}
 
 	Logf("Ack Received: %+v\n", ack)
 
-	return fail("Plugin failed with ACK.Result:%s", ack.Result)
-}
-
-func (actPlugin *kafkaPublishActionPlugin) WorkerHTTPPort(ctx context.Context, q *actionplugin.WorkerHTTPPortQuery) (*empty.Empty, error) {
-	actPlugin.HTTPPort = q.Port
-	return &empty.Empty{}, nil
+	return actionplugin.Fail("Plugin failed with ACK.Result:%s", ack.Result)
 }
 
 func main() {
@@ -221,15 +216,6 @@ func main() {
 	})
 	_ = app.Run(os.Args)
 	return
-}
-
-func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error) {
-	msg := fmt.Sprintf(format, args...)
-	fmt.Println(msg)
-	return &actionplugin.ActionResult{
-		Details: msg,
-		Status:  sdk.StatusFail.String(),
-	}, nil
 }
 
 func tmplMessage(q *actionplugin.ActionQuery, buff []byte) (string, error) {

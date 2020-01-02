@@ -37,11 +37,11 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 			return sdk.WrapError(err, "Format invalid")
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
-		if _, err := workflow.Export(ctx, api.mustDB(), api.Cache, proj, name, f, deprecatedGetUser(ctx), w, opts...); err != nil {
+		if _, err := workflow.Export(ctx, api.mustDB(), api.Cache, proj, name, f, w, opts...); err != nil {
 			return sdk.WithStack(err)
 		}
 
@@ -63,12 +63,12 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 			opts = append(opts, exportentities.WorkflowWithPermissions)
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		pull, err := workflow.Pull(ctx, api.mustDB(), api.Cache, proj, name, exportentities.FormatYAML, project.EncryptWithBuiltinKey, deprecatedGetUser(ctx), opts...)
+		pull, err := workflow.Pull(ctx, api.mustDB(), api.Cache, proj, name, exportentities.FormatYAML, project.EncryptWithBuiltinKey, opts...)
 		if err != nil {
 			return err
 		}
@@ -79,7 +79,7 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 		}
 
 		buf := new(bytes.Buffer)
-		if err := pull.Tar(buf); err != nil {
+		if err := pull.Tar(ctx, buf); err != nil {
 			return err
 		}
 

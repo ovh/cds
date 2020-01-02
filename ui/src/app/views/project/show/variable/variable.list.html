@@ -1,5 +1,5 @@
 <div *ngIf="!loading">
-  <ng-container *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE">
+  <ng-container *ngIf="project.permissions.writable">
       <h3>
           <app-warning-mark-list [warnings]="unusedVariableWarning"></app-warning-mark-list>
           {{ 'project_variable_form_title' | translate }}
@@ -10,7 +10,7 @@
       <h3>
           {{ 'project_variable_list_title' | translate }}
       </h3>
-      <app-variable [project]="project" [variables]="project.variables" [mode]="project.permission === permissionEnum.READ_WRITE_EXECUTE? 'edit': 'ro'" (event)="variableEvent($event)" auditContext="project" [warnings]="variableWarning"></app-variable>
+      <app-variable [project]="project" [variables]="project.variables" [mode]="project.permissions.writable? 'edit': 'ro'" (event)="variableEvent($event)" auditContext="project" [warnings]="variableWarning"></app-variable>
   </div>
   <app-warning-modal [title]="'warning_modal_title' | translate" [msg]="'warning_modal_body' | translate" (event)="variableEvent($event, true)" #varWarning></app-warning-modal>
 </div>

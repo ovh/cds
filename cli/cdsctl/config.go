@@ -1,16 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/fsamin/go-repo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/cli/cdsctl/internal"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -20,13 +21,6 @@ var (
 	_ApplicationName = "application-name"
 	_WorkflowName    = "workflow-name"
 )
-
-type config struct {
-	Host                  string
-	User                  string
-	Token                 string
-	InsecureSkipVerifyTLS bool
-}
 
 func userHomeDir() string {
 	env := "HOME"
@@ -38,92 +32,134 @@ func userHomeDir() string {
 	return os.Getenv(env)
 }
 
-func loadConfig(cmd *cobra.Command, configFile string) (*cdsclient.Config, error) {
+func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
+	var configFile, _ = cmd.Flags().GetString("file")
+	if configFile == "" {
+		configFile = os.Getenv("CDS_FILE")
+	}
 	var verbose, _ = cmd.Flags().GetBool("verbose")
 	verbose = verbose || os.Getenv("CDS_VERBOSE") == "true"
 	var insecureSkipVerifyTLS, _ = cmd.Flags().GetBool("insecure")
 	insecureSkipVerifyTLS = insecureSkipVerifyTLS || os.Getenv("CDS_INSECURE") == "true"
+	var contextName, _ = cmd.Flags().GetString("context")
+	if contextName == "" {
+		contextName = os.Getenv("CDS_CONTEXT")
+	}
 
-	c := &config{}
-	c.Host = os.Getenv("CDS_API_URL")
-	c.User = os.Getenv("CDS_USER")
-	c.Token = os.Getenv("CDS_TOKEN")
-	c.InsecureSkipVerifyTLS = insecureSkipVerifyTLS
+	cdsctxEnv := &internal.CDSContext{}
+	cdsctxEnv.Host = os.Getenv("CDS_API_URL")
+	cdsctxEnv.Session = os.Getenv("CDS_SESSION_TOKEN")
+	cdsctxEnv.Token = os.Getenv("CDS_TOKEN")
+	cdsctxEnv.InsecureSkipVerifyTLS = insecureSkipVerifyTLS
 
-	if c.Host != "" && c.User != "" {
+	if cdsctxEnv.Host != "" {
 		if verbose {
 			fmt.Println("Configuration loaded from environment variables")
 		}
 	}
 
-	dir, err := os.Getwd()
+	if configFile == "" {
+		configFile = path.Join(userHomeDir(), ".cdsrc")
+	}
+
+	if verbose {
+		fmt.Println("Configuration loaded from", configFile)
+	}
+
+	cdsctx := &internal.CDSContext{}
+	if _, err := os.Stat(configFile); !os.IsNotExist(err) {
+		f, err := os.Open(configFile)
+		if err != nil {
+			return "", nil, fmt.Errorf("unable to read file %s: %v", configFile, err)
+		}
+		defer f.Close()
+
+		if contextName != "" {
+			if cdsctx, err = internal.GetContext(f, contextName); err != nil {
+				return "", nil, fmt.Errorf("unable to load the current context from %s", contextName)
+			}
+		} else if cdsctx, err = internal.GetCurrentContext(f); err != nil {
+			return "", nil, fmt.Errorf("unable to load the current context from %s", configFile)
+		}
+
+		if verbose {
+			fmt.Printf("Configuration loaded from %s with context %s\n", configFile, contextName)
+		}
+	}
+
+	if cdsctxEnv.Host != "" {
+		cdsctx.Host = cdsctxEnv.Host
+	}
+	if cdsctxEnv.Session != "" {
+		cdsctx.Session = cdsctxEnv.Session
+	}
+
+	// if there is no session token, but if we have a sign in token, recreate a session token
+	if cdsctxEnv.Session == "" && cdsctxEnv.Token != "" {
+		var err error
+		cdsctx, err = recreateSessionToken(configFile, *cdsctx, contextName)
+		if err != nil {
+			return "", nil, err
+		}
+	}
+
+	if cdsctxEnv.InsecureSkipVerifyTLS {
+		cdsctx.InsecureSkipVerifyTLS = cdsctxEnv.InsecureSkipVerifyTLS
+	}
+
+	cdsctx.Verbose = verbose
+
+	config := &cdsclient.Config{
+		Host:                              cdsctx.Host,
+		SessionToken:                      cdsctx.Session,
+		BuitinConsumerAuthenticationToken: cdsctx.Token,
+		Verbose:                           verbose,
+		InsecureSkipVerifyTLS:             insecureSkipVerifyTLS,
+	}
+
+	return configFile, config, nil
+}
+
+// regenerate a session token from a singin token if needed
+func recreateSessionToken(configFile string, cdsctx internal.CDSContext, contextName string) (*internal.CDSContext, error) {
+	req := sdk.AuthConsumerSigninRequest{
+		"token": cdsctx.Token,
+	}
+	client := cdsclient.New(cdsclient.Config{
+		Host:    cdsctx.Host,
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+	})
+	res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, req)
 	if err != nil {
+		return nil, fmt.Errorf("cannot signin: %v", err)
+	}
+	if res.Token == "" || res.User == nil {
+		return nil, fmt.Errorf("invalid username or token returned by sign in token")
+	}
+	cdsctx.Session = res.Token
+	// resave session token
+	if res.Token == cdsctx.Session {
+		return &cdsctx, nil
+	}
+
+	fi, err := os.OpenFile(configFile, os.O_RDONLY, 0600)
+	if err != nil {
+		return nil, fmt.Errorf("Error while opening file %s: %v", configFile, err)
+	}
+	wdata := &bytes.Buffer{}
+	if err := internal.StoreContext(fi, wdata, cdsctx); err != nil {
+		fi.Close() // nolint
 		return nil, err
 	}
 
-	homedir := userHomeDir()
-
-	var configFiles []string
-	if configFile != "" {
-		configFiles = []string{configFile}
-	} else {
-		configFiles = []string{
-			path.Join(dir, ".cdsrc"),
-			path.Join(homedir, ".cdsrc"),
-		}
+	if err := fi.Close(); err != nil {
+		return nil, fmt.Errorf("Error while closing file %s: %v", configFile, err)
+	}
+	if err := writeConfigFile(configFile, wdata); err != nil {
+		return nil, err
 	}
 
-	var i int
-	for c.Host == "" && i < len(configFiles) {
-		if _, err := os.Stat(configFiles[i]); err == nil {
-			f, err := os.Open(configFiles[i])
-			if err != nil {
-				if verbose {
-					fmt.Printf("Unable to read %s \n", configFiles[i])
-				}
-				return nil, err
-			}
-			defer f.Close()
-
-			if err := loadSecret(f, c); err != nil {
-				if verbose {
-					fmt.Printf("Unable to load configuration %s \n", configFiles[i])
-				}
-				return nil, err
-			}
-
-			if verbose {
-				fmt.Println("Configuration loaded from", configFiles[i])
-			}
-		}
-		i++
-	}
-
-	if c.Host == "" {
-		return nil, fmt.Errorf("unable to load configuration, you should try to login first")
-	}
-
-	conf := &cdsclient.Config{
-		Host:                  c.Host,
-		User:                  c.User,
-		Verbose:               verbose,
-		InsecureSkipVerifyTLS: c.InsecureSkipVerifyTLS,
-	}
-
-	// TEMPORARY CODE
-	// Try to parse the token as JWT and set it as access token
-	if _, _, err := new(jwt.Parser).ParseUnverified(c.Token, &sdk.AccessTokenJWTClaims{}); err == nil {
-		conf.AccessToken = c.Token
-		conf.Token = ""
-		if verbose {
-			fmt.Println("JWT recognized")
-		}
-	} else {
-		conf.Token = c.Token
-	}
-	// TEMPORARY CODE - END
-
-	return conf, nil
+	return &cdsctx, nil
 }
 
 func withAllCommandModifiers() []cli.CommandModifier {
@@ -199,7 +235,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 			if err != nil {
 				return nil, errors.Wrap(err, "cannot get name from local git repository")
 			}
-			repoExists = cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s (%s). Is it correct?", name, fetchURL))
+			repoExists = cli.AskConfirm(fmt.Sprintf("Detected repository as %s (%s). Is it correct?", name, fetchURL))
 		}
 	}
 
@@ -265,7 +301,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		// if given project key not valid ask for a project
 		if project == nil {
 			if len(projects) == 1 {
-				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project '%s - %s'. Is it correct?", projects[0].Key, projects[0].Name)) {
+				if !cli.AskConfirm(fmt.Sprintf("Found one CDS project '%s - %s'. Is it correct?", projects[0].Key, projects[0].Name)) {
 					// there is no filter on repo so there was only one choice possible
 					if !repoExists {
 						return nil, errors.New("can't find a project to use")
@@ -288,7 +324,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 				for i := range projects {
 					opts[i] = fmt.Sprintf("%s - %s", projects[i].Key, projects[i].Name)
 				}
-				selected := cli.MultiChoice("Choose the CDS project", opts...)
+				selected := cli.AskChoice("Choose the CDS project", opts...)
 				project = &projects[selected]
 			}
 		}
@@ -309,7 +345,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 
 			var application *sdk.Application
 			if len(applications) == 1 {
-				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS application '%s'. Is it correct?", applications[0].Name)) {
+				if cli.AskConfirm(fmt.Sprintf("Found one CDS application '%s'. Is it correct?", applications[0].Name)) {
 					application = &applications[0]
 				}
 			} else if len(applications) > 1 {
@@ -320,7 +356,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 				if mctx[_ApplicationName].AllowEmpty {
 					opts = append(opts, "Use a new application")
 				}
-				selected := cli.MultiChoice("Choose the CDS application", opts...)
+				selected := cli.AskChoice("Choose the CDS application", opts...)
 				if selected < len(applications) {
 					application = &applications[selected]
 				}
@@ -348,7 +384,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 
 			var workflow *sdk.Workflow
 			if len(workflows) == 1 {
-				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow '%s'. Is it correct?", workflows[0].Name)) {
+				if cli.AskConfirm(fmt.Sprintf("Found one CDS workflow '%s'. Is it correct?", workflows[0].Name)) {
 					workflow = &workflows[0]
 				}
 			} else if len(workflows) > 1 {
@@ -359,7 +395,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 				if mctx[_WorkflowName].AllowEmpty {
 					opts = append(opts, "Use a new workflow")
 				}
-				selected := cli.MultiChoice("Choose the CDS workflow", opts...)
+				selected := cli.AskChoice("Choose the CDS workflow", opts...)
 				if selected < len(workflows) {
 					workflow = &workflows[selected]
 				}

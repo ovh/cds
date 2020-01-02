@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -18,8 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -33,26 +31,20 @@ func VersionHandler() service.Handler {
 }
 
 // Status returns status, implements interface service.Service
-func (api *API) Status() sdk.MonitoringStatus {
+func (api *API) Status(ctx context.Context) sdk.MonitoringStatus {
 	m := api.CommonMonitoring()
 
-	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK}))
-	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK}))
-	m.Lines = append(m.Lines, getStatusLine(api.Router.StatusPanic()))
-	m.Lines = append(m.Lines, getStatusLine(event.Status()))
-	m.Lines = append(m.Lines, getStatusLine(api.Cache.Status()))
-	m.Lines = append(m.Lines, getStatusLine(sessionstore.Status))
-	m.Lines = append(m.Lines, getStatusLine(api.SharedStorage.Status()))
-	m.Lines = append(m.Lines, getStatusLine(mail.Status()))
-	m.Lines = append(m.Lines, getStatusLine(api.DBConnectionFactory.Status()))
-	m.Lines = append(m.Lines, getStatusLine(worker.Status(api.mustDB())))
-	m.Lines = append(m.Lines, getStatusLine(migrate.Status(api.mustDB())))
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK})
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK})
+	m.Lines = append(m.Lines, api.Router.StatusPanic())
+	m.Lines = append(m.Lines, event.Status(ctx))
+	m.Lines = append(m.Lines, api.SharedStorage.Status(ctx))
+	m.Lines = append(m.Lines, mail.Status(ctx))
+	m.Lines = append(m.Lines, api.DBConnectionFactory.Status(ctx))
+	m.Lines = append(m.Lines, workermodel.Status(api.mustDB()))
+	m.Lines = append(m.Lines, migrate.Status(api.mustDB()))
 
 	return m
-}
-
-func getStatusLine(s sdk.MonitoringStatusLine) sdk.MonitoringStatusLine {
-	return s
 }
 
 func (api *API) statusHandler() service.Handler {
@@ -62,7 +54,7 @@ func (api *API) statusHandler() service.Handler {
 			status = http.StatusServiceUnavailable
 		}
 
-		srvs, err := services.All(api.mustDB())
+		srvs, err := services.LoadAll(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}
@@ -72,36 +64,19 @@ func (api *API) statusHandler() service.Handler {
 	}
 }
 
-func (api *API) smtpPingHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if deprecatedGetUser(ctx) == nil {
-			return sdk.ErrForbidden
-		}
-
-		message := "mail sent"
-		if err := mail.SendEmail("Ping", bytes.NewBufferString("Pong"), deprecatedGetUser(ctx).Email, false); err != nil {
-			message = err.Error()
-		}
-
-		return service.WriteJSON(w, map[string]string{"message": message}, http.StatusOK)
-	}
-}
-
 type computeGlobalNumbers struct {
-	nbSrv       int
-	nbOK        int
-	nbAlerts    int
-	nbWarn      int
-	minInstance int
+	nbSrv    int
+	nbOK     int
+	nbAlerts int
+	nbWarn   int
 }
 
 var (
-	tagRange                tag.Key
-	tagStatus               tag.Key
-	tagServiceName          tag.Key
-	tagService              tag.Key
-	tagsService             []tag.Key
-	tagsServiceAvailability []tag.Key
+	tagRange       tag.Key
+	tagStatus      tag.Key
+	tagServiceName tag.Key
+	tagService     tag.Key
+	tagsService    []tag.Key
 )
 
 // computeGlobalStatus returns global status
@@ -113,13 +88,13 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 	linesGlobal := []sdk.MonitoringStatusLine{}
 
 	resume := map[string]computeGlobalNumbers{
-		services.TypeAPI:           {minInstance: api.Config.Status.API.MinInstance},
-		services.TypeRepositories:  {minInstance: api.Config.Status.Repositories.MinInstance},
-		services.TypeVCS:           {minInstance: api.Config.Status.VCS.MinInstance},
-		services.TypeHooks:         {minInstance: api.Config.Status.Hooks.MinInstance},
-		services.TypeHatchery:      {minInstance: api.Config.Status.Hatchery.MinInstance},
-		services.TypeDBMigrate:     {minInstance: api.Config.Status.DBMigrate.MinInstance},
-		services.TypeElasticsearch: {minInstance: api.Config.Status.ElasticSearch.MinInstance},
+		services.TypeAPI:           {},
+		services.TypeRepositories:  {},
+		services.TypeVCS:           {},
+		services.TypeHooks:         {},
+		services.TypeHatchery:      {},
+		services.TypeDBMigrate:     {},
+		services.TypeElasticsearch: {},
 	}
 	var nbg computeGlobalNumbers
 	for _, s := range srvs {
@@ -180,26 +155,6 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 	})
 
 	for stype, r := range resume {
-		if r.minInstance == 0 {
-			continue
-		}
-		st := sdk.MonitoringStatusOK
-		if r.nbSrv < r.minInstance {
-			st = sdk.MonitoringStatusAlert
-			nbg.nbAlerts++
-		} else {
-			nbg.nbOK++
-		}
-		percent := float64(r.nbSrv / r.minInstance)
-		linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
-			Status:    st,
-			Component: fmt.Sprintf("Availability/%s", stype),
-			Value:     fmt.Sprintf("%f", percent),
-			Type:      stype,
-		})
-	}
-
-	for stype, r := range resume {
 		linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
 			Status:    api.computeGlobalStatusByNumbers(r),
 			Component: fmt.Sprintf("Global/%s", stype),
@@ -227,24 +182,15 @@ func (api *API) computeGlobalStatusByNumbers(s computeGlobalNumbers) string {
 		r = sdk.MonitoringStatusAlert
 	} else if s.nbWarn > 0 {
 		r = sdk.MonitoringStatusWarn
-	} else if s.nbSrv < s.minInstance {
-		r = sdk.MonitoringStatusAlert
 	}
 	return r
 }
 
 func (api *API) initMetrics(ctx context.Context) error {
-	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs_started", api.Name)
-	api.Metrics.WorkflowRunStarted = stats.Int64(label, "number of started workflow runs", stats.UnitDimensionless)
 
-	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_failed", api.Name)
-	api.Metrics.WorkflowRunFailed = stats.Int64(label, "number of failed workflow runs", stats.UnitDimensionless)
+	log.Info(ctx, "Metrics initialized for %s/%s", api.Type(), api.Name())
 
-	log.Info("api> Metrics initialized")
-
-	tagCDSInstance, _ := tag.NewKey("cds")
-	tags := []tag.Key{tagCDSInstance}
-
+	// TODO refactor all the metrics name to replace "cds-api" by "api.Type()"
 	api.Metrics.nbUsers = stats.Int64("cds/cds-api/nb_users", "number of users", stats.UnitDimensionless)
 	api.Metrics.nbApplications = stats.Int64("cds/cds-api/nb_applications", "nb_applications", stats.UnitDimensionless)
 	api.Metrics.nbProjects = stats.Int64("cds/cds-api/nb_projects", "nb_projects", stats.UnitDimensionless)
@@ -256,49 +202,58 @@ func (api *API) initMetrics(ctx context.Context) error {
 	api.Metrics.nbWorkflowRuns = stats.Int64("cds/cds-api/nb_workflow_runs", "nb_workflow_runs", stats.UnitDimensionless)
 	api.Metrics.nbWorkflowNodeRuns = stats.Int64("cds/cds-api/nb_workflow_node_runs", "nb_workflow_node_runs", stats.UnitDimensionless)
 	api.Metrics.nbMaxWorkersBuilding = stats.Int64("cds/cds-api/nb_max_workers_building", "nb_max_workers_building", stats.UnitDimensionless)
-
 	api.Metrics.queue = stats.Int64("cds/cds-api/queue", "queue", stats.UnitDimensionless)
-
-	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_mark_to_delete", api.Name)
-	api.Metrics.WorkflowRunsMarkToDelete = stats.Int64(label, "number of workflow runs mark to delete", stats.UnitDimensionless)
-	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_deleted", api.Name)
-	api.Metrics.WorkflowRunsDeleted = stats.Int64(label, "number of workflow runs deleted", stats.UnitDimensionless)
+	api.Metrics.WorkflowRunsMarkToDelete = stats.Int64(
+		fmt.Sprintf("cds/cds-api/%s/workflow_runs_mark_to_delete", api.Name()),
+		"number of workflow runs mark to delete",
+		stats.UnitDimensionless)
+	api.Metrics.WorkflowRunsDeleted = stats.Int64(
+		fmt.Sprintf("cds/cds-api/%s/workflow_runs_deleted", api.Name()),
+		"number of workflow runs deleted",
+		stats.UnitDimensionless)
+	api.Metrics.WorkflowRunStarted = stats.Int64(
+		fmt.Sprintf("cds/cds-api/%s/workflow_runs_started", api.Name()),
+		"number of started workflow runs",
+		stats.UnitDimensionless)
+	api.Metrics.WorkflowRunFailed = stats.Int64(
+		fmt.Sprintf("cds/cds-api/%s/workflow_runs_failed", api.Name()),
+		"number of failed workflow runs",
+		stats.UnitDimensionless)
+	api.Metrics.DatabaseConns = stats.Int64(
+		fmt.Sprintf("cds/cds-api/%s/database_conn°", api.Name()),
+		"number database connections",
+		stats.UnitDimensionless)
 
 	tagRange, _ = tag.NewKey("range")
 	tagStatus, _ = tag.NewKey("status")
-	tagServiceName, _ = tag.NewKey("name")
-	tagService, _ = tag.NewKey("service")
 
-	tagsRange := []tag.Key{tagCDSInstance, tagRange, tagStatus}
-	tagsService = []tag.Key{tagCDSInstance, tagServiceName, tagService}
-	tagsServiceAvailability = []tag.Key{tagCDSInstance, tagService}
+	tagServiceType := observability.MustNewKey(observability.TagServiceType)
+	tagServiceName := observability.MustNewKey(observability.TagServiceName)
+	tagsRange := []tag.Key{tagRange, tagStatus}
+	tagsService = []tag.Key{tagServiceName, tagServiceType}
+
+	err := observability.RegisterView(
+		observability.NewViewLast("cds/nb_users", api.Metrics.nbUsers, nil),
+		observability.NewViewLast("cds/nb_applications", api.Metrics.nbApplications, nil),
+		observability.NewViewLast("cds/nb_projects", api.Metrics.nbProjects, nil),
+		observability.NewViewLast("cds/nb_groups", api.Metrics.nbGroups, nil),
+		observability.NewViewLast("cds/nb_pipelines", api.Metrics.nbPipelines, nil),
+		observability.NewViewLast("cds/nb_workflows", api.Metrics.nbWorkflows, nil),
+		observability.NewViewLast("cds/nb_artifacts", api.Metrics.nbArtifacts, nil),
+		observability.NewViewLast("cds/nb_worker_models", api.Metrics.nbWorkerModels, nil),
+		observability.NewViewLast("cds/nb_workflow_runs", api.Metrics.nbWorkflowRuns, nil),
+		observability.NewViewLast("cds/nb_workflow_node_runs", api.Metrics.nbWorkflowNodeRuns, nil),
+		observability.NewViewLast("cds/nb_max_workers_building", api.Metrics.nbMaxWorkersBuilding, nil),
+		observability.NewViewLast("cds/queue", api.Metrics.queue, tagsRange),
+		observability.NewViewCount("cds/workflow_runs_started", api.Metrics.WorkflowRunStarted, tagsService),
+		observability.NewViewCount("cds/workflow_runs_failed", api.Metrics.WorkflowRunFailed, tagsService),
+		observability.NewViewCount("cds/workflow_runs_mark_to_delete", api.Metrics.WorkflowRunsMarkToDelete, tagsService),
+		observability.NewViewCount("cds/workflow_runs_deleted", api.Metrics.WorkflowRunsDeleted, tagsService),
+		observability.NewViewLast("cds/database_conn", api.Metrics.DatabaseConns, tagsService),
+	)
 
 	api.computeMetrics(ctx)
 
-	err := observability.RegisterView(
-		observability.NewViewLast("nb_users", api.Metrics.nbUsers, tags),
-		observability.NewViewLast("nb_applications", api.Metrics.nbApplications, tags),
-		observability.NewViewLast("nb_projects", api.Metrics.nbProjects, tags),
-		observability.NewViewLast("nb_groups", api.Metrics.nbGroups, tags),
-		observability.NewViewLast("nb_pipelines", api.Metrics.nbPipelines, tags),
-		observability.NewViewLast("nb_workflows", api.Metrics.nbWorkflows, tags),
-		observability.NewViewLast("nb_artifacts", api.Metrics.nbArtifacts, tags),
-		observability.NewViewLast("nb_worker_models", api.Metrics.nbWorkerModels, tags),
-		observability.NewViewLast("nb_workflow_runs", api.Metrics.nbWorkflowRuns, tags),
-		observability.NewViewLast("nb_workflow_node_runs", api.Metrics.nbWorkflowNodeRuns, tags),
-		observability.NewViewLast("nb_max_workers_building", api.Metrics.nbMaxWorkersBuilding, tags),
-		observability.NewViewLast("queue", api.Metrics.queue, tagsRange),
-		observability.NewViewCount("workflow_runs_started", api.Metrics.WorkflowRunStarted, tags),
-		observability.NewViewCount("workflow_runs_failed", api.Metrics.WorkflowRunFailed, tags),
-		observability.NewViewCount("workflow_runs_mark_to_delete", api.Metrics.WorkflowRunsMarkToDelete, tags),
-		observability.NewViewCount("workflow_runs_deleted", api.Metrics.WorkflowRunsDeleted, tags),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	err = observability.RegisterView(service.CommonMetricsView(ctx)...)
 	return err
 }
 
@@ -309,7 +264,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 			select {
 			case <-ctx.Done():
 				if ctx.Err() != nil {
-					log.Error("Exiting metrics.Initialize: %v", ctx.Err())
+					log.Error(ctx, "Exiting metrics.Initialize: %v", ctx.Err())
 					return
 				}
 			case <-tick:
@@ -324,6 +279,8 @@ func (api *API) computeMetrics(ctx context.Context) {
 				api.countMetric(ctx, api.Metrics.nbWorkflowRuns, "SELECT COALESCE(MAX(id), 0) FROM workflow_run")
 				api.countMetric(ctx, api.Metrics.nbWorkflowNodeRuns, "SELECT COALESCE(MAX(id),0) FROM workflow_node_run")
 				api.countMetric(ctx, api.Metrics.nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'")
+
+				observability.Record(ctx, api.Metrics.DatabaseConns, int64(api.DBConnectionFactory.DB().Stats().OpenConnections))
 
 				now := time.Now()
 				now10s := now.Add(-10 * time.Second)
@@ -347,7 +304,6 @@ func (api *API) computeMetrics(ctx context.Context) {
 				api.countMetricRange(ctx, "waiting", "70_more_10min", api.Metrics.queue, queryOld, now10min)
 
 				api.processStatusMetrics(ctx)
-
 			}
 		}
 	})
@@ -356,7 +312,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query string) {
 	n, err := api.mustDB().SelectInt(query)
 	if err != nil {
-		log.Warning("metrics>Errors while fetching count %s: %v", query, err)
+		log.Warning(ctx, "metrics>Errors while fetching count %s: %v", query, err)
 	}
 	observability.Record(ctx, v, n)
 }
@@ -364,16 +320,16 @@ func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query st
 func (api *API) countMetricRange(ctx context.Context, status string, timerange string, v *stats.Int64Measure, query string, args ...interface{}) {
 	n, err := api.mustDB().SelectInt(query, args...)
 	if err != nil {
-		log.Warning("metrics>Errors while fetching count range %s: %v", query, err)
+		log.Warning(ctx, "metrics>Errors while fetching count range %s: %v", query, err)
 	}
 	ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, status), tag.Upsert(tagRange, timerange))
 	observability.Record(ctx, v, n)
 }
 
 func (api *API) processStatusMetrics(ctx context.Context) {
-	srvs, err := services.All(api.mustDB())
+	srvs, err := services.LoadAll(ctx, api.mustDB())
 	if err != nil {
-		log.Error("Error while getting services list: %v", err)
+		log.Error(ctx, "Error while getting services list: %v", err)
 		return
 	}
 	mStatus := api.computeGlobalStatus(srvs)
@@ -409,24 +365,6 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 			continue
 		}
 
-		if service == "Availability" {
-			number, err := strconv.ParseFloat(line.Value, 64)
-			if err != nil {
-				number = 0
-				log.Warning("metrics>Errors while parsing float %s: %v", line.Value, err)
-			}
-
-			item = "Availability"
-			ctx, _ = tag.New(ctx, tag.Upsert(tagService, line.Type))
-			v, err := observability.FindAndRegisterViewLastFloat64(item, tagsServiceAvailability)
-			if err != nil {
-				log.Warning("metrics>Errors while FindAndRegisterViewLastFloat64 %s: %v", item, err)
-				continue
-			}
-			observability.RecordFloat64(ctx, v.Measure, number)
-			continue
-		}
-
 		// take the value if it's an integer for metrics
 		// if it's not an integer, AL -> 0, OK -> 1
 		number, err := strconv.ParseInt(line.Value, 10, 64)
@@ -440,7 +378,7 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 		ctx, _ = tag.New(ctx, tag.Upsert(tagServiceName, service), tag.Upsert(tagService, line.Type))
 		v, err := observability.FindAndRegisterViewLast(item, tagsService)
 		if err != nil {
-			log.Warning("metrics>Errors while FindAndRegisterViewLast %s: %v", item, err)
+			log.Warning(ctx, "metrics>Errors while FindAndRegisterViewLast %s: %v", item, err)
 			continue
 		}
 		observability.Record(ctx, v.Measure, number)

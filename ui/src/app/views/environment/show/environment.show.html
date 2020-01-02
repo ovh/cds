@@ -1,4 +1,4 @@
-<div *ngIf="environment;then showEnv;else loadEnv"></div>
+<div *ngIf="project && environment;then showEnv;else loadEnv"></div>
 <ng-template #showEnv>
     <div id="EnvironmentShow">
         <app-project-breadcrumb [project]="project" [environment]="environment" [workflow]="workflowName"
@@ -46,14 +46,14 @@
                     <div [ngSwitch]="selectedTab">
                         <div *ngSwitchCase="'variables'">
                             <ng-container
-                                *ngIf="environment.permission === perm.READ_WRITE_EXECUTE && !environment.from_repository">
+                                *ngIf="project.permissions.writable && !environment.from_repository">
                                 <h3>{{ 'environment_variable_form_title' | translate}}</h3>
                                 <app-variable-form [loading]="varFormLoading"
                                     (createVariableEvent)="variableEvent($event)"></app-variable-form>
                             </ng-container>
                             <h3>{{ 'environment_variable_list_title' | translate}}</h3>
                             <app-variable [variables]="environment.variables"
-                                [mode]="(environment.permission === perm.READ_WRITE_EXECUTE && !environment.from_repository)?'edit':'ro'"
+                                [mode]="(project.permissions.writable && !environment.from_repository)?'edit':'ro'"
                                 (event)="variableEvent($event)" auditContext="environment" [project]="project"
                                 [environment]="environment"></app-variable>
                         </div>

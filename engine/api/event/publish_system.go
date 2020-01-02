@@ -1,6 +1,7 @@
 package event
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 )
 
 // PublishMaintenanceEvent publish maintenance event
-func PublishMaintenanceEvent(payload interface{}) {
+func PublishMaintenanceEvent(ctx context.Context, payload interface{}) {
 	event := sdk.Event{
 		Timestamp: time.Now(),
 		Hostname:  hostname,
@@ -18,5 +19,5 @@ func PublishMaintenanceEvent(payload interface{}) {
 		EventType: fmt.Sprintf("%T", payload),
 		Payload:   structs.Map(payload),
 	}
-	_ = publishEvent(event)
+	_ = publishEvent(ctx, event)
 }

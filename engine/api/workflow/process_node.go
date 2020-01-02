@@ -36,20 +36,22 @@ func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.S
 			//Keep the subnumber of the previous node in the graph
 			r1, _, errPwnr := processNodeRun(ctx, db, store, proj, wr, mapNodes, &t.ChildNode, int(parentSubNumber), parentNodeRun, nil, nil)
 			if errPwnr != nil {
-				log.Error("processWorkflowRun> Unable to process node ID=%d: %s", t.ChildNode.ID, errPwnr)
+				log.Error(ctx, "processWorkflowRun> Unable to process node ID=%d: %s", t.ChildNode.ID, errPwnr)
 				AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 					ID:   sdk.MsgWorkflowError.ID,
 					Args: []interface{}{errPwnr.Error()},
 				})
 			}
-			_, _ = report.Merge(r1, nil)
+			_, _ = report.Merge(ctx, r1, nil)
 			continue
 		}
 	}
 	return report, nil
 }
 
-func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parentNodeRuns []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun,
+	mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parentNodeRuns []*sdk.WorkflowNodeRun,
+	hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
 	exist, errN := nodeRunExist(db, wr.ID, n.ID, wr.Number, subNumber)
 	if errN != nil {
@@ -84,20 +86,22 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		if errT != nil {
 			return nil, false, sdk.WrapError(errT, "Unable to processNode")
 		}
-		report.Merge(r1, nil) // nolint
+		report.Merge(ctx, r1, nil) // nolint
 		return report, conditionOK, nil
 	case sdk.NodeTypeOutGoingHook:
 		r1, conditionOK, errO := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, parentNodeRuns, n, subNumber, manual)
 		if errO != nil {
 			return nil, false, sdk.WrapError(errO, "Unable to processNodeOutGoingHook")
 		}
-		report.Merge(r1, nil) // nolint
+		report.Merge(ctx, r1, nil) // nolint
 		return report, conditionOK, nil
 	}
 	return nil, false, nil
 }
 
-func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parents []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun,
+	mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parents []*sdk.WorkflowNodeRun,
+	hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
 
 	//TODO: Check user for manual done but check permission also for automatic trigger and hooks (with system to authenticate a webhook)
@@ -180,7 +184,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		currentRepo = app.RepositoryFullname
 	}
 
-	parentRepo := sdk.ParameterFind(&nr.BuildParameters, tagGitRepository)
+	parentRepo := sdk.ParameterFind(nr.BuildParameters, tagGitRepository)
 
 	// Compute git params for current job
 	// Get from parent when
@@ -203,7 +207,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		// Try to found a parent on the same repo
 		found := false
 		for _, parent := range wr.WorkflowNodeRuns {
-			repo := sdk.ParameterFind(&parent[0].BuildParameters, tagGitRepository)
+			repo := sdk.ParameterFind(parent[0].BuildParameters, tagGitRepository)
 			// if same repo OR not same repo, and same application, but different repo, it's a fork
 			if repo != nil && (repo.Value == currentRepo || parent[0].ApplicationID == n.Context.ApplicationID) {
 				found = true
@@ -219,7 +223,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 		// If we change repo and we dont find ancestor on the same repo, just keep the branch
 		if !found {
-			b := sdk.ParameterFind(&nr.BuildParameters, tagGitBranch)
+			b := sdk.ParameterFind(nr.BuildParameters, tagGitBranch)
 			if b != nil {
 				currentJobGitValues[tagGitBranch] = b.Value
 			}
@@ -250,7 +254,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	// CONDITION
-	if !checkCondition(wr, n.Context.Conditions, nr.BuildParameters) {
+	if !checkCondition(ctx, wr, n.Context.Conditions, nr.BuildParameters) {
 		log.Debug("Condition failed on processNode %d/%d %+v", wr.ID, n.ID, nr.BuildParameters)
 		return nil, false, nil
 	}
@@ -327,7 +331,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 	}
 
-	report.Add(*nr)
+	report.Add(ctx, *nr)
 
 	//Update workflow run
 	if wr.WorkflowNodeRuns == nil {
@@ -385,7 +389,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if err != nil {
 		return nil, false, sdk.WrapError(err, "unable to execute workflow run")
 	}
-	_, _ = report.Merge(r1, nil)
+	_, _ = report.Merge(ctx, r1, nil)
 	return report, true, nil
 }
 
@@ -394,14 +398,14 @@ func getParentsStatus(wr *sdk.WorkflowRun, parents []*sdk.WorkflowNodeRun) strin
 		for _, v := range wr.WorkflowNodeRuns {
 			for _, run := range v {
 				if p.ID == run.ID {
-					if run.Status == sdk.StatusFail.String() || run.Status == sdk.StatusStopped.String() {
+					if run.Status == sdk.StatusFail || run.Status == sdk.StatusStopped {
 						return run.Status
 					}
 				}
 			}
 		}
 	}
-	return sdk.StatusSuccess.String()
+	return sdk.StatusSuccess
 }
 
 func createWorkflowNodeRun(wr *sdk.WorkflowRun, n *sdk.Node, parents []*sdk.WorkflowNodeRun, subNumber int, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) *sdk.WorkflowNodeRun {
@@ -483,7 +487,7 @@ func computeNodeContextBuildParameters(ctx context.Context, proj *sdk.Project, w
 			Args: []interface{}{errParam.Error()},
 		})
 		// if there an error -> display it in workflowRunInfo and not stop the launch
-		log.Error("processNode> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%v", proj.Name, wr.Number, run.SubNumber, wr.Workflow.Name, n.ID, run.Payload, errParam)
+		log.Error(ctx, "processNode> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%v", proj.Name, wr.Number, run.SubNumber, wr.Workflow.Name, n.ID, run.Payload, errParam)
 	}
 	run.BuildParameters = append(run.BuildParameters, nodeRunParams...)
 }
@@ -536,15 +540,15 @@ func computeBuildParameters(wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, paren
 		params = append(params, sdk.Parameter{
 			Name:  "cds.triggered_by.email",
 			Type:  sdk.StringParameter,
-			Value: manual.User.Email,
+			Value: manual.Email,
 		}, sdk.Parameter{
 			Name:  "cds.triggered_by.fullname",
 			Type:  sdk.StringParameter,
-			Value: manual.User.Fullname,
+			Value: manual.Fullname,
 		}, sdk.Parameter{
 			Name:  "cds.triggered_by.username",
 			Type:  sdk.StringParameter,
-			Value: manual.User.Username,
+			Value: manual.Username,
 		}, sdk.Parameter{
 			Name:  "cds.manual",
 			Type:  sdk.StringParameter,

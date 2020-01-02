@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
@@ -15,7 +16,7 @@ import (
 func Insert(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 	m := grpcPlugin(*p)
 	if err := db.Insert(&m); err != nil {
-		return sdk.WrapError(err, "plugin.Insert")
+		return sdk.WithStack(err)
 	}
 	*p = sdk.GRPCPlugin(m)
 	return nil
@@ -25,7 +26,7 @@ func Insert(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 func Update(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 	m := grpcPlugin(*p)
 	if _, err := db.Update(&m); err != nil {
-		return sdk.WrapError(err, "plugin.Update")
+		return sdk.WithStack(err)
 	}
 	*p = sdk.GRPCPlugin(m)
 	return nil
@@ -53,10 +54,10 @@ func (p *grpcPlugin) PostUpdate(db gorp.SqlExecutor) error {
 }
 
 // Delete deletes a plugin
-func Delete(db gorp.SqlExecutor, storageDriver objectstore.Driver, p *sdk.GRPCPlugin) error {
+func Delete(ctx context.Context, db gorp.SqlExecutor, storageDriver objectstore.Driver, p *sdk.GRPCPlugin) error {
 	for _, b := range p.Binaries {
-		if err := storageDriver.Delete(b); err != nil {
-			log.Error("plugin.Delete> unable to delete binary %v", b.ObjectPath)
+		if err := storageDriver.Delete(ctx, b); err != nil {
+			log.Error(ctx, "plugin.Delete> unable to delete binary %v", b.ObjectPath)
 		}
 	}
 

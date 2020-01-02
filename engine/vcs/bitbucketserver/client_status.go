@@ -25,7 +25,7 @@ type statusData struct {
 
 func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if b.consumer.disableStatus {
-		log.Warning("bitbucketClient.SetStatus>  ⚠ Bitbucket statuses are disabled")
+		log.Warning(ctx, "bitbucketClient.SetStatus>  ⚠ Bitbucket statuses are disabled")
 		return nil
 	}
 
@@ -106,11 +106,11 @@ func (b *bitbucketClient) ListStatuses(ctx context.Context, repo string, ref str
 func processBitbucketState(s Status) string {
 	switch s.State {
 	case successful:
-		return sdk.StatusSuccess.String()
+		return sdk.StatusSuccess
 	case failed:
-		return sdk.StatusFail.String()
+		return sdk.StatusFail
 	default:
-		return sdk.StatusBuilding.String()
+		return sdk.StatusDisabled
 	}
 }
 
@@ -149,13 +149,13 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 
 func getBitbucketStateFromStatus(status string) string {
 	switch status {
-	case sdk.StatusSuccess.String(), sdk.StatusSkipped.String():
+	case sdk.StatusSuccess, sdk.StatusSkipped:
 		return successful
-	case sdk.StatusWaiting.String():
+	case sdk.StatusWaiting:
 		return inProgress
-	case sdk.StatusBuilding.String():
+	case sdk.StatusDisabled:
 		return inProgress
-	case sdk.StatusFail.String():
+	case sdk.StatusFail:
 		return failed
 	default:
 		return failed

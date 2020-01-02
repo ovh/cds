@@ -23,13 +23,6 @@ var ArtifactUpload = Manifest{
 				Value:       "{{.cds.version}}",
 			},
 			{
-				Name:        "enabled",
-				Type:        sdk.BooleanParameter,
-				Description: "(optional) Enable artifact upload, \"true\" or \"false\".",
-				Value:       "true",
-				Advanced:    true,
-			},
-			{
 				Name:        "destination",
 				Description: "(optional) Destination of this artifact. Use the name of integration attached on your project.",
 				Value:       "", // empty is the default value

@@ -11,9 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tevino/abool"
-
 	"github.com/go-gorp/gorp"
+	"github.com/tevino/abool"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
@@ -26,11 +25,11 @@ import (
 
 // eventsBrokerSubscribe is the information needed to subscribe
 type eventsBrokerSubscribe struct {
-	UUID    string
-	User    *sdk.User
-	isAlive *abool.AtomicBool
-	w       http.ResponseWriter
-	mutex   sync.Mutex
+	UUID     string
+	consumer *sdk.AuthConsumer
+	isAlive  *abool.AtomicBool
+	w        http.ResponseWriter
+	mutex    sync.Mutex
 }
 
 // lastUpdateBroker keeps connected client of the current route,
@@ -66,12 +65,12 @@ func (b *eventsBroker) Init(ctx context.Context, panicCallback func(s string) (i
 }
 
 func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
-	if cacheMsgChan == nil {
+	if cacheMsgChan == nil || store == nil {
 		return
 	}
 	pubSub, err := store.Subscribe("events_pubsub")
 	if err != nil {
-		log.Error("events.cacheSubscribe> Exiting on error: %v", err)
+		log.Error(c, "events.cacheSubscribe> Exiting on error: %v", err)
 		return
 	}
 	tick := time.NewTicker(50 * time.Millisecond)
@@ -80,13 +79,13 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				log.Error("events.cacheSubscribe> Exiting: %v", c.Err())
+				log.Error(c, "events.cacheSubscribe> Exiting: %v", c.Err())
 				return
 			}
 		case <-tick.C:
 			msg, err := store.GetMessageFromSubscription(c, pubSub)
 			if err != nil {
-				log.Warning("events.cacheSubscribe> Cannot get message: %v", err)
+				log.Warning(c, "events.cacheSubscribe> Cannot get message: %v", err)
 				continue
 			}
 			var e sdk.Event
@@ -99,7 +98,7 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 			case "sdk.EventJob":
 				continue
 			}
-			observability.Record(b.router.Background, b.router.Stats.SSEEvents, 1)
+			observability.Record(b.router.Background, SSEEvents, 1)
 			cacheMsgChan <- e
 		}
 	}
@@ -116,17 +115,17 @@ func (b *eventsBroker) Start(ctx context.Context, panicCallback func(s string) (
 	for {
 		select {
 		case <-tickerMetrics.C:
-			observability.Record(b.router.Background, b.router.Stats.SSEClients, int64(len(b.clients)))
+			observability.Record(b.router.Background, SSEClients, int64(len(b.clients)))
 
 		case <-ctx.Done():
 			if b.clients != nil {
 				for uuid := range b.clients {
 					delete(b.clients, uuid)
 				}
-				observability.Record(b.router.Background, b.router.Stats.SSEClients, 0)
+				observability.Record(b.router.Background, SSEClients, 0)
 			}
 			if ctx.Err() != nil {
-				log.Error("eventsBroker.Start> Exiting: %v", ctx.Err())
+				log.Error(ctx, "eventsBroker.Start> Exiting: %v", ctx.Err())
 				return
 			}
 
@@ -143,8 +142,8 @@ func (b *eventsBroker) Start(ctx context.Context, panicCallback func(s string) (
 				sdk.GoRoutine(ctx, s,
 					func(ctx context.Context) {
 						if c.isAlive.IsSet() {
-							log.Debug("send data to %s", c.UUID)
-							if err := c.Send(receivedEvent); err != nil {
+							log.Debug("eventsBroker> send data to %s", c.UUID)
+							if err := c.Send(b.dbFunc(), receivedEvent); err != nil {
 								b.chanRemoveClient <- c.UUID
 								msg := fmt.Sprintf("%v", err)
 								for _, s := range handledEventErrors {
@@ -153,7 +152,7 @@ func (b *eventsBroker) Start(ctx context.Context, panicCallback func(s string) (
 										return
 									}
 								}
-								log.Error("eventsBroker> unable to send event to %s: %v", c.UUID, err)
+								log.Error(ctx, "eventsBroker> unable to send event to %s: %v", c.UUID, err)
 							}
 						}
 					}, panicCallback,
@@ -187,21 +186,15 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 			return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
 		}
 
-		user := deprecatedGetUser(ctx)
-		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
-			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
-		}
-
-		uuid := sdk.UUID()
-		client := &eventsBrokerSubscribe{
-			UUID:    uuid,
-			User:    user,
-			isAlive: abool.NewBool(true),
-			w:       w,
+		var client = eventsBrokerSubscribe{
+			UUID:     sdk.UUID(),
+			consumer: getAPIConsumer(ctx),
+			isAlive:  abool.NewBool(true),
+			w:        w,
 		}
 
 		// Add this client to the map of those that should receive updates
-		b.chanAddClient <- client
+		b.chanAddClient <- &client
 
 		// Set the headers related to event streaming.
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -209,7 +202,7 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 		w.Header().Set("Connection", "keep-alive")
 		w.Header().Set("X-Accel-Buffering", "no")
 
-		if _, err := w.Write([]byte(fmt.Sprintf("data: ACK: %s \n\n", uuid))); err != nil {
+		if _, err := w.Write([]byte(fmt.Sprintf("data: ACK: %s \n\n", client.UUID))); err != nil {
 			return sdk.WrapError(err, "Unable to send ACK to client")
 		}
 		f.Flush()
@@ -229,7 +222,7 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 				b.chanRemoveClient <- client.UUID
 				break leave
 			case <-tick.C:
-				_ = client.Send(sdk.Event{})
+				_ = client.Send(nil, sdk.Event{})
 			}
 		}
 
@@ -237,61 +230,61 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 	}
 }
 
-func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
+func (client *eventsBrokerSubscribe) manageEvent(db gorp.SqlExecutor, event sdk.Event) (bool, error) {
 	if strings.HasPrefix(event.EventType, "sdk.EventMaintenance") {
-		return true
+		return true, nil
 	}
 
-	var isSharedInfra bool
-	for _, g := range client.User.Groups {
-		if g.ID == group.SharedInfraGroup.ID {
-			isSharedInfra = true
-			break
-		}
-	}
+	var isSharedInfra = client.consumer.Groups.HasOneOf(group.SharedInfraGroup.ID)
 
-	projectPermission := permission.ProjectPermission(event.ProjectKey, client.User)
-	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
-		if client.User.Admin || isSharedInfra || projectPermission >= permission.PermissionRead {
-			return true
+	switch {
+	case strings.HasPrefix(event.EventType, "sdk.EventProject"):
+		if isSharedInfra || client.consumer.Maintainer() {
+			return true, nil
 		}
-		return false
-	}
-	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") || strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") {
-		if client.User.Admin || isSharedInfra || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, client.User) >= permission.PermissionRead {
-			return true
+
+		perms, err := permission.LoadProjectMaxLevelPermission(context.Background(), db, []string{event.ProjectKey}, client.consumer.GetGroupIDs())
+		if err != nil {
+			return false, err
 		}
-		return false
-	}
-	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
-		if client.User.Admin || isSharedInfra || projectPermission >= permission.PermissionRead {
-			return true
+
+		return perms.Level(event.ProjectKey) >= sdk.PermissionRead, nil
+
+	case strings.HasPrefix(event.EventType, "sdk.EventWorkflow") || strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow"):
+		if isSharedInfra || client.consumer.Maintainer() {
+			return true, nil
 		}
-		return false
-	}
-	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
-		if client.User.Admin || isSharedInfra || projectPermission >= permission.PermissionRead {
-			return true
+
+		perms, err := permission.LoadWorkflowMaxLevelPermission(context.Background(), db, event.ProjectKey, []string{event.WorkflowName}, client.consumer.GetGroupIDs())
+		if err != nil {
+			return false, err
 		}
-		return false
-	}
-	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
-		if client.User.Admin || isSharedInfra || projectPermission >= permission.PermissionRead {
-			return true
+
+		return perms.Level(event.WorkflowName) >= sdk.PermissionRead, nil
+
+	case strings.HasPrefix(event.EventType, "sdk.EventBroadcast"):
+		if event.ProjectKey == "" {
+			return true, nil
 		}
-		return false
-	}
-	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
-		if client.User.Admin || isSharedInfra || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, client.User, permission.PermissionRead) {
-			return true
+
+		if isSharedInfra || client.consumer.Maintainer() {
+			return true, nil
 		}
-		return false
+
+		perms, err := permission.LoadProjectMaxLevelPermission(context.Background(), db, []string{event.ProjectKey}, client.consumer.GetGroupIDs())
+		if err != nil {
+			return false, err
+		}
+
+		return perms.Level(event.ProjectKey) >= sdk.PermissionRead, nil
+	default:
+		return false, nil
+
 	}
-	return false
 }
 
 // Send an event to a client
-func (client *eventsBrokerSubscribe) Send(event sdk.Event) (err error) {
+func (client *eventsBrokerSubscribe) Send(db gorp.SqlExecutor, event sdk.Event) (err error) {
 	client.mutex.Lock()
 	defer client.mutex.Unlock()
 
@@ -313,8 +306,8 @@ func (client *eventsBrokerSubscribe) Send(event sdk.Event) (err error) {
 
 	var buffer bytes.Buffer
 	if event.EventType != "" {
-		if ok := client.manageEvent(event); !ok {
-			return nil
+		if ok, err := client.manageEvent(db, event); !ok {
+			return err
 		}
 
 		msg, err := json.Marshal(event)

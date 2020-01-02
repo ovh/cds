@@ -1,7 +1,6 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AppService } from 'app/app.service';
-import { AuthentificationStore } from 'app/service/services.module';
 import { Subscription } from 'rxjs/Subscription';
 import { Event } from '../../../model/event.model';
 import { HeatmapSearchCriterion } from '../../../model/heatmap.model';
@@ -53,16 +52,12 @@ export class HomeHeatmapComponent implements AfterViewInit {
         private _toast: ToastService,
         public _translate: TranslateService,
         private _appService: AppService,
-        private _authStore: AuthentificationStore,
         private _cd: ChangeDetectorRef
     ) {
         this.filter = new TimelineFilter();
     }
 
     ngAfterViewInit() {
-        if (!this._authStore.isConnected) {
-            return;
-        }
         this.filterSub = this._timelineStore.getFilter().subscribe(f => {
             this.filter = f;
             this._appService.initFilter(this.filter);
@@ -148,21 +143,21 @@ export class HomeHeatmapComponent implements AfterViewInit {
     filterEvents() {
         const ONE_HOUR = 60 * 60 * 1000;
         Object.keys(this.unfilteredGroupedEvents).forEach(proj => {
-          Object.keys(this.unfilteredGroupedEvents[proj]).forEach(workflow => {
-            this.unfilteredGroupedEvents[proj][workflow] = this.unfilteredGroupedEvents[proj][workflow].filter(event => {
-              let diffWithNow = new Date().getTime() - new Date(event.timestamp).getTime();
-              if (event.pipelineStatus === 'Building') {
-                return true;
-              }
-              return diffWithNow < ONE_HOUR;
+            Object.keys(this.unfilteredGroupedEvents[proj]).forEach(workflow => {
+                this.unfilteredGroupedEvents[proj][workflow] = this.unfilteredGroupedEvents[proj][workflow].filter(event => {
+                    let diffWithNow = new Date().getTime() - new Date(event.timestamp).getTime();
+                    if (event.pipelineStatus === 'Building') {
+                        return true;
+                    }
+                    return diffWithNow < ONE_HOUR;
+                });
+                if (this.unfilteredGroupedEvents[proj][workflow].length === 0) {
+                    delete this.unfilteredGroupedEvents[proj][workflow];
+                }
             });
-            if (this.unfilteredGroupedEvents[proj][workflow].length === 0) {
-              delete this.unfilteredGroupedEvents[proj][workflow];
+            if (Object.keys(this.unfilteredGroupedEvents[proj]).length === 0) {
+                delete this.unfilteredGroupedEvents[proj];
             }
-          });
-          if (Object.keys(this.unfilteredGroupedEvents[proj]).length === 0) {
-            delete this.unfilteredGroupedEvents[proj];
-          }
         });
         this.workflows = HomeHeatmapComponent.clone(this.unfilteredWorkflows);
         this.projects = Object.keys(this.unfilteredGroupedEvents).sort();

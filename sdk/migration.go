@@ -14,6 +14,8 @@ const (
 	MigrationStatusDone string = "DONE"
 	// MigrationStatusCanceled is the constant to indicate that the migration is "canceled"
 	MigrationStatusCanceled string = "CANCELED"
+	// MigrationStatusNotExecuted is the constant to indicate that the migration is "not executed"
+	MigrationStatusNotExecuted string = "NOT EXECUTED"
 )
 
 // Migration represent a CDS migration
@@ -23,7 +25,7 @@ type Migration struct {
 	Status    string    `json:"status" db:"status" cli:"status"`
 	Progress  string    `json:"progress" db:"progress" cli:"progress"`
 	Error     string    `json:"error" db:"error" cli:"error"`
-	Mandatory bool      `json:"mandatory" db:"mandatory" cli:"mandatory"`
+	Automatic bool      `json:"automatic" db:"mandatory" cli:"automatic"`
 	Created   time.Time `json:"created" db:"created" cli:"created"`
 	Done      time.Time `json:"done" db:"done" cli:"done"`
 	Release   string    `json:"release" db:"release" cli:"release"`

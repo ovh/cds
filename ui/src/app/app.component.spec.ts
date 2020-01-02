@@ -1,42 +1,71 @@
-/* tslint:disable:no-unused-variable */
-
-import { APP_BASE_HREF } from '@angular/common';
+import { HttpClient, HttpRequest } from '@angular/common/http';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Injector } from '@angular/core';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { ToasterModule } from 'angular2-toaster/src/toaster.module';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
 import { AppComponent } from './app.component';
-import { AppModule } from './app.module';
+import { createTranslateLoader } from './app.module';
+import { AppService } from './app.service';
 import { Application } from './model/application.model';
 import { Pipeline } from './model/pipeline.model';
 import { Project } from './model/project.model';
-import { User } from './model/user.model';
+import { AuthentifiedUser } from './model/user.model';
 import { ApplicationService } from './service/application/application.service';
-import { AuthentificationStore } from './service/auth/authentification.store';
+import { AuthenticationService } from './service/authentication/authentication.service';
+import { BroadcastService } from './service/broadcast/broadcast.service';
+import { BroadcastStore } from './service/broadcast/broadcast.store';
+import { LanguageStore } from './service/language/language.store';
+import { NavbarService } from './service/navbar/navbar.service';
+import { NotificationService } from './service/notification/notification.service';
 import { PipelineService } from './service/pipeline/pipeline.service';
 import { ProjectService } from './service/project/project.service';
+import { ProjectStore } from './service/project/project.store';
+import { RouterService } from './service/router/router.service';
+import { ThemeStore } from './service/theme/theme.store';
+import { TimelineService } from './service/timeline/timeline.service';
+import { TimelineStore } from './service/timeline/timeline.store';
+import { UserService } from './service/user/user.service';
 import { SharedModule } from './shared/shared.module';
+import { ToastService } from './shared/toast/ToastService';
+import { FetchCurrentUser } from './store/authentication.action';
 import { NgxsStoreModule } from './store/store.module';
+import { NavbarModule } from './views/navbar/navbar.module';
 
 describe('App: CDS', () => {
 
     let injector: Injector;
-    let authStore: AuthentificationStore;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [],
+            declarations: [
+                AppComponent
+            ],
             providers: [
-                AuthentificationStore,
                 Store,
                 WorkflowService,
                 WorkflowRunService,
-                { provide: APP_BASE_HREF, useValue: '/' },
+                UserService,
+                NavbarService,
+                ProjectStore,
+                AuthenticationService,
+                LanguageStore,
+                ThemeStore,
+                NotificationService,
+                AppService,
+                RouterService,
+                ToastService,
+                BroadcastStore,
+                BroadcastService,
+                TimelineStore,
+                TimelineService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ProjectService, useClass: MockProjectService },
                 { provide: ApplicationService, useClass: MockApplicationService },
@@ -44,20 +73,27 @@ describe('App: CDS', () => {
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes }
             ],
             imports: [
-                AppModule,
-                SharedModule,
                 NgxsStoreModule,
-                RouterTestingModule.withRoutes([])
+                SharedModule,
+                NavbarModule,
+                ToasterModule.forRoot(),
+                RouterTestingModule.withRoutes([]),
+                HttpClientTestingModule,
+                TranslateModule.forRoot({
+                    loader: {
+                        provide: TranslateLoader,
+                        useFactory: createTranslateLoader,
+                        deps: [HttpClient]
+                    }
+                }),
             ]
         });
 
         injector = getTestBed();
-        authStore = injector.get(AuthentificationStore);
     });
 
     afterEach(() => {
         injector = undefined;
-        authStore = undefined;
     });
 
 
@@ -76,12 +112,22 @@ describe('App: CDS', () => {
         expect(compiled.querySelector('#navbar.connected')).toBeFalsy('Nav bar must not have the css class "connected"');
 
         fixture.componentInstance.ngOnInit();
-        authStore.addUser(new User(), false);
+
+        const store = TestBed.get(Store);
+        store.dispatch(new FetchCurrentUser());
+
+        const http = TestBed.get(HttpTestingController);
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/user/me';
+        })).flush(<AuthentifiedUser>{
+            username: 'someone',
+        });
 
         expect(fixture.componentInstance.isConnected).toBeTruthy('IsConnected flag must be true');
         expect(compiled.querySelector('#navbar.connected')).toBeFalsy('Nav bar must have connected css class');
     });
 });
+
 class MockActivatedRoutes {
 
     snapshot: {

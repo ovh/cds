@@ -50,12 +50,6 @@ var templateBulkCmd = cli.Command{
 			Usage: "Specify path|url of a json|yaml file that contains instances with params",
 		},
 		{
-			Type:      cli.FlagBool,
-			Name:      "no-interactive",
-			ShortHand: "n",
-			Usage:     "Set to not ask interactively for params",
-		},
-		{
 			Type:  cli.FlagBool,
 			Name:  "track",
 			Usage: "Wait the bulk to be over",
@@ -300,11 +294,7 @@ func templateAskForInstances(wt *sdk.WorkflowTemplate, mwtis map[string]sdk.Work
 
 	var results []string
 	if len(opts) > 0 {
-		prompt := &cli.CustomMultiSelect{
-			Message: "Select template's instances that you want to update",
-			Options: opts,
-		}
-		prompt.Init()
+		prompt := cli.NewCustomMultiSelect("Select template's instances that you want to update", opts...)
 		if err := survey.AskOne(prompt, &results, nil); err != nil {
 			return err
 		}

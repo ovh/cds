@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
@@ -8,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) generatePayloadFromGitlabRequest(t *sdk.TaskExecution, event string) (map[string]interface{}, error) {
+func (s *Service) generatePayloadFromGitlabRequest(ctx context.Context, t *sdk.TaskExecution, event string) (map[string]interface{}, error) {
 	projectKey := t.Config["project"].Value
 	workflowName := t.Config["workflow"].Value
 
@@ -37,8 +38,8 @@ func (s *Service) generatePayloadFromGitlabRequest(t *sdk.TaskExecution, event s
 		if !strings.HasPrefix(request.Ref, "refs/tags/") {
 			branch := strings.TrimPrefix(request.Ref, "refs/heads/")
 			payload[GIT_BRANCH] = branch
-			if err := s.stopBranchDeletionTask(branch); err != nil {
-				log.Error("cannot stop branch deletion task for branch %s : %v", branch, err)
+			if err := s.stopBranchDeletionTask(ctx, branch); err != nil {
+				log.Error(ctx, "cannot stop branch deletion task for branch %s : %v", branch, err)
 			}
 		} else {
 			payload[GIT_TAG] = strings.TrimPrefix(request.Ref, "refs/tags/")
@@ -58,7 +59,7 @@ func (s *Service) generatePayloadFromGitlabRequest(t *sdk.TaskExecution, event s
 
 	getPayloadFromGitlabProject(payload, request.Project)
 	getPayloadFromGitlabCommit(payload, request.Commits)
-	getPayloadStringVariable(payload, request)
+	getPayloadStringVariable(ctx, payload, request)
 
 	return payload, nil
 }

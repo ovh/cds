@@ -1,6 +1,6 @@
 define MINIO_CONFIG
 export AWS_DEFAULT_REGION=us-east-1
-export S3_BUCKET=test-it
+export S3_BUCKET=cds-it
 export MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
 export MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 export AWS_ENDPOINT_URL=http://$$(hostname):9000
@@ -28,6 +28,6 @@ minio_reset_bucket:
 		while ! nc -z minio 9000; do echo 'Wait minio to startup...' && sleep 0.1; done; \
 		sleep 5 && \
 		mc config host add myminio http://minio:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY && \
-		mc rm -r --force myminio/test-it  || true && \
-		mc mb myminio/test-it || true \
+		mc rm -r --force myminio/cds-it  || true && \
+		mc mb myminio/cds-it || true \
 		"

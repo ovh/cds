@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -26,21 +27,13 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(t, db)
 
 	UUID := sdk.UUID()
 
-	mockServiceVCS := &sdk.Service{Name: "Test_postWorkflowAsCodeHandlerVCS", Type: services.TypeVCS}
-	_ = services.Delete(db, mockServiceVCS)
-	test.NoError(t, services.Insert(db, mockServiceVCS))
-
-	mockServiceRepositories := &sdk.Service{Name: "Test_postWorkflowAsCodeHandlerRepo", Type: services.TypeRepositories}
-	_ = services.Delete(db, mockServiceRepositories)
-	test.NoError(t, services.Insert(db, mockServiceRepositories))
-
-	mockServiceHook := &sdk.Service{Name: "Test_postWorkflowAsCodeHandlerHook", Type: services.TypeHooks}
-	_ = services.Delete(db, mockServiceHook)
-	test.NoError(t, services.Insert(db, mockServiceHook))
+	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerVCS", services.TypeVCS)
+	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerRepo", services.TypeRepositories)
+	_, _ = assets.InsertService(t, db, "Test_postWorkflowAsCodeHandlerHook", services.TypeHooks)
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -118,7 +111,7 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 
 	// Create Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -132,7 +125,7 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
 
 	// Create Application
 	app := sdk.Application{
@@ -141,7 +134,7 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
@@ -171,12 +164,17 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 			},
 		},
 	}
-	assert.NoError(t, workflow.RenameNode(db, &w))
+	assert.NoError(t, workflow.RenameNode(context.Background(), db, &w))
 
 	var errP error
-	proj, errP = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithApplicationWithDeploymentStrategies, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithIntegrations)
+	proj, errP = project.Load(api.mustDB(), api.Cache, proj.Key,
+		project.LoadOptions.WithApplicationWithDeploymentStrategies,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithEnvironments,
+		project.LoadOptions.WithIntegrations,
+	)
 	assert.NoError(t, errP)
-	if !assert.NoError(t, workflow.Insert(db, api.Cache, &w, proj, u)) {
+	if !assert.NoError(t, workflow.Insert(context.Background(), db, api.Cache, &w, proj)) {
 		return
 	}
 

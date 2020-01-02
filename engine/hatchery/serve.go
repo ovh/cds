@@ -2,7 +2,7 @@ package hatchery
 
 import (
 	"context"
-	"encoding/base64"
+	"crypto/rsa"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -15,7 +15,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -25,9 +24,7 @@ import (
 
 type Common struct {
 	service.Common
-	Router      *api.Router
-	initialized bool
-	metrics     hatchery.Metrics
+	Router *api.Router
 }
 
 const panicDumpDir = "panic_dumps"
@@ -53,7 +50,7 @@ func init() {
 			time.Sleep(1 * time.Minute)
 			dir, err := os.Getwd()
 			if err != nil {
-				log.Warning("unable to get working directory: %v", err)
+				log.Warning(context.Background(), "unable to get working directory: %v", err)
 				continue
 			}
 
@@ -62,7 +59,7 @@ func init() {
 
 			files, err := ioutil.ReadDir(path)
 			if err != nil {
-				log.Warning("unable to list files in %s: %v", path, err)
+				log.Warning(context.Background(), "unable to list files in %s: %v", path, err)
 				break
 			}
 
@@ -70,12 +67,12 @@ func init() {
 				filename := filepath.Join(path, f.Name())
 				file, err := os.Stat(filename)
 				if err != nil {
-					log.Warning("unable to get file %s info: %v", f.Name(), err)
+					log.Warning(context.Background(), "unable to get file %s info: %v", f.Name(), err)
 					continue
 				}
 				if file.ModTime().Before(time.Now().Add(-15 * time.Minute)) {
 					if err := os.Remove(filename); err != nil {
-						log.Warning("unable to remove file %s: %v", filename, err)
+						log.Warning(context.Background(), "unable to remove file %s: %v", filename, err)
 					}
 				}
 			}
@@ -95,25 +92,12 @@ func (c *Common) PanicDumpDirectory() (string, error) {
 	return path, os.MkdirAll(path, os.FileMode(0755))
 }
 
-func (c *Common) ServiceName() string {
-	return c.Common.ServiceName
+func (c *Common) Service() *sdk.Service {
+	return c.Common.ServiceInstance
 }
 
-func (c *Common) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	if rc.Options["auth"] != "true" {
-		return ctx, nil
-	}
-
-	hash, err := base64.StdEncoding.DecodeString(req.Header.Get(sdk.AuthHeader))
-	if err != nil {
-		return ctx, fmt.Errorf("bad header syntax: %s", err)
-	}
-
-	if c.Hash == string(hash) {
-		return ctx, nil
-	}
-
-	return ctx, sdk.ErrUnauthorized
+func (c *Common) ServiceName() string {
+	return c.Common.ServiceName
 }
 
 //CDSClient returns cdsclient instance
@@ -121,23 +105,17 @@ func (c *Common) CDSClient() cdsclient.Interface {
 	return c.Client
 }
 
-// IsInitialized returns true if hatchery is fully initialized
-func (c *Common) IsInitialized() bool {
-	return c.initialized
-}
-
-// SetInitialized set initialized = true for this hatchery
-func (c *Common) SetInitialized() {
-	c.initialized = true
-}
-
 // CommonServe start the HatcheryLocal server
 func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
-	log.Info("%s> Starting service %s (%s)...", c.Name, h.Configuration().Name, sdk.VERSION)
+	log.Info(ctx, "%s> Starting service %s (%s)...", c.Name(), h.Configuration().Name, sdk.VERSION)
 	c.StartupTime = time.Now()
 
 	//Init the http server
 	c.initRouter(ctx, h)
+	if err := api.InitRouterMetrics(h); err != nil {
+		log.Error(ctx, "unable to init router metrics: %v", err)
+	}
+
 	server := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", h.Configuration().HTTP.Addr, h.Configuration().HTTP.Port),
 		Handler:        c.Router.Mux,
@@ -148,22 +126,18 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 
 	go func() {
 		//Start the http server
-		log.Info("%s> Starting HTTP Server on port %d", c.Name, h.Configuration().HTTP.Port)
+		log.Info(ctx, "%s> Starting HTTP Server on port %d", c.Name(), h.Configuration().HTTP.Port)
 		if err := server.ListenAndServe(); err != nil {
-			log.Error("%s> Listen and serve failed: %s", c.Name, err)
+			log.Error(ctx, "%s> Listen and serve failed: %v", c.Name(), err)
 		}
 
 		//Gracefully shutdown the http server
 		select {
 		case <-ctx.Done():
-			log.Info("%s> Shutdown HTTP Server", c.Name)
+			log.Info(ctx, "%s> Shutdown HTTP Server", c.Name())
 			server.Shutdown(ctx)
 		}
 	}()
-
-	if err := c.initMetrics(h.Configuration().Name); err != nil {
-		return err
-	}
 
 	if err := hatchery.Create(ctx, h); err != nil {
 		return err
@@ -173,19 +147,20 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 }
 
 func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
-	log.Debug("%s> Router initialized", c.Name)
+	log.Debug("%s> Router initialized", c.Name())
 	r := c.Router
 	r.Background = ctx
 	r.URL = h.Configuration().URL
 	r.SetHeaderFunc = api.DefaultHeaders
-	r.Middlewares = append(r.Middlewares, c.AuthMiddleware)
+	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(c.ParsedAPIPublicKey))
 
-	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle("/mon/status", r.GET(getStatusHandler(h), api.Auth(false)))
-	r.Handle("/mon/workers", r.GET(getWorkersPoolHandler(h), api.Auth(false)))
-	r.Handle("/mon/metrics", r.GET(observability.StatsHandler, api.Auth(false)))
-	r.Handle("/mon/errors", r.GET(c.getPanicDumpListHandler, api.Auth(false)))
-	r.Handle("/mon/errors/{id}", r.GET(c.getPanicDumpHandler, api.Auth(false)))
+	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
+	r.Handle("/mon/status", nil, r.GET(getStatusHandler(h), api.Auth(false)))
+	r.Handle("/mon/workers", nil, r.GET(getWorkersPoolHandler(h), api.Auth(false)))
+	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(c), api.Auth(false)))
+	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
+	r.Handle("/mon/errors", nil, r.GET(c.getPanicDumpListHandler, api.Auth(false)))
+	r.Handle("/mon/errors/{id}", nil, r.GET(c.getPanicDumpHandler, api.Auth(false)))
 
 	r.Mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	r.Mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
@@ -196,6 +171,10 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.Mux.HandleFunc("/debug/pprof/", pprof.Index)
 
 	r.Mux.NotFoundHandler = http.HandlerFunc(api.NotFoundHandler)
+}
+
+func (c *Common) GetPrivateKey() *rsa.PrivateKey {
+	return c.Common.PrivateKey
 }
 
 func (c *Common) getPanicDumpListHandler() service.Handler {
@@ -254,7 +233,7 @@ func getStatusHandler(h hatchery.Interface) service.HandlerFunc {
 			if !ok {
 				return fmt.Errorf("unable to get status from %s", h.Service().Name)
 			}
-			status := srv.Status()
+			status := srv.Status(ctx)
 			return service.WriteJSON(w, status, status.HTTPStatusCode())
 		}
 	}

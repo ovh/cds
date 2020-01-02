@@ -1,6 +1,7 @@
 package warning
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -13,9 +14,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type unusedProjectVariableWarning struct {
-	commonWarn
-}
+type unusedProjectVariableWarning struct{}
 
 func (warn unusedProjectVariableWarning) events() []string {
 	return []string{
@@ -41,7 +40,7 @@ func (warn unusedProjectVariableWarning) name() string {
 	return sdk.WarningUnusedProjectVariable
 }
 
-func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (warn unusedProjectVariableWarning) compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
 	case fmt.Sprintf("%T", sdk.EventProjectVariableAdd{}):
 
@@ -50,7 +49,7 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 			return sdk.WrapError(err, "Unable to get payload from EventProjectVariableAdd")
 		}
 		varName := fmt.Sprintf("cds.proj.%s", payload.Variable.Name)
-		if err := checkUnusedProjectVariable(db, e.ProjectKey, varName, warn.name()); err != nil {
+		if err := checkUnusedProjectVariable(ctx, db, e.ProjectKey, varName, warn.name()); err != nil {
 			return sdk.WrapError(err, "EventProjectVariableAdd")
 		}
 
@@ -60,11 +59,11 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectVariableUpdate")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.OldVariable.Name), e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.OldVariable.Name), e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectVariableUpdate")
 		}
 		varName := fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name)
-		if err := checkUnusedProjectVariable(db, e.ProjectKey, varName, warn.name()); err != nil {
+		if err := checkUnusedProjectVariable(ctx, db, e.ProjectKey, varName, warn.name()); err != nil {
 			return sdk.WrapError(err, "EventProjectVariableUpdate")
 		}
 
@@ -75,7 +74,7 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 			return sdk.WrapError(err, "Unable to get payload from EventProjectVariableDelete")
 		}
 		varName := fmt.Sprintf("cds.proj.%s", payload.Variable.Name)
-		if err := removeProjectWarning(db, warn.name(), varName, e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), varName, e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectVariableDelete")
 		}
 
@@ -86,7 +85,7 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 			return sdk.WrapError(err, "Unable to get payload")
 		}
 
-		if err := checkContentValueToRemoveUnusedWarning(db, e.ProjectKey, payload.Variable.Value, "cds.proj", projVarRegexp, warn.name()); err != nil {
+		if err := checkContentValueToRemoveUnusedWarning(ctx, db, e.ProjectKey, payload.Variable.Value, "cds.proj", projVarRegexp, warn.name()); err != nil {
 			return sdk.WrapError(err, "Unable to ckeck content and remove warning: %v", err)
 		}
 
@@ -97,11 +96,11 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 			return sdk.WrapError(err, "Unable to get payload")
 		}
 
-		if err := checkContentValueToAddUnusedWarning(db, e.ProjectKey, payload.OldVariable.Value, "cds.proj", projVarRegexp, warn.name()); err != nil {
+		if err := checkContentValueToAddUnusedWarning(ctx, db, e.ProjectKey, payload.OldVariable.Value, "cds.proj", projVarRegexp, warn.name()); err != nil {
 			return sdk.WrapError(err, "Unable to check content value to add unused warning")
 		}
 
-		if err := checkContentValueToRemoveUnusedWarning(db, e.ProjectKey, payload.NewVariable.Value, "cds.proj", projVarRegexp, warn.name()); err != nil {
+		if err := checkContentValueToRemoveUnusedWarning(ctx, db, e.ProjectKey, payload.NewVariable.Value, "cds.proj", projVarRegexp, warn.name()); err != nil {
 			return sdk.WrapError(err, "Unable to ckeck content and remove warning: %v", err)
 		}
 
@@ -111,7 +110,7 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 			return sdk.WrapError(err, "Unable to get payload")
 		}
 
-		if err := checkContentValueToAddUnusedWarning(db, e.ProjectKey, payload.Variable.Value, "cds.proj", projVarRegexp, warn.name()); err != nil {
+		if err := checkContentValueToAddUnusedWarning(ctx, db, e.ProjectKey, payload.Variable.Value, "cds.proj", projVarRegexp, warn.name()); err != nil {
 			return sdk.WrapError(err, "Unable to check content value to add unused warning")
 		}
 	case fmt.Sprintf("%T", sdk.EventPipelineJobAdd{}):
@@ -136,9 +135,7 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 	return nil
 }
 
-type missingProjectVariableEnv struct {
-	commonWarn
-}
+type missingProjectVariableEnv struct{}
 
 func (warn missingProjectVariableEnv) events() []string {
 	return []string{
@@ -152,14 +149,14 @@ func (warn missingProjectVariableEnv) name() string {
 	return sdk.WarningMissingProjectVariableEnv
 }
 
-func (warn missingProjectVariableEnv) compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (warn missingProjectVariableEnv) compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
 	case fmt.Sprintf("%T", sdk.EventProjectVariableAdd{}):
 		payload, err := e.ToEventProjectVariableAdd()
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectVariableAdd")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Variable.Name), e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Variable.Name), e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectVariableUpdate")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectVariableUpdate{}):
@@ -167,7 +164,7 @@ func (warn missingProjectVariableEnv) compute(db gorp.SqlExecutor, e sdk.Event) 
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectVariableUpdate")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name), e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name), e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectVariableUpdate")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectVariableDelete{}):
@@ -193,7 +190,7 @@ func (warn missingProjectVariableEnv) compute(db gorp.SqlExecutor, e sdk.Event) 
 					"EnvironmentName": envName,
 				},
 			}
-			if err := Insert(db, w); err != nil {
+			if err := Insert(ctx, db, w); err != nil {
 				return sdk.WrapError(err, "Unable to Insert warning")
 			}
 		}
@@ -201,9 +198,7 @@ func (warn missingProjectVariableEnv) compute(db gorp.SqlExecutor, e sdk.Event) 
 	return nil
 }
 
-type missingProjectVariableWorkflow struct {
-	commonWarn
-}
+type missingProjectVariableWorkflow struct{}
 
 func (warn missingProjectVariableWorkflow) events() []string {
 	return []string{
@@ -217,14 +212,14 @@ func (warn missingProjectVariableWorkflow) name() string {
 	return sdk.WarningMissingProjectVariableWorkflow
 }
 
-func (warn missingProjectVariableWorkflow) compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (warn missingProjectVariableWorkflow) compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
 	case fmt.Sprintf("%T", sdk.EventProjectVariableAdd{}):
 		payload, err := e.ToEventProjectVariableAdd()
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectVariableAdd")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Variable.Name), e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Variable.Name), e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectVariableUpdate")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectVariableUpdate{}):
@@ -232,7 +227,7 @@ func (warn missingProjectVariableWorkflow) compute(db gorp.SqlExecutor, e sdk.Ev
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectVariableUpdate")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name), e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name), e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectVariableUpdate")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectVariableDelete{}):
@@ -259,7 +254,7 @@ func (warn missingProjectVariableWorkflow) compute(db gorp.SqlExecutor, e sdk.Ev
 					"NodeName":     wName.NodeName,
 				},
 			}
-			if err := Insert(db, w); err != nil {
+			if err := Insert(ctx, db, w); err != nil {
 				return sdk.WrapError(err, "Unable to Insert warning")
 			}
 		}
@@ -267,9 +262,7 @@ func (warn missingProjectVariableWorkflow) compute(db gorp.SqlExecutor, e sdk.Ev
 	return nil
 }
 
-type missingProjectVariableApplication struct {
-	commonWarn
-}
+type missingProjectVariableApplication struct{}
 
 func (warn missingProjectVariableApplication) events() []string {
 	return []string{
@@ -283,14 +276,14 @@ func (warn missingProjectVariableApplication) name() string {
 	return sdk.WarningMissingProjectVariableApplication
 }
 
-func (warn missingProjectVariableApplication) compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (warn missingProjectVariableApplication) compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
 	case fmt.Sprintf("%T", sdk.EventProjectVariableAdd{}):
 		payload, err := e.ToEventProjectVariableAdd()
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectVariableAdd")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Variable.Name), e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Variable.Name), e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectVariableUpdate")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectVariableUpdate{}):
@@ -298,7 +291,7 @@ func (warn missingProjectVariableApplication) compute(db gorp.SqlExecutor, e sdk
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectVariableUpdate")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name), e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name), e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectVariableUpdate")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectVariableDelete{}):
@@ -324,7 +317,7 @@ func (warn missingProjectVariableApplication) compute(db gorp.SqlExecutor, e sdk
 					"ApplicationName": appName,
 				},
 			}
-			if err := Insert(db, w); err != nil {
+			if err := Insert(ctx, db, w); err != nil {
 				return sdk.WrapError(err, "Unable to Insert warning")
 			}
 		}
@@ -332,9 +325,7 @@ func (warn missingProjectVariableApplication) compute(db gorp.SqlExecutor, e sdk
 	return nil
 }
 
-type missingProjectVariablePipelineParameter struct {
-	commonWarn
-}
+type missingProjectVariablePipelineParameter struct{}
 
 func (warn missingProjectVariablePipelineParameter) events() []string {
 	return []string{
@@ -348,14 +339,14 @@ func (warn missingProjectVariablePipelineParameter) name() string {
 	return sdk.WarningMissingProjectVariablePipelineParameter
 }
 
-func (warn missingProjectVariablePipelineParameter) compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (warn missingProjectVariablePipelineParameter) compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
 	case fmt.Sprintf("%T", sdk.EventProjectVariableAdd{}):
 		payload, err := e.ToEventProjectVariableAdd()
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectVariableAdd")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Variable.Name), e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Variable.Name), e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectVariableUpdate")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectVariableUpdate{}):
@@ -363,7 +354,7 @@ func (warn missingProjectVariablePipelineParameter) compute(db gorp.SqlExecutor,
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectVariableUpdate")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name), e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name), e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectVariableUpdate")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectVariableDelete{}):
@@ -389,7 +380,7 @@ func (warn missingProjectVariablePipelineParameter) compute(db gorp.SqlExecutor,
 					"PipelineName": pipName,
 				},
 			}
-			if err := Insert(db, w); err != nil {
+			if err := Insert(ctx, db, w); err != nil {
 				return sdk.WrapError(err, "Unable to Insert warning")
 			}
 		}
@@ -397,9 +388,7 @@ func (warn missingProjectVariablePipelineParameter) compute(db gorp.SqlExecutor,
 	return nil
 }
 
-type missingProjectVariablePipelineJob struct {
-	commonWarn
-}
+type missingProjectVariablePipelineJob struct{}
 
 func (warn missingProjectVariablePipelineJob) events() []string {
 	return []string{
@@ -413,14 +402,14 @@ func (warn missingProjectVariablePipelineJob) name() string {
 	return sdk.WarningMissingProjectVariablePipelineJob
 }
 
-func (warn missingProjectVariablePipelineJob) compute(db gorp.SqlExecutor, e sdk.Event) error {
+func (warn missingProjectVariablePipelineJob) compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
 	case fmt.Sprintf("%T", sdk.EventProjectVariableAdd{}):
 		payload, err := e.ToEventProjectVariableAdd()
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectVariableAdd")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Variable.Name), e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Variable.Name), e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectVariableUpdate")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectVariableUpdate{}):
@@ -428,7 +417,7 @@ func (warn missingProjectVariablePipelineJob) compute(db gorp.SqlExecutor, e sdk
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get payload from EventProjectVariableUpdate")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name), e.ProjectKey); err != nil {
+		if err := removeProjectWarning(ctx, db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name), e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "Unable to remove warning from EventProjectVariableUpdate")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectVariableDelete{}):
@@ -456,7 +445,7 @@ func (warn missingProjectVariablePipelineJob) compute(db gorp.SqlExecutor, e sdk
 					"JobName":      pip.JobName,
 				},
 			}
-			if err := Insert(db, w); err != nil {
+			if err := Insert(ctx, db, w); err != nil {
 				return sdk.WrapError(err, "Unable to Insert warning")
 			}
 		}

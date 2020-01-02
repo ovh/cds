@@ -1,18 +1,12 @@
 importScripts('../common.js');
 
-onmessage = function (e) {
-    var url;
-    if (e.data.mode === 'local') {
-        url = '/assets/version.json';
-    } else {
-        url = 'mon/version';
-    }
-    loadVersion(url);
+onmessage = function () {
+    loadVersion();
 };
 
-function loadVersion (url) {
+function loadVersion () {
     loop(60, function () {
-        var xhr = httpCall(url  + '?ts=' + (new Date()).getTime(), '../../../');
+        var xhr = httpCall('mon/version?ts=' + (new Date()).getTime(), '../../../');
         if (xhr.status >= 400) {
             return true;
         }

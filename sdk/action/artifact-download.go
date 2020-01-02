@@ -23,13 +23,6 @@ var ArtifactDownload = Manifest{
 				Value:       "{{.cds.version}}",
 			},
 			{
-				Name:        "enabled",
-				Type:        sdk.BooleanParameter,
-				Description: "(optional) Enable artifact download.",
-				Value:       "true",
-				Advanced:    true,
-			},
-			{
 				Name:        "pattern",
 				Type:        sdk.StringParameter,
 				Description: "(optional) Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB).",

@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -21,22 +23,30 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	yaml "gopkg.in/yaml.v2"
 )
 
 func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	mockVCSSservice := &sdk.Service{Name: "TestAPI_detachRepositoriesManagerVCS", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
+	srvs, err := services.LoadAll(context.TODO(), db)
+	require.NoError(t, err)
+
+	for _, srv := range srvs {
+		require.NoError(t, services.Delete(db, &srv))
+	}
+
+	mockVCSSservice, _ := assets.InsertService(t, db, "TestAPI_detachRepositoriesManagerVCS", services.TypeVCS)
 	defer func() {
 		services.Delete(db, mockVCSSservice) // nolint
 	}()
 
-	mockServiceHook := &sdk.Service{Name: "TestAPI_detachRepositoriesManagerHook", Type: services.TypeHooks}
-	_ = services.Delete(db, mockServiceHook)
-	test.NoError(t, services.Insert(db, mockServiceHook))
+	mockServiceHook, _ := assets.InsertService(t, db, "TestAPI_detachRepositoriesManagerHook", services.TypeHooks)
+	defer func() {
+		_ = services.Delete(db, mockServiceHook) // nolint
+	}()
 
 	services.HTTPClient = mock(
 		func(r *http.Request) (*http.Response, error) {
@@ -129,9 +139,11 @@ func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
 		},
 	)
 
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(t, db)
+	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -146,7 +158,7 @@ func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -162,10 +174,10 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, globalError := application.ParseAndImport(db, api.Cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, globalError := application.ParseAndImport(context.Background(), db, api.Cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
-	proj, _ = project.LoadByID(db, api.Cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, api.Cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
 	assert.NoError(t, err)
@@ -197,9 +209,8 @@ vcs_ssh_key: proj-blabla
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj, u))
-
-	w1, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", u, workflow.LoadOptions{
+	test.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, proj))
+	w1, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -210,13 +221,13 @@ vcs_ssh_key: proj-blabla
 	wr.Workflow = *w1
 	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, api.Cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
-			User: *u,
+			Username: u.Username,
 			Payload: map[string]string{
 				"git.branch": "master",
 				"git.author": "test",
 			},
 		},
-	}, u, nil)
+	}, consumer, nil)
 	test.NoError(t, errWr)
 
 	vars := map[string]string{
@@ -236,7 +247,7 @@ vcs_ssh_key: proj-blabla
 	// as there is one repository webhook attached, 403 is expected
 	assert.Equal(t, 403, rw.Code)
 
-	w2, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	w2, err := workflow.Load(context.TODO(), db, api.Cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	// Delete repository webhook
@@ -249,7 +260,7 @@ vcs_ssh_key: proj-blabla
 	w2.WorkflowData.Node.Hooks = append(w2.WorkflowData.Node.Hooks[:index], w2.WorkflowData.Node.Hooks[index+1:]...)
 
 	// save the workflow with the repositorywebhok deleted
-	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, w2, proj, u, workflow.UpdateOptions{}))
+	test.NoError(t, workflow.Update(context.TODO(), db, api.Cache, w2, proj, workflow.UpdateOptions{}))
 
 	req, err = http.NewRequest("POST", uri, nil)
 	test.NoError(t, err)

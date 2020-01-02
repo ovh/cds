@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/user"
@@ -13,16 +12,16 @@ import (
 
 func (api *API) getTimelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := deprecatedGetUser(ctx)
-		currentItem, errS := FormInt(r, "currentItem")
-		if errS != nil {
-			return sdk.WrapError(errS, "getTimelineHandler> Invalid format for current item")
-		}
+		consumer := getAPIConsumer(ctx)
+		//currentItem, errS := FormInt(r, "currentItem")
+		//if errS != nil {
+		//	return sdk.WrapError(errS, "invalid format for current item")
+		//}
 
 		// Get workflow to mute
-		timelineFilter, errT := user.LoadTimelineFilter(api.mustDB(), u)
+		timelineFilter, errT := user.LoadTimelineFilter(api.mustDB(), consumer.AuthentifiedUser.OldUserStruct.ID)
 		if errT != nil {
-			return sdk.WrapError(errT, "getTimelineHandler> Unable to load timeline filter")
+			return sdk.WrapError(errT, "unable to load timeline filter")
 		}
 
 		// Add all workflows to mute in a map
@@ -33,8 +32,8 @@ func (api *API) getTimelineHandler() service.Handler {
 			}
 		}
 
-		permToRequest := make(map[string][]string, len(u.Permissions.WorkflowsPerm))
-		for k := range u.Permissions.WorkflowsPerm {
+		/*permToRequest := make(map[string][]string, len(consumer.AuthentifiedUser.OldUserStruct.Permissions.WorkflowsPerm))
+		for k := range consumer.AuthentifiedUser.OldUserStruct.Permissions.WorkflowsPerm {
 			if _, ok := muteFilter[k]; ok {
 				continue
 			}
@@ -63,9 +62,9 @@ func (api *API) getTimelineHandler() service.Handler {
 				WorkflowNames: v,
 			}
 			request.Filter.Projects = append(request.Filter.Projects, pFilter)
-		}
+		}*/
 
-		events, err := event.GetEvents(api.mustDB(), api.Cache, request)
+		events, err := event.GetEvents(ctx, api.mustDB(), api.Cache, sdk.EventFilter{})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load events")
 		}

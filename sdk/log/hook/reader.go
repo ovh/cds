@@ -13,11 +13,9 @@ import (
 	"io"
 	"net"
 	"strings"
-	"sync"
 )
 
 type Reader struct {
-	mu   sync.Mutex
 	conn net.Conn
 	ln   net.Listener
 	addr string

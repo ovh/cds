@@ -9,10 +9,11 @@ import (
 	"github.com/ovh/venom"
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/engine/worker/internal/action"
 	"github.com/ovh/cds/sdk"
 )
 
-func cmdJunitParser(w *currentWorker) *cobra.Command {
+func cmdJunitParser() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "junit-parser",
 		Short: "worker junit-parser",
@@ -29,12 +30,12 @@ Examples:
 	$ worker junit-parser *.xml
 	20 20 0 0
 `,
-		RunE: junitParserCmd(w),
+		RunE: junitParserCmd(),
 	}
 	return c
 }
 
-func junitParserCmd(w *currentWorker) func(cmd *cobra.Command, args []string) error {
+func junitParserCmd() func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		var filepaths []string
 		for _, arg := range args {
@@ -55,7 +56,7 @@ func junitParserCmd(w *currentWorker) func(cmd *cobra.Command, args []string) er
 			var vf venom.Tests
 			if err := xml.Unmarshal(data, &vf); err != nil {
 				// Check if file contains testsuite only (and no testsuites)
-				if s, ok := parseTestsuiteAlone(data); ok {
+				if s, ok := action.ParseTestsuiteAlone(data); ok {
 					ftests.TestSuites = append(ftests.TestSuites, s)
 				}
 				tests.TestSuites = append(tests.TestSuites, ftests.TestSuites...)
@@ -65,7 +66,7 @@ func junitParserCmd(w *currentWorker) func(cmd *cobra.Command, args []string) er
 		}
 
 		var res sdk.Result
-		_ = computeStats(&res, &tests)
+		_ = action.ComputeStats(&res, &tests)
 
 		fmt.Println(tests.Total, tests.TotalOK, tests.TotalKO, tests.TotalSkipped)
 

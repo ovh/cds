@@ -12,35 +12,34 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/fsamin/go-dump"
-	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)
@@ -50,10 +49,9 @@ func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -61,9 +59,9 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -81,9 +79,13 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	maxRole, err := permission.LoadWorkflowMaxLevelPermission(context.TODO(), db, proj.Key, []string{w.Name}, []int64{proj.ProjectGroups[0].Group.ID})
+	test.NoError(t, err)
+	assert.Equal(t, sdk.EntitiesPermissions{"test_1": sdk.Permissions{Readable: true, Writable: true, Executable: true}}, maxRole)
+
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -98,21 +100,20 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(ws))
 
-	exp, err := exportentities.NewWorkflow(*w1)
+	exp, err := exportentities.NewWorkflow(context.TODO(), *w1)
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
 
-	fmt.Println(string(btes))
+	t.Log(string(btes))
 }
 
 func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -120,9 +121,9 @@ func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_ 1",
@@ -140,16 +141,15 @@ func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
 		},
 	}
 
-	assert.Error(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.Error(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 }
 
 func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
 
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -157,7 +157,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	app := sdk.Application{
 		ProjectID:  proj.ID,
@@ -165,7 +165,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		Name:       "app1",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app, u))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
 	env := sdk.Environment{
 		ProjectID:  proj.ID,
@@ -175,7 +175,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 
 	test.NoError(t, environment.InsertEnvironment(db, &env))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -196,9 +196,9 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -211,9 +211,8 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
 
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip1 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -221,7 +220,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1))
 
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -229,7 +228,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		Name:       "pip2",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 
 	pip3 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -237,7 +236,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		Name:       "pip3",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
 
 	pip4 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -245,9 +244,9 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		Name:       "pip4",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -326,9 +325,9 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -341,21 +340,20 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 
 	assertEqualNode(t, &w.WorkflowData.Node, &w1.WorkflowData.Node)
 
-	exp, err := exportentities.NewWorkflow(w)
+	exp, err := exportentities.NewWorkflow(context.TODO(), w)
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
 
-	fmt.Println(string(btes))
+	t.Log(string(btes))
 }
 
 func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
 
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip1 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -363,7 +361,7 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1))
 
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -371,7 +369,7 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 		Name:       "pip2",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 
 	pip3 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -379,7 +377,7 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 		Name:       "pip3",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
 
 	pip4 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -387,9 +385,9 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 		Name:       "pip4",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -465,7 +463,7 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 		},
 	}
 
-	assert.Error(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.Error(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 }
 
 func assertEqualNode(t *testing.T, n1, n2 *sdk.Node) {
@@ -487,9 +485,9 @@ func assertEqualNode(t *testing.T, n1, n2 *sdk.Node) {
 func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -504,7 +502,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		},
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -519,7 +517,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		},
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 
 	pip3 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -527,7 +525,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		Name:       "pip3",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
 
 	app := sdk.Application{
 		ProjectID:  proj.ID,
@@ -535,7 +533,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		Name:       "app1",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app, u))
+	test.NoError(t, application.Insert(db, cache, proj, &app))
 
 	app2 := sdk.Application{
 		ProjectID:  proj.ID,
@@ -543,7 +541,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		Name:       "app2",
 	}
 
-	test.NoError(t, application.Insert(db, cache, proj, &app2, u))
+	test.NoError(t, application.Insert(db, cache, proj, &app2))
 
 	env := sdk.Environment{
 		ProjectID:  proj.ID,
@@ -553,7 +551,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 
 	test.NoError(t, environment.InsertEnvironment(db, &env))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -596,9 +594,9 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	t.Logf("Modifying workflow... with %d instead of %d", app2.ID, app.ID)
@@ -607,10 +605,10 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	w1.WorkflowData.Node.Context.PipelineID = pip2.ID
 	w1.WorkflowData.Node.Context.ApplicationID = app2.ID
 
-	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, proj, u, workflow.UpdateOptions{}))
+	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, proj, workflow.UpdateOptions{}))
 
 	t.Logf("Reloading workflow...")
-	w2, err := workflow.LoadByID(db, cache, proj, w1.ID, u, workflow.LoadOptions{})
+	w2, err := workflow.LoadByID(context.TODO(), db, cache, proj, w1.ID, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w1.ID, w2.ID)
@@ -628,9 +626,9 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip1 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -638,7 +636,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1))
 
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -646,7 +644,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		Name:       "pip2",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 
 	pip3 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -654,7 +652,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		Name:       "pip3",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
 
 	pip4 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -662,7 +660,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		Name:       "pip4",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4))
 
 	pip5 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -670,9 +668,9 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		Name:       "pip5",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip5, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip5))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -778,10 +776,10 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -825,30 +823,30 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	assert.Equal(t, pip3.ID, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Context.PipelineID)
 	assert.Equal(t, pip4.ID, w.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Triggers[0].ChildNode.Context.PipelineID)
 
-	log.Warning("%d-%d", w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
+	log.Warning(context.Background(), "%d-%d", w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
 		w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Triggers[0].ChildNode.ID)
 
-	log.Warning("%+v", w1.WorkflowData.Joins[0].JoinContext)
+	log.Warning(context.Background(), "%+v", w1.WorkflowData.Joins[0].JoinContext)
 	test.EqualValuesWithoutOrder(t, []int64{
 		w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
 		w1.WorkflowData.Node.Triggers[0].ChildNode.Triggers[0].ChildNode.Triggers[0].ChildNode.ID,
 	}, []int64{w1.WorkflowData.Joins[0].JoinContext[0].ParentID, w1.WorkflowData.Joins[0].JoinContext[1].ParentID})
 	assert.Equal(t, pip5.ID, w.WorkflowData.Joins[0].Triggers[0].ChildNode.Context.PipelineID)
 
-	exp, err := exportentities.NewWorkflow(*w1)
+	exp, err := exportentities.NewWorkflow(context.TODO(), *w1)
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
 
-	fmt.Println(string(btes))
+	t.Log(string(btes))
 }
 
 func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip1 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -856,7 +854,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1))
 
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -864,7 +862,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip2",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 
 	pip3 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -872,7 +870,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip3",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
 
 	pip4 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -880,7 +878,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip4",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4))
 
 	pip5 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -888,7 +886,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip5",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip5, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip5))
 
 	pip6 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -896,7 +894,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip6",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip6, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip6))
 
 	pip7 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -904,9 +902,9 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "pip7",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip7, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip7))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -1079,10 +1077,10 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	workflow.Sort(&w)
@@ -1116,9 +1114,9 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 func TestUpdateWorkflowWithJoins(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1126,7 +1124,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
 	pip2 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1134,7 +1132,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		Name:       "pip2",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
 
 	pip3 := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1142,7 +1140,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		Name:       "pip3",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3))
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -1168,15 +1166,14 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
-	test.NoError(t, workflow.RenameNode(db, &w))
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	//w1old := *w1
 	w1.Name = "test_2"
 	w1.WorkflowData.Joins = []sdk.Node{
 		{
@@ -1202,12 +1199,12 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, w1))
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, w1))
 
-	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, proj, u, workflow.UpdateOptions{}))
+	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, proj, workflow.UpdateOptions{}))
 
 	t.Logf("Reloading workflow...")
-	w2, err := workflow.LoadByID(db, cache, proj, w1.ID, u, workflow.LoadOptions{})
+	w2, err := workflow.LoadByID(context.TODO(), db, cache, proj, w1.ID, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	m1, _ := dump.ToMap(w1)
@@ -1257,8 +1254,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		}
 	}
 
-	mockHookSservice := &sdk.Service{Name: "TestManualRunBuildParameterMultiApplication", Type: services.TypeHooks}
-	test.NoError(t, services.Insert(db, mockHookSservice))
+	mockHookSservice, _ := assets.InsertService(t, db, "TestManualRunBuildParameterMultiApplication", services.TypeHooks)
 	defer func() {
 		services.Delete(db, mockHookSservice) // nolint
 	}()
@@ -1324,10 +1320,8 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		}
 	}
 
-	u, _ := assets.InsertAdminUser(db)
-
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -1335,9 +1329,9 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
 
-	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -1461,10 +1455,10 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.RenameNode(db, &w))
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u), "unable to insert workflow")
+	test.NoError(t, workflow.RenameNode(context.TODO(), db, &w))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj), "unable to insert workflow")
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -1483,12 +1477,12 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 
 	assert.Len(t, w.WorkflowData.Node.Hooks, 1)
 
-	exp, err := exportentities.NewWorkflow(*w1)
+	exp, err := exportentities.NewWorkflow(context.TODO(), *w1)
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
 
-	fmt.Println(string(btes))
+	t.Log(string(btes))
 
 	test.NoError(t, workflow.Delete(context.TODO(), db, cache, proj, &w))
 }
@@ -1496,7 +1490,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 func TestInsertAndDeleteMultiHook(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := assets.InsertAdminUser(t, db)
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 
 	hookModels, err := workflow.LoadHookModels(db)
@@ -1518,7 +1512,7 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 
 	// Create project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
 		Data: map[string]string{
@@ -1527,14 +1521,14 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 		},
 	}))
 
-	_, err = db.Exec("DELETE FROM services")
-	assert.NoError(t, err)
+	srvs, err := services.LoadAll(context.Background(), db)
+	require.NoError(t, err)
+	for _, srv := range srvs {
+		require.NoError(t, services.Delete(db, &srv))
+	}
 
-	mockVCSSservice := &sdk.Service{Name: "TestInsertAndDeleteMultiHookVCS", Type: services.TypeVCS}
-	test.NoError(t, services.Insert(db, mockVCSSservice))
-
-	mockHookServices := &sdk.Service{Name: "TestInsertAndDeleteMultiHookHook", Type: services.TypeHooks}
-	test.NoError(t, services.Insert(db, mockHookServices))
+	_, _ = assets.InsertService(t, db, "TestInsertAndDeleteMultiHookVCS", services.TypeVCS)
+	_, _ = assets.InsertService(t, db, "TestInsertAndDeleteMultiHookHook", services.TypeHooks)
 
 	//This is a mock for the vcs service
 	services.HTTPClient = mock(
@@ -1684,9 +1678,9 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 			},
 		},
 	}
-	assert.NoError(t, pipeline.Import(context.TODO(), db, cache, proj, pip, nil, u))
+	assert.NoError(t, pipeline.Import(context.Background(), db, cache, proj, pip, nil, u))
 	var errPip error
-	pip, errPip = pipeline.LoadPipeline(db, proj.Key, pip.Name, true)
+	pip, errPip = pipeline.LoadPipeline(context.Background(), db, proj.Key, pip.Name, true)
 	assert.NoError(t, errPip)
 
 	// Add application
@@ -1698,7 +1692,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, globalError := application.ParseAndImport(db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, globalError := application.ParseAndImport(context.Background(), db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
 	proj.Applications = append(proj.Applications, *app)
@@ -1731,7 +1725,7 @@ vcs_ssh_key: proj-blabla
 			proj.Pipelines[0].ID: proj.Pipelines[0],
 		},
 	}
-	assert.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
 
 	// Add check on Hook
 	assert.Equal(t, "666", w.WorkflowData.Node.Hooks[0].Config["webHookID"].Value)
@@ -1740,7 +1734,7 @@ vcs_ssh_key: proj-blabla
 	t.Logf("%+v", w.WorkflowData.Node.Hooks[0])
 
 	// Load workflow
-	oldW, err := workflow.LoadByID(db, cache, proj, w.ID, u, workflow.LoadOptions{})
+	oldW, err := workflow.LoadByID(context.TODO(), db, cache, proj, w.ID, workflow.LoadOptions{})
 	assert.NoError(t, err)
 
 	// Add WEB HOOK
@@ -1749,7 +1743,7 @@ vcs_ssh_key: proj-blabla
 		HookModelID: webHookID,
 	})
 
-	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, u, workflow.UpdateOptions{OldWorkflow: oldW}))
+	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, workflow.UpdateOptions{OldWorkflow: oldW}))
 
 	// Add check on HOOKS
 	assert.Equal(t, 2, len(w.WorkflowData.Node.Hooks))
@@ -1765,7 +1759,7 @@ vcs_ssh_key: proj-blabla
 
 	}
 
-	oldW, err = workflow.LoadByID(db, cache, proj, w.ID, u, workflow.LoadOptions{})
+	oldW, err = workflow.LoadByID(context.TODO(), db, cache, proj, w.ID, workflow.LoadOptions{})
 	assert.NoError(t, err)
 
 	// Add Scheduler
@@ -1774,7 +1768,7 @@ vcs_ssh_key: proj-blabla
 		HookModelID: schedulerID,
 	})
 
-	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, u, workflow.UpdateOptions{OldWorkflow: oldW}))
+	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, workflow.UpdateOptions{OldWorkflow: oldW}))
 
 	// Add check on HOOKS
 	assert.Equal(t, 3, len(w.WorkflowData.Node.Hooks))
@@ -1799,7 +1793,7 @@ vcs_ssh_key: proj-blabla
 		}
 	}
 
-	oldW, err = workflow.LoadByID(db, cache, proj, w.ID, u, workflow.LoadOptions{})
+	oldW, err = workflow.LoadByID(context.TODO(), db, cache, proj, w.ID, workflow.LoadOptions{})
 	assert.NoError(t, err)
 
 	// Delete repository webhook
@@ -1810,7 +1804,7 @@ vcs_ssh_key: proj-blabla
 		}
 	}
 	w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks[:index], w.WorkflowData.Node.Hooks[index+1:]...)
-	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, u, workflow.UpdateOptions{OldWorkflow: oldW}))
+	assert.NoError(t, workflow.Update(context.TODO(), db, cache, &w, proj, workflow.UpdateOptions{OldWorkflow: oldW}))
 
 	// Add check on HOOKS
 	assert.Equal(t, 2, len(w.WorkflowData.Node.Hooks))

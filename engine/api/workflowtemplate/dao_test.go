@@ -20,8 +20,8 @@ func TestCRUD(t *testing.T) {
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	grp2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	defer func() {
-		assert.Nil(t, assets.DeleteTestGroup(t, db, grp1))
-		assert.Nil(t, assets.DeleteTestGroup(t, db, grp2))
+		assets.DeleteTestGroup(t, db, grp1)
+		assets.DeleteTestGroup(t, db, grp2)
 	}()
 
 	tmpls := []sdk.WorkflowTemplate{
@@ -67,7 +67,7 @@ func TestCRUD(t *testing.T) {
 
 	// LoadByID
 	result, err := workflowtemplate.LoadByID(context.TODO(), db, 0)
-	assert.Nil(t, err)
+	assert.NotNil(t, err) // should return "not foud error"
 	assert.Nil(t, result)
 	result, err = workflowtemplate.LoadByID(context.TODO(), db, tmpls[0].ID)
 	assert.Nil(t, err)

@@ -23,9 +23,6 @@ import { HomeTimelineComponent } from './timeline/home.timeline.component';
     imports: [
         SharedModule,
         homeRouting
-    ],
-    providers: [
-
     ]
 })
 export class HomeModule {

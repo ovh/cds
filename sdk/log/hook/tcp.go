@@ -34,7 +34,6 @@ type TCPWriter struct {
 // output of the standard Go log functions to a central GELF server by
 // passing it to log.SetOutput()
 func NewTCPWriter(addr string, tlsCfg *tls.Config) (*TCPWriter, error) {
-	var err error
 	w := new(TCPWriter)
 
 	const dialTimeout = 5 * time.Second
@@ -48,11 +47,8 @@ func NewTCPWriter(addr string, tlsCfg *tls.Config) (*TCPWriter, error) {
 		w.connect = func() (net.Conn, error) { return net.DialTimeout("tcp", addr, dialTimeout) }
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	// Get Hostname if possible, otherwise just set to localhost
+	var err error
 	if w.Hostname, err = os.Hostname(); err != nil {
 		w.Hostname = "localhost"
 	}

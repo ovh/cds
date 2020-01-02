@@ -49,12 +49,12 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	report := new(ProcessorReport)
 	defer func(oldStatus string, wr *sdk.WorkflowRun) {
 		if oldStatus != wr.Status {
-			report.Add(*wr)
+			report.Add(ctx, *wr)
 		}
 	}(oldStatus, wr)
 	////
 
-	wr.Status = sdk.StatusBuilding.String()
+	wr.Status = sdk.StatusBuilding
 	maxsn := MaxSubNumber(wr.WorkflowNodeRuns)
 	wr.LastSubNumber = maxsn
 
@@ -66,13 +66,13 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		if err != nil {
 			return nil, false, sdk.WrapError(err, "unable to processStartFromNode")
 		}
-		report, _ = report.Merge(r1, nil)
+		report, _ = report.Merge(ctx, r1, nil)
 
 		r2, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
 		if err != nil {
 			return nil, false, sdk.WrapError(err, "unable to compute workflow run status")
 		}
-		report.Merge(r2, nil) // nolint
+		report.Merge(ctx, r2, nil) // nolint
 
 		return report, conditionOK, nil
 	}
@@ -83,13 +83,13 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		if err != nil {
 			return nil, false, sdk.WrapError(err, "unable to processStartFromRootNode")
 		}
-		report, _ = report.Merge(r1, nil)
+		report, _ = report.Merge(ctx, r1, nil)
 
 		r2, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
 		if err != nil {
 			return nil, false, sdk.WrapError(err, "unable to compute workflow run status")
 		}
-		report.Merge(r2, nil) // nolint
+		report.Merge(ctx, r2, nil) // nolint
 
 		return report, conditionOK, nil
 	}
@@ -98,19 +98,19 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	if errT != nil {
 		return nil, false, errT
 	}
-	report, _ = report.Merge(r1, nil)
+	report, _ = report.Merge(ctx, r1, nil)
 
 	r2, errJ := processAllJoins(ctx, db, store, proj, wr, mapNodes)
 	if errJ != nil {
 		return nil, false, errJ
 	}
-	report, _ = report.Merge(r2, nil)
+	report, _ = report.Merge(ctx, r2, nil)
 
 	r1, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
 	if err != nil {
 		return nil, false, sdk.WrapError(err, "unable to compute workflow run status")
 	}
-	report.Merge(r1, nil) // nolint
+	report.Merge(ctx, r1, nil) // nolint
 
 	return report, true, nil
 }

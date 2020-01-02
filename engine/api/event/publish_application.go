@@ -1,6 +1,7 @@
 package event
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 )
 
 // PublishApplicationEvent publish application event
-func publishApplicationEvent(payload interface{}, key, appName string, u *sdk.User) {
+func publishApplicationEvent(ctx context.Context, payload interface{}, key, appName string, u sdk.Identifiable) {
 	event := sdk.Event{
 		Timestamp:       time.Now(),
 		Hostname:        hostname,
@@ -21,22 +22,22 @@ func publishApplicationEvent(payload interface{}, key, appName string, u *sdk.Us
 		ApplicationName: appName,
 	}
 	if u != nil {
-		event.Username = u.Username
-		event.UserMail = u.Email
+		event.Username = u.GetUsername()
+		event.UserMail = u.GetEmail()
 	}
-	publishEvent(event)
+	_ = publishEvent(ctx, event)
 }
 
 // PublishAddApplication publishes an event for the creation of the given application
-func PublishAddApplication(projKey string, app sdk.Application, u *sdk.User) {
+func PublishAddApplication(ctx context.Context, projKey string, app sdk.Application, u sdk.Identifiable) {
 	e := sdk.EventApplicationAdd{
 		Application: app,
 	}
-	publishApplicationEvent(e, projKey, app.Name, u)
+	publishApplicationEvent(ctx, e, projKey, app.Name, u)
 }
 
 // PublishUpdateApplication publishes an event for the update of the given application
-func PublishUpdateApplication(projKey string, app sdk.Application, oldApp sdk.Application, u *sdk.User) {
+func PublishUpdateApplication(ctx context.Context, projKey string, app sdk.Application, oldApp sdk.Application, u sdk.Identifiable) {
 	e := sdk.EventApplicationUpdate{
 		NewMetadata:           app.Metadata,
 		NewRepositoryStrategy: app.RepositoryStrategy,
@@ -45,80 +46,80 @@ func PublishUpdateApplication(projKey string, app sdk.Application, oldApp sdk.Ap
 		OldRepositoryStrategy: oldApp.RepositoryStrategy,
 		OldName:               oldApp.Name,
 	}
-	publishApplicationEvent(e, projKey, app.Name, u)
+	publishApplicationEvent(ctx, e, projKey, app.Name, u)
 }
 
 // PublishDeleteApplication publishes an event for the deletion of the given application
-func PublishDeleteApplication(projKey string, app sdk.Application, u *sdk.User) {
+func PublishDeleteApplication(ctx context.Context, projKey string, app sdk.Application, u sdk.Identifiable) {
 	e := sdk.EventApplicationDelete{}
-	publishApplicationEvent(e, projKey, app.Name, u)
+	publishApplicationEvent(ctx, e, projKey, app.Name, u)
 }
 
 // PublishAddVariableApplication publishes an event when adding a new variable
-func PublishAddVariableApplication(projKey string, app sdk.Application, v sdk.Variable, u *sdk.User) {
+func PublishAddVariableApplication(ctx context.Context, projKey string, app sdk.Application, v sdk.Variable, u sdk.Identifiable) {
 	if sdk.NeedPlaceholder(v.Type) {
 		v.Value = sdk.PasswordPlaceholder
 	}
 	e := sdk.EventApplicationVariableAdd{
 		Variable: v,
 	}
-	publishApplicationEvent(e, projKey, app.Name, u)
+	publishApplicationEvent(ctx, e, projKey, app.Name, u)
 }
 
 // PublishUpdateVariableApplication publishes an event when updating a variable
-func PublishUpdateVariableApplication(projKey string, app sdk.Application, v sdk.Variable, vOld sdk.Variable, u *sdk.User) {
+func PublishUpdateVariableApplication(ctx context.Context, projKey string, app sdk.Application, v sdk.Variable, vOld sdk.Variable, u sdk.Identifiable) {
 	e := sdk.EventApplicationVariableUpdate{
 		OldVariable: vOld,
 		NewVariable: v,
 	}
-	publishApplicationEvent(e, projKey, app.Name, u)
+	publishApplicationEvent(ctx, e, projKey, app.Name, u)
 }
 
 // PublishDeleteVariableApplication publishes an event when deleting a new variable
-func PublishDeleteVariableApplication(projKey string, app sdk.Application, v sdk.Variable, u *sdk.User) {
+func PublishDeleteVariableApplication(ctx context.Context, projKey string, app sdk.Application, v sdk.Variable, u sdk.Identifiable) {
 	e := sdk.EventApplicationVariableDelete{
 		Variable: v,
 	}
-	publishApplicationEvent(e, projKey, app.Name, u)
+	publishApplicationEvent(ctx, e, projKey, app.Name, u)
 }
 
-func PublishApplicationKeyAdd(projKey string, app sdk.Application, k sdk.ApplicationKey, u *sdk.User) {
+func PublishApplicationKeyAdd(ctx context.Context, projKey string, app sdk.Application, k sdk.ApplicationKey, u sdk.Identifiable) {
 	e := sdk.EventApplicationKeyAdd{
 		Key: k,
 	}
-	publishApplicationEvent(e, projKey, app.Name, u)
+	publishApplicationEvent(ctx, e, projKey, app.Name, u)
 }
 
-func PublishApplicationKeyDelete(projKey string, app sdk.Application, k sdk.ApplicationKey, u *sdk.User) {
+func PublishApplicationKeyDelete(ctx context.Context, projKey string, app sdk.Application, k sdk.ApplicationKey, u sdk.Identifiable) {
 	e := sdk.EventApplicationKeyDelete{
 		Key: k,
 	}
-	publishApplicationEvent(e, projKey, app.Name, u)
+	publishApplicationEvent(ctx, e, projKey, app.Name, u)
 }
 
 // PublishApplicationRepositoryAdd publishes an envet when adding a repository to an application
-func PublishApplicationRepositoryAdd(projKey string, app sdk.Application, u *sdk.User) {
+func PublishApplicationRepositoryAdd(ctx context.Context, projKey string, app sdk.Application, u sdk.Identifiable) {
 	e := sdk.EventApplicationRepositoryAdd{
 		VCSServer:  app.VCSServer,
 		Repository: app.RepositoryFullname,
 	}
-	publishApplicationEvent(e, projKey, app.Name, u)
+	publishApplicationEvent(ctx, e, projKey, app.Name, u)
 }
 
 // PublishApplicationRepositoryDelete publishes an envet when deleting a repository from an application
-func PublishApplicationRepositoryDelete(projKey string, appName string, vcsServer string, repository string, u *sdk.User) {
+func PublishApplicationRepositoryDelete(ctx context.Context, projKey string, appName string, vcsServer string, repository string, u sdk.Identifiable) {
 	e := sdk.EventApplicationRepositoryDelete{
 		VCSServer:  vcsServer,
 		Repository: repository,
 	}
-	publishApplicationEvent(e, projKey, appName, u)
+	publishApplicationEvent(ctx, e, projKey, appName, u)
 }
 
 // PublishApplicationVulnerabilityUpdate publishes an event when updating a vulnerability
-func PublishApplicationVulnerabilityUpdate(projKey string, appName string, oldV sdk.Vulnerability, newV sdk.Vulnerability, u *sdk.User) {
+func PublishApplicationVulnerabilityUpdate(ctx context.Context, projKey string, appName string, oldV sdk.Vulnerability, newV sdk.Vulnerability, u sdk.Identifiable) {
 	e := sdk.EventApplicationVulnerabilityUpdate{
 		OldVulnerability: oldV,
 		NewVulnerability: newV,
 	}
-	publishApplicationEvent(e, projKey, appName, u)
+	publishApplicationEvent(ctx, e, projKey, appName, u)
 }

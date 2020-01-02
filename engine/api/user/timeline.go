@@ -10,42 +10,42 @@ import (
 )
 
 // InsertTimelineFilter inserts user timeline filter
-func InsertTimelineFilter(db gorp.SqlExecutor, tf sdk.TimelineFilter, u *sdk.User) error {
+func InsertTimelineFilter(db gorp.SqlExecutor, tf sdk.TimelineFilter, userID int64) error {
 	filterNullString, err := gorpmapping.JSONToNullString(tf)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to insert filter")
 	}
-	if _, err := db.Exec("INSERT INTO user_timeline (user_id, filter) VALUES($1, $2)", u.ID, filterNullString); err != nil {
+	if _, err := db.Exec("INSERT INTO user_timeline (user_id, filter) VALUES($1, $2)", userID, filterNullString); err != nil {
 		return sdk.WrapError(err, "Unable to insert user timeline filter")
 	}
 	return nil
 }
 
 // UpdateTimelineFilter user timeline filter
-func UpdateTimelineFilter(db gorp.SqlExecutor, timelineFilter sdk.TimelineFilter, u *sdk.User) error {
+func UpdateTimelineFilter(db gorp.SqlExecutor, timelineFilter sdk.TimelineFilter, userID int64) error {
 	filterJSON, err := gorpmapping.JSONToNullString(timelineFilter)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to read json filter")
 	}
 
 	query := "UPDATE user_timeline SET filter=$1 WHERE user_id=$2"
-	if _, err := db.Exec(query, filterJSON, u.ID); err != nil {
+	if _, err := db.Exec(query, filterJSON, userID); err != nil {
 		return sdk.WrapError(err, "Unable to update filter")
 	}
 	return nil
 }
 
 // CountTimelineFilter count if user has a timeline filter
-func CountTimelineFilter(db gorp.SqlExecutor, u *sdk.User) (int64, error) {
-	return db.SelectInt("SELECT COUNT(*) from user_timeline WHERE user_id = $1", u.ID)
+func CountTimelineFilter(db gorp.SqlExecutor, userID int64) (int64, error) {
+	return db.SelectInt("SELECT COUNT(*) from user_timeline WHERE user_id = $1", userID)
 }
 
 // Load user timeline filter
-func LoadTimelineFilter(db gorp.SqlExecutor, u *sdk.User) (sdk.TimelineFilter, error) {
+func LoadTimelineFilter(db gorp.SqlExecutor, userID int64) (sdk.TimelineFilter, error) {
 	var filter sdk.TimelineFilter
 	var filterS sql.NullString
 	query := "SELECT filter from user_timeline WHERE user_id = $1"
-	err := db.QueryRow(query, u.ID).Scan(&filterS)
+	err := db.QueryRow(query, userID).Scan(&filterS)
 	if err != nil && err != sql.ErrNoRows {
 		return filter, sdk.WrapError(err, "Unable to load timeline filter")
 	}

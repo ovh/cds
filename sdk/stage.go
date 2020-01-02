@@ -16,7 +16,7 @@ type Stage struct {
 	Conditions    WorkflowNodeConditions `json:"conditions"`
 	LastModified  int64                  `json:"last_modified"`
 	Jobs          []Job                  `json:"jobs"`
-	Status        Status                 `json:"status"`
+	Status        string                 `json:"status"`
 	Warnings      []PipelineBuildWarning `json:"warnings"`
 }
 
@@ -26,7 +26,7 @@ type StageSummary struct {
 	Name           string                      `json:"name"`
 	BuildOrder     int                         `json:"build_order"`
 	Enabled        bool                        `json:"enabled"`
-	Status         Status                      `json:"status"`
+	Status         string                      `json:"status"`
 	Jobs           []Job                       `json:"jobs"`
 	RunJobsSummary []WorkflowNodeJobRunSummary `json:"run_jobs_summary"`
 }

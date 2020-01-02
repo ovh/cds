@@ -72,7 +72,7 @@ func InsertJob(db gorp.SqlExecutor, job *sdk.Job, stageID int64, pip *sdk.Pipeli
 }
 
 // UpdateJob  updates the job by actionData.PipelineActionID and actionData.ID
-func UpdateJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job, userID int64) error {
+func UpdateJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job) error {
 	clearJoinedAction, err := action.LoadByID(ctx, db, job.Action.ID, action.LoadOptions.Default)
 	if err != nil {
 		return err

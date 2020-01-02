@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { AuthentifiedUser } from 'app/model/user.model';
+import { UserService } from 'app/service/user/user.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
+import { Column, ColumnType } from 'app/shared/table/data-table.component';
 import { finalize } from 'rxjs/operators/finalize';
-import { User } from '../../../../model/user.model';
-import { UserService } from '../../../../service/user/user.service';
-import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
-import { Column, ColumnType } from '../../../../shared/table/data-table.component';
 
 @Component({
     selector: 'app-user-list',
@@ -13,8 +13,8 @@ import { Column, ColumnType } from '../../../../shared/table/data-table.componen
 })
 export class UserListComponent {
     loading: boolean;
-    columns: Array<Column<User>>;
-    users: Array<User>;
+    columns: Array<Column<AuthentifiedUser>>;
+    users: Array<AuthentifiedUser>;
     path: Array<PathItem>;
 
     constructor(
@@ -22,33 +22,27 @@ export class UserListComponent {
         private _cd: ChangeDetectorRef
     ) {
         this.columns = [
-            <Column<User>>{
+            <Column<AuthentifiedUser>>{
                 type: ColumnType.ICON,
                 class: 'one',
-                selector: (u: User) => { return u.admin ? ['user', 'outline', 'icon'] : ['user', 'icon']; }
+                selector: (u: AuthentifiedUser) => { return u.isAdmin() ? ['user', 'outline', 'icon'] : ['user', 'icon']; }
             },
-            <Column<User>>{
+            <Column<AuthentifiedUser>>{
                 type: ColumnType.ROUTER_LINK,
-                class: 'five',
+                class: 'six',
                 name: 'user_label_username',
-                selector: (u: User) => {
+                selector: (u: AuthentifiedUser) => {
                     return {
-                        link: '/settings/user/' + u.username,
+                        link: `/settings/user/${u.username}`,
                         value: u.username
                     };
                 }
             },
-            <Column<User>>{
+            <Column<AuthentifiedUser>>{
                 type: ColumnType.TEXT,
-                class: 'five',
+                class: 'six',
                 name: 'user_label_fullname',
-                selector: (u: User) => { return u.username; }
-            },
-            <Column<User>>{
-                type: ColumnType.TEXT,
-                class: 'five',
-                name: 'user_label_email',
-                selector: (u: User) => { return u.email; }
+                selector: (u: AuthentifiedUser) => { return u.username; }
             }
         ];
         this.getUsers();
@@ -73,9 +67,8 @@ export class UserListComponent {
 
     filter(f: string) {
         const lowerFilter = f.toLowerCase();
-        return (u: User) => {
+        return (u: AuthentifiedUser) => {
             return u.username.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                u.email.toLowerCase().indexOf(lowerFilter) !== -1 ||
                 u.fullname.toLowerCase().indexOf(lowerFilter) !== -1;
         }
     }

@@ -1,6 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import "common";
+
 html,
 body {
     overflow-y: hidden;
@@ -16,6 +17,7 @@ a.disabled:hover {
     color: gray;
     cursor: not-allowed;
     text-decoration: underline;
+
     .content {
         color: gray;
     }
@@ -80,6 +82,7 @@ a.disabled:hover {
 
 $scrollbarsize: 10px;
 $scrollbarradius: 0px;
+
 body ::-webkit-scrollbar {
     width: $scrollbarsize;
     height: $scrollbarsize;
@@ -109,6 +112,12 @@ body ::-webkit-scrollbar-thumb {
         left: auto;
         right: 0;
     }
+
+    &.right.floated {
+        .button:first-child {
+            margin-left: 0.25em;
+        }
+    }
 }
 
 .ui.selection.dropdown {
@@ -132,9 +141,11 @@ body ::-webkit-scrollbar-thumb {
     i.icon.blue {
         color: $cds_color_teal !important;
     }
+
     i.icon.red {
         color: $cds_color_red !important;
     }
+
     i.icon.green {
         color: $cds_color_green !important;
     }
@@ -211,6 +222,7 @@ body ::-webkit-scrollbar-thumb {
     .wide.twelve {
         width: 75% !important;
     }
+
     .wide.sixteen {
         width: 100% !important;
     }
@@ -278,11 +290,13 @@ body ::-webkit-scrollbar-thumb {
         padding: 5px;
         height: 25px;
     }
+
     .dropdown.icon:active {
         background-color: #cac9c9;
         border-color: white;
         color: white;
     }
+
     .menu.transition {
         z-index: 13;
     }
@@ -298,6 +312,7 @@ body ::-webkit-scrollbar-thumb {
     .ui.dropdown {
         background-color: transparent;
         border-color: rgba(34, 36, 38, 0.35);
+
         &.item {
             i {
                 color: white;
@@ -305,14 +320,17 @@ body ::-webkit-scrollbar-thumb {
             }
         }
     }
+
     .ui.selection.dropdown {
         color: rgba(191, 191, 191, 0.87);
     }
+
     .ui.right.dropdown {
         border-bottom-left-radius: 0px;
         border-top-left-radius: 0px;
         border-left: none;
     }
+
     .ui.left.dropdown {
         border-bottom-right-radius: 0px;
         border-top-right-radius: 0px;
@@ -334,10 +352,13 @@ body ::-webkit-scrollbar-thumb {
 .ui.dropdown.languageSelect {
     min-width: 1em;
     border: none;
+
     .dropdown.icon {
         display: none;
     }
+
     padding-right: 1em;
+
     >.text>.flag {
         margin-right: 0em;
     }
@@ -355,6 +376,7 @@ ngui-auto-complete .no-match-found {
 }
 
 ;
+
 .node {
     white-space: nowrap;
 }
@@ -393,20 +415,25 @@ sui-search {
     .results {
         margin-top: 1.5em !important;
     }
+
     .ui.input {
         .prompt {
             background-color: rgba(225, 226, 229, .1);
             border-color: transparent;
+
             &:focus {
                 border: 1.5px solid #50cfd9;
             }
+
             color: white;
             opacity: 1;
         }
+
         i {
             &.search.icon {
                 opacity: 1;
             }
+
             color: white;
             opacity: 1;
         }
@@ -415,6 +442,7 @@ sui-search {
 
 .codeAdded {
     background-color: #cdffd8;
+
     .night & {
         background-color: $darkTheme_night_green;
     }
@@ -422,6 +450,7 @@ sui-search {
 
 .codeRemoved {
     background-color: #ffeef0;
+
     .night & {
         background-color: $darkTheme_night_red;
     }

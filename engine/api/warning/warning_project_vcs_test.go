@@ -1,6 +1,7 @@
 package warning
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -16,9 +17,8 @@ import (
 func TestUnusedProjectVCSWarning(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key)
 
 	// Create add vcs event
 	ePayload := sdk.EventProjectVCSServerAdd{
@@ -32,14 +32,14 @@ func TestUnusedProjectVCSWarning(t *testing.T) {
 
 	// Compute event
 	warnToTest := unusedProjectVCSWarning{}
-	test.NoError(t, warnToTest.compute(db, e))
+	test.NoError(t, warnToTest.compute(context.Background(), db, e))
 
 	// Check warning exist
 	warnsAfter, errAfter := GetByProject(db, proj.Key)
 	test.NoError(t, errAfter)
 	assert.Equal(t, 1, len(warnsAfter))
 
-	(&warnsAfter[0]).ComputeMessage("en")
+	(&warnsAfter[0]).ComputeMessage(context.TODO(), "en")
 	t.Logf("%s", warnsAfter[0].Message)
 
 	// Create Add key event
@@ -53,7 +53,7 @@ func TestUnusedProjectVCSWarning(t *testing.T) {
 		EventType:       fmt.Sprintf("%T", ePayloadAdd),
 		Payload:         structs.Map(ePayloadAdd),
 	}
-	test.NoError(t, warnToTest.compute(db, eAdd))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eAdd))
 
 	// Check that warning disapears
 	warnsAdd, errAfterDelete := GetByProject(db, proj.Key)
@@ -72,7 +72,7 @@ func TestUnusedProjectVCSWarning(t *testing.T) {
 		EventType:       fmt.Sprintf("%T", ePayloadAppDelete),
 		Payload:         structs.Map(ePayloadAppDelete),
 	}
-	test.NoError(t, warnToTest.compute(db, eAppDelete))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eAppDelete))
 	warnsAppDelete, errAppDeletz := GetByProject(db, proj.Key)
 	test.NoError(t, errAppDeletz)
 	assert.Equal(t, 1, len(warnsAppDelete))
@@ -87,7 +87,7 @@ func TestUnusedProjectVCSWarning(t *testing.T) {
 		EventType:       fmt.Sprintf("%T", ePayloadRepoDelete),
 		Payload:         structs.Map(ePayloadRepoDelete),
 	}
-	test.NoError(t, warnToTest.compute(db, eAppDeleteRepo))
+	test.NoError(t, warnToTest.compute(context.Background(), db, eAppDeleteRepo))
 	warnsRepoDelete, errRepoDelete := GetByProject(db, proj.Key)
 	test.NoError(t, errRepoDelete)
 	assert.Equal(t, 0, len(warnsRepoDelete))

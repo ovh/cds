@@ -115,11 +115,6 @@ export class RollbackWorkflow {
     constructor(public payload: { projectKey: string, workflowName: string, auditId: number }) { }
 }
 
-//  ------- Group Permission --------- //
-export class AddGroupInAllWorkflows {
-    static readonly type = '[Workflow] Add Group in Workflows already cached';
-    constructor(public payload: { projectKey: string, group: GroupPermission }) { }
-}
 export class AddGroupInWorkflow {
     static readonly type = '[Workflow] Add Group in Workflow';
     constructor(public payload: { projectKey: string, workflowName: string, group: GroupPermission }) { }

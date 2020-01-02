@@ -10,7 +10,7 @@ import (
 )
 
 //Import import or reuser the provided environment
-func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgChan chan<- sdk.Message, u *sdk.User) error {
+func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	exists, err := Exists(db, proj.Key, env.Name)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 }
 
 //ImportInto import variables and groups on an existing environment
-func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, into *sdk.Environment, msgChan chan<- sdk.Message, u *sdk.User) error {
+func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, into *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	var updateVar = func(v *sdk.Variable) {
 		log.Debug("ImportInto> Updating var %s", v.Name)
 

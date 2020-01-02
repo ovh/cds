@@ -7,15 +7,18 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"regexp"
 	"strconv"
+
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
+
+	"github.com/ovh/cds/engine/worker/internal"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
 )
 
-func cmdArtifacts(w *currentWorker) *cobra.Command {
+func cmdArtifacts() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "artifacts",
 		Short: "worker artifacts [--workflow=<workflow-name>] [--number=<run-number>] [--tag=<tag>] [--pattern=<pattern>]",
@@ -29,7 +32,7 @@ Inside a job, you can list artifacts of a workflow:
 	worker artifacts --workflow={{.cds.workflow}} --number={{.cds.run.number}}
 
 		`,
-		Run: artifactsCmd(w),
+		Run: artifactsCmd(),
 	}
 	c.Flags().StringVar(&cmdDownloadWorkflowName, "workflow", "", "Workflow name. Optional, default: current workflow")
 	c.Flags().StringVar(&cmdDownloadNumber, "number", "", "Workflow Number. Optional, default: current workflow run")
@@ -39,11 +42,11 @@ Inside a job, you can list artifacts of a workflow:
 	return c
 }
 
-func artifactsCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
+func artifactsCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(WorkerServerPort)
+		portS := os.Getenv(internal.WorkerServerPort)
 		if portS == "" {
-			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", WorkerServerPort)
+			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
 		}
 
 		port, errPort := strconv.Atoi(portS)
@@ -60,7 +63,7 @@ func artifactsCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		a := workerDownloadArtifact{
+		a := workerruntime.DownloadArtifact{
 			Workflow: cmdDownloadWorkflowName,
 			Number:   number,
 			Pattern:  cmdDownloadArtefactName,
@@ -101,67 +104,4 @@ func artifactsCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 		fmt.Println(string(respBody))
 	}
-}
-
-func (wk *currentWorker) artifactsHandler(w http.ResponseWriter, r *http.Request) {
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		newError := sdk.NewError(sdk.ErrWrongRequest, errRead)
-		writeError(w, r, newError)
-		return
-	}
-	defer r.Body.Close()
-
-	var reqArgs workerDownloadArtifact
-	if err := json.Unmarshal(data, &reqArgs); err != nil {
-		newError := sdk.NewError(sdk.ErrWrongRequest, err)
-		writeError(w, r, newError)
-		return
-	}
-
-	if reqArgs.Workflow == "" {
-		reqArgs.Workflow = sdk.ParameterValue(wk.currentJob.params, "cds.workflow")
-	}
-
-	if reqArgs.Number == 0 {
-		var errN error
-		buildNumberString := sdk.ParameterValue(wk.currentJob.params, "cds.run.number")
-		reqArgs.Number, errN = strconv.ParseInt(buildNumberString, 10, 64)
-		if errN != nil {
-			newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot parse '%s' as run number: %s", buildNumberString, errN))
-			writeError(w, r, newError)
-			return
-		}
-	}
-
-	projectKey := sdk.ParameterValue(wk.currentJob.params, "cds.project")
-	artifacts, err := wk.client.WorkflowRunArtifacts(projectKey, reqArgs.Workflow, reqArgs.Number)
-	if err != nil {
-		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot list artifacts with worker artifacts: %s", err))
-		writeError(w, r, newError)
-		return
-	}
-
-	regexp, errp := regexp.Compile(reqArgs.Pattern)
-	if errp != nil {
-		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid pattern %s : %s", reqArgs.Pattern, errp))
-		writeError(w, r, newError)
-		return
-	}
-
-	artifactsJSON := []sdk.WorkflowNodeRunArtifact{}
-	for i := range artifacts {
-		a := &artifacts[i]
-
-		if reqArgs.Pattern != "" && !regexp.MatchString(a.Name) {
-			continue
-		}
-
-		if reqArgs.Tag != "" && a.Tag != reqArgs.Tag {
-			continue
-		}
-		artifactsJSON = append(artifactsJSON, *a)
-	}
-
-	writeJSON(w, artifactsJSON, http.StatusOK)
 }

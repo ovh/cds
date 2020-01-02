@@ -17,10 +17,10 @@ func (api *API) getWorkerModelExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
-		groupName := vars["groupName"]
+		groupName := vars["permGroupName"]
 		modelName := vars["permModelName"]
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
 		}
@@ -39,9 +39,8 @@ func (api *API) getWorkerModelExportHandler() service.Handler {
 			return err
 		}
 
-		u := deprecatedGetUser(ctx)
 		opts := []exportentities.WorkerModelOption{}
-		if u != nil && !u.Admin && !wm.Restricted {
+		if !(isMaintainer(ctx) || isAdmin(ctx)) && !wm.Restricted {
 			opts = append(opts, exportentities.WorkerModelLoadOptions.HideAdminFields)
 		}
 

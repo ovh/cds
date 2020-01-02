@@ -11,15 +11,14 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
 
 // LoadEnvironments load all environment from the given project
-func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, u *sdk.User) ([]sdk.Environment, error) {
+func LoadEnvironments(db gorp.SqlExecutor, projectKey string) ([]sdk.Environment, error) {
 	var envs []sdk.Environment
 
-	query := `SELECT environment.id, environment.name, environment.last_modified, 7 as "perm", environment.from_repository
+	query := `SELECT environment.id, environment.name, environment.last_modified, environment.from_repository
 		  FROM environment
 		  JOIN project ON project.id = environment.project_id
 		  WHERE project.projectKey = $1
@@ -36,22 +35,18 @@ func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, u *
 	for rows.Next() {
 		var env sdk.Environment
 		var lastModified time.Time
-		if err := rows.Scan(&env.ID, &env.Name, &lastModified, &env.Permission, &env.FromRepository); err != nil {
+		if err := rows.Scan(&env.ID, &env.Name, &lastModified, &env.FromRepository); err != nil {
 			return envs, sdk.WithStack(err)
 		}
 		env.LastModified = lastModified.Unix()
 		env.ProjectKey = projectKey
-		env.Permission = permission.ProjectPermission(projectKey, u)
 		envs = append(envs, env)
 	}
 	rows.Close()
 
 	for i := range envs {
-		if loadDeps {
-			err = loadDependencies(db, &envs[i])
-			if err != nil {
-				return envs, err
-			}
+		if err := loadDependencies(db, &envs[i]); err != nil {
+			return envs, err
 		}
 	}
 	return envs, nil
@@ -286,7 +281,7 @@ func CountEnvironmentByVarValue(db gorp.SqlExecutor, projectKey string, value st
 }
 
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables
-func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u *sdk.User) error {
+func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u sdk.Identifiable) error {
 	if !strings.HasPrefix(keyname, "env-") {
 		keyname = "env-" + keyname
 	}

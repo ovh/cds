@@ -3,11 +3,10 @@ package sdk
 // DefaultValues contains default user values for init DB
 type DefaultValues struct {
 	DefaultGroupName string
-	SharedInfraToken string
 }
 
-// ConfigURLUIKey is the configuration key for UI URL
-var ConfigURLUIKey = "url.ui"
-
-// ConfigURLAPIKey is the configuration key for API URL
-var ConfigURLAPIKey = "url.api"
+// ConfigUser struct.
+type ConfigUser struct {
+	URLUI  string `json:"url.ui"`
+	URLAPI string `json:"url.api"`
+}

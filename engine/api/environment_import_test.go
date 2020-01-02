@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http/httptest"
 	"strings"
@@ -18,8 +19,8 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithoutSecret(t *testing.T)
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//Prepare request
@@ -87,8 +88,8 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//We will create an env, with a pgp key, export it then import as a new environment(with a different name)
@@ -168,7 +169,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 	variables, errLoadVars := environment.GetAllVariable(db, proj.Key, "myNewEnv", environment.WithClearPassword())
 	test.NoError(t, errLoadVars)
 	env.Variable = variables
-	test.NoError(t, environment.LoadAllDecryptedKeys(db, env))
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
 
 	env1, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
 	test.NoError(t, err)
@@ -176,7 +177,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 	variables1, errLoadVariables := environment.GetAllVariable(db, proj.Key, "myNewEnv-1", environment.WithClearPassword())
 	test.NoError(t, errLoadVariables)
 	env1.Variable = variables1
-	test.NoError(t, environment.LoadAllDecryptedKeys(db, env1))
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env1))
 
 	assert.NotNil(t, env1)
 	assert.Equal(t, "myNewEnv-1", env1.Name)
@@ -212,8 +213,8 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	env := &sdk.Environment{
@@ -290,7 +291,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	variables, errLoadVars := environment.GetAllVariable(db, proj.Key, "myNewEnv", environment.WithClearPassword())
 	test.NoError(t, errLoadVars)
 	env.Variable = variables
-	test.NoError(t, environment.LoadAllDecryptedKeys(db, env))
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
 
 	env1, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
 	test.NoError(t, err)
@@ -298,7 +299,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	variables1, errLoadVariables := environment.GetAllVariable(db, proj.Key, "myNewEnv-1", environment.WithClearPassword())
 	test.NoError(t, errLoadVariables)
 	env1.Variable = variables1
-	test.NoError(t, environment.LoadAllDecryptedKeys(db, env1))
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env1))
 
 	assert.NotNil(t, env1)
 	assert.Equal(t, "myNewEnv-1", env1.Name)
@@ -353,7 +354,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	variables, errLoadVars = environment.GetAllVariable(db, proj.Key, "myNewEnv", environment.WithClearPassword())
 	test.NoError(t, errLoadVars)
 	env.Variable = variables
-	test.NoError(t, environment.LoadAllDecryptedKeys(db, env))
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
 
 	env1, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
 	test.NoError(t, err)
@@ -361,7 +362,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	variables1, errLoadVariables = environment.GetAllVariable(db, proj.Key, "myNewEnv-1", environment.WithClearPassword())
 	test.NoError(t, errLoadVariables)
 	env1.Variable = variables1
-	test.NoError(t, environment.LoadAllDecryptedKeys(db, env1))
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env1))
 
 	assert.NotNil(t, env1)
 	assert.Equal(t, "myNewEnv-1", env1.Name)
@@ -396,8 +397,8 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithEmptyKey(t *testing.T) 
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	//Prepare request
@@ -432,7 +433,7 @@ keys:
 	variables, errLoadVars := environment.GetAllVariable(db, proj.Key, "myNewEnv", environment.WithClearPassword())
 	test.NoError(t, errLoadVars)
 	env.Variable = variables
-	test.NoError(t, environment.LoadAllDecryptedKeys(db, env))
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
 
 	assert.NotNil(t, env)
 	assert.Equal(t, "myNewEnv", env.Name)
@@ -463,8 +464,8 @@ func Test_postEnvironmentImportHandler_ExistingAppFromYAMLWithoutForce(t *testin
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	env := sdk.Environment{
@@ -499,8 +500,8 @@ func Test_postEnvironmentImportHandler_ExistingAppFromYAMLInheritPermissions(t *
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	test.NotNil(t, proj)
 
 	env := sdk.Environment{

@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"text/template"
 
 	"github.com/spf13/cobra"
 
@@ -158,7 +157,8 @@ type Doc struct {
 	QueryParams   []string
 	ResponseBody  string
 	RequestBody   string
-	Middleware    []Middleware
+	Middlewares   []Middleware
+	Scopes        []string
 	HTTPOperation string
 }
 
@@ -166,7 +166,8 @@ type Doc struct {
 type RouteInfo struct {
 	URL           string
 	Method        string
-	Middleware    []Middleware
+	Middlewares   []Middleware
+	Scopes        []string
 	HTTPOperation string
 }
 
@@ -177,8 +178,6 @@ type Middleware struct {
 }
 
 type visitor struct {
-	processingNewRoute bool
-
 	allRoutes map[string]RouteInfo
 }
 
@@ -243,6 +242,7 @@ type routeTmpl struct {
 	URL          string
 	Method       string
 	Permissions  string
+	Scopes       string
 	QueryParams  []string
 	Code         string
 	RequestBody  string
@@ -272,60 +272,10 @@ func writeRouteInfo(inputDocs []Doc, genPath string) error {
 			return err
 		}
 
-		t := template.New("routes")
-		t, err = t.ParseFiles("sdk/doc/routes.tmpl")
-		if err != nil {
+		if err := printSection(name, docs, f); err != nil {
 			return err
 		}
-		dataPage := pageTmpl{
-			Title:  name,
-			Routes: []routeTmpl{},
-		}
 
-		sort.Slice(docs, func(i, j int) bool {
-			titlea := docTitle(docs[i])
-			titleb := docTitle(docs[j])
-			return titlea < titleb
-		})
-		for _, doc := range docs {
-			route := routeTmpl{}
-			route.Title = docTitle(doc)
-			var permissions string
-			var noAuth bool
-			for _, v := range doc.Middleware {
-				if permissions != "" {
-					permissions += " - "
-				}
-				permissions += fmt.Sprintf(" %s: %s", v.Name, strings.Join(v.Value, ","))
-				if v.Name == "Auth" {
-					for _, value := range v.Value {
-						if value == "false" {
-							noAuth = true
-						}
-					}
-				}
-			}
-
-			if !noAuth {
-				if permissions != "" {
-					permissions += " - "
-				}
-				permissions += " Auth: true"
-			}
-			route.Permissions = permissions
-			route.URL = doc.URL
-			route.Method = doc.HTTPOperation
-			route.QueryParams = doc.QueryParams
-			route.Code = fmt.Sprintf("[%s](https://github.com/ovh/cds/search?q=%%22func+%%28api+*API%%29+%s%%22)\n", doc.Method, doc.Method)
-			route.Description = doc.Description
-			route.RequestBody = doc.RequestBody
-			route.ResponseBody = doc.ResponseBody
-			dataPage.Routes = append(dataPage.Routes, route)
-		}
-
-		if err := t.ExecuteTemplate(f, "routes.tmpl", dataPage); err != nil {
-			return err
-		}
 		f.Sync()
 		f.Close()
 	}
@@ -357,15 +307,12 @@ func extractFromMethod(doc *Doc, m Method) {
 			doc.ResponseBody = strings.Trim(strings.Replace(dLine, responseBody, "", -1), " ")
 		}
 	}
-	if len(docSliptted) > 0 && doc.Title == "" {
-		doc.Title = strings.Replace(docSliptted[0], "Handler", "", 1)
-		doc.Title = strings.Replace(doc.Title, "Handle", "", 1)
-	}
 }
 func extractFromRouteInfo(doc *Doc, routeInfo RouteInfo) {
 	doc.Method = routeInfo.Method
 	doc.HTTPOperation = routeInfo.HTTPOperation
-	doc.Middleware = routeInfo.Middleware
+	doc.Middlewares = routeInfo.Middlewares
+	doc.Scopes = routeInfo.Scopes
 	doc.URL = buildURL(routeInfo.URL)
 }
 
@@ -375,25 +322,40 @@ func buildURL(url string) string {
 	for i, u := range urlSplitted {
 		u = strings.Replace(strings.Replace(u, "{", "<", 1), "}", ">", 1)
 		switch u {
+		case "<consumerType>":
+			u = "<consumer-type>"
 		case "<key>", "<permProjectKey>":
 			u = "<project-key>"
-		case "<app>", "<permApplicationName>":
-			u = "<application-name>"
-		case "<pip>", "<permPipelineKey>":
-			u = "<pipeline-name>"
 		case "<permWorkflowName>":
 			u = "<workflow-name>"
-		case "<permEnvironmentName>":
-			u = "<environment-name>"
-		case "<permID>":
-			u = "<token>"
+		case "<applicationName>":
+			u = "<application-name>"
 		case "<permGroupName>", "<groupName>":
 			u = "<group-name>"
+		case "permUsernamePublic", "<permUsername>":
+			u = "<username>"
+		case "<permActionName>", "permActionBuiltinName":
+			u = "<action-name>"
+		case "<permJobID>":
+			u = "<job-id>"
+		case "<pipelineKey>":
+			u = "<pipeline-key>"
+		case "<environmentName>":
+			u = "<environment-name>"
 		case "<nodeRunID>":
 			u = "node-run-id"
-		case "<user>":
-			u = "<user-name>"
+		case "nodeID":
+			u = "node-id"
+		case "permModelName":
+			u = "model-name"
+		case "permTemplateSlug":
+			u = "template-slug"
+		case "permConsumerID":
+			u = "consumer-id"
+		case "permSessionID":
+			u = "session-id"
 		}
+
 		urlSplitted[i] = u
 	}
 	return strings.Join(urlSplitted, "/")
@@ -431,9 +393,11 @@ func (v visitor) Visit(n ast.Node) ast.Visitor {
 				v.allRoutes[currentRouteInfo.Method] = currentRouteInfo
 			}
 			url := currentRouteInfo.URL
+			scopes := currentRouteInfo.Scopes
 			currentRouteInfo = RouteInfo{
 				URL:           url,
 				HTTPOperation: d.Sel.Name,
+				Scopes:        scopes,
 			}
 		} else {
 			currentRouteInfo.Method = d.Sel.Name
@@ -458,7 +422,7 @@ func isHTTPOperation(op string) bool {
 
 func setMiddleWare(callExpr *ast.CallExpr) {
 	switch fmt.Sprintf("%s", callExpr.Fun) {
-	case "NeedAdmin", "NeedUsernameOrAdmin", "Auth", "NeedHatchery", "NeedService", "NeedWorker", "AllowServices":
+	case "NeedAdmin", "Auth":
 		m := Middleware{
 			Name:  fmt.Sprintf("%s", callExpr.Fun),
 			Value: make([]string, len(callExpr.Args)),
@@ -466,7 +430,13 @@ func setMiddleWare(callExpr *ast.CallExpr) {
 		for i, a := range callExpr.Args {
 			m.Value[i] = fmt.Sprintf("%s", a)
 		}
-		currentRouteInfo.Middleware = append(currentRouteInfo.Middleware, m)
+		currentRouteInfo.Middlewares = append(currentRouteInfo.Middlewares, m)
+	case "Scope":
+		for _, a := range callExpr.Args {
+			if v, ok := a.(*ast.SelectorExpr); ok {
+				currentRouteInfo.Scopes = append(currentRouteInfo.Scopes, strings.TrimPrefix(v.Sel.Name, "AuthConsumerScope"))
+			}
+		}
 	}
 }
 

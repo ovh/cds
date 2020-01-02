@@ -41,7 +41,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 		return nil, sdk.WrapError(err, "cannot get workflow template")
 	}
 	if !found {
-		return nil, nil
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	for i := range opts {
@@ -162,7 +162,7 @@ func getInstance(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, 
 		return nil, sdk.WrapError(err, "cannot get workflow template instance")
 	}
 	if !found {
-		return nil, nil
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	for i := range opts {

@@ -89,7 +89,7 @@ func (client *bitbucketcloudClient) reposForUser(ctx context.Context, username s
 
 // RepoByFullname Get only one repo
 func (client *bitbucketcloudClient) RepoByFullname(ctx context.Context, fullname string) (sdk.VCSRepo, error) {
-	repo, err := client.repoByFullname(fullname)
+	repo, err := client.repoByFullname(ctx, fullname)
 	if err != nil {
 		return sdk.VCSRepo{}, err
 	}
@@ -110,12 +110,12 @@ func (client *bitbucketcloudClient) RepoByFullname(ctx context.Context, fullname
 	return r, nil
 }
 
-func (client *bitbucketcloudClient) repoByFullname(fullname string) (Repository, error) {
+func (client *bitbucketcloudClient) repoByFullname(ctx context.Context, fullname string) (Repository, error) {
 	var repo Repository
 	url := fmt.Sprintf("/repositories/%s", fullname)
 	status, body, _, err := client.get(url)
 	if err != nil {
-		log.Warning("bitbucketcloudClient.Repos> Error %s", err)
+		log.Warning(ctx, "bitbucketcloudClient.Repos> Error %s", err)
 		return repo, err
 	}
 	if status >= 400 {

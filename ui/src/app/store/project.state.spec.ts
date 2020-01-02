@@ -14,7 +14,7 @@ import { Variable } from 'app/model/variable.model';
 import { Workflow } from 'app/model/workflow.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ProjectService } from 'app/service/project/project.service';
-import { ProjectStore } from 'app/service/services.module';
+import { ProjectStore } from 'app/service/project/project.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { ApplicationsState } from './applications.state';

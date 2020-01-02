@@ -1,6 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { CanActivateAuthRoute } from 'app/service/auth/authenRouteActivate';
+import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { ProjectResolver } from 'app/service/project/project.resolver';
 import { EnvironmentAddComponent } from './add/environment.add.component';
 import { EnvironmentShowComponent } from './show/environment.show.component';
@@ -8,8 +8,8 @@ import { EnvironmentShowComponent } from './show/environment.show.component';
 const environmentRoutes: Routes = [
     {
         path: '',
-        canActivate: [CanActivateAuthRoute],
-        canActivateChild: [CanActivateAuthRoute],
+        canActivate: [AuthenticationGuard],
+        canActivateChild: [AuthenticationGuard],
         children: [
             {
                 path: '', component: EnvironmentAddComponent,
@@ -29,6 +29,5 @@ const environmentRoutes: Routes = [
         ]
     }
 ];
-
 
 export const environmentRouting: ModuleWithProviders = RouterModule.forChild(environmentRoutes);

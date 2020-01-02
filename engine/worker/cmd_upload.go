@@ -2,10 +2,8 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,12 +12,13 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
 )
 
 var cmdUploadTag string
 
-func cmdUpload(w *currentWorker) *cobra.Command {
+func cmdUpload() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "upload",
 		Short: "worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload",
@@ -34,18 +33,18 @@ Inside a job, there are two ways to upload an artifact:
 You can use you storage integration:
 	worker upload --destination="yourStorageIntegrationName"
 		`,
-		Run: uploadCmd(w),
+		Run: uploadCmd(),
 	}
 	c.Flags().StringVar(&cmdUploadTag, "tag", "", "Tag for artifact Upload - Tag is mandatory")
 	c.Flags().StringVar(&cmdStorageIntegrationName, "destination", "", "optional. Your storage integration name")
 	return c
 }
 
-func uploadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
+func uploadCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(WorkerServerPort)
+		portS := os.Getenv(internal.WorkerServerPort)
 		if portS == "" {
-			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", WorkerServerPort)
+			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
 		}
 
 		port, errPort := strconv.Atoi(portS)
@@ -89,47 +88,5 @@ func uploadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				sdk.Exit("cannot artefact upload HTTP %d\n", resp.StatusCode)
 			}
 		}
-	}
-}
-
-func (wk *currentWorker) uploadHandler(w http.ResponseWriter, r *http.Request) {
-	// Get body
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	var a sdk.WorkflowNodeRunArtifact
-	if err := json.Unmarshal(data, &a); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	action := sdk.Action{
-		Parameters: []sdk.Parameter{
-			{
-				Name:  "path",
-				Type:  sdk.StringParameter,
-				Value: a.Name,
-			},
-			{
-				Name:  "tag",
-				Type:  sdk.StringParameter,
-				Value: a.Tag,
-			},
-			{
-				Name:  "destination",
-				Type:  sdk.StringParameter,
-				Value: r.FormValue("integration"),
-			},
-		},
-	}
-
-	sendLog := getLogger(wk, wk.currentJob.wJob.ID, wk.currentJob.currentStep)
-
-	if result := runArtifactUpload(wk)(context.Background(), &action, wk.currentJob.wJob.ID, &wk.currentJob.wJob.Parameters, wk.currentJob.secrets, sendLog); result.Status != sdk.StatusSuccess.String() {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
 	}
 }

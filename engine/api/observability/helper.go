@@ -20,6 +20,8 @@ import (
 
 // Tags contants
 const (
+	TagServiceType        = "service_type"
+	TagServiceName        = "service_name"
 	TagWorkflow           = "workflow"
 	TagWorkflowRun        = "workflow_run"
 	TagProjectKey         = "project_key"
@@ -28,9 +30,11 @@ const (
 	TagJob                = "job"
 	TagWorkflowNode       = "workflow_node"
 	TagPipelineID         = "pipeline_id"
+	TagPipeline           = "pipeline"
 	TagPipelineDeep       = "pipeline_deep"
 	TagWorker             = "worker"
 	TagToken              = "token"
+	TagPermission         = "permission"
 )
 
 // LinkTo a traceID
@@ -75,13 +79,31 @@ func ContextWithTag(ctx context.Context, s ...interface{}) context.Context {
 	for i := 0; i < len(s)-1; i = i + 2 {
 		k, err := tag.NewKey(s[i].(string))
 		if err != nil {
-			log.Error("ContextWithTag> %v", err)
+			log.Error(ctx, "ContextWithTag> %v", err)
 			continue
 		}
 		tags = append(tags, tag.Upsert(k, fmt.Sprintf("%v", s[i+1])))
 	}
 	ctx, _ = tag.New(ctx, tags...)
 	return ctx
+}
+
+func ContextGetTags(ctx context.Context, s ...string) []tag.Mutator {
+	m := tag.FromContext(ctx)
+	var tags []tag.Mutator
+
+	for i := 0; i < len(s); i++ {
+		k, err := tag.NewKey(s[i])
+		if err != nil {
+			log.Error(ctx, "ContextGetTags> %v", err)
+			continue
+		}
+		val, ok := m.Value(k)
+		if ok {
+			tags = append(tags, tag.Upsert(k, val))
+		}
+	}
+	return tags
 }
 
 // Span start a new span from the parent context
@@ -98,7 +120,7 @@ func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Co
 	return ctx, span.End
 }
 
-func findPrimaryKeyFromRequest(req *http.Request, db gorp.SqlExecutor, store cache.Store) (string, bool) {
+func findPrimaryKeyFromRequest(ctx context.Context, req *http.Request, db gorp.SqlExecutor, store cache.Store) (string, bool) {
 	vars := mux.Vars(req)
 	pkey := vars["key"]
 	if pkey == "" {
@@ -109,23 +131,23 @@ func findPrimaryKeyFromRequest(req *http.Request, db gorp.SqlExecutor, store cac
 		id, _ := strconv.ParseInt(vars["id"], 10, 64)
 		//The ID found may be a node run job, let's try to find the project key behing
 		if id <= 0 {
-			id, _ = strconv.ParseInt(vars["permID"], 10, 64)
+			id, _ = strconv.ParseInt(vars["permJobID"], 10, 64)
 		}
 		if id != 0 {
 			var err error
 			cacheKey := cache.Key("api:FindProjetKeyForNodeRunJob:", fmt.Sprintf("%v", id))
 			find, errGet := store.Get(cacheKey, &pkey)
 			if errGet != nil {
-				log.Error("cannot get from cache %s: %v", cacheKey, errGet)
+				log.Error(ctx, "cannot get from cache %s: %v", cacheKey, errGet)
 			}
 			if !find {
-				pkey, err = findProjetKeyForNodeRunJob(db, id)
+				pkey, err = findProjetKeyForNodeRunJob(ctx, db, id)
 				if err != nil {
-					log.Error("tracingMiddleware> %v", err)
+					log.Error(ctx, "tracingMiddleware> %v", err)
 					return "", false
 				}
 				if err := store.SetWithTTL(cacheKey, pkey, 60*15); err != nil {
-					log.Error("cannot SetWithTTL: %s: %v", cacheKey, err)
+					log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 				}
 			}
 		}

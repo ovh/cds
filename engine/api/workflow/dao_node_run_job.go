@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -34,10 +33,10 @@ func NewQueueFilter() QueueFilter {
 	now := time.Now()
 	return QueueFilter{
 		ModelType: sdk.AvailableWorkerModelType,
-		Rights:    permission.PermissionRead,
+		Rights:    sdk.PermissionRead,
 		Since:     new(time.Time),
 		Until:     &now,
-		Statuses:  []string{sdk.StatusWaiting.String()},
+		Statuses:  []string{sdk.StatusWaiting},
 	}
 }
 
@@ -59,9 +58,9 @@ func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.
 	return c, nil
 }
 
-func CountNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter, groups []sdk.Group) (sdk.WorkflowNodeJobRunCount, error) {
+func CountNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter, groupIDs []int64) (sdk.WorkflowNodeJobRunCount, error) {
 	var c sdk.WorkflowNodeJobRunCount
-	queue, err := LoadNodeJobRunQueueByGroups(ctx, db, store, filter, groups)
+	queue, err := LoadNodeJobRunQueueByGroupIDs(ctx, db, store, filter, groupIDs)
 	if err != nil {
 		return c, sdk.WrapError(err, "unable to load queue")
 	}
@@ -109,8 +108,8 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit)
 }
 
-// LoadNodeJobRunQueueByGroups load all workflow_node_run_job accessible
-func LoadNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter, groups []sdk.Group) ([]sdk.WorkflowNodeJobRun, error) {
+// LoadNodeJobRunQueueByGroupIDs load all workflow_node_run_job accessible
+func LoadNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter, groupIDs []int64) ([]sdk.WorkflowNodeJobRun, error) {
 	ctx, end := observability.Span(ctx, "workflow.LoadNodeJobRunQueueByGroups")
 	defer end()
 	containsService := []bool{true, false}
@@ -133,12 +132,12 @@ func LoadNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store
 	--  $8: shared infra group ID
 	--  $9: minimum level of permission
 	WITH workflow_id_with_permissions AS (
-		SELECT workflow_perm.workflow_id, 
+		SELECT workflow_perm.workflow_id,
 			CASE WHEN $8 = ANY(string_to_array($7, ',')::int[]) THEN 7
-				 ELSE max(workflow_perm.role) 
+				 ELSE max(workflow_perm.role)
 			END as "role"
 		FROM workflow_perm
-		JOIN project_group ON project_group.id = workflow_perm.project_group_id			
+		JOIN project_group ON project_group.id = workflow_perm.project_group_id
 		WHERE
 			project_group.group_id = ANY(string_to_array($7, ',')::int[])
 		OR
@@ -148,7 +147,7 @@ func LoadNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store
 		SELECT id, jsonb_array_elements_text(exec_groups)::jsonb->'id' AS exec_group_id
 		FROM workflow_node_run_job
 	), workflow_node_run_job_matching_exec_groups AS (
-		SELECT id 
+		SELECT id
 		FROM workflow_node_run_job_exec_groups
 		WHERE exec_group_id::text = ANY(string_to_array($7, ','))
 	)
@@ -158,12 +157,12 @@ func LoadNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store
 	JOIN workflow_run ON workflow_run.id = workflow_node_run.workflow_run_id
 	JOIN workflow ON workflow.id = workflow_run.workflow_id
 	WHERE workflow.id IN (
-		SELECT workflow_id 
+		SELECT workflow_id
 		FROM workflow_id_with_permissions
 		WHERE role >= $9
 	)
 	AND workflow_node_run_job.id IN (
-		SELECT id 
+		SELECT id
 		FROM workflow_node_run_job_matching_exec_groups
 	)
 	AND workflow_node_run_job.queued >= $1
@@ -171,21 +170,21 @@ func LoadNodeJobRunQueueByGroups(ctx context.Context, db gorp.SqlExecutor, store
 	AND workflow_node_run_job.status = ANY(string_to_array($3, ','))
 	AND workflow_node_run_job.contains_service IN ($4, $5)
 	AND (
-		workflow_node_run_job.model_type is NULL 
-		OR 
+		workflow_node_run_job.model_type is NULL
+		OR
 		model_type = '' OR model_type = ANY(string_to_array($6, ','))
 	)
 	ORDER BY workflow_node_run_job.queued ASC
 	`).Args(
-		*filter.Since,                       // $1
-		*filter.Until,                       // $2
-		strings.Join(filter.Statuses, ","),  // $3
-		containsService[0],                  // $4
-		containsService[1],                  // $5
-		strings.Join(filter.ModelType, ","), // $6
-		gorpmapping.IDsToQueryString(sdk.GroupsToIDs(groups)), // $7
-		group.SharedInfraGroup.ID,                             // $8
-		filter.Rights,                                         // $9
+		*filter.Since,                          // $1
+		*filter.Until,                          // $2
+		strings.Join(filter.Statuses, ","),     // $3
+		containsService[0],                     // $4
+		containsService[1],                     // $5
+		strings.Join(filter.ModelType, ","),    // $6
+		gorpmapping.IDsToQueryString(groupIDs), // $7
+		group.SharedInfraGroup.ID,              // $8
+		filter.Rights,                          // $9
 	)
 	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit)
 }
@@ -206,10 +205,10 @@ func loadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 
 	jobs := make([]sdk.WorkflowNodeJobRun, 0, len(sqlJobs))
 	for i := range sqlJobs {
-		getHatcheryInfo(store, &sqlJobs[i])
+		getHatcheryInfo(ctx, store, &sqlJobs[i])
 		jr, err := sqlJobs[i].WorkflowNodeRunJob()
 		if err != nil {
-			log.Error("LoadNodeJobRunQueue> WorkflowNodeRunJob error: %v", err)
+			log.Error(ctx, "LoadNodeJobRunQueue> WorkflowNodeRunJob error: %v", err)
 			continue
 		}
 		jobs = append(jobs, jr)
@@ -238,7 +237,7 @@ func LoadNodeJobRunIDByNodeRunID(db gorp.SqlExecutor, runNodeID int64) ([]int64,
 }
 
 //LoadNodeJobRun load a NodeJobRun given its ID
-func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func LoadNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1`
 	if err := db.SelectOne(&j, query, id); err != nil {
@@ -251,7 +250,7 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 		return nil, sdk.WithStack(err)
 	}
 	if store != nil {
-		getHatcheryInfo(store, &j)
+		getHatcheryInfo(ctx, store, &j)
 	}
 	jr, err := j.WorkflowNodeRunJob()
 	if err != nil {
@@ -261,10 +260,10 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 }
 
 //LoadDeadNodeJobRun load a NodeJobRun which is Building but without worker
-func LoadDeadNodeJobRun(db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowNodeJobRun, error) {
+func LoadDeadNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowNodeJobRun, error) {
 	var deadJobsDB []JobRun
 	query := `SELECT workflow_node_run_job.* FROM workflow_node_run_job WHERE status = $1 AND worker_id IS NULL`
-	if _, err := db.Select(&deadJobsDB, query, sdk.StatusBuilding.String()); err != nil {
+	if _, err := db.Select(&deadJobsDB, query, sdk.StatusBuilding); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
@@ -274,7 +273,7 @@ func LoadDeadNodeJobRun(db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowN
 	deadJobs := make([]sdk.WorkflowNodeJobRun, len(deadJobsDB))
 	for i, deadJob := range deadJobsDB {
 		if store != nil {
-			getHatcheryInfo(store, &deadJob)
+			getHatcheryInfo(ctx, store, &deadJob)
 		}
 
 		jr, err := deadJob.WorkflowNodeRunJob()
@@ -288,13 +287,13 @@ func LoadDeadNodeJobRun(db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowN
 }
 
 //LoadAndLockNodeJobRunWait load for update a NodeJobRun given its ID
-func LoadAndLockNodeJobRunWait(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func LoadAndLockNodeJobRunWait(ctx context.Context, db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update`
 	if err := db.SelectOne(&j, query, id); err != nil {
 		return nil, err
 	}
-	getHatcheryInfo(store, &j)
+	getHatcheryInfo(ctx, store, &j)
 	jr, err := j.WorkflowNodeRunJob()
 	if err != nil {
 		return nil, err
@@ -316,7 +315,7 @@ func LoadAndLockNodeJobRunSkipLocked(ctx context.Context, db gorp.SqlExecutor, s
 		}
 		return nil, err
 	}
-	getHatcheryInfo(store, &j)
+	getHatcheryInfo(ctx, store, &j)
 	jr, err := j.WorkflowNodeRunJob()
 	if err != nil {
 		return nil, err
@@ -365,12 +364,12 @@ func keyBookJob(id int64) string {
 	return cache.Key("book", "job", strconv.FormatInt(id, 10))
 }
 
-func getHatcheryInfo(store cache.Store, j *JobRun) {
+func getHatcheryInfo(ctx context.Context, store cache.Store, j *JobRun) {
 	h := sdk.Service{}
 	k := keyBookJob(j.ID)
 	find, err := store.Get(k, &h)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", k, err)
+		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
 	if find {
 		j.BookedBy = h
@@ -380,11 +379,11 @@ func getHatcheryInfo(store cache.Store, j *JobRun) {
 // replaceWorkflowJobRunInQueue restart workflow node job
 func replaceWorkflowJobRunInQueue(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun) error {
 	query := "UPDATE workflow_node_run_job SET status = $1, retry = $2, worker_id = NULL WHERE id = $3"
-	if _, err := db.Exec(query, sdk.StatusWaiting.String(), wNodeJob.Retry+1, wNodeJob.ID); err != nil {
-		return sdk.WrapError(err, "Unable to set workflow_node_run_job id %d with status %s", wNodeJob.ID, sdk.StatusWaiting.String())
+	if _, err := db.Exec(query, sdk.StatusWaiting, wNodeJob.Retry+1, wNodeJob.ID); err != nil {
+		return sdk.WrapError(err, "Unable to set workflow_node_run_job id %d with status %s", wNodeJob.ID, sdk.StatusWaiting)
 	}
 
-	query = "UPDATE worker SET status = $2, action_build_id = NULL where action_build_id = $1"
+	query = "UPDATE worker SET status = $2, job_run_id = NULL where action_build_id = $1"
 	if _, err := db.Exec(query, wNodeJob.ID, sdk.StatusDisabled); err != nil {
 		return sdk.WrapError(err, "Unable to set workers")
 	}

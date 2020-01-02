@@ -12,10 +12,7 @@ import { finalize, first } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PermissionFormComponent {
-
     public ready = false;
-
-
     permissionList: {};
     groupList: Group[];
     newGroupPermission: GroupPermission;
@@ -40,7 +37,7 @@ export class PermissionFormComponent {
     }
 
     loadGroups() {
-        this._groupService.getGroups().pipe(first(), finalize(() => this._cd.markForCheck())).subscribe(groups => {
+        this._groupService.getAll().pipe(first(), finalize(() => this._cd.markForCheck())).subscribe(groups => {
             this.groupList = groups;
             this.ready = true;
         });

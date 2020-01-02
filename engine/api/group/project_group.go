@@ -1,127 +1,53 @@
 package group
 
 import (
-	"database/sql"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
 )
 
-func checkAtLeastOneGroupWithWriteRoleOnProject(db gorp.SqlExecutor, projectID int64) (bool, error) {
-	query := `select count(group_id) from project_group where project_id = $1 and role = $2`
-	nb, err := db.SelectInt(query, projectID, 7)
+// DeleteLinkGroupProject deletes the link between group and project and checks
+// that group was not last with RWX permission.
+func DeleteLinkGroupProject(db gorp.SqlExecutor, l *LinkGroupProject) error {
+	query := `
+    SELECT count(*)
+    FROM project_group
+    WHERE project_id = $1 AND id != $2 AND role = $3
+  `
+	nb, err := db.SelectInt(query, l.ProjectID, l.ID, sdk.PermissionReadWriteExecute)
 	if err != nil {
-		return false, sdk.WrapError(err, "CheckAtLeastOneGroupWithWriteRoleOnProject")
+		return sdk.WrapError(err, "cannot count link between project %d and group %d", l.ProjectID, l.GroupID)
 	}
-	return nb > 0, err
+	if nb == 0 {
+		return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot remove group from project as it's the last group with write permission on project")
+	}
+
+	return deleteDBLinkGroupProject(db, l)
 }
 
-// DeleteGroupFromProject  Delete the group from the given project
-func DeleteGroupFromProject(db gorp.SqlExecutor, projectID, groupID int64) error {
-	query := `DELETE FROM project_group WHERE project_id=$1 AND group_id=$2`
-	if _, err := db.Exec(query, projectID, groupID); err != nil {
-		return sdk.WrapError(err, "DeleteGroupFromProject")
-	}
-
-	ok, err := checkAtLeastOneGroupWithWriteRoleOnProject(db, projectID)
-	if err != nil {
-		return sdk.WrapError(err, "DeleteGroupFromProject")
-	}
-	if !ok {
-		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "DeleteGroupFromProject")
-	}
-
-	return nil
-}
-
-// DeleteAllGroupFromProject Delete all groups from the given project ID
-func DeleteAllGroupFromProject(db gorp.SqlExecutor, projectID int64) error {
-	query := `DELETE FROM project_group WHERE project_id=$1 `
-	_, err := db.Exec(query, projectID)
-	return err
-}
-
-// UpdateGroupRoleInProject Update group role for the given project
-func UpdateGroupRoleInProject(db gorp.SqlExecutor, projectID, groupID int64, role int) error {
-	query := `UPDATE project_group SET role=$1 WHERE project_id=$2 AND group_id=$3`
-	if _, err := db.Exec(query, role, projectID, groupID); err != nil {
-		return sdk.WrapError(err, "UpdateGroupRoleInProject")
-	}
-
-	ok, err := checkAtLeastOneGroupWithWriteRoleOnProject(db, projectID)
-	if err != nil {
-		return sdk.WrapError(err, "UpdateGroupRoleInProject (checkAtLeastOneGroupWithWriteRoleOnProject)")
-	}
-	if !ok {
-		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "UpdateGroupRoleInProject")
-	}
-
-	return nil
-}
-
-// InsertGroupInProject Attach a group to a project
-func InsertGroupInProject(db gorp.SqlExecutor, projectID, groupID int64, role int) error {
-	query := `INSERT INTO project_group (project_id, group_id, role) VALUES($1,$2,$3) `
-	_, err := db.Exec(query, projectID, groupID, role)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	return err
-}
-
-// DeleteGroupProjectByProject removes group associated with project
-// Only use by delete project
-func DeleteGroupProjectByProject(db gorp.SqlExecutor, projectID int64) error {
-	query := `DELETE FROM project_group WHERE project_id=$1`
-	_, err := db.Exec(query, projectID)
-	return err
-}
-
-func deleteGroupProjectByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
-	projectIDs := []int64{}
-	if _, err := db.Select(&projectIDs, "SELECT project_id from project_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
-		return sdk.WrapError(err, "deleteGroupProjectByGroup")
-	}
-
-	query := `DELETE FROM project_group WHERE group_id=$1`
-	if _, err := db.Exec(query, group.ID); err != nil {
-		return sdk.WrapError(err, "deleteGroupProjectByGroup")
-	}
-
-	for _, id := range projectIDs {
-		ok, err := checkAtLeastOneGroupWithWriteRoleOnProject(db, id)
+// UpdateLinkGroupProject updates group role for the given project.
+func UpdateLinkGroupProject(db gorp.SqlExecutor, l *LinkGroupProject) error {
+	// If downgrade of permission, checks that there is still a group with RWX permissions
+	if l.Role < sdk.PermissionReadWriteExecute {
+		query := `
+      SELECT count(*)
+      FROM project_group
+      WHERE project_id = $1 AND id != $2 AND role = $3
+    `
+		nb, err := db.SelectInt(query, l.ProjectID, l.ID, 7)
 		if err != nil {
-			return sdk.WrapError(err, "deleteGroupProjectByGroup")
+			return sdk.WrapError(err, "cannot count link between project %d and group %d", l.ProjectID, l.GroupID)
 		}
-		if !ok {
-			return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "deleteGroupProjectByGroup")
+		if nb == 0 {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot downgrade group permission on project as it's the last group with write permission")
 		}
 	}
 
-	return nil
+	return updateDBLinkGroupProject(db, l)
 }
 
-// CheckGroupInProject  Check if the group is already attached to the project
-func CheckGroupInProject(db gorp.SqlExecutor, projectID, groupID int64) (bool, error) {
-	query := `SELECT COUNT(group_id) FROM project_group WHERE project_id = $1 AND group_id = $2`
-
-	var nb int64
-	err := db.QueryRow(query, projectID, groupID).Scan(&nb)
-	if err != nil {
-		return false, err
-	}
-	if nb != 0 {
-		return true, nil
-	}
-	return false, nil
-}
-
-// LoadRoleGroupInProject load role from group linked to the project
-func LoadRoleGroupInProject(db gorp.SqlExecutor, projectID, groupID int64) (int64, int, error) {
-	var role int
-	var id int64
-	query := `SELECT id, role FROM project_group WHERE project_id = $1 AND group_id = $2`
-	err := db.QueryRow(query, projectID, groupID).Scan(&id, &role)
-	return id, role, sdk.WrapError(err, "cannot load role group id %d from project id %d", groupID, projectID)
+// DeleteLinksGroupProjectForProjectID removes all links between group and project from database for given project id.
+func DeleteLinksGroupProjectForProjectID(db gorp.SqlExecutor, projectID int64) error {
+	_, err := db.Exec("DELETE FROM project_group WHERE project_id = $1", projectID)
+	return sdk.WithStack(err)
 }

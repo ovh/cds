@@ -1,5 +1,3 @@
-/* tslint:disable:no-unused-variable */
-
 import { APP_BASE_HREF } from '@angular/common';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Component, Injector } from '@angular/core';
@@ -8,6 +6,8 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { UserService } from 'app/service/user/user.service';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { Application } from '../../../../model/application.model';
 import { Pipeline } from '../../../../model/pipeline.model';
@@ -15,7 +15,6 @@ import { Project } from '../../../../model/project.model';
 import { RepositoriesManager } from '../../../../model/repositories.model';
 import { ApplicationService } from '../../../../service/application/application.service';
 import { ApplicationStore } from '../../../../service/application/application.store';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
 import { EnvironmentService } from '../../../../service/environment/environment.service';
 import { NavbarService } from '../../../../service/navbar/navbar.service';
 import { PipelineService } from '../../../../service/pipeline/pipeline.service';
@@ -67,12 +66,13 @@ describe('CDS: Application Admin Component', () => {
                 TranslateService,
                 TranslateParser,
                 RepoManagerService,
-                AuthentificationStore,
                 WorkflowStore,
                 WorkflowService,
                 WorkflowRunService,
                 { provide: APP_BASE_HREF, useValue: '/' },
-                Store
+                Store,
+                UserService,
+                AuthenticationService
             ],
             imports: [
                 RouterTestingModule.withRoutes([
@@ -105,7 +105,6 @@ describe('CDS: Application Admin Component', () => {
 
         let appRenamed = new Application();
         appRenamed.name = 'appRenamed';
-        appRenamed.permission = 7;
 
 
         let fixture = TestBed.createComponent(ApplicationAdminComponent);
@@ -114,7 +113,6 @@ describe('CDS: Application Admin Component', () => {
 
         let app: Application = new Application();
         app.name = 'app';
-        app.permission = 7;
         let p: Project = new Project();
         p.key = 'key1';
         p.name = 'proj1';

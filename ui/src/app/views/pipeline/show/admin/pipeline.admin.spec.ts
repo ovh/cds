@@ -1,4 +1,3 @@
-/* tslint:disable:no-unused-variable */
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Injector } from '@angular/core';
 import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
@@ -8,7 +7,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { NavbarService } from 'app/service/navbar/navbar.service';
+import { ProjectService } from 'app/service/project/project.service';
+import { ProjectStore } from 'app/service/project/project.store';
+import { MonitoringService, UserService } from 'app/service/services.module';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { NgxsStoreModule } from 'app/store/store.module';
 import 'rxjs/add/observable/of';
 import { Observable } from 'rxjs/Observable';
@@ -19,11 +24,6 @@ import { SharedModule } from '../../../../shared/shared.module';
 import { ToastService } from '../../../../shared/toast/ToastService';
 import { PipelineModule } from '../../pipeline.module';
 import { PipelineAdminComponent } from './pipeline.admin.component';
-import {WorkflowService} from 'app/service/workflow/workflow.service';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
-import { MonitoringService } from 'app/service/monitoring/monitoring.service';
-import { ProjectStore } from 'app/service/project/project.store';
-import { ProjectService } from 'app/service/project/project.service';
 
 describe('CDS: Pipeline Admin Component', () => {
 
@@ -46,6 +46,8 @@ describe('CDS: Pipeline Admin Component', () => {
                 WorkflowService,
                 WorkflowRunService,
                 TranslateParser,
+                UserService,
+                AuthenticationService,
                 MonitoringService,
                 ProjectStore,
                 ProjectService
@@ -77,6 +79,11 @@ describe('CDS: Pipeline Admin Component', () => {
 
         let p: Project = new Project();
         p.key = 'key1';
+        p.permissions = {
+            readable : true,
+            writable: true,
+            executable: true
+        }
         fixture.componentInstance.project = p;
 
         let pip: Pipeline = new Pipeline();

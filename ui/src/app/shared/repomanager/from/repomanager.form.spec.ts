@@ -1,5 +1,3 @@
-/* tslint:disable:no-unused-variable */
-
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, Injector } from '@angular/core';
@@ -7,6 +5,11 @@ import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { ToasterService } from 'angular2-toaster/angular2-toaster';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { MonitoringService } from 'app/service/services.module';
+import { UserService } from 'app/service/user/user.service';
+import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
+import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { Project } from '../../../model/project.model';
 import { RepositoriesManager } from '../../../model/repositories.model';
@@ -19,9 +22,6 @@ import { RepoManagerService } from '../../../service/repomanager/project.repoman
 import { VariableService } from '../../../service/variable/variable.service';
 import { SharedModule } from '../../shared.module';
 import { RepoManagerFormComponent } from './repomanager.form.component';
-import {WorkflowService} from 'app/service/workflow/workflow.service';
-import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
-import { MonitoringService } from 'app/service/services.module';
 
 
 describe('CDS: Project RepoManager Form Component', () => {
@@ -44,6 +44,9 @@ describe('CDS: Project RepoManager Form Component', () => {
                 TranslateParser,
                 NavbarService,
                 WorkflowService,
+                WorkflowRunService,
+                UserService,
+                AuthenticationService,
                 MonitoringService,
                 WorkflowRunService
             ],
@@ -106,6 +109,5 @@ describe('CDS: Project RepoManager Form Component', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/project/key1';
         })).flush(repoManMock);
-
     }));
 });

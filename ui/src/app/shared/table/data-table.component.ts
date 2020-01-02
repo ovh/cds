@@ -29,6 +29,8 @@ export enum ColumnType {
     CONFIRM_BUTTON = 'confirm-button',
     LABEL = 'label',
     TEXT_COPY = 'text-copy',
+    TEXT_LABELS = 'text-labels',
+    TEXT_ICONS = 'text-icons',
     TIME_AGO = 'time-ago'
 }
 

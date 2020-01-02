@@ -96,6 +96,7 @@ func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
+
 	b, err := json.Marshal(value)
 	if err != nil {
 		return sdk.WrapError(err, "redis> error caching %s", key)
@@ -104,6 +105,24 @@ func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) error {
 	if err := s.Client.Set(key, string(b), time.Duration(ttl)*time.Second).Err(); err != nil {
 		return sdk.WrapError(err, "redis> set error %s", key)
 	}
+	return nil
+}
+
+// SetWithDuration a value in local store (0 for eternity)
+func (s *RedisStore) SetWithDuration(key string, value interface{}, duration time.Duration) error {
+	if s.Client == nil {
+		return nil
+	}
+
+	b, err := json.Marshal(value)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if err := s.Client.Set(key, string(b), duration).Err(); err != nil {
+		return sdk.WrapError(err, "set error %s", key)
+	}
+
 	return nil
 }
 
@@ -220,7 +239,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 }
 
 // Publish a msg in a channel
-func (s *RedisStore) Publish(channel string, value interface{}) error {
+func (s *RedisStore) Publish(ctx context.Context, channel string, value interface{}) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
@@ -240,7 +259,7 @@ func (s *RedisStore) Publish(channel string, value interface{}) error {
 		if errP == nil {
 			break
 		}
-		log.Warning("redis.Publish> Unable to publish in channel %s: %v", channel, errP)
+		log.Warning(ctx, "redis.Publish> Unable to publish in channel %s: %v", channel, errP)
 		time.Sleep(100 * time.Millisecond)
 	}
 	return nil
@@ -294,14 +313,6 @@ func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 	return redisMsg.Payload, nil
 }
 
-// Status returns the status of the local cache
-func (s *RedisStore) Status() sdk.MonitoringStatusLine {
-	if s.Client.Ping().Err() == nil {
-		return sdk.MonitoringStatusLine{Component: "Cache Ping", Value: "OK", Status: sdk.MonitoringStatusOK}
-	}
-	return sdk.MonitoringStatusLine{Component: "Cache Ping", Value: "KO", Status: sdk.MonitoringStatusAlert}
-}
-
 // RemoveFromQueue removes a member from a list
 func (s *RedisStore) RemoveFromQueue(rootKey string, memberKey string) error {
 	if err := s.Client.LRem(rootKey, 0, memberKey).Err(); err != nil {
@@ -337,13 +348,13 @@ func (s *RedisStore) SetCard(key string) (int, error) {
 }
 
 // SetScan scans a ZSet
-func (s *RedisStore) SetScan(key string, members ...interface{}) error {
+func (s *RedisStore) SetScan(ctx context.Context, key string, members ...interface{}) error {
 	values, err := s.Client.ZRangeByScore(key, redis.ZRangeBy{
 		Min: "-inf",
 		Max: "+inf",
 	}).Result()
 	if err != nil {
-		return sdk.WrapError(err, "redis zrange error")
+		return fmt.Errorf("redis zrange error: %v", err)
 	}
 
 	keys := make([]string, len(values))
@@ -354,7 +365,7 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 	if len(keys) > 0 {
 		res, err := s.Client.MGet(keys...).Result()
 		if err != nil {
-			return sdk.WrapError(err, "redis mget error")
+			return fmt.Errorf("redis mget error: %v", err)
 		}
 
 		for i := range members {
@@ -365,11 +376,11 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 			if res[i] == nil {
 				//If the member is not found, return an error because the members are inconsistents
 				// but try to delete the member from the Redis ZSET
-				log.Error("redis>SetScan member %s not found", keys[i])
+				log.Error(ctx, "redis>SetScan member %s not found", keys[i])
 				if err := s.Client.ZRem(key, values[i]).Err(); err != nil {
 					return sdk.WrapError(err, "redis>SetScan unable to delete member %s", keys[i])
 				}
-				log.Info("redis> member %s deleted", keys[i])
+				log.Info(ctx, "redis> member %s deleted", keys[i])
 				return sdk.WithStack(fmt.Errorf("SetScan member %s not found", keys[i]))
 			}
 

@@ -92,7 +92,7 @@ func (r *WorkflowRun) PendingOutgoingHook() map[string]*WorkflowNodeRun {
 		}
 		for j := range runs {
 			nr := &runs[j]
-			if nr.Status != StatusWaiting.String() && nr.Status != StatusBuilding.String() {
+			if nr.Status != StatusWaiting && nr.Status != StatusBuilding {
 				continue
 			}
 			nrs[nr.UUID] = nr
@@ -141,7 +141,6 @@ func (r *WorkflowRun) TagExists(tag string) bool {
 	return false
 }
 
-// TODO remove old struct
 func (r *WorkflowRun) RootRun() *WorkflowNodeRun {
 	rootNodeRuns, has := r.WorkflowNodeRuns[r.Workflow.WorkflowData.Node.ID]
 	if !has || len(rootNodeRuns) < 1 {
@@ -357,7 +356,7 @@ type WorkflowNodeJobRun struct {
 	Parameters                []Parameter        `json:"parameters,omitempty"`
 	Status                    string             `json:"status"`
 	Retry                     int                `json:"retry"`
-	Queued                    time.Time          `json:"queued,omitempty"`
+	Queued                    time.Time          `json:"queued,omitempty" cli:"queued"`
 	QueuedSeconds             int64              `json:"queued_seconds,omitempty"`
 	Start                     time.Time          `json:"start,omitempty"`
 	Done                      time.Time          `json:"done,omitempty"`
@@ -365,7 +364,7 @@ type WorkflowNodeJobRun struct {
 	ModelType                 string             `json:"model_type,omitempty"`
 	BookedBy                  Service            `json:"bookedby,omitempty"`
 	SpawnInfos                []SpawnInfo        `json:"spawninfos"`
-	ExecGroups                []Group            `json:"exec_groups"`
+	ExecGroups                Groups             `json:"exec_groups"`
 	IntegrationPluginBinaries []GRPCPluginBinary `json:"integration_plugin_binaries,omitempty"`
 	Header                    WorkflowRunHeaders `json:"header,omitempty"`
 	ContainsService           bool               `json:"contains_service,omitempty"`
@@ -433,7 +432,9 @@ type WorkflowNodeRunHookEvent struct {
 type WorkflowNodeRunManual struct {
 	Payload            interface{} `json:"payload" db:"-"`
 	PipelineParameters []Parameter `json:"pipeline_parameter" db:"-"`
-	User               User        `json:"user" db:"-"`
+	Username           string      `json:"username" db:"-"`
+	Fullname           string      `json:"fullname" db:"-"`
+	Email              string      `json:"email" db:"-"`
 }
 
 //GetName returns the name the artifact

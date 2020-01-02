@@ -105,8 +105,6 @@ func getBuildParameterFromNodeContext(proj *sdk.Project, w *sdk.Workflow, runCon
 	//Merge the dumped payload with vars
 	vars = sdk.ParametersMapMerge(vars, tmpVars)
 
-	// TODO Update suggest.go  with new variable
-
 	vars["cds.project"] = w.ProjectKey
 	vars["cds.workflow"] = w.Name
 	vars["cds.pipeline"] = runContext.Pipeline.Name

@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, ViewChild } from '@angular/core';
+import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Operation } from 'app/model/operation.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
-import { AuthentificationStore } from 'app/service/auth/authentification.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
-import { environment } from 'environments/environment';
+import { AuthenticationState } from 'app/store/authentication.state';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -23,14 +23,16 @@ export class WorkflowSaveAsCodeComponent {
     ope: Operation;
     webworkerSub: Subscription;
 
-    @ViewChild('saveAsCodeModal', {static: false})
+    @ViewChild('saveAsCodeModal', { static: false })
     public saveAsCodeModal: ModalTemplate<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
 
-    constructor(private _modalService: SuiModalService, private _authStore: AuthentificationStore,
-                private _cd: ChangeDetectorRef) {
-    }
+    constructor(
+        private _modalService: SuiModalService,
+        private _store: Store,
+        private _cd: ChangeDetectorRef
+    ) { }
 
     show(ope: Operation): void {
         if (this.saveAsCodeModal) {
@@ -47,9 +49,9 @@ export class WorkflowSaveAsCodeComponent {
         let zone = new NgZone({ enableLongStackTrace: false });
         let webworker = new CDSWebWorker('./assets/worker/web/operation.js');
         webworker.start({
-            'user': this._authStore.getUser(),
-            'session': this._authStore.getSessionToken(),
-            'api': environment.apiURL,
+            'user': this._store.selectSnapshot(AuthenticationState.user),
+            // 'session': this._authStore.getSessionToken(),
+            'api': '/cdsapi',
             'path': '/project/' + this.project.key + '/workflows/' + this.workflow.name + '/ascode/' + this.ope.uuid
         });
         this.webworkerSub = webworker.response().subscribe(operation => {

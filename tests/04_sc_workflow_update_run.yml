@@ -1,0 +1,90 @@
+name: Create a simple workflow (ITSCWRKFLW2), update it and run it
+version: "2"
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./fixtures/ITSCWRKFLW2/pipeline.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW2/workflow_updated.yml ]'
+  - script: '[ -f ./fixtures/ITSCWRKFLW2/workflow.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW2"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw2 "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW2 ITSCWRKFLW2"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} application add ITSCWRKFLW2 ITSCWRKFLW2-APPLICATION"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} application add ITSCWRKFLW2 ITSCWRKFLW2-ANOTHER-APPLICATION"
+  - script: |-
+      {{.cdsctl}} -f {{.cdsctl.config}} worker model show buildpack-deps
+      if [ $? -ne 0 ]; then
+          {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml
+      fi
+
+- name: import pipeline
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force ITSCWRKFLW2 ./fixtures/ITSCWRKFLW2/pipeline.yml
+
+- name: import workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force ITSCWRKFLW2 ./fixtures/ITSCWRKFLW2/workflow.yml
+
+- name: run workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW2-WORKFLOW #1 has been launched"
+
+- name: check workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1 --format json
+    retry: 10
+    delay: 3
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.payload ShouldNotBeEmpty
+    - result.systemoutjson.num ShouldContainSubstring 1
+    - result.systemoutjson.status ShouldEqual Success
+    - result.systemoutjson.tags ShouldContainSubstring triggered_by
+
+- name: check log
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1
+    - script: grep "ITSCWRKFLW2-APPLICATION" *.log
+      assertions:
+      - result.code ShouldEqual 0
+
+- name: import an updated workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force ITSCWRKFLW2 ./fixtures/ITSCWRKFLW2/workflow_updated.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow export ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW > ITSCWRKFLW2-WORKFLOW.yml
+  
+- name: run workflow
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW2-WORKFLOW #2 has been launched"
+
+- name: check workflow run 2
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 2 --format json
+    retry: 10
+    delay: 3
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.payload ShouldBeEmpty
+    - result.systemoutjson.num ShouldContainSubstring 2
+    - result.systemoutjson.status ShouldEqual Success
+    - result.systemoutjson.tags ShouldContainSubstring triggered_by
+
+- name: check log 2
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 2
+    - script: grep "ITSCWRKFLW2-ANOTHER-APPLICATION" *.log
+      assertions:
+      - result.code ShouldEqual 0

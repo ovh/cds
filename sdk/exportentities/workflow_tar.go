@@ -2,6 +2,7 @@ package exportentities
 
 import (
 	"archive/tar"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -11,11 +12,11 @@ import (
 )
 
 // Tar returns a tar containing all files for a pulled workflow.
-func (w WorkflowPulled) Tar(writer io.Writer) error {
+func (w WorkflowPulled) Tar(ctx context.Context, writer io.Writer) error {
 	tw := tar.NewWriter(writer)
 	defer func() {
 		if err := tw.Close(); err != nil {
-			log.Error("%v", sdk.WrapError(err, "unable to close tar writer"))
+			log.Error(ctx, "%v", sdk.WrapError(err, "unable to close tar writer"))
 		}
 	}()
 

@@ -38,15 +38,11 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("ApplyConfiguration> Invalid Elasticsearch configuration")
 	}
 
-	s.Client = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second, s.Cfg.API.HTTP.Insecure)
-	s.API = s.Cfg.API.HTTP.URL
-	s.Name = s.Cfg.Name
 	s.HTTPURL = s.Cfg.URL
-	s.Token = s.Cfg.API.Token
-	s.Type = services.TypeElasticsearch
+	s.ServiceName = s.Cfg.Name
+	s.ServiceType = services.TypeElasticsearch
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 	s.ServiceName = "cds-elasticsearch"
-
 	return nil
 }
 
@@ -65,6 +61,20 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 	}
 
 	return nil
+}
+
+func (s *Service) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(Configuration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid Elasticsearch configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
 }
 
 // Serve will start the http api server
@@ -93,15 +103,15 @@ func (s *Service) Serve(c context.Context) error {
 	go func() {
 		select {
 		case <-ctx.Done():
-			log.Info("ElasticSearch> Shutdown HTTP Server")
+			log.Info(ctx, "ElasticSearch> Shutdown HTTP Server")
 			_ = server.Shutdown(ctx)
 		}
 	}()
 
 	//Start the http server
-	log.Info("ElasticSearch> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+	log.Info(ctx, "ElasticSearch> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Error("ElasticSearch> Listen and serve failed: %v", err)
+		log.Error(ctx, "ElasticSearch> Listen and serve failed: %v", err)
 	}
 
 	return ctx.Err()

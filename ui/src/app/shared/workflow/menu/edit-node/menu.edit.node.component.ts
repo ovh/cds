@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { IPopup } from '@richardlt/ng2-semantic-ui';
-import { PermissionValue } from 'app/model/permission.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
@@ -48,7 +47,6 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
     @Input() popup: IPopup;
     @Input() readonly = true;
     @Output() event = new EventEmitter<string>();
-    permissionEnum = PermissionValue;
     runnable: boolean;
     storeSubscription: Subscription;
     workflow: Workflow;
@@ -77,13 +75,7 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
             return;
         }
 
-        // Get Env permission
-        let envForbid = this.node && this.node.context && this.node.context.environment_id > 1
-            && this.workflow.environments && this.workflow.environments[this.node.context.environment_id]
-            && this.workflow.environments[this.node.context.environment_id].permission
-            && this.workflow.environments[this.node.context.environment_id].permission < PermissionValue.READ_EXECUTE;
-
-        if (this.workflow && this.workflow.permission < PermissionValue.READ_EXECUTE || envForbid) {
+        if (this.workflow && !this.workflow.permissions.executable) {
             return false;
         }
 

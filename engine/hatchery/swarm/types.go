@@ -2,18 +2,14 @@ package swarm
 
 import (
 	docker "github.com/docker/docker/client"
+	"github.com/ovh/cds/engine/service"
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/hatchery"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
 type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration"`
-
-	// RatioService Percent reserved for spawning worker with service requirement
-	RatioService int `mapstructure:"ratioService" toml:"ratioService" default:"75" commented:"false" comment:"Percent reserved for spawning worker with service requirement" json:"ratioService"`
+	service.HatcheryCommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration"`
 
 	// MaxContainers
 	MaxContainers int `mapstructure:"maxContainers" toml:"maxContainers" default:"10" commented:"false" comment:"Max Containers on Host managed by this Hatchery" json:"maxContainers"`
@@ -27,6 +23,9 @@ type HatcheryConfiguration struct {
 	// DockerOpts Docker options
 	DockerOpts string `mapstructure:"dockerOpts" toml:"dockerOpts" default:"" commented:"true" comment:"Docker Options. --add-host and --privileged supported. Example: dockerOpts=\"--add-host=myhost:x.x.x.x,myhost2:y.y.y.y --privileged\"" json:"dockerOpts,omitempty"`
 
+	// TODO refactor DockerOpts globally: issue #4594
+	DisableDockerOptsOnRequirements bool `mapstructure:"disableDockerOptsOnRequirements" toml:"disableDockerOptsOnRequirements" default:"" commented:"true" comment:"disable dockerOpts on requirements"`
+
 	// NetworkEnableIPv6 if true: set ipv6 to true
 	NetworkEnableIPv6 bool `mapstructure:"networkEnableIPv6" toml:"networkEnableIPv6" default:"false" commented:"false" comment:"if true: hatchery creates private network between services with ipv6 enabled" json:"networkEnableIPv6"`
 
@@ -37,7 +36,6 @@ type HatcheryConfiguration struct {
 type HatcherySwarm struct {
 	hatcheryCommon.Common
 	Config        HatcheryConfiguration
-	hatch         *sdk.Hatchery
 	dockerClients map[string]*dockerClient
 }
 

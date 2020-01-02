@@ -12,39 +12,40 @@ import (
 )
 
 var (
-	configFile string
-	cfg        *cdsclient.Config
-	client     cdsclient.Interface
-	root       *cobra.Command
+	cfg            *cdsclient.Config
+	configFilePath string
+	client         cdsclient.Interface
+	root           *cobra.Command
 )
 
 func main() {
 	root = rootFromSubCommands([]*cobra.Command{
-		doc(),         // hidden command
-		accesstoken(), // experimental command
+		doc(), // hidden command
 		action(),
-		login(),             // nearly deprecated
-		loginExperimental(), // experimental command to handle JWT
-		signup(),
+		admin(),
 		application(),
+		consumer(),
+		encrypt(),
+		contexts(),
 		environment(),
 		events(),
-		pipeline(),
 		group(),
 		health(),
+		login(),
+		reset(),
+		signup(),
+		pipeline(),
 		project(),
-		worker(),
-		workflow(),
+		queue(),
+		shell(),
+		template(),
+		tools(),
 		update(),
 		usr(),
-		shell(),
-		monitoring(),
+		session(),
 		version(),
-		encrypt(),
-		token(), // nearly deprecated
-		template(),
-		admin(),
-		tools(),
+		worker(),
+		workflow(),
 	})
 	if err := root.Execute(); err != nil {
 		cli.ExitOnError(err)
@@ -54,21 +55,25 @@ func main() {
 func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 	root := cli.NewCommand(mainCmd, mainRun, cmds)
 
-	root.PersistentFlags().StringVarP(&configFile, "file", "f", "", "set configuration file")
-	root.PersistentFlags().BoolP("verbose", "", false, "verbose output")
+	root.PersistentFlags().StringP("context", "c", "", "cdsctl context name")
+	root.PersistentFlags().StringP("file", "f", "", "set configuration file")
+	root.PersistentFlags().BoolP("no-interactive", "n", false, "Set to disable interaction with ctl")
+	root.PersistentFlags().BoolP("verbose", "", false, "Enable verbose output")
 	root.PersistentFlags().BoolP("insecure", "", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 
 	root.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		var err error
-		cfg, err = loadConfig(cmd, configFile)
+		configFilePath, cfg, err = loadConfig(cmd)
 
 		if err == nil && cfg != nil {
 			client = cdsclient.New(*cfg)
 		}
 
-		//Do not load config on login
+		// Do not load config on login
 		if cmd.Name() == "login" ||
 			cmd.Name() == "signup" ||
+			cmd.Name() == "verify" ||
+			cmd.Name() == "reset-password" ||
 			cmd.Name() == "confirm" ||
 			cmd.Name() == "version" ||
 			cmd.Name() == "doc" || strings.HasPrefix(cmd.Use, "doc ") || (cmd.Run == nil && cmd.RunE == nil) {
@@ -88,7 +93,7 @@ var mainCmd = cli.Command{
 
 ## Download
 
-You will find lastest release of ` + "`cdsctl`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
+You will find latest release of ` + "`cdsctl`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
 
 
 ## Authentication
@@ -97,11 +102,14 @@ Per default, the command line ` + "`cdsctl`" + ` uses your keychain on your os:
 
 * OSX: Keychain Access
 * Linux System: Secret-tool (libsecret)
-* Windows: Windows Credentials service
 
 You can bypass keychain tools by using environment variables:
 
-	CDS_API_URL="https://instance.cds.api" CDS_USER="username" CDS_TOKEN="yourtoken" cdsctl [command]
+	CDS_API_URL="https://instance.cds.api" CDS_USER="username" CDS_SESSION_TOKEN="yourtoken" cdsctl [command]
+
+You can use a "sign in" token attached to a consumer:
+
+	CDS_API_URL="https://instance.cds.api" CDS_SIGNIN_TOKEN="token-consumer" cdsctl [command]
 
 
 Want to debug something? You can use ` + "`CDS_VERBOSE`" + ` environment variable.
@@ -119,15 +127,13 @@ If you're using a self-signed certificate on CDS API, you probably want to use `
 func mainRun(vals cli.Values) error {
 	fmt.Println("Welcome to CDS")
 
-	urlUI, err := client.ConfigUser()
+	config, err := client.ConfigUser()
 	if err != nil {
 		return nil
 	}
 
-	var uiURL string
-	if b, ok := urlUI[sdk.ConfigURLUIKey]; ok {
-		uiURL = b
-		fmt.Printf("UI: %s\n", uiURL)
+	if config.URLUI != "" {
+		fmt.Printf("UI: %s\n", config.URLUI)
 	}
 
 	navbarInfos, err := client.Navbar()
@@ -150,12 +156,12 @@ func mainRun(vals cli.Values) error {
 
 	fmt.Println("\n -=-=-=-=- Projects bookmarked -=-=-=-=-")
 	for _, prj := range projFavs {
-		fmt.Printf("- %s %s\n", prj.Name, uiURL+"/project/"+prj.Key)
+		fmt.Printf("- %s %s\n", prj.Name, config.URLUI+"/project/"+prj.Key)
 	}
 
 	fmt.Println("\n -=-=-=-=- Workflows bookmarked -=-=-=-=-")
 	for _, wf := range wfFavs {
-		fmt.Printf("- %s %s\n", wf.WorkflowName, uiURL+"/project/"+wf.Key+"/workflow/"+wf.WorkflowName)
+		fmt.Printf("- %s %s\n", wf.WorkflowName, config.URLUI+"/project/"+wf.Key+"/workflow/"+wf.WorkflowName)
 	}
 
 	return nil

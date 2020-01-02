@@ -21,13 +21,8 @@ var (
 )
 
 func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-	if rc.Options["auth"] != "true" {
+	if !rc.NeedAuth {
 		return ctx, nil
-	}
-
-	hash, err := base64.StdEncoding.DecodeString(req.Header.Get(sdk.AuthHeader))
-	if err != nil {
-		return ctx, fmt.Errorf("bad header syntax: %s", err)
 	}
 
 	encodedAccessToken := req.Header.Get(sdk.HeaderXAccessToken)
@@ -56,10 +51,6 @@ func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req
 	}
 	if len(accessTokenCreated) != 0 {
 		ctx = context.WithValue(ctx, contextKeyAccessTokenCreated, string(accessTokenCreated))
-	}
-
-	if s.Hash != string(hash) {
-		return ctx, sdk.ErrUnauthorized
 	}
 
 	return ctx, nil

@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"io"
 
 	"github.com/go-gorp/gorp"
@@ -11,8 +12,8 @@ import (
 )
 
 // Export a pipeline
-func Export(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exportentities.Format, w io.Writer) (int, error) {
-	p, err := LoadPipeline(db, key, name, true)
+func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, key string, name string, f exportentities.Format, w io.Writer) (int, error) {
+	p, err := LoadPipeline(ctx, db, key, name, true)
 	if err != nil {
 		return 0, sdk.WrapError(err, "Cannot load workflow %s", name)
 	}

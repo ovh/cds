@@ -19,11 +19,11 @@ import (
 )
 
 // Export a workflow
-func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, u *sdk.User, w io.Writer, opts ...exportentities.WorkflowOptions) (int, error) {
+func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, w io.Writer, opts ...exportentities.WorkflowOptions) (int, error) {
 	ctx, end := observability.Span(ctx, "workflow.Export")
 	defer end()
 
-	wf, errload := Load(ctx, db, cache, proj, name, u, LoadOptions{})
+	wf, errload := Load(ctx, db, cache, proj, name, LoadOptions{})
 	if errload != nil {
 		return 0, sdk.WrapError(errload, "workflow.Export> Cannot load workflow %s", name)
 	}
@@ -33,11 +33,11 @@ func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *s
 		opts = append(opts, exportentities.WorkflowSkipIfOnlyOneRepoWebhook)
 	}
 
-	return exportWorkflow(*wf, f, w, opts...)
+	return exportWorkflow(ctx, *wf, f, w, opts...)
 }
 
-func exportWorkflow(wf sdk.Workflow, f exportentities.Format, w io.Writer, opts ...exportentities.WorkflowOptions) (int, error) {
-	e, err := exportentities.NewWorkflow(wf, opts...)
+func exportWorkflow(ctx context.Context, wf sdk.Workflow, f exportentities.Format, w io.Writer, opts ...exportentities.WorkflowOptions) (int, error) {
+	e, err := exportentities.NewWorkflow(ctx, wf, opts...)
 	if err != nil {
 		return 0, sdk.WrapError(err, "exportWorkflow")
 	}
@@ -58,7 +58,7 @@ func exportWorkflow(wf sdk.Workflow, f exportentities.Format, w io.Writer, opts 
 
 // Pull a workflow with all it dependencies; it writes a tar buffer in the writer
 func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format,
-	encryptFunc sdk.EncryptFunc, u *sdk.User, opts ...exportentities.WorkflowOptions) (exportentities.WorkflowPulled, error) {
+	encryptFunc sdk.EncryptFunc, opts ...exportentities.WorkflowOptions) (exportentities.WorkflowPulled, error) {
 	ctx, end := observability.Span(ctx, "workflow.Pull")
 	defer end()
 
@@ -67,13 +67,13 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	options := LoadOptions{
 		DeepPipeline: true,
 	}
-	wf, errload := Load(ctx, db, cache, proj, name, u, options)
+	wf, errload := Load(ctx, db, cache, proj, name, options)
 	if errload != nil {
 		return wp, sdk.WrapError(errload, "cannot load workflow %s", name)
 	}
 
 	i, err := workflowtemplate.LoadInstanceByWorkflowID(ctx, db, wf.ID, workflowtemplate.LoadInstanceOptions.WithTemplate)
-	if err != nil {
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return wp, err
 	}
 	if i != nil {
@@ -104,7 +104,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		}
 		env.Variable = vars
 
-		if err := environment.LoadAllDecryptedKeys(db, &env); err != nil {
+		if err := environment.LoadAllDecryptedKeys(ctx, db, &env); err != nil {
 			return wp, sdk.WrapError(err, "cannot load environment keys %s", env.Name)
 		}
 		wf.Environments[i] = env
@@ -115,7 +115,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	if wf.FromRepository != "" {
 		opts = append(opts, exportentities.WorkflowSkipIfOnlyOneRepoWebhook)
 	}
-	if _, err := exportWorkflow(*wf, f, buffw, opts...); err != nil {
+	if _, err := exportWorkflow(ctx, *wf, f, buffw, opts...); err != nil {
 		return wp, sdk.WrapError(err, "unable to export workflow")
 	}
 	wp.Workflow.Name = wf.Name

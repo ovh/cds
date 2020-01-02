@@ -260,7 +260,7 @@ export class ActionEditComponent implements OnInit {
 
     getGroups(): void {
         this.loading = true;
-        this._groupService.getGroups()
+        this._groupService.getAll()
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();

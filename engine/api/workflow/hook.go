@@ -51,7 +51,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 					ID:       h.Config[sdk.HookConfigWebHookID].Value,
 				}
 				if err := client.DeleteHook(ctx, h.Config["repoFullName"].Value, vcsHook); err != nil {
-					log.Error("deleteHookConfiguration> Cannot delete hook on repository %s", err)
+					log.Error(ctx, "deleteHookConfiguration> Cannot delete hook on repository %s", err)
 				}
 			}
 		}
@@ -59,15 +59,15 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	//Push the hook to hooks µService
 	//Load service "hooks"
-	srvs, err := services.FindByType(db, services.TypeHooks)
+	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
 	if err != nil {
 		return err
 	}
-	_, code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
+	_, code, errHooks := services.DoJSONRequest(ctx, db, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
 	if errHooks != nil || code >= 400 {
 		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
 		// so, it's just a warn log
-		log.Error("HookRegistration> unable to delete old hooks [%d]: %s", code, errHooks)
+		log.Error(ctx, "HookRegistration> unable to delete old hooks [%d]: %s", code, errHooks)
 	}
 	return nil
 }
@@ -83,7 +83,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		return nil
 	}
 
-	srvs, err := services.FindByType(db, services.TypeHooks)
+	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
 	if err != nil {
 		return sdk.WrapError(err, "unable to get services dao")
 	}
@@ -159,7 +159,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 
 	if len(hookToUpdate) > 0 {
 		// Create hook on µservice
-		_, code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hookToUpdate)
+		_, code, errHooks := services.DoJSONRequest(ctx, db, srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hookToUpdate)
 		if errHooks != nil || code >= 400 {
 			return sdk.WrapError(errHooks, "unable to create hooks [%d]", code)
 		}

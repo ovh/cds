@@ -7,7 +7,7 @@ import { Label, Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { ProjectService } from 'app/service/project/project.service';
-import { ProjectStore } from 'app/service/services.module';
+import { ProjectStore } from 'app/service/project/project.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { ApplicationsState } from './applications.state';
@@ -23,7 +23,13 @@ describe('Workflows', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            providers: [NavbarService, WorkflowService, WorkflowRunService, ProjectStore, ProjectService],
+            providers: [
+                NavbarService,
+                WorkflowService,
+                WorkflowRunService,
+                ProjectStore,
+                ProjectService
+            ],
             imports: [
                 NgxsModule.forRoot([ApplicationsState, ProjectState, PipelinesState, WorkflowState]),
                 HttpClientTestingModule
@@ -31,9 +37,10 @@ describe('Workflows', () => {
         }).compileComponents();
 
         store = TestBed.get(Store);
-        let project = new Project();
-        project.key = testProjectKey;
-        project.name = testProjectKey;
+        let project = <Project>{
+            key: testProjectKey,
+            name: testProjectKey
+        };
         store.dispatch(new AddProject(project));
         const http = TestBed.get(HttpTestingController);
         http.expectOne(((req: HttpRequest<any>) => {
@@ -58,7 +65,12 @@ describe('Workflows', () => {
             return req.url === '/project/test1/workflows/wf1';
         })).flush(<Workflow>{
             name: 'wf1',
-            project_key: testProjectKey
+            project_key: testProjectKey,
+            permissions: {
+                readable: true,
+                writable: true,
+                executable: true
+            }
         });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wsf: WorkflowStateModel) => {
             expect(wsf.workflow).toBeTruthy();
@@ -263,6 +275,11 @@ describe('Workflows', () => {
         let workflow = new Workflow();
         workflow.name = 'wf1';
         workflow.project_key = testProjectKey;
+        workflow.permissions = {
+            readable: true,
+            writable: true,
+            executable: true
+        };
         store.dispatch(new workflowsActions.CreateWorkflow({
             projectKey: testProjectKey,
             workflow
@@ -289,7 +306,12 @@ describe('Workflows', () => {
         })).flush(<Workflow>{
             project_key: testProjectKey,
             name: 'wf1',
-            audits: [audit]
+            audits: [audit],
+            permissions: {
+                readable: true,
+                writable: true,
+                executable: true
+            }
         });
         store.selectOnce(WorkflowState.getCurrent()).subscribe((wfs: WorkflowStateModel) => {
             expect(wfs.workflow).toBeTruthy();

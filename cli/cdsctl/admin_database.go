@@ -16,6 +16,10 @@ func adminDatabase() *cobra.Command {
 		cli.NewCommand(adminDatabaseUnlockCmd, adminDatabaseUnlockFunc, nil),
 		cli.NewCommand(adminDatabaseDeleteMigrationCmd, adminDatabaseDeleteFunc, nil),
 		cli.NewListCommand(adminDatabaseMigrationsList, adminDatabaseMigrationsListFunc, nil),
+		cli.NewGetCommand(adminDatabaseSignatureResume, adminDatabaseSignatureResumeFunc, nil),
+		cli.NewCommand(adminDatabaseSignatureRoll, adminDatabaseSignatureRollFunc, nil),
+		cli.NewGetCommand(adminDatabaseEncryptionResume, adminDatabaseEncryptionResumeFunc, nil),
+		cli.NewCommand(adminDatabaseEncryptionRoll, adminDatabaseEncryptionRollFunc, nil),
 	})
 }
 
@@ -54,4 +58,71 @@ func adminDatabaseMigrationsListFunc(_ cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	return cli.AsListResult(migrations), nil
+}
+
+var adminDatabaseSignatureResume = cli.Command{
+	Name:  "list-signed-data",
+	Short: "List all signed data in database",
+}
+
+func adminDatabaseSignatureResumeFunc(_ cli.Values) (interface{}, error) {
+	return client.AdminDatabaseSignaturesResume()
+}
+
+var adminDatabaseSignatureRoll = cli.Command{
+	Name:  "roll-signed-data",
+	Short: "Roll a signed data in database",
+	VariadicArgs: cli.Arg{
+		Name: "entity",
+	},
+}
+
+func adminDatabaseSignatureRollFunc(args cli.Values) error {
+
+	entities := args.GetStringSlice("entity")
+	if len(entities) == 0 {
+		return client.AdminDatabaseSignaturesRollAllEntities()
+	}
+
+	for _, e := range entities {
+		if err := client.AdminDatabaseSignaturesRollEntity(e); err != nil {
+			return err
+		}
+	}
+
+	return nil
+
+}
+
+var adminDatabaseEncryptionResume = cli.Command{
+	Name:  "list-encrypted-data",
+	Short: "List all encrypted data in database",
+}
+
+func adminDatabaseEncryptionResumeFunc(_ cli.Values) (interface{}, error) {
+	return client.AdminDatabaseListEncryptedEntities()
+}
+
+var adminDatabaseEncryptionRoll = cli.Command{
+	Name:  "roll-encrypteddata",
+	Short: "Roll a encrypted data in database",
+	VariadicArgs: cli.Arg{
+		Name: "entity",
+	},
+}
+
+func adminDatabaseEncryptionRollFunc(args cli.Values) error {
+	entities := args.GetStringSlice("entity")
+	if len(entities) == 0 {
+		return client.AdminDatabaseRollAllEncryptedEntities()
+	}
+
+	for _, e := range entities {
+		if err := client.AdminDatabaseRollEncryptedEntity(e); err != nil {
+			return err
+		}
+	}
+
+	return nil
+
 }

@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
@@ -87,7 +88,7 @@ func LoadAllDecryptedKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
 		keys[i] = sdk.ProjectKey(p)
 		decrypted, err := secret.Decrypt([]byte(keys[i].Private))
 		if err != nil {
-			log.Error("LoadAllDecryptedKeys> Unable to decrypt private key %s/%s: %v", proj.Key, keys[i].Name, err)
+			log.Error(context.TODO(), "LoadAllDecryptedKeys> Unable to decrypt private key %s/%s: %v", proj.Key, keys[i].Name, err)
 		}
 		keys[i].Private = string(decrypted)
 	}

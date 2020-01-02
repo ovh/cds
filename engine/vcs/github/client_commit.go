@@ -100,7 +100,7 @@ func (g *githubClient) Commits(ctx context.Context, repo, theBranch, since, unti
 	k := cache.Key("vcs", "github", "commits", repo, "since="+since, "until="+until)
 	find, err := g.Cache.Get(k, &commitsResult)
 	if err != nil {
-		log.Error("cannot get from cache %s: %v", k, err)
+		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
 	if find {
 		return commitsResult, nil
@@ -148,7 +148,7 @@ func (g *githubClient) Commits(ctx context.Context, repo, theBranch, since, unti
 	}
 
 	//Get Commit List
-	theCommits, err := g.allCommitBetween(repo, untilDate, sinceDate, theBranch)
+	theCommits, err := g.allCommitBetween(ctx, repo, untilDate, sinceDate, theBranch)
 	if err != nil {
 		return nil, err
 	}
@@ -177,13 +177,13 @@ func (g *githubClient) Commits(ctx context.Context, repo, theBranch, since, unti
 
 	key := cache.Key("vcs", "github", "commits", repo, "since="+since, "until="+until)
 	if err := g.Cache.SetWithTTL(key, commitsResult, 3*60*60); err != nil {
-		log.Error("cannot SetWithTTL: %s: %v", key, err)
+		log.Error(ctx, "cannot SetWithTTL: %s: %v", key, err)
 	}
 
 	return commitsResult, nil
 }
 
-func (g *githubClient) allCommitBetween(repo string, untilDate time.Time, sinceDate time.Time, branch string) ([]Commit, error) {
+func (g *githubClient) allCommitBetween(ctx context.Context, repo string, untilDate time.Time, sinceDate time.Time, branch string) ([]Commit, error) {
 	var commits = []Commit{}
 	urlValues := url.Values{}
 	urlValues.Add("sha", branch)
@@ -198,19 +198,19 @@ func (g *githubClient) allCommitBetween(repo string, untilDate time.Time, sinceD
 			} else {
 				nextPage += "?"
 			}
-			status, body, headers, err := g.get(nextPage+urlValues.Encode(), withoutETag)
+			status, body, headers, err := g.get(ctx, nextPage+urlValues.Encode(), withoutETag)
 			if err != nil {
-				log.Warning("githubClient.Commits> Error %s", err)
+				log.Warning(ctx, "githubClient.Commits> Error %s", err)
 				return nil, err
 			}
 			if status >= 400 {
-				log.Warning("githubClient.Commits> Error %s", errorAPI(body))
+				log.Warning(ctx, "githubClient.Commits> Error %s", errorAPI(body))
 				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 			}
 			nextCommits := []Commit{}
 
 			if err := json.Unmarshal(body, &nextCommits); err != nil {
-				log.Warning("githubClient.Commits> Unable to parse github commits: %s", err)
+				log.Warning(ctx, "githubClient.Commits> Unable to parse github commits: %s", err)
 				return nil, err
 			}
 
@@ -227,9 +227,9 @@ func (g *githubClient) allCommitBetween(repo string, untilDate time.Time, sinceD
 // https://developer.github.com/v3/repos/commits/#get-a-single-commit
 func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCommit, error) {
 	url := "/repos/" + repo + "/commits/" + hash
-	status, body, _, err := g.get(url)
+	status, body, _, err := g.get(ctx, url)
 	if err != nil {
-		log.Warning("githubClient.Commit> Error %s", err)
+		log.Warning(ctx, "githubClient.Commit> Error %s", err)
 		return sdk.VCSCommit{}, err
 	}
 	if status >= 400 {
@@ -242,17 +242,17 @@ func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 		//If repo isn't updated, lets get them from cache
 		k := cache.Key("vcs", "github", "commit", g.OAuthToken, url)
 		if _, err := g.Cache.Get(k, &c); err != nil {
-			log.Error("cannot get from cache %s: %v", k, err)
+			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
 		if err := json.Unmarshal(body, &c); err != nil {
-			log.Warning("githubClient.Commit> Unable to parse github commit: %s", err)
+			log.Warning(ctx, "githubClient.Commit> Unable to parse github commit: %s", err)
 			return sdk.VCSCommit{}, err
 		}
 		//Put the body on cache for one hour and one minute
 		k := cache.Key("vcs", "github", "commit", g.OAuthToken, url)
 		if err := g.Cache.SetWithTTL(k, c, 61*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", k, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 	}
 
@@ -275,9 +275,9 @@ func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 func (g *githubClient) CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]sdk.VCSCommit, error) {
 	var commits []sdk.VCSCommit
 	url := fmt.Sprintf("/repos/%s/compare/%s...%s", repo, base, head)
-	status, body, _, err := g.get(url)
+	status, body, _, err := g.get(ctx, url)
 	if err != nil {
-		log.Warning("githubClient.CommitsBetweenRefs> Error %s", err)
+		log.Warning(ctx, "githubClient.CommitsBetweenRefs> Error %s", err)
 		return commits, err
 	}
 	if status >= 400 {
@@ -290,11 +290,11 @@ func (g *githubClient) CommitsBetweenRefs(ctx context.Context, repo, base, head 
 		//If repo isn't updated, lets get them from cache
 		k := cache.Key("vcs", "github", "commitdiff", g.OAuthToken, url)
 		if _, err := g.Cache.Get(k, &commits); err != nil {
-			log.Error("cannot get from cache %s: %v", k, err)
+			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
 		if err := json.Unmarshal(body, &diff); err != nil {
-			log.Warning("githubClient.CommitsBetweenRefs> Unable to parse github commit: %s", err)
+			log.Warning(ctx, "githubClient.CommitsBetweenRefs> Unable to parse github commit: %s", err)
 			return commits, err
 		}
 
@@ -316,7 +316,7 @@ func (g *githubClient) CommitsBetweenRefs(ctx context.Context, repo, base, head 
 		//Put the body on cache for one hour and one minute
 		k := cache.Key("vcs", "github", "commitdiff", g.OAuthToken, url)
 		if err := g.Cache.SetWithTTL(k, &commits, 61*60); err != nil {
-			log.Error("cannot SetWithTTL: %s: %v", k, err)
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 	}
 

@@ -93,76 +93,30 @@ type BuildState struct {
 	Stages   []Stage `json:"stages"`
 	Logs     []Log   `json:"logs"`
 	StepLogs Log     `json:"step_logs"`
-	Status   Status  `json:"status"`
-}
-
-// Status represents a Build Action or Build Pipeline Status
-type Status string
-
-// StatusFromString returns a Status from a given string
-func StatusFromString(in string) Status {
-	switch in {
-	case StatusWaiting.String():
-		return StatusWaiting
-	case StatusBuilding.String():
-		return StatusBuilding
-	case StatusPending.String():
-		return StatusPending
-	case StatusChecking.String():
-		return StatusChecking
-	case StatusSuccess.String():
-		return StatusSuccess
-	case StatusNeverBuilt.String():
-		return StatusNeverBuilt
-	case StatusFail.String():
-		return StatusFail
-	case StatusDisabled.String():
-		return StatusDisabled
-	case StatusSkipped.String():
-		return StatusSkipped
-	case StatusStopped.String():
-		return StatusStopped
-	case StatusWorkerPending.String():
-		return StatusWorkerPending
-	case StatusWorkerRegistering.String():
-		return StatusWorkerRegistering
-	default:
-		return StatusUnknown
-	}
-}
-
-func (t Status) String() string { return string(t) }
-
-// StatusToStrings returns []string from given []status.
-func StatusToStrings(ss []Status) []string {
-	res := make([]string, len(ss))
-	for i, s := range ss {
-		res[i] = s.String()
-	}
-	return res
+	Status   string  `json:"status"`
 }
 
 // Action status in queue
 const (
-	StatusPending           Status = "Pending"
-	StatusWaiting           Status = "Waiting"
-	StatusChecking          Status = "Checking" // DEPRECATED, to remove when removing pipelineBuild
-	StatusBuilding          Status = "Building"
-	StatusSuccess           Status = "Success"
-	StatusFail              Status = "Fail"
-	StatusDisabled          Status = "Disabled"
-	StatusNeverBuilt        Status = "Never Built"
-	StatusUnknown           Status = "Unknown"
-	StatusSkipped           Status = "Skipped"
-	StatusStopped           Status = "Stopped"
-	StatusWorkerPending     Status = "Pending"
-	StatusWorkerRegistering Status = "Registering"
+	StatusPending           = "Pending"
+	StatusWaiting           = "Waiting"
+	StatusChecking          = "Checking" // DEPRECATED, to remove when removing pipelineBuild
+	StatusBuilding          = "Building"
+	StatusSuccess           = "Success"
+	StatusFail              = "Fail"
+	StatusDisabled          = "Disabled"
+	StatusNeverBuilt        = "Never Built"
+	StatusUnknown           = "Unknown"
+	StatusSkipped           = "Skipped"
+	StatusStopped           = "Stopped"
+	StatusWorkerPending     = "Pending"
+	StatusWorkerRegistering = "Registering"
 )
 
 // StatusIsTerminated returns if status is terminated (nothing related to building or waiting, ...)
 func StatusIsTerminated(status string) bool {
 	switch status {
-	case StatusBuilding.String(), StatusWaiting.String():
+	case StatusBuilding, StatusWaiting:
 		return false
 	default:
 		return true
@@ -172,7 +126,7 @@ func StatusIsTerminated(status string) bool {
 // StatusValidate returns if given strings are valid status.
 func StatusValidate(status ...string) bool {
 	for _, s := range status {
-		if StatusFromString(s) == StatusUnknown {
+		if s == StatusUnknown {
 			return false
 		}
 	}

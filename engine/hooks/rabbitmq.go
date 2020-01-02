@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -22,12 +23,12 @@ type rabbitMQConsumer struct {
 	done    chan error
 }
 
-func (s *Service) startRabbitMQHook(t *sdk.Task) error {
+func (s *Service) startRabbitMQHook(ctx context.Context, t *sdk.Task) error {
 	projectKey := t.Config[sdk.HookConfigProject].Value
 	integrationName := t.Config[sdk.HookModelIntegration].Value
 	pf, err := s.Client.ProjectIntegrationGet(projectKey, integrationName, true)
 	if err != nil {
-		_ = s.stopTask(t)
+		_ = s.stopTask(ctx, t)
 		return sdk.WrapError(err, "Cannot get rabbitMQ configuration for %s/%s", projectKey, integrationName)
 	}
 
@@ -44,7 +45,7 @@ func (s *Service) startRabbitMQHook(t *sdk.Task) error {
 		t.Config[sdk.RabbitMQHookModelConsumerTag].Value,
 	)
 	if err != nil {
-		_ = s.stopTask(t)
+		_ = s.stopTask(ctx, t)
 		return fmt.Errorf("startRabbitMQHook>Error creating consumer: (%s %s %+v): %v", pf.Config["uri"].Value, username, t.Config, err)
 	}
 
@@ -58,7 +59,7 @@ func (s *Service) startRabbitMQHook(t *sdk.Task) error {
 		nil,          // arguments
 	)
 	if errConsume != nil {
-		_ = s.stopTask(t)
+		_ = s.stopTask(ctx, t)
 		return fmt.Errorf("startRabbitMQHook> Queue Consume: %s", errConsume)
 	}
 
@@ -66,8 +67,8 @@ func (s *Service) startRabbitMQHook(t *sdk.Task) error {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigs
-		log.Info("RabbitMQ> shutdown")
-		_ = consumer.Shutdown()
+		log.Info(ctx, "RabbitMQ> shutdown")
+		_ = consumer.Shutdown(ctx)
 	}()
 
 	go func() {
@@ -191,7 +192,7 @@ func newConsumer(amqpURI, exchange, exchangeType, queueName, key, ctag string) (
 	return c, nil
 }
 
-func (c *rabbitMQConsumer) Shutdown() error {
+func (c *rabbitMQConsumer) Shutdown(ctx context.Context) error {
 	// will close() the deliveries channel
 	if err := c.channel.Cancel(c.tag, true); err != nil {
 		return fmt.Errorf("Consumer cancel failed: %s", err)
@@ -201,7 +202,7 @@ func (c *rabbitMQConsumer) Shutdown() error {
 		return fmt.Errorf("AMQP connection close error: %s", err)
 	}
 
-	log.Info("RabbitMQ> Shutdown> Wait for handle to exit...")
+	log.Info(ctx, "RabbitMQ> Shutdown> Wait for handle to exit...")
 	// wait for handle() to exit
 	return <-c.done
 }

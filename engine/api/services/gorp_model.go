@@ -5,10 +5,19 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type service sdk.Service
+type service struct {
+	sdk.Service
+	gorpmapping.SignedEntity
+}
+
+func (s service) Canonical() gorpmapping.CanonicalForms {
+	return []gorpmapping.CanonicalForm{
+		"{{.ID}}{{.Name}}{{.Type}}",
+	}
+}
 
 func init() {
 	gorpmapping.Register(
-		gorpmapping.New(service{}, "services", true, "id"),
+		gorpmapping.New(service{}, "service", true, "id"),
 	)
 }

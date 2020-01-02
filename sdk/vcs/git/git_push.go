@@ -27,7 +27,7 @@ func prepareGitPushCommands(repoURL string, opts *PushOpts) cmds {
 
 	if opts != nil {
 		if opts.Directory != "" {
-			gitcmd.dir = opts.Directory
+			gitcmd.workdir = opts.Directory
 		}
 		gitcmd.args = append(gitcmd.args, repoURL, opts.Branch)
 	}

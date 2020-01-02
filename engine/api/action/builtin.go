@@ -27,7 +27,7 @@ func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() // nolint
 
 	nb, err := tx.SelectInt("SELECT COUNT(1) FROM action WHERE action.name = $1 and action.type = $2", a.Name, sdk.BuiltinAction)
 	if err != nil {
@@ -49,7 +49,6 @@ func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 	}
 
 	a.ID = id
-	log.Debug("createBuiltinAction> update builtin action %s", a.Name)
 	if err := Update(tx, a); err != nil {
 		return err
 	}

@@ -11,6 +11,7 @@ import { Project } from 'app/model/project.model';
 import { RepositoriesManager } from 'app/model/repositories.model';
 import { ApplicationService } from 'app/service/application/application.service';
 import { ApplicationStore } from 'app/service/application/application.store';
+import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
 import { KeyService } from 'app/service/keys/keys.service';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -18,17 +19,17 @@ import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { MonitoringService, ThemeStore } from 'app/service/services.module';
+import { MonitoringService, ThemeStore, UserService } from 'app/service/services.module';
 import { VariableService } from 'app/service/variable/variable.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { SharedModule } from 'app/shared/shared.module';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { NgxsStoreModule } from 'app/store/store.module';
+import { ApplicationModule } from 'app/views/application/application.module';
+import { ProjectModule } from 'app/views/project/project.module';
 import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
-import { ProjectModule } from '../../../../project/project.module';
-import { ApplicationModule } from '../../../application.module';
 import { ApplicationRepositoryComponent } from './application.repo.component';
 
 @Component({
@@ -66,7 +67,9 @@ describe('CDS: Application Repo Component', () => {
                 { provide: APP_BASE_HREF, useValue: '/' },
                 ThemeStore,
                 WorkflowRunService,
-                WorkflowService
+                WorkflowService,
+                UserService,
+                AuthenticationService
             ],
             imports: [
                 RouterTestingModule.withRoutes([
@@ -108,7 +111,6 @@ describe('CDS: Application Repo Component', () => {
 
         let app: Application = new Application();
         app.name = 'app';
-        app.permission = 7;
         let p: Project = new Project();
         p.key = 'key1';
         p.name = 'proj1';

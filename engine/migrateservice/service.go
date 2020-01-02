@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
@@ -46,6 +48,20 @@ func New() service.Service {
 	return &dbmigservice{}
 }
 
+func (s *dbmigservice) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(Configuration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid migrate service configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
+}
+
 func (s *dbmigservice) CheckConfiguration(cfg interface{}) error {
 	_, ok := cfg.(Configuration)
 	if !ok {
@@ -62,15 +78,10 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 	dbCfg, _ := cfg.(Configuration)
 
 	s.cfg = dbCfg
-	log.Debug("%+v", s.cfg)
-
-	s.Client = cdsclient.NewService(s.cfg.API.HTTP.URL, 60*time.Second, s.cfg.API.HTTP.Insecure)
-	s.API = s.cfg.API.HTTP.URL
-	s.Name = s.cfg.Name
+	s.ServiceName = s.cfg.Name
+	s.ServiceType = services.TypeDBMigrate
 	s.HTTPURL = s.cfg.URL
-	s.Token = s.cfg.API.Token
-	s.Type = services.TypeDBMigrate
-	s.ServiceName = "cds-migrate"
+
 	s.MaxHeartbeatFailures = s.cfg.API.MaxHeartbeatFailures
 	s.Router = &api.Router{
 		Mux: mux.NewRouter(),
@@ -78,18 +89,37 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 	return nil
 }
 
-func (s *dbmigservice) BeforeStart() error {
-	log.Info("DBMigrate> Starting Database migration...")
-	errDo := s.doMigrate()
+func (s *dbmigservice) BeforeStart(ctx context.Context) error {
+	log.Info(ctx, "DBMigrate> Starting Database migration...")
+	dbConn, err := database.Init(
+		ctx,
+		s.cfg.DB.User,
+		s.cfg.DB.Role,
+		s.cfg.DB.Password,
+		s.cfg.DB.Name,
+		s.cfg.DB.Host,
+		s.cfg.DB.Port,
+		s.cfg.DB.SSLMode,
+		s.cfg.DB.ConnectTimeout,
+		s.cfg.DB.Timeout,
+		s.cfg.DB.MaxConn)
+	if err != nil {
+		return sdk.WrapError(fmt.Errorf("cannot connect to database: %v", err), "getMigrate")
+	}
+
+	upgradeTo := os.Getenv("UPGRADE_TO")     // Set this env variable to define the maximum migration file you want to upgrade
+	downgradeTo := os.Getenv("DOWNGRADE_TO") // Set this env variable to define the maximum migration file you want to downgrade
+
+	errDo := s.doMigrate(dbConn.DB, gorp.PostgresDialect{}, upgradeTo, downgradeTo)
 	if errDo != nil {
-		log.Error("DBMigrate> Migration failed %v", errDo)
+		log.Error(ctx, "DBMigrate> Migration failed %v", errDo)
 		s.currentStatus.err = errDo
 	}
 
-	log.Info("DBMigrate> Retrieving Database migration status...")
-	status, errGet := s.getMigrate()
+	log.Info(ctx, "DBMigrate> Retrieving Database migration status...")
+	status, errGet := s.getMigrate(dbConn.DB, gorp.PostgresDialect{})
 	if errGet != nil {
-		log.Error("DBMigrate> Migration status unavailable %v", errGet)
+		log.Error(ctx, "DBMigrate> Migration status unavailable %v", errGet)
 	}
 	if errDo == nil && errGet != nil {
 		s.currentStatus.err = errGet
@@ -103,12 +133,12 @@ func (s *dbmigservice) BeforeStart() error {
 	return nil
 }
 
-func (s *dbmigservice) Serve(c context.Context) error {
-	log.Info("DBMigrate> Starting service %s %s...", s.cfg.Name, sdk.VERSION)
+func (s *dbmigservice) Serve(ctx context.Context) error {
+	log.Info(ctx, "DBMigrate> Starting service %s %s...", s.cfg.Name, sdk.VERSION)
 	s.StartupTime = time.Now()
 
 	//Init the http server
-	s.initRouter(c)
+	s.initRouter(ctx)
 	server := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", s.cfg.HTTP.Addr, s.cfg.HTTP.Port),
 		Handler:        s.Router.Mux,
@@ -119,23 +149,23 @@ func (s *dbmigservice) Serve(c context.Context) error {
 
 	go func() {
 		//Start the http server
-		log.Info("DBMigrate> Starting HTTP Server on port %d", s.cfg.HTTP.Port)
+		log.Info(ctx, "DBMigrate> Starting HTTP Server on port %d", s.cfg.HTTP.Port)
 		if err := server.ListenAndServe(); err != nil {
-			log.Error("DBMigrate> Listen and serve failed: %s", err)
+			log.Error(ctx, "DBMigrate> Listen and serve failed: %s", err)
 		}
 	}()
 
 	//Gracefully shutdown the http server
-	<-c.Done()
-	log.Info("DBMigrate> Shutdown HTTP Server")
-	if err := server.Shutdown(c); err != nil {
+	<-ctx.Done()
+	log.Info(ctx, "DBMigrate> Shutdown HTTP Server")
+	if err := server.Shutdown(ctx); err != nil {
 		return fmt.Errorf("unable to shutdown server: %v", err)
 	}
 
-	return c.Err()
+	return ctx.Err()
 }
 
-func (s *dbmigservice) Status() sdk.MonitoringStatus {
+func (s *dbmigservice) Status(ctx context.Context) sdk.MonitoringStatus {
 	response := s.CommonMonitoring()
 	if s.currentStatus.err != nil {
 		response.Lines = append(response.Lines,
@@ -175,8 +205,11 @@ func (s *dbmigservice) initRouter(ctx context.Context) {
 	log.Debug("DBMigrate> Router initialized")
 	r := s.Router
 	r.SetHeaderFunc = api.DefaultHeaders
+	r.Middlewares = append(r.Middlewares, service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey))
 
-	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
-	r.Handle("/mon/status", r.GET(s.statusHandler, api.Auth(false)))
-	r.Handle("/", r.GET(s.getMigrationHandler, api.Auth(false)))
+	r.Handle("/mon/version", nil, r.GET(api.VersionHandler, api.Auth(false)))
+	r.Handle("/mon/status", nil, r.GET(s.statusHandler, api.Auth(false)))
+	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), api.Auth(false)))
+	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, api.Auth(false)))
+	r.Handle("/", nil, r.GET(s.getMigrationHandler, api.Auth(false)))
 }

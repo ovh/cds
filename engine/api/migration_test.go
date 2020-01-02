@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -20,13 +19,11 @@ func TestPostAdminMigrationCancelHandler(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	_, jwt := assets.InsertAdminUser(t, api.mustDB())
 
 	//Load all migration
 	uri := router.GetRoute("GET", api.getAdminMigrationsHandler, nil)
-	req, err := http.NewRequest("GET", uri, nil)
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
+	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 
 	// Do the request
 	w := httptest.NewRecorder()
@@ -47,9 +44,7 @@ func TestPostAdminMigrationCancelHandler(t *testing.T) {
 	}()
 
 	uri = router.GetRoute("GET", api.getAdminMigrationsHandler, nil)
-	req, err = http.NewRequest("GET", uri, nil)
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 
 	// Do the request
 	w = httptest.NewRecorder()
@@ -63,9 +58,7 @@ func TestPostAdminMigrationCancelHandler(t *testing.T) {
 
 	//Prepare post request
 	uri = router.GetRoute("POST", api.postAdminMigrationCancelHandler, map[string]string{"id": fmt.Sprintf("%d", migrations[0].ID)})
-	req, err = http.NewRequest("POST", uri, nil)
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
 
 	// Do the request
 	w = httptest.NewRecorder()

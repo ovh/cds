@@ -10,10 +10,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/engine/api"
@@ -32,6 +34,20 @@ func New() *Service {
 	return s
 }
 
+func (s *Service) Init(config interface{}) (cdsclient.ServiceConfig, error) {
+	var cfg cdsclient.ServiceConfig
+	sConfig, ok := config.(Configuration)
+	if !ok {
+		return cfg, sdk.WithStack(fmt.Errorf("invalid ui service configuration"))
+	}
+
+	cfg.Host = sConfig.API.HTTP.URL
+	cfg.Token = sConfig.API.Token
+	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
+	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+	return cfg, nil
+}
+
 // ApplyConfiguration apply an object of type hooks.Configuration after checking it
 func (s *Service) ApplyConfiguration(config interface{}) error {
 	if err := s.CheckConfiguration(config); err != nil {
@@ -43,14 +59,10 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	s.Client = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second, s.Cfg.API.HTTP.Insecure)
-	s.API = s.Cfg.API.HTTP.URL
-	s.Name = s.Cfg.Name
+	s.ServiceName = s.Cfg.Name
+	s.ServiceType = services.TypeUI
 	s.HTTPURL = s.Cfg.URL
-	s.Token = s.Cfg.API.Token
-	s.Type = services.TypeUI
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
-	s.ServiceName = "cds-ui"
 
 	// HTMLDir must contains the ui dist directory.
 	// ui.tar.gz contains the dist directory
@@ -82,7 +94,7 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 
 // Serve will start the http ui server
 func (s *Service) Serve(c context.Context) error {
-	log.Info("ui> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
+	log.Info(c, "ui> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
 	s.StartupTime = time.Now()
 
 	fromTmpl, err := s.prepareIndexHTML()
@@ -90,7 +102,7 @@ func (s *Service) Serve(c context.Context) error {
 		return err
 	}
 
-	if err := s.checkStaticFiles(); err != nil {
+	if err := s.checkStaticFiles(c); err != nil {
 		return err
 	}
 
@@ -117,14 +129,14 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	// Start the http server
-	log.Info("ui> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+	log.Info(c, "ui> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Error("ui> Listen and serve failed: %s", err)
+		log.Error(c, "ui> Listen and serve failed: %s", err)
 	}
 
 	// Gracefully shutdown the http server
 	<-c.Done()
-	log.Info("ui> Shutdown HTTP Server")
+	log.Info(c, "ui> Shutdown HTTP Server")
 	if err := server.Shutdown(c); err != nil {
 		return fmt.Errorf("unable to shutdown server: %v", err)
 	}
@@ -163,13 +175,13 @@ func (s *Service) checkChecksumFiles() error {
 	return nil
 }
 
-func (s *Service) checkStaticFiles() error {
+func (s *Service) checkStaticFiles(ctx context.Context) error {
 	fs := http.Dir(s.HTMLDir)
 
 	if _, err := fs.Open("index.html"); os.IsNotExist(err) {
-		log.Warning("ui> CDS UI static files were not found in directory %v", s.HTMLDir)
+		log.Warning(ctx, "ui> CDS UI static files were not found in directory %v", s.HTMLDir)
 
-		if err := s.askForGettingStaticFiles(sdk.VERSION); err != nil {
+		if err := s.askForGettingStaticFiles(ctx, sdk.VERSION); err != nil {
 			return err
 		}
 
@@ -180,7 +192,7 @@ func (s *Service) checkStaticFiles() error {
 			return fmt.Errorf("CDS UI static files were not found in directory %v", s.HTMLDir)
 		}
 	}
-	log.Info("ui> CDS UI static files were found in directory %v", s.HTMLDir)
+	log.Info(ctx, "ui> CDS UI static files were found in directory %v", s.HTMLDir)
 
 	return nil
 }
@@ -216,14 +228,18 @@ func (s *Service) indexHTMLReplaceVar() error {
 		return sdk.WrapError(err, "error while reading %s file", indexHTML)
 	}
 
-	indexContent := strings.Replace(string(read), "<base href=\"/\">", "<base href=\""+s.Cfg.BaseURL+"\">", -1)
+	regexBaseHref, err := regexp.Compile("<base href=\".*\">")
+	if err != nil {
+		return sdk.WrapError(err, "cannot parse base href regex")
+	}
+	indexContent := regexBaseHref.ReplaceAllString(string(read), "<base href=\""+s.Cfg.BaseURL+"\">")
 	indexContent = strings.Replace(indexContent, "window.cds_sentry_url = '';", "window.cds_sentry_url = '"+s.Cfg.SentryURL+"';", -1)
 	indexContent = strings.Replace(indexContent, "window.cds_version = '';", "window.cds_version='"+sdk.VERSION+"';", -1)
 
 	return ioutil.WriteFile(indexHTML, []byte(indexContent), 0)
 }
 
-func (s *Service) askForGettingStaticFiles(version string) error {
+func (s *Service) askForGettingStaticFiles(ctx context.Context, version string) error {
 	answerLatestRelease := fmt.Sprintf("Download files into %s from the latest GitHub CDS Release", s.Cfg.Staticdir)
 	answerVersionRelease := fmt.Sprintf("Download files into %s from the GitHub CDS Release %s", s.Cfg.Staticdir, version)
 	answerBuildFromSource := fmt.Sprintf("Build from source %s with node", filepath.Join("..", "ui"))
@@ -245,24 +261,24 @@ func (s *Service) askForGettingStaticFiles(version string) error {
 
 	ask := fmt.Sprintf("What do you want to do?")
 
-	selected := cli.MultiChoice(ask, opts...)
+	selected := cli.AskChoice(ask, opts...)
 
 	switch opts[selected] {
 	case answerDoNothing:
 		return nil
 	case answerLatestRelease:
-		return s.downloadStaticFilesFromGitHub("latest")
+		return s.downloadStaticFilesFromGitHub(ctx, "latest")
 	case answerVersionRelease:
-		return s.downloadStaticFilesFromGitHub(version)
+		return s.downloadStaticFilesFromGitHub(ctx, version)
 	case answerBuildFromSource:
-		return s.buildFromSource()
+		return s.buildFromSource(ctx)
 	case useExistingBuildFromSource:
 		s.HTMLDir = filepath.Join("..", "ui", "dist")
 	}
 	return nil
 }
 
-func (s *Service) buildFromSource() error {
+func (s *Service) buildFromSource(ctx context.Context) error {
 	if _, err := os.Stat(filepath.Join("..", "ui")); os.IsNotExist(err) {
 		return fmt.Errorf("You must have the directory ../ui with the ui source code")
 	}
@@ -278,7 +294,7 @@ func (s *Service) buildFromSource() error {
 }
 
 func (s *Service) execCommand(command string) (string, error) {
-	log.Info("ui> running %s...", command)
+	log.Info(context.Background(), "ui> running %s...", command)
 
 	parts := strings.Fields(command)
 	cmd := exec.Command(parts[0], parts[1:]...)
@@ -308,9 +324,9 @@ func (s *Service) execCommand(command string) (string, error) {
 	return output, nil
 }
 
-func (s *Service) downloadStaticFilesFromGitHub(version string) error {
+func (s *Service) downloadStaticFilesFromGitHub(ctx context.Context, version string) error {
 	if _, err := os.Stat(s.Cfg.Staticdir); os.IsNotExist(err) {
-		log.Info("ui> creating directory %s", s.Cfg.Staticdir)
+		log.Info(ctx, "ui> creating directory %s", s.Cfg.Staticdir)
 		if err := os.Mkdir(s.Cfg.Staticdir, 0740); err != nil {
 			return fmt.Errorf("Error while creating directory: %v", err)
 		}
@@ -325,7 +341,7 @@ func (s *Service) downloadStaticFilesFromGitHub(version string) error {
 		}
 	}
 
-	log.Info("ui> Downloading from %s...", urlFiles)
+	log.Info(ctx, "ui> Downloading from %s...", urlFiles)
 
 	resp, err := http.Get(urlFiles)
 	if err != nil {
@@ -341,7 +357,7 @@ func (s *Service) downloadStaticFilesFromGitHub(version string) error {
 		return fmt.Errorf("Error while getting ui.tar.gz from GitHub - HTTP code: %d", resp.StatusCode)
 	}
 
-	log.Info("ui> Download successful, decompressing the archive file...")
+	log.Info(ctx, "ui> Download successful, decompressing the archive file...")
 
-	return sdk.UntarGz(s.Cfg.Staticdir, resp.Body)
+	return sdk.UntarGz(afero.NewOsFs(), s.Cfg.Staticdir, resp.Body)
 }

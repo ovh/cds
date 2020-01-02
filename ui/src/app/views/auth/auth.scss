@@ -1,0 +1,14 @@
+@import '../../../common';
+
+.auth {
+  background-color: $darkBackground;
+
+  .column {
+    width: 600px;
+  }
+
+  .logo {
+    margin: 60px auto;
+    height: 100px;
+  }
+}
