@@ -87,6 +87,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 		for _, h := range hooks {
 			if h.UUID == t.UUID {
 				found = true
+				log.Debug("Hook> Synchronizing %s task %s", h.HookModelName, t.UUID)
 				break
 			}
 		}
@@ -262,7 +263,7 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecutio
 	case TypeScheduler, TypeRepoPoller, TypeBranchDeletion:
 		return nil, s.prepareNextScheduledTaskExecution(ctx, t)
 	case TypeKafka:
-		return nil, s.startKafkaHook(ctx,t)
+		return nil, s.startKafkaHook(ctx, t)
 	case TypeRabbitMQ:
 		return nil, s.startRabbitMQHook(ctx, t)
 	case TypeOutgoingWebHook:
@@ -289,7 +290,7 @@ func (s *Service) prepareNextScheduledTaskExecution(ctx context.Context, t *sdk.
 
 	//The last execution has not been executed, let it go
 	if len(execs) > 0 && execs[len(execs)-1].ProcessingTimestamp == 0 {
-		log.Debug("Hooks> Scheduled tasks %s:%d ready. Next execution scheduled on %v", t.UUID, execs[len(execs)-1].Timestamp, time.Unix(0, execs[len(execs)-1].Timestamp))
+		log.Debug("Hooks> Scheduled task %s:%d ready. Next execution already scheduled on %v", t.UUID, execs[len(execs)-1].Timestamp, time.Unix(0, execs[len(execs)-1].Timestamp))
 		return nil
 	}
 
@@ -345,7 +346,7 @@ func (s *Service) prepareNextScheduledTaskExecution(ctx context.Context, t *sdk.
 	s.Dao.SaveTaskExecution(exec)
 	//We don't push in queue, we will the scheduler to run it
 
-	log.Debug("Hooks> Scheduled tasks %v:%d ready. Next execution scheduled on %v, len:%d", t.UUID, exec.Timestamp, time.Unix(0, exec.Timestamp), len(execs))
+	log.Debug("Hooks> Scheduled task %v:%d ready. Next execution scheduled on %v, len:%d", t.UUID, exec.Timestamp, time.Unix(0, exec.Timestamp), len(execs))
 
 	return nil
 }
