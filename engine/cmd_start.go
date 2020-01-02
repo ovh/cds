@@ -273,7 +273,7 @@ See $ engine config command for more details.
 			}
 
 			if srv, ok := s.service.(service.BeforeStart); ok {
-				if err := srv.BeforeStart(); err != nil {
+				if err := srv.BeforeStart(ctx); err != nil {
 					sdk.Exit("Unable to start service %s: %v", s.arg, err)
 				}
 			}
