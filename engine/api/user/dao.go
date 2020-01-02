@@ -49,7 +49,7 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts 
 	return aus, nil
 }
 
-func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
+func Get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
 	var u authentifiedUser
 
 	found, err := gorpmapping.Get(ctx, db, q, &u)
@@ -109,13 +109,13 @@ func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []string, opts .
 // LoadByID returns a user from database for given id.
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM authentified_user WHERE id = $1").Args(id)
-	return get(ctx, db, query, opts...)
+	return Get(ctx, db, query, opts...)
 }
 
 // LoadByUsername returns a user from database for given username.
 func LoadByUsername(ctx context.Context, db gorp.SqlExecutor, username string, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM authentified_user WHERE username = $1").Args(username)
-	return get(ctx, db, query, opts...)
+	return Get(ctx, db, query, opts...)
 }
 
 // CountAdmin admin users in database.
