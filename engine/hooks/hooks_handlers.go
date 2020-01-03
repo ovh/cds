@@ -309,7 +309,7 @@ func (s *Service) getTaskExecutionsHandler() service.Handler {
 		//Load the task
 		t := s.Dao.FindTask(uuid)
 		if t == nil {
-			return service.WriteJSON(w, t, http.StatusOK)
+			return sdk.ErrNotFound
 		}
 
 		//Load the executions
