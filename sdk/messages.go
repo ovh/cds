@@ -92,6 +92,7 @@ var (
 	MsgWorkflowErrorBadCdsDir              = &Message{"MsgWorkflowErrorBadCdsDir", trad{FR: "Un problème est survenu avec votre répertoire .cds", EN: "A problem occurred about your .cds directory"}, nil}
 	MsgWorkflowErrorUnknownKey             = &Message{"MsgWorkflowErrorUnknownKey", trad{FR: "La clé '%s' est incorrecte ou n'existe pas", EN: "The key '%s' is incorrect or doesn't exist"}, nil}
 	MsgWorkflowErrorBadVCSStrategy         = &Message{"MsgWorkflowErrorBadVCSStrategy", trad{FR: "Vos informations vcs_* sont incorrectes", EN: "Your vcs_* fields are incorrects"}, nil}
+	MsgSpawnInfoDisabledModel              = &Message{"MsgSpawnInfoDisabledModel", trad{FR: "⚠ Attention vous utilisez un worker model (%s) désactivé", EN: "⚠ Pay attention you are using a disabled worker model (%s)"}, nil}
 )
 
 // Messages contains all sdk Messages
@@ -168,6 +169,7 @@ var Messages = map[string]*Message{
 	MsgWorkflowErrorBadCdsDir.ID:              MsgWorkflowErrorBadCdsDir,
 	MsgWorkflowErrorUnknownKey.ID:             MsgWorkflowErrorUnknownKey,
 	MsgWorkflowErrorBadVCSStrategy.ID:         MsgWorkflowErrorBadVCSStrategy,
+	MsgSpawnInfoDisabledModel.ID:              MsgSpawnInfoDisabledModel,
 }
 
 //Message represent a struc format translated messages
