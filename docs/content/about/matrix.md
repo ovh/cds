@@ -1,5 +1,5 @@
 ---
-title: "Comparaison Matrix"
+title: "Comparison Matrix"
 ---
 
 {{% matrix linkMore="" %}}
@@ -202,4 +202,4 @@ Several types of hatchery are available:
 - *14 it's a plugin
 - *15 K8s, Docker machine & GKE only
 - *16 limited to about 150 executors https://www.cloudbees.com/blog/multi-tenancy-jenkins(§Scale)
-- *17 Only in Silver and Premimum Gitlab Edition https://docs.gitlab.com/ee/ci/yaml/#trigger-premium
+- *17 Only in Silver and Premium Gitlab Edition https://docs.gitlab.com/ee/ci/yaml/#trigger-premium
