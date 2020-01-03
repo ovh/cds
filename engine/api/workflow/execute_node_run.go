@@ -770,7 +770,7 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 
 	if nodeRun.HookExecutionID != "" {
 		path := fmt.Sprintf("/task/%s/execution/%d/stop", nodeRun.HookExecutionID, nodeRun.HookExecutionTimeStamp)
-		if _, _, err := services.DoJSONRequest(ctx, db, srvs, "POST", path, nil, nil); err != nil {
+		if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, "POST", path, nil, nil); err != nil {
 			return fmt.Errorf("unable to stop task execution: %v", err)
 		}
 	}

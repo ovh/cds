@@ -18,12 +18,24 @@ const (
 type NodeHook struct {
 	ID            int64                  `json:"id" db:"id"`
 	UUID          string                 `json:"uuid" db:"uuid"`
-	Ref           string                 `json:"ref" db:"ref"`
 	NodeID        int64                  `json:"node_id" db:"node_id"`
 	HookModelID   int64                  `json:"hook_model_id" db:"hook_model_id"`
 	HookModelName string                 `json:"hook_model_name" db:"-"`
 	Config        WorkflowNodeHookConfig `json:"config" db:"config"`
 	Conditions    WorkflowNodeConditions `json:"conditions" db:"conditions"`
+}
+
+func (h NodeHook) Ref() string {
+	s := "model:" + h.HookModelName + ";"
+
+	for k, cfg := range h.Config {
+		if cfg.Configurable == true {
+			s += k + ":" + cfg.Value + ";"
+		}
+	}
+
+	sha, _ := SHA512sum(s)
+	return sha
 }
 
 //Equals checks functional equality between two hooks

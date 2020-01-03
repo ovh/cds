@@ -1615,7 +1615,6 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 					},
 					HookModelName: sdk.WebHookModel.Name,
 					Config:        sdk.WebHookModel.DefaultConfig.Clone(),
-					Ref:           "root.0",
 					UUID:          "1cbf3792-126b-4111-884f-077bdee9523c",
 				}
 				if err := enc.Encode(hooks); err != nil {
@@ -1652,7 +1651,6 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 						},
 						HookModelName: sdk.WebHookModel.Name,
 						Config:        sdk.WebHookModel.DefaultConfig.Clone(),
-						Ref:           "root.0",
 						UUID:          "1cbf3792-126b-4111-884f-077bdee9523c",
 					},
 				},
@@ -1773,7 +1771,6 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 				hooks["1cbf3792-126b-4111-884f-077bdee9523d"] = sdk.NodeHook{
 					HookModelName: sdk.WebHookModel.Name,
 					Config:        sdk.WebHookModel.DefaultConfig.Clone(),
-					Ref:           "root.0",
 					UUID:          "1cbf3792-126b-4111-884f-077bdee9523d",
 				}
 				if err := enc.Encode(hooks); err != nil {
@@ -1808,7 +1805,6 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 					{
 						HookModelName: sdk.WebHookModel.Name,
 						Config:        sdk.WebHookModel.DefaultConfig.Clone(),
-						Ref:           "root.0",
 						UUID:          "1cbf3792-126b-4111-884f-077bdee9523d",
 					},
 				},

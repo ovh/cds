@@ -35,8 +35,33 @@ var HTTPClient cdsclient.HTTPClient
 // HTTPSigner is used to sign requests based on the RFC draft specification https://tools.ietf.org/html/draft-cavage-http-signatures-06
 var HTTPSigner *httpsig.Signer
 
-// DoMultiPartRequest performs an http request on a service with multipart  tar file + json field
-func DoMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
+type Client interface {
+	// DoJSONRequest performs an http request on a service
+	DoJSONRequest(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error)
+	// DoMultiPartRequest performs an http request on a service with multipart  tar file + json field
+	DoMultiPartRequest(ctx context.Context, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (int, error)
+}
+
+type defaultServiceClient struct {
+	db   gorp.SqlExecutor
+	srvs []sdk.Service
+}
+
+var NewClient func(gorp.SqlExecutor, []sdk.Service) Client = newDefaultClient
+
+func newDefaultClient(db gorp.SqlExecutor, srvs []sdk.Service) Client {
+	return &defaultServiceClient{
+		db:   db,
+		srvs: srvs,
+	}
+}
+
+func (s *defaultServiceClient) DoMultiPartRequest(ctx context.Context, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
+	return doMultiPartRequest(ctx, s.db, s.srvs, method, path, multiPartData, in, out, mods...)
+}
+
+// doMultiPartRequest performs an http request on a service with multipart  tar file + json field
+func doMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -95,8 +120,12 @@ func DoMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Ser
 	return lastCode, lastErr
 }
 
-// DoJSONRequest performs an http request on a service
-func DoJSONRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
+func (s *defaultServiceClient) DoJSONRequest(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
+	return doJSONRequest(ctx, s.db, s.srvs, method, path, in, out, mods...)
+}
+
+// doJSONRequest performs an http request on a service
+func doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -104,7 +133,7 @@ func DoJSONRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service,
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			headers, code, err := doJSONRequest(ctx, db, srv, method, path, in, out, mods...)
+			headers, code, err := _doJSONRequest(ctx, db, srv, method, path, in, out, mods...)
 			if err == nil {
 				return headers, code, nil
 			}
@@ -118,8 +147,8 @@ func DoJSONRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Service,
 	return nil, lastCode, lastErr
 }
 
-// DoJSONRequest performs an http request on service
-func doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
+// _doJSONRequest is a low level function that performs an http request on service
+func _doJSONRequest(ctx context.Context, db gorp.SqlExecutor, srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...cdsclient.RequestModifier) (http.Header, int, error) {
 	var b = []byte{}
 	var err error
 

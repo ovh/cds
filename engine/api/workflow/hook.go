@@ -63,7 +63,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	if err != nil {
 		return err
 	}
-	_, code, errHooks := services.DoJSONRequest(ctx, db, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
+	_, code, errHooks := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodDelete, "/task/bulk", hookToDelete, nil)
 	if errHooks != nil || code >= 400 {
 		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
 		// so, it's just a warn log
@@ -96,15 +96,9 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	hookToUpdate := make(map[string]sdk.NodeHook)
 	for i := range wf.WorkflowData.Node.Hooks {
 		h := &wf.WorkflowData.Node.Hooks[i]
-		if h.UUID == "" && h.Ref == "" {
-			nodeName := wf.WorkflowData.Node.Name
-			if len(nodeName) > 45 {
-				nodeName = nodeName[:45]
-			}
-			h.Ref = fmt.Sprintf("%s.%d", nodeName, i)
-		} else if h.UUID == "" && h.Ref != "" && oldHooksByRef != nil {
+		if h.UUID == "" && oldHooksByRef != nil {
 			// search previous hook configuration by ref
-			previousHook, has := oldHooksByRef[h.Ref]
+			previousHook, has := oldHooksByRef[h.Ref()]
 			if has {
 				h.UUID = previousHook.UUID
 				// If previous hook is the same, we do nothing
@@ -159,7 +153,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 
 	if len(hookToUpdate) > 0 {
 		// Create hook on µservice
-		_, code, errHooks := services.DoJSONRequest(ctx, db, srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hookToUpdate)
+		_, code, errHooks := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodPost, "/task/bulk", hookToUpdate, &hookToUpdate)
 		if errHooks != nil || code >= 400 {
 			return sdk.WrapError(errHooks, "unable to create hooks [%d]", code)
 		}

@@ -135,7 +135,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 	}
 
 	var task sdk.Task
-	if _, _, err := services.DoJSONRequest(ctx, db, srvs, "POST", "/task/execute", hookRun, &task); err != nil {
+	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, "POST", "/task/execute", hookRun, &task); err != nil {
 		log.Warning(ctx, "outgoing hook execution failed: %v", err)
 		hookRun.Status = sdk.StatusFail
 	}

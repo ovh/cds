@@ -133,7 +133,6 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 						UUID:          oldRepoWebHook.UUID,
 						HookModelName: oldRepoWebHook.HookModelName,
 						Config:        oldRepoWebHook.Config.Clone(),
-						Ref:           oldRepoWebHook.Ref,
 						HookModelID:   oldRepoWebHook.HookModelID,
 					}
 					h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{Value: w.Name}
