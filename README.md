@@ -18,7 +18,7 @@ CDS provides an intuitive UI that allows you to build complex workflows, run the
 
 <p align="center">
   <kbd>
-    <img src="./docs/static/images/capture-start.gif" alt="create and run workflow with CDS ui" title="create and run workflow with CDS ui"> 
+    <img src="./docs/static/images/capture-start.gif" alt="create and run workflow with CDS ui" title="create and run workflow with CDS ui">
   </kbd>
   <i>Create and run workflow with CDS ui.</i>
 </p>
@@ -40,7 +40,7 @@ Docker-Compose or Helm are your friends, see [Ready To Run Tutorials](https://ov
 
 ## Blog posts and talks
 
--	CDS Introduction: https://www.ovh.com/fr/blog/how-does-ovh-manage-the-ci-cd-at-scale/ 
+-	CDS Introduction: https://www.ovh.com/fr/blog/how-does-ovh-manage-the-ci-cd-at-scale/
 -	DataBuzzWord Podcast (French) : https://www.ovh.com/fr/blog/understanding-ci-cd-for-big-data-and-machine-learning/
 - Continuous Delivery and Deployment Workflows with CDS: https://www.ovh.com/fr/blog/continuous-delivery-and-deployment-workflows-with-cds/
 - Talk at conference [Breizhcamp](https://www.breizhcamp.org) to introduce CDS (French): https://www.youtube.com/watch?v=JUzEQuOehv4
@@ -307,7 +307,7 @@ Several types of hatchery are available:
 - *14 it's a plugin
 - *15 K8s, Docker machine & GKE only
 - *16 limited to about 150 executors https://www.cloudbees.com/blog/multi-tenancy-jenkins(§Scale)
-- *17 Only in Silver and Premimum Gitlab Edition https://docs.gitlab.com/ee/ci/yaml/#trigger-premium
+- *17 Only in Silver and Premium Gitlab Edition https://docs.gitlab.com/ee/ci/yaml/#trigger-premium
 
 ## License
 
