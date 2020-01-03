@@ -2,7 +2,6 @@ package migrate
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -31,7 +30,7 @@ func RefactorAuthenticationUser(ctx context.Context, db *gorp.DbMap, store cache
 
 	for _, u := range usrs {
 		if err := refactorAuthenticationUser(ctx, db, store, u); err != nil {
-			log.Error(ctx, "migrate.refactorAuthenticationUser> %v", err)
+			log.Error(ctx, "migrate.refactorAuthenticationUser> %+v", err)
 		}
 	}
 
@@ -46,8 +45,7 @@ func refactorAuthenticationUser(ctx context.Context, db *gorp.DbMap, store cache
 	defer tx.Rollback() // nolint
 
 	// Lock the user if it has not been migrated
-	var res interface{}
-	if err := tx.SelectOne(&res, `
+	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM "user"
 		WHERE id = $1
@@ -56,8 +54,10 @@ func refactorAuthenticationUser(ctx context.Context, db *gorp.DbMap, store cache
 			FROM authentified_user_migration
 		)
 		FOR UPDATE SKIP LOCKED
-	`, u.ID); err != nil {
-		if err == sql.ErrNoRows {
+	`).Args(u.ID)
+
+	if _, err := user.GetDeprecatedUser(ctx, tx, query); err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			log.Info(ctx, "migrate.RefactorAuthenticationUser> authentified_user_migration already exists for %s(%d)", u.Username, u.ID)
 			return nil
 		}
@@ -78,7 +78,7 @@ func refactorAuthenticationUser(ctx context.Context, db *gorp.DbMap, store cache
 		newUser.Ring = sdk.UserRingUser
 	}
 
-	if err := user.Insert(ctx, db, &newUser); err != nil {
+	if err := user.Insert(ctx, tx, &newUser); err != nil {
 		return sdk.WithStack(err)
 	}
 
@@ -90,7 +90,7 @@ func refactorAuthenticationUser(ctx context.Context, db *gorp.DbMap, store cache
 		Primary:  true,
 	}
 
-	if err := user.InsertContact(ctx, db, &contact); err != nil {
+	if err := user.InsertContact(ctx, tx, &contact); err != nil {
 		return sdk.WithStack(err)
 	}
 

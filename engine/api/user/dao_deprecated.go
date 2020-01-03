@@ -42,7 +42,7 @@ func GetDeprecatedUsers(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.
 	return us, nil
 }
 
-func getDeprecatedUser(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadDeprecatedUserOptionFunc) (*sdk.User, error) {
+func GetDeprecatedUser(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadDeprecatedUserOptionFunc) (*sdk.User, error) {
 	var du DeprecatedUser
 
 	found, err := gorpmapping.Get(ctx, db, q, &du)
@@ -50,7 +50,7 @@ func getDeprecatedUser(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Q
 		return nil, sdk.WrapError(err, "cannot get deprecated user")
 	}
 	if !found {
-		return nil, nil
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	pu := &du.Data
@@ -84,7 +84,7 @@ func LoadDeprecatedUserWithoutAuthByID(ctx context.Context, db gorp.SqlExecutor,
     FROM "user"
     WHERE id = $1
   `).Args(id)
-	return getDeprecatedUser(ctx, db, query, opts...)
+	return GetDeprecatedUser(ctx, db, query, opts...)
 }
 
 func insertDeprecatedUser(db gorp.SqlExecutor, u *sdk.User) error {
@@ -114,11 +114,11 @@ func DeleteUserWithDependencies(db gorp.SqlExecutor, u *sdk.User) error {
 func deleteUserFromUserGroup(db gorp.SqlExecutor, u *sdk.User) error {
 	query := `DELETE FROM "group_user" WHERE user_id=$1`
 	_, err := db.Exec(query, u.ID)
-	return err
+	return sdk.WithStack(err)
 }
 
 func deleteUser(db gorp.SqlExecutor, u *sdk.User) error {
 	query := `DELETE FROM "user" WHERE id=$1`
 	_, err := db.Exec(query, u.ID)
-	return err
+	return sdk.WithStack(err)
 }

@@ -92,5 +92,5 @@ type Service interface {
 
 // BeforeStart has to be implemented if you want to run some code after the ApplyConfiguration and before the Serve of a Service
 type BeforeStart interface {
-	BeforeStart() error
+	BeforeStart(ctx context.Context) error
 }

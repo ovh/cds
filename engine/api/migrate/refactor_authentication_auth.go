@@ -2,12 +2,12 @@ package migrate
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/authentication/local"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
@@ -24,7 +24,7 @@ func RefactorAuthenticationAuth(ctx context.Context, db *gorp.DbMap, store cache
 
 	for _, u := range us {
 		if err := refactorAuthenticationAuth(ctx, db, store, apiURL, uiURL, u); err != nil {
-			log.Error(ctx, "migrate.RefactorAuthenticationAuth> %v", err)
+			log.Error(ctx, "migrate.RefactorAuthenticationAuth> %+v", err)
 		}
 	}
 
@@ -38,10 +38,8 @@ func refactorAuthenticationAuth(ctx context.Context, db *gorp.DbMap, store cache
 	}
 	defer tx.Rollback() // nolint
 
-	var res interface{}
-
 	// Lock the user if it has not been migrated
-	if err := tx.SelectOne(&res, `
+	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM "authentified_user"
 		WHERE id = $1
@@ -51,8 +49,10 @@ func refactorAuthenticationAuth(ctx context.Context, db *gorp.DbMap, store cache
 			WHERE type = 'local'
 		)
 		FOR UPDATE SKIP LOCKED
-	`, u.ID); err != nil {
-		if err == sql.ErrNoRows {
+	`).Args(u.ID)
+
+	if _, err := user.Get(ctx, tx, query); err != nil {
+		if sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 			log.Info(ctx, "migrate.RefactorAuthenticationAuth> local auth consumer already exists for %s(%s)", u.Username, u.ID)
 			return nil
 		}

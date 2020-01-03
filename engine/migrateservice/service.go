@@ -29,6 +29,8 @@ type dbmigservice struct {
 	}
 }
 
+var _ service.BeforeStart = new(dbmigservice)
+
 // Configuration is the exposed type for database API configuration
 type Configuration struct {
 	Name      string `toml:"name" comment:"Name of this CDS Database Migrate service\n Enter a name to enable this service" json:"name"`
