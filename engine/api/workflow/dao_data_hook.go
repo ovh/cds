@@ -54,7 +54,13 @@ func LoadAllHooks(db gorp.SqlExecutor) ([]sdk.NodeHook, error) {
 	}
 
 	var res []dbNodeHookData
-	if _, err := db.Select(&res, "select * from w_node_hook"); err != nil {
+	var query = `
+	select * from w_node_hook 
+	where id in (
+	select max(id) as "id" from w_node_hook
+	group by uuid)
+	`
+	if _, err := db.Select(&res, query); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
