@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 
 export class Tab {
     translate: string;
+    translate_args?: {};
     icon: string;
     key: string;
     default: boolean;
@@ -36,9 +37,13 @@ export class TabsComponent implements OnInit, OnChanges {
     }
 
     ngOnChanges() {
-        this.selected = this.tabs.find(t => t.default);
         if (!this.selected) {
-            this.selected = this.tabs[0];
+            let default_tab = this.tabs.find(t => t.default);
+            if (default_tab) {
+                this.selected = default_tab;
+            } else {
+                this.selected = this.tabs[0];
+            }
         }
     }
 

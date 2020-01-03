@@ -27,10 +27,12 @@
                 <div class="ui grid">
                     <div class="sixteen wide column">
                         <app-data-table [withSelect]="selectFunc" (selectChange)="selectChange($event)"
-                            [withPagination]="10" [columns]="columnsInstances" [data]="instances" [loading]="loadingInstances"></app-data-table>
+                            [withPagination]="10" [columns]="columnsInstances" [data]="instances"
+                            [loading]="loadingInstances"></app-data-table>
                     </div>
                     <div class="sixteen wide column centered">
-                        <button class="ui positive button" [class.disabled]="selectedInstanceKeys.length === 0" (click)="clickGoToParam()">
+                        <button class="ui positive button" [class.disabled]="selectedInstanceKeys.length === 0"
+                            (click)="clickGoToParam()">
                             {{ 'btn_next' | translate }}
                         </button>
                     </div>
@@ -41,13 +43,16 @@
                     <div class="sixteen wide column">
                         <div class="ui styled fluid accordion">
                             <ng-container *ngFor="let instance of selectedInstances;let i = index">
-                                <div class="title" [class.active]="accordionOpenedIndex === i" (click)="accordionOpen($event, i)">
+                                <div class="title" [class.active]="accordionOpenedIndex === i"
+                                    (click)="accordionOpen($event, i)">
                                     <i class="dropdown icon"></i>{{instance.request.workflow_name}}
                                 </div>
                                 <div class="content" [class.active]="accordionOpenedIndex === i">
-                                    <app-workflow-template-param-form *ngIf="accordionOpenedIndex === i" [project]="instance.project"
-                                        [workflowTemplate]="workflowTemplate" [workflowTemplateInstance]="instance"
-                                        (paramChange)="changeParam(instance.id, $event)"></app-workflow-template-param-form>
+                                    <app-workflow-template-param-form *ngIf="accordionOpenedIndex === i"
+                                        [project]="instance.project" [workflowTemplate]="workflowTemplate"
+                                        [workflowTemplateInstance]="instance"
+                                        (paramChange)="changeParam(instance.id, $event)">
+                                    </app-workflow-template-param-form>
                                 </div>
                             </ng-container>
                         </div>
@@ -68,7 +73,8 @@
             <div *ngIf="currentStep === 2" class="sixteen wide column">
                 <div class="ui grid">
                     <div class="sixteen wide column">
-                        <app-data-table *ngIf="response" [columns]="columnsOperations" [data]="response.operations"></app-data-table>
+                        <app-data-table *ngIf="response" [withPagination]="10" [columns]="columnsOperations"
+                            [data]="response.operations"></app-data-table>
                     </div>
                     <div class="four wide column left floated">
                         <button class="ui primary button" (click)="clickGoToInstanceReset()">
