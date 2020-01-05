@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/fsamin/smtp"
+
 	"github.com/ovh/cds/tools/smtpmock/sdk"
 	"github.com/ovh/cds/tools/smtpmock/server/store"
-
-	"github.com/fsamin/smtp"
 )
 
 func Start(ctx context.Context, port int) error {

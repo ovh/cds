@@ -7,10 +7,11 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/pkg/errors"
+
 	"github.com/ovh/cds/tools/smtpmock/sdk"
 	"github.com/ovh/cds/tools/smtpmock/server/jwt"
 	"github.com/ovh/cds/tools/smtpmock/server/store"
-	"github.com/pkg/errors"
 )
 
 type Config struct {

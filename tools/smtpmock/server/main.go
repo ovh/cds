@@ -2,16 +2,15 @@ package main
 
 import (
 	"os"
-
 	"fmt"
 	"log"
+
+	cli "github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v2/altsrc"
 
 	"github.com/ovh/cds/tools/smtpmock/server/api"
 	"github.com/ovh/cds/tools/smtpmock/server/jwt"
 	"github.com/ovh/cds/tools/smtpmock/server/smtp"
-
-	cli "github.com/urfave/cli/v2"
-	"github.com/urfave/cli/v2/altsrc"
 )
 
 func main() {

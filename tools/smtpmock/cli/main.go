@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ovh/cds/tools/smtpmock/sdk"
-
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
+
+	"github.com/ovh/cds/tools/smtpmock/sdk"
 )
 
 var client sdk.Client
