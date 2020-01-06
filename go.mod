@@ -146,7 +146,6 @@ require (
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
 
 	github.com/ovh/cds/sdk/izanami v0.0.0-20190703081656-683453b50b2a
-	github.com/ovh/cds/tools/smtpmock v0.0.0-00010101000000-000000000000 // indirect
 	github.com/ovh/configstore v0.3.2
 	github.com/ovh/symmecrypt v0.4.0
 
@@ -166,6 +165,7 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/samuel/go-zookeeper v0.0.0-20180130194729-c4fab1ac1bec // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/sethgrid/pester v0.0.0-20171127025028-760f8913c048 // indirect
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
@@ -180,7 +180,6 @@ require (
 	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/tebeka/go2xunit v1.4.10 // indirect
 	github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5
 	github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926 // indirect
 	github.com/ugorji/go v1.1.7 // indirect
