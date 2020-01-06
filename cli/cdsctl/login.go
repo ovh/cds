@@ -30,7 +30,7 @@ var loginCmd = cli.Command{
 		},
 		{
 			Name:      "driver",
-			Usage:     "An enabled auth driver to login with. This should be local, github, gitlab, ldap, builtin or corporate-sso",
+			Usage:     "An enabled auth driver to login with. This should be local, GitHub, GitLab, Ldap, builtin or corporate-sso",
 			ShortHand: "d",
 		},
 		{
@@ -51,6 +51,10 @@ var loginCmd = cli.Command{
 			Name:      "init-token",
 			Usage:     "A CDS init token that can be used for first connection",
 			ShortHand: "i",
+		},
+		{
+			Name:  "token",
+			Usage: "A CDS token that can be used to login with a builtin auth driver.",
 		},
 	},
 }
@@ -179,7 +183,7 @@ func loginRunLDAP(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
 
 func loginRunBuiltin(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
 	req := sdk.AuthConsumerSigninRequest{
-		"token": v.GetString("signin-token"),
+		"token": v.GetString("token"),
 	}
 
 	if req["token"] == "" && !v.GetBool("no-interactive") {
@@ -238,7 +242,7 @@ func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, drive
 
 	var signinToken, sessionToken string
 	if driverType == sdk.ConsumerBuiltin {
-		signinToken = v.GetString("signin-token")
+		signinToken = v.GetString("token")
 		sessionToken = res.Token
 	} else {
 		var err error
