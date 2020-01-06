@@ -1,4 +1,4 @@
-package smtp
+package main
 
 import (
 	"context"
@@ -6,12 +6,11 @@ import (
 	"io/ioutil"
 
 	"github.com/fsamin/smtp"
-
+	
 	"github.com/ovh/cds/tools/smtpmock/sdk"
-	"github.com/ovh/cds/tools/smtpmock/server/store"
 )
 
-func Start(ctx context.Context, port int) error {
+func StartSMTP(ctx context.Context, port int) error {
 	srv := smtp.NewServeMux()
 	srv.HandleFunc("*@*", smtpHandler)
 	fmt.Printf("smtp server started on :%d\n", port)
@@ -34,7 +33,7 @@ func smtpHandler(envelope *smtp.Envelope) error {
 
 	m.Content = string(btes)
 
-	store.AddMessage(m)
+	StoreAddMessage(m)
 
 	return nil
 }

@@ -12,4 +12,5 @@ COPY --from=builder /tmp/smtpmocksrv ./
 COPY --from=builder /tmp/smtpmockcli ./
 RUN chmod +x ./smtpmocksrv
 ENTRYPOINT ["./smtpmocksrv"]
+CMD ["start"]
 EXPOSE 2023 2024

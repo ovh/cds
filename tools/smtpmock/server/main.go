@@ -1,16 +1,12 @@
 package main
 
 import (
-	"os"
 	"fmt"
 	"log"
+	"os"
 
 	cli "github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
-
-	"github.com/ovh/cds/tools/smtpmock/server/api"
-	"github.com/ovh/cds/tools/smtpmock/server/jwt"
-	"github.com/ovh/cds/tools/smtpmock/server/smtp"
 )
 
 func main() {
@@ -72,12 +68,12 @@ func main() {
 
 func start(ctx *cli.Context) error {
 	go func() {
-		if err := smtp.Start(ctx.Context, ctx.Int("smtp-port")); err != nil {
+		if err := StartSMTP(ctx.Context, ctx.Int("smtp-port")); err != nil {
 			log.Fatal(err)
 		}
 	}()
 
-	return api.Start(ctx.Context, api.Config{
+	return StartAPI(ctx.Context, ConfigAPI{
 		Port:      ctx.Int("api-port"),
 		PortSMTP:  ctx.Int("smtp-port"),
 		WithAuth:  ctx.Bool("with-auth"),
@@ -91,11 +87,11 @@ func generateToken(ctx *cli.Context) error {
 		return nil
 	}
 
-	if err := jwt.Init([]byte(ctx.String("jwt-secret"))); err != nil {
+	if err := InitJWT([]byte(ctx.String("jwt-secret"))); err != nil {
 		return err
 	}
 
-	subjectID, token, err := jwt.NewSigninToken()
+	subjectID, token, err := NewSigninToken()
 	if err != nil {
 		return err
 	}

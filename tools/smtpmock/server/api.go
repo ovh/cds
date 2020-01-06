@@ -1,4 +1,4 @@
-package api
+package main
 
 import (
 	"context"
@@ -10,27 +10,25 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/tools/smtpmock/sdk"
-	"github.com/ovh/cds/tools/smtpmock/server/jwt"
-	"github.com/ovh/cds/tools/smtpmock/server/store"
 )
 
-type Config struct {
+type ConfigAPI struct {
 	Port      int
 	PortSMTP  int
 	WithAuth  bool
 	JwtSecret string
 }
 
-var config Config
+var configAPI ConfigAPI
 
-func Start(ctx context.Context, c Config) error {
-	config = c
+func StartAPI(ctx context.Context, c ConfigAPI) error {
+	configAPI = c
 
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	if err := jwt.Init([]byte(config.JwtSecret)); err != nil {
+	if err := InitJWT([]byte(configAPI.JwtSecret)); err != nil {
 		return err
 	}
 
@@ -39,12 +37,12 @@ func Start(ctx context.Context, c Config) error {
 
 	mess := e.Group("/messages", middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
 		Skipper: func(c echo.Context) bool {
-			return !config.WithAuth
+			return !configAPI.WithAuth
 		},
 		KeyLookup:  "header:" + echo.HeaderAuthorization,
 		AuthScheme: "Bearer",
 		Validator: func(key string, c echo.Context) (bool, error) {
-			if _, err := jwt.CheckSessionToken(key); err != nil {
+			if _, err := CheckSessionToken(key); err != nil {
 				return false, nil
 			}
 			return true, nil
@@ -54,13 +52,13 @@ func Start(ctx context.Context, c Config) error {
 	{ // sub routes for /messages
 		mess.GET("", func(c echo.Context) error {
 			fmt.Println(c.Request().Header.Get("Authorization"))
-			return c.JSON(http.StatusOK, store.GetMessages())
+			return c.JSON(http.StatusOK, StoreGetMessages())
 		})
 		mess.GET("/:recipent", func(c echo.Context) error {
-			return c.JSON(http.StatusOK, store.GetRecipientMessages(c.Param("recipent")))
+			return c.JSON(http.StatusOK, StoreGetRecipientMessages(c.Param("recipent")))
 		})
 		mess.GET("/:recipent/latest", func(c echo.Context) error {
-			messages := store.GetRecipientMessages(c.Param("recipent"))
+			messages := StoreGetRecipientMessages(c.Param("recipent"))
 			if len(messages) == 0 {
 				return c.JSON(http.StatusNotFound, "not found")
 			}
@@ -68,17 +66,17 @@ func Start(ctx context.Context, c Config) error {
 		})
 	}
 
-	return e.Start(fmt.Sprintf(":%d", config.Port))
+	return e.Start(fmt.Sprintf(":%d", configAPI.Port))
 }
 
 func httpRootHandler(c echo.Context) error {
-	var s = fmt.Sprintf("SMTP server listenning on %d\n", config.PortSMTP)
-	s += fmt.Sprintf("%d mails received to %d recipents\n", store.CountMessages(), store.CountRecipients())
+	var s = fmt.Sprintf("SMTP server listenning on %d\n", configAPI.PortSMTP)
+	s += fmt.Sprintf("%d mails received to %d recipents\n", StoreCountMessages(), StoreCountRecipients())
 	return c.String(http.StatusOK, s)
 }
 
 func httpSigninHandler(c echo.Context) error {
-	if !config.WithAuth {
+	if !configAPI.WithAuth {
 		return c.JSON(http.StatusOK, sdk.SigninResponse{})
 	}
 
@@ -87,17 +85,17 @@ func httpSigninHandler(c echo.Context) error {
 		return errors.WithStack(err)
 	}
 
-	subjectID, err := jwt.CheckSigninToken(data.SigninToken)
+	subjectID, err := CheckSigninToken(data.SigninToken)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	sessionID, sessionToken, err := jwt.NewSessionToken(subjectID)
+	sessionID, sessionToken, err := NewSessionToken(subjectID)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	store.AddSession(sessionID)
+	StoreAddSession(sessionID)
 
 	return c.JSON(http.StatusOK, sdk.SigninResponse{
 		SessionToken: sessionToken,

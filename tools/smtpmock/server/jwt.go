@@ -1,4 +1,4 @@
-package jwt
+package main
 
 import (
 	"crypto/rsa"
@@ -12,7 +12,7 @@ var (
 	verifyKey  *rsa.PublicKey
 )
 
-func Init(k []byte) error {
+func InitJWT(k []byte) error {
 	var err error
 	signingKey, err = jwt.ParseRSAPrivateKeyFromPEM(k)
 	if err != nil {

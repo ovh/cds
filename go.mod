@@ -115,9 +115,6 @@ require (
 	github.com/marstr/guid v1.1.0 // indirect
 	github.com/maruel/panicparse v1.3.0
 	github.com/mattbaird/elastigo v0.0.0-20170123220020-2fe47fd29e4b // indirect
-
-	github.com/mattn/go-colorable v0.1.2 // indirect
-	github.com/mattn/go-isatty v0.0.9 // indirect
 	github.com/mattn/go-runewidth v0.0.1 // indirect
 	github.com/mattn/go-sqlite3 v1.9.0
 	github.com/mattn/go-zglob v0.0.1
@@ -149,6 +146,7 @@ require (
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
 
 	github.com/ovh/cds/sdk/izanami v0.0.0-20190703081656-683453b50b2a
+	github.com/ovh/cds/tools/smtpmock v0.0.0-00010101000000-000000000000 // indirect
 	github.com/ovh/configstore v0.3.2
 	github.com/ovh/symmecrypt v0.4.0
 
@@ -168,7 +166,6 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/samuel/go-zookeeper v0.0.0-20180130194729-c4fab1ac1bec // indirect
-	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/sethgrid/pester v0.0.0-20171127025028-760f8913c048 // indirect
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
@@ -200,7 +197,7 @@ require (
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	go.etcd.io/bbolt v1.3.3 // indirect
 	go.opencensus.io v0.22.0
-	golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5
+	golang.org/x/crypto v0.0.0-20190829043050-9756ffdc2472
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a

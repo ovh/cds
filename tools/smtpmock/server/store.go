@@ -1,4 +1,4 @@
-package store
+package main
 
 import (
 	"sync"
@@ -14,7 +14,7 @@ var (
 	sessionsMutex    sync.Mutex
 )
 
-func AddMessage(m sdk.Message) {
+func StoreAddMessage(m sdk.Message) {
 	allMessagesMutex.Lock()
 	defer allMessagesMutex.Unlock()
 
@@ -24,7 +24,7 @@ func AddMessage(m sdk.Message) {
 	messagesCounter++
 }
 
-func GetMessages() []sdk.Message {
+func StoreGetMessages() []sdk.Message {
 	ms := []sdk.Message{}
 	for k := range allMessages {
 		ms = append(ms, allMessages[k]...)
@@ -32,22 +32,22 @@ func GetMessages() []sdk.Message {
 	return ms
 }
 
-func GetRecipientMessages(addr string) []sdk.Message {
+func StoreGetRecipientMessages(addr string) []sdk.Message {
 	if ms, ok := allMessages[addr]; ok && len(ms) > 0 {
 		return ms
 	}
 	return []sdk.Message{}
 }
 
-func CountMessages() int {
+func StoreCountMessages() int {
 	return messagesCounter
 }
 
-func CountRecipients() int {
+func StoreCountRecipients() int {
 	return len(allMessages)
 }
 
-func AddSession(sessionID string) {
+func StoreAddSession(sessionID string) {
 	sessionsMutex.Lock()
 	defer sessionsMutex.Unlock()
 
