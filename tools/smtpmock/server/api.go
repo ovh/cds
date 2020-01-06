@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/pkg/errors"
 
-	"github.com/ovh/cds/tools/smtpmock/sdk"
+	"github.com/ovh/cds/tools/smtpmock"
 )
 
 type ConfigAPI struct {
@@ -77,10 +77,10 @@ func httpRootHandler(c echo.Context) error {
 
 func httpSigninHandler(c echo.Context) error {
 	if !configAPI.WithAuth {
-		return c.JSON(http.StatusOK, sdk.SigninResponse{})
+		return c.JSON(http.StatusOK, smtpmock.SigninResponse{})
 	}
 
-	var data sdk.SigninRequest
+	var data smtpmock.SigninRequest
 	if err := c.Bind(&data); err != nil {
 		return errors.WithStack(err)
 	}
@@ -97,7 +97,7 @@ func httpSigninHandler(c echo.Context) error {
 
 	StoreAddSession(sessionID)
 
-	return c.JSON(http.StatusOK, sdk.SigninResponse{
+	return c.JSON(http.StatusOK, smtpmock.SigninResponse{
 		SessionToken: sessionToken,
 	})
 }

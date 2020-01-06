@@ -3,40 +3,40 @@ package main
 import (
 	"sync"
 
-	"github.com/ovh/cds/tools/smtpmock/sdk"
+	"github.com/ovh/cds/tools/smtpmock"
 )
 
 var (
-	allMessages      = make(map[string][]sdk.Message)
+	allMessages      = make(map[string][]smtpmock.Message)
 	allMessagesMutex sync.Mutex
 	messagesCounter  int
 	sessions         []string
 	sessionsMutex    sync.Mutex
 )
 
-func StoreAddMessage(m sdk.Message) {
+func StoreAddMessage(m smtpmock.Message) {
 	allMessagesMutex.Lock()
 	defer allMessagesMutex.Unlock()
 
 	list := allMessages[m.To]
-	list = append([]sdk.Message{m}, list...)
+	list = append([]smtpmock.Message{m}, list...)
 	allMessages[m.To] = list
 	messagesCounter++
 }
 
-func StoreGetMessages() []sdk.Message {
-	ms := []sdk.Message{}
+func StoreGetMessages() []smtpmock.Message {
+	ms := []smtpmock.Message{}
 	for k := range allMessages {
 		ms = append(ms, allMessages[k]...)
 	}
 	return ms
 }
 
-func StoreGetRecipientMessages(addr string) []sdk.Message {
+func StoreGetRecipientMessages(addr string) []smtpmock.Message {
 	if ms, ok := allMessages[addr]; ok && len(ms) > 0 {
 		return ms
 	}
-	return []sdk.Message{}
+	return []smtpmock.Message{}
 }
 
 func StoreCountMessages() int {

@@ -1,4 +1,4 @@
-package sdk
+package smtpmock
 
 type SigninRequest struct {
 	SigninToken string `json:"signin-token"`

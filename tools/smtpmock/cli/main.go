@@ -8,10 +8,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 
-	"github.com/ovh/cds/tools/smtpmock/sdk"
+	"github.com/ovh/cds/tools/smtpmock"
 )
 
-var client sdk.Client
+var client smtpmock.Client
 
 func main() {
 	flags := []cli.Flag{
@@ -46,7 +46,7 @@ func main() {
 		},
 		Flags: flags,
 		Before: func(ctx *cli.Context) error {
-			client = sdk.NewClient(ctx.String("api-url"))
+			client = smtpmock.NewClient(ctx.String("api-url"))
 
 			token := ctx.String("signin-token")
 			if token != "" {

@@ -1,4 +1,4 @@
-package sdk
+package smtpmock
 
 type Message struct {
 	FromAgent     string `json:"from-agent"`

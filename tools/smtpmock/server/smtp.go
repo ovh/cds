@@ -7,7 +7,7 @@ import (
 
 	"github.com/fsamin/smtp"
 	
-	"github.com/ovh/cds/tools/smtpmock/sdk"
+	"github.com/ovh/cds/tools/smtpmock"
 )
 
 func StartSMTP(ctx context.Context, port int) error {
@@ -18,7 +18,7 @@ func StartSMTP(ctx context.Context, port int) error {
 }
 
 func smtpHandler(envelope *smtp.Envelope) error {
-	m := sdk.Message{
+	m := smtpmock.Message{
 		RemoteAddress: envelope.RemoteAddr,
 		FromAgent:     envelope.FromAgent,
 		To:            envelope.MessageTo,
