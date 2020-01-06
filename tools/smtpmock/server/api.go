@@ -28,8 +28,10 @@ func StartAPI(ctx context.Context, c ConfigAPI) error {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	if err := InitJWT([]byte(configAPI.JwtSecret)); err != nil {
-		return err
+	if configAPI.WithAuth {
+		if err := InitJWT([]byte(configAPI.JwtSecret)); err != nil {
+			return err
+		}
 	}
 
 	e.GET("/", httpRootHandler)
