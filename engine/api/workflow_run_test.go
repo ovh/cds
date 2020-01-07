@@ -1231,6 +1231,32 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	wr := &sdk.WorkflowRun{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
 	assert.Equal(t, int64(1), wr.Number)
+
+	// wait for the workflow to finish crafting
+	assert.NoError(t, waitCraftinWorkflow(t, db, wr.ID))
+}
+
+func waitCraftinWorkflow(t *testing.T, db gorp.SqlExecutor, id int64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	tick := time.NewTicker(100 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-tick.C:
+			w, _ := workflow.LoadRunByID(db, id, workflow.LoadRunOptions{})
+			if w == nil {
+				continue
+			}
+			if w.Status == sdk.StatusPending {
+				continue
+			}
+			return nil
+		}
+	}
+
 }
 
 func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {

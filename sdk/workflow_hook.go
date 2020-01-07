@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"database/sql/driver"
+	"encoding/base64"
 	json "encoding/json"
 	"fmt"
 )
@@ -34,8 +35,7 @@ func (h NodeHook) Ref() string {
 		}
 	}
 
-	sha, _ := SHA512sum(s)
-	return sha
+	return base64.StdEncoding.EncodeToString([]byte(s))
 }
 
 //Equals checks functional equality between two hooks
