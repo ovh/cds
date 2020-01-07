@@ -29,6 +29,7 @@ func StartAPI(ctx context.Context, c ConfigAPI) error {
 	e.Use(middleware.Recover())
 
 	if configAPI.WithAuth {
+		fmt.Println("Starting with auth enabled")
 		if err := InitJWT([]byte(configAPI.JwtSecret)); err != nil {
 			return err
 		}
