@@ -55,7 +55,9 @@ export class UpdateAscodeComponent {
         this.modal = this._modalService.open(this.modalConfig);
         this._awService.getVCSInfos(this.project.key, this.appName, '').pipe(first())
             .subscribe(vcsinfos => {
-                this.branches = vcsinfos.branches.map(b => b.display_id);
+                if (vcsinfos && vcsinfos.branches) {
+                    this.branches = vcsinfos.branches.map(b => b.display_id);
+                }
                 this._cd.markForCheck();
             });
     }
@@ -133,7 +135,5 @@ export class UpdateAscodeComponent {
             default:
                 this._toast.error('', this._translate.instant('ascode_error_unknown_type'))
         }
-
-
     }
 }

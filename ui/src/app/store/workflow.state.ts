@@ -6,7 +6,7 @@ import { NavbarService } from 'app/service/navbar/navbar.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
-import { ResyncEvents } from 'app/store/ascode.action';
+import * as actionAsCode from 'app/store/ascode.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first, tap } from 'rxjs/operators';
 import * as ActionProject from './project.action';
@@ -19,7 +19,6 @@ export class WorkflowStateModel {
     node: WNode; // selected node
     hook: WNodeHook; // selected hook
     editModal: boolean; // is edit modal is opened
-    modalSaveAsCode: boolean; // is modal to save as code is opened
     loadingWorkflow: boolean;
     loadingWorkflowRuns: boolean;
     loadingWorkflowRun: boolean;
@@ -44,7 +43,6 @@ export function getInitialWorkflowState(): WorkflowStateModel {
         node: null,
         hook: null,
         editModal: false,
-        modalSaveAsCode: false,
         loadingWorkflow: false,
         loadingWorkflowRuns: false,
         loadingWorkflowRun: false,
@@ -173,13 +171,18 @@ export class WorkflowState {
         // As code Update Cache
         if (stateEdit.editMode) {
             let n: WNode;
+            let h: WNodeHook;
             if (stateEdit.node) {
                 n = Workflow.getNodeByRef(stateEdit.node.ref, action.payload.changes);
+            }
+            if (stateEdit.hook) {
+                h = Workflow.getHookByRef(stateEdit.hook.ref, action.payload.changes);
             }
             ctx.setState({
                 ...stateEdit,
                 editWorkflow: action.payload.changes,
                 node: n,
+                hook: h,
                 editModeWorkflowChanged: true,
             });
             return;
@@ -620,6 +623,9 @@ export class WorkflowState {
 
         if (state.workflow && state.editMode) {
             const hooksAsCode = state.editWorkflow.workflow_data.node.hooks || [];
+            if (!action.payload.hook.ref) {
+                action.payload.hook.ref = new Date().getTime().toString();
+            }
             const rootAsCode = Object.assign({}, state.editWorkflow.workflow_data.node, <WNode>{
                 hooks: hooksAsCode.concat([action.payload.hook])
             });
@@ -1110,7 +1116,7 @@ export class WorkflowState {
         if (state.workflow.from_repository) {
             editMode = true;
         }
-        let editWorkflow = cloneDeep(state.workflow)
+        let editWorkflow = cloneDeep(state.workflow);
         // compute ref on node
         Workflow.getAllNodes(editWorkflow).forEach(n => {
             if (!n.ref) {
@@ -1125,21 +1131,29 @@ export class WorkflowState {
         });
     }
 
-    @Action(ResyncEvents)
+    @Action(actionAsCode.ResyncEvents)
     refreshAsCodeEvents(ctx: StateContext<WorkflowStateModel>, _) {
         const state = ctx.getState();
         ctx.dispatch(new actionWorkflow
             .GetWorkflow({projectKey: state.projectKey, workflowName: state.workflow.name}));
     }
 
-    @Action(actionWorkflow.OpenSaveWorkflowModal)
-    openSaveWorkflowModal(ctx: StateContext<WorkflowStateModel>, _) {
+    @Action(actionAsCode.AsCodeEvent)
+    receivedAsCodeEvent(ctx: StateContext<WorkflowStateModel>, action: actionAsCode.AsCodeEvent) {
+        if (!action.payload.data || !action.payload.data.workflows) {
+            // Event not on a workflow
+            return;
+        }
         const state = ctx.getState();
-        ctx.setState({
-            ...state,
-            modalSaveAsCode: true
-        });
+        if (!state.workflow) {
+            // No workflow in the state
+            return;
+        }
+        if (!action.payload.data.workflows[state.workflow.id]) {
+            // Not the same workflow
+            return
+        }
+        ctx.dispatch(new actionWorkflow.GetWorkflow({projectKey: state.projectKey, workflowName: state.workflow.name}));
+
     }
-
-
 }

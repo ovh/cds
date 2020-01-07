@@ -21,6 +21,8 @@ export class Event {
 export class EventType {
     static MAINTENANCE = 'sdk.EventMaintenance';
 
+    static ASCODE = 'sdk.EventAsCodeEvent';
+
     static PROJECT_PREFIX = 'sdk.EventProject';
     static PROJECT_DELETE = 'sdk.EventProjectDelete';
     static PROJECT_VARIABLE_PREFIX = 'sdk.EventProjectVariable';

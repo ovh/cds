@@ -36,6 +36,7 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() mode = 'create'; // create / edit / ro
+    @Input() editMode: boolean;
 
     _outgoingHook: WNode;
     @Input('hook')
@@ -188,7 +189,11 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this.outgoinghookChange.emit(false);
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
             });
     }
 

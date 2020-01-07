@@ -71,6 +71,8 @@ export class WorkflowWNodeJoinComponent {
         })).subscribe(() => {
             if (!this.editMode) {
                 this._toast.success('', this._translate.instant('workflow_updated'));
+            } else {
+                this._toast.info('', this._translate.instant('workflow_ascode_updated'));
             }
         });
     }

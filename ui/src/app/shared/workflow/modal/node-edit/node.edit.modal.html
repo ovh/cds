@@ -65,7 +65,7 @@
 
                         </ng-container>
                         <ng-container *ngSwitchCase="'outgoinghook'">
-                            <app-workflow-node-outgoinghook [project]="project" [workflow]="workflow"
+                            <app-workflow-node-outgoinghook [project]="project" [workflow]="workflow" [editMode]="editMode"
                                 [mode]="readonly?'ro':'update'" [hook]="node" (outgoinghookChange)="pushChange($event)">
                             </app-workflow-node-outgoinghook>
                         </ng-container>
@@ -98,7 +98,7 @@
                         </ng-container>
                         <ng-container *ngSwitchCase="'hook'">
                             <app-workflow-node-hook-form [project]="project" [workflow]="workflow" [node]="node"
-                                [hook]="hook" [mode]="readonly?'ro':'update'"></app-workflow-node-hook-form>
+                                [hook]="hook" [mode]="readonly?'ro':'update'" [editMode]="editMode"></app-workflow-node-hook-form>
                         </ng-container>
                     </div>
                 </div>

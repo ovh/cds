@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/ascode"
+	"github.com/ovh/cds/engine/api/ascode/sync"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -201,7 +201,8 @@ func (api *API) postResyncPRAsCodeHandler() service.Handler {
 			return errA
 		}
 
-		if _, _, _, err := ascode.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, proj, app); err != nil {
+		_, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, proj, app, getAPIConsumer(ctx).AuthentifiedUser)
+		if err != nil {
 			return err
 		}
 		return nil

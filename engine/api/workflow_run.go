@@ -13,7 +13,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/ascode"
+	ascodesync "github.com/ovh/cds/engine/api/ascode/sync"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -965,36 +965,13 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			}
 			app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
 
-			tx, err := db.Begin()
+			_, fromRepo, err := ascodesync.SyncAsCodeEvent(ctx, db, cache, p, &app, u.AuthentifiedUser)
 			if err != nil {
-				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to start transaction"))
-				report.Merge(ctx, r1, nil) // nolint
-				return
-			}
-			m, _, fromRepo, err := ascode.SyncAsCodeEvent(ctx, tx, cache, p, &app)
-			if err != nil {
-				tx.Rollback() // nolint
 				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to sync as code event"))
 				report.Merge(ctx, r1, nil) // nolint
 				return
 			}
-			if m {
-				wf.FromRepository = fromRepo
-				if err := workflow.UpdateFromRepository(tx, wf.ID, wf.FromRepository); err != nil {
-					tx.Rollback() // nolint
-					r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to save repository on workflow"))
-					report.Merge(ctx, r1, nil) // nolint
-					return
-				}
-			}
-
-			if err := tx.Commit(); err != nil {
-				tx.Rollback() // nolint
-				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(err, "unable to commit transaction as code event"))
-				report.Merge(ctx, r1, nil) // nolint
-				return
-			}
-
+			wf.FromRepository = fromRepo
 		}
 
 		// IF AS CODE - REBUILD Workflow

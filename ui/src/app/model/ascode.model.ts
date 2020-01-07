@@ -13,8 +13,19 @@ export class AsCodeEventData {
     pipelines: AsCodeEventDataValue;
     applications: AsCodeEventDataValue;
     environments: AsCodeEventDataValue;
+
+    static FromEventsmanager(data: {}): AsCodeEventData {
+        let asCodeEventData = new AsCodeEventData();
+        asCodeEventData.workflows = data['Workflows'];
+        asCodeEventData.pipelines = data['Pipelines'];
+        asCodeEventData.applications = data['Applications'];
+        asCodeEventData.environments = data['Environments'];
+        return asCodeEventData;
+    }
 }
 
 export class AsCodeEventDataValue {
     [key: number]: string;
 }
+
+

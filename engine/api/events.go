@@ -238,7 +238,7 @@ func (client *eventsBrokerSubscribe) manageEvent(db gorp.SqlExecutor, event sdk.
 	var isSharedInfra = client.consumer.Groups.HasOneOf(group.SharedInfraGroup.ID)
 
 	switch {
-	case strings.HasPrefix(event.EventType, "sdk.EventProject"):
+	case strings.HasPrefix(event.EventType, "sdk.EventProject") || strings.HasPrefix(event.EventType, "sdk.EventAsCodeEvent"):
 		if isSharedInfra || client.consumer.Maintainer() {
 			return true, nil
 		}

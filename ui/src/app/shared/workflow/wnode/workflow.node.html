@@ -24,7 +24,7 @@
         (triggerEvent)="updateWorkflow($event, workflowTrigger.modal)" #workflowTrigger></app-workflow-trigger>
     <!-- Add hook -->
     <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
-        (hookEvent)="updateHook($event, workflowAddHook.modal)" #workflowAddHook></app-hook-modal>
+        (hookEvent)="addHook($event, workflowAddHook.modal)" #workflowAddHook></app-hook-modal>
 
     <!-- Delete Node -->
     <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow"

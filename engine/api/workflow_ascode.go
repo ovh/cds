@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/ascode"
+	"github.com/ovh/cds/engine/api/ascode/sync"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
@@ -115,17 +116,9 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 
 	// Sync as code event
 	if len(wf.AsCodeEvent) > 0 {
-		tx, err := api.mustDB().Begin()
+		eventsLeft, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, proj, app, getAPIConsumer(ctx).AuthentifiedUser)
 		if err != nil {
-			return sdk.WrapError(err, "unable to start transaction")
-		}
-		_, eventsLeft, _, err := ascode.SyncAsCodeEvent(ctx, tx, api.Cache, proj, app)
-		if err != nil {
-			tx.Rollback() // nolint
 			return err
-		}
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "unable to commit transaction")
 		}
 		wf.AsCodeEvent = eventsLeft
 	}

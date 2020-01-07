@@ -196,7 +196,11 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this.contextChange.emit(false);
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
             });
     }
 }

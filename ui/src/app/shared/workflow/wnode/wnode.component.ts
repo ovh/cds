@@ -22,7 +22,6 @@ import {
     AddNodeTriggerWorkflow,
     OpenEditModal,
     SelectWorkflowNodeRun,
-    UpdateHookWorkflow,
     UpdateWorkflow
 } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
@@ -245,27 +244,21 @@ export class WorkflowWNodeComponent implements OnInit {
         }
     }
 
-    updateHook(hook: WNodeHook, modal: SuiActiveModal<boolean, boolean, void>): void {
+    addHook(hook: WNodeHook, modal: SuiActiveModal<boolean, boolean, void>): void {
         this.loading = true;
 
-        let action = new UpdateHookWorkflow({
+        let action = new AddHookWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             hook
         });
 
-        if (!hook.uuid) {
-            action = new AddHookWorkflow({
-                projectKey: this.project.key,
-                workflowName: this.workflow.name,
-                hook
-            });
-        }
-
         this._store.dispatch(action).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 if (!this.editMode) {
                     this._toast.success('', this._translate.instant('workflow_updated'));
+                } else {
+                    this._toast.info('', this._translate.instant('workflow_ascode_updated'))
                 }
                 if (modal) {
                     modal.approve(null);

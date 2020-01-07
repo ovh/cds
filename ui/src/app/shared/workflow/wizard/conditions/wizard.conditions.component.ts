@@ -209,8 +209,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                     cc.value = cc.value.toString();
                 });
             }
-        }
-        else if (this.editableHook) {
+        } else if (this.editableHook) {
             let hook = Workflow.getHookByRef(this.editableHook.ref, clonedWorkflow);
             hook.conditions = cloneDeep(this.editableHook.conditions);
             if (hook.conditions && hook.conditions.plain) {
@@ -228,7 +227,12 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this.conditionsChange.emit(false);
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
+
             });
     }
 

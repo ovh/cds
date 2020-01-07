@@ -129,6 +129,9 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
                 projectKey: this.project.key,
                 pipelineName: pipeline.name
             }));
+            if (this.pipSubscription) {
+                this.pipSubscription.unsubscribe();
+            }
             this.pipSubscription = this.store.select(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
                 if (pip.pipeline.name === pipeline.name && pip.currentProjectKey === this.project.key) {
                     this.currentPipeline = pip.pipeline;
@@ -145,7 +148,6 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
                         this.editableNode.context.default_payload = {};
                     }
                     this._cd.markForCheck();
-                    this.pipSubscription.unsubscribe();
                 }
             });
         }
@@ -262,7 +264,11 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this.inputChange.emit(false);
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
             });
     }
 }

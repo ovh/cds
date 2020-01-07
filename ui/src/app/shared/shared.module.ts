@@ -12,6 +12,7 @@ import { AsCodeEventComponent } from 'app/shared/ascode/events/ascode.event.comp
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
 import { GroupFormComponent } from 'app/shared/group/form/group.form.component';
 import { AutoFocusInputComponent } from 'app/shared/input/autofocus/autofocus.input.component';
+import { UpdateAscodeComponent } from 'app/shared/modal/save-as-code/update.ascode.component';
 import { SelectFilterComponent } from 'app/shared/select/select.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
@@ -44,7 +45,6 @@ import { LabelsEditComponent } from './labels/edit/labels.edit.component';
 import { MenuComponent } from './menu/menu.component';
 import { ConfirmModalComponent } from './modal/confirm/confirm.component';
 import { DeleteModalComponent } from './modal/delete/delete.component';
-import { UpdateAscodeComponent } from './modal/save-as-code/update.Ascode.component';
 import { WarningModalComponent } from './modal/warning/warning.component';
 import { ParameterFormComponent } from './parameter/form/parameter.form';
 import { ParameterListComponent } from './parameter/list/parameter.component';

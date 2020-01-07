@@ -17,7 +17,7 @@ import { AscodeService } from 'app/service/ascode/ascode.service';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { UpdateAscodeComponent } from 'app/shared/modal/save-as-code/update.Ascode.component';
+import { UpdateAscodeComponent } from 'app/shared/modal/save-as-code/update.ascode.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowTemplateApplyModalComponent } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
@@ -133,10 +133,6 @@ export class WorkflowComponent {
         this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
             this.sidebarMode = s.sidebar;
             this.editWorkflow = s.editWorkflow;
-            if (s.modalSaveAsCode) {
-                this.saveAsCodeModal();
-            }
-
 
             if (s.workflow && (!this.workflow || (this.workflow && s.workflow.id !== this.workflow.id))) {
                 this.workflow = s.workflow;
@@ -219,7 +215,24 @@ export class WorkflowComponent {
         });
     }
 
-    saveAsCodeModal(): void {
+    openSaveAsCodeModal(): void {
+        if (!this.project.vcs_servers) {
+            this._toast.error('', this._translate.instant('project_vcs_no'));
+            return;
+        }
+        if (!this.workflow.workflow_data || !this.workflow.workflow_data.node ||
+            !this.workflow.workflow_data.node.context ||
+            !this.workflow.workflow_data.node.context.application_id
+        ) {
+            this._toast.error('', this._translate.instant('common_no_application'));
+            return;
+        }
+        let app = this.workflow.applications[this.workflow.workflow_data.node.context.application_id];
+        if (!app || !app.repository_fullname) {
+            this._toast.error('', this._translate.instant('application_repo_no'));
+            return;
+        }
+
         if (this.saveAsCode) {
             this.saveAsCode.show(this.editWorkflow, 'workflow');
         }

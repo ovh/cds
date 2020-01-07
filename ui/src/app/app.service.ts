@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { AsCodeEventData } from 'app/model/ascode.model';
+import { AsCodeEvent } from 'app/store/ascode.action';
 import { UpdateMaintenance } from 'app/store/cds.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { filter, first } from 'rxjs/operators';
@@ -60,6 +62,13 @@ export class AppService {
         }
         if (event.type_event.indexOf(EventType.MAINTENANCE) === 0) {
             this._store.dispatch(new UpdateMaintenance(event.payload['Enable']));
+            return;
+        }
+        if (event.type_event.indexOf(EventType.ASCODE) === 0) {
+            if (event.username === this._store.selectSnapshot(AuthenticationState.user).username) {
+                let e = event.payload['Event'];
+                this._store.dispatch(new AsCodeEvent({data: AsCodeEventData.FromEventsmanager(e['Data'])}));
+            }
             return;
         }
         if (event.type_event.indexOf(EventType.PROJECT_PREFIX) === 0 || event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0 ||

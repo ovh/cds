@@ -16,10 +16,13 @@
                 <a sm-item [class.active]="selectedTab === 'permissions'" id="WorkflowPermissionsTabs" (click)="showTab('permissions')">
                     <i class="users icon"></i>
                     {{'common_permissions' | translate }}</a>
-                <a sm-item [class.active]="selectedTab === 'audits'" id="WorkflowAuditsTabs" (click)="showTab('audits')">
-                    <i class="history icon"></i>
-                    {{'common_audit' | translate }}
-                </a>
+                <ng-container *ngIf="!detailedWorkflow.from_repository">
+                    <a sm-item [class.active]="selectedTab === 'audits'" id="WorkflowAuditsTabs" (click)="showTab('audits')">
+                        <i class="history icon"></i>
+                        {{'common_audit' | translate }}
+                    </a>
+                </ng-container>
+
                 <a sm-item [class.active]="selectedTab === 'usage'" id="WorkflowUsageTabs" [class.disabled]="usageCount === 0"
                     (click)="usageCount !== 0 && showTab('usage')">
                     <i class="map signs icon"></i>
@@ -56,7 +59,7 @@
                                             </button>
                                         </div>
                                         <div class="six wide column centered">
-                                            <div class="ui buttons">
+                                            <div class="ui buttons" *ngIf="!detailedWorkflow.from_repository">
                                                 <div class="ui blue button" (click)="showAsCodeEditor()"
                                                     [class.loading]="loading">
                                                     <i class="terminal icon"></i>
@@ -67,7 +70,7 @@
                                                     </i>
                                                 </div>
                                                 <div *ngIf="previewWorkflow" class="ui green button" (click)="savePreview()"
-                                                    [class.disabled]="loading || (detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0) || !detailedWorkflow.permissions.writable"
+                                                    [class.disabled]="loading || !detailedWorkflow.permissions.writable"
                                                     [class.loading]="loading">
                                                     <i class="save icon"></i> {{'btn_save' |
                                                     translate}}
@@ -99,7 +102,7 @@
         </div>
         <app-scrollview class="scrollview" *ngIf="selectedTab !== 'workflows'" [ngSwitch]="selectedTab">
             <div *ngSwitchCase="'notifications'">
-                <app-workflow-notification-list [project]="project" [workflow]="detailedWorkflow"></app-workflow-notification-list>
+                <app-workflow-notification-list [project]="project" [workflow]="detailedWorkflow" [editMode]="editMode"></app-workflow-notification-list>
             </div>
             <div *ngSwitchCase="'permissions'" class="padded">
                 <h3>{{ 'workflow_permission_list_title' | translate }}</h3>
@@ -112,7 +115,7 @@
                     (event)="groupManagement($event, true)" #permWarning></app-warning-modal>
             </div>
             <div *ngSwitchCase="'advanced'" class="padded">
-                <app-workflow-admin [project]="project" [workflow]="detailedWorkflow"></app-workflow-admin>
+                <app-workflow-admin [project]="project" [workflow]="detailedWorkflow" [editMode]="editMode"></app-workflow-admin>
             </div>
             <div *ngSwitchCase="'usage'" class="padded">
                 <app-usage [project]="project" [pipelines]="detailedWorkflow.usage.pipelines" [applications]="detailedWorkflow.usage.applications"
