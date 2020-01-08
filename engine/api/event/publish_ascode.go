@@ -23,7 +23,7 @@ func publishAsCodeEvent(ctx context.Context, payload interface{}, key string, u 
 		event.Username = u.GetUsername()
 		event.UserMail = u.GetEmail()
 	}
-	publishEvent(ctx, event)
+	_ = publishEvent(ctx, event)
 }
 
 func PublishAsCodeEvent(ctx context.Context, projKey string, asCodeEvent sdk.AsCodeEvent, u sdk.Identifiable) {

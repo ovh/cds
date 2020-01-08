@@ -47,7 +47,7 @@ func SyncAsCodeEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, pro
 	if err != nil {
 		return nil, fromRepo, sdk.WrapError(err, "unable to start transaction")
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint
 
 	eventLeft := make([]sdk.AsCodeEvent, 0)
 	eventDeleted := make([]sdk.AsCodeEvent, 0)
