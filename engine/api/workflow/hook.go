@@ -18,18 +18,18 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func computeHookToDelete(newWorkflow *sdk.Workflow, oldWorkflow *sdk.Workflow) map[string]*sdk.NodeHook {
-	hookToDelete := make(map[string]*sdk.NodeHook)
+func computeHookToDelete(newWorkflow *sdk.Workflow, oldWorkflow *sdk.Workflow) map[string]sdk.NodeHook {
+	hookToDelete := make(map[string]sdk.NodeHook)
 	currentHooks := newWorkflow.WorkflowData.GetHooks()
 	for k, h := range oldWorkflow.WorkflowData.GetHooks() {
 		if _, has := currentHooks[k]; !has {
-			hookToDelete[k] = h
+			hookToDelete[k] = *h
 		}
 	}
 	return hookToDelete
 }
 
-func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]*sdk.NodeHook) error {
+func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.NodeHook) error {
 	if len(hookToDelete) == 0 {
 		return nil
 	}
@@ -168,7 +168,11 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		// Create vcs configuration ( always after hook creation to have webhook URL) + update hook in DB
 		for i := range wf.WorkflowData.Node.Hooks {
 			h := &wf.WorkflowData.Node.Hooks[i]
-			v, ok := h.Config["webHookID"]
+			// Manage VCSconfigation only for updated hooks
+			if _, isUpdated := hookToUpdate[h.UUID]; !isUpdated {
+				continue
+			}
+			v, ok := h.Config[sdk.HookConfigWebHookID]
 			if h.HookModelName == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" {
 				if !ok || v.Value == "" {
 					if err := createVCSConfiguration(ctx, db, store, p, h); err != nil {
@@ -304,7 +308,7 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 		return sdk.WrapError(err, "Cannot create hook on repository: %+v", vcsHook)
 	}
 	observability.Current(ctx, observability.Tag("VCS_ID", vcsHook.ID))
-	h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
+	h.Config[sdk.HookConfigWebHookID] = sdk.WorkflowNodeHookConfigValue{
 		Value:        vcsHook.ID,
 		Configurable: false,
 	}

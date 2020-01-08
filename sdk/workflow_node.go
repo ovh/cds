@@ -30,6 +30,15 @@ type Node struct {
 	Groups              []GroupPermission `json:"groups,omitempty" db:"-"`
 }
 
+func (n Node) GetHook(UUID string) *NodeHook {
+	for _, h := range n.Hooks {
+		if h.UUID == UUID {
+			return &h
+		}
+	}
+	return nil
+}
+
 // NodeContext represents a node linked to a pipeline
 type NodeContext struct {
 	ID                        int64                  `json:"id" db:"id"`
