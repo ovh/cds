@@ -5,7 +5,14 @@ import { Environment } from 'app/model/environment.model';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Pipeline, PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { WNode, WNodeTrigger, Workflow, WorkflowNodeCondition, WorkflowNodeConditions } from 'app/model/workflow.model';
+import {
+    WNode,
+    WNodeTrigger,
+    WNodeType,
+    Workflow,
+    WorkflowNodeCondition,
+    WorkflowNodeConditions
+} from 'app/model/workflow.model';
 import { ApplicationService } from 'app/service/application/application.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
@@ -80,7 +87,26 @@ export class WorkflowTriggerComponent {
         c.operator = 'eq';
         this.destNode.context.conditions.plain.push(c);
         if (this.editMode) {
+            let allNodes = Workflow.getAllNodes(this.workflow);
             this.destNode.ref = new Date().getTime().toString();
+
+            if (this.destNode.type === WNodeType.PIPELINE) {
+                    this.destNode.name =
+                        this.project.pipeline_names.find(p => p.id === this.destNode.context.pipeline_id)
+                            .name;
+            }
+            let nodeBaseName = this.destNode.name;
+            let loop = true;
+            let nameIndex = 1;
+            do {
+                if (allNodes.findIndex(
+                    n => n.name === this.destNode.name && n.ref !== this.destNode.ref) === -1) {
+                    loop = false;
+                } else {
+                    this.destNode.name = nodeBaseName + '_' + nameIndex;
+                    nameIndex++;
+                }
+            } while (loop);
         }
         let clonedWorkflow = cloneDeep(this.workflow);
 

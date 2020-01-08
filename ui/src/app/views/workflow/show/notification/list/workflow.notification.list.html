@@ -69,8 +69,7 @@
                         </div>
                         <div class="one wide field" *ngIf="eventIntegrations && eventIntegrations.length > 0">
                             <button class="ui blue icon button right floated" [class.loading]="loading"
-                                [class.disabled]="!selectedIntegration || loading || (workflow.from_repository &&
-                                workflow.from_repository.length > 0)" (click)="addEvent(selectedIntegration)">
+                                [class.disabled]="!selectedIntegration || loading" (click)="addEvent(selectedIntegration)">
                                 <i class="plus icon"></i>
                             </button>
                         </div>

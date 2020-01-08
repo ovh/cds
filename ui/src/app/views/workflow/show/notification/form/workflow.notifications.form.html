@@ -85,7 +85,6 @@
             <div class="field">
                 <label>{{ 'workflow_notification_conditions' | translate }}</label>
                 <app-conditions *ngIf="!loading" [project]="project"
-                    [readonly]="workflow.from_repository && workflow.from_repository.length > 0"
                     [triggerConditions]="triggerConditions" [(conditions)]="notification.settings.conditions">
                 </app-conditions>
             </div>
@@ -111,11 +110,10 @@
 
         <ng-container *ngIf="canDelete">
             <app-delete-button [loading]="loading"
-                [disabled]="workflow.from_repository && workflow.from_repository.length > 0"
                 (event)="deleteNotification()"></app-delete-button>
         </ng-container>
         <div class="ui right floated green button" name="save" [class.loading]="loading"
-            [class.disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
+            [class.disabled]="loading"
             (click)="createNotification()">
             <span *ngIf="canDelete">{{'btn_save' | translate}}</span>
             <span *ngIf="!canDelete">{{'btn_add' | translate}}</span>
