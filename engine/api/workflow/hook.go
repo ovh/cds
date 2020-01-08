@@ -285,7 +285,7 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 		return sdk.WrapError(sdk.ErrInvalidHookConfiguration, "wrong repoFullName value for hook")
 	}
 	if !sdk.IsURL(h.Config["webHookURL"].Value) {
-		return sdk.WrapError(sdk.ErrInvalidHookConfiguration, "wrong webHookURL value (project: %s, repository: %s)", p.Key, h.Config["repoFullName"])
+		return sdk.WrapError(sdk.ErrInvalidHookConfiguration, "wrong webHookURL value (project: %s, repository: %s)", p.Key, h.Config["repoFullName"].Value)
 	}
 
 	// If empty, take the first event
