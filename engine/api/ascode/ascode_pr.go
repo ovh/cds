@@ -147,7 +147,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 					asCodeEvent.Data.Pipelines[ed.ID] = ed.Name
 				}
 			}
-			if err := insertOrUpdateAsCodeEvent(db, &asCodeEvent); err != nil {
+			if err := InsertOrUpdateAsCodeEvent(db, &asCodeEvent); err != nil {
 				log.Error(ctx, "postWorkflowAsCodeHandler> unable to insert as code event: %v", err)
 				ed.Operation.Status = sdk.OperationStatusError
 				ed.Operation.Error = "unable to insert as code event"

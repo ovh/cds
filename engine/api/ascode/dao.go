@@ -51,7 +51,7 @@ func LoadAsCodeEventByRepo(db gorp.SqlExecutor, fromRepo string) ([]sdk.AsCodeEv
 	return asCodeEvents, nil
 }
 
-func insertOrUpdateAsCodeEvent(db gorp.SqlExecutor, asCodeEvent *sdk.AsCodeEvent) error {
+func InsertOrUpdateAsCodeEvent(db gorp.SqlExecutor, asCodeEvent *sdk.AsCodeEvent) error {
 	if asCodeEvent.ID == 0 {
 		return insertAsCodeEvent(db, asCodeEvent)
 	}
