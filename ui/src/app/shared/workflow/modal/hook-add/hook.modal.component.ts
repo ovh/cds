@@ -17,6 +17,7 @@ export class WorkflowHookModalComponent {
     @Input() workflow: Workflow;
     @Input() node: WNode;
     @Input() loading: boolean;
+    @Input() editMode: boolean;
 
     @Input() hook: WNodeHook;
 
@@ -39,10 +40,6 @@ export class WorkflowHookModalComponent {
             this.modalConfig.mustScroll = true;
             this.modal = this._modalService.open(this.modalConfig);
         }
-    }
-
-    deleteHook(): void {
-        this.deleteHookEvent.emit(this.hook);
     }
 
     saveHook(): void {

@@ -39,13 +39,14 @@
             <ng-container *ngIf="selectedNotification != null">
                 <app-workflow-notifications-form [project]="project" [workflow]="workflow"
                     [notification]="workflow.notifications[selectedNotification]" [loading]="loading"
+                    [editMode]="editMode"
                     (updatedNotification)="updateNotification($event)"
                     (deleteNotificationEvent)="deleteNotification($event)" [canDelete]="true">
                 </app-workflow-notifications-form>
             </ng-container>
             <ng-container *ngIf="tab === 'newNotification' && !loadingNotifTemplate">
                 <app-workflow-notifications-form [project]="project" [workflow]="workflow" [loading]="loading"
-                    [canDelete]="false" [notification]="newNotification"
+                    [canDelete]="false" [notification]="newNotification" [editMode]="editMode"
                     (updatedNotification)="createNotification($event)"></app-workflow-notifications-form>
             </ng-container>
             <ng-container *ngIf="tab === 'newEvent'">

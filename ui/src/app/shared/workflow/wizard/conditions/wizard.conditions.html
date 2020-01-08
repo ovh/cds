@@ -15,6 +15,7 @@
 
     <button class="ui right floated green button" (click)="updateWorkflow()" *ngIf="!readonly" [class.loading]="loading"
         [disabled]="loading">
-        {{ 'btn_save' | translate }}
+        <span *ngIf="editMode">{{ 'btn_apply' | translate }}</span>
+        <span *ngIf="!editMode">{{ 'btn_save' | translate }}</span>
     </button>
 </div>

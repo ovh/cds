@@ -115,8 +115,9 @@
         <div class="ui right floated green button" name="save" [class.loading]="loading"
             [class.disabled]="loading"
             (click)="createNotification()">
-            <span *ngIf="canDelete">{{'btn_save' | translate}}</span>
-            <span *ngIf="!canDelete">{{'btn_add' | translate}}</span>
+            <span *ngIf="!editMode && canDelete">{{'btn_save' | translate}}</span>
+            <span *ngIf="!editMode && !canDelete">{{'btn_add' | translate}}</span>
+            <span *ngIf="editMode">{{'btn_apply' | translate}}</span>
         </div>
     </form>
 </div>

@@ -113,6 +113,7 @@
             *ngIf="!readonly"
             [disabled]="loading"
             [class.loading]="loading" (click)="updateWorkflow()">
-        {{ 'btn_save' | translate }}
+        <span *ngIf="!editMode">{{ 'btn_save' | translate }}</span>
+        <span *ngIf="editMode">{{ 'btn_apply' | translate }}</span>
     </button>
 </ng-container>

@@ -16,16 +16,15 @@ import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { ApplicationWorkflowService } from 'app/service/application/application.workflow.service';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { VariableService } from 'app/service/variable/variable.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { FetchPipeline } from 'app/store/pipelines.action';
-import { PipelinesState, PipelinesStateModel } from 'app/store/pipelines.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { finalize } from 'rxjs/operators';
+import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
 declare var CodeMirror: any;
@@ -80,7 +79,8 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
         private _translate: TranslateService,
         private _toast: ToastService,
         private _theme: ThemeStore,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _pipelineService: PipelineService
     ) { }
 
     ngOnInit(): void {
@@ -125,19 +125,12 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
         this.payloadString = JSON.stringify(this.editableNode.context.default_payload, undefined, 4);
         let pipeline = Workflow.getPipeline(this.workflow, this.node);
         if (pipeline) {
-            this.store.dispatch(new FetchPipeline({
-                projectKey: this.project.key,
-                pipelineName: pipeline.name
-            }));
-            if (this.pipSubscription) {
-                this.pipSubscription.unsubscribe();
-            }
-            this.pipSubscription = this.store.select(PipelinesState.getCurrent()).subscribe((pip: PipelinesStateModel) => {
-                if (pip.pipeline.name === pipeline.name && pip.currentProjectKey === this.project.key) {
-                    this.currentPipeline = pip.pipeline;
+            this._pipelineService.getPipeline(this.project.key, pipeline.name)
+                .pipe(first()).subscribe(p => {
+                    this.currentPipeline = p;
                     this.pipParamsReady = true;
                     this.editableNode.context.default_pipeline_parameters =
-                        cloneDeep(Pipeline.mergeAndKeepOld(pip.pipeline.parameters, this.editableNode.context.default_pipeline_parameters));
+                        cloneDeep(Pipeline.mergeAndKeepOld(p.parameters, this.editableNode.context.default_pipeline_parameters));
                     try {
                         this.editableNode.context.default_payload = JSON.parse(this.payloadString);
                         this.invalidJSON = false;
@@ -148,7 +141,6 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
                         this.editableNode.context.default_payload = {};
                     }
                     this._cd.markForCheck();
-                }
             });
         }
     }

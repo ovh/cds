@@ -82,7 +82,6 @@ export class WorkflowShowComponent implements OnInit {
 
         this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this._cd.markForCheck();
-            console.log(s.editMode, s.workflow, s.editWorkflow);
             this.editMode = s.editMode;
             if (s.editMode) {
                 this.detailedWorkflow = s.editWorkflow;

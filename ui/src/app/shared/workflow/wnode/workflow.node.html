@@ -23,7 +23,7 @@
     <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node" [editMode]="editMode"
         (triggerEvent)="updateWorkflow($event, workflowTrigger.modal)" #workflowTrigger></app-workflow-trigger>
     <!-- Add hook -->
-    <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
+    <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" [editMode]="editMode"
         (hookEvent)="addHook($event, workflowAddHook.modal)" #workflowAddHook></app-hook-modal>
 
     <!-- Delete Node -->

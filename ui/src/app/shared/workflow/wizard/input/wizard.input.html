@@ -56,7 +56,13 @@
         <button class="ui right floated green button"
                 [disabled]="loadingBranches || loading"
                 [class.loading]="loading" (click)="updateWorkflow()">
-            {{ 'btn_save' | translate }}
+            <span *ngIf="editMode">
+                {{ 'btn_apply' | translate }}
+            </span>
+            <span *ngIf="!editMode">
+                {{ 'btn_save' | translate }}
+            </span>
+
         </button>
     </ng-container>
 </div>
