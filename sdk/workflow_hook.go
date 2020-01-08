@@ -30,7 +30,7 @@ func (h NodeHook) Ref() string {
 	s := "model:" + h.HookModelName + ";"
 
 	for k, cfg := range h.Config {
-		if cfg.Configurable == true {
+		if cfg.Configurable {
 			s += k + ":" + cfg.Value + ";"
 		}
 	}
