@@ -54,6 +54,6 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 			return service.WriteJSON(w, p, http.StatusOK)
 		}
 
-		return sdk.ErrInvalidFavoriteType
+		return sdk.WithStack(sdk.ErrInvalidFavoriteType)
 	}
 }
