@@ -344,6 +344,9 @@ version: v1.0`),
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 
+	_, err = workflow.Load(context.Background(), db, api.Cache, proj, "w-go-repo", workflow.LoadOptions{})
+	assert.Error(t, err)
+
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)
 
 	for _, h := range wk.WorkflowData.GetHooks() {
