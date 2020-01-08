@@ -25,7 +25,7 @@ func StoreAddMessage(m smtpmock.Message) {
 }
 
 func StoreGetMessages() []smtpmock.Message {
-	ms := []smtpmock.Message{}
+	ms := make([]smtpmock.Message, 0, len(allMessages))
 	for k := range allMessages {
 		ms = append(ms, allMessages[k]...)
 	}
