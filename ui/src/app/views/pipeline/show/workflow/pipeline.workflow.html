@@ -85,7 +85,9 @@
         <button class="ui grey button" [disabled]="loadingStage"
             (click)="editStageModal.hide()">{{ 'btn_cancel' | translate }}</button>
         <button class="ui green button" [disabled]="loadingStage"
-            [class.loading]="loadingStage" (click)="stageEvent('update')">{{ 'btn_save' | translate }}
+            [class.loading]="loadingStage" (click)="stageEvent('update')">
+            <span *ngIf="!editMode">{{ 'btn_save' | translate }}</span>
+            <span *ngIf="editMode">{{ 'btn_apply' | translate }}</span>
         </button>
         <app-delete-button (event)="stageEvent('delete')"
             *ngIf="!selectedStage?.hasChanged && project.permissions.writable">

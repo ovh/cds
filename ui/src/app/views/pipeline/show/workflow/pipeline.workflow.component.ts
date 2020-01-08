@@ -218,10 +218,11 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                 return;
             }
             let pipStateModel = <PipelinesStateModel>st['pipelines'];
-            if (!pipStateModel.editPipeline) {
+            if (!pipStateModel.editMode) {
                 this._toast.success('', this._translate.instant('stage_added'));
                 this.selectStage(pipStateModel.pipeline.stages[pipStateModel.pipeline.stages.length - 1]);
             } else {
+                this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
                 this.selectStage(pipStateModel.editPipeline.stages[pipStateModel.editPipeline.stages.length - 1]);
             }
             this.addJob(this.selectedStage);
@@ -249,6 +250,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                 this._toast.success('', this._translate.instant('stage_job_added'));
                 this.selectStage(pipStateModel.pipeline.stages.find((stage) => this.selectedStage.id === stage.id));
             } else {
+                this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
                 this.selectStage(pipStateModel.editPipeline.stages.find((stage) => this.selectedStage.ref === stage.ref));
             }
             if (this.selectedStage) {
@@ -282,6 +284,8 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     .subscribe(() => {
                         if (!this.editMode) {
                             this._toast.success('', this._translate.instant('stage_updated'));
+                        } else {
+                            this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
                         }
                         this.editStageModal.hide();
                     });
@@ -298,6 +302,8 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     .subscribe(() => {
                         if (!this.editMode) {
                             this._toast.success('', this._translate.instant('stage_deleted'));
+                        } else {
+                            this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
                         }
                         this.editStageModal.hide();
                         this.selectedStage = null;
@@ -365,6 +371,12 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                             .find((s) => this.selectedStage.id === s.id) || this.selectedStage;
                         this.selectedJob = this.selectedStage.jobs
                             .find((j) => this.selectedJob.action.id === j.action.id) || this.selectedJob;
+                    } else {
+                        this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
+                        this.selectedStage = this.pipeline.stages
+                            .find((s) => this.selectedStage.ref === s.ref) || this.selectedStage;
+                        this.selectedJob = this.selectedStage.jobs
+                            .find((j) => this.selectedJob.action.id === j.action.id) || this.selectedJob;
                     }
                 });
                 break;
@@ -381,6 +393,8 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     .subscribe(() => {
                         if (!this.editMode) {
                             this._toast.success('', this._translate.instant('stage_job_deleted'));
+                        } else {
+                            this._toast.info('', this._translate.instant('pipeline_ascode_updated'));
                         }
                     });
                 break;

@@ -518,6 +518,7 @@
   "pipeline_stage_moved": "Stage déplacé",
   "pipeline_stage_no": "Le pipeline ne contient aucun stage",
   "pipeline_stop": "Le pipeline a été arrêté",
+  "pipeline_ascode_updated": "Brouillon mis à jour",
   "pipeline_updated": "Pipeline mis à jour",
   "pipeline_wizard_description": "Créer ou sélectionner votre premier pipeline associé à votre workflow",
   "project_add_group_help": "Les permissions de Lecture / Écriture / Exécution doivent être positionnées sur ce nouveau projet. Vous pouvez choisir un groupe d'utilisateurs existant ou laisser vide pour que CDS créé automatiquement un nouveau groupe, vous en serez l'administrateur.",

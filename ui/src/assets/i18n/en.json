@@ -500,6 +500,7 @@
   "pipeline_parameters_form_title": "Add a parameter: ",
   "pipeline_parent_commit_to_deploy": "Commits list",
   "pipeline_stop": "Pipeline has been stopped",
+  "pipeline_ascode_updated": "Draft updated",
   "pipeline_updated": "Pipeline updated",
   "pipeline_administration": "General administration of the pipeline",
   "pipeline_run_test_total_title_s": " tests",
