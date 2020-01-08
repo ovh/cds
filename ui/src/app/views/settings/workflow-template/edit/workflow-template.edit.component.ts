@@ -3,13 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AuditWorkflowTemplate } from 'app/model/audit.model';
 import { Group } from 'app/model/group.model';
-import {
-    InstanceStatus,
-    InstanceStatusUtil,
-    WorkflowTemplate,
-    WorkflowTemplateError,
-    WorkflowTemplateInstance
-} from 'app/model/workflow-template.model';
+// tslint:disable-next-line: max-line-length
+import { InstanceStatus, InstanceStatusUtil, WorkflowTemplate, WorkflowTemplateError, WorkflowTemplateInstance } from 'app/model/workflow-template.model';
 import { Workflow } from 'app/model/workflow.model';
 import { GroupService } from 'app/service/group/group.service';
 import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
@@ -325,7 +320,20 @@ export class WorkflowTemplateEditComponent implements OnInit {
                 this.loadingInstances = false;
                 this._cd.markForCheck();
             }))
-            .subscribe(is => this.instances = is.sort((a, b) => a.key() < b.key() ? -1 : 1));
+            .subscribe(is => {
+                this.instances = is.sort((a, b) => a.key() < b.key() ? -1 : 1)
+                this.tabs = this.tabs.map((tab) => {
+                    tab.default = false;
+                    if (tab.key === 'instances') {
+                        tab.translate = 'workflow_template_instances_with_nb';
+                        tab.translate_args = {
+                            nb: this.instances.length,
+                        };
+                    }
+
+                    return tab;
+                });
+            });
     }
 
     clickCreateBulk() {

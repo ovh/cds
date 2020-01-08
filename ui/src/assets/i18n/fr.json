@@ -914,6 +914,7 @@
   "workflow_template_imported_from_url": "Importé depuis une URL",
   "workflow_template_init_from_workflow": "Initialiser un modèle",
   "workflow_template_instances": "Instances",
+  "workflow_template_instances_with_nb": "Instances ({{nb}})",
   "workflow_template_no_usage": "Ce modèle de workflow n'est pas utilisé sur l'un de vos workflows",
   "workflow_template_not_imported_yet": "Pas encore importé",
   "workflow_template_saved": "Modèle de workflow sauvegardé",
