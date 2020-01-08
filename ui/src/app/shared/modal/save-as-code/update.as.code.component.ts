@@ -22,7 +22,7 @@ import { first } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class UpdateAscodeComponent {
+export class UpdateAsCodeComponent {
 
     @Input() project: Project;
     @Input() appName: string;

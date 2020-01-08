@@ -17,7 +17,7 @@ import { AscodeService } from 'app/service/ascode/ascode.service';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { UpdateAscodeComponent } from 'app/shared/modal/save-as-code/update.ascode.component';
+import { UpdateAsCodeComponent } from 'app/shared/modal/save-as-code/update.as.code.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowTemplateApplyModalComponent } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
@@ -68,7 +68,7 @@ export class WorkflowComponent {
     asCodeEditorOpen = false;
 
     @ViewChild('updateAsCode', {static: false})
-    saveAsCode: UpdateAscodeComponent;
+    saveAsCode: UpdateAsCodeComponent;
     @ViewChild('popup', {static: false})
     popupFromlRepository: SuiPopup;
     @ViewChildren(SuiPopupController) popups: QueryList<SuiPopupController>;

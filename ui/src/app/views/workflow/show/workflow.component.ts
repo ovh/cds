@@ -8,7 +8,7 @@ import { Workflow } from 'app/model/workflow.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { UpdateAscodeComponent } from 'app/shared/modal/save-as-code/update.ascode.component';
+import { UpdateAsCodeComponent } from 'app/shared/modal/save-as-code/update.as.code.component';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { PermissionEvent } from 'app/shared/permission/permission.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -50,7 +50,7 @@ export class WorkflowShowComponent implements OnInit {
     @ViewChild('permWarning', {static: false})
     permWarningModal: WarningModalComponent;
     @ViewChild('updateAsCode', {static: false})
-    updateAsCodeModal: UpdateAscodeComponent;
+    updateAsCodeModal: UpdateAsCodeComponent;
 
     selectedHookRef: string;
 

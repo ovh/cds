@@ -13,7 +13,7 @@ import { ApplicationService } from 'app/service/application/application.service'
 import { KeyService } from 'app/service/keys/keys.service';
 import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { UpdateAscodeComponent } from 'app/shared/modal/save-as-code/update.ascode.component';
+import { UpdateAsCodeComponent } from 'app/shared/modal/save-as-code/update.as.code.component';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -71,7 +71,7 @@ export class PipelineShowComponent implements OnInit {
     @ViewChild('paramWarning', { static: false })
     parameterModalWarning: WarningModalComponent;
     @ViewChild('updateEditMode', { static: false})
-    asCodeSaveModal: UpdateAscodeComponent;
+    asCodeSaveModal: UpdateAsCodeComponent;
 
     keys: AllKeys;
     asCodeEditorOpen: boolean;

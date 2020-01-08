@@ -12,7 +12,7 @@ import { AsCodeEventComponent } from 'app/shared/ascode/events/ascode.event.comp
 import { ConditionsComponent } from 'app/shared/conditions/conditions.component';
 import { GroupFormComponent } from 'app/shared/group/form/group.form.component';
 import { AutoFocusInputComponent } from 'app/shared/input/autofocus/autofocus.input.component';
-import { UpdateAscodeComponent } from 'app/shared/modal/save-as-code/update.ascode.component';
+import { UpdateAsCodeComponent } from 'app/shared/modal/save-as-code/update.as.code.component';
 import { SelectFilterComponent } from 'app/shared/select/select.component';
 import { WorkflowHookMenuEditComponent } from 'app/shared/workflow/menu/edit-hook/menu.edit.hook.component';
 import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard/conditions/wizard.conditions.component';
@@ -182,7 +182,7 @@ import { ZoneComponent } from './zone/zone.component';
         StatusIconComponent,
         TabsComponent,
         TruncatePipe,
-        UpdateAscodeComponent,
+        UpdateAsCodeComponent,
         UploadButtonComponent,
         UsageApplicationsComponent,
         UsageComponent,
@@ -289,7 +289,7 @@ import { ZoneComponent } from './zone/zone.component';
         TranslateModule,
         TruncatePipe,
         SafeHtmlPipe,
-        UpdateAscodeComponent,
+        UpdateAsCodeComponent,
         VariableComponent,
         VariableFormComponent,
         VariableValueComponent,
