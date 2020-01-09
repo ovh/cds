@@ -863,8 +863,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		if opts.Hook != nil {
 			hook, errH := workflow.LoadHookByUUID(api.mustDB(), opts.Hook.WorkflowNodeHookUUID)
 			if errH != nil {
-				log.Error(ctx, "postWorkflowRunHandler> unknow hook %s: %v", opts.Hook.WorkflowNodeHookUUID, errH)
-				return sdk.WrapError(errH, "cannot load hookn for uuid %s", opts.Hook.WorkflowNodeHookUUID)
+				return sdk.WrapError(errH, "cannot load hook for uuid %s", opts.Hook.WorkflowNodeHookUUID)
 			}
 			conditions := hook.Conditions
 			params := sdk.ParametersFromMap(opts.Hook.Payload)
