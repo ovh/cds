@@ -58,7 +58,6 @@ func (api *API) getWorkflowsHandler() service.Handler {
 					ws[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
 				}
 			}
-
 		}
 
 		return service.WriteJSON(w, ws, http.StatusOK)
