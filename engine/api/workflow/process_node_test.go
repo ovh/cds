@@ -135,6 +135,15 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 				if err := json.Unmarshal(bts, &hooks); err != nil {
 					return writeError(w, err)
 				}
+				for k, h := range hooks {
+					if h.HookModelName == sdk.RepositoryWebHookModelName {
+						cfg := hooks[k].Config
+						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+							Value:        "http://lolcat.host",
+							Configurable: false,
+						}
+					}
+				}
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
@@ -307,6 +316,15 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 				}
 				if err := json.Unmarshal(bts, &hooks); err != nil {
 					return writeError(w, err)
+				}
+				for k, h := range hooks {
+					if h.HookModelName == sdk.RepositoryWebHookModelName {
+						cfg := hooks[k].Config
+						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+							Value:        "http://lolcat.host",
+							Configurable: false,
+						}
+					}
 				}
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
