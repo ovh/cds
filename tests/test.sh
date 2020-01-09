@@ -31,7 +31,7 @@ VENOM="${VENOM:-`which venom`}"
 VENOM_OPTS="${VENOM_OPTS:---log debug --output-dir ./results --strict --stop-on-failure}"
 
 CDS_API_URL="${CDS_API_URL:-http://localhost:8081}"
-CDS_UI_URL="${CDS_UI_URL:-http://localhost:4200}"
+CDS_UI_URL="${CDS_UI_URL:-http://localhost:8080}"
 CDS_HATCHERY_URL="${CDS_HATCHERY_URL:-http://localhost:8086}"
 CDS_HOOKS_URL="${CDS_HOOKS_URL:-http://localhost:8083}"
 CDSCTL="${CDSCTL:-`which cdsctl`}"

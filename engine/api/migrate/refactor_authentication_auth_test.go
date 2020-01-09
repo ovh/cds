@@ -15,5 +15,5 @@ func TestRefactorAuthenticationAuth(t *testing.T) {
 	db, cache, _ := test.SetupPG(t)
 	mail.Init("", "", "", "", "", false, true)
 	require.NoError(t, migrate.RefactorAuthenticationAuth(context.TODO(), db, cache,
-		"http://localhost:8081", "http://localhost:4200"))
+		"http://localhost:8081", "http://localhost:8080"))
 }
