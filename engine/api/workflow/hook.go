@@ -290,12 +290,14 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	// If empty, take the first event
 	var valueSplitted = strings.Split(h.Config[sdk.HookConfigEventFilter].Value, ";")
-	if len(valueSplitted) == 0 || valueSplitted[0] == "" && len(webHookInfo.Events) > 0 {
+	if valueSplitted[0] == "" && webHookInfo.Events != nil {
 		h.Config[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
 			Value:        webHookInfo.Events[0],
 			Configurable: true,
 			Type:         sdk.HookConfigTypeString,
 		}
+		valueSplitted = []string{h.Config[sdk.HookConfigEventFilter].Value}
+
 	}
 
 	// Prepare the hook that will be send to VCS
