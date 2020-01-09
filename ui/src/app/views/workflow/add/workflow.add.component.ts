@@ -16,7 +16,6 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
-import { AuthenticationState } from 'app/store/authentication.state';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { CreateWorkflow, ImportWorkflow } from 'app/store/workflow.action';
 import { Subscription } from 'rxjs';
@@ -223,9 +222,6 @@ workflow:
         let zone = new NgZone({ enableLongStackTrace: false });
         let webworker = new CDSWebWorker('./assets/worker/web/operation.js')
         webworker.start({
-            'user': this._store.selectSnapshot(AuthenticationState.user),
-            // 'session': this._authStore.getSessionToken(),
-            'api': '/cdsapi',
             'path': '/import/' + this.project.key + '/' + uuid
         });
         this.webworkerSub = webworker.response().subscribe(ope => {

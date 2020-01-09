@@ -8,22 +8,19 @@ var number = 0;
 var nodeRunId = 0;
 var runJobId = 0;
 
-
 onmessage = function (e) {
     key = e.data.key;
     workflowName = e.data.workflowName;
     number = e.data.number;
     nodeRunId = e.data.nodeRunId;
     runJobId = e.data.runJobId;
-
-    loadLog(e.data.user, e.data.session, e.data.api);
+    loadLog();
 };
 
-function loadLog (user, session, api) {
+function loadLog() {
     loop(4, function () {
         var url = `/project/${key}/workflows/${workflowName}/runs/${number}/nodes/${nodeRunId}/job/${runJobId}/info`;
-
-        var xhr = httpCall(url, api, user, session);
+        var xhr = httpCallAPI(url);
         if (xhr.status >= 400) {
             return true;
         }

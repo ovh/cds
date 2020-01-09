@@ -4,12 +4,12 @@ var path = '';
 
 onmessage = function (e) {
     path = e.data.path;
-    getOperation(e.data.user, e.data.session, e.data.api);
+    getOperation();
 };
 
-function getOperation (user, session, api) {
+function getOperation() {
     loop(5, function () {
-        var xhr = httpCall(path, api, user, session);
+        var xhr = httpCallAPI(path);
         if (xhr.status >= 400) {
             return true;
         }

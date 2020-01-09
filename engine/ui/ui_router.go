@@ -31,8 +31,6 @@ func (s *Service) initRouter(ctx context.Context) {
 	// proxypass
 	r.Mux.PathPrefix("/cdsapi").Handler(s.getReverseProxy("/cdsapi", s.Cfg.API.HTTP.URL))
 	r.Mux.PathPrefix("/cdshooks").Handler(s.getReverseProxy("/cdshooks", s.Cfg.HooksURL))
-	r.Mux.PathPrefix("/assets/worker/cdsapi").Handler(s.getReverseProxy("/assets/worker/cdsapi", s.Cfg.API.HTTP.URL))
-	r.Mux.PathPrefix("/assets/worker/web/cdsapi").Handler(s.getReverseProxy("/assets/worker/web/cdsapi", s.Cfg.API.HTTP.URL))
 
 	// serve static UI files
 	r.Mux.PathPrefix("/").Handler(s.uiServe(http.Dir(s.HTMLDir)))

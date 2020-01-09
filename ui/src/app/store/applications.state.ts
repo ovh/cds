@@ -195,7 +195,7 @@ export class ApplicationsState {
         const appKey = action.payload.projectKey + '/' + action.payload.applicationName;
 
         return this._http.get<Overview>(
-            `/ui/project/${action.payload.projectKey}/application/${action.payload.applicationName}/overview`
+            `/project/${action.payload.projectKey}/application/${action.payload.applicationName}/overview`
         ).pipe(tap((overview) => {
             ctx.setState({
                 ...state,

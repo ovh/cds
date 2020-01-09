@@ -295,7 +295,7 @@ describe('Applications', () => {
         let overview = new Overview();
         overview.git_url = 'git+ssh://thisisatest';
         http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/ui/project/test1/application/app1/overview';
+            return req.url === '/project/test1/application/app1/overview';
         })).flush(overview);
         store.selectOnce(ApplicationsState).subscribe(state => {
             expect(Object.keys(state.overviews).length).toEqual(1);
