@@ -844,7 +844,7 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	consumer := getAPIConsumer(ctx)
 
-	if !isAdmin(ctx) && !isMaintainer(ctx) {
+	if !isMaintainer(ctx) {
 		// filter usage in pipeline by user's projects
 		ps, err := project.LoadAllByGroupIDs(ctx, db, store, consumer.GetGroupIDs())
 		if err != nil {
