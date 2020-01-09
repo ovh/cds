@@ -239,7 +239,7 @@ func (client *eventsBrokerSubscribe) manageEvent(db gorp.SqlExecutor, event sdk.
 
 	switch {
 	case strings.HasPrefix(event.EventType, "sdk.EventProject"):
-		if isSharedInfra || client.consumer.Maintainer() {
+		if isSharedInfra || client.consumer.Maintainer() || client.consumer.Admin() {
 			return true, nil
 		}
 
@@ -251,7 +251,7 @@ func (client *eventsBrokerSubscribe) manageEvent(db gorp.SqlExecutor, event sdk.
 		return perms.Level(event.ProjectKey) >= sdk.PermissionRead, nil
 
 	case strings.HasPrefix(event.EventType, "sdk.EventWorkflow") || strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow"):
-		if isSharedInfra || client.consumer.Maintainer() {
+		if isSharedInfra || client.consumer.Maintainer() || client.consumer.Admin() {
 			return true, nil
 		}
 
@@ -267,7 +267,7 @@ func (client *eventsBrokerSubscribe) manageEvent(db gorp.SqlExecutor, event sdk.
 			return true, nil
 		}
 
-		if isSharedInfra || client.consumer.Maintainer() {
+		if isSharedInfra || client.consumer.Maintainer() || client.consumer.Admin() {
 			return true, nil
 		}
 

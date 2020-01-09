@@ -68,8 +68,6 @@ export class QueueComponent implements OnDestroy {
     getQueueWorkerParams(): any {
         return {
             'user': this._store.selectSnapshot(AuthenticationState.user),
-            // 'session': this._authStore.getSessionToken(),
-            'api': '/cdsapi',
             'status': this.status.length > 0 ? this.status : this.statusOptions
         };
     }
