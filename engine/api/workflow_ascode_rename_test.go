@@ -25,6 +25,10 @@ func Test_WorkflowAsCodeRename(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

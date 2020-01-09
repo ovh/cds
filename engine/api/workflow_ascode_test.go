@@ -27,6 +27,10 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+
 	u, pass := assets.InsertAdminUser(t, db)
 
 	UUID := sdk.UUID()
