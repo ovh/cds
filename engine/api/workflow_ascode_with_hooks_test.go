@@ -40,6 +40,9 @@ func Test_WorkflowAsCodeWithNoHook_ShouldGive_AnAutomaticRepoWebHook(t *testing.
 	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
 		return servicesClients
 	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
 
 	// Create a project with a repository manager
 	prjKey := sdk.RandomString(10)
@@ -264,6 +267,9 @@ func Test_WorkflowAsCodeWithDefaultHook_ShouldGive_TheSameRepoWebHook(t *testing
 	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
 		return servicesClients
 	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
 
 	// Create a project with a repository manager
 	prjKey := sdk.RandomString(10)
@@ -559,6 +565,9 @@ func Test_WorkflowAsCodeWithDefaultHookAndAScheduler_ShouldGive_TheSameRepoWebHo
 	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
 		return servicesClients
 	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
 
 	// Create a project with a repository manager
 	prjKey := sdk.RandomString(10)
@@ -934,6 +943,9 @@ func Test_WorkflowAsCodeWithJustAcheduler_ShouldGive_ARepoWebHookAndTheScheduler
 	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
 		return servicesClients
 	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
 
 	// Create a project with a repository manager
 	prjKey := sdk.RandomString(10)

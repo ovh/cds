@@ -39,6 +39,9 @@ func Test_WorkflowAsCodeRename(t *testing.T) {
 	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
 		return servicesClients
 	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
 
 	// Create a project with a repository manager
 	prjKey := sdk.RandomString(10)

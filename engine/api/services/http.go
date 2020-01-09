@@ -47,9 +47,9 @@ type defaultServiceClient struct {
 	srvs []sdk.Service
 }
 
-var NewClient func(gorp.SqlExecutor, []sdk.Service) Client = newDefaultClient
+var NewClient func(gorp.SqlExecutor, []sdk.Service) Client = NewDefaultClient
 
-func newDefaultClient(db gorp.SqlExecutor, srvs []sdk.Service) Client {
+func NewDefaultClient(db gorp.SqlExecutor, srvs []sdk.Service) Client {
 	return &defaultServiceClient{
 		db:   db,
 		srvs: srvs,
