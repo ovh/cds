@@ -103,13 +103,9 @@ Per default, the command line ` + "`cdsctl`" + ` uses your keychain on your os:
 * OSX: Keychain Access
 * Linux System: Secret-tool (libsecret)
 
-You can bypass keychain tools by using environment variables:
-
-	CDS_API_URL="https://instance.cds.api" CDS_USER="username" CDS_SESSION_TOKEN="yourtoken" cdsctl [command]
-
 You can use a "sign in" token attached to a consumer:
 
-	CDS_API_URL="https://instance.cds.api" CDS_SIGNIN_TOKEN="token-consumer" cdsctl [command]
+	CDS_API_URL="https://instance.cds.api" CDS_TOKEN="token-consumer" cdsctl [command]
 
 
 Want to debug something? You can use ` + "`CDS_VERBOSE`" + ` environment variable.
@@ -120,6 +116,10 @@ Want to debug something? You can use ` + "`CDS_VERBOSE`" + ` environment variabl
 If you're using a self-signed certificate on CDS API, you probably want to use ` + "`CDS_INSECURE`" + ` variable.
 
 	CDS_INSECURE=true cdsctl [command]
+
+For advanced usage, you can use a session-token instead of a token:
+
+	CDS_API_URL="https://instance.cds.api" CDS_USER="username" CDS_SESSION_TOKEN="yourtoken" cdsctl [command]
 
 `,
 }
