@@ -71,7 +71,9 @@
                             {{ c.selector.value }}
                         </div>
                     </div>
-                    <ng-container *ngSwitchCase="'text-html'"><pre [innerHTML]="c.selector"></pre></ng-container>
+                    <ng-container *ngSwitchCase="'text-html'">
+                        <pre [innerHTML]="c.selector"></pre>
+                    </ng-container>
                     <ng-container *ngSwitchCase="'time-ago'"> {{c.selector | amTimeAgo}} </ng-container>
                     <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
                     <button class="ui primary button small" *ngSwitchCase="'button'" (click)="c.selector.click()">{{c.selector.title
@@ -80,7 +82,8 @@
                         [color]="c.selector.color ? c.selector.color : 'primary'" (event)="c.selector.click()"
                         [title]="c.selector.title">
                     </app-confirm-button>
-                    <span class="ui label" [ngClass]="c.selector.class" *ngSwitchCase="'label'">{{c.selector.value | translate}}</span>
+                    <span class="ui label" [ngClass]="c.selector.class"
+                        *ngSwitchCase="'label'">{{c.selector.value | translate}}</span>
                     <ng-container *ngSwitchCase="'router-link-with-icons'">
                         <a class="ui" [routerLink]="c.selector.link">{{c.selector.value}}</a>
                         <span *ngFor="let i of c.selector.icons" suiPopup [popupText]="i.label | translate">
@@ -102,7 +105,8 @@
                     </span>
                     <span *ngSwitchCase="'text-icons'">
                         {{c.selector.value | translate}}
-                        <span *ngFor="let i of c.selector.icons" suiPopup [popupText]="i.label | translate" popupTrigger="{{i.trigger ? i.trigger : 'hover'}}">
+                        <span *ngFor="let i of c.selector.icons" suiPopup [popupText]="i.label | translate"
+                            popupTrigger="{{i.trigger ? i.trigger : 'hover'}}">
                             {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
                         </span>
                     </span>
@@ -121,10 +125,9 @@
     <tfoot tfoot *ngIf="nbElementsByPage && pagesCount > 1">
         <tr>
             <td [colSpan]="columnsCount">
-                <sui-pagination class="ui right floated" [collectionSize]="filteredData.length"
-                    [pageSize]="nbElementsByPage" [maxSize]="20" [hasEllipses]="true" (pageChange)="pageChange($event)"
-                    [page]="currentPage">
-                </sui-pagination>
+                <app-pagination [collectionSize]="filteredData.length" [pageSize]="nbElementsByPage" [maxSize]="20"
+                    [hasEllipses]="true" (pageChange)="pageChange($event)" [page]="currentPage">
+                </app-pagination>
             </td>
         </tr>
     </tfoot>
