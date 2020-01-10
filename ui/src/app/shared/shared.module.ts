@@ -64,6 +64,7 @@ import { ScrollviewComponent } from './scrollview/scrollview.component';
 import { SharedService } from './shared.service';
 import { StatusIconComponent } from './status/status.component';
 import { DataTableComponent, SelectorPipe, SelectPipe } from './table/data-table.component';
+import { PaginationComponent } from './table/pagination.component';
 import { TabsComponent } from './tabs/tabs.component';
 import { ToastService } from './toast/ToastService';
 import { UsageApplicationsComponent } from './usage/applications/usage.applications.component';
@@ -148,6 +149,7 @@ import { ZoneComponent } from './zone/zone.component';
         ConfirmModalComponent,
         CutPipe,
         DataTableComponent,
+        PaginationComponent,
         DeleteButtonComponent,
         DeleteModalComponent,
         DiffItemComponent,
@@ -327,6 +329,7 @@ import { ZoneComponent } from './zone/zone.component';
         SelectorPipe,
         SelectPipe,
         DataTableComponent,
+        PaginationComponent,
         WorkflowTemplateApplyFormComponent,
         WorkflowTemplateApplyModalComponent,
         WorkflowTemplateBulkModalComponent,
