@@ -1,7 +1,7 @@
 name: Smoke tests
 
 vars:
-  ui.url: 'http://localhost:4200'
+  ui.url: 'http://localhost:8080'
   hatchery.url: 'http://localhost:8086'
   hooks.url: 'http://localhost:8083'
 

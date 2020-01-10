@@ -8,6 +8,9 @@ endef
 
 MINIO_CONTAINER_ID = $(shell docker ps -f name=minio1 -q)
 
+UNAME_S := $(shell uname -s| tr A-Z a-z)
+VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
+
 clean:
 	@rm -f $(MINIO_CONTAINER_ID) $(MINIO_RC)
 	@docker kill minio1 || true && docker rm minio1 || true
@@ -31,3 +34,25 @@ minio_reset_bucket:
 		mc rm -r --force myminio/cds-it  || true && \
 		mc mb myminio/cds-it || true \
 		"
+
+
+test-docker-compose:
+	@export HOSTNAME=`hostname` && \
+	export CDS_DOCKER_IMAGE=ovhcom/cds-engine:$(VERSION) && \
+	docker-compose up --no-recreate -d cds-db cds-cache elasticsearch smtpmocksrv && \
+	sleep 5	&& \
+	docker-compose up --no-recreate cds-migrate && \
+	docker-compose up cds-prepare && \
+	docker-compose up -d cds-api && \
+	echo "waiting 8s to let cds-api start.." && sleep 8 && \
+	echo "downloading cdsctl from http://localhost:8081/download/cdsctl/$(UNAME_S)/amd64?variant=nokeychain -o cdsctl" && \
+	curl http://localhost:8081/download/cdsctl/$(UNAME_S)/amd64?variant=nokeychain -o cdsctl && \
+	chmod +x cdsctl && \
+	cdsctl version && \
+	export CDSCTL=`realpath ./cdsctl` && \
+	TOKEN_CMD=`docker logs cds_cds-prepare_1|grep TOKEN` && \
+	$$TOKEN_CMD && \
+	./test.sh smoke_api initialization && \
+	docker-compose up -d cds-ui cds-hooks cds-hatchery-local cds-elasticsearch && \
+	echo "waiting 5s to let services start.." && sleep 5 && \
+	./test.sh smoke_services cli;
