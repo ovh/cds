@@ -1,9 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AuthConsumer, AuthConsumerCreateResponse, AuthSession } from 'app/model/authentication.model';
 import { Bookmark } from 'app/model/bookmark.model';
 import { Group } from 'app/model/group.model';
-import { AuthentifiedUser, UserContact } from 'app/model/user.model';
+import { AuthentifiedUser, Schema, UserContact } from 'app/model/user.model';
 import { Observable } from 'rxjs';
 
 @Injectable()
@@ -79,5 +79,13 @@ export class UserService {
 
     getBookmarks(): Observable<Bookmark[]> {
         return this._http.get<Bookmark[]>('/bookmarks');
+    }
+
+    getSchema(filter: string): Observable<Schema> {
+        let p = new HttpParams();
+        if (filter) {
+            p = p.append('filter', filter);
+        }
+        return this._http.get<Schema>('/user/schema', {params: p});
     }
 }

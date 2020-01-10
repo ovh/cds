@@ -61,7 +61,6 @@
               "node_modules/js-yaml/dist/js-yaml.js",
               "resources/cds-hint.js",
               "resources/cds-snippets.js",
-              "resources/cds-lint.js",
               "node_modules/ansi_up/ansi_up.js",
               "node_modules/sanitize-html/dist/sanitize-html.min.js",
               "node_modules/duration-js/duration.js",

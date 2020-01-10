@@ -12,9 +12,9 @@
         let suggest = [];
         let fromChar = 0;
 
-        const pipPrefix = '    pipeline: ';
-        const appPrefix = '    application: ';
-        const envPrefix = '    environment: ';
+        const pipPrefix = 'pipeline: ';
+        const appPrefix = 'application: ';
+        const envPrefix = 'environment: ';
 
         // Get cursor position
         let cur = cm.getCursor(0);
@@ -25,15 +25,15 @@
 
         // Get current line
         let text = cm.doc.children[0].lines[cur.line].text;
-        if (text.indexOf('@') === 0) {
+        if (text.trim().indexOf('@') === 0) {
             suggest = options.snippets;
-        } else if (text.indexOf(pipPrefix) === 0) {
+        } else if (text.trim().indexOf(pipPrefix) === 0) {
             suggest = options.suggests['pipelines'];
             fromChar = pipPrefix.length;
-        } else if (text.indexOf(appPrefix) === 0) {
+        } else if (text.trim().indexOf(appPrefix) === 0) {
             suggest = options.suggests['applications'];
             fromChar = appPrefix.length;
-        } else if (text.indexOf(envPrefix) === 0) {
+        } else if (text.trim().indexOf(envPrefix) === 0) {
             suggest = options.suggests['environments'];
             fromChar = envPrefix.length;
         }

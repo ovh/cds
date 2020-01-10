@@ -14,14 +14,14 @@
 
     CodeMirror.registerHelper("hint", "cds", function (cm, options) {
         // Suggest list
-        var cdsCompletionList = options.cdsCompletionList;
+        let cdsCompletionList = options.cdsCompletionList;
 
         // Get cursor position
-        var cur = cm.getCursor(0);
+        let cur = cm.getCursor(0);
 
         // Get current line
-        var line = cm.doc.children[0].lines[cur.line];
-        var text = '';
+        let line = cm.doc.children[0].lines[cur.line];
+        let text = '';
 
         if (!line) {
             return null;
@@ -33,7 +33,7 @@
             return null;
         }
 
-        var areaBefore = text.substring(0, cur.ch);
+        let areaBefore = text.substring(0, cur.ch);
         if (areaBefore.lastIndexOf('{{.') < areaBefore.lastIndexOf('}}')) {
             return null
         }
@@ -58,31 +58,31 @@
     });
 
     CodeMirror.registerHelper("hint", "condition", function (cm, options) {
-        var cdsPrefix = 'cds_';
-        var workflowPrefix = 'workflow_';
-        var gitPrefix = 'git_';
+        let cdsPrefix = 'cds_';
+        let workflowPrefix = 'workflow_';
+        let gitPrefix = 'git_';
         // Suggest list
-        var cdsCompletionList = options.cdsCompletionList;
+        let cdsCompletionList = options.cdsCompletionList;
 
         // Get cursor position
-        var cur = cm.getCursor(0);
+        let cur = cm.getCursor(0);
 
         if (!cur || !cm.doc.children[0].lines[cur.line]) {
             return null;
         }
 
         // Get current line
-        var text = cm.doc.children[0].lines[cur.line].text;
+        let text = cm.doc.children[0].lines[cur.line].text;
         if (text.indexOf(cdsPrefix) === -1 && text.indexOf(workflowPrefix) === -1 && text.indexOf(gitPrefix) === -1) {
             return null;
         }
 
-        var areaBefore = text.substring(0, cur.ch);
-        var cdsPrefixCh = areaBefore.lastIndexOf(cdsPrefix);
-        var workflowPrefixCh = areaBefore.lastIndexOf(workflowPrefix);
-        var gitPrefixCh = areaBefore.lastIndexOf(gitPrefix);
+        let areaBefore = text.substring(0, cur.ch);
+        let cdsPrefixCh = areaBefore.lastIndexOf(cdsPrefix);
+        let workflowPrefixCh = areaBefore.lastIndexOf(workflowPrefix);
+        let gitPrefixCh = areaBefore.lastIndexOf(gitPrefix);
 
-        var ch = Math.max(cdsPrefixCh, workflowPrefixCh, gitPrefixCh);
+        let ch = Math.max(cdsPrefixCh, workflowPrefixCh, gitPrefixCh);
         return {
             list: cdsCompletionList.filter(function (l) {
                 return l.indexOf(areaBefore.substring(areaBefore.lastIndexOf(cdsPrefix))) !== -1 ||
@@ -98,22 +98,22 @@
     });
 
     CodeMirror.registerHelper("hint", "payload", function (cm, options) {
-        var branchPrefix = '"git.branch":';
-        var tagPrefix = '"git.tag":';
-        var repoPrefix = '"git.repository":';
+        let branchPrefix = '"git.branch":';
+        let tagPrefix = '"git.tag":';
+        let repoPrefix = '"git.repository":';
         // Suggest list
-        var payloadCompletionList = [];
+        let payloadCompletionList = [];
 
         // Get cursor position
-        var cur = cm.getCursor(0);
+        let cur = cm.getCursor(0);
 
         // Get current line
         if (!cur || !cm.doc.children[0].lines[cur.line]) {
             return null;
         }
 
-        var text = cm.doc.children[0].lines[cur.line].text;
-        var prefix = "";
+        let text = cm.doc.children[0].lines[cur.line].text;
+        let prefix = "";
 
         if (!options.payloadCompletionList) {
             return null;
@@ -136,10 +136,10 @@
                 return null;
         }
 
-        var lastIndexOfPrefix = text.lastIndexOf(prefix);
-        var areaAfterPrefix = text.substring(lastIndexOfPrefix + prefix.length + 1);
-        var lastIndexOfComma = areaAfterPrefix.indexOf(',');
-        var indexOfComma = text.indexOf(',');
+        let lastIndexOfPrefix = text.lastIndexOf(prefix);
+        let areaAfterPrefix = text.substring(lastIndexOfPrefix + prefix.length + 1);
+        let lastIndexOfComma = areaAfterPrefix.indexOf(',');
+        let indexOfComma = text.indexOf(',');
         if (indexOfComma !== -1 && cur.ch >= indexOfComma) {
             return null;
         }
@@ -151,7 +151,7 @@
         } else {
             lastIndexOfComma += (lastIndexOfPrefix + prefix.length + 1);
         }
-        var inc = 0;
+        let inc = 0;
 
         if (text.indexOf(prefix + ' ') !== -1) {
             inc = 1;
@@ -164,6 +164,37 @@
                 ch: lastIndexOfPrefix + prefix.length + inc
             },
             to: CodeMirror.Pos(cur.line, lastIndexOfComma)
+        };
+    });
+    CodeMirror.registerHelper("hint", "asCode", function (cm, options) {
+        
+        // Get cursor position
+        let cur = cm.getCursor(0);
+
+        // Get current line
+        if (!cur || !cm.doc.children[0].lines[cur.line]) {
+            return null;
+        }
+        let text = cm.doc.children[0].lines[cur.line].text;
+        let autoCompleteList = [];
+        let ch = 0;
+
+        let textToComplete = text.substring(0, cur.ch);
+
+        // Detect : and quote
+
+        let indentLevel = 0;
+        let parentTree = [];
+
+
+
+        return {
+            list: autoCompleteList,
+            from: {
+                line: cur.line,
+                ch: ch
+            },
+            to: CodeMirror.Pos(cur.line, ch)
         };
     });
 });
