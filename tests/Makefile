@@ -38,7 +38,6 @@ minio_reset_bucket:
 
 test-docker-compose:
 	@export HOSTNAME=`hostname` && \
-	export CDS_DOCKER_IMAGE=ovhcom/cds-engine:$(VERSION) && \
 	docker-compose up --no-recreate -d cds-db cds-cache elasticsearch smtpmocksrv && \
 	sleep 5	&& \
 	docker-compose up --no-recreate cds-migrate && \

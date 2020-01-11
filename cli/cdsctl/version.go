@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
@@ -30,43 +29,30 @@ func version() *cobra.Command {
 }
 
 func versionRun(v cli.Values) error {
-	var apiVersion *sdk.Version
-	var err error
-	if client != nil {
-		apiVersion, err = client.Version()
-	} else {
-		err = errors.New("no configuration file found")
-	}
-
-	m := map[string]interface{}{
-		"version":  sdk.VersionString(),
-		"keychain": internal.IsKeychainEnabled(),
-	}
-
-	if apiVersion != nil {
-		m["api-version"] = apiVersion.Version
-		m["api-url"] = client.APIURL()
-	} else if err != nil {
-		m["api-version"] = err.Error()
-		m["api-url"] = "-"
-	}
-
 	format := v.GetString("format")
 	if format == "" {
-		fmt.Println(m["version"])
-		fmt.Printf("CDS api version: %s\n", m["api-version"])
-		fmt.Printf("CDS URL: %s\n", m["api-url"])
-		fmt.Printf("keychain support: %v\n", m["keychain"])
+		fmt.Println(sdk.VersionString())
+		fmt.Printf("keychain support: %t\n", internal.IsKeychainEnabled())
 		return nil
 	}
 
-	var buf []byte
+	type versionWithKeychain struct {
+		sdk.Version
+		Keychain bool `json:"keychain"`
+	}
 
+	version := versionWithKeychain{
+		Version:  sdk.VersionCurrent(),
+		Keychain: internal.IsKeychainEnabled(),
+	}
+
+	var buf []byte
+	var err error
 	switch format {
 	case "json":
-		buf, err = json.Marshal(m)
+		buf, err = json.Marshal(version)
 	case "yaml":
-		buf, err = yaml.Marshal(m)
+		buf, err = yaml.Marshal(version)
 	default:
 		return fmt.Errorf("invalid given format")
 	}
