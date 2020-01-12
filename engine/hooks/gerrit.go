@@ -3,6 +3,8 @@ package hooks
 import (
 	"bufio"
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -227,7 +229,7 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 }
 
 // ListenGerritStreamEvent listen the gerrit event stream
-func ListenGerritStreamEvent(ctx context.Context, v sdk.VCSConfiguration, gerritEventChan chan<- GerritEvent) {
+func ListenGerritStreamEvent(ctx context.Context, store cache.Store, v sdk.VCSConfiguration, gerritEventChan chan<- GerritEvent) {
 	signer, err := ssh.ParsePrivateKey([]byte(v.Password))
 	if err != nil {
 		log.Error("unable to read ssh key: %v", err)
@@ -272,6 +274,7 @@ func ListenGerritStreamEvent(ctx context.Context, v sdk.VCSConfiguration, gerrit
 		}
 	}()
 
+	lockKey := cache.Key("gerrit", "event", "lock")
 	tick := time.NewTicker(50 * time.Millisecond)
 	for {
 		select {
@@ -291,11 +294,46 @@ func ListenGerritStreamEvent(ctx context.Context, v sdk.VCSConfiguration, gerrit
 				continue
 			}
 			var event GerritEvent
-			if err := json.Unmarshal([]byte(line), &event); err != nil {
+			lineBytes := []byte(line)
+			if err := json.Unmarshal(lineBytes, &event); err != nil {
 				log.Error("unable to read gerrit event %v: %s", err, line)
 				continue
 			}
-			gerritEventChan <- event
+
+			// Avoid that 2 hook uservice dispatch the same event
+			// Take the lock to dispatch an event
+			_, _ = store.Lock(lockKey, time.Minute, 100, 100)
+
+			// compute md5
+			hasher := md5.New()
+			hasher.Write(lineBytes)
+			md5 := hex.EncodeToString(hasher.Sum(nil))
+
+			// check if this event has already been dispatched
+			k := cache.Key("gerrit", "event", "id", md5)
+			var existString string
+			b, _ := store.Get(k, &existString)
+			if !b {
+				// Dispatch event
+				gerritEventChan <- event
+				_ = store.SetWithTTL(k, md5, 300)
+			}
+			cpt := 0
+			for {
+				if err := store.Unlock(lockKey); err == nil {
+					break
+				}
+				if cpt > 100 {
+					break
+				}
+				log.Warning("gerrit> Cannot remove event lock. Retry in 100ms")
+				time.Sleep(100 * time.Millisecond)
+				cpt++
+			}
+			if cpt > 100 {
+				log.Error("gerrit> Event lock cannot be removed.")
+			}
+			// release lock
 		}
 	}
 
