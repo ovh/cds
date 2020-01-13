@@ -306,7 +306,7 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, v sdk.VCSCo
 
 			// compute md5
 			hasher := md5.New()
-			hasher.Write(lineBytes) //nolint
+			hasher.Write(lineBytes) // nolint
 			md5 := hex.EncodeToString(hasher.Sum(nil))
 
 			// check if this event has already been dispatched
