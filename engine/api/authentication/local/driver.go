@@ -49,7 +49,7 @@ func (d AuthDriver) CheckSignupRequest(req sdk.AuthConsumerSigninRequest) error 
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing fullname for local signup")
 	}
 	if username, ok := req["username"]; !ok || username == "" {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing username for local signup")
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid username for local signup")
 	}
 	if email, ok := req["email"]; !ok || !sdk.IsValidEmail(email) || !d.isAllowedDomain(email) {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid email for local signup")
