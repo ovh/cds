@@ -28,7 +28,7 @@ type AWSS3Store struct {
 }
 
 func newS3Store(integration sdk.ProjectIntegration, conf ConfigOptionsAWSS3) (*AWSS3Store, error) {
-	log.Info("ObjectStore> Initialize AWS S3 driver for bucket: %s in region %s", conf.BucketName, conf.Region)
+	log.Info(context.Background(), "ObjectStore> Initialize AWS S3 driver for bucket: %s in region %s", conf.BucketName, conf.Region)
 	aConf := aws.NewConfig()
 	aConf.Region = aws.String(conf.Region)
 	if conf.AuthFromEnvironment {
@@ -120,14 +120,14 @@ func (s *AWSS3Store) Open(ctx context.Context, o Object) (io.WriteCloser, error)
 					break loop
 				}
 				if _, err := writer.Write(btes); err != nil {
-					log.Error("cannot write in writer %v", err)
+					log.Error(ctx, "cannot write in writer %v", err)
 					errChan <- err
 					return
 				}
 			}
 		}
 		if err := writer.Close(); err != nil {
-			log.Error("cannot close writer : %v", err)
+			log.Error(ctx, "cannot close writer : %v", err)
 			errChan <- err
 			return
 		}
@@ -142,7 +142,7 @@ func (s *AWSS3Store) Open(ctx context.Context, o Object) (io.WriteCloser, error)
 		}
 		_, err := uploader.UploadWithContext(ctx, &uploadInput)
 		if err != nil {
-			log.Error("cannot upload : %v", err)
+			log.Error(ctx, "cannot upload : %v", err)
 			errChan <- err
 			return
 		}

@@ -181,7 +181,6 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 			return err
 		}
 
-<<<<<<< HEAD
 		nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, art.WorkflowNodeJobRunID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load node job run with art.WorkflowNodeJobRunID: %d", art.WorkflowNodeJobRunID)
@@ -195,21 +194,6 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 		tag, err := base64.RawURLEncoding.DecodeString(ref)
 		if err != nil {
 			return sdk.WrapError(err, "cannot decode ref")
-=======
-		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, art.WorkflowNodeJobRunID)
-		if errJ != nil {
-			return sdk.WrapError(errJ, "Cannot load node job run with art.WorkflowNodeJobRunID: %d", art.WorkflowNodeJobRunID)
-		}
-
-		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
-		if errR != nil {
-			return sdk.WrapError(errR, "Cannot load node run")
-		}
-
-		tag, errT := base64.RawURLEncoding.DecodeString(ref)
-		if errT != nil {
-			return sdk.WrapError(errT, "Cannot decode ref")
->>>>>>> 35cad79947... feat(cdn): artifact support
 		}
 
 		art.WorkflowID = nodeRun.WorkflowRunID
