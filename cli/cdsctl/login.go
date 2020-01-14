@@ -21,6 +21,7 @@ import (
 var loginCmd = cli.Command{
 	Name:    "login",
 	Short:   "Login to CDS",
+	Long:    "For admin signup with LDAP driver, INIT_TOKEN environment variable must be set.",
 	Example: `Use it with 'eval' and 'env' flag to set environment variable: eval $(cds login -H API_URL -u USERNAME -p PASSWORD --env)`,
 	Flags: []cli.Flag{
 		{
@@ -48,11 +49,6 @@ var loginCmd = cli.Command{
 			ShortHand: "p",
 		},
 		{
-			Name:      "init-token",
-			Usage:     "A CDS init token that can be used for first connection",
-			ShortHand: "i",
-		},
-		{
 			Name:  "token",
 			Usage: "A CDS token that can be used to login with a builtin auth driver.",
 		},
@@ -60,7 +56,7 @@ var loginCmd = cli.Command{
 }
 
 func login() *cobra.Command {
-	return cli.NewCommand(loginCmd, loginRun, nil, cli.CommandWithoutExtraFlags)
+	return cli.NewCommand(loginCmd, loginRun, cli.SubCommands{loginVerify()}, cli.CommandWithoutExtraFlags)
 }
 
 func loginRun(v cli.Values) error {
@@ -116,7 +112,7 @@ func loginRun(v cli.Values) error {
 		if noInteractive {
 			return fmt.Errorf("Cannot signin with %s driver in no interactive mode", driverType)
 		}
-		req, err = loginRunExternal(v, driverType, apiURL)
+		return loginRunExternal(v, driverType, apiURL)
 	}
 	if err != nil {
 		return err
@@ -124,7 +120,7 @@ func loginRun(v cli.Values) error {
 
 	// For first connection ask for an optional init token
 	if drivers.IsFirstConnection {
-		initToken := v.GetString("init-token")
+		initToken := os.Getenv("INIT_TOKEN")
 		if initToken != "" {
 			req["init_token"] = initToken
 		}
@@ -196,36 +192,28 @@ func loginRunBuiltin(v cli.Values) (sdk.AuthConsumerSigninRequest, error) {
 	return req, nil
 }
 
-func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType, apiURL string) (sdk.AuthConsumerSigninRequest, error) {
-	req := sdk.AuthConsumerSigninRequest{}
-
+func loginRunExternal(v cli.Values, consumerType sdk.AuthConsumerType, apiURL string) error {
 	client := cdsclient.New(cdsclient.Config{
 		Host:    apiURL,
 		Verbose: v.GetBool("verbose"),
 	})
 	config, err := client.ConfigUser()
 	if err != nil {
-		return req, err
+		return err
 	}
 
 	askSigninURI, err := url.Parse(config.URLUI + "/auth/ask-signin/" + string(consumerType) + "?origin=cdsctl")
 	if err != nil {
-		return req, fmt.Errorf("cannot parse given api uri: %v", err)
+		return fmt.Errorf("cannot parse given api uri: %v", err)
 	}
 
 	fmt.Println("cdsctl: Opening the browser to login or control-c to abort")
 	fmt.Println(" >\tWarning: If browser does not open, visit")
 	fmt.Println(" >\t" + cli.Green("%s", askSigninURI.String()))
 	browser.OpenURL(askSigninURI.String()) // nolint
+	fmt.Println(" >\tPlease follow instructions given on your browser to finish login.")
 
-	token := cli.AskPassword("Token")
-	splittedToken := strings.Split(token, ":")
-	if len(splittedToken) != 2 {
-		return req, fmt.Errorf("Invalid given token")
-	}
-	req["state"], req["code"] = splittedToken[0], splittedToken[1]
-
-	return req, nil
+	return nil
 }
 
 func doAfterLogin(client cdsclient.Interface, v cli.Values, apiURL string, driverType sdk.AuthConsumerType, res sdk.AuthConsumerSigninResponse) error {
@@ -423,4 +411,77 @@ func writeConfigFile(configFile string, content *bytes.Buffer) error {
 		return fmt.Errorf("Error while writing file %s: %v", configFile, err)
 	}
 	return nil
+}
+
+func loginVerify() *cobra.Command {
+	return cli.NewCommand(loginVerifyCmd, loginVerifyFunc, nil, cli.CommandWithoutExtraFlags)
+}
+
+var loginVerifyCmd = cli.Command{
+	Name:   "verify",
+	Long:   "For admin signup INIT_TOKEN environment variable must be set.",
+	Hidden: true,
+	Args: []cli.Arg{
+		{
+			Name:       "api-url",
+			AllowEmpty: false,
+		},
+		{
+			Name:       "driver-type",
+			AllowEmpty: false,
+		},
+		{
+			Name:       "token",
+			AllowEmpty: false,
+		},
+	},
+}
+
+func loginVerifyFunc(v cli.Values) error {
+	apiURL := v.GetString("api-url")
+
+	// Load all drivers from given CDS instance
+	client := cdsclient.New(cdsclient.Config{
+		Host:    apiURL,
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+	})
+	drivers, err := client.AuthDriverList()
+	if err != nil {
+		return fmt.Errorf("Cannot list auth drivers: %v", err)
+	}
+	if len(drivers.Drivers) == 0 {
+		return fmt.Errorf("No authentication driver configured")
+	}
+
+	driverType := sdk.AuthConsumerType(v.GetString("driver-type"))
+	if !driverType.IsValidExternal() {
+		return fmt.Errorf("Invalid given driver type: %s", driverType)
+	}
+
+	token := v.GetString("token")
+	splittedToken := strings.Split(token, ":")
+	if len(splittedToken) != 2 {
+		return fmt.Errorf("Invalid given token")
+	}
+
+	req := sdk.AuthConsumerSigninRequest{
+		"state": splittedToken[0],
+		"code":  splittedToken[1],
+	}
+
+	// For first connection ask for an optional init token
+	if drivers.IsFirstConnection {
+		initToken := os.Getenv("INIT_TOKEN")
+		if initToken != "" {
+			req["init_token"] = initToken
+		}
+	}
+
+	// Send signin request
+	res, err := client.AuthConsumerSignin(driverType, req)
+	if err != nil {
+		return fmt.Errorf("cannot signin: %v", err)
+	}
+
+	return doAfterLogin(client, v, apiURL, driverType, res)
 }
