@@ -167,7 +167,7 @@
         };
     });
     CodeMirror.registerHelper("hint", "asCode", function (cm, options) {
-        
+
         // Get cursor position
         let cur = cm.getCursor(0);
 
@@ -176,25 +176,130 @@
             return null;
         }
         let text = cm.doc.children[0].lines[cur.line].text;
-        let autoCompleteList = [];
-        let ch = 0;
+        let autoCompleteResponse = {};
 
-        let textToComplete = text.substring(0, cur.ch);
-
-        // Detect : and quote
-
-        let indentLevel = 0;
-        let parentTree = [];
-
-
+        let firstColon = text.indexOf(':');
+        if (firstColon !== -1 && cur.ch > firstColon) {
+            // autocomplete value
+            autoCompleteResponse = autoCompleteValue(text, cur);
+        } else if (firstColon === -1){
+            // autocomplete key
+            autoCompleteResponse = autoCompleteKey(text, options.schema, cur, cm.doc.children[0]);
+        }
 
         return {
-            list: autoCompleteList,
+            list: autoCompleteResponse.sug,
             from: {
                 line: cur.line,
-                ch: ch
+                ch: autoCompleteResponse.fromCh
             },
-            to: CodeMirror.Pos(cur.line, ch)
+            to: CodeMirror.Pos(cur.line, autoCompleteResponse.toCh)
         };
+
+        function autoCompleteKey(text, schema, cur, fullText) {
+            let depth = findDepth(text);
+            if (depth === -1) {
+                return {sug: []};
+            }
+            if (text.trimStart().indexOf('-') === 0) {
+                return {sug: []};
+            }
+            return findKeySuggestion(depth, schema, cur, fullText);
+        }
+
+        function autoCompleteValue(text, cur) {
+            const pipPrefix = 'pipeline: ';
+            const appPrefix = 'application: ';
+            const envPrefix = 'environment: ';
+            let trimmedTrext = text.trimStart();
+
+            let suggestions = [];
+            if (trimmedTrext.indexOf(pipPrefix) === 0) {
+                suggestions = options.suggests['pipelines'];
+            } else if (trimmedTrext.indexOf(appPrefix) === 0) {
+                suggestions = options.suggests['applications'];
+            } else if (trimmedTrext.indexOf(envPrefix) === 0) {
+                suggestions = options.suggests['environments'];
+            }
+            return {fromCh: text.indexOf(':') + 2, toCh: cur.ch, sug: suggestions}
+        }
+
+        function findKeySuggestion(depth, schema, cur, fullText) {
+            let eltMatchesLevel = schema.flatElements
+                .filter(felt => felt.positions.findIndex(p => p.depth === depth) !== -1)
+                .map(felt => {
+                    felt.positions = felt.positions.filter(p => p.depth === depth);
+                    return felt;
+                });
+
+            let suggestions = [];
+
+            // Find parents
+            if (cur.line === 0) {
+                suggestions = eltMatchesLevel.map(e => e.name + ': ');
+            } else {
+                let currentLine = cur.line -1;
+                let parents = [];
+                let refDepth = depth;
+                for (let i = currentLine; i > 0; i--) {
+                    let currentText = fullText.lines[i].text;
+                    if (currentText.indexOf(':') === -1) {
+                        continue
+                    }
+                    // if has key, find indentation
+                    let currentLintDepth = findDepth(currentText);
+                    if (currentLintDepth >= refDepth) {
+                        continue
+                    }
+                    // find parent key
+                    let pkey = currentText.substr(0, currentText.indexOf(':')).trimStart();
+                    parents.unshift(pkey);
+                    refDepth = currentLintDepth;
+                    if (refDepth === 0) {
+                        break;
+                    }
+                }
+
+                suggestions = eltMatchesLevel.map(elt => {
+                    let keepElt = false;
+                    for(let i = 0; i < elt.positions.length; i++) {
+                        let parentMatch = true;
+                        for(let j = 0; j < elt.positions[i].parent.length; j++) {
+                            const regExp = RegExp(elt.positions[i].parent[j]);
+                            if (!regExp.test(parents[j])) {
+                                parentMatch = false;
+                                break;
+                            }
+                        }
+                        if (parentMatch) {
+                            keepElt = true;
+                            break;
+                        }
+                    }
+                    if (keepElt) {
+                        return elt.name + ': ';
+                    }
+                }).filter(elt => elt);
+
+            }
+            return {fromCh: depth*2, to: cur.line.length,sug: suggestions};
+        }
+
+        function findDepth(text) {
+            let spaceNumber = 0;
+            for(let i=0; i<text.length; i++) {
+                if (text[i] === ' ') {
+                    spaceNumber++;
+                    continue;
+                } else {
+                    break;
+                }
+            }
+            let depth = -1;
+            if (spaceNumber%2 === 0) {
+                depth = spaceNumber/2;
+            }
+            return depth;
+        }
     });
 });

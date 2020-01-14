@@ -12,18 +12,19 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { HookEntry, NodeEntry, WorkflowEntry } from 'app/model/export.entities.model';
 import { Project } from 'app/model/project.model';
+import { FlatSchema, JSONSchema } from 'app/model/schema.model';
 import { Workflow } from 'app/model/workflow.model';
 import { ThemeStore } from 'app/service/theme/theme.store';
+import { UserService } from 'app/service/user/user.service';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchAsCodeWorkflow, GetWorkflow, ImportWorkflow, PreviewWorkflow } from 'app/store/workflow.action';
+import * as yaml from 'js-yaml';
+import { Schema } from 'js-yaml';
+import { Validator } from 'jsonschema';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
-import { UserService } from 'app/service/user/user.service';
-import * as yaml from 'js-yaml';
-import { Validator } from 'jsonschema';
-import { Schema } from 'js-yaml';
 
 declare var CodeMirror: any;
 
@@ -71,6 +72,7 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
     previewMode = false;
     themeSubscription: Subscription;
     workflowSchema: Schema;
+    flatSchema: FlatSchema;
     viewInit: boolean;
 
     constructor(
@@ -98,7 +100,7 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
         this._userService.getSchema('workflow').pipe(first()).subscribe(sc => {
             if (sc.workflow) {
                 this.workflowSchema = <Schema>JSON.parse(sc.workflow);
-
+                this.flatSchema = JSONSchema.flat(this.workflowSchema);
                 if (this.viewInit) {
                     this.initCodeMirror();
                 }
@@ -191,7 +193,7 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
                         applications: this.project.application_names.map(n => n.name),
                         environments: this.project.environment_names.map(n => n.name)
                     },
-                    schema: this.workflowSchema
+                    schema: this.flatSchema
                 });
             }
         });
