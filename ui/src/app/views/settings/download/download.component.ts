@@ -12,7 +12,6 @@ import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 export class DownloadComponent {
     resources: Array<DownloadableResource>;
     loading = false;
-    apiURL: string;
     path: Array<PathItem>;
 
     constructor(
