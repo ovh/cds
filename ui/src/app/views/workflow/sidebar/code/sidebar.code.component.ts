@@ -10,7 +10,6 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { HookEntry, NodeEntry, WorkflowEntry } from 'app/model/export.entities.model';
 import { Project } from 'app/model/project.model';
 import { FlatSchema, JSONSchema } from 'app/model/schema.model';
 import { Workflow } from 'app/model/workflow.model';
@@ -91,6 +90,8 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
             lineWrapping: true,
             lineNumbers: true,
             autoRefresh: true,
+            tabSize: 2,
+            indentWithTabs: false,
             gutters: ['CodeMirror-lint-markers'],
             lint: {
                 getAnnotations: this.workflowCheck
@@ -174,20 +175,6 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
                     completeSingle: true,
                     closeCharacters: / /,
                     specialChars: '',
-                    snippets: [
-                        {
-                            'text': new WorkflowEntry().toSnippet(),
-                            'displayText': '@workflow'
-                        },
-                        {
-                            'text': new NodeEntry().toSnippet(),
-                            'displayText': '@node'
-                        },
-                        {
-                            'text': new HookEntry().toSnippet(),
-                            'displayText': '@hooks'
-                        }
-                    ],
                     suggests: {
                         pipelines: this.project.pipeline_names.map(n => n.name),
                         applications: this.project.application_names.map(n => n.name),
