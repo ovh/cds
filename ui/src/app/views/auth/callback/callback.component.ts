@@ -3,6 +3,7 @@ import { NgForm } from '@angular/forms';
 import { ActivatedRoute, DefaultUrlSerializer, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
+import { ConfigService } from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { jws } from 'jsrsasign';
@@ -28,6 +29,7 @@ export class CallbackComponent implements OnInit {
     showInitTokenForm: boolean;
     consumerType: string;
     payloadData: any;
+    cmd: string;
 
     constructor(
         private _route: ActivatedRoute,
@@ -35,7 +37,8 @@ export class CallbackComponent implements OnInit {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _router: Router,
-        private _authenticationService: AuthenticationService
+        private _authenticationService: AuthenticationService,
+        private _configService: ConfigService
     ) {
         this.loading = true;
     }
@@ -60,9 +63,12 @@ export class CallbackComponent implements OnInit {
 
             // If the origin is cdsctl, show the code and the state for copy
             if (this.payloadData && this.payloadData.origin === 'cdsctl') {
-                this.loading = false;
-                this.showCTL = true;
-                this._cd.markForCheck();
+                this._configService.getConfig().subscribe(config => {
+                    this.cmd = `cdsctl login verify ${config['url.api']} ${this.consumerType} ${this.state}:${this.code}`
+                    this.loading = false;
+                    this.showCTL = true;
+                    this._cd.markForCheck();
+                })
                 return;
             }
 
