@@ -256,6 +256,33 @@ func TestRunGitCloneInHTTPSWithoutAuth(t *testing.T) {
 	assert.DirExists(t, filepath.Join(wk.workingDirectory.File.Name(), "dummy-empty-repo", ".git"))
 }
 
-func TestRunGitCloneInHTTPSWithAuth(t *testing.T) {
+func TestRunGitCloneWithSecret(t *testing.T) {
+	wk, ctx := setupTest(t)
+	res, err := RunGitClone(ctx, wk,
+		sdk.Action{
+			Parameters: []sdk.Parameter{
+				{
+					Name:  "url",
+					Value: "git@github.com:fsamin/dummy-empty-repo.git",
+				},
+				{
+					Name:  "privateKey",
+					Value: "proj-ssh-key",
+				},
+				{
+					Name:  "directory",
+					Value: ".",
+				},
+			},
+		}, []sdk.Variable{
+			{
+				Name:  "cds.key.proj-ssh-key.priv",
+				Value: string(test.TestKey),
+				Type:  sdk.KeyTypeSSH,
+			},
+		})
+	assert.NoError(t, err)
+	assert.Equal(t, sdk.StatusSuccess, res.Status)
 
+	assert.DirExists(t, filepath.Join(wk.workingDirectory.File.Name(), ".git"))
 }
