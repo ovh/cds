@@ -5,8 +5,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
+	"strings"
+
+	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
@@ -27,7 +28,24 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 		return res, errors.New("UnitTest parser: path not provided")
 	}
 
-	files, errg := filepath.Glob(p)
+	workdir, err := workerruntime.WorkingDirectory(ctx)
+	if err != nil {
+		return res, err
+	}
+
+	var abs string
+	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
+		abs, _ = x.RealPath(workdir.Name())
+	} else {
+		abs = workdir.Name()
+	}
+
+	wkDirFS := afero.NewBasePathFs(afero.NewOsFs(), abs)
+	path := strings.TrimPrefix(p, abs)
+
+	// Global all files matching filePath
+	files, errg := afero.Glob(wkDirFS, path)
+
 	if errg != nil {
 		return res, errors.New("UnitTest parser: Cannot find requested files, invalid pattern")
 	}
@@ -38,7 +56,7 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 	for _, f := range files {
 		var ftests venom.Tests
 
-		data, errRead := ioutil.ReadFile(f)
+		data, errRead := afero.ReadFile(wkDirFS, f)
 		if errRead != nil {
 			return res, fmt.Errorf("UnitTest parser: cannot read file %s (%s)", f, errRead)
 		}
@@ -61,7 +79,7 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 		wk.SendLog(ctx, workerruntime.LevelInfo, r)
 	}
 
-	if err := wk.Blur(tests); err != nil {
+	if err := wk.Blur(&tests); err != nil {
 		return res, err
 	}
 
