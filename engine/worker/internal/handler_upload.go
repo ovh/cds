@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path"
+	"path/filepath"
 
 	"github.com/ovh/cds/engine/worker/internal/action"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
@@ -22,10 +24,15 @@ func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 
-		var art sdk.WorkflowNodeRunArtifact
+		var art workerruntime.UploadArtifact
 		if err := json.Unmarshal(data, &art); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
+		}
+
+		artifactPath := art.Name
+		if !path.IsAbs(artifactPath) {
+			artifactPath = filepath.Join(art.WorkingDirectory, art.Name)
 		}
 
 		a := sdk.Action{
@@ -33,7 +40,7 @@ func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 				{
 					Name:  "path",
 					Type:  sdk.StringParameter,
-					Value: art.Name,
+					Value: artifactPath,
 				},
 				{
 					Name:  "tag",
@@ -57,6 +64,7 @@ func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			return
 		}
 		ctx = workerruntime.SetWorkingDirectory(ctx, workingDir)
+
 		result, err := action.RunArtifactUpload(ctx, wk, a, wk.currentJob.secrets)
 		if err != nil {
 			wk.SendLog(ctx, workerruntime.LevelError, fmt.Sprintf("Artifact upload failed: %v", err))
