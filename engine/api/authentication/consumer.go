@@ -20,6 +20,7 @@ func NewConsumerWorker(ctx context.Context, db gorp.SqlExecutor, name string, ha
 		Scopes: []sdk.AuthConsumerScope{
 			sdk.AuthConsumerScopeWorker,
 			sdk.AuthConsumerScopeWorkerModel,
+			sdk.AuthConsumerScopeProject,
 			sdk.AuthConsumerScopeRun,
 			sdk.AuthConsumerScopeRunExecution,
 		},
