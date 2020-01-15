@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -254,11 +253,11 @@ func checkPluginDeployment(ctx context.Context, w *CurrentWorker, job sdk.Workfl
 	}
 
 	// then try to download the plugin
-	integrationPluginBinary := path.Join(w.BaseDir().Name(), binary.Name)
-	if _, err := w.BaseDir().Stat(integrationPluginBinary); os.IsNotExist(err) {
+	//integrationPluginBinary := path.Join(w.BaseDir().Name(), binary.Name)
+	if _, err := w.BaseDir().Stat(binary.Name); os.IsNotExist(err) {
 		log.Debug("Downloading the plugin %s", binary.PluginName)
 		//If the file doesn't exist. Download it.
-		fi, err := os.OpenFile(integrationPluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
+		fi, err := w.BaseDir().OpenFile(binary.Name, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
 		if err != nil {
 			return false, err
 		}
