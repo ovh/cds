@@ -46,6 +46,7 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, se
 		installedKey, err := wk.InstallKey(sdk.Variable{
 			Name:  privateKeyContent.Name,
 			Value: privateKeyContent.Value,
+			Type:  sdk.KeyTypeSSH,
 		}, "")
 		if err != nil {
 			return sdk.Result{}, err
