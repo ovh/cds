@@ -107,7 +107,7 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
                 }
             }
 
-        })
+        });
     }
 
     workflowCheck = cm => {
@@ -170,7 +170,8 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
 
     initCodeMirror(): void {
         this.codemirror.instance.on('keyup', (cm, event) => {
-            if (event.key === '@' || event.keyCode > 46 || event.keyCode === 32) {
+            if (event.which > 46 || event.which === 32) {
+                console.log(event);
                 CodeMirror.showHint(cm, CodeMirror.hint.asCode, {
                     completeSingle: true,
                     closeCharacters: / /,

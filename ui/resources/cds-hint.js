@@ -201,9 +201,9 @@
             if (depth === -1) {
                 return {sug: []};
             }
-            if (text.trimStart().indexOf('-') === 0) {
-                return {sug: []};
-            }
+            //if (text.trimStart().indexOf('-') === 0) {
+            //    return {sug: []};
+            //}
             return findKeySuggestion(depth, schema, cur, fullText);
         }
 
@@ -286,9 +286,10 @@
         }
 
         function findDepth(text) {
-            let spaceNumber = 0;
+            let spaceNumber = 0
+
             for(let i=0; i<text.length; i++) {
-                if (text[i] === ' ') {
+                if (text[i] === ' ' || text[i] === '-') {
                     spaceNumber++;
                     continue;
                 } else {

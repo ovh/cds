@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { Pipeline, PipelineStatus } from 'app/model/pipeline.model';
+import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
@@ -9,7 +9,14 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchAsCodePipeline, ImportPipeline, PreviewPipeline, ResyncPipeline } from 'app/store/pipelines.action';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { finalize, first } from 'rxjs/operators';
+import * as yaml from 'js-yaml';
+import { Schema } from 'js-yaml';
+import { FlatSchema, JSONSchema } from 'app/model/schema.model';
+import { UserService } from 'app/service/user/user.service';
+import { Validator } from 'jsonschema';
+
+declare var CodeMirror: any;
 
 @Component({
     selector: 'app-pipeline-ascode-editor',
@@ -28,12 +35,10 @@ export class PipelineAsCodeEditorComponent implements OnInit {
     @Input('open')
     set open(data: boolean) {
         if (data && !this.updated) {
-            this.loadingGet = true;
             this.store.dispatch(new FetchAsCodePipeline({
                 projectKey: this.project.key,
                 pipelineName: this.pipeline.name
             })).pipe(finalize(() => {
-                this.loadingGet = false;
                 this._cd.markForCheck();
             }))
                 .subscribe(() => this.exportedPip = this.pipeline.asCode);
@@ -49,11 +54,13 @@ export class PipelineAsCodeEditorComponent implements OnInit {
     codeMirrorConfig: any;
     updated = false;
     loading = false;
-    loadingGet = true;
     previewMode = false;
     exportedPip = '';
-    statusEnum = PipelineStatus;
     themeSubscription: Subscription;
+
+    pipelineSchema: Schema;
+    flatSchema: FlatSchema;
+    viewInit: boolean;
 
     constructor(
         private store: Store,
@@ -61,14 +68,87 @@ export class PipelineAsCodeEditorComponent implements OnInit {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _theme: ThemeStore,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _userService: UserService
     ) {
         this.codeMirrorConfig = {
             mode: 'text/x-yaml',
             lineWrapping: true,
             lineNumbers: true,
             autoRefresh: true,
+            tabSize: 2,
+            indentWithTabs: false,
+            gutters: ['CodeMirror-lint-markers'],
+            lint: {
+                getAnnotations: this.pipelineCheck
+            }
         };
+        this._userService.getSchema('pipeline').pipe(first()).subscribe(sc => {
+            if (sc.pipeline) {
+                this.pipelineSchema = <Schema>JSON.parse(sc.pipeline);
+                this.flatSchema = JSONSchema.flat(this.pipelineSchema);
+                console.log(this.flatSchema);
+                if (this.viewInit) {
+                    this.initCodeMirror();
+                }
+            }
+
+        })
+    }
+
+    ngAfterViewInit(): void {
+        this.viewInit = true;
+        if (this.pipelineSchema) {
+            this.initCodeMirror();
+        }
+    }
+    initCodeMirror(): void {
+        this.codemirror.instance.on('keyup', (cm, event) => {
+            if (event.which > 46 || event.which === 32) {
+                console.log(event);
+                CodeMirror.showHint(cm, CodeMirror.hint.asCode, {
+                    completeSingle: true,
+                    closeCharacters: / /,
+                    specialChars: '',
+                    schema: this.flatSchema
+                });
+            }
+        });
+    }
+
+    pipelineCheck = cm => {
+        const errors = CodeMirror.lint.yaml(cm);
+        if (errors && errors.length > 0) {
+            return errors;
+        }
+        if (!cm) {
+            return [];
+        }
+
+        if (!this.pipelineSchema) {
+            return [];
+        }
+
+        const yamlData = yaml.load(cm);
+        let v = new Validator();
+        let result = v.validate(yamlData, this.pipelineSchema);
+        return this.toCodemirrorError(<[]>result.errors);
+    };
+
+    toCodemirrorError(errors: []) {
+        let errs = [];
+        if (errors) {
+            errors.forEach(e => {
+                errs.push({
+                    from: {
+                        ch: 1,
+                        line: 1
+                    },
+                    message: e['message']
+                });
+            });
+        }
+        return errs;
     }
 
     ngOnInit(): void {
