@@ -37,10 +37,10 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, se
 	if privateKey != nil && privateKey.Value != "" {
 		// The private key parameter, contains the name of the private key to use.
 		// Let's look up in the secret list to find the content of the private key
-		privateKeyContent := sdk.VariableFind(secrets, privateKey.Value)
+		privateKeyContent := sdk.VariableFind(secrets, privateKey.Name)
 
 		if privateKeyContent == nil {
-			return sdk.Result{}, fmt.Errorf("unknown key \"%s\"", privateKey.Value)
+			return sdk.Result{}, fmt.Errorf("unknown key \"%s\"", privateKey.Name)
 		}
 
 		installedKey, err := wk.InstallKey(sdk.Variable{

@@ -318,7 +318,13 @@ func setupWorkingDirectory(ctx context.Context, fs afero.Fs, wd string) (afero.F
 		}
 	}
 
-	if err := os.Setenv("HOME", wd); err != nil {
+	var absWD string
+	if x, ok := fs.(*afero.BasePathFs); ok {
+		absWD, _ = x.RealPath(wd)
+	} else {
+		absWD = wd
+	}
+	if err := os.Setenv("HOME", absWD); err != nil {
 		return nil, err
 	}
 
