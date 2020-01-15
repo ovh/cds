@@ -27,7 +27,12 @@ func projectPermissionUsers(ctx context.Context, db gorp.SqlExecutor, projectID 
 			AND	"group".id <> $3
 		`
 
-	rows, err := db.Query(query, projectID, access, group.SharedInfraGroup.ID)
+	var defaultGroupID int64
+	if group.DefaultGroup != nil {
+		defaultGroupID = group.DefaultGroup.ID
+	}
+
+	rows, err := db.Query(query, projectID, access, defaultGroupID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return users, nil
