@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/engine/worker/internal"
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -60,10 +61,12 @@ func uploadCmd() func(cmd *cobra.Command, args []string) {
 			sdk.Exit("Wrong usage: Example : worker upload --tag={{.cds.version}} filea fileb filec*")
 		}
 
+		cwd, _ := os.Getwd()
 		for _, arg := range args {
-			a := sdk.WorkflowNodeRunArtifact{
-				Name: arg,
-				Tag:  cmdUploadTag,
+			a := workerruntime.UploadArtifact{
+				Name:             arg,
+				Tag:              cmdUploadTag,
+				WorkingDirectory: cwd,
 			}
 
 			data, errMarshal := json.Marshal(a)
