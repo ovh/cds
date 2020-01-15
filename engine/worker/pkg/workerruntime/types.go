@@ -20,6 +20,12 @@ type DownloadArtifact struct {
 	Destination string `json:"destination"`
 }
 
+type UploadArtifact struct {
+	Name             string `json:"name"`
+	Tag              string `json:"tag"`
+	WorkingDirectory string `json:"working_directory"`
+}
+
 type FilePath struct {
 	Path string `json:"path"`
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -23,9 +25,9 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 		return res, err
 	}
 
-	path := strings.TrimSpace(sdk.ParameterValue(a.Parameters, "path"))
-	if path == "" {
-		path = "."
+	artifactPath := strings.TrimSpace(sdk.ParameterValue(a.Parameters, "path"))
+	if artifactPath == "" {
+		artifactPath = "."
 	}
 
 	workdir, err := workerruntime.WorkingDirectory(ctx)
@@ -40,22 +42,23 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 		abs = workdir.Name()
 	}
 
-	wkDirFS := afero.NewBasePathFs(afero.NewOsFs(), abs)
+	if !path.IsAbs(artifactPath) {
+		artifactPath = filepath.Join(abs, artifactPath)
+	}
 
 	tag := sdk.ParameterFind(a.Parameters, "tag")
 	if tag == nil {
 		return res, errors.New("tag variable is empty. aborting")
 	}
 
-	path = strings.TrimPrefix(path, abs)
 	// Global all files matching filePath
-	filesPath, err := afero.Glob(wkDirFS, path)
+	filesPath, err := afero.Glob(afero.NewOsFs(), artifactPath)
 	if err != nil {
-		return res, fmt.Errorf("cannot perform globbing of pattern '%s': %s", path, err)
+		return res, fmt.Errorf("cannot perform globbing of pattern '%s': %s", artifactPath, err)
 	}
 
 	if len(filesPath) == 0 {
-		return res, fmt.Errorf("pattern '%s' matched no file", path)
+		return res, fmt.Errorf("pattern '%s' matched no file", artifactPath)
 	}
 
 	var globalError = &sdk.MultiError{}
@@ -77,12 +80,11 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	wg.Add(len(filesPath))
 	for _, p := range filesPath {
 		go func(path string) {
-			absFile := abs + "/" + strings.TrimPrefix(path, abs)
-			log.Debug("Uploading %s projectKey:%v integrationName:%v job:%d", absFile, projectKey, integrationName, jobID)
+			log.Debug("Uploading %s projectKey:%v integrationName:%v job:%d", path, projectKey, integrationName, jobID)
 			defer wg.Done()
-			throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, absFile)
+			throughTempURL, duration, err := wk.Client().QueueArtifactUpload(ctx, projectKey, integrationName, jobID, tag.Value, path)
 			if err != nil {
-				chanError <- sdk.WrapError(err, "Error while uploading artifact %s", absFile)
+				chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
 				wgErrors.Add(1)
 				return
 			}
