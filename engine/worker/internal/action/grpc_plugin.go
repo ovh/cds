@@ -73,7 +73,7 @@ func enablePluginLogger(ctx context.Context, done chan struct{}, c *pluginClient
 	}
 }
 
-func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Parameter, w workerruntime.Runtime, chanRes chan sdk.Result, done chan struct{}) {
+func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Parameter, action sdk.Action, w workerruntime.Runtime, chanRes chan sdk.Result, done chan struct{}) {
 	//For the moment we consider that plugin name = action name
 	pluginName := actionName
 
@@ -144,7 +144,7 @@ func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Paramete
 		return
 	}
 	query := actionplugin.ActionQuery{
-		Options: sdk.ParametersMapMerge(sdk.ParametersToMap(params), sdk.ParametersToMap(params), sdk.MapMergeOptions.ExcludeGitParams),
+		Options: sdk.ParametersMapMerge(sdk.ParametersToMap(params), sdk.ParametersToMap(action.Parameters), sdk.MapMergeOptions.ExcludeGitParams),
 		JobID:   jobID,
 	}
 

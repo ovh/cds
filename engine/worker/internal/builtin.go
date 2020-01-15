@@ -54,7 +54,7 @@ func (w *CurrentWorker) runGRPCPlugin(ctx context.Context, a sdk.Action) sdk.Res
 	chanRes := make(chan sdk.Result, 1)
 	done := make(chan struct{})
 	sdk.GoRoutine(ctx, "runGRPCPlugin", func(ctx context.Context) {
-		action.RunGRPCPlugin(ctx, a.Name, w.currentJob.params, w, chanRes, done)
+		action.RunGRPCPlugin(ctx, a.Name, w.currentJob.params, a, w, chanRes, done)
 	})
 
 	select {
