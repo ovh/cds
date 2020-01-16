@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sguiheux/go-coverage"
@@ -43,7 +44,7 @@ func TestRunCoverageWrongFormat(t *testing.T) {
 	assert.Equal(t, sdk.StatusFail, res.Status)
 }
 
-func TestRunCoverage(t *testing.T) {
+func TestRunCoverage_Absolute(t *testing.T) {
 	defer gock.Off()
 
 	wk, ctx := setupTest(t)
@@ -86,6 +87,60 @@ func TestRunCoverage(t *testing.T) {
 				{
 					Name:  "path",
 					Value: fiPath,
+				},
+				{
+					Name:  "format",
+					Value: "cobertura",
+				},
+				{
+					Name:  "minimum",
+					Value: "10",
+				},
+			},
+		}, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, sdk.StatusSuccess, res.Status)
+}
+
+func TestRunCoverage_Relative(t *testing.T) {
+	defer gock.Off()
+
+	wk, ctx := setupTest(t)
+	fname := filepath.Join(wk.workingDirectory.Name(), "results.xml")
+	require.NoError(t, afero.WriteFile(wk.BaseDir(), fname, []byte(cobertura_result), os.ModePerm))
+
+	gock.New("http://lolcat.host").Post("/queue/workflows/666/coverage").
+		Reply(200)
+
+	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
+		bodyContent, err := ioutil.ReadAll(request.Body)
+		assert.NoError(t, err)
+		request.Body = ioutil.NopCloser(bytes.NewReader(bodyContent))
+		if mock != nil {
+			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
+			switch mock.Request().URLStruct.String() {
+			case "http://lolcat.host/queue/workflows/666/coverage":
+				var report coverage.Report
+				err := json.Unmarshal(bodyContent, &report)
+				assert.NoError(t, err)
+				require.Equal(t, 8, report.TotalLines)
+				require.Equal(t, 6, report.CoveredLines)
+				require.Equal(t, 4, report.TotalBranches)
+				require.Equal(t, 2, report.CoveredBranches)
+			}
+		}
+	}
+
+	gock.Observe(checkRequest)
+
+	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
+	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPSSEClient())
+	res, err := RunParseCoverageResultAction(ctx, wk,
+		sdk.Action{
+			Parameters: []sdk.Parameter{
+				{
+					Name:  "path",
+					Value: "results.xml",
 				},
 				{
 					Name:  "format",
