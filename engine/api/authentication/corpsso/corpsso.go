@@ -89,7 +89,7 @@ func (d authDriver) GetSigninURI(state sdk.AuthSigninConsumerToken) (sdk.AuthDri
 }
 
 func (d authDriver) GetSessionDuration() time.Duration {
-	return time.Hour
+	return 24 * time.Hour
 }
 
 func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
