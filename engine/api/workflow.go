@@ -48,14 +48,12 @@ func (api *API) getWorkflowsHandler() service.Handler {
 		}
 
 		for i := range ws {
-			ws[i].Permissions = perms.Permissions(ws[i].Name)
-
-			if !ws[i].Permissions.IsMaxLevel() && !ws[i].Permissions.Readable {
+			if isAdmin(ctx) {
+				ws[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+			} else {
+				ws[i].Permissions = perms.Permissions(ws[i].Name)
 				if isMaintainer(ctx) {
-					ws[i].Permissions = sdk.Permissions{Readable: true, Writable: false, Executable: false}
-				}
-				if isAdmin(ctx) {
-					ws[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+					ws[i].Permissions.Readable = true
 				}
 			}
 		}
@@ -128,18 +126,16 @@ func (api *API) getWorkflowHandler() service.Handler {
 			}
 		}
 
-		perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), key, []string{w1.Name}, getAPIConsumer(ctx).GetGroupIDs())
-		if err != nil {
-			return err
-		}
-		w1.Permissions = perms.Permissions(w1.Name)
-
-		if !w1.Permissions.IsMaxLevel() && !w1.Permissions.Readable {
-			if isMaintainer(ctx) {
-				w1.Permissions = sdk.Permissions{Readable: true, Writable: false, Executable: false}
+		if isAdmin(ctx) {
+			w1.Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+		} else {
+			perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), key, []string{w1.Name}, getAPIConsumer(ctx).GetGroupIDs())
+			if err != nil {
+				return err
 			}
-			if isAdmin(ctx) {
-				w1.Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+			w1.Permissions = perms.Permissions(w1.Name)
+			if isMaintainer(ctx) {
+				w1.Permissions.Readable = true
 			}
 		}
 
