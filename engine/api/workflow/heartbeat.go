@@ -12,8 +12,8 @@ import (
 
 const maxRetry = 3
 
-// restartDeadJob restart all jobs which are building but without worker
-func restartDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store) error {
+// manageDeadJob restart all jobs which are building but without worker
+func manageDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store) error {
 	db := DBFunc()
 	deadJobs, err := LoadDeadNodeJobRun(ctx, db, store)
 	if err != nil {
@@ -27,21 +27,29 @@ func restartDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.
 			continue
 		}
 
-		if deadJob.Retry >= maxRetry {
-			if _, err := UpdateNodeJobRunStatus(ctx, tx, store, nil, &deadJob, sdk.StatusStopped); err != nil {
-				log.Error(ctx, "restartDeadJob> Cannot update node run job %d : %v", deadJob.ID, err)
-				_ = tx.Rollback()
-				continue
-			}
+		if deadJob.Status == sdk.StatusBuilding {
+			if deadJob.Retry >= maxRetry {
+				if _, err := UpdateNodeJobRunStatus(ctx, tx, store, nil, &deadJob, sdk.StatusStopped); err != nil {
+					log.Error(ctx, "restartDeadJob> Cannot update node run job %d : %v", deadJob.ID, err)
+					_ = tx.Rollback()
+					continue
+				}
 
-			if err := DeleteNodeJobRuns(tx, deadJob.WorkflowNodeRunID); err != nil {
-				log.Error(ctx, "restartDeadJob> Cannot delete node run job %d : %v", deadJob.ID, err)
-				_ = tx.Rollback()
-				continue
+				if err := DeleteNodeJobRuns(tx, deadJob.WorkflowNodeRunID); err != nil {
+					log.Error(ctx, "restartDeadJob> Cannot delete node run job %d : %v", deadJob.ID, err)
+					_ = tx.Rollback()
+					continue
+				}
+			} else {
+				if err := RestartWorkflowNodeJob(ctx, tx, deadJob); err != nil {
+					log.Warning(ctx, "restartDeadJob> Cannot restart node job run %d: %v", deadJob.ID, err)
+					_ = tx.Rollback()
+					continue
+				}
 			}
 		} else {
-			if err := RestartWorkflowNodeJob(ctx, tx, deadJob); err != nil {
-				log.Warning(ctx, "restartDeadJob> Cannot restart node job run %d: %v", deadJob.ID, err)
+			if err := DeleteNodeJobRuns(tx, deadJob.WorkflowNodeRunID); err != nil {
+				log.Error(ctx, "restartDeadJob> Cannot delete node run job %d : %v", deadJob.ID, err)
 				_ = tx.Rollback()
 				continue
 			}
