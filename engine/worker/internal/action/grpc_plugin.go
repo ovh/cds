@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -94,7 +93,7 @@ func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Paramete
 		envs = append(envs, fmt.Sprintf("%s=%s", envName, p.Value))
 	}
 
-	pluginSocket, err := startGRPCPlugin(ctx, pluginName, w, nil, startGRPCPluginOptions{
+	pluginSocket, err := startGRPCPlugin(context.Background(), pluginName, w, nil, startGRPCPluginOptions{
 		envs: envs,
 	})
 	if err != nil {
@@ -232,36 +231,19 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w workerruntime.Run
 		}
 	}
 
-	var basedir string
-	if x, ok := w.BaseDir().(*afero.BasePathFs); ok {
-		basedir, _ = x.RealPath(".")
-	} else {
-		basedir = w.BaseDir().Name()
-	}
-
 	cmd := binary.Cmd
 	if _, err := sdk.LookPath(w.BaseDir(), cmd); err != nil {
-		return nil, sdk.WrapError(err, "plugin:%s unable to find GRPC plugin, binary command not found.", pluginName)
-	}
-	cmd = path.Join(basedir, cmd)
-
-	for i := range binary.Entrypoints {
-		binary.Entrypoints[i] = path.Join(basedir, binary.Entrypoints[i])
+		return nil, sdk.WrapError(err, "plugin:%s unable to start GRPC plugin, binary command not found.", pluginName)
 	}
 	args := append(binary.Entrypoints, binary.Args...)
 	var errstart error
 
-	workdir, err := workerruntime.WorkingDirectory(ctx)
-	if err != nil {
-		return nil, err
-	}
 	var dir string
 	if x, ok := w.BaseDir().(*afero.BasePathFs); ok {
-		dir, _ = x.RealPath(workdir.Name())
+		dir, _ = x.RealPath(".")
 	} else {
-		dir = workdir.Name()
+		dir = w.BaseDir().Name()
 	}
-
 	if c.StdPipe, c.Socket, errstart = grpcplugin.StartPlugin(ctx, pluginName, dir, cmd, args, envs); errstart != nil {
 		return nil, sdk.WrapError(errstart, "plugin:%s unable to start GRPC plugin... Aborting", pluginName)
 	}
