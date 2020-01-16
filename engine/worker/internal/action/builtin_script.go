@@ -73,6 +73,8 @@ func prepareScriptContent(parameters []sdk.Parameter, basedir afero.Fs, workdir 
 		script.dir = workdir.Name()
 	}
 
+	log.Debug("prepareScriptContent> script.dir is %s", script.dir)
+
 	return &script, nil
 }
 
@@ -129,24 +131,29 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 		return nil, fmt.Errorf("unable to write script to %s", tmpscript)
 	}
 
-	if isWindows() {
-		//This aims to stop a the very first error and return the right exit code
-		psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", tmpFileName)
-		script.opts = append(script.opts, psCommand)
-	} else {
-		script.opts = append(script.opts, tmpFileName)
-	}
+	var realScriptPath = scriptPath
 
 	switch x := fs.(type) {
 	case *afero.BasePathFs:
-		script.dir, err = x.RealPath(path.Dir(basedir.Name()))
+		realScriptPath, err = x.RealPath(tmpscript.Name())
 		if err != nil {
 			return nil, fmt.Errorf("unable to get script working dir: %v", err)
 		}
-	default:
-		script.dir = path.Dir(basedir.Name())
+		realScriptPath, err = filepath.Abs(realScriptPath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get script working dir: %v", err)
+		}
 	}
 
+	if isWindows() {
+		//This aims to stop a the very first error and return the right exit code
+		psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", realScriptPath)
+		script.opts = append(script.opts, psCommand)
+	} else {
+		script.opts = append(script.opts, realScriptPath)
+	}
+
+	log.Debug("writeScriptContent> script is %s", realScriptPath)
 	log.Debug("writeScriptContent> script.dir is %s", script.dir)
 
 	deferFunc := func() {
@@ -193,6 +200,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		log.Info(ctx, "runScriptAction> Running command %s %s in %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"), script.dir)
 		cmd := exec.CommandContext(ctx, script.shell, script.opts...)
 		res.Status = sdk.StatusUnknown
+
 		cmd.Dir = script.dir
 		cmd.Env = wk.Environ()
 
