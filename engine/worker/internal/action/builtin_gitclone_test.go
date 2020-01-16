@@ -55,7 +55,7 @@ func TestRunGitCloneInSSHWithPrivateKey(t *testing.T) {
 		},
 		[]sdk.Variable{
 			{
-				Name:  "proj-ssh-key",
+				Name:  "cds.key.proj-ssh-key.priv",
 				Value: string(test.TestKey),
 			},
 		})
@@ -83,7 +83,7 @@ func TestRunGitCloneInSSHWithTheWrongPrivateKeyShouldFail(t *testing.T) {
 		},
 		[]sdk.Variable{
 			{
-				Name:  "proj-ssh-key",
+				Name:  "cds.key.proj-ssh-key.priv",
 				Value: "this not a private key",
 			},
 		})
@@ -111,7 +111,7 @@ func TestRunGitCloneInSSHWithPrivateKeyWithTargetDirectory(t *testing.T) {
 		},
 		[]sdk.Variable{
 			{
-				Name:  "proj-ssh-key",
+				Name:  "cds.key.proj-ssh-key.priv",
 				Value: string(test.TestKey),
 			},
 		})
@@ -152,7 +152,7 @@ func TestRunGitCloneInSSHWithPrivateKeyAndExtractInfo(t *testing.T) {
 		},
 		[]sdk.Variable{
 			{
-				Name:  "proj-ssh-key",
+				Name:  "cds.key.proj-ssh-key.priv",
 				Value: string(test.TestKey),
 			},
 		})
