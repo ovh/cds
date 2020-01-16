@@ -23,40 +23,40 @@ func manageDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.S
 	for _, deadJob := range deadJobs {
 		tx, errTx := db.Begin()
 		if errTx != nil {
-			log.Error(ctx, "restartDeadJob> Cannot create transaction : %v", errTx)
+			log.Error(ctx, "manageDeadJob> Cannot create transaction : %v", errTx)
 			continue
 		}
 
 		if deadJob.Status == sdk.StatusBuilding {
 			if deadJob.Retry >= maxRetry {
 				if _, err := UpdateNodeJobRunStatus(ctx, tx, store, nil, &deadJob, sdk.StatusStopped); err != nil {
-					log.Error(ctx, "restartDeadJob> Cannot update node run job %d : %v", deadJob.ID, err)
+					log.Error(ctx, "manageDeadJob> Cannot update node run job %d : %v", deadJob.ID, err)
 					_ = tx.Rollback()
 					continue
 				}
 
 				if err := DeleteNodeJobRuns(tx, deadJob.WorkflowNodeRunID); err != nil {
-					log.Error(ctx, "restartDeadJob> Cannot delete node run job %d : %v", deadJob.ID, err)
+					log.Error(ctx, "manageDeadJob> Cannot delete node run job %d : %v", deadJob.ID, err)
 					_ = tx.Rollback()
 					continue
 				}
 			} else {
 				if err := RestartWorkflowNodeJob(ctx, tx, deadJob); err != nil {
-					log.Warning(ctx, "restartDeadJob> Cannot restart node job run %d: %v", deadJob.ID, err)
+					log.Warning(ctx, "manageDeadJob> Cannot restart node job run %d: %v", deadJob.ID, err)
 					_ = tx.Rollback()
 					continue
 				}
 			}
-		} else {
+		} else if sdk.StatusIsTerminated(deadJob.Status) {
 			if err := DeleteNodeJobRuns(tx, deadJob.WorkflowNodeRunID); err != nil {
-				log.Error(ctx, "restartDeadJob> Cannot delete node run job %d : %v", deadJob.ID, err)
+				log.Error(ctx, "manageDeadJob> Cannot delete node run job %d : %v", deadJob.ID, err)
 				_ = tx.Rollback()
 				continue
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Error(ctx, "restartDeadJob> Cannot commit transaction : %v", err)
+			log.Error(ctx, "manageDeadJob> Cannot commit transaction : %v", err)
 		}
 	}
 
