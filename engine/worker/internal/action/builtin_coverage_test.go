@@ -3,12 +3,14 @@ package action
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sguiheux/go-coverage"
 	"gopkg.in/h2non/gock.v1"
@@ -47,6 +49,11 @@ func TestRunCoverage(t *testing.T) {
 	wk, ctx := setupTest(t)
 	assert.NoError(t, ioutil.WriteFile("results.xml", []byte(cobertura_result), os.ModePerm))
 
+	fi, err := os.Open("results.xml")
+	require.NoError(t, err)
+	fiPath, err := filepath.Abs(fi.Name())
+	require.NoError(t, err)
+
 	gock.New("http://lolcat.host").Post("/queue/workflows/666/coverage").
 		Reply(200)
 
@@ -78,7 +85,7 @@ func TestRunCoverage(t *testing.T) {
 			Parameters: []sdk.Parameter{
 				{
 					Name:  "path",
-					Value: "./results.xml",
+					Value: fiPath,
 				},
 				{
 					Name:  "format",
@@ -100,6 +107,11 @@ func TestRunCoverageMinimumFail(t *testing.T) {
 	wk, ctx := setupTest(t)
 	assert.NoError(t, ioutil.WriteFile("results.xml", []byte(cobertura_result), os.ModePerm))
 
+	fi, err := os.Open("results.xml")
+	require.NoError(t, err)
+	fiPath, err := filepath.Abs(fi.Name())
+	require.NoError(t, err)
+
 	gock.New("http://lolcat.host").Post("/queue/workflows/666/coverage").
 		Reply(200)
 
@@ -131,7 +143,7 @@ func TestRunCoverageMinimumFail(t *testing.T) {
 			Parameters: []sdk.Parameter{
 				{
 					Name:  "path",
-					Value: "./results.xml",
+					Value: fiPath,
 				},
 				{
 					Name:  "format",
