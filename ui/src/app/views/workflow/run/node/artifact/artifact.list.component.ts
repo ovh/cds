@@ -31,7 +31,7 @@ export class WorkflowRunArtifactListComponent {
                 selector: (a: WorkflowNodeRunArtifact) => {
                     let size = this.getHumainFileSize(a.size);
                     return {
-                        link: `/cdsapi/workflow/artifact/${a.download_hash}`,
+                        link: `./cdsapi/workflow/artifact/${a.download_hash}`,
                         value: `${a.name} (${size})`
                     };
                 }
