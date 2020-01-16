@@ -129,7 +129,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 		}
 		opts.Manual.Username = u.GetUsername()
 		opts.Manual.Email = u.GetEmail()
-		opts.Manual.Username = u.GetFullname()
+		opts.Manual.Fullname = u.GetFullname()
 
 		if len(opts.FromNodeIDs) > 0 && len(wr.WorkflowNodeRuns) > 0 {
 			// MANUAL RUN FROM NODE
