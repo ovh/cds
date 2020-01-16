@@ -608,11 +608,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 		for i := range nodeJobRun.Job.StepStatus {
 			jobStep := &nodeJobRun.Job.StepStatus[i]
 			if step.StepOrder == jobStep.StepOrder {
-				if nodeJobRun.Status == sdk.StatusStopped {
-					jobStep.Status = sdk.StatusStopped
-				} else {
-					jobStep.Status = step.Status
-				}
+				jobStep.Status = step.Status
 				if sdk.StatusIsTerminated(step.Status) {
 					jobStep.Done = step.Done
 				}
