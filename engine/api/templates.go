@@ -31,7 +31,7 @@ func (api *API) getTemplatesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var ts []sdk.WorkflowTemplate
 		var err error
-		if isMaintainer(ctx) || isAdmin(ctx) {
+		if isMaintainer(ctx) {
 			ts, err = workflowtemplate.LoadAll(ctx, api.mustDB(),
 				workflowtemplate.LoadOptions.Default,
 				workflowtemplate.LoadOptions.WithAudits,
@@ -81,8 +81,7 @@ func (api *API) postTemplateHandler() service.Handler {
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing group name")
 			}
 
-			// check that the user is admin on the given template's group
-			grp, err = group.LoadByName(ctx, api.mustDB(), data.Group.Name)
+			grp, err = group.LoadByName(ctx, api.mustDB(), data.Group.Name, group.LoadOptions.WithMembers)
 			if err != nil {
 				return sdk.NewError(sdk.ErrWrongRequest, err)
 			}
@@ -93,13 +92,9 @@ func (api *API) postTemplateHandler() service.Handler {
 				return err
 			}
 		} else {
-			// check that the group exists and user is admin for group id
-			grp, err = group.LoadByID(ctx, api.mustDB(), data.GroupID)
+			grp, err = group.LoadByID(ctx, api.mustDB(), data.GroupID, group.LoadOptions.WithMembers)
 			if err != nil {
 				return err
-			}
-			if grp == nil {
-				return sdk.WithStack(sdk.ErrNotFound)
 			}
 		}
 
@@ -144,7 +139,7 @@ func (api *API) getTemplateHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		templateSlug := vars["permTemplateSlug"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
@@ -207,7 +202,7 @@ func (api *API) putTemplateHandler() service.Handler {
 			}
 
 			// check that the user is admin on the given template's group
-			grp, err = group.LoadByName(ctx, api.mustDB(), data.Group.Name)
+			grp, err = group.LoadByName(ctx, api.mustDB(), data.Group.Name, group.LoadOptions.WithMembers)
 			if err != nil {
 				return sdk.NewError(sdk.ErrWrongRequest, err)
 			}
@@ -219,13 +214,14 @@ func (api *API) putTemplateHandler() service.Handler {
 			}
 		} else {
 			// check that the group exists and user is admin for group id
-			grp, err = group.LoadByID(ctx, api.mustDB(), data.GroupID)
+			grp, err = group.LoadByID(ctx, api.mustDB(), data.GroupID, group.LoadOptions.WithMembers)
 			if err != nil {
 				return err
 			}
-			if grp == nil {
-				return sdk.WithStack(sdk.ErrNotFound)
-			}
+		}
+
+		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		// update fields from request data
