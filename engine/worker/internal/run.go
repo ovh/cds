@@ -351,8 +351,8 @@ func setupWorkingDirectory(ctx context.Context, fs afero.Fs, wd string) (afero.F
 	return fi, nil
 }
 
-func teardownDirectory(fs afero.Fs, wd string) error {
-	return fs.RemoveAll(wd)
+func teardownDirectory(fs afero.Fs, dir string) error {
+	return fs.RemoveAll(dir)
 }
 
 func workingDirectory(ctx context.Context, fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes ...string) (string, error) {
@@ -538,11 +538,18 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		log.Debug("processJob> new variables: %v", res.NewVariables)
 	}
 
+	// Delete working directory
 	if err := teardownDirectory(w.basedir, wdFile.Name()); err != nil {
 		log.Error(ctx, "Cannot remove build directory: %s", err)
 	}
-	if err := teardownDirectory(w.basedir, wdFile.Name()); err != nil {
+	// Delelete key directory
+	if err := teardownDirectory(w.basedir, kdFile.Name()); err != nil {
 		log.Error(ctx, "Cannot remove keys directory: %s", err)
 	}
+	// Delete all plugins
+	if err := teardownDirectory(w.basedir, ""); err != nil {
+		log.Error(ctx, "Cannot remove basedir content: %s", err)
+	}
+
 	return res, err
 }
