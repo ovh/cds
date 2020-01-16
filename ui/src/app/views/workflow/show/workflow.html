@@ -69,7 +69,7 @@
                                         </div>
                                         <div class="right aligned five wide column" title="{{'btn_run_workflow' | translate}}">
                                             <div class="ui green buttons">
-                                                <div class="ui button" [class.disabled]="!detailedWorkflow.permissions.writable"
+                                                <div class="ui button" [class.disabled]="!detailedWorkflow.permissions.executable"
                                                     (click)="runWithParameter()" [class.loading]="loading">
                                                     {{'btn_run_workflow' | translate }}
                                                 </div>
