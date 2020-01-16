@@ -3,9 +3,9 @@ package action
 import (
 	"context"
 	"fmt"
+	"path"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	coverage "github.com/sguiheux/go-coverage"
 	"github.com/spf13/afero"
@@ -55,13 +55,22 @@ func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime,
 	if err != nil {
 		return res, err
 	}
-	var dir string
+
+	var fpath string
+	var abs string
 	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
-		dir, _ = x.RealPath(workdir.Name())
+		abs, _ = x.RealPath(workdir.Name())
 	} else {
-		dir = workdir.Name()
+		abs = workdir.Name()
 	}
-	parser := coverage.New(filepath.Join(dir, strings.TrimPrefix(p, dir)), parserMode)
+
+	if !path.IsAbs(p) {
+		fpath = filepath.Join(abs, p)
+	} else {
+		fpath = p
+	}
+
+	parser := coverage.New(fpath, parserMode)
 	report, errR := parser.Parse()
 	if errR != nil {
 		return res, fmt.Errorf("coverage parser: unable to parse report: %v", errR)
