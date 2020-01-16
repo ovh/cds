@@ -153,8 +153,8 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 		script.opts = append(script.opts, realScriptPath)
 	}
 
-	log.Debug("writeScriptContent> script is %s", realScriptPath)
-	log.Debug("writeScriptContent> script.dir is %s", script.dir)
+	log.Debug("writeScriptContent> script realpath is %s", realScriptPath)
+	log.Debug("writeScriptContent> script directory is %s", script.dir)
 
 	deferFunc := func() {
 		filename := filepath.Join(path.Dir(basedir.Name()), tmpFileName)
