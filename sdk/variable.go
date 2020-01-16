@@ -15,8 +15,12 @@ type Variable struct {
 }
 
 func (v Variable) ToParameter(prefix string) Parameter {
+	name := v.Name
+	if prefix != "" {
+		name = fmt.Sprintf("%s.%s", prefix, v.Name)
+	}
 	return Parameter{
-		Name:  "." + prefix + "." + v.Name,
+		Name:  name,
 		Value: v.Value,
 		Type:  v.Type,
 	}
