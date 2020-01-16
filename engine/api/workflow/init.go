@@ -31,7 +31,7 @@ func Initialize(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Stor
 				return
 			}
 		case <-tickHeart.C:
-			if err := restartDeadJob(ctx, DBFunc, store); err != nil {
+			if err := manageDeadJob(ctx, DBFunc, store); err != nil {
 				log.Warning(ctx, "workflow.restartDeadJob> Error on restartDeadJob : %v", err)
 			}
 		case <-tickStop.C:
