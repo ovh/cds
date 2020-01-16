@@ -5,12 +5,14 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"strings"
+	"path"
+	"path/filepath"
 
 	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/venom"
 )
 
@@ -36,15 +38,21 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 	var abs string
 	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
 		abs, _ = x.RealPath(workdir.Name())
+		log.Debug("RunParseJunitTestResultAction> workdir is %s", abs)
 	} else {
 		abs = workdir.Name()
 	}
 
-	wkDirFS := afero.NewBasePathFs(afero.NewOsFs(), abs)
-	path := strings.TrimPrefix(p, abs)
+	if !path.IsAbs(p) {
+		p = filepath.Join(abs, p)
+	}
+
+	log.Debug("RunParseJunitTestResultAction> path: %v", p)
 
 	// Global all files matching filePath
-	files, errg := afero.Glob(wkDirFS, path)
+	files, errg := afero.Glob(afero.NewOsFs(), p)
+
+	log.Debug("RunParseJunitTestResultAction> files: %v", files)
 
 	if errg != nil {
 		return res, errors.New("UnitTest parser: Cannot find requested files, invalid pattern")
@@ -56,7 +64,7 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 	for _, f := range files {
 		var ftests venom.Tests
 
-		data, errRead := afero.ReadFile(wkDirFS, f)
+		data, errRead := afero.ReadFile(afero.NewOsFs(), f)
 		if errRead != nil {
 			return res, fmt.Errorf("UnitTest parser: cannot read file %s (%s)", f, errRead)
 		}
