@@ -51,7 +51,7 @@ func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, a sdk.A
 		return sdk.Result{}, fmt.Errorf("Unable to retrieve the plugin for deployment integration %s... Aborting", pf.Model.Name)
 	}
 
-	pluginSocket, err := startGRPCPlugin(context.Background(), binary.PluginName, wk, binary, startGRPCPluginOptions{})
+	pluginSocket, err := startGRPCPlugin(ctx, binary.PluginName, wk, binary, startGRPCPluginOptions{})
 	if err != nil {
 		return sdk.Result{}, fmt.Errorf("unable to start GRPCPlugin: %v", err)
 	}
