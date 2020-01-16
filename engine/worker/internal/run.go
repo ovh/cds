@@ -123,6 +123,14 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 		if nCriticalFailed == 0 || step.AlwaysExecuted {
 			stepResult = w.runAction(ctx, step, jobID, secrets, step.Name)
 
+			// Check if all newVariables are in currentJob.params
+			// variable can be add in w.currentJob.newVariables by worker command export
+			for _, newVariableFromHandler := range w.currentJob.newVariables {
+				if sdk.ParameterFind(w.currentJob.params, newVariableFromHandler.Name) == nil {
+					w.currentJob.params = append(w.currentJob.params, newVariableFromHandler.ToParameter(""))
+				}
+			}
+
 			for _, newVariable := range stepResult.NewVariables {
 				// append the new variable from a step to the following steps
 				w.currentJob.params = append(w.currentJob.params, newVariable.ToParameter("cds.build"))
@@ -257,6 +265,14 @@ func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.
 			}
 		} else if criticalStepFailed && !child.AlwaysExecuted {
 			r.Status = sdk.StatusNeverBuilt
+		}
+
+		// Check if all newVariables are in currentJob.params
+		// variable can be add in w.currentJob.newVariables by worker command export
+		for _, newVariableFromHandler := range w.currentJob.newVariables {
+			if sdk.ParameterFind(w.currentJob.params, newVariableFromHandler.Name) == nil {
+				w.currentJob.params = append(w.currentJob.params, newVariableFromHandler.ToParameter(""))
+			}
 		}
 
 		for _, newVariable := range r.NewVariables {
