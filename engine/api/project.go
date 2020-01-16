@@ -291,18 +291,16 @@ func (api *API) getProjectHandler() service.Handler {
 		p.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getProjectHandler, map[string]string{"permProjectKey": key})
 		p.URLs.UIURL = api.Config.URL.UI + "/project/" + key
 
-		permissions, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{p.Key}, getAPIConsumer(ctx).GetGroupIDs())
-		if err != nil {
-			return err
-		}
-		p.Permissions = permissions.Permissions(p.Key)
-
-		if !p.Permissions.IsMaxLevel() && !p.Permissions.Readable {
-			if isMaintainer(ctx) {
-				p.Permissions = sdk.Permissions{Readable: true, Writable: false}
+		if isAdmin(ctx) {
+			p.Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+		} else {
+			permissions, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{p.Key}, getAPIConsumer(ctx).GetGroupIDs())
+			if err != nil {
+				return err
 			}
-			if isAdmin(ctx) {
-				p.Permissions = sdk.Permissions{Readable: true, Writable: true}
+			p.Permissions = permissions.Permissions(p.Key)
+			if isMaintainer(ctx) {
+				p.Permissions.Readable = true
 			}
 		}
 
@@ -446,9 +444,9 @@ func (api *API) postProjectHandler() service.Handler {
 			var grp *sdk.Group
 			var err error
 			if gp.Group.ID != 0 {
-				grp, err = group.LoadByID(ctx, tx, gp.Group.ID)
+				grp, err = group.LoadByID(ctx, tx, gp.Group.ID, group.LoadOptions.WithMembers)
 			} else {
-				grp, err = group.LoadByName(ctx, tx, gp.Group.Name)
+				grp, err = group.LoadByName(ctx, tx, gp.Group.Name, group.LoadOptions.WithMembers)
 			}
 			if err != nil {
 				return err
