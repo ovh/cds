@@ -111,13 +111,13 @@ type Configuration struct {
 			RedirectMethod string `json:"redirect_method" toml:"redirectMethod"`
 			RedirectURL    string `json:"redirect_url" toml:"redirectURL"`
 			Keys           struct {
-				RequestSigningKey  string `json:"request_signing_key" toml:"requestSigningKey"`
-				TokenSigningKey    string `json:"token_signing_key" toml:"tokenSigningKey"`
+				RequestSigningKey  string `json:"-" toml:"requestSigningKey"`
+				TokenSigningKey    string `json:"-" toml:"tokenSigningKey"`
 				TokenKeySigningKey struct {
 					KeySigningKey   string `json:"public_signing_key" toml:"keySigningKey"`
 					SigningKeyClaim string `json:"signing_key_claim" toml:"signingKeyClaim"`
-				} `json:"key_signing_key" toml:"tokenKeySigningKey"`
-			} `json:"keys" toml:"keys"`
+				} `json:"-" toml:"tokenKeySigningKey"`
+			} `json:"-" toml:"keys"`
 		} `json:"corporate_sso" toml:"corporateSSO"`
 		Github struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`
