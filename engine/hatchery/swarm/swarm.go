@@ -454,6 +454,13 @@ const (
 // CanSpawn checks if the model can be spawned by this hatchery
 // it checks on every docker engine is one of the docker has availability
 func (h *HatcherySwarm) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+	// Hostname requirement are not supported
+	for _, r := range requirements {
+		if r.Type == sdk.HostnameRequirement {
+			log.Debug("CanSpawn> Job %d has a hostname requirement. Swarm can't spawn a worker for this job", jobID)
+			return false
+		}
+	}
 	for dockerName, dockerClient := range h.dockerClients {
 		//List all containers to check if we can spawn a new one
 		cs, errList := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
@@ -633,6 +640,7 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClientName string, containers []ty
 
 		//If there isn't any worker registered on the API. Kill the container
 		if len(apiworkers) == 0 {
+			log.Debug("hatchery> swarm> listAwolWorkers> no apiworkers returned by api container %s will be deleted", c.Names[0])
 			oldContainers = append(oldContainers, c)
 			continue
 		}
@@ -652,6 +660,7 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClientName string, containers []ty
 		}
 		//If the container doesn't match any worker : Kill it.
 		if !found {
+			log.Debug("hatchery> swarm> listAwolWorkers> container %s not found on apiworkers", c.Names[0])
 			oldContainers = append(oldContainers, c)
 		}
 	}

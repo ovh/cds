@@ -166,7 +166,7 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 // requirements are not supported
 func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	for _, r := range requirements {
-		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
+		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
 			return false
 		}
 	}
