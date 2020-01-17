@@ -85,7 +85,7 @@ func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 	h.Config.Name = "swarmy"
 
 	now := time.Now()
-	d1h := now.Add(-2 * time.Minute)
+	d1h := now.Add(-5 * time.Minute)
 	containers := []types.Container{
 		{
 			ID:    "swarmy-model1-w1",
