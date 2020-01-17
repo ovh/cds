@@ -20,6 +20,8 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	t := ""
 	log.Info(ctx, "takeWorkflowJob> Job %d taken%s", job.ID, t)
 
+	ctx, cancel := context.WithCancel(ctx)
+
 	w.currentJob.context = workerruntime.SetJobID(ctx, job.ID)
 	w.currentJob.context = ctx
 
@@ -32,7 +34,6 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	start := time.Now()
 
 	//This goroutine try to get the job every 5 seconds, if it fails, it cancel the build.
-	ctx, cancel := context.WithCancel(ctx)
 	tick := time.NewTicker(5 * time.Second)
 	go func(cancel context.CancelFunc, jobID int64, tick *time.Ticker) {
 		var nbConnrefused int
