@@ -262,8 +262,8 @@ func LoadNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 //LoadDeadNodeJobRun load a NodeJobRun which is Building but without worker
 func LoadDeadNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowNodeJobRun, error) {
 	var deadJobsDB []JobRun
-	query := `SELECT workflow_node_run_job.* FROM workflow_node_run_job WHERE status = $1 AND worker_id IS NULL`
-	if _, err := db.Select(&deadJobsDB, query, sdk.StatusBuilding); err != nil {
+	query := `SELECT workflow_node_run_job.* FROM workflow_node_run_job WHERE worker_id IS NULL`
+	if _, err := db.Select(&deadJobsDB, query); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
