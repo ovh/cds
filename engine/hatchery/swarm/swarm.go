@@ -626,7 +626,7 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClientName string, containers []ty
 	//Checking workers
 	oldContainers := []types.Container{}
 	for _, c := range workers {
-		if !strings.Contains(c.Status, "Exited") && time.Now().Add(-1*time.Minute).Unix() < c.Created {
+		if !strings.Contains(c.Status, "Exited") && time.Now().Add(-3*time.Minute).Unix() < c.Created {
 			log.Debug("hatchery> swarm> listAwolWorkers> container %s(status=%s) is too young", c.Names[0], c.Status)
 			continue
 		}
@@ -681,12 +681,25 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 			}
 		}
 
+		// creating a map of containers names
+		mContainers := map[string]struct{}{}
+		for i := range containers {
+			name := strings.TrimPrefix(containers[i].Names[0], "/") // docker returns name prefixed by a /
+			mContainers[name] = struct{}{}
+		}
+
 		// Checking services
 		for _, c := range containers {
-			if c.Labels["service_worker"] == "" || c.Names[0] != c.Labels["service_worker"] {
+			// checks if the container is a service based on its labels
+			if c.Labels["service_worker"] == "" {
 				continue
 			}
-			if !strings.Contains(c.Status, "Exited") && time.Now().Add(-1*time.Minute).Unix() < c.Created {
+			// if the worker associated to this service is still alive do not kill the service
+			if _, workerStillAlive := mContainers[c.Labels["service_worker"]]; workerStillAlive {
+				continue
+			}
+
+			if !strings.Contains(c.Status, "Exited") && time.Now().Add(-3*time.Minute).Unix() < c.Created {
 				log.Debug("hatchery> swarm> killAwolWorker> container %s(status=%s) is too young - service associated to worker %s", c.Names[0], c.Status, c.Labels["service_worker"])
 				continue
 			}
