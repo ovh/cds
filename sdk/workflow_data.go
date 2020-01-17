@@ -63,6 +63,9 @@ func (w *WorkflowData) Array() []*Node {
 
 func (w *WorkflowData) Maps() map[int64]*Node {
 	nodes := make(map[int64]*Node, 0)
+	if w == nil {
+		return nodes
+	}
 	nodes = w.Node.maps(nodes)
 	for i := range w.Joins {
 		nodes = w.Joins[i].maps(nodes)
@@ -71,6 +74,9 @@ func (w *WorkflowData) Maps() map[int64]*Node {
 }
 
 func (w *WorkflowData) NodeByRef(ref string) *Node {
+	if w == nil {
+		return nil
+	}
 	n := (&w.Node).nodeByRef(ref)
 	if n != nil {
 		return n
@@ -85,6 +91,9 @@ func (w *WorkflowData) NodeByRef(ref string) *Node {
 }
 
 func (w *WorkflowData) NodeByID(ID int64) *Node {
+	if w == nil {
+		return nil
+	}
 	n := (&w.Node).nodeByID(ID)
 	if n != nil {
 		return n
