@@ -61,9 +61,11 @@ func CreateTarFromPaths(fs afero.Fs, cwd string, paths []string, opts *TarOption
 		if !path.IsAbs(p) {
 			completePath = filepath.Join(cwd, p)
 		}
+
 		if _, err := fs.Stat(completePath); err != nil {
 			return nil, 0, fmt.Errorf("unable to tar files - %v", err.Error())
 		}
+
 		// walk path
 		errWalk := afero.Walk(fs, completePath, func(file string, fi os.FileInfo, err error) error {
 			if err != nil {
@@ -87,10 +89,11 @@ func CreateTarFromPaths(fs afero.Fs, cwd string, paths []string, opts *TarOption
 				if errEval != nil {
 					return errEval
 				}
-				abs, errAbs := filepath.Abs(filepath.Dir(header.Name))
+				abs, errAbs := filepath.Abs(header.Name)
 				if errAbs != nil {
 					return errAbs
 				}
+
 				symlinkRel, errRel := filepath.Rel(abs, symlink)
 				if errRel != nil {
 					return errRel
