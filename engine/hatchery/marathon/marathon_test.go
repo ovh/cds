@@ -296,7 +296,7 @@ func TestSpawnWorkerTimeout(t *testing.T) {
 				assert.NoError(t, json.Unmarshal(bodyContent, &a))
 				assert.Equal(t, "DOCKER", a.Container.Type)
 				assert.Equal(t, "BRIDGE", a.Container.Docker.Network)
-				assert.Equal(t, 0.1, a.CPUs)
+				assert.Equal(t, 2, a.CPUs)
 				assert.Equal(t, 1, *a.Instances)
 				assert.Equal(t, "1", (*a.Env)["CDS_BOOKED_WORKFLOW_JOB_ID"])
 				assert.Equal(t, "GroupModel/fake", (*a.Env)["CDS_MODEL_PATH"])
