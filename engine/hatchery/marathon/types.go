@@ -26,6 +26,9 @@ type HatcheryConfiguration struct {
 	// MarathonLabelsStr "marathon-labels"
 	MarathonLabels string `mapstructure:"labels" toml:"labels" default:"" commented:"false" comment:"Use this option if you want to add labels on workers spawned by this hatchery.\n Format: MarathonLabels = \"A_LABEL=value-of-label,B_LABEL=value-of-label-b\"" json:"labels"`
 
+	// DefaultCPUs
+	DefaultCPUs float64 `mapstructure:"defaultCPUs" toml:"defaultCPUs" default:"1" commented:"false" comment:"Worker default CPUs count" json:"defaultCPUs"`
+
 	// DefaultMemory Worker default memory
 	DefaultMemory int `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo" json:"defaultMemory"`
 

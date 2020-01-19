@@ -309,7 +309,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 			Type: "DOCKER",
 		},
 		Env:       &envsWm,
-		CPUs:      2,
+		CPUs:      h.Config.DefaultCPUs,
 		Instances: &instance,
 		Mem:       &mem,
 		Labels:    &h.marathonLabels,
