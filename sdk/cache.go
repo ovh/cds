@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -58,7 +57,7 @@ func CreateTarFromPaths(fs afero.Fs, cwd string, paths []string, opts *TarOption
 		// ensure the src actually exists before trying to tar it
 
 		completePath := p
-		if !path.IsAbs(p) {
+		if !PathIsAbs(p) {
 			completePath = filepath.Join(cwd, p)
 		}
 
@@ -85,14 +84,13 @@ func CreateTarFromPaths(fs afero.Fs, cwd string, paths []string, opts *TarOption
 				header.Name = strings.TrimPrefix(strings.TrimPrefix(header.Name, opts.TrimDirName), string(filepath.Separator))
 			}
 			if fi.Mode()&os.ModeSymlink != 0 {
+
 				symlink, errEval := filepath.EvalSymlinks(file)
 				if errEval != nil {
 					return errEval
 				}
-				abs, errAbs := filepath.Abs(header.Name)
-				if errAbs != nil {
-					return errAbs
-				}
+
+				abs := filepath.Dir(filepath.Join(cwd, header.Name))
 
 				symlinkRel, errRel := filepath.Rel(abs, symlink)
 				if errRel != nil {

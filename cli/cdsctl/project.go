@@ -158,9 +158,9 @@ func projectDeleteRun(v cli.Values) error {
 	projKey := v.GetString(_ProjectKey)
 	if v.GetBool("force") {
 		// Delete all workflow
-		ws, errW := client.WorkflowList(projKey)
-		if errW != nil && !sdk.ErrorIs(errW, sdk.ErrNoProject) {
-			return errW
+		ws, err := client.WorkflowList(projKey)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoProject) {
+			return err
 		}
 		for _, w := range ws {
 			if err := client.WorkflowDelete(projKey, w.Name); err != nil && !sdk.ErrorIs(err, sdk.ErrNoProject) {
@@ -169,9 +169,9 @@ func projectDeleteRun(v cli.Values) error {
 		}
 
 		// Delete all apps
-		apps, errA := client.ApplicationList(projKey)
-		if errA != nil && !sdk.ErrorIs(errA, sdk.ErrNoProject) {
-			return errA
+		apps, err := client.ApplicationList(projKey)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoProject) {
+			return err
 		}
 		for _, app := range apps {
 			if err := client.ApplicationDelete(projKey, app.Name); err != nil && !sdk.ErrorIs(err, sdk.ErrNoProject) {
@@ -180,9 +180,9 @@ func projectDeleteRun(v cli.Values) error {
 		}
 
 		// Delete all pipelines
-		pips, errP := client.PipelineList(projKey)
-		if errP != nil && !sdk.ErrorIs(errP, sdk.ErrNoProject) {
-			return errP
+		pips, err := client.PipelineList(projKey)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoProject) {
+			return err
 		}
 		for _, pip := range pips {
 			if err := client.PipelineDelete(projKey, pip.Name); err != nil && !sdk.ErrorIs(err, sdk.ErrNoProject) {
@@ -191,9 +191,9 @@ func projectDeleteRun(v cli.Values) error {
 		}
 
 		// Delete all environments
-		envs, errE := client.EnvironmentList(projKey)
-		if errE != nil && !sdk.ErrorIs(errE, sdk.ErrNoProject) {
-			return errE
+		envs, err := client.EnvironmentList(projKey)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoProject) {
+			return err
 		}
 		for _, env := range envs {
 			if err := client.EnvironmentDelete(projKey, env.Name); err != nil && !sdk.ErrorIs(err, sdk.ErrNoProject) {

@@ -88,7 +88,7 @@ func uploadCmd() func(cmd *cobra.Command, args []string) {
 			}
 
 			if resp.StatusCode >= 300 {
-				sdk.Exit("cannot artefact upload HTTP %d\n", resp.StatusCode)
+				sdk.Exit("cannot artifact upload HTTP %d\n", resp.StatusCode)
 			}
 		}
 	}

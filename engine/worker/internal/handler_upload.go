@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"path"
 	"path/filepath"
 
 	"github.com/ovh/cds/engine/worker/internal/action"
@@ -31,7 +30,7 @@ func uploadHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 		}
 
 		artifactPath := art.Name
-		if !path.IsAbs(artifactPath) {
+		if !sdk.PathIsAbs(artifactPath) {
 			artifactPath = filepath.Join(art.WorkingDirectory, art.Name)
 		}
 
