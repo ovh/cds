@@ -164,7 +164,7 @@ func (api *API) putTemplateHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		templateSlug := vars["permTemplateSlug"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
@@ -398,7 +398,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		groupName := vars["groupName"]
 		templateSlug := vars["templateSlug"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
@@ -485,7 +485,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 		groupName := vars["groupName"]
 		templateSlug := vars["templateSlug"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
@@ -637,7 +637,7 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 		groupName := vars["groupName"]
 		templateSlug := vars["templateSlug"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
@@ -672,7 +672,7 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 		groupName := vars["groupName"]
 		templateSlug := vars["templateSlug"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
@@ -761,7 +761,7 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 		groupName := vars["groupName"]
 		templateSlug := vars["templateSlug"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
@@ -812,7 +812,7 @@ func (api *API) postTemplatePullHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		templateSlug := vars["permTemplateSlug"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
@@ -855,7 +855,7 @@ func (api *API) postTemplatePushHandler() service.Handler {
 		}
 
 		// check that the user is admin on the given template's group
-		grp, err := group.LoadByName(ctx, api.mustDB(), wt.Group.Name)
+		grp, err := group.LoadByName(ctx, api.mustDB(), wt.Group.Name, group.LoadOptions.WithMembers)
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
@@ -924,7 +924,7 @@ func (api *API) getTemplateUsageHandler() service.Handler {
 		groupName := vars["groupName"]
 		templateSlug := vars["templateSlug"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
