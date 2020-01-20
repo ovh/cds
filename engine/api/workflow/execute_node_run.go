@@ -270,7 +270,6 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		}
 
 		//Delete the line in workflow_node_run_job
-		log.Info(ctx, ">>>>>Delete JOB ON NODE RUN TERMINATED: %s", nr.Status)
 		if err := DeleteNodeJobRuns(db, nr.ID); err != nil {
 			return nil, sdk.WrapError(err, "Unable to delete node %d job runs ", nr.ID)
 		}

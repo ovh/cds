@@ -343,6 +343,13 @@ func DeleteNodeJobRuns(db gorp.SqlExecutor, nodeID int64) error {
 	return err
 }
 
+// DeleteNodeJobRun deletes the given workflow_node_run_job
+func DeleteNodeJobRun(db gorp.SqlExecutor, nodeRunJob int64) error {
+	query := `delete from workflow_node_run_job where id = $1`
+	_, err := db.Exec(query, nodeRunJob)
+	return err
+}
+
 //UpdateNodeJobRun updates a workflow_node_run_job
 func UpdateNodeJobRun(ctx context.Context, db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
 	var end func()
