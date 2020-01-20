@@ -35,6 +35,7 @@ func manageDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.S
 					continue
 				}
 
+				log.Info(ctx, ">>>>>Delete DEAD BUILDING JOB")
 				if err := DeleteNodeJobRuns(tx, deadJob.WorkflowNodeRunID); err != nil {
 					log.Error(ctx, "manageDeadJob> Cannot delete node run job %d : %v", deadJob.ID, err)
 					_ = tx.Rollback()
@@ -48,6 +49,7 @@ func manageDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.S
 				}
 			}
 		} else if sdk.StatusIsTerminated(deadJob.Status) {
+			log.Info(ctx, ">>>>>Delete DEAD JOB")
 			if err := DeleteNodeJobRuns(tx, deadJob.WorkflowNodeRunID); err != nil {
 				log.Error(ctx, "manageDeadJob> Cannot delete node run job %d : %v", deadJob.ID, err)
 				_ = tx.Rollback()
