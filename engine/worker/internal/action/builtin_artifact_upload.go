@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -42,7 +41,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 		abs = workdir.Name()
 	}
 
-	if !path.IsAbs(artifactPath) {
+	if !sdk.PathIsAbs(artifactPath) {
 		artifactPath = filepath.Join(abs, artifactPath)
 	}
 

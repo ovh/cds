@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -58,7 +57,7 @@ func CreateTarFromPaths(fs afero.Fs, cwd string, paths []string, opts *TarOption
 		// ensure the src actually exists before trying to tar it
 
 		completePath := p
-		if !path.IsAbs(p) {
+		if !PathIsAbs(p) {
 			completePath = filepath.Join(cwd, p)
 		}
 
