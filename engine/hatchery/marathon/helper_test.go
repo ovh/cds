@@ -28,6 +28,7 @@ func InitMarathonMarathonTest(opts marathonJDD) *HatcheryMarathon {
 	h.marathonClient, _ = marathon.NewClient(config)
 	h.Config.Provision.MaxConcurrentProvisioning = opts.MaxProvision
 	h.Config.Provision.MaxWorker = opts.MaxWorker
+	h.Config.DefaultCPUs = 1
 	if opts.Prefix != "" {
 		h.Config.MarathonIDPrefix = opts.Prefix
 	}
