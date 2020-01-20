@@ -126,8 +126,11 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 			// Check if all newVariables are in currentJob.params
 			// variable can be add in w.currentJob.newVariables by worker command export
 			for _, newVariableFromHandler := range w.currentJob.newVariables {
-				if sdk.ParameterFind(w.currentJob.params, newVariableFromHandler.Name) == nil {
+				p := sdk.ParameterFind(w.currentJob.params, newVariableFromHandler.Name)
+				if p == nil {
 					w.currentJob.params = append(w.currentJob.params, newVariableFromHandler.ToParameter(""))
+				} else {
+					p.Value = newVariableFromHandler.Value
 				}
 			}
 
@@ -270,8 +273,11 @@ func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.
 		// Check if all newVariables are in currentJob.params
 		// variable can be add in w.currentJob.newVariables by worker command export
 		for _, newVariableFromHandler := range w.currentJob.newVariables {
-			if sdk.ParameterFind(w.currentJob.params, newVariableFromHandler.Name) == nil {
+			p := sdk.ParameterFind(w.currentJob.params, newVariableFromHandler.Name)
+			if p == nil {
 				w.currentJob.params = append(w.currentJob.params, newVariableFromHandler.ToParameter(""))
+			} else {
+				p.Value = newVariableFromHandler.Value
 			}
 		}
 
