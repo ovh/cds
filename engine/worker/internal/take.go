@@ -20,6 +20,8 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	t := ""
 	log.Info(ctx, "takeWorkflowJob> Job %d taken%s", job.ID, t)
 
+	ctx, cancel := context.WithCancel(ctx)
+
 	w.currentJob.context = workerruntime.SetJobID(ctx, job.ID)
 	w.currentJob.context = ctx
 
@@ -32,7 +34,6 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	start := time.Now()
 
 	//This goroutine try to get the job every 5 seconds, if it fails, it cancel the build.
-	ctx, cancel := context.WithCancel(ctx)
 	tick := time.NewTicker(5 * time.Second)
 	go func(cancel context.CancelFunc, jobID int64, tick *time.Ticker) {
 		var nbConnrefused int
@@ -106,7 +107,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 			log.Info(ctx, "takeWorkflowJob> Cannot send build result: HTTP %v - worker cancelled - giving up", lasterr)
 			return nil
 		}
-		log.Warning(ctx, "takeWorkflowJob> Cannot send build result: HTTP %v - try: %d - new try in 15s", lasterr, try)
+		log.Warning(ctx, "takeWorkflowJob> Cannot send build result for job id %d: HTTP %v - try: %d - new try in 15s", job.ID, lasterr, try)
 		time.Sleep(15 * time.Second)
 	}
 	log.Error(ctx, "takeWorkflowJob> Could not send built result 10 times, giving up. job: %d", job.ID)

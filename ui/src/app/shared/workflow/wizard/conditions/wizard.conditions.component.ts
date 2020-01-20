@@ -119,26 +119,28 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             }
         });
 
-        if (this.node) {
-            this._workflowService.getTriggerCondition(this.project.key, this.workflow.name, this.node.id)
-                .pipe(
-                    first(),
-                    finalize(() => {
-                        this.loadingConditions = false;
-                        this._cd.markForCheck();
-                    })
-                )
-                .subscribe(wtc => this.triggerConditions = wtc);
-        } else {
-            this._workflowService.getTriggerHookCondition(this.project.key, this.workflow.name)
-                .pipe(
-                    first(),
-                    finalize(() => {
-                        this.loadingConditions = false;
-                        this._cd.markForCheck();
-                    })
-                )
-                .subscribe(wtc => this.triggerConditions = wtc);
+        if (!this.readonly) {
+            if (this.node) {
+                this._workflowService.getTriggerCondition(this.project.key, this.workflow.name, this.node.id)
+                    .pipe(
+                        first(),
+                        finalize(() => {
+                            this.loadingConditions = false;
+                            this._cd.markForCheck();
+                        })
+                    )
+                    .subscribe(wtc => this.triggerConditions = wtc);
+            } else {
+                this._workflowService.getTriggerHookCondition(this.project.key, this.workflow.name)
+                    .pipe(
+                        first(),
+                        finalize(() => {
+                            this.loadingConditions = false;
+                            this._cd.markForCheck();
+                        })
+                    )
+                    .subscribe(wtc => this.triggerConditions = wtc);
+            }
         }
     }
 

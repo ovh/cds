@@ -13,15 +13,13 @@ onmessage = function (e) {
     appName = e.data.appName;
     pipName = e.data.pipName;
     envName = e.data.envName;
-    loadBuild(e.data.user, e.data.session, e.data.api);
+    loadBuild();
 };
 
-function loadBuild (user, session, api) {
+function loadBuild() {
     loop(2, function () {
         var url = `/project/${key}/application/${appName}/pipeline/${pipName}/build/${buildNumber}?withArtifacts=true&withTests=true&envName=${encodeURIComponent(envName)}`;
-
-        var xhr = httpCall(url, api, user, session);ccccccgcdvhvtvcivbbhvrnjdfuegftnfihkiidggikd
-
+        var xhr = httpCallAPI(url);
         if (xhr.status >= 400) {
             return true;
         }

@@ -13,14 +13,13 @@ onmessage = function (e) {
     appName = e.data.appName;
     version = e.data.version;
     remote = e.data.remote;
-    loadWorkflow(e.data.user, e.data.session, e.data.api);
+    loadWorkflow();
 };
 
-function loadWorkflow (user, session, api) {
+function loadWorkflow() {
     loop(2, function () {
         var url = `/project/${key}/application/${appName}/tree/status?branchName=${encodeURIComponent(branch)}&remote=${encodeURIComponent(remote)}&version=${version}`;
-
-        var xhr = httpCall(url, api, user, session);
+        var xhr = httpCallAPI(url);
         if (xhr.status >= 400) {
             return true;
         }

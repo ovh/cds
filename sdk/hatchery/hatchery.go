@@ -389,7 +389,7 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 
 // SendSpawnInfo sends a spawnInfo
 func SendSpawnInfo(ctx context.Context, h Interface, jobID int64, spawnMsg sdk.SpawnMsg) {
-	if h.CDSClient() == nil {
+	if h.CDSClient() == nil || jobID == 0 {
 		return
 	}
 	infos := []sdk.SpawnInfo{{RemoteTime: time.Now(), Message: spawnMsg}}

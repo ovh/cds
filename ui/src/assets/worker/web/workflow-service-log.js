@@ -14,15 +14,13 @@ onmessage = function (e) {
     number = e.data.number;
     nodeRunId = e.data.nodeRunId;
     runJobId = e.data.runJobId;
-
-    loadLog(e.data.user, e.data.session, e.data.api);
+    loadLog();
 };
 
-function loadLog (user, session, api) {
+function loadLog() {
     loop(7, function () {
         var url = `/project/${key}/workflows/${workflowName}/runs/${number}/nodes/${nodeRunId}/job/${runJobId}/log/service`;
-
-        var xhr = httpCall(url, api, user, session);
+        var xhr = httpCallAPI(url);
         if (xhr.status >= 400) {
             return true;
         }

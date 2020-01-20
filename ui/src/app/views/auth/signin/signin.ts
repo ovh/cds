@@ -16,7 +16,6 @@ export class SigninComponent implements OnInit {
     loading: boolean;
     redirect: string;
     mfa: boolean;
-    apiURL: string;
 
     isFirstConnection: boolean;
     localDriver: AuthDriverManifest;

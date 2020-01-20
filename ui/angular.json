@@ -94,6 +94,7 @@
         "serve": {
           "builder": "@angular-builders/custom-webpack:dev-server",
           "options": {
+            "port": 8080,
             "browserTarget": "ui-ng2:build",
             "proxyConfig": "proxy.conf.json"
           },

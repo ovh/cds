@@ -133,12 +133,11 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 }
 
 func (s *Service) initGerritStreamEvent(ctx context.Context, vcsName string, vcsConfig map[string]sdk.VCSConfiguration) {
-
 	// Create channel to store gerrit event
 	gerritEventChan := make(chan GerritEvent, 20)
 	// Listen to gerrit event stream
 	sdk.GoRoutine(ctx, "gerrit.EventStream."+vcsName, func(ctx context.Context) {
-		ListenGerritStreamEvent(ctx, vcsConfig[vcsName], gerritEventChan)
+		ListenGerritStreamEvent(ctx, s.Cache, vcsConfig[vcsName], gerritEventChan)
 	})
 	// Listen to gerrit event stream
 	sdk.GoRoutine(ctx, "gerrit.EventStreamCompute."+vcsName, func(ctx context.Context) {

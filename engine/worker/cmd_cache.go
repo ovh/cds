@@ -102,11 +102,7 @@ func cachePushCmd() func(cmd *cobra.Command, args []string) {
 
 		files := make([]string, len(args)-1)
 		for i, arg := range args[1:] {
-			absPath, err := filepath.Abs(arg)
-			if err != nil {
-				sdk.Exit("worker cache push > cannot have absolute path for (%s) : %s", absPath, err)
-			}
-			files[i] = absPath
+			files[i] = arg
 		}
 
 		cwd, err := os.Getwd()

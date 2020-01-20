@@ -30,13 +30,13 @@ services:
     restart: always
 
   cds-migrate:
-    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: /app/cds-engine-linux-amd64 database upgrade --db-host cds-db --db-user cds --db-password cds --db-name cds --db-sslmode disable  --migrate-dir /app/sql
     links:
        - cds-db
 
   cds-prepare:
-    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: >
         sh -c "
         /app/cds-engine-linux-amd64 config new > /app/conf/conf.toml;
@@ -56,9 +56,13 @@ services:
             api.url.api=http://${HOSTNAME}:8081 \
             api.url.ui=http://${HOSTNAME}:8080 \
             api.log.level=info \
-            api.smtp.disable=true \
+            api.smtp.disable=false \
+            api.smtp.port=2023 \
+            api.smtp.host=smtpmocksrv \
+            hatchery.local.commonConfiguration.url=http://cds-hatchery-local:8086 \
             hatchery.local.commonConfiguration.api.http.url=http://cds-api:8081 \
             hatchery.local.basedir=/app/hatchery-local \
+            hatchery.swarm.commonConfiguration.url=http://cds-hatchery-swarm:8086 \
             hatchery.swarm.commonConfiguration.api.http.url=http://cds-api:8081 \
             hatchery.swarm.ratioService=50 \
             hatchery.swarm.dockerEngines.default.host=unix:///var/run/docker.sock \
@@ -86,12 +90,12 @@ services:
             ui.api.http.url=http://cds-api:8081 \
             ui.hooksURL=http://cds-hooks:8081;
             echo '';
-            echo '/!\ Please run the export command BELOW, this will be usefull to create admin user';
+            echo '/!\ Please run the export command BELOW, this will be useful to create admin user';
             echo '';
             TOKEN=`/app/cds-engine-linux-amd64 config init-token --config /app/conf/conf.toml`;
             echo 'export INIT_TOKEN='$$TOKEN;
             echo '';
-            echo '/!\ Please run the export command ABOVE, this will be usefull to create admin user';
+            echo '/!\ Please run the export command ABOVE, this will be useful to create admin user';
             echo '';"
     user: root
     volumes:
@@ -101,13 +105,13 @@ services:
       - cds-hatchery-local-volume:/app/hatchery-local
 
   cds-api:
-    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: sh -c "/app/cds-engine-linux-amd64 start api --config /app/conf/conf.toml"
     volumes:
       - cds-artifacts-volume:/app/artifacts
       - cds-conf-volume:/app/conf
     ports:
-      - "127.0.0.1:8081:8081"
+      - "8081:8081"
     links:
        - cds-db
        - cds-cache
@@ -118,12 +122,12 @@ services:
       retries: 6
 
   cds-ui:
-    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: sh -c "/app/cds-engine-linux-amd64 start ui --config /app/conf/conf.toml"
     volumes:
       - cds-conf-volume:/app/conf
     ports:
-      - "127.0.0.1:8080:8080"
+      - "8080:8080"
     links:
        - cds-api
        - cds-hooks
@@ -146,7 +150,7 @@ services:
   # your docker socket to a tcp port with a socat like
   # docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 2375:2375 bobrik/socat TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
   cds-hatchery-swarm:
-    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: sh -c "/app/cds-engine-linux-amd64 start hatchery:swarm --config /app/conf/conf.toml"
     volumes:
       - cds-conf-volume:/app/conf
@@ -165,13 +169,15 @@ services:
       retries: 6
 
   cds-hatchery-local:
-    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: sh -c "/app/cds-engine-linux-amd64 start hatchery:local --config /app/conf/conf.toml"
     volumes:
       - cds-conf-volume:/app/conf
       - cds-hatchery-local-volume:/app/hatchery-local
     links:
        - cds-api
+    ports:
+      - "8086:8086"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/mon/version"]
       interval: 30s
@@ -179,13 +185,15 @@ services:
       retries: 6
 
   cds-hooks:
-    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: sh -c "/app/cds-engine-linux-amd64 start hooks --config /app/conf/conf.toml"
     volumes:
       - cds-conf-volume:/app/conf
     links:
        - cds-api
        - cds-cache
+    ports:
+      - "8083:8083"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8083/mon/version"]
       interval: 30s
@@ -193,7 +201,7 @@ services:
       retries: 6
 
   cds-vcs:
-    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: sh -c "/app/cds-engine-linux-amd64 start vcs --config /app/conf/conf.toml"
     volumes:
       - cds-conf-volume:/app/conf
@@ -207,7 +215,7 @@ services:
       retries: 6
 
   cds-repositories:
-    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: sh -c "/app/cds-engine-linux-amd64 start repositories --config /app/conf/conf.toml"
     volumes:
       - cds-conf-volume:/app/conf
@@ -221,7 +229,7 @@ services:
       retries: 6
 
   cds-elasticsearch:
-    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: sh -c "/app/cds-engine-linux-amd64 start elasticsearch --config /app/conf/conf.toml"
     volumes:
       - cds-conf-volume:/app/conf
@@ -236,13 +244,20 @@ services:
       retries: 6
 
   cds-edit-config:
-    image: ${CDS_DOCKER_IMAGE:-ovhcom/ovh/cds-engine:latest}
+    image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: >
         sh -c "
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml \
             ${CDS_EDIT_CONFIG}";
     volumes:
       - cds-conf-volume:/app/conf
+
+  smtpmocksrv:
+    build:
+      context: ./tools/smtpmock
+    ports:
+      - "2023:2023"
+      - "2024:2024"
 
 volumes:
   cds-artifacts-volume:

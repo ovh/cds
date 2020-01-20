@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
-import { Failure, TestCase, Tests } from '../../../../../../model/pipeline.model';
-
 import { ThemeStore } from 'app/service/services.module';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { Failure, TestCase, Tests } from '../../../../../../model/pipeline.model';
+
 
 @Component({
     selector: 'app-workflow-test-table',
@@ -46,7 +46,7 @@ export class WorkflowRunTestTableComponent implements OnInit {
                     tc.fullname = ts.name + ' / ' + tc.name;
                     if (!tc.errors && !tc.failures) {
                         tc.status = 'success';
-                    } else if ( (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0)) {
+                    } else if ((tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0)) {
                         tc.status = 'failed';
                     } else {
                         tc.status = 'skipped';

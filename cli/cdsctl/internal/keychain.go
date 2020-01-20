@@ -1,4 +1,4 @@
-// +build nokeychain freebsd openbsd 386 arm arm64 windows
+// +build nokeychain freebsd openbsd 386 arm arm64 windows ppc64 ppc64le
 
 package internal
 

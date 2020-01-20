@@ -14,7 +14,7 @@ Install the dependencies: `npm install`.
 
 Run `npm start` to launch a development server. 
 
-Navigate to `http://localhost:4200/`.
+Navigate to `http://localhost:8080/`.
 
 The app will automatically reload if you change any of the source files.
 

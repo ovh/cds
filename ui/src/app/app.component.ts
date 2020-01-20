@@ -58,7 +58,7 @@ export class AppComponent implements OnInit {
     cdsstateSub: Subscription;
     user: AuthentifiedUser;
 
-    @ViewChild('gamification', {static: false})
+    @ViewChild('gamification', { static: false })
     eltGamification: ElementRef;
     gameInit: boolean;
 
@@ -161,7 +161,7 @@ export class AppComponent implements OnInit {
                 }
             });
 
-        this.cdsstateSub = this._store.select(CDSState.getCurrentState()).subscribe( m => {
+        this.cdsstateSub = this._store.select(CDSState.getCurrentState()).subscribe(m => {
             // Switch maintenance ON
             if (!this.maintenance && m.maintenance && !this.gameInit && this.isConnected && !this.user.isAdmin()) {
                 setTimeout(() => {
@@ -209,20 +209,20 @@ export class AppComponent implements OnInit {
             this.sseWorker = new CDSWebWorker('./assets/worker/webWorker.js');
         }
 
+        const href = this._router['location']._baseHref;
         this.sseWorker.start({
             headAuthKey: authKey,
             headAuthValue: authValue,
-            urlSubscribe: '/cdsapi/events/subscribe',
-            urlUnsubscribe: '/cdsapi/events/unsubscribe',
-            sseURL: '/cdsapi/events',
-            pingURL: '/cdsapi/user/me'
+            urlSubscribe: `${href}/cdsapi/events/subscribe`,
+            urlUnsubscribe: `${href}/cdsapi/events/unsubscribe`,
+            sseURL: `${href}/cdsapi/events`,
+            pingURL: `${href}/cdsapi/user/me`,
         });
         this._sseSubscription = this.sseWorker.response()
             .pipe(
                 filter((e) => e != null),
                 bufferTime(2000),
                 filter((events) => events.length !== 0),
-
             )
             .subscribe((events) => {
                 this.zone.run(() => {

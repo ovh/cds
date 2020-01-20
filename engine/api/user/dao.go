@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"regexp"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -127,11 +126,9 @@ func CountAdmin(db gorp.SqlExecutor) (int64, error) {
 	return count, nil
 }
 
-var usernameRegex = regexp.MustCompile("[a-z0-9._-]{3,32}")
-
 // Insert a user in database.
 func Insert(ctx context.Context, db gorp.SqlExecutor, au *sdk.AuthentifiedUser) error {
-	if !usernameRegex.MatchString(au.Username) {
+	if !sdk.UsernameRegex.MatchString(au.Username) {
 		return sdk.WithStack(sdk.ErrInvalidUsername)
 	}
 

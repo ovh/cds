@@ -42,6 +42,10 @@ func LoadRegistrationByID(ctx context.Context, db gorp.SqlExecutor, id string) (
 
 // InsertRegistration in database.
 func InsertRegistration(ctx context.Context, db gorp.SqlExecutor, ur *sdk.UserRegistration) error {
+	if !sdk.UsernameRegex.MatchString(ur.Username) {
+		return sdk.WithStack(sdk.ErrInvalidUsername)
+	}
+
 	if ur.ID == "" {
 		ur.ID = sdk.UUID()
 	}

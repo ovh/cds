@@ -235,7 +235,7 @@ func (s *Service) doOutgoingWorkflowExecution(ctx context.Context, t *sdk.TaskEx
 	}
 
 	callbackData.Log = fmt.Sprintf("Workflow %s/%s #%d.%d has been started", targetProject, targetWorkflow, targetRun.Number, targetRun.LastSubNumber)
-	callbackData.Status = sdk.StatusDisabled
+	callbackData.Status = sdk.StatusBuilding
 	callbackData.WorkflowRunNumber = &targetRun.Number
 
 	// Post the callback
