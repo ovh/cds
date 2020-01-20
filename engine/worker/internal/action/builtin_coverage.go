@@ -3,7 +3,6 @@ package action
 import (
 	"context"
 	"fmt"
-	"path"
 	"path/filepath"
 	"strconv"
 
@@ -64,7 +63,7 @@ func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime,
 		abs = workdir.Name()
 	}
 
-	if !path.IsAbs(p) {
+	if !sdk.PathIsAbs(p) {
 		fpath = filepath.Join(abs, p)
 	} else {
 		fpath = p

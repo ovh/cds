@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"path"
 	"path/filepath"
 
 	"github.com/spf13/afero"
@@ -43,7 +42,7 @@ func RunParseJunitTestResultAction(ctx context.Context, wk workerruntime.Runtime
 		abs = workdir.Name()
 	}
 
-	if !path.IsAbs(p) {
+	if !sdk.PathIsAbs(p) {
 		p = filepath.Join(abs, p)
 	}
 

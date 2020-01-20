@@ -11,8 +11,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"reflect"
 	"regexp"
+	"runtime"
 	"strings"
 	"unicode"
 
@@ -268,4 +270,13 @@ func RemoveNotPrintableChar(in string) string {
 		}
 	}
 	return strings.Map(m, in)
+}
+
+var windowsPathRegex = regexp.MustCompile(`^[a-zA-Z]:\\[\\\S|*\S]?.*$`)
+
+func PathIsAbs(s string) bool {
+	if GOOS == "windows" || runtime.GOOS == "windows" {
+		return windowsPathRegex.MatchString(s)
+	}
+	return path.IsAbs(s)
 }
