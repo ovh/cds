@@ -40,12 +40,12 @@ func init() {
 
 // Version is used by /mon/version
 type Version struct {
-	Version      string `json:"version"`
-	Architecture string `json:"architecture"`
-	OS           string `json:"os"`
-	GitHash      string `json:"git_hash"`
-	BuildTime    string `json:"build_time"`
-	DBMigrate    string `json:"db_migrate"`
+	Version      string `json:"version" yaml:"version"`
+	Architecture string `json:"architecture" yaml:"architecture"`
+	OS           string `json:"os" yaml:"os"`
+	GitHash      string `json:"git_hash" yaml:"git_hash"`
+	BuildTime    string `json:"build_time" yaml:"build_time"`
+	DBMigrate    string `json:"db_migrate,omitempty" yaml:"db_migrate,omitempty"`
 }
 
 // VersionCurrent returns the current version
