@@ -373,6 +373,12 @@ func (h *HatcheryLocal) checkRequirement(r sdk.Requirement) (bool, error) {
 		}
 		conn.Close()
 		return true, nil
+	case sdk.HostnameRequirement:
+		h, err := os.Hostname()
+		if err != nil {
+			return false, err
+		}
+		return h == r.Value, nil
 	default:
 		log.Debug("checkRequirement> %v don't work on this hatchery", r.Type)
 		return false, nil
