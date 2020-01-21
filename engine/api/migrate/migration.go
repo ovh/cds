@@ -98,7 +98,8 @@ func CleanMigrationsList() {
 
 // Status returns monitoring status, if there are cds migration in progress it returns WARN
 func Status(db gorp.SqlExecutor) sdk.MonitoringStatusLine {
-	count, err := db.SelectInt("SELECT COUNT(id) FROM cds_migration WHERE status <> $1 AND status <> $2", sdk.MigrationStatusDone, sdk.MigrationStatusCanceled)
+	count, err := db.SelectInt("SELECT COUNT(id) FROM cds_migration WHERE status <> $1 AND status <> $2 AND status <> $3",
+		sdk.MigrationStatusDone, sdk.MigrationStatusCanceled, sdk.MigrationStatusNotExecuted)
 	if err != nil {
 		return sdk.MonitoringStatusLine{Component: "CDS Migration", Status: sdk.MonitoringStatusWarn, Value: fmt.Sprintf("KO Cannot request in database : %v", err)}
 	}
