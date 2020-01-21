@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -44,10 +44,12 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	} else {
 		abs = workdir.Name()
 	}
-	wkDirFS := afero.NewBasePathFs(afero.NewOsFs(), abs)
 
-	destPath = strings.TrimPrefix(destPath, abs)
+	if !sdk.PathIsAbs(destPath) {
+		destPath = filepath.Join(abs, destPath)
+	}
 
+	wkDirFS := afero.NewOsFs()
 	if err := wkDirFS.MkdirAll(destPath, os.FileMode(0744)); err != nil {
 		return res, fmt.Errorf("Unable to create %s: %v", destPath, err)
 	}
