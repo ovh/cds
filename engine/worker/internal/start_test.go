@@ -304,13 +304,22 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 
 	err := internal.StartWorker(ctx, w, 42)
 	assert.NoError(t, err)
-	assert.True(t, gock.IsDone())
-	if !gock.IsDone() {
+
+	var isDone bool
+	if gock.IsDone() {
+		isDone = true
+	}
+	if !isDone {
 		pending := gock.Pending()
+		isDone = true
 		for _, m := range pending {
 			t.Logf("PENDING %s %s", m.Request().Method, m.Request().URLStruct.String())
+			if m.Request().URLStruct.String() != "http://lolcat.host/queue/workflows/42/log" {
+				isDone = false
+			}
 		}
 	}
+	assert.True(t, isDone)
 	if gock.HasUnmatchedRequest() {
 		reqs := gock.GetUnmatchedRequests()
 		for _, req := range reqs {
