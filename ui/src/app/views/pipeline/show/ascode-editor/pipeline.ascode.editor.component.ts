@@ -1,20 +1,28 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    Input,
+    OnInit,
+    ViewChild
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
+import { FlatSchema, JSONSchema } from 'app/model/schema.model';
 import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
+import { UserService } from 'app/service/user/user.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchAsCodePipeline, ImportPipeline, PreviewPipeline, ResyncPipeline } from 'app/store/pipelines.action';
-import { Subscription } from 'rxjs';
-import { finalize, first } from 'rxjs/operators';
 import * as yaml from 'js-yaml';
 import { Schema } from 'js-yaml';
-import { FlatSchema, JSONSchema } from 'app/model/schema.model';
-import { UserService } from 'app/service/user/user.service';
 import { Validator } from 'jsonschema';
+import { Subscription } from 'rxjs';
+import { finalize, first } from 'rxjs/operators';
 
 declare var CodeMirror: any;
 
@@ -25,7 +33,7 @@ declare var CodeMirror: any;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class PipelineAsCodeEditorComponent implements OnInit {
+export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit {
     @ViewChild('codeMirror', {static: false}) codemirror: any;
 
     // Project that contains the pipeline
@@ -87,7 +95,6 @@ export class PipelineAsCodeEditorComponent implements OnInit {
             if (sc.pipeline) {
                 this.pipelineSchema = <Schema>JSON.parse(sc.pipeline);
                 this.flatSchema = JSONSchema.flat(this.pipelineSchema);
-                console.log(this.flatSchema);
                 if (this.viewInit) {
                     this.initCodeMirror();
                 }
@@ -104,8 +111,8 @@ export class PipelineAsCodeEditorComponent implements OnInit {
     }
     initCodeMirror(): void {
         this.codemirror.instance.on('keyup', (cm, event) => {
-            if (event.which > 46 || event.which === 32) {
-                console.log(event);
+            // 32 : space ; 13: enter ; 8: backspace
+            if (event.which > 46 || event.which === 32 || event.which === 13 || event.which === 8) {
                 CodeMirror.showHint(cm, CodeMirror.hint.asCode, {
                     completeSingle: true,
                     closeCharacters: / /,

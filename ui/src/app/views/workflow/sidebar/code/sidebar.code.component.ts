@@ -170,8 +170,8 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit {
 
     initCodeMirror(): void {
         this.codemirror.instance.on('keyup', (cm, event) => {
-            if (event.which > 46 || event.which === 32) {
-                console.log(event);
+            // 32 : space ; 13: enter ; 8: backspace
+            if (event.which > 46 || event.which === 32 || event.which === 13 || event.which === 8) {
                 CodeMirror.showHint(cm, CodeMirror.hint.asCode, {
                     completeSingle: true,
                     closeCharacters: / /,

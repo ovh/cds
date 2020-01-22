@@ -63,6 +63,12 @@ func (api *API) getUserJSONSchema() service.Handler {
 					Ref:         "#/definitions/" + s,
 					Description: as[i].Description,
 				}
+				sch.Definitions["Step"].OneOf = append(sch.Definitions["Step"].OneOf, &jsonschema.Type{
+					Required: []string{
+						path,
+					},
+					Title: path,
+				})
 
 				sch.Definitions[s] = &jsonschema.Type{
 					Properties:           map[string]*jsonschema.Type{},

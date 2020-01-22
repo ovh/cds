@@ -236,6 +236,8 @@ require (
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
+replace github.com/alecthomas/jsonschema => github.com/sguiheux/jsonschema v0.1.1
+
 replace github.com/go-gorp/gorp => github.com/yesnault/gorp v2.0.1-0.20190906143353-6210446a0d92+incompatible
 
 replace github.com/docker/docker => github.com/docker/engine v0.0.0-20180816081446-320063a2ad06

@@ -197,13 +197,12 @@
         };
 
         function autoCompleteKey(text, schema, cur, fullText) {
+            // Find yaml level
             let depth = findDepth(text);
             if (depth === -1) {
                 return {sug: []};
             }
-            //if (text.trimStart().indexOf('-') === 0) {
-            //    return {sug: []};
-            //}
+            // Get suggestion
             return findKeySuggestion(depth, schema, cur, fullText);
         }
 
@@ -225,6 +224,7 @@
         }
 
         function findKeySuggestion(depth, schema, cur, fullText) {
+            // Get all elements for this yaml level
             let eltMatchesLevel = schema.flatElements
                 .filter(felt => felt.positions.findIndex(p => p.depth === depth) !== -1)
                 .map(felt => {
@@ -234,59 +234,153 @@
 
             let suggestions = [];
 
-            // Find parents
             if (cur.line === 0) {
                 suggestions = eltMatchesLevel.map(e => e.name + ': ');
             } else {
-                let currentLine = cur.line -1;
-                let parents = [];
-                let refDepth = depth;
-                for (let i = currentLine; i > 0; i--) {
-                    let currentText = fullText.lines[i].text;
-                    if (currentText.indexOf(':') === -1) {
-                        continue
-                    }
-                    // if has key, find indentation
-                    let currentLintDepth = findDepth(currentText);
-                    if (currentLintDepth >= refDepth) {
-                        continue
-                    }
-                    // find parent key
-                    let pkey = currentText.substr(0, currentText.indexOf(':')).trimStart();
-                    parents.unshift(pkey);
-                    refDepth = currentLintDepth;
-                    if (refDepth === 0) {
-                        break;
-                    }
-                }
+                let parents = findParent(cur.line -1, fullText, depth);
+                let lastParent = parents[parents.length-1];
+                if (lastParent && parents[parents.length-1].indexOf('-') === 0) {
+                    let lastParentTrimmed = lastParent.substr(1, lastParent.length).trimStart();
+                    suggestions = schema.flatElements
+                        .filter(elt => elt.positions.filter(p => p.depth === depth && p.parent[depth-1] === lastParentTrimmed).length > 0)
+                        .map(elt => elt.name);
+                } else {
+                    // Find key to exclude from suggestion
+                    let keyToExclude = findKeyToExclude(cur, fullText, lastParent, schema);
 
-                suggestions = eltMatchesLevel.map(elt => {
-                    let keepElt = false;
-                    for(let i = 0; i < elt.positions.length; i++) {
-                        let parentMatch = true;
-                        for(let j = 0; j < elt.positions[i].parent.length; j++) {
-                            const regExp = RegExp(elt.positions[i].parent[j]);
-                            if (!regExp.test(parents[j])) {
-                                parentMatch = false;
+                    // Filter suggestion ( match match and not in exclude array )
+                    suggestions = eltMatchesLevel.map(elt => {
+                        let keepElt = false;
+                        for(let i = 0; i < elt.positions.length; i++) {
+                            let parentMatch = true;
+                            for(let j = 0; j < elt.positions[i].parent.length; j++) {
+                                const regExp = RegExp(elt.positions[i].parent[j]);
+                                if (!regExp.test(parents[j])) {
+                                    parentMatch = false;
+                                    break;
+                                }
+                            }
+                            if (parentMatch) {
+                                keepElt = true;
                                 break;
                             }
                         }
-                        if (parentMatch) {
-                            keepElt = true;
-                            break;
+                        if (keepElt && keyToExclude.findIndex(e => e === elt.name) === -1) {
+                            return elt.name + ': ';
                         }
-                    }
-                    if (keepElt) {
-                        return elt.name + ': ';
-                    }
-                }).filter(elt => elt);
-
+                    }).filter(elt => elt);
+                }
             }
             return {fromCh: depth*2, to: cur.line.length,sug: suggestions};
         }
 
+        /**
+         *  Find key to exclude from suggestion
+         * @param cur Current position of the cursor in codemirror
+         * @param fullText Full text written by user
+         * @param lastParent Direct yaml parent
+         * @param schema JSON schema
+         * @returns {[]}  Array of string that contains all keys to exclude
+         */
+        function findKeyToExclude(cur, fullText, lastParent, schema) {
+            // Find neighbour to know which keys are already here
+            let neighbour = findNeighbour(cur, fullText);
+
+            // Exclude key from oneOf.required
+            let keyToExclude = [];
+            let parent = schema.flatElements.find(e => e.name === lastParent);
+            if (parent && parent.oneOf) {
+                for (let i = 0; i < neighbour.length; i++) {
+                    let key = neighbour[i];
+                    if (!parent.oneOf[key]) {
+                        continue
+                    }
+                    keyToExclude = Object.keys(parent.oneOf).filter( k => parent.oneOf[key].findIndex(kk => kk === k) === -1);
+                }
+            }
+
+            // Add neighbour in exclude array
+            keyToExclude.push(...neighbour);
+            return keyToExclude;
+        }
+
+        /**
+         * Find parent tree from cursor position
+         * @param currentLine Current line position
+         * @param fullText Full text written by the user
+         * @returns {[]} Array of strings that contains the parent tree
+         */
+        function findParent(currentLine, fullText, depth) {
+            let parents = [];
+            let refDepth = depth;
+            for (let i = currentLine; i > 0; i--) {
+                let currentText = fullText.lines[i].text;
+                if (currentText.indexOf(':') === -1) {
+                    continue
+                }
+                // if has key, find indentation
+                let currentLintDepth = findDepth(currentText);
+                if (currentLintDepth >= refDepth) {
+                    continue
+                }
+                // find parent key
+                let pkey = currentText.substr(0, currentText.indexOf(':')).trimStart();
+                parents.unshift(pkey);
+                refDepth = currentLintDepth;
+                if (refDepth === 0) {
+                    break;
+                }
+            }
+            return parents;
+        }
+
+        /**
+         * Find key at the same level with the same parent
+         * @param cur Current cursor position
+         * @param fullText Full text written  by the user
+         * @returns {[]} Array of strings that contains all neighbour
+         */
+        function findNeighbour(cur, fullText) {
+            let neighbour = [];
+            let nbOfSpaces = fullText.lines[cur.line].text.length - fullText.lines[cur.line].text.trimStart().length;
+
+            if (cur.line > 0) {
+                // find neighbour before
+                for (let i = cur.line -1; i >= 0; i--) {
+                    let currentText = fullText.lines[i].text.trimStart();
+                    let currentSpace = fullText.lines[i].text.length - currentText.length;
+                    if (currentSpace !== nbOfSpaces) {
+                        // check if we are in a array
+                        if (currentSpace + 2 !== nbOfSpaces || currentText.indexOf('-') !== 0) {
+                            break;
+                        }
+                        currentText = currentText.substr(1, currentText.length).trimStart();
+                    } else if (currentText.indexOf('-') === 0) {
+                        continue;
+                    }
+                    neighbour.push(currentText.split(':')[0]);
+                }
+            }
+            if (cur.line < fullText.lines.length - 1) {
+                // find neighbour before
+                for (let i = cur.line + 1; i < fullText.lines.length; i++) {
+                    let currentSpace = fullText.lines[i].text.length - fullText.lines[i].text.trimStart();
+                    if (currentSpace !== nbOfSpaces) {
+                        break;
+                    }
+                    neighbour.push(fullText.lines[i].text.trimStart().split(':')[0]);
+                }
+            }
+            return neighbour;
+        }
+
+        /**
+         * Find yaml level
+         * @param text Current text
+         * @returns {number} level
+         */
         function findDepth(text) {
-            let spaceNumber = 0
+            let spaceNumber = 0;
 
             for(let i=0; i<text.length; i++) {
                 if (text[i] === ' ' || text[i] === '-') {
