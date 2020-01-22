@@ -203,12 +203,12 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			},
 		)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/42/step").Times(6).
+	gock.New("http://lolcat.host").Post("/queue/workflows/42/step").Times(8).
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(nil)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(5).
+	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(8).
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(nil)
@@ -236,28 +236,30 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 				var result sdk.StepStatus
 				err := json.Unmarshal(bodyContent, &result)
 				assert.NoError(t, err)
+
 				switch result.StepOrder {
 				case 0:
 					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusSuccess {
+						t.Logf("Wrong status on step 0")
 						t.Fail()
 					}
 				case 1:
 					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusSuccess {
+						t.Logf("Wrong status on step 1")
 						t.Fail()
 					}
 				case 2:
 					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusSuccess {
+						t.Logf("Wrong status on step 2")
 						t.Fail()
 					}
 				case 3:
-					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusSuccess {
-						t.Fail()
-					}
-				case 4:
 					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusFail {
+						t.Logf("Wrong status on step 3")
 						t.Fail()
 					}
 				default:
+					t.Logf("This case should not happend")
 					t.Fail()
 				}
 			case "http://lolcat.host/queue/workflows/42/log":
@@ -273,8 +275,8 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 				assert.Equal(t, sdk.StatusFail, result.Status)
 				if len(result.NewVariables) > 0 {
 					assert.Equal(t, "cds.build.newvar", result.NewVariables[0].Name)
-					assert.Equal(t, "cds.semver", result.NewVariables[0].Name)
-					assert.Equal(t, "git.describe", result.NewVariables[0].Name)
+					// assert.Equal(t, "cds.semver", result.NewVariables[0].Name)
+					// assert.Equal(t, "git.describe", result.NewVariables[0].Name)
 					assert.Equal(t, "newval", result.NewVariables[0].Value)
 				} else {
 					t.Error("missing new variables")
