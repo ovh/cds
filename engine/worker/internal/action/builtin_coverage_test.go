@@ -21,7 +21,7 @@ import (
 )
 
 func TestRunCoverageWrongFormat(t *testing.T) {
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	res, err := RunParseCoverageResultAction(ctx, wk,
 		sdk.Action{
 			Parameters: []sdk.Parameter{
@@ -47,7 +47,7 @@ func TestRunCoverageWrongFormat(t *testing.T) {
 func TestRunCoverage_Absolute(t *testing.T) {
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	assert.NoError(t, ioutil.WriteFile("results.xml", []byte(cobertura_result), os.ModePerm))
 
 	fi, err := os.Open("results.xml")
@@ -105,7 +105,7 @@ func TestRunCoverage_Absolute(t *testing.T) {
 func TestRunCoverage_Relative(t *testing.T) {
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	fname := filepath.Join(wk.workingDirectory.Name(), "results.xml")
 	require.NoError(t, afero.WriteFile(wk.BaseDir(), fname, []byte(cobertura_result), os.ModePerm))
 
@@ -159,7 +159,7 @@ func TestRunCoverage_Relative(t *testing.T) {
 func TestRunCoverageMinimumFail(t *testing.T) {
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	assert.NoError(t, ioutil.WriteFile("results.xml", []byte(cobertura_result), os.ModePerm))
 
 	fi, err := os.Open("results.xml")

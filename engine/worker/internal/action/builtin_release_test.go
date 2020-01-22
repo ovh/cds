@@ -18,7 +18,7 @@ import (
 func TestRunRelease(t *testing.T) {
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 
 	gock.New("http://lolcat.host").Post("/project/projKey/workflows/workflowName/runs/999/nodes/666/release").
 		Reply(200)
@@ -88,7 +88,7 @@ func TestRunRelease(t *testing.T) {
 func TestRunReleaseMissingTag(t *testing.T) {
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
 			Name:  "cds.project",
@@ -128,7 +128,7 @@ func TestRunReleaseMissingTag(t *testing.T) {
 func TestRunReleaseMissingTitle(t *testing.T) {
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
 			Name:  "cds.project",
@@ -168,7 +168,7 @@ func TestRunReleaseMissingTitle(t *testing.T) {
 func TestRunReleaseMissingReleaseNote(t *testing.T) {
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
 			Name:  "cds.project",
@@ -208,7 +208,7 @@ func TestRunReleaseMissingReleaseNote(t *testing.T) {
 func TestRunReleaseMissingProjectKey(t *testing.T) {
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
 			Name:  "cds.workflow",
@@ -248,7 +248,7 @@ func TestRunReleaseMissingProjectKey(t *testing.T) {
 func TestRunReleaseMissingWorkflowName(t *testing.T) {
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
 			Name:  "cds.project",
@@ -288,7 +288,7 @@ func TestRunReleaseMissingWorkflowName(t *testing.T) {
 func TestRunReleaseMissingWorkflowRunNumber(t *testing.T) {
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
 			Name:  "cds.project",

@@ -83,9 +83,20 @@ jobs:
   stage: Stage1
   steps:
     - script:
+      - '#!/bin/bash'
       - set -ex
-      - worker key install --env proj-ssh-04scworkflowrunworkercmd --file id_rsa
+      - worker key install proj-ssh-fsamin
+      - eval $(worker key install --env proj-ssh-fsamin)
+      - if [[ -z "$PKEY" ]]; then exit 1; fi;
+      - ""
+      - eval $(worker key install --env-git proj-ssh-fsamin)
+      - if [[ -z "$GIT_SSH" ]]; then exit 1; fi;
+      - ""
+      - worker key install --file id_rsa proj-ssh-fsamin
       - cat id_rsa
+      - ""
+      - worker key install --file /tmp/ssh/id_rsa proj-ssh-fsamin
+      - cat /tmp/ssh/id_rsa
     - script:
         - sleep 5
   requirements:

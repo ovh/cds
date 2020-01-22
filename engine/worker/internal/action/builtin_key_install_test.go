@@ -8,7 +8,7 @@ import (
 )
 
 func TestRunInstallKeyAction(t *testing.T) {
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 
 	keyInstallAction := sdk.Action{
 		Parameters: []sdk.Parameter{
