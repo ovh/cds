@@ -183,6 +183,18 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 											},
 										},
 									},
+									{
+										Name:     sdk.ScriptAction,
+										Type:     sdk.BuiltinAction,
+										Enabled:  true,
+										StepName: "edit with failure",
+										Parameters: []sdk.Parameter{
+											{
+												Name:  "script",
+												Value: "#!/bin/bash\nset -ex\nexit 1",
+											},
+										},
+									},
 								},
 							},
 						},
@@ -230,11 +242,19 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 						t.Fail()
 					}
 				case 1:
-					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusFail {
+					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusSuccess {
 						t.Fail()
 					}
 				case 2:
 					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusSuccess {
+						t.Fail()
+					}
+				case 3:
+					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusSuccess {
+						t.Fail()
+					}
+				case 4:
+					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusFail {
 						t.Fail()
 					}
 				default:
@@ -253,6 +273,8 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 				assert.Equal(t, sdk.StatusFail, result.Status)
 				if len(result.NewVariables) > 0 {
 					assert.Equal(t, "cds.build.newvar", result.NewVariables[0].Name)
+					assert.Equal(t, "cds.semver", result.NewVariables[0].Name)
+					assert.Equal(t, "git.describe", result.NewVariables[0].Name)
 					assert.Equal(t, "newval", result.NewVariables[0].Value)
 				} else {
 					t.Error("missing new variables")
