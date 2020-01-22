@@ -123,9 +123,8 @@ func (api *API) getWorkersHandler() service.Handler {
 			if err != nil {
 				return err
 			}
-		} else {
-			// TODO load workers for users
 		}
+		// TODO load workers for users
 		return service.WriteJSON(w, workers, http.StatusOK)
 	}
 }
