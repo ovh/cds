@@ -14,7 +14,7 @@ import (
 
 func (api *API) postPushCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, isWorker := api.isWorker(ctx); !isWorker {
+		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -24,11 +24,11 @@ func (api *API) postPushCacheHandler() service.Handler {
 		// check tag name pattern
 		regexp := sdk.NamePatternRegex
 		if !regexp.MatchString(tag) {
-			return sdk.ErrInvalidName
+			return sdk.WithStack(sdk.ErrInvalidName)
 		}
 
 		if r.Body == nil {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 		defer r.Body.Close()
 
@@ -44,7 +44,7 @@ func (api *API) postPushCacheHandler() service.Handler {
 		}
 
 		if _, err := storageDriver.Store(&cacheObject, r.Body); err != nil {
-			return sdk.WrapError(err, "postPushCacheHandler>Cannot store cache")
+			return sdk.WrapError(err, "cannot store cache")
 		}
 
 		return nil
@@ -53,7 +53,7 @@ func (api *API) postPushCacheHandler() service.Handler {
 
 func (api *API) getPullCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, isWorker := api.isWorker(ctx); !isWorker {
+		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -63,7 +63,7 @@ func (api *API) getPullCacheHandler() service.Handler {
 		// check tag name pattern
 		regexp := sdk.NamePatternRegex
 		if !regexp.MatchString(tag) {
-			return sdk.ErrInvalidName
+			return sdk.WithStack(sdk.ErrInvalidName)
 		}
 
 		cacheObject := sdk.Cache{
@@ -101,13 +101,14 @@ func (api *API) getPullCacheHandler() service.Handler {
 		if err := ioread.Close(); err != nil {
 			return sdk.WrapError(err, "cannot close artifact")
 		}
+
 		return nil
 	}
 }
 
 func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, isWorker := api.isWorker(ctx); !isWorker {
+		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -149,7 +150,7 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 
 func (api *API) getPullCacheWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, isWorker := api.isWorker(ctx); !isWorker {
+		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 

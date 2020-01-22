@@ -84,5 +84,4 @@ func TestServicesHandlers(t *testing.T) {
 	require.Equal(t, 204, rec.Code)
 
 	require.NoError(t, services.Delete(api.mustDB(), &srv))
-
 }
