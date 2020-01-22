@@ -125,7 +125,7 @@ CREATE TABLE "worker" (
   model_id BIGINT,
   job_run_id BIGINT,
   hatchery_id BIGINT NOT NULL,
-  auth_consumer_id VARCHAR(36) REFERENCES auth_consumer(id),
+  auth_consumer_id VARCHAR(36),
   version VARCHAR(255) NOT NULL,
   os VARCHAR(255) NOT NULL,
   arch VARCHAR(255) NOT NULL

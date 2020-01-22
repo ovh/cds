@@ -93,6 +93,9 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 	if cdsctxEnv.Session != "" {
 		cdsctx.Session = cdsctxEnv.Session
 	}
+	if cdsctxEnv.Token != "" {
+		cdsctx.Token = cdsctxEnv.Token
+	}
 
 	// if there is no session token, but if we have a sign in token, recreate a session token
 	if cdsctxEnv.Session == "" && cdsctxEnv.Token != "" {

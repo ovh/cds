@@ -2,6 +2,7 @@ package migrate
 
 import (
 	"context"
+	"strings"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -67,7 +68,7 @@ func refactorAuthenticationUser(ctx context.Context, db *gorp.DbMap, store cache
 	log.Info(ctx, "migrate.RefactorAuthenticationUser> starting user migration %s - %s", u.Username, u.Fullname)
 
 	var newUser = sdk.AuthentifiedUser{
-		Username:      u.Username,
+		Username:      strings.Trim(u.Username, " "), // fix existing account that starts or ends with spaces
 		Fullname:      u.Fullname,
 		OldUserStruct: &u,
 	}

@@ -3,9 +3,11 @@ package action
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strconv"
 
 	coverage "github.com/sguiheux/go-coverage"
+	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
@@ -47,7 +49,27 @@ func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime,
 	default:
 		return res, fmt.Errorf("coverage parser: unknown format %s", mode)
 	}
-	parser := coverage.New(p, parserMode)
+
+	workdir, err := workerruntime.WorkingDirectory(ctx)
+	if err != nil {
+		return res, err
+	}
+
+	var fpath string
+	var abs string
+	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
+		abs, _ = x.RealPath(workdir.Name())
+	} else {
+		abs = workdir.Name()
+	}
+
+	if !sdk.PathIsAbs(p) {
+		fpath = filepath.Join(abs, p)
+	} else {
+		fpath = p
+	}
+
+	parser := coverage.New(fpath, parserMode)
 	report, errR := parser.Parse()
 	if errR != nil {
 		return res, fmt.Errorf("coverage parser: unable to parse report: %v", errR)

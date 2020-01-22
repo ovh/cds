@@ -10,6 +10,7 @@ jobs:
       tag: '{{.git.tag}}'
       url: https://github.com/ovh/venom.git
   - script:
+    - ls
     - git log
     - cat README.md
   requirements:

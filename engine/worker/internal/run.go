@@ -123,6 +123,17 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 		if nCriticalFailed == 0 || step.AlwaysExecuted {
 			stepResult = w.runAction(ctx, step, jobID, secrets, step.Name)
 
+			// Check if all newVariables are in currentJob.params
+			// variable can be add in w.currentJob.newVariables by worker command export
+			for _, newVariableFromHandler := range w.currentJob.newVariables {
+				p := sdk.ParameterFind(w.currentJob.params, newVariableFromHandler.Name)
+				if p == nil {
+					w.currentJob.params = append(w.currentJob.params, newVariableFromHandler.ToParameter(""))
+				} else {
+					p.Value = newVariableFromHandler.Value
+				}
+			}
+
 			for _, newVariable := range stepResult.NewVariables {
 				// append the new variable from a step to the following steps
 				w.currentJob.params = append(w.currentJob.params, newVariable.ToParameter("cds.build"))
@@ -259,6 +270,17 @@ func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.
 			r.Status = sdk.StatusNeverBuilt
 		}
 
+		// Check if all newVariables are in currentJob.params
+		// variable can be add in w.currentJob.newVariables by worker command export
+		for _, newVariableFromHandler := range w.currentJob.newVariables {
+			p := sdk.ParameterFind(w.currentJob.params, newVariableFromHandler.Name)
+			if p == nil {
+				w.currentJob.params = append(w.currentJob.params, newVariableFromHandler.ToParameter(""))
+			} else {
+				p.Value = newVariableFromHandler.Value
+			}
+		}
+
 		for _, newVariable := range r.NewVariables {
 			// append the new variable from a chile to the following children
 			w.currentJob.params = append(w.currentJob.params, newVariable.ToParameter("cds.build"))
@@ -318,7 +340,13 @@ func setupWorkingDirectory(ctx context.Context, fs afero.Fs, wd string) (afero.F
 		}
 	}
 
-	if err := os.Setenv("HOME", wd); err != nil {
+	var absWD string
+	if x, ok := fs.(*afero.BasePathFs); ok {
+		absWD, _ = x.RealPath(wd)
+	} else {
+		absWD = wd
+	}
+	if err := os.Setenv("HOME", absWD); err != nil {
 		return nil, err
 	}
 
@@ -329,8 +357,8 @@ func setupWorkingDirectory(ctx context.Context, fs afero.Fs, wd string) (afero.F
 	return fi, nil
 }
 
-func teardownDirectory(fs afero.Fs, wd string) error {
-	return fs.RemoveAll(wd)
+func teardownDirectory(fs afero.Fs, dir string) error {
+	return fs.RemoveAll(dir)
 }
 
 func workingDirectory(ctx context.Context, fs afero.Fs, jobInfo sdk.WorkflowNodeJobRunData, suffixes ...string) (string, error) {
@@ -516,11 +544,18 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (sdk.Resu
 		log.Debug("processJob> new variables: %v", res.NewVariables)
 	}
 
+	// Delete working directory
 	if err := teardownDirectory(w.basedir, wdFile.Name()); err != nil {
 		log.Error(ctx, "Cannot remove build directory: %s", err)
 	}
-	if err := teardownDirectory(w.basedir, wdFile.Name()); err != nil {
+	// Delelete key directory
+	if err := teardownDirectory(w.basedir, kdFile.Name()); err != nil {
 		log.Error(ctx, "Cannot remove keys directory: %s", err)
 	}
+	// Delete all plugins
+	if err := teardownDirectory(w.basedir, ""); err != nil {
+		log.Error(ctx, "Cannot remove basedir content: %s", err)
+	}
+
 	return res, err
 }

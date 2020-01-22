@@ -17,17 +17,16 @@ onmessage = function (e) {
     envName = e.data.envName;
     jobID = e.data.jobID;
     stepOrder = e.data.stepOrder;
-    loadLog(e.data.user, e.data.session, e.data.api);
+    loadLog();
 };
 
-function loadLog (user, session, api) {
+function loadLog () {
     loop(2, function () {
         var url = `/project/${key}/application/${appName}/pipeline/${pipName}/build/${buildNumber}/action/${jobID}/step/${stepOrder}/log`;
         if (envName !== '') {
             url += '?envName=' + encodeURIComponent(envName);
         }
-
-        var xhr = httpCall(url, api, user, session);
+        var xhr = httpCallAPI(url);
         if (xhr.status >= 400) {
             return true;
         }

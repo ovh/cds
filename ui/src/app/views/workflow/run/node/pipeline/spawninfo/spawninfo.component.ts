@@ -9,15 +9,13 @@ import {
     ViewChild
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
+import { Parameter } from 'app/model/parameter.model';
+import { PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
-import { AuthenticationState } from 'app/store/authentication.state';
 import { Subscription } from 'rxjs';
-import { Parameter } from '../../../../../../model/parameter.model';
-import { PipelineStatus, SpawnInfo } from '../../../../../../model/pipeline.model';
-import { Project } from '../../../../../../model/project.model';
-import { WorkflowNodeJobRun, WorkflowNodeRun } from '../../../../../../model/workflow.run.model';
 import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
 
 @Component({
@@ -27,7 +25,6 @@ import { WorkflowRunJobVariableComponent } from '../variables/job.variables.comp
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
-
     @Input() project: Project;
     @Input() workflowName: string;
     @Input() jobStatus: string;
@@ -83,7 +80,6 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
     }
 
     constructor(
-        private _store: Store,
         private _translate: TranslateService,
         private _cd: ChangeDetectorRef
     ) {
@@ -129,9 +125,6 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
         if (!this.worker) {
             this.worker = new CDSWebWorker('./assets/worker/web/workflow-spawninfos.js');
             this.worker.start({
-                user: this._store.selectSnapshot(AuthenticationState.user),
-                // session: this._authStore.getSessionToken(),
-                api: '/cdsapi',
                 key: this.project.key,
                 workflowName: this.workflowName,
                 number: this.nodeRun.num,

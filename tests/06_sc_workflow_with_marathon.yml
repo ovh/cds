@@ -12,7 +12,7 @@ testcases:
 - name: prepare_tests
   steps:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITSCWRKFLW17"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWRKFLW17"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw17"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW17 ITSCWRKFLW17"
 
 - name: import_pipeline

@@ -74,6 +74,8 @@ type UserRegistration struct {
 	Hash     string    `json:"-"  db:"hash"` // do no return hash in json
 }
 
+var UsernameRegex = regexp.MustCompile("[a-z0-9._-]{3,32}")
+
 // AuthentifiedUser struct contains all information about a cds user.
 type AuthentifiedUser struct {
 	ID       string    `json:"id" yaml:"id" cli:"id" db:"id"`

@@ -149,11 +149,9 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 
 func getBitbucketStateFromStatus(status string) string {
 	switch status {
-	case sdk.StatusSuccess, sdk.StatusSkipped:
+	case sdk.StatusSuccess, sdk.StatusSkipped, sdk.StatusDisabled:
 		return successful
-	case sdk.StatusWaiting:
-		return inProgress
-	case sdk.StatusDisabled:
+	case sdk.StatusWaiting, sdk.StatusBuilding:
 		return inProgress
 	case sdk.StatusFail:
 		return failed

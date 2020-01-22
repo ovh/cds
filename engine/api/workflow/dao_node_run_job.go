@@ -262,8 +262,8 @@ func LoadNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 //LoadDeadNodeJobRun load a NodeJobRun which is Building but without worker
 func LoadDeadNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowNodeJobRun, error) {
 	var deadJobsDB []JobRun
-	query := `SELECT workflow_node_run_job.* FROM workflow_node_run_job WHERE status = $1 AND worker_id IS NULL`
-	if _, err := db.Select(&deadJobsDB, query, sdk.StatusBuilding); err != nil {
+	query := `SELECT workflow_node_run_job.* FROM workflow_node_run_job WHERE worker_id IS NULL`
+	if _, err := db.Select(&deadJobsDB, query); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
@@ -343,6 +343,13 @@ func DeleteNodeJobRuns(db gorp.SqlExecutor, nodeID int64) error {
 	return err
 }
 
+// DeleteNodeJobRun deletes the given workflow_node_run_job
+func DeleteNodeJobRun(db gorp.SqlExecutor, nodeRunJob int64) error {
+	query := `delete from workflow_node_run_job where id = $1`
+	_, err := db.Exec(query, nodeRunJob)
+	return err
+}
+
 //UpdateNodeJobRun updates a workflow_node_run_job
 func UpdateNodeJobRun(ctx context.Context, db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
 	var end func()
@@ -383,7 +390,7 @@ func replaceWorkflowJobRunInQueue(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNode
 		return sdk.WrapError(err, "Unable to set workflow_node_run_job id %d with status %s", wNodeJob.ID, sdk.StatusWaiting)
 	}
 
-	query = "UPDATE worker SET status = $2, job_run_id = NULL where action_build_id = $1"
+	query = "UPDATE worker SET status = $2, job_run_id = NULL where job_run_id = $1"
 	if _, err := db.Exec(query, wNodeJob.ID, sdk.StatusDisabled); err != nil {
 		return sdk.WrapError(err, "Unable to set workers")
 	}

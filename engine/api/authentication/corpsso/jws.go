@@ -10,9 +10,9 @@ import (
 )
 
 type ssoSigninToken struct {
-	IssuedAt   int64  `json:"iat"`
-	RequireMFA bool   `json:"requireMFA,omitempty"`
-	Data       string `json:"data"`
+	IssuedAt   int64                  `json:"iat"`
+	RequireMFA bool                   `json:"requireMFA,omitempty"`
+	Data       map[string]interface{} `json:"data"`
 }
 
 type nonceSource struct{}
@@ -45,9 +45,13 @@ func prepareRequest(requestSigningKey string, request sdk.AuthSigninConsumerToke
 	if err != nil {
 		return "", sdk.WithStack(err)
 	}
+	var requestData map[string]interface{}
+	if err := json.Unmarshal(requestJSON, &requestData); err != nil {
+		return "", sdk.WithStack(err)
+	}
 
 	data, err := json.Marshal(ssoSigninToken{
-		Data:       string(requestJSON),
+		Data:       requestData,
 		IssuedAt:   request.IssuedAt,
 		RequireMFA: request.RequireMFA,
 	})

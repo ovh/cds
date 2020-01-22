@@ -6,20 +6,18 @@ var status = [];
 onmessage = function (e) {
     status = e.data.status;
     if (!started) {
-        loadWorkflowRuns(e.data.user, e.data.session, e.data.api);
+        loadWorkflowRuns();
     }
 };
 
-function loadWorkflowRuns(user, session, api) {
+function loadWorkflowRuns() {
     started = true;
     loop(5, function () {
         var url = '/queue/workflows';
-
         if (status && status.length > 0) {
             url = url.concat('?', status.map(function (s) { return 'status=' + s; }).join('&'))
         }
-
-        var xhr = httpCall(url, api, user, session);
+        var xhr = httpCallAPI(url);
         if (xhr.status >= 400) {
             return true;
         }

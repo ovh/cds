@@ -32,3 +32,12 @@ func TestRemoveNotPrintableChar(t *testing.T) {
 		})
 	}
 }
+
+func TestPathIsAbs(t *testing.T) {
+	GOOS = "windows"
+	assert.True(t, PathIsAbs(`C:\Program Files (x86)\Foo`))
+	assert.False(t, PathIsAbs(`Program Files (x86)\Foo`))
+	GOOS = "linux"
+	assert.True(t, PathIsAbs(`/tmp`))
+	assert.False(t, PathIsAbs(`tmp`))
+}

@@ -54,10 +54,7 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			refNode = wr.Workflow.WorkflowData.NodeByID(id)
 			var errp error
 			params, errp = workflow.NodeBuildParametersFromRun(*wr, id)
-			if errp != nil {
-				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters from workflow run")
-			}
-			if len(params) == 0 {
+			if errp != nil || len(params) == 0 {
 				refNode = nil
 			}
 		}
@@ -66,18 +63,17 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			var errp error
 			ancestorIds := refNode.Ancestors(wf.WorkflowData)
 			params, errp = workflow.NodeBuildParametersFromWorkflow(ctx, api.mustDB(), api.Cache, proj, wf, refNode, ancestorIds)
-			if errp != nil {
-				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters from workflow")
-			}
-			sdk.AddParameter(&params, "cds.dest.pipeline", sdk.StringParameter, "")
-			sdk.AddParameter(&params, "cds.status", sdk.StringParameter, "")
-			sdk.AddParameter(&params, "cds.manual", sdk.StringParameter, "")
+			if errp == nil && params != nil {
+				sdk.AddParameter(&params, "cds.dest.pipeline", sdk.StringParameter, "")
+				sdk.AddParameter(&params, "cds.status", sdk.StringParameter, "")
+				sdk.AddParameter(&params, "cds.manual", sdk.StringParameter, "")
 
-			if refNode.Context != nil && refNode.Context.ApplicationID != 0 {
-				sdk.AddParameter(&params, "cds.dest.application", sdk.StringParameter, "")
-			}
-			if refNode.Context != nil && refNode.Context.EnvironmentID != 0 {
-				sdk.AddParameter(&params, "cds.dest.environment", sdk.StringParameter, "")
+				if refNode.Context != nil && refNode.Context.ApplicationID != 0 {
+					sdk.AddParameter(&params, "cds.dest.application", sdk.StringParameter, "")
+				}
+				if refNode.Context != nil && refNode.Context.EnvironmentID != 0 {
+					sdk.AddParameter(&params, "cds.dest.environment", sdk.StringParameter, "")
+				}
 			}
 		}
 

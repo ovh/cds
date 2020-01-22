@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -73,7 +74,7 @@ func enablePluginLogger(ctx context.Context, done chan struct{}, c *pluginClient
 	}
 }
 
-func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Parameter, w workerruntime.Runtime, chanRes chan sdk.Result, done chan struct{}) {
+func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Parameter, action sdk.Action, w workerruntime.Runtime, chanRes chan sdk.Result, done chan struct{}) {
 	//For the moment we consider that plugin name = action name
 	pluginName := actionName
 
@@ -93,7 +94,7 @@ func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Paramete
 		envs = append(envs, fmt.Sprintf("%s=%s", envName, p.Value))
 	}
 
-	pluginSocket, err := startGRPCPlugin(context.Background(), pluginName, w, nil, startGRPCPluginOptions{
+	pluginSocket, err := startGRPCPlugin(ctx, pluginName, w, nil, startGRPCPluginOptions{
 		envs: envs,
 	})
 	if err != nil {
@@ -144,7 +145,7 @@ func RunGRPCPlugin(ctx context.Context, actionName string, params []sdk.Paramete
 		return
 	}
 	query := actionplugin.ActionQuery{
-		Options: sdk.ParametersMapMerge(sdk.ParametersToMap(params), sdk.ParametersToMap(params), sdk.MapMergeOptions.ExcludeGitParams),
+		Options: sdk.ParametersMapMerge(sdk.ParametersToMap(params), sdk.ParametersToMap(action.Parameters), sdk.MapMergeOptions.ExcludeGitParams),
 		JobID:   jobID,
 	}
 
@@ -231,19 +232,36 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w workerruntime.Run
 		}
 	}
 
+	var basedir string
+	if x, ok := w.BaseDir().(*afero.BasePathFs); ok {
+		basedir, _ = x.RealPath(".")
+	} else {
+		basedir = w.BaseDir().Name()
+	}
+
 	cmd := binary.Cmd
 	if _, err := sdk.LookPath(w.BaseDir(), cmd); err != nil {
-		return nil, sdk.WrapError(err, "plugin:%s unable to start GRPC plugin, binary command not found.", pluginName)
+		return nil, sdk.WrapError(err, "plugin:%s unable to find GRPC plugin, binary command not found.", pluginName)
+	}
+	cmd = path.Join(basedir, cmd)
+
+	for i := range binary.Entrypoints {
+		binary.Entrypoints[i] = path.Join(basedir, binary.Entrypoints[i])
 	}
 	args := append(binary.Entrypoints, binary.Args...)
 	var errstart error
 
+	workdir, err := workerruntime.WorkingDirectory(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var dir string
 	if x, ok := w.BaseDir().(*afero.BasePathFs); ok {
-		dir, _ = x.RealPath(".")
+		dir, _ = x.RealPath(workdir.Name())
 	} else {
-		dir = w.BaseDir().Name()
+		dir = workdir.Name()
 	}
+
 	if c.StdPipe, c.Socket, errstart = grpcplugin.StartPlugin(ctx, pluginName, dir, cmd, args, envs); errstart != nil {
 		return nil, sdk.WrapError(errstart, "plugin:%s unable to start GRPC plugin... Aborting", pluginName)
 	}

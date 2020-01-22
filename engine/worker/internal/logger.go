@@ -76,7 +76,9 @@ func (wk *CurrentWorker) sendHTTPLog(ctx context.Context, jobID int64) {
 
 	for _, l := range logs {
 		log.Debug("LOG: %v", l.Val)
-		if err := wk.Client().QueueSendLogs(wk.currentJob.context, jobID, *l); err != nil {
+		// TODO: stop the worker a nice way,
+		// for the moment we are using context.Background and not the job context
+		if err := wk.Client().QueueSendLogs(context.Background(), jobID, *l); err != nil {
 			log.Error(ctx, "error: cannot send logs: %s", err)
 			continue
 		}
