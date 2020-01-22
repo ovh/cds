@@ -95,6 +95,10 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 					ID: 42,
 					Parameters: []sdk.Parameter{
 						{
+							Name:  "cds.version", // used to compute cds.semver
+							Value: "1",
+						},
+						{
 							Name:  "cds.project",
 							Value: "my-project",
 						},
@@ -109,6 +113,10 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 						{
 							Name:  "cds.job",
 							Value: "my-job",
+						},
+						{
+							Name:  "git.http_url", // simulate an application attached to the pipeline
+							Value: "https://github.com/fsamin/dummy-empty-repo.git",
 						},
 					},
 					Job: sdk.ExecutedJob{
@@ -130,14 +138,22 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 											},
 										},
 									}, {
-										Name:     sdk.CheckoutApplicationAction,
+										Name:     sdk.GitCloneAction,
 										Type:     sdk.BuiltinAction,
 										Enabled:  true,
-										StepName: "checkout",
+										StepName: "gitClone",
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "directory",
 												Value: "{{.cds.workspace}}",
+											},
+											{
+												Name:  "url",
+												Value: "https://github.com/fsamin/dummy-empty-repo.git",
+											},
+											{
+												Name:  "depth",
+												Value: "false",
 											},
 										},
 									},
@@ -180,7 +196,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 		Reply(200).
 		JSON(nil)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(4).
+	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(5).
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(nil)
@@ -284,4 +300,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	assert.Equal(t, 2, strings.Count(logBuffer.String(), "my password should not be displayed here: **********\n"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_BUILD_NEWVAR=newval"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_KEY=********"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_SEMVER=0.1.0+cds.1"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] GIT_DESCRIBE=0.1.0"))
+	assert.Equal(t, 0, strings.Count(logBuffer.String(), "[INFO] CDS_BUILD_CDS_BUILD"))
 }
