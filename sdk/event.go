@@ -31,6 +31,8 @@ type Event struct {
 	WorkflowName        string                 `json:"workflow_name,omitempty"`
 	WorkflowRunNum      int64                  `json:"workflow_run_num,omitempty"`
 	WorkflowRunNumSub   int64                  `json:"workflow_run_num_sub,omitempty"`
+	WorkflowNodeRunID   int64                  `json:"workflow_node_run_id,omitempty"`
+	OperationUUID       string                 `json:"operation_uuid,omitempty"`
 	Status              string                 `json:"status,omitempty"`
 	Tags                []WorkflowRunTag       `json:"tag,omitempty"`
 	EventIntegrationsID []int64                `json:"event_integrations_id"`
@@ -116,10 +118,14 @@ type EventRunWorkflowOutgoingHook struct {
 // EventRunWorkflowJob contains event data for a workflow job node run
 //easyjson:json
 type EventRunWorkflowJob struct {
-	ID     int64  `json:"id,omitempty"`
-	Status string `json:"status,omitempty"`
-	Start  int64  `json:"start,omitempty"`
-	Done   int64  `json:"done,omitempty"`
+	ID           int64         `json:"id,omitempty"`
+	Status       string        `json:"status,omitempty"`
+	Start        int64         `json:"start,omitempty"`
+	Done         int64         `json:"done,omitempty"`
+	Requirements []Requirement `json:"requirements,omitempty"`
+	WorkerName   string        `json:"worker_name,omitempty"`
+	BookByName   string        `json:"book_by_name,omitempty"`
+	Parameters   []Parameter   `json:"parameters,omitempty"`
 }
 
 // EventRunWorkflow contains event data for a workflow run

@@ -38,6 +38,17 @@ func (api *API) InitRouter() {
 	}
 	api.eventsBroker.Init(r.Background, api.PanicDump())
 
+	api.websocketBroker = &websocketBroker{
+		router:           api.Router,
+		cache:            api.Cache,
+		dbFunc:           api.mustDB,
+		clients:          make(map[string]*websocketClient),
+		messages:         make(chan sdk.Event),
+		chanAddClient:    make(chan *websocketClient),
+		chanRemoveClient: make(chan string),
+	}
+	api.websocketBroker.Init(r.Background, api.PanicDump())
+
 	// Auth
 	r.Handle("/auth/driver", ScopeNone(), r.GET(api.getAuthDriversHandler, Auth(false)))
 	r.Handle("/auth/me", Scope(sdk.AuthConsumerScopeAction), r.GET(api.getAuthMe))
@@ -401,6 +412,7 @@ func (api *API) InitRouter() {
 
 	// SSE
 	r.Handle("/events", ScopeNone(), r.GET(api.eventsBroker.ServeHTTP))
+	r.Handle("/ws", ScopeNone(), r.GET(api.websocketBroker.ServeHTTP, Auth(false)))
 
 	// Feature
 	r.Handle("/feature/clean", ScopeNone(), r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token)))

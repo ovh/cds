@@ -251,6 +251,7 @@ type API struct {
 	StartupTime         time.Time
 	Maintenance         bool
 	eventsBroker        *eventsBroker
+	websocketBroker     *websocketBroker
 	warnChan            chan sdk.Event
 	Cache               cache.Store
 	Metrics             struct {

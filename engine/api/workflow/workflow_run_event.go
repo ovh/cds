@@ -61,7 +61,7 @@ func SendEvent(ctx context.Context, db gorp.SqlExecutor, key string, report *Pro
 			log.Warning(ctx, "SendEvent.workflow> Cannot load workflow run %d: %s", noderun.WorkflowRunID, errWR)
 			continue
 		}
-		event.PublishWorkflowNodeJobRun(ctx, db, key, *wr, jobrun)
+		event.PublishWorkflowNodeJobRun(ctx, key, *wr, jobrun)
 	}
 }
 
