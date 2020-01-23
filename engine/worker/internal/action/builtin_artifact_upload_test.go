@@ -18,7 +18,7 @@ import (
 )
 
 func TestRunArtifactUpload_Absolute(t *testing.T) {
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	wk.Params = []sdk.Parameter{
 		{Name: "cds.project", Value: "project"},
 	}
@@ -87,7 +87,7 @@ func TestRunArtifactUpload_Absolute(t *testing.T) {
 }
 
 func TestRunArtifactUpload_Relative(t *testing.T) {
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	wk.Params = []sdk.Parameter{
 		{Name: "cds.project", Value: "project"},
 	}

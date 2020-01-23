@@ -28,6 +28,14 @@ type TestWorker struct {
 	Params           []sdk.Parameter
 }
 
+func (w TestWorker) WorkingDirectory() *afero.BasePathFile {
+	return w.workingDirectory
+}
+
+func (w TestWorker) KeyDirectory() *afero.BasePathFile {
+	return w.keyDirectory
+}
+
 func (w TestWorker) Blur(i interface{}) error {
 	w.t.Log("Blur")
 	return nil
@@ -74,7 +82,7 @@ func (_ TestWorker) Unregister(ctx context.Context) error {
 	return nil
 }
 
-func (w TestWorker) InstallKey(key sdk.Variable, destinationPath string) (*workerruntime.KeyResponse, error) {
+func (w TestWorker) InstallKey(key sdk.Variable) (*workerruntime.KeyResponse, error) {
 	installedKeyPath := path.Join(w.keyDirectory.Name(), key.Name)
 	err := vcs.CleanAllSSHKeys(w.BaseDir(), w.keyDirectory.Name())
 	require.NoError(w.t, err)
@@ -93,9 +101,26 @@ func (w TestWorker) InstallKey(key sdk.Variable, destinationPath string) (*worke
 	}, nil
 }
 
+func (w TestWorker) InstallKeyTo(key sdk.Variable, destinationPath string) (*workerruntime.KeyResponse, error) {
+	var installedKeyPath string
+
+	w.t.Logf("InstallKey> destination : %s", destinationPath)
+	err := vcs.WriteKey(afero.NewOsFs(), destinationPath, key.Value)
+	require.NoError(w.t, err)
+	if x, ok := w.BaseDir().(*afero.BasePathFs); ok {
+		installedKeyPath, _ = x.RealPath(destinationPath)
+	}
+
+	return &workerruntime.KeyResponse{
+		Content: []byte(key.Value),
+		Type:    key.Type,
+		PKey:    installedKeyPath,
+	}, nil
+}
+
 var _ workerruntime.Runtime = new(TestWorker)
 
-func setupTest(t *testing.T) (TestWorker, context.Context) {
+func SetupTest(t *testing.T) (TestWorker, context.Context) {
 	fs := afero.NewOsFs()
 	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
 	log.Debug("creating basedir %s", basedir)
