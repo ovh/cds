@@ -5,25 +5,12 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 )
 
-// LoadNavbarData returns just the needed data for the ui navbar
-func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
-	// Admin can gets all project
-	// Users can gets only their projects
-
-	if u.Admin() {
-		return loadNavbarAsAdmin(db, store, u)
-	}
-
-	return loadNavbarAsUser(db, store, u)
-}
-
-func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
+func LoadNavbarAsAdmin(db gorp.SqlExecutor, userID int64) (data []sdk.NavbarProjectData, err error) {
 	query := `
 	(
 		SELECT DISTINCT
@@ -61,9 +48,9 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.Authentifie
 	)
 	`
 
-	rows, err := db.Query(query, u.OldUserStruct.ID)
+	rows, err := db.Query(query, userID)
 	if err != nil {
-		return data, err
+		return data, sdk.WithStack(err)
 	}
 	defer rows.Close()
 
@@ -72,7 +59,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.Authentifie
 		var favorite bool
 		var name sql.NullString
 		if err := rows.Scan(&key, &projectName, &projectDescription, &name, &favorite, &eltType); err != nil {
-			return data, err
+			return data, sdk.WithStack(err)
 		}
 
 		projData := sdk.NavbarProjectData{
@@ -98,7 +85,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.Authentifie
 	return data, nil
 }
 
-func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
+func LoadNavbarAsUser(db gorp.SqlExecutor, userID int64, groupIDs []int64) (data []sdk.NavbarProjectData, err error) {
 	query := `
 	(
 		SELECT DISTINCT
@@ -160,7 +147,7 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.Authentified
 	)
   `
 
-	rows, err := db.Query(query, u.OldUserStruct.ID, gorpmapping.IDsToQueryString(u.OldUserStruct.Groups.ToIDs()), group.SharedInfraGroup.ID)
+	rows, err := db.Query(query, userID, gorpmapping.IDsToQueryString(groupIDs), group.SharedInfraGroup.ID)
 	if err != nil {
 		return data, sdk.WithStack(err)
 	}
@@ -171,7 +158,7 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.Authentified
 		var favorite bool
 		var name sql.NullString
 		if err := rows.Scan(&key, &projectName, &projectDescription, &name, &favorite, &eltType); err != nil {
-			return data, err
+			return data, sdk.WithStack(err)
 		}
 
 		projData := sdk.NavbarProjectData{

@@ -113,19 +113,18 @@ func (api *API) getWorkersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var workers []sdk.Worker
 		var err error
-		h, isHatchery := api.isHatchery(ctx)
-		if isHatchery && h != nil {
-			workers, err = worker.LoadByHatcheryID(ctx, api.mustDB(), h.ID)
+		if isHatchery(ctx) {
+			workers, err = worker.LoadByHatcheryID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
 			if err != nil {
 				return err
 			}
 		} else if isMaintainer(ctx) {
-			// TODO Load worker for users
 			workers, err = worker.LoadAll(ctx, api.mustDB())
 			if err != nil {
 				return err
 			}
 		}
+		// TODO load workers for users
 		return service.WriteJSON(w, workers, http.StatusOK)
 	}
 }

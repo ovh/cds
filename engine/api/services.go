@@ -103,18 +103,27 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 
 func (api *API) postServiceHearbeatHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var mon sdk.MonitoringStatus
-		if err := service.UnmarshalBody(r, &mon); err != nil {
-			return sdk.WithStack(err)
+		if ok := isService(ctx); !ok {
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
+		s, err := services.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
+		if err != nil {
+			return err
+		}
+
+		var mon sdk.MonitoringStatus
+		if err := service.UnmarshalBody(r, &mon); err != nil {
+			return err
+		}
+
+		// Update status to warn if service version != api version
 		for i := range mon.Lines {
-			s := &mon.Lines[i]
-			if s.Component == "Version" {
-				if sdk.VERSION != s.Value {
-					s.Status = sdk.MonitoringStatusWarn
+			if mon.Lines[i].Component == "Version" {
+				if sdk.VERSION != mon.Lines[i].Value {
+					mon.Lines[i].Status = sdk.MonitoringStatusWarn
 				} else {
-					s.Status = sdk.MonitoringStatusOK
+					mon.Lines[i].Status = sdk.MonitoringStatusOK
 				}
 				break
 			}
@@ -122,19 +131,14 @@ func (api *API) postServiceHearbeatHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "Cannot start transaction")
+			return sdk.WithStack(err)
 		}
 		defer tx.Rollback() // nolint
 
-		srv, ok := api.isService(ctx)
-		if !ok {
-			return sdk.ErrForbidden
-		}
+		s.LastHeartbeat = time.Now()
+		s.MonitoringStatus = mon
 
-		srv.LastHeartbeat = time.Now()
-		srv.MonitoringStatus = mon
-
-		if err := services.Update(ctx, tx, srv); err != nil {
+		if err := services.Update(ctx, tx, s); err != nil {
 			return err
 		}
 

@@ -5,9 +5,10 @@ import (
 	"strconv"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 
 	"github.com/ovh/cds/engine/api/action"
@@ -69,7 +70,12 @@ func (api *API) checkJobIDPermissions(ctx context.Context, jobID string, perm in
 
 	// If the expected permission if >= RX and the consumer is a worker
 	// We check that the worker has took this job
-	if wk, isWorker := api.isWorker(ctx); isWorker && perm >= sdk.PermissionReadExecute {
+	if isWorker := isWorker(ctx); isWorker && perm >= sdk.PermissionReadExecute {
+		wk, err := worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Worker.ID)
+		if err != nil {
+			return err
+		}
+
 		var ok bool
 		k := cache.Key("api:workers", getAPIConsumer(ctx).ID, "perm", jobID)
 		if has, _ := api.Cache.Get(k, &ok); ok && has {
@@ -98,13 +104,13 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 	ctx, end := observability.Span(ctx, "api.checkProjectPermissions")
 	defer end()
 
-	if _, err := project.Load(api.mustDB(), api.Cache, projectKey);  err != nil {
+	if _, err := project.Load(api.mustDB(), api.Cache, projectKey); err != nil {
 		return err
 	}
 
 	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, getAPIConsumer(ctx).GetGroupIDs())
 	if err != nil {
-		return sdk.WrapError(err,  "cannot get max project permissions for %s", projectKey)
+		return sdk.WrapError(err, "cannot get max project permissions for %s", projectKey)
 	}
 
 	callerPermission := perms.Level(projectKey)

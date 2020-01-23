@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -33,14 +34,18 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return err
 		}
 
-		wk, ok := api.isWorker(ctx)
-		if !ok {
+		if ok := isWorker(ctx); !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
+		wk, err := worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Worker.ID)
+		if err != nil {
+			return err
 		}
 
 		p, err := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, project.LoadOptions.WithVariables, project.LoadOptions.WithClearKeys)
 		if err != nil {
-			return sdk.WrapError(err, "cannot load project by nodeJobRunID:%d", id)
+			return sdk.WrapError(err, "cannot load project by nodeJobRunID: %d", id)
 		}
 
 		// Load worker model
@@ -56,7 +61,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		// Load job run
 		pbj, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, id)
 		if err != nil {
-			return sdk.WrapError(err, "cannot load job nodeJobRunID:%d", id)
+			return sdk.WrapError(err, "cannot load job nodeJobRunID: %d", id)
 		}
 
 		observability.Current(ctx,
@@ -172,14 +177,19 @@ func (api *API) postBookWorkflowJobHandler() service.Handler {
 			return err
 		}
 
-		s, ok := api.isHatchery(ctx)
-		if !ok {
+		if ok := isHatchery(ctx); !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		if _, err := workflow.BookNodeJobRun(ctx, api.Cache, id, s); err != nil {
-			return sdk.WrapError(err, "Job already booked")
+		s, err := services.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Service.ID)
+		if err != nil {
+			return err
 		}
+
+		if _, err := workflow.BookNodeJobRun(ctx, api.Cache, id, s); err != nil {
+			return sdk.WrapError(err, "job already booked")
+		}
+
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
@@ -191,8 +201,7 @@ func (api *API) deleteBookWorkflowJobHandler() service.Handler {
 			return err
 		}
 
-		_, ok := api.isHatchery(ctx)
-		if !ok {
+		if ok := isHatchery(ctx); !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -221,7 +230,7 @@ func (api *API) getWorkflowJobHandler() service.Handler {
 
 func (api *API) postVulnerabilityReportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, isWorker := api.isWorker(ctx); !isWorker {
+		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -259,7 +268,12 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 		if err := workflow.HandleVulnerabilityReport(ctx, tx, api.Cache, p, nr, report); err != nil {
 			return sdk.WrapError(err, "Unable to handle report")
 		}
-		return sdk.WithStack(tx.Commit())
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		return nil
 	}
 }
 
@@ -270,8 +284,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 			return sdk.WrapError(err, "invalid id")
 		}
 
-		_, ok := api.isHatchery(ctx)
-		if !ok {
+		if ok := isHatchery(ctx); !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -299,7 +312,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit tx")
+			return sdk.WithStack(err)
 		}
 
 		return nil
@@ -313,9 +326,12 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			return err
 		}
 
-		wk, ok := api.isWorker(ctx)
-		if !ok {
+		if ok := isWorker(ctx); !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
+		}
+		wk, err := worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Worker.ID)
+		if err != nil {
+			return err
 		}
 
 		// Unmarshal into results
@@ -509,8 +525,7 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 			return sdk.WrapError(err, "cannot get job run %d", id)
 		}
 
-		_, ok := api.isWorker(ctx)
-		if !ok {
+		if ok := isWorker(ctx); !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -537,14 +552,13 @@ func (api *API) postWorkflowJobLogsHandler() service.Handler {
 
 func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
-		_, ok := api.isHatchery(ctx)
-		if !ok {
+		if ok := isHatchery(ctx); !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		var logs []sdk.ServiceLog
 		if err := service.UnmarshalBody(r, &logs); err != nil {
-			return sdk.WrapError(err, "Unable to parse body")
+			return err
 		}
 		db := api.mustDB()
 
@@ -584,7 +598,7 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 
 func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, isWorker := api.isWorker(ctx); !isWorker {
+		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -728,8 +742,8 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 
 		permissions := sdk.PermissionReadExecute
 
-		_, isW := api.isWorker(ctx)
-		_, isS := api.isService(ctx)
+		isW := isWorker(ctx)
+		isS := isService(ctx)
 		if !isW && !isS {
 			permissions = sdk.PermissionRead
 		}
@@ -802,7 +816,7 @@ func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *htt
 
 func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, isWorker := api.isWorker(ctx); !isWorker {
+		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -854,7 +868,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 
 func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, isWorker := api.isWorker(ctx); !isWorker {
+		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -956,7 +970,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 
 func (api *API) postWorkflowJobTagsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, isWorker := api.isWorker(ctx); !isWorker {
+		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
