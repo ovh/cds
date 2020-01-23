@@ -159,7 +159,7 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (err error) {
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			log.Warning(ctx, "upgrade:", err)
+			log.Warning(ctx, "upgrade: %v", err)
 			return err
 		}
 		defer c.Close()
