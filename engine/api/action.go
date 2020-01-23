@@ -85,7 +85,7 @@ func (api *API) getActionsForGroupHandler() service.Handler {
 
 		groupName := vars["permGroupName"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
@@ -654,7 +654,7 @@ func (api *API) importActionHandler() service.Handler {
 		if ea.Group == sdk.SharedInfraGroupName || ea.Group == "" {
 			grp = group.SharedInfraGroup
 		} else {
-			grp, err = group.LoadByName(ctx, tx, ea.Group)
+			grp, err = group.LoadByName(ctx, tx, ea.Group, group.LoadOptions.WithMembers)
 			if err != nil {
 				return err
 			}
