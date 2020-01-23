@@ -85,17 +85,17 @@ jobs:
     - script:
       - '#!/bin/bash'
       - set -ex
-      - worker key install proj-ssh-fsamin
-      - eval $(worker key install --env proj-ssh-fsamin)
+      - worker key install proj-ssh-04scworkflowrunworkercmd
+      - eval $(worker key install --env proj-ssh-04scworkflowrunworkercmd)
       - if [[ -z "$PKEY" ]]; then exit 1; fi;
       - ""
-      - eval $(worker key install --env-git proj-ssh-fsamin)
+      - eval $(worker key install --env-git proj-ssh-04scworkflowrunworkercmd)
       - if [[ -z "$GIT_SSH" ]]; then exit 1; fi;
       - ""
-      - worker key install --file id_rsa proj-ssh-fsamin
+      - worker key install --file id_rsa proj-ssh-04scworkflowrunworkercmd
       - cat id_rsa
       - ""
-      - worker key install --file /tmp/ssh/id_rsa proj-ssh-fsamin
+      - worker key install --file /tmp/ssh/id_rsa proj-ssh-04scworkflowrunworkercmd
       - cat /tmp/ssh/id_rsa
     - script:
         - sleep 5
