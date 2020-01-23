@@ -41,7 +41,6 @@ export class AppComponent implements OnInit {
     sseWorker: CDSWorker;
     heartbeatToken: number;
     zone: NgZone;
-    currentVersion = 0;
     showUIUpdatedBanner: boolean;
     languageSubscriber: Subscription;
     themeSubscriber: Subscription;
@@ -262,11 +261,7 @@ export class AppComponent implements OnInit {
         this.versionWorker.response().subscribe(msg => {
             if (msg) {
                 this.zone.run(() => {
-                    let versionJSON = Number(JSON.parse(msg).version);
-                    if (this.currentVersion === 0) {
-                        this.currentVersion = versionJSON;
-                    }
-                    if (this.currentVersion < versionJSON) {
+                    if ((<any>window).cds_version !== '' && (<any>window).cds_version !== JSON.parse(msg).version) {
                         this.showUIUpdatedBanner = true;
                     }
                 });
