@@ -86,7 +86,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		data.Uptodate = data.Version == sdk.VERSION
+		srv.Uptodate = data.Version == sdk.VERSION
 
 		return service.WriteJSON(w, srv, http.StatusOK)
 	}
