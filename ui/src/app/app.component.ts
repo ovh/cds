@@ -9,8 +9,10 @@ import { Store } from '@ngxs/store';
 import { GetCDSStatus } from 'app/store/cds.action';
 import { CDSState } from 'app/store/cds.state';
 import { Observable } from 'rxjs';
-import { bufferTime, filter, map, mergeMap } from 'rxjs/operators';
+import { WebSocketSubject } from 'rxjs/internal-compatibility';
+import { bufferTime, delay, filter, map, mergeMap, retryWhen } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
+import { webSocket } from 'rxjs/webSocket';
 import * as format from 'string-format-obj';
 import { AppService } from './app.service';
 import { Event, EventType } from './model/event.model';
@@ -61,6 +63,7 @@ export class AppComponent implements OnInit {
     @ViewChild('gamification', { static: false })
     eltGamification: ElementRef;
     gameInit: boolean;
+    websocket: WebSocketSubject<any>;
 
     constructor(
         _translate: TranslateService,
@@ -120,6 +123,7 @@ export class AppComponent implements OnInit {
                 this.user = user;
                 this.isConnected = true;
                 this.startSSE();
+                this.startWebsocket();
             }
         });
         this.startVersionWorker();
@@ -180,6 +184,32 @@ export class AppComponent implements OnInit {
         if (s) {
             s.unsubscribe();
         }
+    }
+
+    startWebsocket() {
+        const protocol = window.location.protocol.replace('http', 'ws');
+        const host = window.location.host;
+        const href = this._router['location']._baseHref;
+
+        this.websocket = webSocket({
+            url: `${protocol}//${host}${href}/cdsapi/ws`,
+            openObserver: {
+                next: value => {
+                    if (value.type === 'open') {
+                        console.log('connected');
+                    }
+                }
+            }});
+
+        this.websocket
+            .pipe(retryWhen(errors => errors.pipe(delay(5000))))
+            .subscribe((message: any) => {
+                console.log(message);
+            }, (err) => {
+                console.error('Error: ', err)
+            }, () => {
+                console.warn('Websocket Completed');
+            });
     }
 
     startSSE(): void {
