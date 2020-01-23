@@ -17,13 +17,23 @@ type CanonicalService struct {
 	PublicKey  []byte        `json:"public_key" db:"public_key"`
 }
 
-// Service is a µService registered on CDS API
+// Service is a µService registered on CDS API.
 type Service struct {
 	CanonicalService
 	LastHeartbeat    time.Time        `json:"last_heartbeat" db:"last_heartbeat" cli:"heartbeat"`
 	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"monitoring_status" cli:"-"`
 	Version          string           `json:"version" db:"-" cli:"version"`
 	Uptodate         bool             `json:"up_to_date" db:"-"`
+}
+
+// Update service field from new data.
+func (s *Service) Update(data Service) {
+  s.Name = data.Name
+	s.HTTPURL = data.HTTPURL
+	s.Config = data.Config
+	s.PublicKey = data.PublicKey
+	s.LastHeartbeat = data.LastHeartbeat
+	s.MonitoringStatus = data.MonitoringStatus
 }
 
 type ServiceConfig map[string]interface{}

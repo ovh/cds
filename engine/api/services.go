@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ovh/cds/engine/api/group"
-
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
@@ -35,58 +33,49 @@ func (api *API) getExternalServiceHandler() service.Handler {
 
 func (api *API) postServiceRegisterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var srv sdk.Service
-		if err := service.UnmarshalBody(r, &srv); err != nil {
+		consumer := getAPIConsumer(ctx)
+
+		var data sdk.Service
+		if err := service.UnmarshalBody(r, &data); err != nil {
 			return sdk.WithStack(err)
 		}
+		data.LastHeartbeat = time.Now()
 
-		//Service must be with a sharedinfra group token
-		// except for hatchery: users can start hatchery with their group
-		if !isGroupMember(ctx, group.SharedInfraGroup) && srv.Type != services.TypeHatchery {
-			return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", getAPIConsumer(ctx).ID, srv.Type)
+		// Service that are not hatcheries should be started be an admin
+		if data.Type != services.TypeHatchery && !isAdmin(ctx) {
+			return sdk.WrapError(sdk.ErrForbidden, "cannot register service of type %s for consumer %s", data.Type, consumer.ID)
 		}
 
-		// For hatcheries, the user who created the used token must be admin of all groups in the token
-		if srv.Type == services.TypeHatchery && !isAdmin(ctx) {
-			links, err := group.LoadLinksGroupUserForUserIDs(ctx, api.mustDB(), []int64{getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID})
-			if err != nil {
-				return err
-			}
-			groupsAdminIDs := links.ToGroupIDs()
-			for _, gID := range getAPIConsumer(ctx).GetGroupIDs() {
-				if !sdk.IsInInt64Array(gID, groupsAdminIDs) {
-					return sdk.WrapError(sdk.ErrForbidden, "Cannot register service for token %s with service %s", getAPIConsumer(ctx).ID, srv.Type)
-				}
-			}
-		}
-
-		srv.Uptodate = srv.Version == sdk.VERSION
-		srv.ConsumerID = &getAPIConsumer(ctx).ID
-		srv.LastHeartbeat = time.Now()
-
-		//Insert or update the service
+		// Insert or update the service
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "Cannot start transaction")
+			return sdk.WithStack(err)
 		}
 		defer tx.Rollback() // nolint
 
-		//Try to find the service, and keep; else generate a new one
-		oldSrv, errOldSrv := services.LoadByName(ctx, tx, srv.Name)
-		if oldSrv != nil {
-			srv.ID = oldSrv.ID
-			if err := services.Update(ctx, tx, &srv); err != nil {
-				return sdk.WithStack(err)
+		// Try to find the service, and keep; else generate a new one
+		srv, err := services.LoadByConsumerID(ctx, tx, consumer.ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		if srv != nil && !(srv.Type == data.Type) {
+			return sdk.WrapError(sdk.ErrForbidden, "cannot register service %s of type %s for consumer %s while existing service type is different", data.Name, data.Type, consumer.ID)
+    }
+    
+    // Update or create the service
+		if srv != nil {
+			srv.Update(data)
+			if err := services.Update(ctx, tx, srv); err != nil {
+				return err
 			}
-			log.Debug("postServiceRegisterHandler> service %s(%d) registered for consumer %v", srv.Name, srv.ID, *srv.ConsumerID)
-		} else if !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
-			log.Error(ctx, "postServiceRegisterHandler> unable to find service by name %s: %v", srv.Name, errOldSrv)
-			return sdk.WithStack(errOldSrv)
+			log.Debug("postServiceRegisterHandler> update existing service %s(%d) registered for consumer %s", srv.Name, srv.ID, *srv.ConsumerID)
 		} else {
-			if err := services.Insert(ctx, tx, &srv); err != nil {
+			srv = &data
+			srv.ConsumerID = &consumer.ID
+			if err := services.Insert(ctx, tx, srv); err != nil {
 				return sdk.WithStack(err)
 			}
-			log.Debug("postServiceRegisterHandler> new service %s(%d) registered for consumer %v", srv.Name, srv.ID, *srv.ConsumerID)
+			log.Debug("postServiceRegisterHandler> insert new service %s(%d) registered for consumer %s", srv.Name, srv.ID, *srv.ConsumerID)
 		}
 
 		if len(srv.PublicKey) > 0 {
@@ -96,6 +85,8 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
+
+		data.Uptodate = data.Version == sdk.VERSION
 
 		return service.WriteJSON(w, srv, http.StatusOK)
 	}
