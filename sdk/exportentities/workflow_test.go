@@ -22,7 +22,6 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 		Version                string
 		Workflow               map[string]exportentities.NodeEntry
 		Hooks                  map[string][]exportentities.HookEntry
-		DependsOn              []string
 		Conditions             *sdk.WorkflowNodeConditions
 		When                   []string
 		PipelineName           string
@@ -42,15 +41,6 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 			name: "Simple Workflow without dependencies should not raise an error",
 			fields: fields{
 				PipelineName: "pipeline",
-				DependsOn:    []string{"non existing"},
-			},
-			wantErr: true,
-		},
-		{
-			name: "Simple Workflow with an invalid dependency should raise an error",
-			fields: fields{
-				PipelineName: "pipeline",
-				Description:  "here is my description",
 			},
 			wantErr: false,
 		},
