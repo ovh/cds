@@ -26,5 +26,5 @@
             </div>
         </div>
     </div>
-    <div *ngIf="loadingGet" class="ui active text loader">{{ 'common_loading' | translate }}</div>
+    <div *ngIf="!exportedPip" class="ui active text loader">{{ 'common_loading' | translate }}</div>
 </div>
