@@ -182,7 +182,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5
 	github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926 // indirect
-	github.com/ugorji/go/codec v1.1.7 // indirect
+	github.com/ugorji/go v1.1.7 // indirect
 	github.com/ulikunitz/xz v0.5.4 // indirect
 	github.com/urfave/cli v1.20.0
 	github.com/vmware/govmomi v0.0.0-20170817040329-d7e841db6909
