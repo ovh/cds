@@ -110,6 +110,10 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 		return res, nil, code, sdk.WithStack(fmt.Errorf("HTTP %d", code))
 	}
 
+	if code == 204 {
+		return res, header, code, nil
+	}
+
 	if out != nil {
 		if err := json.Unmarshal(res, out); err != nil {
 			return res, nil, code, sdk.WithStack(err)

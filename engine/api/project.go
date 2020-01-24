@@ -27,12 +27,100 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	withPermissions := r.FormValue("permission")
+	filterByRepo := r.FormValue("repo")
+
+	var projects sdk.Projects
+	var err error
+	var filterByRepoFunc = func(db gorp.SqlExecutor, store cache.Store, p *sdk.Project) error {
+		//Filter the applications by repo
+		apps := []sdk.Application{}
+		for i := range p.Applications {
+			if p.Applications[i].RepositoryFullname == filterByRepo {
+				apps = append(apps, p.Applications[i])
+			}
+		}
+		p.Applications = apps
+		ws := []sdk.Workflow{}
+		//Filter the workflow by applications
+		for i := range p.Workflows {
+			w, err := workflow.LoadByID(ctx, db, store, p, p.Workflows[i].ID, workflow.LoadOptions{})
+			if err != nil {
+				return err
+			}
+
+			//Checks the workflow use one of the applications
+		wapps:
+			for _, a := range w.Applications {
+				for _, b := range apps {
+					if a.Name == b.Name {
+						ws = append(ws, p.Workflows[i])
+						break wapps
+					}
+				}
+			}
+		}
+		p.Workflows = ws
+		return nil
+	}
+
+	opts := []project.LoadOptionFunc{
+		project.LoadOptions.WithPermission,
+	}
+	opts = append(opts, filterByRepoFunc)
+
+	if isMaintainer(ctx) || isAdmin(ctx) {
+		projects, err = project.LoadAllByRepo(ctx, api.mustDB(), api.Cache, filterByRepo, opts...)
+		if err != nil {
+			return err
+		}
+	} else {
+		projects, err = project.LoadAllByRepoAndGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
+		if err != nil {
+			return err
+		}
+	}
+
+	pKeys := projects.Keys()
+	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), pKeys, getAPIConsumer(ctx).GetGroupIDs())
+	if err != nil {
+		return err
+	}
+	for i := range projects {
+		if isAdmin(ctx) {
+			projects[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+			continue
+		}
+		projects[i].Permissions = perms[projects[i].Key]
+		if isMaintainer(ctx) {
+			projects[i].Permissions.Readable = true
+		}
+	}
+
+	if strings.ToUpper(withPermissions) == "W" {
+		res := make([]sdk.Project, 0, len(projects))
+		for _, p := range projects {
+			if p.Permissions.Writable {
+				res = append(res, p)
+			}
+		}
+		projects = res
+	}
+
+	return service.WriteJSON(w, projects, http.StatusOK)
+}
+
 func (api *API) getProjectsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		withPermissions := r.FormValue("permission")
+		filterByRepo := r.FormValue("repo")
+		if filterByRepo != "" {
+			return api.getProjectsHandler_FilterByRepo(ctx, w, r)
+		}
+
 		withApplications := FormBool(r, "application")
 		withWorkflows := FormBool(r, "workflow")
-		filterByRepo := r.FormValue("repo")
-		withPermissions := r.FormValue("permission")
 		withIcon := FormBool(r, "withIcon")
 
 		requestedUserName := r.Header.Get("X-Cds-Username")
@@ -64,7 +152,6 @@ func (api *API) getProjectsHandler() service.Handler {
 
 		var projects sdk.Projects
 		var err error
-
 		switch {
 		case isMaintainer(ctx) && requestedUser == nil:
 			projects, err = project.LoadAll(ctx, api.mustDB(), api.Cache, opts...)
@@ -83,71 +170,32 @@ func (api *API) getProjectsHandler() service.Handler {
 			return err
 		}
 
+		var groupIDs []int64
+		var admin bool
+		var maintainer bool
+		if requestedUser == nil {
+			groupIDs = getAPIConsumer(ctx).GetGroupIDs()
+			admin = isAdmin(ctx)
+			maintainer = isMaintainer(ctx)
+		} else {
+			groupIDs = requestedUser.GetGroupIDs()
+			admin = requestedUser.Ring == sdk.UserRingAdmin
+			maintainer = requestedUser.Ring == sdk.UserRingMaintainer
+		}
+
 		pKeys := projects.Keys()
-		perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), pKeys, getAPIConsumer(ctx).GetGroupIDs())
+		perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), pKeys, groupIDs)
 		if err != nil {
 			return err
 		}
 		for i := range projects {
+			if admin {
+				projects[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+				continue
+			}
 			projects[i].Permissions = perms[projects[i].Key]
-		}
-
-		if filterByRepo == "" {
-			if strings.ToUpper(withPermissions) == "W" {
-				res := make([]sdk.Project, 0, len(projects))
-				for _, p := range projects {
-					if p.Permissions.Writable {
-						res = append(res, p)
-					}
-				}
-				projects = res
-			}
-
-			return service.WriteJSON(w, projects, http.StatusOK)
-		}
-
-		var filterByRepoFunc = func(db gorp.SqlExecutor, store cache.Store, p *sdk.Project) error {
-			//Filter the applications by repo
-			apps := []sdk.Application{}
-			for i := range p.Applications {
-				if p.Applications[i].RepositoryFullname == filterByRepo {
-					apps = append(apps, p.Applications[i])
-				}
-			}
-			p.Applications = apps
-			ws := []sdk.Workflow{}
-			//Filter the workflow by applications
-			for i := range p.Workflows {
-				w, err := workflow.LoadByID(ctx, db, store, p, p.Workflows[i].ID, workflow.LoadOptions{})
-				if err != nil {
-					return err
-				}
-
-				//Checks the workflow use one of the applications
-			wapps:
-				for _, a := range w.Applications {
-					for _, b := range apps {
-						if a.Name == b.Name {
-							ws = append(ws, p.Workflows[i])
-							break wapps
-						}
-					}
-				}
-			}
-			p.Workflows = ws
-			return nil
-		}
-		opts = append(opts, filterByRepoFunc)
-
-		if isMaintainer(ctx) || isAdmin(ctx) {
-			projects, err = project.LoadAllByRepo(ctx, api.mustDB(), api.Cache, filterByRepo, opts...)
-			if err != nil {
-				return err
-			}
-		} else {
-			projects, err = project.LoadAllByRepoAndGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), filterByRepo, opts...)
-			if err != nil {
-				return err
+			if maintainer {
+				projects[i].Permissions.Readable = true
 			}
 		}
 

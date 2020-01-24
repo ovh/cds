@@ -286,7 +286,7 @@ func Test_getProjectsHandler_WithWPermissionShouldReturnOneProject(t *testing.T)
 	assert.Len(t, projs, 1, "should have one project")
 }
 
-func Test_getprojectsHandler_AsProvider(t *testing.T) {
+func Test_getProjectsHandler_AsProvider(t *testing.T) {
 	api, tsURL, tsClose := newTestServer(t)
 	defer tsClose()
 
@@ -339,19 +339,34 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app))
+	require.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app))
 
-	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
+	// Call with an admin
+	sdkclientAdmin := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,
 		Token: jws,
 	})
 
-	projs, err := sdkclient.ProjectsList(cdsclient.FilterByUser(u.Username))
-	test.NoError(t, err)
+	projs, err := sdkclientAdmin.ProjectsList()
+	require.NoError(t, err)
+	assert.True(t, len(projs) >= 1)
+
+	apps, err := sdkclientAdmin.ApplicationsList(pkey, cdsclient.FilterByUser(u.Username), cdsclient.WithUsage(), cdsclient.FilterByWritablePermission())
+	require.NoError(t, err)
+	assert.True(t, len(apps) >= 1)
+
+	// Call like a provider
+	sdkclientProvider := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
+		Host:  tsURL,
+		Token: jws,
+	})
+
+	projs, err = sdkclientProvider.ProjectsList(cdsclient.FilterByUser(u.Username), cdsclient.FilterByWritablePermission())
+	require.NoError(t, err)
 	assert.Len(t, projs, 1)
 
-	apps, err := sdkclient.ApplicationsList(pkey, cdsclient.FilterByUser(u.Username), cdsclient.WithUsage())
-	test.NoError(t, err)
+	apps, err = sdkclientProvider.ApplicationsList(pkey, cdsclient.FilterByUser(u.Username), cdsclient.WithUsage(), cdsclient.FilterByWritablePermission())
+	require.NoError(t, err)
 	assert.Len(t, apps, 1)
 }
 
