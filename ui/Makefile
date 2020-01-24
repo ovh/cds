@@ -24,13 +24,13 @@ ngbuild: $(NG)
 INDEX = dist/index.tmpl
 $(INDEX):
 	$(MAKE) ngbuild
-	@cd dist && sed -i -e "s|window.cds_version = '';|window.cds_version='${VERSION}';|g" index.html && cp index.html index.tmpl
+	@cd dist && mv index.html index.tmpl
 
 FILES_UI = dist/FILES_UI
 $(FILES_UI): $(INDEX)
 	$(info sha512 = ${SHA512})
 	touch $(FILES_UI)
-	cd dist/ && for i in `ls -p | grep -v /|grep -v FILES_UI|grep -v index.html`; do echo "$$i;`${SHA512} $$i|cut -d ' ' -f1`" >> FILES_UI; done;
+	cd dist/ && for i in `ls -p | grep -v /|grep -v FILES_UI`; do echo "$$i;`${SHA512} $$i|cut -d ' ' -f1`" >> FILES_UI; done;
 
 build: $(FILES_UI) $(INDEX) ui.tar.gz
 
