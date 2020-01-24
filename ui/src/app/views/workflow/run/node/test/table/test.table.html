@@ -30,7 +30,7 @@
     <div class="ui grid">
         <div class="sixteen wide column">
             <app-data-table [withPagination]="20" [filter]="filterInput" [withFilter]="filter"
-                [columns]="columns" [data]="testcases">
+                [columns]="columns" [data]="testcases" (dataChange)="resetFilter($event)">
             </app-data-table>
         </div>
         <div class="sixteen wide column" *ngIf="testCaseSelected">

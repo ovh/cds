@@ -20,7 +20,12 @@ export class WorkflowRunTestTableComponent implements OnInit {
     codeMirrorConfig: any;
     columns: Array<Column<TestCase>>;
     filter: Filter<TestCase>;
+
+    beforeClickFilter: string;
     filterInput: string;
+    filterIndex: number;
+    countFilteredElement: number;
+
     testCaseSelected: TestCase;
     themeSubscription: Subscription;
 
@@ -29,6 +34,9 @@ export class WorkflowRunTestTableComponent implements OnInit {
     @Input('tests')
     set tests(data: Tests) {
         this._tests = data;
+        if (this._tests && this._tests.ko > 0 && (!this.filterInput || this.filterInput === '')) {
+            this.statusFilter('failed');
+        }
         this.initTestCases(data);
     }
     get tests() {
@@ -74,15 +82,23 @@ export class WorkflowRunTestTableComponent implements OnInit {
                 type: ColumnType.BUTTON,
                 name: '',
                 class: 'two right aligned',
-                selector: (tc: TestCase) => {
+                selector: (tc: TestCase, index?: number) => {
                     return {
                         icon: 'eye',
                         class: 'icon small',
-                        click: () => this.clickTestCase(tc)
+                        click: () => this.clickTestCase(tc, index)
                     };
                 },
             },
         ];
+    }
+
+    resetFilter(count: number): void {
+        if (this.countFilteredElement !== count) {
+            this.countFilteredElement = count;
+            delete this.testCaseSelected;
+            delete this.beforeClickFilter;
+        }
     }
 
     ngOnInit(): void {
@@ -116,7 +132,6 @@ export class WorkflowRunTestTableComponent implements OnInit {
         this.testCaseSelected = null;
         this.filterInput = newFilter;
         this._cd.markForCheck();
-        console.log(this.filterInput);
     }
 
     initTestCases(data: Tests) {
@@ -144,12 +159,15 @@ export class WorkflowRunTestTableComponent implements OnInit {
         this._cd.detectChanges();
     }
 
-    clickTestCase(tc: TestCase): void {
-        if (this.testCaseSelected && this.testCaseSelected.fullname === tc.fullname) {
+    clickTestCase(tc: TestCase, index: number): void {
+        if (this.testCaseSelected && this.testCaseSelected.fullname === tc.fullname  && this.filterIndex === index) {
             this.testCaseSelected = undefined;
-            this.filterInput = '';
+            this.filterInput = this.beforeClickFilter;
+            delete this.beforeClickFilter;
             return
         }
+        this.filterIndex = index;
+        this.beforeClickFilter = this.filterInput;
         this.filterInput = tc.fullname;
         tc.errorsAndFailures = this.getFailureString(tc.errors);
         tc.errorsAndFailures += this.getFailureString(tc.failures);
