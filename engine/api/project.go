@@ -88,7 +88,14 @@ func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.Resp
 		return err
 	}
 	for i := range projects {
+		if isAdmin(ctx) {
+			projects[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+			continue
+		}
 		projects[i].Permissions = perms[projects[i].Key]
+		if isMaintainer(ctx) {
+			projects[i].Permissions.Readable = true
+		}
 	}
 
 	if strings.ToUpper(withPermissions) == "W" {
@@ -164,10 +171,16 @@ func (api *API) getProjectsHandler() service.Handler {
 		}
 
 		var groupIDs []int64
+		var admin bool
+		var maintainer bool
 		if requestedUser == nil {
 			groupIDs = getAPIConsumer(ctx).GetGroupIDs()
+			admin = isAdmin(ctx)
+			maintainer = isMaintainer(ctx)
 		} else {
 			groupIDs = requestedUser.GetGroupIDs()
+			admin = requestedUser.Ring == sdk.UserRingAdmin
+			maintainer = requestedUser.Ring == sdk.UserRingMaintainer
 		}
 
 		pKeys := projects.Keys()
@@ -176,7 +189,14 @@ func (api *API) getProjectsHandler() service.Handler {
 			return err
 		}
 		for i := range projects {
+			if admin {
+				projects[i].Permissions = sdk.Permissions{Readable: true, Writable: true, Executable: true}
+				continue
+			}
 			projects[i].Permissions = perms[projects[i].Key]
+			if maintainer {
+				projects[i].Permissions.Readable = true
+			}
 		}
 
 		if strings.ToUpper(withPermissions) == "W" {
