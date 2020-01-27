@@ -258,7 +258,7 @@ func (s *Service) doOutgoingWebHookExecution(ctx context.Context, t *sdk.TaskExe
 		return nil
 	}
 
-	if wr.Status != sdk.StatusDisabled {
+	if wr.Status != sdk.StatusBuilding {
 		log.Error(ctx, "Hooks> workflow %s/%s #%s status: %s", pkey, workflow, run, wr.Status)
 		return nil
 	}
