@@ -74,6 +74,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 					}
 				}
 			}
+			projectIntegration.Config[kkBody] = c
 		}
 
 		tx, errT := api.mustDB().Begin()
