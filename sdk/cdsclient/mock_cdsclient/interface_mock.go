@@ -11,7 +11,7 @@ import (
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 	venom "github.com/ovh/venom"
-	go_coverage "github.com/sguiheux/go-coverage"
+	coverage "github.com/sguiheux/go-coverage"
 	io "io"
 	http "net/http"
 	reflect "reflect"
@@ -2892,7 +2892,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interfa
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
+func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -3132,6 +3132,21 @@ func (m *MockUserClient) UpdateFavorite(params sdk.FavoriteParams) (interface{},
 func (mr *MockUserClientMockRecorder) UpdateFavorite(params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFavorite", reflect.TypeOf((*MockUserClient)(nil).UpdateFavorite), params)
+}
+
+// UserGetSchema mocks base method
+func (m *MockUserClient) UserGetSchema() (sdk.SchemaResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGetSchema")
+	ret0, _ := ret[0].(sdk.SchemaResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGetSchema indicates an expected call of UserGetSchema
+func (mr *MockUserClientMockRecorder) UserGetSchema() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockUserClient)(nil).UserGetSchema))
 }
 
 // MockWorkerClient is a mock of WorkerClient interface
@@ -6430,7 +6445,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in interface
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
+func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
@@ -6721,6 +6736,21 @@ func (m *MockInterface) UpdateFavorite(params sdk.FavoriteParams) (interface{}, 
 func (mr *MockInterfaceMockRecorder) UpdateFavorite(params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFavorite", reflect.TypeOf((*MockInterface)(nil).UpdateFavorite), params)
+}
+
+// UserGetSchema mocks base method
+func (m *MockInterface) UserGetSchema() (sdk.SchemaResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGetSchema")
+	ret0, _ := ret[0].(sdk.SchemaResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGetSchema indicates an expected call of UserGetSchema
+func (mr *MockInterfaceMockRecorder) UserGetSchema() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockInterface)(nil).UserGetSchema))
 }
 
 // WorkerModelBook mocks base method
@@ -7875,7 +7905,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobSendSpawnInfo(ctx, id, in int
 }
 
 // QueueSendCoverage mocks base method
-func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report go_coverage.Report) error {
+func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
 	ret0, _ := ret[0].(error)
