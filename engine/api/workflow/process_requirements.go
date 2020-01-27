@@ -23,9 +23,16 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 	var model string
 	var tmp = sdk.ParametersToMap(run.BuildParameters)
 
+	pluginsRequirements := []sdk.Requirement{}
 	for i := range integrationPluginBinaries {
-		j.Action.Requirements = append(j.Action.Requirements, integrationPluginBinaries[i].Requirements...)
+		pluginsRequirements = append(pluginsRequirements, integrationPluginBinaries[i].Requirements...)
 	}
+
+	// as some plugin binaries can have same requirement, we deduplicate them
+	pluginsRequirements = sdk.RequirementListDeduplicate(pluginsRequirements)
+
+	// then add plugins requirement to the action requirement
+	j.Action.Requirements = append(j.Action.Requirements, pluginsRequirements...)
 
 	for _, v := range j.Action.Requirements {
 		name, errName := interpolate.Do(v.Name, tmp)

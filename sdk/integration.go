@@ -155,7 +155,7 @@ func DefaultIfEmptyStorage(integrationName string) string {
 	return integrationName
 }
 
-// IntegrationConfig represent the configuration of a plateform
+// IntegrationConfig represent the configuration of an integration
 type IntegrationConfig map[string]IntegrationConfigValue
 
 // Clone return a copy of the config (with a copy of the underlying data structure)

@@ -33,6 +33,21 @@ func (l RequirementList) Values() []string {
 	return values
 }
 
+// RequirementListDeduplicate returns requirements list without duplicate values.
+func RequirementListDeduplicate(l RequirementList) RequirementList {
+	m := map[string]Requirement{}
+
+	for i := range l {
+		m[l[i].Name+l[i].Type+l[i].Value] = l[i]
+	}
+
+	newList := []Requirement{}
+	for i := range m {
+		newList = append(newList, m[i])
+	}
+	return newList
+}
+
 // IsValid returns requirement list validity.
 func (l RequirementList) IsValid() error {
 	// check requirement unicity

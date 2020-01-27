@@ -3,12 +3,10 @@
 VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
 GITHASH := $(if ${GIT_HASH},${GIT_HASH},`git log -1 --format="%H"`)
 BUILDTIME := `date "+%m/%d/%y-%H:%M:%S"`
+CDSCTL := $(if ${CDSCTL},${CDSCTL},cdsctl)
 
 TARGET_DIR = ./dist
 TARGET_NAME = plugin-arsenal
-
-PLUGIN_MANIFEST=`echo plugin.yml`
-export PLUGIN_MANIFEST
 
 define PLUGIN_MANIFEST_BINARY
 os: %os%
@@ -50,12 +48,12 @@ build: $(TARGET_DIR)
 
 publish:
 	@echo "Updating plugin..."
-	cdsctl admin plugins import $(TARGET_DIR)/plugin.yml
+	$(CDSCTL) admin plugins import $(TARGET_DIR)/$(TARGET_NAME).yml
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
 			EXTENSION=""; \
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			echo "Updating plugin binary $(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION"; \
-			cdsctl admin plugins binary-add arsenal-deployment-plugin $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
+			$(CDSCTL) admin plugins binary-add arsenal-deployment-plugin $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
 	done
