@@ -46,7 +46,7 @@ func RequirementListDeduplicate(l RequirementList) RequirementList {
 		m[l[i].Name+l[i].Type+l[i].Value] = l[i]
 	}
 
-	newList := []Requirement{}
+	newList := make([]Requirement, 0, len(m))
 	for i := range m {
 		newList = append(newList, m[i])
 	}
