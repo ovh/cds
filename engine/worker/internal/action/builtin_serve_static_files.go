@@ -42,10 +42,14 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	} else {
 		abs = workdir.Name()
 	}
-	wkDirFS := afero.NewBasePathFs(afero.NewOsFs(), abs)
 
-	// Global all files matching filePath
-	filesPath, err := afero.Glob(wkDirFS, path)
+	completePath := path
+	if !filepath.IsAbs(path) {
+		completePath = filepath.Join(abs, path)
+	}
+
+	aferoFS := afero.NewOsFs()
+	filesPath, err := afero.Glob(aferoFS, completePath)
 	if err != nil {
 		return res, fmt.Errorf("cannot perform globbing of pattern '%s': %s", path, err)
 	}
@@ -61,7 +65,7 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 
 	// To set entrypoint dynamically when the path is a single file
 	if entrypoint.Value == "" && len(filesPath) == 1 {
-		fileStat, errS := wkDirFS.Stat(filesPath[0])
+		fileStat, errS := aferoFS.Stat(filesPath[0])
 		if errS != nil {
 			return res, fmt.Errorf("cannot stat file %s : %v", filesPath[0], errS)
 		}
@@ -75,7 +79,7 @@ func RunServeStaticFiles(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	}
 
 	wk.SendLog(ctx, workerruntime.LevelInfo, "Fetching files in progress...")
-	file, _, err := sdk.CreateTarFromPaths(wkDirFS, path, filesPath, &sdk.TarOptions{TrimDirName: filepath.Dir(path)})
+	file, _, err := sdk.CreateTarFromPaths(aferoFS, path, filesPath, &sdk.TarOptions{TrimDirName: filepath.Dir(path)})
 	if err != nil {
 		return res, fmt.Errorf("cannot tar files: %v", err)
 	}

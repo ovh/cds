@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { DownloadableResource } from 'app/model/download.model';
-import { DownloadService } from '../../../service/download/download.service';
-import { PathItem } from '../../../shared/breadcrumb/breadcrumb.component';
+import { DownloadService } from 'app/service/download/download.service';
+import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 
 @Component({
     selector: 'app-download',
@@ -12,15 +12,16 @@ import { PathItem } from '../../../shared/breadcrumb/breadcrumb.component';
 export class DownloadComponent {
     resources: Array<DownloadableResource>;
     loading = false;
-    apiURL: string;
     path: Array<PathItem>;
 
-    constructor(private _downloadService: DownloadService, private _cd: ChangeDetectorRef) {
+    constructor(
+        private _downloadService: DownloadService,
+        private _cd: ChangeDetectorRef
+    ) {
         this.loading = true;
 
         this._downloadService.getDownloads().subscribe(r => {
             this.resources = r;
-            this.apiURL = '/cdsapi';
             this.loading = false;
             this._cd.markForCheck();
         });

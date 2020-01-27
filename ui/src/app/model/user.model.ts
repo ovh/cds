@@ -41,3 +41,10 @@ export class UserContact {
     primary: boolean;
     verified: boolean;
 }
+
+export class Schema {
+    application: string;
+    pipeline: string;
+    environment: string;
+    workflow: string;
+}

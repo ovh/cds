@@ -454,6 +454,13 @@ const (
 // CanSpawn checks if the model can be spawned by this hatchery
 // it checks on every docker engine is one of the docker has availability
 func (h *HatcherySwarm) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+	// Hostname requirement are not supported
+	for _, r := range requirements {
+		if r.Type == sdk.HostnameRequirement {
+			log.Debug("CanSpawn> Job %d has a hostname requirement. Swarm can't spawn a worker for this job", jobID)
+			return false
+		}
+	}
 	for dockerName, dockerClient := range h.dockerClients {
 		//List all containers to check if we can spawn a new one
 		cs, errList := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
@@ -626,13 +633,14 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClientName string, containers []ty
 	//Checking workers
 	oldContainers := []types.Container{}
 	for _, c := range workers {
-		if !strings.Contains(c.Status, "Exited") && time.Now().Add(-1*time.Minute).Unix() < c.Created {
+		if !strings.Contains(c.Status, "Exited") && time.Now().Add(-3*time.Minute).Unix() < c.Created {
 			log.Debug("hatchery> swarm> listAwolWorkers> container %s(status=%s) is too young", c.Names[0], c.Status)
 			continue
 		}
 
 		//If there isn't any worker registered on the API. Kill the container
 		if len(apiworkers) == 0 {
+			log.Debug("hatchery> swarm> listAwolWorkers> no apiworkers returned by api container %s will be deleted", c.Names[0])
 			oldContainers = append(oldContainers, c)
 			continue
 		}
@@ -652,6 +660,7 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClientName string, containers []ty
 		}
 		//If the container doesn't match any worker : Kill it.
 		if !found {
+			log.Debug("hatchery> swarm> listAwolWorkers> container %s not found on apiworkers", c.Names[0])
 			oldContainers = append(oldContainers, c)
 		}
 	}
@@ -681,12 +690,25 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 			}
 		}
 
+		// creating a map of containers names
+		mContainers := map[string]struct{}{}
+		for i := range containers {
+			name := strings.TrimPrefix(containers[i].Names[0], "/") // docker returns name prefixed by a /
+			mContainers[name] = struct{}{}
+		}
+
 		// Checking services
 		for _, c := range containers {
-			if c.Labels["service_worker"] == "" || c.Names[0] != c.Labels["service_worker"] {
+			// checks if the container is a service based on its labels
+			if c.Labels["service_worker"] == "" {
 				continue
 			}
-			if !strings.Contains(c.Status, "Exited") && time.Now().Add(-1*time.Minute).Unix() < c.Created {
+			// if the worker associated to this service is still alive do not kill the service
+			if _, workerStillAlive := mContainers[c.Labels["service_worker"]]; workerStillAlive {
+				continue
+			}
+
+			if !strings.Contains(c.Status, "Exited") && time.Now().Add(-3*time.Minute).Unix() < c.Created {
 				log.Debug("hatchery> swarm> killAwolWorker> container %s(status=%s) is too young - service associated to worker %s", c.Names[0], c.Status, c.Labels["service_worker"])
 				continue
 			}

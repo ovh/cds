@@ -21,6 +21,13 @@ func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, expiration 
 		},
 	}
 
+	// FIXME create dedicated struct with only required fields for the token
+	if claims.Worker.Model != nil {
+		claims.Worker.Model = &sdk.Model{
+			ID: claims.Worker.Model.ID,
+		}
+	}
+
 	jwtoken := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)
 	signedJWToken, err := jwtoken.SignedString(privateKey)
 	if err != nil {

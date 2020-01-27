@@ -512,7 +512,7 @@ func EnableTracing() HandlerConfigParam {
 
 // NotFoundHandler is called by default by Mux is any matching handler has been found
 func NotFoundHandler(w http.ResponseWriter, req *http.Request) {
-	service.WriteError(w, req, sdk.ErrNotFound)
+	service.WriteError(w, req, sdk.WithStack(sdk.ErrNotFound))
 }
 
 // StatusPanic returns router status. If nbPanic > 30 -> Alert, if nbPanic > 0 -> Warn

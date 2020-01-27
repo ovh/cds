@@ -63,7 +63,7 @@ type Configuration struct {
 	Name string `toml:"name" comment:"Name of this CDS API Service\n Enter a name to enable this service" json:"name"`
 	URL  struct {
 		API string `toml:"api" default:"http://localhost:8081" json:"api"`
-		UI  string `toml:"ui" default:"http://localhost:2015" json:"ui"`
+		UI  string `toml:"ui" default:"http://localhost:8080" json:"ui"`
 	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################" json:"url"`
 	HTTP struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen HTTP address without port, example: 127.0.0.1" json:"addr"`
@@ -111,13 +111,13 @@ type Configuration struct {
 			RedirectMethod string `json:"redirect_method" toml:"redirectMethod"`
 			RedirectURL    string `json:"redirect_url" toml:"redirectURL"`
 			Keys           struct {
-				RequestSigningKey  string `json:"request_signing_key" toml:"requestSigningKey"`
-				TokenSigningKey    string `json:"token_signing_key" toml:"tokenSigningKey"`
+				RequestSigningKey  string `json:"-" toml:"requestSigningKey"`
+				TokenSigningKey    string `json:"-" toml:"tokenSigningKey"`
 				TokenKeySigningKey struct {
 					KeySigningKey   string `json:"public_signing_key" toml:"keySigningKey"`
 					SigningKeyClaim string `json:"signing_key_claim" toml:"signingKeyClaim"`
-				} `json:"key_signing_key" toml:"tokenKeySigningKey"`
-			} `json:"keys" toml:"keys"`
+				} `json:"-" toml:"tokenKeySigningKey"`
+			} `json:"-" toml:"keys"`
 		} `json:"corporate_sso" toml:"corporateSSO"`
 		Github struct {
 			Enabled        bool   `toml:"enabled" default:"false" json:"enabled"`

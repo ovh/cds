@@ -318,7 +318,7 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 
 		withDetailledNodeRun := QueryString(r, "withDetails")
 
-		_, isService := api.isService(ctx)
+		isService := isService(ctx)
 
 		// loadRun, DisableDetailledNodeRun = false for calls from CDS Service
 		// as hook service. It's needed to have the buildParameters.
@@ -925,7 +925,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			}
 
 			// Check node permission
-			if _, isService := api.isService(ctx); !isService && !permission.AccessToWorkflowNode(ctx, api.mustDB(), wf, &wf.WorkflowData.Node, getAPIConsumer(ctx), sdk.PermissionReadExecute) {
+			if isService := isService(ctx); !isService && !permission.AccessToWorkflowNode(ctx, api.mustDB(), wf, &wf.WorkflowData.Node, getAPIConsumer(ctx), sdk.PermissionReadExecute) {
 				return sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %s", wf.WorkflowData.Node.Name)
 			}
 

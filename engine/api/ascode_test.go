@@ -124,6 +124,7 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
+	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertAdminUser(t, db)
 
 	_, _ = assets.InsertService(t, db, "Test_getImportAsCodeHandler", services.TypeRepositories)
@@ -164,7 +165,8 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 	)
 
 	uri := api.Router.GetRoute("GET", api.getImportAsCodeHandler, map[string]string{
-		"uuid": UUID,
+		"permProjectKey": p.Key,
+		"uuid":           UUID,
 	})
 	req, err := http.NewRequest("GET", uri, nil)
 	test.NoError(t, err)

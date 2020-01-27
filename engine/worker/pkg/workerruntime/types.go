@@ -20,6 +20,12 @@ type DownloadArtifact struct {
 	Destination string `json:"destination"`
 }
 
+type UploadArtifact struct {
+	Name             string `json:"name"`
+	Tag              string `json:"tag"`
+	WorkingDirectory string `json:"working_directory"`
+}
+
 type FilePath struct {
 	Path string `json:"path"`
 }
@@ -58,7 +64,8 @@ type Runtime interface {
 	Take(ctx context.Context, job sdk.WorkflowNodeJobRun) error
 	ProcessJob(job sdk.WorkflowNodeJobRunData) (sdk.Result, error)
 	SendLog(ctx context.Context, level Level, format string)
-	InstallKey(key sdk.Variable, destinationPath string) (*KeyResponse, error)
+	InstallKey(key sdk.Variable) (*KeyResponse, error)
+	InstallKeyTo(key sdk.Variable, destinationPath string) (*KeyResponse, error)
 	Unregister(ctx context.Context) error
 	Client() cdsclient.WorkerInterface
 	BaseDir() afero.Fs

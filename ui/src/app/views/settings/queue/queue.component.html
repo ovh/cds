@@ -26,9 +26,9 @@
                             <th class="two wide">by</th>
                             <th class="one wide">run</th>
                             <th class="two wide">project/workflow</th>
-                            <th [ngClass]="{'four wide': !user.admin, 'one wide': user.admin}">node</th>
+                            <th [ngClass]="{'four wide': !user.isAdmin(), 'one wide': user.isAdmin()}">node</th>
                             <th class="two wide">triggered_by</th>
-                            <th class="three wide" *ngIf="user.admin">requirements</th>
+                            <th class="three wide" *ngIf="user.isAdmin()">requirements</th>
                             <th class="two wide"></th>
                         </tr>
                     </thead>
@@ -66,7 +66,7 @@
                                     parametersMaps[index]['cds.triggered_by.username']}}
                                 </span>
                             </td>
-                            <td *ngIf="user.admin">
+                            <td *ngIf="user.isAdmin()">
                                 <span *ngIf="wNodeJobRun.job != null && wNodeJobRun.job.action != null && wNodeJobRun.job.action.requirements != null">
                                     {{requirementsList[index]}}
                                 </span>

@@ -1,6 +1,4 @@
-var apiTestEnv = 'foo.bar'; // url for test cf environments/environment.ts
-
-function loop (initWaitingTime, func) {
+function loop(initWaitingTime, func) {
     var retry = 0;
     var fibonacciStep = 0;
     var timeToWait = initWaitingTime;
@@ -20,33 +18,23 @@ function loop (initWaitingTime, func) {
             }
         }
     }, 1000);
-
 }
 
-function httpCall (path, host, user, session, additionnalHeaders) {
-    if (host !== apiTestEnv) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', host + path, false, null, null);
-        if (session) {
-            xhr.setRequestHeader("Session-Token", session);
-        } else if (user) {
-            xhr.setRequestHeader("Authorization", "Basic " + user.token);
-        }
-        if (additionnalHeaders) {
-            Object.keys(additionnalHeaders).forEach(function (k) {
-                xhr.setRequestHeader(k, additionnalHeaders[k]);
-            });
-        }
+function httpCallAPI(path) {
+    return httpCall('./../../../cdsapi', path)
+}
 
-        xhr.send(null);
-        if (xhr.status === 401 || xhr.status === 403 || xhr.status === 404) {
-            close();
-        }
-        return xhr;
+function httpCall(host, path) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', host + path, false, null, null);
+    xhr.send(null);
+    if (xhr.status === 401 || xhr.status === 403 || xhr.status === 404) {
+        close();
     }
+    return xhr;
 }
 
-function fibonacci (retry) {
+function fibonacci(retry) {
     if (retry <= 1) {
         return retry;
     }
@@ -56,5 +44,5 @@ function fibonacci (retry) {
 function connectSSE(url, headAuthKey, headAuthValue) {
     var headers = {};
     headers[headAuthKey] = headAuthValue;
-    return new EventSourcePolyfill(url, {headers: headers, errorOnTimeout: false, checkActivity: false, heartbeatTimeout: 300000});
+    return new EventSourcePolyfill(url, { headers: headers, errorOnTimeout: false, checkActivity: false, heartbeatTimeout: 300000 });
 }

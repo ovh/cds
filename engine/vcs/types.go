@@ -28,7 +28,7 @@ type Configuration struct {
 	URL string `default:"http://localhost:8084" json:"url"`
 	UI  struct {
 		HTTP struct {
-			URL string `toml:"url" default:"http://localhost:2015" json:"url"`
+			URL string `toml:"url" default:"http://localhost:8080" json:"url"`
 		} `toml:"http" json:"http"`
 	} `toml:"ui" json:"ui"`
 	API   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`

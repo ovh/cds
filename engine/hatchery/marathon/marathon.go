@@ -166,10 +166,13 @@ func (h *HatcheryMarathon) WorkerModelsEnabled() ([]sdk.Model, error) {
 // CanSpawn return wether or not hatchery can spawn model
 // requirements services are not supported
 func (h *HatcheryMarathon) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
-	//Service requirement are not supported
+	// Service and Hostname requirement are not supported
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement {
 			log.Debug("CanSpawn> Job %d has a service requirement. Marathon can't spawn a worker for this job", jobID)
+			return false
+		} else if r.Type == sdk.HostnameRequirement {
+			log.Debug("CanSpawn> Job %d has a hostname requirement. Marathon can't spawn a worker for this job", jobID)
 			return false
 		}
 	}
@@ -309,7 +312,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 			Type: "DOCKER",
 		},
 		Env:       &envsWm,
-		CPUs:      2,
+		CPUs:      h.Config.DefaultCPUs,
 		Instances: &instance,
 		Mem:       &mem,
 		Labels:    &h.marathonLabels,

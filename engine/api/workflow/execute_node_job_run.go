@@ -190,8 +190,11 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 	syncJobInNodeRun(nodeRun, job, stageIndex)
 
-	r, err := executeNodeRun(ctx, db, store, proj, nodeRun)
-	return report.Merge(ctx, r, err)
+	if job.Status != sdk.StatusStopped {
+		r, err := executeNodeRun(ctx, db, store, proj, nodeRun)
+		return report.Merge(ctx, r, err)
+	}
+	return nil, nil
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker

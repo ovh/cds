@@ -11,7 +11,9 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -76,9 +78,25 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		}
 		// If the driver was disabled for the consumer that was found, ignore it
 		if _, ok := api.AuthenticationDrivers[c.Type]; ok {
+			// Add contacts for consumer's user
 			if err := user.LoadOptions.WithContacts(ctx, api.mustDB(), c.AuthentifiedUser); err != nil {
 				return ctx, err
 			}
+
+			// Add service for consumer if exists
+			s, err := services.LoadByConsumerID(ctx, api.mustDB(), c.ID)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return ctx, err
+			}
+			c.Service = s
+
+			// Add worker for consumer if exists
+			w, err := worker.LoadByConsumerID(ctx, api.mustDB(), c.ID)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return ctx, err
+			}
+			c.Worker = w
+
 			consumer = c
 		}
 	}

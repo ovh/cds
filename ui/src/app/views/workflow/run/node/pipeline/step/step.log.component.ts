@@ -9,9 +9,7 @@ import {
     ViewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
-import { AuthenticationState } from 'app/store/authentication.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { Action } from '../../../../../../model/action.model';
@@ -105,7 +103,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     @ViewChild('logsContent', { static: false }) logsElt: ElementRef;
 
     constructor(
-        private _store: Store,
         private _durationService: DurationService,
         private _router: Router,
         private _route: ActivatedRoute,
@@ -162,9 +159,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         if (!this.worker) {
             this.worker = new CDSWebWorker('./assets/worker/web/workflow-log.js');
             this.worker.start({
-                user: this._store.selectSnapshot(AuthenticationState.user),
-                // session: this._authStore.getSessionToken(),
-                api: '/cdsapi',
                 key: this.project.key,
                 workflowName: this.workflowName,
                 number: this.nodeRun.num,

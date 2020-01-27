@@ -142,9 +142,6 @@ $ engine config new > ~/.cds/dev.toml
 ## in section [hatchery.local.commonConfiguration.api.http]
 ### --> uncomment url, should be set to url = "http://localhost:8081" 
 
-## Replace all http://localhost:8080 by http://localhost:4200
-## 8080 is the "production" port for UI, 4200 is the development port
-
 ```
 
 Prepare database:
@@ -180,7 +177,7 @@ $ cdsctl signup -H http://localhost:8081 --email your-username@localhost.local -
 # Check CDS API logs to get the validation code
 ```
 
-Open a browser, go on http://localhost:4200 - Have fun.
+Open a browser, go on http://localhost:8080 - Have fun.
 
 ## Notes
 

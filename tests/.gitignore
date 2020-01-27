@@ -3,3 +3,4 @@
 results
 *.exported
 *.csv
+cdsctl

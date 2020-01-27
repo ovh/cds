@@ -1,18 +1,14 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"reflect"
 	"strings"
 
-	"github.com/alecthomas/jsonschema"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
-	"github.com/ovh/cds/sdk/exportentities"
 )
 
 const (
@@ -75,6 +71,11 @@ func (y yamlSchemaVSCodeInstaller) Install(schemas yamlSchemaPath) error {
 }
 
 func toolsYamlSchemaRun(v cli.Values) error {
+	res, err := client.UserGetSchema()
+	if err != nil {
+		return err
+	}
+
 	var installer yamlSchemaInstaller
 
 	switch v.GetString("ide-name") {
@@ -82,13 +83,6 @@ func toolsYamlSchemaRun(v cli.Values) error {
 		installer = &yamlSchemaVSCodeInstaller{}
 	default:
 		return fmt.Errorf("Invalid given IDE name")
-	}
-
-	types := []reflect.Type{
-		reflect.TypeOf(exportentities.Workflow{}),
-		reflect.TypeOf(exportentities.PipelineV1{}),
-		reflect.TypeOf(exportentities.Application{}),
-		reflect.TypeOf(exportentities.Environment{}),
 	}
 
 	home, err := os.UserHomeDir()
@@ -103,28 +97,37 @@ func toolsYamlSchemaRun(v cli.Values) error {
 		return fmt.Errorf("Cannot create folder %s: %s", targetFolder, err)
 	}
 
-	results := make([]string, len(types))
-	for i := range types {
-		r := jsonschema.Reflector{
-			AllowAdditionalProperties:  true,
-			RequiredFromJSONSchemaTags: true,
-		}
-		sch := r.ReflectFromType(types[i])
-
-		buf, _ := json.MarshalIndent(sch, "", "\t")
-		path := fmt.Sprintf("%s/%s.schema.json", targetFolder, types[i].Name())
-		if err := ioutil.WriteFile(path, buf, 0775); err != nil {
-			return fmt.Errorf("Cannot write file at %s: %s", path, err)
-		}
-		fmt.Printf("File %s successfully written.\n", path)
-
-		results[i] = "file://" + path
+	paths := yamlSchemaPath{
+		Workflow:    fmt.Sprintf("%s/workflow.schema.json", targetFolder),
+		Pipeline:    fmt.Sprintf("%s/pipeline.schema.json", targetFolder),
+		Application: fmt.Sprintf("%s/application.schema.json", targetFolder),
+		Environment: fmt.Sprintf("%s/environment.schema.json", targetFolder),
 	}
 
-	return installer.Install(yamlSchemaPath{
-		Workflow:    results[0],
-		Pipeline:    results[1],
-		Application: results[2],
-		Environment: results[3],
-	})
+	if err := ioutil.WriteFile(paths.Workflow, []byte(res.Workflow), 0775); err != nil {
+		return fmt.Errorf("Cannot write file at %s: %s", paths.Workflow, err)
+	}
+	fmt.Printf("File %s successfully written.\n", paths.Workflow)
+
+	if err := ioutil.WriteFile(paths.Pipeline, []byte(res.Pipeline), 0775); err != nil {
+		return fmt.Errorf("Cannot write file at %s: %s", paths.Pipeline, err)
+	}
+	fmt.Printf("File %s successfully written.\n", paths.Pipeline)
+
+	if err := ioutil.WriteFile(paths.Application, []byte(res.Application), 0775); err != nil {
+		return fmt.Errorf("Cannot write file at %s: %s", paths.Application, err)
+	}
+	fmt.Printf("File %s successfully written.\n", paths.Application)
+
+	if err := ioutil.WriteFile(paths.Environment, []byte(res.Environment), 0775); err != nil {
+		return fmt.Errorf("Cannot write file at %s: %s", paths.Environment, err)
+	}
+	fmt.Printf("File %s successfully written.\n", paths.Environment)
+
+	paths.Workflow = "file://" + paths.Workflow
+	paths.Pipeline = "file://" + paths.Pipeline
+	paths.Application = "file://" + paths.Application
+	paths.Environment = "file://" + paths.Environment
+
+	return installer.Install(paths)
 }

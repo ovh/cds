@@ -33,11 +33,11 @@ func vcsStrategy(ctx context.Context, wk workerruntime.Runtime, params []sdk.Par
 		}
 		privateKeyVar := sdk.Variable{
 			Name:  "cds.key." + keyName.Value + ".priv",
-			Type:  "string",
+			Type:  sdk.KeyTypeSSH,
 			Value: privateKey.Value,
 		}
 
-		installedKey, err := wk.InstallKey(privateKeyVar, "")
+		installedKey, err := wk.InstallKey(privateKeyVar)
 		if err != nil {
 			return gitURL, nil, err
 		}

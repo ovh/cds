@@ -300,6 +300,8 @@ type AuthConsumer struct {
 	// aggregates
 	AuthentifiedUser *AuthentifiedUser `json:"user,omitempty" db:"-"`
 	Groups           Groups            `json:"groups,omitempty" db:"-"`
+	Service          *Service          `json:"-" db:"-"`
+	Worker           *Worker           `json:"-" db:"-"`
 }
 
 // IsValid returns validity for auth consumer.
@@ -327,28 +329,32 @@ func (c AuthConsumer) GetGroupIDs() []int64 {
 }
 
 func (c AuthConsumer) Admin() bool {
-	admin := c.AuthentifiedUser.Admin()
-	return admin
+	return c.AuthentifiedUser.Ring == UserRingAdmin
 }
 
 func (c AuthConsumer) Maintainer() bool {
-	return c.AuthentifiedUser.Maintainer()
-}
-
-func (c AuthConsumer) GetConsumerName() string {
-	return c.Name
+	return c.AuthentifiedUser.Ring == UserRingMaintainer
 }
 
 func (c AuthConsumer) GetUsername() string {
-	return c.AuthentifiedUser.Username
-}
-
-func (c AuthConsumer) GetFullname() string {
-	return c.AuthentifiedUser.Fullname
+	if c.Service != nil || c.Worker != nil {
+		return c.Name
+	}
+	return c.AuthentifiedUser.GetUsername()
 }
 
 func (c AuthConsumer) GetEmail() string {
+	if c.Service != nil || c.Worker != nil {
+		return ""
+	}
 	return c.AuthentifiedUser.GetEmail()
+}
+
+func (c AuthConsumer) GetFullname() string {
+	if c.Service != nil || c.Worker != nil {
+		return c.Name
+	}
+	return c.AuthentifiedUser.GetFullname()
 }
 
 func (c AuthConsumer) GetDEPRECATEDUserStruct() *User {

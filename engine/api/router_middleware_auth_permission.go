@@ -7,6 +7,8 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 
 	"github.com/ovh/cds/engine/api/action"
@@ -68,7 +70,12 @@ func (api *API) checkJobIDPermissions(ctx context.Context, jobID string, perm in
 
 	// If the expected permission if >= RX and the consumer is a worker
 	// We check that the worker has took this job
-	if wk, isWorker := api.isWorker(ctx); isWorker && perm >= sdk.PermissionReadExecute {
+	if isWorker := isWorker(ctx); isWorker && perm >= sdk.PermissionReadExecute {
+		wk, err := worker.LoadByID(ctx, api.mustDB(), getAPIConsumer(ctx).Worker.ID)
+		if err != nil {
+			return err
+		}
+
 		var ok bool
 		k := cache.Key("api:workers", getAPIConsumer(ctx).ID, "perm", jobID)
 		if has, _ := api.Cache.Get(k, &ok); ok && has {
@@ -93,24 +100,29 @@ func (api *API) checkJobIDPermissions(ctx context.Context, jobID string, perm in
 	return nil
 }
 
-func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, perm int, routeVars map[string]string) error {
+func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, requiredPerm int, routeVars map[string]string) error {
 	ctx, end := observability.Span(ctx, "api.checkProjectPermissions")
 	defer end()
 
-	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, getAPIConsumer(ctx).GetGroupIDs())
-	if err != nil {
-		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for project %s", projectKey))
+	if _, err := project.Load(api.mustDB(), api.Cache, projectKey); err != nil {
+		return err
 	}
 
-	maxLevelPermission := perms.Level(projectKey)
-	if maxLevelPermission < perm { // If the caller based on its group doesn have enough permission level
-		log.Debug("checkProjectPermissions> maxLevelPermission= %d ", maxLevelPermission)
+	perms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, getAPIConsumer(ctx).GetGroupIDs())
+	if err != nil {
+		return sdk.WrapError(err, "cannot get max project permissions for %s", projectKey)
+	}
+
+	callerPermission := perms.Level(projectKey)
+	// If the caller based on its group doesn't have enough permission level
+	if callerPermission < requiredPerm {
+		log.Debug("checkProjectPermissions> callerPermission=%d ", callerPermission)
 		// If it's about READ: we have to check if the user is a maintainer or an admin
-		if perm < sdk.PermissionReadExecute {
+		if requiredPerm == sdk.PermissionRead {
 			if !isMaintainer(ctx) {
 				// The caller doesn't enough permission level from its groups and is neither a maintainer nor an admin
 				log.Debug("checkProjectPermissions> %s(%s) is not authorized to %s", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
-				return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s", projectKey)
+				return sdk.WrapError(sdk.ErrNoProject, "not authorized for project %s", projectKey)
 			}
 			log.Debug("checkProjectPermissions> %s(%s) access granted to %s because is maintainer", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
 			observability.Current(ctx, observability.Tag(observability.TagPermission, "is_maintainer"))
@@ -126,9 +138,8 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 		log.Debug("checkProjectPermissions> %s(%s) access granted to %s because is admin", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey)
 		observability.Current(ctx, observability.Tag(observability.TagPermission, "is_admin"))
 		return nil
-
 	}
-	log.Debug("checkWorkflowPermissions> %s(%s) access granted to %s because has permission (max permission = %d)", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey, maxLevelPermission)
+	log.Debug("checkWorkflowPermissions> %s(%s) access granted to %s because has permission (max permission = %d)", getAPIConsumer(ctx).Name, getAPIConsumer(ctx).ID, projectKey, callerPermission)
 	observability.Current(ctx, observability.Tag(observability.TagPermission, "is_granted"))
 	return nil
 }

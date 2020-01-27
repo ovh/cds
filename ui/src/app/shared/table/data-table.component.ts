@@ -35,7 +35,7 @@ export enum ColumnType {
 }
 
 export type SelectorType<T> = (d: T) => ColumnType;
-export type Selector<T> = (d: T) => any;
+export type Selector<T> = (d: T, index?: number) => any;
 export type Filter<T> = (f: string) => (d: T) => boolean;
 export type Select<T> = (d: T) => boolean;
 
@@ -51,7 +51,7 @@ export class Column<T> {
 
 @Pipe({ name: 'selector' })
 export class SelectorPipe<T> implements PipeTransform {
-    transform(columns: Array<Column<T>>, data: T): Array<any> {
+    transform(columns: Array<Column<T>>, data: T, index?: number): Array<any> {
         return columns.map(c => {
             let type: ColumnType;
             switch (typeof c.type) {
@@ -63,7 +63,7 @@ export class SelectorPipe<T> implements PipeTransform {
                     break;
             }
 
-            let selector = c.selector(data);
+            let selector = c.selector(data, index);
 
             let translate: boolean;
             if (!type || type === ColumnType.TEXT) {

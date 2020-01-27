@@ -9,12 +9,10 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
-
-	"github.com/ovh/cds/engine/worker/internal"
-
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/engine/worker/internal"
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
 

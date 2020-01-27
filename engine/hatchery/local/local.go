@@ -62,9 +62,13 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	genname := h.Configuration().Name
 	h.Common.Common.ServiceName = genname
 	h.Common.Common.ServiceType = services.TypeHatchery
+	var err error
+	h.Config.Basedir, err = filepath.Abs(h.Config.Basedir)
+	if err != nil {
+		return fmt.Errorf("unable to get basedir absolute path: %v", err)
+	}
 	h.HTTPURL = h.Config.URL
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
-	var err error
 	h.Common.Common.PrivateKey, err = jwt.ParseRSAPrivateKeyFromPEM([]byte(h.Config.RSAPrivateKey))
 	if err != nil {
 		return fmt.Errorf("unable to parse RSA private Key: %v", err)
@@ -369,6 +373,12 @@ func (h *HatcheryLocal) checkRequirement(r sdk.Requirement) (bool, error) {
 		}
 		conn.Close()
 		return true, nil
+	case sdk.HostnameRequirement:
+		h, err := os.Hostname()
+		if err != nil {
+			return false, err
+		}
+		return h == r.Value, nil
 	default:
 		log.Debug("checkRequirement> %v don't work on this hatchery", r.Type)
 		return false, nil

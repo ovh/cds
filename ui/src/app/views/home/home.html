@@ -41,7 +41,7 @@
                             <i class="book icon"></i>{{'navbar_favorites' | translate}}
                         </a>
                     </div>
-                    <ng-container *ngIf="user.admin">
+                    <ng-container *ngIf="user.isAdmin()">
                         <app-home-favorite [bookmarks]="favorites"></app-home-favorite>
                     </ng-container>
                 </div>

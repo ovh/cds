@@ -59,11 +59,13 @@ const (
 )
 
 type Identifiable interface {
-	GetConsumerName() string
 	GetUsername() string
-	GetFullname() string
 	GetEmail() string
+	GetFullname() string
 }
+
+var _ Identifiable = new(AuthConsumer)
+var _ Identifiable = new(AuthentifiedUser)
 
 type UserRegistration struct {
 	ID       string    `json:"id" db:"id"`
@@ -73,6 +75,8 @@ type UserRegistration struct {
 	Email    string    `json:"email"  db:"email"`
 	Hash     string    `json:"-"  db:"hash"` // do no return hash in json
 }
+
+var UsernameRegex = regexp.MustCompile("[a-z0-9._-]{3,32}")
 
 // AuthentifiedUser struct contains all information about a cds user.
 type AuthentifiedUser struct {
@@ -132,22 +136,6 @@ func (u AuthentifiedUser) GetUsername() string {
 	return u.Username
 }
 
-func (u AuthentifiedUser) GetFullname() string {
-	return u.Fullname
-}
-
-func (u AuthentifiedUser) GetConsumerName() string {
-	return u.Fullname
-}
-
-func (u AuthentifiedUser) Admin() bool {
-	return u.Ring == UserRingAdmin
-}
-
-func (u AuthentifiedUser) Maintainer() bool {
-	return u.Ring == UserRingMaintainer
-}
-
 // GetEmail return the primary email for the authentified user (should exists).
 func (u AuthentifiedUser) GetEmail() string {
 	if u.Contacts == nil {
@@ -156,6 +144,10 @@ func (u AuthentifiedUser) GetEmail() string {
 	byEmails := u.Contacts.Filter(UserContactTypeEmail)
 	primaryEmailAdress := byEmails.Primary()
 	return primaryEmailAdress.Value
+}
+
+func (u AuthentifiedUser) GetFullname() string {
+	return u.Fullname
 }
 
 // AuthentifiedUsers provides func for authentified user list.

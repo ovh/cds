@@ -1,10 +1,8 @@
 <div class="ui right floated sidebar codebar" [ngClass]="{'visible animated fadeInRight': open}">
-    <div class="ui row fullheight" *ngIf="!loadingGet">
-        <ng-container *ngIf="open">
-            <codemirror [(ngModel)]="exportedPip" (keydown)="updated = true; keyEvent($event)" [config]="codeMirrorConfig"
-                #codeMirror>
-            </codemirror>
-        </ng-container>
+    <div class="ui row fullheight">
+        <codemirror [(ngModel)]="exportedPip" (keydown)="updated = true; keyEvent($event)"
+                    [config]="codeMirrorConfig" #codeMirror>
+        </codemirror>
         <div class="ui bottomBtnsWrapper segment">
             <div class="ui grid">
                 <div class="sixteen wide column">
@@ -28,5 +26,5 @@
             </div>
         </div>
     </div>
-    <div *ngIf="loadingGet" class="ui active text loader">{{ 'common_loading' | translate }}</div>
+    <div *ngIf="!exportedPip" class="ui active text loader">{{ 'common_loading' | translate }}</div>
 </div>

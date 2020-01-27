@@ -93,8 +93,8 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 }
 
 // Serve will start the http ui server
-func (s *Service) Serve(c context.Context) error {
-	log.Info(c, "ui> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
+func (s *Service) Serve(ctx context.Context) error {
+	log.Info(ctx, "ui> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
 	s.StartupTime = time.Now()
 
 	fromTmpl, err := s.prepareIndexHTML()
@@ -102,7 +102,7 @@ func (s *Service) Serve(c context.Context) error {
 		return err
 	}
 
-	if err := s.checkStaticFiles(c); err != nil {
+	if err := s.checkStaticFiles(ctx); err != nil {
 		return err
 	}
 
@@ -119,7 +119,7 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	//Init the http server
-	s.initRouter(c)
+	s.initRouter(ctx)
 	server := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
 		Handler:        s.Router.Mux,
@@ -129,19 +129,19 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	// Start the http server
-	log.Info(c, "ui> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+	log.Info(ctx, "ui> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Error(c, "ui> Listen and serve failed: %s", err)
+		log.Error(ctx, "ui> Listen and serve failed: %s", err)
 	}
 
 	// Gracefully shutdown the http server
-	<-c.Done()
-	log.Info(c, "ui> Shutdown HTTP Server")
-	if err := server.Shutdown(c); err != nil {
+	<-ctx.Done()
+	log.Info(ctx, "ui> Shutdown HTTP Server")
+	if err := server.Shutdown(ctx); err != nil {
 		return fmt.Errorf("unable to shutdown server: %v", err)
 	}
 
-	return c.Err()
+	return ctx.Err()
 }
 
 // checkChecksumFiles checks the sha512 values.
@@ -235,7 +235,6 @@ func (s *Service) indexHTMLReplaceVar() error {
 	indexContent := regexBaseHref.ReplaceAllString(string(read), "<base href=\""+s.Cfg.BaseURL+"\">")
 	indexContent = strings.Replace(indexContent, "window.cds_sentry_url = '';", "window.cds_sentry_url = '"+s.Cfg.SentryURL+"';", -1)
 	indexContent = strings.Replace(indexContent, "window.cds_version = '';", "window.cds_version='"+sdk.VERSION+"';", -1)
-
 	return ioutil.WriteFile(indexHTML, []byte(indexContent), 0)
 }
 

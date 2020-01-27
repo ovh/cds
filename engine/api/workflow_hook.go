@@ -18,13 +18,13 @@ import (
 func (api *API) getWorkflowHooksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// This handler can only be called by a service managed by an admin
-		if _, isService := api.isService(ctx); !isService && !isAdmin(ctx) {
+		if isService := isService(ctx); !isService && !isAdmin(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		hooks, err := workflow.LoadAllHooks(api.mustDB())
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowHooksHandler")
+			return err
 		}
 
 		return service.WriteJSON(w, hooks, http.StatusOK)
@@ -35,7 +35,7 @@ func (api *API) getWorkflowOutgoingHookModelsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		m, err := workflow.LoadOutgoingHookModels(api.mustDB())
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowOutgoingHookModelsHandler")
+			return sdk.WithStack(err)
 		}
 		return service.WriteJSON(w, m, http.StatusOK)
 	}
@@ -46,29 +46,30 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
+
 		nodeID, errN := requestVarInt(r, "nodeID")
 		if errN != nil {
-			return sdk.WrapError(errN, "getWorkflowHookModelsHandler")
+			return sdk.WithStack(errN)
 		}
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
 		if errP != nil {
-			return sdk.WrapError(errP, "getWorkflowHookModelsHandler > project.Load")
+			return sdk.WithStack(errP)
 		}
 
 		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, workflowName, workflow.LoadOptions{})
 		if errW != nil {
-			return sdk.WrapError(errW, "getWorkflowHookModelsHandler > workflow.Load")
+			return sdk.WithStack(errW)
 		}
 
 		node := wf.WorkflowData.NodeByID(nodeID)
 		if node == nil {
-			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowHookModelsHandler")
+			return sdk.WithStack(sdk.ErrWorkflowNodeNotFound)
 		}
 
 		m, err := workflow.LoadHookModels(api.mustDB())
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowHookModelsHandler")
+			return sdk.WithStack(err)
 		}
 
 		// Post processing  on repositoryWebHook
@@ -84,18 +85,18 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			if vcsServer != nil {
 				client, errclient := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, p.Key, vcsServer)
 				if errclient != nil {
-					return sdk.WrapError(errclient, "getWorkflowHookModelsHandler> Cannot get vcs client")
+					return sdk.WrapError(errclient, "cannot get vcs client")
 				}
 				var errWH error
 				webHookInfo, errWH = repositoriesmanager.GetWebhooksInfos(ctx, client)
 				if errWH != nil {
-					return sdk.WrapError(errWH, "getWorkflowHookModelsHandler> Cannot get vcs web hook info")
+					return sdk.WrapError(errWH, "cannot get vcs web hook info")
 				}
 				repoWebHookEnable = webHookInfo.WebhooksSupported && !webHookInfo.WebhooksDisabled
 
 				pollInfo, errPoll := repositoriesmanager.GetPollingInfos(ctx, client, *p)
 				if errPoll != nil {
-					return sdk.WrapError(errPoll, "getWorkflowHookModelsHandler> Cannot get vcs poller info")
+					return sdk.WrapError(errPoll, "cannot get vcs poller info")
 				}
 				repoPollerEnable = pollInfo.PollingSupported && !pollInfo.PollingDisabled
 

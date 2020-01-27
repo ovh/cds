@@ -15,6 +15,8 @@ jobs:
       - this a a line in the file, with a CDS variable of type password {{.cds.app.password}}
       - EOF
       - worker check-secret {{.cds.workspace}}/myFile
+    - script:
+      - sleep 5
   requirements:
   - os-architecture: linux/amd64
 - job: EXIT
@@ -62,6 +64,8 @@ jobs:
       - EOF
       - worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile
       - cat {{.cds.workspace}}/outputFile
+    - script:
+        - sleep 5
   requirements:
   - os-architecture: linux/amd64
 - job: UPLOAD
@@ -79,9 +83,22 @@ jobs:
   stage: Stage1
   steps:
     - script:
+      - '#!/bin/bash'
       - set -ex
-      - worker key install --env proj-ssh-04scworkflowrunworkercmd --file id_rsa
+      - worker key install proj-ssh-04scworkflowrunworkercmd
+      - eval $(worker key install --env proj-ssh-04scworkflowrunworkercmd)
+      - if [[ -z "$PKEY" ]]; then exit 1; fi;
+      - ""
+      - eval $(worker key install --env-git proj-ssh-04scworkflowrunworkercmd)
+      - if [[ -z "$GIT_SSH" ]]; then exit 1; fi;
+      - ""
+      - worker key install --file id_rsa proj-ssh-04scworkflowrunworkercmd
       - cat id_rsa
+      - ""
+      - worker key install --file /tmp/ssh/id_rsa proj-ssh-04scworkflowrunworkercmd
+      - cat /tmp/ssh/id_rsa
+    - script:
+        - sleep 5
   requirements:
   - os-architecture: linux/amd64
 - job: ARTIFACTLIST
@@ -90,6 +107,7 @@ jobs:
     - script:
       - set -ex
       - worker artifacts
+    - script:
       - sleep 5
   requirements:
   - os-architecture: linux/amd64
@@ -100,6 +118,7 @@ jobs:
       - set -ex
       - worker cache pull latest
       - cat fileCache
+    - script:
       - sleep 5
   requirements:
   - os-architecture: linux/amd64
@@ -110,6 +129,7 @@ jobs:
       - set -ex
       - worker download
       - cat myFileUploaded
+    - script:
       - sleep 5
   requirements:
   - os-architecture: linux/amd64
@@ -119,6 +139,7 @@ jobs:
     - script:
       - set -ex
       - echo "Export value {{.cds.build.foo}}"
+    - script:
       - sleep 5
   requirements:
   - os-architecture: linux/amd64

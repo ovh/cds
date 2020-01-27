@@ -14,9 +14,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/spf13/afero"
-
 	"github.com/kardianos/osext"
+	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
@@ -30,7 +29,7 @@ type script struct {
 	opts    []string
 }
 
-func prepareScriptContent(parameters []sdk.Parameter) (*script, error) {
+func prepareScriptContent(parameters []sdk.Parameter, basedir afero.Fs, workdir afero.File) (*script, error) {
 	var script = script{
 		shell: "/bin/sh",
 	}
@@ -46,7 +45,7 @@ func prepareScriptContent(parameters []sdk.Parameter) (*script, error) {
 	}
 
 	// except on windows where it's powershell
-	if sdk.GOOS == "windows" {
+	if isWindows() {
 		script.shell = "PowerShell"
 		script.opts = []string{"-ExecutionPolicy", "Bypass", "-Command"}
 		// on windows, we add ErrorActionPreference just below
@@ -68,7 +67,19 @@ func prepareScriptContent(parameters []sdk.Parameter) (*script, error) {
 
 	script.content = []byte(scriptContent)
 
+	if x, ok := basedir.(*afero.BasePathFs); ok {
+		script.dir, _ = x.RealPath(workdir.Name())
+	} else {
+		script.dir = workdir.Name()
+	}
+
+	log.Debug("prepareScriptContent> script.dir is %s", script.dir)
+
 	return &script, nil
+}
+
+func isWindows() bool {
+	return sdk.GOOS == "windows" || runtime.GOOS == "windows" || os.Getenv("CDS_WORKER_PSHELL_MODE") == "true"
 }
 
 func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedir afero.File) (func(), error) {
@@ -89,11 +100,16 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 	}
 	tmpFileName := hex.EncodeToString(bs)[0:16]
 	log.Debug("writeScriptContent> Basedir name is %s (%T)", basedir.Name(), basedir)
-	path := filepath.Join(basedir.Name(), tmpFileName)
 
-	log.Debug("writeScriptContent> Opening file %s", path)
+	if isWindows() {
+		tmpFileName += ".PS1"
+		log.Debug("runScriptAction> renaming powershell script to %s", tmpFileName)
+	}
 
-	tmpscript, err := fs.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
+	scriptPath := filepath.Join(path.Dir(basedir.Name()), tmpFileName)
+	log.Debug("writeScriptContent> Opening file %s", scriptPath)
+
+	tmpscript, err := fs.OpenFile(scriptPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
 	if err != nil {
 		log.Warning(ctx, "writeScriptContent> Cannot create tmp file: %s", err)
 		return nil, fmt.Errorf("cannot create temporary file, aborting: %v", err)
@@ -104,9 +120,9 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 	n, errw := tmpscript.Write(script.content)
 	if errw != nil || n != len(script.content) {
 		if errw != nil {
-			log.Warning(ctx, "cannot write script: %s", errw)
+			log.Warning(ctx, "writeScriptContent> cannot write script: %s", errw)
 		} else {
-			log.Warning(ctx, "cannot write all script: %d/%d", n, len(script.content))
+			log.Warning(ctx, "writeScriptContent> cannot write all script: %d/%d", n, len(script.content))
 		}
 		return nil, errors.New("cannot write script in temporary file, aborting")
 	}
@@ -115,32 +131,36 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs, basedi
 		return nil, fmt.Errorf("unable to write script to %s", tmpscript)
 	}
 
-	if runtime.GOOS == "windows" {
-		//and add .PS1 extension
-		//newName := tmpFileName + ".PS1"
-		//if err := basedir.Rename(tmpFileName, newName); err != nil {
-		//	return nil, errors.New("cannot rename script to add powershell Extension, aborting")
-		//}
-		//tmpFileName = newName
-		////This aims to stop a the very first error and return the right exit code
-		//psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", tmpFileName)
-		//scriptPath = newPath
-		//script.opts = append(script.opts, psCommand)
-	} else {
-		script.opts = append(script.opts, tmpFileName)
-		switch x := fs.(type) {
-		case *afero.BasePathFs:
-			script.dir, err = x.RealPath(basedir.Name())
-			if err != nil {
-				return nil, fmt.Errorf("unable to get script working dir: %v", err)
-			}
-		default:
-			script.dir = basedir.Name()
+	var realScriptPath = scriptPath
+
+	switch x := fs.(type) {
+	case *afero.BasePathFs:
+		realScriptPath, err = x.RealPath(tmpscript.Name())
+		if err != nil {
+			return nil, fmt.Errorf("unable to get script working dir: %v", err)
+		}
+		realScriptPath, err = filepath.Abs(realScriptPath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get script working dir: %v", err)
 		}
 	}
+
+	if isWindows() {
+		//This aims to stop a the very first error and return the right exit code
+		psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", realScriptPath)
+		script.opts = append(script.opts, psCommand)
+	} else {
+		script.opts = append(script.opts, realScriptPath)
+	}
+
+	log.Debug("writeScriptContent> script realpath is %s", realScriptPath)
+	log.Debug("writeScriptContent> script directory is %s", script.dir)
+
 	deferFunc := func() {
-		if err := fs.Remove(tmpFileName); err != nil {
-			log.Error(ctx, "unable to remove %s: %v", tmpFileName, err)
+		filename := filepath.Join(path.Dir(basedir.Name()), tmpFileName)
+		log.Debug("writeScriptContent> removing file %s", filename)
+		if err := fs.Remove(filename); err != nil {
+			log.Error(ctx, "unable to remove %s: %v", filename, err)
 		}
 	}
 
@@ -164,15 +184,9 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 
 	go func() {
 		res := sdk.Result{Status: sdk.StatusSuccess}
-		script, err := prepareScriptContent(a.Parameters)
+		script, err := prepareScriptContent(a.Parameters, wk.BaseDir(), workdir)
 		if err != nil {
 			chanErr <- err
-		}
-
-		if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
-			script.dir, _ = x.RealPath(workdir.Name())
-		} else {
-			script.dir = workdir.Name()
 		}
 
 		deferFunc, err := writeScriptContent(ctx, script, wk.BaseDir(), workdir)
@@ -186,6 +200,7 @@ func RunScriptAction(ctx context.Context, wk workerruntime.Runtime, a sdk.Action
 		log.Info(ctx, "runScriptAction> Running command %s %s in %s", script.shell, strings.Trim(fmt.Sprint(script.opts), "[]"), script.dir)
 		cmd := exec.CommandContext(ctx, script.shell, script.opts...)
 		res.Status = sdk.StatusUnknown
+
 		cmd.Dir = script.dir
 		cmd.Env = wk.Environ()
 

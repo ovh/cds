@@ -125,7 +125,8 @@ func signupFunc(v cli.Values) error {
 
 var signupVerifyCmd = cli.Command{
 	Name:  "verify",
-	Short: "Verify local CDS signup.\nFor admin signup INIT_TOKEN environment variable must be set",
+	Short: "Verify local CDS signup.",
+	Long:  "For admin signup INIT_TOKEN environment variable must be set.",
 	Args: []cli.Arg{
 		{
 			Name:       "token",

@@ -10,7 +10,7 @@ import (
 )
 
 func TestRunGitCloneInSSHWithoutVCSStrategyShouldRaiseError(t *testing.T) {
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 
 	res, err := RunGitClone(ctx, wk,
 		sdk.Action{}, nil)
@@ -19,7 +19,7 @@ func TestRunGitCloneInSSHWithoutVCSStrategyShouldRaiseError(t *testing.T) {
 }
 
 func TestRunGitCloneInSSHWithoutKeyShouldRaiseError(t *testing.T) {
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 
 	res, err := RunGitClone(ctx, wk,
 		sdk.Action{
@@ -39,7 +39,7 @@ func TestRunGitCloneInSSHWithoutKeyShouldRaiseError(t *testing.T) {
 }
 
 func TestRunGitCloneInSSHWithPrivateKey(t *testing.T) {
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 
 	res, err := RunGitClone(ctx, wk,
 		sdk.Action{
@@ -55,7 +55,7 @@ func TestRunGitCloneInSSHWithPrivateKey(t *testing.T) {
 		},
 		[]sdk.Variable{
 			{
-				Name:  "proj-ssh-key",
+				Name:  "cds.key.proj-ssh-key.priv",
 				Value: string(test.TestKey),
 			},
 		})
@@ -67,7 +67,7 @@ func TestRunGitCloneInSSHWithPrivateKey(t *testing.T) {
 }
 
 func TestRunGitCloneInSSHWithTheWrongPrivateKeyShouldFail(t *testing.T) {
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 
 	res, err := RunGitClone(ctx, wk,
 		sdk.Action{
@@ -83,7 +83,7 @@ func TestRunGitCloneInSSHWithTheWrongPrivateKeyShouldFail(t *testing.T) {
 		},
 		[]sdk.Variable{
 			{
-				Name:  "proj-ssh-key",
+				Name:  "cds.key.proj-ssh-key.priv",
 				Value: "this not a private key",
 			},
 		})
@@ -92,7 +92,7 @@ func TestRunGitCloneInSSHWithTheWrongPrivateKeyShouldFail(t *testing.T) {
 }
 
 func TestRunGitCloneInSSHWithPrivateKeyWithTargetDirectory(t *testing.T) {
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 
 	res, err := RunGitClone(ctx, wk,
 		sdk.Action{
@@ -111,7 +111,7 @@ func TestRunGitCloneInSSHWithPrivateKeyWithTargetDirectory(t *testing.T) {
 		},
 		[]sdk.Variable{
 			{
-				Name:  "proj-ssh-key",
+				Name:  "cds.key.proj-ssh-key.priv",
 				Value: string(test.TestKey),
 			},
 		})
@@ -124,7 +124,7 @@ func TestRunGitCloneInSSHWithPrivateKeyWithTargetDirectory(t *testing.T) {
 }
 
 func TestRunGitCloneInSSHWithPrivateKeyAndExtractInfo(t *testing.T) {
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
 			Name:  "git.url",
@@ -152,7 +152,7 @@ func TestRunGitCloneInSSHWithPrivateKeyAndExtractInfo(t *testing.T) {
 		},
 		[]sdk.Variable{
 			{
-				Name:  "proj-ssh-key",
+				Name:  "cds.key.proj-ssh-key.priv",
 				Value: string(test.TestKey),
 			},
 		})
@@ -165,7 +165,7 @@ func TestRunGitCloneInSSHWithPrivateKeyAndExtractInfo(t *testing.T) {
 }
 
 func TestRunGitCloneInSSHWithApplicationVCSStrategy(t *testing.T) {
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
 			Name:  "git.connection.type",
@@ -207,7 +207,7 @@ func TestRunGitCloneInSSHWithApplicationVCSStrategy(t *testing.T) {
 
 func TestRunGitCloneInHTTPSWithoutAuth(t *testing.T) {
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 
 	res, err := RunGitClone(ctx, wk,
 		sdk.Action{
@@ -256,6 +256,33 @@ func TestRunGitCloneInHTTPSWithoutAuth(t *testing.T) {
 	assert.DirExists(t, filepath.Join(wk.workingDirectory.File.Name(), "dummy-empty-repo", ".git"))
 }
 
-func TestRunGitCloneInHTTPSWithAuth(t *testing.T) {
+func TestRunGitCloneWithSecret(t *testing.T) {
+	wk, ctx := SetupTest(t)
+	res, err := RunGitClone(ctx, wk,
+		sdk.Action{
+			Parameters: []sdk.Parameter{
+				{
+					Name:  "url",
+					Value: "git@github.com:fsamin/dummy-empty-repo.git",
+				},
+				{
+					Name:  "privateKey",
+					Value: "proj-ssh-key",
+				},
+				{
+					Name:  "directory",
+					Value: ".",
+				},
+			},
+		}, []sdk.Variable{
+			{
+				Name:  "cds.key.proj-ssh-key.priv",
+				Value: string(test.TestKey),
+				Type:  sdk.KeyTypeSSH,
+			},
+		})
+	assert.NoError(t, err)
+	assert.Equal(t, sdk.StatusSuccess, res.Status)
 
+	assert.DirExists(t, filepath.Join(wk.workingDirectory.File.Name(), ".git"))
 }

@@ -25,7 +25,7 @@ func (api *API) getActionsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var as []sdk.Action
 		var err error
-		if isMaintainer(ctx) || isAdmin(ctx) {
+		if isMaintainer(ctx) {
 			as, err = action.LoadAllByTypes(ctx, api.mustDB(),
 				[]string{sdk.DefaultAction},
 				action.LoadOptions.WithRequirements,
@@ -85,13 +85,13 @@ func (api *API) getActionsForGroupHandler() service.Handler {
 
 		groupName := vars["permGroupName"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
 
 		// and user is part of the group
-		if !isGroupMember(ctx, g) && !isMaintainer(ctx) && !isAdmin(ctx) {
+		if !isGroupMember(ctx, g) && !isMaintainer(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -119,13 +119,9 @@ func (api *API) postActionHandler() service.Handler {
 			return err
 		}
 
-		// check that the group exists and user is admin for group id
-		grp, err := group.LoadByID(ctx, api.mustDB(), *data.GroupID)
+		grp, err := group.LoadByID(ctx, api.mustDB(), *data.GroupID, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
-		}
-		if grp == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
@@ -189,7 +185,7 @@ func (api *API) getActionHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
-		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
+		g, err := group.LoadByName(ctx, api.mustDB(), groupName, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
 		}
@@ -247,12 +243,9 @@ func (api *API) putActionHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		grp, err := group.LoadByID(ctx, tx, *data.GroupID)
+		grp, err := group.LoadByID(ctx, tx, *data.GroupID, group.LoadOptions.WithMembers)
 		if err != nil {
 			return err
-		}
-		if grp == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		if *old.GroupID != *data.GroupID || old.Name != data.Name {
@@ -477,7 +470,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 		} else if ea.Group == grp.Name {
 			newGrp = grp
 		} else {
-			newGrp, err = group.LoadByName(ctx, tx, ea.Group)
+			newGrp, err = group.LoadByName(ctx, tx, ea.Group, group.LoadOptions.WithMembers)
 			if err != nil {
 				return err
 			}
@@ -661,7 +654,7 @@ func (api *API) importActionHandler() service.Handler {
 		if ea.Group == sdk.SharedInfraGroupName || ea.Group == "" {
 			grp = group.SharedInfraGroup
 		} else {
-			grp, err = group.LoadByName(ctx, tx, ea.Group)
+			grp, err = group.LoadByName(ctx, tx, ea.Group, group.LoadOptions.WithMembers)
 			if err != nil {
 				return err
 			}
@@ -844,7 +837,7 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	consumer := getAPIConsumer(ctx)
 
-	if !isAdmin(ctx) && !isMaintainer(ctx) {
+	if !isMaintainer(ctx) {
 		// filter usage in pipeline by user's projects
 		ps, err := project.LoadAllByGroupIDs(ctx, db, store, consumer.GetGroupIDs())
 		if err != nil {
