@@ -2,8 +2,6 @@ package sdk
 
 import (
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
 )
 
 func TestRequirementListDeduplicate(t *testing.T) {
@@ -72,22 +70,32 @@ func TestRequirementListDeduplicate(t *testing.T) {
 			},
 			want: RequirementList{
 				{
-					Name:  "namea",
-					Type:  NetworkAccessRequirement,
-					Value: "valuea",
-				},
-				{
 					Name:  "nameb",
 					Type:  NetworkAccessRequirement,
 					Value: "valueb",
+				},
+				{
+					Name:  "namea",
+					Type:  NetworkAccessRequirement,
+					Value: "valuea",
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := RequirementListDeduplicate(tt.args.l); !cmp.Equal(got, tt.want) {
-				t.Errorf("RequirementListDeduplicate() = %v, want %v", got, tt.want)
+			got := RequirementListDeduplicate(tt.args.l)
+			for _, r := range tt.want {
+				var found bool
+				for _, g := range got {
+					if r.Type == g.Type && r.Value == g.Value && r.Name == g.Name {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("RequirementListDeduplicate() = %v, want %v - not found: %v", got, tt.want, r)
+				}
 			}
 		})
 	}
