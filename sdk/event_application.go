@@ -3,13 +3,11 @@ package sdk
 import "github.com/mitchellh/mapstructure"
 
 // EventApplicationAdd represents the event when adding an application
-//easyjson:json
 type EventApplicationAdd struct {
 	Application
 }
 
 // EventApplicationUpdate represents the event when updating an application
-//easyjson:json
 type EventApplicationUpdate struct {
 	OldName               string             `json:"old_name"`
 	NewName               string             `json:"new_name"`
@@ -20,76 +18,64 @@ type EventApplicationUpdate struct {
 }
 
 // EventApplicationDelete represents the event when deleting an application
-//easyjson:json
 type EventApplicationDelete struct {
 }
 
 // EventApplicationVariableAdd represents the event when adding an application variable
-//easyjson:json
 type EventApplicationVariableAdd struct {
 	Variable Variable `json:"variable"`
 }
 
 // EventApplicationVariableUpdate represents the event when updating an application variable
-//easyjson:json
 type EventApplicationVariableUpdate struct {
 	OldVariable Variable `json:"old_variable"`
 	NewVariable Variable `json:"new_variable"`
 }
 
 // EventApplicationVariableDelete represents the event when deleting an application variable
-//easyjson:json
 type EventApplicationVariableDelete struct {
 	Variable Variable `json:"variable"`
 }
 
 // EventApplicationPermissionAdd represents the event when adding an application permission
-//easyjson:json
 type EventApplicationPermissionAdd struct {
 	Permission GroupPermission `json:"group_permission"`
 }
 
 // EventApplicationPermissionUpdate represents the event when updating an application permission
-//easyjson:json
 type EventApplicationPermissionUpdate struct {
 	OldPermission GroupPermission `json:"old_group_permission"`
 	NewPermission GroupPermission `json:"new_group_permission"`
 }
 
 // EventApplicationPermissionDelete represents the event when deleting an application permission
-//easyjson:json
 type EventApplicationPermissionDelete struct {
 	Permission GroupPermission `json:"group_permission"`
 }
 
 // EventApplicationKeyAdd represents the event when adding an application key
-//easyjson:json
 type EventApplicationKeyAdd struct {
 	Key ApplicationKey `json:"key"`
 }
 
 // EventApplicationKeyDelete represents the event when deleting an application key
-//easyjson:json
 type EventApplicationKeyDelete struct {
 	Key ApplicationKey `json:"key"`
 }
 
 // EventApplicationRepositoryAdd represents the event when adding a repository to an application
-//easyjson:json
 type EventApplicationRepositoryAdd struct {
 	VCSServer  string `json:"vcs_server"`
 	Repository string `json:"repository"`
 }
 
 // EventApplicationRepositoryDelete represents the event when deleting a repository to an application
-//easyjson:json
 type EventApplicationRepositoryDelete struct {
 	VCSServer  string `json:"vcs_server"`
 	Repository string `json:"repository"`
 }
 
 // EventApplicationVulnerabilityUpdate represents the event when updating a vulnerability
-//easyjson:json
 type EventApplicationVulnerabilityUpdate struct {
 	OldVulnerability Vulnerability `json:"old_vulnerability"`
 	NewVulnerability Vulnerability `json:"new_vulnerability"`

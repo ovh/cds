@@ -304,7 +304,7 @@ func Test_postResyncPRAsCodeHandler(t *testing.T) {
 	p := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	// Clean as code event
-	as, err := ascode.LoadAsCodeEventByRepo(db, "urltomyrepo")
+	as, err := ascode.LoadAsCodeEventByRepo(context.TODO(), db, "urltomyrepo")
 	assert.NoError(t, err)
 	for _, a := range as {
 		assert.NoError(t, ascode.DeleteAsCodeEvent(db, a))
@@ -439,7 +439,7 @@ vcs_ssh_key: proj-blabla
 	t.Logf(w.Body.String())
 
 	// Check there is no more events in db
-	assDB, err := ascode.LoadAsCodeEventByRepo(db, "urltomyrepo")
+	assDB, err := ascode.LoadAsCodeEventByRepo(context.TODO(), db, "urltomyrepo")
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(assDB))
 

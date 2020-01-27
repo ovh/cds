@@ -1251,7 +1251,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// Clean ascode event
-	evts, _ := ascode.LoadAsCodeEventByRepo(db, "ssh:/cloneurl")
+	evts, _ := ascode.LoadAsCodeEventByRepo(context.TODO(), db, "ssh:/cloneurl")
 	for _, e := range evts {
 		_ = ascode.DeleteAsCodeEvent(db, e) // nolint
 	}

@@ -14,7 +14,6 @@ const (
 // Event is "create", "update", "delete"
 // Status is  "Waiting" "Building" "Success" "Fail" "Unknown", optional
 // DateEvent is a date (timestamp format)
-//easyjson:json
 type Event struct {
 	Timestamp           time.Time              `json:"timestamp"`
 	Hostname            string                 `json:"hostname"`
@@ -37,14 +36,12 @@ type Event struct {
 }
 
 // EventFilter represents filters when getting events
-//easyjson:json
 type EventFilter struct {
 	CurrentItem int            `json:"current_item"`
 	Filter      TimelineFilter `json:"filter"`
 }
 
 // EventSubscription data send to api to subscribe to an event
-//easyjson:json
 type EventSubscription struct {
 	UUID         string `json:"uuid"`
 	ProjectKey   string `json:"key"`
@@ -55,13 +52,11 @@ type EventSubscription struct {
 }
 
 // EventEngine contains event data for engine
-//easyjson:json
 type EventEngine struct {
 	Message string `json:"message"`
 }
 
 // EventRunWorkflowNode contains event data for a workflow node run
-//easyjson:json
 type EventRunWorkflowNode struct {
 	ID                    int64                     `json:"id,omitempty"`
 	NodeID                int64                     `json:"node_id,omitempty"`
@@ -101,7 +96,6 @@ type GerritChangeEvent struct {
 }
 
 // EventRunWorkflowOutgoingHook contains event data for a workflow outgoing hook run
-//easyjson:json
 type EventRunWorkflowOutgoingHook struct {
 	HookID            int64  `json:"hook_id"`
 	ID                string `json:"id"`
@@ -114,7 +108,6 @@ type EventRunWorkflowOutgoingHook struct {
 }
 
 // EventRunWorkflowJob contains event data for a workflow job node run
-//easyjson:json
 type EventRunWorkflowJob struct {
 	ID     int64  `json:"id,omitempty"`
 	Status string `json:"status,omitempty"`
@@ -123,7 +116,6 @@ type EventRunWorkflowJob struct {
 }
 
 // EventRunWorkflow contains event data for a workflow run
-//easyjson:json
 type EventRunWorkflow struct {
 	ID               int64            `json:"id"`
 	Number           int64            `json:"num"`
@@ -136,7 +128,6 @@ type EventRunWorkflow struct {
 }
 
 // EventJob contains event data for a job
-//easyjson:json
 type EventJob struct {
 	Version         int64  `json:"version,omitempty"`
 	JobName         string `json:"jobName,omitempty"`
@@ -156,7 +147,6 @@ type EventJob struct {
 }
 
 // EventNotif contains event data for a job
-//easyjson:json
 type EventNotif struct {
 	Recipients []string `json:"recipients"`
 	Subject    string   `json:"subject,omitempty"`
@@ -164,7 +154,6 @@ type EventNotif struct {
 }
 
 // EventMaintenance contains event data for maintenance event
-//easyjson:json
 type EventMaintenance struct {
 	Enable bool `json:"enable"`
 }

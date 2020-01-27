@@ -346,8 +346,6 @@ func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
 }
 
 //WorkflowNodeJobRun represents an job to be run
-// /!\ DONT FORGET TO REGENERATE EASYJSON FILES /!\
-//easyjson:json
 type WorkflowNodeJobRun struct {
 	ProjectID                 int64              `json:"project_id"`
 	ID                        int64              `json:"id"`
@@ -369,8 +367,6 @@ type WorkflowNodeJobRun struct {
 	Header                    WorkflowRunHeaders `json:"header,omitempty"`
 	ContainsService           bool               `json:"contains_service,omitempty"`
 }
-
-// /!\ DONT FORGET TO REGENERATE EASYJSON FILES /!\
 
 // WorkflowNodeJobRunSummary is a light representation of WorkflowNodeJobRun for CDS event
 type WorkflowNodeJobRunSummary struct {

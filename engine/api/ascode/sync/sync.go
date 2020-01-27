@@ -38,7 +38,7 @@ func SyncAsCodeEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, pro
 		}
 	}
 
-	asCodeEvents, err := ascode.LoadAsCodeEventByRepo(db, fromRepo)
+	asCodeEvents, err := ascode.LoadAsCodeEventByRepo(ctx, db, fromRepo)
 	if err != nil {
 		return nil, fromRepo, err
 	}

@@ -295,7 +295,7 @@ func (api *API) getPipelineHandler() service.Handler {
 		}
 
 		if withAsCodeEvent {
-			events, errE := ascode.LoadAsCodeEventByRepo(api.mustDB(), p.FromRepository)
+			events, errE := ascode.LoadAsCodeEventByRepo(ctx, api.mustDB(), p.FromRepository)
 			if errE != nil {
 				return errE
 			}

@@ -97,11 +97,16 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 	}
 
 	if ope.RepositoryStrategy.ConnectionType == "ssh" {
+		found := false
 		for _, k := range prj.Keys {
 			if k.Name == ope.RepositoryStrategy.SSHKey {
 				ope.RepositoryStrategy.SSHKeyContent = k.Private
+				found = true
 				break
 			}
+		}
+		if !found {
+			return sdk.WithStack(fmt.Errorf("unable to find key %s on project %s", ope.RepositoryStrategy.SSHKey, prj.Key))
 		}
 		ope.RepositoryStrategy.User = ""
 		ope.RepositoryStrategy.Password = ""

@@ -582,9 +582,9 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		var errAS error
 		_, next = observability.Span(ctx, "workflow.load.AddCodeUpdateEvents")
 		if res.FromRepository != "" {
-			asCodeEvents, errAS = ascode.LoadAsCodeEventByRepo(db, res.FromRepository)
+			asCodeEvents, errAS = ascode.LoadAsCodeEventByRepo(ctx, db, res.FromRepository)
 		} else {
-			asCodeEvents, errAS = ascode.LoadAsCodeEventByWorkflowID(db, res.ID)
+			asCodeEvents, errAS = ascode.LoadAsCodeEventByWorkflowID(ctx, db, res.ID)
 		}
 		next()
 		if errAS != nil {
