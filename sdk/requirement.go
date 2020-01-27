@@ -1,5 +1,10 @@
 package sdk
 
+import (
+	"net"
+	"time"
+)
+
 const (
 	//BinaryRequirement refers to the need to a specific binary on host running the action
 	BinaryRequirement = "binary"
@@ -169,4 +174,15 @@ func (a *Action) Requirement(name string, t string, value string) *Action {
 
 	a.Requirements = append(a.Requirements, r)
 	return a
+}
+
+// CheckNetworkAccessRequirement returns true if req.Value can Dial
+func CheckNetworkAccessRequirement(req Requirement) bool {
+	conn, err := net.DialTimeout("tcp", req.Value, 10*time.Second)
+	if err != nil {
+		return false
+	}
+	conn.Close()
+
+	return true
 }
