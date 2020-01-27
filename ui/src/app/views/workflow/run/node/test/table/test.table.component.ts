@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Failure, TestCase, Tests } from 'app/model/pipeline.model';
 import { ThemeStore } from 'app/service/services.module';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { Failure, TestCase, Tests } from '../../../../../../model/pipeline.model';
 
 
 @Component({
@@ -20,62 +20,27 @@ export class WorkflowRunTestTableComponent implements OnInit {
     codeMirrorConfig: any;
     columns: Array<Column<TestCase>>;
     filter: Filter<TestCase>;
+
+    beforeClickFilter: string;
     filterInput: string;
+    filterIndex: number;
+    countFilteredElement: number;
+
     testCaseSelected: TestCase;
-    @Input() tests: Tests;
     themeSubscription: Subscription;
-    testcases = new Array<TestCase>();
 
-    statusFilter(status: string) {
-        this.testCaseSelected = null;
-        if (status === 'all') {
-            this.filterInput = '';
-        } else if (status !== '') {
-            this.filterInput = 'status:' + status;
+    _tests: Tests;
+    testcases: Array<TestCase>;
+    @Input('tests')
+    set tests(data: Tests) {
+        this._tests = data;
+        if (this._tests && this._tests.ko > 0 && (!this.filterInput || this.filterInput === '')) {
+            this.statusFilter('failed');
         }
+        this.initTestCases(data);
     }
-
-    getTestCases() {
-        let testcases = new Array<TestCase>();
-        if (!this.tests || !this.tests.test_suites) {
-            return;
-        }
-        for (let ts of this.tests.test_suites) {
-            if (ts.tests) {
-                let testCase = ts.tests.map(tc => {
-                    tc.fullname = ts.name + ' / ' + tc.name;
-                    if (!tc.errors && !tc.failures) {
-                        tc.status = 'success';
-                    } else if ((tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0)) {
-                        tc.status = 'failed';
-                    } else {
-                        tc.status = 'skipped';
-                    }
-
-                    return tc;
-                });
-                testcases.push(...testCase);
-            }
-        }
-        return testcases;
-    }
-
-    ngOnInit(): void {
-        this.themeSubscription = this._theme.get()
-            .pipe(finalize(() => this._cd.markForCheck()))
-            .subscribe(t => {
-                this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
-                if (this.codemirror1 && this.codemirror1.instance) {
-                    this.codemirror1.instance.setOption('theme', this.codeMirrorConfig.theme);
-                }
-                if (this.codemirror2 && this.codemirror2.instance) {
-                    this.codemirror2.instance.setOption('theme', this.codeMirrorConfig.theme);
-                }
-                if (this.codemirror3 && this.codemirror3.instance) {
-                    this.codemirror3.instance.setOption('theme', this.codeMirrorConfig.theme);
-                }
-                this._cd.markForCheck();
-            });
+    get tests() {
+        return this._tests;
     }
 
     constructor(private _theme: ThemeStore, private _cd: ChangeDetectorRef) {
@@ -117,27 +82,97 @@ export class WorkflowRunTestTableComponent implements OnInit {
                 type: ColumnType.BUTTON,
                 name: '',
                 class: 'two right aligned',
-                selector: (tc: TestCase) => {
+                selector: (tc: TestCase, index?: number) => {
                     return {
                         icon: 'eye',
                         class: 'icon small',
-                        click: () => this.clickTestCase(tc)
+                        click: () => this.clickTestCase(tc, index)
                     };
                 },
             },
         ];
     }
 
-    clickTestCase(tc: TestCase): void {
-        if (this.testCaseSelected && this.testCaseSelected.fullname === tc.fullname) {
+    resetFilter(count: number): void {
+        if (this.countFilteredElement !== count) {
+            this.countFilteredElement = count;
+            delete this.testCaseSelected;
+            delete this.beforeClickFilter;
+        }
+    }
+
+    ngOnInit(): void {
+        this.themeSubscription = this._theme.get()
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(t => {
+                this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+                if (this.codemirror1 && this.codemirror1.instance) {
+                    this.codemirror1.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+                if (this.codemirror2 && this.codemirror2.instance) {
+                    this.codemirror2.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+                if (this.codemirror3 && this.codemirror3.instance) {
+                    this.codemirror3.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+                this._cd.markForCheck();
+            });
+    }
+
+
+    statusFilter(status: string) {
+        let newFilter = '';
+        if (status !== 'all') {
+            newFilter = 'status:' + status;
+        }
+
+        if (this.filterInput === newFilter) {
+            return;
+        }
+        this.testCaseSelected = null;
+        this.filterInput = newFilter;
+        this._cd.markForCheck();
+    }
+
+    initTestCases(data: Tests) {
+        this.testcases = new Array<TestCase>();
+        if (!data || !data.test_suites) {
+            return;
+        }
+        for (let ts of data.test_suites) {
+            if (ts.tests) {
+                let testCase = ts.tests.map(tc => {
+                    tc.fullname = ts.name + ' / ' + tc.name;
+                    if (!tc.errors && !tc.failures) {
+                        tc.status = 'success';
+                    } else if ((tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0)) {
+                        tc.status = 'failed';
+                    } else {
+                        tc.status = 'skipped';
+                    }
+
+                    return tc;
+                });
+                this.testcases.push(...testCase);
+            }
+        }
+        this._cd.detectChanges();
+    }
+
+    clickTestCase(tc: TestCase, index: number): void {
+        if (this.testCaseSelected && this.testCaseSelected.fullname === tc.fullname  && this.filterIndex === index) {
             this.testCaseSelected = undefined;
-            this.filterInput = '';
+            this.filterInput = this.beforeClickFilter;
+            delete this.beforeClickFilter;
             return
         }
+        this.filterIndex = index;
+        this.beforeClickFilter = this.filterInput;
         this.filterInput = tc.fullname;
-        tc.errorsAndFailures = this.getFailureString(tc.errors)
-        tc.errorsAndFailures += this.getFailureString(tc.failures)
+        tc.errorsAndFailures = this.getFailureString(tc.errors);
+        tc.errorsAndFailures += this.getFailureString(tc.failures);
         this.testCaseSelected = tc;
+        this._cd.markForCheck();
     }
 
     getFailureString(fs: Array<Failure>): string {

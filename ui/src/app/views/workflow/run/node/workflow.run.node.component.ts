@@ -90,7 +90,6 @@ export class WorkflowNodeRunComponent {
             if (!s.workflow || this.workflowName !== s.workflow.name) {
                 return;
             }
-            this._cd.markForCheck();
             this.workflowRun = s.workflowRun;
             this.nodeRun = cloneDeep(s.workflowNodeRun);
             if (this.workflowRun && this.workflowRun.workflow && this.nodeRun) {
@@ -114,6 +113,7 @@ export class WorkflowNodeRunComponent {
                 }
                 this.updateTitle();
             }
+            this._cd.markForCheck();
         });
 
         this._activatedRoute.params.subscribe(params => {
