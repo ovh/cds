@@ -930,7 +930,7 @@
   "workflow_template": "Modèle de workflow",
   "workflow_templates": "Modèles de workflow",
   "workflow_update_name_error": "Nom de workflow invalide. Pattern autorisé : ^[a-zA-Z0-9._-]{1,}$",
-  "workflow_ascode_updated": "Brouillon  mis à jour",
+  "workflow_ascode_updated": "Brouillon mis à jour",
   "workflow_updated": "Workflow mis à jour",
   "workflow_vcs_resynced": "Statuts du dépot distant resynchronisés",
   "workflow_wizard_description": "Choisissez vos options de workflow",
