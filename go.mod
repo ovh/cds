@@ -17,7 +17,7 @@ require (
 	github.com/SSSaaS/sssa-golang v0.0.0-20170502204618-d37d7782d752 // indirect
 	github.com/SermoDigital/jose v0.9.1 // indirect
 	github.com/Shopify/sarama v1.19.0
-	github.com/alecthomas/jsonschema v0.0.0-20190429041900-eff3f6c90428
+	github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755
 	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
 	github.com/apoydence/onpar v0.0.0-20190519213022-ee068f8ea4d1 // indirect
 	github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05 // indirect

@@ -41,6 +41,8 @@ github.com/Shopify/toxiproxy v2.1.4+incompatible h1:TKdv8HiTLgE5wdJuEML90aBgNWso
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
 github.com/alecthomas/jsonschema v0.0.0-20190429041900-eff3f6c90428 h1:HWUBKVGWLvo16E8KreZidffj0htr6jnr2+ifugKTXWE=
 github.com/alecthomas/jsonschema v0.0.0-20190429041900-eff3f6c90428/go.mod h1:qpebaTNSsyUn5rPSJMsfqEtDw71TTggXM6stUDI16HA=
+github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755 h1:+xHAcx6b5TS1DiY+StyK2CrNvD0nQ97G7w45x4ljJFs=
+github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755/go.mod h1:Juc2PrI3wtNfUwptSvAIeNx+HrETwHQs6nf+TkOJlOA=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4 h1:LY5JPwCVaVWtvVMyPb/FuWEqFq0qAewr8SU5pAO371I=
@@ -489,6 +491,9 @@ github.com/sethgrid/pester v0.0.0-20171127025028-760f8913c048 h1:6Men5bEVIDWxw4f
 github.com/sethgrid/pester v0.0.0-20171127025028-760f8913c048/go.mod h1:Ad7IjTpvzZO8Fl0vh9AzQ+j/jYZfyp2diGwI8m5q+ns=
 github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197 h1:qu90yDtRE5WEfRT5mn9v0Xz9RaopLguhbPwZKx4dHq8=
 github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197/go.mod h1:0hhKrsUsoT7yvxwNGKa+TSYNA26DNWMqReeZEQq/9FI=
+github.com/sguiheux/jsonschema v0.1.0/go.mod h1:Juc2PrI3wtNfUwptSvAIeNx+HrETwHQs6nf+TkOJlOA=
+github.com/sguiheux/jsonschema v0.1.1 h1:kD5UgnA0NBlW/6jFgsYOeAAxcWYYtofHceqVVQ2X5aE=
+github.com/sguiheux/jsonschema v0.1.1/go.mod h1:Juc2PrI3wtNfUwptSvAIeNx+HrETwHQs6nf+TkOJlOA=
 github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8 h1:05R1OwSk31dkzqf2Jf27n2IOoF9zkK9LcPgPsEm8U7U=
 github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8/go.mod h1:5b4v6he4MtMOwMlS0TUMTu2PcXUg8+E1lC7eC3UO/RA=
 github.com/sirupsen/logrus v1.0.6/go.mod h1:pMByvHTf9Beacp5x1UXfOR9xyW/9antXMhjMPG0dEzc=
@@ -524,6 +529,7 @@ github.com/stretchr/objx v0.2.0 h1:Hbg2NidpLE8veEBkEZTL3CvlkUIVzuU9jDplZO54c48=
 github.com/stretchr/objx v0.2.0/go.mod h1:qt09Ya8vawLte6SNmTgCsAVtYtaKzEcn8ATUoHMkEqE=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
+github.com/stretchr/testify v1.3.1-0.20190311161405-34c6fa2dc709/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5 h1:hNna6Fi0eP1f2sMBe/rJicDmaHmoXGe1Ta84FPYHLuE=
