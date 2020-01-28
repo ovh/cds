@@ -125,13 +125,8 @@ func checkModelRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 }
 
 func checkNetworkAccessRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
-	conn, err := net.DialTimeout("tcp", r.Value, 10*time.Second)
-	if err != nil {
-		return false, nil
-	}
-	conn.Close()
-
-	return true, nil
+	isValid := sdk.CheckNetworkAccessRequirement(r)
+	return isValid, nil
 }
 
 func checkServiceRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
