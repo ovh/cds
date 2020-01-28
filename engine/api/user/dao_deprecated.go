@@ -1,16 +1,6 @@
 package user
 
-import (
-	"context"
-	"encoding/json"
-	"time"
-
-	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/sdk"
-)
-
+/*
 func GetDeprecatedUsers(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadDeprecatedUserOptionFunc) ([]sdk.User, error) {
 	dus := []DeprecatedUser{}
 
@@ -122,3 +112,4 @@ func deleteUser(db gorp.SqlExecutor, u *sdk.User) error {
 	_, err := db.Exec(query, u.ID)
 	return sdk.WithStack(err)
 }
+*/

@@ -1,15 +1,6 @@
 package user
 
-import (
-	"context"
-
-	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
-)
-
+/*
 func getUserMigrations(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]MigrationUser, error) {
 	ms := []migrationUser{}
 
@@ -62,3 +53,4 @@ func insertUserMigration(ctx context.Context, db gorp.SqlExecutor, m *MigrationU
 	*m = mi.MigrationUser
 	return nil
 }
+*/

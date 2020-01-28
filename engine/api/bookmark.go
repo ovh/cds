@@ -11,7 +11,7 @@ import (
 func (api *API) getBookmarksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		consumer := getAPIConsumer(ctx)
-		data, err := bookmark.LoadAll(api.mustDB(), consumer.AuthentifiedUser.OldUserStruct)
+		data, err := bookmark.LoadAll(api.mustDB(), consumer.AuthentifiedUser)
 		if err != nil {
 			return err
 		}

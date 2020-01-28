@@ -1,6 +1,8 @@
 package group
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -22,7 +24,7 @@ func DeleteLinkGroupProject(db gorp.SqlExecutor, l *LinkGroupProject) error {
 		return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot remove group from project as it's the last group with write permission on project")
 	}
 
-	return deleteDBLinkGroupProject(db, l)
+	return deleteDBLinkGroupProject(context.TODO(), db, l)
 }
 
 // UpdateLinkGroupProject updates group role for the given project.
@@ -43,7 +45,7 @@ func UpdateLinkGroupProject(db gorp.SqlExecutor, l *LinkGroupProject) error {
 		}
 	}
 
-	return updateDBLinkGroupProject(db, l)
+	return updateDBLinkGroupProject(context.TODO(), db, l)
 }
 
 // DeleteLinksGroupProjectForProjectID removes all links between group and project from database for given project id.

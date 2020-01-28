@@ -5,38 +5,41 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
 // DeleteUserFromGroup remove user from group
-func DeleteUserFromGroup(db gorp.SqlExecutor, groupID, userID int64) error {
+func DeleteUserFromGroup(ctx context.Context, db gorp.SqlExecutor, groupID int64, userID string) error {
+
 	// Check if there are admin left
-	var isAdm bool
-	err := db.QueryRow(`SELECT group_admin FROM "group_user" WHERE group_id = $1 AND user_id = $2`, groupID, userID).Scan(&isAdm)
+	grpLink, err := LoadLinkGroupUserForGroupIDAndUserID(ctx, db, groupID, userID)
 	if err != nil {
-		return sdk.WithStack(err)
+		return err
 	}
 
-	if isAdm {
-		var nbAdm int
-		err = db.QueryRow(`SELECT COUNT(id) FROM "group_user" WHERE group_id = $1 AND group_admin = true`, groupID).Scan(&nbAdm)
+	if grpLink.Admin {
+		var q = gorpmapping.NewQuery(`
+			SELECT COUNT(id) 
+			FROM "group_authentified_user" 
+			WHERE group_id = $1 
+			AND group_admin = true`).Args(groupID)
+		nbAdmin, err := gorpmapping.GetInt(db, q)
 		if err != nil {
-			return sdk.WithStack(err)
+			return err
 		}
 
-		if nbAdm <= 1 {
+		if nbAdmin <= 1 {
 			return sdk.WithStack(sdk.ErrNotEnoughAdmin)
 		}
 	}
 
-	query := `DELETE FROM group_user WHERE group_id=$1 AND user_id=$2`
-	_, err = db.Exec(query, groupID, userID)
-	return sdk.WithStack(err)
+	return DeleteLinkGroupUser(db, grpLink)
 }
 
 // CheckUserInDefaultGroup insert user in default group
-func CheckUserInDefaultGroup(ctx context.Context, db gorp.SqlExecutor, userID int64) error {
-	if DefaultGroup == nil || DefaultGroup.ID == 0 || userID == 0 {
+func CheckUserInDefaultGroup(ctx context.Context, db gorp.SqlExecutor, userID string) error {
+	if DefaultGroup == nil || DefaultGroup.ID == 0 || userID == "" {
 		return nil
 	}
 
@@ -47,10 +50,10 @@ func CheckUserInDefaultGroup(ctx context.Context, db gorp.SqlExecutor, userID in
 
 	// If user is not in default group at it
 	if l == nil {
-		return InsertLinkGroupUser(db, &LinkGroupUser{
-			GroupID: DefaultGroup.ID,
-			UserID:  userID,
-			Admin:   false,
+		return InsertLinkGroupUser(ctx, db, &LinkGroupUser{
+			GroupID:            DefaultGroup.ID,
+			AuthentifiedUserID: userID,
+			Admin:              false,
 		})
 	}
 
@@ -59,10 +62,13 @@ func CheckUserInDefaultGroup(ctx context.Context, db gorp.SqlExecutor, userID in
 
 // LoadGroupByProject retrieves all groups related to project
 func LoadGroupByProject(db gorp.SqlExecutor, project *sdk.Project) error {
+
+	// TODO sign this
+
 	query := `
     SELECT "group".id, "group".name, project_group.role
     FROM "group"
-	  JOIN project_group ON project_group.group_id = "group".id
+	JOIN project_group ON project_group.group_id = "group".id
     WHERE project_group.project_id = $1
     ORDER BY "group".name ASC
   `

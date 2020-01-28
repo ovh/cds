@@ -51,7 +51,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 		}
 
 		consumer := getAPIConsumer(ctx)
-		oldBC, err := broadcast.LoadByID(api.mustDB(), broadcastID, consumer.AuthentifiedUser.OldUserStruct)
+		oldBC, err := broadcast.LoadByID(api.mustDB(), broadcastID, consumer.AuthentifiedUser)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load broadcast by id")
 		}
@@ -103,13 +103,13 @@ func (api *API) postMarkAsReadBroadcastHandler() service.Handler {
 		}
 
 		consumer := getAPIConsumer(ctx)
-		br, errL := broadcast.LoadByID(api.mustDB(), broadcastID, consumer.AuthentifiedUser.OldUserStruct)
+		br, errL := broadcast.LoadByID(api.mustDB(), broadcastID, consumer.AuthentifiedUser)
 		if errL != nil {
 			return sdk.WrapError(errL, "Cannot load broadcast by id")
 		}
 
 		if !br.Read {
-			if err := broadcast.MarkAsRead(api.mustDB(), broadcastID, consumer.AuthentifiedUser.OldUserStruct.ID); err != nil {
+			if err := broadcast.MarkAsRead(api.mustDB(), broadcastID, consumer.AuthentifiedUser.ID); err != nil {
 				return sdk.WrapError(err, "Cannot mark as read broadcast id %d and user id %d", broadcastID, broadcastID)
 			}
 		}
@@ -151,7 +151,7 @@ func (api *API) getBroadcastHandler() service.Handler {
 		}
 
 		consumer := getAPIConsumer(ctx)
-		broadcast, err := broadcast.LoadByID(api.mustDB(), id, consumer.AuthentifiedUser.OldUserStruct)
+		broadcast, err := broadcast.LoadByID(api.mustDB(), id, consumer.AuthentifiedUser)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load broadcasts")
 		}
@@ -163,7 +163,7 @@ func (api *API) getBroadcastHandler() service.Handler {
 func (api *API) getBroadcastsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		consumer := getAPIConsumer(ctx)
-		broadcasts, err := broadcast.LoadAll(api.mustDB(), consumer.AuthentifiedUser.OldUserStruct)
+		broadcasts, err := broadcast.LoadAll(api.mustDB(), consumer.AuthentifiedUser)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load broadcasts")
 		}

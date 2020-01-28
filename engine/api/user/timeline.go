@@ -10,7 +10,7 @@ import (
 )
 
 // InsertTimelineFilter inserts user timeline filter
-func InsertTimelineFilter(db gorp.SqlExecutor, tf sdk.TimelineFilter, userID int64) error {
+func InsertTimelineFilter(db gorp.SqlExecutor, tf sdk.TimelineFilter, userID string) error {
 	filterNullString, err := gorpmapping.JSONToNullString(tf)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to insert filter")
@@ -22,7 +22,7 @@ func InsertTimelineFilter(db gorp.SqlExecutor, tf sdk.TimelineFilter, userID int
 }
 
 // UpdateTimelineFilter user timeline filter
-func UpdateTimelineFilter(db gorp.SqlExecutor, timelineFilter sdk.TimelineFilter, userID int64) error {
+func UpdateTimelineFilter(db gorp.SqlExecutor, timelineFilter sdk.TimelineFilter, userID string) error {
 	filterJSON, err := gorpmapping.JSONToNullString(timelineFilter)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to read json filter")
@@ -36,12 +36,12 @@ func UpdateTimelineFilter(db gorp.SqlExecutor, timelineFilter sdk.TimelineFilter
 }
 
 // CountTimelineFilter count if user has a timeline filter
-func CountTimelineFilter(db gorp.SqlExecutor, userID int64) (int64, error) {
+func CountTimelineFilter(db gorp.SqlExecutor, userID string) (int64, error) {
 	return db.SelectInt("SELECT COUNT(*) from user_timeline WHERE user_id = $1", userID)
 }
 
 // Load user timeline filter
-func LoadTimelineFilter(db gorp.SqlExecutor, userID int64) (sdk.TimelineFilter, error) {
+func LoadTimelineFilter(db gorp.SqlExecutor, userID string) (sdk.TimelineFilter, error) {
 	var filter sdk.TimelineFilter
 	var filterS sql.NullString
 	query := "SELECT filter from user_timeline WHERE user_id = $1"

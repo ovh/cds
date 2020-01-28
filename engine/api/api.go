@@ -718,6 +718,18 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.RefactorAuthenticationAuth(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache, a.Config.URL.API, a.Config.URL.UI)
 	}})
 
+	// TODO
+	// migrate workermodel.CreatedBy
+	// migrate group_user to group_authentified_user
+	// table project_group signature
+	// table group signature
+	// migrate bookmark
+	// migrate broadcast
+	// migrate workflow_template_bulk => recreate the whole table from scratch
+	// migrate user_timeline
+	// migrate workflow_favorite
+	// migrate project_favorite
+
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {
 		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")

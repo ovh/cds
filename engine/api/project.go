@@ -127,7 +127,7 @@ func (api *API) getProjectsHandler() service.Handler {
 		var requestedUser *sdk.AuthentifiedUser
 		if requestedUserName != "" {
 			var err error
-			requestedUser, err = user.LoadByUsername(ctx, api.mustDB(), requestedUserName, user.LoadOptions.WithDeprecatedUser)
+			requestedUser, err = user.LoadByUsername(ctx, api.mustDB(), requestedUserName)
 			if err != nil {
 				if sdk.Cause(err) == sql.ErrNoRows {
 					return sdk.ErrUserNotFound
@@ -156,11 +156,11 @@ func (api *API) getProjectsHandler() service.Handler {
 		case isMaintainer(ctx) && requestedUser == nil:
 			projects, err = project.LoadAll(ctx, api.mustDB(), api.Cache, opts...)
 		case isMaintainer(ctx) && requestedUser != nil:
-			groups, errG := group.LoadAllByDeprecatedUserID(context.TODO(), api.mustDB(), requestedUser.OldUserStruct.ID)
+			groups, errG := group.LoadAllByUserID(context.TODO(), api.mustDB(), requestedUser.ID)
 			if errG != nil {
 				return sdk.WrapError(errG, "unable to load user '%s' groups", requestedUserName)
 			}
-			requestedUser.OldUserStruct.Groups = groups
+			requestedUser.Groups = groups
 			log.Debug("load all projects for user %s", requestedUser.Fullname)
 			projects, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, requestedUser.GetGroupIDs(), opts...)
 		default:
@@ -280,7 +280,7 @@ func (api *API) getProjectHandler() service.Handler {
 		withLabels := FormBool(r, "withLabels")
 
 		opts := []project.LoadOptionFunc{
-			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID),
+			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.ID),
 		}
 		if withVariables {
 			opts = append(opts, project.LoadOptions.WithVariables)
@@ -432,7 +432,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 
 		p, errP := project.Load(db, api.Cache, key,
 			project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames, project.LoadOptions.WithVariables,
-			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID),
+			project.LoadOptions.WithFavorites(getAPIConsumer(ctx).AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys, project.LoadOptions.WithPermission, project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "putProjectLabelsHandler> Cannot load project updated from db")
@@ -525,7 +525,7 @@ func (api *API) postProjectHandler() service.Handler {
 			}
 
 			newGroup := sdk.Group{Name: groupSlug}
-			if err := group.Create(tx, &newGroup, consumer.AuthentifiedUser.OldUserStruct.ID); err != nil {
+			if err := group.Create(ctx, tx, &newGroup, consumer.AuthentifiedUser.ID); err != nil {
 				return err
 			}
 
@@ -534,7 +534,7 @@ func (api *API) postProjectHandler() service.Handler {
 
 		// Insert all links between project and group
 		for _, groupID := range groupIDs {
-			if err := group.InsertLinkGroupProject(tx, &group.LinkGroupProject{
+			if err := group.InsertLinkGroupProject(ctx, tx, &group.LinkGroupProject{
 				GroupID:   groupID,
 				ProjectID: p.ID,
 				Role:      sdk.PermissionReadWriteExecute,
@@ -613,7 +613,7 @@ func (api *API) postProjectHandler() service.Handler {
 		proj, err := project.Load(api.mustDB(), api.Cache, p.Key,
 			project.LoadOptions.WithLabels,
 			project.LoadOptions.WithWorkflowNames,
-			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.OldUserStruct.ID),
+			project.LoadOptions.WithFavorites(consumer.AuthentifiedUser.ID),
 			project.LoadOptions.WithKeys,
 			project.LoadOptions.WithPermission,
 			project.LoadOptions.WithIntegrations,

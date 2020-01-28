@@ -18,7 +18,11 @@ type Operation struct {
 	Error              string                   `json:"error,omitempty"`
 	RepositoryInfo     *OperationRepositoryInfo `json:"repository_info,omitempty"`
 	Date               *time.Time               `json:"date,omitempty"`
-	User               User                     `json:"user,omitempty"`
+	User               struct {
+		Username string `json:"username"  db:"-" cli:"-"`
+		Fullname string `json:"fullname"  db:"-" cli:"-"`
+		Email    string `json:"email"  db:"-" cli:"-"`
+	} `json:"user,omitempty"`
 }
 
 // OperationSetup is the setup for an operation basically its a checkout

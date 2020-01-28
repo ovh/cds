@@ -168,7 +168,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 						return err
 					}
 				}
-				if err := group.CheckUserInDefaultGroup(ctx, tx, u.OldUserStruct.ID); err != nil {
+				if err := group.CheckUserInDefaultGroup(ctx, tx, u.ID); err != nil {
 					return err
 				}
 			} else {
@@ -236,7 +236,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 							return err
 						}
 
-						if err := group.CheckUserInDefaultGroup(ctx, tx, u.OldUserStruct.ID); err != nil {
+						if err := group.CheckUserInDefaultGroup(ctx, tx, u.ID); err != nil {
 							return err
 						}
 

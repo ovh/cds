@@ -390,7 +390,7 @@ func UpdateLabel(db gorp.SqlExecutor, label *sdk.Label) error {
 }
 
 // UpdateFavorite add or delete project from user favorites
-func UpdateFavorite(db gorp.SqlExecutor, projectID int64, userID int64, add bool) error {
+func UpdateFavorite(db gorp.SqlExecutor, projectID int64, userID string, add bool) error {
 	var query string
 	if add {
 		query = "INSERT INTO project_favorite (user_id, project_id) VALUES ($1, $2)"

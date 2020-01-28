@@ -644,7 +644,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	return w, nil
 }
 
-func IsFavorite(db gorp.SqlExecutor, w *sdk.Workflow, uID int64) (bool, error) {
+func IsFavorite(db gorp.SqlExecutor, w *sdk.Workflow, uID string) (bool, error) {
 	count, err := db.SelectInt("SELECT COUNT(1) FROM workflow_favorite WHERE user_id = $1 AND workflow_id = $2", uID, w.ID)
 	if err != nil {
 		return false, sdk.WithStack(err)
@@ -1574,7 +1574,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 }
 
 // UpdateFavorite add or delete workflow from user favorites
-func UpdateFavorite(db gorp.SqlExecutor, workflowID int64, u int64, add bool) error {
+func UpdateFavorite(db gorp.SqlExecutor, workflowID int64, u string, add bool) error {
 	var query string
 	if add {
 		query = "INSERT INTO workflow_favorite (user_id, workflow_id) VALUES ($1, $2)"

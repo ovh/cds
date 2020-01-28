@@ -11,7 +11,7 @@ import (
 
 func (api *API) getTimelineFilterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct
+		u := getAPIConsumer(ctx).AuthentifiedUser
 		filter, err := user.LoadTimelineFilter(api.mustDB(), u.ID)
 		if err != nil {
 			return sdk.WrapError(err, "getTimelineFilterHandler")
@@ -22,7 +22,7 @@ func (api *API) getTimelineFilterHandler() service.Handler {
 
 func (api *API) postTimelineFilterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct
+		u := getAPIConsumer(ctx).AuthentifiedUser
 		var timelineFilter sdk.TimelineFilter
 		if err := service.UnmarshalBody(r, &timelineFilter); err != nil {
 			return sdk.WrapError(err, "Unable to read body")

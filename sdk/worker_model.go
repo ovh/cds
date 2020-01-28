@@ -52,15 +52,20 @@ type Model struct {
 	LastRegistration       time.Time           `json:"last_registration"  db:"last_registration" cli:"-"`
 	CheckRegistration      bool                `json:"check_registration"  db:"check_registration" cli:"-"`
 	UserLastModified       time.Time           `json:"user_last_modified"  db:"user_last_modified" cli:"-"`
-	CreatedBy              User                `json:"created_by" db:"-" cli:"-"`
-	GroupID                int64               `json:"group_id" db:"group_id" cli:"-"`
-	NbSpawnErr             int64               `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
-	LastSpawnErr           string              `json:"last_spawn_err" db:"-" cli:"-"`
-	LastSpawnErrLogs       *string             `json:"last_spawn_err_log" db:"-" cli:"-"`
-	DateLastSpawnErr       *time.Time          `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
-	IsDeprecated           bool                `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
-	IsOfficial             bool                `json:"is_official" db:"-" cli:"official"`
-	PatternName            string              `json:"pattern_name,omitempty" db:"-" cli:"-"`
+	CreatedBy              interface{}         // for backward compat
+	Author                 struct {
+		Username string `json:"username"  db:"-" cli:"-"`
+		Fullname string `json:"fullname"  db:"-" cli:"-"`
+		Email    string `json:"email"  db:"-" cli:"-"`
+	} `json:"created_by" db:"-" cli:"-"`
+	GroupID          int64      `json:"group_id" db:"group_id" cli:"-"`
+	NbSpawnErr       int64      `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
+	LastSpawnErr     string     `json:"last_spawn_err" db:"-" cli:"-"`
+	LastSpawnErrLogs *string    `json:"last_spawn_err_log" db:"-" cli:"-"`
+	DateLastSpawnErr *time.Time `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
+	IsDeprecated     bool       `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
+	IsOfficial       bool       `json:"is_official" db:"-" cli:"official"`
+	PatternName      string     `json:"pattern_name,omitempty" db:"-" cli:"-"`
 	// aggregates
 	Editable bool   `json:"editable,omitempty" db:"-"`
 	Group    *Group `json:"group" db:"-" cli:"-"`

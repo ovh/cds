@@ -140,24 +140,7 @@ func Insert(ctx context.Context, db gorp.SqlExecutor, au *sdk.AuthentifiedUser) 
 	}
 	*au = u.AuthentifiedUser
 
-	// TODO refactor this when authenticatedUser will replace user
-	if au.OldUserStruct == nil {
-		oldUser := &sdk.User{
-			Admin:    u.Ring == sdk.UserRingAdmin,
-			Email:    "no-reply-" + u.Username + "@localhost.local",
-			Username: u.Username,
-			Origin:   "local",
-			Fullname: u.Fullname,
-		}
-		if err := insertDeprecatedUser(db, oldUser); err != nil {
-			return sdk.WrapError(err, "unable to insert old user for authenticated_user.id=%s", u.ID)
-		}
-		au.OldUserStruct = oldUser
-	}
-	return insertUserMigration(ctx, db, &MigrationUser{
-		AuthentifiedUserID: u.ID,
-		UserID:             au.OldUserStruct.ID,
-	})
+	return nil
 }
 
 // Update a user in database.
@@ -172,21 +155,8 @@ func Update(ctx context.Context, db gorp.SqlExecutor, au *sdk.AuthentifiedUser) 
 
 // DeleteByID a user in database.
 func DeleteByID(db gorp.SqlExecutor, id string) error {
-	migrations, err := LoadMigrationUsersByUserIDs(context.Background(), db, []string{id})
-	if err != nil {
-		return err
-	}
+	// TODO Delete user dependencies
 
-	for _, m := range migrations {
-		oldU, err := LoadDeprecatedUserWithoutAuthByID(context.Background(), db, m.UserID)
-		if err != nil {
-			return err
-		}
-		if err := DeleteUserWithDependencies(db, oldU); err != nil {
-			return err
-		}
-	}
-
-	_, err = db.Exec("DELETE FROM authentified_user WHERE id = $1", id)
+	_, err := db.Exec("DELETE FROM authentified_user WHERE id = $1", id)
 	return sdk.WithStack(err)
 }

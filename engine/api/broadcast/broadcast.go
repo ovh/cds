@@ -30,10 +30,10 @@ func Update(db gorp.SqlExecutor, bc *sdk.Broadcast) error {
 }
 
 // MarkAsRead mark the broadcast as read for an user
-func MarkAsRead(db gorp.SqlExecutor, broadcastID, userID int64) error {
+func MarkAsRead(db gorp.SqlExecutor, broadcastID int64, userID string) error {
 	brr := broadcastRead{
-		BroadcastID: broadcastID,
-		UserID:      userID,
+		BroadcastID:        broadcastID,
+		AuthentifiedUserID: userID,
 	}
 	err := db.Insert(&brr)
 
@@ -41,7 +41,7 @@ func MarkAsRead(db gorp.SqlExecutor, broadcastID, userID int64) error {
 }
 
 // LoadByID loads broadcast by id
-func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User) (*sdk.Broadcast, error) {
+func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.AuthentifiedUser) (*sdk.Broadcast, error) {
 	var projectKey sql.NullString
 	query := `
 		SELECT
@@ -78,7 +78,7 @@ func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User) (*sdk.Broadcast, error
 }
 
 // LoadAll retrieves broadcasts from database
-func LoadAll(db gorp.SqlExecutor, u *sdk.User) ([]sdk.Broadcast, error) {
+func LoadAll(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) ([]sdk.Broadcast, error) {
 	query := `
 	SELECT
 		broadcast.id,

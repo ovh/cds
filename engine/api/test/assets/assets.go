@@ -62,7 +62,7 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, nam
 
 	require.NoError(t, project.Insert(db, store, &proj))
 
-	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g.ID,
 		ProjectID: proj.ID,
 		Role:      sdk.PermissionReadWriteExecute,
@@ -88,7 +88,7 @@ func InsertTestGroup(t *testing.T, db gorp.SqlExecutor, name string) *sdk.Group 
 	eg, _ := group.LoadByName(context.TODO(), db, g.Name)
 	if eg != nil {
 		g = *eg
-	} else if err := group.Insert(db, &g); err != nil {
+	} else if err := group.Insert(context.TODO(), db, &g); err != nil {
 		t.Fatalf("cannot insert group: %s", err)
 		return nil
 	}
@@ -97,14 +97,14 @@ func InsertTestGroup(t *testing.T, db gorp.SqlExecutor, name string) *sdk.Group 
 }
 
 // SetUserGroupAdmin allows a user to perform operations on given group
-func SetUserGroupAdmin(t *testing.T, db gorp.SqlExecutor, groupID int64, userID int64) {
+func SetUserGroupAdmin(t *testing.T, db gorp.SqlExecutor, groupID int64, userID string) {
 	l, err := group.LoadLinkGroupUserForGroupIDAndUserID(context.TODO(), db, groupID, userID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-		t.Fatalf("cannot load link between group %d and user %d", groupID, userID)
+		t.Fatalf("cannot load link between group %d and user %s", groupID, userID)
 		return
 	}
 	if l == nil {
-		t.Fatalf("given user %d is not member of group %d", userID, groupID)
+		t.Fatalf("given user %s is not member of group %d", userID, groupID)
 		return
 	}
 
@@ -113,8 +113,8 @@ func SetUserGroupAdmin(t *testing.T, db gorp.SqlExecutor, groupID int64, userID 
 	}
 	l.Admin = true
 
-	if err := group.UpdateLinkGroupUser(db, l); err != nil {
-		t.Fatalf("cannot set user %d group admin of %d", userID, groupID)
+	if err := group.UpdateLinkGroupUser(context.Background(), db, l); err != nil {
+		t.Fatalf("cannot set user %s group admin of %d", userID, groupID)
 		return
 	}
 }
@@ -134,7 +134,7 @@ func InsertAdminUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedUser, 
 	}
 	require.NoError(t, user.Insert(context.TODO(), db, &data), "unable to insert user")
 
-	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
+	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithContacts)
 	require.NoError(t, err, "user cannot be load for id %s", data.ID)
 
 	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
@@ -173,7 +173,7 @@ func InsertMaintainerUser(t *testing.T, db gorp.SqlExecutor) (*sdk.AuthentifiedU
 	}
 	require.NoError(t, user.Insert(context.TODO(), db, &data), "unable to insert user")
 
-	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithDeprecatedUser, user.LoadOptions.WithContacts)
+	u, err := user.LoadByID(context.Background(), db, data.ID, user.LoadOptions.WithContacts)
 	require.NoErrorf(t, err, "user cannot be load for id %s", data.ID)
 
 	consumer, err := local.NewConsumer(context.TODO(), db, u.ID)
@@ -197,23 +197,24 @@ func InsertLambdaUser(t *testing.T, db gorp.SqlExecutor, groups ...*sdk.Group) (
 	}
 	require.NoError(t, user.Insert(context.TODO(), db, u))
 
-	u, err := user.LoadByID(context.Background(), db, u.ID, user.LoadOptions.WithDeprecatedUser)
+	u, err := user.LoadByID(context.Background(), db, u.ID)
 	require.NoError(t, err)
 
 	for i := range groups {
 		existingGroup, _ := group.LoadByName(context.TODO(), db, groups[i].Name)
 		if existingGroup == nil {
-			err := group.Create(db, groups[i], u.OldUserStruct.ID)
+			err := group.Create(context.Background(), db, groups[i], u.ID)
 			require.NoError(t, err)
 		} else {
 			groups[i].ID = existingGroup.ID
-			require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
-				GroupID: groups[i].ID,
-				UserID:  u.OldUserStruct.ID,
-				Admin:   false,
-			}), "unable to insert user in group")
+			require.NoError(t, group.InsertLinkGroupUser(context.Background(), db,
+				&group.LinkGroupUser{
+					GroupID:            groups[i].ID,
+					AuthentifiedUserID: u.ID,
+					Admin:              false,
+				}), "unable to insert user in group")
 		}
-		u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, *groups[i])
+		u.Groups = append(u.Groups, *groups[i])
 	}
 
 	btes, err := json.Marshal(u)
@@ -399,7 +400,7 @@ func InsertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 		}
 	}
 
-	if err := group.Insert(db, g); err != nil {
+	if err := group.Insert(context.TODO(), db, g); err != nil {
 		t.Fatalf("Unable to create group %s", err)
 	}
 

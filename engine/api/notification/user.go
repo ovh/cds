@@ -52,12 +52,18 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 				jn := &notif.Settings
 				//Get recipents from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
-					u, errPerm := projectPermissionUsers(ctx, db, w.ProjectID, sdk.PermissionRead)
-					if errPerm != nil {
-						log.Error(ctx, "notification[Jabber]. error while loading permission:%s", errPerm.Error())
+					u, err := projectPermissionUserIDs(ctx, db, w.ProjectID, sdk.PermissionRead)
+					if err != nil {
+						log.Error(ctx, "notification[Jabber]. error while loading permission: %v", err)
+						break
 					}
-					for i := range u {
-						jn.Recipients = append(jn.Recipients, u[i].Username)
+					users, err := user.LoadAllByIDs(ctx, db, u)
+					if err != nil {
+						log.Error(ctx, "notification[Jabber]. error while loading users: %v", err)
+						break
+					}
+					for _, u := range users {
+						jn.Recipients = append(jn.Recipients, u.Username)
 					}
 				}
 				if jn.SendToAuthor == nil || *jn.SendToAuthor {
@@ -78,13 +84,20 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 				jn := &notif.Settings
 				//Get recipents from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
-					u, errPerm := projectPermissionUsers(ctx, db, w.ProjectID, sdk.PermissionRead)
+					u, errPerm := projectPermissionUserIDs(ctx, db, w.ProjectID, sdk.PermissionRead)
 					if errPerm != nil {
 						log.Error(ctx, "notification[Email].GetUserWorkflowEvents> error while loading permission:%s", errPerm.Error())
 						return nil
 					}
-					for i := range u {
-						jn.Recipients = append(jn.Recipients, u[i].Email)
+					contacts, err := user.LoadContactsByUserIDs(ctx, db, u)
+					if err != nil {
+						log.Error(ctx, "notification[Jabber]. error while loading users contacts: %v", err)
+						break
+					}
+					for _, c := range contacts {
+						if c.Type == sdk.UserContactTypeEmail {
+							jn.Recipients = append(jn.Recipients, c.Value)
+						}
 					}
 				}
 				if jn.SendToAuthor == nil || *jn.SendToAuthor {
@@ -92,7 +105,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 						jn.Recipients = append(jn.Recipients, email)
 					} else if author, okA := params["cds.author"]; okA && author != "" {
 						// Load the user
-						au, err := user.LoadByUsername(ctx, db, author, user.LoadOptions.WithDeprecatedUser)
+						au, err := user.LoadByUsername(ctx, db, author)
 						if err != nil {
 							log.Warning(ctx, "notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
 							continue

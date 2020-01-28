@@ -13,37 +13,11 @@ type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.Authentified
 
 // LoadOptions for authentified users.
 var LoadOptions = struct {
-	WithContacts       LoadOptionFunc
-	WithDeprecatedUser LoadOptionFunc
+	WithContacts  LoadOptionFunc
+	WithFavorites LoadOptionFunc // TODO
+	WithGroups    LoadOptionFunc // TODO
 }{
-	WithContacts:       loadContacts,
-	WithDeprecatedUser: loadDeprecatedUser, // TODO: will be removed
-}
-
-func loadDeprecatedUser(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.AuthentifiedUser) error {
-	authentifiedUserIDs := sdk.AuthentifiedUsersToIDs(aus)
-
-	userMigrations, err := LoadMigrationUsersByUserIDs(ctx, db, authentifiedUserIDs)
-	if err != nil {
-		return err
-	}
-
-	us, err := LoadDeprecatedUsersWithoutAuthByIDs(ctx, db, userMigrations.ToUserIDs())
-	if err != nil {
-		return err
-	}
-
-	mUsers := us.ToMapByID()
-	mUserMigrations := userMigrations.ToMapByAuthentifiedUserID()
-	for _, au := range aus {
-		if userMigration, okMigration := mUserMigrations[au.ID]; okMigration {
-			if oldUser, okUser := mUsers[userMigration.UserID]; okUser {
-				au.OldUserStruct = &oldUser
-			}
-		}
-	}
-
-	return nil
+	WithContacts: loadContacts,
 }
 
 func loadContacts(ctx context.Context, db gorp.SqlExecutor, aus ...*sdk.AuthentifiedUser) error {

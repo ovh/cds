@@ -30,26 +30,22 @@ func loadDefault(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsum
 
 func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.AuthConsumer) error {
 	// Load all users for given access tokens
-	users, err := user.LoadAllByIDs(ctx, db, sdk.AuthConsumersToAuthentifiedUserIDs(cs), user.LoadOptions.WithDeprecatedUser)
+	users, err := user.LoadAllByIDs(ctx, db, sdk.AuthConsumersToAuthentifiedUserIDs(cs))
 	if err != nil {
 		return err
 	}
 
 	// Get all links group user for user ids
-	userIDs := make([]int64, len(users))
-	for i := range users {
-		userIDs[i] = users[i].OldUserStruct.ID
-	}
-	links, err := group.LoadLinksGroupUserForUserIDs(ctx, db, userIDs)
+	links, err := group.LoadLinksGroupUserForUserIDs(ctx, db, users.IDs())
 	if err != nil {
 		return err
 	}
-	mLinks := make(map[int64][]group.LinkGroupUser)
+	mLinks := make(map[string][]group.LinkGroupUser)
 	for i := range links {
-		if _, ok := mLinks[links[i].UserID]; !ok {
-			mLinks[links[i].UserID] = []group.LinkGroupUser{links[i]}
+		if _, ok := mLinks[links[i].AuthentifiedUserID]; !ok {
+			mLinks[links[i].AuthentifiedUserID] = []group.LinkGroupUser{links[i]}
 		} else {
-			mLinks[links[i].UserID] = append(mLinks[links[i].UserID], links[i])
+			mLinks[links[i].AuthentifiedUserID] = append(mLinks[links[i].AuthentifiedUserID], links[i])
 		}
 	}
 
@@ -62,11 +58,11 @@ func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.A
 
 	// Set groups for each
 	for i := range users {
-		oldUserID := users[i].OldUserStruct.ID
+		oldUserID := users[i].ID
 		if _, ok := mLinks[oldUserID]; ok {
 			for _, link := range mLinks[oldUserID] {
 				if grp, ok := mGroups[link.GroupID]; ok {
-					users[i].OldUserStruct.Groups = append(users[i].OldUserStruct.Groups, grp)
+					users[i].Groups = append(users[i].Groups, grp)
 				}
 			}
 		}

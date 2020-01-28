@@ -531,7 +531,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 		// store the bulk request
 		bulk := sdk.WorkflowTemplateBulk{
-			UserID:             consumer.AuthentifiedUser.OldUserStruct.ID,
+			UserID:             consumer.AuthentifiedUser.ID,
 			WorkflowTemplateID: wt.ID,
 			Operations:         make([]sdk.WorkflowTemplateBulkOperation, len(req.Operations)),
 		}
@@ -654,7 +654,7 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if b == nil || (b.UserID != getAPIConsumer(ctx).AuthentifiedUser.OldUserStruct.ID && !isMaintainer(ctx) && !isAdmin(ctx)) {
+		if b == nil || (b.UserID != getAPIConsumer(ctx).AuthentifiedUser.ID && !isMaintainer(ctx) && !isAdmin(ctx)) {
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "no workflow template bulk found for id %d", id)
 		}
 		sort.Slice(b.Operations, func(i, j int) bool {

@@ -73,9 +73,9 @@ func (api *API) putUserHandler() service.Handler {
 
 		var oldUser *sdk.AuthentifiedUser
 		if username == "me" {
-			oldUser, err = user.LoadByID(ctx, tx, consumer.AuthentifiedUserID, user.LoadOptions.WithDeprecatedUser)
+			oldUser, err = user.LoadByID(ctx, tx, consumer.AuthentifiedUserID)
 		} else {
-			oldUser, err = user.LoadByUsername(ctx, tx, username, user.LoadOptions.WithDeprecatedUser)
+			oldUser, err = user.LoadByUsername(ctx, tx, username)
 		}
 		if err != nil {
 			return err
@@ -98,7 +98,7 @@ func (api *API) putUserHandler() service.Handler {
 				}
 
 				// Invalidate consumer's group if user is not part of it
-				gs, err := group.LoadAllByDeprecatedUserID(ctx, tx, oldUser.OldUserStruct.ID)
+				gs, err := group.LoadAllByUserID(ctx, tx, oldUser.ID)
 				if err != nil {
 					return err
 				}

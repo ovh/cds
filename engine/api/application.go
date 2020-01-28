@@ -44,7 +44,7 @@ func (api *API) getApplicationsHandler() service.Handler {
 		var requestedUser *sdk.AuthentifiedUser
 		if requestedUserName != "" && isMaintainer(ctx) {
 			var err error
-			requestedUser, err = user.LoadByUsername(ctx, api.mustDB(), requestedUserName, user.LoadOptions.WithDeprecatedUser)
+			requestedUser, err = user.LoadByUsername(ctx, api.mustDB(), requestedUserName)
 			if err != nil {
 				if sdk.Cause(err) == sql.ErrNoRows {
 					return sdk.ErrUserNotFound
@@ -52,11 +52,11 @@ func (api *API) getApplicationsHandler() service.Handler {
 				return err
 			}
 
-			groups, err := group.LoadAllByDeprecatedUserID(context.TODO(), api.mustDB(), requestedUser.OldUserStruct.ID)
+			groups, err := group.LoadAllByUserID(context.TODO(), api.mustDB(), requestedUser.ID)
 			if err != nil {
 				return sdk.WrapError(err, "unable to load user '%s' groups", requestedUserName)
 			}
-			requestedUser.OldUserStruct.Groups = groups
+			requestedUser.Groups = groups
 
 			projPerms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, requestedUser.GetGroupIDs())
 			if err != nil {

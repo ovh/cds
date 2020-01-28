@@ -5,12 +5,26 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 )
 
-func LoadNavbarAsAdmin(db gorp.SqlExecutor, userID int64) (data []sdk.NavbarProjectData, err error) {
+// LoadNavbarData returns just the needed data for the ui navbar
+func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
+	// Admin can gets all project
+	// Users can gets only their projects
+
+	if u.Ring == sdk.UserRingMaintainer || u.Ring == sdk.UserRingAdmin {
+		return loadNavbarAsAdmin(db, store, u)
+	}
+
+	return loadNavbarAsUser(db, store, u)
+}
+
+// TODO project_favorite nmust be linked to authentified_user
+func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
 	query := `
 	(
 		SELECT DISTINCT
@@ -48,7 +62,7 @@ func LoadNavbarAsAdmin(db gorp.SqlExecutor, userID int64) (data []sdk.NavbarProj
 	)
 	`
 
-	rows, err := db.Query(query, userID)
+	rows, err := db.Query(query, u.ID)
 	if err != nil {
 		return data, sdk.WithStack(err)
 	}
@@ -85,7 +99,8 @@ func LoadNavbarAsAdmin(db gorp.SqlExecutor, userID int64) (data []sdk.NavbarProj
 	return data, nil
 }
 
-func LoadNavbarAsUser(db gorp.SqlExecutor, userID int64, groupIDs []int64) (data []sdk.NavbarProjectData, err error) {
+// TODO
+func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
 	query := `
 	(
 		SELECT DISTINCT
@@ -147,7 +162,8 @@ func LoadNavbarAsUser(db gorp.SqlExecutor, userID int64, groupIDs []int64) (data
 	)
   `
 
-	rows, err := db.Query(query, userID, gorpmapping.IDsToQueryString(groupIDs), group.SharedInfraGroup.ID)
+	// TODO shared infra group is useless
+	rows, err := db.Query(query, u.ID, gorpmapping.IDsToQueryString(u.Groups.ToIDs()), group.SharedInfraGroup.ID)
 	if err != nil {
 		return data, sdk.WithStack(err)
 	}

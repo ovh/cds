@@ -21,7 +21,7 @@ func Test_getUserGroupsHandler(t *testing.T) {
 	g2 := assets.InsertGroup(t, db)
 
 	u, jwtRaw := assets.InsertLambdaUser(t, db, g1, g2)
-	assets.SetUserGroupAdmin(t, db, g2.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, db, g2.ID, u.ID)
 
 	uri := api.Router.GetRoute(http.MethodGet, api.getUserGroupsHandler, map[string]string{
 		"permUsernamePublic": u.Username,

@@ -9,7 +9,7 @@ import (
 )
 
 // LoadAll returns all bookmarks with icons and their description
-func LoadAll(db gorp.SqlExecutor, u *sdk.User) ([]sdk.Bookmark, error) {
+func LoadAll(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) ([]sdk.Bookmark, error) {
 	var data []sdk.Bookmark
 	query := `SELECT * FROM (
 		(
@@ -34,8 +34,8 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.User) ([]sdk.Bookmark, error) {
 		)
 	) AS sub ORDER BY sub.workflow_name
 	`
-	if u == nil {
-		u = &sdk.User{}
+	if u == nil { // TODO ?
+		u = &sdk.AuthentifiedUser{}
 	}
 
 	if _, err := db.Select(&data, query, u.ID); err != nil {
