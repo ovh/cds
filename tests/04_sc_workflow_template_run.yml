@@ -3,6 +3,8 @@ version: "2"
 testcases:
 - name: prepare test
   steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} template delete shared.infra/demo-workflow-hello-world"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWTEMPLATERUN"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWTEMPLATERUN"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowtemplaterun "
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add 04SCWORKFLOWTEMPLATERUN 04scworkflowtemplaterun"
@@ -16,7 +18,7 @@ testcases:
 
 - name: create workflow from template
   steps:
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow applyTemplate 04SCWORKFLOWTEMPLATERUN testtemplate shared.infra/demo-workflow-hello-world"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow applyTemplate 04SCWORKFLOWTEMPLATERUN testtemplate shared.infra/demo-workflow-hello-world --import-push -n"
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring has been created"
@@ -31,7 +33,7 @@ testcases:
 - name: check workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWTEMPLATERUN testtemplate 1 --format json
-    retry: 10
+    retry: 20
     delay: 10
     assertions:
     - result.code ShouldEqual 0
@@ -43,5 +45,5 @@ testcases:
 
 - name: check workflow log
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWTEMPLATERUN testtemplate 1 --pattern Build
-    - script: grep "CDS_TEMPLATE_VERSION=1" *.log
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWTEMPLATERUN testtemplate 1 --pattern build
+    - script: grep "CDS_TEMPLATE_VERSION=0" *.log
