@@ -20,13 +20,7 @@
         let cur = cm.getCursor(0);
 
         // Get current line
-        let line = cm.doc.children[0].lines[cur.line];
-        let text = '';
-
-        if (!line) {
-            return null;
-        }
-        text = line.text;
+        let text = cm.getLine(cur.line);
 
         // Show nothing if there is no  {{. on the line
         if (text.indexOf('{{.') === -1) {
@@ -66,13 +60,8 @@
 
         // Get cursor position
         let cur = cm.getCursor(0);
-
-        if (!cur || !cm.doc.children[0].lines[cur.line]) {
-            return null;
-        }
-
         // Get current line
-        let text = cm.doc.children[0].lines[cur.line].text;
+        let text = cm.getLine(cur.line);
         if (text.indexOf(cdsPrefix) === -1 && text.indexOf(workflowPrefix) === -1 && text.indexOf(gitPrefix) === -1) {
             return null;
         }
@@ -108,11 +97,8 @@
         let cur = cm.getCursor(0);
 
         // Get current line
-        if (!cur || !cm.doc.children[0].lines[cur.line]) {
-            return null;
-        }
+        let text = cm.getLine(cur.line);
 
-        let text = cm.doc.children[0].lines[cur.line].text;
         let prefix = "";
 
         if (!options.payloadCompletionList) {
@@ -172,10 +158,7 @@
         let cur = cm.getCursor(0);
 
         // Get current line
-        if (!cur || !cm.doc.children[0].lines[cur.line]) {
-            return null;
-        }
-        let text = cm.doc.children[0].lines[cur.line].text;
+        let text = cm.getLine(cur.line);
         let autoCompleteResponse = {};
 
         let firstColon = text.indexOf(':');
@@ -184,7 +167,7 @@
             autoCompleteResponse = autoCompleteValue(text, cur);
         } else if (firstColon === -1){
             // autocomplete key
-            autoCompleteResponse = autoCompleteKey(text, options.schema, cur, cm.doc.children[0]);
+            autoCompleteResponse = autoCompleteKey(text, options.schema, cur, cm);
         }
 
         return {
@@ -196,14 +179,14 @@
             to: CodeMirror.Pos(cur.line, autoCompleteResponse.toCh)
         };
 
-        function autoCompleteKey(text, schema, cur, fullText) {
+        function autoCompleteKey(text, schema, cur, cm) {
             // Find yaml level
             let depth = findDepth(text);
             if (depth === -1) {
                 return {sug: []};
             }
             // Get suggestion
-            return findKeySuggestion(depth, schema, cur, fullText);
+            return findKeySuggestion(depth, schema, cur, cm);
         }
 
         function autoCompleteValue(text, cur) {
@@ -223,7 +206,7 @@
             return {fromCh: text.indexOf(':') + 2, toCh: cur.ch, sug: suggestions}
         }
 
-        function findKeySuggestion(depth, schema, cur, fullText) {
+        function findKeySuggestion(depth, schema, cur, cm) {
             // Get all elements for this yaml level
             let eltMatchesLevel = schema.flatElements
                 .filter(felt => felt.positions.findIndex(p => p.depth === depth) !== -1)
@@ -237,7 +220,7 @@
             if (cur.line === 0) {
                 suggestions = eltMatchesLevel.map(e => e.name + ': ');
             } else {
-                let parents = findParent(cur.line -1, fullText, depth);
+                let parents = findParent(cur.line -1, cm, depth);
                 let lastParent = parents[parents.length-1];
                 if (lastParent && parents[parents.length-1].indexOf('-') === 0) {
                     let lastParentTrimmed = lastParent.substr(1, lastParent.length).trimStart();
@@ -246,7 +229,7 @@
                         .map(elt => elt.name);
                 } else {
                     // Find key to exclude from suggestion
-                    let keyToExclude = findKeyToExclude(cur, fullText, lastParent, schema);
+                    let keyToExclude = findKeyToExclude(cur, cm, lastParent, schema);
 
                     // Filter suggestion ( match match and not in exclude array )
                     suggestions = eltMatchesLevel.map(elt => {
@@ -277,14 +260,14 @@
         /**
          *  Find key to exclude from suggestion
          * @param cur Current position of the cursor in codemirror
-         * @param fullText Full text written by user
+         * @param cm Instance of codemirror file
          * @param lastParent Direct yaml parent
          * @param schema JSON schema
          * @returns {[]}  Array of string that contains all keys to exclude
          */
-        function findKeyToExclude(cur, fullText, lastParent, schema) {
+        function findKeyToExclude(cur, cm, lastParent, schema) {
             // Find neighbour to know which keys are already here
-            let neighbour = findNeighbour(cur, fullText);
+            let neighbour = findNeighbour(cur, cm);
 
             // Exclude key from oneOf.required
             let keyToExclude = [];
@@ -307,14 +290,15 @@
         /**
          * Find parent tree from cursor position
          * @param currentLine Current line position
-         * @param fullText Full text written by the user
+         * @param cm Instance of the current file
+         * @param depth Current depth reference
          * @returns {[]} Array of strings that contains the parent tree
          */
-        function findParent(currentLine, fullText, depth) {
+        function findParent(currentLine, cm, depth) {
             let parents = [];
             let refDepth = depth;
             for (let i = currentLine; i > 0; i--) {
-                let currentText = fullText.lines[i].text;
+                let currentText = cm.getLine(i);
                 if (currentText.indexOf(':') === -1) {
                     continue
                 }
@@ -337,18 +321,20 @@
         /**
          * Find key at the same level with the same parent
          * @param cur Current cursor position
-         * @param fullText Full text written  by the user
+         * @param cm Instance of codemirror file
          * @returns {[]} Array of strings that contains all neighbour
          */
-        function findNeighbour(cur, fullText) {
+        function findNeighbour(cur, cm) {
             let neighbour = [];
-            let nbOfSpaces = fullText.lines[cur.line].text.length - fullText.lines[cur.line].text.trimStart().length;
+            let givenLine = cm.getLine(cur.line);
+            let nbOfSpaces = givenLine.length - givenLine.trimStart().length;
 
             if (cur.line > 0) {
                 // find neighbour before
                 for (let i = cur.line -1; i >= 0; i--) {
-                    let currentText = fullText.lines[i].text.trimStart();
-                    let currentSpace = fullText.lines[i].text.length - currentText.length;
+                    let currentLine = cm.getLine(i);
+                    let currentText = currentLine.trimStart();
+                    let currentSpace = currentLine.length - currentText.length;
                     if (currentSpace !== nbOfSpaces) {
                         // check if we are in a array
                         if (currentSpace + 2 !== nbOfSpaces || currentText.indexOf('-') !== 0) {
@@ -361,14 +347,15 @@
                     neighbour.push(currentText.split(':')[0]);
                 }
             }
-            if (cur.line < fullText.lines.length - 1) {
+            if (cur.line < cm.doc.size - 1) {
                 // find neighbour before
-                for (let i = cur.line + 1; i < fullText.lines.length; i++) {
-                    let currentSpace = fullText.lines[i].text.length - fullText.lines[i].text.trimStart();
+                for (let i = cur.line + 1; i < cm.doc.size; i++) {
+                    let currentLine = cm.getLine(i);
+                    let currentSpace = currentLine.length - currentLine.trimStart();
                     if (currentSpace !== nbOfSpaces) {
                         break;
                     }
-                    neighbour.push(fullText.lines[i].text.trimStart().split(':')[0]);
+                    neighbour.push(currentLine.trimStart().split(':')[0]);
                 }
             }
             return neighbour;

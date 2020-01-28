@@ -56,7 +56,10 @@ func (api *API) getUserJSONSchema() service.Handler {
 
 			sch = ref.ReflectFromType(reflect.TypeOf(exportentities.PipelineV1{}))
 			for i := range as {
-				path := fmt.Sprintf("%s/%s", as[i].Group.Name, as[i].Name)
+				path := as[i].Name
+				if as[i].Group.Name != sdk.SharedInfraGroupName {
+					path = fmt.Sprintf("%s/%s", as[i].Group.Name, as[i].Name)
+				}
 				s := slug.Convert(path)
 				sch.Definitions["Step"].Properties[path] = &jsonschema.Type{
 					Version:     "http://json-schema.org/draft-04/schema#",
