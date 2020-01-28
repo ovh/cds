@@ -3,7 +3,7 @@ version: "2"
 testcases:
 - name: prepare test
   steps:
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} template delete shared.infra/demo-workflow-hello-world"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} template delete shared.infra/demo-workflow-hello-world --force"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWTEMPLATERUN"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWTEMPLATERUN"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowtemplaterun "
