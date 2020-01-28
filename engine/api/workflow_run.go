@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -922,6 +923,10 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			})
 			if errWf != nil {
 				return sdk.WrapError(errWf, "unable to load workflow %s", name)
+			}
+
+			if err := workflowtemplate.AggregateTemplateInstanceOnWorkflow(ctx, api.mustDB(), wf); err != nil {
+				return sdk.WrapError(err, "cannot load workflow template")
 			}
 
 			// Check node permission
