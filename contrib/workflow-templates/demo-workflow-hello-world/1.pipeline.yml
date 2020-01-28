@@ -9,6 +9,9 @@ jobs:
   steps:
   - script:
     - echo "Building my application"
+  - script:
+    - echo "Display env variables"
+    - env
 - job: package
   stage: package
   steps:
