@@ -27,7 +27,7 @@ func template() *cobra.Command {
 		cli.NewCommand(templateBulkCmd, templateBulkRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePullCmd, templatePullRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePushCmd, templatePushRun, nil, withAllCommandModifiers()...),
-		cli.NewCommand(templateDeleteCmd, templateDeleteRun, nil, withAllCommandModifiers()...),
+		cli.NewDeleteCommand(templateDeleteCmd, templateDeleteRun, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(templateInstancesCmd, templateInstancesRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templateDetachCmd, templateDetachRun, nil, withAllCommandModifiers()...),
 	})
@@ -212,20 +212,27 @@ var templateDeleteCmd = cli.Command{
 func templateDeleteRun(v cli.Values) error {
 	wt, err := getTemplateFromCLI(v)
 	if err != nil {
+		if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil
+		}
 		return err
 	}
 	if wt == nil {
 		wt, err = suggestTemplate()
 		if err != nil {
+			if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return nil
+			}
 			return err
 		}
 	}
 
 	if err := client.TemplateDelete(wt.Group.Name, wt.Slug); err != nil {
+		if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil
+		}
 		return err
 	}
-
-	fmt.Println("Template successfully deleted")
 
 	return nil
 }
