@@ -1,4 +1,4 @@
-package workflowtemplate
+package workflowtemplate_test 
 
 import (
 	"context"
@@ -6,35 +6,39 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestLoadGroup(t *testing.T) {
-	db := &test.SqlExecutorMock{}
-	db.OnSelect = func(i interface{}) {
-		gs := i.(*[]*sdk.Group)
-		*gs = append(*gs, &sdk.Group{
-			ID:   1,
-			Name: "grp-1",
-		}, &sdk.Group{
-			ID:   2,
-			Name: "grp-2",
-		})
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	grp2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	defer func() {
+		assets.DeleteTestGroup(t, db, grp1)
+		assets.DeleteTestGroup(t, db, grp2)
+	}()
+
+	tmpl := sdk.WorkflowTemplate{
+		GroupID: grp1.ID,
+		Slug:    "tmpl-2",
+		Name:    "Template 2",
 	}
 
-	wts := []*sdk.WorkflowTemplate{
-		{GroupID: 1},
-		{GroupID: 2},
-	}
+	require.NoError(t, workflowtemplate.Insert(db, &tmpl))
+	assert.Nil(t, workflowtemplate.LoadOptions.WithGroup(context.TODO(), db, &tmpl))
 
-	assert.Nil(t, loadGroup(context.TODO(), db, wts...))
+	assert.NotNil(t, tmpl.Group)
+	assert.Equal(t, grp1.Name, tmpl.Group.Name)
 
-	assert.NotNil(t, wts[0].Group)
-	assert.Equal(t, "grp-1", wts[0].Group.Name)
-	assert.NotNil(t, wts[1].Group)
-	assert.Equal(t, "grp-2", wts[1].Group.Name)
+	assert.NoError(t, workflowtemplate.Delete(db, &tmpl))
 }
 
 func TestLoadInstanceTemplate(t *testing.T) {
@@ -62,7 +66,7 @@ func TestLoadInstanceTemplate(t *testing.T) {
 		{WorkflowTemplateID: 2},
 	}
 
-	assert.Nil(t, loadInstanceTemplate(context.TODO(), db, wtis...))
+	assert.Nil(t, workflowtemplate.LoadInstanceOptions.WithTemplate(context.TODO(), db, wtis...))
 
 	if !assert.NotNil(t, wtis[0].Template) {
 		t.FailNow()
