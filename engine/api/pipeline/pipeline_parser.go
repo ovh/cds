@@ -50,6 +50,15 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 		}
 	}(&msgList)
 
+	previousPip := pip
+	if exist {
+		prevPip, err := LoadPipeline(ctx, db, proj.Key, pip.Name, true)
+		if err != nil {
+			return pip, nil, sdk.WrapError(err, "cannot load previous pipeline")
+		}
+		previousPip = prevPip
+	}
+
 	var globalError error
 	if exist && !opts.Force {
 		return pip, nil, sdk.ErrPipelineAlreadyExists
@@ -63,7 +72,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 	done.Wait()
 
 	if globalError == nil {
-		if err := CreateAudit(db, pip, AuditUpdatePipeline, u); err != nil {
+		if err := CreateAudit(db, previousPip, AuditUpdatePipeline, u); err != nil {
 			log.Error(ctx, "%v", sdk.WrapError(err, "cannot create audit"))
 		}
 	}
