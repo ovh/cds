@@ -91,6 +91,27 @@ SET created_by = json_build_object(
 
 -- +migrate Down
 
+ALTER TABLE "group" DROP COLUMN sig;
+ALTER TABLE "group" DROP COLUMN signer;
+DROP TABLE "group_authentified_user";
 
+ALTER TABLE "project_group" DROP COLUMN sig;
+ALTER TABLE "project_group" DROP COLUMN signer;
 
+ALTER TABLE "broadcast_read" DROP CONSTRAINT broadcast_read_pkey;
+ALTER TABLE "broadcast_read" ADD PRIMARY KEY (broadcast_id, user_id);
+ALTER TABLE "broadcast_read" DROP COLUMN authentified_user_id;
 
+ALTER TABLE "project_favorite" DROP CONSTRAINT project_favorite_pkey;
+ALTER TABLE "project_favorite" ADD PRIMARY KEY (project_id, user_id);
+ALTER TABLE "project_favorite" DROP COLUMN authentified_user_id;
+
+ALTER TABLE "workflow_favorite" DROP CONSTRAINT workflow_favorite_pkey;
+ALTER TABLE "workflow_favorite" ADD PRIMARY KEY (workflow_id, user_id);
+ALTER TABLE "workflow_favorite" DROP COLUMN authentified_user_id;
+
+ALTER TABLE "user_timeline" DROP CONSTRAINT user_timeline_pkey;
+ALTER TABLE "user_timeline" ADD PRIMARY KEY (user_id);
+ALTER TABLE "user_timeline" DROP COLUMN authentified_user_id;
+
+ALTER TABLE "workflow_template_bulk" DROP COLUMN authentified_user_id;

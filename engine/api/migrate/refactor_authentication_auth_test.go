@@ -12,8 +12,15 @@ import (
 )
 
 func TestRefactorAuthenticationAuth(t *testing.T) {
-	db, cache, _ := test.SetupPG(t)
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	mail.Init("", "", "", "", "", false, true)
 	require.NoError(t, migrate.RefactorAuthenticationAuth(context.TODO(), db, cache,
 		"http://localhost:8081", "http://localhost:8080"))
+}
+
+func TestRefactorGroupMembership(t *testing.T) {
+	db, _, end := test.SetupPG(t)
+	defer end()
+	require.NoError(t, migrate.RefactorGroupMembership(context.TODO(), db))
 }
