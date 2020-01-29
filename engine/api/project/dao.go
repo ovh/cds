@@ -393,9 +393,9 @@ func UpdateLabel(db gorp.SqlExecutor, label *sdk.Label) error {
 func UpdateFavorite(db gorp.SqlExecutor, projectID int64, userID string, add bool) error {
 	var query string
 	if add {
-		query = "INSERT INTO project_favorite (user_id, project_id) VALUES ($1, $2)"
+		query = "INSERT INTO project_favorite (authentified_user_id, project_id) VALUES ($1, $2)"
 	} else {
-		query = "DELETE FROM project_favorite WHERE user_id = $1 AND project_id = $2"
+		query = "DELETE FROM project_favorite WHERE authentified_user_id = $1 AND project_id = $2"
 	}
 
 	_, err := db.Exec(query, userID, projectID)

@@ -29,10 +29,10 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	u, passUser := assets.InsertLambdaUser(t, api.mustDB())
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
-	require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
 
 	pip := sdk.Pipeline{

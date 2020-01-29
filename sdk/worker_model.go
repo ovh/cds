@@ -52,7 +52,6 @@ type Model struct {
 	LastRegistration       time.Time           `json:"last_registration"  db:"last_registration" cli:"-"`
 	CheckRegistration      bool                `json:"check_registration"  db:"check_registration" cli:"-"`
 	UserLastModified       time.Time           `json:"user_last_modified"  db:"user_last_modified" cli:"-"`
-	CreatedBy              interface{}         // for backward compat
 	Author                 struct {
 		Username string `json:"username"  db:"-" cli:"-"`
 		Fullname string `json:"fullname"  db:"-" cli:"-"`

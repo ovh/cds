@@ -18,7 +18,7 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) ([]sdk.Bookmark, erro
 				true AS favorite,
 				'project' AS type
 			FROM project
-			JOIN project_favorite ON project.id = project_favorite.project_id AND project_favorite.user_id = $1
+			JOIN project_favorite ON project.id = project_favorite.project_id AND project_favorite.authentified_user_id = $1
 			ORDER BY project.name
 		)
 		UNION
@@ -29,7 +29,7 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) ([]sdk.Bookmark, erro
 				'workflow' AS type
 			FROM project
 			JOIN workflow ON workflow.project_id = project.id
-			JOIN workflow_favorite ON workflow.id = workflow_favorite.workflow_id AND workflow_favorite.user_id = $1
+			JOIN workflow_favorite ON workflow.id = workflow_favorite.workflow_id AND workflow_favorite.authentified_user_id = $1
 			ORDER BY workflow_name
 		)
 	) AS sub ORDER BY sub.workflow_name

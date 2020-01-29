@@ -56,7 +56,7 @@ func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.AuthentifiedUser) (*sdk.Broa
 			project.projectkey,
 			(broadcast_read.broadcast_id IS NOT NULL)::boolean AS read
 			FROM broadcast
-				LEFT JOIN broadcast_read ON broadcast.id = broadcast_read.broadcast_id AND broadcast_read.user_id = $1
+				LEFT JOIN broadcast_read ON broadcast.id = broadcast_read.broadcast_id AND broadcast_read.authentified_user_id = $1
 				LEFT JOIN project ON broadcast.project_id = project.id
 		WHERE broadcast.id = $2
 	`
@@ -92,7 +92,7 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) ([]sdk.Broadcast, err
 		project.projectkey,
 		(broadcast_read.broadcast_id IS NOT NULL)::boolean AS read
 		FROM broadcast
-			LEFT JOIN broadcast_read ON broadcast.id = broadcast_read.broadcast_id AND broadcast_read.user_id = $1
+			LEFT JOIN broadcast_read ON broadcast.id = broadcast_read.broadcast_id AND broadcast_read.authentified_user_id = $1
 			LEFT JOIN project ON broadcast.project_id = project.id
 	ORDER BY updated DESC
 	`

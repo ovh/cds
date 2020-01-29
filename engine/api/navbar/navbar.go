@@ -30,7 +30,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.Authentifie
 		SELECT DISTINCT
 			project.projectkey, project.name AS project_name, project.description, NULL AS name,
 			CASE
-				WHEN (SELECT project_id FROM project_favorite WHERE user_id = $1 AND project_id = project.id) IS NOT NULL THEN true
+				WHEN (SELECT project_id FROM project_favorite WHERE authentified_user_id = $1 AND project_id = project.id) IS NOT NULL THEN true
 				ELSE false
 			END AS favorite,
 			'project' AS type
@@ -52,7 +52,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.Authentifie
 		SELECT DISTINCT
 			project.projectkey, project.name AS project_name, workflow.description, workflow.name,
 			CASE
-				WHEN (SELECT workflow_id FROM workflow_favorite WHERE user_id = $1 AND workflow_id = workflow.id) IS NOT NULL THEN true
+				WHEN (SELECT workflow_id FROM workflow_favorite WHERE authentified_user_id = $1 AND workflow_id = workflow.id) IS NOT NULL THEN true
 				ELSE false
 			END AS favorite,
 			'workflow' AS type
@@ -106,7 +106,7 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.Authentified
 		SELECT DISTINCT
 			project.projectkey, project.name AS project_name, project.description, NULL AS name,
 			CASE
-				WHEN (SELECT project_id FROM project_favorite WHERE user_id = $1 AND project_id = project.id) IS NOT NULL THEN true
+				WHEN (SELECT project_id FROM project_favorite WHERE authentified_user_id = $1 AND project_id = project.id) IS NOT NULL THEN true
 				ELSE false
 			END AS favorite,
 			'project' AS type
@@ -144,7 +144,7 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.Authentified
 		SELECT DISTINCT
 			project.projectkey, project.name AS project_name, workflow.description, workflow.name,
 			CASE
-				WHEN (SELECT workflow_id FROM workflow_favorite WHERE user_id = $1 AND workflow_id = workflow.id) IS NOT NULL THEN true
+				WHEN (SELECT workflow_id FROM workflow_favorite WHERE authentified_user_id = $1 AND workflow_id = workflow.id) IS NOT NULL THEN true
 				ELSE false
 			END AS favorite,
 			'workflow' AS type

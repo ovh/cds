@@ -40,10 +40,10 @@ func Test_getWorkflowsHandler(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertLambdaUser(t, api.mustDB())
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
 
 	pip := sdk.Pipeline{
@@ -286,10 +286,10 @@ func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
 	defer end()
 	u, pass := assets.InsertLambdaUser(t, api.mustDB())
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
 
 	pip := sdk.Pipeline{
@@ -387,10 +387,10 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
 
 	pip := sdk.Pipeline{

@@ -1535,7 +1535,7 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 	gr := sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, group.Insert(api.mustDB(), &gr))
+	require.NoError(t, group.Insert(context.TODO(), api.mustDB(), &gr))
 
 	uLambda, pass := assets.InsertLambdaUser(t, api.mustDB(), &gr)
 
@@ -2090,8 +2090,8 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	gr := &sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, group.Insert(db, gr))
-	require.NoError(t, group.InsertLinkGroupProject(api.mustDB(), &group.LinkGroupProject{
+	require.NoError(t, group.Insert(context.TODO(), db, gr))
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), api.mustDB(), &group.LinkGroupProject{
 		GroupID:   gr.ID,
 		ProjectID: proj.ID,
 		Role:      7,
@@ -2247,8 +2247,8 @@ func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 	gr := &sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, group.Insert(db, gr))
-	require.NoError(t, group.InsertLinkGroupProject(api.mustDB(), &group.LinkGroupProject{
+	require.NoError(t, group.Insert(context.TODO(), db, gr))
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), api.mustDB(), &group.LinkGroupProject{
 		GroupID:   gr.ID,
 		ProjectID: proj.ID,
 		Role:      7,

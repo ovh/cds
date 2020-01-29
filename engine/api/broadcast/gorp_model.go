@@ -15,5 +15,5 @@ type broadcastRead struct {
 
 func init() {
 	gorpmapping.Register(gorpmapping.New(broadcast{}, "broadcast", true, "id"))
-	gorpmapping.Register(gorpmapping.New(broadcastRead{}, "broadcast_read", false, "broadcast_id", "user_id"))
+	gorpmapping.Register(gorpmapping.New(broadcastRead{}, "broadcast_read", false, "broadcast_id", "authentified_user_id"))
 }

@@ -421,7 +421,7 @@ func WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis []*WorkflowTemplateInst
 // WorkflowTemplateBulk contains info about a template bulk task.
 type WorkflowTemplateBulk struct {
 	ID                 int64                          `json:"id" db:"id"`
-	UserID             string                         `json:"user_id" db:"user_id"`
+	UserID             string                         `json:"user_id" db:"authentified_user_id"`
 	WorkflowTemplateID int64                          `json:"workflow_template_id" db:"workflow_template_id"`
 	Operations         WorkflowTemplateBulkOperations `json:"operations" db:"operations"`
 }
