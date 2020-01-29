@@ -45,7 +45,7 @@ func insertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 		require.NoError(t, group.Delete(context.TODO(), db, g1))
 	}
 
-	if err := group.Insert(db, g); err != nil {
+	if err := group.Insert(context.TODO(), db, g); err != nil {
 		t.Fatalf("Unable to create group %s", err)
 	}
 

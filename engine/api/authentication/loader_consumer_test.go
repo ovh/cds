@@ -29,9 +29,8 @@ func TestWithAuthentifiedUser(t *testing.T) {
 	require.NotNil(t, res.AuthentifiedUser)
 	assert.Equal(t, u.Username, res.AuthentifiedUser.Username)
 
-	require.NotNil(t, res.AuthentifiedUser.OldUserStruct)
-	require.Equal(t, 1, len(res.AuthentifiedUser.OldUserStruct.Groups))
-	assert.Equal(t, g.ID, res.AuthentifiedUser.OldUserStruct.Groups[0].ID)
+	require.Equal(t, 1, len(res.AuthentifiedUser.Groups))
+	assert.Equal(t, g.ID, res.AuthentifiedUser.Groups[0].ID)
 }
 
 func TestWithConsumerGroups(t *testing.T) {

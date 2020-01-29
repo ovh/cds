@@ -75,7 +75,7 @@ func TestLoadAllByRepo(t *testing.T) {
 	eg, _ := group.LoadByName(context.TODO(), db, g.Name)
 	if eg != nil {
 		g = *eg
-	} else if err := group.Insert(db, &g); err != nil {
+	} else if err := group.Insert(context.TODO(), db, &g); err != nil {
 		t.Fatalf("Cannot insert group : %s", err)
 	}
 
@@ -85,7 +85,7 @@ func TestLoadAllByRepo(t *testing.T) {
 	}
 
 	test.NoError(t, project.Insert(db, cache, &proj))
-	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g.ID,
 		ProjectID: proj.ID,
 		Role:      sdk.PermissionReadWriteExecute,
@@ -125,9 +125,9 @@ func TestLoadAll(t *testing.T) {
 	require.NoError(t, project.Insert(db, cache, &proj2))
 
 	g := sdk.Group{Name: sdk.RandomString(10)}
-	require.NoError(t, group.Insert(db, &g))
+	require.NoError(t, group.Insert(context.TODO(), db, &g))
 
-	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g.ID,
 		ProjectID: proj1.ID,
 		Role:      sdk.PermissionReadWriteExecute,
