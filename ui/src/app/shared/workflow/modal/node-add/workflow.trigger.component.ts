@@ -96,17 +96,17 @@ export class WorkflowTriggerComponent {
                             .name;
             }
             let nodeBaseName = this.destNode.name;
-            let loop = true;
+            let hasNodeToRename = true;
             let nameIndex = 1;
             do {
                 if (allNodes.findIndex(
                     n => n.name === this.destNode.name && n.ref !== this.destNode.ref) === -1) {
-                    loop = false;
+                    hasNodeToRename = false;
                 } else {
                     this.destNode.name = nodeBaseName + '_' + nameIndex;
                     nameIndex++;
                 }
-            } while (loop);
+            } while (hasNodeToRename);
         }
         let clonedWorkflow = cloneDeep(this.workflow);
 
