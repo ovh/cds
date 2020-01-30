@@ -5,9 +5,9 @@ card:
   name: repository-manager
 ---
 
-The Github Integration have to be configured on your CDS by a CDS Administrator.
+The GitHub Integration have to be configured on your CDS by a CDS Administrator.
 
-This integration allows you to link a Git Repository hosted by Github to a CDS Application.
+This integration allows you to link a Git Repository hosted by GitHub to a CDS Application.
 
 This integration enables some features:
 
@@ -45,7 +45,7 @@ Example for a local configuration:
 - with WebUI default port (8080), Homepage URL will be `http://localhost:8080`
 - with API default port (8081), callback URL will be `http://localhost:8081/repositories_manager/oauth2/callback`
 
-![Integration Github New OAuth App](../images/github-new-oauth-app.png?height=500px)
+![Integration GitHub New OAuth App](../images/github-new-oauth-app.png?height=500px)
 
 Click on **Register Application**, then on the next page, GitHub give you a **Client ID** and a **Client Secret**
 
@@ -185,7 +185,7 @@ $ engine start api vcs hooks --config config.toml
 
 Go on your **CDS Project -> Advanced -> Link a repository manager**
 
-Select Github in the list, then click on **Connect**
+Select GitHub in the list, then click on **Connect**
 
 ![github-add-on-prj.png](../images/github-add-on-prj.png?height=500px)
 
@@ -195,7 +195,7 @@ A confirmation page is now displayed, click on the link **Click Here**
 
 By clicking on **Click Here**, you call GitHub and you will be redirected on the same page.
 The Repository is now added on the CDS Project with a small warning
- *Unused repository manager Github on ..* as you don't use the repository yet in your CDS Project. 
+ *Unused repository manager GitHub on ..* as you don't use the repository yet in your CDS Project. 
 
 ![github-added.png](../images/github-added.png?height=200px)
 

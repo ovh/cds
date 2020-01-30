@@ -16,22 +16,24 @@ This article contains the steps to start CDS locally, with API, UI and a local H
 - a Redis
 - a PostgreSQL 9.5 min
 
-## Get latest release from GitHub
+## Get the latest release from GitHub
 
 ```bash
 mkdir $HOME/cds
 cd cds
 
 LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d '"' -f 4)
-OS=linux # could be linux, darwin, windows, freebsd
-ARCH=amd64 # could be 386, arm, amd64, arm64
+OS=linux # could be linux, darwin, windows, freebsd, openbsd
+ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le
 
 # GET Binaries from GitHub
-wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-engine-$OS-$ARCH
-wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH
-wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/ui.tar.gz
-wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/sql.tar.gz
-chmod +x *-$OS-$ARCH
+curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-engine-$OS-$ARCH -o cds-engine
+curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH -o cdsctl
+# if you don't want to use the your keychain, you have to use this:
+# curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH-nokeychain -o cdsctl
+curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/ui.tar.gz -o ui.tar.gz
+curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/sql.tar.gz -o sql.tar.gz
+chmod +x cds-engine cdsctl
 
 ```
 
@@ -40,10 +42,17 @@ chmod +x *-$OS-$ARCH
 For this example, we consider that the database is installed on `localhost`,
 port `5432`, with an existing empty database and user named `cds` and a password 'cds'.
 
+If it's just for test purpose, you can start a postgreSQL database with docker, as:
+
+```
+docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGRES_DB=cds -p 127.0.0.1:5432:5432 -d postgres:9.5
+```
+
 ```bash
 cd $HOME/cds
-tar xzf sql.tar.gz
-./cds-engine-linux-amd64 database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql
+mkdir sql
+tar xzf sql.tar.gz -C sql/
+./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql
 ```
 
 ## Launch CDS API
@@ -53,9 +62,9 @@ Generate a **[Configuration File]({{<relref "/hosting/configuration.md" >}})**
 ```bash
 cd $HOME/cds
 
-./cds-engine-linux-amd64 config new > $HOME/cds/conf.toml
-./cds-engine-linux-amd64 download workers --config $HOME/cds/conf.toml
-./cds-engine-linux-amd64 start api --config $HOME/cds/conf.toml
+./cds-engine config new > conf.toml
+./cds-engine download workers --config conf.toml
+./cds-engine start api --config conf.toml
 ```
 
 Check that CDS is up and running:

@@ -65,6 +65,7 @@ The binary engine can be used to launch in different processes each µService. T
 Each µService can be multi-instanciated, example:
 
 - 6x `$engine start api`, each api shared the same PostgreSQL and redis.
+- 3x `$engine start ui`.
 - 3x `$engine start hooks`, each hooks shared the same redis.
 - 3x `$engine start vcs`, each hooks shared the same redis.
 - 3x `$engine start elasticsearch`.
@@ -80,6 +81,9 @@ Example of an installation for a production with 18.000 jobs launched per day:
 
 - 6x `$engine start api`
   - RAM: 3Go per instance
+  - Redis: 128Mo
+- 3x `$engine start ui`
+  - RAM: 128Mo per instance
   - Redis: 128Mo
 - 3x `$engine start hooks`
   - RAM: 256Mo per instance

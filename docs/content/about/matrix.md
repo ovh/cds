@@ -44,14 +44,14 @@ Ability to launch builds based on a branch pattern. This allows, for example, to
 
 Note that CDS's default behavior is to launch the whole workflow on every git commit. This behavior can be altered using "run conditions".
 
-#### Native Github / Bitbucket Server / Gitlab / Gerrit integration
+#### Native GitHub / Bitbucket Server / GitLab / Gerrit integration
 
 2-way integration with most popular git-based products.
 
 1. Ability to get notified and start a build when a change is pushed .
 2. Ability to notify the git-based tool of the success/failure of the build.
 
-CDS natively supports Github, Gitlab, Bitbucket Server and Gerrit.
+CDS natively supports GitHub, GitLab, Bitbucket Server and Gerrit.
 The link between your repo git and CDS is via a CDS application: 1 Git repository == a CDS application.
 Through this integration, CDS will push build status of your commits : Building, Success or Failed.
 

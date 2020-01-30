@@ -40,8 +40,8 @@ var downloadCmd = &cobra.Command{
 
 var downloadWorkersCmd = &cobra.Command{
 	Use:   "workers",
-	Short: "Download workers binaries from latest release on Github",
-	Long: `Download workers binaries from latest release on Github
+	Short: "Download workers binaries from the latest release on GitHub",
+	Long: `Download workers binaries from the latest release on GitHub
 
 You can also indicate a specific os or architecture to not download all binaries available with flag --os and --arch`,
 	Example: "engine download workers",

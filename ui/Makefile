@@ -4,8 +4,6 @@ VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
 
 clean:
 	@rm -rf dist
-
-reset:
 	@rm -rf node_modules
 	@rm -rf semantic
 	@rm -rf semantic\\

@@ -2,7 +2,7 @@
 
 ## Installation tests
 
-+ Download latest release from github (optionnal)
++ Download latest release from github (optional)
 + Assert binaries: engine, cdsctl, worker
 + Assert third parties: postgres, redis
 + Run smtpmock to mock smtp server
