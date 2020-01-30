@@ -26,7 +26,8 @@ export class PipelineStatus {
     }
 
     static isDone(status: string) {
-        return status === this.SUCCESS || status === this.STOPPED || status === this.FAIL;
+        return status === this.SUCCESS || status === this.STOPPED || status === this.FAIL ||
+            status === this.SKIPPED || status === this.DISABLED;
     }
 }
 

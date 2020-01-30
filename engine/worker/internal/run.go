@@ -136,7 +136,7 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 
 			for _, newVariable := range stepResult.NewVariables {
 				// append the new variable from a step to the following steps
-				w.currentJob.params = append(w.currentJob.params, newVariable.ToParameter("cds.build"))
+				w.currentJob.params = append(w.currentJob.params, newVariable.ToParameter(""))
 				// Propagate new variables from step result to jobs result
 				w.currentJob.newVariables = append(w.currentJob.newVariables, newVariable)
 			}
@@ -283,9 +283,7 @@ func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.
 
 		for _, newVariable := range r.NewVariables {
 			// append the new variable from a chile to the following children
-			w.currentJob.params = append(w.currentJob.params, newVariable.ToParameter("cds.build"))
-			// Propagate new variables from child result to action
-			r.NewVariables = append(r.NewVariables, newVariable)
+			w.currentJob.params = append(w.currentJob.params, newVariable.ToParameter(""))
 		}
 	}
 

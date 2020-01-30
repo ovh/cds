@@ -42,7 +42,7 @@ func TestRunParseJunitTestResultAction_Absolute(t *testing.T) {
 
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	assert.NoError(t, ioutil.WriteFile("results.xml", []byte(fileContent), os.ModePerm))
 
 	fi, err := os.Open("results.xml")
@@ -111,7 +111,7 @@ func TestRunParseJunitTestResultAction_Relative(t *testing.T) {
 
 	defer gock.Off()
 
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	fname := filepath.Join(wk.workingDirectory.Name(), "results.xml")
 	require.NoError(t, afero.WriteFile(wk.BaseDir(), fname, []byte(fileContent), os.ModePerm))
 

@@ -6,12 +6,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"runtime"
-	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/spf13/afero"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -71,17 +69,7 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		}
 
 		filename := mapBody["file"]
-
-		basePath, isBasePathFS := wk.BaseDir().(*afero.BasePathFs)
-		if isBasePathFS {
-			realPath, _ := basePath.RealPath("/")
-			filename = strings.TrimPrefix(filename, realPath)
-			if runtime.GOOS == "darwin" {
-				filename = strings.TrimPrefix(filename, "/private"+realPath)
-			}
-		}
-
-		response, err := wk.InstallKey(*key, filename)
+		response, err := keyInstall(wk, filename, key)
 		if err != nil {
 			log.Error(ctx, "Unable to install key %s: %v", key.Name, err)
 			if sdkerr, ok := err.(*sdk.Error); ok {
@@ -98,4 +86,19 @@ func keyInstallHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc 
 		log.Debug("key %s installed to %s", key.Name, response.PKey)
 		writeJSON(w, response, 200)
 	}
+}
+
+func keyInstall(wk workerruntime.Runtime, filename string, key *sdk.Variable) (*workerruntime.KeyResponse, error) {
+	if filename == "" {
+		return wk.InstallKey(*key)
+	}
+
+	log.Debug("worker.keyInstall> installing key %s to %s", key.Name, filename)
+
+	if !sdk.PathIsAbs(filename) {
+		return nil, fmt.Errorf("unsupported relative path")
+	}
+
+	log.Debug("worker.keyInstall> destination: %s", filename)
+	return wk.InstallKeyTo(*key, filename)
 }

@@ -220,6 +220,10 @@ func getNodeRunBuildParameters(ctx context.Context, proj *sdk.Project, wr *sdk.W
 	tmp["cds.run.number"] = fmt.Sprintf("%d", run.Number)
 	tmp["cds.run.subnumber"] = fmt.Sprintf("%d", run.SubNumber)
 
+	if wr.Workflow.TemplateInstance != nil {
+		tmp["cds.template.version"] = fmt.Sprintf("%d", wr.Workflow.TemplateInstance.WorkflowTemplateVersion)
+	}
+
 	_, next := observability.Span(ctx, "workflow.interpolate")
 	params = make([]sdk.Parameter, 0, len(tmp))
 	for k, v := range tmp {

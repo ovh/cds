@@ -49,6 +49,10 @@ a.disabled:hover {
     overflow: hidden !important;
 }
 
+.CodeMirror-lint-tooltip {
+    z-index: 9000;
+}
+
 .fullheight {
     .CodeMirror {
         height: 100% !important;

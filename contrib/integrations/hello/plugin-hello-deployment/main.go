@@ -32,41 +32,41 @@ Hello deployment plugin must configured as following (content of hello-deploymen
 $ cdsctl admin plugins import hello-deployment-plugin.yml
 
 Build the present binaries and import in CDS (content of hello-deployment-plugin-bin.yml):
-	os: linux
-	arch: amd64
-	cmd: <path-to-binary-file>
+  os: linux
+  arch: amd64
+  cmd: <path-to-binary-file>
 
 $ cdsctl admin plugins binary-add hello-deployment-plugin hello-deployment-plugin-bin.yml <path-to-binary-file>
 
 Hello integration must configured as following (content of hello-integration.yml)
-	name: Hello
-	author: "Username Lastname"
-	default_config: {}
-	deployment_default_config:
-	deployment.token:
-		value: ""
-		type: password
-	retry.delay:
-		value: "10"
-		type: string
-	retry.max:
-		value: "30"
-		type: string
-	version:
-		value: '{{.cds.version}}'
-		type: string
-	plugin: hello-deployment-plugin
-	public_configurations:
-	hello-integration-dev:
-		host:
-		value: http://hello.your-deployment-system.dev.local
-		type: string
-	hello-integration-prod:
-		host:
-		value: http://hello.your-deployment-system.prod.local
-		type: string
-	deployment: true
-	public: true
+  name: Hello
+  author: "Username Lastname"
+  default_config: {}
+  deployment_default_config:
+  deployment.token:
+    value: ""
+    type: password
+  retry.delay:
+    value: "10"
+    type: string
+  retry.max:
+    value: "30"
+    type: string
+  version:
+    value: '{{.cds.version}}'
+    type: string
+  plugin: hello-deployment-plugin
+  public_configurations:
+    hello-integration-dev:
+      host:
+        value: http://hello.your-deployment-system.dev.local
+        type: string
+    hello-integration-prod:
+      host:
+        value: http://hello.your-deployment-system.prod.local
+        type: string
+  deployment: true
+  public: true
 
 $ cdsctl admin integration-model import hello-integration.yml
 

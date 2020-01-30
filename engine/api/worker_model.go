@@ -231,7 +231,7 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		// TODO test if hatchery wildcard vs with groups (wildcard same code as a user)
 		models := []sdk.Model{}
 		var err error
-		if _, ok := api.isHatchery(ctx); ok && len(consumer.GroupIDs) > 0 {
+		if ok := isHatchery(ctx); ok && len(consumer.GroupIDs) > 0 {
 			models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(), consumer.GetGroupIDs(), &filter, workermodel.LoadOptions.Default)
 		} else if isMaintainer(ctx) || isAdmin(ctx) {
 			models, err = workermodel.LoadAll(ctx, api.mustDB(), &filter, workermodel.LoadOptions.Default)

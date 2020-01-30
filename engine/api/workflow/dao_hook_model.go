@@ -94,14 +94,14 @@ func checkBuiltinWorkflowHookModelExist(db gorp.SqlExecutor, h *sdk.WorkflowHook
 func LoadHookModels(db gorp.SqlExecutor) ([]sdk.WorkflowHookModel, error) {
 	dbModels := []hookModel{}
 	if _, err := db.Select(&dbModels, "select id, name, type, command, author, description, identifier, icon from workflow_hook_model"); err != nil {
-		return nil, sdk.WrapError(err, "Unable to load WorkflowHookModel")
+		return nil, sdk.WrapError(err, "unable to load WorkflowHookModel")
 	}
 
 	models := make([]sdk.WorkflowHookModel, len(dbModels))
 	for i := range dbModels {
 		m := dbModels[i]
 		if err := m.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "Unable to load WorkflowHookModel")
+			return nil, sdk.WrapError(err, "unable to load WorkflowHookModel")
 		}
 		models[i] = sdk.WorkflowHookModel(m)
 	}

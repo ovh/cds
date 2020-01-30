@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
@@ -30,45 +29,54 @@ func version() *cobra.Command {
 }
 
 func versionRun(v cli.Values) error {
-	var apiVersion *sdk.Version
-	var err error
-	if client != nil {
-		apiVersion, err = client.Version()
-	} else {
-		err = errors.New("no configuration file found")
-	}
-
-	m := map[string]interface{}{
-		"version":  sdk.VersionString(),
-		"keychain": internal.IsKeychainEnabled(),
-	}
-
-	if apiVersion != nil {
-		m["api-version"] = apiVersion.Version
-		m["api-url"] = client.APIURL()
-	} else if err != nil {
-		m["api-version"] = err.Error()
-		m["api-url"] = "-"
-	}
-
 	format := v.GetString("format")
-	if format == "" {
-		fmt.Println(m["version"])
-		fmt.Printf("CDS api version: %s\n", m["api-version"])
-		fmt.Printf("CDS URL: %s\n", m["api-url"])
-		fmt.Printf("keychain support: %v\n", m["keychain"])
-		return nil
+	type versionCDSCTL struct {
+		Version      string `json:"version" yaml:"version"`
+		Architecture string `json:"architecture" yaml:"architecture"`
+		OS           string `json:"os" yaml:"os"`
+		GitHash      string `json:"git_hash" yaml:"git_hash"`
+		BuildTime    string `json:"build_time" yaml:"build_time"`
+		Keychain     bool   `json:"keychain"`
+	}
+
+	vers := sdk.VersionCurrent()
+	cdsctlVers := versionCDSCTL{
+		Version:      vers.Version,
+		Architecture: vers.Architecture,
+		OS:           vers.OS,
+		GitHash:      vers.GitHash,
+		BuildTime:    vers.BuildTime,
+		Keychain:     internal.IsKeychainEnabled(),
+	}
+
+	var versionAPI *sdk.Version
+	if cfg.Host != "" {
+		var err error
+		versionAPI, err = client.Version()
+		if err != nil {
+			return fmt.Errorf("error while getting API version: %v", err)
+		}
+	}
+
+	type allVersion struct {
+		CDSCTLVersion versionCDSCTL `json:"cdsctl,omitempty" yaml:"cdsctl,omitempty"`
+		APIVersion    *sdk.Version  `json:"api,omitempty" yaml:"api,omitempty"`
+	}
+
+	versions := allVersion{
+		CDSCTLVersion: cdsctlVers,
+		APIVersion:    versionAPI,
 	}
 
 	var buf []byte
-
+	var err error
 	switch format {
 	case "json":
-		buf, err = json.Marshal(m)
+		buf, err = json.Marshal(versions)
 	case "yaml":
-		buf, err = yaml.Marshal(m)
+		buf, err = yaml.Marshal(versions)
 	default:
-		return fmt.Errorf("invalid given format")
+		buf, err = yaml.Marshal(versions)
 	}
 	if err != nil {
 		return err

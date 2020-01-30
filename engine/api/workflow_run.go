@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -318,7 +319,7 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 
 		withDetailledNodeRun := QueryString(r, "withDetails")
 
-		_, isService := api.isService(ctx)
+		isService := isService(ctx)
 
 		// loadRun, DisableDetailledNodeRun = false for calls from CDS Service
 		// as hook service. It's needed to have the buildParameters.
@@ -924,8 +925,12 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 				return sdk.WrapError(errWf, "unable to load workflow %s", name)
 			}
 
+			if err := workflowtemplate.AggregateTemplateInstanceOnWorkflow(ctx, api.mustDB(), wf); err != nil {
+				return sdk.WrapError(err, "cannot load workflow template")
+			}
+
 			// Check node permission
-			if _, isService := api.isService(ctx); !isService && !permission.AccessToWorkflowNode(ctx, api.mustDB(), wf, &wf.WorkflowData.Node, getAPIConsumer(ctx), sdk.PermissionReadExecute) {
+			if isService := isService(ctx); !isService && !permission.AccessToWorkflowNode(ctx, api.mustDB(), wf, &wf.WorkflowData.Node, getAPIConsumer(ctx), sdk.PermissionReadExecute) {
 				return sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %s", wf.WorkflowData.Node.Name)
 			}
 

@@ -20,7 +20,7 @@ import (
 
 func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, isWorker := api.isWorker(ctx); !isWorker {
+		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -35,7 +35,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 
 		//parse the multipart form in the request
 		if err := r.ParseMultipartForm(100000); err != nil {
-			return sdk.WrapError(err, "Error parsing multipart form")
+			return sdk.WrapError(err, "error parsing multipart form")
 		}
 		//get a ref to the parsed multipart form
 		m := r.MultipartForm
@@ -123,7 +123,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 
 func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, isWorker := api.isWorker(ctx); !isWorker {
+		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -253,7 +253,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 
 func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, isWorker := api.isWorker(ctx); !isWorker {
+		if  isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -309,7 +309,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, isWorker := api.isWorker(ctx); !isWorker {
+		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 

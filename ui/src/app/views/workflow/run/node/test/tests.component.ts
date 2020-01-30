@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
-import { Coverage } from '../../../../../model/coverage.model';
-import { Tests } from '../../../../../model/pipeline.model';
+import { Coverage } from 'app/model/coverage.model';
+import { Tests } from 'app/model/pipeline.model';
 
 @Component({
     selector: 'app-workflow-tests-result',
@@ -32,7 +32,7 @@ export class WorkflowRunTestsResultComponent {
     set coverage(data: Coverage) {
         if (data && data.workflow_id) {
             this._coverage = data;
-            if (this._coverage.report.total_branches && this._coverage.report.total_branches > 0) {
+            if (this._coverage.report.total_branches) {
                 this.percentBranches =
                     parseFloat((this._coverage.report.covered_branches * 100 / this._coverage.report.total_branches)
                     .toFixed(2));
@@ -49,7 +49,7 @@ export class WorkflowRunTestsResultComponent {
                         / this._coverage.trend.default_branch_report.total_branches).toFixed(2));
                 }
             }
-            if (this._coverage.report.total_functions && this._coverage.report.total_functions > 0) {
+            if (this._coverage.report.total_functions) {
                 this.percentFunctions =
                     parseFloat((this._coverage.report.covered_functions * 100 / this._coverage.report.total_functions)
                         .toFixed(2));

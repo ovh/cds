@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -50,6 +49,30 @@ func isAdmin(ctx context.Context) bool {
 		return false
 	}
 	return c.Admin()
+}
+
+func isService(ctx context.Context) bool {
+	c := getAPIConsumer(ctx)
+	if c == nil {
+		return false
+	}
+	return c.Service != nil
+}
+
+func isWorker(ctx context.Context) bool {
+	c := getAPIConsumer(ctx)
+	if c == nil {
+		return false
+	}
+	return c.Worker != nil
+}
+
+func isHatchery(ctx context.Context) bool {
+	c := getAPIConsumer(ctx)
+	if c == nil {
+		return false
+	}
+	return c.Service != nil && c.Service.Type == services.TypeHatchery
 }
 
 func getAPIConsumer(c context.Context) *sdk.AuthConsumer {
@@ -107,57 +130,4 @@ func (a *API) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
 	}
 
 	return db
-}
-
-func (a *API) isService(ctx context.Context) (*sdk.Service, bool) {
-	db := a.mustDBWithCtx(ctx)
-	session := getAuthSession(ctx)
-	if session == nil {
-		return nil, false
-	}
-
-	s, err := services.LoadByConsumerID(ctx, db, session.ConsumerID)
-	if err != nil {
-		log.Info(ctx, "unable to get service from session %s: %v", session.ID, err)
-		return nil, false
-	}
-	return s, true
-}
-
-func (a *API) isWorker(ctx context.Context) (*sdk.Worker, bool) {
-	db := a.mustDBWithCtx(ctx)
-	s := getAuthSession(ctx)
-	if s == nil {
-		return nil, false
-	}
-	w, err := worker.LoadByConsumerID(ctx, db, s.ConsumerID)
-	if sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return nil, false
-	}
-	if err != nil {
-		log.Warning(ctx, "unable to get worker from session %s: %v", s.ID, err)
-		return nil, false
-	}
-	if w == nil {
-		return nil, false
-	}
-	return w, true
-}
-
-func (a *API) isHatchery(ctx context.Context) (*sdk.Service, bool) {
-	db := a.mustDBWithCtx(ctx)
-	session := getAuthSession(ctx)
-	if session == nil {
-		return nil, false
-	}
-
-	s, err := services.LoadByConsumerID(ctx, db, session.ConsumerID)
-	if err != nil {
-		log.Warning(ctx, "unable to get hatchery from session %s: %v", session.ID, err)
-		return nil, false
-	}
-	if s.Type != services.TypeHatchery {
-		return nil, false
-	}
-	return s, true
 }

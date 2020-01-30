@@ -10,7 +10,7 @@ import (
 )
 
 func TestRunCheckoutApplication(t *testing.T) {
-	wk, ctx := setupTest(t)
+	wk, ctx := SetupTest(t)
 	wk.Params = append(wk.Params, []sdk.Parameter{
 		{
 			Name:  "git.connection.type",

@@ -489,8 +489,11 @@ func (c *client) queueDirectArtifactUpload(projectKey, integrationName string, n
 		_, code, err = c.UploadMultiPart("POST", uri, body,
 			SetHeader("Content-Disposition", "attachment; filename="+name),
 			SetHeader("Content-Type", writer.FormDataContentType()))
-		if err == nil && code < 300 {
-			return nil
+		if err == nil {
+			if code < 400 {
+				return nil
+			}
+			err = fmt.Errorf("Error: HTTP code status %d", code)
 		}
 		time.Sleep(3 * time.Second)
 	}

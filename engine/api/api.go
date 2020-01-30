@@ -63,7 +63,7 @@ type Configuration struct {
 	Name string `toml:"name" comment:"Name of this CDS API Service\n Enter a name to enable this service" json:"name"`
 	URL  struct {
 		API string `toml:"api" default:"http://localhost:8081" json:"api"`
-		UI  string `toml:"ui" default:"http://localhost:2015" json:"ui"`
+		UI  string `toml:"ui" default:"http://localhost:8080" json:"ui"`
 	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################" json:"url"`
 	HTTP struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen HTTP address without port, example: 127.0.0.1" json:"addr"`

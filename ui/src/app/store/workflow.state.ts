@@ -1,5 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
+import { PipelineStatus } from 'app/model/pipeline.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -951,7 +952,7 @@ export class WorkflowState {
                 tap((wr: WorkflowRun) => {
                     const stateRun = ctx.getState();
                     let wnr = stateRun.workflowNodeRun;
-                    if (wnr && wr.nodes && wr.nodes[wnr.workflow_node_id]) {
+                    if (wnr && !PipelineStatus.isDone(wnr.status) && wr.nodes && wr.nodes[wnr.workflow_node_id]) {
                         let wnrUpdated = wr.nodes[wnr.workflow_node_id].find(wnnr => wnnr.id === wnr.id);
                         if (wnrUpdated) {
                             wnr = wnrUpdated;

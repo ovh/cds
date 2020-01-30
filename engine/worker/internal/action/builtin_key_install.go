@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"runtime"
-	"strings"
+	"path/filepath"
 
 	"github.com/spf13/afero"
 
@@ -17,8 +16,13 @@ import (
 func RunInstallKey(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, secrets []sdk.Variable) (sdk.Result, error) {
 	var res sdk.Result
 	keyName := sdk.ParameterFind(a.Parameters, "key")
-	if keyName.Value == "" {
+	if keyName == nil || keyName.Value == "" {
 		return res, fmt.Errorf("Error: cannot have empty name for key parameter")
+	}
+
+	filename := sdk.ParameterFind(a.Parameters, "file")
+	if filename == nil || filename.Value == "" {
+		return res, fmt.Errorf("Error: cannot have empty name for file parameter")
 	}
 
 	if secrets == nil {
@@ -37,17 +41,29 @@ func RunInstallKey(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, 
 		return res, fmt.Errorf("Key %s not found", keyName.Value)
 	}
 
-	var filename string
-	basePath, isBasePathFS := wk.BaseDir().(*afero.BasePathFs)
-	if isBasePathFS {
-		realPath, _ := basePath.RealPath("/")
-		filename = strings.TrimPrefix(filename, realPath)
-		if runtime.GOOS == "darwin" {
-			filename = strings.TrimPrefix(filename, "/private"+realPath)
-		}
+	workdir, err := workerruntime.WorkingDirectory(ctx)
+	if err != nil {
+		return res, err
 	}
 
-	response, err := wk.InstallKey(*key, filename)
+	var fpath string
+	var abs string
+	if x, ok := wk.BaseDir().(*afero.BasePathFs); ok {
+		abs, _ = x.RealPath(workdir.Name())
+		abs, _ = filepath.Abs(abs)
+	} else {
+		abs = workdir.Name()
+	}
+
+	log.Debug("worker.RunInstallKeyW> absolute path is %s", abs)
+
+	if !sdk.PathIsAbs(filename.Value) {
+		fpath = filepath.Join(abs, filename.Value)
+	} else {
+		fpath = filename.Value
+	}
+
+	response, err := wk.InstallKeyTo(*key, fpath)
 	if err != nil {
 		log.Error(ctx, "Unable to install key %s: %v", key.Name, err)
 		if sdkerr, ok := err.(*sdk.Error); ok {

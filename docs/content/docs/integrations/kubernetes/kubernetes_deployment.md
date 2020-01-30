@@ -184,13 +184,11 @@ deployment_default_config:
   helm_values:
     value: ""
     type: string
-    description: specify helm values in a YAML file or a URL to configure/override
-      your helm chart
+    description: specify helm values in a YAML file or a URL to configure/override your helm chart
   namespace:
     value: default
     type: string
-    description: Kubernetes namespace in which you want to deploy your components
-      (OPTIONAL)
+    description: Kubernetes namespace in which you want to deploy your components (OPTIONAL)
   timeout:
     value: "180"
     type: string
@@ -198,18 +196,18 @@ deployment_default_config:
 public_configurations:
   your-public-myk8s-integration:
     "api_url":
-        value: https://your-k8s.localhost.local
-        type: string
+      value: https://your-k8s.localhost.local
+      type: string
     "ca_certificate":
-        value: |-
-          -----BEGIN CERTIFICATE-----
-          XXX
-          -----END CERTIFICATE-----
-        type: text
-        description: Certificate Authority bundle (PEM format)
+      value: |-
+        -----BEGIN CERTIFICATE-----
+        XXX
+        -----END CERTIFICATE-----
+      type: text
+      description: Certificate Authority bundle (PEM format)
     "token":
-        value: XXX
-        type: string
+      value: XXX
+      type: string
 ```
 
 Import the integration with :

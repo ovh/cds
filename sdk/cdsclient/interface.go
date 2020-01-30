@@ -261,6 +261,7 @@ type UserClient interface {
 	UserGetMe() (*sdk.AuthentifiedUser, error)
 	UserGetGroups(username string) (map[string][]sdk.Group, error)
 	UpdateFavorite(params sdk.FavoriteParams) (interface{}, error)
+	UserGetSchema() (sdk.SchemaResponse, error)
 }
 
 // WorkerClient exposes workers functions

@@ -95,6 +95,10 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 					ID: 42,
 					Parameters: []sdk.Parameter{
 						{
+							Name:  "cds.version", // used to compute cds.semver
+							Value: "1",
+						},
+						{
 							Name:  "cds.project",
 							Value: "my-project",
 						},
@@ -109,6 +113,10 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 						{
 							Name:  "cds.job",
 							Value: "my-job",
+						},
+						{
+							Name:  "git.http_url", // simulate an application attached to the pipeline
+							Value: "https://github.com/fsamin/dummy-empty-repo.git",
 						},
 					},
 					Job: sdk.ExecutedJob{
@@ -130,14 +138,22 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 											},
 										},
 									}, {
-										Name:     sdk.CheckoutApplicationAction,
+										Name:     sdk.GitCloneAction,
 										Type:     sdk.BuiltinAction,
 										Enabled:  true,
-										StepName: "checkout",
+										StepName: "gitClone",
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "directory",
 												Value: "{{.cds.workspace}}",
+											},
+											{
+												Name:  "url",
+												Value: "https://github.com/fsamin/dummy-empty-repo.git",
+											},
+											{
+												Name:  "depth",
+												Value: "false",
 											},
 										},
 									},
@@ -167,6 +183,18 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 											},
 										},
 									},
+									{
+										Name:     sdk.ScriptAction,
+										Type:     sdk.BuiltinAction,
+										Enabled:  true,
+										StepName: "edit with failure",
+										Parameters: []sdk.Parameter{
+											{
+												Name:  "script",
+												Value: "#!/bin/bash\nset -ex\nexit 1",
+											},
+										},
+									},
 								},
 							},
 						},
@@ -175,12 +203,12 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			},
 		)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/42/step").Times(6).
+	gock.New("http://lolcat.host").Post("/queue/workflows/42/step").Times(8).
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(nil)
 
-	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(4).
+	gock.New("http://lolcat.host").Post("/queue/workflows/42/log").Times(8).
 		HeaderPresent("Authorization").
 		Reply(200).
 		JSON(nil)
@@ -208,20 +236,30 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 				var result sdk.StepStatus
 				err := json.Unmarshal(bodyContent, &result)
 				assert.NoError(t, err)
+
 				switch result.StepOrder {
 				case 0:
 					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusSuccess {
+						t.Logf("Wrong status on step 0")
 						t.Fail()
 					}
 				case 1:
-					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusFail {
+					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusSuccess {
+						t.Logf("Wrong status on step 1")
 						t.Fail()
 					}
 				case 2:
 					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusSuccess {
+						t.Logf("Wrong status on step 2")
+						t.Fail()
+					}
+				case 3:
+					if result.Status != sdk.StatusBuilding && result.Status != sdk.StatusFail {
+						t.Logf("Wrong status on step 3")
 						t.Fail()
 					}
 				default:
+					t.Logf("This case should not happend")
 					t.Fail()
 				}
 			case "http://lolcat.host/queue/workflows/42/log":
@@ -237,6 +275,8 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 				assert.Equal(t, sdk.StatusFail, result.Status)
 				if len(result.NewVariables) > 0 {
 					assert.Equal(t, "cds.build.newvar", result.NewVariables[0].Name)
+					// assert.Equal(t, "cds.semver", result.NewVariables[0].Name)
+					// assert.Equal(t, "git.describe", result.NewVariables[0].Name)
 					assert.Equal(t, "newval", result.NewVariables[0].Value)
 				} else {
 					t.Error("missing new variables")
@@ -264,13 +304,22 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 
 	err := internal.StartWorker(ctx, w, 42)
 	assert.NoError(t, err)
-	assert.True(t, gock.IsDone())
-	if !gock.IsDone() {
+
+	var isDone bool
+	if gock.IsDone() {
+		isDone = true
+	}
+	if !isDone {
 		pending := gock.Pending()
+		isDone = true
 		for _, m := range pending {
 			t.Logf("PENDING %s %s", m.Request().Method, m.Request().URLStruct.String())
+			if m.Request().URLStruct.String() != "http://lolcat.host/queue/workflows/42/log" {
+				isDone = false
+			}
 		}
 	}
+	assert.True(t, isDone)
 	if gock.HasUnmatchedRequest() {
 		reqs := gock.GetUnmatchedRequests()
 		for _, req := range reqs {
@@ -284,4 +333,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 	assert.Equal(t, 2, strings.Count(logBuffer.String(), "my password should not be displayed here: **********\n"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_BUILD_NEWVAR=newval"))
 	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_KEY=********"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] CDS_SEMVER=0.1.0+cds.1"))
+	assert.Equal(t, 1, strings.Count(logBuffer.String(), "[INFO] GIT_DESCRIBE=0.1.0"))
+	assert.Equal(t, 0, strings.Count(logBuffer.String(), "[INFO] CDS_BUILD_CDS_BUILD"))
 }

@@ -72,23 +72,23 @@ public_configurations:
       type: password
       value: xxxxxxxx
     "binding_key":
-        type: string
-        value: "test-key"
+      type: string
+      value: "test-key"
     "consumer_tag":
-        type: string
-        value: "simple-consumer"
+      type: string
+      value: "simple-consumer"
     "exchange_name":
-        type: string
-        value: "test-exchange"
+      type: string
+      value: "test-exchange"
     "exchange_type":
-        type: string
-        value: "direct"
+      type: string
+      value: "direct"
     "integration":
-        type: string
-        value: "RabbitMQ"
+      type: string
+      value: "RabbitMQ"
     "queue":
-        type: string
-        value: "test-queue"
+      type: string
+      value: "test-queue"
 ```
 
 Import the integration with :
