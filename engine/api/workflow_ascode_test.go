@@ -247,7 +247,7 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 			case "/operations":
 				ope := new(sdk.Operation)
 				ope.UUID = UUID
-				ope.Status = sdk.OperationStatusDone
+				ope.Status = sdk.OperationStatusProcessing
 				if err := enc.Encode(ope); err != nil {
 					return writeError(w, err)
 				}
