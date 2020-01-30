@@ -36,6 +36,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		ed.Operation.RepositoryStrategy.SSHKeyContent = ""
 		_ = store.SetWithTTL(cache.Key(operation.CacheOperationKey, ed.Operation.UUID), ed.Operation, 300)
 	}()
+forLoop:
 	for {
 		select {
 		case <-ctx.Done():
@@ -50,7 +51,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 
 			if ed.Operation.Status == sdk.OperationStatusError {
 				log.Error(ctx, "operation in error %s: %s", ed.Operation.UUID, ed.Operation.Error)
-				break
+				break forLoop
 			}
 			if ed.Operation.Status == sdk.OperationStatusDone {
 				vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)

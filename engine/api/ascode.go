@@ -201,8 +201,7 @@ func (api *API) postResyncPRAsCodeHandler() service.Handler {
 			return errA
 		}
 
-		_, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, proj, app, getAPIConsumer(ctx).AuthentifiedUser)
-		if err != nil {
+		if _, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, proj, app, getAPIConsumer(ctx).AuthentifiedUser); err != nil {
 			return err
 		}
 		return nil
