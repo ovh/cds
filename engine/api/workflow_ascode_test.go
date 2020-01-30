@@ -27,6 +27,10 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", services.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", services.TypeVCS)
+	_, _ = assets.InsertService(t, db, t.Name()+"_REPO", services.TypeRepositories)
+
 	u, pass := assets.InsertAdminUser(t, db)
 
 	UUID := sdk.UUID()
@@ -97,6 +101,15 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 				}
 				if err := json.Unmarshal(bts, &hooks); err != nil {
 					return writeError(w, err)
+				}
+				for k, h := range hooks {
+					if h.HookModelName == sdk.RepositoryWebHookModelName {
+						cfg := hooks[k].Config
+						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+							Value:        "http://lolcat.host",
+							Configurable: false,
+						}
+					}
 				}
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)

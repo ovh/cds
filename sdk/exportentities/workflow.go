@@ -85,7 +85,6 @@ type NodeEntry struct {
 // HookEntry represents a hook as code
 type HookEntry struct {
 	Model      string                      `json:"type,omitempty" yaml:"type,omitempty" jsonschema_description:"Model of the hook.\nhttps://ovh.github.io/cds/docs/concepts/workflow/hooks"`
-	Ref        string                      `json:"ref,omitempty" yaml:"ref,omitempty"`
 	Config     map[string]string           `json:"config,omitempty" yaml:"config,omitempty"`
 	Conditions *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty" jsonschema_description:"Conditions to run this hook.\nhttps://ovh.github.io/cds/docs/concepts/workflow/run-conditions."`
 }
@@ -335,7 +334,6 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, opts ...WorkflowOptions) (
 
 			pipHook := HookEntry{
 				Model:      h.HookModelName,
-				Ref:        h.Ref,
 				Config:     h.Config.Values(m.DefaultConfig),
 				Conditions: &h.Conditions,
 			}
@@ -371,7 +369,6 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, opts ...WorkflowOptions) (
 				}
 				pipHook := HookEntry{
 					Model:      h.HookModelName,
-					Ref:        h.Ref,
 					Config:     h.Config.Values(m.DefaultConfig),
 					Conditions: &h.Conditions,
 				}
@@ -703,13 +700,9 @@ func (w *Workflow) processHooks(n *sdk.Node, wf *sdk.Workflow) {
 					Type:         hType,
 				}
 			}
-			if h.Ref == "" {
-				h.Ref = fmt.Sprintf("%d", time.Now().Unix())
-			}
 
 			hook := sdk.NodeHook{
 				Config:        cfg,
-				Ref:           h.Ref,
 				HookModelName: h.Model,
 			}
 

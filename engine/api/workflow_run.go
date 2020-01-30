@@ -984,7 +984,11 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 		}
 
 		// IF AS CODE - REBUILD Workflow
-		if wf.FromRepository != "" {
+		// NOTICE: Only repository webhooks and manual run will perform the repository analysis
+		if wf.FromRepository != "" && ((opts.Hook != nil &&
+			wf.WorkflowData.Node.GetHook(opts.Hook.WorkflowNodeHookUUID) != nil &&
+			wf.WorkflowData.Node.GetHook(opts.Hook.WorkflowNodeHookUUID).HookModelName == sdk.RepositoryWebHookModelName) ||
+			(opts.Manual != nil)) {
 			log.Debug("initWorkflowRun> rebuild workflow %s/%s from as code configuration", p.Key, wf.Name)
 			p1, errp := project.Load(db, cache, p.Key,
 				project.LoadOptions.WithVariables,

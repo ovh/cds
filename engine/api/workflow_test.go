@@ -688,6 +688,15 @@ func Test_putWorkflowHandler(t *testing.T) {
 				if err := service.UnmarshalBody(r, &hooks); err != nil {
 					return nil, sdk.WithStack(err)
 				}
+				for k, h := range hooks {
+					if h.HookModelName == sdk.RepositoryWebHookModelName {
+						cfg := hooks[k].Config
+						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+							Value:        "http://lolcat.host",
+							Configurable: false,
+						}
+					}
+				}
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
@@ -709,7 +718,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 				if err := enc.Encode(hook); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/foo/bar/hooks?url=&id=666":
+			case "/vcs/github/repos/foo/bar/hooks?url=http%3A%2F%2Flolcat.host&id=666":
 				updatehookCalled = true
 				hook := sdk.VCSHook{}
 				if err := service.UnmarshalBody(r, &hook); err != nil {

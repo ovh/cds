@@ -147,6 +147,17 @@ func FileMd5sum(filePath string) (string, error) {
 	return sum, nil
 }
 
+func SHA512sum(s string) (string, error) {
+	hash := sha512.New()
+	if _, err := io.Copy(hash, strings.NewReader((s))); err != nil {
+		return "", fmt.Errorf("error computing sha512: %v", err)
+	}
+
+	hashInBytes := hash.Sum(nil)[:64]
+	sum := hex.EncodeToString(hashInBytes)
+	return sum, nil
+}
+
 // FileSHA512sum returns the sha512sum of a file
 func FileSHA512sum(filePath string) (string, error) {
 	file, errop := os.Open(filePath)

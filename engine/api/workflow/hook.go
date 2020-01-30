@@ -18,18 +18,18 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func computeHookToDelete(newWorkflow *sdk.Workflow, oldWorkflow *sdk.Workflow) map[string]*sdk.NodeHook {
-	hookToDelete := make(map[string]*sdk.NodeHook)
+func computeHookToDelete(newWorkflow *sdk.Workflow, oldWorkflow *sdk.Workflow) map[string]sdk.NodeHook {
+	hookToDelete := make(map[string]sdk.NodeHook)
 	currentHooks := newWorkflow.WorkflowData.GetHooks()
 	for k, h := range oldWorkflow.WorkflowData.GetHooks() {
 		if _, has := currentHooks[k]; !has {
-			hookToDelete[k] = h
+			hookToDelete[k] = *h
 		}
 	}
 	return hookToDelete
 }
 
-func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]*sdk.NodeHook) error {
+func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.NodeHook) error {
 	if len(hookToDelete) == 0 {
 		return nil
 	}
@@ -51,7 +51,7 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 					ID:       h.Config[sdk.HookConfigWebHookID].Value,
 				}
 				if err := client.DeleteHook(ctx, h.Config["repoFullName"].Value, vcsHook); err != nil {
-					log.Error(ctx, "deleteHookConfiguration> Cannot delete hook on repository %s", err)
+					log.Error(ctx, "hookUnregistration> Cannot delete hook on repository %s", err)
 				}
 			}
 		}
@@ -63,11 +63,11 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	if err != nil {
 		return err
 	}
-	_, code, errHooks := services.DoJSONRequest(ctx, db, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
+	_, code, errHooks := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodDelete, "/task/bulk", hookToDelete, nil)
 	if errHooks != nil || code >= 400 {
 		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
 		// so, it's just a warn log
-		log.Error(ctx, "HookRegistration> unable to delete old hooks [%d]: %s", code, errHooks)
+		log.Error(ctx, "hookUnregistration> unable to delete old hooks [%d]: %s", code, errHooks)
 	}
 	return nil
 }
@@ -85,26 +85,34 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 
 	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
 	if err != nil {
-		return sdk.WrapError(err, "unable to get services dao")
+		return sdk.WrapError(err, "unable to get services")
 	}
 
 	//Perform the request on one off the hooks service
 	if len(srvs) < 1 {
-		return sdk.WrapError(fmt.Errorf("no hooks service available, please try again"), "Unable to get services dao")
+		return sdk.WrapError(fmt.Errorf("no hooks service available, please try again"), "Unable to get services")
 	}
 
 	hookToUpdate := make(map[string]sdk.NodeHook)
 	for i := range wf.WorkflowData.Node.Hooks {
 		h := &wf.WorkflowData.Node.Hooks[i]
-		if h.UUID == "" && h.Ref == "" {
-			nodeName := wf.WorkflowData.Node.Name
-			if len(nodeName) > 45 {
-				nodeName = nodeName[:45]
-			}
-			h.Ref = fmt.Sprintf("%s.%d", nodeName, i)
-		} else if h.UUID == "" && h.Ref != "" && oldHooksByRef != nil {
+
+		h.Config[sdk.HookConfigProject] = sdk.WorkflowNodeHookConfigValue{
+			Value:        wf.ProjectKey,
+			Configurable: false,
+		}
+		h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{
+			Value:        wf.Name,
+			Configurable: false,
+		}
+		h.Config[sdk.HookConfigWorkflowID] = sdk.WorkflowNodeHookConfigValue{
+			Value:        fmt.Sprint(wf.ID),
+			Configurable: false,
+		}
+
+		if h.UUID == "" && oldHooksByRef != nil {
 			// search previous hook configuration by ref
-			previousHook, has := oldHooksByRef[h.Ref]
+			previousHook, has := oldHooksByRef[h.Ref()]
 			if has {
 				h.UUID = previousHook.UUID
 				// If previous hook is the same, we do nothing
@@ -125,18 +133,6 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 			h.UUID = sdk.UUID()
 		}
 
-		h.Config[sdk.HookConfigProject] = sdk.WorkflowNodeHookConfigValue{
-			Value:        wf.ProjectKey,
-			Configurable: false,
-		}
-		h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{
-			Value:        wf.Name,
-			Configurable: false,
-		}
-		h.Config[sdk.HookConfigWorkflowID] = sdk.WorkflowNodeHookConfigValue{
-			Value:        fmt.Sprint(wf.ID),
-			Configurable: false,
-		}
 		if h.HookModelName == sdk.RepositoryWebHookModelName || h.HookModelName == sdk.GitPollerModelName || h.HookModelName == sdk.GerritHookModelName {
 			if wf.WorkflowData.Node.Context.ApplicationID == 0 || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].RepositoryFullname == "" || wf.Applications[wf.WorkflowData.Node.Context.ApplicationID].VCSServer == "" {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "cannot create a git poller or repository webhook on an application without a repository")
@@ -159,7 +155,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 
 	if len(hookToUpdate) > 0 {
 		// Create hook on µservice
-		_, code, errHooks := services.DoJSONRequest(ctx, db, srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hookToUpdate)
+		_, code, errHooks := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodPost, "/task/bulk", hookToUpdate, &hookToUpdate)
 		if errHooks != nil || code >= 400 {
 			return sdk.WrapError(errHooks, "unable to create hooks [%d]", code)
 		}
@@ -172,7 +168,11 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		// Create vcs configuration ( always after hook creation to have webhook URL) + update hook in DB
 		for i := range wf.WorkflowData.Node.Hooks {
 			h := &wf.WorkflowData.Node.Hooks[i]
-			v, ok := h.Config["webHookID"]
+			// Manage VCSconfigation only for updated hooks
+			if _, isUpdated := hookToUpdate[h.UUID]; !isUpdated {
+				continue
+			}
+			v, ok := h.Config[sdk.HookConfigWebHookID]
 			if h.HookModelName == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" {
 				if !ok || v.Value == "" {
 					if err := createVCSConfiguration(ctx, db, store, p, h); err != nil {
@@ -271,6 +271,7 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 	if errclient != nil {
 		return sdk.WrapError(errclient, "createVCSConfiguration> Cannot get vcs client")
 	}
+	// We have to check the repository to know if webhooks are supported and how (events)
 	webHookInfo, errWH := repositoriesmanager.GetWebhooksInfos(ctx, client)
 	if errWH != nil {
 		return sdk.WrapError(errWH, "createVCSConfiguration> Cannot get vcs web hook info")
@@ -278,23 +279,39 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 	if !webHookInfo.WebhooksSupported || webHookInfo.WebhooksDisabled {
 		return sdk.WrapError(sdk.ErrForbidden, "createVCSConfiguration> hook creation are forbidden")
 	}
-	var valueSlitted []string
-	if _, ok := h.Config[sdk.HookConfigEventFilter]; ok {
-		valueEvent := h.Config[sdk.HookConfigEventFilter].Value
-		valueSlitted = strings.Split(valueEvent, ";")
+
+	// Check hook config to avoid sending wrong hooks to VCS
+	if h.Config["repoFullName"].Value == "" {
+		return sdk.WrapError(sdk.ErrInvalidHookConfiguration, "wrong repoFullName value for hook")
+	}
+	if !sdk.IsURL(h.Config["webHookURL"].Value) {
+		return sdk.WrapError(sdk.ErrInvalidHookConfiguration, "wrong webHookURL value (project: %s, repository: %s)", p.Key, h.Config["repoFullName"].Value)
 	}
 
+	// If empty, take the first event
+	var valueSplitted = strings.Split(h.Config[sdk.HookConfigEventFilter].Value, ";")
+	if valueSplitted[0] == "" && webHookInfo.Events != nil {
+		h.Config[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
+			Value:        webHookInfo.Events[0],
+			Configurable: true,
+			Type:         sdk.HookConfigTypeString,
+		}
+		valueSplitted = []string{h.Config[sdk.HookConfigEventFilter].Value}
+
+	}
+
+	// Prepare the hook that will be send to VCS
 	vcsHook := sdk.VCSHook{
 		Method:   "POST",
 		URL:      h.Config["webHookURL"].Value,
-		Events:   valueSlitted,
+		Events:   valueSplitted,
 		Workflow: true,
 	}
 	if err := client.CreateHook(ctx, h.Config["repoFullName"].Value, &vcsHook); err != nil {
 		return sdk.WrapError(err, "Cannot create hook on repository: %+v", vcsHook)
 	}
 	observability.Current(ctx, observability.Tag("VCS_ID", vcsHook.ID))
-	h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
+	h.Config[sdk.HookConfigWebHookID] = sdk.WorkflowNodeHookConfigValue{
 		Value:        vcsHook.ID,
 		Configurable: false,
 	}
