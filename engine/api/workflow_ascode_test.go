@@ -363,23 +363,36 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 	test.NoError(t, json.Unmarshal(wr.Body.Bytes(), myOpe))
 	assert.NotEmpty(t, myOpe.UUID)
 
-	time.Sleep(2 * time.Second)
+	cpt := 0
+	for {
+		if cpt > 10 {
+			t.Fail()
+			break
+		}
+		cpt++
+		time.Sleep(2 * time.Second)
 
-	// Get operation
-	uriGET := api.Router.GetRoute("GET", api.getWorkflowAsCodeHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w.Name,
-		"uuid":             myOpe.UUID,
-	})
-	reqGET, err := http.NewRequest("GET", uriGET, nil)
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, reqGET, u, pass)
-	wrGet := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(wrGet, reqGET)
-	assert.Equal(t, 200, wrGet.Code)
-	myOpeGet := new(sdk.Operation)
-	test.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
-	assert.Equal(t, "myURL", myOpeGet.Setup.Push.PRLink)
+		// Get operation
+		uriGET := api.Router.GetRoute("GET", api.getWorkflowAsCodeHandler, map[string]string{
+			"key":              proj.Key,
+			"permWorkflowName": w.Name,
+			"uuid":             myOpe.UUID,
+		})
+		reqGET, err := http.NewRequest("GET", uriGET, nil)
+		test.NoError(t, err)
+		assets.AuthentifyRequest(t, reqGET, u, pass)
+		wrGet := httptest.NewRecorder()
+		api.Router.Mux.ServeHTTP(wrGet, reqGET)
+		assert.Equal(t, 200, wrGet.Code)
+		myOpeGet := new(sdk.Operation)
+		test.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
+
+		if myOpeGet.Status < sdk.OperationStatusDone {
+			continue
+		}
+		assert.Equal(t, "myURL", myOpeGet.Setup.Push.PRLink)
+		break
+	}
 }
 
 func createProject(t *testing.T, db *gorp.DbMap, api *API) *sdk.Project {
