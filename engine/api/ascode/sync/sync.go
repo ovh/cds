@@ -18,7 +18,7 @@ import (
 func SyncAsCodeEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, app *sdk.Application, u sdk.Identifiable) ([]sdk.AsCodeEvent, string, error) {
 	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 	if vcsServer == nil {
-		return nil, "", sdk.WrapError(sdk.ErrNotFound, "no vcsserver found on application %s", app.Name)
+		return nil, "", sdk.NewErrorFrom(sdk.ErrNotFound, "no vcsserver found on application %s", app.Name)
 	}
 	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
 	if errclient != nil {

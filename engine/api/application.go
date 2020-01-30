@@ -113,9 +113,9 @@ func (api *API) getAsCodeApplicationHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		fromRepo := FormString(r, "repo")
 
-		app, errApp := application.LoadAsCode(api.mustDB(), api.Cache, projectKey, fromRepo)
-		if errApp != nil {
-			return sdk.WrapError(errApp, "getAsCodeApplicationHandler: Cannot load application from repo %s for project %s from db", fromRepo, projectKey)
+		app, err := application.LoadAsCode(api.mustDB(), api.Cache, projectKey, fromRepo)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load application from repo %s for project %s from db", fromRepo, projectKey)
 		}
 		return service.WriteJSON(w, app, http.StatusOK)
 	}

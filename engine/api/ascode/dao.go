@@ -16,7 +16,7 @@ func LoadAsCodeByPRID(ctx context.Context, db gorp.SqlExecutor, ID int64) (sdk.A
 	var event dbAsCodeEvents
 	if _, err := gorpmapping.Get(ctx, db, query, &event); err != nil {
 		if err == sql.ErrNoRows {
-			return sdk.AsCodeEvent{}, sdk.ErrNotFound
+			return sdk.AsCodeEvent{}, sdk.WithStack(sdk.ErrNotFound)
 		}
 		return sdk.AsCodeEvent{}, sdk.WrapError(err, "Unable to load as code event")
 	}
