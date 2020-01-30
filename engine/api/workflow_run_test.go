@@ -1061,74 +1061,26 @@ func Test_resyncWorkflowRunHandlerError(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), db, api.Cache, proj2, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	//Prepare request
-	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
-	}
-	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
-	test.NotEmpty(t, uri)
-
-	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{
-			Payload: map[string]string{
-				"git.branch": "master",
-			},
-		},
-	}
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
-
-	//Do the request
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
-
-	wr := &sdk.WorkflowRun{}
-	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
-	assert.Equal(t, int64(1), wr.Number)
-
-	cpt := 0
-	for {
-		varsGet := map[string]string{
-			"key":              proj.Key,
-			"permWorkflowName": w1.Name,
-			"number":           "1",
-		}
-		uriGet := router.GetRoute("GET", api.getWorkflowRunHandler, varsGet)
-		reqGet := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGet, nil)
-		recGet := httptest.NewRecorder()
-		router.Mux.ServeHTTP(recGet, reqGet)
-
-		var wrGet sdk.WorkflowRun
-		assert.NoError(t, json.Unmarshal(recGet.Body.Bytes(), &wrGet))
-
-		if wrGet.Status != sdk.StatusPending {
-			assert.Equal(t, sdk.StatusBuilding, wrGet.Status)
-			break
-		}
-		t.Logf("workflow run response %+v\n", wrGet)
-		cpt++
-		if cpt > 10 {
-			break
-		}
-	}
+	// Creat run
+	wr, err := workflow.CreateRun(api.mustDB(), w1, nil, u)
+	assert.NoError(t, err)
 
 	pip.Stages[0].Name = "New awesome stage"
 	errS := pipeline.UpdateStage(db, &pip.Stages[0])
 	test.NoError(t, errS)
 
 	//Prepare request
-	vars = map[string]string{
+	vars := map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w1.Name,
 		"number":           fmt.Sprintf("%d", wr.Number),
 	}
-	uri = router.GetRoute("POST", api.resyncWorkflowRunHandler, vars)
+	uri := router.GetRoute("POST", api.resyncWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
 
 	//Do the request
-	rec = httptest.NewRecorder()
+	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 403, rec.Code)
 }
