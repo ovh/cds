@@ -71,7 +71,7 @@ notoc: true
 	return genMarkdownTreeCustom(root, genPath+"/"+rootName, filePrepender, linkHandler)
 }
 
-// genMarkdownTreeCustom is the the same as GenMarkdownTree, but
+// genMarkdownTreeCustom is the same as GenMarkdownTree, but
 // with custom filePrepender and linkHandler.
 // this func is inspired from https://github.com/spf13/cobra/blob/master/doc/md_docs.go
 func genMarkdownTreeCustom(cmd *cobra.Command, rootdir string, filePrepender, linkHandler func(string) string) error {
