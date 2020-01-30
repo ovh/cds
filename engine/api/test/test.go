@@ -196,7 +196,7 @@ func LoadTestingConf(t log.Logger) map[string]string {
 	return nil
 }
 
-//GetTestName returns the name the the test
+//GetTestName returns the name the test
 func GetTestName(t *testing.T) string {
 	return t.Name()
 }
