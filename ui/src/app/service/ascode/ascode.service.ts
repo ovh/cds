@@ -25,7 +25,7 @@ export class AscodeService {
         }
         params = params.append('appName', appName);
 
-        return this._http.post(`/project/${projectKey}/ascode/events/resync`, null, {params: params})
+        return this._http.post(`/project/${projectKey}/ascode/events/resync`, null, {params})
             .map(() => {
             this._store.dispatch(new ResyncEvents());
         });

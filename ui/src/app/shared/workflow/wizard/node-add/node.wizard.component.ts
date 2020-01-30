@@ -191,7 +191,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
           this._toast.success('', this._translate.instant('pipeline_added'));
           this.node.context.pipeline_id = pip.pipeline.id;
           this.pipelineSection = 'application';
-          return pip.pipeline
+          return pip.pipeline;
         }));
   }
 
