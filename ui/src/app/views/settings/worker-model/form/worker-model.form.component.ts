@@ -1,12 +1,4 @@
-import {
-    ChangeDetectionStrategy, ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    Input,
-    OnInit,
-    Output,
-    ViewChild
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { Group } from 'app/model/group.model';
 import { AuthentifiedUser } from 'app/model/user.model';
 import { ModelPattern, WorkerModel } from 'app/model/worker-model.model';
@@ -26,7 +18,7 @@ import { Subscription } from 'rxjs/Subscription';
 })
 @AutoUnsubscribe()
 export class WorkerModelFormComponent implements OnInit {
-    @ViewChild('codeMirror', {static: false}) codemirror: any;
+    @ViewChild('codeMirror', { static: false }) codemirror: any;
 
     _workerModel: WorkerModel;
     @Input() set workerModel(wm: WorkerModel) {
@@ -107,6 +99,37 @@ pattern_name: basic_unix`;
                 this._cd.markForCheck();
             }))
             .subscribe((wmStr) => this.workerModelAsCode = wmStr);
+    }
+
+    canSave(): boolean {
+        if (!this.workerModel.editable) {
+            return false;
+        }
+
+        let minimal_required_info = !!this.workerModel.name && !!this.workerModel.group_id && !!this.workerModel.type;
+        if (!minimal_required_info) {
+            return false;
+        }
+
+        switch (this.workerModel.type) {
+            case 'docker':
+                let minimal_info_docker = !!this.workerModel.model_docker.image
+                    && !!this.workerModel.model_docker.shell && !!this.workerModel.model_docker.cmd;
+                if (!minimal_info_docker) {
+                    return false;
+                }
+                break;
+            case 'host':
+            case 'openstack':
+            case 'vsphere':
+                let minimal_info_vm = !!this.workerModel.model_virtual_machine.image && !!this.workerModel.model_virtual_machine.cmd;
+                if (!minimal_info_vm) {
+                    return false;
+                }
+                break;
+        }
+
+        return true;
     }
 
     filterPatterns(type: string) {
