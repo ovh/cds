@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -142,20 +143,37 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 	test.NoError(t, json.Unmarshal(wr.Body.Bytes(), myOpe))
 	assert.NotEmpty(t, myOpe.UUID)
 
-	// Get operation
-	uriGET := api.Router.GetRoute("GET", api.getWorkflowAsCodeHandler, map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": pip.Name,
-		"uuid":             myOpe.UUID,
-	})
-	reqGET, err := http.NewRequest("GET", uriGET, nil)
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, reqGET, u, pass)
-	wrGet := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(wrGet, reqGET)
-	assert.Equal(t, 200, wrGet.Code)
-	myOpeGet := new(sdk.Operation)
-	test.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
-	assert.Equal(t, "myURL", myOpeGet.Setup.Push.PRLink)
+	cpt := 0
+	for {
+		if cpt >= 10 {
+			t.Fail()
+			return
+		}
+
+		// Get operation
+		uriGET := api.Router.GetRoute("GET", api.getWorkflowAsCodeHandler, map[string]string{
+			"key":              proj.Key,
+			"permWorkflowName": pip.Name,
+			"uuid":             myOpe.UUID,
+		})
+		reqGET, err := http.NewRequest("GET", uriGET, nil)
+		test.NoError(t, err)
+		assets.AuthentifyRequest(t, reqGET, u, pass)
+		wrGet := httptest.NewRecorder()
+		api.Router.Mux.ServeHTTP(wrGet, reqGET)
+		assert.Equal(t, 200, wrGet.Code)
+		myOpeGet := new(sdk.Operation)
+		err = json.Unmarshal(wrGet.Body.Bytes(), myOpeGet)
+		assert.NoError(t, err)
+
+		if myOpeGet.Status < sdk.OperationStatusDone {
+			cpt++
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		test.NoError(t, json.Unmarshal(wrGet.Body.Bytes(), myOpeGet))
+		assert.Equal(t, "myURL", myOpeGet.Setup.Push.PRLink)
+		break
+	}
 
 }
