@@ -1256,6 +1256,9 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		ProjectID:          proj.ID,
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
+		RepositoryStrategy: sdk.RepositoryStrategy{
+			ConnectionType: "ssh",
+		},
 	}
 	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
@@ -1437,7 +1440,6 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 
 		var wrGet sdk.WorkflowRun
 		recGetBody := recGet.Body.Bytes()
-		t.Logf("getWorkflowRunHandler response: %s", string(recGetBody))
 		assert.NoError(t, json.Unmarshal(recGetBody, &wrGet))
 
 		if wrGet.Status != sdk.StatusPending {

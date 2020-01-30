@@ -467,6 +467,7 @@ func initWorkflow(t *testing.T, db gorp.SqlExecutor, proj *sdk.Project, app *sdk
 			},
 		},
 	}
+	w.WorkflowData.Node.Hooks[0].Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{Type: "string", Value: "http://ovh/com"}
 	assert.NoError(t, workflow.RenameNode(context.Background(), db, &w))
 	return &w
 }
