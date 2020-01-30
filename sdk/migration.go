@@ -32,6 +32,7 @@ type Migration struct {
 	Major     uint64    `json:"major" db:"major" cli:"major"`
 	Minor     uint64    `json:"minor" db:"minor" cli:"minor"`
 	Patch     uint64    `json:"patch" db:"patch" cli:"patch"`
+	Blocker   bool      `json:"-" db:"-" cli:"-"`
 
 	ExecFunc func(ctx context.Context) error `json:"-" db:"-" cli:"-" yaml:"-"`
 }
