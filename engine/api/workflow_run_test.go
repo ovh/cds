@@ -1187,6 +1187,32 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	wr := &sdk.WorkflowRun{}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
 	assert.Equal(t, int64(1), wr.Number)
+
+	// wait for the workflow to finish crafting
+	assert.NoError(t, waitCraftinWorkflow(t, db, wr.ID))
+}
+
+func waitCraftinWorkflow(t *testing.T, db gorp.SqlExecutor, id int64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	tick := time.NewTicker(100 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-tick.C:
+			w, _ := workflow.LoadRunByID(db, id, workflow.LoadRunOptions{})
+			if w == nil {
+				continue
+			}
+			if w.Status == sdk.StatusPending {
+				continue
+			}
+			return nil
+		}
+	}
+
 }
 
 /**
@@ -1341,6 +1367,15 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 				hooks := map[string]sdk.NodeHook{}
 				hooks["123"] = sdk.NodeHook{
 					UUID: "123",
+				}
+				for k, h := range hooks {
+					if h.HookModelName == sdk.RepositoryWebHookModelName {
+						cfg := hooks[k].Config
+						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+							Value:        "http://lolcat.host",
+							Configurable: false,
+						}
+					}
 				}
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
@@ -1603,7 +1638,6 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 					},
 					HookModelName: sdk.WebHookModel.Name,
 					Config:        sdk.WebHookModel.DefaultConfig.Clone(),
-					Ref:           "root.0",
 					UUID:          "1cbf3792-126b-4111-884f-077bdee9523c",
 				}
 				if err := enc.Encode(hooks); err != nil {
@@ -1640,7 +1674,6 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 						},
 						HookModelName: sdk.WebHookModel.Name,
 						Config:        sdk.WebHookModel.DefaultConfig.Clone(),
-						Ref:           "root.0",
 						UUID:          "1cbf3792-126b-4111-884f-077bdee9523c",
 					},
 				},
@@ -1761,7 +1794,6 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 				hooks["1cbf3792-126b-4111-884f-077bdee9523d"] = sdk.NodeHook{
 					HookModelName: sdk.WebHookModel.Name,
 					Config:        sdk.WebHookModel.DefaultConfig.Clone(),
-					Ref:           "root.0",
 					UUID:          "1cbf3792-126b-4111-884f-077bdee9523d",
 				}
 				if err := enc.Encode(hooks); err != nil {
@@ -1796,7 +1828,6 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 					{
 						HookModelName: sdk.WebHookModel.Name,
 						Config:        sdk.WebHookModel.DefaultConfig.Clone(),
-						Ref:           "root.0",
 						UUID:          "1cbf3792-126b-4111-884f-077bdee9523d",
 					},
 				},

@@ -122,6 +122,7 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			res.WebhooksIcon = sdk.BitbucketIcon
 			// https://developer.atlassian.com/bitbucket/api/2/reference/resource/hook_events/%7Bsubject_type%7D
 			res.Events = []string{
+				"repo:push",
 				"pullrequest:unapproved",
 				"issue:comment_created",
 				"pullrequest:approved",
@@ -141,7 +142,6 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 				"repo:updated",
 				"pullrequest:rejected",
 				"pullrequest:fulfilled",
-				"repo:push",
 				"pullrequest:created",
 				"repo:transfer",
 				"repo:commit_comment_created",

@@ -232,6 +232,16 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 					return nil, sdk.WithStack(err)
 				}
 
+				for k, h := range hooks {
+					if h.HookModelName == sdk.RepositoryWebHookModelName {
+						cfg := hooks[k].Config
+						cfg["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+							Value:        "http://lolcat.host",
+							Configurable: false,
+						}
+					}
+				}
+
 				body := new(bytes.Buffer)
 				w := new(http.Response)
 				enc := json.NewEncoder(body)

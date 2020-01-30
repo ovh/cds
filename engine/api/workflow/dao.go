@@ -963,7 +963,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.ApplicationID != 0 {
 		var err error
 		if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, p, w); err != nil {
-			log.Warning(ctx, "putWorkflowHandler> Cannot set default payload : %v", err)
+			log.Warning(ctx, "workflow.Update> Cannot set default payload : %v", err)
 		}
 	}
 
@@ -1020,7 +1020,7 @@ func MarkAsDelete(db gorp.SqlExecutor, key, name string) error {
 // Delete workflow
 func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow) error {
 	// Delete all hooks
-	if err := hookUnregistration(ctx, db, store, p, w.WorkflowData.GetHooks()); err != nil {
+	if err := hookUnregistration(ctx, db, store, p, w.WorkflowData.GetHooksMapRef()); err != nil {
 		return sdk.WrapError(err, "Unable to delete hooks from workflow")
 	}
 

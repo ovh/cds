@@ -62,7 +62,6 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	defer end()
 
 	log.Info(ctx, "ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.Name, proj.Key, opts.Force)
-	log.Debug("ParseAndImport>> Workflow: %+v", ew)
 
 	//Parse workflow
 	w, errW := Parse(ctx, proj, ew)
@@ -133,7 +132,6 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 						UUID:          oldRepoWebHook.UUID,
 						HookModelName: oldRepoWebHook.HookModelName,
 						Config:        oldRepoWebHook.Config.Clone(),
-						Ref:           oldRepoWebHook.Ref,
 						HookModelID:   oldRepoWebHook.HookModelID,
 					}
 					h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{Value: w.Name}
@@ -146,11 +144,24 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		// we have to create a new repo webhook
 		if oldW == nil || oldRepoWebHook == nil {
 			// Init new repo webhook
-			w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
+			var newRepoWebHook = sdk.NodeHook{
 				HookModelName: sdk.RepositoryWebHookModel.Name,
 				HookModelID:   sdk.RepositoryWebHookModel.ID,
 				Config:        sdk.RepositoryWebHookModel.DefaultConfig.Clone(),
-			})
+			}
+
+			// If the new workflow already contains a repowebhook (comparing refs), we dont have to add a new one
+			var hasARepoWebHook bool
+			for _, h := range w.WorkflowData.Node.Hooks {
+				if h.Ref() == newRepoWebHook.Ref() {
+					hasARepoWebHook = true
+					break
+				}
+			}
+			if !hasARepoWebHook {
+				w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, newRepoWebHook)
+			}
+
 			var err error
 			if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
 				return nil, nil, sdk.WrapError(err, "Unable to get default payload")

@@ -116,12 +116,12 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 	}
 
 	if multipartData == nil {
-		if _, _, err := services.DoJSONRequest(ctx, db, srvs, http.MethodPost, "/operations", ope, ope); err != nil {
+		if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodPost, "/operations", ope, ope); err != nil {
 			return sdk.WrapError(err, "Unable to perform operation")
 		}
 		return nil
 	}
-	if _, err := services.DoMultiPartRequest(ctx, db, srvs, http.MethodPost, "/operations", multipartData, ope, ope); err != nil {
+	if _, err := services.NewClient(db, srvs).DoMultiPartRequest(ctx, http.MethodPost, "/operations", multipartData, ope, ope); err != nil {
 		return sdk.WrapError(err, "Unable to perform multipart operation")
 	}
 	return nil
@@ -134,7 +134,7 @@ func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, ope *sdk.O
 		return sdk.WrapError(err, "Unable to found repositories service")
 	}
 
-	if _, _, err := services.DoJSONRequest(ctx, db, srvs, http.MethodGet, "/operations/"+ope.UUID, nil, ope); err != nil {
+	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodGet, "/operations/"+ope.UUID, nil, ope); err != nil {
 		return sdk.WrapError(err, "Unable to get operation")
 	}
 	return nil
