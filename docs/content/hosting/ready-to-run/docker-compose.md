@@ -46,11 +46,14 @@ $ docker-compose up --no-recreate cds-migrate
 # prepare initial configuration.
 $ docker-compose up cds-prepare
 
-# the INIT_TOKEN variable will be used by cdsctl to create first admin user
-$ export INIT_TOKEN="THE_VERY_LONG_TOKEN_HERE"
-
 # run API, UI and hooks µservice
 $ docker-compose up -d cds-api
+
+# the INIT_TOKEN variable will be used by cdsctl to create first admin user
+$ TOKEN_CMD=$(docker logs test_cds-prepare_1|grep TOKEN)
+
+# then execute the export INIT_TOKEN
+$ $TOKEN_CMD
 
 # create user
 $ curl http://localhost:8081/download/cdsctl/linux/amd64\?variant=nokeychain -o cdsctl
@@ -79,7 +82,7 @@ $ ./cdsctl user me
 $ docker-compose up -d cds-ui cds-hooks cds-hatchery-local cds-elasticsearch
 ```
 
-- Create the first user with WebUI
+- Login on WebUI
 
 Open a browser on http://localhost:8080/account/signup, then login with the user `admin`,
 

@@ -122,42 +122,21 @@ export INIT_TOKEN=`./cds-engine config init-token --config conf.toml`
 
 ## Launch CDS Local Hatchery
 
-The previously generated configuration file contains all CDS configuration.
-
-To be able to start a local hatchery, enter a hatchery name in the section `hatchery.local.commonConfiguration`
-
-```toml
-
-...
-[hatchery.local]
-
-    # BaseDir for worker workspace
-    basedir = "/tmp"
-
-    [hatchery.local.commonConfiguration]
-
-      # Name of Hatchery
-      name = "my-local-hatchery"
-...
-
-```
-
-Then, start the local hatchery
-
+Start the local hatchery:
 
 ```bash
-./cds-engine-linux-amd64 start hatchery:local --config $HOME/cds/conf.toml
+./cds-engine start hatchery:local --config $HOME/cds/conf.toml
 
 # notice that you can run api and hatchery with one common only:
-# ./cds-engine-linux-amd64 start api hatchery:local --config $HOME/cds/conf.toml
+# ./cds-engine start api hatchery:local --config $HOME/cds/conf.toml
 ```
 
 ## Note about CDS Engine
 
-It is possible to start all services as a single process `$ engine start api ui hooks hatchery:local --config config.toml`.
+It is possible to start all services as a single process `$ ./engine start api ui hooks hatchery:local --config config.toml`.
 
 ```bash
-$ engine start api hooks hatchery:local --config config.toml
+$ ./engine start api hooks hatchery:local --config config.toml
 Reading configuration file config.toml
 Starting service api
 ...
@@ -175,27 +154,27 @@ For serious deployment, we strongly suggest to run each service as a dedicated p
 
 ```bash
 
-$ engine start api --config config.toml
+$ ./engine start api --config config.toml
 
-$ engine start ui --config config.toml
+$ ./engine start ui --config config.toml
 
-$ engine start hooks --config config.toml
+$ ./engine start hooks --config config.toml
 
-$ engine start vcs --config config.toml
+$ ./engine start vcs --config config.toml
 
-$ engine start hatchery:local --config config.toml
-$ engine start hatchery:docker --config config.toml
-$ engine start hatchery:swarm --config config.toml
-$ engine start hatchery:marathon --config config.toml
-$ engine start hatchery:openstack --config config.toml
-$ engine start hatchery:vsphere --config config.toml
+$ ./engine start hatchery:local --config config.toml
+$ ./engine start hatchery:docker --config config.toml
+$ ./engine start hatchery:swarm --config config.toml
+$ ./engine start hatchery:marathon --config config.toml
+$ ./engine start hatchery:openstack --config config.toml
+$ ./engine start hatchery:vsphere --config config.toml
 
 ```
 
 You can scale as you want each of this component, you probably will have to create a configuration for each instance of each service expect the API.
 
 ```bash
-$ engine config new > config.api.toml # All API instance can share the same configuration.
+$ ./engine config new > config.api.toml # All API instance can share the same configuration.
 
 $ cp config.api.toml config.hatchery.swarm-1.toml
 $ cp config.api.toml config.hatchery.swarm-2.toml
