@@ -1,11 +1,11 @@
 ---
-title: GitLab
+title: GitLab Repository Manager
 main_menu: true
 card: 
   name: repository-manager
 ---
 
-The GitLab Integration have to be configured on your CDS by a CDS Administrator.
+The GitLab Repository Manager Integration have to be configured on your CDS by a CDS Administrator.
 
 This integration allows you to link a Git Repository hosted by GitLab
 to a CDS Application.

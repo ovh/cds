@@ -212,5 +212,5 @@ $ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/master/contri
 ## Go further
 
 - How to use OpenStack infrastructure to spawn CDS Workers [read more]({{< relref "/docs/integrations/openstack/openstack_compute.md" >}})
-- Link CDS to a repository manager, as [GitHub]({{< relref "/docs/integrations/github.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab.md" >}})
+- Link CDS to a repository manager, as [GitHub]({{< relref "/docs/integrations/github/_index.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab/_index.md" >}})
 - Learn more about CDS variables [read more]({{< relref "/docs/concepts/variables.md" >}})

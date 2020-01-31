@@ -25,7 +25,7 @@ A CDS µService is a process that can be launch by the `engine` binary.
 - **hooks**: this service manages [Hooks]({{< relref "/docs/concepts/workflow/hooks/_index.md">}}). 
   - You can multi-instanciate this service, it uses a redis to synchronize all tasks over all instances.
   - Users and some integrations need to send HTTP requests to this service, you can use the proxypass `/cdshooks` on the CDS UI to reach this service.
-- **vcs**: The aim of this µService is to communicate with Repository Manager as [GitHub]({{< relref "/docs/integrations/github.md" >}}), [GitLab]({{< relref "/docs/integrations/gitlab.md" >}}), [Bitbucket]({{< relref "/docs/integrations/bitbucket.md" >}})... 
+- **vcs**: The aim of this µService is to communicate with Repository Manager as [GitHub]({{< relref "/docs/integrations/github/_index.md" >}}), [GitLab]({{< relref "/docs/integrations/gitlab/_index.md" >}}), [Bitbucket]({{< relref "/docs/integrations/bitbucket.md" >}})... 
   - You can multi-instanciate this service, a redis is used to synchronize tasks over all instances.
 - **repositories**: this µService is used to enable the as-code feature. 
   - Users can store CDS Files on their repositories. This service clones user repositories on local filesystem. 

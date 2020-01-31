@@ -198,5 +198,5 @@ If you decide to use consul or vault to store your configuration, you will have 
 ## Go further
 
 - How to use OpenStack infrastructure to spawn CDS container [read more]({{< relref "/docs/integrations/openstack/openstack_compute.md" >}})
-* Link CDS to a Repository Manager as [GitHub]({{< relref "/docs/integrations/github.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab.md" >}}) setted up on your CDS Instance.
+* Link CDS to a Repository Manager as [GitHub]({{< relref "/docs/integrations/github/_index.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab/_index.md" >}}) setted up on your CDS Instance.
 - Learn more about CDS variables [read more]({{< relref "/docs/concepts/variables.md" >}})
