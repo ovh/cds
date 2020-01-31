@@ -2,7 +2,7 @@
 title: "Token creation"
 weight: 8
 card: 
-  name: token
+  name: rest-sdk
 ---
 
 There are two types of token in CDS:
