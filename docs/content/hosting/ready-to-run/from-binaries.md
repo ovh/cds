@@ -37,6 +37,18 @@ chmod +x cds-engine cdsctl
 
 ```
 
+## Generate configuration
+
+Generate a **[Configuration File]({{<relref "/hosting/configuration.md" >}})**
+
+```bash
+cd $HOME/cds
+
+./cds-engine config new > conf.toml
+./cds-engine download workers --config conf.toml
+./cds-engine start api --config conf.toml
+```
+
 ## Prepare Database
 
 For this example, we consider that the database is installed on `localhost`,
@@ -50,8 +62,7 @@ docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGR
 
 ```bash
 cd $HOME/cds
-mkdir sql
-tar xzf sql.tar.gz -C sql/
+./cds-engine download sql --config conf.toml
 ./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql
 ```
 
@@ -62,7 +73,6 @@ Generate a **[Configuration File]({{<relref "/hosting/configuration.md" >}})**
 ```bash
 cd $HOME/cds
 
-./cds-engine config new > conf.toml
 ./cds-engine download workers --config conf.toml
 ./cds-engine start api --config conf.toml
 ```
@@ -78,32 +88,8 @@ curl http://localhost:8081/mon/status
 
 ```bash
 cd $HOME/cds
-tar xzf ui.tar.gz # this command generates a $HOME/cds/dist/ directory
-```
-
-The `dist/` directory contains all HTML, JavaScript, CSS... files.
-
-You can serve theses files with a simple web server, but there is a ready-to-run Caddyfile to launch CDS UI quickly.
-
-```bash
-cd dist/
-
-# BACKEND_HOST contains a URL to CDS Engine
-export BACKEND_HOST="http://localhost:8081"
-
-# BACKEND_HOOKS contains a URL to CDS Hooks
-export BACKEND_HOOKS="http://localhost:8083"
-
-# if you expose CDS on a domain as https://your-domain/your-cds, enter "/your-cds"
-BASE_URL="/"
-sed -i "s#base href=\"/\"#base href=\"${BASE_URL}\"#g" index.html
-
-# Get Caddy
-wget https://github.com/ovh/cds/releases/download/0.8.0/caddy-linux-amd64
-chmod +x caddy-linux-amd64
-
-# RUN CDS UI
-./caddy-linux-amd64
+./cds-engine download ui --config conf.toml
+./cds-engine start ui --config conf.toml
 ```
 
 Then, open a browser on http://localhost:8080/ . You have to signup your first CDS user. It will be an administrator on CDS. In order to do that, just go on UI and click on signup or use `cdsctl signup`. If you don't have email service configured you just have to check your CDS API logs to have the confirmation link.
@@ -142,12 +128,14 @@ Then, start the local hatchery
 
 ## Note about CDS Engine
 
-It is possible to start all services as a single process `$ engine start api hooks hatchery:local --config config.toml`.
+It is possible to start all services as a single process `$ engine start api ui hooks hatchery:local --config config.toml`.
 
 ```bash
 $ engine start api hooks hatchery:local --config config.toml
 Reading configuration file config.toml
 Starting service api
+...
+Starting service ui
 ...
 Starting service hooks
 ...
@@ -162,6 +150,8 @@ For serious deployment, we strongly suggest to run each service as a dedicated p
 ```bash
 
 $ engine start api --config config.toml
+
+$ engine start ui --config config.toml
 
 $ engine start hooks --config config.toml
 
