@@ -1,15 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path"
 
+	"github.com/mholt/archiver"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func init() {
@@ -51,67 +55,59 @@ You can also indicate a specific os or architecture to not download all binaries
 
 		config := cdsclient.Config{Host: flagDownloadWorkersURLAPI}
 		client := cdsclient.New(config)
-		resources := sdk.AllDownloadableResources()
 
-		var workersResources []sdk.DownloadableResource
-		for _, resource := range resources {
-			if resource.Name == "worker" {
-				goodArch := flagDownloadWorkersArch == resource.Arch
-				goodOS := flagDownloadWorkersOS == resource.OS
-
-				switch {
-				case flagDownloadWorkersArch == "" && flagDownloadWorkersOS == "":
-					workersResources = append(workersResources, resource)
-				case flagDownloadWorkersArch != "" && flagDownloadWorkersOS == "":
-					if goodArch {
-						workersResources = append(workersResources, resource)
-					}
-				case flagDownloadWorkersArch == "" && flagDownloadWorkersOS != "":
-					if goodOS {
-						workersResources = append(workersResources, resource)
-					}
-				default:
-					if goodArch && goodOS {
-						workersResources = append(workersResources, resource)
-					}
-				}
-			}
+		if conf.API == nil {
+			sdk.Exit("Invalid configuration file")
 		}
 
-		for _, workerResource := range workersResources {
-			filename := sdk.GetArtifactFilename("worker", workerResource.OS, workerResource.Arch, "")
-			// no need to have apiEndpoint here
-			urlBinary, errGH := client.DownloadURLFromGithub(filename)
-			if errGH != nil {
-				if flagDownloadWorkersArch != "" && flagDownloadWorkersOS != "" {
-					sdk.Exit("Error while getting URL from Github url:%s err:%s\nIf it's not available on Github release you should consider compile yourself\n", urlBinary, errGH)
-				}
-				continue
+		if ok, err := sdk.DirectoryExists(conf.API.Directories.Download); !ok {
+			if err := os.MkdirAll(conf.API.Directories.Download, os.FileMode(0700)); err != nil {
+				sdk.Exit("Unable to create directory %s: %v", conf.API.Directories.Download, err)
 			}
+			log.Info(context.Background(), "Directory %s has been created", conf.API.Directories.Download)
+		} else if err != nil {
+			sdk.Exit("Invalid download directory %s: %v", conf.API.Directories.Download, err)
+		}
 
-			fmt.Printf("Downloading worker for os %s and arch %s into %s...\n", workerResource.OS, workerResource.Arch, conf.API.Directories.Download)
-			resp, err := http.Get(urlBinary)
-			if err != nil {
-				sdk.Exit("Error while getting binary from: %s err:%s\n", urlBinary, err)
-			}
-			defer resp.Body.Close()
+		filename := "cds-worker-all.tar.gz"
+		urlBinary, err := client.DownloadURLFromGithub(filename)
+		if err != nil {
+			sdk.Exit("Error while getting %s from err:%s\n", filename, urlBinary, err)
+		}
 
-			if err := sdk.CheckContentTypeBinary(resp); err != nil {
-				sdk.Exit(err.Error())
-			}
+		fmt.Printf("Downloading workers into %s...\n", conf.API.Directories.Download)
+		resp, err := http.Get(urlBinary)
+		if err != nil {
+			sdk.Exit("Error while getting binary from: %s err:%s\n", urlBinary, err)
+		}
+		defer resp.Body.Close()
 
-			if resp.StatusCode != 200 {
-				sdk.Exit("Error http code: %d, url called: %s\n", resp.StatusCode, urlBinary)
-			}
+		if err := sdk.CheckContentTypeBinary(resp); err != nil {
+			sdk.Exit(err.Error())
+		}
 
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				sdk.Exit("Error while reading file content for %s", filename)
-			}
+		if resp.StatusCode != 200 {
+			sdk.Exit("Error http code: %d, url called: %s\n", resp.StatusCode, urlBinary)
+		}
 
-			if err := ioutil.WriteFile(path.Join(conf.API.Directories.Download, filename), body, 0755); err != nil {
-				sdk.Exit("Error while write file content for %s in %s", filename, conf.API.Directories.Download)
-			}
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			sdk.Exit("Error while reading file content for %s", filename)
+		}
+
+		fullpath := path.Join(conf.API.Directories.Download, filename)
+		if err := ioutil.WriteFile(fullpath, body, 0755); err != nil {
+			sdk.Exit("Error while write file content for %s in %s", filename, conf.API.Directories.Download)
+		}
+
+		if err := archiver.DefaultTarGz.Unarchive(fullpath, conf.API.Directories.Download); err != nil {
+			sdk.Exit("Unarchive %s failed: %v", filename, err)
+		}
+		fmt.Printf("Unarchive to %s\n", conf.API.Directories.Download)
+
+		// delete file cds-worker-all.tar.gz
+		if err := os.Remove(fullpath); err != nil {
+			sdk.Exit("Error while deleting file %s: %v", fullpath, err)
 		}
 
 		fmt.Println("Download workers binaries done.")
