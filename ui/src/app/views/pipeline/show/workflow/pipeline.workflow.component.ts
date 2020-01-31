@@ -225,10 +225,10 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         this.loadingStage = true;
         switch (type) {
             case 'update':
-                if (this.selectedStage.conditions.lua_script && this.selectedStage.conditions.lua_script !== '') {
+                if (this.selectedStage.conditions.script && this.selectedStage.conditions.script !== '') {
                     this.selectedStage.conditions.plain = null;
                 } else {
-                    this.selectedStage.conditions.lua_script = '';
+                    this.selectedStage.conditions.script = '';
                 }
                 this.store.dispatch(new pipelineActions.UpdatePipelineStage({
                     projectKey: this.project.key,

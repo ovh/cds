@@ -372,7 +372,7 @@ export class WorkflowNodeHookConfigValue {
 
 // WorkflowTriggerConditions is either a lua script to check conditions or a set of WorkflowTriggerCondition
 export class WorkflowNodeConditions {
-    lua_script: string;
+    script: string;
     plain: Array<WorkflowNodeCondition>;
 }
 
