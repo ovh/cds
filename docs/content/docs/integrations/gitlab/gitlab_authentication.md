@@ -1,8 +1,8 @@
 ---
-title: GitLab Repository Manager
+title: GitLab Authentication
 main_menu: true
 card: 
-  name: repository-manager
+  name: authentication
 ---
 
 The GitHub Authentication Integration have to be configured on your CDS by a CDS Administrator.
