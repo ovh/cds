@@ -30,6 +30,9 @@ func computeHookToDelete(newWorkflow *sdk.Workflow, oldWorkflow *sdk.Workflow) m
 }
 
 func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.NodeHook) error {
+	ctx, end := observability.Span(ctx, "workflow.hookUnregistration")
+	defer end()
+
 	if len(hookToDelete) == 0 {
 		return nil
 	}
@@ -73,6 +76,9 @@ func hookUnregistration(ctx context.Context, db gorp.SqlExecutor, store cache.St
 }
 
 func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wf *sdk.Workflow, oldWorkflow *sdk.Workflow) error {
+	ctx, end := observability.Span(ctx, "workflow.hookRegistration")
+	defer end()
+
 	var oldHooks map[string]*sdk.NodeHook
 	var oldHooksByRef map[string]sdk.NodeHook
 	if oldWorkflow != nil {
@@ -94,6 +100,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	}
 
 	hookToUpdate := make(map[string]sdk.NodeHook)
+	var hookToUpdateUUIDs = []string{}
 	for i := range wf.WorkflowData.Node.Hooks {
 		h := &wf.WorkflowData.Node.Hooks[i]
 
@@ -151,6 +158,7 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 			return err
 		}
 		hookToUpdate[h.UUID] = *h
+		hookToUpdateUUIDs = append(hookToUpdateUUIDs, h.UUID)
 	}
 
 	if len(hookToUpdate) > 0 {
@@ -192,6 +200,9 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 }
 
 func updateSchedulerPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wf *sdk.Workflow, h *sdk.NodeHook) error {
+	ctx, end := observability.Span(ctx, "workflow.updateSchedulerPayload")
+	defer end()
+
 	if h.HookModelName != sdk.SchedulerModelName {
 		return nil
 	}

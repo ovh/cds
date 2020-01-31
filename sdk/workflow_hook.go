@@ -3,8 +3,10 @@ package sdk
 import (
 	"database/sql/driver"
 	"encoding/base64"
-	json "encoding/json"
+	"encoding/json"
 	"fmt"
+	"reflect"
+	"sort"
 )
 
 // Those are icon for hooks
@@ -29,9 +31,14 @@ type NodeHook struct {
 func (h NodeHook) Ref() string {
 	s := "model:" + h.HookModelName + ";"
 
-	for k, cfg := range h.Config {
+	var mapKeys = reflect.ValueOf(h.Config).MapKeys()
+	sort.Slice(mapKeys, func(i, j int) bool {
+		return mapKeys[i].String() < mapKeys[j].String()
+	})
+	for _, k := range mapKeys {
+		cfg := h.Config[k.String()]
 		if cfg.Configurable {
-			s += k + ":" + cfg.Value + ";"
+			s += k.String() + ":" + cfg.Value + ";"
 		}
 	}
 
