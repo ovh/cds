@@ -31,8 +31,6 @@ curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-engine-$O
 curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH -o cdsctl
 # if you don't want to use the your keychain, you have to use this:
 # curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH-nokeychain -o cdsctl
-curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/ui.tar.gz -o ui.tar.gz
-curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/sql.tar.gz -o sql.tar.gz
 chmod +x cds-engine cdsctl
 
 ```
@@ -45,18 +43,39 @@ Generate a **[Configuration File]({{<relref "/hosting/configuration.md" >}})**
 cd $HOME/cds
 
 ./cds-engine config new > conf.toml
-./cds-engine download workers --config conf.toml
-./cds-engine start api --config conf.toml
 ```
+
+You will probably need to update some values in this file. If you need to automatize some update, you 
+can use the `./cds-engine config edit` command.
+
+Example:
+
+```bash
+./engine config edit conf.toml api.directories.download=./binaries --output conf.toml
+```
+
+## Prepare Cache
+
+For this example, we consider that the redis is installed on `localhost`, port `6379` with no password.
+You can edit the section `api.cache.redis` in `conf.toml` file if needed.
+
+If it's just for test purpose, you can start a redis with docker, as:
+
+```bash
+docker run --name cds-cache -p 127.0.0.1:6379:6379 -d redis:5
+```
+
 
 ## Prepare Database
 
 For this example, we consider that the database is installed on `localhost`,
 port `5432`, with an existing empty database and user named `cds` and a password 'cds'.
 
+You can edit the section `api.database` in `conf.toml` file if needed.
+
 If it's just for test purpose, you can start a postgreSQL database with docker, as:
 
-```
+```bash
 docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGRES_DB=cds -p 127.0.0.1:5432:5432 -d postgres:9.5
 ```
 
@@ -84,7 +103,7 @@ curl http://localhost:8081/mon/version
 curl http://localhost:8081/mon/status
 ```
 
-## Launch CDS UI
+## Launch CDS UI & Signup
 
 ```bash
 cd $HOME/cds
@@ -93,6 +112,13 @@ cd $HOME/cds
 ```
 
 Then, open a browser on http://localhost:8080/ . You have to signup your first CDS user. It will be an administrator on CDS. In order to do that, just go on UI and click on signup or use `cdsctl signup`. If you don't have email service configured you just have to check your CDS API logs to have the confirmation link.
+
+Example of signup with cdsctl:
+
+```bash
+export INIT_TOKEN=`./cds-engine config init-token --config conf.toml`
+./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
+```
 
 ## Launch CDS Local Hatchery
 
