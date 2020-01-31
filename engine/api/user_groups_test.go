@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,6 +35,9 @@ func Test_getUserGroupsHandler(t *testing.T) {
 
 	var gs []sdk.Group
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &gs))
+	sort.Slice(gs, func(i, j int) bool {
+		return gs[i].ID < gs[j].ID
+	})
 	require.Equal(t, 2, len(gs))
 	assert.Equal(t, g1.Name, gs[0].Name)
 	assert.Equal(t, false, gs[0].Admin)
