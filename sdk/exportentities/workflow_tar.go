@@ -20,19 +20,21 @@ func (w WorkflowPulled) Tar(ctx context.Context, writer io.Writer) error {
 		}
 	}()
 
-	bs, err := base64.StdEncoding.DecodeString(w.Workflow.Value)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	if err := tw.WriteHeader(&tar.Header{
-		Name: fmt.Sprintf(PullWorkflowName, w.Workflow.Name),
-		Mode: 0644,
-		Size: int64(len(bs)),
-	}); err != nil {
-		return sdk.WrapError(err, "unable to write workflow header for %s", w.Workflow.Name)
-	}
-	if _, err := tw.Write(bs); err != nil {
-		return sdk.WrapError(err, "unable to write workflow value")
+	if w.Workflow.Value != "" {
+		bs, err := base64.StdEncoding.DecodeString(w.Workflow.Value)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		if err := tw.WriteHeader(&tar.Header{
+			Name: fmt.Sprintf(PullWorkflowName, w.Workflow.Name),
+			Mode: 0644,
+			Size: int64(len(bs)),
+		}); err != nil {
+			return sdk.WrapError(err, "unable to write workflow header for %s", w.Workflow.Name)
+		}
+		if _, err := tw.Write(bs); err != nil {
+			return sdk.WrapError(err, "unable to write workflow value")
+		}
 	}
 
 	for _, a := range w.Applications {
