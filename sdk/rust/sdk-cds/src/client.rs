@@ -212,10 +212,7 @@ impl Client {
         path: String,
         body: T,
     ) -> Result<U> {
-        #[cfg(not(test))]
         let uri = format!("{}{}", self.host, path);
-        #[cfg(test)]
-        let uri = format!("{}{}", mockito::server_url(), path);
 
         let url = Url::parse(uri.as_str()).expect("cannot parse url");
         let mut req_http = surf::Request::new(http::Method::from_bytes(method.as_bytes())?, url)
@@ -308,7 +305,7 @@ mod tests {
             .with_body(r#"{"username": "me", "fullname": "me", "created": "2019-10-11T10:23:33.207715+02:00", "id": "xxx", "ring": "user"}"#)
             .create();
 
-        let my_client = Client::new("localhost", "xxx");
+        let my_client = Client::new(&mockito::server_url(), &String::from("xxx"));
 
         let me = task::block_on(my_client.me()).unwrap();
 
@@ -357,7 +354,7 @@ mod tests {
             .with_body(r#"{"username": "me", "fullname": "me", "created": "2019-10-11T10:23:33.207715+02:00", "id": "xxx", "ring": "user"}"#)
             .create();
 
-        let my_client = Client::new("localhost", "xxx");
+        let my_client = Client::new(&mockito::server_url(), &String::from("xxx"));
 
         let me = task::block_on(my_client.me()).unwrap();
 
@@ -395,7 +392,7 @@ mod tests {
             .with_body(r#"{"username": "me", "fullname": "me", "created": "2019-10-11T10:23:33.207715+02:00", "id": "xxx", "ring": "user"}"#)
             .create();
 
-        let my_client = Client::new("localhost", "xxx");
+        let my_client = Client::new(&mockito::server_url(), &String::from("xxx"));
         {
             let session_token = my_client.session_token.read();
             session_token.replace(token);
