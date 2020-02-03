@@ -56,14 +56,14 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		app, err := application.LoadAsCode(api.mustDB(), api.Cache, key, fromRepo)
+		apps, err := application.LoadAsCode(api.mustDB(), api.Cache, key, fromRepo)
 		if err != nil {
 			return err
 		}
 
 		u := getAPIConsumer(ctx)
 
-		ope, err := pipeline.UpdatePipelineAsCode(ctx, api.Cache, api.mustDB(), proj, p, branch, message, app, u)
+		ope, err := pipeline.UpdatePipelineAsCode(ctx, api.Cache, api.mustDB(), proj, p, branch, message, &apps[0], u)
 		if err != nil {
 			return err
 		}
@@ -76,7 +76,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 				Name:      pipelineDB.Name,
 				Operation: ope,
 			}
-			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, app, ed, u)
+			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, &apps[0], ed, u)
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, ope, http.StatusOK)

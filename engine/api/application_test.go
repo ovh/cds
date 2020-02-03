@@ -113,8 +113,8 @@ vcs_ssh_key: proj-blabla
 	api.Router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	var appDB sdk.Application
+	var appDB []sdk.Application
 	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &appDB))
-	assert.Equal(t, app.ID, appDB.ID)
+	assert.Equal(t, app.ID, appDB[0].ID)
 
 }

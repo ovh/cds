@@ -191,14 +191,18 @@ func (api *API) postResyncPRAsCodeHandler() service.Handler {
 			return sdk.WrapError(errP, "unable to load project")
 		}
 		var app *sdk.Application
-		var errA error
 		if fromRepo != "" {
-			app, errA = application.LoadAsCode(api.mustDB(), api.Cache, key, fromRepo)
+			apps, err := application.LoadAsCode(api.mustDB(), api.Cache, key, fromRepo)
+			if err != nil {
+				return err
+			}
+			app = &apps[0]
 		} else {
-			app, errA = application.LoadByName(api.mustDB(), api.Cache, key, appName)
-		}
-		if errA != nil {
-			return errA
+			var err error
+			app, err = application.LoadByName(api.mustDB(), api.Cache, key, appName)
+			if err != nil {
+				return err
+			}
 		}
 
 		if _, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, proj, app, getAPIConsumer(ctx).AuthentifiedUser); err != nil {
