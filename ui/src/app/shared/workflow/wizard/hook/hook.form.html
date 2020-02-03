@@ -88,8 +88,14 @@
             </ng-container>
 
             <button class="ui right floated green button" type="button" *ngIf="mode === 'update'" (click)="updateHook()"
-                    [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)" [class.loading]="loading">
-                {{ 'btn_save' | translate }}
+                    [disabled]="loading" [class.loading]="loading">
+                <span *ngIf="workflow.from_repository && workflow.from_repository.length > 0">
+                    {{ 'btn_apply' | translate }}
+                </span>
+                <span *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)">
+                    {{ 'btn_save' | translate }}
+                </span>
+
             </button>
         </div>
     </div>

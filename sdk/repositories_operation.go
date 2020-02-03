@@ -53,6 +53,7 @@ type OperationPush struct {
 	ToBranch   string `json:"to_branch,omitempty"`
 	Message    string `json:"message,omitempty"`
 	PRLink     string `json:"pr_link,omitempty"`
+	Update     bool   `json:"update,omitempty"`
 }
 
 // OperationStatus is the status of an operation

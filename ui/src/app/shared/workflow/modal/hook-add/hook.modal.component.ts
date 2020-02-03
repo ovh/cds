@@ -4,7 +4,6 @@ import { Project } from 'app/model/project.model';
 import { WNode, WNodeHook, Workflow } from 'app/model/workflow.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WorkflowNodeHookFormComponent } from 'app/shared/workflow/wizard/hook/hook.form.component';
-
 @Component({
     selector: 'app-hook-modal',
     templateUrl: './hook.modal.html',
@@ -18,6 +17,7 @@ export class WorkflowHookModalComponent {
     @Input() workflow: Workflow;
     @Input() node: WNode;
     @Input() loading: boolean;
+    @Input() editMode: boolean;
 
     @Input() hook: WNodeHook;
 
@@ -32,8 +32,7 @@ export class WorkflowHookModalComponent {
     @ViewChild('hookFormComponent', {static: false})
     hookFormComponent: WorkflowNodeHookFormComponent;
 
-    constructor(private _modalService: SuiModalService) {
-    }
+    constructor(private _modalService: SuiModalService) {}
 
     show(): void {
         if (this.hookModalComponent) {
@@ -41,10 +40,6 @@ export class WorkflowHookModalComponent {
             this.modalConfig.mustScroll = true;
             this.modal = this._modalService.open(this.modalConfig);
         }
-    }
-
-    deleteHook(): void {
-        this.deleteHookEvent.emit(this.hook);
     }
 
     saveHook(): void {

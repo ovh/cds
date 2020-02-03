@@ -1,7 +1,4 @@
 <div id="WorkflowAdmin">
-    <div class="ui warning message" *ngIf="workflow.from_repository && workflow.from_repository.length > 0">
-        {{'workflow_ascode_no_edit' | translate}}
-    </div>
     <app-zone header="{{ 'common_icon' | translate }}">
         <app-zone-content class="bottom">
             <div class="ui form">
@@ -47,7 +44,7 @@
                 <div class="field">
                     <label>{{'common_description' | translate}}</label>
                     <textarea name="description" class="ui" [(ngModel)]="_workflow.description"
-                        [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"></textarea>
+                        [disabled]="loading"></textarea>
                 </div>
                 <div class="field">
                     <label>
@@ -59,7 +56,7 @@
                             <div class="item" *ngFor="let t of selectedTags; let i = index">
                                 <div class="ui label">
                                     {{t + '  '}}
-                                    <i class="close icon" *ngIf="!workflow.from_repository && workflow.permission === 7" (click)="removeFromSelectedTags(i)"></i>
+                                    <i class="close icon" *ngIf="workflow.permissions.writable" (click)="removeFromSelectedTags(i)"></i>
                                 </div>
                             </div>
                         </div>
@@ -72,7 +69,7 @@
                     <div class="ui inline fields" *ngIf="existingTags.length > 0">
                         <div class="ui twelve wide field">
                             <sui-multi-select name="sidebartagzone" class="fluid selection"
-                                        [isDisabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
+                                        [isDisabled]="loading"
                                         [options]="existingTags" [isSearchable]="true"
                                         [(ngModel)]="tagsToAdd"
                                          #tagSelect>
@@ -92,14 +89,12 @@
                     <div class="fields">
                         <div class="three wide field">
                             <input type="number" name="formWorkflowUpdateHistory"
-                                placeholder="{{ 'workflow_history_length' | translate}}" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length >
-                                0)" [(ngModel)]="_workflow.history_length" [disabled]="loading" required
+                                placeholder="{{ 'workflow_history_length' | translate}}" [disabled]="loading" [(ngModel)]="_workflow.history_length" [disabled]="loading" required
                                 #formWorkflowUpdateHistory="ngModel" min="1" max="500">
                         </div>
                         <div class="thirteen wide field">
                             <sui-select name="sidebartagzonehistory" class="selection" *ngIf="existingTags.length > 0"
-                                [(ngModel)]="purgeTag" [options]="existingTags" [isSearchable]="true" [isDisabled]="loading || (workflow.from_repository && workflow.from_repository.length >
-                                0)" #SelectPurge>
+                                [(ngModel)]="purgeTag" [options]="existingTags" [isSearchable]="true" [isDisabled]="loading" #SelectPurge>
                                 <sui-select-option *ngFor="let i of SelectPurge.filteredOptions" [value]="i">
                                 </sui-select-option>
                             </sui-select>
@@ -113,20 +108,12 @@
                         #formWorkflowRunNumUpdateNumber="ngModel">
                 </div>
                 <div class="submitbutton">
-                    <ng-container *ngIf="workflow.from_repository && workflow.from_repository.length > 0">
-                        <div class="ui right floated">
-                            <button class="ui green button" type="button" [class.loading]=" loading"
-                                (click)="updateRunNumber()">
-                                {{'btn_save' | translate}}
-                            </button>
-                        </div>
-                    </ng-container>
-                    <ng-container *ngIf="!workflow.from_repository || workflow.from_repository.length === 0">
                         <button class="ui green right floated button" type="submit" name="savebtn"
                             [class.loading]="loading" [disabled]="loading">
-                            {{'btn_save' | translate}}
+                            <span *ngIf="!editMode">{{'btn_save' | translate}}</span>
+                            <span *ngIf="editMode">{{'btn_apply' | translate}}</span>
+
                         </button>
-                    </ng-container>
                 </div>
                 <app-warning-modal [title]="_translate.instant('warning_modal_title')"
                     [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitWorkflowUpdate(true)"

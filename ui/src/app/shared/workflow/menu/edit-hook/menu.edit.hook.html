@@ -10,7 +10,7 @@
         </a>
         <hr>
         <a class="item" (click)="sendEvent('delete')"
-           [class.disabled]="(workflow.from_repository && workflow.from_repository.length > 0) || readonly">
+           [class.disabled]="readonly">
                 {{ 'btn_delete' | translate }}
         </a>
     </div>

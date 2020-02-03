@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/fsamin/go-repo"
 
@@ -39,27 +40,36 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) error {
 
 	// Create new branch
 	if err := gitRepo.CheckoutNewBranch(op.Setup.Push.FromBranch); err != nil {
-		log.Error(ctx, "Repositories> processPush> Create new branch %s> [%s] error %v", op.Setup.Push.FromBranch, op.UUID, err)
-		return sdk.WrapError(err, "Create new branch %s> [%s] error %v", op.Setup.Push.FromBranch, op.UUID, err)
-	}
-
-	// Erase cds directory
-	_, errStat := os.Stat(path + "/.cds")
-	if errStat == nil {
-		if err := os.RemoveAll(path + "/.cds"); err != nil {
-			log.Error(ctx, "Repositories> processPush> Remove old .cds directory> [%s] error %v", op.UUID, err)
-			return sdk.WrapError(err, "Remove old .cds directory> [%s] error %v", op.UUID, err)
+		if !op.Setup.Push.Update || !strings.Contains(err.Error(), "already exists") {
+			return sdk.WrapError(err, "Create new branch %s> [%s] error %v", op.Setup.Push.FromBranch, op.UUID, err)
+		} else {
+			if err := gitRepo.Checkout(op.Setup.Push.FromBranch); err != nil {
+				log.Error(ctx, "Repositories> processPush> Checkout branch %s> [%s] error %v", op.Setup.Push.FromBranch, op.UUID, err)
+				return sdk.WrapError(err, "Cannot checkout on branch %s: %v", op.Setup.Push.FromBranch, err)
+			}
 		}
 	}
 
-	// Create files
-	if err := os.Mkdir(filepath.Join(path, ".cds"), os.ModePerm); err != nil {
-		log.Error(ctx, "Repositories> processPush> Creating cds directory> [%s] error %v", op.UUID, err)
-		return sdk.WrapError(err, "Creating cds directory> [%s] error %v", op.UUID, err)
+	if !op.Setup.Push.Update {
+		// Erase cds directory
+		_, errStat := os.Stat(path + "/.cds")
+		if errStat == nil {
+			if err := os.RemoveAll(path + "/.cds"); err != nil {
+				log.Error(ctx, "Repositories> processPush> Remove old .cds directory> [%s] error %v", op.UUID, err)
+				return sdk.WrapError(err, "Remove old .cds directory> [%s] error %v", op.UUID, err)
+			}
+		}
+		// Create files
+		if err := os.Mkdir(filepath.Join(path, ".cds"), os.ModePerm); err != nil {
+			log.Error(ctx, "Repositories> processPush> Creating cds directory> [%s] error %v", op.UUID, err)
+			return sdk.WrapError(err, "Creating cds directory> [%s] error %v", op.UUID, err)
+		}
 	}
+
 	for k, v := range op.LoadFiles.Results {
 		fname := filepath.Join(path, ".cds", k)
 		log.Debug("Creating %s", fname)
+		_ = os.Remove(fname)
 		fi, err := os.Create(fname)
 		if err != nil {
 			log.Error(ctx, "Repositories> processPush> Create file %s> [%s] error %v", fname, op.UUID, err)

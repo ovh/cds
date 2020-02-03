@@ -1536,8 +1536,13 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 		require.NoError(t, services.Delete(db, &srv))
 	}
 
-	_, _ = assets.InsertService(t, db, "TestInsertAndDeleteMultiHookVCS", services.TypeVCS)
-	_, _ = assets.InsertService(t, db, "TestInsertAndDeleteMultiHookHook", services.TypeHooks)
+	a, _ := assets.InsertService(t, db, "TestInsertAndDeleteMultiHookVCS", services.TypeVCS)
+	b, _ := assets.InsertService(t, db, "TestInsertAndDeleteMultiHookHook", services.TypeHooks)
+
+	defer func() {
+		_ = services.Delete(db, a)
+		_ = services.Delete(db, b)
+	}()
 
 	//This is a mock for the vcs service
 	services.HTTPClient = mock(

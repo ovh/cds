@@ -2,23 +2,86 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/service"
-
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
+func (api *API) updateAsCodePipelineHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Get project name in URL
+		vars := mux.Vars(r)
+		key := vars[permProjectKey]
+		name := vars["pipelineKey"]
+		branch := FormString(r, "branch")
+		message := FormString(r, "message")
+		fromRepo := FormString(r, "repo")
+
+		var p sdk.Pipeline
+		if err := service.UnmarshalBody(r, &p); err != nil {
+			return sdk.WrapError(err, "Cannot read body")
+		}
+
+		// check pipeline name pattern
+		regexp := sdk.NamePatternRegex
+		if !regexp.MatchString(p.Name) {
+			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updateAsCodePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
+		}
+
+		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithClearKeys)
+		if err != nil {
+			return err
+		}
+
+		pipelineDB, err := pipeline.LoadPipeline(ctx, api.mustDB(), key, name, true)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load pipeline %s", name)
+		}
+
+		if pipelineDB.FromRepository == "" {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
+		app, err := application.LoadAsCode(api.mustDB(), api.Cache, key, fromRepo)
+		if err != nil {
+			return err
+		}
+
+		u := getAPIConsumer(ctx)
+
+		ope, err := pipeline.UpdatePipelineAsCode(ctx, api.Cache, api.mustDB(), proj, p, branch, message, app, u)
+		if err != nil {
+			return err
+		}
+
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateAsCodePipelineHandler-%s", ope.UUID), func(ctx context.Context) {
+			ed := ascode.EntityData{
+				FromRepo:  pipelineDB.FromRepository,
+				Type:      ascode.AsCodePipeline,
+				ID:        pipelineDB.ID,
+				Name:      pipelineDB.Name,
+				Operation: ope,
+			}
+			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, app, ed, u)
+		}, api.PanicDump())
+
+		return service.WriteJSON(w, ope, http.StatusOK)
+	}
+}
 func (api *API) updatePipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
@@ -220,6 +283,7 @@ func (api *API) getPipelineHandler() service.Handler {
 		withApp := FormBool(r, "withApplications")
 		withWorkflows := FormBool(r, "withWorkflows")
 		withEnvironments := FormBool(r, "withEnvironments")
+		withAsCodeEvent := FormBool(r, "withAsCodeEvents")
 
 		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {
@@ -228,6 +292,14 @@ func (api *API) getPipelineHandler() service.Handler {
 
 		if withApp || withWorkflows || withEnvironments {
 			p.Usage = &sdk.Usage{}
+		}
+
+		if withAsCodeEvent {
+			events, errE := ascode.LoadAsCodeEventByRepo(ctx, api.mustDB(), p.FromRepository)
+			if errE != nil {
+				return errE
+			}
+			p.AsCodeEvents = events
 		}
 
 		if withWorkflows {

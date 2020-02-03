@@ -13,13 +13,13 @@ import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from '@richa
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowRun } from 'app/model/workflow.run.model';
+import { AscodeService } from 'app/service/ascode/ascode.service';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
-import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { UpdateAsCodeComponent } from 'app/shared/modal/save-as-code/update.as.code.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowTemplateApplyModalComponent } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
-import { WorkflowSaveAsCodeComponent } from 'app/shared/workflow/modal/save-as-code/save.as.code.component';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import {
     CleanWorkflowRun,
@@ -62,11 +62,13 @@ export class WorkflowComponent {
     sidebarMode = WorkflowSidebarMode.RUNS;
     sidebarModes = WorkflowSidebarMode;
 
+    editWorkflow: Workflow;
+
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
 
-    @ViewChild('saveAsCode', {static: false})
-    saveAsCode: WorkflowSaveAsCodeComponent;
+    @ViewChild('updateAsCode', {static: false})
+    saveAsCode: UpdateAsCodeComponent;
     @ViewChild('popup', {static: false})
     popupFromlRepository: SuiPopup;
     @ViewChildren(SuiPopupController) popups: QueryList<SuiPopupController>;
@@ -83,13 +85,13 @@ export class WorkflowComponent {
 
     constructor(
         private _activatedRoute: ActivatedRoute,
-        private _workflowService: WorkflowService,
         private _router: Router,
         private _workflowCore: WorkflowCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
         private _store: Store,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _ascodeService: AscodeService
     ) {
         this.dataRouteSubscription = this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -130,6 +132,7 @@ export class WorkflowComponent {
         this._store.dispatch(new CleanWorkflowState());
         this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
             this.sidebarMode = s.sidebar;
+            this.editWorkflow = s.editWorkflow;
 
             if (s.workflow && (!this.workflow || (this.workflow && s.workflow.id !== this.workflow.id))) {
                 this.workflow = s.workflow;
@@ -212,23 +215,34 @@ export class WorkflowComponent {
         });
     }
 
-    migrateAsCode(): void {
-        this.loadingPopupButton = true;
-        this._workflowService.migrateAsCode(this.project.key, this.workflow.name)
-            .pipe(finalize(() => {
-                this.loadingPopupButton = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe((ope) => {
-                this.showButtons = false;
-                this.popupFromlRepository.close();
-                this.saveAsCode.show(ope);
-            });
+    openSaveAsCodeModal(): void {
+        if (!this.project.vcs_servers) {
+            this._toast.error('', this._translate.instant('project_vcs_no'));
+            return;
+        }
+        if (!this.workflow.workflow_data || !this.workflow.workflow_data.node ||
+            !this.workflow.workflow_data.node.context ||
+            !this.workflow.workflow_data.node.context.application_id
+        ) {
+            this._toast.error('', this._translate.instant('common_no_application'));
+            return;
+        }
+        let app = this.workflow.applications[this.workflow.workflow_data.node.context.application_id];
+        if (!app || !app.repository_fullname) {
+            this._toast.error('', this._translate.instant('application_repo_no'));
+            return;
+        }
+
+        if (this.saveAsCode) {
+            this.saveAsCode.show(this.editWorkflow, 'workflow');
+        }
     }
 
     resyncPR(): void {
         this.loadingPopupButton = true;
-        this._workflowService.resyncPRAsCode(this.project.key, this.workflow.name)
+        this._ascodeService.resyncPRAsCode(this.project.key,
+            this.workflow.applications[this.workflow.workflow_data.node.context.application_id].name,
+            this.workflow.from_repository)
             .pipe(finalize(() => this.loadingPopupButton = false))
             .subscribe(() => {
                 this.popupFromlRepository.close();

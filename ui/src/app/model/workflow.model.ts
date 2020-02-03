@@ -1,3 +1,4 @@
+import { AsCodeEvents } from 'app/model/ascode.model';
 import { Permission } from 'app/model/permission.model';
 import { Application } from './application.model';
 import { AuditWorkflow } from './audit.model';
@@ -350,15 +351,6 @@ export class Workflow {
     }
 }
 
-export class AsCodeEvents {
-    id: number;
-    workflow_id: number;
-    pullrequest_id: number;
-    pullrequest_url: string;
-    username: string;
-    creation_date: string;
-}
-
 export class WorkflowPipelineNameImpact {
     nodes = new Array<WNode>();
 }
@@ -663,6 +655,8 @@ export class WNodeOutgoingHook {
     hook_model_id: number;
     uuid: string;
     config: Map<string, WorkflowNodeHookConfigValue>;
+
+    model: WorkflowHookModel;
 }
 
 export class WNodeJoin {

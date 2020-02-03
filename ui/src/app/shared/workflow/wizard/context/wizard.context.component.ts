@@ -47,6 +47,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
         return this.editableNode;
     }
     @Input() readonly = true;
+    @Input() editMode: boolean;
 
     @Output() contextChange = new EventEmitter<boolean>();
 
@@ -55,6 +56,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     integrations: Array<IdName>;
     loading: boolean;
     showCheckStatus = false;
+
 
     constructor(private _store: Store, private _appService: ApplicationService, private _translate: TranslateService,
         private _toast: ToastService, private _cd: ChangeDetectorRef) {
@@ -114,11 +116,14 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     }
 
     change(): void {
-        this.node.context.application_id = Number(this.node.context.application_id);
-        this.node.context.environment_id = Number(this.node.context.environment_id);
-        this.node.context.pipeline_id = Number(this.node.context.pipeline_id);
+        this.node.context.application_id = Number(this.node.context.application_id) || 0;
+        this.node.context.environment_id = Number(this.node.context.environment_id) || 0;
+        this.node.context.pipeline_id = Number(this.node.context.pipeline_id) || 0;
 
-        let appName = this.applications.find(k => Number(k.id) === this.node.context.application_id).name;
+        let appName = '';
+        if (this.node.context.application_id !== 0) {
+            appName = this.applications.find(k => Number(k.id) === this.node.context.application_id).name;
+        }
         if (appName && appName !== ' ') {
             this._appService.getDeploymentStrategies(this.project.key, appName).pipe(
                 first(),
@@ -154,7 +159,12 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
     updateWorkflow(): void {
         this.loading = true;
         let clonedWorkflow = cloneDeep(this.workflow);
-        let n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+        let n: WNode;
+        if (this.editMode) {
+            n = Workflow.getNodeByRef(this.editableNode.ref, clonedWorkflow);
+        } else {
+            n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+        }
         n.context.application_id = this.editableNode.context.application_id;
         n.context.environment_id = this.editableNode.context.environment_id;
         n.context.project_integration_id = this.editableNode.context.project_integration_id;
@@ -186,7 +196,11 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this.contextChange.emit(false);
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
             });
     }
 }

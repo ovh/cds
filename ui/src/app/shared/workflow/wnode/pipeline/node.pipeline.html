@@ -5,8 +5,16 @@
     [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED"
     [class.active]="selected">
     <div class="title">
-        <div class="name ellipsis" title="{{node.name}}">
-            {{node.name}}
+        <div class="name ellipsis" title="{{node?.name || node.type}}">
+            <ng-container *ngIf="node?.name">
+                {{node?.name}}
+            </ng-container>
+            <ng-container *ngIf="!node.name && node.type === 'pipeline'">
+                {{workflow?.pipelines[node?.context?.pipeline_id]?.name || node.type}}
+            </ng-container>
+            <ng-container *ngIf="!node.name && node.type === 'outgoinghook'">
+                {{node.type + '-' + node.outgoing_hook.model.name}}
+            </ng-container>
         </div>
         <div *ngIf="warnings > 0" suiPopup popupPlacement="right center"
             [popupText]="'warning_build_title' | translate: {nb: warnings}" class="warn">

@@ -53,7 +53,6 @@ export class WorkflowSidebarHookComponent implements OnInit {
     }
 
     loadHookDetails() {
-        console.log('Loading details');
         this.loading = true;
         this._hookService.getHookLogs(this.project.key, this.workflow.name, this.hook.uuid)
             .pipe(finalize(() => {

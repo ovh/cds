@@ -4,7 +4,7 @@
     <app-workflow-wnode-pipeline *ngSwitchCase="'pipeline'" [project]="project" [workflow]="workflow" [node]="node"
         [noderun]="currentNodeRun" [warnings]="warnings"></app-workflow-wnode-pipeline>
     <app-workflow-wnode-join *ngSwitchCase="'join'" [project]="project" [workflow]="workflow" [node]="node"
-        [noderun]="currentNodeRun" [workflowrun]="workflowRun"></app-workflow-wnode-join>
+        [noderun]="currentNodeRun" [workflowrun]="workflowRun" [editMode]="editMode"></app-workflow-wnode-join>
     <app-workflow-wnode-fork *ngSwitchCase="'fork'" [project]="project" [workflow]="workflow" [node]="node"
         [noderun]="currentNodeRun"></app-workflow-wnode-fork>
     <app-workflow-wnode-outgoing-hook *ngSwitchCase="'outgoinghook'" [project]="project" [workflow]="workflow"
@@ -20,11 +20,11 @@
 <ng-container *ngIf="project && node && workflow">
 
     <!-- Add trigger -->
-    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node"
+    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node" [editMode]="editMode"
         (triggerEvent)="updateWorkflow($event, workflowTrigger.modal)" #workflowTrigger></app-workflow-trigger>
     <!-- Add hook -->
-    <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
-        (hookEvent)="updateHook($event, workflowAddHook.modal)" #workflowAddHook></app-hook-modal>
+    <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" [editMode]="editMode"
+        (hookEvent)="addHook($event, workflowAddHook.modal)" #workflowAddHook></app-hook-modal>
 
     <!-- Delete Node -->
     <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow"
