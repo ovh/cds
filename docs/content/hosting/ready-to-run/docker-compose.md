@@ -26,14 +26,14 @@ Docker compose is very convenient to launch CDS for testing it. But this is not 
 ## How to run
 
 ```bash
-$ mkdir /tmp/cdstest && cd /tmp/cdstest
+$ mkdir /tmp/cdstest && cd /tmp/cdstest && mkdir -p tools/smtpmock
 $ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml
 $ export HOSTNAME=$(hostname)
 
 # Get the latest version
 $ docker pull ovhcom/cds-engine:latest
 
-# Create PG database and cache
+# Create PG database, redis and smtp mock server
 $ docker-compose up --no-recreate -d cds-db cds-cache elasticsearch
 
 # check if DB is up
@@ -41,19 +41,20 @@ $ docker-compose up --no-recreate -d cds-db cds-cache elasticsearch
 $ docker-compose logs
 
 $ docker-compose up --no-recreate cds-migrate
-# You should have this log: "cds_cds-migrate_1 exited with code 0"
+# You should have this log: "cdstest_cds-migrate_1 exited with code 0"
 
 # prepare initial configuration.
 $ docker-compose up cds-prepare
+
+# disable the smtp server
+$ export CDS_EDIT_CONFIG="api.smtp.disable=true"
+$ docker-compose up cds-edit-config
 
 # run API, UI and hooks µservice
 $ docker-compose up -d cds-api
 
 # the INIT_TOKEN variable will be used by cdsctl to create first admin user
-$ TOKEN_CMD=$(docker logs test_cds-prepare_1|grep TOKEN)
-
-# then execute the export INIT_TOKEN
-$ $TOKEN_CMD
+$ TOKEN_CMD=$(docker logs cdstest_cds-prepare_1|grep TOKEN) && $TOKEN_CMD
 
 # create user
 $ curl http://localhost:8081/download/cdsctl/linux/amd64\?variant=nokeychain -o cdsctl
@@ -62,10 +63,7 @@ $ ./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local 
 # enter a strong password
 
 # verify the user
-$ docker-compose logs cds-api|grep 'cdsctl signup verify'
-
-# run the command find in the output logs
-$ ./cdsctl signup verify --api-url http://localhost:8081 very-very-long-token-here
+$ VERIFY_CMD=$(docker-compose logs cds-api|grep 'cdsctl signup verify'|cut -d '$' -f2|xargs) && ./$VERIFY_CMD
 
 # run cdsctl 
 $ ./cdsctl user me
