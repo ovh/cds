@@ -188,8 +188,8 @@ export class PipelineShowComponent implements OnInit {
                     if (this.pipeline.from_repository) {
                         // get application
                         this._appService.getAsCodeApplication(this.projectKey, this.pipeline.from_repository)
-                            .pipe(first()).subscribe(app => {
-                                this.appAsCode = app;
+                            .pipe(first()).subscribe(apps => {
+                                this.appAsCode = apps[0];
                         });
                     }
                 } else {
