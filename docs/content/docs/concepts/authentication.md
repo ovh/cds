@@ -9,8 +9,6 @@ card:
 
 # Consumer
 
-## Description:
-
 Two type of consumer: 
 
 - first level: GitLab, GitHub, CorporateSSO, LDAP, Local.

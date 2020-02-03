@@ -167,6 +167,8 @@ $ npm start
 Register first user with cdsctl:
 
 ```bash
+# INIT_TOKEN is used to create the first user as an administrator of CDS.
+export INIT_TOKEN=`./engine config init-token --config ~/.cds/dev.toml`
 $ cdsctl signup -H http://localhost:8081 --email your-username@localhost.local --fullname yourFullname --username your-username
 # Check CDS API logs to get the validation code
 ```
