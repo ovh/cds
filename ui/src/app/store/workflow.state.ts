@@ -1135,8 +1135,10 @@ export class WorkflowState {
     @Action(actionAsCode.ResyncEvents)
     refreshAsCodeEvents(ctx: StateContext<WorkflowStateModel>, _) {
         const state = ctx.getState();
-        ctx.dispatch(new actionWorkflow
-            .GetWorkflow({projectKey: state.projectKey, workflowName: state.workflow.name}));
+        if (state.workflow) {
+            ctx.dispatch(new actionWorkflow
+                .GetWorkflow({projectKey: state.projectKey, workflowName: state.workflow.name}));
+        }
     }
 
     @Action(actionAsCode.AsCodeEvent)

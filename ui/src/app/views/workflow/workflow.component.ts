@@ -13,7 +13,6 @@ import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from '@richa
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowRun } from 'app/model/workflow.run.model';
-import { AscodeService } from 'app/service/ascode/ascode.service';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -90,8 +89,7 @@ export class WorkflowComponent {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _store: Store,
-        private _cd: ChangeDetectorRef,
-        private _ascodeService: AscodeService
+        private _cd: ChangeDetectorRef
     ) {
         this.dataRouteSubscription = this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -236,16 +234,5 @@ export class WorkflowComponent {
         if (this.saveAsCode) {
             this.saveAsCode.show(this.editWorkflow, 'workflow');
         }
-    }
-
-    resyncPR(): void {
-        this.loadingPopupButton = true;
-        this._ascodeService.resyncPRAsCode(this.project.key,
-            this.workflow.applications[this.workflow.workflow_data.node.context.application_id].name,
-            this.workflow.from_repository)
-            .pipe(finalize(() => this.loadingPopupButton = false))
-            .subscribe(() => {
-                this.popupFromlRepository.close();
-            });
     }
 }
