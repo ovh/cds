@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { IdName, Project } from 'app/model/project.model';
-import { Warning } from 'app/model/warning.model';
 
 @Component({
     selector: 'app-project-environments',
@@ -9,22 +8,6 @@ import { Warning } from 'app/model/warning.model';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectEnvironmentListComponent {
-
-    warnMap: Map<string, Array<Warning>>;
-    @Input('warnings')
-    set warnings(data: Array<Warning>) {
-        if (data) {
-            this.warnMap = new Map<string, Array<Warning>>();
-            data.forEach(w => {
-                let arr = this.warnMap.get(w.environment_name);
-                if (!arr) {
-                    arr = new Array<Warning>();
-                }
-                arr.push(w);
-                this.warnMap.set(w.environment_name, arr);
-            });
-        }
-    }
 
     @Input()
     set project(project: Project) {

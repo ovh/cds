@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { IdName, Label, Project } from 'app/model/project.model';
-import { Warning } from 'app/model/warning.model';
 import { HelpersService } from 'app/service/helpers/helpers.service';
 import { AddLabelWorkflowInProject, DeleteLabelWorkflowInProject } from 'app/store/project.action';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -31,7 +30,6 @@ export class ProjectWorkflowListLabelsComponent {
   get project(): Project {
     return this._project;
   }
-  @Input() warnMap: Map<string, Array<Warning>>;
   @Input('workflows')
   set workflows(workflows: IdName[]) {
     this._workflows = workflows;

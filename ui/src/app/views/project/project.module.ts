@@ -16,7 +16,6 @@ import { ProjectPermissionsComponent } from './show/permission/permission.compon
 import { ProjectPipelinesComponent } from './show/pipeline/pipeline.list.component';
 import { ProjectShowComponent } from './show/project.component';
 import { ProjectVariablesComponent } from './show/variable/variable.list.component';
-import { ProjectWarningsComponent } from './show/warnings/warnings.component';
 import { ProjectWorkflowListBlocsComponent } from './show/workflow/blocs/workflow.list.blocs.component';
 import { ProjectWorkflowListLabelsComponent } from './show/workflow/labels/workflow.list.labels.component';
 import { ProjectWorkflowListLinesComponent } from './show/workflow/lines/workflow.list.lines.component';
@@ -42,8 +41,7 @@ import { ProjectWorkflowListComponent } from './show/workflow/workflow.list.comp
         ProjectEnvironmentListComponent,
         ProjectIntegrationsComponent,
         ProjectIntegrationFormComponent,
-        ProjectIntegrationListComponent,
-        ProjectWarningsComponent
+        ProjectIntegrationListComponent
     ],
     imports: [
         SharedModule,

@@ -46,7 +46,6 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/version"
-	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -251,7 +250,6 @@ type API struct {
 	StartupTime         time.Time
 	Maintenance         bool
 	eventsBroker        *eventsBroker
-	warnChan            chan sdk.Event
 	Cache               cache.Store
 	Metrics             struct {
 		WorkflowRunFailed        *stats.Int64Measure
@@ -652,9 +650,6 @@ func (a *API) Serve(ctx context.Context) error {
 		go event.DequeueEvent(ctx, a.mustDB())
 	}
 
-	a.warnChan = make(chan sdk.Event)
-	event.Subscribe(a.warnChan)
-
 	log.Info(ctx, "Initializing internal routines...")
 	sdk.GoRoutine(ctx, "maintenance.Subscribe", func(ctx context.Context) {
 		if err := a.listenMaintenance(ctx); err != nil {
@@ -685,9 +680,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "workflowtemplate.ComputeAudit", func(ctx context.Context) {
 		workflowtemplate.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
-	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "warning.Start", func(ctx context.Context) {
-		warning.Start(ctx, a.DBConnectionFactory.GetDBMap, a.warnChan)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
