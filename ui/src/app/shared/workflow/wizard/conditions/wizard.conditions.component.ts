@@ -74,6 +74,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         return this.editableHook;
     }
     @Input() readonly = true;
+    @Input() editMode: boolean;
 
     @Output() conditionsChange = new EventEmitter<boolean>();
 
@@ -198,7 +199,12 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         let clonedWorkflow = cloneDeep(this.workflow);
 
         if (this.editableNode) {
-            let n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+            let n: WNode;
+            if (this.editMode) {
+                n = Workflow.getNodeByRef(this.editableNode.ref, clonedWorkflow);
+            } else {
+                n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+            }
             n.context.conditions = cloneDeep(this.editableNode.context.conditions);
             if (n.context.conditions && n.context.conditions.plain) {
                 n.context.conditions.plain.forEach(cc => {
@@ -215,6 +221,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             }
         }
 
+
         this.store.dispatch(new UpdateWorkflow({
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
@@ -222,7 +229,12 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this.conditionsChange.emit(false);
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
+
             });
     }
 

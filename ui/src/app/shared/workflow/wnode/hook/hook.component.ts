@@ -42,8 +42,8 @@ export class WorkflowNodeHookComponent implements OnInit {
     loading = false;
     isSelected = false;
     subSelect: Subscription;
-    subRun: Subscription;
     nodeRun: WorkflowNodeRun;
+    editMode: boolean;
 
     constructor(
         private _store: Store, private _toast: ToastService, private _translate: TranslateService,
@@ -54,6 +54,7 @@ export class WorkflowNodeHookComponent implements OnInit {
     ngOnInit(): void {
         this.subSelect = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this.readonly = !s.canEdit;
+            this.editMode = s.editMode;
             this.workflowRun = s.workflowRun;
             if (this.workflowRun && this.node && this.workflowRun.nodes
                 && this.workflowRun.nodes[this.node.id] && this.workflowRun.nodes[this.node.id].length > 0) {
@@ -71,8 +72,10 @@ export class WorkflowNodeHookComponent implements OnInit {
         if (this._hook) {
             if (this._hook.config['hookIcon']) {
                 this.icon = (<WorkflowNodeHookConfigValue>this._hook.config['hookIcon']).value.toLowerCase();
-            } else {
+            } else if (this.workflow.hook_models && this.workflow.hook_models[this.hook.hook_model_id]) {
                 this.icon = this.workflow.hook_models[this.hook.hook_model_id].icon.toLowerCase();
+            } else {
+                this.icon = this._hook.model.icon;
             }
         }
     }
@@ -104,7 +107,12 @@ export class WorkflowNodeHookComponent implements OnInit {
             hook: this.hook
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
+
                 modal.approve(null);
             });
     }

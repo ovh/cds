@@ -26,6 +26,7 @@ export class WorkflowWNodeJoinComponent {
     @Input() public noderun: WorkflowNodeRun;
     @Input() public workflowrun: WorkflowRun;
     @Input() public selected: boolean;
+    @Input() public editMode: boolean;
 
     pipelineStatus = PipelineStatus;
     linkJoinSubscription: Subscription;
@@ -47,7 +48,12 @@ export class WorkflowWNodeJoinComponent {
 
     selectJoinToLink(): void {
         let cloneWorkflow = cloneDeep(this.workflow);
-        let currentJoin = Workflow.getNodeByID(this.node.id, cloneWorkflow);
+        let currentJoin: WNode;
+        if (this.editMode) {
+            currentJoin = Workflow.getNodeByRef(this.node.ref, cloneWorkflow);
+        } else {
+            currentJoin = Workflow.getNodeByID(this.node.id, cloneWorkflow);
+        }
         if (currentJoin.parents.findIndex(p => p.parent_name === this.nodeToLink.ref) === -1) {
             let joinParent = new WNodeJoin();
             joinParent.parent_name = this.nodeToLink.ref;
@@ -62,6 +68,12 @@ export class WorkflowWNodeJoinComponent {
             projectKey: this.project.key,
             workflowName: w.name,
             changes: w
-        })).subscribe(() => this._toast.success('', this._translate.instant('workflow_updated')));
+        })).subscribe(() => {
+            if (!this.editMode) {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            } else {
+                this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+            }
+        });
     }
 }

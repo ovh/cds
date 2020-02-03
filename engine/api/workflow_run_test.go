@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ovh/cds/engine/api/ascode"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -1018,6 +1019,9 @@ func Test_resyncWorkflowRunHandlerError(t *testing.T) {
 		ProjectID:          proj.ID,
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
+		RepositoryStrategy: sdk.RepositoryStrategy{
+			ConnectionType: "ssh",
+		},
 	}
 	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
@@ -1057,74 +1061,26 @@ func Test_resyncWorkflowRunHandlerError(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), db, api.Cache, proj2, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	//Prepare request
-	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": w1.Name,
-	}
-	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
-	test.NotEmpty(t, uri)
-
-	opts := &sdk.WorkflowRunPostHandlerOption{
-		Manual: &sdk.WorkflowNodeRunManual{
-			Payload: map[string]string{
-				"git.branch": "master",
-			},
-		},
-	}
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
-
-	//Do the request
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
-
-	wr := &sdk.WorkflowRun{}
-	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
-	assert.Equal(t, int64(1), wr.Number)
-
-	cpt := 0
-	for {
-		varsGet := map[string]string{
-			"key":              proj.Key,
-			"permWorkflowName": w1.Name,
-			"number":           "1",
-		}
-		uriGet := router.GetRoute("GET", api.getWorkflowRunHandler, varsGet)
-		reqGet := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGet, nil)
-		recGet := httptest.NewRecorder()
-		router.Mux.ServeHTTP(recGet, reqGet)
-
-		var wrGet sdk.WorkflowRun
-		assert.NoError(t, json.Unmarshal(recGet.Body.Bytes(), &wrGet))
-
-		if wrGet.Status != sdk.StatusPending {
-			assert.Equal(t, sdk.StatusBuilding, wrGet.Status)
-			break
-		}
-		t.Logf("workflow run response %+v\n", wrGet)
-		cpt++
-		if cpt > 10 {
-			break
-		}
-	}
+	// Creat run
+	wr, err := workflow.CreateRun(api.mustDB(), w1, nil, u)
+	assert.NoError(t, err)
 
 	pip.Stages[0].Name = "New awesome stage"
 	errS := pipeline.UpdateStage(db, &pip.Stages[0])
 	test.NoError(t, errS)
 
 	//Prepare request
-	vars = map[string]string{
+	vars := map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w1.Name,
 		"number":           fmt.Sprintf("%d", wr.Number),
 	}
-	uri = router.GetRoute("POST", api.resyncWorkflowRunHandler, vars)
+	uri := router.GetRoute("POST", api.resyncWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
 
 	//Do the request
-	rec = httptest.NewRecorder()
+	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 403, rec.Code)
 }
@@ -1259,12 +1215,24 @@ func waitCraftinWorkflow(t *testing.T, db gorp.SqlExecutor, id int64) error {
 
 }
 
+/**
+ * This test does
+ * 1. Create worklow
+ * 2. Migrate as code => this will create PR.id = 1
+ * 3. Run workflow :  Must fail on getting PR.id = 1
+ */
 func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+
+	// Clean ascode event
+	evts, _ := ascode.LoadAsCodeEventByRepo(context.TODO(), db, "ssh:/cloneurl")
+	for _, e := range evts {
+		_ = ascode.DeleteAsCodeEvent(db, e) // nolint
+	}
 
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
 		Name: "github",
@@ -1288,6 +1256,9 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		ProjectID:          proj.ID,
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
+		RepositoryStrategy: sdk.RepositoryStrategy{
+			ConnectionType: "ssh",
+		},
 	}
 	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
@@ -1369,6 +1340,14 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 				if err := enc.Encode(res); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/foo/myrepo":
+				r := sdk.VCSRepo{
+					SSHCloneURL:  "ssh:/cloneurl",
+					HTTPCloneURL: "http:/cloneurl",
+				}
+				if err := enc.Encode(r); err != nil {
+					return writeError(w, err)
+				}
 			case "/vcs/github/repos/foo/myrepo/hooks":
 				h := sdk.VCSHook{}
 				h.Name = "hook"
@@ -1378,11 +1357,13 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 			case "/vcs/github/repos/foo/myrepo/pullrequests":
 				pr := sdk.VCSPullRequest{
 					Title: "blabla",
+					URL:   "myurl",
+					ID:    1,
 				}
 				if err := enc.Encode(pr); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/foo/myrepo/pullrequests/0":
+			case "/vcs/github/repos/foo/myrepo/pullrequests/1":
 				return writeError(w, fmt.Errorf("error for test"))
 
 			case "/task/bulk":
@@ -1413,10 +1394,20 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	ope := sdk.Operation{
 		UUID: "123",
 		Setup: sdk.OperationSetup{
-			Push: sdk.OperationPush{},
+			Push: sdk.OperationPush{
+				Update: false,
+			},
 		},
 	}
-	workflow.UpdateWorkflowAsCodeResult(context.TODO(), api.mustDB(), api.Cache, proj, &ope, w1, u)
+	ed := ascode.EntityData{
+		FromRepo:  "ssh:/cloneurl",
+		Operation: &ope,
+		Name:      w1.Name,
+		ID:        w1.ID,
+		Type:      ascode.AsCodeWorkflow,
+	}
+
+	ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, proj, &app, ed, u)
 
 	//Prepare request
 	vars := map[string]string{
@@ -1449,7 +1440,6 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 
 		var wrGet sdk.WorkflowRun
 		recGetBody := recGet.Body.Bytes()
-		t.Logf("getWorkflowRunHandler response: %s", string(recGetBody))
 		assert.NoError(t, json.Unmarshal(recGetBody, &wrGet))
 
 		if wrGet.Status != sdk.StatusPending {

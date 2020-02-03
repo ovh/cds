@@ -17,4 +17,10 @@ export class Stage {
   // UI params
   hasChanged: boolean;
   edit: boolean;
+  ref: number;
+
+  constructor() {
+    this.ref = new Date().getTime();
+    this.conditions = new WorkflowNodeConditions();
+  }
 }

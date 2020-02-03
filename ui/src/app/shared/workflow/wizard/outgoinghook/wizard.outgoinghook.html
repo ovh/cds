@@ -94,7 +94,7 @@
         <ng-container *ngIf="mode === 'update' && workflow.permissions.writable">
             <button class="ui right floated green button"
                 *ngIf="workflow.permissions.writable"
-                [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)"
+                [disabled]="loading"
                 [class.loading]="loading" (click)="updateWorkflow()">
                 {{ 'btn_save' | translate }}
             </button>

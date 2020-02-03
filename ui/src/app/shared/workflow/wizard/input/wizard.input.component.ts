@@ -16,16 +16,15 @@ import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { ApplicationWorkflowService } from 'app/service/application/application.workflow.service';
+import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { VariableService } from 'app/service/variable/variable.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { FetchPipeline } from 'app/store/pipelines.action';
-import { PipelinesState } from 'app/store/pipelines.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { finalize, flatMap } from 'rxjs/operators';
+import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
 declare var CodeMirror: any;
@@ -42,6 +41,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
+    @Input() editMode: boolean;
     editableNode: WNode;
 
     @Input('node') set node(data: WNode) {
@@ -70,6 +70,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
     tags: string[] = [];
     loading: boolean;
     themeSubscription: Subscription;
+    pipSubscription: Subscription;
 
     constructor(
         private store: Store,
@@ -78,7 +79,8 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
         private _translate: TranslateService,
         private _toast: ToastService,
         private _theme: ThemeStore,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _pipelineService: PipelineService
     ) { }
 
     ngOnInit(): void {
@@ -123,26 +125,22 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
         this.payloadString = JSON.stringify(this.editableNode.context.default_payload, undefined, 4);
         let pipeline = Workflow.getPipeline(this.workflow, this.node);
         if (pipeline) {
-            this.store.dispatch(new FetchPipeline({
-                projectKey: this.project.key,
-                pipelineName: pipeline.name
-            })).pipe(
-                flatMap(() => this.store.selectOnce(PipelinesState.selectPipeline(this.project.key, pipeline.name))),
-                finalize(() => this._cd.markForCheck())
-            ).subscribe((pip) => {
-                this.currentPipeline = pip;
-                this.pipParamsReady = true;
-                this.editableNode.context.default_pipeline_parameters =
-                    cloneDeep(Pipeline.mergeAndKeepOld(pip.parameters, this.editableNode.context.default_pipeline_parameters));
-                try {
-                    this.editableNode.context.default_payload = JSON.parse(this.payloadString);
-                    this.invalidJSON = false;
-                } catch (e) {
-                    this.invalidJSON = true;
-                }
-                if (!this.editableNode.context.default_payload) {
-                    this.editableNode.context.default_payload = {};
-                }
+            this._pipelineService.getPipeline(this.project.key, pipeline.name)
+                .pipe(first()).subscribe(p => {
+                    this.currentPipeline = p;
+                    this.pipParamsReady = true;
+                    this.editableNode.context.default_pipeline_parameters =
+                        cloneDeep(Pipeline.mergeAndKeepOld(p.parameters, this.editableNode.context.default_pipeline_parameters));
+                    try {
+                        this.editableNode.context.default_payload = JSON.parse(this.payloadString);
+                        this.invalidJSON = false;
+                    } catch (e) {
+                        this.invalidJSON = true;
+                    }
+                    if (!this.editableNode.context.default_payload) {
+                        this.editableNode.context.default_payload = {};
+                    }
+                    this._cd.markForCheck();
             });
         }
     }
@@ -237,7 +235,12 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
     updateWorkflow(): void {
         this.loading = true;
         let clonedWorkflow = cloneDeep(this.workflow);
-        let n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+        let n: WNode;
+        if (this.editMode) {
+            n = Workflow.getNodeByRef(this.editableNode.ref, clonedWorkflow);
+        } else {
+            n = Workflow.getNodeByID(this.editableNode.id, clonedWorkflow);
+        }
 
         n.context.default_payload = this.editableNode.context.default_payload;
         n.context.default_pipeline_parameters = this.editableNode.context.default_pipeline_parameters;
@@ -253,7 +256,11 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this.inputChange.emit(false);
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (this.editMode) {
+                    this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+                } else {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
             });
     }
 }

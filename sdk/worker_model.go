@@ -35,7 +35,6 @@ var (
 
 // Model represents a worker model (ex: Go 1.5.1 Docker Images)
 // with specified capabilities (ex: go, golint and go2xunit binaries)
-//easyjson:json
 type Model struct {
 	ID                     int64               `json:"id" db:"id" cli:"-"`
 	Name                   string              `json:"name" db:"name" cli:"name,key"`

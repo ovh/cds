@@ -144,7 +144,6 @@ var (
 // Requirement can be :
 // - a binary "which /usr/bin/docker"
 // - a network access "telnet google.com 443"
-//easyjson:json
 type Requirement struct {
 	ID       int64  `json:"id" db:"id"`
 	ActionID int64  `json:"action_id" db:"action_id"`

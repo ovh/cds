@@ -108,6 +108,7 @@ func ContextGetTags(ctx context.Context, s ...string) []tag.Mutator {
 
 // Span start a new span from the parent context
 func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Context, func()) {
+	log.Debug("# %s - begin", name)
 	if ctx == nil {
 		return context.Background(), func() {}
 	}
@@ -117,7 +118,10 @@ func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Co
 		span.AddAttributes(tags...)
 	}
 	ctx = tracingutils.SpanContextToContext(ctx, span.SpanContext())
-	return ctx, span.End
+	return ctx, func() {
+		log.Debug("# %s - end", name)
+		span.End()
+	}
 }
 
 func findPrimaryKeyFromRequest(ctx context.Context, req *http.Request, db gorp.SqlExecutor, store cache.Store) (string, bool) {

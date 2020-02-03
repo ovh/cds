@@ -22,7 +22,6 @@ import {
     AddNodeTriggerWorkflow,
     OpenEditModal,
     SelectWorkflowNodeRun,
-    UpdateHookWorkflow,
     UpdateWorkflow
 } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
@@ -53,6 +52,7 @@ export class WorkflowWNodeComponent implements OnInit {
     warnings = 0;
     loading: boolean;
 
+    editMode = false;
     readonly = true;
 
     // Subscription
@@ -83,6 +83,7 @@ export class WorkflowWNodeComponent implements OnInit {
     ngOnInit(): void {
         this.sub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this.readonly = !s.canEdit;
+            this.editMode = s.editMode;
             this._cd.markForCheck();
             if (s.workflowRun) {
                 if (this.workflowRun && this.workflowRun.id !== s.workflowRun.id) {
@@ -243,26 +244,22 @@ export class WorkflowWNodeComponent implements OnInit {
         }
     }
 
-    updateHook(hook: WNodeHook, modal: SuiActiveModal<boolean, boolean, void>): void {
+    addHook(hook: WNodeHook, modal: SuiActiveModal<boolean, boolean, void>): void {
         this.loading = true;
 
-        let action = new UpdateHookWorkflow({
+        let action = new AddHookWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             hook
         });
 
-        if (!hook.uuid) {
-            action = new AddHookWorkflow({
-                projectKey: this.project.key,
-                workflowName: this.workflow.name,
-                hook
-            });
-        }
-
         this._store.dispatch(action).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (!this.editMode) {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                } else {
+                    this._toast.info('', this._translate.instant('workflow_ascode_updated'))
+                }
                 if (modal) {
                     modal.approve(null);
                 }
@@ -270,8 +267,15 @@ export class WorkflowWNodeComponent implements OnInit {
     }
 
     createFork(): void {
-        let n = Workflow.getNodeByID(this.node.id, this.workflow);
+        let n: WNode;
+        if (this.editMode) {
+            n = Workflow.getNodeByRef(this.node.ref, this.workflow);
+        } else {
+            n = Workflow.getNodeByID(this.node.id, this.workflow);
+        }
         let fork = new WNode();
+        fork.name = 'fork';
+        fork.ref = new Date().getTime().toString();
         fork.type = WNodeType.FORK;
         let t = new WNodeTrigger();
         t.child_node = fork;
@@ -289,6 +293,8 @@ export class WorkflowWNodeComponent implements OnInit {
 
     createJoin(): void {
         let join = new WNode();
+        join.name = 'join';
+        join.ref = new Date().getTime().toString();
         join.type = WNodeType.JOIN;
         join.parents = new Array<WNodeJoin>();
         let p = new WNodeJoin();
@@ -312,7 +318,9 @@ export class WorkflowWNodeComponent implements OnInit {
             changes: w
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
-                this._toast.success('', this._translate.instant('workflow_updated'));
+                if (!this.editMode) {
+                    this._toast.success('', this._translate.instant('workflow_updated'));
+                }
                 if (modal) {
                     modal.approve(null);
                 }

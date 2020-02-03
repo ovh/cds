@@ -7,6 +7,9 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/ascode/sync"
+	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -64,7 +67,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			}
 		}
 
-		if err := workflow.PostRepositoryOperation(ctx, api.mustDB(), *p, ope, nil); err != nil {
+		if err := operation.PostRepositoryOperation(ctx, api.mustDB(), *p, ope, nil); err != nil {
 			return sdk.WrapError(err, "Cannot create repository operation")
 		}
 		ope.RepositoryStrategy.SSHKeyContent = ""
@@ -85,7 +88,7 @@ func (api *API) getImportAsCodeHandler() service.Handler {
 
 		var ope = new(sdk.Operation)
 		ope.UUID = uuid
-		if err := workflow.GetRepositoryOperation(ctx, api.mustDB(), ope); err != nil {
+		if err := operation.GetRepositoryOperation(ctx, api.mustDB(), ope); err != nil {
 			return sdk.WrapError(err, "Cannot get repository operation status")
 		}
 		return service.WriteJSON(w, ope, http.StatusOK)
@@ -119,7 +122,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		var ope = new(sdk.Operation)
 		ope.UUID = uuid
 
-		if err := workflow.GetRepositoryOperation(ctx, api.mustDB(), ope); err != nil {
+		if err := operation.GetRepositoryOperation(ctx, api.mustDB(), ope); err != nil {
 			return sdk.WrapError(err, "Unable to get repository operation")
 		}
 
@@ -168,5 +171,39 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
+	}
+}
+
+func (api *API) postResyncPRAsCodeHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		appName := FormString(r, "appName")
+		fromRepo := FormString(r, "repo")
+
+		proj, errP := project.Load(api.mustDB(), api.Cache, key,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithIntegrations,
+			project.LoadOptions.WithClearKeys)
+		if errP != nil {
+			return sdk.WrapError(errP, "unable to load project")
+		}
+		var app *sdk.Application
+		var errA error
+		if fromRepo != "" {
+			app, errA = application.LoadAsCode(api.mustDB(), api.Cache, key, fromRepo)
+		} else {
+			app, errA = application.LoadByName(api.mustDB(), api.Cache, key, appName)
+		}
+		if errA != nil {
+			return errA
+		}
+
+		if _, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, proj, app, getAPIConsumer(ctx).AuthentifiedUser); err != nil {
+			return err
+		}
+		return nil
 	}
 }

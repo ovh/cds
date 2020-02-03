@@ -31,6 +31,8 @@ export class WorkflowNotificationFormComponent implements OnInit {
         return this._notification;
     }
 
+    @Input() editMode: boolean;
+
     types: Array<string>;
     notifOnSuccess: Array<string>;
     notifOnFailure: Array<string>;
@@ -86,7 +88,7 @@ export class WorkflowNotificationFormComponent implements OnInit {
 
     initNotif(): void {
         if (this.nodes && this.notification && !this.notification.id) {
-            this.notification.source_node_ref = this.nodes.map(n => {
+            (<WorkflowNotification>this.notification).source_node_ref = this.nodes.map(n => {
                 return n.name;
             });
         }

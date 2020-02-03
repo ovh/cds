@@ -4,6 +4,7 @@ import { Application, Overview } from 'app/model/application.model';
 import { IntegrationModel, ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
 import { Variable } from 'app/model/variable.model';
+import { ApplicationService } from 'app/service/application/application.service';
 import { cloneDeep } from 'lodash-es';
 import { tap } from 'rxjs/operators';
 import * as ActionApplication from './applications.action';
@@ -45,7 +46,7 @@ export class ApplicationsState {
         );
     }
 
-    constructor(private _http: HttpClient) { }
+    constructor(private _http: HttpClient, private _appService: ApplicationService) { }
 
     @Action(ActionApplication.AddApplication)
     add(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.AddApplication) {
@@ -443,18 +444,8 @@ export class ApplicationsState {
 
     @Action(ActionApplication.ResyncApplication)
     resync(ctx: StateContext<ApplicationsStateModel>, action: ActionApplication.ResyncApplication) {
-        let params = new HttpParams();
-        params = params.append('withNotifs', 'true');
-        params = params.append('withUsage', 'true');
-        params = params.append('withIcon', 'true');
-        params = params.append('withKeys', 'true');
-        params = params.append('withDeploymentStrategies', 'true');
-        params = params.append('withVulnerabilities', 'true');
-
-        return this._http.get<Application>(
-            `/project/${action.payload.projectKey}/application/${action.payload.applicationName}`,
-            { params }
-        ).pipe(tap((app) => {
+        return this._appService.getApplication(action.payload.projectKey, action.payload.applicationName)
+            .pipe(tap((app) => {
             if (app.vcs_strategy) {
                 app.vcs_strategy.password = '**********';
             }

@@ -1,3 +1,4 @@
+import { AsCodeEvents } from './ascode.model';
 import { Environment } from './environment.model';
 import { Parameter } from './parameter.model';
 import { Stage } from './stage.model';
@@ -59,6 +60,7 @@ export class Pipeline {
     preview: Pipeline;
     asCode: string;
     from_repository: string;
+    ascode_events: Array<AsCodeEvents>;
 
     // true if someone has updated the pipeline ( used for warnings )
     externalChange: boolean;
@@ -66,6 +68,7 @@ export class Pipeline {
     // UI Params
     forceRefresh: boolean;
     previewMode: boolean;
+    editModeChanged: boolean;
 
     // Return true if pattern is good
     public static checkName(name: string): boolean {

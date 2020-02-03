@@ -30,6 +30,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() node: WNode;
+    @Input() editMode: boolean;
     @Input('hook')
     set hook(data: WNodeHook) {
         if (data) {
@@ -115,7 +116,12 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     updateHook(): void {
         this.loading = true;
         let clonedWorkflow = cloneDeep(this.workflow);
-        let n = Workflow.getNodeByID(this.node.id, clonedWorkflow);
+        let n: WNode;
+        if (this.editMode) {
+            n = Workflow.getNodeByRef(this.node.ref, clonedWorkflow);
+        } else {
+            n = Workflow.getNodeByID(this.node.id, clonedWorkflow);
+        }
         let h = WNode.getHookByRef(n, this.hook.ref);
         if (h) {
             h.config = cloneDeep(this.hook.config);
@@ -125,7 +131,11 @@ export class WorkflowNodeHookFormComponent implements OnInit {
                 changes: clonedWorkflow
             })).pipe(finalize(() => this.loading = false))
                 .subscribe(() => {
-                    this._toast.success('', this._translate.instant('workflow_updated'));
+                    if (this.editMode) {
+                        this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+                    } else {
+                        this._toast.success('', this._translate.instant('workflow_updated'));
+                    }
                 });
         }
     }
