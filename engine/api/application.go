@@ -273,10 +273,6 @@ func (api *API) addApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
 
-		if err := group.LoadGroupByProject(tx, proj); err != nil {
-			return sdk.WrapError(err, "Cannot load group from project")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}

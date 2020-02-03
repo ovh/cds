@@ -59,35 +59,3 @@ func CheckUserInDefaultGroup(ctx context.Context, db gorp.SqlExecutor, userID st
 
 	return nil
 }
-
-// LoadGroupByProject retrieves all groups related to project
-func LoadGroupByProject(db gorp.SqlExecutor, project *sdk.Project) error {
-
-	// TODO sign this
-
-	query := `
-    SELECT "group".id, "group".name, project_group.role
-    FROM "group"
-	JOIN project_group ON project_group.group_id = "group".id
-    WHERE project_group.project_id = $1
-    ORDER BY "group".name ASC
-  `
-	rows, err := db.Query(query, project.ID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var group sdk.Group
-		var perm int
-		if err := rows.Scan(&group.ID, &group.Name, &perm); err != nil {
-			return err
-		}
-		project.ProjectGroups = append(project.ProjectGroups, sdk.GroupPermission{
-			Group:      group,
-			Permission: perm,
-		})
-	}
-	return nil
-}

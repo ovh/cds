@@ -34,9 +34,6 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) ([]sdk.Bookmark, erro
 		)
 	) AS sub ORDER BY sub.workflow_name
 	`
-	if u == nil { // TODO ?
-		u = &sdk.AuthentifiedUser{}
-	}
 
 	if _, err := db.Select(&data, query, u.ID); err != nil {
 		if err == sql.ErrNoRows {

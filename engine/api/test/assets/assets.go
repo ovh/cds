@@ -56,11 +56,11 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, nam
 		require.NoError(t, project.Delete(db, store, key))
 	}
 
-	proj := sdk.Project{Key: key, Name: name}
+	proj := &sdk.Project{Key: key, Name: name}
 
 	g := InsertTestGroup(t, db, name+"-group")
 
-	require.NoError(t, project.Insert(db, store, &proj))
+	require.NoError(t, project.Insert(db, store, proj))
 
 	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g.ID,
@@ -68,9 +68,11 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, nam
 		Role:      sdk.PermissionReadWriteExecute,
 	}))
 
-	require.NoError(t, group.LoadGroupByProject(db, &proj))
+	var err error
+	proj, err = project.LoadByID(db, store, proj.ID, project.LoadOptions.WithGroups)
+	require.NoError(t, err)
 
-	return &proj
+	return proj
 }
 
 // DeleteTestProject delete a test project

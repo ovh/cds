@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -244,10 +243,6 @@ func (api *API) addPipelineHandler() service.Handler {
 		p.ProjectID = proj.ID
 		if err := pipeline.InsertPipeline(tx, api.Cache, proj, &p); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
-		}
-
-		if err := group.LoadGroupByProject(tx, proj); err != nil {
-			return sdk.WrapError(err, "Cannot load groupfrom project")
 		}
 
 		if err := tx.Commit(); err != nil {

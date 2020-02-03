@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v2"
 
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
@@ -121,10 +120,6 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		)
 		if errp != nil {
 			return sdk.WrapError(errp, "Unable to load project %s", key)
-		}
-
-		if err := group.LoadGroupByProject(api.mustDB(), proj); err != nil {
-			return sdk.WrapError(err, "Unable to load project permissions %s", key)
 		}
 
 		// Get body

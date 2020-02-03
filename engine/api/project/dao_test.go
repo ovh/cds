@@ -63,7 +63,7 @@ func TestLoadAllByRepo(t *testing.T) {
 	}
 	project.Delete(db, cache, "TestLoadAllByRepo")
 	defer project.Delete(db, cache, "TestLoadAllByRepo")
-	proj := sdk.Project{
+	proj := &sdk.Project{
 		Key:  "TestLoadAllByRepo",
 		Name: "TestLoadAllByRepo",
 	}
@@ -84,17 +84,17 @@ func TestLoadAllByRepo(t *testing.T) {
 		RepositoryFullname: "ovh/cds",
 	}
 
-	test.NoError(t, project.Insert(db, cache, &proj))
+	test.NoError(t, project.Insert(db, cache, proj))
 	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g.ID,
 		ProjectID: proj.ID,
 		Role:      sdk.PermissionReadWriteExecute,
 	}))
-	test.NoError(t, group.LoadGroupByProject(db, &proj))
+	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithGroups)
 
 	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.Insert(db, cache, &proj, app))
+	test.NoError(t, application.Insert(db, cache, proj, app))
 
 	projs, err := project.LoadAllByRepoAndGroupIDs(context.TODO(), db, cache, u.GetGroupIDs(), "ovh/cds")
 	assert.NoError(t, err)
@@ -108,7 +108,7 @@ func TestLoadAll(t *testing.T) {
 	project.Delete(db, cache, "test_TestLoadAll1")
 	project.Delete(db, cache, "test_TestLoadAll2")
 
-	proj1 := sdk.Project{
+	proj1 := &sdk.Project{
 		Key:  "test_TestLoadAll1",
 		Name: "test_TestLoadAll1",
 		Metadata: map[string]string{
@@ -116,7 +116,7 @@ func TestLoadAll(t *testing.T) {
 			"data2": "value2",
 		},
 	}
-	require.NoError(t, project.Insert(db, cache, &proj1))
+	require.NoError(t, project.Insert(db, cache, proj1))
 
 	proj2 := sdk.Project{
 		Key:  "test_TestLoadAll2",
@@ -132,7 +132,8 @@ func TestLoadAll(t *testing.T) {
 		ProjectID: proj1.ID,
 		Role:      sdk.PermissionReadWriteExecute,
 	}))
-	test.NoError(t, group.LoadGroupByProject(db, &proj1))
+
+	proj1, _ = project.LoadByID(db, cache, proj1.ID, project.LoadOptions.WithGroups)
 
 	allProjects, err := project.LoadAll(nil, db, cache)
 	require.NoError(t, err)

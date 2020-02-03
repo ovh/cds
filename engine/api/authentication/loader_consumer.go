@@ -58,12 +58,9 @@ func loadAuthentifiedUser(ctx context.Context, db gorp.SqlExecutor, cs ...*sdk.A
 
 	// Set groups for each
 	for i := range users {
-		oldUserID := users[i].ID
-		if _, ok := mLinks[oldUserID]; ok {
-			for _, link := range mLinks[oldUserID] {
-				if grp, ok := mGroups[link.GroupID]; ok {
-					users[i].Groups = append(users[i].Groups, grp)
-				}
+		for _, link := range mLinks[users[i].ID] {
+			if grp, ok := mGroups[link.GroupID]; ok {
+				users[i].Groups = append(users[i].Groups, grp)
 			}
 		}
 	}

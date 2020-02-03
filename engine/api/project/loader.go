@@ -251,8 +251,8 @@ func loadEnvironmentNames(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proj
 }
 
 func loadGroups(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
-	if err := group.LoadGroupByProject(db, proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
-		return sdk.WithStack(err)
+	if err := group.LoadGroupsIntoProject(db, proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
+		return err
 	}
 	return nil
 }
