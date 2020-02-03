@@ -199,7 +199,7 @@ impl Client {
         let token: jwt::TokenData<auth::AuthClaims> = jwt::dangerous_unsafe_decode(session_token)?;
         let expired_at: DateTime<Utc> = Utc.timestamp(token.claims.expires_at, 0);
 
-        if expired_at < Utc::now() {
+        if expired_at < Utc::now() && token.claims.expires_at != 0 {
             Ok(false)
         } else {
             Ok(true)
@@ -212,7 +212,11 @@ impl Client {
         path: String,
         body: T,
     ) -> Result<U> {
+        #[cfg(not(test))]
         let uri = format!("{}{}", self.host, path);
+        #[cfg(test)]
+        let uri = format!("{}{}", mockito::server_url(), path);
+
         let url = Url::parse(uri.as_str()).expect("cannot parse url");
         let mut req_http = surf::Request::new(http::Method::from_bytes(method.as_bytes())?, url)
             .set_header("Content-Type", "application/json")
@@ -254,5 +258,153 @@ impl Client {
         }
 
         resp_http.body_json().map_err(CdsError::from).await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use async_std::prelude::*;
+    use async_std::task;
+    use mockito::mock;
+
+    #[test]
+    fn test_new_token() {
+        let auth_claims = auth::AuthClaims {
+            id: String::from("3a95edaa-b78f-4d4d-b85d-9ea3f4d71740"),
+            expires_at: 0,
+            jti: String::from("3a95edaa-b78f-4d4d-b85d-9ea3f4d71740"),
+            issued_at: 1580721850,
+            issuer: String::from("cds-api"),
+            subject: String::from("a0dfd977-b95c-4cbb-b62f-f30f9b65084c"),
+            audience: None,
+            not_before: None,
+        };
+
+        let token = jwt::encode(
+            &jwt::Header::default(),
+            &auth_claims,
+            &jwt::EncodingKey::from_secret("secret".as_ref()),
+        )
+        .unwrap();
+
+        let _m_signin = mock("POST", "/auth/consumer/builtin/signin")
+            .with_status(200)
+            .with_header("Content-Type", "application/json")
+            .with_header("User-Agent", "CDS/sdk")
+            .with_header("X-Requested-With", "X-CDS-SDK")
+            .with_body(format!(
+                r#"{{"api_url": "localhost", "token": "{}"}}"#,
+                token
+            ))
+            .create();
+
+        let _m_user_me = mock("GET", "/user/me")
+            .with_status(200)
+            .with_header("Content-Type", "application/json")
+            .with_header("User-Agent", "CDS/sdk")
+            .with_header("X-Requested-With", "X-CDS-SDK")
+            .with_header("Authorization", &format!("Bearer {}", token))
+            .with_body(r#"{"username": "me", "fullname": "me", "created": "2019-10-11T10:23:33.207715+02:00", "id": "xxx", "ring": "user"}"#)
+            .create();
+
+        let my_client = Client::new("localhost", "xxx");
+
+        let me = task::block_on(my_client.me()).unwrap();
+
+        assert_eq!(me.username, String::from("me"));
+        assert_eq!(me.fullname, String::from("me"));
+        assert_eq!(me.ring, String::from("user"));
+    }
+
+    #[test]
+    fn test_renew_token() {
+        let auth_claims = auth::AuthClaims {
+            id: String::from("3a95edaa-b78f-4d4d-b85d-9ea3f4d71740"),
+            expires_at: 1000,
+            jti: String::from("3a95edaa-b78f-4d4d-b85d-9ea3f4d71740"),
+            issued_at: 1580721850,
+            issuer: String::from("cds-api"),
+            subject: String::from("a0dfd977-b95c-4cbb-b62f-f30f9b65084c"),
+            audience: None,
+            not_before: None,
+        };
+
+        let token = jwt::encode(
+            &jwt::Header::default(),
+            &auth_claims,
+            &jwt::EncodingKey::from_secret("secret".as_ref()),
+        )
+        .unwrap();
+
+        let _m_signin = mock("POST", "/auth/consumer/builtin/signin")
+            .with_status(200)
+            .with_header("Content-Type", "application/json")
+            .with_header("User-Agent", "CDS/sdk")
+            .with_header("X-Requested-With", "X-CDS-SDK")
+            .with_body(format!(
+                r#"{{"api_url": "localhost", "token": "{}"}}"#,
+                token
+            ))
+            .create();
+
+        let _m_user_me = mock("GET", "/user/me")
+            .with_status(200)
+            .with_header("Content-Type", "application/json")
+            .with_header("User-Agent", "CDS/sdk")
+            .with_header("X-Requested-With", "X-CDS-SDK")
+            .with_header("Authorization", &format!("Bearer {}", token))
+            .with_body(r#"{"username": "me", "fullname": "me", "created": "2019-10-11T10:23:33.207715+02:00", "id": "xxx", "ring": "user"}"#)
+            .create();
+
+        let my_client = Client::new("localhost", "xxx");
+
+        let me = task::block_on(my_client.me()).unwrap();
+
+        assert_eq!(me.username, String::from("me"));
+        assert_eq!(me.fullname, String::from("me"));
+        assert_eq!(me.ring, String::from("user"));
+    }
+
+    #[test]
+    fn test_good_token() {
+        let auth_claims = auth::AuthClaims {
+            id: String::from("3a95edaa-b78f-4d4d-b85d-9ea3f4d71740"),
+            expires_at: 0,
+            jti: String::from("3a95edaa-b78f-4d4d-b85d-9ea3f4d71740"),
+            issued_at: 1580721850,
+            issuer: String::from("cds-api"),
+            subject: String::from("a0dfd977-b95c-4cbb-b62f-f30f9b65084c"),
+            audience: None,
+            not_before: None,
+        };
+
+        let token = jwt::encode(
+            &jwt::Header::default(),
+            &auth_claims,
+            &jwt::EncodingKey::from_secret("secret".as_ref()),
+        )
+        .unwrap();
+
+        let _m_user_me = mock("GET", "/user/me")
+            .with_status(200)
+            .with_header("Content-Type", "application/json")
+            .with_header("User-Agent", "CDS/sdk")
+            .with_header("X-Requested-With", "X-CDS-SDK")
+            .with_header("Authorization", &format!("Bearer {}", token))
+            .with_body(r#"{"username": "me", "fullname": "me", "created": "2019-10-11T10:23:33.207715+02:00", "id": "xxx", "ring": "user"}"#)
+            .create();
+
+        let my_client = Client::new("localhost", "xxx");
+        {
+            let session_token = my_client.session_token.read();
+            session_token.replace(token);
+        }
+
+        let me = task::block_on(my_client.me()).unwrap();
+
+        assert_eq!(me.username, String::from("me"));
+        assert_eq!(me.fullname, String::from("me"));
+        assert_eq!(me.ring, String::from("user"));
     }
 }

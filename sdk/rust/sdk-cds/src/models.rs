@@ -394,7 +394,7 @@ pub struct Action {
     pub description: String,
     // requirements: string,
     pub parameters: Option<Vec<Parameter>>,
-    pub action: Option<Vec<Box<Action>>>,
+    pub action: Option<Vec<Action>>,
     pub enabled: bool,
     pub deprecated: bool,
     pub optional: bool,
