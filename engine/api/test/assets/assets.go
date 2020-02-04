@@ -501,7 +501,7 @@ func InsertTestWorkflow(t *testing.T, db gorp.SqlExecutor, store cache.Store, pr
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Name:       "pip1",
+		Name:       sdk.RandomString(10),
 	}
 	require.NoError(t, pipeline.InsertPipeline(db, store, proj, &pip))
 

@@ -28,6 +28,30 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (sdk.Workflows, error) {
+	res := []Workflow{}
+
+	if err := gorpmapping.GetAll(ctx, db, q, &res); err != nil {
+		return nil, sdk.WrapError(err, "cannot get workflows")
+	}
+
+	ws := make([]sdk.Workflow, 0, len(res))
+	for i := range res {
+		ws = append(ws, sdk.Workflow(res[i]))
+	}
+	return ws, nil
+}
+
+// LoadAllByProjectIDs returns all workflow for given project ids.
+func LoadAllByProjectIDs(ctx context.Context, db gorp.SqlExecutor, projectIDs []int64) (sdk.Workflows, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM workflow
+    WHERE project_id = ANY(string_to_array($1, ',')::int[])
+  `).Args(gorpmapping.IDsToQueryString(projectIDs))
+	return getAll(ctx, db, query)
+}
+
 // GetAllByIDs returns all workflows by ids.
 func GetAllByIDs(db gorp.SqlExecutor, ids []int64) (sdk.Workflows, error) {
 	ws := sdk.Workflows{}
@@ -1004,11 +1028,11 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 
 // MarkAsDelete marks a workflow to be deleted
 func MarkAsDelete(db gorp.SqlExecutor, key, name string) error {
-	query := `UPDATE workflow 
-			SET to_delete = true 
+	query := `UPDATE workflow
+			SET to_delete = true
 			FROM project
-			WHERE 
-				workflow.name = $1 AND 
+			WHERE
+				workflow.name = $1 AND
 				project.id = workflow.project_id AND
 				project.projectkey = $2`
 	if _, err := db.Exec(query, name, key); err != nil {
