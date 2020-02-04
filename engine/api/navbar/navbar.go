@@ -23,7 +23,6 @@ func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUs
 	return loadNavbarAsUser(db, store, u)
 }
 
-// TODO project_favorite nmust be linked to authentified_user
 func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
 	query := `
 	(
@@ -99,7 +98,6 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u sdk.Authentifie
 	return data, nil
 }
 
-// TODO
 func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.AuthentifiedUser) (data []sdk.NavbarProjectData, err error) {
 	query := `
 	(
@@ -162,7 +160,6 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u sdk.Authentified
 	)
   `
 
-	// TODO shared infra group is useless
 	rows, err := db.Query(query, u.ID, gorpmapping.IDsToQueryString(u.Groups.ToIDs()), group.SharedInfraGroup.ID)
 	if err != nil {
 		return data, sdk.WithStack(err)

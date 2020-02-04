@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func load(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (LinksGroupUser, error) {
+func getAllLinksGroupUser(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (LinksGroupUser, error) {
 	var ls []LinkGroupUser
 	if err := gorpmapping.GetAll(ctx, db, q, &ls); err != nil {
 		return nil, sdk.WrapError(err, "cannot get links between group and user")
@@ -39,7 +39,7 @@ func LoadLinksGroupUserForGroupIDs(ctx context.Context, db gorp.SqlExecutor, gro
 		FROM group_authentified_user
 		WHERE group_id = ANY(string_to_array($1, ',')::int[])
 	`).Args(gorpmapping.IDsToQueryString(groupIDs))
-	return load(ctx, db, query)
+	return getAllLinksGroupUser(ctx, db, query)
 }
 
 // LoadLinksGroupUserForUserIDs returns data from group_user table for given user ids.
@@ -49,7 +49,7 @@ func LoadLinksGroupUserForUserIDs(ctx context.Context, db gorp.SqlExecutor, user
 		FROM group_authentified_user
 		WHERE authentified_user_id = ANY(string_to_array($1, ','))
 	`).Args(gorpmapping.IDStringsToQueryString(userIDs))
-	return load(ctx, db, query)
+	return getAllLinksGroupUser(ctx, db, query)
 }
 
 // LoadLinkGroupUserForGroupIDAndUserID returns a link from group_user if exists for given group and user ids.

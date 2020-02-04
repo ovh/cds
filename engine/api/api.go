@@ -679,9 +679,6 @@ func (a *API) Serve(ctx context.Context) error {
 		authentication.SessionCleaner(ctx, a.mustDB)
 	}, a.PanicDump())
 
-	migrate.Add(ctx, sdk.Migration{Name: "AddDefaultVCSNotifications", Release: "0.41.0", Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.AddDefaultVCSNotifications(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
-	}})
 	migrate.Add(ctx, sdk.Migration{Name: "RefactorGroupMembership", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.RefactorGroupMembership(ctx, a.DBConnectionFactory.GetDBMap())
 	}})

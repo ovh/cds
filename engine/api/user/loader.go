@@ -13,9 +13,7 @@ type LoadOptionFunc func(context.Context, gorp.SqlExecutor, ...*sdk.Authentified
 
 // LoadOptions for authentified users.
 var LoadOptions = struct {
-	WithContacts  LoadOptionFunc
-	WithFavorites LoadOptionFunc // TODO
-	WithGroups    LoadOptionFunc // TODO
+	WithContacts LoadOptionFunc
 }{
 	WithContacts: loadContacts,
 }
