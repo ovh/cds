@@ -10,7 +10,7 @@ type broadcast sdk.Broadcast
 
 type broadcastRead struct {
 	BroadcastID        int64  `json:"broadcast_id" db:"broadcast_id"`
-	AuthentifiedUserID string `json:"user_id" db:"authentified_user_id"`
+	AuthentifiedUserID string `json:"authentified_user_id" db:"authentified_user_id"`
 }
 
 func init() {
