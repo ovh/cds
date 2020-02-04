@@ -109,9 +109,3 @@
         </app-workflow-template-apply-modal>
     </ng-container>
 </section>
-<ng-container
-    *ngIf="workflow && workflow.applications && workflow.applications[workflow.workflow_data.node.context.application_id]">
-    <app-update-ascode [project]="project"
-        [appName]="workflow.applications[workflow.workflow_data.node.context.application_id].name"
-        [name]="workflow.name" #updateAsCode></app-update-ascode>
-</ng-container>
