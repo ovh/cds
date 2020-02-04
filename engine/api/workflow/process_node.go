@@ -509,7 +509,8 @@ func computeBuildParameters(wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, paren
 	})
 
 	// ADD PAYLOAD as STRING
-	if run.Payload != nil {
+	// Not it's coming from hook because we want the raw payload coming directly from the hook body payload
+	if run.Payload != nil && run.HookEvent == nil {
 		payloadStr, err := json.Marshal(run.Payload)
 		if err != nil {
 			return nil, sdk.WrapError(err, "unable to marshal payload")
