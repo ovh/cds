@@ -553,6 +553,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			return err
 		}
 
+		var ident sdk.Identifiable = *consumer
 		// start async bulk tasks
 		sdk.GoRoutine(context.Background(), "api.templateBulkApply", func(ctx context.Context) {
 			for i := range bulk.Operations {
@@ -621,7 +622,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						continue
 					}
 
-					if err := workflowtemplate.SetTemplateData(ctx, api.mustDB(), p, wkf, getAPIConsumer(ctx), wt); err != nil {
+					if err := workflowtemplate.SetTemplateData(ctx, api.mustDB(), p, wkf, ident, wt); err != nil {
 						log.Error(ctx, "postTemplateBulkHandler> unable to set template data: %v", err)
 					}
 
