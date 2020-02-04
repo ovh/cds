@@ -42,7 +42,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             if (!this.editableNode.context.conditions.plain) {
                 this.editableNode.context.conditions.plain = new Array<WorkflowNodeCondition>();
             }
-            this.previousValue = this.editableNode.context.conditions.lua_script;
+            this.previousValue = this.editableNode.context.conditions.script;
             let condition = this.editableNode.context.conditions.plain.find(cc => cc.variable === 'cds.manual');
             if (condition) {
                 condition.value = <any>(condition.value !== 'false');
@@ -63,7 +63,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                 this.editableHook.conditions.plain = new Array<WorkflowNodeCondition>();
             }
 
-            this.previousValue = this.editableHook.conditions.lua_script;
+            this.previousValue = this.editableHook.conditions.script;
             let condition = this.editableHook.conditions.plain.find(cc => cc.variable === 'cds.manual');
             if (condition) {
                 condition.value = <any>(condition.value !== 'false');
@@ -147,10 +147,10 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     updateWorkflow(): void {
         this.loading = true;
         if (this.editableNode != null) {
-            if (this.editableNode.context.conditions.lua_script && this.editableNode.context.conditions.lua_script !== '') {
+            if (this.editableNode.context.conditions.script && this.editableNode.context.conditions.script !== '') {
                 this.editableNode.context.conditions.plain = null;
             } else {
-                this.editableNode.context.conditions.lua_script = '';
+                this.editableNode.context.conditions.script = '';
                 let sizeBefore = this.editableNode.context.conditions.plain.length;
 
 
@@ -171,10 +171,10 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
                 }
             }
         } else if (this.editableHook != null) {
-            if (this.editableHook.conditions.lua_script && this.editableHook.conditions.lua_script !== '') {
+            if (this.editableHook.conditions.script && this.editableHook.conditions.script !== '') {
                 this.editableHook.conditions.plain = null;
             } else {
-                this.editableHook.conditions.lua_script = '';
+                this.editableHook.conditions.script = '';
                 let sizeBefore = this.editableHook.conditions.plain.length;
 
 

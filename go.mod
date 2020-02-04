@@ -89,6 +89,7 @@ require (
 	github.com/hashicorp/vault v0.0.0-20170114041158-f1c8b772fdec
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
+	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0
 	github.com/imdario/mergo v0.0.0-20180119215619-163f41321a19 // indirect
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
@@ -232,6 +233,8 @@ require (
 	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
+
+replace github.com/alecthomas/jsonschema => github.com/sguiheux/jsonschema v0.2.0
 
 replace github.com/go-gorp/gorp => github.com/yesnault/gorp v2.0.1-0.20190906143353-6210446a0d92+incompatible
 
