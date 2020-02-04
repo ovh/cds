@@ -5,7 +5,6 @@ use std::fmt;
 use std::io::Error as IOError;
 
 use jwt;
-use reqwest;
 
 macro_rules! from_error {
     ($type:ty, $target:ident, $targetvar:expr) => {
@@ -55,7 +54,6 @@ pub struct ApiError {
 }
 
 from_error_str!(IOError, Error, Error::IoError);
-from_error_str!(reqwest::Error, Error, Error::ReqwestError);
 from_error_str!(InvalidMethod, Error, Error::InvalidMethod);
 from_error!(String, Error, Error::Custom);
 from_error!(ApiError, Error, Error::ApiError);
