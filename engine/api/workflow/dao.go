@@ -940,7 +940,7 @@ func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error
 	nodeNames := make(map[string]struct{}, len(nodes))
 	for i := range nodes {
 		if _, ok := nodeNames[nodes[i].Name]; ok {
-			return sdk.ErrWorkflowNodeNameDuplicate
+			return sdk.WithStack(sdk.ErrWorkflowNodeNameDuplicate)
 		}
 		nodeNames[nodes[i].Name] = struct{}{}
 	}
