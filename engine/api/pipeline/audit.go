@@ -40,7 +40,7 @@ const (
 	AuditUpdateStage    = "updateStage"
 	AuditDeleteStage    = "deleteStage"
 	AuditMoveStage      = "moveStage"
-	AuditUpdatePipeline = "updateStage"
+	AuditUpdatePipeline = "updatePipeline"
 )
 
 // CreateAudit insert current pipeline version on audit table

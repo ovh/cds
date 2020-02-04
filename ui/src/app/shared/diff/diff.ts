@@ -53,7 +53,10 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
             })
     }
 
-    let applicationsLength = Math.max(before ? before.applications.length : 0, after ? after.applications.length : 0);
+    let applicationsLength = Math.max(
+        before ? before.applications && before.applications.length : 0,
+        after ? after.applications && after.applications.length : 0
+    );
     for (let i = 0; i < applicationsLength; i++) {
         diffItems.push(
             <Item>{
@@ -65,7 +68,10 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
             })
     }
 
-    let environmentsLength = Math.max(before ? before.environments.length : 0, after ? after.environments.length : 0);
+    let environmentsLength = Math.max(
+        before ? before.environments && before.environments.length : 0,
+        after ? after.environments && after.environments.length : 0
+    );
     for (let i = 0; i < environmentsLength; i++) {
         diffItems.push(
             <Item>{

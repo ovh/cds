@@ -3,10 +3,12 @@
         <div class="wide column">
             <div class="field">
                 <label>{{'workflow_name' | translate}}*</label>
-                <input class="ui input" type="text" name="workflow_name" [(ngModel)]="parameterName" [disabled]="workflowTemplateInstance">
+                <input class="ui input" type="text" name="workflow_name" [(ngModel)]="parameterName"
+                    [disabled]="workflowTemplateInstance">
             </div>
             <app-workflow-template-param-form [project]="project" [workflowTemplate]="workflowTemplate"
-                [workflowTemplateInstance]="workflowTemplateInstance" (paramChange)="changeParam($event)"></app-workflow-template-param-form>
+                [workflowTemplateInstance]="workflowTemplateInstance" (paramChange)="changeParam($event)">
+            </app-workflow-template-param-form>
             <div class="wide field" *ngIf="result">
                 <div class="ui message">
                     <ul>
@@ -16,18 +18,22 @@
             </div>
             <div class="wide field">
                 <div class="ui wide field">
-                    <app-delete-button *ngIf="workflowTemplateInstance && workflowTemplateInstance.id" class="left floated"
-                        (event)="clickDetach()" [loading]="loading" [title]="'workflow_template_detach'"></app-delete-button>
+                    <app-delete-button *ngIf="workflowTemplateInstance && workflowTemplateInstance.id"
+                        class="left floated" (event)="clickDetach()" [loading]="loading"
+                        [title]="'workflow_template_detach'"></app-delete-button>
                     <div class="ui checked checkbox" *ngIf="!workflowTemplateInstance && !result">
                         <input type="checkbox" [ngModel]="detached" [ngModelOptions]="{standalone: true}"
                             (ngModelChange)="onSelectDetachChange($event)">
                         <label>{{'workflow_template_apply_detach' | translate}}</label>
                     </div>
                     <button class="ui green button right floated" type="button" (click)="applyTemplate()"
+                        *ngIf="workflowTemplateInstance.workflow_template_version !== workflowTemplate.version"
                         [class.loading]="loading">{{ 'btn_apply' | translate }}</button>
-                    <button class="ui primary button right floated" type="button" (click)="goToWorkflow()" *ngIf="result && !withClose">{{
+                    <button class="ui primary button right floated" type="button" (click)="goToWorkflow()"
+                        *ngIf="result && !withClose">{{
                         'btn_goto_workflow' | translate}}</button>
-                    <button class="ui secondary button right floated" [disabled]="loading" (click)="clickClose()" *ngIf="withClose">{{
+                    <button class="ui secondary button right floated" [disabled]="loading" (click)="clickClose()"
+                        *ngIf="withClose">{{
                         'btn_close' | translate }}</button>
                 </div>
             </div>
