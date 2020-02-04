@@ -1966,7 +1966,7 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 		_ = services.Delete(db, mockServiceHook) // nolint
 	}()
 
-	//This is a mock for the repositories service
+	//This is a mock for the hook service
 	services.HTTPClient = mock(
 		func(r *http.Request) (*http.Response, error) {
 			body := new(bytes.Buffer)
