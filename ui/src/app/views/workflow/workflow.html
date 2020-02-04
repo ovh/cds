@@ -16,10 +16,11 @@
         </a>
         <ng-template let-popup #popupFromRepository>
             <div class="content infoPopup">
-                <ng-container *ngIf="workflow && (workflow.from_repository || (workflow.as_code_events && workflow.as_code_events.length > 0))">
+                <ng-container
+                    *ngIf="workflow && (workflow.from_repository || (workflow.as_code_events && workflow.as_code_events.length > 0))">
                     <app-ascode-event [events]="workflow.as_code_events" [repo]="workflow.from_repository"
-                    [appName]="workflow.applications[workflow.workflow_data.node.context.application_id].name"
-                    [project]="project"></app-ascode-event>
+                        [appName]="workflow.applications[workflow.workflow_data.node.context.application_id].name"
+                        [project]="project"></app-ascode-event>
                 </ng-container>
                 <ng-container
                     *ngIf="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)">
@@ -108,10 +109,3 @@
         </app-workflow-template-apply-modal>
     </ng-container>
 </section>
-<ng-container *ngIf="workflow">
-    <app-update-ascode
-            [project]="project"
-            [appName]="workflow.applications[workflow.workflow_data.node.context.application_id].name"
-            [name]="workflow.name"
-            #updateAsCode></app-update-ascode>
-</ng-container>
