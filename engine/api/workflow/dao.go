@@ -18,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
@@ -1422,14 +1421,14 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, 
 }
 
 // Push push a workflow from cds files
-func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *PushOption, u sdk.Identifiable, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, error) {
+func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *PushOption, u sdk.Identifiable, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, error) {
 	ctx, end := observability.Span(ctx, "workflow.Push")
 	defer end()
 	allMsg := []sdk.Message{}
 
 	data, err := extractFromCDSFiles(ctx, tr)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	var workflowExists bool
@@ -1441,24 +1440,24 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		// load the workflow from database if exists
 		workflowExists, err = Exists(db, proj.Key, data.wrkflw.Name)
 		if err != nil {
-			return nil, nil, sdk.WrapError(err, "Cannot check if workflow exists")
+			return nil, nil, nil, sdk.WrapError(err, "Cannot check if workflow exists")
 		}
 		if workflowExists {
 			oldWf, err = Load(ctx, db, store, proj, data.wrkflw.Name, LoadOptions{WithIcon: true})
 			if err != nil {
-				return nil, nil, sdk.WrapError(err, "Unable to load existing workflow")
+				return nil, nil, nil, sdk.WrapError(err, "Unable to load existing workflow")
 			}
 		}
 	}
 
 	// if a old workflow as code exists, we want to check if the new workflow is also as code on the same repository
 	if oldWf != nil && oldWf.FromRepository != "" && (opts == nil || opts.FromRepository != oldWf.FromRepository) {
-		return nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
+		return nil, nil, nil, sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		return nil, nil, sdk.WrapError(err, "Unable to start tx")
+		return nil, nil, nil, sdk.WrapError(err, "Unable to start tx")
 	}
 	defer tx.Rollback() // nolint
 
@@ -1470,7 +1469,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 		appDB, msgList, err := application.ParseAndImport(ctx, tx, store, proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
 		if err != nil {
-			return nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", proj.Key, app.Name)
+			return nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", proj.Key, app.Name)
 		}
 		allMsg = append(allMsg, msgList...)
 		proj.SetApplication(*appDB)
@@ -1485,7 +1484,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 		envDB, msgList, err := environment.ParseAndImport(tx, proj, &env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
 		if err != nil {
-			return nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)
+			return nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)
 		}
 		allMsg = append(allMsg, msgList...)
 		proj.SetEnvironment(*envDB)
@@ -1500,7 +1499,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 		pipDB, msgList, err := pipeline.ParseAndImport(ctx, tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true, FromRepository: fromRepo})
 		if err != nil {
-			return nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
+			return nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import pipeline %s/%s", proj.Key, pip.Name)
 
 		}
 		allMsg = append(allMsg, msgList...)
@@ -1529,24 +1528,24 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	wf, msgList, err := ParseAndImport(ctx, tx, store, proj, oldWf, &data.wrkflw, u, importOptions)
 	if err != nil {
-		return msgList, nil, sdk.WrapError(err, "unable to import workflow %s", data.wrkflw.Name)
+		return msgList, nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.wrkflw.Name)
 	}
 
 	// If the workflow is "as-code", it should always be linked to a git repository
 	if opts != nil && opts.FromRepository != "" {
 		if wf.WorkflowData.Node.Context.ApplicationID == 0 {
-			return nil, nil, sdk.WithStack(sdk.ErrApplicationMandatoryOnWorkflowAsCode)
+			return nil, nil, nil, sdk.WithStack(sdk.ErrApplicationMandatoryOnWorkflowAsCode)
 		}
 		app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
 		if app.VCSServer == "" || app.RepositoryFullname == "" {
-			return nil, nil, sdk.WithStack(sdk.ErrApplicationMandatoryOnWorkflowAsCode)
+			return nil, nil, nil, sdk.WithStack(sdk.ErrApplicationMandatoryOnWorkflowAsCode)
 		}
 	}
 
 	if wf.WorkflowData.Node.Context.ApplicationID != 0 {
 		app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
 		if err := application.Update(tx, store, &app); err != nil {
-			return nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
+			return nil, nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
 		}
 		wf.Applications[wf.WorkflowData.Node.Context.ApplicationID] = app
 	}
@@ -1558,19 +1557,13 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		log.Debug("workflow %s rollbacked because it's not coming from the default branch", wf.Name)
 	} else {
 		if err := tx.Commit(); err != nil {
-			return nil, nil, sdk.WrapError(err, "Cannot commit transaction")
-		}
-
-		if oldWf != nil {
-			event.PublishWorkflowUpdate(ctx, proj.Key, *wf, *oldWf, u)
-		} else {
-			event.PublishWorkflowAdd(ctx, proj.Key, *wf, u)
+			return nil, nil, nil, sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		log.Debug("workflow %s updated", wf.Name)
 	}
 
-	return allMsg, wf, nil
+	return allMsg, wf, oldWf, nil
 }
 
 // UpdateFavorite add or delete workflow from user favorites

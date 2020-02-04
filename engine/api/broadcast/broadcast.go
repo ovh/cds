@@ -41,7 +41,7 @@ func MarkAsRead(db gorp.SqlExecutor, broadcastID int64, userID string) error {
 }
 
 // LoadByID loads broadcast by id
-func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.AuthentifiedUser) (*sdk.Broadcast, error) {
+func LoadByID(db gorp.SqlExecutor, id int64, userID string) (*sdk.Broadcast, error) {
 	var projectKey sql.NullString
 	query := `
 		SELECT
@@ -58,10 +58,10 @@ func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.AuthentifiedUser) (*sdk.Broa
 			FROM broadcast
 				LEFT JOIN broadcast_read ON broadcast.id = broadcast_read.broadcast_id AND broadcast_read.authentified_user_id = $1
 				LEFT JOIN project ON broadcast.project_id = project.id
-		WHERE broadcast.id = $2
-	`
+		WHERE broadcast.id = $2`
+
 	var broadcast sdk.Broadcast
-	err := db.QueryRow(query, u.ID, id).Scan(&broadcast.ID, &broadcast.Title, &broadcast.Content, &broadcast.Level,
+	err := db.QueryRow(query, userID, id).Scan(&broadcast.ID, &broadcast.Title, &broadcast.Content, &broadcast.Level,
 		&broadcast.Created, &broadcast.Updated, &broadcast.Archived, &broadcast.ProjectID, &projectKey, &broadcast.Read)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -78,7 +78,7 @@ func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.AuthentifiedUser) (*sdk.Broa
 }
 
 // LoadAll retrieves broadcasts from database
-func LoadAll(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) ([]sdk.Broadcast, error) {
+func LoadAll(db gorp.SqlExecutor, userID string) ([]sdk.Broadcast, error) {
 	query := `
 	SELECT
 		broadcast.id,
@@ -94,10 +94,9 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.AuthentifiedUser) ([]sdk.Broadcast, err
 		FROM broadcast
 			LEFT JOIN broadcast_read ON broadcast.id = broadcast_read.broadcast_id AND broadcast_read.authentified_user_id = $1
 			LEFT JOIN project ON broadcast.project_id = project.id
-	ORDER BY updated DESC
-	`
+	ORDER BY updated DESC`
 
-	rows, err := db.Query(query, u.ID)
+	rows, err := db.Query(query, userID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot query")
 	}

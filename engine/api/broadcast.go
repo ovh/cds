@@ -51,7 +51,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 		}
 
 		consumer := getAPIConsumer(ctx)
-		oldBC, err := broadcast.LoadByID(api.mustDB(), broadcastID, consumer.AuthentifiedUser)
+		oldBC, err := broadcast.LoadByID(api.mustDB(), broadcastID, consumer.AuthentifiedUser.ID)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load broadcast by id")
 		}
@@ -103,7 +103,7 @@ func (api *API) postMarkAsReadBroadcastHandler() service.Handler {
 		}
 
 		consumer := getAPIConsumer(ctx)
-		br, errL := broadcast.LoadByID(api.mustDB(), broadcastID, consumer.AuthentifiedUser)
+		br, errL := broadcast.LoadByID(api.mustDB(), broadcastID, consumer.AuthentifiedUser.ID)
 		if errL != nil {
 			return sdk.WrapError(errL, "Cannot load broadcast by id")
 		}
@@ -151,7 +151,7 @@ func (api *API) getBroadcastHandler() service.Handler {
 		}
 
 		consumer := getAPIConsumer(ctx)
-		broadcast, err := broadcast.LoadByID(api.mustDB(), id, consumer.AuthentifiedUser)
+		broadcast, err := broadcast.LoadByID(api.mustDB(), id, consumer.AuthentifiedUser.ID)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load broadcasts")
 		}
@@ -163,7 +163,7 @@ func (api *API) getBroadcastHandler() service.Handler {
 func (api *API) getBroadcastsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		consumer := getAPIConsumer(ctx)
-		broadcasts, err := broadcast.LoadAll(api.mustDB(), consumer.AuthentifiedUser)
+		broadcasts, err := broadcast.LoadAll(api.mustDB(), consumer.AuthentifiedUser.ID)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load broadcasts")
 		}

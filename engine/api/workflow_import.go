@@ -326,7 +326,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			return sdk.WrapError(errp, "postWorkflowPushHandler> Cannot load project %s", key)
 		}
 
-		allMsg, wrkflw, err := workflow.Push(ctx, db, api.Cache, proj, tr, pushOptions, u, project.DecryptWithBuiltinKey)
+		allMsg, wrkflw, oldWrkflw, err := workflow.Push(ctx, db, api.Cache, proj, tr, pushOptions, u, project.DecryptWithBuiltinKey)
 		if err != nil {
 			return err
 		}
@@ -335,6 +335,12 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		if wrkflw != nil {
 			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wrkflw.ID))
 			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
+		}
+
+		if oldWrkflw != nil {
+			event.PublishWorkflowUpdate(ctx, proj.Key, *wrkflw, *oldWrkflw, u)
+		} else {
+			event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, u)
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)

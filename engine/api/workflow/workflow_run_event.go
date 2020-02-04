@@ -10,60 +10,11 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-// SendEvent Send event on workflow run
-func SendEvent(ctx context.Context, db gorp.SqlExecutor, key string, report *ProcessorReport) {
-	if report == nil {
-		return
-	}
-	for _, wr := range report.workflows {
-		event.PublishWorkflowRun(ctx, wr, key)
-	}
-	for _, wnr := range report.nodes {
-		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, LoadRunOptions{
-			WithLightTests: true,
-		})
-		if errWR != nil {
-			log.Warning(ctx, "SendEvent.workflow> Cannot load workflow run %d: %s", wnr.WorkflowRunID, errWR)
-			continue
-		}
-
-		var previousNodeRun sdk.WorkflowNodeRun
-		if wnr.SubNumber > 0 {
-			previousNodeRun = wnr
-		} else {
-			var errN error
-			previousNodeRun, errN = PreviousNodeRun(db, wnr, wnr.WorkflowNodeName, wr.WorkflowID)
-			if errN != nil {
-				log.Warning(ctx, "SendEvent.workflow> Cannot load previous node run: %s", errN)
-			}
-		}
-
-		event.PublishWorkflowNodeRun(ctx, db, wnr, wr.Workflow, &previousNodeRun)
-	}
-
-	for _, jobrun := range report.jobs {
-		noderun, err := LoadNodeRunByID(db, jobrun.WorkflowNodeRunID, LoadRunOptions{})
-		if err != nil {
-			log.Warning(ctx, "SendEvent.workflow> Cannot load workflow node run %d: %s", jobrun.WorkflowNodeRunID, err)
-			continue
-		}
-		wr, errWR := LoadRunByID(db, noderun.WorkflowRunID, LoadRunOptions{
-			WithLightTests: true,
-		})
-		if errWR != nil {
-			log.Warning(ctx, "SendEvent.workflow> Cannot load workflow run %d: %s", noderun.WorkflowRunID, errWR)
-			continue
-		}
-		event.PublishWorkflowNodeJobRun(ctx, db, key, *wr, jobrun)
-	}
-}
 
 // ResyncCommitStatus resync commit status for a workflow run
 func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {

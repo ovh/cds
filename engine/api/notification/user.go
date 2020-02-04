@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -23,7 +24,7 @@ func Init(uiurl string) {
 }
 
 // GetUserWorkflowEvents return events to send for the given workflow run
-func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.WorkflowNodeRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
+func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w sdk.Workflow, previousWR *sdk.WorkflowNodeRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
 	events := []sdk.EventNotif{}
 
 	//Compute notification
@@ -52,7 +53,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 				jn := &notif.Settings
 				//Get recipents from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
-					u, err := projectPermissionUserIDs(ctx, db, w.ProjectID, sdk.PermissionRead)
+					u, err := projectPermissionUserIDs(ctx, db, store, w.ProjectID, sdk.PermissionRead)
 					if err != nil {
 						log.Error(ctx, "notification[Jabber]. error while loading permission: %v", err)
 						break
@@ -84,9 +85,9 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, w sdk.Workf
 				jn := &notif.Settings
 				//Get recipents from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
-					u, errPerm := projectPermissionUserIDs(ctx, db, w.ProjectID, sdk.PermissionRead)
-					if errPerm != nil {
-						log.Error(ctx, "notification[Email].GetUserWorkflowEvents> error while loading permission:%s", errPerm.Error())
+					u, err := projectPermissionUserIDs(ctx, db, store, w.ProjectID, sdk.PermissionRead)
+					if err != nil {
+						log.Error(ctx, "notification[Email].GetUserWorkflowEvents> error while loading permission: %v", err)
 						return nil
 					}
 					contacts, err := user.LoadContactsByUserIDs(ctx, db, u)

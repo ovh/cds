@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/ascode/sync"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -105,6 +106,8 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 				FromRepo:  wk.FromRepository,
 			}
 			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, p, &app, ed, u)
+
+			event.PublishWorkflowUpdate(ctx, proj.Key, *wf, *wf, u)
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, ope, http.StatusOK)

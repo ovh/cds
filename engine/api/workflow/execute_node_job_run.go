@@ -28,6 +28,18 @@ type ProcessorReport struct {
 	errors    []error
 }
 
+func (r *ProcessorReport) Jobs() []sdk.WorkflowNodeJobRun {
+	return r.jobs
+}
+
+func (r *ProcessorReport) Nodes() []sdk.WorkflowNodeRun {
+	return r.nodes
+}
+
+func (r *ProcessorReport) Workflows() []sdk.WorkflowRun {
+	return r.workflows
+}
+
 // WorkflowRuns returns the list of concerned workflow runs
 func (r *ProcessorReport) WorkflowRuns() []sdk.WorkflowRun {
 	if r == nil {

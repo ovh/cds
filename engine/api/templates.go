@@ -460,7 +460,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		if withImport {
 			tr := tar.NewReader(buf)
 
-			msgs, wkf, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
+			msgs, wkf, oldWkf, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
 			if err != nil {
 				return sdk.WrapError(err, "cannot push generated workflow")
 			}
@@ -469,6 +469,16 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			if w != nil {
 				w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wkf.ID))
 				w.Header().Add(sdk.ResponseWorkflowNameHeader, wkf.Name)
+			}
+
+			if oldWkf != nil {
+				event.PublishWorkflowUpdate(ctx, p.Key, *wkf, *oldWkf, getAPIConsumer(ctx))
+			} else {
+				event.PublishWorkflowAdd(ctx, p.Key, *wkf, getAPIConsumer(ctx))
+			}
+
+			if err := workflowtemplate.SetTemplateData(ctx, api.mustDB(), p, wkf, getAPIConsumer(ctx), wt); err != nil {
+				log.Error(ctx, "postTemplateApplyHandler> unable to set template data: %v", err)
 			}
 
 			return service.WriteJSON(w, msgStrings, http.StatusOK)
@@ -602,13 +612,17 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 					tr := tar.NewReader(buf)
 
-					_, _, err = workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, consumer, project.DecryptWithBuiltinKey)
+					_, wkf, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, consumer, project.DecryptWithBuiltinKey)
 					if err != nil {
 						if errD := errorDefer(sdk.WrapError(err, "cannot push generated workflow")); errD != nil {
 							log.Error(ctx, "%v", errD)
 							return
 						}
 						continue
+					}
+
+					if err := workflowtemplate.SetTemplateData(ctx, api.mustDB(), p, wkf, getAPIConsumer(ctx), wt); err != nil {
+						log.Error(ctx, "postTemplateBulkHandler> unable to set template data: %v", err)
 					}
 
 					bulk.Operations[i].Status = sdk.OperationStatusDone

@@ -26,8 +26,8 @@ type Group struct {
 	ID   int64  `json:"id" yaml:"-" db:"id"`
 	Name string `json:"name" yaml:"name" cli:"name,key" db:"name"`
 	// aggregate
-	Members []GroupMember `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
-	Admin   bool          `json:"admin,omitempty" yaml:"admin,omitempty" db:"-"`
+	Members GroupMembers `json:"members,omitempty" yaml:"members,omitempty" db:"-"`
+	Admin   bool         `json:"admin,omitempty" yaml:"admin,omitempty" db:"-"`
 }
 
 // IsValid returns an error if given group is not valid.
@@ -69,6 +69,16 @@ func (g Groups) ToMap() map[int64]Group {
 		mGroups[g[i].ID] = g[i]
 	}
 	return mGroups
+}
+
+type GroupMembers []GroupMember
+
+func (members GroupMembers) UserIDs() []string {
+	var usersID []string
+	for _, m := range members {
+		usersID = append(usersID, m.ID)
+	}
+	return usersID
 }
 
 // GroupMember struct.

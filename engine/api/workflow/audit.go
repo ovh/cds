@@ -6,19 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
 var (
-	audits = map[string]sdk.Audit{
+	Audits = map[string]sdk.Audit{
 		fmt.Sprintf("%T", sdk.EventWorkflowAdd{}):              addWorkflowAudit{},
 		fmt.Sprintf("%T", sdk.EventWorkflowUpdate{}):           updateWorkflowAudit{},
 		fmt.Sprintf("%T", sdk.EventWorkflowDelete{}):           deleteWorkflowAudit{},
@@ -27,39 +25,6 @@ var (
 		fmt.Sprintf("%T", sdk.EventWorkflowPermissionDelete{}): deleteWorkflowPermissionAudit{},
 	}
 )
-
-// ComputeAudit Compute audit on workflow
-func ComputeAudit(ctx context.Context, DBFunc func() *gorp.DbMap) {
-	chanEvent := make(chan sdk.Event)
-	event.Subscribe(chanEvent)
-	deleteTicker := time.NewTicker(15 * time.Minute)
-	defer deleteTicker.Stop()
-
-	db := DBFunc()
-	for {
-		select {
-		case <-ctx.Done():
-			if ctx.Err() != nil {
-				log.Error(ctx, "ComputeWorkflowAudit> Exiting: %v", ctx.Err())
-				return
-			}
-		case <-deleteTicker.C:
-			if err := purgeAudits(ctx, DBFunc()); err != nil {
-				log.Error(ctx, "ComputeWorkflowAudit> Purge error: %v", err)
-			}
-		case e := <-chanEvent:
-			if !strings.HasPrefix(e.EventType, "sdk.EventWorkflow") {
-				continue
-			}
-
-			if audit, ok := audits[e.EventType]; ok {
-				if err := audit.Compute(ctx, db, e); err != nil {
-					log.Warning(ctx, "ComputeAudit> Unable to compute audit on event %s: %v", e.EventType, err)
-				}
-			}
-		}
-	}
-}
 
 type addWorkflowAudit struct{}
 
@@ -231,7 +196,7 @@ func (a deleteWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlE
 
 const keepAudits = 50
 
-func purgeAudits(ctx context.Context, db gorp.SqlExecutor) error {
+func PurgeAudits(ctx context.Context, db gorp.SqlExecutor) error {
 	var nbAuditsPerWorkflowID = []struct {
 		WorkflowID int64 `db:"workflow_id"`
 		NbAudits   int64 `db:"nb_audits"`

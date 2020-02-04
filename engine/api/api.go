@@ -20,6 +20,7 @@ import (
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/audit"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/authentication/corpsso"
@@ -40,7 +41,6 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/secret"
@@ -648,11 +648,11 @@ func (a *API) Serve(ctx context.Context) error {
 		event.Subscribe(chanEvent)
 		action.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap, chanEvent)
 	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "pipeline.ComputeAudit", func(ctx context.Context) {
-		pipeline.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+	sdk.GoRoutine(ctx, "audit.ComputePipelineAudit", func(ctx context.Context) {
+		audit.ComputePipelineAudit(ctx, a.DBConnectionFactory.GetDBMap)
 	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "workflow.ComputeAudit", func(ctx context.Context) {
-		workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+	sdk.GoRoutine(ctx, "audit.ComputeWorkflowAudit", func(ctx context.Context) {
+		audit.ComputeWorkflowAudit(ctx, a.DBConnectionFactory.GetDBMap)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "workflowtemplate.ComputeAudit", func(ctx context.Context) {
 		workflowtemplate.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)

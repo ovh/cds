@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
@@ -70,14 +69,6 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	wf, errload := Load(ctx, db, cache, proj, name, options)
 	if errload != nil {
 		return wp, sdk.WrapError(errload, "cannot load workflow %s", name)
-	}
-
-	i, err := workflowtemplate.LoadInstanceByWorkflowID(ctx, db, wf.ID, workflowtemplate.LoadInstanceOptions.WithTemplate)
-	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return wp, err
-	}
-	if i != nil {
-		wf.Template = i.Template
 	}
 
 	//Reload app to retrieve secrets

@@ -62,7 +62,7 @@ func LoadGroupsIntoProject(db gorp.SqlExecutor, proj *sdk.Project) error {
 	}
 
 	var groupIDs []int64
-	var groupIDsMap map[int64]int
+	var groupIDsMap = make(map[int64]int)
 	for _, l := range links {
 		groupIDs = append(groupIDs, l.GroupID)
 		groupIDsMap[l.GroupID] = l.Role

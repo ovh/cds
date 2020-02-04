@@ -5,32 +5,37 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/project"
 )
 
 // projectPermissionUsers Get users that access to given project, without default group
-func projectPermissionUserIDs(ctx context.Context, db gorp.SqlExecutor, projectID int64, access int) ([]string, error) {
-	// TODO refactor: we have to load the group_authentified_user entoty to ensure signature validation
-	query := `
-			SELECT DISTINCT "group_authentified_user".id
-			FROM "group"
-			JOIN project_group ON "group".id = project_group.group_id
-			JOIN group_authentified_user ON "group".id = group_authentified_user.group_id
-			WHERE project_group.project_id = $1
-			AND project_group.role >=$2
-			AND	"group".id <> $3
-		`
-	var defaultGroupID int64
-	if group.DefaultGroup != nil {
-		defaultGroupID = group.DefaultGroup.ID
+func projectPermissionUserIDs(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectID int64, access int) ([]string, error) {
+	proj, err := project.LoadByID(db, store, projectID, project.LoadOptions.WithGroups)
+	if err != nil {
+		return nil, err
 	}
 
-	q := gorpmapping.NewQuery(query).Args(projectID, access, defaultGroupID)
+	var groupIDs []int64
+	for _, g := range proj.ProjectGroups {
+		groupIDs = append(groupIDs, g.Group.ID)
+	}
 
-	var userIDs []string
-	if err := gorpmapping.GetAll(ctx, db, q, &userIDs); err != nil {
+	grps, err := group.LoadAllByIDs(ctx, db, groupIDs, group.LoadOptions.WithMembers)
+	if err != nil {
 		return nil, err
+	}
+
+	var userIDsMap = make(map[string]struct{})
+	var userIDs []string
+	for _, g := range grps {
+		for _, m := range g.Members {
+			if _, has := userIDsMap[m.ID]; !has {
+				userIDsMap[m.ID] = struct{}{}
+				userIDs = append(userIDs, m.ID)
+			}
+		}
 	}
 
 	return userIDs, nil
