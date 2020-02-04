@@ -49,6 +49,7 @@ func TestRunCoverage_Absolute(t *testing.T) {
 
 	wk, ctx := SetupTest(t)
 	assert.NoError(t, ioutil.WriteFile("results.xml", []byte(cobertura_result), os.ModePerm))
+	defer os.RemoveAll("results.xml")
 
 	fi, err := os.Open("results.xml")
 	require.NoError(t, err)
@@ -161,6 +162,7 @@ func TestRunCoverageMinimumFail(t *testing.T) {
 
 	wk, ctx := SetupTest(t)
 	assert.NoError(t, ioutil.WriteFile("results.xml", []byte(cobertura_result), os.ModePerm))
+	defer os.RemoveAll("results.xml")
 
 	fi, err := os.Open("results.xml")
 	require.NoError(t, err)

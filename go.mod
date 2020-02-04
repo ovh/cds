@@ -50,7 +50,7 @@ require (
 	github.com/fortytw2/leaktest v1.2.0 // indirect
 	github.com/frankban/quicktest v1.6.0 // indirect
 	github.com/fsamin/go-dump v1.0.9
-	github.com/fsamin/go-repo v0.1.4
+	github.com/fsamin/go-repo v0.1.5
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
 	github.com/garyburd/redigo v1.6.0 // indirect
