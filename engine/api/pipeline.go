@@ -75,7 +75,10 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 				Name:      pipelineDB.Name,
 				Operation: ope,
 			}
-			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, &apps[0], ed, u)
+			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, &apps[0], ed, u)
+			if asCodeEvent != nil {
+				event.PublishAsCodeEvent(ctx, proj.Key, *asCodeEvent, u)
+			}
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, ope, http.StatusOK)

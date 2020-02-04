@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/api/ascode"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/api/ascode"
 
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
@@ -1429,7 +1430,8 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		Type:      ascode.AsCodeWorkflow,
 	}
 
-	ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, proj, &app, ed, u)
+	x := ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, proj, &app, ed, u)
+	assert.NotNil(t, x, "ascodeEvent should not be nil, but it was")
 
 	//Prepare request
 	vars := map[string]string{
