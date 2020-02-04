@@ -101,7 +101,7 @@ export class AppComponent implements OnInit {
 
         this.eventsRouteSubscription = this._router.events.subscribe(e => {
             if (e instanceof NavigationStart) {
-                this.hideNavBar = (e.url.indexOf('/auth') !== -1)
+                this.hideNavBar = e.url.startsWith('/auth')
             }
         });
     }
