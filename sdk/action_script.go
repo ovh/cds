@@ -38,7 +38,7 @@ func ActionInfoMarkdown(a Action, filename string) string {
 
 %s
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/%s)
+More documentation on [GitHub](https://github.com/ovh/cds/tree/master/contrib/actions/%s)
 
 `,
 		a.Description,
