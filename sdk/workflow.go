@@ -204,7 +204,7 @@ func (w *Workflow) ValidateType() error {
 //WorkflowNodeConditions is either an array of WorkflowNodeCondition or a lua script
 type WorkflowNodeConditions struct {
 	PlainConditions []WorkflowNodeCondition `json:"plain,omitempty" yaml:"check,omitempty"`
-	LuaScript       string                  `json:"script,omitempty" yaml:"script,omitempty"`
+	LuaScript       string                  `json:"lua_script,omitempty" yaml:"script,omitempty"`
 }
 
 // Value returns driver.Value from WorkflowNodeConditions request.

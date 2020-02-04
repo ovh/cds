@@ -3,7 +3,7 @@
         <sui-checkbox class="toggle" [(ngModel)]="isAdvanced">{{'workflow_node_condition_advanced' | translate }}
         </sui-checkbox>
     </div>
-    <div class="ui warning message" *ngIf="conditions.plain && conditions.plain.length && conditions.script">
+    <div class="ui warning message" *ngIf="conditions.plain && conditions.plain.length && conditions.lua_script">
         <p>
             {{'workflow_node_condition_warning' | translate}}
         </p>
@@ -121,7 +121,7 @@
                     </div>
                 </div>
             </div>
-            <codemirror [(ngModel)]="conditions.script" (ngModelChange)="pushChange('codemirror', $event)"
+            <codemirror [(ngModel)]="conditions.lua_script" (ngModelChange)="pushChange('codemirror', $event)"
                 (change)="changeCodeMirror($event)" [config]="codeMirrorConfig" #textareaCodeMirror>
             </codemirror>
         </div>
