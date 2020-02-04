@@ -42,7 +42,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
     }
     @Input('conditions') set conditions(conditions: WorkflowNodeConditions) {
         this._conditions = conditions;
-        if (this._conditions.script && this._conditions.script !== '') {
+        if (this._conditions.lua_script && this._conditions.lua_script !== '') {
             this.isAdvanced = true;
         } else {
             this.isAdvanced = false;
@@ -108,7 +108,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
             this.conditions.plain = new Array<WorkflowNodeCondition>();
         }
 
-        this.previousValue = this.conditions.script;
+        this.previousValue = this.conditions.lua_script;
         let condition = this.conditions.plain.find(cc => cc.variable === 'cds.manual');
         if (condition) {
             condition.value = <any>(condition.value === 'true' || <any>condition.value === true);
@@ -143,7 +143,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
     pushChange(event: string, e?: string): void {
         if (event !== 'codemirror') {
             this.conditionsChange.emit(this.conditions);
-            this.conditions.script = '';
+            this.conditions.lua_script = '';
             return;
         }
         if (event === 'codemirror' && e && e !== this.previousValue) {
