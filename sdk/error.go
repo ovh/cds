@@ -200,6 +200,7 @@ var (
 	ErrInvalidJobRequirementNetworkAccess            = Error{ID: 184, Status: http.StatusBadRequest}
 	ErrInvalidWorkerModelNamePattern                 = Error{ID: 185, Status: http.StatusBadRequest}
 	ErrWorkflowAsCodeResync                          = Error{ID: 186, Status: http.StatusForbidden}
+	ErrWorkflowNodeNameDuplicate                     = Error{ID: 187, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -382,6 +383,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrBadBrokerConfiguration.ID:                        "Cannot connect to the broker of your event integration. Check your configuration",
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Invalid job requirement: network requirement must contains ':'. Example: golang.org:http, golang.org:443",
 	ErrWorkflowAsCodeResync.ID:                          "You cannot resynchronize an as-code workflow",
+	ErrWorkflowNodeNameDuplicate.ID:                     "You cannot have same name for different pipeline nodes in your workflow",
 }
 
 var errorsFrench = map[int]string{
@@ -563,6 +565,7 @@ var errorsFrench = map[int]string{
 	ErrBadBrokerConfiguration.ID:                        "Impossible de se connecter à votre intégration de type évènement. Veuillez vérifier votre configuration",
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Pré-requis de job invalide: Le pré-requis network doit contenir un ':'. Exemple: golang.org:http, golang.org:443",
 	ErrWorkflowAsCodeResync.ID:                          "Impossible de resynchroniser un workflow en mode as-code",
+	ErrWorkflowNodeNameDuplicate.ID:                     "Vous ne pouvez pas avoir plusieurs fois le même nom de noeud de pipeline dans votre workflow",
 }
 
 var errorsLanguages = []map[int]string{
