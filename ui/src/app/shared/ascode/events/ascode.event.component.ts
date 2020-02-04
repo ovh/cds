@@ -29,6 +29,6 @@ export class AsCodeEventComponent {
             .pipe(finalize(() => {
                 this.loadingPopupButton = false;
                 this._cd.markForCheck();
-            })).subscribe(() => {});
+            })).subscribe();
     }
 }
