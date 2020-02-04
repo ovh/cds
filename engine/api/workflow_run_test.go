@@ -1431,7 +1431,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	}
 
 	x := ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, proj, &app, ed, u)
-	assert.NotNil(t, x, "ascodeEvent should not be nil, but it was")
+	require.NotNil(t, x, "ascodeEvent should not be nil, but it was")
 
 	//Prepare request
 	vars := map[string]string{
