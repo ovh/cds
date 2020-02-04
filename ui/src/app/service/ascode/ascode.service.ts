@@ -18,16 +18,17 @@ export class AscodeService {
      * @param projectKey
      * @param repo
      */
-    resyncPRAsCode(projectKey: string, appName: string, repo?: string): Observable<any> {
+    resyncPRAsCode(projectKey: string, appName: string, repo?: string): Observable<boolean> {
         let params = new HttpParams();
         if (repo) {
             params = params.append('repo', repo);
         }
         params = params.append('appName', appName);
 
-        return this._http.post(`/project/${projectKey}/ascode/events/resync`, null, {params})
+        return this._http.post<boolean>(`/project/${projectKey}/ascode/events/resync`, null, {params})
             .map(() => {
             this._store.dispatch(new ResyncEvents());
+            return true;
         });
     }
 }
