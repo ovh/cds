@@ -2,6 +2,16 @@ import { WithKey } from 'app/shared/table/data-table.component';
 import { Group } from './group.model';
 import { AuthentifiedUser } from './user.model';
 
+export class AuthConsumerScopeDetail {
+    scope: string;
+    endpoints: Array<AuthConsumerScopeEndpoint>;
+}
+
+export class AuthConsumerScopeEndpoint {
+    route: string;
+    methods: Array<string>;
+}
+
 export class AuthScope implements WithKey {
     value: string;
 

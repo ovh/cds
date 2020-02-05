@@ -4,44 +4,103 @@
     </div>
     <div class="content">
         <div class="ui grid">
-            <div class="ui wide column">
-                <div class="ui form" *ngIf="!newConsumer.id">
-                    <div class="ui wide field">
-                        <div class="fields">
-                            <div class="eight wide field">
-                                <label>{{'common_name' | translate}}</label>
-                                <input class="ui input" type="text" name="name" [(ngModel)]="newConsumer.name">
-                            </div>
-                            <div class="eight wide field">
-                                <label>{{'common_description' | translate}}</label>
-                                <input class="ui input" type="text" name="group" [(ngModel)]="newConsumer.description">
-                            </div>
+            <div class="ui sixteen wide column">
+                <ng-container *ngIf="!newConsumer.id">
+                    <div class="ui grid">
+                        <div class="ui sixteen wide column">
+                            <sui-accordion class="styled fluid">
+                                <sui-accordion-panel [isOpen]="activeStep === formStepName.INFORMATIONS"
+                                    [isDisabled]="true">
+                                    <div title (click)="clickOpenStep(formStepName.INFORMATIONS)">
+                                        <i class="dropdown icon"></i>
+                                        Informations
+                                    </div>
+                                    <div content>
+                                        <div class="ui form">
+                                            <div class="ui wide field">
+                                                <div class="fields">
+                                                    <div class="eight wide field">
+                                                        <label>{{'common_name' | translate}}</label>
+                                                        <input class="ui input" type="text" name="name"
+                                                            [(ngModel)]="newConsumer.name">
+                                                    </div>
+                                                    <div class="eight wide field">
+                                                        <label>{{'common_description' | translate}}</label>
+                                                        <input class="ui input" type="text" name="group"
+                                                            [(ngModel)]="newConsumer.description">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </sui-accordion-panel>
+                                <sui-accordion-panel [isOpen]="activeStep === formStepName.GROUPS" [isDisabled]="true">
+                                    <div title (click)="clickOpenStep(formStepName.GROUPS)">
+                                        <i class="dropdown icon"></i>
+                                        {{'user_auth_groups' | translate}}
+                                    </div>
+                                    <div content>
+                                        <div class="ui form" *ngIf="!newConsumer.id">
+                                            <div class="ui message blue">
+                                                <p>Let groups selection empty to create consumer with wildcard access on
+                                                    groups.</p>
+                                            </div>
+                                            <div class="ui wide field">
+                                                <app-data-table [withFilter]="filterGroups"
+                                                    [withSelect]="selectGroupFunc"
+                                                    (selectChange)="selectGroupChange($event)" [withPagination]="5"
+                                                    [columns]="columnsGroups" [data]="groups" [loading]="loadingGroups">
+                                                </app-data-table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </sui-accordion-panel>
+                                <sui-accordion-panel [isOpen]="activeStep === formStepName.SCOPES" [isDisabled]="true">
+                                    <div title (click)="clickOpenStep(formStepName.SCOPES)">
+                                        <i class="dropdown icon"></i>
+                                        {{'user_auth_scopes' | translate}}
+                                    </div>
+                                    <div content class="scope-list">
+                                        <table class="ui striped fixed table">
+                                            <tbody>
+                                                <tr *ngFor="let scope of scopes">
+                                                    <td class="wide">
+                                                        <app-scope-detail [scope]="scope"></app-scope-detail>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </sui-accordion-panel>
+                            </sui-accordion>
                         </div>
-                        <div class="fields">
-                            <div class="eight wide field">
-                                <label>{{'user_auth_groups' | translate}}</label>
-                                <app-data-table [withFilter]="filterGroups" [withSelect]="selectGroupFunc"
-                                    (selectChange)="selectGroupChange($event)" [withPagination]="5"
-                                    [columns]="columnsGroups" [data]="groups" [loading]="loadingGroups">
-                                </app-data-table>
-                            </div>
-                            <div class="eight wide field">
-                                <label>{{'user_auth_scopes' | translate}}</label>
-                                <app-data-table [withFilter]="filterScopes" [withSelect]="selectScopeFunc"
-                                    (selectChange)="selectScopeChange($event)" [withPagination]="5"
-                                    [columns]="columnsScopes" [data]="scopes" [loading]="loadingScopes">
-                                </app-data-table>
-                            </div>
+                        <div class="four wide column left floated">
+                            <button *ngIf="activeStep === formStepName.GROUPS || activeStep == formStepName.SCOPES"
+                                class="ui primary button" (click)="clickBack()">
+                                {{ 'btn_back' | translate }}
+                            </button>
                         </div>
-                        <div class="field inline">
-                            <div class="eight wide column centered">
-                                <button class="ui green button" [class.loading]="loading" (click)="clickSave()">
+                        <div class="eight wide column centered">
+                            <button *ngIf="activeStep !== formStepName.TOKEN" class="ui green button"
+                                [class.loading]="loading" (click)="clickNext()">
+                                <ng-container
+                                    *ngIf="activeStep === formStepName.SCOPES; then createButton; else nextButton">
+                                </ng-container>
+                                <ng-template #createButton>
                                     <i class="save icon"></i>{{ 'btn_create' | translate }}
-                                </button>
-                            </div>
+                                </ng-template>
+                                <ng-template #nextButton>
+                                    {{ 'btn_next' | translate }}
+                                </ng-template>
+                            </button>
+                        </div>
+                        <div class="four wide column right aligned">
+                            <button class="ui secondary button" (click)="clickClose()">
+                                {{ 'btn_close' | translate }}
+                            </button>
                         </div>
                     </div>
-                </div>
+                </ng-container>
                 <ng-container *ngIf="newConsumer.id">
                     <app-consumer-display-signin-token [consumer]="newConsumer" [signinToken]="signinToken">
                     </app-consumer-display-signin-token>

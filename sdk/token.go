@@ -69,6 +69,17 @@ type AuthDriverManifest struct {
 // AuthConsumerScope alias type for string.
 type AuthConsumerScope string
 
+type AuthConsumerScopeEndpoint struct {
+	Route   string   `json:"route"`
+	Methods []string `json:"methods"`
+}
+
+// AuthConsumerScopeDetail contains all endpoints for a scope.
+type AuthConsumerScopeDetail struct {
+	Scope     AuthConsumerScope           `json:"scope"`
+	Endpoints []AuthConsumerScopeEndpoint `json:"endpoints"`
+}
+
 // IsValid returns validity for scope.
 func (s AuthConsumerScope) IsValid() bool {
 	for i := range AuthConsumerScopes {
