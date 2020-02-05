@@ -7,6 +7,7 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func SetTemplateData(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u sdk.Identifiable, wt *sdk.WorkflowTemplate) error {
@@ -45,6 +46,7 @@ func SetTemplateData(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project, w
 	old := sdk.WorkflowTemplateInstance(*wti)
 
 	// set the workflow id on target instance
+	log.Debug("SetTemplateData> setting workflow ID=%d on on template %s (instance %d)", w.ID, wt.Slug, wti.ID)
 	wti.WorkflowID = &w.ID
 	if err := UpdateInstance(db, wti); err != nil {
 		return err

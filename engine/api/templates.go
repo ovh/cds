@@ -452,6 +452,8 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return err
 		}
 
+		log.Debug("postTemplateApplyHandler> template %s applied (withImport=%v)", wt.Slug, withImport)
+
 		buf := new(bytes.Buffer)
 		if err := workflowtemplate.Tar(ctx, wt, res, buf); err != nil {
 			return err
@@ -465,6 +467,8 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 				return sdk.WrapError(err, "cannot push generated workflow")
 			}
 			msgStrings := translate(r, msgs)
+
+			log.Debug("postTemplateApplyHandler> importing the workflow %s from template %s", wkf, wt.Slug)
 
 			if w != nil {
 				w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wkf.ID))
