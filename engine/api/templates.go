@@ -468,7 +468,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			}
 			msgStrings := translate(r, msgs)
 
-			log.Debug("postTemplateApplyHandler> importing the workflow %s from template %s", wkf, wt.Slug)
+			log.Debug("postTemplateApplyHandler> importing the workflow %s from template %s", wkf.Name, wt.Slug)
 
 			if w != nil {
 				w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wkf.ID))
