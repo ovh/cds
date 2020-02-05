@@ -167,10 +167,10 @@ func craftNodeEntry(w sdk.Workflow, n sdk.Node) (NodeEntry, error) {
 
 		if len(conditions) > 0 || n.Context.Conditions.LuaScript != "" {
 			entry.Conditions = &ConditionEntry{
-				PlainConditions: make([]PlainConditionEntry, 0, len(n.Context.Conditions.PlainConditions)),
+				PlainConditions: make([]PlainConditionEntry, 0, len(conditions)),
 				LuaScript:       n.Context.Conditions.LuaScript,
 			}
-			for _, c := range n.Context.Conditions.PlainConditions {
+			for _, c := range conditions {
 				entry.Conditions.PlainConditions = append(entry.Conditions.PlainConditions, PlainConditionEntry{
 					Value:    c.Value,
 					Operator: c.Operator,
