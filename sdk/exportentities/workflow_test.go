@@ -22,7 +22,7 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 		Version                string
 		Workflow               map[string]exportentities.NodeEntry
 		Hooks                  map[string][]exportentities.HookEntry
-		Conditions             *sdk.WorkflowNodeConditions
+		Conditions             *exportentities.ConditionEntry
 		When                   []string
 		PipelineName           string
 		ApplicationName        string
@@ -114,7 +114,7 @@ func TestWorkflow_checkValidity(t *testing.T) {
 		Workflow               map[string]exportentities.NodeEntry
 		Hooks                  map[string][]exportentities.HookEntry
 		DependsOn              []string
-		Conditions             *sdk.WorkflowNodeConditions
+		Conditions             *exportentities.ConditionEntry
 		When                   []string
 		PipelineName           string
 		ApplicationName        string
@@ -201,7 +201,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		Workflow               map[string]exportentities.NodeEntry
 		Hooks                  map[string][]exportentities.HookEntry
 		DependsOn              []string
-		Conditions             *sdk.WorkflowNodeConditions
+		Conditions             *exportentities.ConditionEntry
 		When                   []string
 		PipelineName           string
 		ApplicationName        string
