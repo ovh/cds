@@ -96,7 +96,6 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		OldWorkflow:        w,
 	}
 
-	// TODO send event
 	allMsg, workflowPushed, _, errP := Push(ctx, db, store, p, tr, opt, ident, decryptFunc)
 	if errP != nil {
 		return allMsg, sdk.WrapError(errP, "unable to get workflow from file")

@@ -155,8 +155,6 @@ func Update(ctx context.Context, db gorp.SqlExecutor, au *sdk.AuthentifiedUser) 
 
 // DeleteByID a user in database.
 func DeleteByID(db gorp.SqlExecutor, id string) error {
-	// TODO Delete user dependencies
-
 	_, err := db.Exec("DELETE FROM authentified_user WHERE id = $1", id)
 	return sdk.WithStack(err)
 }

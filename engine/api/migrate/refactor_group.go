@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
