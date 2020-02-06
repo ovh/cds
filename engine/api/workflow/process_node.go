@@ -288,11 +288,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		if nr.VCSTag != "" {
 			wr.Tag(tagGitTag, nr.VCSTag)
 		}
-		if len(nr.VCSHash) >= 7 {
-			wr.Tag(tagGitHash, nr.VCSHash[:7])
-		} else {
-			wr.Tag(tagGitHash, nr.VCSHash)
-		}
+		wr.Tag(tagGitHash, nr.VCSHash)
 		wr.Tag(tagGitAuthor, vcsInf.Author)
 	}
 
