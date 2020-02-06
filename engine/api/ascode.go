@@ -207,7 +207,7 @@ func (api *API) postResyncPRAsCodeHandler() service.Handler {
 				return err
 			}
 			if app == nil {
-				return sdk.WrapError(sdk.ErrApplicationNotFound, "unable to load application ", appName)
+				return sdk.WrapError(sdk.ErrApplicationNotFound, "unable to load application %s", appName)
 			}
 		}
 
