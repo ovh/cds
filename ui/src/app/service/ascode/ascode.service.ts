@@ -23,7 +23,9 @@ export class AscodeService {
         if (repo) {
             params = params.append('repo', repo);
         }
-        params = params.append('appName', appName);
+        if (appName) {
+            params = params.append('appName', appName);
+        }
 
         return this._http.post<boolean>(`/project/${projectKey}/ascode/events/resync`, null, {params})
             .map(() => {
