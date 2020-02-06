@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql/driver"
 	json "encoding/json"
+	"net/http"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -82,13 +83,13 @@ func (e AuthConsumerScopeEndpoints) FindEndpoint(route string) (bool, AuthConsum
 
 type AuthConsumerScopeEndpoint struct {
 	Route   string      `json:"route"`
-	Methods StringSlice `json:"methods"`
+	Methods StringSlice `json:"methods,omitempty"`
 }
 
 // AuthConsumerScopeDetail contains all endpoints for a scope.
 type AuthConsumerScopeDetail struct {
 	Scope     AuthConsumerScope          `json:"scope"`
-	Endpoints AuthConsumerScopeEndpoints `json:"endpoints"`
+	Endpoints AuthConsumerScopeEndpoints `json:"endpoints,omitempty"`
 }
 
 // IsValid returns validity for scope.
@@ -149,6 +150,41 @@ func NewAuthConsumerScopeDetails(scopes ...AuthConsumerScope) AuthConsumerScopeD
 
 // AuthConsumerScopeDetails type used for database json storage.
 type AuthConsumerScopeDetails []AuthConsumerScopeDetail
+
+// IsValid returns an error if current details are invalids.
+func (s AuthConsumerScopeDetails) IsValid() error {
+	// Check that each scope is unique
+	mScope := map[AuthConsumerScope]struct{}{}
+	for _, detail := range s {
+		if _, ok := mScope[detail.Scope]; ok {
+			return NewErrorFrom(ErrWrongRequest, "duplicated scope %s in given details", detail.Scope)
+		}
+		mScope[detail.Scope] = struct{}{}
+
+		// Check that each route is unique for scope
+		mRoute := map[string]struct{}{}
+		for _, endpoint := range detail.Endpoints {
+			if _, ok := mRoute[endpoint.Route]; ok {
+				return NewErrorFrom(ErrWrongRequest, "duplicated route %s for scope %s in given details", endpoint.Route, detail.Scope)
+			}
+			mRoute[endpoint.Route] = struct{}{}
+
+			// Check that each method is unique for scope and match GET, POST, PUT or DELETE
+			mMethod := map[string]struct{}{}
+			for _, method := range endpoint.Methods {
+				if _, ok := mMethod[method]; ok {
+					return NewErrorFrom(ErrWrongRequest, "duplicated method %s for route %s and scope %s in given details", method, endpoint.Route, detail.Scope)
+				}
+				mRoute[method] = struct{}{}
+				if !(method == http.MethodGet || method == http.MethodPost || method == http.MethodPut || method == http.MethodDelete) {
+					return NewErrorFrom(ErrWrongRequest, "invalid method %s for route %s and scope %s in given details", method, endpoint.Route, detail.Scope)
+				}
+			}
+		}
+	}
+
+	return nil
+}
 
 func (s AuthConsumerScopeDetails) ToEndpointsMap() map[AuthConsumerScope]AuthConsumerScopeEndpoints {
 	m := make(map[AuthConsumerScope]AuthConsumerScopeEndpoints, len(s))
@@ -364,6 +400,14 @@ type AuthConsumer struct {
 
 // IsValid returns validity for auth consumer.
 func (c AuthConsumer) IsValid(scopeDetails AuthConsumerScopeDetails) error {
+	if c.Name == "" {
+		return NewErrorFrom(ErrWrongRequest, "invalid given name")
+	}
+
+	if err := c.ScopeDetails.IsValid(); err != nil {
+		return err
+	}
+
 	mEndpoints := scopeDetails.ToEndpointsMap()
 
 	for _, s := range c.ScopeDetails {

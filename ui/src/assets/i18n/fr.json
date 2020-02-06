@@ -195,6 +195,8 @@
   "common_admin": "Administration",
   "common_advanced": "Options avancées",
   "common_all": "Tout",
+  "common_read": "Lecture",
+  "common_write": "Écriture",
   "common_application_title": "Application : ",
   "common_application": "Application",
   "common_applications": "Applications",

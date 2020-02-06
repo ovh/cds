@@ -65,7 +65,8 @@
                                             <tbody>
                                                 <tr *ngFor="let scope of scopes">
                                                     <td class="wide">
-                                                        <app-scope-detail [scope]="scope"></app-scope-detail>
+                                                        <app-scope-detail [scope]="scope"
+                                                            (onChange)="onScopeDetailChange($event)"></app-scope-detail>
                                                     </td>
                                                 </tr>
                                             </tbody>

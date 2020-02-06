@@ -54,6 +54,7 @@ export class ConsumerCreateModalComponent {
     selectedGroupKeys: Array<string>;
     loadingScopes: boolean;
     scopes: Array<AuthConsumerScopeDetail>;
+    selectedScopeDetails: Array<AuthConsumerScopeDetail>;
 
     formStepName = FormStepName;
     activeStep: FormStepName;
@@ -106,6 +107,7 @@ export class ConsumerCreateModalComponent {
         this.newConsumer = new AuthConsumer();
         this.signinToken = null;
         this.selectedGroupKeys = null;
+        this.selectedScopeDetails = [];
 
         this.activeStep = FormStepName.INFORMATIONS;
         this.maxActivedStep = this.activeStep;
@@ -146,8 +148,7 @@ export class ConsumerCreateModalComponent {
 
     save(): void {
         this.newConsumer.group_ids = this.groups.filter(g => this.selectedGroupKeys.find(k => k === g.key())).map(g => g.id);
-        // TODO get and send scopes
-        // this.newConsumer.scopes = this.selectedScopeKeys;
+        this.newConsumer.scope_details = this.selectedScopeDetails;
 
         this.loading = true;
         this._cd.markForCheck();
@@ -190,6 +191,10 @@ export class ConsumerCreateModalComponent {
     }
 
     clickNext() {
+        if (!this.isValidStep(this.activeStep)) {
+            return;
+        }
+
         switch (this.activeStep) {
             case FormStepName.INFORMATIONS:
                 this.activeStep = FormStepName.GROUPS;
@@ -206,10 +211,14 @@ export class ConsumerCreateModalComponent {
         if (this.maxActivedStep < this.activeStep) {
             this.maxActivedStep = this.activeStep;
         }
+
         this._cd.markForCheck();
     }
 
     clickOpenStep(step: FormStepName) {
+        if (step > this.activeStep && !this.isValidStep(this.activeStep)) {
+            return;
+        }
         if (step === this.activeStep) {
             return;
         }
@@ -217,5 +226,28 @@ export class ConsumerCreateModalComponent {
             this.activeStep = step;
         }
         this._cd.markForCheck();
+    }
+
+    isValidStep(step: FormStepName): boolean {
+        switch (step) {
+            case FormStepName.INFORMATIONS:
+                return this.newConsumer.name && this.newConsumer.name !== '';
+            case FormStepName.GROUPS:
+                return true;
+            case FormStepName.SCOPES:
+                return this.selectedScopeDetails.length > 0;
+            default:
+                return false;
+        }
+    }
+
+    onScopeDetailChange(detail: AuthConsumerScopeDetail) {
+        for (let i = 0; i < this.selectedScopeDetails.length; i++) {
+            if (this.selectedScopeDetails[i].scope === detail.scope) {
+                this.selectedScopeDetails[i] = detail;
+                return
+            }
+        }
+        this.selectedScopeDetails.push(detail);
     }
 }

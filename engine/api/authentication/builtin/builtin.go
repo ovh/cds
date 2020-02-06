@@ -90,6 +90,9 @@ func NewConsumer(ctx context.Context, db gorp.SqlExecutor, name, description str
 	if len(scopes) == 0 {
 		return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "built in consumer creation requires at least one scope to be set")
 	}
+	if err := scopes.IsValid(); err != nil {
+		return nil, "", err
+	}
 	// If parent scopes length equals 0 this means all scopes else checks that given scope is in parent scopes
 	if len(parentConsumer.ScopeDetails) > 0 {
 		for i := range scopes {

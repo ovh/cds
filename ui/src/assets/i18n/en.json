@@ -189,6 +189,8 @@
   "common_audit": "Audit",
   "common_advanced": "Advanced",
   "common_all": "All",
+  "common_read": "Read",
+  "common_write": "Write",
   "common_application": "Application",
   "common_application_title": "Application: ",
   "common_applications": "Applications",
