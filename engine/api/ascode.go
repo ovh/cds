@@ -196,12 +196,18 @@ func (api *API) postResyncPRAsCodeHandler() service.Handler {
 			if err != nil {
 				return err
 			}
+			if len(apps) == 0 {
+				return sdk.WrapError(sdk.ErrApplicationNotFound, "unable to load application as code key:%s fromRepo:%s", key, fromRepo)
+			}
 			app = &apps[0]
 		} else {
 			var err error
 			app, err = application.LoadByName(api.mustDB(), api.Cache, key, appName)
 			if err != nil {
 				return err
+			}
+			if app == nil {
+				return sdk.WrapError(sdk.ErrApplicationNotFound, "unable to load application %s", appName)
 			}
 		}
 

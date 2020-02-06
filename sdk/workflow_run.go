@@ -131,7 +131,7 @@ func (r *WorkflowRun) Tag(tag, value string) bool {
 	return false
 }
 
-// TagExists return true if tag already exits
+// TagExists returns true if tag already exists
 func (r *WorkflowRun) TagExists(tag string) bool {
 	for i := range r.Tags {
 		if r.Tags[i].Tag == tag {
