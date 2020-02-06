@@ -10,5 +10,39 @@
 	<atom:link href="https://ovh.github.io/cds/development/sdk/index.xml" rel="self" type="application/rss+xml" />
     
     
+    <item>
+      <title>Token creation</title>
+      <link>https://ovh.github.io/cds/development/sdk/token/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/development/sdk/token/</guid>
+      <description>There are two types of token in CDS:
+ signin token: can also be named &amp;ldquo;token&amp;rdquo; when using CDS command line. This token is like a scoped &amp;ldquo;password&amp;rdquo; and can be used to sign-in to CDS. You can generate a sign-in token with the web ui or with CDS command line.
+ session token: you should not manipulate it directly as its life is limited. This token is used to authenticate an API call and will be created when you successfully sign-in to CDS.</description>
+    </item>
+    
+    <item>
+      <title>SDK Golang</title>
+      <link>https://ovh.github.io/cds/development/sdk/golang/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/development/sdk/golang/</guid>
+      <description>How to use it? You have to initialize a cdsclient:
+client := cdsclient.New(cdsclient.Config{ Host: host, }) res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{ &amp;quot;token&amp;quot;: &amp;quot;&amp;lt;signin-token-value&amp;gt;&amp;quot;, }) client = cdsclient.New(cdsclient.Config{ Host: host, SessionToken: res.Token, })  and then, you can use it:
+// list workers workers, err := client.WorkerList() // list users users, err := client.UserList() // list workflow runs runs, err := client.WorkflowRunList(...)  Go on https://godoc.org/github.com/ovh/cds/sdk/cdsclient to see all available funcs.</description>
+    </item>
+    
+    <item>
+      <title>SDK Rust</title>
+      <link>https://ovh.github.io/cds/development/sdk/rust/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/development/sdk/rust/</guid>
+      <description>Prerequisites Rust CDS SDK uses async/await from Rust stable version so you need a compatible version with async/await.
+How to use it? You have to initialize a cdsclient:
+use std::env; use sdk_cds::Client; fn main() { let cds_host = &amp;quot;http://localhost:8081&amp;quot;; let cds_token = &amp;quot;mytoken&amp;quot;; let client = Client::new(cds_host, cds_token); }  and then, you can use it:
+// list projects let projects = client.projects().await.unwrap(); // list applications of project with key TEST let applications = client.</description>
+    </item>
+    
   </channel>
 </rss>

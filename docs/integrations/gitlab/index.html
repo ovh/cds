@@ -17,20 +17,11 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="The GitLab Integration have to be configured on your CDS by a CDS Administrator.
-This integration allows you to link a Git Repository hosted by GitLab to a CDS Application.
-This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab. More informations  How to configure GitLab integration What you need to perform the following steps:">
+    content="">
 <meta property="og:description"
-    content="The GitLab Integration have to be configured on your CDS by a CDS Administrator.
-This integration allows you to link a Git Repository hosted by GitLab to a CDS Application.
-This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab. More informations  How to configure GitLab integration What you need to perform the following steps:">
+    content="">
 <meta name="twitter:description"
-    content="The GitLab Integration have to be configured on your CDS by a CDS Administrator.
-This integration allows you to link a Git Repository hosted by GitLab to a CDS Application.
-This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab. More informations  How to configure GitLab integration What you need to perform the following steps:">
+    content="">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/gitlab/">
 <meta property="og:title" content="GitLab">
 <meta name="twitter:title" content="GitLab">
@@ -258,13 +249,57 @@ This integration enables some features:
 	
 		
 			
-<a class="item" data-title="GitHub" href="https://ovh.github.io/cds/docs/integrations/github/"></a>
+<div class="item" data-title="GitHub">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="GitHub Authentication" href="https://ovh.github.io/cds/docs/integrations/github/github_authentication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitLab" href="https://ovh.github.io/cds/docs/integrations/gitlab/"></a>
+<a class="item" data-title="GitHub Repository Manager" href="https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="GitLab">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="GitLab Authentication" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitLab Repository Manager" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_repository_manager/"></a>
+
+		
+	
+
+	</div>
+</div>
 
 		
 	
@@ -326,6 +361,12 @@ This integration enables some features:
 	
 		
 			
+<a class="item" data-title="LDAP Authentication" href="https://ovh.github.io/cds/docs/integrations/ldap/"></a>
+
+		
+	
+		
+			
 <a class="item" data-title="Mesos/Marathon" href="https://ovh.github.io/cds/docs/integrations/marathon/"></a>
 
 		
@@ -381,8 +422,11 @@ This integration enables some features:
 
 			<div id="docsContent">
         		
-
-<h1>GitLab</h1>
+	 
+    
+    
+    
+<h1>GitLab Authentication</h1>
 
 
 
@@ -390,31 +434,32 @@ This integration enables some features:
 <ul>
 <li>
 <ul>
+<li><a href="#resume-on-what-you-have-to-do-before-using-the-github-authentication-integration">Resume on what you have to do before using the GitHub Authentication Integration</a></li>
 <li><a href="#how-to-configure-gitlab-integration">How to configure GitLab integration</a>
 <ul>
 <li><a href="#create-a-cds-application-on-gitlab">Create a CDS application on GitLab</a></li>
 <li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
 </ul></li>
-<li><a href="#start-the-vcs-µservice">Start the vcs µService</a></li>
-<li><a href="#vcs-events">Vcs events</a></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<p>The GitLab Integration have to be configured on your CDS by a CDS Administrator.</p>
+<p>The GitHub Authentication Integration have to be configured on your CDS by a CDS Administrator.</p>
 
-<p>This integration allows you to link a Git Repository hosted by GitLab
-to a CDS Application.</p>
+<p>This integration allows you to authenticate user with the GitHub Authentication.</p>
 
-<p>This integration enables some features:</p>
+<h2 id="resume-on-what-you-have-to-do-before-using-the-github-authentication-integration">Resume on what you have to do before using the GitHub Authentication Integration</h2>
 
-<ul>
-<li><a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-webhook/">Git Repository Webhook</a></li>
-<li>Easy to use action <a href="https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> and <a href="https://ovh.github.io/cds/docs/actions/builtin-gitclone/">GitClone</a> for advanced usage</li>
-<li>Send build notifications on your Pull-Requests and Commits on GitLab. <a href="https://ovh.github.io/cds/docs/concepts/workflow/notifications/#vcs-notifications">More informations</a></li>
-</ul>
+<ol>
+<li>As a CDS Administrator:
+
+<ol>
+<li>Create a CDS application on GitLab</li>
+<li>Complete CDS Configuration File</li>
+</ol></li>
+</ol>
 
 <h2 id="how-to-configure-gitlab-integration">How to configure GitLab integration</h2>
 
@@ -430,7 +475,7 @@ to a CDS Application.</p>
 
 <ul>
 <li>Name: <strong>CDS</strong></li>
-<li>Redirect URI: <strong><a href="https://your-cds-api/repositories_manager/oauth2/callback">https://your-cds-api/repositories_manager/oauth2/callback</a></strong></li>
+<li>Redirect URI: <strong>http(s)://<your-cds-ui>/auth/callback/gitlab#</strong></li>
 </ul>
 
 <p>Scopes:</p>
@@ -443,53 +488,39 @@ to a CDS Application.</p>
 
 <h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
 
-<p>Set value to <code>appId</code> and <code>secret</code></p>
+<p>Edit the toml file:</p>
 
-<pre><code class="language-yaml">    [vcs.servers.Gitlab]
+<ul>
+<li>section <code>[api.auth.gitlab]</code>
 
-      # URL of this VCS Server
+<ul>
+<li>set a value to <code>applicationID</code> and <code>secret</code></li>
+<li>enable the signin with <code>enabled = true</code></li>
+<li>if you want to let user signup with GitHub, set <code>signupDisabled = true</code>
+<br /></li>
+</ul></li>
+</ul>
+
+<pre><code class="language-toml">[api.auth.gitlab]
+
+      #######
+      # Gitlab OAuth Application ID
+      applicationID = &quot;&quot;
+      enabled = false
+
+      # Gitlab OAuth Application Secret
+      secret = &quot;&quot;
+      signupDisabled = false
+
+      #######
+      # Gitlab URL
       url = &quot;https://gitlab.com&quot;
-
-      [vcs.servers.Gitlab.gitlab]
-
-        #######
-        # CDS &lt;-&gt; GitLab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/
-        ########
-        appId = &quot;xxxx&quot;
-
-        # Does polling is supported by VCS Server
-        disablePolling = false
-
-        # Does webhooks are supported by VCS Server
-        disableWebHooks = false
-
-        # If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
-        # proxyWebhook = &quot;&quot;
-        secret = &quot;xxxx&quot;
-
-        [vcs.servers.Gitlab.gitlab.Status]
-
-          # Set to true if you don't want CDS to push statuses on the VCS server
-          # disable = false
-
-          # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
-          # showDetail = false
 </code></pre>
 
-<h2 id="start-the-vcs-µservice">Start the vcs µService</h2>
-
-<pre><code class="language-bash">$ engine start vcs
-
-# you can also start CDS api and vcs in the same process:
-$ engine start api vcs
-</code></pre>
-
-<h2 id="vcs-events">Vcs events</h2>
-
-<p>For now, CDS supports push events. CDS uses this push event to remove existing runs for deleted branches (24h after branch deletion).</p>
 
 
-
+    
+    
 
 			</div>
 		</section><footer>

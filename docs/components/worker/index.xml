@@ -109,19 +109,6 @@ this a a line in the file, with a CDS variable 2  if it&amp;rsquo;s the RUN n°2
     </item>
     
     <item>
-      <title>update</title>
-      <link>https://ovh.github.io/cds/docs/components/worker/update/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/components/worker/update/</guid>
-      <description> worker update worker update [flags]
-Synopsis Update worker from CDS API or from CDS Release
-Update from Github:
- worker update --from-github  Update from your CDS API:
- worker update --api https://your-cds-api.localhost  worker update [flags]  Options  --api string URL of CDS API --from-github Update binary from latest github release --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.  SEE ALSO  worker - CDS Worker  </description>
-    </item>
-    
-    <item>
       <title>upload</title>
       <link>https://ovh.github.io/cds/docs/components/worker/upload/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

@@ -18,16 +18,16 @@
 
 <meta name="description"
     content="Run with Docker-Compose The docker-compose.yml contains:
- cds-db service with a PostgreSQL cds-cache service with a Redis cds-migrate service to prepare DB tables cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
-How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest $ curl https://raw.githubusercontent.com/ovh/cds/0.43.1/docker-compose.yml -o docker-compose.yml $ export HOSTNAME=$(hostname) # Get the latest version $ docker pull ovhcom/cds-ui:latest $ docker pull ovhcom/cds-engine:latest # Create PG database $ docker-compose up --no-recreate -d cds-db # check if DB is up # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API, UI and hooks µservice $ docker-compose up -d cds-api cds-ui cds-hooks   Create the first user with WebUI  Open a browser on http://localhost:8080/account/signup, then register a new user admin, with an email admin@localhost.">
+ cds-db service with a PostgreSQL cds-cache service with a Redis elasticsearch service with an Elasticsearch cds-migrate service to prepare DB tables cds-api service cds-ui service cds-elasticsearch service cds-hatchery-swarm service cds-hatchery-local service cds-vcs service cds-repositories service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
+How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest &amp;&amp; mkdir -p tools/smtpmock $ curl https://raw.">
 <meta property="og:description"
     content="Run with Docker-Compose The docker-compose.yml contains:
- cds-db service with a PostgreSQL cds-cache service with a Redis cds-migrate service to prepare DB tables cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
-How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest $ curl https://raw.githubusercontent.com/ovh/cds/0.43.1/docker-compose.yml -o docker-compose.yml $ export HOSTNAME=$(hostname) # Get the latest version $ docker pull ovhcom/cds-ui:latest $ docker pull ovhcom/cds-engine:latest # Create PG database $ docker-compose up --no-recreate -d cds-db # check if DB is up # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API, UI and hooks µservice $ docker-compose up -d cds-api cds-ui cds-hooks   Create the first user with WebUI  Open a browser on http://localhost:8080/account/signup, then register a new user admin, with an email admin@localhost.">
+ cds-db service with a PostgreSQL cds-cache service with a Redis elasticsearch service with an Elasticsearch cds-migrate service to prepare DB tables cds-api service cds-ui service cds-elasticsearch service cds-hatchery-swarm service cds-hatchery-local service cds-vcs service cds-repositories service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
+How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest &amp;&amp; mkdir -p tools/smtpmock $ curl https://raw.">
 <meta name="twitter:description"
     content="Run with Docker-Compose The docker-compose.yml contains:
- cds-db service with a PostgreSQL cds-cache service with a Redis cds-migrate service to prepare DB tables cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
-How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest $ curl https://raw.githubusercontent.com/ovh/cds/0.43.1/docker-compose.yml -o docker-compose.yml $ export HOSTNAME=$(hostname) # Get the latest version $ docker pull ovhcom/cds-ui:latest $ docker pull ovhcom/cds-engine:latest # Create PG database $ docker-compose up --no-recreate -d cds-db # check if DB is up # check if last log is &quot;LOG: database system is ready to accept connections&quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot; # run API, UI and hooks µservice $ docker-compose up -d cds-api cds-ui cds-hooks   Create the first user with WebUI  Open a browser on http://localhost:8080/account/signup, then register a new user admin, with an email admin@localhost.">
+ cds-db service with a PostgreSQL cds-cache service with a Redis elasticsearch service with an Elasticsearch cds-migrate service to prepare DB tables cds-api service cds-ui service cds-elasticsearch service cds-hatchery-swarm service cds-hatchery-local service cds-vcs service cds-repositories service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
+How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest &amp;&amp; mkdir -p tools/smtpmock $ curl https://raw.">
 <meta property="og:url" content="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/">
 <meta property="og:title" content="Docker Compose">
 <meta name="twitter:title" content="Docker Compose">
@@ -240,7 +240,9 @@ How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest $ curl https://raw.gi
 <ul>
 <li><a href="#run-with-docker-compose">Run with Docker-Compose</a></li>
 <li><a href="#how-to-run">How to run</a></li>
-<li><a href="#next-with-actions-plugins">Next with Actions, Plugins</a></li>
+<li><a href="#next-with-swarm-hatchery">Next with Swarm Hatchery</a></li>
+<li><a href="#setup-connection-with-a-vcs">Setup connection with a VCS</a></li>
+<li><a href="#then-next-with-actions-plugins">Then, next with Actions, Plugins</a></li>
 <li><a href="#go-further">Go further</a></li>
 </ul></li>
 </ul>
@@ -250,90 +252,85 @@ How to run $ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest $ curl https://raw.gi
 
 <h2 id="run-with-docker-compose">Run with Docker-Compose</h2>
 
-<p>The <a href="https://github.com/ovh/cds/blob/0.43.1/docker-compose.yml">docker-compose.yml</a> contains:</p>
+<p>The <a href="https://github.com/ovh/cds/blob/master/docker-compose.yml">docker-compose.yml</a> contains:</p>
 
 <ul>
 <li>cds-db service with a PostgreSQL</li>
 <li>cds-cache service with a Redis</li>
+<li>elasticsearch service with an Elasticsearch</li>
 <li>cds-migrate service to prepare DB tables</li>
 <li>cds-api service</li>
 <li>cds-ui service</li>
+<li>cds-elasticsearch service</li>
 <li>cds-hatchery-swarm service</li>
 <li>cds-hatchery-local service</li>
+<li>cds-vcs service</li>
+<li>cds-repositories service</li>
 </ul>
 
 <p>Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.</p>
 
 <h2 id="how-to-run">How to run</h2>
 
-<pre><code class="language-bash">$ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest
-$ curl https://raw.githubusercontent.com/ovh/cds/0.43.1/docker-compose.yml -o docker-compose.yml
+<pre><code class="language-bash">$ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest &amp;&amp; mkdir -p tools/smtpmock
+$ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml
 $ export HOSTNAME=$(hostname)
 
 # Get the latest version
 $ docker pull ovhcom/cds-engine:latest
 
-# Create PG database
-$ docker-compose up --no-recreate -d cds-db
+# Create PG database, redis and smtp mock server
+$ docker-compose up --no-recreate -d cds-db cds-cache elasticsearch
 
 # check if DB is up
 # check if last log is &quot;LOG: database system is ready to accept connections&quot;
 $ docker-compose logs
 
 $ docker-compose up --no-recreate cds-migrate
-# You should have this log: &quot;cds_cds-migrate_1 exited with code 0&quot;
+# You should have this log: &quot;cdstest_cds-migrate_1 exited with code 0&quot;
+
+# prepare initial configuration.
+$ docker-compose up cds-prepare
+
+# disable the smtp server
+$ export CDS_EDIT_CONFIG=&quot;api.smtp.disable=true&quot;
+$ docker-compose up cds-edit-config
 
 # run API, UI and hooks µservice
-$ docker-compose up -d cds-api cds-ui cds-hooks
-</code></pre>
+$ docker-compose up -d cds-api
 
-<ul>
-<li>Create the first user with WebUI</li>
-</ul>
+# the INIT_TOKEN variable will be used by cdsctl to create first admin user
+$ TOKEN_CMD=$(docker logs cdstest_cds-prepare_1|grep TOKEN) &amp;&amp; $TOKEN_CMD
 
-<p>Open a browser on <a href="http://localhost:8080/account/signup">http://localhost:8080/account/signup</a>, then register a new user <code>admin</code>,
-with an email <code>admin@localhost.local</code> for example.
-As there is no SMTP server configured in docker-compose.yml file,
-run <code>docker-compose logs</code> to get URL for validate the registration.</p>
-
-<pre><code class="language-bash">$ docker-compose logs|grep 'verify/admin'
-</code></pre>
-
-<p>After registration on UI, keep the password displayed, we will use it in next step.</p>
-
-<ul>
-<li>Login with cdsctl</li>
-</ul>
-
-<p>Please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
-If you don&rsquo;t want to use the keychain, you can select the version i386.</p>
-
-<p>See: <a href="https://ovh.github.io/cds/docs/components/cdsctl/">cdsctl documentation</a></p>
-
-<p>You can download cdsctl CLI from <a href="http://localhost:8080/settings/downloads">http://localhost:8080/settings/downloads</a></p>
-
-<pre><code class="language-bash"># on a Linux workstation:
-$ curl http://localhost:8081/download/cdsctl/linux/amd64 -o cdsctl
-# on a osX workstation, it's curl http://localhost:8081/download/cdsctl/darwin/amd64 -o cdsctl
+# create user
+$ curl http://localhost:8081/download/cdsctl/linux/amd64\?variant=nokeychain -o cdsctl
 $ chmod +x cdsctl
-$ ./cdsctl login --api-url http://localhost:8081 -u admin
-CDS API URL: http://localhost:8081
-Username: admin
-Password:
-          You didn't specify config file location; /Users/yourhome/.cdsrc will be used.
-Login successful
+$ ./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
+# enter a strong password
+
+# verify the user
+$ VERIFY_CMD=$(docker-compose logs cds-api|grep 'cdsctl signup verify'|cut -d '$' -f2|xargs) &amp;&amp; ./$VERIFY_CMD
+
+# run cdsctl 
+$ ./cdsctl user me
+
+# should returns something like:
+#./cdsctl user me
+#created   2019-12-18 14:25:53.089718 +0000 UTC
+#fullname  admin
+#id        vvvvv-dddd-eeee-dddd-fffffffff
+#ring      ADMIN
+#username  admin
+
+# run others services
+$ docker-compose up -d cds-ui cds-hooks cds-hatchery-local cds-elasticsearch
 </code></pre>
 
 <ul>
-<li>Test cdsctl</li>
+<li>Login on WebUI</li>
 </ul>
 
-<pre><code class="language-bash">$ ./cdsctl user me
-CDS API:http://localhost:8081
-email       admin@localhost.local
-username    admin
-fullname    Administrator
-</code></pre>
+<p>Open a browser on <a href="http://localhost:8080/account/signup">http://localhost:8080/account/signup</a>, then login with the user <code>admin</code>,</p>
 
 <ul>
 <li>Import a workflow template</li>
@@ -375,35 +372,6 @@ Workflow successfully pushed !
 .cds/MyFirstWorkflow-prod.env.yml
 </code></pre>
 
-<p>Before running your new Workflow, we have to create a worker model and start a Hatchery for spawning workers.</p>
-
-<ul>
-<li>Create our first worker model</li>
-</ul>
-
-<pre><code class="language-bash">$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml
-Worker model go-official-1.11.4-stretch imported with success
-</code></pre>
-
-<ul>
-<li>Hatchery Docker Swarm</li>
-</ul>
-
-<p>The <a href="https://github.com/ovh/cds/blob/0.43.1/docker-compose.yml">docker-compose.yml</a> runs hatchery belonging to the <code>shared.infra</code> groups.</p>
-
-<p>Please check that your Docker installation allows Docker API calls on <code>tcp://${HOSTNAME}:2375</code>
-Otherwise, please update environment variable <code>DOCKER_HOST: tcp://${HOSTNAME}:2375</code> in
-<a href="https://github.com/ovh/cds/blob/0.43.1/docker-compose.yml">docker-compose.yml</a></p>
-
-<pre><code class="language-bash">$ export HOSTNAME=$(hostname)
-$ # For osX user run this container. This will allow hatchery:swarm to communicate with your docker daemon
-$ docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 2375:2375 bobrik/socat TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
-$ docker-compose up -d cds-hatchery-swarm
-</code></pre>
-
-<p>A <code>swarm hatchery</code> spawns CDS Workers inside dedicated containers.
-This ensures isolation of the workspaces and resources.</p>
-
 <ul>
 <li>Run CDS Workflow!</li>
 </ul>
@@ -430,7 +398,61 @@ There is a Run Condition on it <code>cds.manual = true</code>:</p>
 
 <p><img src="https://ovh.github.io/cds/images/ready_to_run_docker_compose_build_pipeline.png" alt="Build Pipeline" /></p>
 
-<h2 id="next-with-actions-plugins">Next with Actions, Plugins</h2>
+<h2 id="next-with-swarm-hatchery">Next with Swarm Hatchery</h2>
+
+<ul>
+<li>Create our first worker model</li>
+</ul>
+
+<p>The previous workflow was launched with the Hatchery Local. This hatchery is only for dev purpose, we will
+now create a Docker worker model and run the Hatchery Docker Swarm.</p>
+
+<pre><code class="language-bash">$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml
+Worker model go-official-1.11.4-stretch imported with success
+</code></pre>
+
+<ul>
+<li>Hatchery Docker Swarm</li>
+</ul>
+
+<p>The <a href="https://github.com/ovh/cds/blob/master/docker-compose.yml">docker-compose.yml</a> runs hatchery belonging to the <code>shared.infra</code> groups.</p>
+
+<p>Please check that your Docker installation allows Docker API calls on <code>tcp://${HOSTNAME}:2375</code>
+Otherwise, please update environment variable <code>DOCKER_HOST: tcp://${HOSTNAME}:2375</code> in
+<a href="https://github.com/ovh/cds/blob/master/docker-compose.yml">docker-compose.yml</a></p>
+
+<pre><code class="language-bash">$ export HOSTNAME=$(hostname)
+$ # For osX user run this container. This will allow hatchery:swarm to communicate with your docker daemon
+$ docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 2375:2375 bobrik/socat TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
+$ docker-compose up -d cds-hatchery-swarm
+</code></pre>
+
+<p>A <code>swarm hatchery</code> spawns CDS Workers inside dedicated containers.
+This ensures isolation of the workspaces and resources.</p>
+
+<h2 id="setup-connection-with-a-vcs">Setup connection with a VCS</h2>
+
+<pre><code class="language-bash"># READ THE section https://ovh.github.io/cds/docs/integrations/github/#create-a-cds-application-on-github to generate the clientId and clientSecret.
+# Short version: 
+# go on https://github.com/settings/applications/new
+# Application name: cds-test-docker-compose
+# Homepage URL: http://localhost:8080
+# Authorization callback: http://localhost:8080/cdsapi/repositories_manager/oauth2/callback
+# send click on register application.
+$ export CDS_EDIT_CONFIG=&quot;vcs.servers.github.github.clientId=xxxxx vcs.servers.github.github.clientSecret=xxxxx &quot; 
+$ docker-compose up cds-edit-config
+$ docker-compose up -d cds-vcs cds-repositories
+</code></pre>
+
+<p>Notice that here, you have the VCS and Repositories services up and running.</p>
+
+<p><em>vcs</em>: The aim of this µService is to communicate with Repository Manager as GitHub, GitLab, Bitbucket…
+But, as your CDS is not probably public, GitHub won&rsquo;t be able to call your CDS to automatically run your workflow on each git push.</p>
+
+<p><em>repositories</em>: this µService is used to enable the as-code feature.
+Users can store CDS Files on their repositories. This service clones user repositories on local filesystem.</p>
+
+<h2 id="then-next-with-actions-plugins">Then, next with Actions, Plugins</h2>
 
 <ul>
 <li>Import actions, example:</li>

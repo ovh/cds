@@ -258,13 +258,57 @@ This integration enables some features:
 	
 		
 			
-<a class="item" data-title="GitHub" href="https://ovh.github.io/cds/docs/integrations/github/"></a>
+<div class="item" data-title="GitHub">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="GitHub Authentication" href="https://ovh.github.io/cds/docs/integrations/github/github_authentication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitLab" href="https://ovh.github.io/cds/docs/integrations/gitlab/"></a>
+<a class="item" data-title="GitHub Repository Manager" href="https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="GitLab">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="GitLab Authentication" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitLab Repository Manager" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_repository_manager/"></a>
+
+		
+	
+
+	</div>
+</div>
 
 		
 	
@@ -321,6 +365,12 @@ This integration enables some features:
 
 	</div>
 </div>
+
+		
+	
+		
+			
+<a class="item" data-title="LDAP Authentication" href="https://ovh.github.io/cds/docs/integrations/ldap/"></a>
 
 		
 	
@@ -463,7 +513,7 @@ $ engine config new &gt; config.toml
 </code></pre>
 
 <ul>
-<li>section <code>[vcs.UI.http]</code>
+<li>section <code>[vcs.ui.http]</code>
 
 <ul>
 <li>URL of CDS UI. This URL will be used by Bitbucket Cloud as a callback on Oauth2. This url must be accessible by users&rsquo; browsers.
@@ -471,8 +521,8 @@ $ engine config new &gt; config.toml
 </ul></li>
 </ul>
 
-<pre><code class="language-toml">    [vcs.UI.http]
-      url = &quot;http://localhost:4200&quot;
+<pre><code class="language-toml">    [vcs.ui.http]
+      url = &quot;http://localhost:8080&quot;
 </code></pre>
 
 <ul>

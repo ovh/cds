@@ -28,8 +28,19 @@ engine config check  SEE ALSO  engine config - Manage CDS Configuration  </descr
       
       <guid>https://ovh.github.io/cds/docs/components/engine/config/edit/</guid>
       <description> engine config edit Edit a CDS configuration file
-Synopsis $ engine config edit &amp;ndash;output   key=value key=value
-engine config edit [flags]  Examples $ engine config edit --output new.conf conf.toml log.level=debug hatchery.swarm.commonConfiguration.name=hatchery-swarm-name  Options  --output string output file  SEE ALSO  engine config - Manage CDS Configuration  </description>
+Synopsis $ engine config edit  key=value key=value
+engine config edit [flags]  Examples $ engine config edit conf.toml log.level=debug hatchery.swarm.commonConfiguration.name=hatchery-swarm-name  Options  --env Print configuration as environment variable --output string output file  SEE ALSO  engine config - Manage CDS Configuration  </description>
+    </item>
+    
+    <item>
+      <title>init-token</title>
+      <link>https://ovh.github.io/cds/docs/components/engine/config/init-token/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/engine/config/init-token/</guid>
+      <description> engine config init-token Generate/Regenerate an init token for a given CDS configuration file
+Synopsis $ engine config init-token
+engine config init-token [flags]  Options  --config string config file --remote-config string (optional) consul configuration store --remote-config-key string (optional) consul configuration store key (default &amp;quot;cds/config.api.toml&amp;quot;) --vault-addr string (optional) Vault address to fetch secrets from vault (example: https://vault.mydomain.net:8200) --vault-token string (optional) Vault token to fetch secrets from vault  SEE ALSO  engine config - Manage CDS Configuration  </description>
     </item>
     
     <item>
@@ -42,7 +53,18 @@ engine config edit [flags]  Examples $ engine config edit --output new.conf conf
 Synopsis Generate the whole configuration file $ engine config new &amp;gt; conf.toml
 you can compose your file configuration this will generate a file configuration containing api and hatchery:local µService $ engine config new api hatchery:local
 For advanced usage, Debug and Tracing section can be generated as: $ engine config new debug tracing [µService(s)&amp;hellip;]
-All options $ engine config new [debug] [tracing] [api] [ui] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]</description>
+All options $ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]</description>
+    </item>
+    
+    <item>
+      <title>regen</title>
+      <link>https://ovh.github.io/cds/docs/components/engine/config/regen/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/engine/config/regen/</guid>
+      <description> engine config regen Regen tokens and keys for given CDS configuration file
+Synopsis $ engine config regen  
+engine config regen [flags]  Options  --env Print configuration as environment variable  SEE ALSO  engine config - Manage CDS Configuration  </description>
     </item>
     
   </channel>

@@ -17,14 +17,14 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="Get import workflow as code operation details    URL /import/&lt;project-key&gt;/&lt;uuid&gt;     Method GET   Permissions Auth: true   Code getImportAsCodeHandler    Description This route helps you to know if a &ldquo;import as code&rdquo; is over, and the details of the performed operation
-Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78-77868fde75ec&quot;,&quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{}},&quot;load_files&quot;:{&quot;pattern&quot;:&quot;.cds/**/*.yml&quot;,&quot;results&quot;:{&quot;w-go-repo.yml&quot;:&quot;bmFtZTogdy1nby1yZXBvCgkJCQkJdmVyc2lvbjogdjEuMAoJCQkJCXBpcGVsaW5lOiBidWlsZAoJCQkJCWFwcGxpY2F0aW9uOiBnby1yZXBvCgkJCQkJcGlwZWxpbmVfaG9va3M6CgkJCQkJLSB0eXBlOiBSZXBvc2l0b3J5V2ViSG9vawoJCQkJCQ==&quot;}},&quot;status&quot;:2}  Import workflow as code    URL /import/&lt;project-key&gt;     Method POST   Permissions Auth: true   Code postImportAsCodeHandler    Description This the entrypoint to perform workflow as code.">
+    content="Get import workflow as code operation details    URL /import/&lt;project-key&gt;/&lt;uuid&gt;     Method GET   Permissions Auth: true   Scopes Project   Code getImportAsCodeHandler    Description This route helps you to know if a &ldquo;import as code&rdquo; is over, and the details of the performed operation
+Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78-77868fde75ec&quot;,&quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{}},&quot;load_files&quot;:{&quot;pattern&quot;:&quot;.cds/**/*.yml&quot;,&quot;results&quot;:{&quot;w-go-repo.yml&quot;:&quot;bmFtZTogdy1nby1yZXBvCgkJCQkJdmVyc2lvbjogdjEuMAoJCQkJCXBpcGVsaW5lOiBidWlsZAoJCQkJCWFwcGxpY2F0aW9uOiBnby1yZXBvCgkJCQkJcGlwZWxpbmVfaG9va3M6CgkJCQkJLSB0eXBlOiBSZXBvc2l0b3J5V2ViSG9vawoJCQkJCQ==&quot;}},&quot;status&quot;:2}  Import workflow as code    URL /import/&lt;project-key&gt;     Method POST   Permissions Auth: true   Scopes Project   Code postImportAsCodeHandler    Description This the entrypoint to perform workflow as code.">
 <meta property="og:description"
-    content="Get import workflow as code operation details    URL /import/&lt;project-key&gt;/&lt;uuid&gt;     Method GET   Permissions Auth: true   Code getImportAsCodeHandler    Description This route helps you to know if a &ldquo;import as code&rdquo; is over, and the details of the performed operation
-Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78-77868fde75ec&quot;,&quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{}},&quot;load_files&quot;:{&quot;pattern&quot;:&quot;.cds/**/*.yml&quot;,&quot;results&quot;:{&quot;w-go-repo.yml&quot;:&quot;bmFtZTogdy1nby1yZXBvCgkJCQkJdmVyc2lvbjogdjEuMAoJCQkJCXBpcGVsaW5lOiBidWlsZAoJCQkJCWFwcGxpY2F0aW9uOiBnby1yZXBvCgkJCQkJcGlwZWxpbmVfaG9va3M6CgkJCQkJLSB0eXBlOiBSZXBvc2l0b3J5V2ViSG9vawoJCQkJCQ==&quot;}},&quot;status&quot;:2}  Import workflow as code    URL /import/&lt;project-key&gt;     Method POST   Permissions Auth: true   Code postImportAsCodeHandler    Description This the entrypoint to perform workflow as code.">
+    content="Get import workflow as code operation details    URL /import/&lt;project-key&gt;/&lt;uuid&gt;     Method GET   Permissions Auth: true   Scopes Project   Code getImportAsCodeHandler    Description This route helps you to know if a &ldquo;import as code&rdquo; is over, and the details of the performed operation
+Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78-77868fde75ec&quot;,&quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{}},&quot;load_files&quot;:{&quot;pattern&quot;:&quot;.cds/**/*.yml&quot;,&quot;results&quot;:{&quot;w-go-repo.yml&quot;:&quot;bmFtZTogdy1nby1yZXBvCgkJCQkJdmVyc2lvbjogdjEuMAoJCQkJCXBpcGVsaW5lOiBidWlsZAoJCQkJCWFwcGxpY2F0aW9uOiBnby1yZXBvCgkJCQkJcGlwZWxpbmVfaG9va3M6CgkJCQkJLSB0eXBlOiBSZXBvc2l0b3J5V2ViSG9vawoJCQkJCQ==&quot;}},&quot;status&quot;:2}  Import workflow as code    URL /import/&lt;project-key&gt;     Method POST   Permissions Auth: true   Scopes Project   Code postImportAsCodeHandler    Description This the entrypoint to perform workflow as code.">
 <meta name="twitter:description"
-    content="Get import workflow as code operation details    URL /import/&lt;project-key&gt;/&lt;uuid&gt;     Method GET   Permissions Auth: true   Code getImportAsCodeHandler    Description This route helps you to know if a &ldquo;import as code&rdquo; is over, and the details of the performed operation
-Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78-77868fde75ec&quot;,&quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{}},&quot;load_files&quot;:{&quot;pattern&quot;:&quot;.cds/**/*.yml&quot;,&quot;results&quot;:{&quot;w-go-repo.yml&quot;:&quot;bmFtZTogdy1nby1yZXBvCgkJCQkJdmVyc2lvbjogdjEuMAoJCQkJCXBpcGVsaW5lOiBidWlsZAoJCQkJCWFwcGxpY2F0aW9uOiBnby1yZXBvCgkJCQkJcGlwZWxpbmVfaG9va3M6CgkJCQkJLSB0eXBlOiBSZXBvc2l0b3J5V2ViSG9vawoJCQkJCQ==&quot;}},&quot;status&quot;:2}  Import workflow as code    URL /import/&lt;project-key&gt;     Method POST   Permissions Auth: true   Code postImportAsCodeHandler    Description This the entrypoint to perform workflow as code.">
+    content="Get import workflow as code operation details    URL /import/&lt;project-key&gt;/&lt;uuid&gt;     Method GET   Permissions Auth: true   Scopes Project   Code getImportAsCodeHandler    Description This route helps you to know if a &ldquo;import as code&rdquo; is over, and the details of the performed operation
+Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78-77868fde75ec&quot;,&quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{}},&quot;load_files&quot;:{&quot;pattern&quot;:&quot;.cds/**/*.yml&quot;,&quot;results&quot;:{&quot;w-go-repo.yml&quot;:&quot;bmFtZTogdy1nby1yZXBvCgkJCQkJdmVyc2lvbjogdjEuMAoJCQkJCXBpcGVsaW5lOiBidWlsZAoJCQkJCWFwcGxpY2F0aW9uOiBnby1yZXBvCgkJCQkJcGlwZWxpbmVfaG9va3M6CgkJCQkJLSB0eXBlOiBSZXBvc2l0b3J5V2ViSG9vawoJCQkJCQ==&quot;}},&quot;status&quot;:2}  Import workflow as code    URL /import/&lt;project-key&gt;     Method POST   Permissions Auth: true   Scopes Project   Code postImportAsCodeHandler    Description This the entrypoint to perform workflow as code.">
 <meta property="og:url" content="https://ovh.github.io/cds/development/rest/import/">
 <meta property="og:title" content="import">
 <meta name="twitter:title" content="import">
@@ -210,12 +210,6 @@ Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78
 	
 		
 			
-<a class="item" data-title="accesstoken" href="https://ovh.github.io/cds/development/rest/accesstoken/"></a>
-
-		
-	
-		
-			
 <a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
 
 		
@@ -283,12 +277,6 @@ Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78
 		
 			
 <a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
-
-		
-	
-		
-			
-<a class="item" data-title="login" href="https://ovh.github.io/cds/development/rest/login/"></a>
 
 		
 	
@@ -454,6 +442,11 @@ Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>Project</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getImportAsCodeHandler%22">getImportAsCodeHandler</a></td>
 </tr>
@@ -496,6 +489,11 @@ Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>Project</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postImportAsCodeHandler%22">postImportAsCodeHandler</a></td>
 </tr>
@@ -535,6 +533,11 @@ Request Body None  Response Body {&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>Project</td>
 </tr>
 
 <tr>

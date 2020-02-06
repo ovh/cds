@@ -11,6 +11,17 @@
     
     
     <item>
+      <title>Authentication</title>
+      <link>https://ovh.github.io/cds/docs/concepts/authentication/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/concepts/authentication/</guid>
+      <description>Consumer Two type of consumer:
+ first level: GitLab, GitHub, CorporateSSO, LDAP, Local. n level: Builtin.  A builtin consumer can be created by a user. Every builtin consumer should have a parent consumer that can also be another builtin consumer. Using a child consumer you can give permission for all or a part of what its parent can access.
+Groups A consumer includes a list of groups. Wildcard for a first level.</description>
+    </item>
+    
+    <item>
       <title>Job</title>
       <link>https://ovh.github.io/cds/docs/concepts/job/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

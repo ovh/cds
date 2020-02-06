@@ -18,19 +18,13 @@
 
 <meta name="description"
     content=" How to request CDS API? You need two HTTP Headers to request CDS API:
- Session-Token: your-cds-token X-Requested-With: X-CDS-SDK  # List CDS Project curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-CDS-SDK&quot; https://your-cds-api/project  About CDS Token The CDS UI uses a non-persistent token. If you want to play with CDS API, you probably need a persistent token.
-You can generate it with:
- cdsctl login Code it with the Go SDK Call CDS API: POST /login with body {&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;} and header -H &quot;X-Requested-With: X-CDS-SDK&quot;  CDS HTTP Routes  accesstoken action actionBuiltin admin auth bookmarks broadcast config download group hook import integration login mon notification parameter project queue repositories_manager requirement services suggest template ui user variable warning worker workflow  ">
+ Authorization: Bearer cds-session-token  # List CDS Project curl -H &quot;Authorization: Bearer cds-session-token&quot; https://your-cds-api/project   To generate the CDS token please check here  CDS HTTP Routes  action actionBuiltin admin auth bookmarks broadcast config download group hook import integration mon notification parameter project queue repositories_manager requirement services suggest template ui user variable warning worker workflow  ">
 <meta property="og:description"
     content=" How to request CDS API? You need two HTTP Headers to request CDS API:
- Session-Token: your-cds-token X-Requested-With: X-CDS-SDK  # List CDS Project curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-CDS-SDK&quot; https://your-cds-api/project  About CDS Token The CDS UI uses a non-persistent token. If you want to play with CDS API, you probably need a persistent token.
-You can generate it with:
- cdsctl login Code it with the Go SDK Call CDS API: POST /login with body {&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;} and header -H &quot;X-Requested-With: X-CDS-SDK&quot;  CDS HTTP Routes  accesstoken action actionBuiltin admin auth bookmarks broadcast config download group hook import integration login mon notification parameter project queue repositories_manager requirement services suggest template ui user variable warning worker workflow  ">
+ Authorization: Bearer cds-session-token  # List CDS Project curl -H &quot;Authorization: Bearer cds-session-token&quot; https://your-cds-api/project   To generate the CDS token please check here  CDS HTTP Routes  action actionBuiltin admin auth bookmarks broadcast config download group hook import integration mon notification parameter project queue repositories_manager requirement services suggest template ui user variable warning worker workflow  ">
 <meta name="twitter:description"
     content=" How to request CDS API? You need two HTTP Headers to request CDS API:
- Session-Token: your-cds-token X-Requested-With: X-CDS-SDK  # List CDS Project curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-CDS-SDK&quot; https://your-cds-api/project  About CDS Token The CDS UI uses a non-persistent token. If you want to play with CDS API, you probably need a persistent token.
-You can generate it with:
- cdsctl login Code it with the Go SDK Call CDS API: POST /login with body {&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;} and header -H &quot;X-Requested-With: X-CDS-SDK&quot;  CDS HTTP Routes  accesstoken action actionBuiltin admin auth bookmarks broadcast config download group hook import integration login mon notification parameter project queue repositories_manager requirement services suggest template ui user variable warning worker workflow  ">
+ Authorization: Bearer cds-session-token  # List CDS Project curl -H &quot;Authorization: Bearer cds-session-token&quot; https://your-cds-api/project   To generate the CDS token please check here  CDS HTTP Routes  action actionBuiltin admin auth bookmarks broadcast config download group hook import integration mon notification parameter project queue repositories_manager requirement services suggest template ui user variable warning worker workflow  ">
 <meta property="og:url" content="https://ovh.github.io/cds/development/rest/">
 <meta property="og:title" content="REST API">
 <meta name="twitter:title" content="REST API">
@@ -216,12 +210,6 @@ You can generate it with:
 	
 		
 			
-<a class="item" data-title="accesstoken" href="https://ovh.github.io/cds/development/rest/accesstoken/"></a>
-
-		
-	
-		
-			
 <a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
 
 		
@@ -289,12 +277,6 @@ You can generate it with:
 		
 			
 <a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
-
-		
-	
-		
-			
-<a class="item" data-title="login" href="https://ovh.github.io/cds/development/rest/login/"></a>
 
 		
 	
@@ -416,7 +398,6 @@ You can generate it with:
 <li>
 <ul>
 <li><a href="#how-to-request-cds-api">How to request CDS API?</a></li>
-<li><a href="#about-cds-token">About CDS Token</a></li>
 <li><a href="#cds-http-routes">CDS HTTP Routes</a></li>
 </ul></li>
 </ul>
@@ -429,32 +410,23 @@ You can generate it with:
 <p>You need two HTTP Headers to request CDS API:</p>
 
 <ul>
-<li><code>Session-Token: your-cds-token</code></li>
-<li><code>X-Requested-With: X-CDS-SDK</code></li>
+<li><code>Authorization: Bearer cds-session-token</code></li>
 </ul>
 
 <pre><code class="language-bash"># List CDS Project
-curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-CDS-SDK&quot; https://your-cds-api/project
+curl -H &quot;Authorization: Bearer cds-session-token&quot; https://your-cds-api/project
 </code></pre>
 
-<h2 id="about-cds-token">About CDS Token</h2>
+<blockquote class="note">
+    <div><strong></strong> To generate the CDS token please check <a href="https://ovh.github.io/cds/development/sdk/token/">here</a></div>
+</blockquote>
 
-<p>The CDS UI uses a non-persistent token. If you want to play with CDS API, you probably need a persistent token.</p>
-
-<p>You can generate it with:</p>
-
-<ul>
-<li><a href="https://ovh.github.io/cds/docs/components/cdsctl/login/">cdsctl login</a></li>
-<li>Code it with the <a href="https://ovh.github.io/cds/development/sdk/golang/">Go SDK</a></li>
-<li>Call CDS API: POST <code>/login</code> with body <code>{&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;}</code> and header <code>-H &quot;X-Requested-With: X-CDS-SDK&quot;</code></li>
-</ul>
 
 <h2 id="cds-http-routes">CDS HTTP Routes</h2>
 
 
 
 <ul class="children children-ul"><ul>
-	<a href="https://ovh.github.io/cds/development/rest/accesstoken/" >accesstoken</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/action/" >action</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/actionbuiltin/" >actionBuiltin</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/admin/" >admin</a></ul><ul>
@@ -467,7 +439,6 @@ curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-C
 	<a href="https://ovh.github.io/cds/development/rest/hook/" >hook</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/import/" >import</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/integration/" >integration</a></ul><ul>
-	<a href="https://ovh.github.io/cds/development/rest/login/" >login</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/mon/" >mon</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/notification/" >notification</a></ul><ul>
 	<a href="https://ovh.github.io/cds/development/rest/parameter/" >parameter</a></ul><ul>

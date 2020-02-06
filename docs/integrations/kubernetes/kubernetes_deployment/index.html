@@ -258,13 +258,57 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 	
 		
 			
-<a class="item" data-title="GitHub" href="https://ovh.github.io/cds/docs/integrations/github/"></a>
+<div class="item" data-title="GitHub">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="GitHub Authentication" href="https://ovh.github.io/cds/docs/integrations/github/github_authentication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitLab" href="https://ovh.github.io/cds/docs/integrations/gitlab/"></a>
+<a class="item" data-title="GitHub Repository Manager" href="https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="GitLab">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="GitLab Authentication" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitLab Repository Manager" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_repository_manager/"></a>
+
+		
+	
+
+	</div>
+</div>
 
 		
 	
@@ -321,6 +365,12 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
 
 	</div>
 </div>
+
+		
+	
+		
+			
+<a class="item" data-title="LDAP Authentication" href="https://ovh.github.io/cds/docs/integrations/ldap/"></a>
 
 		
 	
@@ -575,13 +625,11 @@ deployment_default_config:
   helm_values:
     value: &quot;&quot;
     type: string
-    description: specify helm values in a YAML file or a URL to configure/override
-      your helm chart
+    description: specify helm values in a YAML file or a URL to configure/override your helm chart
   namespace:
     value: default
     type: string
-    description: Kubernetes namespace in which you want to deploy your components
-      (OPTIONAL)
+    description: Kubernetes namespace in which you want to deploy your components (OPTIONAL)
   timeout:
     value: &quot;180&quot;
     type: string
@@ -589,18 +637,18 @@ deployment_default_config:
 public_configurations:
   your-public-myk8s-integration:
     &quot;api_url&quot;:
-        value: https://your-k8s.localhost.local
-        type: string
+      value: https://your-k8s.localhost.local
+      type: string
     &quot;ca_certificate&quot;:
-        value: |-
-          -----BEGIN CERTIFICATE-----
-          XXX
-          -----END CERTIFICATE-----
-        type: text
-        description: Certificate Authority bundle (PEM format)
+      value: |-
+        -----BEGIN CERTIFICATE-----
+        XXX
+        -----END CERTIFICATE-----
+      type: text
+      description: Certificate Authority bundle (PEM format)
     &quot;token&quot;:
-        value: XXX
-        type: string
+      value: XXX
+      type: string
 </code></pre>
 
 <p>Import the integration with :</p>

@@ -11,15 +11,37 @@
     
     
     <item>
+      <title>sql</title>
+      <link>https://ovh.github.io/cds/docs/components/engine/download/sql/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/engine/download/sql/</guid>
+      <description> engine download sql Download sql files from the latest release on GitHub
+Synopsis Download sql files from the latest release on GitHub
+engine download sql [flags]  Examples engine download sql  Options  --config string config file --remote-config string (optional) consul configuration store --remote-config-key string (optional) consul configuration store key (default &amp;quot;cds/config.api.toml&amp;quot;)  SEE ALSO  engine download - Download binaries  </description>
+    </item>
+    
+    <item>
+      <title>ui</title>
+      <link>https://ovh.github.io/cds/docs/components/engine/download/ui/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/engine/download/ui/</guid>
+      <description> engine download ui Download ui files from the latest release on GitHub
+Synopsis Download ui files from the latest release on GitHub
+engine download ui [flags]  Examples engine download ui  Options  --config string config file --remote-config string (optional) consul configuration store --remote-config-key string (optional) consul configuration store key (default &amp;quot;cds/config.api.toml&amp;quot;)  SEE ALSO  engine download - Download binaries  </description>
+    </item>
+    
+    <item>
       <title>workers</title>
       <link>https://ovh.github.io/cds/docs/components/engine/download/workers/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/components/engine/download/workers/</guid>
-      <description>engine download workers Download workers binaries from latest release on Github
-Synopsis Download workers binaries from latest release on Github
+      <description>engine download workers Download workers binaries from the latest release on GitHub
+Synopsis Download workers binaries from the latest release on GitHub
 You can also indicate a specific os or architecture to not download all binaries available with flag &amp;ndash;os and &amp;ndash;arch
-engine download workers [flags]  Examples engine download workers  Options  --arch string Download only for this arch --config string config file --os string Download only for this os --remote-config string (optional) consul configuration store --remote-config-key string (optional) consul configuration store key (default &amp;quot;cds/config.</description>
+engine download workers [flags]  Examples engine download workers  Options  --api string Update binary from a CDS Engine API --arch string Download only for this arch --config string config file --os string Download only for this os --remote-config string (optional) consul configuration store --remote-config-key string (optional) consul configuration store key (default &amp;quot;cds/config.</description>
     </item>
     
   </channel>

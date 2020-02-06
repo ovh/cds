@@ -19,8 +19,8 @@
       <description>The Kubernetes integration have to be configured by CDS administrator.
 This integration allows you to run the Kubernetes Hatchery to start CDS Workers.
 As an end-users, this integration allows:
- to use Worker Models of type &amp;ldquo;Docker&amp;rdquo; to use Service Prerequisite on your CDS Jobs.  Start Kubernetes hatchery Generate a token for group:
-$ cdsctl token generate shared.infra persistent expiration persistent created 2019-03-13 18:47:56.715104 +0100 CET group_name shared.infra token xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx  Edit the CDS Configuration or set the dedicated environment variables.</description>
+ to use Worker Models of type &amp;ldquo;Docker&amp;rdquo; to use Service Prerequisite on your CDS Jobs.  Start Kubernetes hatchery Generate a token:
+$ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ --name=&amp;quot;hatchery.kubernetes&amp;quot; \ --description=&amp;quot;Consumer token for kubernetes hatchery&amp;quot; \ --groups=&amp;quot;&amp;quot; \ --no-interactive Builtin consumer successfully created, use the following token to sign in: xxxxxxxx.</description>
     </item>
     
     <item>

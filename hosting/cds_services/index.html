@@ -279,6 +279,12 @@
 
 		
 	
+		
+			
+<a class="item" data-title="User Authentication" href="https://ovh.github.io/cds/hosting/user_authentication/"></a>
+
+		
+	
 
 
 
@@ -408,6 +414,7 @@
 
 <ul>
 <li>6x <code>$engine start api</code>, each api shared the same PostgreSQL and redis.</li>
+<li>3x <code>$engine start ui</code>.</li>
 <li>3x <code>$engine start hooks</code>, each hooks shared the same redis.</li>
 <li>3x <code>$engine start vcs</code>, each hooks shared the same redis.</li>
 <li>3x <code>$engine start elasticsearch</code>.</li>
@@ -425,6 +432,12 @@
 
 <ul>
 <li>RAM: 3Go per instance</li>
+<li>Redis: 128Mo</li>
+</ul></li>
+<li>3x <code>$engine start ui</code>
+
+<ul>
+<li>RAM: 128Mo per instance</li>
 <li>Redis: 128Mo</li>
 </ul></li>
 <li>3x <code>$engine start hooks</code>

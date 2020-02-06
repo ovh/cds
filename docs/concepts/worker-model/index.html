@@ -212,6 +212,12 @@ Types There are 4 types of worker models:
 	
 		
 			
+<a class="item" data-title="Authentication" href="https://ovh.github.io/cds/docs/concepts/authentication/"></a>
+
+		
+	
+		
+			
 <a class="item" data-title="Job" href="https://ovh.github.io/cds/docs/concepts/job/"></a>
 
 		
@@ -519,7 +525,6 @@ Types There are 4 types of worker models:
 <li><a href="#add-a-worker-model">Add a worker model</a></li>
 <li><a href="#what-s-a-worker-model-pattern">What&rsquo;s a worker model pattern?</a></li>
 <li><a href="#what-s-a-restricted-worker-model">What&rsquo;s a restricted worker model?</a></li>
-<li><a href="#what-s-workers-provisioning">What&rsquo;s workers provisioning?</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -554,7 +559,7 @@ In order to scale automatically on demand, it is possible to register a worker m
 
 <p>A user can add a worker model by setting an owner group if user is administrator of group.</p>
 
-<p>A CDS administrator can add a worker model, a <a href="https://ovh.github.io/cds/docs/concepts/worker-model/patterns/">worker model pattern</a>, attach it to &lsquo;shared.infra&rsquo; group and set provision as he wants.</p>
+<p>A CDS administrator can add a worker model, a <a href="https://ovh.github.io/cds/docs/concepts/worker-model/patterns/">worker model pattern</a> and attach it to &lsquo;shared.infra&rsquo; group.</p>
 
 <h2 id="what-s-a-worker-model-pattern">What&rsquo;s a worker model pattern?</h2>
 
@@ -566,17 +571,6 @@ In order to scale automatically on demand, it is possible to register a worker m
 
 <p><strong>Use case</strong>: users can launch their own <a href="https://ovh.github.io/cds/docs/components/hatchery/">hatchery</a>.
 To use their worker models only with their hatchery, they have to set worker model as &lsquo;restricted&rsquo;.</p>
-
-<h2 id="what-s-workers-provisioning">What&rsquo;s workers provisioning?</h2>
-
-<p>A <a href="https://ovh.github.io/cds/docs/components/hatchery/">hatchery</a> can start workers based on worker models with provisioning &gt; 0.</p>
-
-<p>On &lsquo;restricted&rsquo; worker models, users can set provisioning, as they launch CDS Workers on their infrastructure.</p>
-
-<p>Otherwise, provisioning is only editable by CDS Administrators.</p>
-
-<p><strong>Notice</strong>: if you use <a href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/">Service Requirement</a>, you can&rsquo;t
-use provisioned workers.</p>
 
 
 

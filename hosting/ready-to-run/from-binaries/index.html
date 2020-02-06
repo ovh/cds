@@ -18,13 +18,13 @@
 
 <meta name="description"
     content="This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&quot;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd ARCH=amd64 # could be 386, arm, amd64, arm64 # GET Binaries from GitHub wget https://github.">
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&quot;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
 <meta property="og:description"
     content="This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&quot;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd ARCH=amd64 # could be 386, arm, amd64, arm64 # GET Binaries from GitHub wget https://github.">
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&quot;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
 <meta name="twitter:description"
     content="This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&quot;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd ARCH=amd64 # could be 386, arm, amd64, arm64 # GET Binaries from GitHub wget https://github.">
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.5 min  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&quot;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
 <meta property="og:url" content="https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/">
 <meta property="og:title" content="Run with binaries">
 <meta name="twitter:title" content="Run with binaries">
@@ -236,10 +236,12 @@
 <li>
 <ul>
 <li><a href="#prerequisite">Prerequisite</a></li>
-<li><a href="#get-latest-release-from-github">Get latest release from GitHub</a></li>
+<li><a href="#get-the-latest-release-from-github">Get the latest release from GitHub</a></li>
+<li><a href="#generate-configuration">Generate configuration</a></li>
+<li><a href="#prepare-cache">Prepare Cache</a></li>
 <li><a href="#prepare-database">Prepare Database</a></li>
 <li><a href="#launch-cds-api">Launch CDS API</a></li>
-<li><a href="#launch-cds-ui">Launch CDS UI</a></li>
+<li><a href="#launch-cds-ui-signup">Launch CDS UI &amp; Signup</a></li>
 <li><a href="#launch-cds-local-hatchery">Launch CDS Local Hatchery</a></li>
 <li><a href="#note-about-cds-engine">Note about CDS Engine</a></li>
 <li><a href="#go-further">Go further</a></li>
@@ -264,22 +266,49 @@
 <li>a PostgreSQL 9.5 min</li>
 </ul>
 
-<h2 id="get-latest-release-from-github">Get latest release from GitHub</h2>
+<h2 id="get-the-latest-release-from-github">Get the latest release from GitHub</h2>
 
 <pre><code class="language-bash">mkdir $HOME/cds
 cd cds
 
 LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d '&quot;' -f 4)
-OS=linux # could be linux, darwin, windows, freebsd
-ARCH=amd64 # could be 386, arm, amd64, arm64
+OS=linux # could be linux, darwin, windows, freebsd, openbsd
+ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le
 
 # GET Binaries from GitHub
-wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-engine-$OS-$ARCH
-wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH
-wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/ui.tar.gz
-wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/sql.tar.gz
-chmod +x *-$OS-$ARCH
+curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-engine-$OS-$ARCH -o cds-engine
+curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH -o cdsctl
+# if you don't want to use the your keychain, you have to use this:
+# curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH-nokeychain -o cdsctl
+chmod +x cds-engine cdsctl
 
+</code></pre>
+
+<h2 id="generate-configuration">Generate configuration</h2>
+
+<p>Generate a <strong><a href="https://ovh.github.io/cds/hosting/configuration/">Configuration File</a></strong></p>
+
+<pre><code class="language-bash">cd $HOME/cds
+
+./cds-engine config new &gt; conf.toml
+</code></pre>
+
+<p>You will probably need to update some values in this file. If you need to automatize some update, you
+can use the <code>./cds-engine config edit</code> command.</p>
+
+<p>Example:</p>
+
+<pre><code class="language-bash">./engine config edit conf.toml api.directories.download=./binaries --output conf.toml
+</code></pre>
+
+<h2 id="prepare-cache">Prepare Cache</h2>
+
+<p>For this example, we consider that the redis is installed on <code>localhost</code>, port <code>6379</code> with no password.
+You can edit the section <code>api.cache.redis</code> in <code>conf.toml</code> file if needed.</p>
+
+<p>If it&rsquo;s just for test purpose, you can start a redis with docker, as:</p>
+
+<pre><code class="language-bash">docker run --name cds-cache -p 127.0.0.1:6379:6379 -d redis:5
 </code></pre>
 
 <h2 id="prepare-database">Prepare Database</h2>
@@ -287,9 +316,16 @@ chmod +x *-$OS-$ARCH
 <p>For this example, we consider that the database is installed on <code>localhost</code>,
 port <code>5432</code>, with an existing empty database and user named <code>cds</code> and a password &lsquo;cds&rsquo;.</p>
 
+<p>You can edit the section <code>api.database</code> in <code>conf.toml</code> file if needed.</p>
+
+<p>If it&rsquo;s just for test purpose, you can start a postgreSQL database with docker, as:</p>
+
+<pre><code class="language-bash">docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGRES_DB=cds -p 127.0.0.1:5432:5432 -d postgres:9.5
+</code></pre>
+
 <pre><code class="language-bash">cd $HOME/cds
-tar xzf sql.tar.gz
-./cds-engine-linux-amd64 database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql
+./cds-engine download sql --config conf.toml
+./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql
 </code></pre>
 
 <h2 id="launch-cds-api">Launch CDS API</h2>
@@ -298,9 +334,8 @@ tar xzf sql.tar.gz
 
 <pre><code class="language-bash">cd $HOME/cds
 
-./cds-engine-linux-amd64 config new &gt; $HOME/cds/conf.toml
-./cds-engine-linux-amd64 download workers --config $HOME/cds/conf.toml
-./cds-engine-linux-amd64 start api --config $HOME/cds/conf.toml
+./cds-engine download workers --config conf.toml
+./cds-engine start api --config conf.toml
 </code></pre>
 
 <p>Check that CDS is up and running:</p>
@@ -309,77 +344,40 @@ tar xzf sql.tar.gz
 curl http://localhost:8081/mon/status
 </code></pre>
 
-<h2 id="launch-cds-ui">Launch CDS UI</h2>
+<h2 id="launch-cds-ui-signup">Launch CDS UI &amp; Signup</h2>
 
 <pre><code class="language-bash">cd $HOME/cds
-tar xzf ui.tar.gz # this command generates a $HOME/cds/dist/ directory
-</code></pre>
-
-<p>The <code>dist/</code> directory contains all HTML, JavaScript, CSS&hellip; files.</p>
-
-<p>You can serve theses files with a simple web server, but there is a ready-to-run Caddyfile to launch CDS UI quickly.</p>
-
-<pre><code class="language-bash">cd dist/
-
-# BACKEND_HOST contains a URL to CDS Engine
-export BACKEND_HOST=&quot;http://localhost:8081&quot;
-
-# BACKEND_HOOKS contains a URL to CDS Hooks
-export BACKEND_HOOKS=&quot;http://localhost:8083&quot;
-
-# if you expose CDS on a domain as https://your-domain/your-cds, enter &quot;/your-cds&quot;
-BASE_URL=&quot;/&quot;
-sed -i &quot;s#base href=\&quot;/\&quot;#base href=\&quot;${BASE_URL}\&quot;#g&quot; index.html
-
-# Get Caddy
-wget https://github.com/ovh/cds/releases/download/0.8.0/caddy-linux-amd64
-chmod +x caddy-linux-amd64
-
-# RUN CDS UI
-./caddy-linux-amd64
+./cds-engine download ui --config conf.toml
+./cds-engine start ui --config conf.toml
 </code></pre>
 
 <p>Then, open a browser on <a href="http://localhost:8080/">http://localhost:8080/</a> . You have to signup your first CDS user. It will be an administrator on CDS. In order to do that, just go on UI and click on signup or use <code>cdsctl signup</code>. If you don&rsquo;t have email service configured you just have to check your CDS API logs to have the confirmation link.</p>
 
-<h2 id="launch-cds-local-hatchery">Launch CDS Local Hatchery</h2>
+<p>Example of signup with cdsctl:</p>
 
-<p>The previously generated configuration file contains all CDS configuration.</p>
-
-<p>To be able to start a local hatchery, enter a hatchery name in the section <code>hatchery.local.commonConfiguration</code></p>
-
-<pre><code class="language-toml">
-...
-[hatchery.local]
-
-    # BaseDir for worker workspace
-    basedir = &quot;/tmp&quot;
-
-    # Nb Workers to provision
-    nbProvision = 1
-
-    [hatchery.local.commonConfiguration]
-
-      # Name of Hatchery
-      name = &quot;my-local-hatchery&quot;
-...
-
+<pre><code class="language-bash">export INIT_TOKEN=`./cds-engine config init-token --config conf.toml`
+./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
 </code></pre>
 
-<p>Then, start the local hatchery</p>
+<h2 id="launch-cds-local-hatchery">Launch CDS Local Hatchery</h2>
 
-<pre><code class="language-bash">./cds-engine-linux-amd64 start hatchery:local --config $HOME/cds/conf.toml
+<p>Start the local hatchery:</p>
+
+<pre><code class="language-bash">./cds-engine start hatchery:local --config $HOME/cds/conf.toml
 
 # notice that you can run api and hatchery with one common only:
-# ./cds-engine-linux-amd64 start api hatchery:local --config $HOME/cds/conf.toml
+# ./cds-engine start api hatchery:local --config $HOME/cds/conf.toml
 </code></pre>
 
 <h2 id="note-about-cds-engine">Note about CDS Engine</h2>
 
-<p>It is possible to start all services as a single process <code>$ engine start api hooks hatchery:local --config config.toml</code>.</p>
+<p>It is possible to start all services as a single process <code>$ ./engine start api ui hooks hatchery:local --config config.toml</code>.</p>
 
-<pre><code class="language-bash">$ engine start api hooks hatchery:local --config config.toml
+<pre><code class="language-bash">$ ./engine start api hooks hatchery:local --config config.toml
 Reading configuration file config.toml
 Starting service api
+...
+Starting service ui
 ...
 Starting service hooks
 ...
@@ -392,24 +390,26 @@ Starting service hatchery:local
 <p>For serious deployment, we strongly suggest to run each service as a dedicated process.</p>
 
 <pre><code class="language-bash">
-$ engine start api --config config.toml
+$ ./engine start api --config config.toml
 
-$ engine start hooks --config config.toml
+$ ./engine start ui --config config.toml
 
-$ engine start vcs --config config.toml
+$ ./engine start hooks --config config.toml
 
-$ engine start hatchery:local --config config.toml
-$ engine start hatchery:docker --config config.toml
-$ engine start hatchery:swarm --config config.toml
-$ engine start hatchery:marathon --config config.toml
-$ engine start hatchery:openstack --config config.toml
-$ engine start hatchery:vsphere --config config.toml
+$ ./engine start vcs --config config.toml
+
+$ ./engine start hatchery:local --config config.toml
+$ ./engine start hatchery:docker --config config.toml
+$ ./engine start hatchery:swarm --config config.toml
+$ ./engine start hatchery:marathon --config config.toml
+$ ./engine start hatchery:openstack --config config.toml
+$ ./engine start hatchery:vsphere --config config.toml
 
 </code></pre>
 
 <p>You can scale as you want each of this component, you probably will have to create a configuration for each instance of each service expect the API.</p>
 
-<pre><code class="language-bash">$ engine config new &gt; config.api.toml # All API instance can share the same configuration.
+<pre><code class="language-bash">$ ./engine config new &gt; config.api.toml # All API instance can share the same configuration.
 
 $ cp config.api.toml config.hatchery.swarm-1.toml
 $ cp config.api.toml config.hatchery.swarm-2.toml

@@ -17,11 +17,11 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content=" DELETE /group/&lt;group-name&gt;/token/&lt;tokenid&gt;    URL /group/&lt;group-name&gt;/token/&lt;tokenid&gt;     Method DELETE   Permissions Auth: true   Code deleteTokenHandler    DELETE /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin     Method DELETE   Permissions Auth: true   Code removeUserGroupAdminHandler    DELETE /group/&lt;group-name&gt;/user/&lt;user-name&gt;    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;     Method DELETE   Permissions Auth: true   Code removeUserFromGroupHandler    DELETE /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method DELETE   Permissions Auth: true   Code deleteGroupHandler    GET /group/&lt;group-name&gt;/token    URL /group/&lt;group-name&gt;/token     Method GET   Permissions Auth: true   Code getGroupTokenListHandler    GET /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method GET   Permissions Auth: true   Code getGroupHandler    GET /group/&lt;groupID&gt;/action    URL /group/&lt;groupID&gt;/action     Method GET   Permissions Auth: true   Code getActionsForGroupHandler    GET /group/&lt;groupID&gt;/worker/model    URL /group/&lt;groupID&gt;/worker/model     Method GET   Permissions Auth: true   Code getWorkerModelsForGroupHandler    GET /group/public    URL /group/public     Method GET   Permissions Auth: true   Code getPublicGroupsHandler    GET /group    URL /group     Method GET   Permissions Auth: true   Code getGroupsHandler    POST /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin     Method POST   Permissions Auth: true   Code setUserGroupAdminHandler    POST /group/&lt;group-name&gt;/user    URL /group/&lt;group-name&gt;/user     Method POST   Permissions Auth: true   Code addUserInGroupHandler    POST /group    URL /group     Method POST   Permissions Auth: true   Code addGroupHandler    PUT /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method PUT   Permissions Auth: true   Code updateGroupHandler    generateToken allows a user to generate a token associated to a group permission    URL /group/&lt;group-name&gt;/token     Method POST   Permissions Auth: true   Code generateTokenHandler    ">
+    content=" DELETE /group/&lt;group-name&gt;/user/&lt;username&gt;    URL /group/&lt;group-name&gt;/user/&lt;username&gt;     Method DELETE   Permissions Auth: true   Scopes Group   Code deleteGroupUserHandler    DELETE /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method DELETE   Permissions Auth: true   Scopes Group   Code deleteGroupHandler    GET /group/&lt;group-name&gt;/action    URL /group/&lt;group-name&gt;/action     Method GET   Permissions Auth: true   Scopes Group   Code getActionsForGroupHandler    GET /group/&lt;group-name&gt;/worker/model    URL /group/&lt;group-name&gt;/worker/model     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsForGroupHandler    GET /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method GET   Permissions Auth: true   Scopes Group   Code getGroupHandler    GET /group    URL /group     Method GET   Permissions Auth: true   Scopes Group   Code getGroupsHandler    POST /group/&lt;group-name&gt;/user    URL /group/&lt;group-name&gt;/user     Method POST   Permissions Auth: true   Scopes Group   Code postGroupUserHandler    POST /group    URL /group     Method POST   Permissions Auth: true   Scopes Group   Code postGroupHandler    PUT /group/&lt;group-name&gt;/user/&lt;username&gt;    URL /group/&lt;group-name&gt;/user/&lt;username&gt;     Method PUT   Permissions Auth: true   Scopes Group   Code putGroupUserHandler    PUT /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method PUT   Permissions Auth: true   Scopes Group   Code putGroupHandler    ">
 <meta property="og:description"
-    content=" DELETE /group/&lt;group-name&gt;/token/&lt;tokenid&gt;    URL /group/&lt;group-name&gt;/token/&lt;tokenid&gt;     Method DELETE   Permissions Auth: true   Code deleteTokenHandler    DELETE /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin     Method DELETE   Permissions Auth: true   Code removeUserGroupAdminHandler    DELETE /group/&lt;group-name&gt;/user/&lt;user-name&gt;    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;     Method DELETE   Permissions Auth: true   Code removeUserFromGroupHandler    DELETE /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method DELETE   Permissions Auth: true   Code deleteGroupHandler    GET /group/&lt;group-name&gt;/token    URL /group/&lt;group-name&gt;/token     Method GET   Permissions Auth: true   Code getGroupTokenListHandler    GET /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method GET   Permissions Auth: true   Code getGroupHandler    GET /group/&lt;groupID&gt;/action    URL /group/&lt;groupID&gt;/action     Method GET   Permissions Auth: true   Code getActionsForGroupHandler    GET /group/&lt;groupID&gt;/worker/model    URL /group/&lt;groupID&gt;/worker/model     Method GET   Permissions Auth: true   Code getWorkerModelsForGroupHandler    GET /group/public    URL /group/public     Method GET   Permissions Auth: true   Code getPublicGroupsHandler    GET /group    URL /group     Method GET   Permissions Auth: true   Code getGroupsHandler    POST /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin     Method POST   Permissions Auth: true   Code setUserGroupAdminHandler    POST /group/&lt;group-name&gt;/user    URL /group/&lt;group-name&gt;/user     Method POST   Permissions Auth: true   Code addUserInGroupHandler    POST /group    URL /group     Method POST   Permissions Auth: true   Code addGroupHandler    PUT /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method PUT   Permissions Auth: true   Code updateGroupHandler    generateToken allows a user to generate a token associated to a group permission    URL /group/&lt;group-name&gt;/token     Method POST   Permissions Auth: true   Code generateTokenHandler    ">
+    content=" DELETE /group/&lt;group-name&gt;/user/&lt;username&gt;    URL /group/&lt;group-name&gt;/user/&lt;username&gt;     Method DELETE   Permissions Auth: true   Scopes Group   Code deleteGroupUserHandler    DELETE /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method DELETE   Permissions Auth: true   Scopes Group   Code deleteGroupHandler    GET /group/&lt;group-name&gt;/action    URL /group/&lt;group-name&gt;/action     Method GET   Permissions Auth: true   Scopes Group   Code getActionsForGroupHandler    GET /group/&lt;group-name&gt;/worker/model    URL /group/&lt;group-name&gt;/worker/model     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsForGroupHandler    GET /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method GET   Permissions Auth: true   Scopes Group   Code getGroupHandler    GET /group    URL /group     Method GET   Permissions Auth: true   Scopes Group   Code getGroupsHandler    POST /group/&lt;group-name&gt;/user    URL /group/&lt;group-name&gt;/user     Method POST   Permissions Auth: true   Scopes Group   Code postGroupUserHandler    POST /group    URL /group     Method POST   Permissions Auth: true   Scopes Group   Code postGroupHandler    PUT /group/&lt;group-name&gt;/user/&lt;username&gt;    URL /group/&lt;group-name&gt;/user/&lt;username&gt;     Method PUT   Permissions Auth: true   Scopes Group   Code putGroupUserHandler    PUT /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method PUT   Permissions Auth: true   Scopes Group   Code putGroupHandler    ">
 <meta name="twitter:description"
-    content=" DELETE /group/&lt;group-name&gt;/token/&lt;tokenid&gt;    URL /group/&lt;group-name&gt;/token/&lt;tokenid&gt;     Method DELETE   Permissions Auth: true   Code deleteTokenHandler    DELETE /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin     Method DELETE   Permissions Auth: true   Code removeUserGroupAdminHandler    DELETE /group/&lt;group-name&gt;/user/&lt;user-name&gt;    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;     Method DELETE   Permissions Auth: true   Code removeUserFromGroupHandler    DELETE /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method DELETE   Permissions Auth: true   Code deleteGroupHandler    GET /group/&lt;group-name&gt;/token    URL /group/&lt;group-name&gt;/token     Method GET   Permissions Auth: true   Code getGroupTokenListHandler    GET /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method GET   Permissions Auth: true   Code getGroupHandler    GET /group/&lt;groupID&gt;/action    URL /group/&lt;groupID&gt;/action     Method GET   Permissions Auth: true   Code getActionsForGroupHandler    GET /group/&lt;groupID&gt;/worker/model    URL /group/&lt;groupID&gt;/worker/model     Method GET   Permissions Auth: true   Code getWorkerModelsForGroupHandler    GET /group/public    URL /group/public     Method GET   Permissions Auth: true   Code getPublicGroupsHandler    GET /group    URL /group     Method GET   Permissions Auth: true   Code getGroupsHandler    POST /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin    URL /group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin     Method POST   Permissions Auth: true   Code setUserGroupAdminHandler    POST /group/&lt;group-name&gt;/user    URL /group/&lt;group-name&gt;/user     Method POST   Permissions Auth: true   Code addUserInGroupHandler    POST /group    URL /group     Method POST   Permissions Auth: true   Code addGroupHandler    PUT /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method PUT   Permissions Auth: true   Code updateGroupHandler    generateToken allows a user to generate a token associated to a group permission    URL /group/&lt;group-name&gt;/token     Method POST   Permissions Auth: true   Code generateTokenHandler    ">
+    content=" DELETE /group/&lt;group-name&gt;/user/&lt;username&gt;    URL /group/&lt;group-name&gt;/user/&lt;username&gt;     Method DELETE   Permissions Auth: true   Scopes Group   Code deleteGroupUserHandler    DELETE /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method DELETE   Permissions Auth: true   Scopes Group   Code deleteGroupHandler    GET /group/&lt;group-name&gt;/action    URL /group/&lt;group-name&gt;/action     Method GET   Permissions Auth: true   Scopes Group   Code getActionsForGroupHandler    GET /group/&lt;group-name&gt;/worker/model    URL /group/&lt;group-name&gt;/worker/model     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsForGroupHandler    GET /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method GET   Permissions Auth: true   Scopes Group   Code getGroupHandler    GET /group    URL /group     Method GET   Permissions Auth: true   Scopes Group   Code getGroupsHandler    POST /group/&lt;group-name&gt;/user    URL /group/&lt;group-name&gt;/user     Method POST   Permissions Auth: true   Scopes Group   Code postGroupUserHandler    POST /group    URL /group     Method POST   Permissions Auth: true   Scopes Group   Code postGroupHandler    PUT /group/&lt;group-name&gt;/user/&lt;username&gt;    URL /group/&lt;group-name&gt;/user/&lt;username&gt;     Method PUT   Permissions Auth: true   Scopes Group   Code putGroupUserHandler    PUT /group/&lt;group-name&gt;    URL /group/&lt;group-name&gt;     Method PUT   Permissions Auth: true   Scopes Group   Code putGroupHandler    ">
 <meta property="og:url" content="https://ovh.github.io/cds/development/rest/group/">
 <meta property="og:title" content="group">
 <meta name="twitter:title" content="group">
@@ -207,12 +207,6 @@
 	
 		
 			
-<a class="item" data-title="accesstoken" href="https://ovh.github.io/cds/development/rest/accesstoken/"></a>
-
-		
-	
-		
-			
 <a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
 
 		
@@ -280,12 +274,6 @@
 		
 			
 <a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
-
-		
-	
-		
-			
-<a class="item" data-title="login" href="https://ovh.github.io/cds/development/rest/login/"></a>
 
 		
 	
@@ -405,34 +393,29 @@
 <ul>
 <li>
 <ul>
-<li><a href="#delete-group-group-name-token-tokenid">DELETE <code>/group/&lt;group-name&gt;/token/&lt;tokenid&gt;</code></a></li>
-<li><a href="#delete-group-group-name-user-user-name-admin">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></a></li>
-<li><a href="#delete-group-group-name-user-user-name">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;</code></a></li>
+<li><a href="#delete-group-group-name-user-username">DELETE <code>/group/&lt;group-name&gt;/user/&lt;username&gt;</code></a></li>
 <li><a href="#delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></a></li>
-<li><a href="#get-group-group-name-token">GET <code>/group/&lt;group-name&gt;/token</code></a></li>
+<li><a href="#get-group-group-name-action">GET <code>/group/&lt;group-name&gt;/action</code></a></li>
+<li><a href="#get-group-group-name-worker-model">GET <code>/group/&lt;group-name&gt;/worker/model</code></a></li>
 <li><a href="#get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></a></li>
-<li><a href="#get-group-groupid-action">GET <code>/group/&lt;groupID&gt;/action</code></a></li>
-<li><a href="#get-group-groupid-worker-model">GET <code>/group/&lt;groupID&gt;/worker/model</code></a></li>
-<li><a href="#get-group-public">GET <code>/group/public</code></a></li>
 <li><a href="#get-group">GET <code>/group</code></a></li>
-<li><a href="#post-group-group-name-user-user-name-admin">POST <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></a></li>
 <li><a href="#post-group-group-name-user">POST <code>/group/&lt;group-name&gt;/user</code></a></li>
 <li><a href="#post-group">POST <code>/group</code></a></li>
+<li><a href="#put-group-group-name-user-username">PUT <code>/group/&lt;group-name&gt;/user/&lt;username&gt;</code></a></li>
 <li><a href="#put-group-group-name">PUT <code>/group/&lt;group-name&gt;</code></a></li>
-<li><a href="#generatetoken-allows-a-user-to-generate-a-token-associated-to-a-group-permission">generateToken allows a user to generate a token associated to a group permission</a></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<h2 id="delete-group-group-name-token-tokenid">DELETE <code>/group/&lt;group-name&gt;/token/&lt;tokenid&gt;</code></h2>
+<h2 id="delete-group-group-name-user-username">DELETE <code>/group/&lt;group-name&gt;/user/&lt;username&gt;</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;/token/&lt;tokenid&gt;</code></strong></th>
+<th><strong><code>/group/&lt;group-name&gt;/user/&lt;username&gt;</code></strong></th>
 </tr>
 </thead>
 
@@ -448,64 +431,13 @@
 </tr>
 
 <tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTokenHandler%22">deleteTokenHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="delete-group-group-name-user-user-name-admin">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
+<td>Scopes</td>
+<td>Group</td>
 </tr>
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+removeUserGroupAdminHandler%22">removeUserGroupAdminHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="delete-group-group-name-user-user-name">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+removeUserFromGroupHandler%22">removeUserFromGroupHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupUserHandler%22">deleteGroupUserHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -532,19 +464,24 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>Group</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupHandler%22">deleteGroupHandler</a></td>
 </tr>
 </tbody>
 </table>
 
-<h2 id="get-group-group-name-token">GET <code>/group/&lt;group-name&gt;/token</code></h2>
+<h2 id="get-group-group-name-action">GET <code>/group/&lt;group-name&gt;/action</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;/token</code></strong></th>
+<th><strong><code>/group/&lt;group-name&gt;/action</code></strong></th>
 </tr>
 </thead>
 
@@ -560,8 +497,46 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>Group</td>
+</tr>
+
+<tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupTokenListHandler%22">getGroupTokenListHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionsForGroupHandler%22">getActionsForGroupHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-group-group-name-worker-model">GET <code>/group/&lt;group-name&gt;/worker/model</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;/worker/model</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelsForGroupHandler%22">getWorkerModelsForGroupHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -588,92 +563,13 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>Group</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupHandler%22">getGroupHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-group-groupid-action">GET <code>/group/&lt;groupID&gt;/action</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group/&lt;groupID&gt;/action</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionsForGroupHandler%22">getActionsForGroupHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-group-groupid-worker-model">GET <code>/group/&lt;groupID&gt;/worker/model</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group/&lt;groupID&gt;/worker/model</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelsForGroupHandler%22">getWorkerModelsForGroupHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-group-public">GET <code>/group/public</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group/public</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPublicGroupsHandler%22">getPublicGroupsHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -700,36 +596,13 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>Group</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupsHandler%22">getGroupsHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-group-group-name-user-user-name-admin">POST <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+setUserGroupAdminHandler%22">setUserGroupAdminHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -756,8 +629,13 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>Group</td>
+</tr>
+
+<tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addUserInGroupHandler%22">addUserInGroupHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postGroupUserHandler%22">postGroupUserHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -784,8 +662,46 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>Group</td>
+</tr>
+
+<tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addGroupHandler%22">addGroupHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postGroupHandler%22">postGroupHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="put-group-group-name-user-username">PUT <code>/group/&lt;group-name&gt;/user/&lt;username&gt;</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;/user/&lt;username&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>Group</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putGroupUserHandler%22">putGroupUserHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -812,36 +728,13 @@
 </tr>
 
 <tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateGroupHandler%22">updateGroupHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="generatetoken-allows-a-user-to-generate-a-token-associated-to-a-group-permission">generateToken allows a user to generate a token associated to a group permission</h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;/token</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
+<td>Scopes</td>
+<td>Group</td>
 </tr>
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+generateTokenHandler%22">generateTokenHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putGroupHandler%22">putGroupHandler</a></td>
 </tr>
 </tbody>
 </table>

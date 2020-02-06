@@ -43,32 +43,20 @@ This integration enables some features:
       <description>The Docker Swarm integration have to be configured by CDS administrator.
 This integration allows you to run the Swarm Hatchery to start CDS Workers.
 As an end-users, this integration allows:
- to use Worker Models of type &amp;ldquo;Docker&amp;rdquo; to use Service Prerequisite on your CDS Jobs.  Start Swarm hatchery Generate a token for group:
-$ cdsctl token generate shared.infra persistent expiration persistent created 2019-03-13 18:47:56.715104 +0100 CET group_name shared.</description>
+ to use Worker Models of type &amp;ldquo;Docker&amp;rdquo; to use Service Prerequisite on your CDS Jobs.  Start Swarm hatchery Generate a token:
+$ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ --name=&amp;quot;hatchery.swarm&amp;quot; \ --description=&amp;quot;Consumer token for swarm hatchery&amp;quot; \ --groups=&amp;quot;&amp;quot; \ --no-interactive Builtin consumer successfully created, use the following token to sign in: xxxxxxxx.</description>
     </item>
     
     <item>
-      <title>GitHub</title>
-      <link>https://ovh.github.io/cds/docs/integrations/github/</link>
+      <title>LDAP Authentication</title>
+      <link>https://ovh.github.io/cds/docs/integrations/ldap/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/docs/integrations/github/</guid>
-      <description>The Github Integration have to be configured on your CDS by a CDS Administrator.
-This integration allows you to link a Git Repository hosted by Github to a CDS Application.
-This integration enables some features:
- Git Repository Webhook Git Repository Poller Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitHub. More informations Send comments on your Pull-Requests when a workflow is failed.</description>
-    </item>
-    
-    <item>
-      <title>GitLab</title>
-      <link>https://ovh.github.io/cds/docs/integrations/gitlab/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/docs/integrations/gitlab/</guid>
-      <description>The GitLab Integration have to be configured on your CDS by a CDS Administrator.
-This integration allows you to link a Git Repository hosted by GitLab to a CDS Application.
-This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab. More informations  How to configure GitLab integration What you need to perform the following steps:</description>
+      <guid>https://ovh.github.io/cds/docs/integrations/ldap/</guid>
+      <description>The LDAP Integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to authenticate users.
+How to configure LDAP Authentication integration Edit the toml file:
+ section [api.auth.ldap]  enable the signin with enabled = true if you want to let user signup with GitHub, set signupDisabled = true   [api.auth.ldap] enabled = false host = &amp;quot;&amp;quot; # Define it if ldapsearch need to be authenticated managerDN = &amp;quot;cn=admin,dc=myorganization,dc=com&amp;quot; # Define it if ldapsearch need to be authenticated managerPassword = &amp;quot;SECRET_PASSWORD_MANAGER&amp;quot; port = 636 rootDN = &amp;quot;dc=myorganization,dc=com&amp;quot; signupDisabled = false ssl = true userFullname = &amp;quot;{{.</description>
     </item>
     
     <item>
@@ -80,8 +68,8 @@ This integration enables some features:
       <description>The Mesos/Marathon integration have to be configured by CDS administrator.
 This integration allows you to run the Marathon Hatchery to start CDS Workers.
 As an end-users, this integration allows to use Worker Models of type &amp;ldquo;Docker&amp;rdquo;
-Start Marathon hatchery Generate a token for group:
-$ cdsctl token generate shared.infra persistent expiration persistent created 2019-03-13 18:47:56.715104 +0100 CET group_name shared.infra token xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx  Edit the CDS Configuration or set the dedicated environment variables.</description>
+Start Marathon hatchery Generate a token:
+$ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ --name=&amp;quot;hatchery.marathon&amp;quot; \ --description=&amp;quot;Consumer token for marathon hatchery&amp;quot; \ --groups=&amp;quot;&amp;quot; \ --no-interactive Builtin consumer successfully created, use the following token to sign in: xxxxxxxx.</description>
     </item>
     
     <item>

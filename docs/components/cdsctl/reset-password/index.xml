@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>reset-password on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/docs/components/cdsctl/reset-password/</link>
+    <description>Recent content in reset-password on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/docs/components/cdsctl/reset-password/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>confirm</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/reset-password/confirm/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/reset-password/confirm/</guid>
+      <description> cdsctl reset-password confirm Synopsis cdsctl reset-password confirm TOKEN [flags]  Options  -H, --api-url string Url to your CDS api. --env Display the commands to set up the environment for the cds client. -p, --password string  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output  SEE ALSO  cdsctl reset-password - Reset CDS user password  </description>
+    </item>
+    
+  </channel>
+</rss>

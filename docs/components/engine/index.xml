@@ -19,12 +19,12 @@
       <description>engine start Start CDS
 Synopsis Start CDS Engine Services
 API This is the core component of CDS.
-UI This is the CDS Web UI.
 Hatcheries They are the components responsible for spawning workers. Supported integrations/orchestrators are:
  Local machine Openstack Docker Swarm Openstack Vsphere  Hooks This component operates CDS workflow hooks
 Repositories This component operates CDS workflow repositories
 VCS This component operates CDS VCS connectivity
-Start all of this with a single command:</description>
+Start all of this with a single command:
+$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate] [ui]  All the services are using the same configuration file format.</description>
     </item>
     
     <item>

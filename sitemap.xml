@@ -3,6 +3,10 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/concepts/authentication/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/about/why_cds/</loc>
   </url>
   
@@ -295,6 +299,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/development/sdk/token/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/concepts/files/</loc>
   </url>
   
@@ -312,6 +320,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/concepts/template/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/hosting/user_authentication/</loc>
   </url>
   
   <url>
@@ -379,14 +391,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/development/sdk/golang/examples/go-workers-list/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/development/sdk/golang/examples/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/docs/actions/builtin-gitclone/</loc>
   </url>
   
@@ -395,7 +399,23 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/integrations/github/github_authentication/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/integrations/gitlab/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_repository_manager/</loc>
   </url>
   
   <url>
@@ -431,6 +451,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/integrations/ldap/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/integrations/marathon/</loc>
   </url>
   
@@ -463,15 +487,15 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/development/sdk/rust/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/actions/builtin-script/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/development/rest/accesstoken/</loc>
   </url>
   
   <url>
@@ -503,7 +527,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/group/user/add/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/group/member/add/</loc>
   </url>
   
   <url>
@@ -647,7 +671,15 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/user/confirm/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/reset-password/confirm/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/consumer/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/context/</loc>
   </url>
   
   <url>
@@ -672,6 +704,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/curl/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/context/current/</loc>
   </url>
   
   <url>
@@ -723,6 +759,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/consumer/delete/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/environment/delete/</loc>
   </url>
   
@@ -739,7 +779,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/group/user/delete/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/group/member/delete/</loc>
   </url>
   
   <url>
@@ -767,11 +807,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/template/delete/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/session/delete/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/token/delete/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/template/delete/</loc>
   </url>
   
   <url>
@@ -780,10 +820,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/workflow/advanced/delete/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/xtoken/delete/</loc>
   </url>
   
   <url>
@@ -935,14 +971,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/token/find/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/token/generate/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/errors/get/</loc>
   </url>
   
@@ -1035,6 +1063,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/engine/config/init-token/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/worker/key/install/</loc>
   </url>
   
@@ -1052,6 +1084,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/integration-model/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/queue/interactive/</loc>
   </url>
   
   <url>
@@ -1123,6 +1159,14 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/consumer/list/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/context/list/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/environment/keys/list/</loc>
   </url>
   
@@ -1139,7 +1183,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/group/user/list/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/group/member/list/</loc>
   </url>
   
   <url>
@@ -1167,11 +1211,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/template/list/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/session/list/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/token/list/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/template/list/</loc>
   </url>
   
   <url>
@@ -1199,15 +1243,15 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/xtoken/list/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/database/list-encrypted-data/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/database/list-signed-data/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/events/listen/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/development/rest/login/</loc>
   </url>
   
   <url>
@@ -1227,6 +1271,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/group/member/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/</loc>
   </url>
   
@@ -1243,11 +1291,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/monitoring/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/xtoken/new/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/consumer/new/</loc>
   </url>
   
   <url>
@@ -1359,11 +1403,15 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/xtoken/regen/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/queue/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/group/user/removeadmin/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/consumer/regen/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/engine/config/regen/</loc>
   </url>
   
   <url>
@@ -1391,11 +1439,19 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/user/reset/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/reset-password/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/group/revoke/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/database/roll-encrypteddata/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/database/roll-signed-data/</loc>
   </url>
   
   <url>
@@ -1411,11 +1467,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/workflow/advanced/number/set/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/session/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/group/user/setadmin/</loc>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/workflow/advanced/number/set/</loc>
   </url>
   
   <url>
@@ -1483,6 +1539,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/engine/download/sql/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/admin/hooks/start/</loc>
   </url>
   
@@ -1543,15 +1603,15 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/token/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/tools/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/development/rest/ui/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/engine/download/ui/</loc>
   </url>
   
   <url>
@@ -1579,10 +1639,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/docs/components/worker/update/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/docs/components/engine/database/upgrade/</loc>
   </url>
   
@@ -1596,10 +1652,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/development/rest/user/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/group/user/</loc>
   </url>
   
   <url>
@@ -1624,6 +1676,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/project/variable/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/signup/verify/</loc>
   </url>
   
   <url>
@@ -1668,14 +1724,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/workflow/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/xlogin/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/docs/components/cdsctl/xtoken/</loc>
   </url>
   
   <url>

@@ -17,11 +17,11 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content=" DELETE /queue/workflows/&lt;id&gt;/book    URL /queue/workflows/&lt;id&gt;/book     Method DELETE   Permissions NeedHatchery: - Auth: true   Code deleteBookWorkflowJobHandler    GET /queue/workflows/&lt;id&gt;/infos    URL /queue/workflows/&lt;id&gt;/infos     Method GET   Permissions NeedWorker: - NeedHatchery: - Auth: true   Code getWorkflowJobHandler    GET /queue/workflows/count    URL /queue/workflows/count     Method GET   Permissions Auth: true   Code countWorkflowJobQueueHandler    GET /queue/workflows    URL /queue/workflows     Method GET   Permissions Auth: true   Code getWorkflowJobQueueHandler    POST /queue/workflows/&lt;id&gt;/book    URL /queue/workflows/&lt;id&gt;/book     Method POST   Permissions NeedHatchery: - Auth: true   Code postBookWorkflowJobHandler    POST /queue/workflows/&lt;id&gt;/spawn/infos    URL /queue/workflows/&lt;id&gt;/spawn/infos     Method POST   Permissions NeedHatchery: - Auth: true   Code postSpawnInfosWorkflowJobHandler    POST /queue/workflows/&lt;id&gt;/take    URL /queue/workflows/&lt;id&gt;/take     Method POST   Permissions NeedWorker: - Auth: true   Code postTakeWorkflowJobHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/coverage    URL /queue/workflows/&lt;token&gt;/coverage     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobCoverageResultsHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/log    URL /queue/workflows/&lt;token&gt;/log     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobLogsHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/result    URL /queue/workflows/&lt;token&gt;/result     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobResultHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/step    URL /queue/workflows/&lt;token&gt;/step     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobStepStatusHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/tag    URL /queue/workflows/&lt;token&gt;/tag     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobTagsHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/test    URL /queue/workflows/&lt;token&gt;/test     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobTestsResultsHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/variable    URL /queue/workflows/&lt;token&gt;/variable     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobVariableHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/vulnerability    URL /queue/workflows/&lt;token&gt;/vulnerability     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postVulnerabilityReportHandler    POSTEXECUTE /queue/workflows/log/service    URL /queue/workflows/log/service     Method POSTEXECUTE   Permissions NeedHatchery: - Auth: true   Code postWorkflowJobServiceLogsHandler    ">
+    content=" DELETE /queue/workflows/&lt;job-id&gt;/book    URL /queue/workflows/&lt;job-id&gt;/book     Method DELETE   Permissions Auth: true   Scopes RunExecution   Code deleteBookWorkflowJobHandler    GET /queue/workflows/&lt;job-id&gt;/infos    URL /queue/workflows/&lt;job-id&gt;/infos     Method GET   Permissions Auth: true   Scopes RunExecution   Code getWorkflowJobHandler    GET /queue/workflows/count    URL /queue/workflows/count     Method GET   Permissions Auth: true   Scopes Run   Code countWorkflowJobQueueHandler    GET /queue/workflows    URL /queue/workflows     Method GET   Permissions Auth: true   Scopes Run, RunExecution   Code getWorkflowJobQueueHandler    POST /queue/workflows/&lt;id&gt;/take    URL /queue/workflows/&lt;id&gt;/take     Method POST   Permissions Auth: true   Scopes RunExecution   Code postTakeWorkflowJobHandler    POST /queue/workflows/&lt;job-id&gt;/book    URL /queue/workflows/&lt;job-id&gt;/book     Method POST   Permissions Auth: true   Scopes RunExecution   Code postBookWorkflowJobHandler    POST /queue/workflows/&lt;job-id&gt;/spawn/infos    URL /queue/workflows/&lt;job-id&gt;/spawn/infos     Method POST   Permissions Auth: true   Scopes RunExecution   Code postSpawnInfosWorkflowJobHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/coverage    URL /queue/workflows/&lt;job-id&gt;/coverage     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobCoverageResultsHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/log    URL /queue/workflows/&lt;job-id&gt;/log     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobLogsHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/result    URL /queue/workflows/&lt;job-id&gt;/result     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobResultHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/step    URL /queue/workflows/&lt;job-id&gt;/step     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobStepStatusHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/tag    URL /queue/workflows/&lt;job-id&gt;/tag     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobTagsHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/test    URL /queue/workflows/&lt;job-id&gt;/test     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobTestsResultsHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/vulnerability    URL /queue/workflows/&lt;job-id&gt;/vulnerability     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postVulnerabilityReportHandler    POSTEXECUTE /queue/workflows/log/service    URL /queue/workflows/log/service     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobServiceLogsHandler    ">
 <meta property="og:description"
-    content=" DELETE /queue/workflows/&lt;id&gt;/book    URL /queue/workflows/&lt;id&gt;/book     Method DELETE   Permissions NeedHatchery: - Auth: true   Code deleteBookWorkflowJobHandler    GET /queue/workflows/&lt;id&gt;/infos    URL /queue/workflows/&lt;id&gt;/infos     Method GET   Permissions NeedWorker: - NeedHatchery: - Auth: true   Code getWorkflowJobHandler    GET /queue/workflows/count    URL /queue/workflows/count     Method GET   Permissions Auth: true   Code countWorkflowJobQueueHandler    GET /queue/workflows    URL /queue/workflows     Method GET   Permissions Auth: true   Code getWorkflowJobQueueHandler    POST /queue/workflows/&lt;id&gt;/book    URL /queue/workflows/&lt;id&gt;/book     Method POST   Permissions NeedHatchery: - Auth: true   Code postBookWorkflowJobHandler    POST /queue/workflows/&lt;id&gt;/spawn/infos    URL /queue/workflows/&lt;id&gt;/spawn/infos     Method POST   Permissions NeedHatchery: - Auth: true   Code postSpawnInfosWorkflowJobHandler    POST /queue/workflows/&lt;id&gt;/take    URL /queue/workflows/&lt;id&gt;/take     Method POST   Permissions NeedWorker: - Auth: true   Code postTakeWorkflowJobHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/coverage    URL /queue/workflows/&lt;token&gt;/coverage     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobCoverageResultsHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/log    URL /queue/workflows/&lt;token&gt;/log     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobLogsHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/result    URL /queue/workflows/&lt;token&gt;/result     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobResultHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/step    URL /queue/workflows/&lt;token&gt;/step     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobStepStatusHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/tag    URL /queue/workflows/&lt;token&gt;/tag     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobTagsHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/test    URL /queue/workflows/&lt;token&gt;/test     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobTestsResultsHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/variable    URL /queue/workflows/&lt;token&gt;/variable     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobVariableHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/vulnerability    URL /queue/workflows/&lt;token&gt;/vulnerability     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postVulnerabilityReportHandler    POSTEXECUTE /queue/workflows/log/service    URL /queue/workflows/log/service     Method POSTEXECUTE   Permissions NeedHatchery: - Auth: true   Code postWorkflowJobServiceLogsHandler    ">
+    content=" DELETE /queue/workflows/&lt;job-id&gt;/book    URL /queue/workflows/&lt;job-id&gt;/book     Method DELETE   Permissions Auth: true   Scopes RunExecution   Code deleteBookWorkflowJobHandler    GET /queue/workflows/&lt;job-id&gt;/infos    URL /queue/workflows/&lt;job-id&gt;/infos     Method GET   Permissions Auth: true   Scopes RunExecution   Code getWorkflowJobHandler    GET /queue/workflows/count    URL /queue/workflows/count     Method GET   Permissions Auth: true   Scopes Run   Code countWorkflowJobQueueHandler    GET /queue/workflows    URL /queue/workflows     Method GET   Permissions Auth: true   Scopes Run, RunExecution   Code getWorkflowJobQueueHandler    POST /queue/workflows/&lt;id&gt;/take    URL /queue/workflows/&lt;id&gt;/take     Method POST   Permissions Auth: true   Scopes RunExecution   Code postTakeWorkflowJobHandler    POST /queue/workflows/&lt;job-id&gt;/book    URL /queue/workflows/&lt;job-id&gt;/book     Method POST   Permissions Auth: true   Scopes RunExecution   Code postBookWorkflowJobHandler    POST /queue/workflows/&lt;job-id&gt;/spawn/infos    URL /queue/workflows/&lt;job-id&gt;/spawn/infos     Method POST   Permissions Auth: true   Scopes RunExecution   Code postSpawnInfosWorkflowJobHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/coverage    URL /queue/workflows/&lt;job-id&gt;/coverage     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobCoverageResultsHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/log    URL /queue/workflows/&lt;job-id&gt;/log     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobLogsHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/result    URL /queue/workflows/&lt;job-id&gt;/result     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobResultHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/step    URL /queue/workflows/&lt;job-id&gt;/step     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobStepStatusHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/tag    URL /queue/workflows/&lt;job-id&gt;/tag     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobTagsHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/test    URL /queue/workflows/&lt;job-id&gt;/test     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobTestsResultsHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/vulnerability    URL /queue/workflows/&lt;job-id&gt;/vulnerability     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postVulnerabilityReportHandler    POSTEXECUTE /queue/workflows/log/service    URL /queue/workflows/log/service     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobServiceLogsHandler    ">
 <meta name="twitter:description"
-    content=" DELETE /queue/workflows/&lt;id&gt;/book    URL /queue/workflows/&lt;id&gt;/book     Method DELETE   Permissions NeedHatchery: - Auth: true   Code deleteBookWorkflowJobHandler    GET /queue/workflows/&lt;id&gt;/infos    URL /queue/workflows/&lt;id&gt;/infos     Method GET   Permissions NeedWorker: - NeedHatchery: - Auth: true   Code getWorkflowJobHandler    GET /queue/workflows/count    URL /queue/workflows/count     Method GET   Permissions Auth: true   Code countWorkflowJobQueueHandler    GET /queue/workflows    URL /queue/workflows     Method GET   Permissions Auth: true   Code getWorkflowJobQueueHandler    POST /queue/workflows/&lt;id&gt;/book    URL /queue/workflows/&lt;id&gt;/book     Method POST   Permissions NeedHatchery: - Auth: true   Code postBookWorkflowJobHandler    POST /queue/workflows/&lt;id&gt;/spawn/infos    URL /queue/workflows/&lt;id&gt;/spawn/infos     Method POST   Permissions NeedHatchery: - Auth: true   Code postSpawnInfosWorkflowJobHandler    POST /queue/workflows/&lt;id&gt;/take    URL /queue/workflows/&lt;id&gt;/take     Method POST   Permissions NeedWorker: - Auth: true   Code postTakeWorkflowJobHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/coverage    URL /queue/workflows/&lt;token&gt;/coverage     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobCoverageResultsHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/log    URL /queue/workflows/&lt;token&gt;/log     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobLogsHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/result    URL /queue/workflows/&lt;token&gt;/result     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobResultHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/step    URL /queue/workflows/&lt;token&gt;/step     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobStepStatusHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/tag    URL /queue/workflows/&lt;token&gt;/tag     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobTagsHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/test    URL /queue/workflows/&lt;token&gt;/test     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobTestsResultsHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/variable    URL /queue/workflows/&lt;token&gt;/variable     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postWorkflowJobVariableHandler    POSTEXECUTE /queue/workflows/&lt;token&gt;/vulnerability    URL /queue/workflows/&lt;token&gt;/vulnerability     Method POSTEXECUTE   Permissions NeedWorker: - Auth: true   Code postVulnerabilityReportHandler    POSTEXECUTE /queue/workflows/log/service    URL /queue/workflows/log/service     Method POSTEXECUTE   Permissions NeedHatchery: - Auth: true   Code postWorkflowJobServiceLogsHandler    ">
+    content=" DELETE /queue/workflows/&lt;job-id&gt;/book    URL /queue/workflows/&lt;job-id&gt;/book     Method DELETE   Permissions Auth: true   Scopes RunExecution   Code deleteBookWorkflowJobHandler    GET /queue/workflows/&lt;job-id&gt;/infos    URL /queue/workflows/&lt;job-id&gt;/infos     Method GET   Permissions Auth: true   Scopes RunExecution   Code getWorkflowJobHandler    GET /queue/workflows/count    URL /queue/workflows/count     Method GET   Permissions Auth: true   Scopes Run   Code countWorkflowJobQueueHandler    GET /queue/workflows    URL /queue/workflows     Method GET   Permissions Auth: true   Scopes Run, RunExecution   Code getWorkflowJobQueueHandler    POST /queue/workflows/&lt;id&gt;/take    URL /queue/workflows/&lt;id&gt;/take     Method POST   Permissions Auth: true   Scopes RunExecution   Code postTakeWorkflowJobHandler    POST /queue/workflows/&lt;job-id&gt;/book    URL /queue/workflows/&lt;job-id&gt;/book     Method POST   Permissions Auth: true   Scopes RunExecution   Code postBookWorkflowJobHandler    POST /queue/workflows/&lt;job-id&gt;/spawn/infos    URL /queue/workflows/&lt;job-id&gt;/spawn/infos     Method POST   Permissions Auth: true   Scopes RunExecution   Code postSpawnInfosWorkflowJobHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/coverage    URL /queue/workflows/&lt;job-id&gt;/coverage     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobCoverageResultsHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/log    URL /queue/workflows/&lt;job-id&gt;/log     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobLogsHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/result    URL /queue/workflows/&lt;job-id&gt;/result     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobResultHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/step    URL /queue/workflows/&lt;job-id&gt;/step     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobStepStatusHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/tag    URL /queue/workflows/&lt;job-id&gt;/tag     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobTagsHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/test    URL /queue/workflows/&lt;job-id&gt;/test     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobTestsResultsHandler    POSTEXECUTE /queue/workflows/&lt;job-id&gt;/vulnerability    URL /queue/workflows/&lt;job-id&gt;/vulnerability     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postVulnerabilityReportHandler    POSTEXECUTE /queue/workflows/log/service    URL /queue/workflows/log/service     Method POSTEXECUTE   Permissions Auth: true   Scopes RunExecution   Code postWorkflowJobServiceLogsHandler    ">
 <meta property="og:url" content="https://ovh.github.io/cds/development/rest/queue/">
 <meta property="og:title" content="queue">
 <meta name="twitter:title" content="queue">
@@ -207,12 +207,6 @@
 	
 		
 			
-<a class="item" data-title="accesstoken" href="https://ovh.github.io/cds/development/rest/accesstoken/"></a>
-
-		
-	
-		
-			
 <a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
 
 		
@@ -280,12 +274,6 @@
 		
 			
 <a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
-
-		
-	
-		
-			
-<a class="item" data-title="login" href="https://ovh.github.io/cds/development/rest/login/"></a>
 
 		
 	
@@ -405,21 +393,20 @@
 <ul>
 <li>
 <ul>
-<li><a href="#delete-queue-workflows-id-book">DELETE <code>/queue/workflows/&lt;id&gt;/book</code></a></li>
-<li><a href="#get-queue-workflows-id-infos">GET <code>/queue/workflows/&lt;id&gt;/infos</code></a></li>
+<li><a href="#delete-queue-workflows-job-id-book">DELETE <code>/queue/workflows/&lt;job-id&gt;/book</code></a></li>
+<li><a href="#get-queue-workflows-job-id-infos">GET <code>/queue/workflows/&lt;job-id&gt;/infos</code></a></li>
 <li><a href="#get-queue-workflows-count">GET <code>/queue/workflows/count</code></a></li>
 <li><a href="#get-queue-workflows">GET <code>/queue/workflows</code></a></li>
-<li><a href="#post-queue-workflows-id-book">POST <code>/queue/workflows/&lt;id&gt;/book</code></a></li>
-<li><a href="#post-queue-workflows-id-spawn-infos">POST <code>/queue/workflows/&lt;id&gt;/spawn/infos</code></a></li>
 <li><a href="#post-queue-workflows-id-take">POST <code>/queue/workflows/&lt;id&gt;/take</code></a></li>
-<li><a href="#postexecute-queue-workflows-token-coverage">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/coverage</code></a></li>
-<li><a href="#postexecute-queue-workflows-token-log">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/log</code></a></li>
-<li><a href="#postexecute-queue-workflows-token-result">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/result</code></a></li>
-<li><a href="#postexecute-queue-workflows-token-step">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/step</code></a></li>
-<li><a href="#postexecute-queue-workflows-token-tag">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/tag</code></a></li>
-<li><a href="#postexecute-queue-workflows-token-test">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/test</code></a></li>
-<li><a href="#postexecute-queue-workflows-token-variable">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/variable</code></a></li>
-<li><a href="#postexecute-queue-workflows-token-vulnerability">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/vulnerability</code></a></li>
+<li><a href="#post-queue-workflows-job-id-book">POST <code>/queue/workflows/&lt;job-id&gt;/book</code></a></li>
+<li><a href="#post-queue-workflows-job-id-spawn-infos">POST <code>/queue/workflows/&lt;job-id&gt;/spawn/infos</code></a></li>
+<li><a href="#postexecute-queue-workflows-job-id-coverage">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/coverage</code></a></li>
+<li><a href="#postexecute-queue-workflows-job-id-log">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/log</code></a></li>
+<li><a href="#postexecute-queue-workflows-job-id-result">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/result</code></a></li>
+<li><a href="#postexecute-queue-workflows-job-id-step">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/step</code></a></li>
+<li><a href="#postexecute-queue-workflows-job-id-tag">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/tag</code></a></li>
+<li><a href="#postexecute-queue-workflows-job-id-test">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/test</code></a></li>
+<li><a href="#postexecute-queue-workflows-job-id-vulnerability">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/vulnerability</code></a></li>
 <li><a href="#postexecute-queue-workflows-log-service">POSTEXECUTE <code>/queue/workflows/log/service</code></a></li>
 </ul></li>
 </ul>
@@ -427,13 +414,13 @@
 
 
 
-<h2 id="delete-queue-workflows-id-book">DELETE <code>/queue/workflows/&lt;id&gt;/book</code></h2>
+<h2 id="delete-queue-workflows-job-id-book">DELETE <code>/queue/workflows/&lt;job-id&gt;/book</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/queue/workflows/&lt;id&gt;/book</code></strong></th>
+<th><strong><code>/queue/workflows/&lt;job-id&gt;/book</code></strong></th>
 </tr>
 </thead>
 
@@ -445,7 +432,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedHatchery:  -  Auth: true</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>RunExecution</td>
 </tr>
 
 <tr>
@@ -455,13 +447,13 @@
 </tbody>
 </table>
 
-<h2 id="get-queue-workflows-id-infos">GET <code>/queue/workflows/&lt;id&gt;/infos</code></h2>
+<h2 id="get-queue-workflows-job-id-infos">GET <code>/queue/workflows/&lt;job-id&gt;/infos</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/queue/workflows/&lt;id&gt;/infos</code></strong></th>
+<th><strong><code>/queue/workflows/&lt;job-id&gt;/infos</code></strong></th>
 </tr>
 </thead>
 
@@ -473,7 +465,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedWorker:  -  NeedHatchery:  -  Auth: true</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>RunExecution</td>
 </tr>
 
 <tr>
@@ -505,6 +502,11 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>Run</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+countWorkflowJobQueueHandler%22">countWorkflowJobQueueHandler</a></td>
 </tr>
@@ -533,64 +535,13 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>Run, RunExecution</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowJobQueueHandler%22">getWorkflowJobQueueHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-queue-workflows-id-book">POST <code>/queue/workflows/&lt;id&gt;/book</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/queue/workflows/&lt;id&gt;/book</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedHatchery:  -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postBookWorkflowJobHandler%22">postBookWorkflowJobHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-queue-workflows-id-spawn-infos">POST <code>/queue/workflows/&lt;id&gt;/spawn/infos</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/queue/workflows/&lt;id&gt;/spawn/infos</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedHatchery:  -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postSpawnInfosWorkflowJobHandler%22">postSpawnInfosWorkflowJobHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -613,7 +564,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedWorker:  -  Auth: true</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>RunExecution</td>
 </tr>
 
 <tr>
@@ -623,13 +579,79 @@
 </tbody>
 </table>
 
-<h2 id="postexecute-queue-workflows-token-coverage">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/coverage</code></h2>
+<h2 id="post-queue-workflows-job-id-book">POST <code>/queue/workflows/&lt;job-id&gt;/book</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/queue/workflows/&lt;token&gt;/coverage</code></strong></th>
+<th><strong><code>/queue/workflows/&lt;job-id&gt;/book</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>RunExecution</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postBookWorkflowJobHandler%22">postBookWorkflowJobHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-queue-workflows-job-id-spawn-infos">POST <code>/queue/workflows/&lt;job-id&gt;/spawn/infos</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/queue/workflows/&lt;job-id&gt;/spawn/infos</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>RunExecution</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postSpawnInfosWorkflowJobHandler%22">postSpawnInfosWorkflowJobHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="postexecute-queue-workflows-job-id-coverage">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/coverage</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/queue/workflows/&lt;job-id&gt;/coverage</code></strong></th>
 </tr>
 </thead>
 
@@ -641,7 +663,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedWorker:  -  Auth: true</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>RunExecution</td>
 </tr>
 
 <tr>
@@ -651,13 +678,13 @@
 </tbody>
 </table>
 
-<h2 id="postexecute-queue-workflows-token-log">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/log</code></h2>
+<h2 id="postexecute-queue-workflows-job-id-log">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/log</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/queue/workflows/&lt;token&gt;/log</code></strong></th>
+<th><strong><code>/queue/workflows/&lt;job-id&gt;/log</code></strong></th>
 </tr>
 </thead>
 
@@ -669,7 +696,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedWorker:  -  Auth: true</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>RunExecution</td>
 </tr>
 
 <tr>
@@ -679,13 +711,13 @@
 </tbody>
 </table>
 
-<h2 id="postexecute-queue-workflows-token-result">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/result</code></h2>
+<h2 id="postexecute-queue-workflows-job-id-result">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/result</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/queue/workflows/&lt;token&gt;/result</code></strong></th>
+<th><strong><code>/queue/workflows/&lt;job-id&gt;/result</code></strong></th>
 </tr>
 </thead>
 
@@ -697,7 +729,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedWorker:  -  Auth: true</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>RunExecution</td>
 </tr>
 
 <tr>
@@ -707,13 +744,13 @@
 </tbody>
 </table>
 
-<h2 id="postexecute-queue-workflows-token-step">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/step</code></h2>
+<h2 id="postexecute-queue-workflows-job-id-step">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/step</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/queue/workflows/&lt;token&gt;/step</code></strong></th>
+<th><strong><code>/queue/workflows/&lt;job-id&gt;/step</code></strong></th>
 </tr>
 </thead>
 
@@ -725,7 +762,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedWorker:  -  Auth: true</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>RunExecution</td>
 </tr>
 
 <tr>
@@ -735,13 +777,13 @@
 </tbody>
 </table>
 
-<h2 id="postexecute-queue-workflows-token-tag">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/tag</code></h2>
+<h2 id="postexecute-queue-workflows-job-id-tag">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/tag</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/queue/workflows/&lt;token&gt;/tag</code></strong></th>
+<th><strong><code>/queue/workflows/&lt;job-id&gt;/tag</code></strong></th>
 </tr>
 </thead>
 
@@ -753,7 +795,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedWorker:  -  Auth: true</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>RunExecution</td>
 </tr>
 
 <tr>
@@ -763,13 +810,13 @@
 </tbody>
 </table>
 
-<h2 id="postexecute-queue-workflows-token-test">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/test</code></h2>
+<h2 id="postexecute-queue-workflows-job-id-test">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/test</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/queue/workflows/&lt;token&gt;/test</code></strong></th>
+<th><strong><code>/queue/workflows/&lt;job-id&gt;/test</code></strong></th>
 </tr>
 </thead>
 
@@ -781,7 +828,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedWorker:  -  Auth: true</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>RunExecution</td>
 </tr>
 
 <tr>
@@ -791,13 +843,13 @@
 </tbody>
 </table>
 
-<h2 id="postexecute-queue-workflows-token-variable">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/variable</code></h2>
+<h2 id="postexecute-queue-workflows-job-id-vulnerability">POSTEXECUTE <code>/queue/workflows/&lt;job-id&gt;/vulnerability</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/queue/workflows/&lt;token&gt;/variable</code></strong></th>
+<th><strong><code>/queue/workflows/&lt;job-id&gt;/vulnerability</code></strong></th>
 </tr>
 </thead>
 
@@ -809,35 +861,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedWorker:  -  Auth: true</td>
+<td>Auth: true</td>
 </tr>
 
 <tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowJobVariableHandler%22">postWorkflowJobVariableHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="postexecute-queue-workflows-token-vulnerability">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/vulnerability</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/queue/workflows/&lt;token&gt;/vulnerability</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POSTEXECUTE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedWorker:  -  Auth: true</td>
+<td>Scopes</td>
+<td>RunExecution</td>
 </tr>
 
 <tr>
@@ -865,7 +894,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedHatchery:  -  Auth: true</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>RunExecution</td>
 </tr>
 
 <tr>

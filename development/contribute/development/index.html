@@ -18,21 +18,21 @@
 
 <meta name="description"
     content="Before contributing to CDS, you&rsquo;ll need to install your development environment.
- PostgreSQL Redis Node.js Golang CDS  if you are familiar with these different tools, you probably will not need to read this page :-)
+ PostgreSQL Redis Node.js Golang CDS  If you are familiar with these different tools, you probably will not need to read this page :-)
 PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &gt;= 9.5.
 You can easily use only PostgreSQL binaries, downloaded from https://www.enterprisedb.com/download-postgresql-binaries.
 Initialize DB by running:
 $ mkdir -p ~/data/postgres/data $ initdb -D ~/data/postgres/data  Create user cds and database cds">
 <meta property="og:description"
     content="Before contributing to CDS, you&rsquo;ll need to install your development environment.
- PostgreSQL Redis Node.js Golang CDS  if you are familiar with these different tools, you probably will not need to read this page :-)
+ PostgreSQL Redis Node.js Golang CDS  If you are familiar with these different tools, you probably will not need to read this page :-)
 PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &gt;= 9.5.
 You can easily use only PostgreSQL binaries, downloaded from https://www.enterprisedb.com/download-postgresql-binaries.
 Initialize DB by running:
 $ mkdir -p ~/data/postgres/data $ initdb -D ~/data/postgres/data  Create user cds and database cds">
 <meta name="twitter:description"
     content="Before contributing to CDS, you&rsquo;ll need to install your development environment.
- PostgreSQL Redis Node.js Golang CDS  if you are familiar with these different tools, you probably will not need to read this page :-)
+ PostgreSQL Redis Node.js Golang CDS  If you are familiar with these different tools, you probably will not need to read this page :-)
 PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &gt;= 9.5.
 You can easily use only PostgreSQL binaries, downloaded from https://www.enterprisedb.com/download-postgresql-binaries.
 Initialize DB by running:
@@ -297,7 +297,7 @@ development environment.</p>
 <li>CDS</li>
 </ul>
 
-<p>if you are familiar with these different tools, you probably will not need to read this page :-)</p>
+<p>If you are familiar with these different tools, you probably will not need to read this page :-)</p>
 
 <h2 id="postgresql">PostgreSQL</h2>
 
@@ -359,21 +359,21 @@ $ tar xzf node-v12.4.0-darwin-x64.tar.gz
 
 <h2 id="golang">Golang</h2>
 
-<p>Download the latest Golang version from <a href="https://golang.org/dl/">https://golang.org/dl/</a>, version &gt;= 1.12</p>
+<p>Download the latest Golang version from <a href="https://golang.org/dl/">https://golang.org/dl/</a>, version &gt;= 1.13</p>
 
-<p>Example with version 1.12 on macOS:</p>
+<p>Example with version 1.13 on macOS:</p>
 
 <pre><code class="language-bash">$ export GOROOT=~/go
 $ export PATH=$PATH:$GOROOT/bin
 $ cd ~
-$ curl -O https://dl.google.com/go/go1.12.darwin-amd64.tar.gz
-$ tar xzf go1.12.darwin-amd64.tar.gz
+$ curl -O https://dl.google.com/go/go1.13.darwin-amd64.tar.gz
+$ tar xzf go1.13.darwin-amd64.tar.gz
 </code></pre>
 
 <p>Check if Go installation is ok</p>
 
 <pre><code class="language-bash">$ go version
-go version go1.12 darwin/amd64
+go version go1.13 darwin/amd64
 </code></pre>
 
 <h2 id="cds">CDS</h2>
@@ -385,26 +385,20 @@ $ mkdir -p $(go env GOPATH)/src/github.com/ovh
 $ cd $(go env GOPATH)/src/github.com/ovh
 $ git clone https://github.com/ovh/cds.git
 
-# Compile engine
-$ cd $(go env GOPATH)/src/github.com/ovh/cds/engine
-$ go install
+# Compile everything
+$ cd $(go env GOPATH)/src/github.com/ovh/cds
+$ make clean # useful if you had already compile CDS before
+$ make build
 
-# Compile worker
-$ cd $(go env GOPATH)/src/github.com/ovh/cds/engine/worker
-$ go install
-
-# Compile cdsctl
-$ cd $(go env GOPATH)/src/github.com/ovh/cds/cli/cdsctl
-$ go install
-
-# Compile ui
-$ cd $(go env GOPATH)/src/github.com/ovh/cds/ui
-$ npm install
+# if you want to build only one OS/ARCH, you can do for linux/amd64:
+$ make build OS=&quot;linux&quot; ARCH=&quot;amd64&quot;
 </code></pre>
+
+<p>All binaries are stored in the <code>dist/</code> directory</p>
 
 <p>Configure CDS:</p>
 
-<pre><code># Generate default configuration file
+<pre><code class="language-bash"># Generate default configuration file
 $ engine config new &gt; ~/.cds/dev.toml
 
 # edit ~/.cds/dev.toml file 
@@ -414,9 +408,6 @@ $ engine config new &gt; ~/.cds/dev.toml
 ### --&gt; set name to &quot;hatchery-local&quot;
 ## in section [hatchery.local.commonConfiguration.api.http]
 ### --&gt; uncomment url, should be set to url = &quot;http://localhost:8081&quot; 
-
-## Replace all http://localhost:8080 by http://localhost:4200
-## 8080 is the &quot;production&quot; port for UI, 4200 is the development port
 
 </code></pre>
 
@@ -445,11 +436,13 @@ $ npm start
 
 <p>Register first user with cdsctl:</p>
 
-<pre><code class="language-bash">$ cdsctl signup -H http://localhost:8081 --email your-username@localhost.local --fullname yourFullname --username your-username
+<pre><code class="language-bash"># INIT_TOKEN is used to create the first user as an administrator of CDS.
+export INIT_TOKEN=`./engine config init-token --config ~/.cds/dev.toml`
+$ cdsctl signup -H http://localhost:8081 --email your-username@localhost.local --fullname yourFullname --username your-username
 # Check CDS API logs to get the validation code
 </code></pre>
 
-<p>Open a browser, go on <a href="http://localhost:4200">http://localhost:4200</a> - Have fun.</p>
+<p>Open a browser, go on <a href="http://localhost:8080">http://localhost:8080</a> - Have fun.</p>
 
 <h2 id="notes">Notes</h2>
 

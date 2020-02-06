@@ -249,13 +249,57 @@
 	
 		
 			
-<a class="item" data-title="GitHub" href="https://ovh.github.io/cds/docs/integrations/github/"></a>
+<div class="item" data-title="GitHub">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="GitHub Authentication" href="https://ovh.github.io/cds/docs/integrations/github/github_authentication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitLab" href="https://ovh.github.io/cds/docs/integrations/gitlab/"></a>
+<a class="item" data-title="GitHub Repository Manager" href="https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="GitLab">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="GitLab Authentication" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitLab Repository Manager" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_repository_manager/"></a>
+
+		
+	
+
+	</div>
+</div>
 
 		
 	
@@ -312,6 +356,12 @@
 
 	</div>
 </div>
+
+		
+	
+		
+			
+<a class="item" data-title="LDAP Authentication" href="https://ovh.github.io/cds/docs/integrations/ldap/"></a>
 
 		
 	
@@ -406,16 +456,21 @@
 
 <h2 id="start-kubernetes-hatchery">Start Kubernetes hatchery</h2>
 
-<p>Generate a token for group:</p>
+<p>Generate a token:</p>
 
-<pre><code class="language-bash">$ cdsctl token generate shared.infra persistent
-expiration  persistent
-created     2019-03-13 18:47:56.715104 +0100 CET
-group_name  shared.infra
-token       xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx
+<pre><code class="language-bash">$ cdsctl consumer new me \
+--scopes=Hatchery,RunExecution,Service,WorkerModel \
+--name=&quot;hatchery.kubernetes&quot; \
+--description=&quot;Consumer token for kubernetes hatchery&quot; \
+--groups=&quot;&quot; \
+--no-interactive
+
+Builtin consumer successfully created, use the following token to sign in:
+xxxxxxxx.xxxxxxx.4Bd9XJMIWrfe8Lwb-Au68TKUqflPorY2Fmcuw5vIoUs5gQyCLuxxxxxxxxxxxxxx
 </code></pre>
 
-<p>Edit the <a href="https://ovh.github.io/cds/hosting/configuration/">CDS Configuration</a> or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated.</p>
+<p>Edit the section <code>hatchery.kubernetes</code> in the <a href="https://ovh.github.io/cds/hosting/configuration/">CDS Configuration</a> file.
+The token have to be set on the key <code>hatchery.kubernetes.commonConfiguration.api.http.token</code>.</p>
 
 <p>Then start hatchery:</p>
 

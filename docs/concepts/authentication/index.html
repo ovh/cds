@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>Authentication - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="https://ovh.github.io/cds/sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/callouts.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/auto-complete.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/fontawesome.min.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/asciinema-player.css">
+<link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
+
+<meta name="description"
+    content="Consumer Two type of consumer:
+ first level: GitLab, GitHub, CorporateSSO, LDAP, Local. n level: Builtin.  A builtin consumer can be created by a user. Every builtin consumer should have a parent consumer that can also be another builtin consumer. Using a child consumer you can give permission for all or a part of what its parent can access.
+Groups A consumer includes a list of groups. Wildcard for a first level.">
+<meta property="og:description"
+    content="Consumer Two type of consumer:
+ first level: GitLab, GitHub, CorporateSSO, LDAP, Local. n level: Builtin.  A builtin consumer can be created by a user. Every builtin consumer should have a parent consumer that can also be another builtin consumer. Using a child consumer you can give permission for all or a part of what its parent can access.
+Groups A consumer includes a list of groups. Wildcard for a first level.">
+<meta name="twitter:description"
+    content="Consumer Two type of consumer:
+ first level: GitLab, GitHub, CorporateSSO, LDAP, Local. n level: Builtin.  A builtin consumer can be created by a user. Every builtin consumer should have a parent consumer that can also be another builtin consumer. Using a child consumer you can give permission for all or a part of what its parent can access.
+Groups A consumer includes a list of groups. Wildcard for a first level.">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/authentication/">
+<meta property="og:title" content="Authentication">
+<meta name="twitter:title" content="Authentication">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/jquery-ui-1.12.1.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/script.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="https://ovh.github.io/cds/" class="logo"></a>
+				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="https://ovh.github.io/cds/docs/" class="active">Documentation</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/development/">CDS Developer Manual</a></li>
+					
+					<li><a href="https://ovh.github.io/cds/about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			<li><a href="https://ovh.github.io/cds/docs/">Home</a></li>
+			
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/concepts/" class="menuSelected">Concepts</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/actions/">Actions</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/components/">Components</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/integrations/">Integrations</a></li>
+			
+				
+				<li><a href="https://ovh.github.io/cds/docs/tutorials/">Tutorials</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Concepts" href="https://ovh.github.io/cds/docs/concepts/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Authentication" href="https://ovh.github.io/cds/docs/concepts/authentication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Job" href="https://ovh.github.io/cds/docs/concepts/job/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Project" href="https://ovh.github.io/cds/docs/concepts/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Permissions - ACLs" href="https://ovh.github.io/cds/docs/concepts/permissions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline" href="https://ovh.github.io/cds/docs/concepts/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Variables" href="https://ovh.github.io/cds/docs/concepts/variables/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Workflow">
+	<div class="container">
+		
+		<a class="item" data-title="Workflow" href="https://ovh.github.io/cds/docs/concepts/workflow/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Payload" href="https://ovh.github.io/cds/docs/concepts/workflow/payload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline Context" href="https://ovh.github.io/cds/docs/concepts/workflow/pipeline-context/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Hooks">
+	<div class="container">
+		
+		<a class="item" data-title="Hooks" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Webhook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Scheduler" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/scheduler/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Webhook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Poller" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/git-repo-poller/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Kafka hook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/kafka-hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="RabbitMQ hook" href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/rabbitmq-hook/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Run conditions on pipeline" href="https://ovh.github.io/cds/docs/concepts/workflow/run-conditions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Join" href="https://ovh.github.io/cds/docs/concepts/workflow/join/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Mutex" href="https://ovh.github.io/cds/docs/concepts/workflow/mutex/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Sidebar" href="https://ovh.github.io/cds/docs/concepts/workflow/sidebar/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Run Number" href="https://ovh.github.io/cds/docs/concepts/workflow/run-number/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Notifications" href="https://ovh.github.io/cds/docs/concepts/workflow/notifications/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Requirement">
+	<div class="container">
+		
+		<a class="item" data-title="Requirement" href="https://ovh.github.io/cds/docs/concepts/requirement/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Network Access" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_network/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Service Link" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Memory" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_memory/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="OS &amp; Architecture" href="https://ovh.github.io/cds/docs/concepts/requirement/requirement_os_arch/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Configuration files">
+	<div class="container">
+		
+		<a class="item" data-title="Configuration files" href="https://ovh.github.io/cds/docs/concepts/files/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Workflow configuration file" href="https://ovh.github.io/cds/docs/concepts/files/workflow-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline configuration file" href="https://ovh.github.io/cds/docs/concepts/files/pipeline-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model configuration file" href="https://ovh.github.io/cds/docs/concepts/files/worker_model-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Action configuration file" href="https://ovh.github.io/cds/docs/concepts/files/action-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Application configuration file" href="https://ovh.github.io/cds/docs/concepts/files/application-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Environment configuration file" href="https://ovh.github.io/cds/docs/concepts/files/environment-syntax/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Worker Model">
+	<div class="container">
+		
+		<a class="item" data-title="Worker Model" href="https://ovh.github.io/cds/docs/concepts/worker-model/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Worker Model Variables" href="https://ovh.github.io/cds/docs/concepts/worker-model/variables/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model patterns" href="https://ovh.github.io/cds/docs/concepts/worker-model/patterns/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Workflow Template" href="https://ovh.github.io/cds/docs/concepts/template/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>Authentication</h1>
+
+
+
+<nav id="TableOfContents">
+<ul>
+<li><a href="#consumer">Consumer</a>
+<ul>
+<li><a href="#groups">Groups</a></li>
+<li><a href="#scopes">Scopes</a></li>
+<li><a href="#builtin-consumer-regen">Builtin consumer regen</a></li>
+<li><a href="#changing-user-s-group">Changing user&rsquo;s group</a></li>
+<li><a href="#deleting-a-group">Deleting a group</a></li>
+<li><a href="#changing-user-ring">Changing user ring</a></li>
+</ul></li>
+</ul>
+</nav>
+
+
+
+<h1 id="consumer">Consumer</h1>
+
+<p>Two type of consumer:</p>
+
+<ul>
+<li>first level: GitLab, GitHub, CorporateSSO, LDAP, Local.</li>
+<li>n level: Builtin.</li>
+</ul>
+
+<p>A builtin consumer can be created by a user.
+Every builtin consumer should have a parent consumer that can also be another builtin consumer.
+Using a child consumer you can give permission for all or a part of what its parent can access.</p>
+
+<h2 id="groups">Groups</h2>
+
+<p>A consumer includes a list of groups.
+Wildcard for a first level.
+Wildcard or a list of group for a builtin consumer.
+A user can add only group if is member of it. (A cds admin can add any group inside a builtin consumer).
+A child consumer can only have groups that are in its parents.</p>
+
+<h2 id="scopes">Scopes</h2>
+
+<p>Scope are setup on api routes, this mecaniscm allows to let a consumer access only a part of CDS handlers.
+A consumer includes a list of Scopes, first level consumer contains all scopes by default (wildcard). Second level consumer should at least include one scope.
+Each scope added in a builtin consumer should be in its parent.</p>
+
+<p>Hatchery: service, hatchery, run execution, worker model</p>
+
+<p>Hook: service, hooks, project, run</p>
+
+<p>Other: service</p>
+
+<p>Scopes list:</p>
+
+<ul>
+<li>User: access to handlers for user profile and contact management.</li>
+<li>AccessToken: access to handlers for user authentication management, create new consumers, revoke sessions&hellip;</li>
+<li>Action: access to handlers for action management.</li>
+<li>Admin: access to admin handlers.</li>
+<li>Group: access to handlers for group management.</li>
+<li>Template: access to handlers for workflow template management.</li>
+<li>Project: access to handlers for project management.</li>
+<li>Run: access to handlers for workflow run management.</li>
+<li>RunExecution.</li>
+<li>Hooks.</li>
+<li>Worker.</li>
+<li>WorkerModel: access to handlers for worker model management.</li>
+<li>Hatchery.</li>
+<li>Service.</li>
+</ul>
+
+<h2 id="builtin-consumer-regen">Builtin consumer regen</h2>
+
+<p>This allow you to get a new consumer signin token for a builtin consumer.
+Only consumers that are not disabled can be regen. If there are invalidated groups in the consumer, they will be removed.
+When a consumer is regenerated, its issued date will be updated so all old signin token will be invalidated.</p>
+
+<h2 id="changing-user-s-group">Changing user&rsquo;s group</h2>
+
+<p>If a user is removed from a group, the group should be invalidated in all the consumers that contains it.
+If it was the last group of the consumer we also want to disable the consumer.
+If user is re-added in a given group we restore consumers where this group was invalidated. Also if the consumer was disabled we re-enable it.</p>
+
+<h2 id="deleting-a-group">Deleting a group</h2>
+
+<p>Is a group was removed we removes all references to this group from all consumers.
+If it was the last group for a consumer the consumer will be disabled.</p>
+
+<h2 id="changing-user-ring">Changing user ring</h2>
+
+<p>A CDS admin can create builtin consumers that includes all groups including the shared.infra group.
+A CDS maintainer or a simple user can only includes some of its groups.
+When a user is downgraded from admin to another ring, we invalidates all the groups in its consumers where he is not part of.
+If all the groups are invalid the consumer will be disabled.
+When a user ring is set to admin, we check if there are consumers that contains invalid group that can be restored and re-enable consumers if needed.</p>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

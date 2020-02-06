@@ -17,11 +17,11 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="DELETE /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method DELETE   Permissions Auth: true   Code deleteWorkerModelHandler    DELETE /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Code deleteWorkerModelPatternHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/export    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/export     Method GET   Permissions Auth: true   Code getWorkerModelExportHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/usage    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/usage     Method GET   Permissions Auth: true   Code getWorkerModelUsageHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method GET   Permissions Auth: true   Code getWorkerModelHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Code getRequirementTypesHandler    GET /worker/model/communication    URL /worker/model/communication     Method GET   Permissions Auth: true   Code getWorkerModelCommunicationsHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions NeedHatchery: - Auth: true   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method GET   Permissions Auth: true   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Code getWorkersHandler    POST /worker/&lt;id&gt;/disable    URL /worker/&lt;id&gt;/disable     Method POST   Permissions Auth: true   Code disableWorkerHandler    POST /worker/checking    URL /worker/checking     Method POST   Permissions Auth: true   Code workerCheckingHandler    POST /worker/model/pattern    URL /worker/model/pattern     Method POST   Permissions NeedAdmin: true - Auth: true   Code postAddWorkerModelPatternHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Code postWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Code refreshWorkerHandler    POST /worker/unregister    URL /worker/unregister     Method POST   Permissions Auth: true   Code unregisterWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Code workerWaitingHandler    POST /worker    URL /worker     Method POST   Permissions Auth: false   Code registerWorkerHandler    PUT /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method PUT   Permissions Auth: true   Code putWorkerModelHandler    PUT /worker/model/book/&lt;permModelID&gt;    URL /worker/model/book/&lt;permModelID&gt;     Method PUT   Permissions NeedHatchery: - Auth: true   Code bookWorkerModelHandler    PUT /worker/model/error/&lt;permModelID&gt;    URL /worker/model/error/&lt;permModelID&gt;     Method PUT   Permissions NeedHatchery: - Auth: true   Code spawnErrorWorkerModelHandler    PUT /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Code putWorkerModelPatternHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.">
+    content="DELETE /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method DELETE   Permissions Auth: true   Scopes WorkerModel   Code deleteWorkerModelHandler    DELETE /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code deleteWorkerModelPatternHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/export    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/export     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelExportHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/usage    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/usage     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelUsageHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getRequirementTypesHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Scopes Admin, Worker, Hatchery   Code getWorkersHandler    POST /worker/&lt;id&gt;/disable    URL /worker/&lt;id&gt;/disable     Method POST   Permissions Auth: true   Scopes Admin, Hatchery   Code disableWorkerHandler    POST /worker/model/pattern    URL /worker/model/pattern     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code postAddWorkerModelPatternHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Scopes WorkerModel   Code postWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Scopes Worker   Code postRefreshWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Scopes Worker   Code workerWaitingHandler    PUT /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/book    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/book     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putBookWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/error    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/error     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putSpawnErrorWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putWorkerModelHandler    PUT /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code putWorkerModelPatternHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.">
 <meta property="og:description"
-    content="DELETE /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method DELETE   Permissions Auth: true   Code deleteWorkerModelHandler    DELETE /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Code deleteWorkerModelPatternHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/export    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/export     Method GET   Permissions Auth: true   Code getWorkerModelExportHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/usage    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/usage     Method GET   Permissions Auth: true   Code getWorkerModelUsageHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method GET   Permissions Auth: true   Code getWorkerModelHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Code getRequirementTypesHandler    GET /worker/model/communication    URL /worker/model/communication     Method GET   Permissions Auth: true   Code getWorkerModelCommunicationsHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions NeedHatchery: - Auth: true   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method GET   Permissions Auth: true   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Code getWorkersHandler    POST /worker/&lt;id&gt;/disable    URL /worker/&lt;id&gt;/disable     Method POST   Permissions Auth: true   Code disableWorkerHandler    POST /worker/checking    URL /worker/checking     Method POST   Permissions Auth: true   Code workerCheckingHandler    POST /worker/model/pattern    URL /worker/model/pattern     Method POST   Permissions NeedAdmin: true - Auth: true   Code postAddWorkerModelPatternHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Code postWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Code refreshWorkerHandler    POST /worker/unregister    URL /worker/unregister     Method POST   Permissions Auth: true   Code unregisterWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Code workerWaitingHandler    POST /worker    URL /worker     Method POST   Permissions Auth: false   Code registerWorkerHandler    PUT /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method PUT   Permissions Auth: true   Code putWorkerModelHandler    PUT /worker/model/book/&lt;permModelID&gt;    URL /worker/model/book/&lt;permModelID&gt;     Method PUT   Permissions NeedHatchery: - Auth: true   Code bookWorkerModelHandler    PUT /worker/model/error/&lt;permModelID&gt;    URL /worker/model/error/&lt;permModelID&gt;     Method PUT   Permissions NeedHatchery: - Auth: true   Code spawnErrorWorkerModelHandler    PUT /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Code putWorkerModelPatternHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.">
+    content="DELETE /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method DELETE   Permissions Auth: true   Scopes WorkerModel   Code deleteWorkerModelHandler    DELETE /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code deleteWorkerModelPatternHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/export    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/export     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelExportHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/usage    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/usage     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelUsageHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getRequirementTypesHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Scopes Admin, Worker, Hatchery   Code getWorkersHandler    POST /worker/&lt;id&gt;/disable    URL /worker/&lt;id&gt;/disable     Method POST   Permissions Auth: true   Scopes Admin, Hatchery   Code disableWorkerHandler    POST /worker/model/pattern    URL /worker/model/pattern     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code postAddWorkerModelPatternHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Scopes WorkerModel   Code postWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Scopes Worker   Code postRefreshWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Scopes Worker   Code workerWaitingHandler    PUT /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/book    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/book     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putBookWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/error    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/error     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putSpawnErrorWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putWorkerModelHandler    PUT /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code putWorkerModelPatternHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.">
 <meta name="twitter:description"
-    content="DELETE /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method DELETE   Permissions Auth: true   Code deleteWorkerModelHandler    DELETE /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Code deleteWorkerModelPatternHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/export    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/export     Method GET   Permissions Auth: true   Code getWorkerModelExportHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/usage    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/usage     Method GET   Permissions Auth: true   Code getWorkerModelUsageHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method GET   Permissions Auth: true   Code getWorkerModelHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Code getRequirementTypesHandler    GET /worker/model/communication    URL /worker/model/communication     Method GET   Permissions Auth: true   Code getWorkerModelCommunicationsHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions NeedHatchery: - Auth: true   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method GET   Permissions Auth: true   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Code getWorkersHandler    POST /worker/&lt;id&gt;/disable    URL /worker/&lt;id&gt;/disable     Method POST   Permissions Auth: true   Code disableWorkerHandler    POST /worker/checking    URL /worker/checking     Method POST   Permissions Auth: true   Code workerCheckingHandler    POST /worker/model/pattern    URL /worker/model/pattern     Method POST   Permissions NeedAdmin: true - Auth: true   Code postAddWorkerModelPatternHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Code postWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Code refreshWorkerHandler    POST /worker/unregister    URL /worker/unregister     Method POST   Permissions Auth: true   Code unregisterWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Code workerWaitingHandler    POST /worker    URL /worker     Method POST   Permissions Auth: false   Code registerWorkerHandler    PUT /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method PUT   Permissions Auth: true   Code putWorkerModelHandler    PUT /worker/model/book/&lt;permModelID&gt;    URL /worker/model/book/&lt;permModelID&gt;     Method PUT   Permissions NeedHatchery: - Auth: true   Code bookWorkerModelHandler    PUT /worker/model/error/&lt;permModelID&gt;    URL /worker/model/error/&lt;permModelID&gt;     Method PUT   Permissions NeedHatchery: - Auth: true   Code spawnErrorWorkerModelHandler    PUT /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Code putWorkerModelPatternHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.">
+    content="DELETE /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method DELETE   Permissions Auth: true   Scopes WorkerModel   Code deleteWorkerModelHandler    DELETE /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method DELETE   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code deleteWorkerModelPatternHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/export    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/export     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelExportHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/usage    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/usage     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelUsageHandler    GET /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelHandler    GET /worker/model/capability/type    URL /worker/model/capability/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getRequirementTypesHandler    GET /worker/model/enabled    URL /worker/model/enabled     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsEnabledHandler    GET /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternHandler    GET /worker/model/pattern    URL /worker/model/pattern     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelPatternsHandler    GET /worker/model/type    URL /worker/model/type     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelTypesHandler    GET /worker/model    URL /worker/model     Method GET   Permissions Auth: true   Scopes WorkerModel   Code getWorkerModelsHandler    GET /worker    URL /worker     Method GET   Permissions Auth: true   Scopes Admin, Worker, Hatchery   Code getWorkersHandler    POST /worker/&lt;id&gt;/disable    URL /worker/&lt;id&gt;/disable     Method POST   Permissions Auth: true   Scopes Admin, Hatchery   Code disableWorkerHandler    POST /worker/model/pattern    URL /worker/model/pattern     Method POST   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code postAddWorkerModelPatternHandler    POST /worker/model    URL /worker/model     Method POST   Permissions Auth: true   Scopes WorkerModel   Code postWorkerModelHandler    POST /worker/refresh    URL /worker/refresh     Method POST   Permissions Auth: true   Scopes Worker   Code postRefreshWorkerHandler    POST /worker/waiting    URL /worker/waiting     Method POST   Permissions Auth: true   Scopes Worker   Code workerWaitingHandler    PUT /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/book    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/book     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putBookWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/error    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/error     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putSpawnErrorWorkerModelHandler    PUT /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;    URL /worker/model/&lt;group-name&gt;/&lt;permModelName&gt;     Method PUT   Permissions Auth: true   Scopes WorkerModel   Code putWorkerModelHandler    PUT /worker/model/pattern/&lt;type&gt;/&lt;name&gt;    URL /worker/model/pattern/&lt;type&gt;/&lt;name&gt;     Method PUT   Permissions NeedAdmin: true - Auth: true   Scopes WorkerModel   Code putWorkerModelPatternHandler    import a worker model yml/json file    URL /worker/model/import     Method POST   Query Parameter force=true or false.">
 <meta property="og:url" content="https://ovh.github.io/cds/development/rest/worker/">
 <meta property="og:title" content="worker">
 <meta name="twitter:title" content="worker">
@@ -207,12 +207,6 @@
 	
 		
 			
-<a class="item" data-title="accesstoken" href="https://ovh.github.io/cds/development/rest/accesstoken/"></a>
-
-		
-	
-		
-			
 <a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
 
 		
@@ -280,12 +274,6 @@
 		
 			
 <a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
-
-		
-	
-		
-			
-<a class="item" data-title="login" href="https://ovh.github.io/cds/development/rest/login/"></a>
 
 		
 	
@@ -411,7 +399,6 @@
 <li><a href="#get-worker-model-group-name-permmodelname-usage">GET <code>/worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/usage</code></a></li>
 <li><a href="#get-worker-model-group-name-permmodelname">GET <code>/worker/model/&lt;group-name&gt;/&lt;permModelName&gt;</code></a></li>
 <li><a href="#get-worker-model-capability-type">GET <code>/worker/model/capability/type</code></a></li>
-<li><a href="#get-worker-model-communication">GET <code>/worker/model/communication</code></a></li>
 <li><a href="#get-worker-model-enabled">GET <code>/worker/model/enabled</code></a></li>
 <li><a href="#get-worker-model-pattern-type-name">GET <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
 <li><a href="#get-worker-model-pattern">GET <code>/worker/model/pattern</code></a></li>
@@ -419,16 +406,13 @@
 <li><a href="#get-worker-model">GET <code>/worker/model</code></a></li>
 <li><a href="#get-worker">GET <code>/worker</code></a></li>
 <li><a href="#post-worker-id-disable">POST <code>/worker/&lt;id&gt;/disable</code></a></li>
-<li><a href="#post-worker-checking">POST <code>/worker/checking</code></a></li>
 <li><a href="#post-worker-model-pattern">POST <code>/worker/model/pattern</code></a></li>
 <li><a href="#post-worker-model">POST <code>/worker/model</code></a></li>
 <li><a href="#post-worker-refresh">POST <code>/worker/refresh</code></a></li>
-<li><a href="#post-worker-unregister">POST <code>/worker/unregister</code></a></li>
 <li><a href="#post-worker-waiting">POST <code>/worker/waiting</code></a></li>
-<li><a href="#post-worker">POST <code>/worker</code></a></li>
+<li><a href="#put-worker-model-group-name-permmodelname-book">PUT <code>/worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/book</code></a></li>
+<li><a href="#put-worker-model-group-name-permmodelname-error">PUT <code>/worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/error</code></a></li>
 <li><a href="#put-worker-model-group-name-permmodelname">PUT <code>/worker/model/&lt;group-name&gt;/&lt;permModelName&gt;</code></a></li>
-<li><a href="#put-worker-model-book-permmodelid">PUT <code>/worker/model/book/&lt;permModelID&gt;</code></a></li>
-<li><a href="#put-worker-model-error-permmodelid">PUT <code>/worker/model/error/&lt;permModelID&gt;</code></a></li>
 <li><a href="#put-worker-model-pattern-type-name">PUT <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
 <li><a href="#import-a-worker-model-yml-json-file">import a worker model yml/json file</a>
 <ul>
@@ -462,6 +446,11 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelHandler%22">deleteWorkerModelHandler</a></td>
 </tr>
@@ -486,7 +475,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
+<td>NeedAdmin: true - Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
 </tr>
 
 <tr>
@@ -518,6 +512,11 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelExportHandler%22">getWorkerModelExportHandler</a></td>
 </tr>
@@ -543,6 +542,11 @@
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
 </tr>
 
 <tr>
@@ -574,6 +578,11 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelHandler%22">getWorkerModelHandler</a></td>
 </tr>
@@ -602,36 +611,13 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getRequirementTypesHandler%22">getRequirementTypesHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-worker-model-communication">GET <code>/worker/model/communication</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/worker/model/communication</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelCommunicationsHandler%22">getWorkerModelCommunicationsHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -654,7 +640,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedHatchery:  -  Auth: true</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
 </tr>
 
 <tr>
@@ -686,6 +677,11 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternHandler%22">getWorkerModelPatternHandler</a></td>
 </tr>
@@ -711,6 +707,11 @@
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
 </tr>
 
 <tr>
@@ -742,6 +743,11 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelTypesHandler%22">getWorkerModelTypesHandler</a></td>
 </tr>
@@ -767,6 +773,11 @@
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
 </tr>
 
 <tr>
@@ -798,6 +809,11 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>Admin, Worker, Hatchery</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkersHandler%22">getWorkersHandler</a></td>
 </tr>
@@ -826,36 +842,13 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>Admin, Hatchery</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+disableWorkerHandler%22">disableWorkerHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-worker-checking">POST <code>/worker/checking</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/worker/checking</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+workerCheckingHandler%22">workerCheckingHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -878,7 +871,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
+<td>NeedAdmin: true - Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
 </tr>
 
 <tr>
@@ -910,6 +908,11 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkerModelHandler%22">postWorkerModelHandler</a></td>
 </tr>
@@ -938,36 +941,13 @@
 </tr>
 
 <tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+refreshWorkerHandler%22">refreshWorkerHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="post-worker-unregister">POST <code>/worker/unregister</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/worker/unregister</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
+<td>Scopes</td>
+<td>Worker</td>
 </tr>
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+unregisterWorkerHandler%22">unregisterWorkerHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postRefreshWorkerHandler%22">postRefreshWorkerHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -994,36 +974,79 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>Worker</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+workerWaitingHandler%22">workerWaitingHandler</a></td>
 </tr>
 </tbody>
 </table>
 
-<h2 id="post-worker">POST <code>/worker</code></h2>
+<h2 id="put-worker-model-group-name-permmodelname-book">PUT <code>/worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/book</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/worker</code></strong></th>
+<th><strong><code>/worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/book</code></strong></th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
 <td>Method</td>
-<td>POST</td>
+<td>PUT</td>
 </tr>
 
 <tr>
 <td>Permissions</td>
-<td>Auth: false</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
 </tr>
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+registerWorkerHandler%22">registerWorkerHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putBookWorkerModelHandler%22">putBookWorkerModelHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="put-worker-model-group-name-permmodelname-error">PUT <code>/worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/error</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/worker/model/&lt;group-name&gt;/&lt;permModelName&gt;/error</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putSpawnErrorWorkerModelHandler%22">putSpawnErrorWorkerModelHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -1050,64 +1073,13 @@
 </tr>
 
 <tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
+</tr>
+
+<tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkerModelHandler%22">putWorkerModelHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="put-worker-model-book-permmodelid">PUT <code>/worker/model/book/&lt;permModelID&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/worker/model/book/&lt;permModelID&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedHatchery:  -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+bookWorkerModelHandler%22">bookWorkerModelHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="put-worker-model-error-permmodelid">PUT <code>/worker/model/error/&lt;permModelID&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/worker/model/error/&lt;permModelID&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedHatchery:  -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+spawnErrorWorkerModelHandler%22">spawnErrorWorkerModelHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -1130,7 +1102,12 @@
 
 <tr>
 <td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
+<td>NeedAdmin: true - Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
 </tr>
 
 <tr>
@@ -1164,6 +1141,11 @@
 <tr>
 <td>Permissions</td>
 <td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>WorkerModel</td>
 </tr>
 
 <tr>

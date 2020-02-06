@@ -17,11 +17,11 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content=" AuthMode returns the auth mode : local ok ldap    URL /auth/mode     Method GET   Permissions Auth: false   Code authModeHandler    ">
+    content=" GET /auth/consumer/&lt;consumer-type&gt;/askSignin    URL /auth/consumer/&lt;consumer-type&gt;/askSignin     Method GET   Permissions Auth: false   Code getAuthAskSigninHandler    GET /auth/driver    URL /auth/driver     Method GET   Permissions Auth: false   Code getAuthDriversHandler    GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Scopes Action   Code getAuthMe    GET /auth/scope    URL /auth/scope     Method GET   Permissions Auth: false   Code getAuthScopesHandler    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/&lt;consumer-type&gt;/signin    URL /auth/consumer/&lt;consumer-type&gt;/signin     Method POST   Permissions Auth: false   Scopes AccessToken   Code postAuthSigninHandler    POST /auth/consumer/builtin/signin    URL /auth/consumer/builtin/signin     Method POST   Permissions Auth: false   Code postAuthBuiltinSigninHandler    POST /auth/consumer/local/askReset    URL /auth/consumer/local/askReset     Method POST   Permissions Auth: false   Code postAuthLocalAskResetHandler    POST /auth/consumer/local/reset    URL /auth/consumer/local/reset     Method POST   Permissions Auth: false   Code postAuthLocalResetHandler    POST /auth/consumer/local/signin    URL /auth/consumer/local/signin     Method POST   Permissions Auth: false   Code postAuthLocalSigninHandler    POST /auth/consumer/local/signup    URL /auth/consumer/local/signup     Method POST   Permissions Auth: false   Code postAuthLocalSignupHandler    POST /auth/consumer/local/verify    URL /auth/consumer/local/verify     Method POST   Permissions Auth: false   Code postAuthLocalVerifyHandler    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signin    URL /auth/consumer/worker/signin     Method POST   Permissions Auth: false   Code postRegisterWorkerHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
 <meta property="og:description"
-    content=" AuthMode returns the auth mode : local ok ldap    URL /auth/mode     Method GET   Permissions Auth: false   Code authModeHandler    ">
+    content=" GET /auth/consumer/&lt;consumer-type&gt;/askSignin    URL /auth/consumer/&lt;consumer-type&gt;/askSignin     Method GET   Permissions Auth: false   Code getAuthAskSigninHandler    GET /auth/driver    URL /auth/driver     Method GET   Permissions Auth: false   Code getAuthDriversHandler    GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Scopes Action   Code getAuthMe    GET /auth/scope    URL /auth/scope     Method GET   Permissions Auth: false   Code getAuthScopesHandler    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/&lt;consumer-type&gt;/signin    URL /auth/consumer/&lt;consumer-type&gt;/signin     Method POST   Permissions Auth: false   Scopes AccessToken   Code postAuthSigninHandler    POST /auth/consumer/builtin/signin    URL /auth/consumer/builtin/signin     Method POST   Permissions Auth: false   Code postAuthBuiltinSigninHandler    POST /auth/consumer/local/askReset    URL /auth/consumer/local/askReset     Method POST   Permissions Auth: false   Code postAuthLocalAskResetHandler    POST /auth/consumer/local/reset    URL /auth/consumer/local/reset     Method POST   Permissions Auth: false   Code postAuthLocalResetHandler    POST /auth/consumer/local/signin    URL /auth/consumer/local/signin     Method POST   Permissions Auth: false   Code postAuthLocalSigninHandler    POST /auth/consumer/local/signup    URL /auth/consumer/local/signup     Method POST   Permissions Auth: false   Code postAuthLocalSignupHandler    POST /auth/consumer/local/verify    URL /auth/consumer/local/verify     Method POST   Permissions Auth: false   Code postAuthLocalVerifyHandler    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signin    URL /auth/consumer/worker/signin     Method POST   Permissions Auth: false   Code postRegisterWorkerHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
 <meta name="twitter:description"
-    content=" AuthMode returns the auth mode : local ok ldap    URL /auth/mode     Method GET   Permissions Auth: false   Code authModeHandler    ">
+    content=" GET /auth/consumer/&lt;consumer-type&gt;/askSignin    URL /auth/consumer/&lt;consumer-type&gt;/askSignin     Method GET   Permissions Auth: false   Code getAuthAskSigninHandler    GET /auth/driver    URL /auth/driver     Method GET   Permissions Auth: false   Code getAuthDriversHandler    GET /auth/me    URL /auth/me     Method GET   Permissions Auth: true   Scopes Action   Code getAuthMe    GET /auth/scope    URL /auth/scope     Method GET   Permissions Auth: false   Code getAuthScopesHandler    POST /auth/consumer/&lt;consumer-type&gt;/detach    URL /auth/consumer/&lt;consumer-type&gt;/detach     Method POST   Permissions Auth: true   Scopes AccessToken   Code postAuthDetachHandler    POST /auth/consumer/&lt;consumer-type&gt;/signin    URL /auth/consumer/&lt;consumer-type&gt;/signin     Method POST   Permissions Auth: false   Scopes AccessToken   Code postAuthSigninHandler    POST /auth/consumer/builtin/signin    URL /auth/consumer/builtin/signin     Method POST   Permissions Auth: false   Code postAuthBuiltinSigninHandler    POST /auth/consumer/local/askReset    URL /auth/consumer/local/askReset     Method POST   Permissions Auth: false   Code postAuthLocalAskResetHandler    POST /auth/consumer/local/reset    URL /auth/consumer/local/reset     Method POST   Permissions Auth: false   Code postAuthLocalResetHandler    POST /auth/consumer/local/signin    URL /auth/consumer/local/signin     Method POST   Permissions Auth: false   Code postAuthLocalSigninHandler    POST /auth/consumer/local/signup    URL /auth/consumer/local/signup     Method POST   Permissions Auth: false   Code postAuthLocalSignupHandler    POST /auth/consumer/local/verify    URL /auth/consumer/local/verify     Method POST   Permissions Auth: false   Code postAuthLocalVerifyHandler    POST /auth/consumer/signout    URL /auth/consumer/signout     Method POST   Permissions Auth: true   Code postAuthSignoutHandler    POST /auth/consumer/worker/signin    URL /auth/consumer/worker/signin     Method POST   Permissions Auth: false   Code postRegisterWorkerHandler    POST /auth/consumer/worker/signout    URL /auth/consumer/worker/signout     Method POST   Permissions Auth: true   Code postUnregisterWorkerHandler    ">
 <meta property="og:url" content="https://ovh.github.io/cds/development/rest/auth/">
 <meta property="og:title" content="auth">
 <meta name="twitter:title" content="auth">
@@ -207,12 +207,6 @@
 	
 		
 			
-<a class="item" data-title="accesstoken" href="https://ovh.github.io/cds/development/rest/accesstoken/"></a>
-
-		
-	
-		
-			
 <a class="item" data-title="action" href="https://ovh.github.io/cds/development/rest/action/"></a>
 
 		
@@ -280,12 +274,6 @@
 		
 			
 <a class="item" data-title="integration" href="https://ovh.github.io/cds/development/rest/integration/"></a>
-
-		
-	
-		
-			
-<a class="item" data-title="login" href="https://ovh.github.io/cds/development/rest/login/"></a>
 
 		
 	
@@ -405,20 +393,34 @@
 <ul>
 <li>
 <ul>
-<li><a href="#authmode-returns-the-auth-mode-local-ok-ldap">AuthMode returns the auth mode : local ok ldap</a></li>
+<li><a href="#get-auth-consumer-consumer-type-asksignin">GET <code>/auth/consumer/&lt;consumer-type&gt;/askSignin</code></a></li>
+<li><a href="#get-auth-driver">GET <code>/auth/driver</code></a></li>
+<li><a href="#get-auth-me">GET <code>/auth/me</code></a></li>
+<li><a href="#get-auth-scope">GET <code>/auth/scope</code></a></li>
+<li><a href="#post-auth-consumer-consumer-type-detach">POST <code>/auth/consumer/&lt;consumer-type&gt;/detach</code></a></li>
+<li><a href="#post-auth-consumer-consumer-type-signin">POST <code>/auth/consumer/&lt;consumer-type&gt;/signin</code></a></li>
+<li><a href="#post-auth-consumer-builtin-signin">POST <code>/auth/consumer/builtin/signin</code></a></li>
+<li><a href="#post-auth-consumer-local-askreset">POST <code>/auth/consumer/local/askReset</code></a></li>
+<li><a href="#post-auth-consumer-local-reset">POST <code>/auth/consumer/local/reset</code></a></li>
+<li><a href="#post-auth-consumer-local-signin">POST <code>/auth/consumer/local/signin</code></a></li>
+<li><a href="#post-auth-consumer-local-signup">POST <code>/auth/consumer/local/signup</code></a></li>
+<li><a href="#post-auth-consumer-local-verify">POST <code>/auth/consumer/local/verify</code></a></li>
+<li><a href="#post-auth-consumer-signout">POST <code>/auth/consumer/signout</code></a></li>
+<li><a href="#post-auth-consumer-worker-signin">POST <code>/auth/consumer/worker/signin</code></a></li>
+<li><a href="#post-auth-consumer-worker-signout">POST <code>/auth/consumer/worker/signout</code></a></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<h2 id="authmode-returns-the-auth-mode-local-ok-ldap">AuthMode returns the auth mode : local ok ldap</h2>
+<h2 id="get-auth-consumer-consumer-type-asksignin">GET <code>/auth/consumer/&lt;consumer-type&gt;/askSignin</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/auth/mode</code></strong></th>
+<th><strong><code>/auth/consumer/&lt;consumer-type&gt;/askSignin</code></strong></th>
 </tr>
 </thead>
 
@@ -435,7 +437,414 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+authModeHandler%22">authModeHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAuthAskSigninHandler%22">getAuthAskSigninHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-auth-driver">GET <code>/auth/driver</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/driver</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAuthDriversHandler%22">getAuthDriversHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-auth-me">GET <code>/auth/me</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/me</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>Action</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAuthMe%22">getAuthMe</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-auth-scope">GET <code>/auth/scope</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/scope</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAuthScopesHandler%22">getAuthScopesHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-auth-consumer-consumer-type-detach">POST <code>/auth/consumer/&lt;consumer-type&gt;/detach</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/consumer/&lt;consumer-type&gt;/detach</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>AccessToken</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthDetachHandler%22">postAuthDetachHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-auth-consumer-consumer-type-signin">POST <code>/auth/consumer/&lt;consumer-type&gt;/signin</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/consumer/&lt;consumer-type&gt;/signin</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>AccessToken</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthSigninHandler%22">postAuthSigninHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-auth-consumer-builtin-signin">POST <code>/auth/consumer/builtin/signin</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/consumer/builtin/signin</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthBuiltinSigninHandler%22">postAuthBuiltinSigninHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-auth-consumer-local-askreset">POST <code>/auth/consumer/local/askReset</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/consumer/local/askReset</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthLocalAskResetHandler%22">postAuthLocalAskResetHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-auth-consumer-local-reset">POST <code>/auth/consumer/local/reset</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/consumer/local/reset</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthLocalResetHandler%22">postAuthLocalResetHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-auth-consumer-local-signin">POST <code>/auth/consumer/local/signin</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/consumer/local/signin</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthLocalSigninHandler%22">postAuthLocalSigninHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-auth-consumer-local-signup">POST <code>/auth/consumer/local/signup</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/consumer/local/signup</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthLocalSignupHandler%22">postAuthLocalSignupHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-auth-consumer-local-verify">POST <code>/auth/consumer/local/verify</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/consumer/local/verify</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthLocalVerifyHandler%22">postAuthLocalVerifyHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-auth-consumer-signout">POST <code>/auth/consumer/signout</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/consumer/signout</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAuthSignoutHandler%22">postAuthSignoutHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-auth-consumer-worker-signin">POST <code>/auth/consumer/worker/signin</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/consumer/worker/signin</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postRegisterWorkerHandler%22">postRegisterWorkerHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="post-auth-consumer-worker-signout">POST <code>/auth/consumer/worker/signout</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/auth/consumer/worker/signout</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postUnregisterWorkerHandler%22">postUnregisterWorkerHandler</a></td>
 </tr>
 </tbody>
 </table>

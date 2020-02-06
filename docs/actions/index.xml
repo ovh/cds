@@ -18,7 +18,7 @@
       <guid>https://ovh.github.io/cds/docs/actions/builtin-artifact-download/</guid>
       <description>Artifact Download is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to retrieve an artifact previously uploaded by an Artifact Upload.
-Parameters  enabled: (optional) Enable artifact download. path: Path where artifacts will be downloaded. pattern: (optional) Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB). tag: Artifact are uploaded with a tag, generally {{.cds.version}}.  Requirements No Requirement
+Parameters  path: Path where artifacts will be downloaded. pattern: (optional) Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB). tag: Artifact are uploaded with a tag, generally {{.cds.version}}.  Requirements No Requirement
 YAML example Example of a pipeline using Artifact Download action:</description>
     </item>
     
@@ -30,7 +30,7 @@ YAML example Example of a pipeline using Artifact Download action:</description>
       <guid>https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/</guid>
       <description>Artifact Upload is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
-Parameters  destination: (optional) Destination of this artifact. Use the name of integration attached on your project. enabled: (optional) Enable artifact upload, &amp;ldquo;true&amp;rdquo; or &amp;ldquo;false&amp;rdquo;. path: Path of file to upload, example: ./src/yourFile.json. tag: Artifact will be uploaded with a tag, generally {{.</description>
+Parameters  destination: (optional) Destination of this artifact. Use the name of integration attached on your project. path: Path of file to upload, example: ./src/yourFile.json. tag: Artifact will be uploaded with a tag, generally {{.cds.version}}.  Requirements No Requirement</description>
     </item>
     
     <item>
@@ -158,7 +158,7 @@ Parameters  dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pul
       
       <guid>https://ovh.github.io/cds/docs/actions/cds-go-build/</guid>
       <description>Go Build: compile a go program
-Parameters  architecture: GOARCH artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo cgoDisabled: detectRaceCondition: Enable data race detection. It&amp;rsquo;s flag -race flags: flags for go build. Put -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; for go build -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; os: GOOS package: go package to compile. Put host.ext/foo/bar for go build host.ext/foo/bar preRun: Pre-command. Example: export CGO_ENABLED=0 runGoGet: Run go get -u before go build  Requirements  bash: type: binary Value: bash go: type: binary Value: go  More documentation on Github</description>
+Parameters  architecture: GOARCH artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo cgoDisabled: detectRaceCondition: Enable data race detection. It&amp;rsquo;s flag -race flags: flags for go build. Put -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; for go build -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; os: GOOS package: go package to compile. Put host.ext/foo/bar for go build host.ext/foo/bar preRun: Pre-command. Example: export CGO_ENABLED=0 runGoGet: Run go get -u before go build  Requirements  bash: type: binary Value: bash go: type: binary Value: go  More documentation on GitHub</description>
     </item>
     
     <item>
@@ -177,7 +177,7 @@ Parameters  artifactId: Artifact id of the artifact extension: Extension of the 
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/docs/actions/cds-perl-test/</guid>
-      <description>Parameters  perllib: PERL_LIB, added to $PERL5LIB proveOptions: Options passed to prove testDirectory:  Requirements  bash: type: binary Value: bash perl: type: binary Value: perl prove: type: binary Value: prove  More documentation on Github</description>
+      <description>Parameters  perllib: PERL_LIB, added to $PERL5LIB proveOptions: Options passed to prove testDirectory:  Requirements  bash: type: binary Value: bash perl: type: binary Value: perl prove: type: binary Value: prove  More documentation on GitHub</description>
     </item>
     
     <item>
@@ -187,7 +187,7 @@ Parameters  artifactId: Artifact id of the artifact extension: Extension of the 
       
       <guid>https://ovh.github.io/cds/docs/actions/cds-publish-ovh-metrics/</guid>
       <description>Publish a metric on OVH Metrics. See https://www.ovh.com/fr/data-platforms/metrics/ and doc on https://docs.ovh.com/gb/en/cloud/metrics/
-Parameters  file: Metrics file to push (optional) See: http://www.warp10.io/apis/ingress/ labels: Labels of your metric (one K/V per line separated by a space) name: Name of you metric (optional) region: Metrics region token: Metrics write token value: Value of your metric (T=true) See: http://www.warp10.io/apis/ingress/  Requirements  bash: type: binary Value: bash curl: type: binary Value: curl  More documentation on Github</description>
+Parameters  file: Metrics file to push (optional) See: http://www.warp10.io/apis/ingress/ labels: Labels of your metric (one K/V per line separated by a space) name: Name of you metric (optional) region: Metrics region token: Metrics write token value: Value of your metric (T=true) See: http://www.warp10.io/apis/ingress/  Requirements  bash: type: binary Value: bash curl: type: binary Value: curl  More documentation on GitHub</description>
     </item>
     
     <item>
@@ -207,7 +207,7 @@ Parameters  extra_options: Extra options to pass during pylint invocation. ignor
       
       <guid>https://ovh.github.io/cds/docs/actions/cds-sonar-scanner/</guid>
       <description>Run Sonar analysis. You must have a file sonar-project.properties in your source directory.
-Parameters  sonar-project.properties: sonar-project.properties file sonarBranch: The Sonar branch (e.g. master) sonarDownloadURL: The download URL of Sonar CLI sonarPassword: The Sonar server&amp;rsquo;s password sonarURL: The URL of the Sonar server sonarUsername: The Sonar server&amp;rsquo;s username sonarVersion: SonarScanner&amp;rsquo;s version to use workspace: The directory where your project is (e.g. /go/src/github.com/ovh/cds)  Requirements  bash: type: binary Value: bash plugin-archive: type: plugin Value: plugin-archive plugin-download: type: plugin Value: plugin-download  More documentation on Github</description>
+Parameters  sonar-project.properties: sonar-project.properties file sonarBranch: The Sonar branch (e.g. master) sonarDownloadURL: The download URL of Sonar CLI sonarPassword: The Sonar server&amp;rsquo;s password sonarURL: The URL of the Sonar server sonarUsername: The Sonar server&amp;rsquo;s username sonarVersion: SonarScanner&amp;rsquo;s version to use workspace: The directory where your project is (e.g. /go/src/github.com/ovh/cds)  Requirements  bash: type: binary Value: bash plugin-archive: type: plugin Value: plugin-archive plugin-download: type: plugin Value: plugin-download  More documentation on GitHub</description>
     </item>
     
     <item>
@@ -217,7 +217,7 @@ Parameters  sonar-project.properties: sonar-project.properties file sonarBranch:
       
       <guid>https://ovh.github.io/cds/docs/actions/cds-split-download/</guid>
       <description>Download Artifacts which were uploaded using CDS_SplitUploadArtifact action.
-Parameters  destinationFile: Destination File to save the file. (Mandatory). (like dist.tar.gz) pattern: Prefix pattern to identify files to be downloaded. (Mandatory). (like bigfile-*) prefixHandle: Prefix of the Artifacts uploaded. (Mandatory). tag: Tag to identify uploaded artifacts. Default tag value is CDS run version number. (Optional)  Requirements  bash: type: binary Value: bash  More documentation on Github</description>
+Parameters  destinationFile: Destination File to save the file. (Mandatory). (like dist.tar.gz) pattern: Prefix pattern to identify files to be downloaded. (Mandatory). (like bigfile-*) prefixHandle: Prefix of the Artifacts uploaded. (Mandatory). tag: Tag to identify uploaded artifacts. Default tag value is CDS run version number. (Optional)  Requirements  bash: type: binary Value: bash  More documentation on GitHub</description>
     </item>
     
     <item>

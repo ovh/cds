@@ -17,14 +17,17 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="Generate a persistent token There is three ways to generate a persistent token:
- cdsctl login call CDS API Code it:  conf := cdsclient.Config{ Host: &quot;http://your-cds-instance&quot;, } client = cdsclient.New(conf) // replace username and password ok, token, err := client.UserLogin(username, password) if err != nil { return err } if !ok { return fmt.Errorf(&quot;login failed&quot;) } fmt.Printf(&quot;export CDS_API_URL=%s\n&quot;, url) fmt.Printf(&quot;export CDS_USER=%s\n&quot;, username) fmt.Printf(&quot;export CDS_TOKEN=%s\n&quot;, token)  How to use it?">
+    content="How to use it? You have to initialize a cdsclient:
+client := cdsclient.New(cdsclient.Config{ Host: host, }) res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{ &quot;token&quot;: &quot;&lt;signin-token-value&gt;&quot;, }) client = cdsclient.New(cdsclient.Config{ Host: host, SessionToken: res.Token, })  and then, you can use it:
+// list workers workers, err := client.WorkerList() // list users users, err := client.UserList() // list workflow runs runs, err := client.WorkflowRunList(...)  Go on https://godoc.org/github.com/ovh/cds/sdk/cdsclient to see all available funcs.">
 <meta property="og:description"
-    content="Generate a persistent token There is three ways to generate a persistent token:
- cdsctl login call CDS API Code it:  conf := cdsclient.Config{ Host: &quot;http://your-cds-instance&quot;, } client = cdsclient.New(conf) // replace username and password ok, token, err := client.UserLogin(username, password) if err != nil { return err } if !ok { return fmt.Errorf(&quot;login failed&quot;) } fmt.Printf(&quot;export CDS_API_URL=%s\n&quot;, url) fmt.Printf(&quot;export CDS_USER=%s\n&quot;, username) fmt.Printf(&quot;export CDS_TOKEN=%s\n&quot;, token)  How to use it?">
+    content="How to use it? You have to initialize a cdsclient:
+client := cdsclient.New(cdsclient.Config{ Host: host, }) res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{ &quot;token&quot;: &quot;&lt;signin-token-value&gt;&quot;, }) client = cdsclient.New(cdsclient.Config{ Host: host, SessionToken: res.Token, })  and then, you can use it:
+// list workers workers, err := client.WorkerList() // list users users, err := client.UserList() // list workflow runs runs, err := client.WorkflowRunList(...)  Go on https://godoc.org/github.com/ovh/cds/sdk/cdsclient to see all available funcs.">
 <meta name="twitter:description"
-    content="Generate a persistent token There is three ways to generate a persistent token:
- cdsctl login call CDS API Code it:  conf := cdsclient.Config{ Host: &quot;http://your-cds-instance&quot;, } client = cdsclient.New(conf) // replace username and password ok, token, err := client.UserLogin(username, password) if err != nil { return err } if !ok { return fmt.Errorf(&quot;login failed&quot;) } fmt.Printf(&quot;export CDS_API_URL=%s\n&quot;, url) fmt.Printf(&quot;export CDS_USER=%s\n&quot;, username) fmt.Printf(&quot;export CDS_TOKEN=%s\n&quot;, token)  How to use it?">
+    content="How to use it? You have to initialize a cdsclient:
+client := cdsclient.New(cdsclient.Config{ Host: host, }) res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{ &quot;token&quot;: &quot;&lt;signin-token-value&gt;&quot;, }) client = cdsclient.New(cdsclient.Config{ Host: host, SessionToken: res.Token, })  and then, you can use it:
+// list workers workers, err := client.WorkerList() // list users users, err := client.UserList() // list workflow runs runs, err := client.WorkflowRunList(...)  Go on https://godoc.org/github.com/ovh/cds/sdk/cdsclient to see all available funcs.">
 <meta property="og:url" content="https://ovh.github.io/cds/development/sdk/golang/">
 <meta property="og:title" content="SDK Golang">
 <meta name="twitter:title" content="SDK Golang">
@@ -212,41 +215,19 @@
 	
 		
 			
-<div class="item" data-title="SDK Golang">
-	<div class="container">
+<a class="item" data-title="Token creation" href="https://ovh.github.io/cds/development/sdk/token/"></a>
+
 		
-		<a class="item" data-title="SDK Golang" href="https://ovh.github.io/cds/development/sdk/golang/"></a>
-		
-		
-	
-	
-	
 	
 		
 			
-<div class="item" data-title="Examples">
-	<div class="container">
+<a class="item" data-title="SDK Golang" href="https://ovh.github.io/cds/development/sdk/golang/"></a>
+
 		
-		
-	
-	
-	
 	
 		
 			
-<a class="item" data-title="Example of Code - Workers List" href="https://ovh.github.io/cds/development/sdk/golang/examples/go-workers-list/"></a>
-
-		
-	
-
-	</div>
-</div>
-
-		
-	
-
-	</div>
-</div>
+<a class="item" data-title="SDK Rust" href="https://ovh.github.io/cds/development/sdk/rust/"></a>
 
 		
 	
@@ -261,8 +242,7 @@
 
 			<div id="docsContent">
         		
-	 
-	 
+
 <h1>SDK Golang</h1>
 
 
@@ -271,55 +251,28 @@
 <ul>
 <li>
 <ul>
-<li><a href="#generate-a-persistent-token">Generate a persistent token</a></li>
 <li><a href="#how-to-use-it">How to use it?</a></li>
-<li><a href="#see-also">See also</a></li>
+<li><a href="#example">Example</a></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<h2 id="generate-a-persistent-token">Generate a persistent token</h2>
-
-<p>There is three ways to generate a persistent token:</p>
-
-<ul>
-<li><a href="https://ovh.github.io/cds/docs/components/cdsctl/login/">cdsctl login</a></li>
-<li><a href="https://ovh.github.io/cds/development/rest/">call CDS API</a></li>
-<li>Code it:</li>
-</ul>
-
-<pre><code class="language-go">conf := cdsclient.Config{
-    Host:    &quot;http://your-cds-instance&quot;,
-}
-
-client = cdsclient.New(conf)
-// replace username and password
-ok, token, err := client.UserLogin(username, password)
-if err != nil {
-    return err
-}
-if !ok {
-    return fmt.Errorf(&quot;login failed&quot;)
-}
-
-fmt.Printf(&quot;export CDS_API_URL=%s\n&quot;, url)
-fmt.Printf(&quot;export CDS_USER=%s\n&quot;, username)
-fmt.Printf(&quot;export CDS_TOKEN=%s\n&quot;, token)
-
-</code></pre>
-
 <h2 id="how-to-use-it">How to use it?</h2>
 
 <p>You have to initialize a cdsclient:</p>
 
-<pre><code class="language-go">cfg := cdsclient.Config{
-    Host:  host,
-    Token: token,
-    User:  username,
-}
-client := cdsclient.New(cfg)
+<pre><code class="language-go">client := cdsclient.New(cdsclient.Config{
+	Host:    host,
+})
+res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{
+	&quot;token&quot;: &quot;&lt;signin-token-value&gt;&quot;,
+})
+client = cdsclient.New(cdsclient.Config{
+	Host:  host,
+	SessionToken: res.Token,
+})
 </code></pre>
 
 <p>and then, you can use it:</p>
@@ -332,28 +285,82 @@ workers, err := client.WorkerList()
 users, err := client.UserList()
 
 // list workflow runs
-runs, err := client.client.WorkflowRunList(...)
+runs, err := client.WorkflowRunList(...)
 
 </code></pre>
 
 <p>Go on <a href="https://godoc.org/github.com/ovh/cds/sdk/cdsclient">https://godoc.org/github.com/ovh/cds/sdk/cdsclient</a> to see all available funcs.</p>
 
-<h2 id="see-also">See also</h2>
+<h2 id="example">Example</h2>
 
-
-
-<ul class="children children-ul"><ul>
-	<a href="https://ovh.github.io/cds/development/sdk/golang/examples/" >Examples</a></ul>
+<ul>
+<li>Create a file <code>main.go</code> with this content:</li>
 </ul>
 
+<pre><code class="language-go">
+package main
+
+import (
+	&quot;flag&quot;
+	&quot;fmt&quot;
+	&quot;os&quot;
+
+	&quot;github.com/ovh/cds/sdk/cdsclient&quot;
+	&quot;github.com/ovh/cds/sdk&quot;
+)
+
+var host, token string
+
+func init() {
+	flag.StringVar(&amp;host, &quot;api&quot;, &quot;http://localhost:8081&quot;, &quot;CDS API URL, ex: http://localhost:8081&quot;)
+	flag.StringVar(&amp;token, &quot;token&quot;, &quot;&quot;, &quot;CDS signin token&quot;)
+}
+
+func main() {
+	flag.Parse()
+
+	client := cdsclient.New(cdsclient.Config{
+		Host:    host,
+	})
+	res, err := client.AuthConsumerSignin(sdk.ConsumerBuiltin, sdk.AuthConsumerSigninRequest{
+		&quot;token&quot;: token,
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, &quot;Error while signin: %v&quot;, err)
+		os.Exit(1)
+	}
+	client = cdsclient.New(cdsclient.Config{
+		Host:  host,
+		SessionToken: res.Token,
+	})
+
+	workers, err := client.WorkerList()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, &quot;Error while getting workers: %v&quot;, err)
+		os.Exit(1)
+	}
+
+	if len(workers) == 0 {
+		fmt.Println(&quot;&gt; No worker&quot;)
+	} else {
+		fmt.Println(&quot;Current Workers:&quot;)
+		for _, w := range workers {
+			fmt.Printf(&quot;&gt; %s\n&quot;, w.Name)
+		}
+	}
+}
+
+</code></pre>
+
+<ul>
+<li>Build &amp; run it:</li>
+</ul>
+
+<pre><code class="language-bash">go run main.go --token xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx --api http://localhost:8081
+</code></pre>
 
 
 
-
-
-
-
-	 
 
 			</div>
 		</section><footer>

@@ -18,7 +18,7 @@
       <guid>https://ovh.github.io/cds/docs/components/cdsctl/admin/metadata/application/export/</guid>
       <description> cdsctl admin metadata application export export CDS Application Metadata
 Synopsis export CDS Application Metadata
-cdsctl admin metadata application export [flags]  Options  --export-file string Filename of file created (default &amp;quot;export_metadata_applications.csv&amp;quot;)  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. --verbose verbose output  SEE ALSO  cdsctl admin metadata application - Manage CDS Application Metadata  </description>
+cdsctl admin metadata application export [flags]  Options  --export-file string Filename of file created (default &amp;quot;export_metadata_applications.csv&amp;quot;)  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output  SEE ALSO  cdsctl admin metadata application - Manage CDS Application Metadata  </description>
     </item>
     
     <item>
@@ -31,7 +31,7 @@ cdsctl admin metadata application export [flags]  Options  --export-file string 
 Synopsis Metadata are represented with key:value
 Example of a csv file for a CDS Application
 project_key;application_name;last_modified;vcs_repofullname;ou1;ou2 YOUR_PROJECT_KEY;Your Application Name;2020-01-01T00:00:00;repo_of_application;OU_1_VALUE;OU_2_VALUE  You can enter as many metadata as desired, the key name is on the first line of the csv file.
-cdsctl admin metadata application import PATH  Options inherited from parent commands  -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl admin metadata application import PATH  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
   </channel>

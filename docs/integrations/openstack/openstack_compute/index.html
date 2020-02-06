@@ -18,16 +18,16 @@
 
 <meta name="description"
     content="CDS build using OpenStack infrastructure to spawn each CDS Workers inside dedicated virtual machine.
-Start OpenStack hatchery Generate a token for group:
-$ cdsctl token generate shared.infra persistent expiration persistent created 2019-03-13 18:47:56.715104 &#43;0100 CET group_name shared.infra token xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx  Edit the CDS configuration or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the OpenStack variables.">
+Start OpenStack hatchery Generate a token:
+$ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ --name=&quot;hatchery.openstack&quot; \ --description=&quot;Consumer token for openstack hatchery&quot; \ --groups=&quot;&quot; \ --no-interactive Builtin consumer successfully created, use the following token to sign in: xxxxxxxx.xxxxxxx.4Bd9XJMIWrfe8Lwb-Au68TKUqflPorY2Fmcuw5vIoUs5gQyCLuxxxxxxxxxxxxxx  Edit the section hatchery.openstack in the CDS Configuration file. The token have to be set on the key hatchery.">
 <meta property="og:description"
     content="CDS build using OpenStack infrastructure to spawn each CDS Workers inside dedicated virtual machine.
-Start OpenStack hatchery Generate a token for group:
-$ cdsctl token generate shared.infra persistent expiration persistent created 2019-03-13 18:47:56.715104 &#43;0100 CET group_name shared.infra token xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx  Edit the CDS configuration or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the OpenStack variables.">
+Start OpenStack hatchery Generate a token:
+$ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ --name=&quot;hatchery.openstack&quot; \ --description=&quot;Consumer token for openstack hatchery&quot; \ --groups=&quot;&quot; \ --no-interactive Builtin consumer successfully created, use the following token to sign in: xxxxxxxx.xxxxxxx.4Bd9XJMIWrfe8Lwb-Au68TKUqflPorY2Fmcuw5vIoUs5gQyCLuxxxxxxxxxxxxxx  Edit the section hatchery.openstack in the CDS Configuration file. The token have to be set on the key hatchery.">
 <meta name="twitter:description"
     content="CDS build using OpenStack infrastructure to spawn each CDS Workers inside dedicated virtual machine.
-Start OpenStack hatchery Generate a token for group:
-$ cdsctl token generate shared.infra persistent expiration persistent created 2019-03-13 18:47:56.715104 &#43;0100 CET group_name shared.infra token xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx  Edit the CDS configuration or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the OpenStack variables.">
+Start OpenStack hatchery Generate a token:
+$ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ --name=&quot;hatchery.openstack&quot; \ --description=&quot;Consumer token for openstack hatchery&quot; \ --groups=&quot;&quot; \ --no-interactive Builtin consumer successfully created, use the following token to sign in: xxxxxxxx.xxxxxxx.4Bd9XJMIWrfe8Lwb-Au68TKUqflPorY2Fmcuw5vIoUs5gQyCLuxxxxxxxxxxxxxx  Edit the section hatchery.openstack in the CDS Configuration file. The token have to be set on the key hatchery.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/">
 <meta property="og:title" content="Openstack Compute">
 <meta name="twitter:title" content="Openstack Compute">
@@ -255,13 +255,57 @@ $ cdsctl token generate shared.infra persistent expiration persistent created 20
 	
 		
 			
-<a class="item" data-title="GitHub" href="https://ovh.github.io/cds/docs/integrations/github/"></a>
+<div class="item" data-title="GitHub">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="GitHub Authentication" href="https://ovh.github.io/cds/docs/integrations/github/github_authentication/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="GitLab" href="https://ovh.github.io/cds/docs/integrations/gitlab/"></a>
+<a class="item" data-title="GitHub Repository Manager" href="https://ovh.github.io/cds/docs/integrations/github/github_repository_manager/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="GitLab">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="GitLab Authentication" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_authentication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="GitLab Repository Manager" href="https://ovh.github.io/cds/docs/integrations/gitlab/gitlab_repository_manager/"></a>
+
+		
+	
+
+	</div>
+</div>
 
 		
 	
@@ -318,6 +362,12 @@ $ cdsctl token generate shared.infra persistent expiration persistent created 20
 
 	</div>
 </div>
+
+		
+	
+		
+			
+<a class="item" data-title="LDAP Authentication" href="https://ovh.github.io/cds/docs/integrations/ldap/"></a>
 
 		
 	
@@ -401,16 +451,21 @@ $ cdsctl token generate shared.infra persistent expiration persistent created 20
 
 <h2 id="start-openstack-hatchery">Start OpenStack hatchery</h2>
 
-<p>Generate a token for group:</p>
+<p>Generate a token:</p>
 
-<pre><code class="language-bash">$ cdsctl token generate shared.infra persistent
-expiration  persistent
-created     2019-03-13 18:47:56.715104 +0100 CET
-group_name  shared.infra
-token       xxxxxxxxxe7x4af2d408e5xxxxxxxff2adb333fab7d05c7752xxxxxxx
+<pre><code class="language-bash">$ cdsctl consumer new me \
+--scopes=Hatchery,RunExecution,Service,WorkerModel \
+--name=&quot;hatchery.openstack&quot; \
+--description=&quot;Consumer token for openstack hatchery&quot; \
+--groups=&quot;&quot; \
+--no-interactive
+
+Builtin consumer successfully created, use the following token to sign in:
+xxxxxxxx.xxxxxxx.4Bd9XJMIWrfe8Lwb-Au68TKUqflPorY2Fmcuw5vIoUs5gQyCLuxxxxxxxxxxxxxx
 </code></pre>
 
-<p>Edit the CDS <a href="https://ovh.github.io/cds/hosting/configuration/">configuration</a> or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the OpenStack variables.</p>
+<p>Edit the section <code>hatchery.openstack</code> in the <a href="https://ovh.github.io/cds/hosting/configuration/">CDS Configuration</a> file.
+The token have to be set on the key <code>hatchery.openstack.commonConfiguration.api.http.token</code>.</p>
 
 <p>Then start hatchery:</p>
 

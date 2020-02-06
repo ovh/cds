@@ -209,6 +209,12 @@
 	
 		
 			
+<a class="item" data-title="Authentication" href="https://ovh.github.io/cds/docs/concepts/authentication/"></a>
+
+		
+	
+		
+			
 <a class="item" data-title="Job" href="https://ovh.github.io/cds/docs/concepts/job/"></a>
 
 		
@@ -505,15 +511,6 @@
 
 
 
-<nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#tokens">Tokens</a></li>
-</ul></li>
-</ul>
-</nav>
-
 
 
 <p>There are 3 types of permissions:</p>
@@ -594,22 +591,6 @@
 <p>A more common scenario consists in giving <code>Read / Execute</code> permissions on the node <code>deploy-to-staging</code> to everyone in your development team while restricting the <code>deploy-to-production</code> node and the project edition to a smaller group of users.</p>
 
 <p><strong>Warning:</strong> when you add a new group permission on a workflow node, <strong>only the groups linked on the node will be taken in account</strong>.</p>
-
-<h2 id="tokens">Tokens</h2>
-
-<p>A group permission is also attached to <a href="https://ovh.github.io/cds/docs/components/cdsctl/">CLI</a>, <a href="https://ovh.github.io/cds/docs/components/worker/">workers</a>, <a href="https://ovh.github.io/cds/docs/concepts/worker-model/">worker models</a>, <a href="https://ovh.github.io/cds/docs/components/hatchery/">hatchery</a> and all different services in CDS.</p>
-
-<p>When using the CDS <a href="https://ovh.github.io/cds/docs/components/cdsctl/">CLI</a> in a script, instead of providing your own passwords, you want to generate and use an <a href="https://ovh.github.io/cds/docs/components/cdsctl/">CLI</a> <strong>authentication token</strong>. Similarly, when you start a <a href="https://ovh.github.io/cds/docs/components/hatchery/">hatchery</a> you will need an authentication token to contact the CDS API.</p>
-
-<p>The <code>cdsctl group token</code> command allows to list, generate and remove tokens linked to a group permission (<a href="https://ovh.github.io/cds/docs/components/cdsctl/token/">documentation available here</a>). Alternatively, you can do it via the user interface in the group administration view.</p>
-
-<p>Click on the <code>Groups</code> entry in the menu
-<img src="https://ovh.github.io/cds/images/groups_menu.png" alt="Job" /></p>
-
-<p>And then in the group edition view, you can manage all your generated tokens for this group and generate new ones.
-<img src="https://ovh.github.io/cds/images/group_view.png" alt="Job" /></p>
-
-<p>If you want to list all the tokens that you can use, go to your profile page and you will find a list of all the tokens associated to your groups.</p>
 
 
 
