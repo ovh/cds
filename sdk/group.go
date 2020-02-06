@@ -74,9 +74,9 @@ func (g Groups) ToMap() map[int64]Group {
 type GroupMembers []GroupMember
 
 func (members GroupMembers) UserIDs() []string {
-	var usersID []string
-	for _, m := range members {
-		usersID = append(usersID, m.ID)
+	var usersID = make([]string, len(members))
+	for i, m := range members {
+		usersID[i] = m.ID
 	}
 	return usersID
 }
