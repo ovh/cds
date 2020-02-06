@@ -85,7 +85,7 @@ export class ConsumerDetailsModalComponent {
             return (c: AuthConsumer) => {
                 return c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    c.scopes.join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    c.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
                     (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
                     (!c.groups && lowerFilter === '*');
             }
@@ -113,7 +113,7 @@ export class ConsumerDetailsModalComponent {
                 name: 'user_auth_scopes',
                 selector: (c: AuthConsumer) => {
                     return {
-                        value: c.scopes ? c.scopes.join(', ') : '*',
+                        value: c.scope_details ? c.scope_details.map(s => s.scope).join(', ') : '*',
                         icons: [
                             {
                                 label: 'user_auth_info_scopes',
@@ -236,7 +236,7 @@ export class ConsumerDetailsModalComponent {
 
         this.selectedChildDetails = null;
         this.consumerDeletedOrDetached = false;
-        this.scopes = this.consumer.scopes ? this.consumer.scopes.join(', ') : '*';
+        this.scopes = this.consumer.scope_details ? this.consumer.scope_details.map(s => s.scope).join(', ') : '*';
         this.groups = this.consumer.groups ? this.consumer.groups.map(g => g.name).join(', ') : '*';
 
         if (this.consumer.warnings && this.consumer.warnings.length > 0) {

@@ -68,13 +68,13 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &reqData); err != nil {
 			return err
 		}
-		if err := reqData.IsValid(); err != nil {
+		if err := reqData.IsValid(api.Router.GetScopeDetails()); err != nil {
 			return err
 		}
 
 		// Create the new built in consumer from request data
 		newConsumer, token, err := builtin.NewConsumer(ctx, api.mustDB(), reqData.Name, reqData.Description,
-			consumer, reqData.GroupIDs, reqData.Scopes)
+			consumer, reqData.GroupIDs, reqData.ScopeDetails)
 		if err != nil {
 			return err
 		}

@@ -25,6 +25,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/doc"
 	docSDK "github.com/ovh/cds/sdk/doc"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/tracingutils"
@@ -262,15 +263,17 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 	}
 	r.mapRouterConfigs[uri] = cfg
 
+	cleanURL := doc.CleanURL(uri)
 	for i := range handlers {
+		handlers[i].CleanURL = cleanURL
 		handlers[i].AllowedScopes = scope
-		cfg.Config[handlers[i].Method] = handlers[i]
 		name := runtime.FuncForPC(reflect.ValueOf(handlers[i].Handler).Pointer()).Name()
 		name = strings.Replace(name, ".func1", "", 1)
 		name = strings.Replace(name, ".1", "", 1)
 		name = strings.Replace(name, "github.com/ovh/cds/engine/", "", 1)
 		log.Debug("Registering handler %s on %s %s", name, handlers[i].Method, uri)
 		handlers[i].Name = name
+		cfg.Config[handlers[i].Method] = handlers[i]
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {

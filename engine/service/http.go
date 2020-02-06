@@ -57,6 +57,7 @@ type HandlerConfig struct {
 	AllowedTokens    []string
 	AllowedScopes    []sdk.AuthConsumerScope
 	PermissionLevel  int
+	CleanURL         string
 }
 
 // Accepted is a helper function used by asynchronous handlers

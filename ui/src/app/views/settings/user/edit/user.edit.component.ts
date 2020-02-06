@@ -148,7 +148,7 @@ export class UserEditComponent implements OnInit {
             return (c: AuthConsumer) => {
                 return c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    c.scopes.join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    c.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
                     (c.groups && c.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
                     (!c.groups && lowerFilter === '*');
             }
@@ -180,7 +180,7 @@ export class UserEditComponent implements OnInit {
                 name: 'user_auth_scopes',
                 selector: (c: AuthConsumer) => {
                     return {
-                        value: c.scopes.join(', '),
+                        value: c.scope_details.map(s => s.scope).join(', '),
                         icons: [
                             {
                                 label: 'user_auth_info_scopes',

@@ -66,7 +66,7 @@ func (d AuthDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error 
 // NewConsumer returns a new builtin consumer for given data.
 // The parent consumer should be given with all data loaded including the authentified user.
 func NewConsumer(ctx context.Context, db gorp.SqlExecutor, name, description string, parentConsumer *sdk.AuthConsumer,
-	groupIDs []int64, scopes []sdk.AuthConsumerScope) (*sdk.AuthConsumer, string, error) {
+	groupIDs []int64, scopes sdk.AuthConsumerScopeDetails) (*sdk.AuthConsumer, string, error) {
 	if name == "" {
 		return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "name should be given to create a built in consumer")
 	}
@@ -90,17 +90,41 @@ func NewConsumer(ctx context.Context, db gorp.SqlExecutor, name, description str
 	if len(scopes) == 0 {
 		return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "built in consumer creation requires at least one scope to be set")
 	}
-	for i := range scopes {
-		// If parent scopes length equals 0 this means all scopes else checks that given scope is in parent scopes.
-		if len(parentConsumer.Scopes) > 0 {
-			var found bool
-			for j := range parentConsumer.Scopes {
-				if scopes[i] == parentConsumer.Scopes[j] {
-					found = true
+	// If parent scopes length equals 0 this means all scopes else checks that given scope is in parent scopes
+	if len(parentConsumer.ScopeDetails) > 0 {
+		for i := range scopes {
+			var validScope bool
+			for j := range parentConsumer.ScopeDetails {
+				if scopes[i].Scope == parentConsumer.ScopeDetails[j].Scope {
+					// if no endpoint restrictions on parent scope is valid
+					if len(parentConsumer.ScopeDetails[j].Endpoints) == 0 {
+						validScope = true
+						break
+					}
+
+					// if parent as scope restrictions, child should contains only all or a subset of those restrictions
+					for _, e := range scopes[i].Endpoints {
+						existsParentEndpoint, parentEndpoint := parentConsumer.ScopeDetails[j].Endpoints.FindEndpoint(e.Route)
+						if !existsParentEndpoint {
+							return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given route %s for scope %s when creating built in consumer", e.Route, scopes[i])
+						}
+						if len(parentEndpoint.Methods) > 0 {
+							if len(e.Methods) == 0 {
+								return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given methods for route %s and scope %s when creating built in consumer", e.Route, scopes[i])
+							}
+							for _, m := range e.Methods {
+								if !parentEndpoint.Methods.Contains(m) {
+									return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given method %s for route %s and scope %s when creating built in consumer", m, e.Route, scopes[i])
+								}
+							}
+						}
+					}
+
+					validScope = true
 					break
 				}
 			}
-			if !found {
+			if !validScope {
 				return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given scope %s when creating built in consumer", scopes[i])
 			}
 		}
@@ -114,7 +138,7 @@ func NewConsumer(ctx context.Context, db gorp.SqlExecutor, name, description str
 		Type:               sdk.ConsumerBuiltin,
 		Data:               map[string]string{},
 		GroupIDs:           groupIDs,
-		Scopes:             scopes,
+		ScopeDetails:       scopes,
 		IssuedAt:           time.Now(),
 	}
 

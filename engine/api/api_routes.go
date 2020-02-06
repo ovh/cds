@@ -10,6 +10,7 @@ import (
 
 type HandlerScope []sdk.AuthConsumerScope
 
+// Scope set for handler. If multiple scopes are given, one should match consumer scopes.
 func Scope(s ...sdk.AuthConsumerScope) HandlerScope {
 	return HandlerScope(s)
 }

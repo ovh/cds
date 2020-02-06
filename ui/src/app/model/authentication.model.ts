@@ -74,7 +74,7 @@ export class AuthConsumer {
     type: string;
     created: string;
     group_ids: Array<number>;
-    scopes: Array<string>;
+    scope_details: Array<AuthConsumerScopeDetail>;
     groups: Array<Group>;
     disabled: boolean;
     warnings: Array<AuthConsumerWarning>;
@@ -90,8 +90,6 @@ export class AuthSession {
     consumer_id: string;
     expire_at: string;
     created: string;
-    group_ids: Array<number>;
-    scopes: Array<string>;
     current: boolean;
 
     // UI fields

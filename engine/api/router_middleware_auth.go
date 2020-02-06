@@ -106,17 +106,28 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 		ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 
-		// Checks scopes, all expected scopes should be in actual scopes
+		// Checks scopes, one of expected scopes should be in actual scopes
 		// Actual scope empty list means wildcard scope, we don't need to check scopes
-		expectedScopes, actualScopes := rc.AllowedScopes, consumer.Scopes
+		expectedScopes, actualScopes := rc.AllowedScopes, consumer.ScopeDetails
 		if len(expectedScopes) > 0 && len(actualScopes) > 0 {
 			var found bool
 		findScope:
 			for i := range expectedScopes {
 				for j := range actualScopes {
-					if actualScopes[j] == expectedScopes[i] {
-						found = true
-						break findScope
+					if actualScopes[j].Scope == expectedScopes[i] {
+						// TODO check if there are scope details
+						// if yes we should check if current route/method is allowed in restrictions
+						if len(actualScopes[j].Endpoints) == 0 {
+							found = true
+							break findScope
+						}
+
+						// if the route is not in current consumer allowed endpoints we should not validate the scope
+						if exists, endpoint := actualScopes[j].Endpoints.FindEndpoint(rc.CleanURL); exists &&
+							len(endpoint.Methods) == 0 || endpoint.Methods.Contains(rc.Method) {
+							found = true
+							break findScope
+						}
 					}
 				}
 			}
