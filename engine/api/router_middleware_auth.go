@@ -115,8 +115,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			for i := range expectedScopes {
 				for j := range actualScopes {
 					if actualScopes[j].Scope == expectedScopes[i] {
-						// TODO check if there are scope details
-						// if yes we should check if current route/method is allowed in restrictions
+						// Check if there are scope details, if yes we should check if current route/method is allowed in restrictions
 						if len(actualScopes[j].Endpoints) == 0 {
 							found = true
 							break findScope
