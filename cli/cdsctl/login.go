@@ -371,8 +371,9 @@ func createOrRegenConsumer(apiURL, username, sessionToken string) (string, strin
 	// consumer not found, create it
 	if signinToken == "" {
 		resCreate, err := client.AuthConsumerCreateForUser(username, sdk.AuthConsumer{
-			Name:        consumerName,
-			Description: "Consumer created with cdsctl login",
+			Name:         consumerName,
+			Description:  "Consumer created with cdsctl login",
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopes...),
 		})
 		if err != nil {
 			return "", "", fmt.Errorf("cdsctl: failed to create consumer: %v", err)
