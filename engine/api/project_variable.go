@@ -116,7 +116,7 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 			return err
 		}
 		if newVar.Name != varName || newVar.Type == sdk.KeyVariable {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
@@ -164,7 +164,7 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 			return err
 		}
 		if newVar.Name != varName {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 
 		}
 
@@ -179,7 +179,7 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 		}
 
 		if varInProject {
-			return sdk.ErrVariableExists
+			return sdk.WithStack(sdk.ErrVariableExists)
 		}
 
 		tx, err := api.mustDB().Begin()

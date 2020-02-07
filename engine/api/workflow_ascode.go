@@ -30,7 +30,7 @@ func (api *API) getWorkflowAsCodeHandler() service.Handler {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 		if !b {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 		return service.WriteJSON(w, ope, http.StatusOK)
 	}
@@ -72,7 +72,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		}
 		app := wfDB.Applications[wfDB.WorkflowData.Node.Context.ApplicationID]
 		if app.VCSServer == "" || app.RepositoryFullname == "" {
-			return sdk.ErrRepoNotFound
+			return sdk.WithStack(sdk.ErrRepoNotFound)
 		}
 
 		// MIGRATION TO AS CODE
@@ -82,7 +82,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 
 		// UPDATE EXISTING AS CODE WORKFLOW
 		if wfDB.FromRepository == "" {
-			return sdk.ErrForbidden
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		// Get workflow from body

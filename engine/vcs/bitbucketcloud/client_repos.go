@@ -130,5 +130,5 @@ func (client *bitbucketcloudClient) repoByFullname(ctx context.Context, fullname
 }
 
 func (client *bitbucketcloudClient) GrantWritePermission(ctx context.Context, fullname string) error {
-	return sdk.ErrNotImplemented
+	return sdk.WithStack(sdk.ErrNotImplemented)
 }

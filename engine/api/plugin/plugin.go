@@ -62,7 +62,7 @@ func UpdateBinary(ctx context.Context, db gorp.SqlExecutor, storageDriver object
 	}
 
 	if oldBinary == nil {
-		return sdk.ErrUnsupportedOSArchPlugin
+		return sdk.WithStack(sdk.ErrUnsupportedOSArchPlugin)
 	}
 
 	if err := storageDriver.Delete(ctx, oldBinary); err != nil {

@@ -839,7 +839,7 @@ func (api *API) postTemplatePushHandler() service.Handler {
 		btes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			log.Error(ctx, "%v", sdk.WrapError(err, "unable to read body"))
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 		defer r.Body.Close()
 

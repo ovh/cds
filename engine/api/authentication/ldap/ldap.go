@@ -131,14 +131,14 @@ func (d *AuthDriver) openLDAP(ctx context.Context, conf Config) error {
 		d.conn, err = ldap.Dial("tcp", address)
 		if err != nil {
 			log.Error(ctx, "Auth> Cannot dial %s : %s", address, err)
-			return sdk.ErrLDAPConn
+			return sdk.WithStack(sdk.ErrLDAPConn)
 		}
 
 		//Reconnect with TLS
 		err = d.conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
 		if err != nil {
 			log.Error(ctx, "Auth> Cannot start TLS %s : %s", address, err)
-			return sdk.ErrLDAPConn
+			return sdk.WithStack(sdk.ErrLDAPConn)
 		}
 	} else {
 		log.Info(ctx, "Auth> Connecting to LDAP server")
@@ -148,7 +148,7 @@ func (d *AuthDriver) openLDAP(ctx context.Context, conf Config) error {
 		})
 		if err != nil {
 			log.Error(ctx, "Auth> Cannot dial TLS (InsecureSkipVerify=false) %s : %s", address, err)
-			return sdk.ErrLDAPConn
+			return sdk.WithStack(sdk.ErrLDAPConn)
 		}
 	}
 
