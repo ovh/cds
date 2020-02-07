@@ -131,7 +131,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 				}
 			}
 			if !found {
-				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scope (%v) doesn't match (%v)", actualScopes, expectedScopes)
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "token scopes doesn't match expected: %v", expectedScopes)
 			}
 		}
 
