@@ -70,7 +70,7 @@ func (api *API) postRegisterWorkerHandler() service.Handler {
 		}
 
 		// We have to issue a new consumer for the worker
-		workerConsumer, err := authentication.NewConsumerWorker(ctx, api.mustDB(), workerTokenFromHatchery.Subject, hatchSrv, hatcheryConsumer, groupIDs)
+		workerConsumer, err := authentication.NewConsumerWorker(ctx, tx, workerTokenFromHatchery.Subject, hatchSrv, hatcheryConsumer, groupIDs)
 		if err != nil {
 			return err
 		}
