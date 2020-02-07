@@ -61,7 +61,15 @@
     <div class="actions">
         <button class="ui button" [disabled]="loading"
             (click)="modal.approve(false)">{{'common_cancel' | translate}}</button>
-        <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="run()"
-            autofocus>{{'common_run' | translate}}</button>
+        <div class="ui green buttons" [class.loading]="loading" [class.disabled]="loading" >
+            <div class="ui button" (click)="run(false, false)" autofocus>{{'common_run' | translate}}</div>
+            <div class="ui floating dropdown icon button" suiDropdown>
+                <i class="dropdown icon"></i>
+                <div class="menu" suiDropdownMenu>
+                    <div class="item" (click)="run(true, false)"><i class="sync icon"></i>{{'workflow_resync' | translate }}</div>
+                    <div class="item"(click)="run(false, true)"><i class="bug icon"></i>{{'workflow_run_only_failed' | translate }}</div>
+                </div>
+            </div>
+        </div>
     </div>
 </ng-template>

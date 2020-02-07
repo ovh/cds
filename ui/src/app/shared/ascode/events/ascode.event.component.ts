@@ -22,7 +22,6 @@ export class AsCodeEventComponent {
     constructor(private _ascodeService: AscodeService, private _cd: ChangeDetectorRef) {
     }
 
-
     resyncEvents(): void {
         this.loadingPopupButton = true;
         this._ascodeService.resyncPRAsCode(this.project.key, this.appName, this.repo)

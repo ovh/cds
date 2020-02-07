@@ -415,7 +415,7 @@ func createWorkflowNodeRun(wr *sdk.WorkflowRun, n *sdk.Node, parents []*sdk.Work
 	}
 
 	// CREATE RUN
-	run := sdk.WorkflowNodeRun{
+	nodeRun := sdk.WorkflowNodeRun{
 		WorkflowID:       wr.WorkflowID,
 		LastModified:     time.Now(),
 		Start:            time.Now(),
@@ -429,21 +429,22 @@ func createWorkflowNodeRun(wr *sdk.WorkflowRun, n *sdk.Node, parents []*sdk.Work
 		Header:           wr.Header,
 	}
 
-	if run.SubNumber >= wr.LastSubNumber {
-		wr.LastSubNumber = run.SubNumber
+	if nodeRun.SubNumber >= wr.LastSubNumber {
+		wr.LastSubNumber = nodeRun.SubNumber
 	}
 	if n.Context.ApplicationID != 0 {
-		run.ApplicationID = n.Context.ApplicationID
+		nodeRun.ApplicationID = n.Context.ApplicationID
 	}
 
 	parentsIDs := make([]int64, len(parents))
 	for i := range parents {
 		parentsIDs[i] = parents[i].ID
 	}
-	run.SourceNodeRuns = parentsIDs
-	run.HookEvent = hookEvent
-	run.Manual = manual
-	return &run
+	nodeRun.SourceNodeRuns = parentsIDs
+	nodeRun.HookEvent = hookEvent
+	nodeRun.Manual = manual
+
+	return &nodeRun
 }
 
 func computePipelineParameters(wr *sdk.WorkflowRun, n *sdk.Node, manual *sdk.WorkflowNodeRunManual) []sdk.Parameter {

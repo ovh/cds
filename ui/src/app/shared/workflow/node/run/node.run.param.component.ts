@@ -341,23 +341,7 @@ export class WorkflowNodeRunParamComponent implements OnInit, AfterViewInit {
         }
     }
 
-    resync(): void {
-        let num = this.num;
-        if (this.nodeRun) {
-            num = this.nodeRun.num;
-        }
-        this.loading = true;
-        this._workflowRunService.resync(this.project.key, this.workflow, num)
-            .pipe(finalize(() => {
-                this.loading = false;
-                this._cd.markForCheck();
-            })).subscribe(wr => {
-                this.nodeToRun = Workflow.getNodeByID(this._nodeToRun.id, wr.workflow);
-                this._toast.success('', this._translate.instant('workflow_run_resync_done'));
-            });
-    }
-
-    run(): void {
+    run(resync: boolean, onlyFailedJobs: boolean): void {
         if (this.payloadString && this.payloadString !== '') {
             this.reindent();
             if (this.invalidJSON) {
@@ -366,6 +350,8 @@ export class WorkflowNodeRunParamComponent implements OnInit, AfterViewInit {
         }
         let request = new WorkflowRunRequest();
         request.manual = new WorkflowNodeRunManual();
+        request.manual.resync = resync;
+        request.manual.only_failed_jobs = onlyFailedJobs;
         request.manual.payload = this.payloadString ? JSON.parse(this.payloadString) : null;
         request.manual.pipeline_parameter = Parameter.formatForAPI(this.parameters);
 

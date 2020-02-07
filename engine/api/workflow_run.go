@@ -848,6 +848,11 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			return err
 		}
 
+		// Request check
+		if opts.Manual != nil && opts.Manual.OnlyFailedJobs && opts.Manual.Resync {
+			return sdk.WrapError(sdk.ErrWrongRequest, "You cannot resync workflow and run only failed jobs")
+		}
+
 		// CHECK IF IT S AN EXISTING RUN
 		var lastRun *sdk.WorkflowRun
 		if opts.Number != nil {
@@ -894,6 +899,13 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		var wf *sdk.Workflow
 		// IF CONTINUE EXISTING RUN
 		if lastRun != nil {
+			if opts != nil && opts.Manual != nil && opts.Manual.Resync {
+				log.Debug("Resync workflow %d for run %d%", lastRun.Workflow.ID, lastRun.ID)
+				if err := workflow.Resync(ctx, api.mustDB(), api.Cache, p, lastRun); err != nil {
+					return err
+				}
+			}
+
 			wf = &lastRun.Workflow
 			// Check workflow name in case of rename
 			if wf.Name != name {
