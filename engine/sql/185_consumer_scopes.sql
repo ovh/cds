@@ -1,7 +1,7 @@
 -- +migrate Up
 ALTER TABLE "auth_consumer" ADD COLUMN scope_details JSONB;
 
-UPDATE auth_consumer SET scope_details = scopes WHERE scopes::TEXT <> 'null';
+UPDATE auth_consumer SET scope_details = scopes WHERE scopes::TEXT = 'null';
 
 UPDATE auth_consumer
 SET scope_details = tmp1.scope_details
