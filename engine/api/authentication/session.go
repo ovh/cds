@@ -74,6 +74,7 @@ func SessionCleaner(ctx context.Context, dbFunc func() *gorp.DbMap) {
 	log.Info(ctx, "Initializing session cleaner...")
 	db := dbFunc()
 	tick := time.NewTicker(10 * time.Second)
+	tickCorruped := time.NewTicker(12 * time.Hour)
 
 	for {
 		select {
@@ -92,6 +93,17 @@ func SessionCleaner(ctx context.Context, dbFunc func() *gorp.DbMap) {
 					log.Error(ctx, "SessionCleaner> unable to delete session %s: %v", s.ID, err)
 				}
 				log.Debug("SessionCleaner> expired session %s deleted", s.ID)
+			}
+		case <-tickCorruped.C:
+			sessions, err := UnsafeLoadCorruptedSessions(ctx, db)
+			if err != nil {
+				log.Error(ctx, "SessionCleaner> unable to load corrupted sessions %v", err)
+			}
+			for _, s := range sessions {
+				if err := DeleteSessionByID(db, s.ID); err != nil {
+					log.Error(ctx, "SessionCleaner> unable to delete session %s: %v", s.ID, err)
+				}
+				log.Debug("SessionCleaner> corrupted session %s deleted", s.ID)
 			}
 		}
 	}
