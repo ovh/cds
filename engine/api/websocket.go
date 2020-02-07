@@ -157,14 +157,16 @@ func (b *websocketBroker) cacheSubscribe(ctx context.Context, cacheMsgChan chan<
 
 func (b *websocketBroker) ServeHTTP() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (err error) {
+
+		log.Warning(ctx, "websocket>  %s %+v", r.Host, r.Header)
+
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			log.Warning(ctx, "upgrade: %v", err)
+			log.Warning(ctx, "websocket> upgrade: %v", err)
 			return err
 		}
 		defer c.Close()
 
-		log.Info(ctx, ">>>>>%s", getAPIConsumer(ctx).GetUsername())
 		client := websocketClient{
 			UUID:             sdk.UUID(),
 			AuthConsumer:     getAPIConsumer(ctx),
@@ -174,9 +176,9 @@ func (b *websocketBroker) ServeHTTP() service.Handler {
 		}
 		b.chanAddClient <- &client
 
-		sdk.GoRoutine(ctx, fmt.Sprintf("readUpdateFilterChan-%s-%s", client.AuthConsumer.GetUsername(), client.UUID), func(ctx context.Context) {
-			client.readUpdateFilterChan(ctx, b.dbFunc())
-		})
+		//sdk.GoRoutine(ctx, fmt.Sprintf("readUpdateFilterChan-%s-%s", client.AuthConsumer.GetUsername(), client.UUID), func(ctx context.Context) {
+		//	client.readUpdateFilterChan(ctx, b.dbFunc())
+		//})
 
 		if err := c.WriteJSON(sdk.Event{
 			EventType:    "sdk.EventProject",

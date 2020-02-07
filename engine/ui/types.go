@@ -16,7 +16,7 @@ type Service struct {
 // Configuration is the ui configuration structure
 type Configuration struct {
 	Name      string `toml:"name" comment:"Name of this CDS UI Service\n Enter a name to enable this service" json:"name"`
-	Staticdir string `toml:"staticdir" default:"./ui_static_files" comment:"This directory must contains index.html file and other ui files (css, js...) from ui.tar.gz artifact." json:"staticdir"`
+	Staticdir string `toml:"staticdir" default:"./ui_static_files" comment:"This directory must contain the dist directory." json:"staticdir"`
 	BaseURL   string `toml:"baseURL" default:"/" comment:"Base URL. If you expose CDS UI with https://your-domain.com/ui, enter the value '/ui'" json:"baseURL"`
 	SentryURL string `toml:"sentryURL" default:"" comment:"Sentry URL. Optional" json:"sentryURL"`
 	HTTP      struct {
