@@ -116,7 +116,7 @@ func (api *API) putWorkerModelPatternHandler() service.Handler {
 			}
 		}
 		if !typeFound {
-			return sdk.ErrInvalidPatternModel
+			return sdk.WithStack(sdk.ErrInvalidPatternModel)
 		}
 
 		oldWmp, errOld := workermodel.LoadPatternByName(api.mustDB(), patternType, patternName)

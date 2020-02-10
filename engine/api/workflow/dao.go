@@ -1090,10 +1090,10 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 
 	if w.Icon != "" {
 		if !strings.HasPrefix(w.Icon, sdk.IconFormat) {
-			return sdk.ErrIconBadFormat
+			return sdk.WithStack(sdk.ErrIconBadFormat)
 		}
 		if len(w.Icon) > sdk.MaxIconSize {
-			return sdk.ErrIconBadSize
+			return sdk.WithStack(sdk.ErrIconBadSize)
 		}
 	}
 
@@ -1297,7 +1297,7 @@ func checkProjectIntegration(proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) er
 			}
 		}
 		if ppProj.ID == 0 {
-			return sdk.ErrorWithData(sdk.ErrIntegrationtNotFound, n.Context.ProjectIntegrationName)
+			return sdk.WithStack(sdk.ErrorWithData(sdk.ErrIntegrationtNotFound, n.Context.ProjectIntegrationName))
 		}
 		w.ProjectIntegrations[ppProj.ID] = ppProj
 		n.Context.ProjectIntegrationID = ppProj.ID
@@ -1379,7 +1379,7 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project,
 		appDB, err := application.LoadByName(db, store, proj.Key, n.Context.ApplicationName, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
-				return sdk.ErrorWithData(sdk.ErrApplicationNotFound, n.Context.ApplicationName)
+				return sdk.WithStack(sdk.ErrorWithData(sdk.ErrApplicationNotFound, n.Context.ApplicationName))
 			}
 			return sdk.WrapError(err, "unable to load application %s", n.Context.ApplicationName)
 		}

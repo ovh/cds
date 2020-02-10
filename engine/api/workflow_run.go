@@ -41,14 +41,14 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 	if offsetS != "" {
 		offset, errAtoi = strconv.Atoi(offsetS)
 		if errAtoi != nil {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 	}
 	limitS := r.FormValue("limit")
 	if limitS != "" {
 		limit, errAtoi = strconv.Atoi(limitS)
 		if errAtoi != nil {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 	}
 
@@ -283,7 +283,7 @@ func (api *API) resyncWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load workflow %s/%s", key, name)
 		}
 		if wf.FromRepository != "" {
-			return sdk.ErrWorkflowAsCodeResync
+			return sdk.WithStack(sdk.ErrWorkflowAsCodeResync)
 		}
 
 		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{})
@@ -887,7 +887,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			}
 
 			if !conditionsOK {
-				return sdk.ErrConditionsNotOk
+				return sdk.WithStack(sdk.ErrConditionsNotOk)
 			}
 		}
 

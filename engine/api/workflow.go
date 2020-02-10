@@ -516,10 +516,10 @@ func (api *API) putWorkflowIconHandler() service.Handler {
 
 		icon := string(imageBts)
 		if !strings.HasPrefix(icon, sdk.IconFormat) {
-			return sdk.ErrIconBadFormat
+			return sdk.WithStack(sdk.ErrIconBadFormat)
 		}
 		if len(icon) > sdk.MaxIconSize {
-			return sdk.ErrIconBadSize
+			return sdk.WithStack(sdk.ErrIconBadSize)
 		}
 
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, workflow.LoadOptions{

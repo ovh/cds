@@ -130,7 +130,7 @@ func Delete(db gorp.SqlExecutor, ID int64) error {
 		return err
 	}
 	if count == 0 {
-		return sdk.ErrNoBroadcast
+		return sdk.WithStack(sdk.ErrNoBroadcast)
 	}
 	return nil
 }

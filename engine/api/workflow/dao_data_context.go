@@ -59,7 +59,7 @@ func insertNodeContextData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) er
 
 	for _, cond := range n.Context.Conditions.PlainConditions {
 		if _, ok := sdk.WorkflowConditionsOperators[cond.Operator]; !ok {
-			return sdk.ErrWorkflowConditionBadOperator
+			return sdk.WithStack(sdk.ErrWorkflowConditionBadOperator)
 		}
 	}
 

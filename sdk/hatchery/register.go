@@ -97,7 +97,7 @@ func CheckWorkerModelRegister(h Interface, modelPath string) error {
 		}
 	}
 	if m != nil && sendError {
-		return sdk.ErrWorkerModelDeploymentFailed
+		return sdk.WithStack(sdk.ErrWorkerModelDeploymentFailed)
 	}
 	return nil
 }

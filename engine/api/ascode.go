@@ -34,7 +34,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		}
 
 		if ope.URL == "" {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		if ope.LoadFiles.Pattern == "" {
@@ -42,7 +42,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		}
 
 		if ope.LoadFiles.Pattern != workflow.WorkflowAsCodePattern {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithFeatures, project.LoadOptions.WithClearKeys)
@@ -127,7 +127,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		}
 
 		if ope.Status != sdk.OperationStatusDone {
-			return sdk.ErrMethodNotAllowed
+			return sdk.WithStack(sdk.ErrMethodNotAllowed)
 		}
 
 		tr, err := workflow.ReadCDSFiles(ope.LoadFiles.Results)

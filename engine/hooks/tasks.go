@@ -426,7 +426,7 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 		run, err := s.Client.WorkflowRunFromHook(confProj.Value, confWorkflow.Value, hEvent)
 		if err != nil {
 			globalErr = err
-			log.Error(ctx, "Hooks> Unable to run workflow %s", err)
+			log.Warning(ctx, "Hooks> %s > unable to run workflow %s/%s : %v", t.UUID, confProj.Value, confWorkflow.Value, err)
 		} else {
 			//Save the run number
 			e.WorkflowRun = run.Number
@@ -435,7 +435,7 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	}
 
 	if globalErr != nil {
-		return doRestart, sdk.WrapError(globalErr, "Unable to run workflow")
+		return doRestart, globalErr
 	}
 
 	return doRestart, nil

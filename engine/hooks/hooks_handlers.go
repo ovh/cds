@@ -265,7 +265,7 @@ func (s *Service) getTaskHandler() service.Handler {
 		//Load the task
 		t := s.Dao.FindTask(ctx, uuid)
 		if t == nil {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		execs, err := s.Dao.FindAllTaskExecutions(ctx, t)
@@ -288,7 +288,7 @@ func (s *Service) deleteTaskHandler() service.Handler {
 		//Load the task
 		t := s.Dao.FindTask(ctx, uuid)
 		if t == nil {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		//Stop the task
@@ -309,7 +309,7 @@ func (s *Service) getTaskExecutionsHandler() service.Handler {
 		//Load the task
 		t := s.Dao.FindTask(ctx, uuid)
 		if t == nil {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		//Load the executions
@@ -611,7 +611,7 @@ func (s *Service) getTaskExecutionHandler() service.Handler {
 			}
 		}
 
-		return sdk.ErrNotFound
+		return sdk.WithStack(sdk.ErrNotFound)
 	}
 }
 

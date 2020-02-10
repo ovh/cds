@@ -275,7 +275,7 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, va
 		return err
 	}
 	if rowAffected == 0 {
-		return sdk.ErrNoVariable
+		return sdk.WithStack(sdk.ErrNoVariable)
 	}
 
 	eva := &sdk.EnvironmentVariableAudit{
@@ -303,7 +303,7 @@ func DeleteVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 		return err
 	}
 	if rowAffected == 0 {
-		return sdk.ErrNoVariable
+		return sdk.WithStack(sdk.ErrNoVariable)
 	}
 
 	eva := &sdk.EnvironmentVariableAudit{
