@@ -178,13 +178,6 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	if status == sdk.StatusBuilding {
 		// Sync job status in noderun
-		_, next := observability.Span(ctx, "workflow.LoadNodeRunByID")
-		nodeRun, errNR := LoadNodeRunByID(db, nodeRun.ID, LoadRunOptions{})
-		next()
-
-		if errNR != nil {
-			return nil, sdk.WrapError(errNR, "Cannot LoadNodeRunByID node run %d", nodeRun.ID)
-		}
 		r, err := syncTakeJobInNodeRun(ctx, db, nodeRun, job, stageIndex)
 		return report.Merge(ctx, r, err)
 	}

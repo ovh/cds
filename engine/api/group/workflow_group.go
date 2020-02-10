@@ -24,49 +24,6 @@ func LoadRoleGroupInWorkflow(db gorp.SqlExecutor, workflowID, groupID int64) (in
 	return int(role), nil
 }
 
-// ExistGroupInWorkflow return boolean to indicate if a group exist in this workflow
-func ExistGroupInWorkflow(db gorp.SqlExecutor, workflowID, groupID int64) (bool, error) {
-	query := `SELECT COUNT(workflow_perm.id)
-	FROM workflow_perm
-		JOIN project_group ON workflow_perm.project_group_id = project_group.id
-	WHERE workflow_perm.workflow_id = $1 AND project_group.group_id = $2`
-
-	count, err := db.SelectInt(query, workflowID, groupID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return false, nil
-		}
-		return false, sdk.WithStack(err)
-	}
-	return count > 0, nil
-}
-
-// LoadRoleGroupInWorkflowNode load role from group linked to the workflow node
-func LoadRoleGroupInWorkflowNode(db gorp.SqlExecutor, nodeID, groupID int64) (int, error) {
-	queryNode := `SELECT workflow_node_group.role
-	FROM workflow_node_group
-		JOIN workflow_perm ON workflow_perm.id = workflow_node_group.workflow_group_id
-		JOIN project_group ON workflow_perm.project_group_id = project_group.id
-	WHERE workflow_node_group.workflow_node_id = $1 AND project_group.group_id = $2`
-
-	role, err := db.SelectInt(queryNode, nodeID, groupID)
-	if err != nil && err != sql.ErrNoRows {
-		return int(role), sdk.WithStack(err)
-	}
-
-	query := `SELECT workflow_perm.role
-	FROM workflow_perm
-		JOIN project_group ON workflow_perm.project_group_id = project_group.id
-	WHERE workflow_perm.workflow_id = $1 AND project_group.group_id = $2`
-
-	role, err = db.SelectInt(query, nodeID, groupID)
-	if err != nil {
-		return int(role), sdk.WithStack(err)
-	}
-
-	return int(role), nil
-}
-
 // AddWorkflowGroup Add permission on the given workflow for the given group
 func AddWorkflowGroup(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
 	link, err := LoadLinkGroupProjectForGroupIDAndProjectID(ctx, db, gp.Group.ID, w.ProjectID)

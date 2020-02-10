@@ -144,12 +144,11 @@ func (g *githubClient) PushEvents(ctx context.Context, fullname string, iEvents 
 	res := []sdk.VCSPushEvent{}
 	for b, c := range lastCommitPerBranch {
 		branch, err := g.Branch(ctx, fullname, b)
-		if err != nil || branch == nil {
-			if strings.Contains(err.Error(), "Branch not found") {
-				log.Debug("githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
-			} else {
-				log.Warning(ctx, "githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
-			}
+		if err != nil && strings.Contains(err.Error(), "Branch not found") {
+			log.Debug("githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
+			continue
+		} else if err != nil || branch == nil {
+			log.Warning(ctx, "githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			continue
 		}
 		res = append(res, sdk.VCSPushEvent{

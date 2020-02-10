@@ -801,18 +801,6 @@ func updateNodeRunStatusAndStage(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeR
 	return nil
 }
 
-func updateNodeRunStatusAndTriggersRun(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun) error {
-	triggersRunbts, errMarshal := json.Marshal(nodeRun.TriggersRun)
-	if errMarshal != nil {
-		return sdk.WrapError(errMarshal, "updateNodeRunStatusAndStage> Unable to marshal triggers run")
-	}
-
-	if _, err := db.Exec("UPDATE workflow_node_run SET status = $1, triggers_run = $2 where id = $3", nodeRun.Status, triggersRunbts, nodeRun.ID); err != nil {
-		return sdk.WrapError(err, "Unable to update workflow_node_run %s", nodeRun.WorkflowNodeName)
-	}
-	return nil
-}
-
 // RunExist Check if run exist or not
 func RunExist(db gorp.SqlExecutor, projectKey string, workflowID int64, hash string) (bool, error) {
 	query := `

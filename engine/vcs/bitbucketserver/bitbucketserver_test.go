@@ -41,38 +41,6 @@ func getNewConsumer(t *testing.T) sdk.VCSServer {
 	return ghConsummer
 }
 
-func newAuthorizedClient(t *testing.T) (string, string) {
-	log.SetLogger(t)
-	cfg := test.LoadTestingConf(t)
-	consumerKey := cfg["bitbucketConsumerKey"]
-	privateKey := cfg["bitbucketPrivateKey"]
-	accessToken := cfg["bitbucketAccessToken"]
-	accessTokenSecret := cfg["bitbucketAccessTokenSecret"]
-
-	url := cfg["bitbucketURL"]
-	redisHost := cfg["redisHost"]
-	redisPassword := cfg["redisPassword"]
-
-	if consumerKey == "" && privateKey == "" {
-		t.Logf("Unable to read github configuration. Skipping this tests.")
-		t.SkipNow()
-	}
-
-	cache, err := cache.New(redisHost, redisPassword, 30)
-	if err != nil {
-		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
-	}
-
-	ghConsummer := New(consumerKey, []byte(privateKey), url, "", "", "", "", "", cache, true)
-	token, secret, err := ghConsummer.AuthorizeToken(context.Background(), accessToken, accessTokenSecret)
-	test.NoError(t, err)
-
-	t.Logf("token: %s", token)
-	t.Logf("secret: %s", secret)
-
-	return token, secret
-}
-
 func getAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	log.SetLogger(t)
 	cfg := test.LoadTestingConf(t)

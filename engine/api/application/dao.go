@@ -87,20 +87,6 @@ func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName stri
 	return load(db, store, projectKey, opts, query, args...)
 }
 
-// LoadAndLockByID load and lock given application
-func LoadAndLockByID(db gorp.SqlExecutor, store cache.Store, id int64, opts ...LoadOptionFunc) (*sdk.Application, error) {
-	query := fmt.Sprintf(`
-		SELECT %s
-		FROM application
-		WHERE application.id = $1 FOR UPDATE SKIP LOCKED`, appRows)
-	args := []interface{}{id}
-	app, err := load(db, store, "", opts, query, args...)
-	if err != nil && sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
-		err = sdk.ErrLocked
-	}
-	return app, sdk.WithStack(err)
-}
-
 // LoadByID load an application from DB
 func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	query := fmt.Sprintf(`

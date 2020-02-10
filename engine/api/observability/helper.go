@@ -33,23 +33,8 @@ const (
 	TagPipeline           = "pipeline"
 	TagPipelineDeep       = "pipeline_deep"
 	TagWorker             = "worker"
-	TagToken              = "token"
 	TagPermission         = "permission"
 )
-
-// LinkTo a traceID
-func LinkTo(ctx context.Context, traceID [16]byte) {
-	s := Current(ctx)
-	if s == nil {
-		return
-	}
-
-	s.AddLink(
-		trace.Link{
-			TraceID: trace.TraceID(traceID),
-		},
-	)
-}
 
 // Current return the current span
 func Current(ctx context.Context, tags ...trace.Attribute) *trace.Span {

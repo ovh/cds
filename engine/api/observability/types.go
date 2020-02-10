@@ -7,11 +7,10 @@ import (
 // Attributes recorded on the span for the requests.
 // Only trace exporters will need them.
 const (
-	HostAttribute       = "http.host"
-	MethodAttribute     = "http.method"
-	PathAttribute       = "http.path"
-	UserAgentAttribute  = "http.user_agent"
-	StatusCodeAttribute = "http.status_code"
+	HostAttribute      = "http.host"
+	MethodAttribute    = "http.method"
+	PathAttribute      = "http.path"
+	UserAgentAttribute = "http.user_agent"
 )
 
 // Configuration is the global tracing configuration

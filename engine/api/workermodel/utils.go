@@ -21,8 +21,3 @@ func MergeModelEnvsWithDefaultEnvs(envs map[string]string) map[string]string {
 
 	return envs
 }
-
-// Constant for worker model.
-const (
-	CacheTTLInSeconds = 30
-)
