@@ -46,7 +46,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		}
 
 		if oldGp.Permission == 0 {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		tx, errT := api.mustDB().Begin()

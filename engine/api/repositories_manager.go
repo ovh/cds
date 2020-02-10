@@ -337,7 +337,7 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 		// Load the repositories manager from the DB
 		vcsServer := repositoriesmanager.GetProjectVCSServer(p, rmName)
 		if vcsServer == nil {
-			return sdk.ErrRepoNotFound
+			return sdk.WithStack(sdk.ErrRepoNotFound)
 		}
 
 		tx, errb := api.mustDB().Begin()

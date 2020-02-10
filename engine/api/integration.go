@@ -83,7 +83,7 @@ func (api *API) putIntegrationModelHandler() service.Handler {
 		name := vars["name"]
 
 		if name == "" {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		m := new(sdk.IntegrationModel)
@@ -107,7 +107,7 @@ func (api *API) putIntegrationModelHandler() service.Handler {
 		}
 
 		if m.Name != old.Name {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		m.ID = old.ID

@@ -182,7 +182,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 		return err
 	}
 	if n == 0 {
-		return sdk.ErrNoProject
+		return sdk.WithStack(sdk.ErrNoProject)
 	}
 	*proj = sdk.Project(dbProj)
 	return nil

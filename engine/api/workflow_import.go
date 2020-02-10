@@ -290,13 +290,13 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		)
 
 		if r.Body == nil {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		btes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			log.Error(ctx, "postWorkflowPushHandler> Unable to read body: %v", err)
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 		defer r.Body.Close()
 
