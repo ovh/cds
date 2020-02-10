@@ -131,16 +131,44 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	}
 
 	stagesTerminated := 0
+	var previousNodeRun *sdk.WorkflowNodeRun
+	if nr.Manual != nil && nr.Manual.OnlyFailedJobs {
+		var err error
+		previousNodeRun, err = checkRunOnlyFailedJobs(wr, nr)
+		if err != nil {
+			return report, err
+		}
+	}
+
+	log.Warning(ctx, "BROWSE STAGES ")
+	for stageIndex := range nr.Stages {
+		log.Warning(ctx, "%s: %s", nr.Stages[stageIndex].Name, nr.Stages[stageIndex].Status)
+	}
 	//Browse stages
 	for stageIndex := range nr.Stages {
+		for si := range nr.Stages {
+			log.Warning(ctx, "%s: %s", nr.Stages[si].Name, nr.Stages[si].Status)
+		}
 		stage := &nr.Stages[stageIndex]
-		log.Debug("workflow.executeNodeRun> checking stage %s (status=%s)", stage.Name, stage.Status)
+		log.Warning(ctx, ">>>>>>workflow.executeNodeRun> checking stage %s (status=%s)", stage.Name, stage.Status)
 		//Initialize stage status at waiting
 		if stage.Status == "" {
-			stage.Status = sdk.StatusWaiting
+			var previousStage *sdk.Stage
+			if previousNodeRun == nil || previousNodeRun.Stages[stageIndex].Status == sdk.StatusFail {
+				stage.Status = sdk.StatusWaiting
 
-			if stageIndex == 0 {
-				newStatus = sdk.StatusWaiting
+				if stageIndex == 0 {
+					newStatus = sdk.StatusWaiting
+				}
+
+				if previousNodeRun != nil {
+					previousStage = &previousNodeRun.Stages[stageIndex]
+				}
+			} else if sdk.StatusIsTerminated(previousNodeRun.Stages[stageIndex].Status) {
+				log.Warning(ctx, "Recopy Stagesssssss %s - %s", previousNodeRun.Stages[stageIndex].Name, previousNodeRun.Stages[stageIndex].Status)
+				nr.Stages[stageIndex] = previousNodeRun.Stages[stageIndex]
+				stagesTerminated++
+				continue
 			}
 
 			if len(stage.Jobs) == 0 {
@@ -149,7 +177,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				//Add job to Queue
 				//Insert data in workflow_node_run_job
 				log.Debug("workflow.executeNodeRun> stage %s call addJobsToQueue", stage.Name)
-				r, err := addJobsToQueue(ctx, db, stage, wr, nr)
+				r, err := addJobsToQueue(ctx, db, stage, wr, nr, previousStage)
 				report, err = report.Merge(ctx, r, err)
 				if err != nil {
 					return report, err
@@ -344,7 +372,36 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	return report, nil
 }
 
-func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
+func checkRunOnlyFailedJobs(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) (*sdk.WorkflowNodeRun, error) {
+	var previousNR *sdk.WorkflowNodeRun
+	nrs, ok := wr.WorkflowNodeRuns[nr.WorkflowNodeID]
+	if !ok {
+		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "node %d not found in workflow run %d", nr.WorkflowNodeID, wr.ID)
+	}
+	for i := range nrs {
+		if nrs[i].SubNumber+1 == nr.SubNumber {
+			previousNR = &nrs[i]
+			break
+		}
+	}
+
+	if previousNR == nil {
+		return nil, sdk.WrapError(sdk.ErrNotFound, "unable to find a previous execution of this pipeline")
+	}
+
+	if len(previousNR.Stages) != len(nr.Stages) {
+		return nil, sdk.NewErrorFrom(sdk.ErrForbidden, "you cannot rerun a pipeline that have a different number of stages")
+	}
+
+	for i, s := range nr.Stages {
+		if len(s.Jobs) != len(previousNR.Stages[i].Jobs) {
+			return nil, sdk.NewErrorFrom(sdk.ErrForbidden, "you cannot rerun a pipeline that have a different number of jobs")
+		}
+	}
+	return previousNR, nil
+}
+
+func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun, previousStage *sdk.Stage) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.addJobsToQueue")
 	defer end()
@@ -378,8 +435,18 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	skippedOrDisabledJobs := 0
 	failedJobs := 0
 	//Browse the jobs
+jobLoop:
 	for j := range stage.Jobs {
 		job := &stage.Jobs[j]
+
+		if previousStage != nil {
+			for _, rj := range previousStage.RunJobs {
+				if rj.Job.PipelineActionID == job.PipelineActionID && rj.Status != sdk.StatusFail && sdk.StatusIsTerminated(rj.Status) {
+					stage.RunJobs = append(stage.RunJobs, rj)
+					continue jobLoop
+				}
+			}
+		}
 
 		// errors generated in the loop will be added to job run spawn info
 		spawnErrs := sdk.MultiError{}

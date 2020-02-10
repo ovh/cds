@@ -116,7 +116,7 @@ const (
 // StatusIsTerminated returns if status is terminated (nothing related to building or waiting, ...)
 func StatusIsTerminated(status string) bool {
 	switch status {
-	case StatusBuilding, StatusWaiting:
+	case StatusBuilding, StatusWaiting, "":
 		return false
 	default:
 		return true
