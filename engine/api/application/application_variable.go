@@ -378,9 +378,7 @@ func LoadVariableAudits(db gorp.SqlExecutor, appID, varID int64) ([]sdk.Applicat
 		if err != sql.ErrNoRows {
 			return nil, err
 		}
-		if err == sql.ErrNoRows {
-			return []sdk.ApplicationVariableAudit{}, nil
-		}
+		return []sdk.ApplicationVariableAudit{}, nil
 	}
 
 	avas := make([]sdk.ApplicationVariableAudit, len(res))

@@ -350,9 +350,7 @@ func LoadVariableAudits(db gorp.SqlExecutor, projectID, varID int64) ([]sdk.Proj
 		if err != sql.ErrNoRows {
 			return nil, err
 		}
-		if err == sql.ErrNoRows {
-			return []sdk.ProjectVariableAudit{}, nil
-		}
+		return []sdk.ProjectVariableAudit{}, nil
 	}
 
 	pvas := make([]sdk.ProjectVariableAudit, len(res))
