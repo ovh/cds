@@ -41,14 +41,14 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 	if offsetS != "" {
 		offset, errAtoi = strconv.Atoi(offsetS)
 		if errAtoi != nil {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 	}
 	limitS := r.FormValue("limit")
 	if limitS != "" {
 		limit, errAtoi = strconv.Atoi(limitS)
 		if errAtoi != nil {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 	}
 
@@ -848,7 +848,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			}
 
 			if !conditionsOK {
-				return sdk.ErrConditionsNotOk
+				return sdk.WithStack(sdk.ErrConditionsNotOk)
 			}
 		}
 

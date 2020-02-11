@@ -29,7 +29,7 @@ func (api *API) getErrorHandler() service.Handler {
 		uuid := vars["uuid"]
 
 		if api.Config.Graylog.URL == "" || api.Config.Graylog.AccessToken == "" {
-			return sdk.ErrNotImplemented
+			return sdk.WithStack(sdk.ErrNotImplemented)
 		}
 
 		req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/search/universal/absolute", api.Config.Graylog.URL), nil)
@@ -63,7 +63,7 @@ func (api *API) getErrorHandler() service.Handler {
 		}
 
 		if res.TotalResult < 1 {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		e := sdk.Error{
@@ -90,7 +90,7 @@ func (api *API) getPanicDumpHandler() service.Handler {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 		if !find {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 		w.Write([]byte(data)) // nolint
 		w.Header().Set("Content-Type", "application/octet-stream")

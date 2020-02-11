@@ -16,7 +16,7 @@ func InsertForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.Pro
 	servers, err := LoadAllForProject(db, proj.Key)
 	for _, server := range servers {
 		if server.Name == vcsServer.Name {
-			return sdk.ErrConflict
+			return sdk.WithStack(sdk.ErrConflict)
 		}
 	}
 	if err != nil {

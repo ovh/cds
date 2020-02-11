@@ -192,7 +192,7 @@ func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 	}
 	_, _ = report.Merge(ctx, r1, nil)
 	if !hasRun {
-		return report, sdk.ErrConditionsNotOk
+		return report, sdk.WithStack(sdk.ErrConditionsNotOk)
 	}
 	return report, nil
 }

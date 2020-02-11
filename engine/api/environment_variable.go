@@ -118,10 +118,10 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 
 		var newVar sdk.Variable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 		if newVar.Name != varName || newVar.Type == sdk.KeyVariable {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
@@ -170,11 +170,11 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 
 		var newVar sdk.Variable
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		if newVar.Name != varName {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, envName)

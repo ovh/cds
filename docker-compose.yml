@@ -63,10 +63,10 @@ services:
             hatchery.local.commonConfiguration.api.http.url=http://cds-api:8081 \
             hatchery.local.basedir=/app/hatchery-local \
             hatchery.swarm.commonConfiguration.url=http://cds-hatchery-swarm:8086 \
-            hatchery.swarm.commonConfiguration.api.http.url=http://cds-api:8081 \
+            hatchery.swarm.commonConfiguration.api.http.url=http://${HOSTNAME}:8081 \
             hatchery.swarm.ratioService=50 \
-            hatchery.swarm.dockerEngines.default.host=unix:///var/run/docker.sock \
-            hatchery.swarm.dockerEngines.default.maxContainers=4 \
+            hatchery.swarm.dockerEngines.sample-docker-engine.host=tcp://${HOSTNAME}:2375 \
+            hatchery.swarm.dockerEngines.sample-docker-engine.maxContainers=4 \
             hooks.url=http://cds-hooks:8083 \
             hooks.api.http.url=http://cds-api:8081 \
             hooks.cache.redis.host=cds-cache:6379 \
@@ -137,31 +137,12 @@ services:
       timeout: 10s
       retries: 6
 
-  # The docker engine must be accessible from this container
-  # The hatchery swarm uses standard docker environment variables like
-  # DOCKER_HOST: tcp://${HOSTNAME}:2376 or tcp://${HOSTNAME}:2375 if you use an unsecured docker engine
-  # DOCKER_CERT_PATH: /Users/me/.docker/machines/.client
-  # DOCKER_TLS_VERIFY: 1
-  #
-  # If you don't want to open the docker tcp post, you can bind the docker socket in the volumes section
-  # and set DOCKER_HOST to unix://var/run/docker.sock
-  #
-  # If your are a Docker for Desktop user (Docker4Mac or Docker4Windows) you will probably have to bind
-  # your docker socket to a tcp port with a socat like
-  # docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 2375:2375 bobrik/socat TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
   cds-hatchery-swarm:
     image: ${CDS_DOCKER_IMAGE:-ovhcom/cds-engine:latest}
     command: sh -c "/app/cds-engine-linux-amd64 start hatchery:swarm --config /app/conf/conf.toml"
     volumes:
       - cds-conf-volume:/app/conf
-    environment:
-      DOCKER_HOST: tcp://${HOSTNAME}:2375
-      # DOCKER_HOST: unix://var/run/docker.sock
-      # DOCKER_CERT_PATH: /Users/me/.docker/machines/.client
-      # DOCKER_TLS_VERIFY: 1
-    #volumes:
-       # Uncomment this to bind the docker socket
-       # - /var/run/docker.sock:/var/run/docker.sock
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/mon/version"]
       interval: 30s

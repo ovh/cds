@@ -73,7 +73,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	app.VCSServer = repomanager
 	if app.VCSServer != "" && app.RepositoryFullname != "" {
 		if repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer) == nil {
-			return sdk.ErrNoReposManager
+			return sdk.WithStack(sdk.ErrNoReposManager)
 		}
 
 		if err := repositoriesmanager.InsertForApplication(db, app, proj.Key); err != nil {

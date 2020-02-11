@@ -57,7 +57,7 @@ func (s *Service) getVCSServersHandler() service.Handler {
 		name := muxVar(r, "name")
 		cfg, ok := s.Cfg.Servers[name]
 		if !ok {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 		s := sdk.VCSConfiguration{
 			URL: cfg.URL,
@@ -80,7 +80,7 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 		name := muxVar(r, "name")
 		cfg, ok := s.Cfg.Servers[name]
 		if !ok {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 		res := struct {
 			WebhooksSupported  bool     `json:"webhooks_supported"`
@@ -243,7 +243,7 @@ func (s *Service) getVCSServersPollingHandler() service.Handler {
 		name := muxVar(r, "name")
 		cfg, ok := s.Cfg.Servers[name]
 		if !ok {
-			return sdk.ErrNotFound
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 		res := struct {
 			PollingSupported bool `json:"polling_supported"`
@@ -633,7 +633,7 @@ func (s *Service) getPullRequestHandler() service.Handler {
 		sid := muxVar(r, "id")
 		id, err := strconv.Atoi(sid)
 		if err != nil {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		accessToken, accessTokenSecret, created, ok := getAccessTokens(ctx)
@@ -742,7 +742,7 @@ func (s *Service) postPullRequestCommentHandler() service.Handler {
 		sid := muxVar(r, "id")
 		id, err := strconv.Atoi(sid)
 		if err != nil {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		var body string

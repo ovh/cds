@@ -144,7 +144,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 			return err
 		}
 		if newVar.Name != varName || newVar.Type == sdk.KeyVariable {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)
@@ -197,7 +197,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 		}
 
 		if newVar.Name != varName {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName)

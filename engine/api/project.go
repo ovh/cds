@@ -130,7 +130,7 @@ func (api *API) getProjectsHandler() service.Handler {
 			requestedUser, err = user.LoadByUsername(ctx, api.mustDB(), requestedUserName, user.LoadOptions.WithDeprecatedUser)
 			if err != nil {
 				if sdk.Cause(err) == sql.ErrNoRows {
-					return sdk.ErrUserNotFound
+					return sdk.WithStack(sdk.ErrUserNotFound)
 				}
 				return sdk.WrapError(err, "unable to load user '%s'", requestedUserName)
 			}

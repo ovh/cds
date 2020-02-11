@@ -21,7 +21,6 @@ var (
 	audits = map[string]sdk.Audit{
 		fmt.Sprintf("%T", sdk.EventWorkflowAdd{}):              addWorkflowAudit{},
 		fmt.Sprintf("%T", sdk.EventWorkflowUpdate{}):           updateWorkflowAudit{},
-		fmt.Sprintf("%T", sdk.EventWorkflowDelete{}):           deleteWorkflowAudit{},
 		fmt.Sprintf("%T", sdk.EventWorkflowPermissionAdd{}):    addWorkflowPermissionAudit{},
 		fmt.Sprintf("%T", sdk.EventWorkflowPermissionUpdate{}): updateWorkflowPermissionAudit{},
 		fmt.Sprintf("%T", sdk.EventWorkflowPermissionDelete{}): deleteWorkflowPermissionAudit{},
@@ -115,32 +114,6 @@ func (u updateWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e
 		ProjectKey: e.ProjectKey,
 		DataType:   "yaml",
 		DataAfter:  newWorkflowBuffer.String(),
-		DataBefore: oldWorkflowBuffer.String(),
-	})
-}
-
-type deleteWorkflowAudit struct{}
-
-func (d deleteWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
-	var wEvent sdk.EventWorkflowDelete
-	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
-	}
-
-	oldWorkflowBuffer := bytes.NewBufferString("")
-	if _, err := exportWorkflow(ctx, wEvent.Workflow, exportentities.FormatYAML, oldWorkflowBuffer); err != nil {
-		return sdk.WrapError(err, "Unable to export workflow")
-	}
-
-	return InsertAudit(db, &sdk.AuditWorkflow{
-		AuditCommon: sdk.AuditCommon{
-			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
-			Created:     e.Timestamp,
-			TriggeredBy: e.Username,
-		},
-		WorkflowID: wEvent.Workflow.ID,
-		ProjectKey: e.ProjectKey,
-		DataType:   "yaml",
 		DataBefore: oldWorkflowBuffer.String(),
 	})
 }

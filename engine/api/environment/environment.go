@@ -60,7 +60,7 @@ func LockByID(db gorp.SqlExecutor, envID int64) error {
 	WHERE id = $1 FOR UPDATE SKIP LOCKED
 	`, envID)
 	if err == sql.ErrNoRows {
-		return sdk.ErrLocked
+		return sdk.WithStack(sdk.ErrLocked)
 	}
 	return err
 }
@@ -77,7 +77,7 @@ func Lock(db gorp.SqlExecutor, projectKey, envName string) error {
 	) FOR UPDATE SKIP LOCKED
 	`, projectKey, envName)
 	if err == sql.ErrNoRows {
-		return sdk.ErrEnvironmentNotFound
+		return sdk.WithStack(sdk.ErrEnvironmentNotFound)
 	}
 	return err
 }
@@ -206,7 +206,7 @@ func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 		pqerr, ok := err.(*pq.Error)
 		if ok {
 			if pqerr.Code == "23000" || pqerr.Code == gorpmapping.ViolateUniqueKeyPGCode || pqerr.Code == "23514" {
-				return sdk.ErrEnvironmentExist
+				return sdk.WithStack(sdk.ErrEnvironmentExist)
 			}
 		}
 		return err

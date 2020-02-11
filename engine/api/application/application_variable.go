@@ -222,7 +222,7 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	query := `INSERT INTO application_variable(application_id, var_name, var_value, cipher_value, var_type)
 		  VALUES($1, $2, $3, $4, $5) RETURNING id`
 	if err := db.QueryRow(query, app.ID, variable.Name, clear, cipher, string(variable.Type)).Scan(&variable.ID); err != nil && strings.Contains(err.Error(), "application_variable_pkey") {
-		return sdk.ErrVariableExists
+		return sdk.WithStack(sdk.ErrVariableExists)
 	}
 	if err != nil {
 		return sdk.WrapError(err, "Cannot insert variable %s", variable.Name)
