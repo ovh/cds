@@ -263,50 +263,6 @@ func (api *API) getLatestWorkflowRunHandler() service.Handler {
 	}
 }
 
-func (api *API) resyncWorkflowRunHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permWorkflowName"]
-		number, err := requestVarInt(r, "number")
-		if err != nil {
-			return err
-		}
-
-		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
-		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
-		}
-
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, workflow.LoadOptions{Minimal: true, DeepPipeline: false})
-		if err != nil {
-			return sdk.WrapError(err, "cannot load workflow %s/%s", key, name)
-		}
-		if wf.FromRepository != "" {
-			return sdk.ErrWorkflowAsCodeResync
-		}
-
-		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{})
-		if err != nil {
-			return sdk.WrapError(err, "Unable to load last workflow run [%s/%d]", name, number)
-		}
-
-		tx, errT := api.mustDB().Begin()
-		if errT != nil {
-			return sdk.WrapError(errT, "resyncWorkflowRunHandler> Cannot start transaction")
-		}
-
-		if err := workflow.Resync(ctx, tx, api.Cache, proj, run); err != nil {
-			return sdk.WrapError(err, "Cannot resync pipelines")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
-		}
-		return service.WriteJSON(w, run, http.StatusOK)
-	}
-}
-
 func (api *API) getWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

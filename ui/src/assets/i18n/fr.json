@@ -889,7 +889,6 @@
   "workflow_run_conditions_hook": "Attention, vous ne pouvez pas utiliser des conditions de lancement utilisant {{.cds.build...}} car la vérification des conditions s'effectue avant la création d'un run.",
   "workflow_run_loading": "Chargement des exécutions",
   "workflow_run_node_job_queued": "Attente depuis {{time}}",
-  "workflow_run_resync_done": "Resynchronisé",
   "workflow_run_resync_help": "Resynchronisez ce run par rapport aux derniers changements sur vos pipelines. Ne resynchronise pas les variables de projet.",
   "workflow_run_scheduling": "Construction du workflow",
   "workflow_run_with_parameters": "Lancer le workflow",
