@@ -162,7 +162,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 					newStatus = sdk.StatusWaiting
 				}
 			} else if sdk.StatusIsTerminated(previousStage.Status) {
-				// If stage terminated, recipy it
+				// If stage terminated, recopy it
 				nr.Stages[stageIndex] = previousStage
 				stagesTerminated++
 				continue
