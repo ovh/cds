@@ -644,7 +644,6 @@ func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob s
 			}
 		}
 	}
-	log.Warning(ctx, "LOCK NODE RUN JOBBBBBBB FROM RESTART")
 	nodeRun, errNR := LoadAndLockNodeRunByID(ctx, db, wNodeJob.WorkflowNodeRunID)
 	if errNR != nil {
 		return errNR

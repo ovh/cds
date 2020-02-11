@@ -57,8 +57,8 @@
             <div class="ui floating dropdown icon button" suiDropdown>
                 <i class="dropdown icon"></i>
                 <div class="menu" suiDropdownMenu>
-                    <div class="item" (click)="run(true, false)"><i class="sync icon"></i>{{'workflow_resync' | translate }}</div>
-                    <div class="item"(click)="run(false, true)"><i class="bug icon"></i>{{'workflow_run_only_failed' | translate }}</div>
+                    <div class="item" [class.disabled]="!nodeRun" (click)="run(true, false)"><i class="sync icon"></i>{{'workflow_resync' | translate }}</div>
+                    <div class="item" [class.disabled]="!nodeRun || nodeRun.status !== 'Fail'" (click)="run(false, true)"><i class="bug icon"></i>{{'workflow_run_only_failed' | translate }}</div>
                 </div>
             </div>
         </div>

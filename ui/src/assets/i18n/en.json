@@ -857,6 +857,7 @@
   "workfow_tag_no": "No tag",
   "workflow_tag_dragdrop": "Drag & drop to modify tags order",
   "workflow_resync": "Resynchronize workflow",
+  "workflow_run_only_failed": "Only failed jobs",
   "workflow_stopped": "Workflow stopped",
   "workflow_last_execution": "Last execution date",
   "workflow_first_execution": "First execution date",

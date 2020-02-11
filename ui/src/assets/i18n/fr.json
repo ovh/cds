@@ -880,6 +880,7 @@
   "workflow_resync_vcs_tooltip": "Cette action va renvoyer les statuts de vos pipelines à votre gestionnaire de dépots distants",
   "workflow_resync_vcs": "Resynchroniser les statuts VCS",
   "workflow_resync": "Resynchroniser le workflow",
+  "workflow_run_only_failed": "Uniquement les jobs en erreur",
   "workflow_root_context_application": "Application (facultatif)",
   "workflow_root_context_environment": "Environnement (facultatif)",
   "workflow_root_context_integration": "Intégration (facultatif)",

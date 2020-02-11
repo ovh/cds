@@ -900,7 +900,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		// IF CONTINUE EXISTING RUN
 		if lastRun != nil {
 			if opts != nil && opts.Manual != nil && opts.Manual.Resync {
-				log.Debug("Resync workflow %d for run %d%", lastRun.Workflow.ID, lastRun.ID)
+				log.Debug("Resync workflow %d for run %d", lastRun.Workflow.ID, lastRun.ID)
 				if err := workflow.Resync(ctx, api.mustDB(), api.Cache, p, lastRun); err != nil {
 					return err
 				}
