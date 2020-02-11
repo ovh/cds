@@ -140,33 +140,29 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		}
 	}
 
-	log.Warning(ctx, "BROWSE STAGES ")
-	for stageIndex := range nr.Stages {
-		log.Warning(ctx, "%s: %s", nr.Stages[stageIndex].Name, nr.Stages[stageIndex].Status)
-	}
 	//Browse stages
 	for stageIndex := range nr.Stages {
-		for si := range nr.Stages {
-			log.Warning(ctx, "%s: %s", nr.Stages[si].Name, nr.Stages[si].Status)
-		}
 		stage := &nr.Stages[stageIndex]
-		log.Warning(ctx, ">>>>>>workflow.executeNodeRun> checking stage %s (status=%s)", stage.Name, stage.Status)
 		//Initialize stage status at waiting
 		if stage.Status == "" {
-			var previousStage *sdk.Stage
-			if previousNodeRun == nil || previousNodeRun.Stages[stageIndex].Status == sdk.StatusFail {
-				stage.Status = sdk.StatusWaiting
+			var previousStage sdk.Stage
+			// Find previous stage
+			if previousNodeRun != nil {
+				for i := range previousNodeRun.Stages {
+					if previousNodeRun.Stages[i].ID == stage.ID {
+						previousStage = previousNodeRun.Stages[i]
+					}
+				}
+			}
 
+			if previousNodeRun == nil || previousStage.Status == sdk.StatusFail || !sdk.StatusIsTerminated(previousStage.Status) {
+				stage.Status = sdk.StatusWaiting
 				if stageIndex == 0 {
 					newStatus = sdk.StatusWaiting
 				}
-
-				if previousNodeRun != nil {
-					previousStage = &previousNodeRun.Stages[stageIndex]
-				}
-			} else if sdk.StatusIsTerminated(previousNodeRun.Stages[stageIndex].Status) {
-				log.Warning(ctx, "Recopy Stagesssssss %s - %s", previousNodeRun.Stages[stageIndex].Name, previousNodeRun.Stages[stageIndex].Status)
-				nr.Stages[stageIndex] = previousNodeRun.Stages[stageIndex]
+			} else if sdk.StatusIsTerminated(previousStage.Status) {
+				// If stage terminated, recipy it
+				nr.Stages[stageIndex] = previousStage
 				stagesTerminated++
 				continue
 			}
@@ -177,7 +173,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				//Add job to Queue
 				//Insert data in workflow_node_run_job
 				log.Debug("workflow.executeNodeRun> stage %s call addJobsToQueue", stage.Name)
-				r, err := addJobsToQueue(ctx, db, stage, wr, nr, previousStage)
+				r, err := addJobsToQueue(ctx, db, stage, wr, nr, &previousStage)
 				report, err = report.Merge(ctx, r, err)
 				if err != nil {
 					return report, err
@@ -379,7 +375,7 @@ func checkRunOnlyFailedJobs(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) (*sdk.
 		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "node %d not found in workflow run %d", nr.WorkflowNodeID, wr.ID)
 	}
 	for i := range nrs {
-		if nrs[i].SubNumber+1 == nr.SubNumber {
+		if nrs[i].SubNumber < nr.SubNumber {
 			previousNR = &nrs[i]
 			break
 		}
@@ -1106,7 +1102,6 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if vcsInfos.Hash != "" && (vcsInfos.Author == "" || vcsInfos.Message == "") {
 		commit, errCm := client.Commit(ctx, vcsInfos.Repository, vcsInfos.Hash)
 		if errCm != nil {
-			log.Warning(ctx, "unable to ")
 			return nil, sdk.WrapError(errCm, "cannot get commit infos for %s %s", vcsInfos.Repository, vcsInfos.Hash)
 		}
 		vcsInfos.Author = commit.Author.Name
