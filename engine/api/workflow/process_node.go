@@ -424,7 +424,7 @@ func createWorkflowNodeRun(wr *sdk.WorkflowRun, n *sdk.Node, parents []*sdk.Work
 		WorkflowRunID:    wr.ID,
 		WorkflowNodeID:   n.ID,
 		WorkflowNodeName: n.Name,
-		Status:           string(sdk.StatusWaiting),
+		Status:           sdk.StatusWaiting,
 		Stages:           stages,
 		Header:           wr.Header,
 	}

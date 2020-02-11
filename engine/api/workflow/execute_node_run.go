@@ -151,6 +151,7 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				for i := range previousNodeRun.Stages {
 					if previousNodeRun.Stages[i].ID == stage.ID {
 						previousStage = previousNodeRun.Stages[i]
+						break
 					}
 				}
 			}
