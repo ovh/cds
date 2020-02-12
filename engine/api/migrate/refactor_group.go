@@ -120,6 +120,63 @@ func refactorGroupMembership(ctx context.Context, db *gorp.DbMap) error {
 	return nil
 }
 
+func refactorLinkGroupProject(ctx context.Context, db *gorp.DbMap) error {
+	// Third step
+	// Migrate data from table user_group
+	tx, err := db.Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	defer tx.Rollback() // nolint
+
+	rows, err := tx.Query(`
+	SELECT id, group_id, project_id, role
+	FROM project_group
+	FOR UPDATE SKIP LOCKED
+	`)
+	if err == sql.ErrNoRows {
+		return nil
+	}
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer rows.Close()
+
+	var links []*group.LinkGroupProject
+
+	for rows.Next() {
+		var id int64
+		var groupID int64
+		var projectID int64
+		var role int
+		if err := rows.Scan(&id, &groupID, &projectID, &role); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		var l = group.LinkGroupProject{
+			ID:        id,
+			GroupID:   groupID,
+			ProjectID: projectID,
+			Role:      role,
+		}
+
+		links = append(links, &l)
+	}
+
+	for _, l := range links {
+		if err := group.UpdateLinkGroupProject(tx, l); err != nil {
+			return sdk.WithStack(err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	return nil
+}
+
 // RefactorGroupMembership .
 func RefactorGroupMembership(ctx context.Context, db *gorp.DbMap) error {
 	log.Debug("migrate.RefactorGroupMembership> begin")
@@ -132,6 +189,10 @@ func RefactorGroupMembership(ctx context.Context, db *gorp.DbMap) error {
 	}
 
 	if err := refactorGroupMembership(ctx, db); err != nil {
+		return err
+	}
+
+	if err := refactorLinkGroupProject(ctx, db); err != nil {
 		return err
 	}
 
