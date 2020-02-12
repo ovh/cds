@@ -82,7 +82,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, report)
-		go workflow.SendEvent(context.Background(), api.mustDB(), p.Key, report)
+		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, p.Key, report)
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
 	}
@@ -384,7 +384,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, proj, report)
 		next()
 
-		go workflow.SendEvent(context.Background(), api.mustDB(), proj.Key, report)
+		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, proj.Key, report)
 
 		return nil
 	}
@@ -492,9 +492,12 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 
 	for i := range report.WorkflowRuns() {
 		run := &report.WorkflowRuns()[i]
-		if err := updateParentWorkflowRun(ctx, newDBFunc, store, run); err != nil {
+		report, err := updateParentWorkflowRun(ctx, newDBFunc, store, run)
+		if err != nil {
 			return nil, sdk.WrapError(err, "postJobResult")
 		}
+
+		go WorkflowSendEvent(context.Background(), tx, store, proj.Key, report)
 
 		if sdk.StatusIsTerminated(run.Status) {
 			//Start a goroutine to update commit statuses in repositories manager
@@ -688,7 +691,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 			return nil
 		}
 		nodeRun.Translate(r.Header.Get("Accept-Language"))
-		event.PublishWorkflowNodeRun(context.Background(), api.mustDB(), nodeRun, work, nil)
+		event.PublishWorkflowNodeRun(context.Background(), api.mustDB(), api.Cache, nodeRun, work, nil)
 		return nil
 	}
 }

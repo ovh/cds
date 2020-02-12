@@ -15,26 +15,38 @@ fn main() {
         task::block_on(my_client.status()).unwrap()
     );
     println!("Me : {:?}", task::block_on(my_client.me()).unwrap());
-    println!(
-        "projects : {:?}",
-        task::block_on(my_client.projects()).unwrap()
-    );
-    println!(
-        "applications : {:?}",
-        task::block_on(my_client.applications("TEST")).unwrap()[0].name
-    );
-    println!(
-        "application name : {:?}",
-        task::block_on(my_client.application("TEST", "test"))
-            .unwrap()
-            .icon
-    );
-    println!(
-        "workflows : {:?}",
-        task::block_on(my_client.workflows("TEST")).unwrap()
-    );
-    println!(
-        "workflow test : {:?}",
-        task::block_on(my_client.workflow("TEST", "test")).unwrap()
-    );
+    let projects = task::block_on(my_client.projects()).unwrap();
+    println!("projects length : {}", projects.len());
+
+    if projects.is_empty() {
+        println!("no projects available");
+        return;
+    }
+    let project_key = &projects.get(0).unwrap().key;
+
+    let applications = task::block_on(my_client.applications(project_key)).unwrap();
+    println!("applications length {}", applications.len());
+
+    if applications.is_empty() {
+        println!("no applications in project");
+    } else {
+        let application = task::block_on(my_client.application(
+            &projects.get(0).unwrap().key,
+            &applications.get(0).unwrap().name,
+        ))
+        .unwrap();
+        println!("application name : {:?}", application.name);
+    }
+
+    let workflows = task::block_on(my_client.workflows(project_key)).unwrap();
+    println!("workflows length : {}", workflows.len());
+
+    if workflows.is_empty() {
+        println!("no workflows found in project");
+        return;
+    }
+
+    let workflow =
+        task::block_on(my_client.workflow(project_key, &workflows.get(0).unwrap().name)).unwrap();
+    println!("workflow name : {:?}", workflow.name);
 }

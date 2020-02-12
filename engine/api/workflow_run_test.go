@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/api/ascode"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/api/ascode"
 
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
@@ -1176,7 +1177,13 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 
-	opts := &sdk.WorkflowRunPostHandlerOption{}
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			Payload: map[string]string{
+				"test": "hereismytest",
+			},
+		},
+	}
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
 
 	//Do the request
@@ -1190,6 +1197,22 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 
 	// wait for the workflow to finish crafting
 	assert.NoError(t, waitCraftinWorkflow(t, db, wr.ID))
+
+	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
+	test.NoError(t, err)
+	assert.NotNil(t, lastRun.RootRun())
+	payloadCount := 0
+	testFound := false
+	for _, param := range lastRun.RootRun().BuildParameters {
+		if param.Name == "payload" {
+			payloadCount++
+		} else if param.Name == "test" {
+			testFound = true
+		}
+	}
+
+	assert.Equal(t, 1, payloadCount)
+	assert.True(t, testFound, "should find 'test' in build parameters")
 }
 
 func waitCraftinWorkflow(t *testing.T, db gorp.SqlExecutor, id int64) error {
@@ -1407,7 +1430,8 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		Type:      ascode.AsCodeWorkflow,
 	}
 
-	ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, proj, &app, ed, u)
+	x := ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, proj, &app, ed, u)
+	require.NotNil(t, x, "ascodeEvent should not be nil, but it was")
 
 	//Prepare request
 	vars := map[string]string{
@@ -1513,7 +1537,7 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 	gr := sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, group.Insert(api.mustDB(), &gr))
+	require.NoError(t, group.Insert(context.TODO(), api.mustDB(), &gr))
 
 	uLambda, pass := assets.InsertLambdaUser(t, api.mustDB(), &gr)
 
@@ -1887,7 +1911,175 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 	test.NoError(t, err)
 	assert.Equal(t, int64(2), lastRun.Number)
 	assert.Equal(t, sdk.StatusBuilding, lastRun.Status)
+}
 
+func Test_postWorkflowRunHandlerHook(t *testing.T) {
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), s))
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip))
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	//Second pipeline
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2))
+	s = sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip2.ID
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), s))
+	j = &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	test.NoError(t, pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2))
+	s.Jobs = append(s.Jobs, *j)
+
+	mockServiceHook, _ := assets.InsertService(t, db, "Test_postWorkflowRunHandlerHookWithMutex", services.TypeHooks)
+	defer func() {
+		_ = services.Delete(db, mockServiceHook) // nolint
+	}()
+
+	//This is a mock for the hook service
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+
+			switch r.URL.String() {
+			case "/task/bulk":
+				hooks := map[string]sdk.NodeHook{}
+				hooks["1cbf3792-126b-4111-884f-077bdee9523d"] = sdk.NodeHook{
+					HookModelName: sdk.WebHookModel.Name,
+					Config:        sdk.WebHookModel.DefaultConfig.Clone(),
+					UUID:          "1cbf3792-126b-4111-884f-077bdee9523d",
+				}
+				if err := enc.Encode(hooks); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				return writeError(w, fmt.Errorf("route %s must not be called", r.URL.String()))
+			}
+			return w, nil
+		},
+	)
+
+	_, errDb := db.Exec("DELETE FROM w_node_hook WHERE uuid = $1", "1cbf3792-126b-4111-884f-077bdee9523d")
+	test.NoError(t, errDb)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		HookModels: map[int64]sdk.WorkflowHookModel{
+			1: sdk.WebHookModel,
+		},
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Hooks: []sdk.NodeHook{
+					{
+						HookModelName: sdk.WebHookModel.Name,
+						Config:        sdk.WebHookModel.DefaultConfig.Clone(),
+						UUID:          "1cbf3792-126b-4111-884f-077bdee9523d",
+					},
+				},
+			},
+		},
+	}
+
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithEnvironments)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj2, "test_1", workflow.LoadOptions{})
+	test.NoError(t, err)
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Hook: &sdk.WorkflowNodeRunHookEvent{
+			Payload: map[string]string{
+				"test":    "mypayload",
+				"payload": `{"raw": "value"}`,
+			},
+			WorkflowNodeHookUUID: "1cbf3792-126b-4111-884f-077bdee9523d",
+		},
+	}
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
+
+	//Do the request, start first workflow
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	var body []byte
+	_, err = req.Body.Read(body)
+	test.NoError(t, err)
+	defer req.Body.Close()
+	assert.Equal(t, 202, rec.Code)
+	wr := &sdk.WorkflowRun{}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
+	assert.Equal(t, int64(1), wr.Number)
+
+	assert.NoError(t, waitCraftinWorkflow(t, db, wr.ID))
+	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
+	test.NoError(t, err)
+	assert.NotNil(t, lastRun.RootRun())
+	payloadCount := 0
+	rawFound := false
+	testFound := false
+	for _, param := range lastRun.RootRun().BuildParameters {
+		if param.Name == "payload" {
+			payloadCount++
+		} else if param.Name == "raw" {
+			rawFound = true
+		} else if param.Name == "test" {
+			testFound = true
+		}
+	}
+
+	assert.Equal(t, 1, payloadCount)
+	assert.False(t, rawFound, "should not find 'raw' in build parameters")
+	assert.True(t, testFound, "should find 'test' in build parameters")
 }
 
 func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
@@ -1900,8 +2092,8 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	gr := &sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, group.Insert(db, gr))
-	require.NoError(t, group.InsertLinkGroupProject(api.mustDB(), &group.LinkGroupProject{
+	require.NoError(t, group.Insert(context.TODO(), db, gr))
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), api.mustDB(), &group.LinkGroupProject{
 		GroupID:   gr.ID,
 		ProjectID: proj.ID,
 		Role:      7,
@@ -2057,8 +2249,8 @@ func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 	gr := &sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, group.Insert(db, gr))
-	require.NoError(t, group.InsertLinkGroupProject(api.mustDB(), &group.LinkGroupProject{
+	require.NoError(t, group.Insert(context.TODO(), db, gr))
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), api.mustDB(), &group.LinkGroupProject{
 		GroupID:   gr.ID,
 		ProjectID: proj.ID,
 		Role:      7,

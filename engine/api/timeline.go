@@ -5,7 +5,9 @@ import (
 	"net/http"
 
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -13,60 +15,76 @@ import (
 func (api *API) getTimelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		consumer := getAPIConsumer(ctx)
-		//currentItem, errS := FormInt(r, "currentItem")
-		//if errS != nil {
-		//	return sdk.WrapError(errS, "invalid format for current item")
-		//}
+
+		// Get index of the first element to return
+		currentItem, err := FormInt(r, "currentItem")
+		if err != nil {
+			return sdk.WrapError(err, "invalid format for current item")
+		}
 
 		// Get workflow to mute
-		timelineFilter, errT := user.LoadTimelineFilter(api.mustDB(), consumer.AuthentifiedUser.OldUserStruct.ID)
-		if errT != nil {
-			return sdk.WrapError(errT, "unable to load timeline filter")
+		timelineFilter, err := user.LoadTimelineFilter(api.mustDB(), consumer.AuthentifiedUser.ID)
+		if err != nil {
+			return sdk.WrapError(err, "unable to load timeline filter")
 		}
-
-		// Add all workflows to mute in a map
-		muteFilter := make(map[string]bool, len(timelineFilter.Projects))
+		muteFilter := make(map[string]struct{}, len(timelineFilter.Projects))
 		for _, pf := range timelineFilter.Projects {
 			for _, wn := range pf.WorkflowNames {
-				muteFilter[pf.Key+"/"+wn] = true
+				muteFilter[pf.Key+"/"+wn] = struct{}{}
 			}
 		}
 
-		/*permToRequest := make(map[string][]string, len(consumer.AuthentifiedUser.OldUserStruct.Permissions.WorkflowsPerm))
-		for k := range consumer.AuthentifiedUser.OldUserStruct.Permissions.WorkflowsPerm {
-			if _, ok := muteFilter[k]; ok {
-				continue
-			}
+		var ps []sdk.Project
+		if isMaintainer(ctx) {
+			ps, err = project.LoadAll(ctx, api.mustDB(), api.Cache)
+		} else {
+			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, consumer.GetGroupIDs())
+		}
+		if err != nil {
+			return err
+		}
 
-			keySplitted := strings.Split(k, "/")
-			pKey := keySplitted[0]
-			wName := keySplitted[1]
-
-			pFilter, ok := permToRequest[pKey]
-			if !ok {
-				pFilter = make([]string, 0, 1)
+		ws, err := workflow.LoadAllByProjectIDs(ctx, api.mustDB(), sdk.ProjectsToIDs(ps))
+		if err != nil {
+			return err
+		}
+		mWorkflowNames := map[int64][]string{}
+		for i := range ws {
+			if _, ok := mWorkflowNames[ws[i].ProjectID]; !ok {
+				mWorkflowNames[ws[i].ProjectID] = nil
 			}
-			pFilter = append(pFilter, wName)
-			permToRequest[pKey] = pFilter
+			mWorkflowNames[ws[i].ProjectID] = append(mWorkflowNames[ws[i].ProjectID], ws[i].Name)
+		}
+
+		// Prepare projects filter
+		filters := make([]sdk.ProjectFilter, 0, len(ps))
+		for i := range ps {
+			filter := sdk.ProjectFilter{
+				Key: ps[i].Key,
+			}
+			// Add all workflow not muted to filters for current project
+			if wNames, ok := mWorkflowNames[ps[i].ID]; ok {
+				for j := range wNames {
+					if _, ok := muteFilter[ps[i].Key+"/"+wNames[j]]; !ok {
+						filter.WorkflowNames = append(filter.WorkflowNames, wNames[j])
+					}
+				}
+			}
+			if len(filter.WorkflowNames) > 0 {
+				filters = append(filters, filter)
+			}
 		}
 
 		request := sdk.EventFilter{
 			CurrentItem: currentItem,
 			Filter: sdk.TimelineFilter{
-				Projects: make([]sdk.ProjectFilter, 0, len(permToRequest)),
+				Projects: filters,
 			},
 		}
-		for k, v := range permToRequest {
-			pFilter := sdk.ProjectFilter{
-				Key:           k,
-				WorkflowNames: v,
-			}
-			request.Filter.Projects = append(request.Filter.Projects, pFilter)
-		}*/
 
-		events, err := event.GetEvents(ctx, api.mustDB(), api.Cache, sdk.EventFilter{})
+		events, err := event.GetEvents(ctx, api.mustDB(), api.Cache, request)
 		if err != nil {
-			return sdk.WrapError(err, "Unable to load events")
+			return sdk.WrapError(err, "unable to load events")
 		}
 		return service.WriteJSON(w, events, http.StatusOK)
 	}

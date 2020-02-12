@@ -42,15 +42,8 @@ func loadMembers(ctx context.Context, db gorp.SqlExecutor, gs ...*sdk.Group) err
 		}
 	}
 
-	// Get all user migrations for links
-	userMigrations, err := user.LoadMigrationUsersByDeprecatedUserIDs(ctx, db, links.ToUserIDs())
-	if err != nil {
-		return err
-	}
-	mMigrations := userMigrations.ToMapByUserID()
-
 	// Get all authentified users for migrations
-	members, err := user.LoadAllByIDs(ctx, db, userMigrations.ToAuthentifiedUserIDs())
+	members, err := user.LoadAllByIDs(ctx, db, links.ToUserIDs())
 	if err != nil {
 		return err
 	}
@@ -60,16 +53,15 @@ func loadMembers(ctx context.Context, db gorp.SqlExecutor, gs ...*sdk.Group) err
 	for _, g := range gs {
 		if _, ok := mLinks[g.ID]; ok {
 			for _, link := range mLinks[g.ID] {
-				if migration, ok := mMigrations[link.UserID]; ok {
-					if member, ok := mMembers[migration.AuthentifiedUserID]; ok {
-						g.Members = append(g.Members, sdk.GroupMember{
-							ID:       member.ID,
-							Username: member.Username,
-							Fullname: member.Fullname,
-							Admin:    link.Admin,
-						})
-					}
+				if member, ok := mMembers[link.AuthentifiedUserID]; ok {
+					g.Members = append(g.Members, sdk.GroupMember{
+						ID:       member.ID,
+						Username: member.Username,
+						Fullname: member.Fullname,
+						Admin:    link.Admin,
+					})
 				}
+
 			}
 		}
 	}

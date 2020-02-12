@@ -1,6 +1,8 @@
 name: "ITSCWRKFLW6-WORKFLOW"
 version: v1.0
 pipeline: clonetagbis
+conditions:
+  script: return git_tag == 'v0.27.0'
 payload:
   git.author: ""
   git.tag: "v0.27.0"

@@ -56,7 +56,7 @@ func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) 
 		},
 		{
 			Name:  "git.hash",
-			Value: latestCommit.Hash,
+			Value: latestCommit.LongHash,
 		},
 	}
 

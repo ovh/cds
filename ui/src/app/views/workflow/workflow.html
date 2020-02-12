@@ -16,8 +16,11 @@
         </a>
         <ng-template let-popup #popupFromRepository>
             <div class="content infoPopup">
-                <ng-container *ngIf="workflow && workflow.from_repository">
-                    <app-ascode-event [events]="workflow.as_code_events" [repo]="workflow.from_repository"></app-ascode-event>
+                <ng-container
+                    *ngIf="workflow && (workflow.from_repository || (workflow.as_code_events && workflow.as_code_events.length > 0))">
+                    <app-ascode-event [events]="workflow.as_code_events" [repo]="workflow.from_repository"
+                        [appName]="workflow.applications[workflow.workflow_data.node.context.application_id].name"
+                        [project]="project"></app-ascode-event>
                 </ng-container>
                 <ng-container
                     *ngIf="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)">
@@ -36,18 +39,6 @@
                                 | translate}}</button>
                         </div>
                     </div>
-                </ng-container>
-                <ng-container
-                    *ngIf="workflow && !workflow.from_repository && (workflow.as_code_events && workflow.as_code_events.length > 0)">
-                    <p>{{ 'workflow_from_repository_pending' | translate}}</p>
-                    <ul>
-                        <li *ngFor="let p of workflow.as_code_events">
-                            <a href="{{p.pullrequest_url}}" target="_blank">{{p.pullrequest_url}}</a>
-                        </li>
-                    </ul>
-                    <button class="ui right floated green tiny button" (click)="resyncPR()"
-                        [class.loading]="loadingPopupButton"
-                        [disabled]="loadingPopupButton">{{'workflow_resync' | translate }}</button>
                 </ng-container>
             </div>
         </ng-template>
@@ -118,10 +109,3 @@
         </app-workflow-template-apply-modal>
     </ng-container>
 </section>
-<ng-container *ngIf="workflow">
-    <app-update-ascode
-            [project]="project"
-            [appName]="workflow.applications[workflow.workflow_data.node.context.application_id].name"
-            [name]="workflow.name"
-            #updateAsCode></app-update-ascode>
-</ng-container>

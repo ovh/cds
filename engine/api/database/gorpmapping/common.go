@@ -173,7 +173,7 @@ func LoadTupleByPrimaryKey(db gorp.SqlExecutor, entity string, pk interface{}) (
 
 	newTargetPtr := reflect.New(reflect.TypeOf(e.Target))
 
-	query := NewQuery(fmt.Sprintf("select * from %s where %s::text = $1::text", e.Name, e.Keys[0])).Args(pk)
+	query := NewQuery(fmt.Sprintf(`select * from "%s" where %s::text = $1::text`, e.Name, e.Keys[0])).Args(pk)
 	found, err := Get(context.Background(), db, query, newTargetPtr.Interface())
 	if err != nil {
 		return nil, err

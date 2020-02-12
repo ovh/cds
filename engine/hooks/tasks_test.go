@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"net/http"
 	"testing"
 	"time"
 
@@ -39,6 +40,37 @@ func Test_doWebHookExecution(t *testing.T) {
 	assert.Equal(t, "sguiheux", hs[0].Payload["author"])
 	assert.Equal(t, "monmessage", hs[0].Payload["message"])
 	assert.Equal(t, "123456789", hs[0].Payload["hash"])
+	assert.True(t, hs[0].Payload["payload"] != "", "payload should not be empty")
+}
+
+func Test_doWebHookExecutionWithRequestBody(t *testing.T) {
+	log.SetLogger(t)
+	s, cancel := setupTestHookService(t)
+	defer cancel()
+	task := &sdk.TaskExecution{
+		UUID: sdk.RandomString(10),
+		Type: TypeWebHook,
+		WebHook: &sdk.WebHookExecution{
+			RequestMethod: string(http.MethodPost),
+			RequestHeader: map[string][]string{
+				"Content-Type": []string{
+					"application/json",
+				},
+			},
+			RequestBody: []byte(`{"test": "hereisatest"}`),
+		},
+		Config: sdk.WorkflowNodeHookConfig{
+			"method": sdk.WorkflowNodeHookConfigValue{
+				Value: string(http.MethodPost),
+			},
+		},
+	}
+	hs, err := s.doWebHookExecution(context.TODO(), task)
+	test.NoError(t, err)
+
+	assert.Equal(t, 1, len(hs))
+	assert.Equal(t, "hereisatest", hs[0].Payload["test"])
+	assert.True(t, hs[0].Payload["payload"] != "", "payload should not be empty")
 }
 
 func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {

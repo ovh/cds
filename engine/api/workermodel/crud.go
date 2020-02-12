@@ -47,13 +47,9 @@ func Create(ctx context.Context, db gorp.SqlExecutor, data sdk.Model, ident sdk.
 	// init new model from given data
 	var model sdk.Model
 	model.Update(data)
-
-	// TODO refactor using audit
-	model.CreatedBy = sdk.User{
-		Email:    ident.GetEmail(),
-		Username: ident.GetUsername(),
-		Fullname: ident.GetFullname(),
-	}
+	model.Author.Username = ident.GetUsername()
+	model.Author.Fullname = ident.GetFullname()
+	model.Author.Email = ident.GetEmail()
 
 	if err := Insert(db, &model); err != nil {
 		return nil, sdk.WrapError(err, "cannot add worker model")

@@ -9,7 +9,7 @@ import (
 
 func (c *client) WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error) {
 	ope := new(sdk.Operation)
-	path := fmt.Sprintf("/project/%s/workflows/%s/ascode", projectKey, workflowName)
+	path := fmt.Sprintf("/project/%s/workflows/%s/ascode?migrate=true", projectKey, workflowName)
 	if _, err := c.PostJSON(context.Background(), path, nil, &ope); err != nil {
 		return nil, err
 	}

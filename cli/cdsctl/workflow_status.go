@@ -55,7 +55,7 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 		return nil, fmt.Errorf("unable to get latest commit: %v", err)
 	}
 
-	currentDisplay.Printf("Looking for %s...\n", cli.Magenta(latestCommit.Hash))
+	currentDisplay.Printf("Looking for %s...\n", cli.Magenta(latestCommit.LongHash))
 	currentDisplay.Do(context.Background())
 
 	for runNumber == 0 {

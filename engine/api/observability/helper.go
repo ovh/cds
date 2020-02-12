@@ -108,7 +108,7 @@ func ContextGetTags(ctx context.Context, s ...string) []tag.Mutator {
 
 // Span start a new span from the parent context
 func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Context, func()) {
-	log.Debug("# %s - begin", name)
+	// log.Debug("# %s - begin", name)
 	if ctx == nil {
 		return context.Background(), func() {}
 	}
@@ -119,7 +119,7 @@ func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Co
 	}
 	ctx = tracingutils.SpanContextToContext(ctx, span.SpanContext())
 	return ctx, func() {
-		log.Debug("# %s - end", name)
+		// log.Debug("# %s - end", name)
 		span.End()
 	}
 }

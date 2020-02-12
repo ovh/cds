@@ -156,7 +156,7 @@ func TestManualRun1(t *testing.T) {
 	//TestLoadNodeJobRun
 	filter := workflow.NewQueueFilter()
 	filter.Rights = sdk.PermissionReadExecute
-	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)).ToIDs())
+	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.Groups, proj.ProjectGroups[0].Group)).ToIDs())
 	require.NoError(t, err)
 	test.Equal(t, 2, len(jobs))
 
@@ -295,7 +295,7 @@ func TestManualRun2(t *testing.T) {
 
 	filter := workflow.NewQueueFilter()
 	filter.Rights = sdk.PermissionReadExecute
-	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)).ToIDs())
+	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.Groups, proj.ProjectGroups[0].Group)).ToIDs())
 	require.NoError(t, err)
 
 	assert.Len(t, jobs, 3)
@@ -334,14 +334,14 @@ func TestManualRun3(t *testing.T) {
 		}
 	}
 
-	require.NoError(t, group.Insert(db, &g0))
-	require.NoError(t, group.Insert(db, &g1))
-	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+	require.NoError(t, group.Insert(context.TODO(), db, &g0))
+	require.NoError(t, group.Insert(context.TODO(), db, &g1))
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g0.ID,
 		ProjectID: proj.ID,
 		Role:      sdk.PermissionReadWriteExecute,
 	}))
-	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g1.ID,
 		ProjectID: proj.ID,
 		Role:      sdk.PermissionReadWriteExecute,
@@ -540,7 +540,7 @@ func TestManualRun3(t *testing.T) {
 
 	filter := workflow.NewQueueFilter()
 	// test nil since/until
-	_, err = workflow.CountNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)).ToIDs())
+	_, err = workflow.CountNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.Groups, proj.ProjectGroups[0].Group)).ToIDs())
 	require.NoError(t, err)
 
 	// queue should be empty with since 0,0 until 0,0
@@ -550,7 +550,7 @@ func TestManualRun3(t *testing.T) {
 	filter.Since = &t0
 	filter.Until = &t1
 
-	countAlreadyInQueueNone, err := workflow.CountNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)).ToIDs())
+	countAlreadyInQueueNone, err := workflow.CountNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.Groups, proj.ProjectGroups[0].Group)).ToIDs())
 	require.NoError(t, err)
 	assert.Equal(t, 0, int(countAlreadyInQueueNone.Count))
 
@@ -558,7 +558,7 @@ queueRun:
 	filter3 := workflow.NewQueueFilter()
 	filter3.Rights = sdk.PermissionReadExecute
 
-	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter3, sdk.Groups(append(u.OldUserStruct.Groups, g0)).ToIDs())
+	jobs, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter3, sdk.Groups(append(u.Groups, g0)).ToIDs())
 	require.NoError(t, err)
 	t.Logf("##### nb job in queue : %d\n", len(jobs))
 	require.True(t, len(jobs) > 0)
@@ -686,7 +686,7 @@ queueRun:
 
 	filter = workflow.NewQueueFilter()
 	filter.Rights = sdk.PermissionReadExecute
-	jobs20, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+	jobs20, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(jobs20))
 
@@ -704,7 +704,7 @@ queueRun:
 		filter.Rights = sdk.PermissionReadExecute
 		filter.Since = &t0
 		filter.Until = &t1
-		jobsSince, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+		jobsSince, err := workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
 		require.NoError(t, err)
 		for _, job := range jobsSince {
 			if jobs20[0].ID == job.ID {
@@ -715,7 +715,7 @@ queueRun:
 		filter = workflow.NewQueueFilter()
 		filter.Rights = sdk.PermissionReadExecute
 		filter.Since = &t0
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
 		require.NoError(t, err)
 		var found bool
 		for _, job := range jobsSince {
@@ -733,7 +733,7 @@ queueRun:
 		filter.Rights = sdk.PermissionReadExecute
 		filter.Since = &t0
 		filter.Until = &t1
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
 		require.NoError(t, err)
 		for _, job := range jobsSince {
 			if jobs20[0].ID == job.ID {
@@ -748,7 +748,7 @@ queueRun:
 		filter = workflow.NewQueueFilter()
 		filter.Rights = sdk.PermissionReadExecute
 		filter.RatioService = &cent
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
 		require.NoError(t, err)
 		for _, job := range jobsSince {
 			if !job.ContainsService {
@@ -763,7 +763,7 @@ queueRun:
 		filter = workflow.NewQueueFilter()
 		filter.Rights = sdk.PermissionReadExecute
 		filter.RatioService = &zero
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
 		require.NoError(t, err)
 		for _, job := range jobsSince {
 			if job.ContainsService {
@@ -777,7 +777,7 @@ queueRun:
 		filter = workflow.NewQueueFilter()
 		filter.Rights = sdk.PermissionReadExecute
 		filter.ModelType = []string{sdk.Openstack}
-		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
+		jobsSince, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, db, cache, filter, sdk.Groups(append(u.Groups, proj.ProjectGroups[0].Group, g0, g1)).ToIDs())
 		require.NoError(t, err)
 		// we don't want the job with the worker model "TestManualRun"
 		for _, job := range jobsSince {

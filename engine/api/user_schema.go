@@ -8,6 +8,7 @@ import (
 	"reflect"
 
 	"github.com/alecthomas/jsonschema"
+	"github.com/iancoleman/orderedmap"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/group"
@@ -61,11 +62,11 @@ func (api *API) getUserJSONSchema() service.Handler {
 					path = fmt.Sprintf("%s/%s", as[i].Group.Name, as[i].Name)
 				}
 				s := slug.Convert(path)
-				sch.Definitions["Step"].Properties[path] = &jsonschema.Type{
+				sch.Definitions["Step"].Properties.Set(path, &jsonschema.Type{
 					Version:     "http://json-schema.org/draft-04/schema#",
 					Ref:         "#/definitions/" + s,
 					Description: as[i].Description,
-				}
+				})
 				sch.Definitions["Step"].OneOf = append(sch.Definitions["Step"].OneOf, &jsonschema.Type{
 					Required: []string{
 						path,
@@ -74,7 +75,7 @@ func (api *API) getUserJSONSchema() service.Handler {
 				})
 
 				sch.Definitions[s] = &jsonschema.Type{
-					Properties:           map[string]*jsonschema.Type{},
+					Properties:           orderedmap.New(),
 					AdditionalProperties: sch.Definitions["Step"].AdditionalProperties,
 					Type:                 "object",
 				}
@@ -82,17 +83,17 @@ func (api *API) getUserJSONSchema() service.Handler {
 					p := as[i].Parameters[j]
 					switch p.Type {
 					case "number":
-						sch.Definitions[s].Properties[p.Name] = &jsonschema.Type{
+						sch.Definitions[s].Properties.Set(p.Name, &jsonschema.Type{
 							Type: "integer",
-						}
+						})
 					case "boolean":
-						sch.Definitions[s].Properties[p.Name] = &jsonschema.Type{
+						sch.Definitions[s].Properties.Set(p.Name, &jsonschema.Type{
 							Type: "boolean",
-						}
+						})
 					default:
-						sch.Definitions[s].Properties[p.Name] = &jsonschema.Type{
+						sch.Definitions[s].Properties.Set(p.Name, &jsonschema.Type{
 							Type: "string",
-						}
+						})
 					}
 				}
 			}

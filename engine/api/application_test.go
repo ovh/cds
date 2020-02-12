@@ -35,10 +35,10 @@ func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey)
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
 
 	//Insert Application

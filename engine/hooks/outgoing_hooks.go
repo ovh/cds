@@ -213,6 +213,8 @@ func (s *Service) doOutgoingWorkflowExecution(ctx context.Context, t *sdk.TaskEx
 			} else {
 				log.Error(ctx, "Hooks> doOutgoingWorkflowExecution> Cannot unmarshall payload %s", err)
 			}
+
+			payloadValues["payload"] = string(payloadstr)
 		}
 	}
 

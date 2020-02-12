@@ -204,7 +204,7 @@ func TestLoadByWorkerModel(t *testing.T) {
 	projectKey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, projectKey, projectKey)
 
-	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   g2.ID,
 		ProjectID: proj.ID,
 		Role:      sdk.PermissionReadWriteExecute,

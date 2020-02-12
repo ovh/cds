@@ -55,12 +55,12 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
-	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
+	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -263,7 +263,7 @@ func testGetWorkflowJobAsHatchery(t *testing.T, api *API, router *Router, ctx *t
 }
 
 func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
-	g, err := group.LoadByID(context.TODO(), api.mustDB(), ctx.user.OldUserStruct.Groups[0].ID)
+	g, err := group.LoadByID(context.TODO(), api.mustDB(), ctx.user.Groups[0].ID)
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -274,7 +274,7 @@ func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWork
 }
 
 func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
-	h, _, _, jwt := assets.InsertHatchery(t, api.mustDB(), ctx.user.OldUserStruct.Groups[0])
+	h, _, _, jwt := assets.InsertHatchery(t, api.mustDB(), ctx.user.Groups[0])
 	ctx.hatchery = h
 	ctx.hatcheryToken = jwt
 }
@@ -826,12 +826,12 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// add group
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
-	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
+	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	// Create pipeline
 	pip := &sdk.Pipeline{
@@ -966,12 +966,12 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// add group
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
-	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
+	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	// Add repo manager
 	proj.VCSServers = make([]sdk.ProjectVCSServer, 0, 1)

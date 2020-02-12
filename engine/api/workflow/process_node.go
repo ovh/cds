@@ -288,11 +288,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		if nr.VCSTag != "" {
 			wr.Tag(tagGitTag, nr.VCSTag)
 		}
-		if len(nr.VCSHash) >= 7 {
-			wr.Tag(tagGitHash, nr.VCSHash[:7])
-		} else {
-			wr.Tag(tagGitHash, nr.VCSHash)
-		}
+		wr.Tag(tagGitHash, nr.VCSHash)
 		wr.Tag(tagGitAuthor, vcsInf.Author)
 	}
 
@@ -508,8 +504,8 @@ func computeBuildParameters(wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, paren
 		Value: run.WorkflowNodeName,
 	})
 
-	// ADD PAYLOAD as STRING
-	if run.Payload != nil {
+	// ADD PAYLOAD as STRING only for manual run
+	if run.Payload != nil && run.Manual != nil {
 		payloadStr, err := json.Marshal(run.Payload)
 		if err != nil {
 			return nil, sdk.WrapError(err, "unable to marshal payload")

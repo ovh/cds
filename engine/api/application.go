@@ -44,19 +44,19 @@ func (api *API) getApplicationsHandler() service.Handler {
 		var requestedUser *sdk.AuthentifiedUser
 		if requestedUserName != "" && isMaintainer(ctx) {
 			var err error
-			requestedUser, err = user.LoadByUsername(ctx, api.mustDB(), requestedUserName, user.LoadOptions.WithDeprecatedUser)
+			requestedUser, err = user.LoadByUsername(ctx, api.mustDB(), requestedUserName)
 			if err != nil {
 				if sdk.Cause(err) == sql.ErrNoRows {
-					return sdk.ErrUserNotFound
+					return sdk.WithStack(sdk.ErrUserNotFound)
 				}
 				return err
 			}
 
-			groups, err := group.LoadAllByDeprecatedUserID(context.TODO(), api.mustDB(), requestedUser.OldUserStruct.ID)
+			groups, err := group.LoadAllByUserID(context.TODO(), api.mustDB(), requestedUser.ID)
 			if err != nil {
 				return sdk.WrapError(err, "unable to load user '%s' groups", requestedUserName)
 			}
-			requestedUser.OldUserStruct.Groups = groups
+			requestedUser.Groups = groups
 
 			projPerms, err := permission.LoadProjectMaxLevelPermission(ctx, api.mustDB(), []string{projectKey}, requestedUser.GetGroupIDs())
 			if err != nil {
@@ -271,10 +271,6 @@ func (api *API) addApplicationHandler() service.Handler {
 
 		if err := application.Insert(tx, api.Cache, proj, &app); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
-		}
-
-		if err := group.LoadGroupByProject(tx, proj); err != nil {
-			return sdk.WrapError(err, "Cannot load group from project")
 		}
 
 		if err := tx.Commit(); err != nil {

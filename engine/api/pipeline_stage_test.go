@@ -19,7 +19,7 @@ import (
 func deleteAll(t *testing.T, api *API, key string) error {
 	// Delete all apps
 	t.Logf("start deleted : %s", key)
-	proj, errl := project.Load(api.mustDB(), api.Cache, key, nil)
+	proj, errl := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithGroups)
 	if errl != nil {
 		return errl
 	}
@@ -49,10 +49,6 @@ func deleteAll(t *testing.T, api *API, key string) error {
 			t.Logf("DeletePipeline: %s", err)
 			return err
 		}
-	}
-
-	if err := group.LoadGroupByProject(api.mustDB(), proj); err != nil {
-		return err
 	}
 
 	for _, g := range proj.ProjectGroups {

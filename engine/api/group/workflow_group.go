@@ -71,6 +71,9 @@ func LoadRoleGroupInWorkflowNode(db gorp.SqlExecutor, nodeID, groupID int64) (in
 func AddWorkflowGroup(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
 	link, err := LoadLinkGroupProjectForGroupIDAndProjectID(ctx, db, gp.Group.ID, w.ProjectID)
 	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return sdk.WithStack(sdk.ErrGroupNotFoundInProject)
+		}
 		return sdk.WrapError(err, "cannot load role for group %d in project %d", gp.Group.ID, w.ProjectID)
 	}
 	if link.Role == sdk.PermissionReadWriteExecute && gp.Permission < link.Role {
@@ -173,7 +176,7 @@ func DeleteWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, groupID int64, in
 		return err
 	}
 	if !ok {
-		return sdk.ErrLastGroupWithWriteRole
+		return sdk.WithStack(sdk.ErrLastGroupWithWriteRole)
 	}
 	w.Groups = append(w.Groups[:index], w.Groups[index+1:]...)
 	return nil

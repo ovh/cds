@@ -1,6 +1,7 @@
 <div class="asCodeEvents">
     <p>
-        {{ 'pipeline_from_repository' | translate: {repo: repo} }}
+        <span *ngIf="repo">{{ 'pipeline_from_repository' | translate: {repo: repo} }}</span>
+        <span *ngIf="!repo">{{ 'workflow_from_repository_pending' | translate }}</span>
     </p>
     <ul>
         <li *ngFor="let e of events">
@@ -19,5 +20,6 @@
             </ul>
         </li>
     </ul>
-    <button class="ui right floated mini green button" (click)="resyncEvents()">{{'btn_resync_repo' | translate }}</button>
+    <button class="ui right floated mini green button" [disabled]="loadingPopupButton"
+            [class.loading]="loadingPopupButton" (click)="resyncEvents()">{{'btn_resync_repo' | translate }}</button>
 </div>

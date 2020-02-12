@@ -31,11 +31,11 @@ See Configuration template for more details
 
 ## Supported Platforms
 
-- FreeBSD i386/amd64/arm/arm64
-- Linux i386/amd64/arm(Raspberry Pi)/arm64
-- Windows/amd64
-- Darwin i386/amd64
+- Darwin i386 / amd64
+- FreeBSD amd64
+- Linux i386 / amd64 / arm(Raspberry Pi) / arm64 / ppc64le (Power 8 & 9)
 - OpenBSD amd64
 - Solaris amd64
+- Windows amd64
 
-You'll find binaries for Linux amd64/arm, Windows amd64, Darwin amd64 and FreeBSD amd64 on [CDS Releases](https://github.com/ovh/cds/releases/latest)
+You'll find binaries on [CDS Releases](https://github.com/ovh/cds/releases/latest)

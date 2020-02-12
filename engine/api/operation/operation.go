@@ -46,11 +46,10 @@ func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 				Update:     isUpdate,
 			},
 		},
-		User: sdk.User{
-			Username: u.GetUsername(),
-			Email:    u.GetEmail(),
-		},
 	}
+	ope.User.Email = u.GetEmail()
+	ope.User.Username = u.GetFullname()
+	ope.User.Username = u.GetUsername()
 
 	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 	if vcsServer == nil {

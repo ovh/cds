@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/blang/semver"
@@ -15,7 +16,7 @@ import (
 )
 
 // MinCompatibleRelease represent the minimum release which is working with these migrations, need to update when we delete migration in our codebase
-const MinCompatibleRelease = "0.41.0"
+const MinCompatibleRelease = "0.44.0"
 
 var migrations = []sdk.Migration{}
 
@@ -39,9 +40,19 @@ func Add(ctx context.Context, migration sdk.Migration) {
 
 // Run run all local migrations
 func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.WriteCloser, error)) {
+	var wg = new(sync.WaitGroup)
 	for _, migration := range migrations {
 		func(currentMigration sdk.Migration) {
+			if currentMigration.Blocker {
+				wg.Add(1)
+			}
+
 			sdk.GoRoutine(ctx, "migrate_"+currentMigration.Name, func(contex context.Context) {
+				defer func() {
+					if currentMigration.Blocker {
+						wg.Done()
+					}
+				}()
 				mig, errMig := GetByName(db, currentMigration.Name)
 				if errMig != nil {
 					log.Error(ctx, "Cannot get migration %s : %v", currentMigration.Name, errMig)
@@ -89,6 +100,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 			}, panicDump)
 		}(migration)
 	}
+	wg.Wait()
 }
 
 // CleanMigrationsList Delete all elements in local migrations

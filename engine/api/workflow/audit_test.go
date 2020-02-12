@@ -7,10 +7,10 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 )
 
-func Test_purgeAudits(t *testing.T) {
+func Test_PurgeAudits(t *testing.T) {
 	db, _, end := test.SetupPG(t)
 	defer end()
 
-	err := purgeAudits(context.TODO(), db)
+	err := PurgeAudits(context.TODO(), db)
 	test.NoError(t, err)
 }

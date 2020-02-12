@@ -14,7 +14,7 @@ development environment.
 * Golang
 * CDS
 
-if you are familiar with these different tools, you probably will not need to read this page :-)
+If you are familiar with these different tools, you probably will not need to read this page :-)
 
 ## PostgreSQL
 
@@ -82,23 +82,23 @@ $ tar xzf node-v12.4.0-darwin-x64.tar.gz
 
 ## Golang
 
-Download the latest Golang version from https://golang.org/dl/, version >= 1.12
+Download the latest Golang version from https://golang.org/dl/, version >= 1.13
 
-Example with version 1.12 on macOS:
+Example with version 1.13 on macOS:
 
 ```bash
 $ export GOROOT=~/go
 $ export PATH=$PATH:$GOROOT/bin
 $ cd ~
-$ curl -O https://dl.google.com/go/go1.12.darwin-amd64.tar.gz
-$ tar xzf go1.12.darwin-amd64.tar.gz
+$ curl -O https://dl.google.com/go/go1.13.darwin-amd64.tar.gz
+$ tar xzf go1.13.darwin-amd64.tar.gz
 ```
 
 Check if Go installation is ok
 
 ```bash
 $ go version
-go version go1.12 darwin/amd64
+go version go1.13 darwin/amd64
 ```
 
 ## CDS
@@ -111,26 +111,20 @@ $ mkdir -p $(go env GOPATH)/src/github.com/ovh
 $ cd $(go env GOPATH)/src/github.com/ovh
 $ git clone https://github.com/ovh/cds.git
 
-# Compile engine
-$ cd $(go env GOPATH)/src/github.com/ovh/cds/engine
-$ go install
+# Compile everything
+$ cd $(go env GOPATH)/src/github.com/ovh/cds
+$ make clean # useful if you had already compile CDS before
+$ make build
 
-# Compile worker
-$ cd $(go env GOPATH)/src/github.com/ovh/cds/engine/worker
-$ go install
-
-# Compile cdsctl
-$ cd $(go env GOPATH)/src/github.com/ovh/cds/cli/cdsctl
-$ go install
-
-# Compile ui
-$ cd $(go env GOPATH)/src/github.com/ovh/cds/ui
-$ npm install
+# if you want to build only one OS/ARCH, you can do for linux/amd64:
+$ make build OS="linux" ARCH="amd64"
 ```
+
+All binaries are stored in the `dist/` directory
 
 Configure CDS:
 
-```
+```bash
 # Generate default configuration file
 $ engine config new > ~/.cds/dev.toml
 
@@ -173,6 +167,8 @@ $ npm start
 Register first user with cdsctl:
 
 ```bash
+# INIT_TOKEN is used to create the first user as an administrator of CDS.
+export INIT_TOKEN=`./engine config init-token --config ~/.cds/dev.toml`
 $ cdsctl signup -H http://localhost:8081 --email your-username@localhost.local --fullname yourFullname --username your-username
 # Check CDS API logs to get the validation code
 ```
@@ -195,7 +191,7 @@ If you want to launch vcs & hooks µServices, you have to:
 
 - set name in sections `[vcs]` and `[hooks]`
 - uncomment API URL in sections `[vcs.api.http]` and `[hooks.api.http]`
-- for vcs uService, please read tutorial on [GitHub]({{< relref "/docs/integrations/github.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab.md" >}}).
+- for vcs uService, please read tutorial on [GitHub]({{< relref "/docs/integrations/github/_index.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab/_index.md" >}}).
 
 Of course, you have to do the same thing with other µServices `repositories`, `elasticsearch`, `hatchery.swarm`, etc...
 

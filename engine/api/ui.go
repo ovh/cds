@@ -19,16 +19,10 @@ import (
 func (api *API) getNavbarHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		consumer := getAPIConsumer(ctx)
-		var data []sdk.NavbarProjectData
-		var err error
-		if isMaintainer(ctx) {
-			data, err = navbar.LoadNavbarAsAdmin(api.mustDB(), consumer.GetDEPRECATEDUserStruct().ID)
-		} else {
-			data, err = navbar.LoadNavbarAsUser(api.mustDB(), consumer.GetDEPRECATEDUserStruct().ID, consumer.GetGroupIDs())
-		}
+		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, *consumer.AuthentifiedUser)
 		if err != nil {
 			return err
-    }
+		}
 		return service.WriteJSON(w, data, http.StatusOK)
 	}
 }

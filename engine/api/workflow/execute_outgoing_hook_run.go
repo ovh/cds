@@ -81,7 +81,7 @@ loop:
 }
 
 // UpdateParentWorkflowRun updates the workflow which triggered the current workflow
-func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, wr *sdk.WorkflowRun, parentProj *sdk.Project, parentWR *sdk.WorkflowRun) error {
+func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, wr *sdk.WorkflowRun, parentProj *sdk.Project, parentWR *sdk.WorkflowRun) (*ProcessorReport, error) {
 	_, end := observability.Span(ctx, "workflow.UpdateParentWorkflowRun")
 	defer end()
 
@@ -89,23 +89,23 @@ func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 	// and the outgoing hook callback
 
 	if !sdk.StatusIsTerminated(wr.Status) {
-		return nil
+		return nil, nil
 	}
 
 	if !wr.HasParentWorkflow() {
-		return nil
+		return nil, nil
 	}
 
 	tx, err := dbFunc().Begin()
 	if err != nil {
-		return sdk.WrapError(err, "Unable to start transaction")
+		return nil, sdk.WrapError(err, "Unable to start transaction")
 	}
 
 	defer tx.Rollback() //nolint
 
 	hookrun := parentWR.GetOutgoingHookRun(wr.RootRun().HookEvent.ParentWorkflow.HookRunID)
 	if hookrun == nil {
-		return sdk.WrapError(sdk.ErrNotFound, "unable to find hookrun")
+		return nil, sdk.WrapError(sdk.ErrNotFound, "unable to find hookrun")
 	}
 
 	if hookrun.Callback == nil {
@@ -125,14 +125,12 @@ func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 			parentWR.Workflow.Name,
 			wr.RootRun().HookEvent.ParentWorkflow.Run,
 			err)
-		return sdk.WrapError(err, "Unable to update outgoing hook run status")
+		return nil, sdk.WrapError(err, "Unable to update outgoing hook run status")
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "Unable to commit transaction")
+		return nil, sdk.WrapError(err, "Unable to commit transaction")
 	}
 
-	go SendEvent(context.Background(), dbFunc(), parentProj.Key, report)
-
-	return nil
+	return report, nil
 }

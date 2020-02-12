@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode/sync"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -34,7 +35,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		}
 
 		if ope.URL == "" {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		if ope.LoadFiles.Pattern == "" {
@@ -42,7 +43,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		}
 
 		if ope.LoadFiles.Pattern != workflow.WorkflowAsCodePattern {
-			return sdk.ErrWrongRequest
+			return sdk.WithStack(sdk.ErrWrongRequest)
 		}
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithFeatures, project.LoadOptions.WithClearKeys)
@@ -127,7 +128,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		}
 
 		if ope.Status != sdk.OperationStatusDone {
-			return sdk.ErrMethodNotAllowed
+			return sdk.WithStack(sdk.ErrMethodNotAllowed)
 		}
 
 		tr, err := workflow.ReadCDSFiles(ope.LoadFiles.Results)
@@ -147,7 +148,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			IsDefaultBranch:    ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
 		}
 
-		allMsg, wrkflw, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, tr, opt, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
+		allMsg, wrkflw, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, tr, opt, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to push workflow")
 		}
@@ -169,6 +170,8 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wrkflw.ID))
 			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
 		}
+
+		event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
@@ -196,12 +199,18 @@ func (api *API) postResyncPRAsCodeHandler() service.Handler {
 			if err != nil {
 				return err
 			}
+			if len(apps) == 0 {
+				return sdk.WrapError(sdk.ErrApplicationNotFound, "unable to load application as code key:%s fromRepo:%s", key, fromRepo)
+			}
 			app = &apps[0]
 		} else {
 			var err error
 			app, err = application.LoadByName(api.mustDB(), api.Cache, key, appName)
 			if err != nil {
 				return err
+			}
+			if app == nil {
+				return sdk.WrapError(sdk.ErrApplicationNotFound, "unable to load application %s", appName)
 			}
 		}
 

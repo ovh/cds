@@ -26,43 +26,49 @@ Docker compose is very convenient to launch CDS for testing it. But this is not 
 ## How to run
 
 ```bash
-$ mkdir /tmp/cdstest && cd /tmp/cdstest
+$ mkdir /tmp/cdstest && cd /tmp/cdstest && mkdir -p tools/smtpmock
 $ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml
 $ export HOSTNAME=$(hostname)
 
 # Get the latest version
 $ docker pull ovhcom/cds-engine:latest
 
-# Create PG database and cache
+# Create PostgreSQL database, redis and elasticsearch
 $ docker-compose up --no-recreate -d cds-db cds-cache elasticsearch
-
-# check if DB is up
-# check if last log is "LOG: database system is ready to accept connections"
-$ docker-compose logs
+ 
+# check if database is up, the logs must contain "LOG: database system is ready to accept connections"
+$ docker-compose logs| grep 'database system is ready to accept connections'
+# you should have this line after few seconds: cds-db_1 | LOG:  database system is ready to accept connections
 
 $ docker-compose up --no-recreate cds-migrate
-# You should have this log: "cds_cds-migrate_1 exited with code 0"
+# You should have this log: "cdstest_cds-migrate_1 exited with code 0"
 
 # prepare initial configuration.
 $ docker-compose up cds-prepare
 
-# the INIT_TOKEN variable will be used by cdsctl to create first admin user
-$ export INIT_TOKEN="THE_VERY_LONG_TOKEN_HERE"
+# disable the smtp server
+$ export CDS_EDIT_CONFIG="api.smtp.disable=true"
+$ docker-compose up cds-edit-config
 
-# run API, UI and hooks µservice
+# run API
 $ docker-compose up -d cds-api
 
+# the INIT_TOKEN variable will be used by cdsctl to create first admin user
+$ TOKEN_CMD=$(docker logs cdstest_cds-prepare_1|grep TOKEN) && $TOKEN_CMD
+# if you have this error:  "command too long: export INIT_TOKEN=....",
+# you can manually execute the command "export INIT_TOKEN=...."
+
 # create user
-$ curl http://localhost:8081/download/cdsctl/linux/amd64\?variant=nokeychain -o cdsctl
+$ curl 'http://localhost:8081/download/cdsctl/linux/amd64?variant=nokeychain' -o cdsctl
+# on OSX: $ curl 'http://localhost:8081/download/cdsctl/darwin/amd64?variant=nokeychain' -o cdsctl
 $ chmod +x cdsctl
 $ ./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
 # enter a strong password
 
 # verify the user
-$ docker-compose logs cds-api|grep 'cdsctl signup verify'
-
-# run the command find in the output logs
-$ ./cdsctl signup verify --api-url http://localhost:8081 very-very-long-token-here
+$ VERIFY_CMD=$(docker-compose logs cds-api|grep 'cdsctl signup verify'|cut -d '$' -f2|xargs) && ./$VERIFY_CMD
+# if you have this error:  "such file or directory: ./cdsctl signup verify --api-url...", 
+# you can manually execute the command "./cdsctl signup verify --api-url..."
 
 # run cdsctl 
 $ ./cdsctl user me
@@ -79,7 +85,7 @@ $ ./cdsctl user me
 $ docker-compose up -d cds-ui cds-hooks cds-hatchery-local cds-elasticsearch
 ```
 
-- Create the first user with WebUI
+- Login on WebUI
 
 Open a browser on http://localhost:8080/account/signup, then login with the user `admin`,
 
@@ -166,7 +172,8 @@ Otherwise, please update environment variable `DOCKER_HOST: tcp://${HOSTNAME}:23
 
 ```bash
 $ export HOSTNAME=$(hostname)
-$ # For osX user run this container. This will allow hatchery:swarm to communicate with your docker daemon
+$ # bobrik/socat let a simple communication with docker engine from a container. 
+$ # You have to update the key hatchery.swarm.dockerEngines.xxxxx.host if you don't want to use it
 $ docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 2375:2375 bobrik/socat TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
 $ docker-compose up -d cds-hatchery-swarm
 ```
@@ -209,5 +216,5 @@ $ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/master/contri
 ## Go further
 
 - How to use OpenStack infrastructure to spawn CDS Workers [read more]({{< relref "/docs/integrations/openstack/openstack_compute.md" >}})
-- Link CDS to a repository manager, as [GitHub]({{< relref "/docs/integrations/github.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab.md" >}})
+- Link CDS to a repository manager, as [GitHub]({{< relref "/docs/integrations/github/_index.md" >}}), [Bitbucket Server]({{< relref "/docs/integrations/bitbucket.md" >}}) or [GitLab]({{< relref "/docs/integrations/gitlab/_index.md" >}})
 - Learn more about CDS variables [read more]({{< relref "/docs/concepts/variables.md" >}})

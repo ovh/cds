@@ -1,0 +1,13 @@
+name: Worker Command TestSuite
+version: "2"
+testcases:
+- name: prepare test
+  steps:
+  - script: {{.engine.ctl}} config new api > c.toml
+  - script: {{.engine.ctl}} config edit c.toml api.directories.download=./workersDownloaded --output conf.toml
+  - script: {{.engine.ctl}} download workers --config conf.toml
+  - script: ls ./workersDownloaded|grep 'cds-worker'
+  - script: {{.engine.ctl}} download ui --config conf.toml
+  - script: ls ./ui_static_files/dist/FILES_UI
+  - script: {{.engine.ctl}} download sql --config conf.toml
+  - script: ls ./sql|grep '.sql'

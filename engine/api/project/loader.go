@@ -41,7 +41,7 @@ var LoadOptions = struct {
 	WithClearKeys                           LoadOptionFunc
 	WithIntegrations                        LoadOptionFunc
 	WithClearIntegrations                   LoadOptionFunc
-	WithFavorites                           func(uID int64) LoadOptionFunc
+	WithFavorites                           func(uID string) LoadOptionFunc
 	WithFeatures                            LoadOptionFunc
 	WithLabels                              LoadOptionFunc
 }{
@@ -251,8 +251,8 @@ func loadEnvironmentNames(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proj
 }
 
 func loadGroups(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
-	if err := group.LoadGroupByProject(db, proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
-		return sdk.WithStack(err)
+	if err := group.LoadGroupsIntoProject(db, proj); err != nil && sdk.Cause(err) != sql.ErrNoRows {
+		return err
 	}
 	return nil
 }
@@ -266,9 +266,9 @@ func loadLabels(db gorp.SqlExecutor, _ cache.Store, proj *sdk.Project) error {
 	return nil
 }
 
-func loadFavorites(uID int64) LoadOptionFunc {
+func loadFavorites(uID string) LoadOptionFunc {
 	return func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
-		count, err := db.SelectInt("SELECT COUNT(1) FROM project_favorite WHERE project_id = $1 AND user_id = $2", proj.ID, uID)
+		count, err := db.SelectInt("SELECT COUNT(1) FROM project_favorite WHERE project_id = $1 AND authentified_user_id = $2", proj.ID, uID)
 		if err != nil {
 			return sdk.WithStack(err)
 		}

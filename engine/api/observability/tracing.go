@@ -29,15 +29,6 @@ func Start(ctx context.Context, s service, w http.ResponseWriter, req *http.Requ
 	}
 
 	tags := []trace.Attribute{}
-	if opt.Worker != nil {
-		tags = append(tags, trace.StringAttribute("worker", opt.Worker.Name))
-	}
-	if opt.Hatchery != nil {
-		tags = append(tags, trace.StringAttribute("hatchery", opt.Hatchery.Name))
-	}
-	if opt.User != nil {
-		tags = append(tags, trace.StringAttribute("user", opt.User.Username))
-	}
 
 	var span *trace.Span
 	rootSpanContext, hasSpanContext := tracingutils.DefaultFormat.SpanContextFromRequest(req)
