@@ -75,6 +75,8 @@ func SessionCleaner(ctx context.Context, dbFunc func() *gorp.DbMap) {
 	db := dbFunc()
 	tick := time.NewTicker(10 * time.Second)
 	tickCorruped := time.NewTicker(12 * time.Hour)
+	defer tick.Stop()
+	defer tickCorruped.Stop()
 
 	for {
 		select {
@@ -95,6 +97,7 @@ func SessionCleaner(ctx context.Context, dbFunc func() *gorp.DbMap) {
 				log.Debug("SessionCleaner> expired session %s deleted", s.ID)
 			}
 		case <-tickCorruped.C:
+			// This part of the goroutine should be remove in a next release
 			sessions, err := UnsafeLoadCorruptedSessions(ctx, db)
 			if err != nil {
 				log.Error(ctx, "SessionCleaner> unable to load corrupted sessions %v", err)
