@@ -1,9 +1,5 @@
 package observability
 
-import (
-	"github.com/ovh/cds/sdk"
-)
-
 // Attributes recorded on the span for the requests.
 // Only trace exporters will need them.
 const (
@@ -34,8 +30,5 @@ type Options struct {
 	Init     bool
 	Name     string
 	Enable   bool
-	User     *sdk.User
-	Worker   *sdk.Worker
-	Hatchery *sdk.Service
 	SpanKind int
 }

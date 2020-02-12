@@ -8,7 +8,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 )
@@ -106,8 +105,6 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 			return sdk.WrapError(err, "unable to set deployment strategy %s", pfName)
 		}
 	}
-
-	event.PublishAddApplication(ctx, proj.Key, *app, u)
 
 	return nil
 }

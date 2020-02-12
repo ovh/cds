@@ -34,7 +34,7 @@ func TestMissingProjectPermissionWorkflowWarning(t *testing.T) {
 	g := sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	assert.NoError(t, group.Insert(db, &g))
+	assert.NoError(t, group.Insert(context.TODO(), db, &g))
 
 	// Project KEY to test Event
 	gp := sdk.GroupPermission{
@@ -62,7 +62,7 @@ func TestMissingProjectPermissionWorkflowWarning(t *testing.T) {
 	projUpdate, err := project.Load(db, cache, proj.Key, project.LoadOptions.WithPipelines)
 	assert.NoError(t, err)
 	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, projUpdate))
-	require.NoError(t, group.InsertLinkGroupProject(db, &group.LinkGroupProject{
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), db, &group.LinkGroupProject{
 		GroupID:   gp.Group.ID,
 		ProjectID: proj.ID,
 		Role:      sdk.PermissionReadWriteExecute,

@@ -357,10 +357,6 @@ func (c AuthConsumer) GetFullname() string {
 	return c.AuthentifiedUser.GetFullname()
 }
 
-func (c AuthConsumer) GetDEPRECATEDUserStruct() *User {
-	return c.AuthentifiedUser.OldUserStruct
-}
-
 // AuthSessions gives functions for auth session slice.
 type AuthSessions []AuthSession
 

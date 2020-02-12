@@ -51,7 +51,7 @@ func Test_getTimelineHandler(t *testing.T) {
 				WorkflowNames: []string{"workflow2"},
 			},
 		},
-	}, lambdaIngroupWithMuted.OldUserStruct.ID))
+	}, lambdaIngroupWithMuted.ID))
 
 	// This is a mock for the elastic service
 	mockElasticService, _ := assets.InsertService(t, db, "Test_getTimelineHandler", services.TypeElasticsearch)

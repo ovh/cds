@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v2"
 
-	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
@@ -87,7 +87,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		_, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, proj, payload, getAPIConsumer(ctx),
+		pip, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, proj, payload, getAPIConsumer(ctx),
 			pipeline.ImportOptions{Force: forceUpdate})
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
@@ -102,6 +102,8 @@ func (api *API) importPipelineHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
+
+		event.PublishPipelineAdd(ctx, proj.Key, *pip, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
@@ -121,10 +123,6 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		)
 		if errp != nil {
 			return sdk.WrapError(errp, "Unable to load project %s", key)
-		}
-
-		if err := group.LoadGroupByProject(api.mustDB(), proj); err != nil {
-			return sdk.WrapError(err, "Unable to load project permissions %s", key)
 		}
 
 		// Get body
@@ -147,7 +145,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 			_ = tx.Rollback()
 		}()
 
-		_, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, proj, payload, getAPIConsumer(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
+		pip, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, proj, payload, getAPIConsumer(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
 			return sdk.WrapError(sdk.NewError(sdk.ErrInvalidPipeline, globalError), "unable to parse and import pipeline")
@@ -156,6 +154,8 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
+
+		event.PublishPipelineAdd(ctx, proj.Key, *pip, getAPIConsumer(ctx))
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}

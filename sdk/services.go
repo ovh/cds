@@ -28,7 +28,7 @@ type Service struct {
 
 // Update service field from new data.
 func (s *Service) Update(data Service) {
-  s.Name = data.Name
+	s.Name = data.Name
 	s.HTTPURL = data.HTTPURL
 	s.Config = data.Config
 	s.PublicKey = data.PublicKey
@@ -70,6 +70,6 @@ type ExternalService struct {
 func (e ExternalService) ServiceConfig() ServiceConfig {
 	b, _ := json.Marshal(e)
 	var cfg ServiceConfig
-	json.Unmarshal(b, cfg) // nolint
+	json.Unmarshal(b, &cfg) // nolint
 	return cfg
 }

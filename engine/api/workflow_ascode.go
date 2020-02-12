@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/ascode/sync"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -104,7 +105,11 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 				Type:      ascode.AsCodeWorkflow,
 				FromRepo:  wk.FromRepository,
 			}
-			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, p, &app, ed, u)
+			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, p, &app, ed, u)
+			if asCodeEvent != nil {
+				event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, u)
+			}
+			event.PublishWorkflowUpdate(ctx, p.Key, wk, wk, u)
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, ope, http.StatusOK)
@@ -166,7 +171,10 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 			Name:      wf.Name,
 			Operation: ope,
 		}
-		ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, app, ed, u)
+		asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, app, ed, u)
+		if asCodeEvent != nil {
+			event.PublishAsCodeEvent(ctx, proj.Key, *asCodeEvent, u)
+		}
 	}, api.PanicDump())
 
 	return service.WriteJSON(w, ope, http.StatusOK)

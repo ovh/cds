@@ -2,12 +2,10 @@ package group
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // SharedInfraGroup is the group used to share infrastructure between projects
@@ -18,30 +16,19 @@ var (
 
 // CreateDefaultGroup creates a group 'public' where every user will be
 func CreateDefaultGroup(db *gorp.DbMap, groupName string) error {
-	query := `SELECT id FROM "group" where name = $1`
-	var id int64
-	if err := db.QueryRow(query, groupName).Scan(&id); err == sql.ErrNoRows {
-		log.Debug("CreateDefaultGroup> create %s group in DB", groupName)
-		query = `INSERT INTO "group" (name) VALUES ($1)`
-		if _, err := db.Exec(query, groupName); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// AddAdminInGlobalGroup insert into new admin into global group as group admin
-func AddAdminInGlobalGroup(db gorp.SqlExecutor, userID int64) error {
-	query := `SELECT id FROM "group" where name = $1`
-	var id int64
-	if err := db.QueryRow(query, sdk.SharedInfraGroupName).Scan(&id); err != nil {
+	if g, err := LoadByName(context.Background(), db, groupName); g != nil {
+		return nil
+	} else if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return err
 	}
 
-	query = `INSERT INTO group_user (group_id, user_id, group_admin) VALUES ($1, $2, true)`
-	if _, err := db.Exec(query, id, userID); err != nil {
+	var g = sdk.Group{
+		Name: groupName,
+	}
+	if err := Insert(context.Background(), db, &g); err != nil {
 		return err
 	}
+
 	return nil
 }
 
