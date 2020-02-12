@@ -2,12 +2,10 @@ package group
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // SharedInfraGroup is the group used to share infrastructure between projects
@@ -18,15 +16,19 @@ var (
 
 // CreateDefaultGroup creates a group 'public' where every user will be
 func CreateDefaultGroup(db *gorp.DbMap, groupName string) error {
-	query := `SELECT id FROM "group" where name = $1`
-	var id int64
-	if err := db.QueryRow(query, groupName).Scan(&id); err == sql.ErrNoRows {
-		log.Debug("CreateDefaultGroup> create %s group in DB", groupName)
-		query = `INSERT INTO "group" (name) VALUES ($1)`
-		if _, err := db.Exec(query, groupName); err != nil {
-			return err
-		}
+	if g, err := LoadByName(context.Background(), db, groupName); g != nil {
+		return nil
+	} else if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return err
 	}
+
+	var g = sdk.Group{
+		Name: groupName,
+	}
+	if err := Insert(context.Background(), db, &g); err != nil {
+		return err
+	}
+
 	return nil
 }
 

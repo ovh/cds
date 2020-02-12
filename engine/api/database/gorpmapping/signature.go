@@ -198,7 +198,7 @@ func dbSign(ctx context.Context, db gorp.SqlExecutor, i Canonicaller) error {
 		return sdk.WrapError(err, "primary key field not found in table: %s", table)
 	}
 
-	query := fmt.Sprintf("UPDATE %s SET sig = $2, signer = $3 WHERE %s = $1", table, key)
+	query := fmt.Sprintf(`UPDATE "%s" SET sig = $2, signer = $3 WHERE %s = $1`, table, key)
 	res, err := db.Exec(query, id, signature, signer)
 	if err != nil {
 		log.Error(ctx, "error executing query %s with parameters %s, %s: %v", query, table, key, err)

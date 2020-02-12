@@ -6,11 +6,11 @@ testcases:
   - script: '[ -f ./fixtures/ITSCWCS/check-secret.pip.yml ]'
   - script: '[ -f ./fixtures/ITSCWCS/ITSCWCS.yml ]'
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project delete ITPROJTESTGROUP --force
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWCS"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITPROJTESTGROUP"
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITSCWCS
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove --force ITCLIGRP_TEST
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group delete ITCLIGRP_TEST --force
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group delete ITCLIGRP_TEST_2 --force
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group delete ITPROJTESTGROUPGRP --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group delete itprojtestgroupgrp --force
 
 - name: group add
   steps:
@@ -50,7 +50,7 @@ testcases:
 
 - name: grant group on project and workflow
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project create ITPROJTESTGROUP ITPROJTESTGROUPGRP
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project create ITPROJTESTGROUP itprojtestgroupgrp
   - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITPROJTESTGROUP ./fixtures/ITSCWCS/*.yml --skip-update-files 
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group grant ITPROJTESTGROUP ITCLIGRP_TEST_2 7
   - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow export ITPROJTESTGROUP ITSCWCS --with-permissions

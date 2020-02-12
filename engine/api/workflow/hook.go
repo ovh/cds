@@ -100,7 +100,6 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	}
 
 	hookToUpdate := make(map[string]sdk.NodeHook)
-	var hookToUpdateUUIDs = []string{}
 	for i := range wf.WorkflowData.Node.Hooks {
 		h := &wf.WorkflowData.Node.Hooks[i]
 
@@ -158,7 +157,6 @@ func hookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 			return err
 		}
 		hookToUpdate[h.UUID] = *h
-		hookToUpdateUUIDs = append(hookToUpdateUUIDs, h.UUID)
 	}
 
 	if len(hookToUpdate) > 0 {

@@ -197,7 +197,7 @@ func (api *API) postGroupInProjectHandler() service.Handler {
 			ProjectID: proj.ID,
 			Role:      data.Permission,
 		}
-		if err := group.InsertLinkGroupProject(tx, &newLink); err != nil {
+		if err := group.InsertLinkGroupProject(ctx, tx, &newLink); err != nil {
 			return err
 		}
 
@@ -304,7 +304,7 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 		}
 
 		for i := range data {
-			if err := group.InsertLinkGroupProject(tx, &group.LinkGroupProject{
+			if err := group.InsertLinkGroupProject(ctx, tx, &group.LinkGroupProject{
 				GroupID:   data[i].Group.ID,
 				ProjectID: proj.ID,
 				Role:      data[i].Permission,

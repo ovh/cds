@@ -80,6 +80,18 @@ func FindAndRegisterViewLast(nameInput string, tags []tag.Key) (*view.View, erro
 	return newView, view.Register(newView)
 }
 
+// FindAndRegisterViewLastFloat64 begins collecting data for the given views
+func FindAndRegisterViewLastFloat64(nameInput string, tags []tag.Key) (*view.View, error) {
+	name := strings.ToLower(nameInput)
+	viewFind := view.Find(name)
+	if viewFind != nil {
+		return viewFind, nil
+	}
+	value := stats.Float64("cds/cds-api/"+name, name, stats.UnitDimensionless)
+	newView := NewViewLastFloat64(name, value, tags)
+	return newView, view.Register(newView)
+}
+
 // Record an int64 measure
 func Record(ctx context.Context, m stats.Measure, v int64) {
 	if m == nil {

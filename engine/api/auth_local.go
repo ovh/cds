@@ -305,7 +305,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			return err
 		}
 
-		if err := group.CheckUserInDefaultGroup(ctx, tx, newUser.OldUserStruct.ID); err != nil {
+		if err := group.CheckUserInDefaultGroup(ctx, tx, newUser.ID); err != nil {
 			return err
 		}
 

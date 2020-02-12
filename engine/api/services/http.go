@@ -99,16 +99,19 @@ func doMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Ser
 		for i := range srvs {
 			srv := &srvs[i]
 			res, _, code, err := doRequest(ctx, db, srv, method, path, body.Bytes(), mods...)
-			if err == nil {
-				if out != nil {
-					if err := json.Unmarshal(res, out); err != nil {
-						return code, sdk.WrapError(err, "Unable to marshal output")
-					}
-				}
-				return code, nil
+			if err != nil {
+				lastErr = err
+				lastCode = code
+				continue
 			}
-			lastErr = err
-			lastCode = code
+
+			if out != nil {
+				if err := json.Unmarshal(res, out); err != nil {
+					return code, sdk.WrapError(err, "Unable to marshal output")
+				}
+			}
+			return code, nil
+
 		}
 		if lastErr != nil || attempt > 5 {
 			break

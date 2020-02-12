@@ -11,26 +11,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// ComputeAudit Compute audit on workflow
-func ComputeAudit(ctx context.Context, DBFunc func() *gorp.DbMap) {
-	deleteTicker := time.NewTicker(15 * time.Minute)
-	defer deleteTicker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			if ctx.Err() != nil {
-				log.Error(ctx, "pipeline.ComputeAudit> Exiting: %v", ctx.Err())
-				return
-			}
-		case <-deleteTicker.C:
-			if err := purgeAudits(ctx, DBFunc()); err != nil {
-				log.Error(ctx, "pipeline.ComputeAudit> Purge error: %v", err)
-			}
-		}
-	}
-}
-
 //Audit constants
 const (
 	AuditAddJob         = "addJob"
@@ -134,7 +114,7 @@ func (p *PipelineAudit) PostInsert(s gorp.SqlExecutor) error {
 
 const keepAudits = 50
 
-func purgeAudits(ctx context.Context, db gorp.SqlExecutor) error {
+func PurgeAudits(ctx context.Context, db gorp.SqlExecutor) error {
 	var nbAuditsPerPipelinewID = []struct {
 		PipelineD int64 `db:"pipeline_id"`
 		NbAudits  int64 `db:"nb_audits"`

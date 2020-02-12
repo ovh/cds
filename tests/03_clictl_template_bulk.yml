@@ -11,8 +11,9 @@ testcases:
 - name: prepare test
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project delete --force ITCLIPRJBULK
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group delete --force TestGroup
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group delete --force testgroup
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project add ITCLIPRJBULK TestGroup
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group show testgroup
 
 - name: sendTemplateBulkRequest
   steps:

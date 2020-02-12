@@ -98,3 +98,13 @@ func InsertContact(ctx context.Context, db gorp.SqlExecutor, c *sdk.UserContact)
 	*c = dbc.UserContact
 	return nil
 }
+
+// UpdateContact in database.
+func UpdateContact(ctx context.Context, db gorp.SqlExecutor, c *sdk.UserContact) error {
+	dbc := userContact{UserContact: *c}
+	if err := gorpmapping.UpdateAndSign(ctx, db, &dbc); err != nil {
+		return err
+	}
+	*c = dbc.UserContact
+	return nil
+}

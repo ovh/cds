@@ -194,10 +194,10 @@ func Test_WorkerModelUsage(t *testing.T) {
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-	require.NoError(t, group.InsertLinkGroupUser(db, &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), db, &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
 
 	pip := sdk.Pipeline{
@@ -451,7 +451,7 @@ func Test_postWorkerModelAsAGroupAdmin(t *testing.T) {
 
 	//Create user
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -492,7 +492,7 @@ func Test_postWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 
 	//Create user
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -539,7 +539,7 @@ func Test_postWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, jwt)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	pattern := sdk.ModelPattern{
 		Name: "test",
@@ -599,11 +599,11 @@ func Test_postWorkerModelAsAWrongGroupMember(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	require.NoError(t, group.Insert(api.mustDB(), g1))
+	require.NoError(t, group.Insert(context.TODO(), api.mustDB(), g1))
 
 	//Create user
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -644,7 +644,7 @@ func Test_putWorkerModel(t *testing.T) {
 
 	//Create user
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -718,7 +718,7 @@ func Test_putWorkerModelWithPassword(t *testing.T) {
 
 	//Create user
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	model := sdk.Model{
 		Name:       "Test1",
@@ -826,7 +826,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 
 	//Create user
 	u, jwt := assets.InsertLambdaUser(t, api.mustDB(), g)
-	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.OldUserStruct.ID)
+	assets.SetUserGroupAdmin(t, api.mustDB(), g.ID, u.ID)
 
 	model := sdk.Model{
 		Name:       "Test1",

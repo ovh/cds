@@ -11,6 +11,7 @@ testcases:
 - name: prepare test
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project delete --force ITCLIPRJ
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group delete --force test-project
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project add ITCLIPRJ "Test Project"
 
 - name: apply example simple template

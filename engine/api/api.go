@@ -20,6 +20,7 @@ import (
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/audit"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/authentication/corpsso"
@@ -40,7 +41,6 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/secret"
@@ -490,16 +490,15 @@ func (a *API) Serve(ctx context.Context) error {
 
 	// DEPRECATED
 	// API Storage will be a public integration
-	var errStorage error
-	a.SharedStorage, errStorage = objectstore.Init(ctx, cfg)
-	if errStorage != nil {
-		return fmt.Errorf("cannot initialize storage: %v", errStorage)
+	var err error
+	a.SharedStorage, err = objectstore.Init(ctx, cfg)
+	if err != nil {
+		return fmt.Errorf("cannot initialize storage: %v", err)
 	}
 
 	log.Info(ctx, "Initializing database connection...")
 	//Intialize database
-	var errDB error
-	a.DBConnectionFactory, errDB = database.Init(
+	a.DBConnectionFactory, err = database.Init(
 		ctx,
 		a.Config.Database.User,
 		a.Config.Database.Role,
@@ -511,8 +510,8 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Database.ConnectTimeout,
 		a.Config.Database.Timeout,
 		a.Config.Database.MaxConn)
-	if errDB != nil {
-		return fmt.Errorf("cannot connect to database: %v", errDB)
+	if err != nil {
+		return fmt.Errorf("cannot connect to database: %v", err)
 	}
 
 	log.Info(ctx, "Setting up database keys...")
@@ -522,42 +521,14 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot setup database keys: %v", err)
 	}
 
-	log.Info(ctx, "Bootstrapping database...")
-	defaultValues := sdk.DefaultValues{
-		DefaultGroupName: a.Config.Auth.DefaultGroup,
-	}
-	if err := bootstrap.InitiliazeDB(ctx, defaultValues, a.DBConnectionFactory.GetDBMap); err != nil {
-		return fmt.Errorf("cannot setup databases: %v", err)
-	}
-
-	if err := workflow.CreateBuiltinWorkflowHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
-		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
-	}
-
-	if err := workflow.CreateBuiltinWorkflowOutgoingHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
-		return fmt.Errorf("cannot setup builtin workflow outgoing hook models: %v", err)
-	}
-
-	if err := integration.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap()); err != nil {
-		return fmt.Errorf("cannot setup integrations: %v", err)
-	}
-
-	pubKey, err := jws.ExportPublicKey(authentication.GetSigningKey())
-	if err != nil {
-		return sdk.WrapError(err, "Unable to export public signing key")
-	}
-
-	log.Info(ctx, "API Public Key: \n%s", string(pubKey))
-
 	log.Info(ctx, "Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
 	// Init the cache
-	var errCache error
-	a.Cache, errCache = cache.New(
+	a.Cache, err = cache.New(
 		a.Config.Cache.Redis.Host,
 		a.Config.Cache.Redis.Password,
 		a.Config.Cache.TTL)
-	if errCache != nil {
-		return fmt.Errorf("cannot connect to cache store: %v", errCache)
+	if err != nil {
+		return fmt.Errorf("cannot connect to cache store: %v", err)
 	}
 
 	log.Info(ctx, "Initializing HTTP router")
@@ -677,11 +648,11 @@ func (a *API) Serve(ctx context.Context) error {
 		event.Subscribe(chanEvent)
 		action.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap, chanEvent)
 	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "pipeline.ComputeAudit", func(ctx context.Context) {
-		pipeline.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+	sdk.GoRoutine(ctx, "audit.ComputePipelineAudit", func(ctx context.Context) {
+		audit.ComputePipelineAudit(ctx, a.DBConnectionFactory.GetDBMap)
 	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "workflow.ComputeAudit", func(ctx context.Context) {
-		workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+	sdk.GoRoutine(ctx, "audit.ComputeWorkflowAudit", func(ctx context.Context) {
+		audit.ComputeWorkflowAudit(ctx, a.DBConnectionFactory.GetDBMap)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "workflowtemplate.ComputeAudit", func(ctx context.Context) {
 		workflowtemplate.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
@@ -708,14 +679,8 @@ func (a *API) Serve(ctx context.Context) error {
 		authentication.SessionCleaner(ctx, a.mustDB)
 	}, a.PanicDump())
 
-	migrate.Add(ctx, sdk.Migration{Name: "AddDefaultVCSNotifications", Release: "0.41.0", Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.AddDefaultVCSNotifications(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
-	}})
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorAuthenticationUser", Release: "0.41.0", Automatic: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorAuthenticationUser(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache)
-	}})
-	migrate.Add(ctx, sdk.Migration{Name: "RefactorAuthenticationAuth", Release: "0.41.0", Automatic: false, ExecFunc: func(ctx context.Context) error {
-		return migrate.RefactorAuthenticationAuth(ctx, a.DBConnectionFactory.GetDBMap(), a.Cache, a.Config.URL.API, a.Config.URL.UI)
+	migrate.Add(ctx, sdk.Migration{Name: "RefactorGroupMembership", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.RefactorGroupMembership(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
@@ -744,6 +709,33 @@ func (a *API) Serve(ctx context.Context) error {
 		// Run all migrations in several goroutines
 		migrate.Run(ctx, a.mustDB(), a.PanicDump())
 	}
+
+	log.Info(ctx, "Bootstrapping database...")
+	defaultValues := sdk.DefaultValues{
+		DefaultGroupName: a.Config.Auth.DefaultGroup,
+	}
+	if err := bootstrap.InitiliazeDB(ctx, defaultValues, a.DBConnectionFactory.GetDBMap); err != nil {
+		return fmt.Errorf("cannot setup databases: %v", err)
+	}
+
+	if err := workflow.CreateBuiltinWorkflowHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
+	}
+
+	if err := workflow.CreateBuiltinWorkflowOutgoingHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+		return fmt.Errorf("cannot setup builtin workflow outgoing hook models: %v", err)
+	}
+
+	if err := integration.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+		return fmt.Errorf("cannot setup integrations: %v", err)
+	}
+
+	pubKey, err := jws.ExportPublicKey(authentication.GetSigningKey())
+	if err != nil {
+		return sdk.WrapError(err, "Unable to export public signing key")
+	}
+
+	log.Info(ctx, "API Public Key: \n%s", string(pubKey))
 
 	// Init Services
 	services.Initialize(ctx, a.DBConnectionFactory, a.PanicDump())

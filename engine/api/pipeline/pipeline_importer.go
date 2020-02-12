@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -196,10 +195,6 @@ func ImportUpdate(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, p
 
 	errU := UpdatePipeline(db, pip)
 
-	if oldPipeline.Name != pip.Name {
-		event.PublishPipelineUpdate(ctx, proj.Key, pip.Name, oldPipeline.Name, u)
-	}
-
 	return sdk.WrapError(errU, "ImportUpdate> cannot update pipeline")
 }
 
@@ -290,8 +285,6 @@ func importNew(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 			}
 		}
 	}
-
-	event.PublishPipelineAdd(ctx, proj.Key, *pip, u)
 
 	return nil
 }

@@ -44,7 +44,7 @@ func TestCreateModel(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, sdk.Docker, res.Type)
 	assert.Equal(t, pattern.Model.Cmd, res.ModelDocker.Cmd)
-	assert.Equal(t, u.Username, res.CreatedBy.Username)
+	assert.Equal(t, u.Username, res.Author.Username)
 }
 
 func TestUpdateModel(t *testing.T) {
@@ -104,7 +104,7 @@ func TestUpdateModel(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, sdk.Docker, res.Type)
-	assert.Equal(t, u.Username, res.CreatedBy.Username)
+	assert.Equal(t, u.Username, res.Author.Username)
 	assert.Equal(t, pattern.Model.Cmd, res.ModelDocker.Cmd)
 
 	resClear, err := workermodel.LoadByIDWithClearPassword(db, res.ID)
