@@ -52,6 +52,7 @@ const (
 	stepOrder
 	workDir
 	keysDir
+	LevelDebug Level = "DEBUG"
 	LevelInfo  Level = "INFO"
 	LevelWarn  Level = "WARN"
 	LevelError Level = "ERROR"
