@@ -68,7 +68,7 @@ func (api *API) postConsumerByUserHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &reqData); err != nil {
 			return err
 		}
-		if err := reqData.IsValid(api.Router.GetScopeDetails()); err != nil {
+		if err := reqData.IsValid(api.Router.scopeDetails); err != nil {
 			return err
 		}
 

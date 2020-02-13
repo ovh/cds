@@ -13,7 +13,7 @@
                                     [isDisabled]="true">
                                     <div title (click)="clickOpenStep(formStepName.INFORMATIONS)">
                                         <i class="dropdown icon"></i>
-                                        Informations
+                                        {{'common_informations' | translate}}
                                     </div>
                                     <div content>
                                         <div class="ui form">
@@ -42,8 +42,7 @@
                                     <div content>
                                         <div class="ui form" *ngIf="!newConsumer.id">
                                             <div class="ui message blue">
-                                                <p>Let groups selection empty to create consumer with wildcard access on
-                                                    groups.</p>
+                                                <p>{{'auth_consumer_create_modal_info_groups' | translate}}</p>
                                             </div>
                                             <div class="ui wide field">
                                                 <app-data-table [withFilter]="filterGroups"

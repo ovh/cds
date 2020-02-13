@@ -197,6 +197,7 @@ export class ScopeDetailComponent {
         for (let i = 0; i < routes.length; i++) {
             if (this.selectedRouteMethods[routes[i]].GET != null && !this.selectedRouteMethods[routes[i]].GET) {
                 allReadRoutesSelected = false;
+                break;
             }
         }
         this.allReadRoutesSelected = allReadRoutesSelected;
@@ -216,6 +217,9 @@ export class ScopeDetailComponent {
             if (this.selectedRouteMethods[routes[i]].DELETE != null && !this.selectedRouteMethods[routes[i]].DELETE) {
                 allWriteRoutesSelected = false;
             }
+            if (!allWriteRoutesSelected) {
+                break;
+            }
         }
         this.allWriteRoutesSelected = allWriteRoutesSelected;
     }
@@ -227,6 +231,7 @@ export class ScopeDetailComponent {
         for (let i = 0; i < routes.length; i++) {
             if (!this.selectedRouteMethods[routes[i]].ALL) {
                 allRoutesSelected = false;
+                break;
             }
         }
         this.allRoutesSelected = allRoutesSelected;

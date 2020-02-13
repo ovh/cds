@@ -37,8 +37,7 @@ func (api *API) getAuthDriversHandler() service.Handler {
 
 func (api *API) getAuthScopesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		res := api.Router.GetScopeDetails()
-		return service.WriteJSON(w, res, http.StatusOK)
+		return service.WriteJSON(w, api.Router.scopeDetails, http.StatusOK)
 	}
 }
 

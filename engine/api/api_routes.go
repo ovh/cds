@@ -435,5 +435,5 @@ func (api *API) InitRouter() {
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 
-	r.ComputeScopeDetails()
+	r.computeScopeDetails()
 }

@@ -184,13 +184,8 @@ func DefaultHeaders() map[string]string {
 	}
 }
 
-// ComputeScopeDetails iterate over declared handlers for routers and populate router scope details.
-func (r *Router) GetScopeDetails() []sdk.AuthConsumerScopeDetail {
-	return r.scopeDetails
-}
-
-// ComputeScopeDetails iterate over declared handlers for routers and populate router scope details.
-func (r *Router) ComputeScopeDetails() {
+// computeScopeDetails iterate over declared handlers for routers and populate router scope details.
+func (r *Router) computeScopeDetails() {
 	// create temporary map of scopes, for each scope we will create a map of routes with methods.
 	m := make(map[sdk.AuthConsumerScope]map[string]map[string]struct{})
 
@@ -231,7 +226,7 @@ func (r *Router) ComputeScopeDetails() {
 	// return scope details
 	details := make([]sdk.AuthConsumerScopeDetail, len(sdk.AuthConsumerScopes))
 	for i, scope := range sdk.AuthConsumerScopes {
-		var endpoints []sdk.AuthConsumerScopeEndpoint
+		endpoints := make([]sdk.AuthConsumerScopeEndpoint, 0, len(m[scope]))
 		for uri, mMethods := range m[scope] {
 			methods := make([]string, 0, len(mMethods))
 			for k := range mMethods {
@@ -243,10 +238,8 @@ func (r *Router) ComputeScopeDetails() {
 			})
 		}
 
-		details[i] = sdk.AuthConsumerScopeDetail{
-			Scope:     scope,
-			Endpoints: endpoints,
-		}
+		details[i].Scope = scope
+		details[i].Endpoints = endpoints
 	}
 
 	r.scopeDetails = details
