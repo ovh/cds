@@ -33,7 +33,6 @@ const (
 	TagPipeline           = "pipeline"
 	TagPipelineDeep       = "pipeline_deep"
 	TagWorker             = "worker"
-	TagToken              = "token"
 	TagPermission         = "permission"
 )
 
@@ -46,7 +45,7 @@ func LinkTo(ctx context.Context, traceID [16]byte) {
 
 	s.AddLink(
 		trace.Link{
-			TraceID: trace.TraceID(traceID),
+			TraceID: traceID,
 		},
 	)
 }

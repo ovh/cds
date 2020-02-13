@@ -94,17 +94,6 @@ func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int6
 	return getAll(ctx, db, query, opts...)
 }
 
-// LoadAllNotSharedInfra retrieves models not shared infra from database.
-func LoadAllNotSharedInfra(ctx context.Context, db gorp.SqlExecutor, opts ...LoadOptionFunc) ([]sdk.Model, error) {
-	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM worker_model
-    WHERE group_id != $1
-    ORDER BY name
-  `).Args(group.SharedInfraGroup.ID)
-	return getAll(ctx, db, query, opts...)
-}
-
 // LoadAllByNameAndGroupIDs retrieves all worker model with given name for group ids in database.
 func LoadAllByNameAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, name string, groupIDs []int64, opts ...LoadOptionFunc) ([]sdk.Model, error) {
 	query := gorpmapping.NewQuery(`
@@ -326,21 +315,6 @@ func UpdateDB(db gorp.SqlExecutor, model *sdk.Model) error {
 	*model = sdk.Model(dbmodel)
 	if model.ModelDocker.Password != "" {
 		model.ModelDocker.Password = sdk.PasswordPlaceholder
-	}
-	return nil
-}
-
-// UpdateWithoutRegistration update a worker model
-// if the worker model have SpawnErr -> clear them.
-func UpdateWithoutRegistration(db gorp.SqlExecutor, model sdk.Model) error {
-	model.UserLastModified = time.Now()
-	model.NeedRegistration = false
-	model.NbSpawnErr = 0
-	model.LastSpawnErr = ""
-	model.LastSpawnErrLogs = nil
-	dbmodel := WorkerModel(model)
-	if _, err := db.Update(&dbmodel); err != nil {
-		return sdk.WithStack(err)
 	}
 	return nil
 }

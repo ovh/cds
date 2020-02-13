@@ -103,11 +103,6 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 	wg.Wait()
 }
 
-// CleanMigrationsList Delete all elements in local migrations
-func CleanMigrationsList() {
-	migrations = []sdk.Migration{}
-}
-
 // Status returns monitoring status, if there are cds migration in progress it returns WARN
 func Status(db gorp.SqlExecutor) sdk.MonitoringStatusLine {
 	count, err := db.SelectInt("SELECT COUNT(id) FROM cds_migration WHERE status <> $1 AND status <> $2 AND status <> $3",

@@ -94,24 +94,26 @@ func doMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Ser
 	var lastErr error
 	var lastCode int
 	var attempt int
+
+	bodyToSend := body.Bytes()
 	for {
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			res, _, code, err := doRequest(ctx, db, srv, method, path, body.Bytes(), mods...)
+			res, _, code, err := doRequest(ctx, db, srv, method, path, bodyToSend, mods...)
 			if err != nil {
-				return code, sdk.WrapError(err, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
+				lastErr = err
+				lastCode = code
+				continue
 			}
+
 			if out != nil {
 				if err := json.Unmarshal(res, out); err != nil {
 					return code, sdk.WrapError(err, "Unable to marshal output")
 				}
 			}
-			if err == nil {
-				return code, nil
-			}
-			lastErr = err
-			lastCode = code
+			return code, nil
+
 		}
 		if lastErr != nil || attempt > 5 {
 			break

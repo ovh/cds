@@ -221,8 +221,11 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 
 	query := `INSERT INTO application_variable(application_id, var_name, var_value, cipher_value, var_type)
 		  VALUES($1, $2, $3, $4, $5) RETURNING id`
-	if err := db.QueryRow(query, app.ID, variable.Name, clear, cipher, string(variable.Type)).Scan(&variable.ID); err != nil && strings.Contains(err.Error(), "application_variable_pkey") {
+
+	err = db.QueryRow(query, app.ID, variable.Name, clear, cipher, variable.Type).Scan(&variable.ID)
+	if err != nil && strings.Contains(err.Error(), "application_variable_pkey") {
 		return sdk.WithStack(sdk.ErrVariableExists)
+
 	}
 	if err != nil {
 		return sdk.WrapError(err, "Cannot insert variable %s", variable.Name)
@@ -372,12 +375,10 @@ func LoadVariableAudits(db gorp.SqlExecutor, appID, varID int64) ([]sdk.Applicat
 	var res []dbApplicationVariableAudit
 	query := "SELECT * FROM application_variable_audit WHERE application_id = $1 AND variable_id = $2 ORDER BY versionned DESC"
 	if _, err := db.Select(&res, query, appID, varID); err != nil {
-		if err != nil && err != sql.ErrNoRows {
+		if err != sql.ErrNoRows {
 			return nil, err
 		}
-		if err != nil && err == sql.ErrNoRows {
-			return []sdk.ApplicationVariableAudit{}, nil
-		}
+		return []sdk.ApplicationVariableAudit{}, nil
 	}
 
 	avas := make([]sdk.ApplicationVariableAudit, len(res))

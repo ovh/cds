@@ -206,7 +206,7 @@ func updateSchedulerPayload(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 	// Add git.branch in scheduler payload
 	if wf.WorkflowData.Node.IsLinkedToRepo(wf) {
-		var payloadValues map[string]string
+		payloadValues := make(map[string]string)
 		if h.Config["payload"].Value != "" {
 			var bodyJSON interface{}
 			//Try to parse the body as an array

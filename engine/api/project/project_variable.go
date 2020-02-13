@@ -347,12 +347,10 @@ func LoadVariableAudits(db gorp.SqlExecutor, projectID, varID int64) ([]sdk.Proj
 	var res []dbProjectVariableAudit
 	query := "SELECT * FROM project_variable_audit WHERE project_id = $1 AND variable_id = $2 ORDER BY versionned DESC"
 	if _, err := db.Select(&res, query, projectID, varID); err != nil {
-		if err != nil && err != sql.ErrNoRows {
+		if err != sql.ErrNoRows {
 			return nil, err
 		}
-		if err != nil && err == sql.ErrNoRows {
-			return []sdk.ProjectVariableAudit{}, nil
-		}
+		return []sdk.ProjectVariableAudit{}, nil
 	}
 
 	pvas := make([]sdk.ProjectVariableAudit, len(res))

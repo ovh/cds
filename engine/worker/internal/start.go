@@ -155,7 +155,7 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 
 			// Unregister from engine
 			log.Info(ctx, "Job is done. Unregistering...")
-			defer endFunc()
+			endFunc()
 			return nil
 		}
 	}

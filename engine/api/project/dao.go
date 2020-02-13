@@ -221,17 +221,6 @@ func LoadProjectByNodeJobRunID(ctx context.Context, db gorp.SqlExecutor, store c
 	return load(ctx, db, store, opts, query, nodeJobRunID)
 }
 
-// LoadProjectByNodeRunID return a project from node run id
-func LoadProjectByNodeRunID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, nodeRunID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	query := `
-		SELECT project.* FROM project
-		JOIN workflow_run ON workflow_run.project_id = project.id
-		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = workflow_run.id
-		WHERE workflow_node_run.id = $1
-	`
-	return load(ctx, db, store, opts, query, nodeRunID)
-}
-
 // LoadByID returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
 func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	return load(context.TODO(), db, store, opts, "select project.* from project where id = $1", id)
@@ -249,15 +238,6 @@ func LoadProjectByWorkflowID(db gorp.SqlExecutor, store cache.Store, workflowID 
 	          JOIN workflow ON workflow.project_id = project.id
 	          WHERE workflow.id = $1 `
 	return load(context.TODO(), db, store, opts, query, workflowID)
-}
-
-// LoadByPipelineID loads an project from pipeline iD
-func LoadByPipelineID(db gorp.SqlExecutor, store cache.Store, groupIDs []int64, pipelineID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	query := `SELECT project.id, project.name, project.projectKey, project.last_modified
-	          FROM project
-	          JOIN pipeline ON pipeline.project_id = project.id
-	          WHERE pipeline.id = $1 `
-	return load(context.TODO(), db, store, opts, query, pipelineID)
 }
 
 func loadprojects(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {

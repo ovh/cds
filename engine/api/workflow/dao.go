@@ -367,31 +367,6 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	return res, nil
 }
 
-// LoadWorkflowIDsWithNotifications loads workflow id of workflow with notifications
-func LoadWorkflowIDsWithNotifications(db gorp.SqlExecutor) ([]int64, error) {
-	query := `
-    SELECT id from WORKFLOW
-    WHERE id IN (SELECT workflow_id FROM workflow_notification)`
-	var ids []int64
-	_, err := db.Select(&ids, query)
-	return ids, sdk.WrapError(err, "unable to select workflow with notification")
-}
-
-func LoadAndLock(ctx context.Context, db gorp.SqlExecutor, id int64, store cache.Store, proj *sdk.Project, opts LoadOptions) (*sdk.Workflow, error) {
-	query := `
-		select *
-		from workflow
-		where id = $1 FOR UPDATE SKIP LOCKED`
-	res, err := load(ctx, db, store, proj, opts, query, id)
-	if err != nil {
-		if err == sdk.ErrWorkflowNotFound {
-			err = sdk.ErrLocked
-		}
-		return nil, sdk.WithStack(err)
-	}
-	return res, nil
-}
-
 // LoadByID loads a workflow for a given user (ie. checking permissions)
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
 	query := `
@@ -529,27 +504,6 @@ func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, template
 			JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
 		WHERE workflow_template_instance.workflow_template_id = $1 AND workflow.to_delete = false`
 	args := []interface{}{templateID}
-	return loadByWorkflowTemplateID(ctx, db, query, args)
-}
-
-// LoadByWorkflowTemplateIDByGroups load all workflows linked to a workflow template but without loading workflow details against the groups provided
-func LoadByWorkflowTemplateIDByGroupIDs(ctx context.Context, db gorp.SqlExecutor, templateID int64, groupIDs []int64) (sdk.Workflows, error) {
-	query := `SELECT workflow.*
-				FROM workflow
-					JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
-					JOIN project ON workflow.project_id = project.id
-				WHERE workflow_template_instance.workflow_template_id = $1
-				AND workflow.to_delete = false
-				AND project.id IN (
-					SELECT project_group.project_id
-						FROM project_group
-					WHERE
-						project_group.group_id = ANY(string_to_array($2, ',')::int[])
-						OR
-						$3 = ANY(string_to_array($2, ',')::int[])
-				)`
-
-	args := []interface{}{templateID, gorpmapping.IDsToQueryString(groupIDs), group.SharedInfraGroup.ID}
 	return loadByWorkflowTemplateID(ctx, db, query, args)
 }
 

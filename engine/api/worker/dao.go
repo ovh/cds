@@ -15,10 +15,6 @@ func Insert(db gorp.SqlExecutor, w *sdk.Worker) error {
 	return gorpmapping.Insert(db, w)
 }
 
-func Update(db gorp.SqlExecutor, w *sdk.Worker) error {
-	return gorpmapping.Update(db, w)
-}
-
 // Delete remove worker from database, it also removes the associated access_token
 func Delete(db gorp.SqlExecutor, id string) error {
 	accessTokenID, err := db.SelectNullStr("SELECT auth_consumer_id FROM worker WHERE id = $1", id)

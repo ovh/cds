@@ -2,15 +2,9 @@ package bitbucketcloud
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ovh/cds/sdk"
-)
-
-// ErrNoNewEvents for no new events
-var (
-	ErrNoNewEvents = fmt.Errorf("No new events")
 )
 
 //GetEvents returns events from bitbucket cloud

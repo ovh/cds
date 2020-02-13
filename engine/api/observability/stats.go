@@ -21,12 +21,11 @@ var (
 )
 
 const (
-	Host           = "http.host"
-	StatusCode     = "http.status"
-	Path           = "http.path"
-	Method         = "http.method"
-	KeyServerRoute = "http_server_route"
-	Handler        = "http.handler"
+	Host       = "http.host"
+	StatusCode = "http.status"
+	Path       = "http.path"
+	Method     = "http.method"
+	Handler    = "http.handler"
 )
 
 type ExposedView struct {
