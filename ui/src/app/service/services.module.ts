@@ -56,8 +56,6 @@ import { TimelineService } from './timeline/timeline.service';
 import { TimelineStore } from './timeline/timeline.store';
 import { UserService } from './user/user.service';
 import { VariableService } from './variable/variable.service';
-import { WarningService } from './warning/warning.service';
-import { WarningStore } from './warning/warning.store';
 import { WorkerModelService } from './worker-model/worker-model.service';
 import { WorkflowTemplateService } from './workflow-template/workflow-template.service';
 import { WorkflowRunService } from './workflow/run/workflow.run.service';
@@ -116,8 +114,6 @@ export class ServicesModule {
                 TimelineStore,
                 UserService,
                 VariableService,
-                WarningService,
-                WarningStore,
                 WorkerModelService,
                 WorkflowTemplateService,
                 WorkflowService,
@@ -183,7 +179,6 @@ export {
     TimelineStore,
     UserService,
     VariableService,
-    WarningStore,
     WorkerModelService,
     WorkflowTemplateService,
     WorkflowStore,

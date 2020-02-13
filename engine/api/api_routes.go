@@ -72,7 +72,6 @@ func (api *API) InitRouter() {
 
 	// Admin
 	r.Handle("/admin/maintenance", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postMaintenanceHandler, NeedAdmin(true)))
-	r.Handle("/admin/warning", Scope(sdk.AuthConsumerScopeAdmin), r.DELETE(api.adminTruncateWarningsHandler, NeedAdmin(true)))
 	r.Handle("/admin/cds/migration", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminMigrationsHandler, NeedAdmin(true)))
 	r.Handle("/admin/cds/migration/{id}/cancel", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminMigrationCancelHandler, NeedAdmin(true)))
 	r.Handle("/admin/cds/migration/{id}/todo", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminMigrationTodoHandler, NeedAdmin(true)))
@@ -177,9 +176,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/import/application", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postApplicationImportHandler))
 	// Export Application
 	r.Handle("/project/{permProjectKey}/export/application/{applicationName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getApplicationExportHandler))
-
-	r.Handle("/warning/{permProjectKey}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWarningsHandler))
-	r.Handle("/warning/{permProjectKey}/{hash}", Scope(sdk.AuthConsumerScopeProject), r.PUT(api.putWarningsHandler))
 
 	// Application
 	r.Handle("/project/{permProjectKey}/ascode/application", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getAsCodeApplicationHandler))

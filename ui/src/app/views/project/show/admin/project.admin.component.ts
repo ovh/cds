@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { AuthentifiedUser } from 'app/model/user.model';
-import { Warning } from 'app/model/warning.model';
 import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
@@ -18,23 +17,6 @@ import { finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectAdminComponent implements OnInit {
-
-    @Input('warnings')
-    set warnings(data: Array<Warning>) {
-        if (data) {
-            this.unusedWarning = new Map<string, Warning>();
-            this.missingWarnings = new Array<Warning>();
-            data.forEach(v => {
-                if (v.type.indexOf('MISSING') !== -1) {
-                    this.missingWarnings.push(v);
-                } else {
-                    this.unusedWarning.set(v.element, v);
-                }
-            });
-        }
-    };
-    missingWarnings: Array<Warning>;
-    unusedWarning: Map<string, Warning>;
 
     @Input() project: Project;
     @ViewChild('updateWarning', { static: false })

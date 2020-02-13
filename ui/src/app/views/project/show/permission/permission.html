@@ -1,5 +1,4 @@
 <h3>
-    <app-warning-mark-list [warnings]="warnings"></app-warning-mark-list>
     {{ 'project_permission_list_title' | translate }}
 </h3>
 <app-permission-list [permissions]="project.groups" (event)="groupEvent($event)" [edit]="project.permissions.writable"></app-permission-list>

@@ -2,22 +2,19 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { LoadOpts, Project } from 'app/model/project.model';
+import { AuthentifiedUser } from 'app/model/user.model';
+import { HelpersService } from 'app/service/helpers/helpers.service';
 import { ProjectStore } from 'app/service/services.module';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { Tab } from 'app/shared/tabs/tabs.component';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { FetchProject, UpdateFavoriteProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import * as immutable from 'immutable';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
-import { LoadOpts, Project } from '../../../model/project.model';
-import { AuthentifiedUser } from '../../../model/user.model';
-import { Warning } from '../../../model/warning.model';
-import { HelpersService } from '../../../service/helpers/helpers.service';
-import { WarningStore } from '../../../service/warning/warning.store';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { Tab } from '../../../shared/tabs/tabs.component';
-import { ToastService } from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-show',
@@ -42,22 +39,16 @@ export class ProjectShowComponent implements OnInit {
     workflowPipeline: string;
     loadingFav = false;
 
-    allWarnings: Array<Warning>;
-    warnings: { [key: string]: Array<Warning> };
-    warningsSub: Subscription;
-
     constructor(
         private _route: ActivatedRoute,
         private _router: Router,
         private _toast: ToastService,
         public _translate: TranslateService,
-        private _warningStore: WarningStore,
         private _helpersService: HelpersService,
         private _store: Store,
         private _cd: ChangeDetectorRef,
         private _projectStore: ProjectStore,
     ) {
-        this.initWarnings();
         this.currentUser = this._store.selectSnapshot(AuthenticationState.user);
 
         this.projectSubscriber = this._store.select(ProjectState)
@@ -153,19 +144,6 @@ export class ProjectShowComponent implements OnInit {
         }
     }
 
-    initWarnings() {
-        this.warnings = {
-            'workflows': new Array<Warning>(),
-            'applications': new Array<Warning>(),
-            'pipelines': new Array<Warning>(),
-            'environments': new Array<Warning>(),
-            'variables': new Array<Warning>(),
-            'permissions': new Array<Warning>(),
-            'keys': new Array<Warning>(),
-            'advanced': new Array<Warning>(),
-        };
-    }
-
     selectTab(tab: Tab): void {
         this.selectedTab = tab;
     }
@@ -193,52 +171,6 @@ export class ProjectShowComponent implements OnInit {
         this._store.dispatch(new FetchProject({ projectKey: key, opts }))
             .subscribe(null, () => this._router.navigate(['/home']));
 
-        this.warningsSub = this._warningStore.getProjectWarnings(key).subscribe(ws => {
-            this.splitWarnings(ws.get(key));
-            this._cd.markForCheck();
-        });
-    }
-
-    splitWarnings(warnings: immutable.Map<string, Warning>): void {
-        if (warnings) {
-            this.allWarnings = warnings.valueSeq().toArray().sort((a, b) => {
-                return a.id - b.id;
-            });
-            this.initWarnings();
-            this.allWarnings.forEach(v => {
-                if (v.ignored) {
-                    return;
-                }
-                if (v.application_name !== '') {
-                    this.warnings['applications'].push(v);
-                }
-                if (v.pipeline_name !== '') {
-                    this.warnings['pipelines'].push(v);
-                }
-                if (v.environment_name !== '') {
-                    this.warnings['environments'].push(v);
-                }
-                if (v.workflow_name !== '') {
-                    this.warnings['workflows'].push(v);
-                }
-                if (v.type.indexOf('_VARIABLE') !== -1) {
-                    this.warnings['variables'].push(v);
-                    return;
-                }
-                if (v.type.indexOf('_PERMISSION') !== -1) {
-                    this.warnings['permissions'].push(v);
-                    return;
-                }
-                if (v.type.indexOf('_KEY') !== -1) {
-                    this.warnings['keys'].push(v);
-                    return;
-                }
-                if (v.type.indexOf('PROJECT_VCS') !== -1) {
-                    this.warnings['advanced'].push(v);
-                    return;
-                }
-            });
-        }
     }
 
     updateFav() {

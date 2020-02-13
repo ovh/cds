@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Store } from '@ngxs/store';
+import { IdName, Label, Project } from 'app/model/project.model';
+import { HelpersService } from 'app/service/helpers/helpers.service';
 import { AddLabelWorkflowInProject, DeleteLabelWorkflowInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
-import { IdName, Label, Project } from '../../../../../model/project.model';
-import { Warning } from '../../../../../model/warning.model';
-import { HelpersService } from '../../../../../service/helpers/helpers.service';
 
 @Component({
     selector: 'app-project-workflows-lines',
@@ -15,7 +14,6 @@ import { HelpersService } from '../../../../../service/helpers/helpers.service';
 export class ProjectWorkflowListLinesComponent {
 
   @Input() project: Project;
-  @Input() warnMap: Map<string, Array<Warning>>;
   @Input('workflows')
   set workflows(workflows: IdName[]) {
     this._workflows = workflows;

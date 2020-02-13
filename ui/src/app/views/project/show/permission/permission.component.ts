@@ -1,14 +1,13 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { Project } from 'app/model/project.model';
+import { ConfirmModalComponent } from 'app/shared/modal/confirm/confirm.component';
+import { WarningModalComponent } from 'app/shared/modal/warning/warning.component';
+import { PermissionEvent } from 'app/shared/permission/permission.event.model';
+import { ToastService } from 'app/shared/toast/ToastService';
 import { AddGroupInProject, DeleteGroupInProject, UpdateGroupInProject } from 'app/store/project.action';
 import { finalize } from 'rxjs/operators';
-import { Project } from '../../../../model/project.model';
-import { Warning } from '../../../../model/warning.model';
-import { ConfirmModalComponent } from '../../../../shared/modal/confirm/confirm.component';
-import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
-import { PermissionEvent } from '../../../../shared/permission/permission.event.model';
-import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-permissions',
@@ -18,7 +17,6 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 export class ProjectPermissionsComponent {
 
     @Input() project: Project;
-    @Input() warnings: Array<Warning>;
 
     @ViewChild('permWarning', {static: false})
     permWarningModal: WarningModalComponent;

@@ -33,7 +33,6 @@
                         <app-project-workflows-blocs
                             [project]="project"
                             [workflows]="filteredWorkflows"
-                            [warnMap]="warnMap"
                             (edit)="editLabels()">
                         </app-project-workflows-blocs>
                     </ng-container>
@@ -42,7 +41,6 @@
                             [project]="project"
                             [labels]="project.labels"
                             [workflows]="filteredWorkflows"
-                            [warnMap]="warnMap"
                             (edit)="editLabels()">
                         </app-project-workflows-labels>
                     </ng-container>
@@ -51,7 +49,6 @@
                             [project]="project"
                             [labels]="project.labels"
                             [workflows]="filteredWorkflows"
-                            [warnMap]="warnMap"
                             (edit)="editLabels()">
                         </app-project-workflows-lines>
                     </ng-container>
