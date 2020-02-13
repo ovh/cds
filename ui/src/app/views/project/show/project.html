@@ -9,7 +9,7 @@
                     [class.unfavorite]="!project.favorite" (click)="updateFav()"></i>
             </div>
         </app-project-breadcrumb>
-
+        <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
         <div class="scrollingContent">
             <div class="paddingContent">
                 <div class="viewContent" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
