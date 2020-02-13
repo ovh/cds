@@ -19,6 +19,9 @@ func projectPermissionUserIDs(ctx context.Context, db gorp.SqlExecutor, store ca
 
 	var groupIDs []int64
 	for _, g := range proj.ProjectGroups {
+		if group.DefaultGroup != nil && group.DefaultGroup.ID == g.Group.ID {
+			continue // we don't want to sent notif on all user to the default group
+		}
 		groupIDs = append(groupIDs, g.Group.ID)
 	}
 
