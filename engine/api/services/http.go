@@ -94,11 +94,13 @@ func doMultiPartRequest(ctx context.Context, db gorp.SqlExecutor, srvs []sdk.Ser
 	var lastErr error
 	var lastCode int
 	var attempt int
+
+	bodyToSend := body.Bytes()
 	for {
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			res, _, code, err := doRequest(ctx, db, srv, method, path, body.Bytes(), mods...)
+			res, _, code, err := doRequest(ctx, db, srv, method, path, bodyToSend, mods...)
 			if err != nil {
 				lastErr = err
 				lastCode = code
