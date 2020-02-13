@@ -690,10 +690,8 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 
 	//Insert ssh and gpg keys
 	k := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "app-mykey",
-			Type: sdk.KeyTypePGP,
-		},
+		Name:          "app-mykey",
+		Type:          sdk.KeyTypePGP,
 		ApplicationID: app.ID,
 	}
 
@@ -706,10 +704,8 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	test.NoError(t, application.InsertKey(api.mustDB(), k))
 
 	k2 := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "app-mykey-ssh",
-			Type: sdk.KeyTypeSSH,
-		},
+		Name:          "app-mykey-ssh",
+		Type:          sdk.KeyTypeSSH,
 		ApplicationID: app.ID,
 	}
 	kssh, errK := keys.GenerateSSHKey(k2.Name)

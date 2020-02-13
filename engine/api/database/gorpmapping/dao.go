@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"reflect"
+	"unsafe"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -41,6 +43,41 @@ func Insert(db gorp.SqlExecutor, i interface{}) error {
 
 // Update value in given db.
 func Update(db gorp.SqlExecutor, i interface{}) error {
+	mapping, has := getTabbleMapping(i)
+	if !has {
+		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+	}
+	// If the data has encrypted data
+	if mapping.EncryptedEntity {
+		id := reflectFindValueByTag(i, "db", mapping.Keys[0])
+		entityName := fmt.Sprintf("%T", reflect.ValueOf(i).Elem().Interface())
+
+		// Reload and decrypt the old tuple from the database
+		tuple, err := LoadTupleByPrimaryKey(db, entityName, id, GetOptions.WithDecryption)
+		if err != nil {
+			return err
+		}
+
+		val := reflect.ValueOf(i)
+		if val.Kind() == reflect.Ptr {
+			val = val.Elem()
+		}
+
+		valTuple := reflect.ValueOf(tuple)
+		if valTuple.Kind() == reflect.Ptr {
+			valTuple = valTuple.Elem()
+		}
+
+		for _, f := range mapping.EncryptedFields {
+			// Reset the field to the decrypted value if the value is set to the placeholder
+			field := val.FieldByName(f.Name)
+			if field.Interface() == sdk.PasswordPlaceholder {
+				oldVal := valTuple.FieldByName(f.Name)
+				field.Set(oldVal)
+			}
+		}
+	}
+
 	n, err := db.Update(i)
 	if e, ok := err.(*pq.Error); ok {
 		switch e.Code {
@@ -89,6 +126,27 @@ func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, op
 
 	if _, err := db.Select(i, q.query, q.arguments...); err != nil {
 		return sdk.WithStack(err)
+	}
+
+	v := sdk.ValueFromInterface(i)
+
+	switch reflect.TypeOf(v.Interface()).Kind() {
+	case reflect.Slice:
+		for i := 0; i < v.Len(); i++ {
+			var dest reflect.Value
+			if v.Index(i).Kind() == reflect.Ptr {
+				dest = v.Index(i)
+			} else {
+				dest = reflect.NewAt(reflect.TypeOf(v.Index(i).Interface()), unsafe.Pointer(v.Index(i).UnsafeAddr()))
+			}
+			if err := resetEncryptedData(db, dest.Interface()); err != nil {
+				return err
+			}
+		}
+	default:
+		if err := resetEncryptedData(db, i); err != nil {
+			return err
+		}
 	}
 
 	for _, f := range opts {

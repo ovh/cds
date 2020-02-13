@@ -138,10 +138,9 @@ func resetEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	for _, f := range mapping.EncryptedFields {
 		// Reset the field to the zero value
 		field := val.FieldByName(f.Name)
-		zero := reflect.Zero(field.Type())
-		field.Set(zero)
+		placeholder := reflect.ValueOf(sdk.PasswordPlaceholder)
+		field.Set(placeholder)
 	}
-
 	return nil
 }
 

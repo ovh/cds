@@ -17,7 +17,7 @@ type dbEnvironmentKey sdk.EnvironmentKey
 
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbEnvironmentVariableAudit{}, "environment_variable_audit", true, "id"))
-	gorpmapping.Register(gorpmapping.New(dbEnvironmentKey{}, "environment_key", false))
+	gorpmapping.Register(gorpmapping.New(dbEnvironmentKey{}, "environment_key", true, "id"))
 }
 
 // PostGet is a db hook
