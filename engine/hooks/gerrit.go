@@ -115,6 +115,7 @@ func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunH
 		payload["gerrit.change.status"] = gerritEvent.Change.Status
 		payload["gerrit.change.branch"] = gerritEvent.Change.Branch
 	}
+
 	// ref-updated
 	if gerritEvent.RefUpdate != nil {
 		payload["git.hash.before"] = gerritEvent.RefUpdate.OldRev
@@ -150,6 +151,17 @@ func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunH
 	if gerritEvent.NewRev != "" {
 		payload["git.hash"] = gerritEvent.NewRev
 	}
+
+	// Comment
+	if gerritEvent.Type == GerritEventTypeCommentAdded {
+		payload["gerrit.comment"] = gerritEvent.Comment
+		if gerritEvent.Author != nil {
+			payload["gerrit.comment.author.username"] = gerritEvent.Author.Username
+			payload["gerrit.comment.author.name"] = gerritEvent.Author.Name
+			payload["gerrit.comment.author.email"] = gerritEvent.Author.Email
+		}
+	}
+
 	payload["gerrit.type"] = gerritEvent.Type
 
 	payload["payload"] = string(e.GerritEvent.Message)
