@@ -86,51 +86,9 @@ func NewConsumer(ctx context.Context, db gorp.SqlExecutor, name, description str
 		}
 	}
 
-	// At least one scope should be given, for each given scope checks if its authorized and if it's in parent scopes
-	if len(scopes) == 0 {
-		return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "built in consumer creation requires at least one scope to be set")
-	}
-	if err := scopes.IsValid(); err != nil {
+	// Check that given scopes are valid and if they match parent scopes
+	if err := checkNewConsumerScopes(parentConsumer.ScopeDetails, scopes); err != nil {
 		return nil, "", err
-	}
-	// If parent scopes length equals 0 this means all scopes else checks that given scope is in parent scopes
-	if len(parentConsumer.ScopeDetails) > 0 {
-		for i := range scopes {
-			var validScope bool
-			for j := range parentConsumer.ScopeDetails {
-				if scopes[i].Scope == parentConsumer.ScopeDetails[j].Scope {
-					// if no endpoint restrictions on parent scope is valid
-					if len(parentConsumer.ScopeDetails[j].Endpoints) == 0 {
-						validScope = true
-						break
-					}
-
-					// if parent as scope restrictions, child should contains only all or a subset of those restrictions
-					for _, e := range scopes[i].Endpoints {
-						existsParentEndpoint, parentEndpoint := parentConsumer.ScopeDetails[j].Endpoints.FindEndpoint(e.Route)
-						if !existsParentEndpoint {
-							return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given route %s for scope %s when creating built in consumer", e.Route, scopes[i])
-						}
-						if len(parentEndpoint.Methods) > 0 {
-							if len(e.Methods) == 0 {
-								return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given methods for route %s and scope %s when creating built in consumer", e.Route, scopes[i])
-							}
-							for _, m := range e.Methods {
-								if !parentEndpoint.Methods.Contains(m) {
-									return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given method %s for route %s and scope %s when creating built in consumer", m, e.Route, scopes[i])
-								}
-							}
-						}
-					}
-
-					validScope = true
-					break
-				}
-			}
-			if !validScope {
-				return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given scope %s when creating built in consumer", scopes[i])
-			}
-		}
 	}
 
 	c := sdk.AuthConsumer{
@@ -155,4 +113,62 @@ func NewConsumer(ctx context.Context, db gorp.SqlExecutor, name, description str
 	}
 
 	return &c, jws, nil
+}
+
+func checkNewConsumerScopes(parentScopes, scopes sdk.AuthConsumerScopeDetails) error {
+	// At least one scope should be given, for each given scope checks if its authorized and if it's in parent scopes
+	if len(scopes) == 0 {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "built in consumer creation requires at least one scope to be set")
+	}
+	if err := scopes.IsValid(); err != nil {
+		return err
+	}
+	// If parent scopes length equals 0 this means all scopes else checks that given scope is in parent scopes
+	if len(parentScopes) == 0 {
+		return nil
+	}
+
+	for i := range scopes {
+		var validScope bool
+		for j := range parentScopes {
+			if scopes[i].Scope == parentScopes[j].Scope {
+				// if no endpoint restrictions on parent scope is valid
+				if len(parentScopes[j].Endpoints) == 0 {
+					validScope = true
+					break
+				}
+
+				// invalid if no endpoint given and parents endpoint list is not empty
+				if len(scopes[i].Endpoints) == 0 {
+					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid endpoints for scope %s when creating built in consumer", scopes[i].Scope)
+				}
+
+				// if parent as scope restrictions, child should contains only all or a subset of those restrictions
+				for _, e := range scopes[i].Endpoints {
+					existsParentEndpoint, parentEndpoint := parentScopes[j].Endpoints.FindEndpoint(e.Route)
+					if !existsParentEndpoint {
+						return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given route %s for scope %s when creating built in consumer", e.Route, scopes[i].Scope)
+					}
+					if len(parentEndpoint.Methods) > 0 {
+						if len(e.Methods) == 0 {
+							return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given methods for route %s and scope %s when creating built in consumer", e.Route, scopes[i].Scope)
+						}
+						for _, m := range e.Methods {
+							if !parentEndpoint.Methods.Contains(m) {
+								return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given method %s for route %s and scope %s when creating built in consumer", m, e.Route, scopes[i].Scope)
+							}
+						}
+					}
+				}
+
+				validScope = true
+				break
+			}
+		}
+		if !validScope {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given scope %s when creating built in consumer", scopes[i])
+		}
+	}
+
+	return nil
 }

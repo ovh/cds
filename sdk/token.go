@@ -175,7 +175,7 @@ func (s AuthConsumerScopeDetails) IsValid() error {
 				if _, ok := mMethod[method]; ok {
 					return NewErrorFrom(ErrWrongRequest, "duplicated method %s for route %s and scope %s in given details", method, endpoint.Route, detail.Scope)
 				}
-				mRoute[method] = struct{}{}
+				mMethod[method] = struct{}{}
 				if !(method == http.MethodGet || method == http.MethodPost || method == http.MethodPut || method == http.MethodDelete) {
 					return NewErrorFrom(ErrWrongRequest, "invalid method %s for route %s and scope %s in given details", method, endpoint.Route, detail.Scope)
 				}
