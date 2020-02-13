@@ -226,6 +226,7 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 					GerritEvent: &sdk.GerritEventExecution{
 						Message: msg,
 					},
+					Type: gerritHook.Type,
 				}
 
 				//Save the web hook execution
