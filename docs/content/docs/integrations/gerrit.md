@@ -5,10 +5,10 @@ card:
   name: repository-manager
 ---
 
-The Gerrit Repository Manager Integration have to be configured on your CDS by a CDS Administrator.
+The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
 
 This integration allows you to link a Git Repository hosted by Gerrit
-to a CDS Application.
+to a CDS application.
 
 This integration enables some features:
 
@@ -29,14 +29,11 @@ You will have to create 2 users on gerrit: <a href="https://gerrit-review.google
 
 ```yaml
  [vcs.servers]
- 
      [vcs.servers.gerrit]
- 
        # URL of Gerrit
        url = "http://localhost:9080"
  
        [vcs.servers.gerrit.gerrit]
- 
          # Disable event listener
          disableGerritEvent = false
  
@@ -44,7 +41,6 @@ You will have to create 2 users on gerrit: <a href="https://gerrit-review.google
          sshport = 29418
  
          [vcs.servers.gerrit.gerrit.EventStream]
- 
            # Private key of the user who access to gerrit event stream
            privateKey = "XXXXXXX"
  
@@ -52,13 +48,11 @@ You will have to create 2 users on gerrit: <a href="https://gerrit-review.google
            user = "admin"
  
          [vcs.servers.gerrit.gerrit.Reviewer]
- 
            # Http Password of the user that comment changes
            token = "XXXXXXXXXX"
  
            # User that review changes
            user = "Verifier"
- 
 
 ```
 
