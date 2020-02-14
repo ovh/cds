@@ -2687,3 +2687,162 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	assert.Equal(t, sdk.StatusSuccess, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].Status)
 	assert.Equal(t, sdk.StatusWaiting, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[1].Status)
 }
+
+func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, pass := assets.InsertAdminUser(t, api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+	}
+	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	pipeline.InsertStage(api.mustDB(), s)
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	s.Jobs = append(s.Jobs, *j)
+
+	j2 := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(api.mustDB(), j2, s.ID, &pip)
+	s.Jobs = append(s.Jobs, *j2)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
+		},
+	}
+
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+	require.NoError(t, errP)
+
+	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{})
+	require.NoError(t, err)
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+
+	opts := &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			OnlyFailedJobs: false,
+			Resync:         false,
+		},
+	}
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 202, rec.Code)
+
+	var wr sdk.WorkflowRun
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wr))
+	assert.Equal(t, int64(1), wr.Number)
+
+	// wait for the workflow to finish crafting
+	assert.NoError(t, waitCraftinWorkflow(db, wr.ID))
+
+	wrr, _ := workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
+	assert.Equal(t, sdk.StatusBuilding, wrr.Status)
+	assert.Equal(t, 2, len(wrr.Workflow.Pipelines[pip.ID].Stages[0].Jobs))
+
+	// Update WORKFLOW RUN
+	wrr.Status = sdk.StatusFail
+	assert.NoError(t, workflow.UpdateWorkflowRun(context.TODO(), db, wrr))
+
+	// Update WORKFLOW NODE RUN
+	nr, err := workflow.LoadNodeRunByID(db, wrr.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID, workflow.LoadRunOptions{})
+	assert.NoError(t, err)
+
+	assert.NoError(t, workflow.DeleteNodeJobRuns(db, nr.ID))
+
+	firstJobEnd := time.Now()
+	nr.Status = sdk.StatusFail
+	nr.Stages[0].Status = sdk.StatusFail
+	nr.Stages[0].RunJobs = make([]sdk.WorkflowNodeJobRun, 2)
+	nr.Stages[0].RunJobs[0] = sdk.WorkflowNodeJobRun{
+		Start:  firstJobEnd,
+		Done:   firstJobEnd,
+		Status: sdk.StatusSuccess,
+		Job: sdk.ExecutedJob{
+			Job: pip.Stages[0].Jobs[0],
+		},
+	}
+
+	nr.Stages[0].RunJobs[1] = sdk.WorkflowNodeJobRun{
+		Start:  firstJobEnd,
+		Done:   firstJobEnd,
+		Status: sdk.StatusFail,
+		Job: sdk.ExecutedJob{
+			Job: pip.Stages[0].Jobs[1],
+		},
+	}
+	assert.NoError(t, workflow.UpdateNodeRun(db, nr))
+
+	// Update pipeline
+	j3 := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(api.mustDB(), j3, s.ID, &pip)
+
+	uri = router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+
+	opts = &sdk.WorkflowRunPostHandlerOption{
+		Manual: &sdk.WorkflowNodeRunManual{
+			OnlyFailedJobs: false,
+			Resync:         true,
+		},
+		Number:      &wrr.Number,
+		FromNodeIDs: []int64{w1.WorkflowData.Node.ID},
+	}
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 202, rec.Code)
+
+	var wrResync sdk.WorkflowRun
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wrResync))
+
+	wrrResyncDB, err := workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, wrResync.Number, workflow.LoadRunOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(wrrResyncDB.Workflow.Pipelines[pip.ID].Stages[0].Jobs))
+}
