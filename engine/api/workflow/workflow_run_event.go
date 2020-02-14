@@ -224,14 +224,17 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		if urlParams != nil {
 			url = urlParams.Value
 		}
-		eventWNR.GerritChange = &sdk.GerritChangeEvent{
-			ID:         changeID,
-			DestBranch: branch,
-			Project:    project,
-			Revision:   revision,
-			Report:     report,
-			URL:        url,
+		if changeID != "" {
+			eventWNR.GerritChange = &sdk.GerritChangeEvent{
+				ID:         changeID,
+				DestBranch: branch,
+				Project:    project,
+				Revision:   revision,
+				Report:     report,
+				URL:        url,
+			}
 		}
+
 	}
 
 	evt := sdk.Event{
