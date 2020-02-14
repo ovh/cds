@@ -1,23 +1,11 @@
 function loop(initWaitingTime, func) {
-    var retry = 0;
-    var fibonacciStep = 0;
-    var timeToWait = initWaitingTime;
+    var timeToWait = initWaitingTime * 1000;
 
     // First call  then run in an interval
     func();
     setInterval(function () {
-        retry++;
-        if (!(retry % timeToWait)) {
-            retry = 0;
-            var hasToRetry = func();
-            if (hasToRetry) {
-                fibonacciStep++;
-                timeToWait = fibonacci(fibonacciStep);
-            } else {
-                fibonacciStep = 0;
-            }
-        }
-    }, 1000);
+        func();
+    }, timeToWait);
 }
 
 function httpCallAPI(path) {
