@@ -214,6 +214,15 @@ func (s StringSlice) Value() (driver.Value, error) {
 	return j, WrapError(err, "cannot marshal StringSlice")
 }
 
+func (s StringSlice) Contains(value string) bool {
+	for i := range s {
+		if s[i] == value {
+			return true
+		}
+	}
+	return false
+}
+
 // Int64Slice type used for database json storage.
 type Int64Slice []int64
 

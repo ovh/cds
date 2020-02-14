@@ -1,0 +1,33 @@
+@import "../../../../../common";
+
+.detail {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    margin-right: 0 !important;
+
+    .checkbox {
+        margin-right: 15px;
+    }
+}
+
+.scope {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+}
+
+.route {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    overflow: hidden;
+}
+
+.advanced {
+    display: inline-block;
+    overflow: hidden;
+    margin-right: 40px;
+}
+
+.methods {
+    margin-bottom: 0 !important;
+    justify-content: flex-end;
+}

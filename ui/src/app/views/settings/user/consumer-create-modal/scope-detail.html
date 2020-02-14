@@ -1,0 +1,76 @@
+<div class="ui grid detail" *ngIf="scopeDetail">
+    <div class="ui row scope">
+        <div class="ui four wide column">
+            {{scopeDetail.scope}}
+        </div>
+        <div class="ui twelve wide column right aligned">
+            <a class="pointing advanced" (click)="clickAdvanced()">{{'common_advanced' | translate}}</a>
+            <div class="ui checkbox">
+                <input type="checkbox" [ngModel]="allReadRoutesSelected" (click)="clickSelectAllRoutesRead()">
+                <label>{{'common_read' | translate}}</label>
+            </div>
+            <div class="ui checkbox">
+                <input type="checkbox" [ngModel]="allWriteRoutesSelected" (click)="clickSelectAllRoutesWrite()">
+                <label>{{'common_write' | translate}}</label>
+            </div>
+            <div class="ui checkbox">
+                <input type="checkbox" [ngModel]="allRoutesSelected" (click)="clickSelectAllRoutes()">
+                <label>{{'common_all' | translate}}</label>
+            </div>
+        </div>
+    </div>
+    <ng-container *ngIf="advancedOpen">
+        <div *ngFor="let endpoint of scopeDetail.endpoints" class="ui row route">
+            <div class="ui eight wide column">
+                {{endpoint.route}}
+            </div>
+            <div class="ui eight wide column">
+                <div class="ui form">
+                    <div class="ui fields methods">
+                        <div class="ui checkbox">
+                            <input *ngIf="selectedRouteMethods[endpoint.route].GET != null" type="checkbox"
+                                [ngModel]="selectedRouteMethods[endpoint.route].GET"
+                                (click)="clickMethod(endpoint.route, 'GET')">
+                            <input *ngIf="selectedRouteMethods[endpoint.route].GET == null" type="checkbox"
+                                [disabled]="true">
+                            <label>GET</label>
+                        </div>
+
+                        <div class="ui checkbox">
+                            <input *ngIf="selectedRouteMethods[endpoint.route].POST != null" type="checkbox"
+                                [ngModel]="selectedRouteMethods[endpoint.route].POST"
+                                (click)="clickMethod(endpoint.route, 'POST')">
+                            <input *ngIf="selectedRouteMethods[endpoint.route].POST == null" type="checkbox"
+                                [disabled]="true">
+                            <label>POST</label>
+                        </div>
+
+                        <div class="ui checkbox">
+                            <input *ngIf="selectedRouteMethods[endpoint.route].PUT != null" type="checkbox"
+                                [ngModel]="selectedRouteMethods[endpoint.route].PUT"
+                                (click)="clickMethod(endpoint.route, 'PUT')">
+                            <input *ngIf="selectedRouteMethods[endpoint.route].PUT == null" type="checkbox"
+                                [disabled]="true">
+                            <label>PUT</label>
+                        </div>
+
+                        <div class="ui checkbox">
+                            <input *ngIf="selectedRouteMethods[endpoint.route].DELETE != null" type="checkbox"
+                                [ngModel]="selectedRouteMethods[endpoint.route].DELETE"
+                                (click)="clickMethod(endpoint.route, 'DELETE')">
+                            <input *ngIf="selectedRouteMethods[endpoint.route].DELETE == null" type="checkbox"
+                                [disabled]="true">
+                            <label>DELETE</label>
+                        </div>
+
+                        <div class="ui checkbox">
+                            <input type="checkbox" [ngModel]="selectedRouteMethods[endpoint.route].ALL"
+                                (click)="clickAllMethods(endpoint.route)">
+                            <label>{{'common_all' | translate}}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</div>

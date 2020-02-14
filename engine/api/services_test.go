@@ -23,9 +23,9 @@ func TestServicesHandlers(t *testing.T) {
 	admin, jwtRaw := assets.InsertAdminUser(t, api.mustDB())
 
 	data := sdk.AuthConsumer{
-		Name:     sdk.RandomString(10),
-		Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
-		IssuedAt: time.Now(),
+		Name:         sdk.RandomString(10),
+		ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService),
+		IssuedAt:     time.Now(),
 	}
 
 	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{

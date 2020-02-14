@@ -1,1 +1,10 @@
-@import '../../../../../common';
+@import "../../../../../common";
+
+.scope-list {
+    max-height: 200px;
+    overflow-y: auto;
+
+    td {
+        border: none !important;
+    }
+}

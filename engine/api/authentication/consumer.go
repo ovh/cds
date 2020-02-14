@@ -17,13 +17,13 @@ func NewConsumerWorker(ctx context.Context, db gorp.SqlExecutor, name string, ha
 		Type:               sdk.ConsumerBuiltin,
 		Data:               map[string]string{},
 		GroupIDs:           groupIDs,
-		Scopes: []sdk.AuthConsumerScope{
+		ScopeDetails: sdk.NewAuthConsumerScopeDetails(
 			sdk.AuthConsumerScopeWorker,
 			sdk.AuthConsumerScopeWorkerModel,
 			sdk.AuthConsumerScopeProject,
 			sdk.AuthConsumerScopeRun,
 			sdk.AuthConsumerScopeRunExecution,
-		},
+		),
 		IssuedAt: time.Now(),
 	}
 

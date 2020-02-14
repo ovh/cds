@@ -122,15 +122,15 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorp.SqlExecu
 
 	// Create the consumers provided by the startup configuration
 	for _, cfg := range startupConfig.Consumers {
-		var scopes sdk.AuthConsumerScopeSlice
+		var scopes sdk.AuthConsumerScopeDetails
 
 		switch cfg.ServiceType {
 		case services.TypeHatchery:
-			scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeWorkerModel}
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHatchery, sdk.AuthConsumerScopeRunExecution, sdk.AuthConsumerScopeWorkerModel)
 		case services.TypeHooks:
-			scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHooks, sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun}
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService, sdk.AuthConsumerScopeHooks, sdk.AuthConsumerScopeProject, sdk.AuthConsumerScopeRun)
 		default:
-			scopes = []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService}
+			scopes = sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService)
 		}
 
 		var c = sdk.AuthConsumer{
@@ -142,7 +142,7 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorp.SqlExecu
 			Type:               sdk.ConsumerBuiltin,
 			Data:               map[string]string{},
 			GroupIDs:           []int64{group.SharedInfraGroup.ID},
-			Scopes:             scopes,
+			ScopeDetails:       scopes,
 			IssuedAt:           time.Unix(startupConfig.IAT, 0),
 		}
 
