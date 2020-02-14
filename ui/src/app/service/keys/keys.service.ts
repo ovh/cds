@@ -22,7 +22,7 @@ export class KeyService {
             }));
         }
 
-        forkJoin<Keys, Keys> ([
+        return forkJoin<Keys, Keys> ([
             this._http.get<Keys>('/project/' + projectKey + '/keys'),
             this._http.get<Keys>('/project/' + projectKey + '/application/' + appName + '/keys')
         ]).pipe(map((k1, k2) => {
