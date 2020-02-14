@@ -22,7 +22,7 @@ type dbApplicationKey struct {
 func (e dbApplicationKey) Canonical() gorpmapping.CanonicalForms {
 	var _ = []interface{}{e.ApplicationID, e.ID, e.Name}
 	return gorpmapping.CanonicalForms{
-		"{{print .ApplicationID}} {{print .ID}} {{.Name}}",
+		"{{print .ApplicationID}}{{print .ID}}{{.Name}}",
 	}
 }
 

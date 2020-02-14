@@ -82,7 +82,7 @@ func LoadKey(db gorp.SqlExecutor, id int64, keyName string) (*sdk.ApplicationKey
 		return nil, err
 	}
 	if !found {
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	isValid, err := gorpmapping.CheckSignature(k, k.Signature)
 	if err != nil {
@@ -90,7 +90,7 @@ func LoadKey(db gorp.SqlExecutor, id int64, keyName string) (*sdk.ApplicationKey
 	}
 	if !isValid {
 		log.Error(context.Background(), "application.LoadKey> application key %d data corrupted", k.ID)
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return &k.ApplicationKey, nil
 }
