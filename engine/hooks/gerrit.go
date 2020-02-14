@@ -100,16 +100,18 @@ func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunH
 	}
 
 	payload := make(map[string]interface{})
+	payload[GIT_EVENT] = gerritEvent.Type
+
 	// assignee-* / change-* / comment-* / draft-* / hashtags-* / patchset-* / reviewer-* / topic-* / vote-*
 	if gerritEvent.Change != nil {
-		payload["git.author"] = gerritEvent.Change.Owner.Username
-		payload["git.author.email"] = gerritEvent.Change.Owner.Email
-		payload["git.repository"] = gerritEvent.Change.Project
-		payload["cds.triggered_by.username"] = gerritEvent.Change.Owner.Username
-		payload["cds.triggered_by.fullname"] = gerritEvent.Change.Owner.Name
-		payload["cds.triggered_by.email"] = gerritEvent.Change.Owner.Email
+		payload[GIT_AUTHOR] = gerritEvent.Change.Owner.Username
+		payload[GIT_AUTHOR_EMAIL] = gerritEvent.Change.Owner.Email
+		payload[GIT_REPOSITORY] = gerritEvent.Change.Project
+		payload[CDS_TRIGGERED_BY_USERNAME] = gerritEvent.Change.Owner.Username
+		payload[CDS_TRIGGERED_BY_FULLNAME] = gerritEvent.Change.Owner.Name
+		payload[CDS_TRIGGERED_BY_EMAIL] = gerritEvent.Change.Owner.Email
 
-		payload["git.message"] = gerritEvent.Change.CommitMessage
+		payload[GIT_MESSAGE] = gerritEvent.Change.CommitMessage
 		payload["gerrit.change.id"] = gerritEvent.Change.ID
 		payload["gerrit.change.url"] = gerritEvent.Change.URL
 		payload["gerrit.change.status"] = gerritEvent.Change.Status
@@ -117,42 +119,42 @@ func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunH
 	}
 	// ref-updated
 	if gerritEvent.RefUpdate != nil {
-		payload["git.hash.before"] = gerritEvent.RefUpdate.OldRev
-		payload["git.hash"] = gerritEvent.RefUpdate.NewRev
+		payload[GIT_HASH_BEFORE] = gerritEvent.RefUpdate.OldRev
+		payload[GIT_HASH] = gerritEvent.RefUpdate.NewRev
 		payload["gerrit.ref.name"] = gerritEvent.RefUpdate.RefName
 	}
 	// change-merged / ref-updated
 	if gerritEvent.Submitter != nil {
 		if gerritEvent.Submitter.Username != "" {
-			payload["git.author"] = gerritEvent.Submitter.Username
+			payload[GIT_AUTHOR] = gerritEvent.Submitter.Username
 		}
 		if gerritEvent.Submitter.Email != "" {
-			payload["git.author.email"] = gerritEvent.Submitter.Email
+			payload[GIT_AUTHOR_EMAIL] = gerritEvent.Submitter.Email
 		}
 	}
 	// change-* / comment-* / draft-* / patchset-* / reviewer-* / vote-*
 	if gerritEvent.PatchSet != nil {
-		payload["git.hash"] = gerritEvent.PatchSet.Revision
+		payload[GIT_HASH] = gerritEvent.PatchSet.Revision
 		if len(gerritEvent.PatchSet.Parents) == 1 {
-			payload["git.hash.before"] = gerritEvent.PatchSet.Parents[0]
+			payload[GIT_HASH_BEFORE] = gerritEvent.PatchSet.Parents[0]
 		}
 		payload["gerrit.change.ref"] = gerritEvent.PatchSet.Ref
 		if gerritEvent.PatchSet.Author != nil {
 			if gerritEvent.PatchSet.Author.Username != "" {
-				payload["git.author"] = gerritEvent.PatchSet.Author.Username
+				payload[GIT_AUTHOR] = gerritEvent.PatchSet.Author.Username
 			}
 			if gerritEvent.PatchSet.Author.Email != "" {
-				payload["git.author.email"] = gerritEvent.PatchSet.Author.Email
+				payload[GIT_AUTHOR_EMAIL] = gerritEvent.PatchSet.Author.Email
 			}
 		}
 	}
 	// change-merged
 	if gerritEvent.NewRev != "" {
-		payload["git.hash"] = gerritEvent.NewRev
+		payload[GIT_HASH] = gerritEvent.NewRev
 	}
 	payload["gerrit.type"] = gerritEvent.Type
 
-	payload["payload"] = string(e.GerritEvent.Message)
+	payload[PAYLOAD] = string(e.GerritEvent.Message)
 
 	d := dump.NewDefaultEncoder()
 	d.ExtraFields.Type = false

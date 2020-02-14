@@ -45,7 +45,7 @@ Example for a local configuration:
 - with WebUI default port (8080), Homepage URL will be `http://localhost:8080`
 - with API default port (8081), callback URL will be `http://localhost:8081/repositories_manager/oauth2/callback`
 
-![Integration GitHub New OAuth App](../images/github-new-oauth-app.png?height=500px)
+![Integration GitHub New OAuth App](../../images/github-new-oauth-app.png?height=500px)
 
 Click on **Register Application**, then on the next page, GitHub give you a **Client ID** and a **Client Secret**
 
@@ -187,17 +187,17 @@ Go on your **CDS Project -> Advanced -> Link a repository manager**
 
 Select GitHub in the list, then click on **Connect**
 
-![github-add-on-prj.png](../images/github-add-on-prj.png?height=500px)
+![github-add-on-prj.png](../../images/github-add-on-prj.png?height=500px)
 
 A confirmation page is now displayed, click on the link **Click Here**
 
-![github-modal-click-here.png](../images/github-modal-click-here.png?height=200px)
+![github-modal-click-here.png](../../images/github-modal-click-here.png?height=200px)
 
 By clicking on **Click Here**, you call GitHub and you will be redirected on the same page.
 The Repository is now added on the CDS Project with a small warning
  *Unused repository manager GitHub on ..* as you don't use the repository yet in your CDS Project. 
 
-![github-added.png](../images/github-added.png?height=200px)
+![github-added.png](../../images/github-added.png?height=200px)
 
 
 ### Link a CDS Application to a Git repository
@@ -208,15 +208,15 @@ Go on your **CDS Project -> You Application -> Advanced -> Link application to a
 
 Select GitHub, then select a Git Repository
 
-![github-app-repo.png](../images/github-app-repo.png?height=500px)
+![github-app-repo.png](../../images/github-app-repo.png?height=500px)
 
 The application is linked, you have now to choose a method to Git Clone your repository.
 
-![github-app-freshly-added.png](../images/github-app-freshly-added.png?height=200px)
+![github-app-freshly-added.png](../../images/github-app-freshly-added.png?height=200px)
 
 Example with `https` method, without authentication:
 
-![github-app-repo-configured.png](../images/github-app-repo-configured.png?height=200px)
+![github-app-repo-configured.png](../../images/github-app-repo-configured.png?height=200px)
 
 ### Add a repository webhook on a workflow
 
@@ -224,11 +224,11 @@ Example with `https` method, without authentication:
 
 Select the first pipeline, then click on `Add a hook` in the sidebar.
 
-![github-wf-select-pipeline.png](../images/github-wf-select-pipeline.png?height=500px)
+![github-wf-select-pipeline.png](../../images/github-wf-select-pipeline.png?height=500px)
 
 Select the **RepositoryWebhook**, then click on **Save**.
 
-![github-wf-add-repowebhook.png](../images/github-wf-add-repowebhook.png?height=200px)
+![github-wf-add-repowebhook.png](../../images/github-wf-add-repowebhook.png?height=200px)
 
 The webhook is automatically created on GitHub. 
 
