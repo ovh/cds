@@ -13,9 +13,9 @@ You have to:
 
 With this hook, you will have access to specific variables:
 
-* gerrit.change.id: ID of the change
-* gerrit.change.url: URL of the change
-* gerrit.change.status: Status of the change
-* gerrit.change.branch: Destination branch of the change
-* gerrit.ref.name: Full reference name within project
-* gerrit.change.ref: Git reference of the change
+* `gerrit.change.id`: ID of the change
+* `gerrit.change.url`: URL of the change
+* `gerrit.change.status`: Status of the change
+* `gerrit.change.branch`: Destination branch of the change
+* `gerrit.ref.name`: Full reference name within project
+* `gerrit.change.ref`: Git reference of the change
