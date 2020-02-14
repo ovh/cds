@@ -15,37 +15,41 @@ import (
 )
 
 func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Model, error) {
-	pms := []*sdk.Model{}
+	pms := []*WorkerModel{}
 
 	if err := gorpmapping.GetAll(ctx, db, q, &pms); err != nil {
 		return nil, sdk.WrapError(err, "cannot get worker models")
 	}
-	if len(pms) > 0 {
+
+	for i := range pms {
+		if err := pms[i].PostSelect(db); err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		if pms[i].ModelDocker.Password != "" {
+			pms[i].ModelDocker.Password = sdk.PasswordPlaceholder
+		}
+	}
+
+	var pres = make([]*sdk.Model, len(pms))
+	for i := range pms {
+		wm := sdk.Model(*pms[i])
+		pres[i] = &wm
+	}
+
+	if len(pres) > 0 {
 		for i := range opts {
-			if err := opts[i](ctx, db, pms...); err != nil {
+			if err := opts[i](ctx, db, pres...); err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	// TODO refactor data model to remove post select
-	for i := range pms {
-		wm := WorkerModel(*pms[i])
-		if err := wm.PostSelect(db); err != nil {
-			return nil, sdk.WithStack(err)
-		}
-		if wm.ModelDocker.Password != "" {
-			wm.ModelDocker.Password = sdk.PasswordPlaceholder
-		}
-		*pms[i] = sdk.Model(wm)
+	var res = make([]sdk.Model, len(pms))
+	for i := range pres {
+		res[i] = *pres[i]
 	}
 
-	ms := make([]sdk.Model, len(pms))
-	for i := range ms {
-		ms[i] = *pms[i]
-	}
-
-	return ms, nil
+	return res, nil
 }
 
 // LoadAll retrieves worker models from database.
