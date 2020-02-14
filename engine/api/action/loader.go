@@ -3,6 +3,8 @@ package action
 import (
 	"context"
 
+	"github.com/ovh/cds/engine/api/group"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -182,14 +184,9 @@ func loadChildren(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) e
 }
 
 func loadGroup(ctx context.Context, db gorp.SqlExecutor, as ...*sdk.Action) error {
-	gs := []sdk.Group{}
-
-	if err := gorpmapping.GetAll(ctx, db,
-		gorpmapping.NewQuery(`SELECT * FROM "group" WHERE id = ANY(string_to_array($1, ',')::int[])`).
-			Args(gorpmapping.IDsToQueryString(sdk.ActionsToGroupIDs(as))),
-		&gs,
-	); err != nil {
-		return sdk.WrapError(err, "cannot get groups")
+	gs, err := group.LoadAllByIDs(ctx, db, sdk.ActionsToGroupIDs(as))
+	if err != nil {
+		return err
 	}
 
 	m := make(map[int64]sdk.Group, len(gs))

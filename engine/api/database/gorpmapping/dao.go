@@ -14,8 +14,19 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func checkDatabase(db gorp.SqlExecutor) error {
+	if db == nil {
+		return sdk.NewErrorFrom(sdk.ErrServiceUnavailable, "database unavailabe")
+	}
+	return nil
+}
+
 // Insert value in given db.
 func Insert(db gorp.SqlExecutor, i interface{}) error {
+	if err := checkDatabase(db); err != nil {
+		return err
+	}
+
 	err := db.Insert(i)
 	if e, ok := err.(*pq.Error); ok {
 		switch e.Code {
@@ -43,6 +54,10 @@ func Insert(db gorp.SqlExecutor, i interface{}) error {
 
 // Update value in given db.
 func Update(db gorp.SqlExecutor, i interface{}) error {
+	if err := checkDatabase(db); err != nil {
+		return err
+	}
+
 	mapping, has := getTabbleMapping(i)
 	if !has {
 		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
@@ -107,6 +122,10 @@ func Update(db gorp.SqlExecutor, i interface{}) error {
 
 // Delete value in given db.
 func Delete(db gorp.SqlExecutor, i interface{}) error {
+	if err := checkDatabase(db); err != nil {
+		return err
+	}
+
 	_, err := db.Delete(i)
 	return sdk.WithStack(err)
 }
@@ -121,6 +140,10 @@ var GetOptions = struct {
 
 // GetAll values from database.
 func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts ...GetOptionFunc) error {
+	if err := checkDatabase(db); err != nil {
+		return err
+	}
+
 	_, end := observability.Span(ctx, fmt.Sprintf("database.GetAll(%T)", i), observability.Tag("query", q.String()))
 	defer end()
 
@@ -159,6 +182,10 @@ func GetAll(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, op
 
 // Get a value from database.
 func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts ...GetOptionFunc) (bool, error) {
+	if err := checkDatabase(db); err != nil {
+		return false, err
+	}
+
 	_, end := observability.Span(ctx, fmt.Sprintf("database.Get(%T)", i), observability.Tag("query", q.String()))
 	defer end()
 
@@ -183,6 +210,10 @@ func Get(ctx context.Context, db gorp.SqlExecutor, q Query, i interface{}, opts 
 
 // GetInt a value from database.
 func GetInt(db gorp.SqlExecutor, q Query) (int64, error) {
+	if err := checkDatabase(db); err != nil {
+		return 0, err
+	}
+
 	res, err := db.SelectNullInt(q.query, q.arguments...)
 	if err != nil {
 		if err == sql.ErrNoRows {
