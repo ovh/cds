@@ -7,11 +7,11 @@ Do you want to trigger a workflow from a gerrit event? This kind of hook is for 
 
 You have to:
 
-* link your project to a Gerit Server, on Advanced Section
-* link an application to a gerrit repository
+* link your project to a Gerrit Server, on Advanced Section
+* link an application to a Gerrit repository
 * add a Gerrit Hook on the root pipeline, this pipeline have the application linked in the [context]({{< relref "/docs/concepts/workflow/pipeline-context.md" >}})
 
-With this hooks, you will have access to specific variables:
+With this hook, you will have access to specific variables:
 
 * gerrit.change.id: ID of the change
 * gerrit.change.url: URL of the change
