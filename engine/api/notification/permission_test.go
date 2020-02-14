@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/alecthomas/assert"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +23,7 @@ func Test_projectPermissionUserIDs(t *testing.T) {
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	g3 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
-	u1, _ := assets.InsertLambdaUser(t, db, g1)
+	_, _ = assets.InsertLambdaUser(t, db, g1)
 	u2, _ := assets.InsertLambdaUser(t, db, g2)
 
 	pkey := sdk.RandomString(10)
@@ -55,9 +55,5 @@ func Test_projectPermissionUserIDs(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, userList)
 	assert.Equal(t, 1, len(userList))
-
-	for _, u := range userList {
-		assert.NotEqual(t, u, u1.Username, "User in default group should not be here")
-	}
-
+	assert.Equal(t, u2.ID, userList[0], "Only user 2 have to be here. u1, in the default group only should not be here.")
 }
