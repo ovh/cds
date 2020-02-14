@@ -22,13 +22,6 @@ function httpCall(host, path) {
     return xhr;
 }
 
-function fibonacci(retry) {
-    if (retry <= 1) {
-        return retry;
-    }
-    return fibonacci(retry - 1) + fibonacci(retry - 2);
-}
-
 function connectSSE(url, headAuthKey, headAuthValue) {
     var headers = {};
     headers[headAuthKey] = headAuthValue;
