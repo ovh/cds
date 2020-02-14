@@ -15,6 +15,7 @@ This integration enables some features:
  - [Gerrit Hooks]({{<relref "/docs/concepts/workflow/hooks/gerrit.md" >}})
  - Easy to use action [CheckoutApplication]({{<relref "/docs/actions/builtin-checkoutapplication.md" >}}) and [GitClone]({{<relref "/docs/actions/builtin-gitclone.md">}}) for advanced usage
  - Send comments on your Pull-Requests when a workflow is failed
+ - Add a vote -1/+1 on a change
 
 ## How to configure Gerrit integration
 
