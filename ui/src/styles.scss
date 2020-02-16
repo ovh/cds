@@ -49,10 +49,6 @@ a.disabled:hover {
     overflow: hidden !important;
 }
 
-.CodeMirror-lint-tooltip {
-    z-index: 9000;
-}
-
 .fullheight {
     .CodeMirror {
         height: 100% !important;
@@ -112,7 +108,7 @@ body ::-webkit-scrollbar-thumb {
 
 // dropdown
 .ui.buttons {
-    sm-dropdown>.ui.dropdown:last-child .menu {
+    sm-dropdown > .ui.dropdown:last-child .menu {
         left: auto;
         right: 0;
     }
@@ -182,7 +178,7 @@ body ::-webkit-scrollbar-thumb {
 }
 
 .ui.green.button.loading:after {
-    border-color: #000000 transparent transparent
+    border-color: #000000 transparent transparent;
 }
 
 .ui.red.button {
@@ -202,7 +198,7 @@ body ::-webkit-scrollbar-thumb {
 }
 
 .ui.red.button.loading:after {
-    border-color: #000000 transparent transparent
+    border-color: #000000 transparent transparent;
 }
 
 .ui.blue.button {
@@ -271,7 +267,7 @@ body ::-webkit-scrollbar-thumb {
     width: auto;
 }
 
-.ui.card>.content>.description {
+.ui.card > .content > .description {
     overflow-wrap: break-word;
 }
 
@@ -288,7 +284,6 @@ body ::-webkit-scrollbar-thumb {
 .workflow.grid {
     .dropdown.icon {
         position: relative;
-        z-index: 11;
         border: 1px solid #cac9c9;
         border-radius: 3px;
         padding: 5px;
@@ -299,10 +294,6 @@ body ::-webkit-scrollbar-thumb {
         background-color: #cac9c9;
         border-color: white;
         color: white;
-    }
-
-    .menu.transition {
-        z-index: 13;
     }
 }
 
@@ -363,7 +354,7 @@ body ::-webkit-scrollbar-thumb {
 
     padding-right: 1em;
 
-    >.text>.flag {
+    > .text > .flag {
         margin-right: 0em;
     }
 }
@@ -371,15 +362,12 @@ body ::-webkit-scrollbar-thumb {
 ngui-auto-complete {
     height: 200px;
     overflow-y: auto;
-    z-index: 10 !important;
 }
 
 ngui-auto-complete .no-match-found {
     display: none;
     border: none;
 }
-
-;
 
 .node {
     white-space: nowrap;
@@ -422,7 +410,7 @@ sui-search {
 
     .ui.input {
         .prompt {
-            background-color: rgba(225, 226, 229, .1);
+            background-color: rgba(225, 226, 229, 0.1);
             border-color: transparent;
 
             &:focus {

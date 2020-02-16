@@ -11,7 +11,7 @@
 .tiles-container {
   display: table-row-group;
   table-layout: fixed;
-  
+
   label {
     display: table-cell;
     vertical-align: middle;
@@ -33,7 +33,7 @@
   .tiles {
     display: table-cell;
     width: 100%;
-    
+
     .tile {
       display: inline-block;
       width: 60px;
@@ -55,7 +55,6 @@
         text-overflow: ellipsis;
         max-width: 60px;
         line-height: normal;
-        z-index: 1;
 
         .tag {
           vertical-align: bottom;
@@ -71,7 +70,6 @@
         line-height: 10px;
         display: none;
         position: absolute;
-        z-index: 999;
         background-color: white;
         border-top-right-radius: 5px;
         border-bottom-left-radius: 5px;
@@ -83,7 +81,7 @@
         bottom: calc(100% + 10px);
         border: 6px solid transparent;
         text-align: left;
-        
+
         td {
           padding: 3px 10px;
         }
@@ -100,7 +98,7 @@
           bottom: -16px;
           display: block;
         }
-        
+
         &:before {
           width: 0;
           height: 0;
@@ -113,7 +111,7 @@
           bottom: -19px;
           display: block;
         }
-        
+
         .property {
           font-weight: bold;
         }

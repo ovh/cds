@@ -1,6 +1,6 @@
 <ng-template let-context let-modal="modal" #deleteModal>
     <div class="header">{{ 'workflow_node_delete_title' | translate: { node: node.name} }}</div>
-    <div class="content">
+    <div class="content scrolling">
         <div class="ui orange message" *ngIf="deleteAll === 'all' && isRoot">
           {{'workflow_deleted_warning' | translate}}
         </div>

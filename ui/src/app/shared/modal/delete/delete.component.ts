@@ -4,7 +4,6 @@ import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } f
 @Component({
     selector: 'app-delete-modal',
     templateUrl: './delete.html',
-    styleUrls: ['./delete.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DeleteModalComponent {

@@ -4,7 +4,6 @@ import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } f
 @Component({
     selector: 'app-confirm-modal',
     templateUrl: './confirm.html',
-    styleUrls: ['./confirm.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConfirmModalComponent {

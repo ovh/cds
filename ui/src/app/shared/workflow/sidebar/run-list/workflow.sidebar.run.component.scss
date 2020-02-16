@@ -9,7 +9,6 @@
   .selection {
     margin: 6px 0 6px 4px;
     width: calc(100% - 4px);
-    z-index: 1001; // fix to be over loader that is z-index 1000
   }
 
   .runs {

@@ -1,113 +1,101 @@
-@import '../common';
+@import "../common";
 
 #AppComponent {
-  height: 100%;
-  #navbar {
-    padding: 0px;
-    width: 100%;
-    position: fixed;
-    display: none;
-    z-index: 1020;
-  }
-  #navbar.connected {
-    display: inherit;
-  }
-  .maintenance.banner {
-    margin-top: 0;
-    img {
-      position: absolute;
-      left: 0;
-      animation: slideinbanner 10s infinite;
-      height: 50px;
+    height: 100%;
+    .maintenance.banner {
+        margin-top: 0;
+        img {
+            position: absolute;
+            left: 0;
+            animation: slideinbanner 10s infinite;
+            height: 50px;
+        }
     }
-  }
-  .maintenance.banner.mt50 {
-    margin-top: 50px;
-  }
-  .banner {
-    height: 50px;
-    margin-top: $navbarHeight;
-    background-color: $cds_color_red;
-    text-align: center;
-    line-height: 50px;
-    color: white;
-    font-weight: 600;
-  }
-  .page.connected {
-    padding-top: $navbarHeight;
-  }
-  .page {
-    height: inherit;
-    z-index: 0;
-    .content {
-      height: inherit;
-      margin-left: $sidebarCloseWidth;
-      transition: all .4s ease 0s;
-      padding-top: 0px;
+    .maintenance.banner.mt50 {
+        margin-top: 50px;
     }
-  }
-
-  .maintenance {
-
-    h2 {
-      margin: 20px 0;
-      text-align: center;
+    .banner {
+        height: 50px;
+        margin-top: $navbarHeight;
+        background-color: $cds_color_red;
+        text-align: center;
+        line-height: 50px;
+        color: white;
+        font-weight: 600;
+    }
+    .page.connected {
+        padding-top: $navbarHeight;
+    }
+    .page {
+        height: inherit;
+        .content {
+            height: inherit;
+            margin-left: $sidebarCloseWidth;
+            transition: all 0.4s ease 0s;
+            padding-top: 0px;
+        }
     }
 
-    .logo {
-      width: 400px;
-      margin: auto;
-      img {
-        height: 150px;
-        animation: slidein 10s infinite;
-      }
+    .maintenance {
+        h2 {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .logo {
+            width: 400px;
+            margin: auto;
+            img {
+                height: 150px;
+                animation: slidein 10s infinite;
+            }
+        }
     }
-  }
-  .gamification {
-    width: 450px;
-    height: 450px;
-    margin: auto;
-  }
+    .gamification {
+        width: 450px;
+        height: 450px;
+        margin: auto;
+    }
 }
 
 @keyframes slidein {
-  from {
-    margin-left: -50%;
-    transform: scaleX(1);
-  }
+    from {
+        margin-left: -50%;
+        transform: scaleX(1);
+    }
 
-  50% {
-    margin-left: 100%;
-    transform: scaleX(1);
-  }
-  51% {
-    margin-left: 100%;
-    transform: scaleX(-1);
-  }
+    50% {
+        margin-left: 100%;
+        transform: scaleX(1);
+    }
+    51% {
+        margin-left: 100%;
+        transform: scaleX(-1);
+    }
 
-  to {
-    margin-left: -50%;
-    transform: scaleX(-1);
-  }
+    to {
+        margin-left: -50%;
+        transform: scaleX(-1);
+    }
 }
 
 @keyframes slideinbanner {
-  from {
-    left: 0;
-    transform: scaleX(1);
-  }
+    from {
+        left: 0;
+        transform: scaleX(1);
+    }
 
-  50% {
-    left: 96%;
-    transform: scaleX(1);
-  }
-  51% {
-    left: 96%;
-    transform: scaleX(-1);
-  }
+    50% {
+        left: 96%;
+        transform: scaleX(1);
+    }
+    51% {
+        left: 96%;
+        transform: scaleX(-1);
+    }
 
-  to {
-    left: 0%;
-    transform: scaleX(-1);
-  }
+    to {
+        left: 0%;
+        transform: scaleX(-1);
+    }
 }
