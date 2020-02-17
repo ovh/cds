@@ -43,9 +43,11 @@ type AuthentifiedUser struct {
 	Fullname string    `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
 	Ring     string    `json:"ring" yaml:"ring,omitempty" cli:"ring" db:"ring"`
 	// aggregates
-	Contacts  UserContacts `json:"-" yaml:"-" db:"-"`
-	Favorites []Favorite   `json:"favorites" yaml:"favorites" db:"-"`
-	Groups    Groups       `json:"groups" yaml:"groups" db:"-"`
+	Contacts           UserContacts `json:"-" yaml:"-" db:"-"`
+	Favorites          []Favorite   `json:"favorites" yaml:"favorites" db:"-"`
+	FavoritesProjects  []Project    `json:"favorites_projects" yaml:"favorites_projects"`
+	FavoritesWorkflows []Workflow   `json:"favorites_workflows" yaml:"favorites_workflows"`
+	Groups             Groups       `json:"groups" yaml:"groups" db:"-"`
 }
 
 // IsValid returns an error if given user's infos are not valid.

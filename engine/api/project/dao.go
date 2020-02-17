@@ -240,6 +240,21 @@ func LoadProjectByWorkflowID(db gorp.SqlExecutor, store cache.Store, workflowID 
 	return load(context.TODO(), db, store, opts, query, workflowID)
 }
 
+// LoadFavorites returns all favorites projects for one user
+func LoadFavorites(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.AuthentifiedUser) ([]sdk.Project, error) {
+	var end func()
+	_, end = observability.Span(ctx, "project.LoadFavorites")
+	defer end()
+
+	query := `SELECT project.*
+			FROM project
+			JOIN project_favorite ON project.id = project_id
+			WHERE authentified_user_id = $1`
+
+	args := []interface{}{u.ID}
+	return loadprojects(ctx, db, store, nil, query, args...)
+}
+
 func loadprojects(ctx context.Context, db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
 	var res []dbProject
 	if _, err := db.Select(&res, query, args...); err != nil {

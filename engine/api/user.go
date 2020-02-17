@@ -10,7 +10,9 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -32,6 +34,8 @@ func (api *API) getUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["permUsernamePublic"]
+		withFavoritesWorkflows := FormBool(r, "withFavoritesWorkflows")
+		withFavoritesProjects := FormBool(r, "withFavoritesProjects")
 
 		consumer := getAPIConsumer(ctx)
 
@@ -44,6 +48,22 @@ func (api *API) getUserHandler() service.Handler {
 		}
 		if err != nil {
 			return err
+		}
+
+		if withFavoritesWorkflows {
+			favoritesWorkflows, err := workflow.LoadFavorites(ctx, api.mustDB(), api.Cache, u)
+			if err != nil {
+				return sdk.WrapError(err, "unable to load favorites workflows")
+			}
+			u.FavoritesWorkflows = favoritesWorkflows
+		}
+
+		if withFavoritesProjects {
+			favoritesProjects, err := project.LoadFavorites(ctx, api.mustDB(), api.Cache, u)
+			if err != nil {
+				return sdk.WrapError(err, "unable to load favorites projects")
+			}
+			u.FavoritesProjects = favoritesProjects
 		}
 
 		return service.WriteJSON(w, u, http.StatusOK)

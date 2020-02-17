@@ -1,45 +1,251 @@
 {
-	"name": "vscode-cds",
-	"displayName": "CDS",
-	"description": "CDS VSCode Extension",
-	"version": "0.0.1",
-	"engines": {
-		"vscode": "^1.42.0"
-	},
-	"categories": [
-		"Other"
-	],
-	"activationEvents": [
-		"onCommand:extension.helloWorld"
-	],
-	"main": "./out/extension.js",
-	"contributes": {
-		"commands": [
-			{
-				"command": "extension.helloWorld",
-				"title": "Hello World"
-			}
-		]
-	},
-	"scripts": {
-		"vscode:prepublish": "npm run compile",
-		"compile": "tsc -p ./",
-		"lint": "eslint src --ext ts",
-		"watch": "tsc -watch -p ./",
-		"pretest": "npm run compile && npm run lint",
-		"test": "node ./out/test/runTest.js"
-	},
-	"devDependencies": {
-		"@types/glob": "^7.1.1",
-		"@types/mocha": "^7.0.1",
-		"@types/node": "^12.11.7",
-		"@types/vscode": "^1.42.0",
-		"eslint": "^6.8.0",
-		"@typescript-eslint/parser": "^2.18.0",
-		"@typescript-eslint/eslint-plugin": "^2.18.0",
-		"glob": "^7.1.6",
-		"mocha": "^7.0.1",
-		"typescript": "^3.7.5",
-		"vscode-test": "^1.3.0"
-	}
+    "name": "vscode-cds",
+    "displayName": "CDS",
+    "description": "CDS VSCode Extension",
+    "version": "0.1.0",
+    "publisher": "OVHcloud",
+    "engines": {
+        "vscode": "^1.42.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:extension.vsCdsAddNewConfig",
+        "onView:extension.vsCdsExplorer",
+        "onView:extension.vsCdsQueue",
+        "extension.vsCdsOpenBrowserWorkflow",
+        "extension.vsCdsOpenBrowserWorkflowRun",
+        "extension.vsCdsOpenBrowserProject",
+        "extension.vsCdsOpenBrowserApplication",
+        "extension.vsCdsOpenBrowserPipeline",
+        "extension.vsCdsShowStepLogs"
+    ],
+    "keywords": [
+        "cds",
+        "cdsctl"
+    ],
+    "main": "./out/index.js",
+    "license": "BSD 3-Clause License",
+    "contributes": {
+        "configuration": {
+            "type": "object",
+            "title": "CDS configuration",
+            "properties": {
+                "cdsctl.binaryFileLocation": {
+                    "type": "string",
+                    "default": "cdsctl",
+                    "description": "path to cdsctl binary"
+                },
+                "cdsctl.knownCdsconfigs": {
+                    "type": "array",
+                    "description": "File paths to cdsconfig files from which you can select.",
+                    "default": []
+                },
+                "cdsctl.logLevel": {
+                    "type": "array",
+                    "default": [
+                        "info",
+                        "error",
+                        "command",
+                        "critical"
+                    ],
+                    "description": "Limit what levels of log message get sent to the log",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "info",
+                            "error",
+                            "command",
+                            "critical"
+                        ]
+                    }
+                },
+                "cdsctl.progressSpinner": {
+                    "type": "array",
+                    "default": [
+                        "$(sync~spin)"
+                    ],
+                    "description": "A series of string that denotes progress"
+                },
+                "cdsctl.statusBarPositionPriority": {
+                    "type": "number",
+                    "description": "Priority where the status bar view should be placed"
+                }
+            }
+        },
+        "views": {
+            "cdsView": [
+                {
+                    "id": "extension.vsCdsExplorer",
+                    "name": "Explorer"
+                },
+                {
+                    "id": "extension.vsCdsQueue",
+                    "name": "Queue"
+                }
+            ]
+        },
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "cdsView",
+                    "title": "CDS",
+                    "icon": "images/cds.svg"
+                }
+            ]
+        },
+        "menus": {
+            "view/title": [
+                {
+                    "command": "extension.vsCdsRefreshExplorer",
+                    "when": "view == extension.vsCdsExplorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "extension.vsCdsAddNewConfig",
+                    "when": "view == extension.vsCdsExplorer",
+                    "group": "0"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "extension.vsCdsRemoveConfigFile",
+                    "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*instance/i",
+                    "group": "0@1"
+                },
+                {
+                    "command": "extension.vsCdsSetAsCurrentContext",
+                    "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*instance/i",
+                    "group": "0@1"
+                },
+                {
+                    "command": "extension.vsCdsOpenBrowserWorkflow",
+                    "group": "0@1",
+                    "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*workflowEdit/i"
+                },
+                {
+                    "command": "extension.vsCdsOpenBrowserWorkflowRun",
+                    "group": "0@1",
+                    "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*workflowRun/i"
+                },
+                {
+                    "command": "extension.vsCdsOpenBrowserProject",
+                    "group": "0@1",
+                    "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*project/i"
+                },
+                {
+                    "command": "extension.vsCdsOpenBrowserApplication",
+                    "group": "0@1",
+                    "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*application/i"
+                },
+                {
+                    "command": "extension.vsCdsOpenBrowserPipeline",
+                    "group": "0@1",
+                    "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*pipeline/i"
+                },
+                {
+                    "command": "extension.vsCdsShowStepLogs",
+                    "group": "0@1",
+                    "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*step/i"
+                }
+            ]
+        },
+        "commandPalette": [
+            {
+                "command": "extension.vsCdsRemoveConfigFile",
+                "when": "view == extension.vsCdsExplorer"
+            },
+            {
+                "command": "extension.vsCdsSetAsCurrentContext",
+                "when": "view == extension.vsCdsExplorer"
+            }
+        ],
+        "commands": [
+            {
+                "command": "extension.vsCdsRemoveConfigFile",
+                "title": "Remove CDS Instance",
+                "category": "CDS"
+            },
+            {
+                "command": "extension.vsCdsSetAsCurrentContext",
+                "title": "Set as current context",
+                "category": "CDS"
+            },
+            {
+                "command": "extension.vsCdsInfo",
+                "title": "Show CDS Info",
+                "category": "CDS"
+            },
+            {
+                "command": "extension.vsCdsAddNewConfig",
+                "title": "Add CDS config file (.cdsrc)",
+                "category": "CDS"
+            },
+            {
+                "command": "extension.vsCdsRefreshExplorer",
+                "title": "Refresh",
+                "category": "CDS",
+                "icon": {
+                    "light": "images/light/refresh.svg",
+                    "dark": "images/dark/refresh.svg"
+                }
+            },
+            {
+                "command": "extension.vsCdsOpenBrowserWorkflow",
+                "title": "Open Workflow (browser)",
+                "description": "Open Workflow in your browser",
+                "category": "CDS"
+            },
+            {
+                "command": "extension.vsCdsOpenBrowserWorkflowRun",
+                "title": "Open Workflow Run (browser)",
+                "description": "Open Workflow Run in your browser",
+                "category": "CDS"
+            },
+            {
+                "command": "extension.vsCdsOpenBrowserProject",
+                "title": "Open Project (browser)",
+                "description": "Open Project in your browser",
+                "category": "CDS"
+            },
+            {
+                "command": "extension.vsCdsOpenBrowserApplication",
+                "title": "Open Application (browser)",
+                "description": "Open Application in your browser",
+                "category": "CDS"
+            },
+            {
+                "command": "extension.vsCdsOpenBrowserPipeline",
+                "title": "Open Pipeline (browser)",
+                "description": "Open Pipeline in your browser",
+                "category": "CDS"
+            },
+            {
+                "command": "extension.vsCdsShowStepLogs",
+                "title": "Show step log",
+                "description": "Show step log",
+                "category": "CDS"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "typescript": "^3.3.1",
+        "vscode": "^1.1.28",
+        "tslint": "^5.12.1",
+        "@types/node": "^10.12.21",
+        "@types/mocha": "^2.2.42"
+    },
+    "dependencies": {
+        "@types/concat-stream": "^1.6.0",
+        "concat-stream": "^2.0.0",
+        "toml": "^3.0.0"
+    }
 }

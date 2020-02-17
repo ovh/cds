@@ -2,6 +2,7 @@ package cdsclient
 
 import (
 	"context"
+	"net/http"
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
@@ -69,4 +70,33 @@ func (c *client) UserGetSchema() (sdk.SchemaResponse, error) {
 		return res, err
 	}
 	return res, nil
+}
+
+func (c *client) ProjectFavoritesList(username string) ([]sdk.Project, error) {
+	res := sdk.AuthentifiedUser{}
+	mods := []RequestModifier{}
+	mods = append(mods, func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withFavoritesProjects", "true")
+		r.URL.RawQuery = q.Encode()
+	})
+
+	if _, err := c.GetJSON(context.Background(), "/user/"+url.QueryEscape(username), &res, mods...); err != nil {
+		return nil, err
+	}
+	return res.FavoritesProjects, nil
+}
+
+func (c *client) WorkflowFavoritesList(username string) ([]sdk.Workflow, error) {
+	res := sdk.AuthentifiedUser{}
+	mods := []RequestModifier{}
+	mods = append(mods, func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withFavoritesWorkflows", "true")
+		r.URL.RawQuery = q.Encode()
+	})
+	if _, err := c.GetJSON(context.Background(), "/user/"+url.QueryEscape(username), &res, mods...); err != nil {
+		return nil, err
+	}
+	return res.FavoritesWorkflows, nil
 }

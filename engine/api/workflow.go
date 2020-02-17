@@ -143,6 +143,11 @@ func (api *API) getWorkflowHandler() service.Handler {
 			}
 		}
 
+		w1.Favorite, err = workflow.IsFavorite(api.mustDB(), w1, getAPIConsumer(ctx).AuthentifiedUser.ID)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot load workflow favorite %s/%s", w1.ProjectKey, w1.Name)
+		}
+
 		w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": key, "permWorkflowName": w1.Name})
 		w1.URLs.UIURL = api.Config.URL.UI + "/project/" + key + "/workflow/" + w1.Name
 

@@ -1,0 +1,20 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+    "files.exclude": {
+        "out": false // set this to true to hide the "out" folder with the compiled JS files
+    },
+    "search.exclude": {
+        "out": true // set this to false to include "out" folder in search results
+    },
+    "go.useLanguageServer": true,
+    "gopls": {
+        "usePlaceholders": true, // add parameter placeholders when completing a function
+    
+        // Experimental settings
+        "completeUnimported": true, // autocomplete unimported packages
+        "watchChangedFiles": true,  // watch file changes outside of the editor
+        "deepCompletion": true,     // enable deep completion
+    },
+    // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
+    "typescript.tsc.autoDetect": "off"
+}

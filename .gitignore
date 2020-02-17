@@ -1,8 +1,12 @@
 *.swp
 *.iml
 .idea
-.vscode
 .DS_Store
+.vscode/*
+.vscode-test/*
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
 dump.rdb
 dist
 target/

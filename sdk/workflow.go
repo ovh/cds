@@ -27,7 +27,7 @@ type Workflow struct {
 	Icon                    string                       `json:"icon,omitempty" db:"icon" cli:"-"`
 	LastModified            time.Time                    `json:"last_modified" db:"last_modified" mapstructure:"-"`
 	ProjectID               int64                        `json:"project_id,omitempty" db:"project_id" cli:"-"`
-	ProjectKey              string                       `json:"project_key" db:"-" cli:"-"`
+	ProjectKey              string                       `json:"project_key" db:"-" cli:"project_key"`
 	Groups                  []GroupPermission            `json:"groups,omitempty" db:"-" cli:"-"`
 	Permissions             Permissions                  `json:"permissions" db:"-" cli:"-"`
 	Metadata                Metadata                     `json:"metadata" yaml:"metadata" db:"-"`

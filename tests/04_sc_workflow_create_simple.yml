@@ -32,3 +32,35 @@ testcases:
   - script: '[ -f ./fixtures/ITSCWRKFLW1/output/ITSCWRKFLW1-PIPELINE.pip.yml ]'
   - script: '[ -f ./fixtures/ITSCWRKFLW1/output/ITSCWRKFLW1-APPLICATION.app.yml ]'
   - script: '[ -f ./fixtures/ITSCWRKFLW1/output/ITSCWRKFLW1-WORKFLOW.yml ]'
+
+- name: workflow favorite add
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow favorites toggle ITSCWRKFLW1 ITSCWRKFLW1-WORKFLOW
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring added
+
+- name: workflow favorite check
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow show ITSCWRKFLW1 ITSCWRKFLW1-WORKFLOW
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring true
+
+- name: workflow favorite list
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow favorites list
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring ITSCWRKFLW1-WORKFLOW
+
+- name: workflow favorite delete
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow favorites toggle ITSCWRKFLW1 ITSCWRKFLW1-WORKFLOW
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring deleted
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow favorites list
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldNotContainSubstring ITSCWRKFLW1-WORKFLOW

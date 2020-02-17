@@ -1,0 +1,53 @@
+{
+    "rules": {
+        "encoding": true,
+        "only-arrow-functions": [
+            true, "allow-declarations", "allow-named-functions"
+        ],
+        "no-var-keyword": true,
+        "no-unused-variable": true,
+        "object-literal-key-quotes": [
+            true, "as-needed"
+        ],
+        "comment-format": [true, "check-space"],
+        "curly": [true, "ignore-same-line"],
+        "triple-equals": true,
+        "prefer-const": true,
+        "prefer-for-of": true,
+        "variable-name": [true, "ban-keywords", "check-format", "allow-leading-underscore"],
+        "switch-final-break": [true, "always"],
+        "prefer-template": [true, "allow-single-concat"],
+        "semicolon": [true, "always"],
+        "arrow-parens": true,
+        "no-consecutive-blank-lines": true,
+        "no-boolean-literal-compare": true,
+        "whitespace": [
+            true,
+            "check-branch",
+            "check-decl",
+            "check-module",
+            "check-separator",
+            "check-type",
+            "check-preblock"
+        ],
+        "typedef-whitespace": [
+            true,
+            {
+                "call-signature": "nospace",
+                "index-signature": "nospace",
+                "parameter": "nospace",
+                "property-declaration": "nospace",
+                "variable-declaration": "nospace"
+            },
+            {
+                "call-signature": "onespace",
+                "index-signature": "onespace",
+                "parameter": "onespace",
+                "property-declaration": "onespace",
+                "variable-declaration": "onespace"
+            }
+        ],
+        "no-trailing-whitespace": true,
+        "no-debugger": true
+    }
+}

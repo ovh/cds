@@ -1,2 +1,9 @@
-node_modules
 out
+out-test
+node_modules
+.vscode/*
+.vscode-test/*
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.DS_Store
