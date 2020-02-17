@@ -6,10 +6,11 @@ import (
 	"fmt"
 
 	"github.com/ovh/cds/engine/api/application"
-
-	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+
+	"github.com/go-gorp/gorp"
 )
 
 // RefactorApplicationKeys .
@@ -121,7 +122,12 @@ func refactorApplicationKeys(ctx context.Context, db *gorp.DbMap, id int64) erro
 	if err != nil {
 		return err
 	}
-	k.Private = s
+
+	btes, err := secret.Decrypt([]byte(s))
+	if err != nil {
+		return err
+	}
+	k.Private = string(btes)
 
 	s, _ = stringIfValid("keyID", keyID)
 	k.KeyID = s

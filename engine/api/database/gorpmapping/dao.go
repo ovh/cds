@@ -62,8 +62,24 @@ func Update(db gorp.SqlExecutor, i interface{}) error {
 	if !has {
 		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
 	}
+
+	val := reflect.ValueOf(i)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	var hasPlaceHolder bool
+	for _, f := range mapping.EncryptedFields {
+		// Reset the field to the decrypted value if the value is set to the placeholder
+		field := val.FieldByName(f.Name)
+		if field.Interface() == sdk.PasswordPlaceholder {
+			hasPlaceHolder = true
+			break
+		}
+	}
+
 	// If the data has encrypted data
-	if mapping.EncryptedEntity {
+	if mapping.EncryptedEntity && hasPlaceHolder {
 		id := reflectFindValueByTag(i, "db", mapping.Keys[0])
 		entityName := fmt.Sprintf("%T", reflect.ValueOf(i).Elem().Interface())
 
@@ -71,11 +87,6 @@ func Update(db gorp.SqlExecutor, i interface{}) error {
 		tuple, err := LoadTupleByPrimaryKey(db, entityName, id, GetOptions.WithDecryption)
 		if err != nil {
 			return err
-		}
-
-		val := reflect.ValueOf(i)
-		if val.Kind() == reflect.Ptr {
-			val = val.Elem()
 		}
 
 		valTuple := reflect.ValueOf(tuple)
