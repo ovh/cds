@@ -141,7 +141,7 @@ See $ engine config command for more details.
 				names = append(names, conf.API.Name)
 				types = append(types, services.TypeAPI)
 
-			case "ui":
+			case "ui", "gui":
 				if conf.UI == nil {
 					sdk.Exit("Unable to start: missing service %s configuration", a)
 				}
