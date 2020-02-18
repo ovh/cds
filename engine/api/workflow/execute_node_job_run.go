@@ -360,18 +360,10 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project
 				Value: k.KeyID,
 			})
 
-			unBase64, err64 := base64.StdEncoding.DecodeString(k.Private)
-			if err64 != nil {
-				return nil, nil, sdk.WrapError(err64, "LoadNodeJobRunKeys> Cannot app decode key %s", k.Name)
-			}
-			decrypted, errD := secret.Decrypt([]byte(unBase64))
-			if errD != nil {
-				log.Error(ctx, "LoadNodeJobRunKeys> Unable to decrypt app private key %s/%s: %v", app.Name, k.Name, errD)
-			}
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
 				Type:  k.Type,
-				Value: string(decrypted),
+				Value: k.Private,
 			})
 		}
 	}

@@ -23,7 +23,9 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -90,6 +92,63 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 
 	pip.Stages = append(pip.Stages, *s)
 
+	// Insert Application
+	app := &sdk.Application{
+		Name: sdk.RandomString(10),
+	}
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app); err != nil {
+		t.Fatal(err)
+	}
+
+	k := &sdk.ApplicationKey{
+		Name:          "mykey",
+		Type:          "pgp",
+		ApplicationID: app.ID,
+	}
+
+	pgpK, err := keys.GeneratePGPKeyPair(k.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	k.Public = pgpK.Public
+	k.Private = pgpK.Private
+	k.KeyID = pgpK.KeyID
+
+	if err := application.InsertKey(api.mustDB(), k); err != nil {
+		t.Fatal(err)
+	}
+
+	//Insert Application
+	env := &sdk.Environment{
+		Name:      sdk.RandomString(10),
+		ProjectID: proj.ID,
+	}
+	if err := environment.InsertEnvironment(api.mustDB(), env); err != nil {
+		t.Fatal(err)
+	}
+
+	envk := &sdk.EnvironmentKey{
+		Key: sdk.Key{
+			Name: "my-env-key",
+			Type: "pgp",
+		},
+		EnvironmentID: env.ID,
+	}
+
+	kpgp, err := keys.GeneratePGPKeyPair(envk.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	envk.Public = kpgp.Public
+	envk.Private = kpgp.Private
+	envk.KeyID = kpgp.KeyID
+
+	if err := environment.InsertKey(api.mustDB(), envk); err != nil {
+		t.Fatal(err)
+	}
+
 	w := sdk.Workflow{
 		Name:       "test_1",
 		ProjectID:  proj.ID,
@@ -100,7 +159,9 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 				Ref:  "node1",
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
-					PipelineID: pip.ID,
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+					EnvironmentID: env.ID,
 				},
 			},
 		},
@@ -373,9 +434,28 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
+	pbji := &sdk.WorkflowNodeJobRunData{}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), pbji))
+	require.Len(t, pbji.Secrets, 3)
+	for _, s := range pbji.Secrets {
+		switch s.Name {
+		case "cds.key.mykey.priv":
+			assert.NotEmpty(t, s.Value)
+			assert.Equal(t, "pgp", s.Type)
+		case "cds.key.my-env-key.priv":
+			assert.NotEmpty(t, s.Value)
+			assert.Equal(t, "pgp", s.Type)
+		case "git.http.password":
+
+		default:
+			t.Errorf("unexpected secrets: %s", s.Name)
+		}
+	}
+
 	run, err := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, err)
 	require.Equal(t, "Building", run.Status)
+
 }
 
 func Test_postBookWorkflowJobHandler(t *testing.T) {
