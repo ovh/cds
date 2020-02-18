@@ -106,11 +106,15 @@ func (g *githubClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 
 func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook, error) {
 	var webhooks = []Webhook{}
-	var nextPage = "/repos/" + fullname + "/hooks"
 	cacheKey := cache.Key("vcs", "github", "hooks", g.OAuthToken, "/repos/"+fullname+"/hooks")
 	opts := []getArgFunc{withETag}
 
+	var nextPage = "/repos/" + fullname + "/hooks"
 	for nextPage != "" {
+		if ctx.Err() != nil {
+			break
+		}
+
 		status, body, headers, err := g.get(ctx, nextPage, opts...)
 		if err != nil {
 			log.Warning(ctx, "githubClient.PullRequests> Error %s", err)

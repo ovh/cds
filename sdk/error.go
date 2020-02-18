@@ -624,7 +624,7 @@ func (e Error) Translate(al string) string {
 	return msg
 }
 
-// NewErrorWithStack returns an error with stack.
+// NewErrorWithStack wraps given root error and override its http error with given error.
 func NewErrorWithStack(root error, err error) error {
 	errWithStack := WithStack(root).(errorWithStack)
 

@@ -38,6 +38,10 @@ func (c *gitlabClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	}
 
 	for resp.NextPage != 0 {
+		if ctx.Err() != nil {
+			break
+		}
+
 		opts.Page = resp.NextPage
 
 		projects, resp, err = c.client.Projects.ListProjects(opts)

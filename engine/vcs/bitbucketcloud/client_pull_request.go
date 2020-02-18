@@ -39,6 +39,10 @@ func (client *bitbucketcloudClient) PullRequests(ctx context.Context, fullname s
 	params.Set("pagelen", "50")
 	nextPage := 1
 	for {
+		if ctx.Err() != nil {
+			break
+		}
+
 		if nextPage != 1 {
 			params.Set("page", fmt.Sprintf("%d", nextPage))
 		}

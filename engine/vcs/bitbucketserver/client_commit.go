@@ -37,6 +37,10 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 		}
 
 		for {
+			if ctx.Err() != nil {
+				break
+			}
+
 			if response.NextPageStart != 0 {
 				params.Set("start", fmt.Sprintf("%d", response.NextPageStart))
 			}

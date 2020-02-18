@@ -17,6 +17,10 @@ func (b *bitbucketClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	params.Set("limit", "200")
 	nextPage := 0
 	for {
+		if ctx.Err() != nil {
+			break
+		}
+
 		if nextPage != 0 {
 			params.Set("start", fmt.Sprintf("%d", nextPage))
 		}
