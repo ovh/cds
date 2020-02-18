@@ -1,6 +1,7 @@
 -- +migrate Up
 
 CREATE TABLE application_key_tmp AS SELECT * FROM application_key;
+ ALTER TABLE application_key_tmp ADD PRIMARY KEY (id);
 
 ALTER TABLE "application_key" ADD COLUMN IF NOT EXISTS sig BYTEA;
 ALTER TABLE "application_key" ADD COLUMN IF NOT EXISTS signer TEXT;
