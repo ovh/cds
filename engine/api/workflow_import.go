@@ -296,8 +296,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 
 		btes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Error(ctx, "postWorkflowPushHandler> Unable to read body: %v", err)
-			return sdk.WithStack(sdk.ErrWrongRequest)
+			return sdk.NewErrorWithStack(err, sdk.ErrWrongRequest)
 		}
 		defer r.Body.Close()
 
@@ -316,15 +315,15 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		u := getAPIConsumer(ctx)
 
 		//Load project
-		proj, errp := project.Load(db, api.Cache, key,
+		proj, err := project.Load(db, api.Cache, key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithIntegrations)
-		if errp != nil {
-			return sdk.WrapError(errp, "postWorkflowPushHandler> Cannot load project %s", key)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
 		allMsg, wrkflw, oldWrkflw, err := workflow.Push(ctx, db, api.Cache, proj, tr, pushOptions, u, project.DecryptWithBuiltinKey)

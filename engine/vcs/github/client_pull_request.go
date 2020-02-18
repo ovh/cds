@@ -77,49 +77,49 @@ func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int)
 // PullRequests fetch all the pull request for a repository
 func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk.VCSPullRequest, error) {
 	var pullRequests = []PullRequest{}
-	var nextPage = "/repos/" + fullname + "/pulls"
 	cacheKey := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls")
 	opts := []getArgFunc{withETag}
 
-	for {
-		if nextPage != "" {
-			status, body, headers, err := g.get(ctx, nextPage, opts...)
-			if err != nil {
-				log.Warning(ctx, "githubClient.PullRequests> Error %s", err)
-				return nil, err
-			}
-			if status >= 400 {
-				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
-			}
-			opts[0] = withETag
-			nextPullRequests := []PullRequest{}
-
-			//Github may return 304 status because we are using conditional request with ETag based headers
-			if status == http.StatusNotModified {
-				//If repos aren't updated, lets get them from cache
-				find, err := g.Cache.Get(cacheKey, &pullRequests)
-				if err != nil {
-					log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
-				}
-				if !find {
-					opts[0] = withoutETag
-					log.Error(ctx, "Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
-					continue
-				}
-				break
-			} else {
-				if err := json.Unmarshal(body, &nextPullRequests); err != nil {
-					log.Warning(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
-					return nil, err
-				}
-			}
-
-			pullRequests = append(pullRequests, nextPullRequests...)
-
-			nextPage = getNextPage(headers)
-		} else {
+	var nextPage = "/repos/" + fullname + "/pulls"
+	for nextPage != "" {
+		if ctx.Err() != nil {
 			break
 		}
+
+		status, body, headers, err := g.get(ctx, nextPage, opts...)
+		if err != nil {
+			log.Warning(ctx, "githubClient.PullRequests> Error %s", err)
+			return nil, err
+		}
+		if status >= 400 {
+			return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
+		}
+		opts[0] = withETag
+		nextPullRequests := []PullRequest{}
+
+		//Github may return 304 status because we are using conditional request with ETag based headers
+		if status == http.StatusNotModified {
+			//If repos aren't updated, lets get them from cache
+			find, err := g.Cache.Get(cacheKey, &pullRequests)
+			if err != nil {
+				log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
+			}
+			if !find {
+				opts[0] = withoutETag
+				log.Error(ctx, "Unable to get pullrequest (%s) from the cache", strings.ReplaceAll(cacheKey, g.OAuthToken, ""))
+				continue
+			}
+			break
+		} else {
+			if err := json.Unmarshal(body, &nextPullRequests); err != nil {
+				log.Warning(ctx, "githubClient.Branches> Unable to parse github branches: %s", err)
+				return nil, err
+			}
+		}
+
+		pullRequests = append(pullRequests, nextPullRequests...)
+
+		nextPage = getNextPage(headers)
 	}
 
 	//Put the body on cache for one hour and one minute
