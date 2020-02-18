@@ -571,7 +571,8 @@ func (api *API) postProjectHandler() service.Handler {
 				Name: fmt.Sprintf("proj-%s-%s", sdk.KeyTypePGP, strings.ToLower(p.Key))},
 			})
 		}
-		for _, k := range p.Keys {
+		for i := range p.Keys {
+			k := &p.Keys[i]
 			k.ProjectID = p.ID
 			switch k.Type {
 			case sdk.KeyTypeSSH:
@@ -587,7 +588,7 @@ func (api *API) postProjectHandler() service.Handler {
 				}
 				k.Key = keyTemp
 			}
-			if errK := project.InsertKey(tx, &k); errK != nil {
+			if errK := project.InsertKey(tx, k); errK != nil {
 				return sdk.WrapError(errK, "addProjectHandler> Cannot add key %s in project %s", k.Name, p.Name)
 			}
 		}

@@ -568,6 +568,8 @@ github.com/yesnault/go-keychain v0.0.0-20190829085436-f78f7ae28786 h1:3i+IgAiigX
 github.com/yesnault/go-keychain v0.0.0-20190829085436-f78f7ae28786/go.mod h1:EzotOW21xnO2Lld4dB8qr2bSnzi3nGtE9FG33n/y2Q8=
 github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945 h1:icS0gqYJLvPFpni3gxPml7gCSdCcJx72RrbkVgmvw80=
 github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945/go.mod h1:SsMrIuedaKvK8GekjwjVv8gMnHNAuvoINpKCARzdsEQ=
+github.com/yesnault/gorp v2.0.0+incompatible h1:4pwtvWrXQTAgGVnzAB0X5jX/mWRQEa8zmcdNT5U8jyg=
+github.com/yesnault/gorp v2.0.0+incompatible/go.mod h1:7nhqtxBPZoPXx86SqUzP/OFLd8prnhkydPk51uJthQc=
 github.com/yesnault/gorp v2.0.1-0.20190906143353-6210446a0d92+incompatible h1:lJBr14ALmOEDTV6iIAQLR8WSBSUIqeS8cFZ628Zl2fo=
 github.com/yesnault/gorp v2.0.1-0.20190906143353-6210446a0d92+incompatible/go.mod h1:7nhqtxBPZoPXx86SqUzP/OFLd8prnhkydPk51uJthQc=
 github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed h1:I1vcLHWU9m30rA90rMrKPu0eD3NDA4FBlkB8WMaDyUw=

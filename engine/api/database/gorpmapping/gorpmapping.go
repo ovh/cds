@@ -31,6 +31,25 @@ type EncryptedField struct {
 	Extras []string
 }
 
+func deepFields(iface interface{}) []reflect.StructField {
+	fields := make([]reflect.StructField, 0)
+	ifv := reflect.ValueOf(iface)
+	ift := reflect.TypeOf(iface)
+
+	for i := 0; i < ift.NumField(); i++ {
+		v := ifv.Field(i)
+
+		switch v.Kind() {
+		case reflect.Struct:
+			fields = append(fields, deepFields(v.Interface())...)
+		default:
+			fields = append(fields, ift.Field(i))
+		}
+	}
+
+	return fields
+}
+
 // New initialize a TableMapping.
 func New(target interface{}, name string, autoIncrement bool, keys ...string) TableMapping {
 	v := sdk.ValueFromInterface(target)
@@ -43,17 +62,19 @@ func New(target interface{}, name string, autoIncrement bool, keys ...string) Ta
 	var (
 		encryptedEntity bool
 		encryptedFields []EncryptedField
+		signedEntity    bool
 	)
-	var signedEntity bool
-	for i := 0; i < v.NumField(); i++ {
-		gmTag, ok := v.Type().Field(i).Tag.Lookup("gorpmapping")
+
+	fields := deepFields(target)
+	for i := 0; i < len(fields); i++ {
+		gmTag, ok := fields[i].Tag.Lookup("gorpmapping")
 		if ok {
 			tagValues := strings.Split(gmTag, ",")
 			if len(tagValues) == 0 {
 				continue
 			}
 
-			dbTag, ok := v.Type().Field(i).Tag.Lookup("db")
+			dbTag, ok := fields[i].Tag.Lookup("db")
 			if !ok {
 				continue
 			}
@@ -63,13 +84,16 @@ func New(target interface{}, name string, autoIncrement bool, keys ...string) Ta
 				encryptedEntity = true
 				encryptedFields = append(encryptedFields,
 					EncryptedField{
-						Name:   v.Type().Field(i).Name,
+						Name:   fields[i].Name,
 						Extras: tagValues[1:],
 						Column: column,
 					})
 			}
 		}
 
+	}
+
+	for i := 0; i < v.NumField(); i++ {
 		if v.Type().Field(i).Name == reflect.TypeOf(SignedEntity{}).Name() {
 			signedEntity = true
 		}
@@ -142,7 +166,7 @@ func Register(m ...TableMapping) {
 	mappingMutex.Lock()
 	defer mappingMutex.Unlock()
 	for _, t := range m {
-		k := fmt.Sprintf("%T", t.Target)
+		k := reflect.TypeOf(t.Target).String()
 		Mapping[k] = t
 	}
 }
@@ -153,7 +177,7 @@ func getTabbleMapping(i interface{}) (TableMapping, bool) {
 	}
 	mappingMutex.Lock()
 	defer mappingMutex.Unlock()
-	k := fmt.Sprintf("%T", i)
+	k := reflect.TypeOf(i).String()
 	mapping, has := Mapping[k]
 	return mapping, has
 }

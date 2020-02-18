@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -67,7 +66,7 @@ func deleteAll(t *testing.T, api *API, key string) error {
 }
 
 func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T) {
-	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
@@ -119,7 +118,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T)
 }
 
 func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T) {
-	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
@@ -189,7 +188,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T)
 }
 
 func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2ActionsStageWithoutCondition(t *testing.T) {
-	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
@@ -295,7 +294,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 }
 
 func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions(t *testing.T) {
-	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
@@ -431,7 +430,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 }
 
 func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
-	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
@@ -492,7 +491,7 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 }
 
 func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
-	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")

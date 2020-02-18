@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -20,7 +19,7 @@ import (
 )
 
 func Test_postWorkflowGroupHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -92,7 +91,7 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 }
 
 func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -158,7 +157,7 @@ func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
 }
 
 func Test_putWorkflowGroupHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -262,7 +261,7 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 }
 
 func Test_deleteWorkflowGroupHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -345,7 +344,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 
 // Test_UpdateProjectPermsWithWorkflow Useful to test permission propagation on project
 func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertLambdaUser(t, api.mustDB(), &proj.ProjectGroups[0].Group)
@@ -426,7 +425,7 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 
 // Test_PermissionOnWorkflowInferiorOfProject Useful to test when permission on wf is superior than permission on project
 func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -595,7 +594,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 
 // Test_PermissionOnWorkflowWithRestrictionOnNode Useful to test when we add permission on a workflow node
 func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertLambdaUser(t, api.mustDB(), &proj.ProjectGroups[0].Group)

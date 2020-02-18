@@ -308,9 +308,11 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project
 		appMap, has := wr.Workflow.Applications[n.Context.ApplicationID]
 		if has {
 			app = &appMap
-			if err := application.LoadAllBase64Keys(db, app); err != nil {
+			keys, err := application.LoadAllKeysWithPrivateContent(db, app.ID)
+			if err != nil {
 				return nil, nil, err
 			}
+			app.Keys = keys
 		}
 	}
 	if n.Context.EnvironmentID != 0 {

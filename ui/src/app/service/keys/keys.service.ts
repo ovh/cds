@@ -1,8 +1,8 @@
 
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AllKeys, Key, Keys, KeyType } from 'app/model/keys.model';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Injectable()
@@ -11,18 +11,22 @@ export class KeyService {
     constructor(private _http: HttpClient) { }
 
     /**
-     * Get all keys (project/application/env) from the given project
+     * Get all keys (project/application) from the given project
      * @param projectKey Project unique key
      * @returns {Observable<Keys>}
      */
     getAllKeys(projectKey: string, appName?: string): Observable<AllKeys> {
-        let p = new HttpParams();
-        if (appName) {
-            p = p.append('appName', appName);
+        if (!appName) {
+            return this._http.get<Keys>('/project/' + projectKey + '/keys').pipe(map(keys => {
+                return Keys.formatForSelect(keys);
+            }));
         }
 
-        return this._http.get<Keys>('/project/' + projectKey + '/all/keys', { params: p }).pipe(map(keys => {
-            return Keys.formatForSelect(keys);
+        return forkJoin<Keys, Keys> ([
+            this._http.get<Keys>('/project/' + projectKey + '/keys'),
+            this._http.get<Keys>('/project/' + projectKey + '/application/' + appName + '/keys')
+        ]).pipe(map((k1, k2) => {
+            return Keys.formatForSelect(k1, k2);
         }));
     }
 

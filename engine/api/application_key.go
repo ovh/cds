@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getKeysInApplicationHandler() service.Handler {
@@ -21,15 +20,9 @@ func (api *API) getKeysInApplicationHandler() service.Handler {
 		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 
-		log.Debug("%s %s", key, appName)
-
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName)
-		if errA != nil {
-			return sdk.WrapError(errA, "getKeysInApplicationHandler> Cannot load application")
-		}
-
-		if errK := application.LoadAllKeys(api.mustDB(), app); errK != nil {
-			return sdk.WrapError(errK, "getKeysInApplicationHandler> Cannot load application keys")
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, application.LoadOptions.WithKeys)
+		if err != nil {
+			return err
 		}
 
 		return service.WriteJSON(w, app.Keys, http.StatusOK)
@@ -61,7 +54,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 		for _, k := range app.Keys {
 			if k.Name == keyName {
 				keyToDelete = k
-				if err := application.DeleteApplicationKey(tx, app.ID, keyName); err != nil {
+				if err := application.DeleteKey(tx, app.ID, keyName); err != nil {
 					return sdk.WrapError(err, "Cannot delete key %s", k.Name)
 				}
 			}
@@ -117,13 +110,16 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 			if errK != nil {
 				return sdk.WrapError(errK, "addKeyInApplicationHandler> Cannot generate ssh key")
 			}
-			newKey.Key = k
+			newKey.Public = k.Public
+			newKey.Private = k.Private
 		case sdk.KeyTypePGP:
 			k, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInApplicationHandler> Cannot generate pgpKey")
 			}
-			newKey.Key = k
+			newKey.Public = k.Public
+			newKey.Private = k.Private
+			newKey.KeyID = k.KeyID
 		default:
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInApplicationHandler> unknown key of type: %s", newKey.Type)
 		}
