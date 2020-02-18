@@ -70,7 +70,7 @@ func LoadAllKeysWithPrivateContent(db gorp.SqlExecutor, appID int64) ([]sdk.Appl
 		return nil, err
 	}
 
-	var res []sdk.ApplicationKey
+	res := make([]sdk.ApplicationKey, 0, len(keys))
 	for _, k := range keys {
 		x, err := LoadKey(db, k.ID, k.Name)
 		if err != nil {
