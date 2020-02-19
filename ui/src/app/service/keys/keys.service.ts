@@ -1,7 +1,7 @@
 
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AllKeys, Key, Keys, KeyType } from 'app/model/keys.model';
+import { AllKeys, formatKeysForSelect, Key} from 'app/model/keys.model';
 import { forkJoin, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -13,33 +13,20 @@ export class KeyService {
     /**
      * Get all keys (project/application) from the given project
      * @param projectKey Project unique key
-     * @returns {Observable<Keys>}
+     * @returns {Observable<AllKeys>}
      */
     getAllKeys(projectKey: string, appName?: string): Observable<AllKeys> {
         if (!appName) {
-            return this._http.get<Keys>('/project/' + projectKey + '/keys').pipe(map(keys => {
-                return Keys.formatForSelect(keys);
+            return this._http.get<Key[]>('/project/' + projectKey + '/keys').pipe(map(keys => {
+                return formatKeysForSelect(...keys);
             }));
         }
 
-        return forkJoin<Keys, Keys> ([
-            this._http.get<Keys>('/project/' + projectKey + '/keys'),
-            this._http.get<Keys>('/project/' + projectKey + '/application/' + appName + '/keys')
-        ]).pipe(map((k1, k2) => {
-            return Keys.formatForSelect(k1, k2);
-        }));
-    }
-
-    /**
-     * Get project keys from the given project
-     * @param projectKey Project unique key
-     * @returns {Observable<Keys>}
-     */
-    getProjectKeys(projectKey: string): Observable<AllKeys> {
-        return this._http.get<Array<Key>>('/project/' + projectKey + '/keys').pipe(map(keys => {
-            let k = new AllKeys();
-            k.ssh.push(...keys.filter(key => key.type === KeyType.SSH));
-            k.pgp.push(...keys.filter(key => key.type === KeyType.PGP));
+        return forkJoin({
+            projectKeys: this._http.get<Key[]>('/project/' + projectKey + '/keys'),
+            appKeys: this._http.get<Key[]>('/project/' + projectKey + '/application/' + appName + '/keys')
+        }).pipe(map(({projectKeys, appKeys}) => {
+            let k = formatKeysForSelect(...projectKeys, ...appKeys);
             return k;
         }));
     }
