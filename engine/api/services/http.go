@@ -287,6 +287,13 @@ func doRequestFromURL(ctx context.Context, db gorp.SqlExecutor, method string, c
 		}
 	}
 
+	iRequestID := ctx.Value(log.ContextLoggingRequestIDKey)
+	if iRequestID != nil {
+		if requestID, ok := iRequestID.(string); ok {
+			req.Header.Set(log.HeaderRequestID, requestID)
+		}
+	}
+
 	// Sign the http request with API private RSA Key
 	if err := HTTPSigner.Sign(req); err != nil {
 		return nil, nil, 0, sdk.WrapError(err, "services.DoRequest> Request signature failed")

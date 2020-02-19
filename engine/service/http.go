@@ -102,27 +102,29 @@ func WriteProcessTime(ctx context.Context, w http.ResponseWriter) {
 }
 
 // WriteError is a helper function to return error in a language the called understand
-func WriteError(w http.ResponseWriter, r *http.Request, err error) {
+func WriteError(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	al := r.Header.Get("Accept-Language")
 	httpErr := sdk.ExtractHTTPError(err, al)
 	httpErr.UUID = uuid.NewUUID().String()
 	isErrWithStack := sdk.IsErrorWithStack(err)
 
-	entry := logrus.WithField("method", r.Method).
-		WithField("request_uri", r.RequestURI).
-		WithField("status", httpErr.Status).
-		WithField("error_uuid", httpErr.UUID)
+	fields := logrus.Fields{
+		"method":      r.Method,
+		"request_uri": r.RequestURI,
+		"status":      httpErr.Status,
+		"error_uuid":  httpErr.UUID,
+	}
 	if isErrWithStack {
-		entry = entry.WithField("stack_trace", fmt.Sprintf("%+v", err))
+		fields["stack_trace"] = fmt.Sprintf("%+v", err)
 	}
 
 	// ErrAlreadyTaken and ErrWorkerModelAlreadyBooked are not useful to log in warning
 	if sdk.ErrorIs(httpErr, sdk.ErrAlreadyTaken) ||
 		sdk.ErrorIs(httpErr, sdk.ErrWorkerModelAlreadyBooked) ||
 		sdk.ErrorIs(httpErr, sdk.ErrJobAlreadyBooked) || r.URL.Path == "/user/logged" {
-		entry.Debugf("%s", err)
+		log.WarningWithFields(ctx, fields, "%s", err)
 	} else {
-		entry.Warningf("%s", err)
+		log.ErrorWithFields(ctx, fields, "%s", err)
 	}
 
 	// safely ignore error returned by WriteJSON

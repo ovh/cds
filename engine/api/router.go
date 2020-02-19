@@ -18,6 +18,8 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
@@ -154,7 +156,7 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 					log.Error(context.TODO(), "[PANIC_RECOVERY] RESTART NEEDED")
 				}
 
-				service.WriteError(w, req, err)
+				service.WriteError(context.TODO(), w, req, err)
 			}
 		}()
 		h.ServeHTTP(w, req)
@@ -273,6 +275,17 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 
+		var requestID string
+		if existingRequestID := req.Header.Get("Request-ID"); existingRequestID != "" {
+			if _, err := uuid.FromString(existingRequestID); err == nil {
+				requestID = existingRequestID
+			}
+		}
+		if requestID == "" {
+			requestID = uuid.NewV4().String()
+		}
+		ctx = context.WithValue(ctx, log.ContextLoggingRequestIDKey, requestID)
+
 		dateRFC5322 := req.Header.Get("Date")
 		dateReq, err := sdk.ParseDateRFC5322(dateRFC5322)
 		if err == nil {
@@ -309,7 +322,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 		rc := cfg.Config[req.Method]
 		if rc == nil || rc.Handler == nil {
 			observability.Record(ctx, Errors, 1)
-			service.WriteError(w, req, sdk.ErrNotFound)
+			service.WriteError(ctx, w, req, sdk.ErrNotFound)
 			return
 		}
 
@@ -325,9 +338,36 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 			observability.Path, req.URL.Path,
 			observability.Method, req.Method)
 
-		//Log request
+		// Prepare logging fields
+		ctx = context.WithValue(ctx, log.ContextLoggingFuncKey, func(ctx context.Context) logrus.Fields {
+			fields := make(logrus.Fields)
+
+			// Add consumer info if exists
+			iConsumer := ctx.Value(contextAPIConsumer)
+			if iConsumer != nil {
+				if consumer, ok := iConsumer.(*sdk.AuthConsumer); ok {
+					fields["auth_user_id"] = consumer.AuthentifiedUserID
+					fields["auth_consumer_id"] = consumer.ID
+				}
+			}
+
+			// Add session info if exists
+			iSession := ctx.Value(contextSession)
+			if iSession != nil {
+				if session, ok := iSession.(*sdk.AuthSession); ok {
+					fields["auth_session_id"] = session.ID
+				}
+			}
+
+			return fields
+		})
+
+		// Log request start
 		start := time.Now()
-		defer func(ctx context.Context) {
+		log.Info(ctx, "%s | BEGIN | %s [%s]", req.Method, req.URL, rc.Name)
+
+		// Defer log request end
+		deferFunc := func(ctx context.Context) {
 			if responseWriter.statusCode == 0 {
 				responseWriter.statusCode = 200
 			}
@@ -335,16 +375,18 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 
 			end := time.Now()
 			latency := end.Sub(start)
-			if rc.IsDeprecated {
-				log.Error(ctx, "[%-3d] | %-7s | %13v | DEPRECATED ROUTE | %v [%s]", responseWriter.statusCode, req.Method, latency, req.URL, rc.Name)
-			} else {
-				log.Info(ctx, "[%-3d] | %-7s | %13v | %v [%s]", responseWriter.statusCode, req.Method, latency, req.URL, rc.Name)
-			}
+
+			log.InfoWithFields(ctx, logrus.Fields{
+				"method":     req.Method,
+				"latency":    latency,
+				"status":     responseWriter.statusCode,
+				"deprecated": rc.IsDeprecated,
+			}, "[%d] | %s | END | %s [%s]", responseWriter.statusCode, req.Method, req.URL, rc.Name)
 
 			observability.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))
 			observability.Record(ctx, ServerRequestBytes, responseWriter.reqSize)
 			observability.Record(ctx, ServerResponseBytes, responseWriter.respSize)
-		}(ctx)
+		}
 
 		observability.Record(r.Background, Hits, 1)
 		observability.Record(ctx, ServerRequestCount, 1)
@@ -354,7 +396,8 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 			ctx, err = m(ctx, responseWriter, req, rc)
 			if err != nil {
 				observability.Record(r.Background, Errors, 1)
-				service.WriteError(w, req, err)
+				service.WriteError(ctx, w, req, err)
+				deferFunc(ctx)
 				return
 			}
 		}
@@ -362,7 +405,8 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 		if err := rc.Handler(ctx, responseWriter.wrappedResponseWriter(), req); err != nil {
 			observability.Record(r.Background, Errors, 1)
 			observability.End(ctx, responseWriter, req)
-			service.WriteError(responseWriter, req, err)
+			service.WriteError(ctx, responseWriter, req, err)
+			deferFunc(ctx)
 			return
 		}
 
@@ -377,6 +421,8 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 				log.Error(ctx, "PostMiddlewares > %s", err)
 			}
 		}
+
+		deferFunc(ctx)
 	}
 
 	// The chain is http -> mux -> f -> recover -> wrap -> pprof -> opencensus -> http
@@ -577,7 +623,7 @@ func EnableTracing() HandlerConfigParam {
 
 // NotFoundHandler is called by default by Mux is any matching handler has been found
 func NotFoundHandler(w http.ResponseWriter, req *http.Request) {
-	service.WriteError(w, req, sdk.WithStack(sdk.ErrNotFound))
+	service.WriteError(context.Background(), w, req, sdk.WithStack(sdk.ErrNotFound))
 }
 
 // StatusPanic returns router status. If nbPanic > 30 -> Alert, if nbPanic > 0 -> Warn

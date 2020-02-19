@@ -8,8 +8,9 @@ import (
 	"os"
 	"strings"
 
-	loghook "github.com/ovh/cds/sdk/log/hook"
 	log "github.com/sirupsen/logrus"
+
+	loghook "github.com/ovh/cds/sdk/log/hook"
 )
 
 // Conf contains log configuration
@@ -28,6 +29,12 @@ type Conf struct {
 	Ctx                        context.Context
 }
 
+const (
+	HeaderRequestID            = "Request-ID"
+	ContextLoggingRequestIDKey = "ctx-logging-request-id"
+	ContextLoggingFuncKey      = "ctx-logging-func"
+)
+
 var (
 	logger Logger
 	hook   *loghook.Hook
@@ -40,7 +47,7 @@ type Logger interface {
 	Fatalf(fmt string, values ...interface{})
 }
 
-// SetLogger override private logger reference
+// SetLogger replace logrus logger with custom one.
 func SetLogger(l Logger) {
 	logger = l
 }
@@ -127,77 +134,93 @@ func Initialize(conf *Conf) {
 // Debug prints debug log
 func Debug(format string, values ...interface{}) {
 	if logger != nil {
-		logger.Logf("[DEBUG]    "+format, values...)
-	} else {
-		if len(values) == 0 {
-			log.Debug(format)
-		} else {
-			log.Debugf(format, values...)
-		}
+		logger.Logf("[DEBUG] "+format, values...)
+		return
 	}
+	log.Debugf(format, values...)
 }
 
-// Info prints information log
-func Info(ctx context.Context, format string, values ...interface{}) {
-	if logger != nil {
-		logger.Logf("[INFO]    "+format, values...)
-	} else {
-		if len(values) == 0 {
-			log.Info(ctx, format)
-		} else {
-			log.Infof(format, values...)
-		}
-	}
-}
-
-// InfoWithoutCtx prints information log
+// InfoWithoutCtx prints information log.
 func InfoWithoutCtx(format string, values ...interface{}) {
-	if logger != nil {
-		logger.Logf("[INFO]    "+format, values...)
-	} else {
-		if len(values) == 0 {
-			log.Info(context.Background(), format)
-		} else {
-			log.Infof(format, values...)
-		}
-	}
+	Info(nil, format, values...)
 }
 
-// Warning prints warnings for user
+// Info prints information log.
+func Info(ctx context.Context, format string, values ...interface{}) {
+	InfoWithFields(ctx, nil, format, values...)
+}
+
+// InfoWithFields print info log with given logrus fields.
+func InfoWithFields(ctx context.Context, fields log.Fields, format string, values ...interface{}) {
+	if logger != nil {
+		logger.Logf("[INFO] "+format, values...)
+		return
+	}
+	newEntry(ctx, fields).Infof(format, values...)
+}
+
+// Warning prints warnings log.
 func Warning(ctx context.Context, format string, values ...interface{}) {
-	if logger != nil {
-		logger.Logf("[WARN]    "+format, values...)
-	} else {
-		if len(values) == 0 {
-			log.Warn(format)
-		} else {
-			log.Warnf(format, values...)
-		}
-	}
+	WarningWithFields(ctx, nil, format, values...)
 }
 
-// Error prints error informations
-func Error(ctx context.Context, format string, values ...interface{}) {
+// WarningWithFields print warning log with given logrus fields.
+func WarningWithFields(ctx context.Context, fields log.Fields, format string, values ...interface{}) {
 	if logger != nil {
-		logger.Logf("[ERROR]    "+format, values...)
-	} else {
-		if len(values) == 0 {
-			log.Errorf(format)
-		} else {
-			log.Errorf(format, values...)
-		}
+		logger.Logf("[WARN] "+format, values...)
+		return
 	}
+	newEntry(ctx, fields).Warningf(format, values...)
+}
+
+// Error prints error log.
+func Error(ctx context.Context, format string, values ...interface{}) {
+	ErrorWithFields(ctx, nil, format, values...)
+}
+
+// ErrorWithFields print error log with given logrus fields.
+func ErrorWithFields(ctx context.Context, fields log.Fields, format string, values ...interface{}) {
+	if logger != nil {
+		logger.Logf("[ERROR] "+format, values...)
+		return
+	}
+	newEntry(ctx, fields).Errorf(format, values...)
 }
 
 // Fatalf prints fatal informations, then os.Exit(1)
 func Fatalf(format string, values ...interface{}) {
 	if logger != nil {
-		logger.Logf("[FATAL]    "+format, values...)
-	} else {
-		if len(values) == 0 {
-			log.Fatalf(format)
-		} else {
-			log.Fatalf(format, values...)
+		logger.Logf("[FATAL] "+format, values...)
+		return
+	}
+	log.Fatalf(format, values...)
+}
+
+func newEntry(ctx context.Context, fields log.Fields) *log.Entry {
+	entry := log.NewEntry(log.StandardLogger())
+	if fields != nil {
+		entry = entry.WithFields(fields)
+	}
+	if ctx == nil {
+		return entry
+	}
+
+	// Add request info if exists
+	iRequestID := ctx.Value(ContextLoggingRequestIDKey)
+	if iRequestID != nil {
+		if requestID, ok := iRequestID.(string); ok {
+			entry = entry.WithField("request_id", requestID)
 		}
 	}
+
+	// If a logging func exists in context, execute it
+	iFunc := ctx.Value(ContextLoggingFuncKey)
+	if iFunc != nil {
+		if f, ok := iFunc.(func(ctx context.Context) log.Fields); ok {
+			contextFields := f(ctx)
+			entry = entry.WithFields(contextFields)
+		}
+	}
+
+	return entry
 }
