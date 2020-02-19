@@ -83,7 +83,6 @@ func (api *API) getWorkflowHandler() service.Handler {
 
 		opts := workflow.LoadOptions{
 			Minimal:               minimal, // if true, load only data from table workflow, not pipelines, app, env...
-			WithFavorites:         true,
 			DeepPipeline:          withDeepPipelines,
 			WithIcon:              true,
 			WithLabels:            withLabels,
@@ -93,6 +92,11 @@ func (api *API) getWorkflowHandler() service.Handler {
 		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, opts)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load workflow %s", name)
+		}
+
+		w1.Favorite, err = workflow.IsFavorite(api.mustDB(), w1, getAPIConsumer(ctx).AuthentifiedUserID)
+		if err != nil {
+			return err
 		}
 
 		if withUsage {

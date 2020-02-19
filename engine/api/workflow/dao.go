@@ -70,7 +70,6 @@ type LoadOptions struct {
 	Minimal               bool
 	DeepPipeline          bool
 	Base64Keys            bool
-	WithFavorites         bool
 	WithLabels            bool
 	WithIcon              bool
 	WithAsCodeUpdateEvent bool
