@@ -1,11 +1,10 @@
-export class Keys {
-    static formatForSelect(...keys: any[]): AllKeys {
-        let k = new AllKeys();
-            k.ssh.push(...keys.filter(key => key.type === KeyType.SSH));
-            k.pgp.push(...keys.filter(key => key.type === KeyType.PGP));
-        return k;
-    }
+export function formatKeysForSelect(...keys: Key[]): AllKeys {
+    let k = new AllKeys();
+    k.ssh.push(...keys.filter(key => key.type === KeyType.SSH));
+    k.pgp.push(...keys.filter(key => key.type === KeyType.PGP));
+    return k;
 }
+
 
 export class AllKeys {
     ssh: Array<Key>;
