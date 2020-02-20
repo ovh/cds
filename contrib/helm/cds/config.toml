@@ -1,3 +1,7 @@
+
+#####################
+# API Configuration 
+#####################
 [api]
 
   # if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)
@@ -6,11 +10,49 @@
   # if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)
   defaultOS = "linux"
 
+  # Name of this CDS API Service
+  # Enter a name to enable this service
+  name = ""
+
   # Either filesystem local storage or Openstack Swift Storage are supported
   [api.artifact]
 
-    # swift or local
+    # swift, awss3 or local
     mode = "local"
+
+    [api.artifact.awss3]
+
+      # A static AWS Secret Key ID
+      accessKeyId = ""
+
+      # Pull S3 auth information from env vars AWS_SECRET_ACCESS_KEY and AWS_SECRET_KEY_ID
+      authFromEnv = false
+
+      # Name of the S3 bucket to use when storing artifacts
+      bucketName = ""
+      disableSSL = false
+
+      # S3 API Endpoint (optional)
+      # endpoint = ""
+      forcePathStyle = false
+
+      # A subfolder of the bucket to store objects in, if left empty will store at the root of the bucket
+      prefix = ""
+
+      # The profile within the AWS credentials file to use
+      profile = ""
+
+      # The AWS region
+      region = ""
+
+      # A static AWS Secret Access Key
+      secretAccessKey = ""
+
+      # A static AWS session token
+      sessionToken = ""
+
+      # The path for the AWS credential file, used with profile
+      sharedCredsFile = ""
 
     [api.artifact.local]
       baseDirectory = "/app/artifacts"
@@ -49,37 +91,85 @@
     # The default group is the group in which every new user will be granted at signup
     defaultGroup = "cdsdemo"
 
-    # The RSA Private Key used to sign and verify the JWT Tokens issued by the API
+    # The RSA Private Key used to sign and verify the JWT Tokens issued by the API 
     #This is mandatory.
-    rsaPrivateKey = ""
+    rsaPrivateKey = "-----BEGIN RSA PRIVATE KEY-----\nMIIEpgIBAAKCAQEAv4fpyFT4EbXuWDGekomNquq0TQP2nhdSyY2Qxw2nzlVbwya/\nYx8cxNwZr+y33vxDCbVPP/JZ9W9QFnrUq82R+aH5E1jWhBMN6PdAs9ZvCPFY/0P5\nxOqmgUF4pdrhQHvbK+IK9/JYuO4cqU0We/J/qRcNYU3ZIvqE745d3nWzJvTgCnzD\nCH9jERgajoY84Yydq5Z8bpruZl9iGWmOJknl2DttptpQs6IJIFUCGwcdccpUTPX7\ns865yOW/4fHtjSK0o8YXAlRMHfmGqlvnTS4y4bKIV3di6UMla4QuGdqfrR5JVOhF\nLNXsBqN+1u4s5JyTHczPeHRWet+jPCWsnJ/4+QIDAQABAoIBAQCM6dkFjAYrOZgP\nCQqqs0soeZ+Hniferjg5k871tEVGmCR4EtTyf1xyNaEsftPU2fIUfXG+EXdADNJ2\nh45ajFceu51+L3k8GKy+PtM6vMRaZv7cZ82mpCE2rc2u8LeS8s0QnzEEtSezf3RU\n1yN4s7Ra2lv8wALGKlyNx0emuR/Cw1XnpctckZP2lCMmR4cS8/r1rlYZ9QSI8Zeq\nEN4bVL+VuDvTTvRLexhiQ2aChsTl5FBPxsNCgrcsDf7vyuIUVZcnXQO6WEfNnpZT\nDIbqUwpLvpj60OZrTj4fsp/JhLXpvtVMXTBtCQ1xzSpQgBd8ymUNa2LJtxZkZDK4\nbC3TuIGBAoGBAPD4Z2dYdl500DCshc1HTncTn0EwMfJNiIYkEzsiivA3KnmT97g/\n6RQaU5bRnpfexw8KNFCnZPTLDHCbcMbxcnEn9pR+5OP7efN0vIWGzhVGtJ273fBM\nj2CB6oSOcQ1ZG99rYM29UBWqNAP5GiUsKhKcrP7cxCBeXpsIwUD8jBgxAoGBAMt6\nGv3GNm5jLw/j3fMxFKB/Zdz0LgGPfzGRXBQj9raVbH/StmGrBbxvSRB8qb/9RGzy\nkb2aZ/Hcqib5MOPtV6zB3caHg0CUrcGCPgkZaIcTkTxj+sAkp50lW6xblq7EkDL8\ndE/EuBZt9rEqtIerseQSPexJAGBa6toJwyimDINJAoGBAIwS2Yjpk2U04hBpOR4q\n5SGy9lAeg+olx8ayEbu+SKV6a+ZgbQ9dl09oPk7dayM9DNlhRSfdJoJlxcVvlg8P\nK0c7w8puOP+Nn0Y2BaBYzFLx1uwZ2Nlmp7Gh04Fai70Gn30wHgV6lqMBXVsx4lDZ\na1uGV8mO6zMlqDjWzf/IzmcBAoGBAIuDOlR7/kArw03q1/hx04nEMAySY6TwRa6v\n0umASx2fUFhIGoLW50TvLLKgNyeLOMpWezT8VH7R5Nx6CVqOFoo+FpiTu5uhFY3T\nhkNo53GOKgu1JW1u9Hnb7oI7/hHwdkpvLDSxVeMTHI0XEdbgE0WkeE61Mwvd6p77\nCJOrXnL5AoGBAN8CDa1rFfPDHtvlqlg8kdNdtSBpmr0dU6eJyRQJA10R79lE1hLa\na6h4iaEPecbYiPofh2mQDg/3Bjel7+viMNTR2w+3Eiq5uOeN1f0I6dHPv8k0maGi\nxw66XWloQIHTEPA4DhFWPEMi0qon2a13NAG4YZxlTha5eFe0W8ZL09fW\n-----END RSA PRIVATE KEY-----\n"
 
-    # Token for shared.infra group. This value will be used when shared.infra will be created
-    #at first CDS launch. This token can be used by CDS CLI, Hatchery, etc...
-    #This is mandatory.
-    #sharedInfraToken = ""
+    [api.auth.corporateSSO]
+      enabled = false
+      mailDomain = ""
+      redirectMethod = ""
+      redirectURL = ""
+      signupDisabled = false
+
+      [api.auth.corporateSSO.keys]
+        requestSigningKey = ""
+        tokenSigningKey = ""
+
+        [api.auth.corporateSSO.keys.tokenKeySigningKey]
+          keySigningKey = ""
+          signingKeyClaim = ""
+
+    [api.auth.github]
+
+      #######
+      # Github API URL
+      apiUrl = ""
+
+      #######
+      # Github OAuth Client ID
+      clientId = ""
+
+      # Github OAuth Client Secret
+      clientSecret = ""
+      enabled = false
+      signupDisabled = false
+
+      #######
+      # Github URL
+      url = ""
+
+    [api.auth.gitlab]
+
+      #######
+      # Gitlab OAuth Application ID
+      applicationID = ""
+      enabled = false
+
+      # Gitlab OAuth Application Secret
+      secret = ""
+      signupDisabled = false
+
+      #######
+      # Gitlab URL
+      url = ""
 
     [api.auth.ldap]
-      base = "dc=myorganization,dc=com"
-
-      # Define it if ldapsearch need to be authenticated
-      bindDN = ""
-
-      # Define it if ldapsearch need to be authenticated
-      bindPwd = ""
-      dn = "uid=%s,ou=people,dc=myorganization,dc=com"
-      enable = false
-      fullname = "{{.givenName}} {{.sn}}"
+      enabled = false
       host = ""
+
+      # Define it if ldapsearch need to be authenticated
+      managerDN = ""
+
+      # Define it if ldapsearch need to be authenticated
+      managerPassword = ""
       port = 636
+      rootDN = ""
+      signupDisabled = false
       ssl = true
+      userFullname = ""
+      userSearch = ""
+      userSearchBase = ""
 
     [api.auth.local]
+      enabled = false
 
       # Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com
       # signupAllowedDomains = ""
+      signupDisabled = false
 
   ######################
-  # CDS Cache Settings
+  # CDS Cache Settings 
   ######################
   #
   [api.cache]
@@ -89,22 +179,22 @@
     [api.cache.redis]
 
       # If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379
-      #host = "localhost:6379"
-      #password = ""
+      host = ""
+      password = ""
 
   ################################
-  # Postgresql Database settings
+  # Postgresql Database settings 
   ################################
   [api.database]
 
     # Maximum wait for connection, in seconds
     connectTimeout = 10
-#    host = "localhost"
+    host = ""
 
     # DB Max connection
     maxconn = 20
     name = "cds"
-#    password = "cds"
+    password = ""
     port = 5432
 
     # Set a specific role to run SET ROLE for each connection
@@ -117,25 +207,27 @@
     timeout = 3000
     user = "cds"
 
+    # Encryption rolling keys
+    [api.database.encryptionRollingKeys]
+      cipher = "xchacha20-poly1305"
+
+      [[api.database.encryptionRollingKeys.keys]]
+        key = "7088f6d44f77d51a1e6c5b6857c46f88b5e6841ade860b204b50305c5ca48d8c"
+        timestamp = 1580996691
+
+    # Signature rolling keys
+    [api.database.signatureRollingKeys]
+      cipher = "hmac"
+
+      [[api.database.signatureRollingKeys.keys]]
+        key = "77eef4f617ff99770e8de6e5886a39872d2c95efc4d4626b93cfba60a5c8130a"
+        timestamp = 1580996691
+
   [api.directories]
     download = "/app"
-    keys = "/app/keys"
-
-  #######################
-  # CDS Events Settings
-  #######################
-  [api.events]
-
-    [api.events.kafka]
-      broker = ""
-      enabled = false
-      maxmessagebytes = 10000000
-      password = ""
-      topic = ""
-      user = ""
 
   ###########################
-  # CDS Features flipping Settings
+  # CDS Features flipping Settings 
   ###########################
   [api.features]
 
@@ -149,11 +241,11 @@
       token = ""
 
   ###########################
-  # Graylog Search.
-  # When CDS API generates errors, you can fetch them with cdsctl.
-  # Examples:
-  # $ cdsctl admin errors get <error-id>
-  # $ cdsctl admin errors get 55f6e977-d39b-11e8-8513-0242ac110007
+  # Graylog Search. 
+  # When CDS API generates errors, you can fetch them with cdsctl. 
+  # Examples: 
+  # $ cdsctl admin errors get <error-id> 
+  # $ cdsctl admin errors get 55f6e977-d39b-11e8-8513-0242ac110007 
   ###########################
   [api.graylog]
     accessToken = ""
@@ -162,18 +254,11 @@
     # Example: http://localhost:9000
     url = ""
 
-  [api.grpc]
-
-    # Listen GRPC address without port, example: 127.0.0.1
-    # addr = ""
-#    port = 8082
-
   [api.http]
 
     # Listen HTTP address without port, example: 127.0.0.1
     # addr = ""
-#    port = 8081
-#    sessionTTL = 60
+    port = 0
 
   ###########################
   # Log settings.
@@ -187,78 +272,37 @@
     stepMaxSize = 15728640
 
   [api.secrets]
-#    key = ""
+    key = "sp737pgtziyb6bjswd81g6nwz7ai9frd"
 
   #####################
-  ## CDS SMTP Settings
+  ## CDS SMTP Settings 
   #####################
   [api.smtp]
+
+    # Set to false to enable the internal SMTP client
     disable = true
     from = "no-reply@cds.local"
+
+    # smtp host
     host = ""
     password = ""
+
+    # smtp port
     port = ""
     tls = false
     user = ""
 
-  ###########################
-  # CDS Status Settings
-  # Documentation: https://ovh.github.io/cds/hosting/monitoring/
-  ###########################
-  [api.status]
-
-    [api.status.api]
-
-      # if less than minInstance of API is running, an alert will on Global/API be created on /mon/status
-      minInstance = 1
-
-    [api.status.dbmigrate]
-
-      # if less than minInstance of dbmigrate service is running, an alert on Global/dbmigrate will be created on /mon/status
-      minInstance = 1
-
-    [api.status.elasticsearch]
-
-      # if less than minInstance of elasticsearch service is running, an alert on Global/elasticsearch will be created on /mon/status
-      minInstance = 1
-
-    [api.status.hatchery]
-
-      # if less than minInstance of hatchery service is running, an alert on Global/hatchery will be created on /mon/status
-      minInstance = 1
-
-    [api.status.hooks]
-
-      # if less than minInstance of hooks service is running, an alert on Global/hooks will be created on /mon/status
-      minInstance = 1
-
-    [api.status.repositories]
-
-      # if less than minInstance of repositories service is running, an alert on Global/hooks will be created on /mon/status
-      minInstance = 1
-
-    [api.status.vcs]
-
-      # if less than minInstance of vcs service is running, an alert will on Global/vcs be created on /mon/status
-      minInstance = 1
-
   #####################
-  # CDS URLs Settings
+  # CDS URLs Settings 
   #####################
   [api.url]
-#    api = "http://localhost:8081"
-#    ui = "http://localhost:2015"
-
-  [api.vault]
-    configurationKey = ""
-
-
+    api = ""
+    ui = ""
 
 ######################
-# CDS Hooks Settings
+# CDS Hooks Settings 
 #######################
 [hooks]
-  URL = "http://localhost:8083"
 
   # Disable all hooks executions
   disable = false
@@ -275,28 +319,25 @@
 
   # Retry execution while this number of error is not reached
   retryError = 3
+  url = "http://localhost:8083"
 
   # Public url for external call (webhook)
   urlPublic = ""
 
   ######################
-  # CDS API Settings
+  # CDS API Settings 
   #######################
   [hooks.api]
     maxHeartbeatFailures = 10
     requestTimeout = 10
-    token = ""
-
-    [hooks.api.grpc]
-      # insecure = false
-      url = "http://localhost:8082"
+    token = "eyJhbGciOiJQUzUxMiIsImtpZCI6IiJ9.eyJ0eXBlIjoic2lnbmluQnVpbHRpbkNvbnN1bWVyVG9rZW4iLCJleHBpcmUiOjAsImRhdGEiOnsiY29uc3VtZXJfaWQiOiJhYzQ4Y2Q3My1jOWY1LTRjNjAtYmNlMC1kYzMxNTNmYTA1NjciLCJpYXQiOjE1ODA5OTY2OTF9fQ.kb_GPsSbrjtFQXH-SZxve4I-dqsZN94KjdVw9Z2zQCQP3__VaMxZaSE0UOsw5Hym6m3opZYcZol568haAiC9Q1s6-0C1vfOgaaGbtl-3kBIYGOedoEcoXt1aNJmWA5n6ICLvR3u4R0sqxLKwxrReJgf0MgSPhaVNWXQD27TSil-HoCwJFTqoQYjAW_0bHuzTM1xa76TBptRke9mAWMibOFCzjXFF2SZkUD3TnSnEgZ9HWmRkpAI6zjn_lnmJLqzfCSqT3cgeuwqXb2VaY_mmjv_MddCQnZ0nv_NaAGThzlhpDZI4tW-jyganqRGXdv4zP2i-j4CBQeK2UPF7bWKG9Q"
 
     [hooks.api.http]
-      # insecure = false
+      insecure = false
       url = "http://localhost:8081"
 
   ######################
-  # CDS Hooks Cache Settings
+  # CDS Hooks Cache Settings 
   #######################
   [hooks.cache]
     ttl = 60
@@ -309,7 +350,7 @@
       password = ""
 
   ######################
-  # CDS Hooks HTTP Configuration
+  # CDS Hooks HTTP Configuration 
   #######################
   [hooks.http]
 
@@ -318,7 +359,7 @@
     port = 8083
 
 #####################
-# CDS Logs Settings
+# CDS Logs Settings 
 #####################
 [log]
 
@@ -343,7 +384,7 @@
     protocol = ""
 
 ######################
-# CDS Repositories Settings
+# CDS Repositories Settings 
 #######################
 [repositories]
   URL = "http://localhost:8085"
@@ -356,29 +397,25 @@
   name = ""
 
   # Operation retention in redis store (in days)
-  operation_retention = 5
+  operationRetention = 0
 
   # Re retention on the filesystem (in days)
-  repositories_retention = 10
+  repositoriesRetention = 0
 
   ######################
-  # CDS API Settings
+  # CDS API Settings 
   #######################
   [repositories.api]
     maxHeartbeatFailures = 10
     requestTimeout = 10
-    token = ""
-
-    [repositories.api.grpc]
-      # insecure = false
-      url = "http://localhost:8082"
+    token = "eyJhbGciOiJQUzUxMiIsImtpZCI6IiJ9.eyJ0eXBlIjoic2lnbmluQnVpbHRpbkNvbnN1bWVyVG9rZW4iLCJleHBpcmUiOjAsImRhdGEiOnsiY29uc3VtZXJfaWQiOiJiZDIwN2I0Yy04NmM4LTRmNDAtOWNhZC0wNjA0OWQyNWM0ZTEiLCJpYXQiOjE1ODA5OTY2OTF9fQ.PluyFjoSjBS4-_dxmpzWab9Rp06FhxiXk647QVWSGptUxBbqVFO6lVAvPU0rhxpWJijvPe0u4ZKRWoa_lJsKbOQ8h5Zr1xuWHjbfgminJQEqZvMdhvd84-LzEJtIKmTDxMVS8YtiSEUL0MJ2hU9zTCl2YiPx2teBYZ1SxtYK55XhF7n9WNt6WbDpbuWQvoeOPp4-Z-upjHy15ZHGq3Ibytmlt1PleD1-8fYPPGymVVMUz8HJHX5x641A0ETA4dg1qVz4xF3ACJSE8kFfDSNK0eNuiT6c_WDE3gYLKrCUr2M2FqyxvAyII46HDkVBAZzv1WfS-_tPUnfzvCXrtuDEfw"
 
     [repositories.api.http]
-      # insecure = false
+      insecure = false
       url = "http://localhost:8081"
 
   ######################
-  # CDS Repositories Cache Settings
+  # CDS Repositories Cache Settings 
   #######################
   [repositories.cache]
     ttl = 60
@@ -390,7 +427,7 @@
       password = ""
 
   ######################
-  # CDS Repositories HTTP Configuration
+  # CDS Repositories HTTP Configuration 
   #######################
   [repositories.http]
 
@@ -399,53 +436,45 @@
     port = 8085
 
 ###########################
-# CDS Tracing Settings
+# CDS Telemetry Settings 
 ###########################
-[tracing]
-  Enable = false
-  SamplingProbability = 0.0
+[telemetry]
+  metricsEnabled = false
+  tracingEnabled = false
 
-  [tracing.Exporter]
+  [telemetry.Exporters]
 
-    [tracing.Exporter.Jaeger]
-      HTTPCollectorEndpoint = "http://localhost:14268"
+    [telemetry.Exporters.Jaeger]
+      HTTPCollectorEndpoint = ""
+      samplingProbability = 0.0
 
-    [tracing.Exporter.Prometheus]
-      ReporteringPeriod = 60
+    [telemetry.Exporters.Prometheus]
+      ReporteringPeriod = 0
 
 ######################
-# CDS VCS Settings
+# CDS VCS Settings 
 #######################
 [vcs]
-  # URL = ""
+  URL = ""
 
   # Name of this CDS VCS Service
   # Enter a name to enable this service
-  # name = ""
-
-  [vcs.UI]
-
-    [vcs.UI.http]
-      # url = ""
+  name = ""
 
   ######################
-  # CDS API Settings
+  # CDS API Settings 
   #######################
   [vcs.api]
     maxHeartbeatFailures = 10
     requestTimeout = 10
-    # token = ""
-
-    [vcs.api.grpc]
-      # insecure = false
-      # url = "http://localhost:8082"
+    token = "eyJhbGciOiJQUzUxMiIsImtpZCI6IiJ9.eyJ0eXBlIjoic2lnbmluQnVpbHRpbkNvbnN1bWVyVG9rZW4iLCJleHBpcmUiOjAsImRhdGEiOnsiY29uc3VtZXJfaWQiOiIzMDhjNmUzOS0wMjg2LTRlZDQtOGJmYi03Y2M0NDE3MmIxNWMiLCJpYXQiOjE1ODA5OTY2OTF9fQ.qlter_aqc3AZ5iwDALxuoXmCAMjMmJsO5oEmzglfi9fCxGUbuIfM_GwSrlGSNJKUIQUc1oQoHTEdTh2r3QzKC23dmnK0bql-va1x3CsnDXi_mnSd4Z1hjs-etmqGPYazl9EWBR44i0HS_uhyB1PIDmJR09XJpANV_zaC3Jbwcz0Sp7ThmqmhB9l9OiBGe6vscMFXx2-XyPgqcSVRddcgIi0iQAkS-JOjvX1y_lulGBRRWmei-xTQvvYHAwDFu-uripNSO6w11vSHuw7a2zx9zKE5iFdQjAdjRzL6yda___K0sjC_STOMbxo5CsZKHwHfSbN_FwSYYLt35ELmgOdzGQ"
 
     [vcs.api.http]
-      # insecure = false
-      # url = "http://localhost:8081"
+      insecure = false
+      url = ""
 
   ######################
-  # CDS VCS Cache Settings
+  # CDS VCS Cache Settings 
   #######################
   [vcs.cache]
     ttl = 60
@@ -453,66 +482,35 @@
     [vcs.cache.redis]
 
       # If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379
-      # host = "localhost:6379"
-      # password = ""
+      host = ""
+      password = ""
 
   ######################
-  # CDS VCS HTTP Configuration
+  # CDS VCS HTTP Configuration 
   #######################
   [vcs.http]
 
     # Listen address without port, example: 127.0.0.1
     # addr = ""
-    # port = 8084
+    port = 0
 
   ######################
-  # CDS VCS Server Settings
+  # CDS VCS Server Settings 
   #######################
   [vcs.servers]
 
-    # [vcs.servers.Bitbucket]
-
-      # # URL of this VCS Server
-      # url = "https://mybitbucket.com"
-      #
-      # [vcs.servers.Bitbucket.bitbucket]
-      #
-      #   #######
-      #   # CDS <-> Bitbucket. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/
-      #   ########
-      #   # You can change the consumeKey if you want
-      #   consumerKey = "xxx"
-      #
-      #   # Does polling is supported by VCS Server
-      #   disablePolling = false
-      #
-      #   # Does webhooks are supported by VCS Server
-      #   disableWebHooks = false
-      #   privateKey = "xxx"
-      #
-      #   # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
-      #   # proxyWebhook = ""
-      #
-      #   # optional, Bitbucket Token associated to username, used to add comment on Pull Request
-      #   token = ""
-      #
-      #   # optional. Bitbucket username, used to add comment on Pull Request on failed build.
-      #   username = ""
-      #
-      #   [vcs.servers.Bitbucket.bitbucket.Status]
-      #
-      #     # Set to true if you don't want CDS to push statuses on the VCS server
-      #     # disable = false
-
-    [vcs.servers.Github]
+    [vcs.servers.github]
 
       # URL of this VCS Server
       url = "https://github.com"
 
-      [vcs.servers.Github.github]
+      [vcs.servers.github.github]
+
+        # The URL for the GitHub API.
+        apiUrl = ""
 
         #######
-        # CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/
+        # CDS <-> Github. Documentation on https://ovh.github.io/cds/docs/integrations/github/ 
         ########
         # Github OAuth Application Client ID
         clientId = "XXX"
@@ -530,12 +528,12 @@
         # proxyWebhook = ""
 
         # optional, Github Token associated to username, used to add comment on Pull Request
-        # token = ""
+        token = ""
 
         # optional. Github username, used to add comment on Pull Request on failed build.
         username = ""
 
-        [vcs.servers.Github.github.Status]
+        [vcs.servers.github.github.Status]
 
           # Set to true if you don't want CDS to push statuses on the VCS server
           # disable = false
@@ -543,32 +541,53 @@
           # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
           # showDetail = false
 
-    # [vcs.servers.Gitlab]
-    #
-    #   # URL of this VCS Server
-    #   url = "https://gitlab.com"
-    #
-    #   [vcs.servers.Gitlab.gitlab]
-    #
-    #     #######
-    #     # CDS <-> Gitlab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/
-    #     ########
-    #     appId = "xxxx"
-    #
-    #     # Does polling is supported by VCS Server
-    #     disablePolling = false
-    #
-    #     # Does webhooks are supported by VCS Server
-    #     disableWebHooks = false
-    #
-    #     # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
-    #     # proxyWebhook = ""
-    #     secret = "xxxx"
-    #
-    #     [vcs.servers.Gitlab.gitlab.Status]
-    #
-    #       # Set to true if you don't want CDS to push statuses on the VCS server
-    #       # disable = false
-    #
-    #       # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
-    #       # showDetail = false
+  [vcs.ui]
+
+    [vcs.ui.http]
+      url = ""
+
+
+#####################
+# UI Configuration 
+#####################
+[ui]
+
+  # Base URL. If you expose CDS UI with https://your-domain.com/ui, enter the value '/ui'
+  baseURL = "/"
+
+  # Hooks µService URL
+  hooksURL = "http://localhost:8083"
+
+  # Name of this CDS UI Service
+  # Enter a name to enable this service
+  name = "cds-ui"
+
+  # Sentry URL. Optional
+  sentryURL = ""
+
+  # This directory must contains index.html file and other ui files (css, js...) from ui.tar.gz artifact.
+  staticdir = "./ui_static_files"
+
+  # URL of this UI service
+  url = "http://localhost:8086"
+
+  ######################
+  # CDS API Settings 
+  #######################
+  [ui.api]
+    maxHeartbeatFailures = 10
+    requestTimeout = 10
+    token = "eyJhbGciOiJQUzUxMiIsImtpZCI6IiJ9.eyJ0eXBlIjoic2lnbmluQnVpbHRpbkNvbnN1bWVyVG9rZW4iLCJleHBpcmUiOjAsImRhdGEiOnsiY29uc3VtZXJfaWQiOiIzMDhjNmUzOS0wMjg2LTRlZDQtOGJmYi03Y2M0NDE3MmIxNWMiLCJpYXQiOjE1ODA5OTY2OTF9fQ.qlter_aqc3AZ5iwDALxuoXmCAMjMmJsO5oEmzglfi9fCxGUbuIfM_GwSrlGSNJKUIQUc1oQoHTEdTh2r3QzKC23dmnK0bql-va1x3CsnDXi_mnSd4Z1hjs-etmqGPYazl9EWBR44i0HS_uhyB1PIDmJR09XJpANV_zaC3Jbwcz0Sp7ThmqmhB9l9OiBGe6vscMFXx2-XyPgqcSVRddcgIi0iQAkS-JOjvX1y_lulGBRRWmei-xTQvvYHAwDFu-uripNSO6w11vSHuw7a2zx9zKE5iFdQjAdjRzL6yda___K0sjC_STOMbxo5CsZKHwHfSbN_FwSYYLt35ELmgOdzGQ"
+
+    [ui.api.http]
+      insecure = false
+      url = "http://localhost:8081"
+
+  ######################
+  # CDS UI HTTP Configuration 
+  #######################
+  [ui.http]
+
+    # Listen address without port, example: 127.0.0.1
+    # addr = ""
+    port = 8086

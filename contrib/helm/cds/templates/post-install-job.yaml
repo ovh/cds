@@ -44,7 +44,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: {{ template "cds.postgresql.fullname" . }}
-              key: postgres-password #reference postgresql chart secret
+              key: postgresql-password #reference postgresql chart secret
         {{- else }}
           value: {{ default "" .Values.externalDatabase.password | quote }}
         {{- end }}

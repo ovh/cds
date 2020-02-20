@@ -1,12 +1,12 @@
 dependencies:
 - name: postgresql
   repository: https://kubernetes-charts.storage.googleapis.com/
-  version: 0.13.1
+  version: 8.0.0
 - name: redis
   repository: https://kubernetes-charts.storage.googleapis.com/
-  version: 3.3.5
+  version: 10.4.2
 - name: elasticsearch
   repository: https://kubernetes-charts.storage.googleapis.com/
-  version: 1.11.1
-digest: sha256:8d2c2d7d9d4b5fdaf1f0bc7553678e234e48ea6a4dbd449f332fd530bfb8ceba
-generated: 2018-10-24T08:59:04.364687+02:00
+  version: 1.32.2
+digest: sha256:fb87f42218fe8a69a1650623667a5525e130d1b376556fb50b18c590aab080da
+generated: 2020-02-10T17:02:16.495546+01:00

@@ -171,19 +171,19 @@ ingress:
 ui:
   image:
     registry: docker.io
-    repository: ovhcom/cds-ui
+    repository: ovhcom/cds-engine
     cdstag: 0.43.1
   logLevel: info
   baseUrl: /
   api.livenessProbe:
     httpGet:
       path: /
-      port: 8081
+      port: 8086
     initialDelaySeconds: 120
   api.readinessProbe:
     httpGet:
       path: /
-      port: 8081
+      port: 8086
     initialDelaySeconds: 30
 
   ## Service configuration
@@ -209,7 +209,7 @@ postgresql:
   # imagePullSecrets: myregistrykey
 
   ## Create a database user
-  postgresUser: cds
+  postgresqlUsername: cds
   ## Default: random 10 character string
   # postgresPassword:
 
@@ -219,7 +219,7 @@ postgresql:
 
   ## Create a database
   ## Default: the postgres user
-  postgresDatabase: cds
+  postgresqlDatabase: cds
 
   ## Other agrs available
   ## ref: https://github.com/docker-library/docs/blob/master/postgres/content.md#postgres_initdb_args
@@ -253,7 +253,7 @@ postgresql:
     ##   GKE, AWS & OpenStack)
     ##
     # storageClass: "-"
-    accessMode: ReadWriteOnce
+    accessModes: [ReadWriteOnce]
     size: 8Gi
     subPath: "postgresql-db"
     mountPath: /tmp/pgdata #FIXME:  default value is NOK but there should be a better path
@@ -262,25 +262,6 @@ postgresql:
 
   metrics:
     enabled: false
-    image: wrouesnel/postgres_exporter
-    imageTag: v0.1.1
-    imagePullPolicy: IfNotPresent
-    resources:
-      requests:
-        memory: 256Mi
-        cpu: 100m
-      ## Define additional custom metrics
-      ## ref: https://github.com/wrouesnel/postgres_exporter#adding-new-metrics-via-a-config-file
-      # customMetrics:
-      #   pg_database:
-      #     query: "SELECT d.datname AS name, CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT') THEN pg_catalog.pg_database_size(d.datname) ELSE 0 END AS size FROM pg_catalog.pg_database d where datname not in ('template0', 'template1', 'postgres')"
-      #     metrics:
-      #       - name:
-      #           usage: "LABEL"
-      #           description: "Name of the database"
-      #       - size_bytes:
-      #           usage: "GAUGE"
-      #           description: "Size of the database in bytes"
 
   ## Configure resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -322,10 +303,10 @@ postgresql:
   podAnnotations: {}
 
 redis:
-  image:
-    registry: docker.io
-    repository: bitnami/redis
-    tag: 4.0.9
+  # image:
+  #   registry: docker.io
+  #   repository: bitnami/redis
+  #   tag: 4.0.9
 
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -391,9 +372,9 @@ redis:
   ## ref: https://github.com/bitnami/bitnami-docker-redis#setting-the-server-password-on-first-run
   ##
   usePassword: false
-  password:
+  #password:
   ## Use existing secret (ignores previous password)
-  # existingSecret:
+    #existingSecret:
 
   ## Persist data to a persistent volume
   persistence: {}
@@ -429,7 +410,9 @@ redis:
     ## Can be used to disable Redis commands for security reasons.
     ## ref: https://github.com/bitnami/bitnami-docker-redis#disabling-redis-commands
     ##
-    disableCommands: "FLUSHDB,FLUSHALL"
+    disableCommands: 
+    - FLUSHDB
+    - FLUSHALL
     ## Enable persistence using Persistent Volume Claims
     ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
     ##
@@ -498,7 +481,7 @@ redis:
 
       ## The path the volume will be mounted at, useful when using different
       ## Redis images.
-      path: /bitnami/redis/data
+      # path: /bitnami/redis/data
 
       ## The subdirectory of the volume to mount to, useful in dev environments and one PV for multiple services.
       subPath: ""

@@ -25,9 +25,39 @@ spec:
       {{- if .Values.image.pullSecrets }}
       imagePullSecrets:
       {{- range .Values.image.pullSecrets }}
-        - name: {{ . }}
+      - name: {{ . }}
       {{- end}}
       {{- end }}
+      initContainers:
+      - name: init-config-file
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.cdstag }}"
+        command: ['sh', '-c', "[ ! -f '/app/conf/conf.toml' ] && mkdir -p /app/conf && /app/cds-engine-linux-amd64 config new > /app/conf/conf.toml;
+        mkdir -p /app/artifacts /app/repositories /app/hatchery-local;
+        chown -R cds:cds /app/conf /app/artifacts /app/repositories /app/hatchery-local;
+        /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml \
+        api.artifact.local.baseDirectory=/app/artifacts \
+        api.cache.redis.host=cds-cache:6379 \
+        api.database.connectTimeout=10 \
+        api.database.host=cds-db \
+        api.database.name=cds \
+        api.database.user=cds \
+        api.database.password=cds \
+        api.database.sslmode=disable \
+        api.directories.download=/app \
+        api.url.api={{ template "cds.fullname" . }}-api \
+        api.url.ui={{ template "cds.fullname" . }}-ui \
+        api.log.level=info \
+        vcs.url=http://{{ template "cds.fullname" . }}-vcs \
+        vcs.api.http.url=http://cds-api:8081 \
+        vcs.cache.redis.host={{ template "cds.redis.fullname" . }}-master:{{ default "" .Values.redis.master.port }} \
+        ui.url=http://{{ template "cds.fullname" . }}-ui \
+        ui.api.http.url=http://{{ template "cds.fullname" . }}-ui/cdsapi \
+        ui.hooksURL=http://cds-hooks:8081; cp /app/conf/conf.toml /cache/conf.toml; cat /app/conf/conf.toml"]
+        volumeMounts:
+        - name: cds-data
+          mountPath: {{ .Values.persistence.mountPath }}
+        - name: cds-cache
+          mountPath: /cache
       containers:
       - name: {{ template "cds.fullname" . }}-api
         image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.cdstag }}"
@@ -49,7 +79,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: {{ template "cds.postgresql.fullname" . }}
-              key: postgres-password #reference postgresql chart secret
+              key: postgresql-password #reference postgresql chart secret
         {{- else }}
           value: {{ default "" .Values.externalDatabase.password | quote }}
         {{- end }}
@@ -67,15 +97,6 @@ spec:
           value: {{ default "" .Values.logLevel | quote }}
         - name: CDS_API_CACHE_REDIS_HOST
           value: {{ template "cds.redis.fullname" . }}-master:{{ default "" .Values.redis.master.port }}
-        - name: CDS_API_CACHE_REDIS_PASSWORD
-        {{- if .Values.redis.enabled }}
-          valueFrom:
-            secretKeyRef:
-              name: {{ template "cds.redis.fullname" . }}
-              key: redis-password #reference postgresql chart secret
-        {{- else }}
-          value: {{ default "" .Values.redis.password | quote }}
-        {{- end }}
         - name: CDS_API_AUTH_SHAREDINFRATOKEN
           valueFrom:
             secretKeyRef:
@@ -87,7 +108,7 @@ spec:
               name: {{ template "cds.fullname" . }}
               key: cds-api_secrets_key
         command: ["/bin/sh"]
-        args: ["-c", "echo $CDS_CONFIG_FILE | base64 -d > config.toml && /app/cds-engine-linux-amd64 start api --config config.toml"]
+        args: ["-c", "/app/cds-engine-linux-amd64 start api --config /cache/conf.toml"]
         ports:
         - name: http
           containerPort: 8081
@@ -102,11 +123,13 @@ spec:
         volumeMounts:
         - name: cds-data
           mountPath: {{ .Values.persistence.mountPath }}
+        - name: cds-cache
+          mountPath: /cache
       volumes:
       - name: cds-data
       {{- if .Values.persistence.enabled }}
         persistentVolumeClaim:
           claimName: {{ .Values.persistence.existingClaim | default (printf "%s-api" (include "cds.fullname" .)) }}
-      {{- else }}
-        emptyDir: {}
       {{- end }}
+      - name: cds-cache
+        emptyDir: {}
