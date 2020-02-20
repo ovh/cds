@@ -2517,7 +2517,7 @@ func Test_deleteWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerBadResyncOptions(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -2546,7 +2546,7 @@ func Test_postWorkflowRunHandlerBadResyncOptions(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -2690,7 +2690,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
