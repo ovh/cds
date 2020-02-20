@@ -52,6 +52,10 @@ func SetLogger(l Logger) {
 	logger = l
 }
 
+func logWithLogger(level, format string, values ...interface{}) {
+	logger.Logf("["+level+"] "+format, values...)
+}
+
 // Initialize init log level
 func Initialize(conf *Conf) {
 	switch conf.Level {
@@ -134,7 +138,7 @@ func Initialize(conf *Conf) {
 // Debug prints debug log
 func Debug(format string, values ...interface{}) {
 	if logger != nil {
-		logger.Logf("[DEBUG] "+format, values...)
+		logWithLogger("DEBUG", format, values...)
 		return
 	}
 	log.Debugf(format, values...)
@@ -153,7 +157,7 @@ func Info(ctx context.Context, format string, values ...interface{}) {
 // InfoWithFields print info log with given logrus fields.
 func InfoWithFields(ctx context.Context, fields log.Fields, format string, values ...interface{}) {
 	if logger != nil {
-		logger.Logf("[INFO] "+format, values...)
+		logWithLogger("INFO", format, values...)
 		return
 	}
 	newEntry(ctx, fields).Infof(format, values...)
@@ -167,7 +171,7 @@ func Warning(ctx context.Context, format string, values ...interface{}) {
 // WarningWithFields print warning log with given logrus fields.
 func WarningWithFields(ctx context.Context, fields log.Fields, format string, values ...interface{}) {
 	if logger != nil {
-		logger.Logf("[WARN] "+format, values...)
+		logWithLogger("WARN", format, values...)
 		return
 	}
 	newEntry(ctx, fields).Warningf(format, values...)
@@ -181,7 +185,7 @@ func Error(ctx context.Context, format string, values ...interface{}) {
 // ErrorWithFields print error log with given logrus fields.
 func ErrorWithFields(ctx context.Context, fields log.Fields, format string, values ...interface{}) {
 	if logger != nil {
-		logger.Logf("[ERROR] "+format, values...)
+		logWithLogger("ERROR", format, values...)
 		return
 	}
 	newEntry(ctx, fields).Errorf(format, values...)
@@ -190,7 +194,7 @@ func ErrorWithFields(ctx context.Context, fields log.Fields, format string, valu
 // Fatalf prints fatal informations, then os.Exit(1)
 func Fatalf(format string, values ...interface{}) {
 	if logger != nil {
-		logger.Logf("[FATAL] "+format, values...)
+		logWithLogger("FATAL", format, values...)
 		return
 	}
 	log.Fatalf(format, values...)

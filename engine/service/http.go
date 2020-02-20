@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pborman/uuid"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
@@ -101,18 +100,21 @@ func WriteProcessTime(ctx context.Context, w http.ResponseWriter) {
 	}
 }
 
+type ErrorResponse struct {
+	sdk.Error
+	RequestID string `json:"request_id"`
+}
+
 // WriteError is a helper function to return error in a language the called understand
 func WriteError(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	al := r.Header.Get("Accept-Language")
 	httpErr := sdk.ExtractHTTPError(err, al)
-	httpErr.UUID = uuid.NewUUID().String()
 	isErrWithStack := sdk.IsErrorWithStack(err)
 
 	fields := logrus.Fields{
 		"method":      r.Method,
 		"request_uri": r.RequestURI,
 		"status":      httpErr.Status,
-		"error_uuid":  httpErr.UUID,
 	}
 	if isErrWithStack {
 		fields["stack_trace"] = fmt.Sprintf("%+v", err)
@@ -125,6 +127,14 @@ func WriteError(ctx context.Context, w http.ResponseWriter, r *http.Request, err
 		log.WarningWithFields(ctx, fields, "%s", err)
 	} else {
 		log.ErrorWithFields(ctx, fields, "%s", err)
+	}
+
+	// Add request info if exists
+	iRequestID := ctx.Value(log.ContextLoggingRequestIDKey)
+	if iRequestID != nil {
+		if requestID, ok := iRequestID.(string); ok {
+			httpErr.RequestID = requestID
+		}
 	}
 
 	// safely ignore error returned by WriteJSON

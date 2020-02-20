@@ -152,7 +152,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	// If we set Auth(false) on a handler, with should have a consumer in the context if a valid JWT is given
 	if rc.NeedAuth && getAPIConsumer(ctx) == nil {
-		return nil, sdk.WithStack(sdk.ErrUnauthorized)
+		return ctx, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 
 	if rc.NeedAdmin && !isAdmin(ctx) {

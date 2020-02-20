@@ -579,7 +579,7 @@ type Error struct {
 	Status     int         `json:"-"`
 	Message    string      `json:"message"`
 	Data       interface{} `json:"data"`
-	UUID       string      `json:"uuid,omitempty"`
+	RequestID  string      `json:"request_id,omitempty"`
 	StackTrace string      `json:"stack_trace,omitempty"`
 	from       string
 }

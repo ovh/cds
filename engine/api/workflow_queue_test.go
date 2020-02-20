@@ -455,7 +455,6 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	run, err := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, err)
 	require.Equal(t, "Building", run.Status)
-
 }
 
 func Test_postBookWorkflowJobHandler(t *testing.T) {

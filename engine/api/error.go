@@ -26,10 +26,10 @@ type graylogResponse struct {
 func (api *API) getErrorHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		uuid := vars["uuid"]
+		id := vars["request_id"]
 
 		if api.Config.Graylog.URL == "" || api.Config.Graylog.AccessToken == "" {
-			return sdk.WithStack(sdk.ErrNotImplemented)
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/search/universal/absolute", api.Config.Graylog.URL), nil)
@@ -38,10 +38,9 @@ func (api *API) getErrorHandler() service.Handler {
 		}
 
 		q := req.URL.Query()
-		q.Add("query", fmt.Sprintf("error_uuid:%s", uuid))
+		q.Add("query", fmt.Sprintf("request_id:%s", id))
 		q.Add("from", "1970-01-01 00:00:00.000")
 		q.Add("to", time.Now().Format("2006-01-02 15:04:05"))
-		q.Add("limit", "1")
 		q.Add("filter", fmt.Sprintf("streams:%s", api.Config.Graylog.Stream))
 		req.URL.RawQuery = q.Encode()
 
@@ -66,15 +65,16 @@ func (api *API) getErrorHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		e := sdk.Error{
-			UUID:    res.Messages[0].Message["error_uuid"].(string),
-			Message: res.Messages[0].Message["message"].(string),
-		}
-		if st, ok := res.Messages[0].Message["stack_trace"]; ok {
-			e.StackTrace = st.(string)
+		logs := make([]sdk.Error, res.TotalResult)
+		for i := range res.Messages {
+			logs[i].RequestID = res.Messages[i].Message["request_id"].(string)
+			logs[i].Message = res.Messages[i].Message["message"].(string)
+			if st, ok := res.Messages[i].Message["stack_trace"]; ok {
+				logs[i].StackTrace = st.(string)
+			}
 		}
 
-		return service.WriteJSON(w, e, http.StatusOK)
+		return service.WriteJSON(w, logs, http.StatusOK)
 	}
 }
 
