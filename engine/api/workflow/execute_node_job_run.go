@@ -111,8 +111,7 @@ func (r *ProcessorReport) Errors() []error {
 	return nil
 }
 
-// UpdateNodeJobRunStatus Update status of an workflow_node_run_job
-// the dbFunc parameter is only used to send status to the repository manager
+// UpdateNodeJobRunStatus Update status of an workflow_node_run_job.
 func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status string) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.UpdateNodeJobRunStatus",
@@ -229,7 +228,8 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 }
 
 // TakeNodeJobRun Take an a job run for update
-func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
+func TakeNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64,
+	workerModel, workerName, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.TakeNodeJobRun")
 	defer end()
@@ -237,9 +237,9 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 	report := new(ProcessorReport)
 
 	// first load without FOR UPDATE WAIT to quick check status
-	currentStatus, errS := db.SelectStr(`SELECT status FROM workflow_node_run_job WHERE id = $1`, jobID)
-	if errS != nil {
-		return nil, nil, sdk.WrapError(errS, "Cannot select status from workflow_node_run_job node job run %d", jobID)
+	currentStatus, err := db.SelectStr(`SELECT status FROM workflow_node_run_job WHERE id = $1`, jobID)
+	if err != nil {
+		return nil, nil, sdk.WrapError(err, "cannot select status from workflow_node_run_job node job run %d", jobID)
 	}
 
 	if err := checkStatusWaiting(ctx, store, jobID, currentStatus); err != nil {
@@ -247,12 +247,12 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 	}
 
 	// reload and recheck status
-	job, errl := LoadAndLockNodeJobRunSkipLocked(ctx, db, store, jobID)
-	if errl != nil {
-		if sdk.ErrorIs(errl, sdk.ErrLocked) {
-			errl = sdk.ErrJobAlreadyBooked
+	job, err := LoadAndLockNodeJobRunSkipLocked(ctx, db, store, jobID)
+	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrLocked) {
+			err = sdk.NewErrorWithStack(err, sdk.ErrJobAlreadyBooked)
 		}
-		return nil, nil, sdk.WrapError(errl, "cannot load node job run (WAIT) %d", jobID)
+		return nil, nil, sdk.WrapError(err, "cannot load node job run (WAIT) %d", jobID)
 	}
 	if err := checkStatusWaiting(ctx, store, jobID, job.Status); err != nil {
 		return nil, report, err
@@ -263,20 +263,18 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 	job.Job.WorkerID = workerID
 	job.Start = time.Now()
 
-	_, errExec := db.Exec("UPDATE workflow_node_run_job SET worker_id = $2 WHERE id = $1", job.ID, workerID)
-	if errExec != nil {
-		return nil, nil, sdk.WrapError(errl, "Cannot update worker_id in node job run %d", jobID)
+	if _, err := db.Exec("UPDATE workflow_node_run_job SET worker_id = $2 WHERE id = $1", job.ID, workerID); err != nil {
+		return nil, nil, sdk.WrapError(err, "cannot update worker_id in node job run %d", jobID)
 	}
 
 	if err := AddSpawnInfosNodeJobRun(db, jobID, PrepareSpawnInfos(infos)); err != nil {
-		return nil, nil, sdk.WrapError(err, "Cannot save spawn info on node job run %d", jobID)
+		return nil, nil, sdk.WrapError(err, "cannot save spawn info on node job run %d", jobID)
 	}
 
 	r, err := UpdateNodeJobRunStatus(ctx, db, store, p, job, sdk.StatusBuilding)
 	report, err = report.Merge(ctx, r, err)
 	if err != nil {
-		log.Debug("TakeNodeJobRun> call UpdateNodeJobRunStatus on job %d set status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
-		return nil, nil, sdk.WrapError(err, "Cannot update node job run %d", jobID)
+		return nil, nil, sdk.WrapError(err, "cannot update node job run %d status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
 	}
 
 	return job, report, nil
@@ -291,9 +289,9 @@ func checkStatusWaiting(ctx context.Context, store cache.Store, jobID int64, sta
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 		if find {
-			return sdk.WrapError(sdk.ErrAlreadyTaken, "job %d is not waiting status and was booked by hatchery %d. Current status:%s", jobID, h.ID, status)
+			return sdk.WrapError(sdk.ErrAlreadyTaken, "job %d is not waiting status and was booked by hatchery %d. current status: %s", jobID, h.ID, status)
 		}
-		return sdk.WrapError(sdk.ErrAlreadyTaken, "job %d is not waiting status. Current status:%s", jobID, status)
+		return sdk.WrapError(sdk.ErrAlreadyTaken, "job %d is not waiting status. current status: %s", jobID, status)
 	}
 	return nil
 }

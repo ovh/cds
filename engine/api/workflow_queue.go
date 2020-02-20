@@ -108,18 +108,18 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 		},
 	}
 
-	//Take node job run
-	job, report, errTake := workflow.TakeNodeJobRun(ctx, dbFunc, tx, store, p, id, workerModel, wk.Name, wk.ID, infos)
+	// Take node job run
+	job, report, errTake := workflow.TakeNodeJobRun(ctx, tx, store, p, id, workerModel, wk.Name, wk.ID, infos)
 	if errTake != nil {
-		return nil, sdk.WrapError(errTake, "Cannot take job %d", id)
+		return nil, sdk.WrapError(errTake, "cannot take job %d", id)
 	}
 
-	//Change worker status
+	// Change worker status
 	if err := worker.SetToBuilding(tx, wk.ID, job.ID); err != nil {
 		return nil, sdk.WrapError(err, "Cannot update worker %s status", wk.Name)
 	}
 
-	//Load the node run
+	// Load the node run
 	noderun, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
 	if errn != nil {
 		return nil, sdk.WrapError(errn, "Cannot get node run")
@@ -133,13 +133,13 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 		report.Add(ctx, *noderun)
 	}
 
-	//Load workflow run
+	// Load workflow run
 	workflowRun, err := workflow.LoadRunByID(tx, noderun.WorkflowRunID, workflow.LoadRunOptions{})
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load workflow run")
 	}
 
-	//Load the secrets
+	// Load the secrets
 	pv, err := project.GetAllVariableInProject(tx, p.ID, project.WithClearPassword())
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot load project variable")
@@ -150,7 +150,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 		return nil, sdk.WrapError(errSecret, "Cannot load secrets")
 	}
 
-	//Feed the worker
+	// Feed the worker
 	wnjri.NodeJobRun = *job
 	wnjri.Number = noderun.Number
 	wnjri.SubNumber = noderun.SubNumber
