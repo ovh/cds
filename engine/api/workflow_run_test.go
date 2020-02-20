@@ -942,7 +942,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	assert.Equal(t, int64(1), wr.Number)
 
 	// wait for the workflow to finish crafting
-	assert.NoError(t, waitCraftinWorkflow(db, wr.ID))
+	assert.NoError(t, waitCraftinWorkflow(t, db, wr.ID))
 
 	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
@@ -961,7 +961,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	assert.True(t, testFound, "should find 'test' in build parameters")
 }
 
-func waitCraftinWorkflow(db gorp.SqlExecutor, id int64) error {
+func waitCraftinWorkflow(t *testing.T, db gorp.SqlExecutor, id int64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	tick := time.NewTicker(100 * time.Millisecond)
@@ -1806,7 +1806,7 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
 	assert.Equal(t, int64(1), wr.Number)
 
-	assert.NoError(t, waitCraftinWorkflow(db, wr.ID))
+	assert.NoError(t, waitCraftinWorkflow(t, db, wr.ID))
 	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	assert.NotNil(t, lastRun.RootRun())
@@ -2630,7 +2630,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	assert.Equal(t, int64(1), wr.Number)
 
 	// wait for the workflow to finish crafting
-	assert.NoError(t, waitCraftinWorkflow(db, wr.ID))
+	assert.NoError(t, waitCraftinWorkflow(t, db, wr.ID))
 
 	wrr, _ := workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
 	assert.Equal(t, sdk.StatusBuilding, wrr.Status)
@@ -2774,7 +2774,7 @@ func Test_postWorkflowRunHandlerRestartResync(t *testing.T) {
 	assert.Equal(t, int64(1), wr.Number)
 
 	// wait for the workflow to finish crafting
-	assert.NoError(t, waitCraftinWorkflow(db, wr.ID))
+	assert.NoError(t, waitCraftinWorkflow(t, db, wr.ID))
 
 	wrr, _ := workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
 	assert.Equal(t, sdk.StatusBuilding, wrr.Status)

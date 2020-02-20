@@ -482,7 +482,7 @@ func CanBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun
 	}
 	for _, ancestorID := range ancestorsID {
 		nodeRuns, ok := workflowRun.WorkflowNodeRuns[ancestorID]
-		if ok && (len(nodeRuns) == 0 || nodeRuns[0].Status == "" || !sdk.StatusIsTerminated(nodeRuns[0].Status) ||
+		if ok && (len(nodeRuns) == 0 || !sdk.StatusIsTerminated(nodeRuns[0].Status) ||
 			nodeRuns[0].Status == sdk.StatusNeverBuilt) {
 			return false
 		}
