@@ -15,37 +15,41 @@ import (
 )
 
 func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.Model, error) {
-	pms := []*sdk.Model{}
+	pms := []*WorkerModel{}
 
 	if err := gorpmapping.GetAll(ctx, db, q, &pms); err != nil {
 		return nil, sdk.WrapError(err, "cannot get worker models")
 	}
-	if len(pms) > 0 {
+
+	for i := range pms {
+		if err := pms[i].PostSelect(db); err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		if pms[i].ModelDocker.Password != "" {
+			pms[i].ModelDocker.Password = sdk.PasswordPlaceholder
+		}
+	}
+
+	var pres = make([]*sdk.Model, len(pms))
+	for i := range pms {
+		wm := sdk.Model(*pms[i])
+		pres[i] = &wm
+	}
+
+	if len(pres) > 0 {
 		for i := range opts {
-			if err := opts[i](ctx, db, pms...); err != nil {
+			if err := opts[i](ctx, db, pres...); err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	// TODO refactor data model to remove post select
-	for i := range pms {
-		wm := WorkerModel(*pms[i])
-		if err := wm.PostSelect(db); err != nil {
-			return nil, sdk.WithStack(err)
-		}
-		if wm.ModelDocker.Password != "" {
-			wm.ModelDocker.Password = sdk.PasswordPlaceholder
-		}
-		*pms[i] = sdk.Model(wm)
+	var res = make([]sdk.Model, len(pms))
+	for i := range pres {
+		res[i] = *pres[i]
 	}
 
-	ms := make([]sdk.Model, len(pms))
-	for i := range ms {
-		ms[i] = *pms[i]
-	}
-
-	return ms, nil
+	return res, nil
 }
 
 // LoadAll retrieves worker models from database.
@@ -91,17 +95,6 @@ func LoadAllByGroupIDs(ctx context.Context, db gorp.SqlExecutor, groupIDs []int6
 		}))
 	}
 
-	return getAll(ctx, db, query, opts...)
-}
-
-// LoadAllNotSharedInfra retrieves models not shared infra from database.
-func LoadAllNotSharedInfra(ctx context.Context, db gorp.SqlExecutor, opts ...LoadOptionFunc) ([]sdk.Model, error) {
-	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM worker_model
-    WHERE group_id != $1
-    ORDER BY name
-  `).Args(group.SharedInfraGroup.ID)
 	return getAll(ctx, db, query, opts...)
 }
 
@@ -326,21 +319,6 @@ func UpdateDB(db gorp.SqlExecutor, model *sdk.Model) error {
 	*model = sdk.Model(dbmodel)
 	if model.ModelDocker.Password != "" {
 		model.ModelDocker.Password = sdk.PasswordPlaceholder
-	}
-	return nil
-}
-
-// UpdateWithoutRegistration update a worker model
-// if the worker model have SpawnErr -> clear them.
-func UpdateWithoutRegistration(db gorp.SqlExecutor, model sdk.Model) error {
-	model.UserLastModified = time.Now()
-	model.NeedRegistration = false
-	model.NbSpawnErr = 0
-	model.LastSpawnErr = ""
-	model.LastSpawnErrLogs = nil
-	dbmodel := WorkerModel(model)
-	if _, err := db.Update(&dbmodel); err != nil {
-		return sdk.WithStack(err)
 	}
 	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,6 +17,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
@@ -25,6 +25,8 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/doc"
+	docSDK "github.com/ovh/cds/sdk/doc"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/tracingutils"
 )
@@ -45,8 +47,7 @@ var (
 
 // Router is a wrapper around mux.Router
 type Router struct {
-	Background context.Context
-	//	AuthDriver             auth.Driver
+	Background             context.Context
 	Mux                    *mux.Router
 	SetHeaderFunc          func() map[string]string
 	Prefix                 string
@@ -58,6 +59,7 @@ type Router struct {
 	panicked               bool
 	nbPanic                int
 	lastPanic              *time.Time
+	scopeDetails           []sdk.AuthConsumerScopeDetail
 }
 
 // HandlerConfigParam is a type used in handler configuration, to set specific config on a route given a method
@@ -182,6 +184,67 @@ func DefaultHeaders() map[string]string {
 	}
 }
 
+// computeScopeDetails iterate over declared handlers for routers and populate router scope details.
+func (r *Router) computeScopeDetails() {
+	// create temporary map of scopes, for each scope we will create a map of routes with methods.
+	m := make(map[sdk.AuthConsumerScope]map[string]map[string]struct{})
+
+	for uri, cfg := range r.mapRouterConfigs {
+		var err error
+		uri, err = docSDK.CleanAndCheckURL(uri)
+		if err != nil {
+			panic(errors.Wrap(err, "error computing scope detail"))
+		}
+
+		if len(cfg.Config) == 0 {
+			continue
+		}
+
+		methods := make([]string, 0, len(cfg.Config))
+		var scopes []sdk.AuthConsumerScope
+		for method, handler := range cfg.Config {
+			// Take scopes from the first handler as every handlers should have the same scopes
+			if scopes == nil {
+				scopes = handler.AllowedScopes
+			}
+			methods = append(methods, method)
+		}
+
+		for i := range scopes {
+			if _, ok := m[scopes[i]]; !ok {
+				m[scopes[i]] = make(map[string]map[string]struct{})
+			}
+			if _, ok := m[scopes[i]][uri]; !ok {
+				m[scopes[i]][uri] = make(map[string]struct{})
+			}
+			for j := range methods {
+				m[scopes[i]][uri][methods[j]] = struct{}{}
+			}
+		}
+	}
+
+	// return scope details
+	details := make([]sdk.AuthConsumerScopeDetail, len(sdk.AuthConsumerScopes))
+	for i, scope := range sdk.AuthConsumerScopes {
+		endpoints := make([]sdk.AuthConsumerScopeEndpoint, 0, len(m[scope]))
+		for uri, mMethods := range m[scope] {
+			methods := make([]string, 0, len(mMethods))
+			for k := range mMethods {
+				methods = append(methods, k)
+			}
+			endpoints = append(endpoints, sdk.AuthConsumerScopeEndpoint{
+				Route:   uri,
+				Methods: methods,
+			})
+		}
+
+		details[i].Scope = scope
+		details[i].Endpoints = endpoints
+	}
+
+	r.scopeDetails = details
+}
+
 // Handle adds all handler for their specific verb in gorilla router for given uri
 func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) {
 	uri = r.Prefix + uri
@@ -193,15 +256,17 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 	}
 	r.mapRouterConfigs[uri] = cfg
 
+	cleanURL := doc.CleanURL(uri)
 	for i := range handlers {
+		handlers[i].CleanURL = cleanURL
 		handlers[i].AllowedScopes = scope
-		cfg.Config[handlers[i].Method] = handlers[i]
 		name := runtime.FuncForPC(reflect.ValueOf(handlers[i].Handler).Pointer()).Name()
 		name = strings.Replace(name, ".func1", "", 1)
 		name = strings.Replace(name, ".1", "", 1)
 		name = strings.Replace(name, "github.com/ovh/cds/engine/", "", 1)
 		log.Debug("Registering handler %s on %s %s", name, handlers[i].Method, uri)
 		handlers[i].Name = name
+		cfg.Config[handlers[i].Method] = handlers[i]
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {

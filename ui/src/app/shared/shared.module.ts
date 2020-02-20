@@ -82,9 +82,6 @@ import { VariableValueComponent } from './variable/value/variable.value.componen
 import { VCSStrategyComponent } from './vcs/vcs.strategy.component';
 import { VulnerabilitiesListComponent } from './vulnerability/list/vulnerability.list.component';
 import { VulnerabilitiesComponent } from './vulnerability/vulnerabilities.component';
-import { WarningMarkListComponent } from './warning/mark-list/warning.mark.list.component';
-import { WarningMarkComponent } from './warning/mark-single/warning.mark.component';
-import { WarningTabComponent } from './warning/tab/warning.tab.component';
 import { WorkflowTemplateApplyFormComponent } from './workflow-template/apply-form/workflow-template.apply-form.component';
 import { WorkflowTemplateApplyModalComponent } from './workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { WorkflowTemplateBulkModalComponent } from './workflow-template/bulk-modal/workflow-template.bulk-modal.component';
@@ -199,10 +196,7 @@ import { ZoneComponent } from './zone/zone.component';
         VCSStrategyComponent,
         VulnerabilitiesComponent,
         VulnerabilitiesListComponent,
-        WarningMarkComponent,
-        WarningMarkListComponent,
         WarningModalComponent,
-        WarningTabComponent,
         WorkflowDeleteNodeComponent,
         WorkflowHookMenuEditComponent,
         WorkflowHookModalComponent,
@@ -297,9 +291,6 @@ import { ZoneComponent } from './zone/zone.component';
         VariableValueComponent,
         VulnerabilitiesComponent,
         VulnerabilitiesListComponent,
-        WarningTabComponent,
-        WarningMarkComponent,
-        WarningMarkListComponent,
         WarningModalComponent,
         DeleteModalComponent,
         ConfirmModalComponent,

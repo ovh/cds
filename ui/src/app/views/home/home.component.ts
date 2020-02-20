@@ -54,10 +54,10 @@ export class HomeComponent implements OnInit {
         this._broadcastSub = this._broadcastService.getBroadcasts()
             .subscribe((broadcasts) => {
                 this.loadingBroadcasts = false;
-                this._cd.markForCheck();
                 if (broadcasts) {
                     this.broadcasts = broadcasts.valueSeq().toArray().filter((br) => !br.read && !br.archived).slice(0, 5);
                 }
+                this._cd.markForCheck();
             }, () => this.loadingBroadcasts = false);
     }
 

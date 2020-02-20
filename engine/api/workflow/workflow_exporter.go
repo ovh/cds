@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
@@ -72,26 +71,21 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		return wp, sdk.WrapError(errload, "cannot load workflow %s", name)
 	}
 
-	i, err := workflowtemplate.LoadInstanceByWorkflowID(ctx, db, wf.ID, workflowtemplate.LoadInstanceOptions.WithTemplate)
-	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return wp, err
-	}
-	if i != nil {
-		wf.Template = i.Template
-	}
-
 	//Reload app to retrieve secrets
 	for i := range wf.Applications {
 		app := wf.Applications[i]
-		vars, errv := application.GetAllVariable(db, proj.Key, app.Name, application.WithClearPassword())
-		if errv != nil {
-			return wp, sdk.WrapError(errv, "cannot load application variables %s", app.Name)
+		vars, err := application.GetAllVariable(db, proj.Key, app.Name, application.WithClearPassword())
+		if err != nil {
+			return wp, sdk.WrapError(err, "cannot load application variables %s", app.Name)
 		}
 		app.Variable = vars
 
-		if err := application.LoadAllDecryptedKeys(db, &app); err != nil {
+		keys, err := application.LoadAllKeysWithPrivateContent(db, app.ID)
+		if err != nil {
 			return wp, sdk.WrapError(err, "cannot load application keys %s", app.Name)
 		}
+		app.Keys = keys
+
 		wf.Applications[i] = app
 	}
 

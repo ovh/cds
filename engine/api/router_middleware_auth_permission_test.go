@@ -43,7 +43,7 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 
 	// test case: is Admin
 	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
+	consumer.AuthentifiedUser.Groups = nil
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, sdk.PermissionReadWriteExecute, map[string]string{
 		"key":              wctx.project.Key,
@@ -53,7 +53,7 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 
 	// test case: is Maintaner
 	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
+	consumer.AuthentifiedUser.Groups = nil
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, sdk.PermissionRead, map[string]string{
 		"key":              wctx.project.Key,
@@ -63,7 +63,7 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 
 	// test case: forbidden
 	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
+	consumer.AuthentifiedUser.Groups = nil
 	consumer.AuthentifiedUser.Ring = ""
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, sdk.PermissionRead, map[string]string{
@@ -82,16 +82,16 @@ func Test_checkProjectPermissions(t *testing.T) {
 
 	p := assets.InsertTestProject(t, api.mustDB(), api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: p.ProjectGroups[0].Group.ID,
-		UserID:  authUser.OldUserStruct.ID,
-		Admin:   false,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            p.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: authUser.ID,
+		Admin:              false,
 	}))
 
 	// Reload the groups for the user
-	groups, err := group.LoadAllByDeprecatedUserID(context.TODO(), api.mustDB(), authUser.OldUserStruct.ID)
+	groups, err := group.LoadAllByUserID(context.TODO(), api.mustDB(), authUser.ID)
 	require.NoError(t, err)
-	authUser.OldUserStruct.Groups = groups
+	authUser.Groups = groups
 
 	var consumer sdk.AuthConsumer
 	consumer.AuthentifiedUser = authUser
@@ -105,21 +105,21 @@ func Test_checkProjectPermissions(t *testing.T) {
 	// test case: is Admin
 	consumer.AuthentifiedUser.Ring = sdk.UserRingAdmin
 	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
+	consumer.AuthentifiedUser.Groups = nil
 	ctx = context.WithValue(ctx, contextAPIConsumer, &consumer)
 	err = api.checkProjectPermissions(ctx, p.Key, sdk.PermissionReadWriteExecute, nil)
 	assert.NoError(t, err, "should be granted because because is admin")
 
 	// test case: is Maintainer
 	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
+	consumer.AuthentifiedUser.Groups = nil
 	ctx = context.WithValue(ctx, contextAPIConsumer, &consumer)
 	err = api.checkProjectPermissions(ctx, p.Key, sdk.PermissionRead, nil)
 	assert.NoError(t, err, "should be granted because because is maintainer")
 
 	// test case: forbidden
 	consumer.GroupIDs = nil
-	consumer.AuthentifiedUser.OldUserStruct.Groups = nil
+	consumer.AuthentifiedUser.Groups = nil
 	consumer.AuthentifiedUser.Ring = ""
 	ctx = context.WithValue(ctx, contextAPIConsumer, &consumer)
 	err = api.checkProjectPermissions(ctx, p.Key, sdk.PermissionRead, nil)
@@ -664,7 +664,7 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			g, err := group.LoadByName(context.TODO(), api.mustDB(), groupName+suffix, group.LoadOptions.WithMembers)
 			require.NoError(t, err)
 
-			require.NoError(t, group.InsertLinkGroupProject(api.mustDB(), &group.LinkGroupProject{
+			require.NoError(t, group.InsertLinkGroupProject(context.TODO(), api.mustDB(), &group.LinkGroupProject{
 				GroupID:   g.ID,
 				ProjectID: proj.ID,
 				Role:      permLevel,
@@ -871,7 +871,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 			require.NoError(t, user.Insert(context.TODO(), api.mustDB(), groupAdmin))
 
 			var err error
-			groupAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), groupAdmin.ID, user.LoadOptions.WithDeprecatedUser)
+			groupAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), groupAdmin.ID)
 			require.NoError(t, err)
 
 			tt.args.groupName = prefix + tt.args.groupName
@@ -880,7 +880,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 				Name: tt.args.groupName,
 			}
 
-			require.NoError(t, group.Create(api.mustDB(), &g, groupAdmin.OldUserStruct.ID))
+			require.NoError(t, group.Create(context.TODO(), api.mustDB(), &g, groupAdmin.ID))
 
 			for _, adm := range tt.setup.groupAdmins {
 				adm = prefix + adm
@@ -894,12 +894,12 @@ func Test_checkGroupPermissions(t *testing.T) {
 					defer assert.NoError(t, user.DeleteByID(api.mustDB(), uAdm.ID))
 
 				}
-				uAdm, _ = user.LoadByID(context.TODO(), api.mustDB(), uAdm.ID, user.LoadOptions.WithDeprecatedUser)
+				uAdm, _ = user.LoadByID(context.TODO(), api.mustDB(), uAdm.ID)
 
-				require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-					Admin:   true,
-					GroupID: g.ID,
-					UserID:  uAdm.OldUserStruct.ID,
+				require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+					Admin:              true,
+					GroupID:            g.ID,
+					AuthentifiedUserID: uAdm.ID,
 				}))
 			}
 
@@ -915,12 +915,12 @@ func Test_checkGroupPermissions(t *testing.T) {
 					defer assert.NoError(t, user.DeleteByID(api.mustDB(), uMember.ID))
 
 				}
-				uMember, _ = user.LoadByID(context.TODO(), api.mustDB(), uMember.ID, user.LoadOptions.WithDeprecatedUser)
+				uMember, _ = user.LoadByID(context.TODO(), api.mustDB(), uMember.ID)
 
-				require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-					Admin:   false,
-					GroupID: g.ID,
-					UserID:  uMember.OldUserStruct.ID,
+				require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+					Admin:              false,
+					GroupID:            g.ID,
+					AuthentifiedUserID: uMember.ID,
 				}))
 			}
 
@@ -1013,13 +1013,13 @@ func Test_checkTemplateSlugPermissions(t *testing.T) {
 				require.NoError(t, user.Insert(context.TODO(), api.mustDB(), groupAdmin))
 
 				var err error
-				groupAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), groupAdmin.ID, user.LoadOptions.WithDeprecatedUser)
+				groupAdmin, err = user.LoadByID(context.TODO(), api.mustDB(), groupAdmin.ID)
 				require.NoError(t, err)
 				tt.setup.groupName = prefix + tt.setup.groupName
 				g := sdk.Group{
 					Name: tt.setup.groupName,
 				}
-				require.NoError(t, group.Create(api.mustDB(), &g, groupAdmin.OldUserStruct.ID))
+				require.NoError(t, group.Create(context.TODO(), api.mustDB(), &g, groupAdmin.ID))
 				t.Logf("group %s created", g.Name)
 
 				if tt.setup.templateSlug != "" {

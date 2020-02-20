@@ -63,9 +63,6 @@ func CheckChildrenForGroupIDs(ctx context.Context, db gorp.SqlExecutor, a *sdk.A
 	if err != nil {
 		return err
 	}
-	if err != nil {
-		return err
-	}
 	return handleChildrenError(a, children)
 }
 

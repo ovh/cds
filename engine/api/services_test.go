@@ -10,22 +10,21 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestServicesHandlers(t *testing.T) {
-	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, _, end := newTestAPI(t)
 	defer end()
 
 	admin, jwtRaw := assets.InsertAdminUser(t, api.mustDB())
 
 	data := sdk.AuthConsumer{
-		Name:     sdk.RandomString(10),
-		Scopes:   []sdk.AuthConsumerScope{sdk.AuthConsumerScopeService},
-		IssuedAt: time.Now(),
+		Name:         sdk.RandomString(10),
+		ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeService),
+		IssuedAt:     time.Now(),
 	}
 
 	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{

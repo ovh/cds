@@ -202,9 +202,18 @@ export class WorkflowState {
                 wf.template_up_to_date = cloneDeep(oldWorkflow.template_up_to_date);
                 wf.as_code_events = cloneDeep(oldWorkflow.as_code_events);
 
+                // Generate hook ref for UI edition
+                if (wf && wf.workflow_data && wf.workflow_data.node && wf.workflow_data.node.hooks) {
+                    wf.workflow_data.node.hooks.forEach(h => {
+                        if (!h.ref) {
+                            h.ref = h.uuid;
+                        }
+                    });
+                }
+
                 ctx.setState({
                     ...state,
-                    workflow: wf,
+                    workflow: wf
                 });
                 ctx.dispatch(new ActionProject.UpdateWorkflowInProject({
                     previousWorkflowName: action.payload.workflowName,
@@ -225,11 +234,20 @@ export class WorkflowState {
                 wfUpdated.template_up_to_date = state.workflow.template_up_to_date;
                 wfUpdated.as_code_events = state.workflow.as_code_events;
 
+                // Generate hook ref for UI edition
+                if (wfUpdated.workflow_data && wfUpdated.workflow_data.node && wfUpdated.workflow_data.node.hooks) {
+                    wfUpdated.workflow_data.node.hooks.forEach(h => {
+                        if (!h.ref) {
+                            h.ref = h.uuid;
+                        }
+                    });
+                }
+
                 ctx.setState({
                     ...state,
-                    workflow: wf,
+                    workflow: wfUpdated
                 });
-                ctx.dispatch(new UpdateModal({ workflow: wf }));
+                ctx.dispatch(new UpdateModal({ workflow: wfUpdated }));
             }
         }));
     }
@@ -849,6 +867,16 @@ export class WorkflowState {
                 let canEdit = wf.permissions.writable;
                 let editWorkflow: Workflow;
                 let editMode: boolean;
+
+                // Generate hook ref for UI edition
+                if (wf && wf.workflow_data && wf.workflow_data.node && wf.workflow_data.node.hooks) {
+                    wf.workflow_data.node.hooks.forEach(h => {
+                        if (!h.ref) {
+                            h.ref = h.uuid;
+                        }
+                    });
+                }
+
                 if (wf.from_repository) {
                     editWorkflow = cloneDeep(wf);
                     editMode = true;

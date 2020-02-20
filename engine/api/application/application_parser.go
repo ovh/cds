@@ -108,12 +108,21 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 		}
 
 		k := sdk.ApplicationKey{
-			Key:           *kk,
+			Name:          kk.Name,
+			Public:        kk.Public,
+			Private:       kk.Private,
+			KeyID:         kk.KeyID,
+			Type:          kk.Type,
 			ApplicationID: app.ID,
 		}
 
 		if keepOldValue && oldKey != nil {
-			k.Key = oldKey.Key
+			k.Name = oldKey.Name
+			k.Public = oldKey.Public
+			k.Private = oldKey.Private
+			k.KeyID = oldKey.KeyID
+			k.Type = oldKey.Type
+			k.ApplicationID = oldKey.ApplicationID
 		}
 
 		app.Keys = append(app.Keys, k)

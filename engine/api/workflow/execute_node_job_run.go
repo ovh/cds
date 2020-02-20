@@ -28,6 +28,18 @@ type ProcessorReport struct {
 	errors    []error
 }
 
+func (r *ProcessorReport) Jobs() []sdk.WorkflowNodeJobRun {
+	return r.jobs
+}
+
+func (r *ProcessorReport) Nodes() []sdk.WorkflowNodeRun {
+	return r.nodes
+}
+
+func (r *ProcessorReport) Workflows() []sdk.WorkflowRun {
+	return r.workflows
+}
+
 // WorkflowRuns returns the list of concerned workflow runs
 func (r *ProcessorReport) WorkflowRuns() []sdk.WorkflowRun {
 	if r == nil {
@@ -178,13 +190,6 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	if status == sdk.StatusBuilding {
 		// Sync job status in noderun
-		_, next := observability.Span(ctx, "workflow.LoadNodeRunByID")
-		nodeRun, errNR := LoadNodeRunByID(db, nodeRun.ID, LoadRunOptions{})
-		next()
-
-		if errNR != nil {
-			return nil, sdk.WrapError(errNR, "Cannot LoadNodeRunByID node run %d", nodeRun.ID)
-		}
 		r, err := syncTakeJobInNodeRun(ctx, db, nodeRun, job, stageIndex)
 		return report.Merge(ctx, r, err)
 	}
@@ -303,9 +308,11 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project
 		appMap, has := wr.Workflow.Applications[n.Context.ApplicationID]
 		if has {
 			app = &appMap
-			if err := application.LoadAllBase64Keys(db, app); err != nil {
+			keys, err := application.LoadAllKeysWithPrivateContent(db, app.ID)
+			if err != nil {
 				return nil, nil, err
 			}
+			app.Keys = keys
 		}
 	}
 	if n.Context.EnvironmentID != 0 {
@@ -353,18 +360,10 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project
 				Value: k.KeyID,
 			})
 
-			unBase64, err64 := base64.StdEncoding.DecodeString(k.Private)
-			if err64 != nil {
-				return nil, nil, sdk.WrapError(err64, "LoadNodeJobRunKeys> Cannot app decode key %s", k.Name)
-			}
-			decrypted, errD := secret.Decrypt([]byte(unBase64))
-			if errD != nil {
-				log.Error(ctx, "LoadNodeJobRunKeys> Unable to decrypt app private key %s/%s: %v", app.Name, k.Name, errD)
-			}
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
 				Type:  k.Type,
-				Value: string(decrypted),
+				Value: k.Private,
 			})
 		}
 	}

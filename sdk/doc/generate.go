@@ -313,52 +313,7 @@ func extractFromRouteInfo(doc *Doc, routeInfo RouteInfo) {
 	doc.HTTPOperation = routeInfo.HTTPOperation
 	doc.Middlewares = routeInfo.Middlewares
 	doc.Scopes = routeInfo.Scopes
-	doc.URL = buildURL(routeInfo.URL)
-}
-
-func buildURL(url string) string {
-	url = strings.Replace(url, "\"", "", -1)
-	urlSplitted := strings.Split(url, "/")
-	for i, u := range urlSplitted {
-		u = strings.Replace(strings.Replace(u, "{", "<", 1), "}", ">", 1)
-		switch u {
-		case "<consumerType>":
-			u = "<consumer-type>"
-		case "<key>", "<permProjectKey>":
-			u = "<project-key>"
-		case "<permWorkflowName>":
-			u = "<workflow-name>"
-		case "<applicationName>":
-			u = "<application-name>"
-		case "<permGroupName>", "<groupName>":
-			u = "<group-name>"
-		case "permUsernamePublic", "<permUsername>":
-			u = "<username>"
-		case "<permActionName>", "permActionBuiltinName":
-			u = "<action-name>"
-		case "<permJobID>":
-			u = "<job-id>"
-		case "<pipelineKey>":
-			u = "<pipeline-key>"
-		case "<environmentName>":
-			u = "<environment-name>"
-		case "<nodeRunID>":
-			u = "node-run-id"
-		case "nodeID":
-			u = "node-id"
-		case "permModelName":
-			u = "model-name"
-		case "permTemplateSlug":
-			u = "template-slug"
-		case "permConsumerID":
-			u = "consumer-id"
-		case "permSessionID":
-			u = "session-id"
-		}
-
-		urlSplitted[i] = u
-	}
-	return strings.Join(urlSplitted, "/")
+	doc.URL = CleanURL(routeInfo.URL)
 }
 
 func filterFile(f os.FileInfo) bool {

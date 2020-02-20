@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Key } from 'app/model/keys.model';
-import { Warning } from 'app/model/warning.model';
 import { KeyEvent } from 'app/shared/keys/key.event';
 import { Table } from 'app/shared/table/table';
 
@@ -14,7 +13,6 @@ export class KeysListComponent extends Table<Key> {
     @Input() keys: Array<Key>;
     @Input() loading: boolean;
     @Input() edit: boolean;
-    @Input() warnings: Map<string, Warning>;
     @Output() deleteEvent = new EventEmitter<KeyEvent>();
 
     constructor() {

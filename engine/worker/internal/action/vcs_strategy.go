@@ -13,8 +13,7 @@ import (
 
 func vcsStrategy(ctx context.Context, wk workerruntime.Runtime, params []sdk.Parameter, secrets []sdk.Variable) (string, *git.AuthOpts, error) {
 	var gitURL string
-	var auth *git.AuthOpts
-
+	auth := new(git.AuthOpts)
 	// Get connection type
 	connetionType := sdk.ParameterFind(params, "git.connection.type")
 	if connetionType == nil || (connetionType.Value != "ssh" && connetionType.Value != "https") {
@@ -57,9 +56,6 @@ func vcsStrategy(ctx context.Context, wk workerruntime.Runtime, params []sdk.Par
 			return gitURL, nil, sdk.WithStack(fmt.Errorf("unable to setup ssh key. %s", errK))
 		}
 
-		if auth == nil {
-			auth = new(git.AuthOpts)
-		}
 		auth.PrivateKey = *key
 
 		url := sdk.ParameterFind(params, "git.url")

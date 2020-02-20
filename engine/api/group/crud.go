@@ -9,15 +9,15 @@ import (
 )
 
 // Create insert a new group in database and set user for given id as group admin.
-func Create(db gorp.SqlExecutor, grp *sdk.Group, userID int64) error {
-	if err := Insert(db, grp); err != nil {
+func Create(ctx context.Context, db gorp.SqlExecutor, grp *sdk.Group, userID string) error {
+	if err := Insert(ctx, db, grp); err != nil {
 		return err
 	}
 
-	if err := InsertLinkGroupUser(db, &LinkGroupUser{
-		GroupID: grp.ID,
-		UserID:  userID,
-		Admin:   true,
+	if err := InsertLinkGroupUser(ctx, db, &LinkGroupUser{
+		GroupID:            grp.ID,
+		AuthentifiedUserID: userID,
+		Admin:              true,
 	}); err != nil {
 		return err
 	}

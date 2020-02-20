@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -295,8 +296,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 
 		btes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Error(ctx, "postWorkflowPushHandler> Unable to read body: %v", err)
-			return sdk.WithStack(sdk.ErrWrongRequest)
+			return sdk.NewErrorWithStack(err, sdk.ErrWrongRequest)
 		}
 		defer r.Body.Close()
 
@@ -315,18 +315,18 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		u := getAPIConsumer(ctx)
 
 		//Load project
-		proj, errp := project.Load(db, api.Cache, key,
+		proj, err := project.Load(db, api.Cache, key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithIntegrations)
-		if errp != nil {
-			return sdk.WrapError(errp, "postWorkflowPushHandler> Cannot load project %s", key)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
-		allMsg, wrkflw, err := workflow.Push(ctx, db, api.Cache, proj, tr, pushOptions, u, project.DecryptWithBuiltinKey)
+		allMsg, wrkflw, oldWrkflw, err := workflow.Push(ctx, db, api.Cache, proj, tr, pushOptions, u, project.DecryptWithBuiltinKey)
 		if err != nil {
 			return err
 		}
@@ -335,6 +335,18 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		if wrkflw != nil {
 			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wrkflw.ID))
 			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
+		}
+
+		if oldWrkflw != nil {
+			event.PublishWorkflowUpdate(ctx, proj.Key, *wrkflw, *oldWrkflw, u)
+		} else {
+			event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, u)
+		}
+
+		if wrkflw.Template != nil {
+			if err := workflowtemplate.SetTemplateData(ctx, api.mustDB(), proj, wrkflw, getAPIConsumer(ctx), wrkflw.Template); err != nil {
+				log.Error(ctx, "postTemplateApplyHandler> unable to set template data: %v", err)
+			}
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)

@@ -23,7 +23,9 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -55,12 +57,12 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key)
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
-	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
+	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -90,6 +92,63 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 
 	pip.Stages = append(pip.Stages, *s)
 
+	// Insert Application
+	app := &sdk.Application{
+		Name: sdk.RandomString(10),
+	}
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app); err != nil {
+		t.Fatal(err)
+	}
+
+	k := &sdk.ApplicationKey{
+		Name:          "mykey",
+		Type:          "pgp",
+		ApplicationID: app.ID,
+	}
+
+	pgpK, err := keys.GeneratePGPKeyPair(k.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	k.Public = pgpK.Public
+	k.Private = pgpK.Private
+	k.KeyID = pgpK.KeyID
+
+	if err := application.InsertKey(api.mustDB(), k); err != nil {
+		t.Fatal(err)
+	}
+
+	//Insert Application
+	env := &sdk.Environment{
+		Name:      sdk.RandomString(10),
+		ProjectID: proj.ID,
+	}
+	if err := environment.InsertEnvironment(api.mustDB(), env); err != nil {
+		t.Fatal(err)
+	}
+
+	envk := &sdk.EnvironmentKey{
+		Key: sdk.Key{
+			Name: "my-env-key",
+			Type: "pgp",
+		},
+		EnvironmentID: env.ID,
+	}
+
+	kpgp, err := keys.GeneratePGPKeyPair(envk.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	envk.Public = kpgp.Public
+	envk.Private = kpgp.Private
+	envk.KeyID = kpgp.KeyID
+
+	if err := environment.InsertKey(api.mustDB(), envk); err != nil {
+		t.Fatal(err)
+	}
+
 	w := sdk.Workflow{
 		Name:       "test_1",
 		ProjectID:  proj.ID,
@@ -100,7 +159,9 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 				Ref:  "node1",
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
-					PipelineID: pip.ID,
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+					EnvironmentID: env.ID,
 				},
 			},
 		},
@@ -263,7 +324,7 @@ func testGetWorkflowJobAsHatchery(t *testing.T, api *API, router *Router, ctx *t
 }
 
 func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
-	g, err := group.LoadByID(context.TODO(), api.mustDB(), ctx.user.OldUserStruct.Groups[0].ID)
+	g, err := group.LoadByID(context.TODO(), api.mustDB(), ctx.user.Groups[0].ID)
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -274,7 +335,7 @@ func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWork
 }
 
 func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
-	h, _, _, jwt := assets.InsertHatchery(t, api.mustDB(), ctx.user.OldUserStruct.Groups[0])
+	h, _, _, jwt := assets.InsertHatchery(t, api.mustDB(), ctx.user.Groups[0])
 	ctx.hatchery = h
 	ctx.hatcheryToken = jwt
 }
@@ -373,9 +434,28 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
+	pbji := &sdk.WorkflowNodeJobRunData{}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), pbji))
+	require.Len(t, pbji.Secrets, 3)
+	for _, s := range pbji.Secrets {
+		switch s.Name {
+		case "cds.key.mykey.priv":
+			assert.NotEmpty(t, s.Value)
+			assert.Equal(t, "pgp", s.Type)
+		case "cds.key.my-env-key.priv":
+			assert.NotEmpty(t, s.Value)
+			assert.Equal(t, "pgp", s.Type)
+		case "git.http.password":
+
+		default:
+			t.Errorf("unexpected secrets: %s", s.Name)
+		}
+	}
+
 	run, err := workflow.LoadNodeJobRun(context.TODO(), api.mustDB(), api.Cache, ctx.job.ID)
 	require.NoError(t, err)
 	require.Equal(t, "Building", run.Status)
+
 }
 
 func Test_postBookWorkflowJobHandler(t *testing.T) {
@@ -826,12 +906,12 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// add group
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
-	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
+	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	// Create pipeline
 	pip := &sdk.Pipeline{
@@ -966,12 +1046,12 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
 	// add group
-	require.NoError(t, group.InsertLinkGroupUser(api.mustDB(), &group.LinkGroupUser{
-		GroupID: proj.ProjectGroups[0].Group.ID,
-		UserID:  u.OldUserStruct.ID,
-		Admin:   true,
+	require.NoError(t, group.InsertLinkGroupUser(context.TODO(), api.mustDB(), &group.LinkGroupUser{
+		GroupID:            proj.ProjectGroups[0].Group.ID,
+		AuthentifiedUserID: u.ID,
+		Admin:              true,
 	}))
-	u.OldUserStruct.Groups = append(u.OldUserStruct.Groups, proj.ProjectGroups[0].Group)
+	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	// Add repo manager
 	proj.VCSServers = make([]sdk.ProjectVCSServer, 0, 1)

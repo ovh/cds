@@ -65,6 +65,10 @@ func (client *bitbucketcloudClient) getHooks(ctx context.Context, fullname strin
 	params.Set("pagelen", "100")
 	nextPage := 1
 	for {
+		if ctx.Err() != nil {
+			break
+		}
+
 		if nextPage != 1 {
 			params.Set("page", fmt.Sprintf("%d", nextPage))
 		}

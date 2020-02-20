@@ -7,64 +7,12 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
-
-func (api *API) getAllKeysProjectHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars[permProjectKey]
-
-		appName := r.FormValue("appName")
-
-		allkeys := struct {
-			ProjectKeys     []sdk.ProjectKey     `json:"project_key"`
-			ApplicationKeys []sdk.ApplicationKey `json:"application_key"`
-			EnvironmentKeys []sdk.EnvironmentKey `json:"environment_key"`
-		}{}
-
-		p, errP := project.Load(api.mustDB(), api.Cache, key)
-		if errP != nil {
-			return errP
-		}
-		projectKeys, errK := project.LoadAllKeysByID(api.mustDB(), p.ID)
-		if errK != nil {
-			return errK
-		}
-		allkeys.ProjectKeys = projectKeys
-
-		if appName == "" {
-			appKeys, errA := application.LoadAllApplicationKeysByProject(api.mustDB(), p.ID)
-			if errA != nil {
-				return errA
-			}
-			allkeys.ApplicationKeys = appKeys
-		} else {
-			app, errA := application.LoadByName(api.mustDB(), api.Cache, p.Key, appName)
-			if errA != nil {
-				return errA
-			}
-			if errK := application.LoadAllKeys(api.mustDB(), app); errK != nil {
-				return errK
-			}
-			allkeys.ApplicationKeys = app.Keys
-		}
-
-		envKeys, errP := environment.LoadAllEnvironmentKeysByProject(api.mustDB(), p.ID)
-		if errP != nil {
-			return errP
-		}
-		allkeys.EnvironmentKeys = envKeys
-
-		return service.WriteJSON(w, allkeys, http.StatusOK)
-	}
-}
 
 func (api *API) getKeysInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {

@@ -8,6 +8,7 @@ testcases:
     - result.code ShouldEqual 0
 - name: prepare test
   steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIAPPPRJ --force
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITCLIAPPPRJ
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIAPP_GRP --force
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIAPP_GRP_EDIT_TEST --force

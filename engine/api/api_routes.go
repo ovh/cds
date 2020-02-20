@@ -10,6 +10,7 @@ import (
 
 type HandlerScope []sdk.AuthConsumerScope
 
+// Scope set for handler. If multiple scopes are given, one should match consumer scopes.
 func Scope(s ...sdk.AuthConsumerScope) HandlerScope {
 	return HandlerScope(s)
 }
@@ -72,7 +73,6 @@ func (api *API) InitRouter() {
 
 	// Admin
 	r.Handle("/admin/maintenance", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postMaintenanceHandler, NeedAdmin(true)))
-	r.Handle("/admin/warning", Scope(sdk.AuthConsumerScopeAdmin), r.DELETE(api.adminTruncateWarningsHandler, NeedAdmin(true)))
 	r.Handle("/admin/cds/migration", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminMigrationsHandler, NeedAdmin(true)))
 	r.Handle("/admin/cds/migration/{id}/cancel", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminMigrationCancelHandler, NeedAdmin(true)))
 	r.Handle("/admin/cds/migration/{id}/todo", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminMigrationTodoHandler, NeedAdmin(true)))
@@ -166,7 +166,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/integrations", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectIntegrationsHandler), r.POST(api.postProjectIntegrationHandler))
 	r.Handle("/project/{permProjectKey}/integrations/{integrationName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectIntegrationHandler /*, AllowServices(true)*/), r.PUT(api.putProjectIntegrationHandler), r.DELETE(api.deleteProjectIntegrationHandler))
 	r.Handle("/project/{permProjectKey}/notifications", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectNotificationsHandler, DEPRECATED))
-	r.Handle("/project/{permProjectKey}/all/keys", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getAllKeysProjectHandler))
 	r.Handle("/project/{permProjectKey}/keys", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getKeysInProjectHandler), r.POST(api.addKeyInProjectHandler))
 	r.Handle("/project/{permProjectKey}/keys/{name}", Scope(sdk.AuthConsumerScopeProject), r.DELETE(api.deleteKeyInProjectHandler))
 
@@ -177,9 +176,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/import/application", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postApplicationImportHandler))
 	// Export Application
 	r.Handle("/project/{permProjectKey}/export/application/{applicationName}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getApplicationExportHandler))
-
-	r.Handle("/warning/{permProjectKey}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getWarningsHandler))
-	r.Handle("/warning/{permProjectKey}/{hash}", Scope(sdk.AuthConsumerScopeProject), r.PUT(api.putWarningsHandler))
 
 	// Application
 	r.Handle("/project/{permProjectKey}/ascode/application", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getAsCodeApplicationHandler))
@@ -432,4 +428,6 @@ func (api *API) InitRouter() {
 
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
+
+	r.computeScopeDetails()
 }

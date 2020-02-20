@@ -20,7 +20,7 @@ func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	if eventNR.GerritChange == nil {
-		log.Warning(ctx, "gerrit.setStatus> no gerrit change provided: %s/%s", eventNR.Status, eventNR.NodeName)
+		log.Debug("gerrit.setStatus> no gerrit change provided: %s/%s", eventNR.Status, eventNR.NodeName)
 		return nil
 	}
 

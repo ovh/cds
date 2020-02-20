@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -76,7 +75,10 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 				Name:      pipelineDB.Name,
 				Operation: ope,
 			}
-			ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, &apps[0], ed, u)
+			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, &apps[0], ed, u)
+			if asCodeEvent != nil {
+				event.PublishAsCodeEvent(ctx, proj.Key, *asCodeEvent, u)
+			}
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, ope, http.StatusOK)
@@ -244,10 +246,6 @@ func (api *API) addPipelineHandler() service.Handler {
 		p.ProjectID = proj.ID
 		if err := pipeline.InsertPipeline(tx, api.Cache, proj, &p); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
-		}
-
-		if err := group.LoadGroupByProject(tx, proj); err != nil {
-			return sdk.WrapError(err, "Cannot load groupfrom project")
 		}
 
 		if err := tx.Commit(); err != nil {

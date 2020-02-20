@@ -20,7 +20,6 @@
                       <div class="content">
                           <div class="header">
                             <span [innerText]="pip.name"></span>
-                            <app-warning-mark-list [warnings]="warnMap?.get(pip.name)"></app-warning-mark-list>
                           </div>
                           <div class="meta" *ngIf="pip.description">
                               <span [innerText]="pip.description.slice(0, 90)"></span><span *ngIf="pip.description.length > 90">...</span>

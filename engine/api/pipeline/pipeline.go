@@ -120,12 +120,12 @@ func LoadByWorkerModel(ctx context.Context, db gorp.SqlExecutor, model *sdk.Mode
     `).Args(modelNamePattern)
 	}
 
-	var pips []sdk.Pipeline
-	if err := gorpmapping.GetAll(ctx, db, query, &pips); err != nil {
+	var dbPips Pipelines
+	if err := gorpmapping.GetAll(ctx, db, query, &dbPips); err != nil {
 		return nil, sdk.WrapError(err, "unable to load pipelines linked to worker model pattern %s", modelNamePattern)
 	}
 
-	return pips, nil
+	return dbPips.Cast(), nil
 }
 
 // LoadByWorkerModelAndGroupIDs loads pipelines from database for a given worker model and group ids.
@@ -170,12 +170,12 @@ func LoadByWorkerModelAndGroupIDs(ctx context.Context, db gorp.SqlExecutor, mode
     `).Args(modelNamePattern, gorpmapping.IDsToQueryString(groupIDs))
 	}
 
-	var pips []sdk.Pipeline
+	var pips Pipelines
 	if err := gorpmapping.GetAll(ctx, db, query, &pips); err != nil {
 		return nil, sdk.WrapError(err, "unable to load pipelines linked to worker model pattern %s", modelNamePattern)
 	}
 
-	return pips, nil
+	return pips.Cast(), nil
 }
 
 // LoadByWorkflowID loads pipelines from database for a given workflow id

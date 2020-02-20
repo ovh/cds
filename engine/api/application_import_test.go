@@ -105,10 +105,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 	test.NoError(t, application.Insert(db, api.Cache, proj, app))
 
 	k := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "app-mykey",
-			Type: "pgp",
-		},
+		Name:          "app-mykey",
+		Type:          "pgp",
 		ApplicationID: app.ID,
 	}
 
@@ -216,10 +214,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	test.NoError(t, application.Insert(db, api.Cache, proj, app))
 
 	k := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "app-mykey",
-			Type: "pgp",
-		},
+		Name:          "app-mykey",
+		Type:          "pgp",
 		ApplicationID: app.ID,
 	}
 
@@ -383,10 +379,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 
 	// create password, pgp and ssh keys
 	k1 := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "app-key-1",
-			Type: "pgp",
-		},
+		Name:          "app-key-1",
+		Type:          "pgp",
 		ApplicationID: app.ID,
 	}
 
@@ -399,10 +393,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 
 	// create password, pgp and ssh keys
 	k2 := &sdk.ApplicationKey{
-		Key: sdk.Key{
-			Name: "app-key-2",
-			Type: "ssh",
-		},
+		Name:          "app-key-2",
+		Type:          "ssh",
 		ApplicationID: app.ID,
 	}
 

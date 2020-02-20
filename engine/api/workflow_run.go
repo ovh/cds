@@ -15,6 +15,7 @@ import (
 
 	ascodesync "github.com/ovh/cds/engine/api/ascode/sync"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/observability"
@@ -365,7 +366,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 		}
 		workflowRuns := report.WorkflowRuns()
 
-		go workflow.SendEvent(context.Background(), api.mustDB(), proj.Key, report)
+		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, proj.Key, report)
 
 		go func(ID int64) {
 			wRun, errLw := workflow.LoadRunByID(api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
@@ -487,17 +488,19 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 	}
 
 	if parentWorkflowRunID == 0 {
-		if err := updateParentWorkflowRun(ctx, dbFunc, store, run); err != nil {
+		report, err := updateParentWorkflowRun(ctx, dbFunc, store, run)
+		if err != nil {
 			return nil, sdk.WithStack(err)
 		}
+		go WorkflowSendEvent(context.Background(), dbFunc(), store, p.Key, report)
 	}
 
 	return report, nil
 }
 
-func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, run *sdk.WorkflowRun) error {
+func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, run *sdk.WorkflowRun) (*workflow.ProcessorReport, error) {
 	if !run.HasParentWorkflow() {
-		return nil
+		return nil, nil
 	}
 
 	parentProj, err := project.Load(
@@ -509,7 +512,7 @@ func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 	)
 	if err != nil {
-		return sdk.WrapError(err, "updateParentWorkflowRun> Cannot load project")
+		return nil, sdk.WrapError(err, "updateParentWorkflowRun> Cannot load project")
 	}
 
 	parentWR, err := workflow.LoadRun(ctx,
@@ -521,14 +524,16 @@ func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 			DisableDetailledNodeRun: false,
 		})
 	if err != nil {
-		return sdk.WrapError(err, "Unable to load parent run: %v", run.RootRun().HookEvent)
+		return nil, sdk.WrapError(err, "Unable to load parent run: %v", run.RootRun().HookEvent)
 	}
 
-	if err := workflow.UpdateParentWorkflowRun(ctx, dbFunc, store, run, parentProj, parentWR); err != nil {
-		return sdk.WrapError(err, "updateParentWorkflowRun")
+	report, err := workflow.UpdateParentWorkflowRun(ctx, dbFunc, store, run, parentProj, parentWR)
+	if err != nil {
+		return nil, sdk.WrapError(err, "updateParentWorkflowRun")
 	}
+	go WorkflowSendEvent(context.Background(), dbFunc(), store, parentProj.Key, report)
 
-	return nil
+	return report, nil
 }
 
 func (api *API) getWorkflowNodeRunHistoryHandler() service.Handler {
@@ -675,7 +680,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to stop workflow run")
 		}
 
-		go workflow.SendEvent(context.Background(), api.mustDB(), p.Key, report)
+		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, p.Key, report)
 
 		return service.WriteJSON(w, nodeRun, http.StatusOK)
 	}
@@ -924,7 +929,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 	var asCodeInfosMsg []sdk.Message
 	report := new(workflow.ProcessorReport)
 	defer func() {
-		go workflow.SendEvent(context.Background(), db, p.Key, report)
+		go WorkflowSendEvent(context.Background(), db, cache, p.Key, report)
 	}()
 
 	// IF NEW WORKFLOW RUN
@@ -944,6 +949,8 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 				report.Merge(ctx, r1, nil) // nolint
 				return
 			}
+			event.PublishWorkflowUpdate(ctx, p.Key, *wf, *wf, u)
+
 			wf.FromRepository = fromRepo
 		}
 
@@ -973,6 +980,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 			// Get workflow from repository
 			var errCreate error
 			log.Debug("workflow.CreateFromRepository> %s", wf.Name)
+			oldWf := *wf
 			asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, db, cache, p1, wf, *opts, u, project.DecryptWithBuiltinKey)
 			if errCreate != nil {
 				infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
@@ -987,6 +995,9 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 				report.Merge(ctx, r1, nil) // nolint
 				return
 			}
+
+			event.PublishWorkflowUpdate(ctx, p1.Key, *wf, oldWf, u)
+
 		}
 		wfRun.Workflow = *wf
 	}

@@ -6,50 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"time"
-
-	"github.com/pkg/errors"
 )
-
-// User represent a CDS user.
-type User struct {
-	ID        int64      `json:"id" yaml:"-" cli:"-"`
-	Username  string     `json:"username" yaml:"username" cli:"username,key"`
-	Fullname  string     `json:"fullname" yaml:"fullname,omitempty" cli:"fullname"`
-	Email     string     `json:"email" yaml:"email,omitempty" cli:"email"`
-	Groups    Groups     `json:"groups,omitempty" yaml:"-" cli:"-"`
-	Origin    string     `json:"origin" yaml:"origin,omitempty"`
-	Favorites []Favorite `json:"favorites" yaml:"favorites"`
-	// aggregated
-	Admin      bool `json:"admin,omitempty" yaml:"admin,omitempty" cli:"admin"`
-	GroupAdmin bool `json:"group_admin,omitempty" yaml:"group_admin,omitempty"`
-}
-
-// Value returns driver.Value from user.
-func (u User) Value() (driver.Value, error) {
-	j, err := json.Marshal(u)
-	return j, WrapError(err, "cannot marshal User")
-}
-
-// Scan user.
-func (u *User) Scan(src interface{}) error {
-	source, ok := src.(string)
-	if !ok {
-		return WithStack(errors.New("type assertion .(string) failed"))
-	}
-	return WrapError(json.Unmarshal([]byte(source), u), "cannot unmarshal User")
-}
-
-// Users type provides method on user list.
-type Users []User
-
-// ToMapByID returns a map of users indexed by their ids.
-func (u Users) ToMapByID() map[int64]User {
-	mUsers := make(map[int64]User, len(u))
-	for i := range u {
-		mUsers[u[i].ID] = u[i]
-	}
-	return mUsers
-}
 
 // User rings.
 const (
@@ -86,8 +43,9 @@ type AuthentifiedUser struct {
 	Fullname string    `json:"fullname" yaml:"fullname,omitempty" cli:"fullname" db:"fullname"`
 	Ring     string    `json:"ring" yaml:"ring,omitempty" cli:"ring" db:"ring"`
 	// aggregates
-	Contacts      UserContacts `json:"-" yaml:"-" db:"-"`
-	OldUserStruct *User        `json:"-" yaml:"-" db:"-"`
+	Contacts  UserContacts `json:"-" yaml:"-" db:"-"`
+	Favorites []Favorite   `json:"favorites" yaml:"favorites" db:"-"`
+	Groups    Groups       `json:"groups" yaml:"groups" db:"-"`
 }
 
 // IsValid returns an error if given user's infos are not valid.
@@ -124,12 +82,12 @@ func (u *AuthentifiedUser) Scan(src interface{}) error {
 	return WrapError(json.Unmarshal(source, u), "cannot unmarshal AuthentifiedUser")
 }
 
-// GetGroupIDs returns groups ids for user based on old user.
+// GetGroupIDs returns groups ids for user
 func (u AuthentifiedUser) GetGroupIDs() []int64 {
-	if u.OldUserStruct == nil {
+	if u.Groups == nil {
 		return nil
 	}
-	return u.OldUserStruct.Groups.ToIDs()
+	return u.Groups.ToIDs()
 }
 
 func (u AuthentifiedUser) GetUsername() string {
@@ -152,6 +110,14 @@ func (u AuthentifiedUser) GetFullname() string {
 
 // AuthentifiedUsers provides func for authentified user list.
 type AuthentifiedUsers []AuthentifiedUser
+
+func (a AuthentifiedUsers) IDs() []string {
+	ids := make([]string, len(a))
+	for i := range a {
+		ids[i] = (a)[i].ID
+	}
+	return ids
+}
 
 // ToMapByID returns a map of authentified users indexed by ids.
 func (a AuthentifiedUsers) ToMapByID() map[string]AuthentifiedUser {

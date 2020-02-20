@@ -210,6 +210,18 @@ func (c *client) WorkflowNodeRunRelease(projectKey string, workflowName string, 
 }
 
 func (c *client) WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error) {
+	// Check that the hook exists before run it
+	w, err := c.WorkflowGet(projectKey, workflowName)
+	if err != nil {
+		return nil, err
+	}
+
+	hooks := w.WorkflowData.GetHooks()
+	if _, has := hooks[hook.WorkflowNodeHookUUID]; !has {
+		// If the hook doesn't exist, raise an error
+		return nil, sdk.WithStack(sdk.ErrHookNotFound)
+	}
+
 	if c.config.Verbose {
 		log.Println("Payload: ", hook.Payload)
 	}

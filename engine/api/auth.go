@@ -37,7 +37,7 @@ func (api *API) getAuthDriversHandler() service.Handler {
 
 func (api *API) getAuthScopesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, sdk.AuthConsumerScopes, http.StatusOK)
+		return service.WriteJSON(w, api.Router.scopeDetails, http.StatusOK)
 	}
 }
 
@@ -168,7 +168,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 						return err
 					}
 				}
-				if err := group.CheckUserInDefaultGroup(ctx, tx, u.OldUserStruct.ID); err != nil {
+				if err := group.CheckUserInDefaultGroup(ctx, tx, u.ID); err != nil {
 					return err
 				}
 			} else {
@@ -236,7 +236,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 							return err
 						}
 
-						if err := group.CheckUserInDefaultGroup(ctx, tx, u.OldUserStruct.ID); err != nil {
+						if err := group.CheckUserInDefaultGroup(ctx, tx, u.ID); err != nil {
 							return err
 						}
 

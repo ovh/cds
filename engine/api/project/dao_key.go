@@ -27,9 +27,10 @@ func InsertKey(db gorp.SqlExecutor, key *sdk.ProjectKey) error {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
 			err = sdk.ErrKeyAlreadyExist
 		}
-		return sdk.WrapError(err, "Cannot insert project key")
+		return sdk.WrapError(err, "Cannot insert project key %s", dbProjKey.Name)
 	}
 	*key = sdk.ProjectKey(dbProjKey)
+	log.Debug("project.InsertKey>  key %s (%d) inserted", key.Name, key.ID)
 	return nil
 }
 

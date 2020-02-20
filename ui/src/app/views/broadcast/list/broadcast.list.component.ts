@@ -13,7 +13,6 @@ import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
 })
 @AutoUnsubscribe()
 export class BroadcastListComponent {
-
     recentBroadcasts: Array<Broadcast> = [];
     oldBroadcasts: Array<Broadcast> = [];
     filteredBroadcasts: Array<Broadcast> = [];
@@ -27,23 +26,21 @@ export class BroadcastListComponent {
         let filterLower = filter.toLowerCase();
         let broadcasts = this.recentView ? this.recentBroadcasts : this.oldBroadcasts;
         this.filteredBroadcasts = broadcasts.filter((br) => {
-          return br.title.toLowerCase().indexOf(filterLower) !== -1 || br.level === filter;
+            return br.title.toLowerCase().indexOf(filterLower) !== -1 || br.level === filter;
         });
     }
 
     constructor(private _broadcastStore: BroadcastStore, private _cd: ChangeDetectorRef) {
-      this._broadcastSub = this._broadcastStore.getBroadcasts()
-          .pipe(finalize(() => {
-              this.loading = false;
-              this._cd.markForCheck();
-          }))
-        .subscribe((broadcasts) => {
-            this.recentBroadcasts = broadcasts.valueSeq().toArray().filter((br) => !br.read && !br.archived)
-                .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
-            this.oldBroadcasts = broadcasts.valueSeq().toArray().filter((br) => br.read || br.archived)
-                .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
-            this.filteredBroadcasts = this.recentBroadcasts;
-        });
+        this._broadcastSub = this._broadcastStore.getBroadcasts()
+            .subscribe((broadcasts) => {
+                this.recentBroadcasts = broadcasts.valueSeq().toArray().filter((br) => !br.read && !br.archived)
+                    .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
+                this.oldBroadcasts = broadcasts.valueSeq().toArray().filter((br) => br.read || br.archived)
+                    .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
+                this.filteredBroadcasts = this.recentBroadcasts;
+                this.loading = false;
+                this._cd.markForCheck();
+            });
     }
 
     switchToRecentView(recent: boolean) {
@@ -54,22 +51,22 @@ export class BroadcastListComponent {
         this.recentView = recent;
         if (recent) {
             this.filteredBroadcasts = this.recentBroadcasts.filter((br) => {
-              return br.title.toLowerCase().indexOf(filterLower) !== -1 || br.level === this.filter;
+                return br.title.toLowerCase().indexOf(filterLower) !== -1 || br.level === this.filter;
             });
         } else {
             this.filteredBroadcasts = this.oldBroadcasts.filter((br) => {
-              return br.title.toLowerCase().indexOf(filterLower) !== -1 || br.level === this.filter;
+                return br.title.toLowerCase().indexOf(filterLower) !== -1 || br.level === this.filter;
             });
         }
     }
 
     markAsRead(id: number) {
-      this.loading = true;
-      this._broadcastStore.markAsRead(id)
-        .pipe(finalize(() => {
-            this.loading = false;
-            this._cd.markForCheck();
-        }))
-        .subscribe();
+        this.loading = true;
+        this._broadcastStore.markAsRead(id)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe();
     }
 }

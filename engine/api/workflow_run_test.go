@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/api/ascode"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/api/ascode"
 
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -33,7 +33,7 @@ import (
 )
 
 func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -161,7 +161,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 }
 
 func Test_getWorkflowRunsHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -315,7 +315,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 }
 
 func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -431,7 +431,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 }
 
 func Test_getLatestWorkflowRunHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -565,7 +565,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_getWorkflowRunHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -682,7 +682,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_getWorkflowNodeRunHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
@@ -833,7 +833,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -991,7 +991,7 @@ func waitCraftinWorkflow(db gorp.SqlExecutor, id int64) error {
  * 3. Run workflow :  Must fail on getting PR.id = 1
  */
 func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -1176,7 +1176,8 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		Type:      ascode.AsCodeWorkflow,
 	}
 
-	ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, proj, &app, ed, u)
+	x := ascode.UpdateAsCodeResult(context.TODO(), api.mustDB(), api.Cache, proj, &app, ed, u)
+	require.NotNil(t, x, "ascodeEvent should not be nil, but it was")
 
 	//Prepare request
 	vars := map[string]string{
@@ -1226,7 +1227,7 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -1282,7 +1283,7 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 	gr := sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, group.Insert(api.mustDB(), &gr))
+	require.NoError(t, group.Insert(context.TODO(), api.mustDB(), &gr))
 
 	uLambda, pass := assets.InsertLambdaUser(t, api.mustDB(), &gr)
 
@@ -1338,7 +1339,7 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -1497,7 +1498,7 @@ func Test_postWorkflowRunHandlerWithoutRightConditionsOnHook(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -1659,7 +1660,7 @@ func Test_postWorkflowRunHandlerHookWithMutex(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerHook(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -1828,7 +1829,7 @@ func Test_postWorkflowRunHandlerHook(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -1837,8 +1838,8 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	gr := &sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, group.Insert(db, gr))
-	require.NoError(t, group.InsertLinkGroupProject(api.mustDB(), &group.LinkGroupProject{
+	require.NoError(t, group.Insert(context.TODO(), db, gr))
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), api.mustDB(), &group.LinkGroupProject{
 		GroupID:   gr.ID,
 		ProjectID: proj.ID,
 		Role:      7,
@@ -1901,7 +1902,7 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandler_ConditionNotOK(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -1985,7 +1986,7 @@ func Test_postWorkflowRunHandler_ConditionNotOK(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -1994,8 +1995,8 @@ func Test_postWorkflowRunHandler_BadPayload(t *testing.T) {
 	gr := &sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	require.NoError(t, group.Insert(db, gr))
-	require.NoError(t, group.InsertLinkGroupProject(api.mustDB(), &group.LinkGroupProject{
+	require.NoError(t, group.Insert(context.TODO(), db, gr))
+	require.NoError(t, group.InsertLinkGroupProject(context.TODO(), api.mustDB(), &group.LinkGroupProject{
 		GroupID:   gr.ID,
 		ProjectID: proj.ID,
 		Role:      7,
@@ -2254,7 +2255,7 @@ func Test_getWorkflowNodeRunJobServiceLogsHandler(t *testing.T) {
 }
 
 func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)
@@ -2400,7 +2401,7 @@ func Test_deleteWorkflowRunsBranchHandler(t *testing.T) {
 }
 
 func Test_deleteWorkflowRunHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(t, api.mustDB())
 	key := sdk.RandomString(10)

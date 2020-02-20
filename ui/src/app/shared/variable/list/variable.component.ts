@@ -11,7 +11,6 @@ import { Application } from 'app/model/application.model';
 import { Environment } from 'app/model/environment.model';
 import { Project } from 'app/model/project.model';
 import { Variable, VariableAudit } from 'app/model/variable.model';
-import { Warning } from 'app/model/warning.model';
 import { ApplicationAuditService } from 'app/service/application/application.audit.service';
 import { EnvironmentAuditService } from 'app/service/environment/environment.audit.service';
 import { ProjectAuditService } from 'app/service/project/project.audit.service';
@@ -49,7 +48,6 @@ export class VariableComponent extends Table<Variable> {
     @Input() project: Project;
     @Input() environment: Environment;
     @Input() application: Application;
-    @Input() warnings: Map<string, Warning>;
 
     @Output() event = new EventEmitter<VariableEvent>();
 

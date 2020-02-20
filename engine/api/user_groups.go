@@ -17,13 +17,13 @@ func (api *API) getUserGroupsHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["permUsernamePublic"]
 
-		u, err := user.LoadByUsername(ctx, api.mustDB(), username, user.LoadOptions.WithDeprecatedUser)
+		u, err := user.LoadByUsername(ctx, api.mustDB(), username)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load user %s", username)
 		}
 
 		// Get all links group user for user id
-		links, err := group.LoadLinksGroupUserForUserIDs(ctx, api.mustDB(), []int64{u.OldUserStruct.ID})
+		links, err := group.LoadLinksGroupUserForUserIDs(ctx, api.mustDB(), []string{u.ID})
 		if err != nil {
 			return err
 		}

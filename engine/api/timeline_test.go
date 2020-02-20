@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/olivere/elastic.v6"
 
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
@@ -28,7 +27,7 @@ type testTimelineEvent struct {
 func (e testTimelineEvent) String() string { return e.ProjectKey + "/" + e.WorkflowName }
 
 func Test_getTimelineHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 
 	// Create two projects with workflows
@@ -51,7 +50,7 @@ func Test_getTimelineHandler(t *testing.T) {
 				WorkflowNames: []string{"workflow2"},
 			},
 		},
-	}, lambdaIngroupWithMuted.OldUserStruct.ID))
+	}, lambdaIngroupWithMuted.ID))
 
 	// This is a mock for the elastic service
 	mockElasticService, _ := assets.InsertService(t, db, "Test_getTimelineHandler", services.TypeElasticsearch)

@@ -4,9 +4,9 @@ testcases:
 - name: prepare test
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITCLIPFARSENAL1
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIPFARSENAL1 --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove itclipfarsenal1 --force
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITCLIPFARSENAL2
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIPFARSENAL2 --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove itclipfarsenal2 --force
 
 - name: List all the model
   steps:

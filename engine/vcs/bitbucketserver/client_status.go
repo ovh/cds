@@ -69,12 +69,16 @@ func (b *bitbucketClient) ListStatuses(ctx context.Context, repo string, ref str
 	params := url.Values{}
 	nextPage := 0
 	for {
+		if ctx.Err() != nil {
+			break
+		}
+
 		if nextPage != 0 {
 			params.Set("start", fmt.Sprintf("%d", nextPage))
 		}
 
 		var response ResponseStatus
-		if err := b.do(ctx, "GET", "build-status", path, nil, nil, &response, nil); err != nil {
+		if err := b.do(ctx, "GET", "build-status", path, params, nil, &response, nil); err != nil {
 			return nil, sdk.WrapError(err, "Unable to get statuses")
 		}
 

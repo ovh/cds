@@ -10,7 +10,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -106,7 +105,7 @@ func LoadOrCreateWorkerModel(t *testing.T, api *API, groupID int64, workermodelN
 }
 
 func TestPostRegisterWorkerHandler(t *testing.T) {
-	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, _, end := newTestAPI(t)
 	defer end()
 
 	g := LoadSharedInfraGroup(t, api)
