@@ -17,11 +17,11 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content=" DELETE /user/&lt;permUsernamePublic&gt;    URL /user/&lt;permUsernamePublic&gt;     Method DELETE   Permissions Auth: true   Scopes User   Code deleteUserHandler    DELETE /user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;    URL /user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteConsumerByUserHandler    DELETE /user/&lt;username&gt;/auth/session/&lt;permSessionID&gt;    URL /user/&lt;username&gt;/auth/session/&lt;permSessionID&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteSessionByUserHandler    GET /user/&lt;permUsernamePublic&gt;/group    URL /user/&lt;permUsernamePublic&gt;/group     Method GET   Permissions Auth: true   Scopes User   Code getUserGroupsHandler    GET /user/&lt;permUsernamePublic&gt;    URL /user/&lt;permUsernamePublic&gt;     Method GET   Permissions Auth: true   Scopes User   Code getUserHandler    GET /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method GET   Permissions Auth: true   Scopes AccessToken   Code getConsumersByUserHandler    GET /user/&lt;username&gt;/auth/session    URL /user/&lt;username&gt;/auth/session     Method GET   Permissions Auth: true   Scopes AccessToken   Code getSessionsByUserHandler    GET /user/&lt;username&gt;/contact    URL /user/&lt;username&gt;/contact     Method GET   Permissions Auth: true   Scopes User   Code getUserContactsHandler    GET /user/schema    URL /user/schema     Method GET   Permissions Auth: true   Scopes User   Code getUserJSONSchema    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Scopes User   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Scopes User   Code getTimelineHandler    GET /user    URL /user     Method GET   Permissions Auth: true   Scopes User   Code getUsersHandler    POST /user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;/regen    URL /user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;/regen     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerRegenByUserHandler    POST /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerByUserHandler    POST /user/favorite    URL /user/favorite     Method POST   Permissions Auth: true   Scopes User   Code postUserFavoriteHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Scopes User   Code postTimelineFilterHandler    PUT /user/&lt;permUsernamePublic&gt;    URL /user/&lt;permUsernamePublic&gt;     Method PUT   Permissions Auth: true   Scopes User   Code putUserHandler    ">
+    content=" DELETE /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteConsumerByUserHandler    DELETE /user/&lt;username&gt;/auth/session/&lt;session-id&gt;    URL /user/&lt;username&gt;/auth/session/&lt;session-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteSessionByUserHandler    DELETE /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method DELETE   Permissions Auth: true   Scopes User   Code deleteUserHandler    GET /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method GET   Permissions Auth: true   Scopes AccessToken   Code getConsumersByUserHandler    GET /user/&lt;username&gt;/auth/session    URL /user/&lt;username&gt;/auth/session     Method GET   Permissions Auth: true   Scopes AccessToken   Code getSessionsByUserHandler    GET /user/&lt;username&gt;/contact    URL /user/&lt;username&gt;/contact     Method GET   Permissions Auth: true   Scopes User   Code getUserContactsHandler    GET /user/&lt;username&gt;/group    URL /user/&lt;username&gt;/group     Method GET   Permissions Auth: true   Scopes User   Code getUserGroupsHandler    GET /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method GET   Permissions Auth: true   Scopes User   Code getUserHandler    GET /user/schema    URL /user/schema     Method GET   Permissions Auth: true   Scopes User   Code getUserJSONSchema    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Scopes User   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Scopes User   Code getTimelineHandler    GET /user    URL /user     Method GET   Permissions Auth: true   Scopes User   Code getUsersHandler    POST /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerRegenByUserHandler    POST /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerByUserHandler    POST /user/favorite    URL /user/favorite     Method POST   Permissions Auth: true   Scopes User   Code postUserFavoriteHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Scopes User   Code postTimelineFilterHandler    PUT /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method PUT   Permissions Auth: true   Scopes User   Code putUserHandler    ">
 <meta property="og:description"
-    content=" DELETE /user/&lt;permUsernamePublic&gt;    URL /user/&lt;permUsernamePublic&gt;     Method DELETE   Permissions Auth: true   Scopes User   Code deleteUserHandler    DELETE /user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;    URL /user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteConsumerByUserHandler    DELETE /user/&lt;username&gt;/auth/session/&lt;permSessionID&gt;    URL /user/&lt;username&gt;/auth/session/&lt;permSessionID&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteSessionByUserHandler    GET /user/&lt;permUsernamePublic&gt;/group    URL /user/&lt;permUsernamePublic&gt;/group     Method GET   Permissions Auth: true   Scopes User   Code getUserGroupsHandler    GET /user/&lt;permUsernamePublic&gt;    URL /user/&lt;permUsernamePublic&gt;     Method GET   Permissions Auth: true   Scopes User   Code getUserHandler    GET /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method GET   Permissions Auth: true   Scopes AccessToken   Code getConsumersByUserHandler    GET /user/&lt;username&gt;/auth/session    URL /user/&lt;username&gt;/auth/session     Method GET   Permissions Auth: true   Scopes AccessToken   Code getSessionsByUserHandler    GET /user/&lt;username&gt;/contact    URL /user/&lt;username&gt;/contact     Method GET   Permissions Auth: true   Scopes User   Code getUserContactsHandler    GET /user/schema    URL /user/schema     Method GET   Permissions Auth: true   Scopes User   Code getUserJSONSchema    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Scopes User   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Scopes User   Code getTimelineHandler    GET /user    URL /user     Method GET   Permissions Auth: true   Scopes User   Code getUsersHandler    POST /user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;/regen    URL /user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;/regen     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerRegenByUserHandler    POST /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerByUserHandler    POST /user/favorite    URL /user/favorite     Method POST   Permissions Auth: true   Scopes User   Code postUserFavoriteHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Scopes User   Code postTimelineFilterHandler    PUT /user/&lt;permUsernamePublic&gt;    URL /user/&lt;permUsernamePublic&gt;     Method PUT   Permissions Auth: true   Scopes User   Code putUserHandler    ">
+    content=" DELETE /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteConsumerByUserHandler    DELETE /user/&lt;username&gt;/auth/session/&lt;session-id&gt;    URL /user/&lt;username&gt;/auth/session/&lt;session-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteSessionByUserHandler    DELETE /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method DELETE   Permissions Auth: true   Scopes User   Code deleteUserHandler    GET /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method GET   Permissions Auth: true   Scopes AccessToken   Code getConsumersByUserHandler    GET /user/&lt;username&gt;/auth/session    URL /user/&lt;username&gt;/auth/session     Method GET   Permissions Auth: true   Scopes AccessToken   Code getSessionsByUserHandler    GET /user/&lt;username&gt;/contact    URL /user/&lt;username&gt;/contact     Method GET   Permissions Auth: true   Scopes User   Code getUserContactsHandler    GET /user/&lt;username&gt;/group    URL /user/&lt;username&gt;/group     Method GET   Permissions Auth: true   Scopes User   Code getUserGroupsHandler    GET /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method GET   Permissions Auth: true   Scopes User   Code getUserHandler    GET /user/schema    URL /user/schema     Method GET   Permissions Auth: true   Scopes User   Code getUserJSONSchema    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Scopes User   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Scopes User   Code getTimelineHandler    GET /user    URL /user     Method GET   Permissions Auth: true   Scopes User   Code getUsersHandler    POST /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerRegenByUserHandler    POST /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerByUserHandler    POST /user/favorite    URL /user/favorite     Method POST   Permissions Auth: true   Scopes User   Code postUserFavoriteHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Scopes User   Code postTimelineFilterHandler    PUT /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method PUT   Permissions Auth: true   Scopes User   Code putUserHandler    ">
 <meta name="twitter:description"
-    content=" DELETE /user/&lt;permUsernamePublic&gt;    URL /user/&lt;permUsernamePublic&gt;     Method DELETE   Permissions Auth: true   Scopes User   Code deleteUserHandler    DELETE /user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;    URL /user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteConsumerByUserHandler    DELETE /user/&lt;username&gt;/auth/session/&lt;permSessionID&gt;    URL /user/&lt;username&gt;/auth/session/&lt;permSessionID&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteSessionByUserHandler    GET /user/&lt;permUsernamePublic&gt;/group    URL /user/&lt;permUsernamePublic&gt;/group     Method GET   Permissions Auth: true   Scopes User   Code getUserGroupsHandler    GET /user/&lt;permUsernamePublic&gt;    URL /user/&lt;permUsernamePublic&gt;     Method GET   Permissions Auth: true   Scopes User   Code getUserHandler    GET /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method GET   Permissions Auth: true   Scopes AccessToken   Code getConsumersByUserHandler    GET /user/&lt;username&gt;/auth/session    URL /user/&lt;username&gt;/auth/session     Method GET   Permissions Auth: true   Scopes AccessToken   Code getSessionsByUserHandler    GET /user/&lt;username&gt;/contact    URL /user/&lt;username&gt;/contact     Method GET   Permissions Auth: true   Scopes User   Code getUserContactsHandler    GET /user/schema    URL /user/schema     Method GET   Permissions Auth: true   Scopes User   Code getUserJSONSchema    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Scopes User   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Scopes User   Code getTimelineHandler    GET /user    URL /user     Method GET   Permissions Auth: true   Scopes User   Code getUsersHandler    POST /user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;/regen    URL /user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;/regen     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerRegenByUserHandler    POST /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerByUserHandler    POST /user/favorite    URL /user/favorite     Method POST   Permissions Auth: true   Scopes User   Code postUserFavoriteHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Scopes User   Code postTimelineFilterHandler    PUT /user/&lt;permUsernamePublic&gt;    URL /user/&lt;permUsernamePublic&gt;     Method PUT   Permissions Auth: true   Scopes User   Code putUserHandler    ">
+    content=" DELETE /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteConsumerByUserHandler    DELETE /user/&lt;username&gt;/auth/session/&lt;session-id&gt;    URL /user/&lt;username&gt;/auth/session/&lt;session-id&gt;     Method DELETE   Permissions Auth: true   Scopes AccessToken   Code deleteSessionByUserHandler    DELETE /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method DELETE   Permissions Auth: true   Scopes User   Code deleteUserHandler    GET /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method GET   Permissions Auth: true   Scopes AccessToken   Code getConsumersByUserHandler    GET /user/&lt;username&gt;/auth/session    URL /user/&lt;username&gt;/auth/session     Method GET   Permissions Auth: true   Scopes AccessToken   Code getSessionsByUserHandler    GET /user/&lt;username&gt;/contact    URL /user/&lt;username&gt;/contact     Method GET   Permissions Auth: true   Scopes User   Code getUserContactsHandler    GET /user/&lt;username&gt;/group    URL /user/&lt;username&gt;/group     Method GET   Permissions Auth: true   Scopes User   Code getUserGroupsHandler    GET /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method GET   Permissions Auth: true   Scopes User   Code getUserHandler    GET /user/schema    URL /user/schema     Method GET   Permissions Auth: true   Scopes User   Code getUserJSONSchema    GET /user/timeline/filter    URL /user/timeline/filter     Method GET   Permissions Auth: true   Scopes User   Code getTimelineFilterHandler    GET /user/timeline    URL /user/timeline     Method GET   Permissions Auth: true   Scopes User   Code getTimelineHandler    GET /user    URL /user     Method GET   Permissions Auth: true   Scopes User   Code getUsersHandler    POST /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen    URL /user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerRegenByUserHandler    POST /user/&lt;username&gt;/auth/consumer    URL /user/&lt;username&gt;/auth/consumer     Method POST   Permissions Auth: true   Scopes AccessToken   Code postConsumerByUserHandler    POST /user/favorite    URL /user/favorite     Method POST   Permissions Auth: true   Scopes User   Code postUserFavoriteHandler    POST /user/timeline/filter    URL /user/timeline/filter     Method POST   Permissions Auth: true   Scopes User   Code postTimelineFilterHandler    PUT /user/&lt;username&gt;    URL /user/&lt;username&gt;     Method PUT   Permissions Auth: true   Scopes User   Code putUserHandler    ">
 <meta property="og:url" content="https://ovh.github.io/cds/development/rest/user/">
 <meta property="og:title" content="user">
 <meta name="twitter:title" content="user">
@@ -357,12 +357,6 @@
 	
 		
 			
-<a class="item" data-title="warning" href="https://ovh.github.io/cds/development/rest/warning/"></a>
-
-		
-	
-		
-			
 <a class="item" data-title="worker" href="https://ovh.github.io/cds/development/rest/worker/"></a>
 
 		
@@ -393,69 +387,36 @@
 <ul>
 <li>
 <ul>
-<li><a href="#delete-user-permusernamepublic">DELETE <code>/user/&lt;permUsernamePublic&gt;</code></a></li>
-<li><a href="#delete-user-username-auth-consumer-permconsumerid">DELETE <code>/user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;</code></a></li>
-<li><a href="#delete-user-username-auth-session-permsessionid">DELETE <code>/user/&lt;username&gt;/auth/session/&lt;permSessionID&gt;</code></a></li>
-<li><a href="#get-user-permusernamepublic-group">GET <code>/user/&lt;permUsernamePublic&gt;/group</code></a></li>
-<li><a href="#get-user-permusernamepublic">GET <code>/user/&lt;permUsernamePublic&gt;</code></a></li>
+<li><a href="#delete-user-username-auth-consumer-consumer-id">DELETE <code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;</code></a></li>
+<li><a href="#delete-user-username-auth-session-session-id">DELETE <code>/user/&lt;username&gt;/auth/session/&lt;session-id&gt;</code></a></li>
+<li><a href="#delete-user-username">DELETE <code>/user/&lt;username&gt;</code></a></li>
 <li><a href="#get-user-username-auth-consumer">GET <code>/user/&lt;username&gt;/auth/consumer</code></a></li>
 <li><a href="#get-user-username-auth-session">GET <code>/user/&lt;username&gt;/auth/session</code></a></li>
 <li><a href="#get-user-username-contact">GET <code>/user/&lt;username&gt;/contact</code></a></li>
+<li><a href="#get-user-username-group">GET <code>/user/&lt;username&gt;/group</code></a></li>
+<li><a href="#get-user-username">GET <code>/user/&lt;username&gt;</code></a></li>
 <li><a href="#get-user-schema">GET <code>/user/schema</code></a></li>
 <li><a href="#get-user-timeline-filter">GET <code>/user/timeline/filter</code></a></li>
 <li><a href="#get-user-timeline">GET <code>/user/timeline</code></a></li>
 <li><a href="#get-user">GET <code>/user</code></a></li>
-<li><a href="#post-user-username-auth-consumer-permconsumerid-regen">POST <code>/user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;/regen</code></a></li>
+<li><a href="#post-user-username-auth-consumer-consumer-id-regen">POST <code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen</code></a></li>
 <li><a href="#post-user-username-auth-consumer">POST <code>/user/&lt;username&gt;/auth/consumer</code></a></li>
 <li><a href="#post-user-favorite">POST <code>/user/favorite</code></a></li>
 <li><a href="#post-user-timeline-filter">POST <code>/user/timeline/filter</code></a></li>
-<li><a href="#put-user-permusernamepublic">PUT <code>/user/&lt;permUsernamePublic&gt;</code></a></li>
+<li><a href="#put-user-username">PUT <code>/user/&lt;username&gt;</code></a></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<h2 id="delete-user-permusernamepublic">DELETE <code>/user/&lt;permUsernamePublic&gt;</code></h2>
+<h2 id="delete-user-username-auth-consumer-consumer-id">DELETE <code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/user/&lt;permUsernamePublic&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>User</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteUserHandler%22">deleteUserHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="delete-user-username-auth-consumer-permconsumerid">DELETE <code>/user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;</code></strong></th>
+<th><strong><code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;</code></strong></th>
 </tr>
 </thead>
 
@@ -482,13 +443,13 @@
 </tbody>
 </table>
 
-<h2 id="delete-user-username-auth-session-permsessionid">DELETE <code>/user/&lt;username&gt;/auth/session/&lt;permSessionID&gt;</code></h2>
+<h2 id="delete-user-username-auth-session-session-id">DELETE <code>/user/&lt;username&gt;/auth/session/&lt;session-id&gt;</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/user/&lt;username&gt;/auth/session/&lt;permSessionID&gt;</code></strong></th>
+<th><strong><code>/user/&lt;username&gt;/auth/session/&lt;session-id&gt;</code></strong></th>
 </tr>
 </thead>
 
@@ -515,20 +476,20 @@
 </tbody>
 </table>
 
-<h2 id="get-user-permusernamepublic-group">GET <code>/user/&lt;permUsernamePublic&gt;/group</code></h2>
+<h2 id="delete-user-username">DELETE <code>/user/&lt;username&gt;</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/user/&lt;permUsernamePublic&gt;/group</code></strong></th>
+<th><strong><code>/user/&lt;username&gt;</code></strong></th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
 <td>Method</td>
-<td>GET</td>
+<td>DELETE</td>
 </tr>
 
 <tr>
@@ -543,40 +504,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserGroupsHandler%22">getUserGroupsHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h2 id="get-user-permusernamepublic">GET <code>/user/&lt;permUsernamePublic&gt;</code></h2>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/user/&lt;permUsernamePublic&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Scopes</td>
-<td>User</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserHandler%22">getUserHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteUserHandler%22">deleteUserHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -676,6 +604,72 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserContactsHandler%22">getUserContactsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-user-username-group">GET <code>/user/&lt;username&gt;/group</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/&lt;username&gt;/group</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>User</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserGroupsHandler%22">getUserGroupsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="get-user-username">GET <code>/user/&lt;username&gt;</code></h2>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/&lt;username&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Scopes</td>
+<td>User</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserHandler%22">getUserHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -812,13 +806,13 @@
 </tbody>
 </table>
 
-<h2 id="post-user-username-auth-consumer-permconsumerid-regen">POST <code>/user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;/regen</code></h2>
+<h2 id="post-user-username-auth-consumer-consumer-id-regen">POST <code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/user/&lt;username&gt;/auth/consumer/&lt;permConsumerID&gt;/regen</code></strong></th>
+<th><strong><code>/user/&lt;username&gt;/auth/consumer/&lt;consumer-id&gt;/regen</code></strong></th>
 </tr>
 </thead>
 
@@ -944,13 +938,13 @@
 </tbody>
 </table>
 
-<h2 id="put-user-permusernamepublic">PUT <code>/user/&lt;permUsernamePublic&gt;</code></h2>
+<h2 id="put-user-username">PUT <code>/user/&lt;username&gt;</code></h2>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/user/&lt;permUsernamePublic&gt;</code></strong></th>
+<th><strong><code>/user/&lt;username&gt;</code></strong></th>
 </tr>
 </thead>
 

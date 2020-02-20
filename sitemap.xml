@@ -267,6 +267,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/concepts/workflow/hooks/gerrit/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/concepts/requirement/requirement_os_arch/</loc>
   </url>
   
@@ -388,6 +392,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/integrations/gerrit/</loc>
   </url>
   
   <url>
@@ -1692,10 +1700,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/worker/version/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/development/rest/warning/</loc>
   </url>
   
   <url>

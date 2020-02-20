@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>Openstack - CDS - Continuous Delivery Service</title>
+<title>Gerrit Repository Manager - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
@@ -17,14 +17,23 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="">
+    content="The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by Gerrit to a CDS application.
+This integration enables some features:
+ Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to]">
 <meta property="og:description"
-    content="">
+    content="The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by Gerrit to a CDS application.
+This integration enables some features:
+ Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to]">
 <meta name="twitter:description"
-    content="">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/openstack/">
-<meta property="og:title" content="Openstack">
-<meta name="twitter:title" content="Openstack">
+    content="The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by Gerrit to a CDS application.
+This integration enables some features:
+ Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to]">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/gerrit/">
+<meta property="og:title" content="Gerrit Repository Manager">
+<meta name="twitter:title" content="Gerrit Repository Manager">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
@@ -428,11 +437,8 @@
 
 			<div id="docsContent">
         		
-	 
-    
-    
-    
-<h1>OpenStack Swift</h1>
+
+<h1>Gerrit Repository Manager</h1>
 
 
 
@@ -440,127 +446,82 @@
 <ul>
 <li>
 <ul>
-<li><a href="#configure-with-webui">Configure with WebUI</a></li>
-<li><a href="#configure-with-cdsctl">Configure with cdsctl</a>
+<li><a href="#how-to-configure-gerrit-integration">How to configure Gerrit integration</a>
 <ul>
-<li><a href="#import-a-openstack-swift-on-your-cds-project">Import a OpenStack Swift on your CDS Project</a></li>
-<li><a href="#create-a-public-openstack-swift-for-whole-cds-projects">Create a Public OpenStack Swift for whole CDS Projects</a></li>
+<li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
 </ul></li>
+<li><a href="#start-the-vcs-µservice">Start the vcs µService</a></li>
 </ul></li>
 </ul>
 </nav>
 
 
 
-<p>The OpenStack Swift Integration is a Self-Service integration that can be configured on a CDS Project.</p>
+<p>The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.</p>
 
-<p>With this integration, you can use a dedicated OpenStack Swift Storage on :</p>
+<p>This integration allows you to link a Git Repository hosted by Gerrit
+to a CDS application.</p>
+
+<p>This integration enables some features:</p>
 
 <ul>
-<li>action <a href="https://ovh.github.io/cds/docs/actions/builtin-artifact-upload/">Artifact Upload</a></li>
-<li>action <a href="https://ovh.github.io/cds/docs/actions/builtin-artifact-download/">Artifact Download</a></li>
-<li>action <a href="https://ovh.github.io/cds/docs/actions/builtin-serve-static-files/">Serve Static Files</a></li>
-<li><a href="https://ovh.github.io/cds/docs/components/worker/cache/">worker cache command</a></li>
+<li><a href="https://ovh.github.io/cds/docs/concepts/workflow/hooks/gerrit/">Gerrit Hooks</a></li>
+<li>Easy to use action <a href="https://ovh.github.io/cds/docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> and <a href="https://ovh.github.io/cds/docs/actions/builtin-gitclone/">GitClone</a> for advanced usage</li>
+<li>Send comments on your Pull-Requests when a workflow is failed</li>
+<li>Add a vote -1/+1 on a change</li>
 </ul>
 
-<p>Notice: by default, the storage is configured in CDS Configuration. This integration
-allows user to use their own OpenStack Storage and not use the shared storage.</p>
+<h2 id="how-to-configure-gerrit-integration">How to configure Gerrit integration</h2>
 
-<h2 id="configure-with-webui">Configure with WebUI</h2>
+<p>You will have to create 2 users on gerrit: <a href="https://gerrit-review.googlesource.com/Documentation/cmd-create-account.html" target="_blank">[How to]</a></p>
 
-<p>You can add a OpenStack Swift on your CDS Project.</p>
+<ul>
+<li>An Administrator User ( with SSH KEY ), to get event from Gerrit Server</li>
+<li>An User on gerrit ( with httpPassword ), to comment changes with workflow result</li>
+</ul>
 
-<p><img src="../images/openstack-swift-integration-webui.png" alt="Integration" /></p>
+<h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
 
-<h2 id="configure-with-cdsctl">Configure with cdsctl</h2>
+<pre><code class="language-yaml"> [vcs.servers]
+     [vcs.servers.gerrit]
+       # URL of Gerrit
+       url = &quot;http://localhost:9080&quot;
+ 
+       [vcs.servers.gerrit.gerrit]
+         # Disable event listener
+         disableGerritEvent = false
+ 
+         # SSH port of gerrit
+         sshport = 29418
+ 
+         [vcs.servers.gerrit.gerrit.EventStream]
+           # Private key of the user who access to gerrit event stream
+           privateKey = &quot;XXXXXXX&quot;
+ 
+           # User to access to gerrit event stream
+           user = &quot;admin&quot;
+ 
+         [vcs.servers.gerrit.gerrit.Reviewer]
+           # Http Password of the user that comment changes
+           token = &quot;XXXXXXXXXX&quot;
+ 
+           # User that review changes
+           user = &quot;Verifier&quot;
 
-<h3 id="import-a-openstack-swift-on-your-cds-project">Import a OpenStack Swift on your CDS Project</h3>
-
-<p>Create a file project-configuration.yml:</p>
-
-<pre><code class="language-yml">name: MyOpenstackTenant
-model:
-  name: Openstack
-  public: false
-config:
-  address:
-    value: https://auth.cloud.ovh.net/v2.0/
-    type: string
-  domain:
-    value: &quot;&quot;
-    type: string
-  password:
-    value: 'your-password-here'
-    type: password
-  region:
-    value: your-region
-    type: string
-  storage_container_prefix:
-    value: cds-prefix-
-    type: string
-  storage_temporary_url_supported:
-    value: &quot;true&quot;
-    type: string
-  tenant_name:
-    value: &quot;your-openstack-tenant&quot;
-    type: string
-  username:
-    value: your-openstack-user
-    type: string
 </code></pre>
 
-<p>Import the integration on your CDS Project with:</p>
+<p>See how to generate <strong><a href="https://ovh.github.io/cds/hosting/configuration/">Configuration File</a></strong></p>
 
-<pre><code class="language-bash">cdsctl project integration import PROJECT_KEY project-configuration.yml
-</code></pre>
+<h2 id="start-the-vcs-µservice">Start the vcs µService</h2>
 
-<h3 id="create-a-public-openstack-swift-for-whole-cds-projects">Create a Public OpenStack Swift for whole CDS Projects</h3>
+<pre><code class="language-bash">$ engine start vcs
 
-<p>You can also add a OpenStack Swift with cdsctl. As a CDS Administrator,
-this allows you to propose a Public OpenStack Swift, available on all CDS Projects.</p>
-
-<p>Create a file public-configuration.yml:</p>
-
-<pre><code class="language-yml">name: Openstack
-storage: true
-public: true
-public_configurations:
-  your-public-openstack-integration:
-    &quot;address&quot;:
-      value: https://auth.cloud.ovh.net/v2.0/
-      type: string
-    &quot;domain&quot;:
-      value: &quot;&quot;
-      type: string
-    &quot;password&quot;:
-      value: 'your-password-here'
-      type: password
-    &quot;region&quot;:
-      value: your-region
-      type: string
-    &quot;storage_container_prefix&quot;:
-      value: cds-prefix-
-      type: string
-    &quot;storage_temporary_url_supported&quot;:
-      value: &quot;true&quot;
-      type: string
-    &quot;tenant_name&quot;:
-      value: &quot;your-openstack-tenant&quot;
-      type: string
-    &quot;username&quot;:
-      value: your-openstack-user
-      type: string
-</code></pre>
-
-<p>Import the integration with :</p>
-
-<pre><code class="language-bash">cdsctl admin integration-model import public-configuration.yml
+# you can also start CDS api and vcs in the same process:
+$ engine start api vcs
 </code></pre>
 
 
 
-    
-    
 
 			</div>
 		</section><footer>

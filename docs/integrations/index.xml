@@ -48,6 +48,18 @@ $ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ 
     </item>
     
     <item>
+      <title>Gerrit Repository Manager</title>
+      <link>https://ovh.github.io/cds/docs/integrations/gerrit/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/integrations/gerrit/</guid>
+      <description>The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
+This integration allows you to link a Git Repository hosted by Gerrit to a CDS application.
+This integration enables some features:
+ Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/+1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to]</description>
+    </item>
+    
+    <item>
       <title>LDAP Authentication</title>
       <link>https://ovh.github.io/cds/docs/integrations/ldap/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

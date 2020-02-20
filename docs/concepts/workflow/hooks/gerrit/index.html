@@ -2,7 +2,7 @@
 <html id="docs" lang="en" class="">
 	<head>
 	<meta charset="utf-8">
-<title>Pipeline Context - CDS - Continuous Delivery Service</title>
+<title>Gerrit Hook - CDS - Continuous Delivery Service</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="shortcut icon" type="image/png" href="https://ovh.github.io/cds/images/favicon.png">
 
@@ -17,20 +17,23 @@
 <link rel="stylesheet" href="https://ovh.github.io/cds/css/solarized-light.css">
 
 <meta name="description"
-    content="After adding the pipeline, you can &ldquo;Edit the pipeline Context&rdquo; (sidebar).
-Then, you can:
- add or remove application. Jobs can use cds.app.* configuration and or remove an environment. Jobs can use cds.env.* configuration enable / disable Pipeline Mutex  ">
+    content="Do you want to trigger a workflow from a gerrit event? This kind of hook is for you.
+You have to:
+ link your project to a Gerrit Server, on Advanced Section link an application to a Gerrit repository add a Gerrit Hook on the root pipeline, this pipeline have the application linked in the context  With this hook, you will have access to specific variables:
+ gerrit.change.id: ID of the change gerrit.">
 <meta property="og:description"
-    content="After adding the pipeline, you can &ldquo;Edit the pipeline Context&rdquo; (sidebar).
-Then, you can:
- add or remove application. Jobs can use cds.app.* configuration and or remove an environment. Jobs can use cds.env.* configuration enable / disable Pipeline Mutex  ">
+    content="Do you want to trigger a workflow from a gerrit event? This kind of hook is for you.
+You have to:
+ link your project to a Gerrit Server, on Advanced Section link an application to a Gerrit repository add a Gerrit Hook on the root pipeline, this pipeline have the application linked in the context  With this hook, you will have access to specific variables:
+ gerrit.change.id: ID of the change gerrit.">
 <meta name="twitter:description"
-    content="After adding the pipeline, you can &ldquo;Edit the pipeline Context&rdquo; (sidebar).
-Then, you can:
- add or remove application. Jobs can use cds.app.* configuration and or remove an environment. Jobs can use cds.env.* configuration enable / disable Pipeline Mutex  ">
-<meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/workflow/pipeline-context/">
-<meta property="og:title" content="Pipeline Context">
-<meta name="twitter:title" content="Pipeline Context">
+    content="Do you want to trigger a workflow from a gerrit event? This kind of hook is for you.
+You have to:
+ link your project to a Gerrit Server, on Advanced Section link an application to a Gerrit repository add a Gerrit Hook on the root pipeline, this pipeline have the application linked in the context  With this hook, you will have access to specific variables:
+ gerrit.change.id: ID of the change gerrit.">
+<meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/workflow/hooks/gerrit/">
+<meta property="og:title" content="Gerrit Hook">
+<meta name="twitter:title" content="Gerrit Hook">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
 <script type="text/javascript" src="https://ovh.github.io/cds/js/anchor-4.1.1.min.js"></script>
@@ -513,25 +516,32 @@ Then, you can:
 			<div id="docsContent">
         		
 
-<h1>Pipeline Context</h1>
+<h1>Gerrit Hook</h1>
 
 
 
 
 
-<p>After adding the pipeline, you can &ldquo;Edit the pipeline Context&rdquo; (sidebar).</p>
+<p>Do you want to trigger a workflow from a gerrit event? This kind of hook is for you.</p>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.design.ctx.select.png" alt="Select Pipeline" /></p>
-
-<p>Then, you can:</p>
+<p>You have to:</p>
 
 <ul>
-<li>add or remove application. Jobs can use <code>cds.app.*</code> <a href="https://ovh.github.io/cds/docs/concepts/variables/">configuration</a></li>
-<li>and or remove an environment. Jobs can use <code>cds.env.*</code> <a href="https://ovh.github.io/cds/docs/concepts/variables/">configuration</a></li>
-<li>enable / disable Pipeline Mutex</li>
+<li>link your project to a Gerrit Server, on Advanced Section</li>
+<li>link an application to a Gerrit repository</li>
+<li>add a Gerrit Hook on the root pipeline, this pipeline have the application linked in the <a href="https://ovh.github.io/cds/docs/concepts/workflow/pipeline-context/">context</a></li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.design.ctx.edit.png" alt="Pipeline Edit Context" /></p>
+<p>With this hook, you will have access to specific variables:</p>
+
+<ul>
+<li><code>gerrit.change.id</code>: ID of the change</li>
+<li><code>gerrit.change.url</code>: URL of the change</li>
+<li><code>gerrit.change.status</code>: Status of the change</li>
+<li><code>gerrit.change.branch</code>: Destination branch of the change</li>
+<li><code>gerrit.ref.name</code>: Full reference name within project</li>
+<li><code>gerrit.change.ref</code>: Git reference of the change</li>
+</ul>
 
 
 
