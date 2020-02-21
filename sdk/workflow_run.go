@@ -428,6 +428,8 @@ type WorkflowNodeRunHookEvent struct {
 type WorkflowNodeRunManual struct {
 	Payload            interface{} `json:"payload" db:"-"`
 	PipelineParameters []Parameter `json:"pipeline_parameter" db:"-"`
+	OnlyFailedJobs     bool        `json:"only_failed_jobs" db:"-"`
+	Resync             bool        `json:"resync" db:"-"`
 	Username           string      `json:"username" db:"-"`
 	Fullname           string      `json:"fullname" db:"-"`
 	Email              string      `json:"email" db:"-"`

@@ -61,6 +61,7 @@ func TestCanBeRun(t *testing.T) {
 
 	wnr := &sdk.WorkflowNodeRun{
 		WorkflowNodeID: node1.ID,
+		Status:         sdk.StatusSuccess, // a node node always have a status
 	}
 
 	ts := []struct {
@@ -68,13 +69,12 @@ func TestCanBeRun(t *testing.T) {
 		canBeRun bool
 	}{
 		{status: sdk.StatusBuilding, canBeRun: false},
-		{status: "", canBeRun: false},
 		{status: sdk.StatusSuccess, canBeRun: true},
 	}
 
 	for _, tc := range ts {
 		wnrs[nodeRoot.ID][0].Status = tc.status
-		test.Equal(t, workflow.CanBeRun(wr, wnr), tc.canBeRun)
+		test.Equal(t, tc.canBeRun, workflow.CanBeRun(wr, wnr))
 	}
 }
 
