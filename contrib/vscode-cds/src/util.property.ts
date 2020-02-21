@@ -1,4 +1,4 @@
-import { workspace, ConfigurationTarget } from "vscode";
+import { ConfigurationTarget, workspace } from "vscode";
 import { LogCategory } from "./util.journal";
 
 interface IPropertiesMap {

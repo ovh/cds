@@ -1,8 +1,6 @@
-import { commands, env, ExtensionContext, window, workspace, MessageItem } from "vscode";
-
-import { createExplorer, CDSObject, CDSContext, CDSResource, refreshExplorer, CDSExt } from "./explorer";
+import { commands, env, ExtensionContext, MessageItem, window, workspace } from "vscode";
+import { CDSContext, CDSExt, CDSObject, CDSResource, createExplorer, refreshExplorer } from "./explorer";
 import { Property } from "./util.property";
-
 
 const cdsExt = new CDSExt();
 

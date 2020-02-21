@@ -1,15 +1,15 @@
-import * as path from "path";
-import * as vscode from "vscode";
 import * as fs from 'fs';
+import * as path from "path";
 import * as toml from 'toml';
+import * as vscode from "vscode";
 import { CdsCtl } from "./cdsctl";
 import { Application } from "./models/application";
 import { Pipeline } from "./models/pipeline";
 import { Project } from "./models/project";
-import { Workflow, WNode } from "./models/workflow";
+import { WNode, Workflow } from "./models/workflow";
+import { Action, Stage, WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun } from "./models/workflow_run";
 import { allKinds, ResourceKind } from "./resources";
 import { Property } from "./util.property";
-import { WorkflowRun, WorkflowNodeRun, Stage, WorkflowNodeJobRun, Action } from "./models/workflow_run";
 
 export class CDSExt {
     public currentContext: CDSContext | undefined;
@@ -44,7 +44,7 @@ export class CDSExplorer implements vscode.TreeDataProvider<CDSObject> {
 
     constructor(readonly cdsExt: CDSExt) {
         this.contexts = discoverContexts(cdsExt);
-     }
+    }
 
     public getTreeItem(element: CDSObject): vscode.TreeItem | Thenable<vscode.TreeItem> {
         const treeItem = element.getTreeItem();

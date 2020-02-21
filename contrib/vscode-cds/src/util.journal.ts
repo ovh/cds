@@ -1,5 +1,4 @@
 import { OutputChannel, window } from "vscode";
-
 import { Property } from "./util.property";
 
 export enum LogCategory {

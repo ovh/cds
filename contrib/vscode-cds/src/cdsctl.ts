@@ -1,6 +1,5 @@
 import { exec } from "child_process";
 import { window, workspace } from "vscode";
-import { Version } from "./models/version";
 import { isActiveEditorValid } from "./util.editor";
 import { Journal } from "./util.journal";
 import { Property } from "./util.property";
