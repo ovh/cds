@@ -467,33 +467,6 @@ func WithWorkflows() RequestModifier {
 	}
 }
 
-// WithApplications allow a provider to retrieve a pipeline with its applications usage
-func WithApplications() RequestModifier {
-	return func(r *http.Request) {
-		q := r.URL.Query()
-		q.Set("withApplications", "true")
-		r.URL.RawQuery = q.Encode()
-	}
-}
-
-// WithEnvironments allow a provider to retrieve a pipeline with its environments usage
-func WithEnvironments() RequestModifier {
-	return func(r *http.Request) {
-		q := r.URL.Query()
-		q.Set("withEnvironments", "true")
-		r.URL.RawQuery = q.Encode()
-	}
-}
-
-// WithAsCodeEvents allow a provider to retrieve a pipeline with its as code events usage
-func WithAsCodeEvents() RequestModifier {
-	return func(r *http.Request) {
-		q := r.URL.Query()
-		q.Set("withAsCodeEvents", "true")
-		r.URL.RawQuery = q.Encode()
-	}
-}
-
 // AuthClient is the interface for authentication management.
 type AuthClient interface {
 	AuthDriverList() (sdk.AuthDriverResponse, error)

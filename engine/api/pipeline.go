@@ -278,18 +278,12 @@ func (api *API) getPipelineHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
 		pipelineName := vars["pipelineKey"]
-		withApp := FormBool(r, "withApplications")
 		withWorkflows := FormBool(r, "withWorkflows")
-		withEnvironments := FormBool(r, "withEnvironments")
 		withAsCodeEvent := FormBool(r, "withAsCodeEvents")
 
 		p, err := pipeline.LoadPipeline(ctx, api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load pipeline %s", pipelineName)
-		}
-
-		if withApp || withWorkflows || withEnvironments {
-			p.Usage = &sdk.Usage{}
 		}
 
 		if withAsCodeEvent {
@@ -305,6 +299,7 @@ func (api *API) getPipelineHandler() service.Handler {
 			if errW != nil {
 				return sdk.WrapError(errW, "getPipelineHandler> Cannot load workflows using pipeline %s", p.Name)
 			}
+			p.Usage = &sdk.Usage{}
 			p.Usage.Workflows = wf
 		}
 
