@@ -11,12 +11,12 @@ interface IPropertiesMap {
 
 export class Property {
     public static get<K extends keyof IPropertiesMap>(name: K): IPropertiesMap[K] | undefined {
-        const properties = workspace.getConfiguration("cdsctl");
+        const properties = workspace.getConfiguration("cds");
         return properties.get(name);
     }
 
     public static set<K extends keyof IPropertiesMap>(name: K, value: IPropertiesMap[K]) {
-        const properties = workspace.getConfiguration("cdsctl");
+        const properties = workspace.getConfiguration("cds");
         properties.update(name, value, ConfigurationTarget.Global);
     }
 
@@ -27,6 +27,6 @@ export class Property {
         if (index > -1) {
             v.splice(index, 1);
         }
-        Property.set(name, v!);
+        Property.set(name, v as never);
     }
 }

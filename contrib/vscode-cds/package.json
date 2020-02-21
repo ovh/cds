@@ -32,17 +32,17 @@
             "type": "object",
             "title": "CDS configuration",
             "properties": {
-                "cdsctl.binaryFileLocation": {
+                "cds.binaryFileLocation": {
                     "type": "string",
                     "default": "cdsctl",
                     "description": "path to cdsctl binary"
                 },
-                "cdsctl.knownCdsconfigs": {
+                "cds.knownCdsconfigs": {
                     "type": "array",
                     "description": "File paths to cdsconfig files from which you can select.",
                     "default": []
                 },
-                "cdsctl.logLevel": {
+                "cds.logLevel": {
                     "type": "array",
                     "default": [
                         "info",
@@ -61,14 +61,14 @@
                         ]
                     }
                 },
-                "cdsctl.progressSpinner": {
+                "cds.progressSpinner": {
                     "type": "array",
                     "default": [
                         "$(sync~spin)"
                     ],
                     "description": "A series of string that denotes progress"
                 },
-                "cdsctl.statusBarPositionPriority": {
+                "cds.statusBarPositionPriority": {
                     "type": "number",
                     "description": "Priority where the status bar view should be placed"
                 }
@@ -111,12 +111,12 @@
             "view/item/context": [
                 {
                     "command": "extension.vsCdsRemoveConfigFile",
-                    "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*instance/i",
+                    "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*context/i",
                     "group": "0@1"
                 },
                 {
                     "command": "extension.vsCdsSetAsCurrentContext",
-                    "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*instance/i",
+                    "when": "view == extension.vsCdsExplorer && viewItem =~ /vsCds\\.\\w*context/i",
                     "group": "0@1"
                 },
                 {
@@ -164,7 +164,7 @@
         "commands": [
             {
                 "command": "extension.vsCdsRemoveConfigFile",
-                "title": "Remove CDS Instance",
+                "title": "Remove CDS Config file",
                 "category": "CDS"
             },
             {

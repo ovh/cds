@@ -1,10 +1,12 @@
 import { commands, env, ExtensionContext, window, workspace, MessageItem } from "vscode";
 
-import { createExplorer, CDSObject, CDSContext, CDSResource, refreshExplorer } from "./explorer";
+import { createExplorer, CDSObject, CDSContext, CDSResource, refreshExplorer, CDSExt } from "./explorer";
 import { Property } from "./util.property";
 
-export function activate(context: ExtensionContext) {
 
+const cdsExt = new CDSExt();
+
+export function activate(context: ExtensionContext) {
     const subscriptions = [
         commands.registerCommand("extension.vsCdsAddNewConfig", addNewConfig),
         commands.registerCommand('extension.vsCdsRemoveConfigFile', vsCdsremoveConfigFile),
@@ -20,7 +22,7 @@ export function activate(context: ExtensionContext) {
         context.subscriptions.push(element);
     });
 
-    const treeProvider = createExplorer();
+    const treeProvider = createExplorer(cdsExt);
     commands.registerCommand("extension.vsCdsRefreshExplorer", () => treeProvider.refresh()),
         window.registerTreeDataProvider("extension.vsCdsExplorer", treeProvider);
 }
@@ -35,17 +37,17 @@ async function addNewConfig(cdsconfig?: string): Promise<void> {
     return undefined;
 }
 
-const ADD_NEW_CDS_PICK = "+ Add new cds instance";
-
 async function getCdsconfigSelection(cdsconfig?: string): Promise<string | undefined> {
+    const addNewCDSConfigFile = "+ Add new cds config file";
+
     if (cdsconfig) {
         return cdsconfig;
     }
     const knownCdsconfigs = Property.get("knownCdsconfigs") || [];
-    const picks = [ADD_NEW_CDS_PICK, ...knownCdsconfigs!];
+    const picks = [addNewCDSConfigFile, ...knownCdsconfigs!];
     const pick = await window.showQuickPick(picks);
 
-    if (pick === ADD_NEW_CDS_PICK) {
+    if (pick === addNewCDSConfigFile) {
         const cdsconfigUris = await window.showOpenDialog({});
         if (cdsconfigUris && cdsconfigUris.length === 1) {
             const cdsconfigPath = cdsconfigUris[0].fsPath;
@@ -69,6 +71,9 @@ async function vsCdsremoveConfigFile(explorerNode: CDSObject) {
     if (!answer || answer.isCloseAffordance) {
         return;
     }
+    if (cdsExt.currentContext === contextObj) {
+        cdsExt.currentContext = undefined;
+    }
     Property.delete("knownCdsconfigs", contextObj.cdsctl.getConfigFile());
     refreshExplorer();
 }
@@ -84,6 +89,8 @@ async function vsCdsSetAsCurrentContext(explorerNode: CDSObject) {
     if (!answer || answer.isCloseAffordance) {
         return;
     }
+    cdsExt.currentContext = contextObj;
+    refreshExplorer();
 }
 
 async function vsCdsOpenBrowserNode(explorerNode: CDSObject): Promise<void> {

@@ -11,8 +11,12 @@ import { allKinds, ResourceKind } from "./resources";
 import { Property } from "./util.property";
 import { WorkflowRun, WorkflowNodeRun, Stage, WorkflowNodeJobRun, Action } from "./models/workflow_run";
 
-export function createExplorer(): CDSExplorer {
-    return new CDSExplorer();
+export class CDSExt {
+    public currentContext: CDSContext | undefined;
+}
+
+export function createExplorer(cdsExt: CDSExt): CDSExplorer {
+    return new CDSExplorer(cdsExt);
 }
 
 export interface CDSObject {
@@ -36,8 +40,11 @@ export async function refreshExplorer(): Promise<void> {
 export class CDSExplorer implements vscode.TreeDataProvider<CDSObject> {
     private onDidChangeTreeDataEmitter: vscode.EventEmitter<CDSObject | undefined> = new vscode.EventEmitter<CDSObject | undefined>();
     readonly onDidChangeTreeData: vscode.Event<CDSObject | undefined> = this.onDidChangeTreeDataEmitter.event;
+    private contexts: Promise<CDSContext[]>;
 
-    constructor() { }
+    constructor(readonly cdsExt: CDSExt) {
+        this.contexts = discoverContexts(cdsExt);
+     }
 
     public getTreeItem(element: CDSObject): vscode.TreeItem | Thenable<vscode.TreeItem> {
         const treeItem = element.getTreeItem();
@@ -49,6 +56,7 @@ export class CDSExplorer implements vscode.TreeDataProvider<CDSObject> {
     }
 
     public refresh(): void {
+        this.contexts = discoverContexts(this.cdsExt);
         this.onDidChangeTreeDataEmitter.fire();
     }
 
@@ -60,9 +68,8 @@ export class CDSExplorer implements vscode.TreeDataProvider<CDSObject> {
     }
 
     private async getContextsNode(): Promise<CDSObject[]> {
-        const contexts = await getContexts();
-        return contexts.map((context) => {
-            return new CDSContextNode(context.cdsctl.getContextName(), context);
+        return (await this.contexts).map((context) => {
+            return new CDSContextNode(this.cdsExt, context.cdsctl.getContextName(), context);
         });
     }
 }
@@ -94,12 +101,14 @@ class CDSExplorerNodeImpl {
 }
 
 class CDSContextNode extends CDSExplorerNodeImpl implements CDSObject {
-    constructor(readonly id: string, readonly metadata: CDSContext) {
+    constructor(readonly cdsExt: CDSExt, readonly id: string, readonly metadata: CDSContext) {
         super('context');
     }
 
-    get icon(): vscode.Uri {
-        return vscode.Uri.file(path.join(__dirname, "../../images/cds-logo.png"));
+    get icon(): vscode.Uri | undefined {
+        if (this.cdsExt.currentContext && this.cdsExt.currentContext.name === this.id) {
+            return vscode.Uri.file(path.join(__dirname, "../images/cds.svg"));
+        }
     }
 
     public getChildren(): vscode.ProviderResult<CDSObject[]> {
@@ -112,12 +121,12 @@ class CDSContextNode extends CDSExplorerNodeImpl implements CDSObject {
     public getTreeItem(): vscode.TreeItem | Thenable<vscode.TreeItem> {
         const treeItem = new vscode.TreeItem(this.id, vscode.TreeItemCollapsibleState.Collapsed);
         treeItem.iconPath = this.icon;
-        treeItem.contextValue = "vsCds.instance";
+        treeItem.contextValue = "vsCds.context";
         return treeItem;
     }
 }
 
-export async function getContexts(): Promise<CDSContext[]> {
+export async function discoverContexts(cdsExt: CDSExt): Promise<CDSContext[]> {
     const cdsConfigs = Property.get("knownCdsconfigs");
     if (!cdsConfigs) {
         return [];
@@ -126,6 +135,7 @@ export async function getContexts(): Promise<CDSContext[]> {
     const allContextes: CDSContext[][] = await Promise.all(cdsConfigs.map(async (configFile): Promise<CDSContext[]> => {
         const config = toml.parse(fs.readFileSync(configFile, 'utf-8'));
         const ctxs = new Array<CDSContext>();
+        let current: string = "";
 
         for (const contextName in config) {
             if (contextName !== "current") {
@@ -134,6 +144,11 @@ export async function getContexts(): Promise<CDSContext[]> {
                     name: contextName,
                     cdsctl,
                 });
+                if (current === contextName && !cdsExt.currentContext) {
+                    cdsExt.currentContext = {name: contextName, cdsctl};
+                }
+            } else {
+                current = config["current"];
             }
         }
         return ctxs;
