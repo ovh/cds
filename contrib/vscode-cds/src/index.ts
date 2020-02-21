@@ -1,8 +1,9 @@
-import { commands, env, ExtensionContext, MessageItem, window, workspace } from "vscode";
-import { CDSContext, CDSExt, CDSObject, CDSResource, createExplorer, refreshExplorer } from "./explorer";
+import { commands, env, ExtensionContext, MessageItem, window, workspace, Uri } from "vscode";
+import { CDSContext, CDSObject, CDSResource, createExplorer, refreshExplorer } from "./explorer";
 import { Property } from "./util.property";
-
-const cdsExt = new CDSExt();
+import { CDSExt } from "./cdsext";
+import { StatusBarView } from "./view.statusbar";
+import { Journal } from "./util.journal";
 
 export function activate(context: ExtensionContext) {
     const subscriptions = [
@@ -11,6 +12,7 @@ export function activate(context: ExtensionContext) {
         commands.registerCommand('extension.vsCdsSetAsCurrentContext', vsCdsSetAsCurrentContext),
         commands.registerCommand('extension.vsCdsOpenBrowserWorkflow', vsCdsOpenBrowserNode),
         commands.registerCommand('extension.vsCdsOpenBrowserWorkflowRun', vsCdsOpenBrowserNode),
+        commands.registerCommand('extension.vsCdsOpenBrowserWorkflowStatusBar', vsCdsOpenBrowserStatusBar),
         commands.registerCommand('extension.vsCdsOpenBrowserProject', vsCdsOpenBrowserNode),
         commands.registerCommand('extension.vsCdsOpenBrowserApplication', vsCdsOpenBrowserNode),
         commands.registerCommand('extension.vsCdsOpenBrowserPipeline', vsCdsOpenBrowserNode),
@@ -20,7 +22,7 @@ export function activate(context: ExtensionContext) {
         context.subscriptions.push(element);
     });
 
-    const treeProvider = createExplorer(cdsExt);
+    const treeProvider = createExplorer();
     commands.registerCommand("extension.vsCdsRefreshExplorer", () => treeProvider.refresh()),
         window.registerTreeDataProvider("extension.vsCdsExplorer", treeProvider);
 }
@@ -69,8 +71,8 @@ async function vsCdsremoveConfigFile(explorerNode: CDSObject) {
     if (!answer || answer.isCloseAffordance) {
         return;
     }
-    if (cdsExt.currentContext === contextObj) {
-        cdsExt.currentContext = undefined;
+    if (CDSExt.getInstance().currentContext === contextObj) {
+        CDSExt.getInstance().currentContext = undefined;
     }
     Property.delete("knownCdsconfigs", contextObj.cdsctl.getConfigFile());
     refreshExplorer();
@@ -87,13 +89,24 @@ async function vsCdsSetAsCurrentContext(explorerNode: CDSObject) {
     if (!answer || answer.isCloseAffordance) {
         return;
     }
-    cdsExt.currentContext = contextObj;
+    CDSExt.getInstance().currentContext = contextObj;
     refreshExplorer();
 }
 
 async function vsCdsOpenBrowserNode(explorerNode: CDSObject): Promise<void> {
     const r = explorerNode as CDSResource;
     env.openExternal(r.uri());
+}
+
+async function vsCdsOpenBrowserStatusBar(): Promise<void> {
+    const project = await CDSExt.getInstance().currentContext!.cdsctl.getCDSProject();
+    const workflow = await CDSExt.getInstance().currentContext!.cdsctl.getCDSWorkflow();
+    CDSExt.getInstance().currentContext!.cdsctl.getConfigUiURL().then(
+        (uiUri) => {
+            const uri = Uri.parse(`${uiUri}/project/${project.key}/workflow/${workflow.name}`);
+            env.openExternal(uri);
+        }
+    );
 }
 
 async function vsCdsShowStepLogs(explorerNode: CDSObject): Promise<void> {

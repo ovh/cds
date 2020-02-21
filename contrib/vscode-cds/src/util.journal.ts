@@ -58,7 +58,7 @@ export class Journal {
     private readonly outputChannel: OutputChannel;
 
     private constructor() {
-        this.outputChannel = window.createOutputChannel("Extension: cdsctl");
+        this.outputChannel = window.createOutputChannel("CDS");
     }
 
     public dispose() {

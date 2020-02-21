@@ -10,13 +10,13 @@ export class CdsCtl {
 
     private configFile: string;
     private contextName: string;
-    private configUiURL: string;
+    private configUiURL: string | undefined;
     private initialized: boolean;
 
     constructor(configFile: string, contextName: string) {
         this.configFile = configFile;
         this.contextName = contextName;
-        this.configUiURL = "...";
+        this.configUiURL = undefined;
         this.initialized = false;
     }
 
@@ -24,8 +24,11 @@ export class CdsCtl {
         return this.contextName;
     }
 
-    public getConfigUiURL(): string {
-        return this.configUiURL;
+    public async getConfigUiURL(): Promise<string | undefined> {
+        if (!this.initialized) {
+            await this.init();
+        }
+        return Promise.resolve(this.configUiURL);
     }
 
     public getConfigFile(): string {
@@ -36,7 +39,10 @@ export class CdsCtl {
         try {
             const rawCmd = this.buildRawCDSCommand("admin curl /config/user");
             const configUser = await <Promise<any>>this.runCommand(rawCmd);
-            this.configUiURL = configUser["url.ui"];
+            this.configUiURL = JSON.parse(configUser)["url.ui"];
+            if (!this.configUiURL) {
+                window.showErrorMessage(`Unable to get URL of CDS UI ctx:` + this.contextName);
+            }
             this.initialized = true;
             await this.runCommand(this.buildCDSCommand("user me"));
         } catch (e) {

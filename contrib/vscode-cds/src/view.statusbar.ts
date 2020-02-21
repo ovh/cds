@@ -1,6 +1,7 @@
 import { StatusBarAlignment, StatusBarItem, window } from "vscode";
 import { Property } from "./util.property";
 import { Spinner } from "./view.spinner";
+import { Journal } from "./util.journal";
 
 export class StatusBarView {
     public static getInstance(): StatusBarView {
@@ -69,7 +70,7 @@ export class StatusBarView {
         this.statusBarItem.tooltip = "CDS Workflow";
         this.statusBarItem.command = "";
         if (hasCommand) {
-            this.statusBarItem.command = "cdsctl.workflowInfo";
+            this.statusBarItem.command = "extension.vsCdsOpenBrowserWorkflowStatusBar";
         }
         this.statusBarItem.show();
     }
