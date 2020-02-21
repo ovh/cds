@@ -2126,6 +2126,26 @@ func (m *MockPipelineClient) EXPECT() *MockPipelineClientMockRecorder {
 	return m.recorder
 }
 
+// PipelineGet mocks base method
+func (m *MockInterface) PipelineGet(projectKey, name string, opts ...cdsclient.RequestModifier) (*sdk.Pipeline, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{projectKey, name}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PipelineGet", varargs...)
+	ret0, _ := ret[0].(*sdk.Pipeline)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PipelineGet indicates an expected call of PipelineGet
+func (mr *MockInterfaceMockRecorder) PipelineGet(projectKey, name interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{projectKey, name}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PipelineGet", reflect.TypeOf((*MockInterface)(nil).PipelineGet), varargs...)
+}
+
 // PipelineDelete mocks base method
 func (m *MockPipelineClient) PipelineDelete(projectKey, name string) error {
 	m.ctrl.T.Helper()
