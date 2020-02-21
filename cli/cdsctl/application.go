@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var applicationCmd = cli.Command{
@@ -19,6 +20,7 @@ var applicationCmd = cli.Command{
 func application() *cobra.Command {
 	return cli.NewCommand(applicationCmd, nil, []*cobra.Command{
 		cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(applicationUsageCmd, applicationUsageRun, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(applicationCreateCmd, applicationCreateRun, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(applicationDeleteCmd, applicationDeleteRun, nil, withAllCommandModifiers()...),
@@ -43,6 +45,24 @@ func applicationListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	return cli.AsListResult(apps), nil
+}
+
+var applicationUsageCmd = cli.Command{
+	Name:  "usage",
+	Short: "CDS application usage",
+	Long:  "PATH: Path or URL of application",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName},
+	},
+}
+
+func applicationUsageRun(v cli.Values) (cli.ListResult, error) {
+	app, err := client.ApplicationGet(v.GetString(_ProjectKey), v.GetString(_ApplicationName), cdsclient.WithUsage())
+	if err != nil {
+		return nil, err
+	}
+	return cli.AsListResult(app.Usage.Workflows), nil
 }
 
 var applicationShowCmd = cli.Command{

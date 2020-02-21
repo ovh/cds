@@ -185,6 +185,7 @@ type BroadcastClient interface {
 
 // PipelineClient exposes pipelines related functions
 type PipelineClient interface {
+	PipelineGet(projectKey, name string, mods ...RequestModifier) (*sdk.Pipeline, error)
 	PipelineDelete(projectKey, name string) error
 	PipelineCreate(projectKey string, pip *sdk.Pipeline) error
 	PipelineList(projectKey string) ([]sdk.Pipeline, error)
@@ -453,6 +454,42 @@ func WithUsage() RequestModifier {
 	return func(r *http.Request) {
 		q := r.URL.Query()
 		q.Set("withUsage", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+// WithWorkflows allow a provider to retrieve a pipeline with its workflows usage
+func WithWorkflows() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withWorkflows", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+// WithApplications allow a provider to retrieve a pipeline with its applications usage
+func WithApplications() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withApplications", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+// WithEnvironments allow a provider to retrieve a pipeline with its environments usage
+func WithEnvironments() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withEnvironments", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+// WithAsCodeEvents allow a provider to retrieve a pipeline with its as code events usage
+func WithAsCodeEvents() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withAsCodeEvents", "true")
 		r.URL.RawQuery = q.Encode()
 	}
 }

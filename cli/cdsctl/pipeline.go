@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var pipelineCmd = cli.Command{
@@ -21,6 +22,7 @@ var pipelineCmd = cli.Command{
 func pipeline() *cobra.Command {
 	return cli.NewCommand(pipelineCmd, nil, []*cobra.Command{
 		cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(pipelineUsageCmd, pipelineUsageRun, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(pipelineDeleteCmd, pipelineDeleteRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil, withAllCommandModifiers()...),
@@ -41,6 +43,26 @@ func pipelineListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	return cli.AsListResult(pipelines), nil
+}
+
+var pipelineUsageCmd = cli.Command{
+	Name:  "usage",
+	Short: "CDS pipeline usage",
+	Long:  "PATH: Path or URL of pipeline",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "pipeline-name"},
+	},
+}
+
+func pipelineUsageRun(v cli.Values) (cli.ListResult, error) {
+	pipeline, err := client.PipelineGet(v.GetString(_ProjectKey), v.GetString("pipeline-name"), cdsclient.WithWorkflows())
+	if err != nil {
+		return nil, err
+	}
+	return cli.AsListResult(pipeline.Usage.Workflows), nil
 }
 
 var pipelineExportCmd = cli.Command{
