@@ -175,6 +175,8 @@ export class WorkflowNodeRunManual {
     payload: {};
     pipeline_parameter: Array<Parameter>;
     user: User;
+    resync: boolean;
+    only_failed_jobs: boolean;
 }
 
 export class WorkflowNodeRunVulnerabilityReport {

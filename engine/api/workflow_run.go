@@ -264,50 +264,6 @@ func (api *API) getLatestWorkflowRunHandler() service.Handler {
 	}
 }
 
-func (api *API) resyncWorkflowRunHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permWorkflowName"]
-		number, err := requestVarInt(r, "number")
-		if err != nil {
-			return err
-		}
-
-		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
-		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
-		}
-
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, workflow.LoadOptions{Minimal: true, DeepPipeline: false})
-		if err != nil {
-			return sdk.WrapError(err, "cannot load workflow %s/%s", key, name)
-		}
-		if wf.FromRepository != "" {
-			return sdk.WithStack(sdk.ErrWorkflowAsCodeResync)
-		}
-
-		run, err := workflow.LoadRun(ctx, api.mustDB(), key, name, number, workflow.LoadRunOptions{})
-		if err != nil {
-			return sdk.WrapError(err, "Unable to load last workflow run [%s/%d]", name, number)
-		}
-
-		tx, errT := api.mustDB().Begin()
-		if errT != nil {
-			return sdk.WrapError(errT, "resyncWorkflowRunHandler> Cannot start transaction")
-		}
-
-		if err := workflow.Resync(ctx, tx, api.Cache, proj, run); err != nil {
-			return sdk.WrapError(err, "Cannot resync pipelines")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
-		}
-		return service.WriteJSON(w, run, http.StatusOK)
-	}
-}
-
 func (api *API) getWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -853,6 +809,11 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			return err
 		}
 
+		// Request check
+		if opts.Manual != nil && opts.Manual.OnlyFailedJobs && opts.Manual.Resync {
+			return sdk.WrapError(sdk.ErrWrongRequest, "You cannot resync workflow and run only failed jobs")
+		}
+
 		// CHECK IF IT S AN EXISTING RUN
 		var lastRun *sdk.WorkflowRun
 		if opts.Number != nil {
@@ -899,6 +860,13 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		var wf *sdk.Workflow
 		// IF CONTINUE EXISTING RUN
 		if lastRun != nil {
+			if opts != nil && opts.Manual != nil && opts.Manual.Resync {
+				log.Debug("Resync workflow %d for run %d", lastRun.Workflow.ID, lastRun.ID)
+				if err := workflow.Resync(ctx, api.mustDB(), api.Cache, p, lastRun); err != nil {
+					return err
+				}
+			}
+
 			wf = &lastRun.Workflow
 			// Check workflow name in case of rename
 			if wf.Name != name {
