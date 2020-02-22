@@ -132,6 +132,7 @@ export async function discoverContexts(): Promise<CDSContext[]> {
                 ctxs.push({name: contextName, cdsctl});
                 if (current === contextName && !CDSExt.getInstance().currentContext) {
                     CDSExt.getInstance().currentContext = {name: contextName, cdsctl};
+                    await cdsctl.init();
                 }
             } else {
                 current = config["current"];

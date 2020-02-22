@@ -1,7 +1,6 @@
 import { StatusBarAlignment, StatusBarItem, window } from "vscode";
 import { Property } from "./util.property";
 import { Spinner } from "./view.spinner";
-import { Journal } from "./util.journal";
 
 export class StatusBarView {
     public static getInstance(): StatusBarView {

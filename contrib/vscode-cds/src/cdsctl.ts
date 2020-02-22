@@ -45,6 +45,7 @@ export class CdsCtl {
             }
             this.initialized = true;
             await this.runCommand(this.buildCDSCommand("user me"));
+            await this.runCommand(this.buildRawCDSCommand("tools yaml-schema vscode"));
         } catch (e) {
             window.showErrorMessage(`Unable to initialize context: ${e}. You should run this command outside vscode to investigate.`);
         }

@@ -3,6 +3,7 @@ import { Journal } from "./util.journal";
 import { throttleFunction } from "./util.throttle.function";
 import { CDSContext } from "./view.explorer";
 import { StatusBarView } from "./view.statusbar";
+import { registerYamlSchemaSupport, activateYamlExtension } from "./yaml";
 
 export class CDSExt {
     public currentContext: CDSContext | undefined;
@@ -21,6 +22,8 @@ export class CDSExt {
     private constructor() {
         this.disposable = this.setupDisposables();
         this.setupListeners();
+        registerYamlSchemaSupport();
+        activateYamlExtension();
     }
 
     public dispose(): void {
