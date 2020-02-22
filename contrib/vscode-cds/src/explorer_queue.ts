@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { CDSExt } from './cdsext';
-import { CDSObject } from './explorer';
+import { CDSObject, CDSResourceFolder } from './explorer';
 import { WorkflowNodeJobRun } from "./models/workflow_run";
 
 export function createExplorerQueue(): CDSExplorerQueue {
@@ -15,8 +15,7 @@ export class CDSExplorerQueue implements vscode.TreeDataProvider<CDSObject> {
     private onDidChangeTreeDataEmitter: vscode.EventEmitter<CDSObject | undefined> = new vscode.EventEmitter<CDSObject | undefined>();
     readonly onDidChangeTreeData: vscode.Event<CDSObject | undefined> = this.onDidChangeTreeDataEmitter.event;
 
-    constructor() {
-    }
+    constructor() {}
 
     public getTreeItem(element: CDSObject): vscode.TreeItem | Thenable<vscode.TreeItem> {
         const treeItem = element.getTreeItem();
@@ -27,39 +26,47 @@ export class CDSExplorerQueue implements vscode.TreeDataProvider<CDSObject> {
         return this.getChildrenBase(parent);
     }
 
-    public refresh(): void {
-        this.onDidChangeTreeDataEmitter.fire();
-    }
-
     private getChildrenBase(parent?: CDSObject): vscode.ProviderResult<CDSObject[]> {
         if (parent) {
             return parent.getChildren();
         }
-        return this.getQueueJob();
+        return [
+            new CDSQueueFolder("Waiting"),
+            new CDSQueueFolder("Building"),
+        ];
     }
 
-    private async getQueueJob(): Promise<CDSObject[]> {
-        const jobs = await <Promise<WorkflowNodeJobRun[]>>CDSExt.getInstance().currentContext!.cdsctl.runCdsCommand("queue");
-        return jobs.map((job) => new CDSQueueJobNode("TODO", job));
+    public refresh(): void {
+        this.onDidChangeTreeDataEmitter.fire();
     }
 }
 
-class CDSExplorerQueueNodeImpl {
-    constructor() { }
-}
-
-class CDSQueueJobNode extends CDSExplorerQueueNodeImpl implements CDSObject {
-    constructor(readonly label: string, readonly metadata: WorkflowNodeJobRun) {
-        super();
+class CDSQueueFolder extends CDSResourceFolder {
+    constructor(readonly label: string) {
+        super(label);
     }
 
-    public getChildren(): vscode.ProviderResult<CDSObject[]> {
+    async getChildren(): Promise<CDSObject[]> {
+        const jobs = await <Promise<WorkflowNodeJobRun[]>>CDSExt.getInstance().currentContext!.cdsctl.runCdsCommand(`queue --filter status=${this.label}`);
+        return jobs.map((job) => new CDSQueueJobNode("TODO JOB Label", job));
+    }
+}
+
+class CDSQueueJobNode implements CDSObject {
+    constructor(readonly label: string, readonly metadata: WorkflowNodeJobRun) {}
+
+    async getChildren(): Promise<CDSObject[]> {
         return [];
     }
 
     public getTreeItem(): vscode.TreeItem | Thenable<vscode.TreeItem> {
-        const treeItem = new vscode.TreeItem(this.metadata.status, vscode.TreeItemCollapsibleState.Collapsed);
+        const treeItem = new vscode.TreeItem("TODO", vscode.TreeItemCollapsibleState.Collapsed);
         treeItem.contextValue = "vsCds.queue.Job";
         return treeItem;
+    }
+
+    uri(): vscode.Uri {
+        // TODO
+        return vscode.Uri.parse(CDSExt.getInstance().currentContext!.cdsctl.getConfigUiURL() + "/TODO/TODO");
     }
 }

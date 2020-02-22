@@ -125,10 +125,7 @@ export async function discoverContexts(): Promise<CDSContext[]> {
         for (const contextName in config) {
             if (contextName !== "current") {
                 const cdsctl = new CdsCtl(configFile, contextName);
-                ctxs.push({
-                    name: contextName,
-                    cdsctl,
-                });
+                ctxs.push({name: contextName, cdsctl});
                 if (current === contextName && !CDSExt.getInstance().currentContext) {
                     CDSExt.getInstance().currentContext = {name: contextName, cdsctl};
                 }
@@ -165,9 +162,9 @@ abstract class CDSFolder implements CDSObject {
     }
 }
 
-class CDSResourceFolder extends CDSFolder {
+export class CDSResourceFolder extends CDSFolder {
     constructor(readonly label: string) {
-        super(label, "vscds.kind");
+        super(label);
     }
 
     async getChildren(): Promise<CDSObject[]> {
