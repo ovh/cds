@@ -17,8 +17,6 @@ export function createExplorer(): CDSExplorer {
 }
 
 export interface CDSObject {
-    readonly nodeCategory: "cds-explorer-node";
-    readonly nodeType: CDSExplorerNodeType;
     readonly id: string;
     readonly metadata?: any;
     getChildren(): vscode.ProviderResult<CDSObject[]>;
@@ -71,13 +69,6 @@ export class CDSExplorer implements vscode.TreeDataProvider<CDSObject> {
     }
 }
 
-export const CDS_EXPLORER_NODE_CATEGORY = 'cds-explorer-node';
-export type CDSExplorerNodeType =
-    'error' |
-    'resource' |
-    'folder.resource' |
-    'context';
-
 const statusIcon: { [name: string]: string } = {
     Pending: "↻",
     Waiting: "↻",
@@ -93,13 +84,12 @@ const statusIcon: { [name: string]: string } = {
 };
 
 class CDSExplorerNodeImpl {
-    readonly nodeCategory = CDS_EXPLORER_NODE_CATEGORY;
-    constructor(readonly nodeType: CDSExplorerNodeType) { }
+    constructor() { }
 }
 
 class CDSContextNode extends CDSExplorerNodeImpl implements CDSObject {
     constructor(readonly id: string, readonly metadata: CDSContext) {
-        super('context');
+        super();
     }
 
     get icon(): vscode.Uri | undefined {
@@ -172,8 +162,8 @@ export interface ResourceNode {
 }
 
 abstract class CDSFolder extends CDSExplorerNodeImpl implements CDSObject {
-    constructor(readonly nodeType: CDSExplorerNodeType, readonly id: string, readonly displayName: string, readonly contextValue?: string) {
-        super(nodeType);
+    constructor(readonly id: string, readonly displayName: string, readonly contextValue?: string) {
+        super();
     }
 
     abstract getChildren(): vscode.ProviderResult<CDSObject[]>;
@@ -186,7 +176,7 @@ abstract class CDSFolder extends CDSExplorerNodeImpl implements CDSObject {
 
 class CDSResourceFolder extends CDSFolder implements ResourceFolder {
     constructor(cdsContext: CDSContext, readonly kind: ResourceKind) {
-        super("folder.resource", kind.abbreviation, kind.pluralDisplayName, "vscds.kind");
+        super(kind.abbreviation, kind.pluralDisplayName, "vscds.kind");
     }
 
     async getChildren(): Promise<CDSObject[]> {
@@ -196,7 +186,7 @@ class CDSResourceFolder extends CDSFolder implements ResourceFolder {
 
 export class CDSResource extends CDSExplorerNodeImpl implements CDSObject, ResourceNode {
     constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly metadata?: any) {
-        super('resource');
+        super();
     }
 
     async getChildren(): Promise<CDSObject[]> {
@@ -232,7 +222,7 @@ class CDSWorkflowsFolder extends CDSResourceFolder {
 
 class CDSWorkflowResource extends CDSExplorerNodeImpl implements CDSObject {
     constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly workflow: Workflow) {
-        super('folder.resource');
+        super();
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
@@ -263,7 +253,7 @@ class CDSWorkflowResource extends CDSExplorerNodeImpl implements CDSObject {
 
 class CDSWorklowRunResource extends CDSExplorerNodeImpl implements CDSObject {
     constructor(readonly kind: ResourceKind, readonly cdsContext: CDSContext, readonly id: string, readonly workflowRun: WorkflowRun, readonly workflow: Workflow) {
-        super('folder.resource');
+        super();
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
@@ -304,7 +294,7 @@ lastExecution: ${this.workflowRun.last_execution}`;
 
 class CDSWorklowRunNodeResource extends CDSExplorerNodeImpl implements CDSObject {
     constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly workflowRun: WorkflowRun, readonly workflowNode: WNode) {
-        super('folder.resource');
+        super();
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
@@ -351,7 +341,7 @@ class CDSWorklowRunNodeResource extends CDSExplorerNodeImpl implements CDSObject
 
 class CDSWorklowPipelineStagesResource extends CDSExplorerNodeImpl implements CDSObject {
     constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly workflowRun: WorkflowRun, readonly workflowNodeRun: WorkflowNodeRun) {
-        super('folder.resource');
+        super();
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
@@ -380,7 +370,7 @@ class CDSWorklowPipelineStagesResource extends CDSExplorerNodeImpl implements CD
 
 class CDSWorklowPipelineStageResource extends CDSExplorerNodeImpl implements CDSObject {
     constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly workflowRun: WorkflowRun, readonly stage: Stage) {
-        super('folder.resource');
+        super();
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
@@ -405,7 +395,7 @@ class CDSWorklowPipelineStageResource extends CDSExplorerNodeImpl implements CDS
 
 class CDSWorklowPipelineJobResource extends CDSExplorerNodeImpl implements CDSObject {
     constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly workflowRun: WorkflowRun, readonly job: WorkflowNodeJobRun) {
-        super('folder.resource');
+        super();
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
@@ -466,7 +456,7 @@ class CDSProjectsFolder extends CDSResourceFolder {
 
 class CDSProjectResource extends CDSExplorerNodeImpl implements CDSObject {
     constructor(readonly kind: ResourceKind, readonly cdsContext: CDSContext, readonly id: string, readonly metadata?: any) {
-        super('folder.resource');
+        super();
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
@@ -558,7 +548,7 @@ class CDSPipelineResource extends CDSResource {
 
 class DummyObject extends CDSExplorerNodeImpl implements CDSObject {
     constructor(readonly id: string, readonly diagnostic?: string) {
-        super('error');
+        super();
     }
 
     getTreeItem(): vscode.TreeItem | Thenable<vscode.TreeItem> {

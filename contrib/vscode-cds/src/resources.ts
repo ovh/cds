@@ -26,5 +26,7 @@ export const allKinds: Dictionary<ResourceKind> = {
     stage: new ResourceKind("Stage", "Stages", "Stage", "stage"),
     project: new ResourceKind("Project", "Projects", "Project", "project"),
     workflow: new ResourceKind("Workflow", "Workflows", "Workflow", "workflow"),
-    workflowRun: new ResourceKind("Workflow Run", "Workflow Runs", "WorkflowRun", "workflowRun")
+    workflowRun: new ResourceKind("Workflow Run", "Workflow Runs", "WorkflowRun", "workflowRun"),
+    building: new ResourceKind("Building", "Building", "building", "building"),
+    waiting: new ResourceKind("Waiting", "Waiting", "waiting", "waiting")
 };

@@ -2,29 +2,35 @@ import { commands, env, ExtensionContext, MessageItem, window, workspace, Uri } 
 import { CDSContext, CDSObject, CDSResource, createExplorer, refreshExplorer } from "./explorer";
 import { Property } from "./util.property";
 import { CDSExt } from "./cdsext";
-import { StatusBarView } from "./view.statusbar";
-import { Journal } from "./util.journal";
+import { createExplorerQueue } from "./explorer_queue";
 
 export function activate(context: ExtensionContext) {
     const subscriptions = [
+        // Config
         commands.registerCommand("extension.vsCdsAddNewConfig", addNewConfig),
         commands.registerCommand('extension.vsCdsRemoveConfigFile', vsCdsremoveConfigFile),
         commands.registerCommand('extension.vsCdsSetAsCurrentContext', vsCdsSetAsCurrentContext),
+        // Explorer
         commands.registerCommand('extension.vsCdsOpenBrowserWorkflow', vsCdsOpenBrowserNode),
         commands.registerCommand('extension.vsCdsOpenBrowserWorkflowRun', vsCdsOpenBrowserNode),
-        commands.registerCommand('extension.vsCdsOpenBrowserWorkflowStatusBar', vsCdsOpenBrowserStatusBar),
         commands.registerCommand('extension.vsCdsOpenBrowserProject', vsCdsOpenBrowserNode),
         commands.registerCommand('extension.vsCdsOpenBrowserApplication', vsCdsOpenBrowserNode),
         commands.registerCommand('extension.vsCdsOpenBrowserPipeline', vsCdsOpenBrowserNode),
         commands.registerCommand('extension.vsCdsShowStepLogs', vsCdsShowStepLogs),
+        // Status bar
+        commands.registerCommand('extension.vsCdsOpenBrowserWorkflowStatusBar', vsCdsOpenBrowserStatusBar),
     ];
     subscriptions.forEach((element) => {
         context.subscriptions.push(element);
     });
 
-    const treeProvider = createExplorer();
-    commands.registerCommand("extension.vsCdsRefreshExplorer", () => treeProvider.refresh()),
-        window.registerTreeDataProvider("extension.vsCdsExplorer", treeProvider);
+    const treeExplorer = createExplorer();
+    commands.registerCommand("extension.vsCdsRefreshExplorer", () => treeExplorer.refresh()),
+        window.registerTreeDataProvider("extension.vsCdsExplorer", treeExplorer);
+
+    const queueExplorer = createExplorerQueue();
+    commands.registerCommand("extension.vsCdsRefreshQueue", () => queueExplorer.refresh()),
+        window.registerTreeDataProvider("extension.vsCdsQueue", queueExplorer);
 }
 
 export function deactivate() { }

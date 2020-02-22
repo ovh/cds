@@ -62,7 +62,7 @@ export class StatusBarView {
     }
 
     public update(proj: any, wrkflw: any): void {
-        this.setText("$(beaker) " + proj.key + "/" + wrkflw.name);
+        this.setText(`$(beaker) ${proj.key}/${wrkflw.name}`);
     }
 
     private setText(text: string, hasCommand: boolean = true): void {
