@@ -49,7 +49,7 @@ class CDSExplorerQueueNodeImpl {
 }
 
 class CDSQueueJobNode extends CDSExplorerQueueNodeImpl implements CDSObject {
-    constructor(readonly id: string, readonly metadata: WorkflowNodeJobRun) {
+    constructor(readonly label: string, readonly metadata: WorkflowNodeJobRun) {
         super();
     }
 

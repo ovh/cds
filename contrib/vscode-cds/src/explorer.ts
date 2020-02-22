@@ -8,7 +8,6 @@ import { Pipeline } from "./models/pipeline";
 import { Project } from "./models/project";
 import { WNode, Workflow } from "./models/workflow";
 import { Action, Stage, WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun } from "./models/workflow_run";
-import { allKinds, ResourceKind } from "./resources";
 import { Property } from "./util.property";
 import { CDSExt } from './cdsext';
 
@@ -17,7 +16,7 @@ export function createExplorer(): CDSExplorer {
 }
 
 export interface CDSObject {
-    readonly id: string;
+    readonly label: string;
     readonly metadata?: any;
     getChildren(): vscode.ProviderResult<CDSObject[]>;
     getTreeItem(): vscode.TreeItem | Thenable<vscode.TreeItem>;
@@ -83,30 +82,29 @@ const statusIcon: { [name: string]: string } = {
     Stopping: "✗"
 };
 
-class CDSExplorerNodeImpl {
-    constructor() { }
-}
+const favWorkflows = "⭐ workflows";
+const favProjects = "⭐ projects";
 
-class CDSContextNode extends CDSExplorerNodeImpl implements CDSObject {
-    constructor(readonly id: string, readonly metadata: CDSContext) {
-        super();
+class CDSContextNode implements CDSObject {
+    constructor(readonly label: string, readonly metadata: CDSContext) {
     }
 
     get icon(): vscode.Uri | undefined {
-        if (CDSExt.getInstance().currentContext && CDSExt.getInstance().currentContext!.name === this.id) {
+        if (CDSExt.getInstance().currentContext && CDSExt.getInstance().currentContext!.name === this.label) {
             return vscode.Uri.file(path.join(__dirname, "../images/cds.svg"));
         }
     }
 
     public getChildren(): vscode.ProviderResult<CDSObject[]> {
         return [
-            new CDSWorkflowsFolder(allKinds.favoriteWorkflow, this.metadata),
-            new CDSProjectsFolder(allKinds.favoriteProject, this.metadata),
+            new CDSWorkflowsFolder(favWorkflows, this.metadata),
+            new CDSProjectsFolder(favProjects, this.metadata),
+            new CDSProjectsFolder("all projects", this.metadata),
         ];
     }
 
     public getTreeItem(): vscode.TreeItem | Thenable<vscode.TreeItem> {
-        const treeItem = new vscode.TreeItem(this.id, vscode.TreeItemCollapsibleState.Collapsed);
+        const treeItem = new vscode.TreeItem(this.label, vscode.TreeItemCollapsibleState.Collapsed);
         treeItem.iconPath = this.icon;
         treeItem.contextValue = "vsCds.context";
         return treeItem;
@@ -151,32 +149,25 @@ export async function discoverContexts(): Promise<CDSContext[]> {
     return results;
 }
 
-export interface ResourceFolder {
-    readonly kind: ResourceKind;
-}
-
 export interface ResourceNode {
-    readonly kind: ResourceKind;
-    readonly id: string;
+    readonly label: string;
     uri(): vscode.Uri;
 }
 
-abstract class CDSFolder extends CDSExplorerNodeImpl implements CDSObject {
-    constructor(readonly id: string, readonly displayName: string, readonly contextValue?: string) {
-        super();
-    }
+abstract class CDSFolder implements CDSObject {
+    constructor(readonly label: string, readonly contextValue?: string) {}
 
     abstract getChildren(): vscode.ProviderResult<CDSObject[]>;
 
     getTreeItem(): vscode.TreeItem | Thenable<vscode.TreeItem> {
-        const treeItem = new vscode.TreeItem(this.displayName, vscode.TreeItemCollapsibleState.Collapsed);
+        const treeItem = new vscode.TreeItem(this.label, vscode.TreeItemCollapsibleState.Collapsed);
         return treeItem;
     }
 }
 
-class CDSResourceFolder extends CDSFolder implements ResourceFolder {
-    constructor(cdsContext: CDSContext, readonly kind: ResourceKind) {
-        super(kind.abbreviation, kind.pluralDisplayName, "vscds.kind");
+class CDSResourceFolder extends CDSFolder {
+    constructor(readonly label: string) {
+        super(label, "vscds.kind");
     }
 
     async getChildren(): Promise<CDSObject[]> {
@@ -184,9 +175,8 @@ class CDSResourceFolder extends CDSFolder implements ResourceFolder {
     }
 }
 
-export class CDSResource extends CDSExplorerNodeImpl implements CDSObject, ResourceNode {
-    constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly metadata?: any) {
-        super();
+export class CDSResource implements CDSObject, ResourceNode {
+    constructor(readonly cdsContext: CDSContext, readonly label: string, readonly metadata?: any) {
     }
 
     async getChildren(): Promise<CDSObject[]> {
@@ -198,35 +188,33 @@ export class CDSResource extends CDSExplorerNodeImpl implements CDSObject, Resou
     }
 
     getTreeItem(): vscode.TreeItem | Thenable<vscode.TreeItem> {
-        const treeItem = new vscode.TreeItem(this.id, vscode.TreeItemCollapsibleState.None);
+        const treeItem = new vscode.TreeItem(this.label, vscode.TreeItemCollapsibleState.None);
         return treeItem;
     }
 }
 
 class CDSWorkflowsFolder extends CDSResourceFolder {
-    constructor(readonly kind: ResourceKind, readonly cdsContext: CDSContext, readonly projectKey?: string) {
-        super(cdsContext, kind);
+    constructor(readonly label: string, readonly cdsContext: CDSContext, readonly projectKey?: string) {
+        super(label);
     }
 
     async getChildren(): Promise<CDSObject[]> {
-        if (this.kind === allKinds.favoriteWorkflow) {
+        if (this.label === favWorkflows) {
             const wf = await <Promise<Workflow[]>>this.cdsContext.cdsctl.runCdsCommand("workflow favorites list");
-            return wf.map((wf) => new CDSWorkflowResource(this.cdsContext, this.kind, wf.name, wf));
+            return wf.map((wf) => new CDSWorkflowResource(this.cdsContext, wf.name, wf));
         }
 
         const wf = await <Promise<Workflow[]>>this.cdsContext.cdsctl.runCdsCommand("workflow list " + this.projectKey!);
-        return wf.map((wf) => new CDSWorkflowResource(this.cdsContext, this.kind, wf.name, wf));
-
+        return wf.map((wf) => new CDSWorkflowResource(this.cdsContext, wf.name, wf));
     }
 }
 
-class CDSWorkflowResource extends CDSExplorerNodeImpl implements CDSObject {
-    constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly workflow: Workflow) {
-        super();
+class CDSWorkflowResource implements CDSObject {
+    constructor(readonly cdsContext: CDSContext, readonly label: string, readonly workflow: Workflow) {
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
-        const treeItem = new vscode.TreeItem(this.id, vscode.TreeItemCollapsibleState.Collapsed);
+        const treeItem = new vscode.TreeItem(this.label, vscode.TreeItemCollapsibleState.Collapsed);
         treeItem.contextValue = "vsCds.workflowEdit";
         if (this.workflow.name) {
             treeItem.tooltip = this.workflow.name;
@@ -238,9 +226,7 @@ class CDSWorkflowResource extends CDSExplorerNodeImpl implements CDSObject {
         const projectKey = this.workflow.project_key;
         const workflowName = this.workflow.name;
         const wrs = await <Promise<WorkflowRun[]>>this.cdsContext.cdsctl.runCdsCommand(`workflow history ${projectKey} ${workflowName}`);
-        return wrs.map((wr) => new CDSWorklowRunResource(this.kind, this.cdsContext,
-            `run ${wr.num} - ${wr.status}`,
-             wr, this.workflow));
+        return wrs.map((wr) => new CDSWorklowRunResource(this.cdsContext, `run ${wr.num} - ${wr.status}`, wr, this.workflow));
     }
 
     uri(): vscode.Uri {
@@ -251,9 +237,8 @@ class CDSWorkflowResource extends CDSExplorerNodeImpl implements CDSObject {
     }
 }
 
-class CDSWorklowRunResource extends CDSExplorerNodeImpl implements CDSObject {
-    constructor(readonly kind: ResourceKind, readonly cdsContext: CDSContext, readonly id: string, readonly workflowRun: WorkflowRun, readonly workflow: Workflow) {
-        super();
+class CDSWorklowRunResource implements CDSObject {
+    constructor(readonly cdsContext: CDSContext, readonly label: string, readonly workflowRun: WorkflowRun, readonly workflow: Workflow) {
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
@@ -279,7 +264,7 @@ lastExecution: ${this.workflowRun.last_execution}`;
         const workflowNodeRun = wr.nodes[wr.workflow.workflow_data.node.id][0];
         const title = `${statusIcon[workflowNodeRun.status]} ${wr.workflow.workflow_data.node.name}`;
         return [
-            new CDSWorklowRunNodeResource(this.cdsContext, this.kind, title, wr, wr.workflow.workflow_data.node)
+            new CDSWorklowRunNodeResource(this.cdsContext, title, wr, wr.workflow.workflow_data.node)
         ];
     }
 
@@ -292,13 +277,12 @@ lastExecution: ${this.workflowRun.last_execution}`;
     }
 }
 
-class CDSWorklowRunNodeResource extends CDSExplorerNodeImpl implements CDSObject {
-    constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly workflowRun: WorkflowRun, readonly workflowNode: WNode) {
-        super();
+class CDSWorklowRunNodeResource implements CDSObject {
+    constructor(readonly cdsContext: CDSContext, readonly label: string, readonly workflowRun: WorkflowRun, readonly workflowNode: WNode) {
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
-        const treeItem = new vscode.TreeItem(this.id, vscode.TreeItemCollapsibleState.Collapsed);
+        const treeItem = new vscode.TreeItem(this.label, vscode.TreeItemCollapsibleState.Collapsed);
         treeItem.contextValue = "vsCds.workflowNodeRun";
         return treeItem;
     }
@@ -308,7 +292,7 @@ class CDSWorklowRunNodeResource extends CDSExplorerNodeImpl implements CDSObject
 
         if (this.workflowNode.id in this.workflowRun.nodes) {
             const workflowNodeRun = this.workflowRun.nodes[this.workflowNode.id][0];
-            result.push(new CDSWorklowPipelineStagesResource(this.cdsContext, allKinds.stage, "Stages", this.workflowRun, workflowNodeRun));
+            result.push(new CDSWorklowPipelineStagesResource(this.cdsContext, "Stages", this.workflowRun, workflowNodeRun));
         }
 
         const nodesIDs = Array<number>();
@@ -320,7 +304,7 @@ class CDSWorklowRunNodeResource extends CDSExplorerNodeImpl implements CDSObject
                     const childNode = this.workflowRun.nodes[node.child_node.id][0];
                     title = `${statusIcon[childNode.status]} ${title}`;
                 }
-                result.push(new CDSWorklowRunNodeResource(this.cdsContext, this.kind, title, this.workflowRun, node.child_node));
+                result.push(new CDSWorklowRunNodeResource(this.cdsContext, title, this.workflowRun, node.child_node));
             }
         }
 
@@ -330,7 +314,7 @@ class CDSWorklowRunNodeResource extends CDSExplorerNodeImpl implements CDSObject
                 for (const parent of node.parents) {
                     if (this.workflowNode.id === parent.parent_id && !nodesIDsAlreadyAddded.includes(node.id)) {
                         nodesIDsAlreadyAddded.push(node.id);
-                        result.push(new CDSWorklowRunNodeResource(this.cdsContext, this.kind, node.name, this.workflowRun, node));
+                        result.push(new CDSWorklowRunNodeResource(this.cdsContext, node.name, this.workflowRun, node));
                     }
                 }
             }
@@ -339,13 +323,12 @@ class CDSWorklowRunNodeResource extends CDSExplorerNodeImpl implements CDSObject
     }
 }
 
-class CDSWorklowPipelineStagesResource extends CDSExplorerNodeImpl implements CDSObject {
-    constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly workflowRun: WorkflowRun, readonly workflowNodeRun: WorkflowNodeRun) {
-        super();
+class CDSWorklowPipelineStagesResource implements CDSObject {
+    constructor(readonly cdsContext: CDSContext, readonly label: string, readonly workflowRun: WorkflowRun, readonly workflowNodeRun: WorkflowNodeRun) {
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
-        const treeItem = new vscode.TreeItem(this.id, vscode.TreeItemCollapsibleState.Collapsed);
+        const treeItem = new vscode.TreeItem(this.label, vscode.TreeItemCollapsibleState.Collapsed);
         treeItem.contextValue = "vsCds.workflowStage";
         return treeItem;
     }
@@ -360,7 +343,7 @@ class CDSWorklowPipelineStagesResource extends CDSExplorerNodeImpl implements CD
                     stageName = "stage " + stage.build_order;
                 }
                 const title = `${statusIcon[stage.status]} ${stageName}`;
-                result.push(new CDSWorklowPipelineStageResource(this.cdsContext, allKinds.stage, title, this.workflowRun, stage));
+                result.push(new CDSWorklowPipelineStageResource(this.cdsContext, title, this.workflowRun, stage));
             }
         }
 
@@ -368,13 +351,12 @@ class CDSWorklowPipelineStagesResource extends CDSExplorerNodeImpl implements CD
     }
 }
 
-class CDSWorklowPipelineStageResource extends CDSExplorerNodeImpl implements CDSObject {
-    constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly workflowRun: WorkflowRun, readonly stage: Stage) {
-        super();
+class CDSWorklowPipelineStageResource implements CDSObject {
+    constructor(readonly cdsContext: CDSContext, readonly label: string, readonly workflowRun: WorkflowRun, readonly stage: Stage) {
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
-        const treeItem = new vscode.TreeItem(this.id, vscode.TreeItemCollapsibleState.Collapsed);
+        const treeItem = new vscode.TreeItem(this.label, vscode.TreeItemCollapsibleState.Collapsed);
         treeItem.contextValue = "vsCds.workflowStage";
         return treeItem;
     }
@@ -385,7 +367,7 @@ class CDSWorklowPipelineStageResource extends CDSExplorerNodeImpl implements CDS
         if (this.stage.run_jobs) {
             for (const job of this.stage.run_jobs) {
                 const title = `${statusIcon[job.status]} ${job.job.action.name}`;
-                result.push(new CDSWorklowPipelineJobResource(this.cdsContext, allKinds.stage, title, this.workflowRun, job));
+                result.push(new CDSWorklowPipelineJobResource(this.cdsContext, title, this.workflowRun, job));
             }
         }
 
@@ -393,13 +375,12 @@ class CDSWorklowPipelineStageResource extends CDSExplorerNodeImpl implements CDS
     }
 }
 
-class CDSWorklowPipelineJobResource extends CDSExplorerNodeImpl implements CDSObject {
-    constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly workflowRun: WorkflowRun, readonly job: WorkflowNodeJobRun) {
-        super();
+class CDSWorklowPipelineJobResource implements CDSObject {
+    constructor(readonly cdsContext: CDSContext, readonly label: string, readonly workflowRun: WorkflowRun, readonly job: WorkflowNodeJobRun) {
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
-        const treeItem = new vscode.TreeItem(this.id, vscode.TreeItemCollapsibleState.Collapsed);
+        const treeItem = new vscode.TreeItem(this.label, vscode.TreeItemCollapsibleState.Collapsed);
         treeItem.contextValue = "vsCds.workflowJob";
         return treeItem;
     }
@@ -420,7 +401,7 @@ class CDSWorklowPipelineJobResource extends CDSExplorerNodeImpl implements CDSOb
                     title = `${statusIcon[this.job.job.step_status[index].status]} ${title}`;
                 }
 
-                result.push(new CDSStepStatusResource(this.cdsContext, allKinds.stage, title, action));
+                result.push(new CDSStepStatusResource(this.cdsContext, title, action));
             }
         }
 
@@ -429,14 +410,14 @@ class CDSWorklowPipelineJobResource extends CDSExplorerNodeImpl implements CDSOb
 }
 
 class CDSStepStatusResource extends CDSResource {
-    constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly action: Action) {
-        super(cdsContext, kind, id, action);
+    constructor(readonly cdsContext: CDSContext, readonly label: string, readonly action: Action) {
+        super(cdsContext, label, action);
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
         const treeItem = await super.getTreeItem();
         if (this.metadata.name) {
-            treeItem.tooltip = this.id;
+            treeItem.tooltip = this.label;
         }
         treeItem.contextValue = "vsCds.workflowStep";
         return treeItem;
@@ -444,32 +425,36 @@ class CDSStepStatusResource extends CDSResource {
 }
 
 class CDSProjectsFolder extends CDSResourceFolder {
-    constructor(readonly kind: ResourceKind, readonly cdsContext: CDSContext) {
-        super(cdsContext, kind);
+    constructor(readonly label: string, readonly cdsContext: CDSContext) {
+        super(label);
     }
 
     async getChildren(): Promise<CDSObject[]> {
-        const prj = await <Promise<Project[]>>this.cdsContext.cdsctl.runCdsCommand("project favorites list");
-        return prj.map((prj) => new CDSProjectResource(this.kind, this.cdsContext, prj.name, prj));
+        if (this.label === favWorkflows) {
+            const prj = await <Promise<Project[]>>this.cdsContext.cdsctl.runCdsCommand("project favorites list");
+        return prj.map((prj) => new CDSProjectResource(this.cdsContext, prj.name, prj));
+        }
+
+        const prj = await <Promise<Project[]>>this.cdsContext.cdsctl.runCdsCommand("project list");
+        return prj.map((prj) => new CDSProjectResource(this.cdsContext, prj.name, prj));
     }
 }
 
-class CDSProjectResource extends CDSExplorerNodeImpl implements CDSObject {
-    constructor(readonly kind: ResourceKind, readonly cdsContext: CDSContext, readonly id: string, readonly metadata?: any) {
-        super();
+class CDSProjectResource implements CDSObject {
+    constructor(readonly cdsContext: CDSContext, readonly label: string, readonly metadata?: any) {
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
-        const treeItem = new vscode.TreeItem(this.id, vscode.TreeItemCollapsibleState.Collapsed);
+        const treeItem = new vscode.TreeItem(this.label, vscode.TreeItemCollapsibleState.Collapsed);
         treeItem.contextValue = "vsCds.project";
         return treeItem;
     }
 
     getChildren(): vscode.ProviderResult<CDSObject[]> {
         return [
-            new CDSWorkflowsFolder(allKinds.workflow, this.cdsContext, this.metadata.key),
-            new CDSApplicationsFolder(allKinds.application, this.cdsContext, this.metadata.key),
-            new CDSPipelinesFolder(allKinds.pipeline, this.cdsContext, this.metadata.key),
+            new CDSWorkflowsFolder("Workflows", this.cdsContext, this.metadata.key),
+            new CDSApplicationsFolder("Applications", this.cdsContext, this.metadata.key),
+            new CDSPipelinesFolder("Pipelines", this.cdsContext, this.metadata.key),
         ];
     }
 
@@ -481,19 +466,19 @@ class CDSProjectResource extends CDSExplorerNodeImpl implements CDSObject {
 }
 
 class CDSApplicationsFolder extends CDSResourceFolder {
-    constructor(readonly kind: ResourceKind, readonly cdsContext: CDSContext, readonly projectKey?: string) {
-        super(cdsContext, kind);
+    constructor(readonly label: string, readonly cdsContext: CDSContext, readonly projectKey?: string) {
+        super(label);
     }
 
     async getChildren(): Promise<CDSObject[]> {
-        const wf = await <Promise<Application[]>>this.cdsContext.cdsctl.runCdsCommand("application list " + this.projectKey!);
-        return wf.map((wf) => new CDSApplicationResource(this.cdsContext, this.kind, wf.name, wf));
+        const apps = await <Promise<Application[]>>this.cdsContext.cdsctl.runCdsCommand("application list " + this.projectKey!);
+        return apps.map((app) => new CDSApplicationResource(this.cdsContext, app.name, app));
     }
 }
 
 class CDSApplicationResource extends CDSResource {
-    constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly metadata?: any) {
-        super(cdsContext, kind, id, metadata);
+    constructor(readonly cdsContext: CDSContext, readonly label: string, readonly metadata?: any) {
+        super(cdsContext, label, metadata);
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
@@ -514,19 +499,19 @@ class CDSApplicationResource extends CDSResource {
 }
 
 class CDSPipelinesFolder extends CDSResourceFolder {
-    constructor(readonly kind: ResourceKind, readonly cdsContext: CDSContext, readonly projectKey?: string) {
-        super(cdsContext, kind);
+    constructor(readonly label: string, readonly cdsContext: CDSContext, readonly projectKey?: string) {
+        super(label);
     }
 
     async getChildren(): Promise<CDSObject[]> {
         const pipelines = await <Promise<Pipeline[]>>this.cdsContext.cdsctl.runCdsCommand("pipeline list " + this.projectKey!);
-        return pipelines.map((pipeline) => new CDSPipelineResource(this.cdsContext, this.kind, pipeline.name, pipeline));
+        return pipelines.map((pipeline) => new CDSPipelineResource(this.cdsContext, pipeline.name, pipeline));
     }
 }
 
 class CDSPipelineResource extends CDSResource {
-    constructor(readonly cdsContext: CDSContext, readonly kind: ResourceKind, readonly id: string, readonly metadata?: any) {
-        super(cdsContext, kind, id, metadata);
+    constructor(readonly cdsContext: CDSContext, readonly label: string, readonly metadata?: any) {
+        super(cdsContext, label, metadata);
     }
 
     async getTreeItem(): Promise<vscode.TreeItem> {
@@ -546,13 +531,12 @@ class CDSPipelineResource extends CDSResource {
     }
 }
 
-class DummyObject extends CDSExplorerNodeImpl implements CDSObject {
-    constructor(readonly id: string, readonly diagnostic?: string) {
-        super();
+class DummyObject implements CDSObject {
+    constructor(readonly label: string, readonly diagnostic?: string) {
     }
 
     getTreeItem(): vscode.TreeItem | Thenable<vscode.TreeItem> {
-        return new vscode.TreeItem(this.id, vscode.TreeItemCollapsibleState.None);
+        return new vscode.TreeItem(this.label, vscode.TreeItemCollapsibleState.None);
     }
 
     getChildren(): vscode.ProviderResult<CDSObject[]> {
