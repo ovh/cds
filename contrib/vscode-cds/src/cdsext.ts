@@ -1,8 +1,8 @@
-import { CDSContext } from "./explorer";
-import { StatusBarView } from "./view.statusbar";
+import { Disposable, window, workspace } from "vscode";
 import { Journal } from "./util.journal";
 import { throttleFunction } from "./util.throttle.function";
-import { workspace, window, Disposable } from "vscode";
+import { CDSContext } from "./view.explorer";
+import { StatusBarView } from "./view.statusbar";
 
 export class CDSExt {
     public currentContext: CDSContext | undefined;

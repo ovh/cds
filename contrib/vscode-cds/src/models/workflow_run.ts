@@ -102,7 +102,14 @@ export interface WorkflowNodeJobRun {
     start: string;
     done: string;
     model: string;
-    //bookedby: Hatchery;
+    booked_by: string;
+    pipeline_name: string;
+    project_key: string;
+    run: string;
+    since: string;
+    triggered_by: string;
+    url: string;
+    workflow_name: string;
     //spawninfos: Array<SpawnInfo>;
 
     // UI infos for queue

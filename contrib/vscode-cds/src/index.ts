@@ -1,8 +1,10 @@
-import { commands, env, ExtensionContext, MessageItem, window, workspace, Uri } from "vscode";
-import { CDSContext, CDSObject, CDSResource, createExplorer, refreshExplorer } from "./explorer";
-import { Property } from "./util.property";
+import { commands, env, ExtensionContext, MessageItem, Uri, window, workspace } from "vscode";
 import { CDSExt } from "./cdsext";
-import { createExplorerQueue } from "./explorer_queue";
+import { Property } from "./util.property";
+import { CDSContext, CDSExplorer, CDSObject, CDSResource, refreshExplorer } from "./view.explorer";
+import { CDSExplorerQueue } from "./view.explorer.queue";
+
+let refreshQueueView: NodeJS.Timeout;
 
 export function activate(context: ExtensionContext) {
     const subscriptions = [
@@ -24,16 +26,20 @@ export function activate(context: ExtensionContext) {
         context.subscriptions.push(element);
     });
 
-    const treeExplorer = createExplorer();
+    const treeExplorer = CDSExplorer.getInstance();
     commands.registerCommand("extension.vsCdsRefreshExplorer", () => treeExplorer.refresh()),
         window.registerTreeDataProvider("extension.vsCdsExplorer", treeExplorer);
 
-    const queueExplorer = createExplorerQueue();
-    commands.registerCommand("extension.vsCdsRefreshQueue", () => queueExplorer.refresh()),
-        window.registerTreeDataProvider("extension.vsCdsQueue", queueExplorer);
+    const queueExplorer = CDSExplorerQueue.getInstance();
+    commands.registerCommand("extension.vsCdsRefreshExplorerQueue", () => queueExplorer.refresh()),
+        window.registerTreeDataProvider("extension.vsCdsExplorerQueue", queueExplorer);
+
+    refreshQueueView = setInterval(() => queueExplorer.refresh(), 5000);
 }
 
-export function deactivate() { }
+export function deactivate() {
+    clearInterval(refreshQueueView);
+}
 
 async function addNewConfig(cdsconfig?: string): Promise<void> {
     const kc = await getCdsconfigSelection(cdsconfig);

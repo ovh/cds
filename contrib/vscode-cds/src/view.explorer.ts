@@ -3,17 +3,13 @@ import * as path from "path";
 import * as toml from 'toml';
 import * as vscode from "vscode";
 import { CdsCtl } from "./cdsctl";
+import { CDSExt } from './cdsext';
 import { Application } from "./models/application";
 import { Pipeline } from "./models/pipeline";
 import { Project } from "./models/project";
 import { WNode, Workflow } from "./models/workflow";
 import { Action, Stage, WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun } from "./models/workflow_run";
 import { Property } from "./util.property";
-import { CDSExt } from './cdsext';
-
-export function createExplorer(): CDSExplorer {
-    return new CDSExplorer();
-}
 
 export interface CDSObject {
     readonly label: string;
@@ -32,9 +28,17 @@ export async function refreshExplorer(): Promise<void> {
 }
 
 export class CDSExplorer implements vscode.TreeDataProvider<CDSObject> {
+    private static instance: CDSExplorer;
     private onDidChangeTreeDataEmitter: vscode.EventEmitter<CDSObject | undefined> = new vscode.EventEmitter<CDSObject | undefined>();
     readonly onDidChangeTreeData: vscode.Event<CDSObject | undefined> = this.onDidChangeTreeDataEmitter.event;
     private contexts: Promise<CDSContext[]>;
+
+    public static getInstance(): CDSExplorer {
+        if (!this.instance) {
+            this.instance = new CDSExplorer();
+        }
+        return this.instance;
+    }
 
     constructor() {
         this.contexts = discoverContexts();
@@ -528,7 +532,7 @@ class CDSPipelineResource extends CDSResource {
     }
 }
 
-class DummyObject implements CDSObject {
+export class DummyObject implements CDSObject {
     constructor(readonly label: string, readonly diagnostic?: string) {
     }
 
