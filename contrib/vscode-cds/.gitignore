@@ -7,3 +7,4 @@ node_modules
 !.vscode/settings.json
 !.vscode/tasks.json
 .DS_Store
+vscode-cds-*.vsix
