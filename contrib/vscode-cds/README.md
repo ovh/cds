@@ -16,5 +16,22 @@ It's easy to get started with CDS for Visual Studio Code. Simply follow these st
 
 1. Install and run cdsctl command line outside VS Code.
 1. Make sure you have VSCode version 1.42.0 or higher.
-1. Download the extension from [the marketplace](https://aka.ms/vscodepr-download).
+1. Download the extension from [the marketplace](https://marketplace.visualstudio.com/vscode).
 1. You should be good to go!
+
+
+# Dev
+
+
+``` bash
+# build
+$ git clone https://github.com/ovh/cds.git
+$ cd cds/contrib/vscode-cds
+$ npm install
+
+# package
+$ npm install -g vsce
+# this will generate a vsix file, that you can manually install on your vscode
+```
+
+If you open the cds (https://github.com/ovh/cds.git) directory on your VSCode, you can launch the task `CDS Extension Run` (F5).
