@@ -18,7 +18,6 @@ import { first } from 'rxjs/operators';
 @Component({
     selector: 'app-update-ascode',
     templateUrl: './update-ascode.html',
-    styleUrls: ['./update-ascode.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()

@@ -363,9 +363,12 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 		key := vars[permProjectKey]
 		db := api.mustDB()
 
-		var labels []sdk.Label
+		var labels sdk.Labels
 		if err := service.UnmarshalBody(r, &labels); err != nil {
 			return sdk.WrapError(err, "Unmarshall error")
+		}
+		if err := labels.IsValid(); err != nil {
+			return err
 		}
 
 		// Check is project exist

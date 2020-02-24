@@ -259,23 +259,36 @@ type Label struct {
 	WorkflowID int64  `json:"workflow_id,omitempty" db:"-"`
 }
 
-//Validate return error or update label if it is not valid
-func (label *Label) Validate() error {
+// IsValid return an error or update label if it is not valid.
+func (label *Label) IsValid() error {
 	if label.Name == "" {
-		return WrapError(fmt.Errorf("Label must have a name"), "IsValid>")
+		return NewErrorFrom(ErrWrongRequest, "label must have a name")
 	}
 	if label.Color == "" {
 		bytes := make([]byte, 3)
 		if _, err := rand.Read(bytes); err != nil {
-			return WrapError(err, "IsValid> Cannot create random color")
+			return WrapError(err, "cannot create random color")
 		}
 		label.Color = "#" + hex.EncodeToString(bytes)
 	} else {
 		if !ColorRegexp.Match([]byte(label.Color)) {
-			return ErrIconBadFormat
+			return WithStack(ErrIconBadFormat)
 		}
 	}
 
+	return nil
+}
+
+// Labels slice.
+type Labels []Label
+
+// IsValid returns an error if a label is not valid.
+func (l Labels) IsValid() error {
+	for i := range l {
+		if err := l[i].IsValid(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

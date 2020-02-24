@@ -341,8 +341,8 @@ func DeleteLabel(db gorp.SqlExecutor, labelID int64) error {
 
 // InsertLabel insert a label
 func InsertLabel(db gorp.SqlExecutor, label *sdk.Label) error {
-	if err := label.Validate(); err != nil {
-		return sdk.WithStack(err)
+	if err := label.IsValid(); err != nil {
+		return err
 	}
 
 	lbl := dbLabel(*label)
@@ -356,8 +356,8 @@ func InsertLabel(db gorp.SqlExecutor, label *sdk.Label) error {
 
 // UpdateLabel update a label
 func UpdateLabel(db gorp.SqlExecutor, label *sdk.Label) error {
-	if err := label.Validate(); err != nil {
-		return sdk.WithStack(err)
+	if err := label.IsValid(); err != nil {
+		return err
 	}
 
 	lbl := dbLabel(*label)

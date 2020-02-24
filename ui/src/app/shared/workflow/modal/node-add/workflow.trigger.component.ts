@@ -24,7 +24,6 @@ import { forkJoin, Observable } from 'rxjs';
 @Component({
     selector: 'app-workflow-trigger',
     templateUrl: './workflow.trigger.html',
-    styleUrls: ['./workflow.trigger.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowTriggerComponent {
