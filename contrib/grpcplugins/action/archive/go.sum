@@ -502,6 +502,7 @@ github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:
 github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b/go.mod h1:LH8s5iF2nb4JFQ1A9fAcvsdqzUGZttifagNxO5TOiPQ=
 github.com/yesnault/go-toml v0.0.0-20170920144045-9a5282f85277/go.mod h1:SsMrIuedaKvK8GekjwjVv8gMnHNAuvoINpKCARzdsEQ=
 github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945/go.mod h1:SsMrIuedaKvK8GekjwjVv8gMnHNAuvoINpKCARzdsEQ=
+github.com/yesnault/gorp v2.0.0+incompatible/go.mod h1:7nhqtxBPZoPXx86SqUzP/OFLd8prnhkydPk51uJthQc=
 github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed/go.mod h1:9w6KSdZh23UWqOywWsRLUcJUrUNjRh4Ql3z9uVgnSP4=
 github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908/go.mod h1:aEV29XrmTYFr3CiRxZeGHpkvbwq+prZduBqMaascyCU=
 github.com/ziutek/mymysql v1.5.4 h1:GB0qdRGsTwQSBVYuVShFBKaXSnSnYYC2d9knnE1LHFs=

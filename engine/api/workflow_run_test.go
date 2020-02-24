@@ -1212,10 +1212,13 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 		recGetBody := recGet.Body.Bytes()
 		assert.NoError(t, json.Unmarshal(recGetBody, &wrGet))
 
-		if wrGet.Status != sdk.StatusPending {
+		if sdk.StatusIsTerminated(wrGet.Status) {
+			t.Logf("%+v", wrGet)
 			assert.Equal(t, sdk.StatusFail, wrGet.Status)
 			assert.Equal(t, 1, len(wrGet.Infos))
-			assert.Equal(t, wrGet.Infos[0].Message.ID, sdk.MsgWorkflowError.ID)
+			if len(wrGet.Infos) == 1 {
+				assert.Equal(t, wrGet.Infos[0].Message.ID, sdk.MsgWorkflowError.ID)
+			}
 			return
 		}
 		cpt++
