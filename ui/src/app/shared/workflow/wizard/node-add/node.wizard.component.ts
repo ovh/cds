@@ -17,14 +17,14 @@ import { WNode, WNodeType } from 'app/model/workflow.model';
 import { ApplicationService } from 'app/service/application/application.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AddApplication } from 'app/store/applications.action';
-import { ApplicationsState } from 'app/store/applications.state';
+import { ApplicationsState, ApplicationStateModel } from 'app/store/applications.state';
 import { AddPipeline } from 'app/store/pipelines.action';
 import { PipelinesState, PipelinesStateModel } from 'app/store/pipelines.state';
 import { AddEnvironmentInProject } from 'app/store/project.action';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, of as observableOf, Subscription } from 'rxjs';
-import { finalize, first, flatMap, map } from 'rxjs/operators';
+import { filter, finalize, first, flatMap, map } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-add-wizard',
@@ -220,12 +220,13 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
           this.loadingCreateApplication = false;
           this._cd.markForCheck();
       }),
-      flatMap(() => this.store.selectOnce(ApplicationsState.selectApplication(this.project.key, this.newApplication.name))),
-      map((app) => {
+      flatMap(() => this.store.selectOnce(ApplicationsState.currentState())),
+      filter((app: ApplicationStateModel) => app.application != null && app.application.name === this.newApplication.name),
+      map((app: ApplicationStateModel) => {
         this._toast.success('', this._translate.instant('application_created'));
-        this.node.context.application_id = app.id;
+        this.node.context.application_id = app.application.id;
         this.pipelineSection = 'environment';
-        return app;
+        return app.application;
       })
     );
   }

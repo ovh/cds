@@ -9,7 +9,7 @@ import { VariableService } from 'app/service/variable/variable.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AddApplication, CloneApplication, FetchApplication } from 'app/store/applications.action';
-import { ApplicationsState } from 'app/store/applications.state';
+import { ApplicationsState, ApplicationStateModel } from 'app/store/applications.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { finalize, first, flatMap } from 'rxjs/operators';
@@ -82,10 +82,10 @@ export class ApplicationAddComponent implements OnInit {
         this.store.dispatch(new FetchApplication({
             projectKey: this.project.key,
             applicationName: appName
-        })).pipe(flatMap(() => this.store.selectOnce(ApplicationsState.selectApplication(this.project.key, appName))))
-            .subscribe(app => {
-                this.selectedApplication = app;
-                this.variables = cloneDeep(app.variables);
+        })).pipe(flatMap(() => this.store.selectOnce(ApplicationsState.currentState())))
+            .subscribe((app: ApplicationStateModel) => {
+                this.selectedApplication = app.application;
+                this.variables = cloneDeep(app.application.variables);
                 if (this.variables) {
                     this.variables.forEach(v => {
                         if (v.type === 'password') {
