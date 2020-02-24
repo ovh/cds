@@ -14,10 +14,10 @@ $(NG):
 	npm install
 
 stats: $(NG)
-	@node --max_old_space_size=4096 node_modules/@angular/cli/bin/ng build --prod --stats-json
+	@node --max-old-space-size=2048 node_modules/@angular/cli/bin/ng build --prod --stats-json
 
 ngbuild: $(NG)
-	@node --max_old_space_size=4096 node_modules/@angular/cli/bin/ng build --prod
+	@node --max-old-space-size=2048 node_modules/@angular/cli/bin/ng build --prod
 
 INDEX = dist/index.tmpl
 $(INDEX):
