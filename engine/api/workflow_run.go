@@ -1168,8 +1168,10 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 				return runs[i].SubNumber > runs[j].SubNumber
 			})
 
+			artifacts := workflow.MergeArtifactWithPreviousSubRun(runs)
+
 			wg := &sync.WaitGroup{}
-			for i := range runs[0].Artifacts {
+			for i := range artifacts {
 				wg.Add(1)
 				go func(art *sdk.WorkflowNodeRunArtifact) {
 					defer wg.Done()
@@ -1201,10 +1203,10 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 							art.TempURL = fURL
 						}
 					}
-				}(&runs[0].Artifacts[i])
+				}(&artifacts[i])
 			}
 			wg.Wait()
-			arts = append(arts, runs[0].Artifacts...)
+			arts = append(arts, artifacts...)
 		}
 
 		return service.WriteJSON(w, arts, http.StatusOK)
