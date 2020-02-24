@@ -14,7 +14,7 @@ type Usage struct {
 
 // UsagePipeline represent a pipeline using an action.
 type UsagePipeline struct {
-	ProjectID    string `json:"project_id"`
+	ProjectID    int64  `json:"project_id"`
 	ProjectKey   string `json:"project_key"`
 	ProjectName  string `json:"project_name"`
 	PipelineID   int64  `json:"pipeline_id"`

@@ -850,7 +850,7 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 		filteredPipelines := make([]action.UsagePipeline, 0, len(usage.Pipelines))
 		for i := range usage.Pipelines {
-			if _, ok := mProjectIDs[usage.Pipelines[i].PipelineID]; ok {
+			if _, ok := mProjectIDs[usage.Pipelines[i].ProjectID]; ok {
 				filteredPipelines = append(filteredPipelines, usage.Pipelines[i])
 			}
 		}
