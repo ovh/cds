@@ -100,8 +100,7 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	}
 
 	c := gitlab.NewOAuthClient(http.DefaultClient, t.AccessToken)
-	err = c.SetBaseURL(d.url)
-	if err != nil {
+	if err := c.SetBaseURL(d.url); err != nil {
 		return info, sdk.WrapError(err, "invalid gitlab url")
 	}
 	me, res, err := c.Users.CurrentUser()
