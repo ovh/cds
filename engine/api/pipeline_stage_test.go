@@ -80,7 +80,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutCondition(t *testing.T)
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -133,7 +133,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutCondition(t *testing.T)
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -203,7 +203,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), pip))
 
 	//Insert Stage
 	stage0 := &sdk.Stage{
@@ -309,7 +309,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutConditionAnd1StageWith2Conditions
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -445,7 +445,7 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -506,7 +506,7 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{

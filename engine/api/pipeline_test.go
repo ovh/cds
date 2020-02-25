@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/ovh/cds/engine/api/application"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/api/application"
 
 	"github.com/stretchr/testify/assert"
 
@@ -109,7 +110,7 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		ProjectID:      proj.ID,
 		FromRepository: "myrepofrom",
 	}
-	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
+	assert.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	pip.Stages = []sdk.Stage{
 		{
@@ -126,7 +127,7 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 		VCSServer:          "github",
 		FromRepository:     "myrepofrom",
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
+	assert.NoError(t, application.Insert(db, api.Cache, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	uri := api.Router.GetRoute("PUT", api.updateAsCodePipelineHandler, map[string]string{

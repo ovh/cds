@@ -94,7 +94,7 @@ func TestLoadAllByRepo(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.Insert(db, cache, proj, app))
+	test.NoError(t, application.Insert(db, cache, *proj, app))
 
 	projs, err := project.LoadAllByRepoAndGroupIDs(context.TODO(), db, cache, u.GetGroupIDs(), "ovh/cds")
 	assert.NoError(t, err)

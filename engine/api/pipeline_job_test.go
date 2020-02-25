@@ -35,7 +35,7 @@ func TestAddJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), pip))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -101,7 +101,7 @@ func TestUpdateJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), pip))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -182,7 +182,7 @@ func TestUpdateInvalidJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), pip))
 
 	//4. Add Stage
 	stage1 := &sdk.Stage{
@@ -264,7 +264,7 @@ func TestDeleteJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), pip))
 
 	//4. Add Stage
 	stage := &sdk.Stage{

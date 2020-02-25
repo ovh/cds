@@ -81,7 +81,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "cannot takeJob nodeJobRunID:%d", id)
 		}
 
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, report)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, p.Key, report)
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
@@ -109,20 +109,20 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	}
 
 	// Take node job run
-	job, report, errTake := workflow.TakeNodeJobRun(ctx, tx, store, p, id, workerModel, wk.Name, wk.ID, infos)
-	if errTake != nil {
-		return nil, sdk.WrapError(errTake, "cannot take job %d", id)
+	job, report, err := workflow.TakeNodeJobRun(ctx, tx, store, *p, id, workerModel, wk.Name, wk.ID, infos)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot take job %d", id)
 	}
 
 	// Change worker status
 	if err := worker.SetToBuilding(tx, wk.ID, job.ID); err != nil {
-		return nil, sdk.WrapError(err, "Cannot update worker %s status", wk.Name)
+		return nil, sdk.WrapError(err, "cannot update worker %s status", wk.Name)
 	}
 
 	// Load the node run
-	noderun, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
-	if errn != nil {
-		return nil, sdk.WrapError(errn, "Cannot get node run")
+	noderun, err := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot get node run")
 	}
 
 	if noderun.Status == sdk.StatusWaiting {
@@ -265,8 +265,8 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.HandleVulnerabilityReport(ctx, tx, api.Cache, p, nr, report); err != nil {
-			return sdk.WrapError(err, "Unable to handle report")
+		if err := workflow.HandleVulnerabilityReport(ctx, tx, api.Cache, *p, nr, report); err != nil {
+			return sdk.WrapError(err, "unable to handle report")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -381,7 +381,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		}
 
 		_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, proj, report)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *proj, report)
 		next()
 
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, proj.Key, report)
@@ -466,13 +466,13 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	}
 
 	if err := workflow.UpdateNodeRunBuildParameters(tx, node.ID, node.BuildParameters); err != nil {
-		return nil, sdk.WrapError(err, "Unable to update node run %d", node.ID)
+		return nil, sdk.WrapError(err, "unable to update node run %d", node.ID)
 	}
 	// ^ build variables are now updated on job run and on node
 
 	//Update worker status
 	if err := worker.SetStatus(tx, wr.ID, sdk.StatusWaiting); err != nil {
-		return nil, sdk.WrapError(err, "Cannot update worker %s status", wr.ID)
+		return nil, sdk.WrapError(err, "cannot update worker %s status", wr.ID)
 	}
 
 	// Update action status
@@ -480,21 +480,21 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	newDBFunc := func() *gorp.DbMap {
 		return dbFunc(context.Background())
 	}
-	report, err := workflow.UpdateNodeJobRunStatus(ctx, tx, store, proj, job, res.Status)
+	report, err := workflow.UpdateNodeJobRunStatus(ctx, tx, store, *proj, job, res.Status)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Cannot update NodeJobRun %d status", job.ID)
+		return nil, sdk.WrapError(err, "cannot update NodeJobRun %d status", job.ID)
 	}
 
 	//Commit the transaction
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "Cannot commit tx")
+		return nil, sdk.WrapError(err, "cannot commit tx")
 	}
 
 	for i := range report.WorkflowRuns() {
 		run := &report.WorkflowRuns()[i]
 		report, err := updateParentWorkflowRun(ctx, newDBFunc, store, run)
 		if err != nil {
-			return nil, sdk.WrapError(err, "postJobResult")
+			return nil, sdk.WithStack(err)
 		}
 
 		go WorkflowSendEvent(context.Background(), tx, store, proj.Key, report)
@@ -505,7 +505,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 				//The function could be called with nil project so we need to test if project is not nil
 				if sdk.StatusIsTerminated(wRun.Status) && proj != nil {
 					wRun.LastExecution = time.Now()
-					if err := workflow.ResyncCommitStatus(context.Background(), dbFunc(context.Background()), store, proj, wRun); err != nil {
+					if err := workflow.ResyncCommitStatus(context.Background(), dbFunc(context.Background()), store, *proj, wRun); err != nil {
 						log.Error(ctx, "workflow.UpdateNodeJobRunStatus> %v", err)
 					}
 				}
@@ -849,7 +849,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project by nodeJobRunID:%d", id)
 		}
 		if sdk.ErrorIs(errLoad, sdk.ErrNotFound) {
-			if err := workflow.ComputeNewReport(ctx, api.mustDB(), api.Cache, report, wnr, p); err != nil {
+			if err := workflow.ComputeNewReport(ctx, api.mustDB(), api.Cache, report, wnr, *p); err != nil {
 				return sdk.WrapError(err, "cannot compute new coverage report")
 			}
 			return nil
@@ -857,7 +857,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 
 		// update
 		existingReport.Report = report
-		if err := workflow.ComputeLatestDefaultBranchReport(ctx, api.mustDB(), api.Cache, p, wnr, &existingReport); err != nil {
+		if err := workflow.ComputeLatestDefaultBranchReport(ctx, api.mustDB(), api.Cache, *p, wnr, &existingReport); err != nil {
 			return sdk.WrapError(err, "cannot compute default branch coverage report")
 		}
 
@@ -948,7 +948,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 			}
 
 			// Get vcs info to known if we are on the default branch or not
-			projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, nr.VCSServer)
+			projectVCSServer := repositoriesmanager.GetProjectVCSServer(*p, nr.VCSServer)
 			client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, p.Key, projectVCSServer)
 			if err != nil {
 				log.Error(ctx, "postWorkflowJobTestsResultsHandler> Cannot get repo client %s : %v", nr.VCSServer, err)

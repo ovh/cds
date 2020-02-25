@@ -30,7 +30,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 
 	// create the workflow if not exists
 	if oldW == nil {
-		if err := Insert(ctx, db, store, w, proj); err != nil {
+		if err := Insert(ctx, db, store, proj, w); err != nil {
 			return sdk.WrapError(err, "Unable to insert workflow")
 		}
 		if msgChan != nil {
@@ -78,7 +78,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 		OldWorkflow:           oldW,
 	}
 
-	if err := Update(ctx, db, store, w, proj, uptOptions); err != nil {
+	if err := Update(ctx, db, store, proj, w, uptOptions); err != nil {
 		return sdk.WrapError(err, "Unable to update workflow")
 	}
 

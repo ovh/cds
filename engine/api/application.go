@@ -359,7 +359,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := cloneApplication(ctx, tx, api.Cache, proj, &newApp, appToClone); err != nil {
+		if err := cloneApplication(ctx, tx, api.Cache, *proj, &newApp, appToClone); err != nil {
 			return sdk.WrapError(err, "Cannot insert new application %s", newApp.Name)
 		}
 
@@ -372,7 +372,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 }
 
 // cloneApplication Clone an application with all her dependencies: pipelines, permissions, triggers
-func cloneApplication(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
+func cloneApplication(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, newApp *sdk.Application, appToClone *sdk.Application) error {
 	// Create Application
 	if err := application.Insert(db, store, proj, newApp); err != nil {
 		return err
