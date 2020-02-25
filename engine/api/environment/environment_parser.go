@@ -19,7 +19,7 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Environment and insert or update the environment in database
-func ParseAndImport(db gorp.SqlExecutor, proj *sdk.Project, eenv *exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Message, error) {
+func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv *exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Message, error) {
 	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, opts.Force)
 	log.Debug("ParseAndImport>> Env: %+v", eenv)
 
@@ -127,7 +127,7 @@ func ParseAndImport(db gorp.SqlExecutor, proj *sdk.Project, eenv *exportentities
 	var globalError error
 
 	if exist {
-		globalError = ImportInto(db, proj, env, oldEnv, msgChan, u)
+		globalError = ImportInto(db, env, oldEnv, msgChan, u)
 	} else {
 		globalError = Import(db, proj, env, msgChan, u)
 	}

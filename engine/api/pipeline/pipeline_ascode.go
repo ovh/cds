@@ -14,8 +14,7 @@ import (
 )
 
 // UpdateWorkflowAsCode update an as code workflow
-func UpdatePipelineAsCode(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj *sdk.Project, p sdk.Pipeline, branch string, message string, app *sdk.Application, u sdk.Identifiable) (*sdk.Operation, error) {
-
+func UpdatePipelineAsCode(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj sdk.Project, p sdk.Pipeline, branch string, message string, app *sdk.Application, u sdk.Identifiable) (*sdk.Operation, error) {
 	var wp exportentities.WorkflowPulled
 	buffw := new(bytes.Buffer)
 	if _, err := ExportPipeline(p, exportentities.FormatYAML, buffw); err != nil {

@@ -112,7 +112,7 @@ func (r *ProcessorReport) Errors() []error {
 }
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job.
-func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status string) (*ProcessorReport, error) {
+func UpdateNodeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, job *sdk.WorkflowNodeJobRun, status string) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.UpdateNodeJobRunStatus",
 		observability.Tag(observability.TagWorkflowNodeJobRun, job.ID),
@@ -228,7 +228,7 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 }
 
 // TakeNodeJobRun Take an a job run for update
-func TakeNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64,
+func TakeNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, jobID int64,
 	workerModel, workerName, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.TakeNodeJobRun")
@@ -271,7 +271,7 @@ func TakeNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return nil, nil, sdk.WrapError(err, "cannot save spawn info on node job run %d", jobID)
 	}
 
-	r, err := UpdateNodeJobRunStatus(ctx, db, store, p, job, sdk.StatusBuilding)
+	r, err := UpdateNodeJobRunStatus(ctx, db, store, proj, job, sdk.StatusBuilding)
 	report, err = report.Merge(ctx, r, err)
 	if err != nil {
 		return nil, nil, sdk.WrapError(err, "cannot update node job run %d status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
@@ -297,7 +297,7 @@ func checkStatusWaiting(ctx context.Context, store cache.Store, jobID int64, sta
 }
 
 // LoadNodeJobRunKeys loads all keys for a job run
-func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Parameter, []sdk.Variable, error) {
+func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Parameter, []sdk.Variable, error) {
 	var app *sdk.Application
 	var env *sdk.Environment
 
@@ -326,7 +326,7 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, p *sdk.Project
 	params := []sdk.Parameter{}
 	secrets := []sdk.Variable{}
 
-	for _, k := range p.Keys {
+	for _, k := range proj.Keys {
 		params = append(params, sdk.Parameter{
 			Name:  "cds.key." + k.Name + ".pub",
 			Type:  "string",

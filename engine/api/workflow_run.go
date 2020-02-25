@@ -847,9 +847,8 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 				errc = luacheck.Perform(conditions.LuaScript)
 				conditionsOK = luacheck.Result
 			}
-
 			if errc != nil {
-				return sdk.WrapError(errc, "cannot check conditoons")
+				return sdk.WrapError(errc, "cannot check conditions")
 			}
 
 			if !conditionsOK {

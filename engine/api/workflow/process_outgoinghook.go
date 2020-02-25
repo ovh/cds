@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, parentNodeRun []*sdk.WorkflowNodeRun, node *sdk.Node, subNumber int, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, parentNodeRun []*sdk.WorkflowNodeRun, node *sdk.Node, subNumber int, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	ctx, end := observability.Span(ctx, "workflow.processNodeOutGoingHook")
 	defer end()
 

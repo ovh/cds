@@ -208,7 +208,7 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 			return service.WriteJSON(w, resp, http.StatusOK)
 		}
 
-		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(*proj, app.VCSServer)
 		client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectKey, vcsServer)
 		if erra != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationVCSInfosHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
@@ -269,7 +269,7 @@ func (api *API) addApplicationHandler() service.Handler {
 
 		defer tx.Rollback() // nolint
 
-		if err := application.Insert(tx, api.Cache, proj, &app); err != nil {
+		if err := application.Insert(tx, api.Cache, *proj, &app); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
 
