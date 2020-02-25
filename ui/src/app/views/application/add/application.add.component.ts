@@ -83,9 +83,9 @@ export class ApplicationAddComponent implements OnInit {
             projectKey: this.project.key,
             applicationName: appName
         })).pipe(flatMap(() => this.store.selectOnce(ApplicationsState.currentState())))
-            .subscribe((app: ApplicationStateModel) => {
-                this.selectedApplication = app.application;
-                this.variables = cloneDeep(app.application.variables);
+            .subscribe((s: ApplicationStateModel) => {
+                this.selectedApplication = s.application;
+                this.variables = cloneDeep(s.application.variables);
                 if (this.variables) {
                     this.variables.forEach(v => {
                         if (v.type === 'password') {

@@ -221,12 +221,12 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
           this._cd.markForCheck();
       }),
       flatMap(() => this.store.selectOnce(ApplicationsState.currentState())),
-      filter((app: ApplicationStateModel) => app.application != null && app.application.name === this.newApplication.name),
-      map((app: ApplicationStateModel) => {
+      filter((s: ApplicationStateModel) => s.application != null && s.application.name === this.newApplication.name),
+      map((s: ApplicationStateModel) => {
         this._toast.success('', this._translate.instant('application_created'));
-        this.node.context.application_id = app.application.id;
+        this.node.context.application_id = s.application.id;
         this.pipelineSection = 'environment';
-        return app.application;
+        return s.application;
       })
     );
   }

@@ -102,7 +102,7 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
         this._store.dispatch(new FetchApplication({ projectKey: this.project.key, applicationName: this.applications[i].name }))
             .pipe(
                 flatMap(() => this._store.selectOnce(ApplicationsState.currentState())),
-                filter((app: ApplicationStateModel) => app.application != null && app.application.name === this.applications[i].name),
+                filter((s: ApplicationStateModel) => s.application != null && s.application.name === this.applications[i].name),
                 first())
             .subscribe(app => {
                 this.showCheckStatus = app.application.repository_fullname && app.application.repository_fullname !== '';

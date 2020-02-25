@@ -192,7 +192,7 @@ export class AppService {
 
         this._store.selectOnce(ApplicationsState).subscribe((appState: ApplicationStateModel) => {
             if (!appState.application ||
-                (appState.application.name === event.application_name &&
+                !(appState.application.name === event.application_name &&
                     appState.currentProjectKey === event.project_key)) {
                 return;
             }
@@ -229,7 +229,6 @@ export class AppService {
                 this._store.dispatch(new ResyncApplication(payload));
             }
         });
-
     }
 
     updatePipelineCache(event: Event): void {

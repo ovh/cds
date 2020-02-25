@@ -68,6 +68,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     currentUser: AuthentifiedUser;
     usageCount = 0;
 
+    storeSub: Subscription;
+
     constructor(
         private _applicationStore: ApplicationStore,
         private _routeActivated: ActivatedRoute,
@@ -104,11 +106,11 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
             }
         });
 
-        this._store.select(ApplicationsState.currentState())
-            .pipe(filter((state: ApplicationStateModel) => state.application != null && state.application.name === this.urlAppName))
-            .subscribe((state: ApplicationStateModel) => {
+        this.storeSub = this._store.select(ApplicationsState.currentState())
+            .pipe(filter((s: ApplicationStateModel) => s.application != null && s.application.name === this.urlAppName))
+            .subscribe((s: ApplicationStateModel) => {
                 this.readyApp = true;
-                this.application = cloneDeep(state.application);
+                this.application = cloneDeep(s.application);
                 if (this.application.usage) {
                     this.workflows = this.application.usage.workflows || [];
                     this.environments = this.application.usage.environments || [];
@@ -117,7 +119,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 }
 
                 // Update recent application viewed
-                this._applicationStore.updateRecentApplication(state.currentProjectKey, this.application);
+                this._applicationStore.updateRecentApplication(s.currentProjectKey, this.application);
                 this._cd.markForCheck();
         }, () => {
                 this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
