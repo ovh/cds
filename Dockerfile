@@ -8,7 +8,7 @@ COPY dist/cds-worker-* /app/
 COPY dist/sql.tar.gz /app/
 COPY dist/ui.tar.gz /app/
 
-RUN groupadd -r cds && useradd -r -g cds cds
+RUN groupadd -r cds && useradd --create-home -r -g cds cds
 RUN chmod +w /app/panic_dumps && \
     chmod +x /app/cds-engine-linux-amd64 && \
     tar xzf /app/sql.tar.gz -C /app/sql && \

@@ -83,8 +83,8 @@ services:
             elasticsearch.URL=http://cds-elasticsearch:8088 \
             elasticsearch.api.http.url=http://cds-api:8081 \
             elasticsearch.name=cds-elasticsearch \
-            elasticsearch.elasticsearch.indexEvents=cds-indexEvents \
-            elasticsearch.elasticsearch.indexMetrics=cds-indexEvents \
+            elasticsearch.elasticsearch.indexEvents=cds-index-events \
+            elasticsearch.elasticsearch.indexMetrics=cds-index-events \
             elasticsearch.elasticsearch.url=http://elasticsearch:9200 \
             ui.url=http://${HOSTNAME}:8080 \
             ui.api.http.url=http://cds-api:8081 \
