@@ -12,12 +12,12 @@ The [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.y
 - cds-db service with a PostgreSQL
 - cds-cache service with a Redis
 - elasticsearch service with an Elasticsearch
+- dockerhost allows cds-hatchery-swarm service to communicate with the local docker daemon
 - cds-migrate service to prepare DB tables
 - cds-api service
 - cds-ui service
 - cds-elasticsearch service
 - cds-hatchery-swarm service
-- cds-hatchery-local service
 - cds-vcs service
 - cds-repositories service
 
@@ -34,7 +34,7 @@ $ export HOSTNAME=$(hostname)
 $ docker pull ovhcom/cds-engine:latest
 
 # Create PostgreSQL database, redis and elasticsearch
-$ docker-compose up --no-recreate -d cds-db cds-cache elasticsearch
+$ docker-compose up --no-recreate -d cds-db cds-cache elasticsearch dockerhost
  
 # check if database is up, the logs must contain "LOG: database system is ready to accept connections"
 $ docker-compose logs| grep 'database system is ready to accept connections'
@@ -82,58 +82,29 @@ $ ./cdsctl user me
 #username  admin
 
 # run others services
-$ docker-compose up -d cds-ui cds-hooks cds-hatchery-local cds-elasticsearch
+$ docker-compose up -d cds-ui cds-hooks cds-elasticsearch cds-hatchery-swarm
+
+# create first worker model
+$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml
+
+# import Import a workflow template
+$ ./cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
+Workflow template shared.infra/demo-workflow-hello-world has been created
+Template successfully pushed !
+
+# create project, then create a workflow from template
+$ ./cdsctl project create DEMO FirstProject
+$ ./cdsctl template apply DEMO MyFirstWorkflow shared.infra/demo-workflow-hello-world --force --import-push --quiet
+
+# run CDS Workflow!
+$ ./cdsctl workflow run DEMO MyFirstWorkflow
+Workflow MyFirstWorkflow #1 has been launched
+http://localhost:8080/project/DEMO/workflow/MyFirstWorkflow/run/1
 ```
 
 - Login on WebUI
 
 Open a browser on http://localhost:8080/account/signup, then login with the user `admin`,
-
-- Import a workflow template
-
-```bash
-$ ./cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
-Workflow template shared.infra/demo-workflow-hello-world has been created
-Template successfully pushed !
-```
-
-- Create a project, then create your first workflow
-
-```bash
-$ ./cdsctl project create DEMO FirstProject
-$ ./cdsctl workflow applyTemplate
-? Found one CDS project DEMO - FirstProject. Is it correct? Yes
-? Choose the CDS template to apply: Demo workflow hello world (shared.infra/demo-workflow-hello-world)
-? Give a valid name for the new generated workflow MyFirstWorkflow
-? Push the generated workflow to the DEMO project Yes
-Application MyFirstWorkflow successfully created
-Application variables for MyFirstWorkflow are successfully created
-Permission applied to group FirstProject to application MyFirstWorkflow
-Environment MyFirstWorkflow-prod successfully created
-Environment MyFirstWorkflow-dev successfully created
-Environment MyFirstWorkflow-preprod successfully created
-Pipeline build-1 successfully created
-Pipeline deploy-1 successfully created
-Pipeline it-1 successfully created
-Workflow MyFirstWorkflow has been created
-Workflow successfully pushed !
-.cds/MyFirstWorkflow.yml
-.cds/build-1.pip.yml
-.cds/deploy-1.pip.yml
-.cds/it-1.pip.yml
-.cds/MyFirstWorkflow.app.yml
-.cds/MyFirstWorkflow-dev.env.yml
-.cds/MyFirstWorkflow-preprod.env.yml
-.cds/MyFirstWorkflow-prod.env.yml
-```
-
-- Run CDS Workflow!
-
-```bash
-$ ./cdsctl workflow run DEMO MyFirstWorkflow
-Workflow MyFirstWorkflow #1 has been launched
-http://localhost:8080/project/DEMO/workflow/MyFirstWorkflow/run/1
-```
 
 - Check on UI
 
@@ -149,37 +120,6 @@ There is a Run Condition on it `cds.manual = true`:
 The build pipeline contains two stages, with only one job in each stage
 
 ![Build Pipeline](/images/ready_to_run_docker_compose_build_pipeline.png)
-
-## Next with Swarm Hatchery
-
-- Create our first worker model
-
-The previous workflow was launched with the Hatchery Local. This hatchery is only for dev purpose, we will
-now create a Docker worker model and run the Hatchery Docker Swarm.
-
-```bash
-$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml
-Worker model go-official-1.11.4-stretch imported with success
-```
-
-- Hatchery Docker Swarm
-
-The [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml) runs hatchery belonging to the `shared.infra` groups.
-
-Please check that your Docker installation allows Docker API calls on `tcp://${HOSTNAME}:2375`
-Otherwise, please update environment variable `DOCKER_HOST: tcp://${HOSTNAME}:2375` in
-[docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml)
-
-```bash
-$ export HOSTNAME=$(hostname)
-$ # bobrik/socat let a simple communication with docker engine from a container. 
-$ # You have to update the key hatchery.swarm.dockerEngines.xxxxx.host if you don't want to use it
-$ docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 2375:2375 bobrik/socat TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
-$ docker-compose up -d cds-hatchery-swarm
-```
-
-A `swarm hatchery` spawns CDS Workers inside dedicated containers.
-This ensures isolation of the workspaces and resources.
 
 ## Setup connection with a VCS
 
