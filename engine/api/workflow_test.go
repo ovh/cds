@@ -337,8 +337,8 @@ func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
 	var err error
 
 	userAdmin, passAdmin := assets.InsertAdminUser(t, db)
-	uri = api.Router.GetRoute("GET", api.getWorkflowHandler, vars)
-	req, err = http.NewRequest("GET", uri, nil)
+	uri = api.Router.GetRoute(http.MethodGet, api.getWorkflowHandler, vars)
+	req, err = http.NewRequest(http.MethodGet, uri, nil)
 	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, userAdmin, passAdmin)
 
