@@ -1103,6 +1103,10 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if vcsInfos.Hash != "" && (vcsInfos.Author == "" || vcsInfos.Message == "") {
 		commit, errCm := client.Commit(ctx, vcsInfos.Repository, vcsInfos.Hash)
 		if errCm != nil {
+			// log to debug random 401
+			log.Error(ctx, "cannot get commit infos for %s %s - data:%d vcsServer.Name:%s vcsServer.Username:%s vcsServer.len-data:%d vcsServer.len-token:%v vcsServer.len-secret:%d vcsServer.created:%v err: %v",
+				vcsInfos.Repository, vcsInfos.Hash, vcsServer.Name, vcsServer.Username, len(vcsServer.Data), len(vcsServer.Data["token"]), len(vcsServer.Data["secret"]), vcsServer.Data["created"], errCm)
+
 			return nil, sdk.WrapError(errCm, "cannot get commit infos for %s %s", vcsInfos.Repository, vcsInfos.Hash)
 		}
 		vcsInfos.Author = commit.Author.Name
