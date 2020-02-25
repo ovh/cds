@@ -146,7 +146,7 @@ func Debug(format string, values ...interface{}) {
 
 // InfoWithoutCtx prints information log.
 func InfoWithoutCtx(format string, values ...interface{}) {
-	Info(nil, format, values...)
+	Info(context.Background(), format, values...)
 }
 
 // Info prints information log.
