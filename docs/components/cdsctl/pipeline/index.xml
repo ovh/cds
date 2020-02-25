@@ -54,5 +54,16 @@ Synopsis List CDS pipelines
 cdsctl pipeline list [ PROJECT-KEY ] [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
+    <item>
+      <title>usage</title>
+      <link>https://ovh.github.io/cds/docs/components/cdsctl/pipeline/usage/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/docs/components/cdsctl/pipeline/usage/</guid>
+      <description>cdsctl pipeline usage CDS pipeline usage
+Synopsis PATH: Path or URL of pipeline
+cdsctl pipeline usage [ PROJECT-KEY ] PIPELINE-NAME [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
   </channel>
 </rss>

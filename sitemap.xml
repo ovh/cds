@@ -1659,6 +1659,14 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/application/usage/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/pipeline/usage/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/development/rest/user/</loc>
   </url>
   
