@@ -88,7 +88,7 @@ services:
             elasticsearch.elasticsearch.url=http://elasticsearch:9200 \
             ui.url=http://${HOSTNAME}:8080 \
             ui.api.http.url=http://cds-api:8081 \
-            ui.hooksURL=http://cds-hooks:8081;
+            ui.hooksURL=http://cds-hooks:8083;
             echo '';
             echo '/!\ Please run the export command BELOW, this will be useful to create admin user';
             echo '';
