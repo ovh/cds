@@ -333,6 +333,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 			log.Error(ctx, "observability.ContextGetTags> %v", err)
 		}
 		ctx = observability.ContextWithTag(ctx,
+			observability.RequestID, requestID,
 			observability.Handler, rc.Name,
 			observability.Host, req.Host,
 			observability.Path, req.URL.Path,
