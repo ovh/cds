@@ -75,7 +75,7 @@ services:
             vcs.api.http.url=http://cds-api:8081 \
             vcs.cache.redis.host=cds-cache:6379 \
             vcs.cache.redis.password=cds \
-            repositories.url=http://cds-repositories:8085 \
+            repositories.URL=http://cds-repositories:8085 \
             repositories.basedir=/app/repositories \
             repositories.api.http.url=http://cds-api:8081 \
             repositories.cache.redis.host=cds-cache:6379 \
