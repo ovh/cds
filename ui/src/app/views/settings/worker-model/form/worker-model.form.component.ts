@@ -84,7 +84,6 @@ export class WorkerModelFormComponent implements OnInit {
             this.workerModelAsCode = `# Example of worker model as code of type Docker
 name: myWorkerModel
 group: mygrouptest
-communication: http
 image: myImage
 description: ""
 type: docker

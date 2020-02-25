@@ -197,12 +197,12 @@ Login successful
 + Create a worker model
 
 ```console
-./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml
+./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.13.yml
 ```
 
 In this case, it's a worker model based on the official golang docker image coming from docker hub. 
 The hatchery will register the worker model before it can be used. You can check the 
-registration information on the ui: Settings -> Worker models -> go-official-1.11.4-stretch -> flag "Need registration".
+registration information on the ui: Settings -> Worker models -> go-official-1.13 -> flag "Need registration".
 
 + Import a workflow template
 

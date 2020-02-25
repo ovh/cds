@@ -8,10 +8,9 @@ card:
 Example:
 
 ```yml
-name: go-official-1.11.4-stretch
+name: go-official-1.13
 group: shared.infra
-communication: http
-image: golang:1.11.4-stretch
+image: golang:1.13
 description: official from https://hub.docker.com/_/golang/
 type: docker
 pattern_name: basic_unix
@@ -20,13 +19,13 @@ pattern_name: basic_unix
 Import a worker model:
 
 ```bash
-cdsctl worker model import ./go-official-1.11.4-stretch.yml
+cdsctl worker model import ./go-official-1.13.yml
 ```
 
 or with a remote file:
 
 ```bash
-cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml
+cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.13.yml
 ```
 
 {{< note >}}
