@@ -234,7 +234,7 @@ func generateWorkerName(hatcheryName string, isRegister bool, model string) stri
 	}
 
 	maxLength := 63
-	hName := strings.Replace(strings.ToLower(hatcheryName), "/", "-", -1)
+	hName := strings.Replace(strings.ToLower(hatcheryName), "/", "-", -1) + "-"
 	modelName := strings.Replace(strings.ToLower(model), "/", "-", -1)
 	random := strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)
 	workerName := strings.Replace(fmt.Sprintf("%s%s-%s-%s", prefix, hatcheryName, modelName, random), ".", "-", -1)
@@ -245,17 +245,20 @@ func generateWorkerName(hatcheryName string, isRegister bool, model string) stri
 	if len(hName) > 10 {
 		hName = ""
 	}
-	workerName = fmt.Sprintf("%s%s-%s-%s", prefix, hName, modelName, random)
+	workerName = fmt.Sprintf("%s%s%s-%s", prefix, hName, modelName, random)
 	if len(workerName) <= maxLength {
 		return workerName
 	}
 	if len(modelName) > 15 {
 		modelName = modelName[:15]
 	}
-	workerName = fmt.Sprintf("%s%s-%s-%s", prefix, hName, modelName, random)
+	workerName = fmt.Sprintf("%s%s%s-%s", prefix, hName, modelName, random)
 	if len(workerName) <= maxLength {
 		return workerName
 	}
 
-	return workerName[:maxLength] // last, but should not happen
+	if len(workerName[:maxLength]) > maxLength {
+		return workerName[:maxLength]
+	}
+	return workerName
 }
