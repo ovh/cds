@@ -26,12 +26,11 @@ func (s *Service) getEventsHandler() service.Handler {
 		}
 
 		boolQuery := elastic.NewBoolQuery()
-		boolQuery.Should(elastic.NewQueryStringQuery("type_event:sdk.EventRunWorkflow"))
+		boolQuery.Must(elastic.NewQueryStringQuery("type_event:sdk.EventRunWorkflow"))
 		for _, p := range filters.Filter.Projects {
 			for _, w := range p.WorkflowNames {
-				boolQuery.Should(elastic.NewQueryStringQuery(fmt.Sprintf("project_key:%s AND workflow_name:%s", p.Key, w)))
+				boolQuery.Must(elastic.NewQueryStringQuery(fmt.Sprintf("project_key:%s AND workflow_name:%s", p.Key, w)))
 			}
-
 		}
 		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.IndexEvents).Type(fmt.Sprintf("%T", sdk.Event{})).Query(boolQuery).Sort("timestamp", false).From(filters.CurrentItem).Size(15).Do(context.Background())
 		if errR != nil {
