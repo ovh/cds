@@ -257,7 +257,7 @@ func generateWorkerName(hatcheryName string, isRegister bool, model string) stri
 		return workerName
 	}
 
-	if len(workerName[:maxLength]) > maxLength {
+	if len(workerName) > maxLength {
 		return workerName[:maxLength]
 	}
 	return workerName

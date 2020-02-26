@@ -35,8 +35,8 @@ func Test_generateWorkerName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := generateWorkerName(tt.args.hatcheryName, tt.args.isRegister, tt.args.model)
-			if len(got) > 60 {
-				t.Errorf("len must be < 60() = %d", len(got))
+			if len(got) > 64 {
+				t.Errorf("len must be < 64() = %d - got:%s", len(got), got)
 			}
 
 			if !strings.HasPrefix(got, tt.want) {
