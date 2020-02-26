@@ -265,6 +265,24 @@ notifications:
           Branch : {{.git.branch}}
 `,
 		},
+		{
+			name: "two pipelines with one notif without node name",
+			yaml: `name: test-notif-2-pipeline-no-node
+version: v1.0
+workflow:
+  test:
+    pipeline: test
+  test_2:
+    depends_on:
+    - test
+    when:
+    - success
+    pipeline: test
+notifications:
+  "":
+  - type: jabber
+`,
+		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
