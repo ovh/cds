@@ -111,7 +111,7 @@ require (
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lib/pq v1.0.0
 
-	github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024 // indirect
+	github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d
 	github.com/marstr/guid v1.1.0 // indirect
@@ -164,10 +164,11 @@ require (
 	github.com/poy/onpar v0.0.0-20190519213022-ee068f8ea4d1 // indirect
 	github.com/prometheus/client_golang v1.1.0 // indirect
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
+	github.com/prometheus/common v0.6.0
 	github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/samuel/go-zookeeper v0.0.0-20180130194729-c4fab1ac1bec // indirect
-	github.com/satori/go.uuid v1.2.0 // indirect
+	github.com/satori/go.uuid v1.2.0
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/sethgrid/pester v0.0.0-20171127025028-760f8913c048 // indirect
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
@@ -204,6 +205,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
 	golang.org/x/text v0.3.2
+	google.golang.org/appengine v1.6.1
 	google.golang.org/genproto v0.0.0-20190817000702-55e96fffbd48 // indirect
 	google.golang.org/grpc v1.23.0
 	gopkg.in/AlecAivazis/survey.v1 v1.7.1

@@ -26,6 +26,7 @@ const (
 	Path       = "http.path"
 	Method     = "http.method"
 	Handler    = "http.handler"
+	RequestID  = "http.request-id"
 )
 
 type ExposedView struct {
