@@ -717,7 +717,7 @@ export class UserNotificationSettings {
     send_to_author: boolean;
     recipients: Array<string>;
     template: UserNotificationTemplate;
-    notifications: WorkflowNodeConditions;
+    conditions: WorkflowNodeConditions;
 
     constructor() {
         this.on_success = notificationOnSuccess[1];
@@ -727,7 +727,7 @@ export class UserNotificationSettings {
         this.send_to_groups = false;
         this.recipients = [];
         this.template = new UserNotificationTemplate();
-        this.notifications = new WorkflowNodeConditions();
+        this.conditions = new WorkflowNodeConditions();
     }
 }
 
@@ -735,4 +735,5 @@ export class UserNotificationTemplate {
     subject: string;
     body: string;
     disable_comment: boolean;
+    disable_status: boolean;
 }

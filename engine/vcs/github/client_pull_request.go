@@ -138,15 +138,15 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 }
 
 // PullRequestComment push a new comment on a pull request
-func (g *githubClient) PullRequestComment(ctx context.Context, repo string, id int, text string) error {
+func (g *githubClient) PullRequestComment(ctx context.Context, repo string, prReq sdk.VCSPullRequestCommentRequest) error {
 	if g.DisableStatus {
 		log.Warning(ctx, "github.PullRequestComment>  ⚠ Github statuses are disabled")
 		return nil
 	}
 
-	path := fmt.Sprintf("/repos/%s/issues/%d/comments", repo, id)
+	path := fmt.Sprintf("/repos/%s/issues/%d/comments", repo, prReq.ID)
 	payload := map[string]string{
-		"body": text,
+		"body": prReq.Message,
 	}
 	values, _ := json.Marshal(payload)
 	res, err := g.post(path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
