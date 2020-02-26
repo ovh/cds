@@ -321,6 +321,12 @@ func sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, store c
 		return errClient
 	}
 
+	// Check if it's a gerrit or not
+	vcsConf, err := repositoriesmanager.LoadByName(ctx, db, vcsServer.Name)
+	if err != nil {
+		return err
+	}
+
 	var changeID string
 	changeIDParam := sdk.ParameterFind(nodeRun.BuildParameters, "gerrit.change.id")
 	if changeIDParam != nil {
@@ -337,13 +343,13 @@ func sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, store c
 	reqComment.Revision = revision
 
 	// If we are on Gerrit
-	if changeID != "" {
+	if changeID != "" && vcsConf.Type == "gerrit" {
 		reqComment.ChangeID = changeID
 		if err := client.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
 			log.Error(ctx, "sendVCSPullRequestComment> unable to send PR report:%v", err)
 			return nil
 		}
-	} else {
+	} else if vcsConf.Type != "gerrit" {
 		//Check if this branch and this commit is a pullrequest
 		prs, err := client.PullRequests(ctx, app.RepositoryFullname)
 		if err != nil {
