@@ -18,19 +18,19 @@
 
 <meta name="description"
     content="Example:
-name: go-official-1.11.4-stretch group: shared.infra communication: http image: golang:1.11.4-stretch description: official from https://hub.docker.com/_/golang/ type: docker pattern_name: basic_unix  Import a worker model:
-cdsctl worker model import ./go-official-1.11.4-stretch.yml  or with a remote file:
-cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml   If you want to specify an image using a private registry or a private image, you need to fill credentials in field username and password to access your image. And if your image is not on docker hub but from a private registry, you need to fill the registry info (the registry api url, for example for docker hub it&rsquo;s https://index.">
+name: go-official-1.13 group: shared.infra image: golang:1.13 description: official from https://hub.docker.com/_/golang/ type: docker pattern_name: basic_unix  Import a worker model:
+cdsctl worker model import ./go-official-1.13.yml  or with a remote file:
+cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.13.yml   If you want to specify an image using a private registry or a private image, you need to fill credentials in field username and password to access your image. And if your image is not on docker hub but from a private registry, you need to fill the registry info (the registry api url, for example for docker hub it&rsquo;s https://index.">
 <meta property="og:description"
     content="Example:
-name: go-official-1.11.4-stretch group: shared.infra communication: http image: golang:1.11.4-stretch description: official from https://hub.docker.com/_/golang/ type: docker pattern_name: basic_unix  Import a worker model:
-cdsctl worker model import ./go-official-1.11.4-stretch.yml  or with a remote file:
-cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml   If you want to specify an image using a private registry or a private image, you need to fill credentials in field username and password to access your image. And if your image is not on docker hub but from a private registry, you need to fill the registry info (the registry api url, for example for docker hub it&rsquo;s https://index.">
+name: go-official-1.13 group: shared.infra image: golang:1.13 description: official from https://hub.docker.com/_/golang/ type: docker pattern_name: basic_unix  Import a worker model:
+cdsctl worker model import ./go-official-1.13.yml  or with a remote file:
+cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.13.yml   If you want to specify an image using a private registry or a private image, you need to fill credentials in field username and password to access your image. And if your image is not on docker hub but from a private registry, you need to fill the registry info (the registry api url, for example for docker hub it&rsquo;s https://index.">
 <meta name="twitter:description"
     content="Example:
-name: go-official-1.11.4-stretch group: shared.infra communication: http image: golang:1.11.4-stretch description: official from https://hub.docker.com/_/golang/ type: docker pattern_name: basic_unix  Import a worker model:
-cdsctl worker model import ./go-official-1.11.4-stretch.yml  or with a remote file:
-cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml   If you want to specify an image using a private registry or a private image, you need to fill credentials in field username and password to access your image. And if your image is not on docker hub but from a private registry, you need to fill the registry info (the registry api url, for example for docker hub it&rsquo;s https://index.">
+name: go-official-1.13 group: shared.infra image: golang:1.13 description: official from https://hub.docker.com/_/golang/ type: docker pattern_name: basic_unix  Import a worker model:
+cdsctl worker model import ./go-official-1.13.yml  or with a remote file:
+cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.13.yml   If you want to specify an image using a private registry or a private image, you need to fill credentials in field username and password to access your image. And if your image is not on docker hub but from a private registry, you need to fill the registry info (the registry api url, for example for docker hub it&rsquo;s https://index.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/files/worker_model-syntax/">
 <meta property="og:title" content="Worker Model configuration file">
 <meta name="twitter:title" content="Worker Model configuration file">
@@ -524,10 +524,9 @@ cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/cont
 
 <p>Example:</p>
 
-<pre><code class="language-yml">name: go-official-1.11.4-stretch
+<pre><code class="language-yml">name: go-official-1.13
 group: shared.infra
-communication: http
-image: golang:1.11.4-stretch
+image: golang:1.13
 description: official from https://hub.docker.com/_/golang/
 type: docker
 pattern_name: basic_unix
@@ -535,12 +534,12 @@ pattern_name: basic_unix
 
 <p>Import a worker model:</p>
 
-<pre><code class="language-bash">cdsctl worker model import ./go-official-1.11.4-stretch.yml
+<pre><code class="language-bash">cdsctl worker model import ./go-official-1.13.yml
 </code></pre>
 
 <p>or with a remote file:</p>
 
-<pre><code class="language-bash">cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml
+<pre><code class="language-bash">cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.13.yml
 </code></pre>
 
 <blockquote class="note">

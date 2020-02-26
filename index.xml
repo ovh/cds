@@ -49,8 +49,7 @@ Groups A consumer includes a list of groups. Wildcard for a first level.</descri
       
       <guid>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</guid>
       <description>Run with Docker-Compose The docker-compose.yml contains:
- cds-db service with a PostgreSQL cds-cache service with a Redis elasticsearch service with an Elasticsearch cds-migrate service to prepare DB tables cds-api service cds-ui service cds-elasticsearch service cds-hatchery-swarm service cds-hatchery-local service cds-vcs service cds-repositories service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
-How to run $ mkdir /tmp/cdstest &amp;amp;&amp;amp; cd /tmp/cdstest &amp;amp;&amp;amp; mkdir -p tools/smtpmock $ curl https://raw.</description>
+ cds-db service with a PostgreSQL cds-cache service with a Redis elasticsearch service with an Elasticsearch dockerhost allows cds-hatchery-swarm service to communicate with the local docker daemon cds-migrate service to prepare DB tables cds-api service cds-ui service cds-elasticsearch service cds-hatchery-swarm service cds-vcs service cds-repositories service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.</description>
     </item>
     
     <item>
@@ -232,9 +231,9 @@ The following tools must be included in the model:
       
       <guid>https://ovh.github.io/cds/docs/concepts/files/worker_model-syntax/</guid>
       <description>Example:
-name: go-official-1.11.4-stretch group: shared.infra communication: http image: golang:1.11.4-stretch description: official from https://hub.docker.com/_/golang/ type: docker pattern_name: basic_unix  Import a worker model:
-cdsctl worker model import ./go-official-1.11.4-stretch.yml  or with a remote file:
-cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.11.4-stretch.yml   If you want to specify an image using a private registry or a private image, you need to fill credentials in field username and password to access your image. And if your image is not on docker hub but from a private registry, you need to fill the registry info (the registry api url, for example for docker hub it&amp;rsquo;s https://index.</description>
+name: go-official-1.13 group: shared.infra image: golang:1.13 description: official from https://hub.docker.com/_/golang/ type: docker pattern_name: basic_unix  Import a worker model:
+cdsctl worker model import ./go-official-1.13.yml  or with a remote file:
+cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.13.yml   If you want to specify an image using a private registry or a private image, you need to fill credentials in field username and password to access your image. And if your image is not on docker hub but from a private registry, you need to fill the registry info (the registry api url, for example for docker hub it&amp;rsquo;s https://index.</description>
     </item>
     
     <item>
