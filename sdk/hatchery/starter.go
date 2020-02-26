@@ -72,14 +72,8 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			// increment nbRegisteringWorkerModels, but no decrement.
 			// this counter is reset with func workerRegister
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
-			workerName := fmt.Sprintf("register-%s-%s-%s", h.Service().Name, strings.Replace(strings.ToLower(m.Name), "/", "-", -1), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1))
-			if len(workerName) > 63 {
-				workerName = workerName[:60]
-			}
-			workerName = strings.Replace(workerName, ".", "-", -1)
-
 			arg := SpawnArguments{
-				WorkerName:   workerName,
+				WorkerName:   generateWorkerName(h.Service().Name, true, m.Name),
 				Model:        m,
 				RegisterOnly: true,
 				HatcheryName: h.Service().Name,
@@ -176,10 +170,8 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	log.Info(ctx, "hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", modelName, j.id)
 
 	_, next = observability.Span(ctxJob, "hatchery.SpawnWorker")
-	
-
 	arg := SpawnArguments{
-		WorkerName:   genereateWorkerName(false), 
+		WorkerName:   generateWorkerName(h.Service().Name, false, modelName),
 		Model:        j.model,
 		JobID:        j.id,
 		Requirements: j.requirements,
@@ -234,14 +226,42 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	return true // ok for this job
 }
 
-func genereateWorkerName(isRegister bool) string {
+// a worker name must be 60 char max, without '.' and '_' -> replaced by '-'
+func generateWorkerName(hatcheryName string, isRegister bool, model string) string {
 	prefix := ""
 	if isRegister {
 		prefix = "register-"
 	}
-	workerName := fmt.Sprintf("%s%s-%s-%s", prefix, h.Service().Name, strings.Replace(strings.ToLower(modelName), "/", "-", -1), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
-	if len(workerName) > 63 {
-		workerName = workerName[:60]
+
+	modelName := strings.Replace(strings.ToLower(model), "/", "-", -1)
+	random := strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)
+	workerName := strings.Replace(fmt.Sprintf("%s%s-%s-%s", prefix, hatcheryName, modelName, random), ".", "-", -1)
+
+	if len(workerName) <= 60 {
+		return workerName
 	}
-	return strings.Replace(workerName, ".", "-", -1)
+	if len(hatcheryName) > 15 {
+		hatcheryName = hatcheryName[:15]
+	}
+	workerName = strings.Replace(fmt.Sprintf("%s%s-%s-%s", prefix, hatcheryName, modelName, random), ".", "-", -1)
+	if len(workerName) <= 60 {
+		return workerName
+	}
+	if len(modelName) > 25 {
+		modelName = modelName[:25]
+	}
+	workerName = strings.Replace(fmt.Sprintf("%s%s-%s-%s", prefix, hatcheryName, modelName, random), ".", "-", -1)
+	if len(workerName) <= 60 {
+		return workerName
+	}
+
+	if len(random) > 15 {
+		random = random[:15] // prefix: 10, hatcheryName: 15, modelName: 25, random: 10, 10+15+25+10 = 60
+	}
+	workerName = strings.Replace(fmt.Sprintf("%s%s-%s-%s", prefix, hatcheryName, modelName, random), ".", "-", -1)
+	if len(workerName) <= 60 {
+		return workerName
+	}
+
+	return workerName[:60] // last, but should not happen
 }
