@@ -68,6 +68,7 @@
   "application_create": "Create a new application",
   "application_created": "Application created",
   "application_deleted": "Application deleted",
+  "application_deleted_by": "The application {{appName}} has been deleted by {{username}}",
   "application_delete_label": "Delete application",
   "application_delete_description": "Once you delete an application, there is no going back. Please be certain.",
   "application_name": "Application name",

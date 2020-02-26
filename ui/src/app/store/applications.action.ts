@@ -108,11 +108,6 @@ export class ResyncApplication {
     constructor(public payload: { projectKey: string, applicationName: string }) { }
 }
 
-export class DeleteFromCacheApplication {
-    static readonly type = '[Application] Delete from cache Application';
-    constructor(public payload: { projectKey: string, applicationName: string }) { }
-}
-
 export class ClearCacheApplication {
     static readonly type = '[Application] Clear cache Application';
     constructor() { }

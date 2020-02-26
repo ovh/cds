@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AsCodeEventData } from 'app/model/ascode.model';
@@ -16,8 +16,12 @@ import { NavbarService } from './service/navbar/navbar.service';
 import { RouterService, TimelineStore } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
 import { ToastService } from './shared/toast/ToastService';
-import { DeleteFromCacheApplication, ExternalChangeApplication, ResyncApplication } from './store/applications.action';
-import { ApplicationsState, ApplicationsStateModel } from './store/applications.state';
+import {
+    ClearCacheApplication,
+    ExternalChangeApplication,
+    ResyncApplication
+} from './store/applications.action';
+import { ApplicationsState, ApplicationStateModel } from './store/applications.state';
 import { AuthenticationState } from './store/authentication.state';
 import { DeleteFromCachePipeline, ExternalChangePipeline, ResyncPipeline } from './store/pipelines.action';
 import { PipelinesState, PipelinesStateModel } from './store/pipelines.state';
@@ -37,6 +41,7 @@ export class AppService {
     constructor(
         private _routerService: RouterService,
         private _routeActivated: ActivatedRoute,
+        private _router: Router,
         private _translate: TranslateService,
         private _broadcastStore: BroadcastStore,
         private _timelineStore: TimelineStore,
@@ -184,19 +189,24 @@ export class AppService {
             return
         }
         const payload = { projectKey: event.project_key, applicationName: event.application_name };
-        const appKey = event.project_key + '/' + event.application_name;
 
-        this._store.selectOnce(ApplicationsState).subscribe((appState: ApplicationsStateModel) => {
-            if (!appState.applications || !Object.keys(appState.applications).length) {
-                return;
-            }
-
-            if (!appState.applications[appKey]) {
+        this._store.selectOnce(ApplicationsState).subscribe((appState: ApplicationStateModel) => {
+            if (!appState.application ||
+                !(appState.application.name === event.application_name &&
+                    appState.currentProjectKey === event.project_key)) {
                 return;
             }
 
             if (event.type_event === EventType.APPLICATION_DELETE) {
-                this._store.dispatch(new DeleteFromCacheApplication(payload));
+                // If user is on an application that has been deleted by an other user
+                if (this.routeParams['key'] && this.routeParams['key'] === event.project_key &&
+                    this.routeParams['appName'] && this.routeParams['appName'] === event.application_name &&
+                    event.username !== this._store.selectSnapshot(AuthenticationState.user).username) {
+                    this._toast.info('', this._translate.instant('application_deleted_by',
+                        {appName: this.routeParams['appName'], username: event.username}));
+                    this._router.navigate(['/project'], this.routeParams['key']);
+                }
+                this._store.dispatch(new ClearCacheApplication());
                 this._store.dispatch(new projectActions.DeleteApplicationInProject({ applicationName: event.application_name }));
                 return;
             }
@@ -211,7 +221,7 @@ export class AppService {
                     return;
                 }
             } else {
-                this._store.dispatch(new DeleteFromCacheApplication(payload));
+                this._store.dispatch(new ClearCacheApplication());
                 return;
             }
 
@@ -219,7 +229,6 @@ export class AppService {
                 this._store.dispatch(new ResyncApplication(payload));
             }
         });
-
     }
 
     updatePipelineCache(event: Event): void {

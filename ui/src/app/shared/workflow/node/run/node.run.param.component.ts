@@ -1,6 +1,5 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline } from 'app/model/pipeline.model';
@@ -12,7 +11,6 @@ import { ApplicationWorkflowService } from 'app/service/application/application.
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { ToastService } from 'app/shared/toast/ToastService';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { debounceTime, finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
@@ -97,8 +95,6 @@ export class WorkflowNodeRunParamComponent implements OnInit, AfterViewInit {
         private _modalService: SuiModalService,
         private _workflowRunService: WorkflowRunService,
         private _router: Router,
-        private _translate: TranslateService,
-        private _toast: ToastService,
         private _appWorkflowService: ApplicationWorkflowService,
         private _theme: ThemeStore,
         private _cd: ChangeDetectorRef
