@@ -120,11 +120,8 @@ func WriteError(ctx context.Context, w http.ResponseWriter, r *http.Request, err
 		fields["stack_trace"] = fmt.Sprintf("%+v", err)
 	}
 
-	// ErrAlreadyTaken and ErrWorkerModelAlreadyBooked are not useful to log in warning
-	if sdk.ErrorIs(httpErr, sdk.ErrAlreadyTaken) ||
-		sdk.ErrorIs(httpErr, sdk.ErrWorkerModelAlreadyBooked) ||
-		sdk.ErrorIs(httpErr, sdk.ErrJobAlreadyBooked) || r.URL.Path == "/user/logged" {
-		log.WarningWithFields(ctx, fields, "%s", err)
+	if httpErr.Status < 500 {
+		log.InfoWithFields(ctx, fields, "%s", err)
 	} else {
 		log.ErrorWithFields(ctx, fields, "%s", err)
 	}
