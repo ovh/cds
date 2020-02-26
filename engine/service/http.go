@@ -111,11 +111,7 @@ func WriteError(ctx context.Context, w http.ResponseWriter, r *http.Request, err
 	httpErr := sdk.ExtractHTTPError(err, al)
 	isErrWithStack := sdk.IsErrorWithStack(err)
 
-	fields := logrus.Fields{
-		"method":      r.Method,
-		"request_uri": r.RequestURI,
-		"status":      httpErr.Status,
-	}
+	fields := logrus.Fields{}
 	if isErrWithStack {
 		fields["stack_trace"] = fmt.Sprintf("%+v", err)
 	}
