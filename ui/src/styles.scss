@@ -53,7 +53,9 @@ a.disabled:hover {
     .CodeMirror {
         height: 100% !important;
         max-height: 100%;
-    } // Code mirror
+    }
+
+    // Code mirror
     .CodeMirror-scroll {
         height: 100% !important;
         max-height: 100%;
@@ -65,6 +67,7 @@ a.disabled:hover {
     .CodeMirror {
         max-height: 500px;
     }
+
     .CodeMirror-scroll {
         max-height: 500px;
     }
@@ -108,7 +111,7 @@ body ::-webkit-scrollbar-thumb {
 
 // dropdown
 .ui.buttons {
-    sm-dropdown > .ui.dropdown:last-child .menu {
+    sm-dropdown>.ui.dropdown:last-child .menu {
         left: auto;
         right: 0;
     }
@@ -267,7 +270,7 @@ body ::-webkit-scrollbar-thumb {
     width: auto;
 }
 
-.ui.card > .content > .description {
+.ui.card>.content>.description {
     overflow-wrap: break-word;
 }
 
@@ -354,7 +357,7 @@ body ::-webkit-scrollbar-thumb {
 
     padding-right: 1em;
 
-    > .text > .flag {
+    >.text>.flag {
         margin-right: 0em;
     }
 }
@@ -461,4 +464,8 @@ sui-search {
 .buttonBreadcrumb {
     position: relative;
     top: -7px;
+}
+
+.CodeMirror pre.CodeMirror-line {
+    z-index: unset;
 }
