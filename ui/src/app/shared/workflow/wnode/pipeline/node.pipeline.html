@@ -27,21 +27,21 @@
     <div class="details">
         <div *ngIf="node.context.application_id || node.context.environment_id || node.context.project_integration_id"
             class="context">
-            <div *ngIf="node.context.application_id" class="item ellipsis">
+            <div *ngIf="node.context.application_id && workflow.applications[node.context.application_id]" class="item ellipsis">
                 <a (click)="$event.stopPropagation()"
                     [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]"
                     title="{{ 'common_application_title' | translate }}{{workflow.applications[node.context.application_id].name}}">
                     {{workflow.applications[node.context.application_id].name}}
                 </a>
             </div>
-            <div *ngIf="node.context.environment_id" class="item ellipsis">
+            <div *ngIf="node.context.environment_id && workflow.environments[node.context.environment_id]" class="item ellipsis">
                 <a (click)="$event.stopPropagation()"
                     [routerLink]="['/project', project.key, 'environment', workflow.environments[node.context.environment_id].name]"
                     title="{{ 'common_environment_title' | translate}}{{workflow.environments[node.context.environment_id].name}}">
                     {{workflow.environments[node.context.environment_id].name}}
                 </a>
             </div>
-            <div *ngIf="node.context.project_integration_id" class="item ellipsis">
+            <div *ngIf="node.context.project_integration_id && workflow.project_integrations[node.context.project_integration_id]" class="item ellipsis">
                 <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]"
                     [queryParams]="{tab: 'integrations'}"
                     title="{{ 'common_integration_title' | translate}}{{workflow.project_integrations[node.context.project_integration_id].name}}">
