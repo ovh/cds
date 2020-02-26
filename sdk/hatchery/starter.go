@@ -233,7 +233,7 @@ func generateWorkerName(hatcheryName string, isRegister bool, model string) stri
 		prefix = "register-"
 	}
 
-	maxLength := 60
+	maxLength := 63
 	hName := strings.Replace(strings.ToLower(hatcheryName), "/", "-", -1)
 	modelName := strings.Replace(strings.ToLower(model), "/", "-", -1)
 	random := strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)
