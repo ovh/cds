@@ -65,22 +65,22 @@ services:
             hatchery.swarm.commonConfiguration.url=http://cds-hatchery-swarm:8086 \
             hatchery.swarm.commonConfiguration.api.http.url=http://${HOSTNAME}:8081 \
             hatchery.swarm.ratioService=50 \
-            hatchery.swarm.dockerEngines.sample-docker-engine.host=tcp://${HOSTNAME}:2375 \
+            hatchery.swarm.dockerEngines.sample-docker-engine.host=tcp://dockerhost:2375 \
             hatchery.swarm.dockerEngines.sample-docker-engine.maxContainers=4 \
             hooks.url=http://cds-hooks:8083 \
             hooks.api.http.url=http://cds-api:8081 \
             hooks.cache.redis.host=cds-cache:6379 \
             hooks.cache.redis.password=cds \
-            vcs.url=http://cds-vcs:8084 \
+            vcs.URL=http://cds-vcs:8084 \
             vcs.api.http.url=http://cds-api:8081 \
             vcs.cache.redis.host=cds-cache:6379 \
             vcs.cache.redis.password=cds \
-            repositories.url=http://cds-repositories:8085 \
+            repositories.URL=http://cds-repositories:8085 \
             repositories.basedir=/app/repositories \
             repositories.api.http.url=http://cds-api:8081 \
             repositories.cache.redis.host=cds-cache:6379 \
             repositories.cache.redis.password=cds \
-            elasticsearch.url=http://cds-elasticsearch:8088 \
+            elasticsearch.URL=http://cds-elasticsearch:8088 \
             elasticsearch.api.http.url=http://cds-api:8081 \
             elasticsearch.name=cds-elasticsearch \
             elasticsearch.elasticsearch.indexEvents=cds-indexEvents \
@@ -88,7 +88,7 @@ services:
             elasticsearch.elasticsearch.url=http://elasticsearch:9200 \
             ui.url=http://${HOSTNAME}:8080 \
             ui.api.http.url=http://cds-api:8081 \
-            ui.hooksURL=http://cds-hooks:8081;
+            ui.hooksURL=http://cds-hooks:8083;
             echo '';
             echo '/!\ Please run the export command BELOW, this will be useful to create admin user';
             echo '';
@@ -111,12 +111,12 @@ services:
       - cds-artifacts-volume:/app/artifacts
       - cds-conf-volume:/app/conf
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"
     links:
        - cds-db
        - cds-cache
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/mon/version"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8081/mon/version"]
       interval: 30s
       timeout: 10s
       retries: 6
@@ -127,12 +127,12 @@ services:
     volumes:
       - cds-conf-volume:/app/conf
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     links:
        - cds-api
        - cds-hooks
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/mon/version"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/mon/version"]
       interval: 30s
       timeout: 10s
       retries: 6
@@ -144,7 +144,7 @@ services:
       - cds-conf-volume:/app/conf
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8086/mon/version"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8086/mon/version"]
       interval: 30s
       timeout: 10s
       retries: 6
@@ -158,9 +158,9 @@ services:
     links:
        - cds-api
     ports:
-      - "8086:8086"
+      - "127.0.0.1:8086:8086"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8086/mon/version"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8086/mon/version"]
       interval: 30s
       timeout: 10s
       retries: 6
@@ -174,9 +174,9 @@ services:
        - cds-api
        - cds-cache
     ports:
-      - "8083:8083"
+      - "127.0.0.1:8083:8083"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/mon/version"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8083/mon/version"]
       interval: 30s
       timeout: 10s
       retries: 6
@@ -190,7 +190,7 @@ services:
        - cds-api
        - cds-cache
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8084/mon/version"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8084/mon/version"]
       interval: 30s
       timeout: 10s
       retries: 6
@@ -204,7 +204,7 @@ services:
     links:
        - cds-api
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8085/mon/version"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8085/mon/version"]
       interval: 30s
       timeout: 10s
       retries: 6
@@ -219,7 +219,7 @@ services:
       - elasticsearch
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8088/mon/version"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8088/mon/version"]
       interval: 30s
       timeout: 10s
       retries: 6
@@ -232,6 +232,14 @@ services:
             ${CDS_EDIT_CONFIG}";
     volumes:
       - cds-conf-volume:/app/conf
+
+  dockerhost:
+    image: bobrik/socat
+    command: TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "127.0.0.1:2375:2375"
 
   smtpmocksrv:
     build:

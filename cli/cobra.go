@@ -32,7 +32,7 @@ func ExitOnError(err error, helpFunc ...func() error) {
 
 	switch e := err.(type) {
 	case sdk.Error:
-		fmt.Printf("Error(%s): %s\n", e.UUID, e.Message)
+		fmt.Printf("Error(request_id:%s): %s\n", e.RequestID, e.Message)
 	case *Error:
 		code = e.Code
 		fmt.Println("Error:", e.Error())

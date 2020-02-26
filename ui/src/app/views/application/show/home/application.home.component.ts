@@ -35,7 +35,7 @@ export class ApplicationHomeComponent implements OnInit {
 
     ngOnInit(): void {
         this.store.dispatch(new FetchApplicationOverview({ projectKey: this.project.key, applicationName: this.application.name }));
-        this.overviewSubscription = this.store.select(ApplicationsState.selectOverview(this.project.key, this.application.name))
+        this.overviewSubscription = this.store.select(ApplicationsState.selectOverview())
             .pipe(filter((o) => o != null))
             .subscribe((o: Overview) => {
                 this.overview = o;

@@ -21,21 +21,22 @@ import (
 )
 
 func Test_checkWorkflowPermissions(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 
 	wctx := testRunWorkflow(t, api, api.Router)
-
-	consumer, err := local.NewConsumer(context.TODO(), api.mustDB(), wctx.user.ID)
-	require.NoError(t, err)
-
-	consumer.AuthentifiedUser = wctx.user
+	user := wctx.user
+	admin, _ := assets.InsertAdminUser(t, db)
+	maintainer, _ := assets.InsertAdminUser(t, db)
 
 	ctx := context.Background()
 
+	consumer := &sdk.AuthConsumer{}
+
 	// test case: has enough permission
+	consumer.AuthentifiedUser = user
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
-	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, sdk.PermissionReadWriteExecute, map[string]string{
+	err := api.checkWorkflowPermissions(ctx, wctx.workflow.Name, sdk.PermissionReadWriteExecute, map[string]string{
 		"key":              wctx.project.Key,
 		"permWorkflowName": wctx.workflow.Name,
 	})
@@ -44,6 +45,7 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 	// test case: is Admin
 	consumer.GroupIDs = nil
 	consumer.AuthentifiedUser.Groups = nil
+	consumer.AuthentifiedUser = admin
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, sdk.PermissionReadWriteExecute, map[string]string{
 		"key":              wctx.project.Key,
@@ -51,9 +53,10 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 	})
 	assert.NoError(t, err, "should be granted because because is admin")
 
-	// test case: is Maintaner
+	// test case: is Maintainer
 	consumer.GroupIDs = nil
 	consumer.AuthentifiedUser.Groups = nil
+	consumer.AuthentifiedUser = maintainer
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, sdk.PermissionRead, map[string]string{
 		"key":              wctx.project.Key,
@@ -65,6 +68,7 @@ func Test_checkWorkflowPermissions(t *testing.T) {
 	consumer.GroupIDs = nil
 	consumer.AuthentifiedUser.Groups = nil
 	consumer.AuthentifiedUser.Ring = ""
+	consumer.AuthentifiedUser = user
 	ctx = context.WithValue(ctx, contextAPIConsumer, consumer)
 	err = api.checkWorkflowPermissions(ctx, wctx.workflow.Name, sdk.PermissionRead, map[string]string{
 		"key":              wctx.project.Key,

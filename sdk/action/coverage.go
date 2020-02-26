@@ -45,8 +45,8 @@ You will be able to see the coverage history in the application home page.`,
 				{
 					Coverage: &exportentities.StepCoverage{
 						Format:  "cobertura",
-						Minimum: "./coverage.xml",
-						Path:    "60",
+						Minimum: "60",
+						Path:    "./coverage.xml",
 					},
 				},
 			},

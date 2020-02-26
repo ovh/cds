@@ -60,6 +60,7 @@
   "application_delete_description": "Une fois l'application supprimée, il n'y a pas de retour possible.",
   "application_delete_label": "Suppression de l'application",
   "application_deleted": "Application supprimée",
+  "application_deleted_by": "L'application {{appName}} a été supprimée par {{username}}",
   "application_deployment_title": "Lier l'application à une intégration (déploiement): ",
   "application_description": "Description de l'application",
   "application_from_repository": "Application importée depuis {{repo}}",

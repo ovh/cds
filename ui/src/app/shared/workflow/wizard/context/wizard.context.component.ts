@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { Application } from 'app/model/application.model';
 import { Environment } from 'app/model/environment.model';
 import { IdName, Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
@@ -17,10 +16,10 @@ import { ApplicationService } from 'app/service/application/application.service'
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchApplication } from 'app/store/applications.action';
-import { ApplicationsState } from 'app/store/applications.state';
+import { ApplicationsState, ApplicationStateModel } from 'app/store/applications.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { filter, finalize, first } from 'rxjs/operators';
+import { filter, finalize, first, flatMap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-context',
@@ -100,12 +99,14 @@ export class WorkflowWizardNodeContextComponent implements OnInit {
             this.showCheckStatus = false;
             return;
         }
-        this._store.dispatch(new FetchApplication({ projectKey: this.project.key, applicationName: this.applications[i].name }));
-        this._store.selectOnce(ApplicationsState.selectApplication(this.project.key, this.applications[i].name))
-            .pipe(filter((app) => app != null), first())
-            .subscribe((app: Application) => {
-                this.showCheckStatus = app.repository_fullname && app.repository_fullname !== '';
-            })
+        this._store.dispatch(new FetchApplication({ projectKey: this.project.key, applicationName: this.applications[i].name }))
+            .pipe(
+                flatMap(() => this._store.selectOnce(ApplicationsState.currentState())),
+                filter((s: ApplicationStateModel) => s.application != null && s.application.name === this.applications[i].name),
+                first())
+            .subscribe(app => {
+                this.showCheckStatus = app.application.repository_fullname && app.application.repository_fullname !== '';
+            });
     }
 
     initIntegrationList(): void {

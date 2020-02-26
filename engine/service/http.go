@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pborman/uuid"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
@@ -101,28 +100,41 @@ func WriteProcessTime(ctx context.Context, w http.ResponseWriter) {
 	}
 }
 
+type ErrorResponse struct {
+	sdk.Error
+	RequestID string `json:"request_id"`
+}
+
 // WriteError is a helper function to return error in a language the called understand
-func WriteError(w http.ResponseWriter, r *http.Request, err error) {
+func WriteError(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	al := r.Header.Get("Accept-Language")
 	httpErr := sdk.ExtractHTTPError(err, al)
-	httpErr.UUID = uuid.NewUUID().String()
 	isErrWithStack := sdk.IsErrorWithStack(err)
 
-	entry := logrus.WithField("method", r.Method).
-		WithField("request_uri", r.RequestURI).
-		WithField("status", httpErr.Status).
-		WithField("error_uuid", httpErr.UUID)
+	fields := logrus.Fields{
+		"method":      r.Method,
+		"request_uri": r.RequestURI,
+		"status":      httpErr.Status,
+	}
 	if isErrWithStack {
-		entry = entry.WithField("stack_trace", fmt.Sprintf("%+v", err))
+		fields["stack_trace"] = fmt.Sprintf("%+v", err)
 	}
 
 	// ErrAlreadyTaken and ErrWorkerModelAlreadyBooked are not useful to log in warning
 	if sdk.ErrorIs(httpErr, sdk.ErrAlreadyTaken) ||
 		sdk.ErrorIs(httpErr, sdk.ErrWorkerModelAlreadyBooked) ||
 		sdk.ErrorIs(httpErr, sdk.ErrJobAlreadyBooked) || r.URL.Path == "/user/logged" {
-		entry.Debugf("%s", err)
+		log.WarningWithFields(ctx, fields, "%s", err)
 	} else {
-		entry.Warningf("%s", err)
+		log.ErrorWithFields(ctx, fields, "%s", err)
+	}
+
+	// Add request info if exists
+	iRequestID := ctx.Value(log.ContextLoggingRequestIDKey)
+	if iRequestID != nil {
+		if requestID, ok := iRequestID.(string); ok {
+			httpErr.RequestID = requestID
+		}
 	}
 
 	// safely ignore error returned by WriteJSON

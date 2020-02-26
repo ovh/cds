@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
@@ -599,7 +597,7 @@ queueRun:
 		}
 
 		//TakeNodeJobRun
-		takenJob, _, _ := workflow.TakeNodeJobRun(context.TODO(), func() *gorp.DbMap { return db }, db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
+		takenJob, _, _ := workflow.TakeNodeJobRun(context.TODO(), db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
 			{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),

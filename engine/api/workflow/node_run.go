@@ -13,7 +13,7 @@ func MergeArtifactWithPreviousSubRun(runs []sdk.WorkflowNodeRun) []sdk.WorkflowN
 	default:
 		artifacts := runs[0].Artifacts
 		// Only browse subnumber if noderun is still building and has been launched by OnlyFailedJobs option
-		if runs[0].Manual != nil && runs[0].Manual.OnlyFailedJobs && !sdk.StatusIsTerminated(runs[0].Status) {
+		if runs[0].Manual != nil && runs[0].Manual.OnlyFailedJobs {
 
 			// Create a map to identify artifacts already get
 			tmpsArtifactsMap := make(map[string]struct{})

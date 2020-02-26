@@ -43,7 +43,7 @@ Go to https://github.com/settings/developers and **Register a new OAuth applicat
 Example for a local configuration:
 
 - with WebUI default port (8080), Homepage URL will be `http://localhost:8080`
-- with API default port (8081), callback URL will be `http://localhost:8081/repositories_manager/oauth2/callback`
+- with API through /cdsapi proxy on ui, callback URL will be `http://localhost:8080/cdsapi/repositories_manager/oauth2/callback`
 
 ![Integration GitHub New OAuth App](../../images/github-new-oauth-app.png?height=500px)
 

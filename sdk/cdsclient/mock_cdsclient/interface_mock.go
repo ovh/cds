@@ -7,15 +7,16 @@ package mock_cdsclient
 import (
 	tar "archive/tar"
 	context "context"
+	io "io"
+	http "net/http"
+	reflect "reflect"
+	time "time"
+
 	gomock "github.com/golang/mock/gomock"
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 	venom "github.com/ovh/venom"
 	coverage "github.com/sguiheux/go-coverage"
-	io "io"
-	http "net/http"
-	reflect "reflect"
-	time "time"
 )
 
 // MockTemplateClient is a mock of TemplateClient interface
@@ -3947,18 +3948,18 @@ func (mr *MockMonitoringClientMockRecorder) MonDBMigrate() *gomock.Call {
 }
 
 // MonErrorsGet mocks base method
-func (m *MockMonitoringClient) MonErrorsGet(uuid string) (*sdk.Error, error) {
+func (m *MockMonitoringClient) MonErrorsGet(requestID string) ([]sdk.Error, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MonErrorsGet", uuid)
-	ret0, _ := ret[0].(*sdk.Error)
+	ret := m.ctrl.Call(m, "MonErrorsGet", requestID)
+	ret0, _ := ret[0].([]sdk.Error)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // MonErrorsGet indicates an expected call of MonErrorsGet
-func (mr *MockMonitoringClientMockRecorder) MonErrorsGet(uuid interface{}) *gomock.Call {
+func (mr *MockMonitoringClientMockRecorder) MonErrorsGet(requestID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MonErrorsGet", reflect.TypeOf((*MockMonitoringClient)(nil).MonErrorsGet), uuid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MonErrorsGet", reflect.TypeOf((*MockMonitoringClient)(nil).MonErrorsGet), requestID)
 }
 
 // MockIntegrationClient is a mock of IntegrationClient interface
@@ -7428,18 +7429,18 @@ func (mr *MockInterfaceMockRecorder) MonDBMigrate() *gomock.Call {
 }
 
 // MonErrorsGet mocks base method
-func (m *MockInterface) MonErrorsGet(uuid string) (*sdk.Error, error) {
+func (m *MockInterface) MonErrorsGet(requestID string) ([]sdk.Error, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MonErrorsGet", uuid)
-	ret0, _ := ret[0].(*sdk.Error)
+	ret := m.ctrl.Call(m, "MonErrorsGet", requestID)
+	ret0, _ := ret[0].([]sdk.Error)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // MonErrorsGet indicates an expected call of MonErrorsGet
-func (mr *MockInterfaceMockRecorder) MonErrorsGet(uuid interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) MonErrorsGet(requestID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MonErrorsGet", reflect.TypeOf((*MockInterface)(nil).MonErrorsGet), uuid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MonErrorsGet", reflect.TypeOf((*MockInterface)(nil).MonErrorsGet), requestID)
 }
 
 // PollVCSEvents mocks base method
