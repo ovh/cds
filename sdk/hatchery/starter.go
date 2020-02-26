@@ -233,35 +233,29 @@ func generateWorkerName(hatcheryName string, isRegister bool, model string) stri
 		prefix = "register-"
 	}
 
+	maxLength := 60
+	hName := strings.Replace(strings.ToLower(hatcheryName), "/", "-", -1)
 	modelName := strings.Replace(strings.ToLower(model), "/", "-", -1)
 	random := strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)
 	workerName := strings.Replace(fmt.Sprintf("%s%s-%s-%s", prefix, hatcheryName, modelName, random), ".", "-", -1)
 
-	if len(workerName) <= 60 {
+	if len(workerName) <= maxLength {
 		return workerName
 	}
-	if len(hatcheryName) > 15 {
-		hatcheryName = hatcheryName[:15]
+	if len(hName) > 10 {
+		hName = hName[:10]
 	}
-	workerName = strings.Replace(fmt.Sprintf("%s%s-%s-%s", prefix, hatcheryName, modelName, random), ".", "-", -1)
-	if len(workerName) <= 60 {
+	workerName = fmt.Sprintf("%s%s-%s-%s", prefix, hName, modelName, random)
+	if len(workerName) <= maxLength {
 		return workerName
 	}
-	if len(modelName) > 25 {
-		modelName = modelName[:25]
+	if len(modelName) > 15 {
+		modelName = modelName[:15]
 	}
-	workerName = strings.Replace(fmt.Sprintf("%s%s-%s-%s", prefix, hatcheryName, modelName, random), ".", "-", -1)
-	if len(workerName) <= 60 {
-		return workerName
-	}
-
-	if len(random) > 15 {
-		random = random[:15] // prefix: 10, hatcheryName: 15, modelName: 25, random: 10, 10+15+25+10 = 60
-	}
-	workerName = strings.Replace(fmt.Sprintf("%s%s-%s-%s", prefix, hatcheryName, modelName, random), ".", "-", -1)
-	if len(workerName) <= 60 {
+	workerName = fmt.Sprintf("%s%s-%s-%s", prefix, hName, modelName, random)
+	if len(workerName) <= maxLength {
 		return workerName
 	}
 
-	return workerName[:60] // last, but should not happen
+	return workerName[:maxLength] // last, but should not happen
 }
