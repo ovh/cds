@@ -47,7 +47,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 				continue
 			}
 			// If list of node is nill, send notification to all of them
-			if len(notif.NodeIDs) == 0 {
+			if len(n.NodeIDs) == 0 {
 				notif = &n
 				break
 			}
