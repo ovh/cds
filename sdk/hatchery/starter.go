@@ -72,8 +72,14 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			// increment nbRegisteringWorkerModels, but no decrement.
 			// this counter is reset with func workerRegister
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
+			workerName := fmt.Sprintf("register-%s-%s-%s", h.Service().Name, strings.Replace(strings.ToLower(m.Name), "/", "-", -1), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1))
+			if len(workerName) > 63 {
+				workerName = workerName[:60]
+			}
+			workerName = strings.Replace(workerName, ".", "-", -1)
+
 			arg := SpawnArguments{
-				WorkerName:   fmt.Sprintf("register-%s-%s-%s", h.Service().Name, strings.Replace(strings.ToLower(m.Name), "/", "-", -1), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+				WorkerName:   workerName,
 				Model:        m,
 				RegisterOnly: true,
 				HatcheryName: h.Service().Name,
@@ -170,8 +176,10 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	log.Info(ctx, "hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", modelName, j.id)
 
 	_, next = observability.Span(ctxJob, "hatchery.SpawnWorker")
+	
+
 	arg := SpawnArguments{
-		WorkerName:   fmt.Sprintf("%s-%s-%s", h.Service().Name, strings.Replace(strings.ToLower(modelName), "/", "-", -1), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+		WorkerName:   genereateWorkerName(false), 
 		Model:        j.model,
 		JobID:        j.id,
 		Requirements: j.requirements,
@@ -224,4 +232,16 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		next()
 	}
 	return true // ok for this job
+}
+
+func genereateWorkerName(isRegister bool) string {
+	prefix := ""
+	if isRegister {
+		prefix = "register-"
+	}
+	workerName := fmt.Sprintf("%s%s-%s-%s", prefix, h.Service().Name, strings.Replace(strings.ToLower(modelName), "/", "-", -1), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+	if len(workerName) > 63 {
+		workerName = workerName[:60]
+	}
+	return strings.Replace(workerName, ".", "-", -1)
 }
