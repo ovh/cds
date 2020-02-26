@@ -252,13 +252,6 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		label = "register"
 	}
 
-	podName := spawnArgs.WorkerName
-	// Kubernetes pod name must not be > 63 chars
-	if len(podName) > 63 {
-		podName = podName[:60]
-	}
-	podName = strings.Replace(podName, ".", "-", -1)
-
 	var logJob string
 	if spawnArgs.JobID > 0 {
 		logJob = fmt.Sprintf("for workflow job %d,", spawnArgs.JobID)
