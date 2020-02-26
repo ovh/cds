@@ -29,7 +29,7 @@ func (s *Service) getEventsHandler() service.Handler {
 		boolQuery.Should(elastic.NewQueryStringQuery("type_event:sdk.EventRunWorkflow"))
 		for _, p := range filters.Filter.Projects {
 			for _, w := range p.WorkflowNames {
-				boolQuery.Should(elastic.NewQueryStringQuery(fmt.Sprintf("project_key:%s AND workflow_name:%s AND type_event:%s", p.Key, w, "sdk.EventRunWorkflow")))
+				boolQuery.Should(elastic.NewQueryStringQuery(fmt.Sprintf("project_key:%s AND workflow_name:%s", p.Key, w)))
 			}
 
 		}
@@ -39,7 +39,7 @@ func (s *Service) getEventsHandler() service.Handler {
 				log.Warning(ctx, "elasticsearch> getEventsHandler> %v", errR.Error())
 				return service.WriteJSON(w, nil, http.StatusOK)
 			}
-			esReq := fmt.Sprintf(`esClient.Search().Index(%+v).Type("%s").Query(%+v).Sort("timestamp", false).From(%+v).Size(15)`, s.Cfg.ElasticSearch.IndexEvents, fmt.Sprintf("%T", sdk.Event{}), boolQuery, filters.CurrentItem)
+			esReq := fmt.Sprintf(`esClient.Search().Index(%+v).Type("%T").Query(%+v).Sort("timestamp", false).From(%+v).Size(15)`, s.Cfg.ElasticSearch.IndexEvents, sdk.Event{}, boolQuery, filters.CurrentItem)
 			return sdk.WrapError(errR, "Cannot get result on index: %s : query -> %s", s.Cfg.ElasticSearch.IndexEvents, esReq)
 		}
 		return service.WriteJSON(w, result.Hits.Hits, http.StatusOK)
