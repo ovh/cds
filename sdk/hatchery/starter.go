@@ -243,7 +243,7 @@ func generateWorkerName(hatcheryName string, isRegister bool, model string) stri
 		return workerName
 	}
 	if len(hName) > 10 {
-		hName = hName[:10]
+		hName = ""
 	}
 	workerName = fmt.Sprintf("%s%s-%s-%s", prefix, hName, modelName, random)
 	if len(workerName) <= maxLength {
