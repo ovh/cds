@@ -20,17 +20,17 @@
     content="The LDAP Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to authenticate users.
 How to configure LDAP Authentication integration Edit the toml file:
- section [api.auth.ldap]  enable the signin with enabled = true if you want to let user signup with GitHub, set signupDisabled = true   [api.auth.ldap] enabled = false host = &quot;&quot; # Define it if ldapsearch need to be authenticated managerDN = &quot;cn=admin,dc=myorganization,dc=com&quot; # Define it if ldapsearch need to be authenticated managerPassword = &quot;SECRET_PASSWORD_MANAGER&quot; port = 636 rootDN = &quot;dc=myorganization,dc=com&quot; signupDisabled = false ssl = true userFullname = &quot;{{.">
+ section [api.auth.ldap]  enable the signin with enabled = true if you want to disable signup, set signupDisabled = true   [api.auth.ldap] enabled = false host = &quot;&quot; # Define it if ldapsearch need to be authenticated managerDN = &quot;cn=admin,dc=myorganization,dc=com&quot; # Define it if ldapsearch need to be authenticated managerPassword = &quot;SECRET_PASSWORD_MANAGER&quot; port = 636 rootDN = &quot;dc=myorganization,dc=com&quot; signupDisabled = false ssl = true userFullname = &quot;{{.">
 <meta property="og:description"
     content="The LDAP Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to authenticate users.
 How to configure LDAP Authentication integration Edit the toml file:
- section [api.auth.ldap]  enable the signin with enabled = true if you want to let user signup with GitHub, set signupDisabled = true   [api.auth.ldap] enabled = false host = &quot;&quot; # Define it if ldapsearch need to be authenticated managerDN = &quot;cn=admin,dc=myorganization,dc=com&quot; # Define it if ldapsearch need to be authenticated managerPassword = &quot;SECRET_PASSWORD_MANAGER&quot; port = 636 rootDN = &quot;dc=myorganization,dc=com&quot; signupDisabled = false ssl = true userFullname = &quot;{{.">
+ section [api.auth.ldap]  enable the signin with enabled = true if you want to disable signup, set signupDisabled = true   [api.auth.ldap] enabled = false host = &quot;&quot; # Define it if ldapsearch need to be authenticated managerDN = &quot;cn=admin,dc=myorganization,dc=com&quot; # Define it if ldapsearch need to be authenticated managerPassword = &quot;SECRET_PASSWORD_MANAGER&quot; port = 636 rootDN = &quot;dc=myorganization,dc=com&quot; signupDisabled = false ssl = true userFullname = &quot;{{.">
 <meta name="twitter:description"
     content="The LDAP Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to authenticate users.
 How to configure LDAP Authentication integration Edit the toml file:
- section [api.auth.ldap]  enable the signin with enabled = true if you want to let user signup with GitHub, set signupDisabled = true   [api.auth.ldap] enabled = false host = &quot;&quot; # Define it if ldapsearch need to be authenticated managerDN = &quot;cn=admin,dc=myorganization,dc=com&quot; # Define it if ldapsearch need to be authenticated managerPassword = &quot;SECRET_PASSWORD_MANAGER&quot; port = 636 rootDN = &quot;dc=myorganization,dc=com&quot; signupDisabled = false ssl = true userFullname = &quot;{{.">
+ section [api.auth.ldap]  enable the signin with enabled = true if you want to disable signup, set signupDisabled = true   [api.auth.ldap] enabled = false host = &quot;&quot; # Define it if ldapsearch need to be authenticated managerDN = &quot;cn=admin,dc=myorganization,dc=com&quot; # Define it if ldapsearch need to be authenticated managerPassword = &quot;SECRET_PASSWORD_MANAGER&quot; port = 636 rootDN = &quot;dc=myorganization,dc=com&quot; signupDisabled = false ssl = true userFullname = &quot;{{.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/ldap/">
 <meta property="og:title" content="LDAP Authentication">
 <meta name="twitter:title" content="LDAP Authentication">
@@ -466,7 +466,7 @@ How to configure LDAP Authentication integration Edit the toml file:
 
 <ul>
 <li>enable the signin with <code>enabled = true</code></li>
-<li>if you want to let user signup with GitHub, set <code>signupDisabled = true</code></li>
+<li>if you want to disable signup, set <code>signupDisabled = true</code></li>
 </ul></li>
 </ul>
 

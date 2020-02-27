@@ -68,7 +68,7 @@ This integration enables some features:
       <description>The LDAP Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to authenticate users.
 How to configure LDAP Authentication integration Edit the toml file:
- section [api.auth.ldap]  enable the signin with enabled = true if you want to let user signup with GitHub, set signupDisabled = true   [api.auth.ldap] enabled = false host = &amp;quot;&amp;quot; # Define it if ldapsearch need to be authenticated managerDN = &amp;quot;cn=admin,dc=myorganization,dc=com&amp;quot; # Define it if ldapsearch need to be authenticated managerPassword = &amp;quot;SECRET_PASSWORD_MANAGER&amp;quot; port = 636 rootDN = &amp;quot;dc=myorganization,dc=com&amp;quot; signupDisabled = false ssl = true userFullname = &amp;quot;{{.</description>
+ section [api.auth.ldap]  enable the signin with enabled = true if you want to disable signup, set signupDisabled = true   [api.auth.ldap] enabled = false host = &amp;quot;&amp;quot; # Define it if ldapsearch need to be authenticated managerDN = &amp;quot;cn=admin,dc=myorganization,dc=com&amp;quot; # Define it if ldapsearch need to be authenticated managerPassword = &amp;quot;SECRET_PASSWORD_MANAGER&amp;quot; port = 636 rootDN = &amp;quot;dc=myorganization,dc=com&amp;quot; signupDisabled = false ssl = true userFullname = &amp;quot;{{.</description>
     </item>
     
     <item>

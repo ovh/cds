@@ -723,7 +723,7 @@ A template contains a workflow, pipelines, applications, environments in yaml fo
       <description>CDS can use several authentication backends:
  local LDAP GitHub GitLab  All backends can be enabled at the same time, ie. a user can authenticate both with GitHub, GitLab, Ldap or with local authentication at the same time.
 Local Authentication Edit the toml configuration file:
- section [api.auth.local]  enable the signin with enabled = true if you want to let user signup with GitHub, set signupDisabled = true you can authorize only some domains with the key signupAllowedDomains    [api.</description>
+ section [api.auth.local]  enable the signin with enabled = true if you want to disable signup, set signupDisabled = true you can authorize only some domains with the key signupAllowedDomains    [api.</description>
     </item>
     
     <item>
@@ -1018,7 +1018,7 @@ name: Kubernetes default_config: api_url: type: string ca_certificate: type: tex
       <description>The LDAP Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to authenticate users.
 How to configure LDAP Authentication integration Edit the toml file:
- section [api.auth.ldap]  enable the signin with enabled = true if you want to let user signup with GitHub, set signupDisabled = true   [api.auth.ldap] enabled = false host = &amp;quot;&amp;quot; # Define it if ldapsearch need to be authenticated managerDN = &amp;quot;cn=admin,dc=myorganization,dc=com&amp;quot; # Define it if ldapsearch need to be authenticated managerPassword = &amp;quot;SECRET_PASSWORD_MANAGER&amp;quot; port = 636 rootDN = &amp;quot;dc=myorganization,dc=com&amp;quot; signupDisabled = false ssl = true userFullname = &amp;quot;{{.</description>
+ section [api.auth.ldap]  enable the signin with enabled = true if you want to disable signup, set signupDisabled = true   [api.auth.ldap] enabled = false host = &amp;quot;&amp;quot; # Define it if ldapsearch need to be authenticated managerDN = &amp;quot;cn=admin,dc=myorganization,dc=com&amp;quot; # Define it if ldapsearch need to be authenticated managerPassword = &amp;quot;SECRET_PASSWORD_MANAGER&amp;quot; port = 636 rootDN = &amp;quot;dc=myorganization,dc=com&amp;quot; signupDisabled = false ssl = true userFullname = &amp;quot;{{.</description>
     </item>
     
     <item>
