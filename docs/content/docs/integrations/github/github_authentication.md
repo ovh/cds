@@ -33,7 +33,7 @@ Example for a local configuration:
  - Homepage URL will be `http://localhost:8080`
  - Callback URL will be `http://localhost:8080/auth/callback/github#`
 
-![Integration GitHub New OAuth App](../images/github-new-oauth-app.png?height=500px)
+![Integration GitHub New OAuth App](../../images/github-new-oauth-app.png?height=500px)
 
 Click on **Register Application**, then on the next page, GitHub give you a **Client ID** and a **Client Secret**
 
@@ -44,7 +44,7 @@ Edit the toml file:
 - section `[api.auth.github]`
   - set a value to `clientId` and `clientSecret`
   - enable the signin with `enabled = true`
-  - if you want to let user signup with GitHub, set `signupDisabled = true`
+  - if you want to disable user signup with GitHub, set `signupDisabled = true`
   
 ```toml
 [api.auth.github]
