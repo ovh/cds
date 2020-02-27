@@ -378,10 +378,13 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 			latency := end.Sub(start)
 
 			log.InfoWithFields(ctx, logrus.Fields{
-				"method":     req.Method,
-				"latency":    latency,
-				"status":     responseWriter.statusCode,
-				"deprecated": rc.IsDeprecated,
+				"method":        req.Method,
+				"latency":       latency.Milliseconds(),
+				"latency_human": latency,
+				"status":        responseWriter.statusCode,
+				"route":         cleanURL,
+				"request_uri":   req.RequestURI,
+				"deprecated":    rc.IsDeprecated,
 			}, "[%d] | %s | END | %s [%s]", responseWriter.statusCode, req.Method, req.URL, rc.Name)
 
 			observability.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))
