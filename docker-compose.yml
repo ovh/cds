@@ -111,7 +111,7 @@ services:
       - cds-artifacts-volume:/app/artifacts
       - cds-conf-volume:/app/conf
     ports:
-      - "127.0.0.1:8081:8081"
+      - "8081:8081"
     links:
        - cds-db
        - cds-cache
@@ -127,7 +127,7 @@ services:
     volumes:
       - cds-conf-volume:/app/conf
     ports:
-      - "127.0.0.1:8080:8080"
+      - "8080:8080"
     links:
        - cds-api
        - cds-hooks
