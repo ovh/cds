@@ -27,9 +27,9 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 		}
 		withPermissions := FormBool(r, "withPermissions")
 
-		opts := []exportentities.WorkflowOptions{}
+		opts := exportentities.Options{}
 		if withPermissions {
-			opts = append(opts, exportentities.WorkflowWithPermissions)
+			opts.WithPermission = true
 		}
 
 		f, err := exportentities.GetFormat(format)
@@ -41,7 +41,7 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
-		if _, err := workflow.Export(ctx, api.mustDB(), api.Cache, proj, name, f, w, opts...); err != nil {
+		if _, err := workflow.Export(ctx, api.mustDB(), api.Cache, proj, name, f, w, opts); err != nil {
 			return sdk.WithStack(err)
 		}
 
@@ -58,9 +58,9 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		withPermissions := FormBool(r, "withPermissions")
 
-		opts := []exportentities.WorkflowOptions{}
+		opts := exportentities.Options{}
 		if withPermissions {
-			opts = append(opts, exportentities.WorkflowWithPermissions)
+			opts.WithPermission = true
 		}
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
@@ -68,7 +68,7 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		pull, err := workflow.Pull(ctx, api.mustDB(), api.Cache, proj, name, exportentities.FormatYAML, project.EncryptWithBuiltinKey, opts...)
+		pull, err := workflow.Pull(ctx, api.mustDB(), api.Cache, proj, name, exportentities.FormatYAML, project.EncryptWithBuiltinKey, opts)
 		if err != nil {
 			return err
 		}

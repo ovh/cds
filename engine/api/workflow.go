@@ -12,8 +12,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
@@ -210,8 +208,8 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 			return sdk.WrapError(errA, "Cannot load workflow audit %s/%s", key, workflowName)
 		}
 
-		var exportWf exportentities.Workflow
-		if err := yaml.Unmarshal([]byte(audit.DataBefore), &exportWf); err != nil {
+		exportWf, err := exportentities.UnmarshalWorklow([]byte(audit.DataBefore))
+		if err != nil {
 			return sdk.WrapError(err, "Cannot unmarshal data before")
 		}
 
@@ -223,7 +221,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 			_ = tx.Rollback()
 		}()
 
-		newWf, _, errP := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, &exportWf, u, workflow.ImportOptions{Force: true, WorkflowName: workflowName})
+		newWf, _, errP := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, exportWf, u, workflow.ImportOptions{Force: true, WorkflowName: workflowName})
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot parse and import previous workflow")
 		}

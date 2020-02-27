@@ -204,7 +204,7 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 }
 
 // Tar returns in buffer the a tar file that contains all generated stuff in template result.
-func Tar(ctx context.Context, wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) error {
+func Tar(ctx context.Context, res sdk.WorkflowTemplateResult, w io.Writer) error {
 	tw := tar.NewWriter(w)
 	defer func() {
 		if err := tw.Close(); err != nil {
@@ -213,20 +213,20 @@ func Tar(ctx context.Context, wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplate
 	}()
 
 	// add generated workflow to writer
-	var wor exportentities.Workflow
 	bs := []byte(res.Workflow)
-	if err := yaml.Unmarshal(bs, &wor); err != nil {
+	wor, err := exportentities.UnmarshalWorklow(bs)
+	if err != nil {
 		return sdk.NewError(sdk.Error{
 			ID:      sdk.ErrWrongRequest.ID,
 			Message: "Cannot parse generated workflow",
 		}, err)
 	}
 	if err := tw.WriteHeader(&tar.Header{
-		Name: fmt.Sprintf(exportentities.PullWorkflowName, wor.Name),
+		Name: fmt.Sprintf(exportentities.PullWorkflowName, wor.GetName()),
 		Mode: 0644,
 		Size: int64(len(bs)),
 	}); err != nil {
-		return sdk.WrapError(err, "Unable to write header for workflow %s", wor.Name)
+		return sdk.WrapError(err, "Unable to write header for workflow %s", wor.GetName())
 	}
 	if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
 		return sdk.WrapError(err, "Unable to copy workflow buffer")

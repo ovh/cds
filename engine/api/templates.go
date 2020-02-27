@@ -353,21 +353,24 @@ func (api *API) applyTemplate(ctx context.Context, u sdk.Identifiable, p *sdk.Pr
 	// parse the generated workflow to find its name an update it in instance if not detached
 	// also set the template path in generated workflow if not detached
 	if !req.Detached {
-		var wor exportentities.Workflow
-		if err := yaml.Unmarshal([]byte(result.Workflow), &wor); err != nil {
+		wor, err := exportentities.UnmarshalWorklow([]byte(result.Workflow))
+		if err != nil {
 			return result, sdk.NewError(sdk.Error{
 				ID:      sdk.ErrWrongRequest.ID,
 				Message: "Cannot parse generated workflow",
 			}, err)
 		}
 
-		wti.WorkflowName = wor.Name
+		wti.WorkflowName = wor.GetName()
 		if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
 			return result, err
 		}
 
 		templatePath := fmt.Sprintf("%s/%s", wt.Group.Name, wt.Slug)
-		wor.Template = &templatePath
+		wor, err = exportentities.SetTemplate(wor, templatePath)
+		if err != nil {
+			return result, err
+		}
 		b, err := yaml.Marshal(wor)
 		if err != nil {
 			return result, sdk.NewError(sdk.Error{
@@ -455,7 +458,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		log.Debug("postTemplateApplyHandler> template %s applied (withImport=%v)", wt.Slug, withImport)
 
 		buf := new(bytes.Buffer)
-		if err := workflowtemplate.Tar(ctx, wt, res, buf); err != nil {
+		if err := workflowtemplate.Tar(ctx, res, buf); err != nil {
 			return err
 		}
 
@@ -607,7 +610,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					}
 
 					buf := new(bytes.Buffer)
-					if err := workflowtemplate.Tar(ctx, wt, res, buf); err != nil {
+					if err := workflowtemplate.Tar(ctx, res, buf); err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)
 							return

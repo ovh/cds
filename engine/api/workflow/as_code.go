@@ -26,7 +26,7 @@ func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExe
 
 	var wp exportentities.WorkflowPulled
 	buffw := new(bytes.Buffer)
-	if _, err := exportWorkflow(ctx, wf, exportentities.FormatYAML, buffw, exportentities.WorkflowSkipIfOnlyOneRepoWebhook); err != nil {
+	if _, err := exportWorkflow(ctx, wf, exportentities.FormatYAML, buffw, exportentities.Options{SkipIfOnlyOneRepoWebhook: true}); err != nil {
 		return nil, sdk.WrapError(err, "unable to export workflow")
 	}
 	wp.Workflow.Name = wf.Name
@@ -47,7 +47,7 @@ func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj 
 	}
 
 	// Export workflow
-	pull, err := Pull(ctx, db, store, proj, wf.Name, exportentities.FormatYAML, encryptFunc, exportentities.WorkflowSkipIfOnlyOneRepoWebhook)
+	pull, err := Pull(ctx, db, store, proj, wf.Name, exportentities.FormatYAML, encryptFunc, exportentities.Options{SkipIfOnlyOneRepoWebhook: true})
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot pull workflow")
 	}

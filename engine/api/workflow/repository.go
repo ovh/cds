@@ -207,7 +207,9 @@ func extractFromCDSFiles(ctx context.Context, tr *tar.Reader) (*exportedEntities
 				mError.Append(fmt.Errorf("two workflows files found: %s and %s", workflowFileName, hdr.Name))
 				break
 			}
-			if err := yaml.Unmarshal(b, &res.wrkflw); err != nil {
+			var err error
+			res.wrkflw, err = exportentities.UnmarshalWorklow(b)
+			if err != nil {
 				log.Error(ctx, "Push> Unable to unmarshal workflow %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("Unable to unmarshal workflow %s: %v", hdr.Name, err))
 				continue

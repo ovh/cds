@@ -1,4 +1,4 @@
-package exportentities
+package v2
 
 import (
 	"context"
@@ -94,16 +94,12 @@ func craftNotifications(ctx context.Context, w sdk.Workflow, exportedWorkflow *W
 		if err != nil {
 			return sdk.WrapError(err, "unable to craft notification")
 		}
-		// If it's a single pipeline workflow, the pipelineName is set
-		if exportedWorkflow.PipelineName != "" {
-			exportedWorkflow.Notifications = append(exportedWorkflow.Notifications, notifEntry)
-		} else {
-			if exportedWorkflow.MapNotifications == nil {
-				exportedWorkflow.MapNotifications = make(map[string][]NotificationEntry)
-			}
-			s := strings.Join(nodeNames, ",")
-			exportedWorkflow.MapNotifications[s] = append(exportedWorkflow.MapNotifications[s], notifEntry)
+		if exportedWorkflow.MapNotifications == nil {
+			exportedWorkflow.MapNotifications = make(map[string][]NotificationEntry)
 		}
+		s := strings.Join(nodeNames, ",")
+		exportedWorkflow.MapNotifications[s] = append(exportedWorkflow.MapNotifications[s], notifEntry)
+
 	}
 	return nil
 }

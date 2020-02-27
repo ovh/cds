@@ -27,41 +27,35 @@ type ImportOptions struct {
 }
 
 // Parse parse an exportentities.workflow and return the parsed workflow
-func Parse(ctx context.Context, proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error) {
-	log.Info(ctx, "Parse>> Parse workflow %s in project %s", ew.Name, proj.Key)
+func Parse(ctx context.Context, proj *sdk.Project, ew exportentities.Workflow) (*sdk.Workflow, error) {
+	log.Info(ctx, "Parse>> Parse workflow %s in project %s", ew.GetName(), proj.Key)
 	log.Debug("Parse>> Workflow: %+v", ew)
 
-	//Check valid application name
-	rx := sdk.NamePatternRegex
-	if !rx.MatchString(ew.Name) {
-		return nil, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Workflow name %s do not respect pattern %s", ew.Name, sdk.NamePattern)
-	}
-
-	//Inherit permissions from project
-	if len(ew.Permissions) == 0 {
-		ew.Permissions = make(map[string]int)
-		for _, p := range proj.ProjectGroups {
-			ew.Permissions[p.Group.Name] = p.Permission
-		}
-	}
-
 	//Parse workflow
-	w, errW := ew.GetWorkflow()
+	w, errW := exportentities.ParseWorkflow(ew)
 	if errW != nil {
 		return nil, sdk.NewError(sdk.ErrWrongRequest, errW)
 	}
 	w.ProjectID = proj.ID
 	w.ProjectKey = proj.Key
 
+	// Get permission from project if needed
+	if len(w.Groups) == 0 {
+		w.Groups = make([]sdk.GroupPermission, 0, len(proj.ProjectGroups))
+		for _, gp := range proj.ProjectGroups {
+			perm := sdk.GroupPermission{Group: sdk.Group{Name: gp.Group.Name}, Permission: gp.Permission}
+			w.Groups = append(w.Groups, perm)
+		}
+	}
 	return w, nil
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW *sdk.Workflow, ew *exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.ParseAndImport")
 	defer end()
 
-	log.Info(ctx, "ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.Name, proj.Key, opts.Force)
+	log.Info(ctx, "ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.GetName(), proj.Key, opts.Force)
 
 	//Parse workflow
 	w, errW := Parse(ctx, proj, ew)

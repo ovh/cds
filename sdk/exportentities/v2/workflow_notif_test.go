@@ -1,7 +1,8 @@
-package exportentities_test
+package v2_test
 
 import (
 	"context"
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"reflect"
 	"testing"
 
@@ -28,7 +29,7 @@ func Test_checkWorkflowNotificationsValidity(t *testing.T) {
 			want: nil,
 			args: args{
 				yaml: `name: test1
-version: v1.0
+version: v2.0
 workflow:
   DDOS-me:
     pipeline: DDOS-me
@@ -96,9 +97,9 @@ notifications:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var w exportentities.Workflow
+			var w v2.Workflow
 			test.NoError(t, yaml.Unmarshal([]byte(tt.args.yaml), &w))
-			if got := exportentities.CheckWorkflowNotificationsValidity(w); got != tt.want {
+			if got := v2.CheckWorkflowNotificationsValidity(w); got != tt.want {
 				t.Errorf("checkWorkflowNotificationsValidity() = %#v, want %v", got, tt.want)
 			}
 		})
@@ -107,7 +108,7 @@ notifications:
 
 func Test_processNotificationValues(t *testing.T) {
 	type args struct {
-		notif exportentities.NotificationEntry
+		notif v2.NotificationEntry
 	}
 	tests := []struct {
 		name    string
@@ -119,7 +120,7 @@ func Test_processNotificationValues(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := exportentities.ProcessNotificationValues(tt.args.notif)
+			got, err := v2.ProcessNotificationValues(tt.args.notif)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("processNotificationValues() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -140,7 +141,7 @@ func TestFromYAMLToYAMLWithNotif(t *testing.T) {
 		{
 			name: "test one pipeline with one notif",
 			yaml: `name: test-notif-1
-version: v1.0
+version: v2.0
 pipeline: test
 notify:
 - type: jabber
@@ -160,7 +161,7 @@ notify:
 		}, {
 			name: "test one pipeline with two notif",
 			yaml: `name: test-notif-2
-version: v1.0
+version: v2.0
 pipeline: test
 notify:
 - type: jabber
@@ -200,7 +201,7 @@ notify:
 		}, {
 			name: "two pipelines with one notif",
 			yaml: `name: test-notif-1
-version: v1.0
+version: v2.0
 workflow:
   test:
     pipeline: test
@@ -217,7 +218,7 @@ notifications:
 		}, {
 			name: "two pipelines with two notifs",
 			yaml: `name: test-notif-1
-version: v1.0
+version: v2.0
 workflow:
   test:
     pipeline: test
@@ -268,8 +269,7 @@ notifications:
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			var yamlWorkflow exportentities.Workflow
-			err := exportentities.Unmarshal([]byte(tst.yaml), exportentities.FormatYAML, &yamlWorkflow)
+			yamlWorkflow, err := exportentities.UnmarshalWorklow([]byte(tst.yaml))
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("Unmarshal raised an error", err)
@@ -280,7 +280,7 @@ notifications:
 				t.Error("Unmarshal should return an error but it doesn't")
 				return
 			}
-			w, err := yamlWorkflow.GetWorkflow()
+			w, err := exportentities.ParseWorkflow(yamlWorkflow)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("GetWorkflow raised an error", err)
@@ -310,7 +310,7 @@ notifications:
 					}
 				}
 			})
-			exportedWorkflow, err := exportentities.NewWorkflow(context.TODO(), *w)
+			exportedWorkflow, err := exportentities.NewWorkflow(context.TODO(), *w, exportentities.Options{})
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("NewWorkflow raised an error", err)
