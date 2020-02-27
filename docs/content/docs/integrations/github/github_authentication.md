@@ -44,7 +44,7 @@ Edit the toml file:
 - section `[api.auth.github]`
   - set a value to `clientId` and `clientSecret`
   - enable the signin with `enabled = true`
-  - if you want to disable user signup with GitHub, set `signupDisabled = true`
+  - if you want to disable signup with GitHub, set `signupDisabled = true`
   
 ```toml
 [api.auth.github]
