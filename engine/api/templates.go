@@ -10,11 +10,8 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
-	"time"
 
 	"github.com/gorilla/mux"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
@@ -69,7 +66,7 @@ func (api *API) postTemplateHandler() service.Handler {
 			if err := exportentities.DownloadTemplate(data.ImportURL, t); err != nil {
 				return sdk.NewError(sdk.ErrWrongRequest, err)
 			}
-			wt, err := ReadFromTar(tar.NewReader(t))
+			wt, err := exportentities.ReadTemplateFromTar(tar.NewReader(t))
 			if err != nil {
 				return err
 			}
@@ -98,14 +95,14 @@ func (api *API) postTemplateHandler() service.Handler {
 			}
 		}
 
-		data.Version = 0
+		data.Version = 1
 
 		if !isGroupAdmin(ctx, grp) && !isAdmin(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		// execute template with no instance only to check if parsing is ok
-		if _, err := workflowtemplate.Execute(&data, nil); err != nil {
+		if _, err := workflowtemplate.Parse(data); err != nil {
 			return err
 		}
 
@@ -189,7 +186,7 @@ func (api *API) putTemplateHandler() service.Handler {
 			if err := exportentities.DownloadTemplate(data.ImportURL, t); err != nil {
 				return sdk.NewError(sdk.ErrWrongRequest, err)
 			}
-			wt, err := ReadFromTar(tar.NewReader(t))
+			wt, err := exportentities.ReadTemplateFromTar(tar.NewReader(t))
 			if err != nil {
 				return err
 			}
@@ -229,7 +226,7 @@ func (api *API) putTemplateHandler() service.Handler {
 		clone.Update(data)
 
 		// execute template with no instance only to check if parsing is ok
-		if _, err := workflowtemplate.Execute(&clone, nil); err != nil {
+		if _, err := workflowtemplate.Parse(clone); err != nil {
 			return err
 		}
 
@@ -280,120 +277,6 @@ func (api *API) deleteTemplateHandler() service.Handler {
 	}
 }
 
-func (api *API) applyTemplate(ctx context.Context, u sdk.Identifiable, p *sdk.Project, wt *sdk.WorkflowTemplate, req sdk.WorkflowTemplateRequest) (sdk.WorkflowTemplateResult, error) {
-	var result sdk.WorkflowTemplateResult
-
-	tx, err := api.mustDB().Begin()
-	if err != nil {
-		return result, sdk.WrapError(err, "cannot start transaction")
-	}
-	defer func() { _ = tx.Rollback() }()
-
-	var wti *sdk.WorkflowTemplateInstance
-	// try to get a instance not assign to a workflow but with the same slug
-	wtis, err := workflowtemplate.GetInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(tx, wt.ID, p.ID, req.WorkflowName)
-	if err != nil {
-		return result, err
-	}
-
-	for _, res := range wtis {
-		if wti == nil {
-			wti = &res
-		} else {
-			// if there are more than one instance found, delete others
-			if err := workflowtemplate.DeleteInstance(tx, &res); err != nil {
-				return result, err
-			}
-		}
-	}
-
-	// if the request is for a detached workflow and there is an existing instance, remove it
-	if wti != nil && req.Detached {
-		if err := workflowtemplate.DeleteInstance(tx, wti); err != nil {
-			return result, err
-		}
-		wti = nil
-	}
-
-	// if a previous instance exist for the same workflow update it, else create a new one
-	var old *sdk.WorkflowTemplateInstance
-	if wti != nil {
-		clone := sdk.WorkflowTemplateInstance(*wti)
-		old = &clone
-		wti.WorkflowTemplateVersion = wt.Version
-		wti.Request = req
-		if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
-			return result, err
-		}
-	} else {
-		wti = &sdk.WorkflowTemplateInstance{
-			ProjectID:               p.ID,
-			WorkflowTemplateID:      wt.ID,
-			WorkflowTemplateVersion: wt.Version,
-			Request:                 req,
-		}
-
-		// only store the new instance if request is not for a detached workflow
-		if !req.Detached {
-			if err := workflowtemplate.InsertInstance(tx, wti); err != nil {
-				return result, err
-			}
-		} else {
-			// if is a detached apply set an id based on time
-			wti.ID = time.Now().Unix()
-		}
-	}
-
-	// execute template with request
-	result, err = workflowtemplate.Execute(wt, wti)
-	if err != nil {
-		return result, err
-	}
-
-	// parse the generated workflow to find its name an update it in instance if not detached
-	// also set the template path in generated workflow if not detached
-	if !req.Detached {
-		wor, err := exportentities.UnmarshalWorkflow([]byte(result.Workflow))
-		if err != nil {
-			return result, sdk.NewError(sdk.Error{
-				ID:      sdk.ErrWrongRequest.ID,
-				Message: "Cannot parse generated workflow",
-			}, err)
-		}
-
-		wti.WorkflowName = wor.GetName()
-		if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
-			return result, err
-		}
-
-		templatePath := fmt.Sprintf("%s/%s", wt.Group.Name, wt.Slug)
-		wor, err = exportentities.SetTemplate(wor, templatePath)
-		if err != nil {
-			return result, err
-		}
-		b, err := yaml.Marshal(wor)
-		if err != nil {
-			return result, sdk.NewError(sdk.Error{
-				ID:      sdk.ErrWrongRequest.ID,
-				Message: "Cannot add template info to generated workflow",
-			}, err)
-		}
-		result.Workflow = string(b)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return result, sdk.WrapError(err, "cannot commit transaction")
-	}
-
-	if old != nil {
-		event.PublishWorkflowTemplateInstanceUpdate(ctx, *old, *wti, u)
-	} else if !req.Detached {
-		event.PublishWorkflowTemplateInstanceAdd(ctx, *wti, u)
-	}
-
-	return result, nil
-}
-
 func (api *API) postTemplateApplyHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -438,6 +321,14 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			}
 		}
 
+		// non admin user should have read/write to given project
+		consumer := getAPIConsumer(ctx)
+		if !consumer.Admin() {
+			if err := api.checkProjectPermissions(ctx, req.ProjectKey, sdk.PermissionReadWriteExecute, nil); err != nil {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "write permission on project required to import generated workflow.")
+			}
+		}
+
 		// load project with key
 		p, err := project.Load(api.mustDB(), api.Cache, req.ProjectKey,
 			project.LoadOptions.WithGroups,
@@ -450,48 +341,61 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return err
 		}
 
-		res, err := api.applyTemplate(ctx, getAPIConsumer(ctx), p, wt, req)
+		data := exportentities.WorkflowComponents{
+			Template: exportentities.TemplateInstance{
+				Name:       req.WorkflowName,
+				From:       wt.PathWithVersion(),
+				Parameters: req.Parameters,
+			},
+		}
+
+		if !withImport && !req.Detached {
+			buf := new(bytes.Buffer)
+			if err := exportentities.TarWorkflowComponents(ctx, data, buf); err != nil {
+				return err
+			}
+			return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
+		}
+
+		wti, err := workflowtemplate.PrePush(ctx, api.mustDB(), *consumer, *p, &data, req.Detached)
 		if err != nil {
 			return err
 		}
 
 		log.Debug("postTemplateApplyHandler> template %s applied (withImport=%v)", wt.Slug, withImport)
 
-		buf := new(bytes.Buffer)
-		if err := workflowtemplate.Tar(ctx, res, buf); err != nil {
+		if !withImport {
+			buf := new(bytes.Buffer)
+			if err := exportentities.TarWorkflowComponents(ctx, data, buf); err != nil {
+				return err
+			}
+			return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
+		}
+
+		msgs, wkf, oldWkf, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey)
+		if err != nil {
+			return sdk.WrapError(err, "cannot push generated workflow")
+		}
+		if err := workflowtemplate.PostPush(ctx, api.mustDB(), *wkf, *consumer, wti); err != nil {
 			return err
 		}
 
-		if withImport {
-			tr := tar.NewReader(buf)
+		msgStrings := translate(r, msgs)
 
-			msgs, wkf, oldWkf, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, getAPIConsumer(ctx), project.DecryptWithBuiltinKey)
-			if err != nil {
-				return sdk.WrapError(err, "cannot push generated workflow")
-			}
-			msgStrings := translate(r, msgs)
+		log.Debug("postTemplateApplyHandler> importing the workflow %s from template %s", wkf.Name, wt.Slug)
 
-			log.Debug("postTemplateApplyHandler> importing the workflow %s from template %s", wkf.Name, wt.Slug)
-
-			if w != nil {
-				w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wkf.ID))
-				w.Header().Add(sdk.ResponseWorkflowNameHeader, wkf.Name)
-			}
-
-			if oldWkf != nil {
-				event.PublishWorkflowUpdate(ctx, p.Key, *wkf, *oldWkf, getAPIConsumer(ctx))
-			} else {
-				event.PublishWorkflowAdd(ctx, p.Key, *wkf, getAPIConsumer(ctx))
-			}
-
-			if err := workflowtemplate.SetTemplateData(ctx, api.mustDB(), p, wkf, getAPIConsumer(ctx), wt); err != nil {
-				log.Error(ctx, "postTemplateApplyHandler> unable to set template data: %v", err)
-			}
-
-			return service.WriteJSON(w, msgStrings, http.StatusOK)
+		if w != nil {
+			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wkf.ID))
+			w.Header().Add(sdk.ResponseWorkflowNameHeader, wkf.Name)
 		}
 
-		return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
+		if oldWkf != nil {
+			event.PublishWorkflowUpdate(ctx, p.Key, *wkf, *oldWkf, getAPIConsumer(ctx))
+		} else {
+			event.PublishWorkflowAdd(ctx, p.Key, *wkf, getAPIConsumer(ctx))
+		}
+
+		return service.WriteJSON(w, msgStrings, http.StatusOK)
 	}
 }
 
@@ -560,7 +464,6 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			return err
 		}
 
-		var ident sdk.Identifiable = *consumer
 		// start async bulk tasks
 		sdk.GoRoutine(context.Background(), "api.templateBulkApply", func(ctx context.Context) {
 			for i := range bulk.Operations {
@@ -600,7 +503,15 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					}
 
 					// apply and import workflow
-					res, err := api.applyTemplate(ctx, consumer, p, wt, bulk.Operations[i].Request)
+					data := exportentities.WorkflowComponents{
+						Template: exportentities.TemplateInstance{
+							Name:       bulk.Operations[i].Request.WorkflowName,
+							From:       wt.PathWithVersion(),
+							Parameters: bulk.Operations[i].Request.Parameters,
+						},
+					}
+
+					wti, err := workflowtemplate.PrePush(ctx, api.mustDB(), *consumer, *p, &data, false)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)
@@ -609,18 +520,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						continue
 					}
 
-					buf := new(bytes.Buffer)
-					if err := workflowtemplate.Tar(ctx, res, buf); err != nil {
-						if errD := errorDefer(err); errD != nil {
-							log.Error(ctx, "%v", errD)
-							return
-						}
-						continue
-					}
-
-					tr := tar.NewReader(buf)
-
-					_, wkf, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, consumer, project.DecryptWithBuiltinKey)
+					_, wkf, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey)
 					if err != nil {
 						if errD := errorDefer(sdk.WrapError(err, "cannot push generated workflow")); errD != nil {
 							log.Error(ctx, "%v", errD)
@@ -629,8 +529,12 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						continue
 					}
 
-					if err := workflowtemplate.SetTemplateData(ctx, api.mustDB(), p, wkf, ident, wt); err != nil {
-						log.Error(ctx, "postTemplateBulkHandler> unable to set template data: %v", err)
+					if err := workflowtemplate.PostPush(ctx, api.mustDB(), *wkf, *consumer, wti); err != nil {
+						if errD := errorDefer(err); errD != nil {
+							log.Error(ctx, "%v", errD)
+							return
+						}
+						continue
 					}
 
 					bulk.Operations[i].Status = sdk.OperationStatusDone
@@ -739,7 +643,7 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplateInstance(api.mustDB(), isPointers...); err != nil {
 			return err
 		}
-		if err := workflow.AggregateOnWorkflowTemplateInstance(api.mustDB(), isPointers...); err != nil {
+		if err := workflow.AggregateOnWorkflowTemplateInstance(ctx, api.mustDB(), isPointers...); err != nil {
 			return err
 		}
 
@@ -868,7 +772,7 @@ func (api *API) postTemplatePushHandler() service.Handler {
 		defer r.Body.Close()
 
 		tr := tar.NewReader(bytes.NewReader(btes))
-		wt, err := ReadFromTar(tr)
+		wt, err := exportentities.ReadTemplateFromTar(tr)
 		if err != nil {
 			return err
 		}
@@ -932,7 +836,7 @@ func (api *API) getTemplateAuditsHandler() service.Handler {
 			}
 		}
 
-		as, err := workflowtemplate.GetAuditsByTemplateIDAndVersionGTE(api.mustDB(), wt.ID, version)
+		as, err := workflowtemplate.LoadAuditsByTemplateIDAndVersionGTE(api.mustDB(), wt.ID, version)
 		if err != nil {
 			return err
 		}
@@ -990,68 +894,4 @@ func (api *API) getTemplateUsageHandler() service.Handler {
 
 		return service.WriteJSON(w, wfs, http.StatusOK)
 	}
-}
-
-// ReadFromTar returns a workflow template from given tar reader.
-func ReadFromTar(tr *tar.Reader) (sdk.WorkflowTemplate, error) {
-	var wt sdk.WorkflowTemplate
-
-	// extract template data from tar
-	var apps, pips, envs [][]byte
-	var wkf []byte
-	var tmpl exportentities.Template
-
-	mError := new(sdk.MultiError)
-	var templateFileName string
-	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return wt, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Unable to read tar file"))
-		}
-
-		buff := new(bytes.Buffer)
-		if _, err := io.Copy(buff, tr); err != nil {
-			return wt, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Unable to read tar file"))
-		}
-
-		b := buff.Bytes()
-		switch {
-		case strings.Contains(hdr.Name, ".application."):
-			apps = append(apps, b)
-		case strings.Contains(hdr.Name, ".pipeline."):
-			pips = append(pips, b)
-		case strings.Contains(hdr.Name, ".environment."):
-			envs = append(envs, b)
-		case hdr.Name == "workflow.yml":
-			// if a workflow was already found, it's a mistake
-			if len(wkf) != 0 {
-				mError.Append(fmt.Errorf("Two workflow files found"))
-				break
-			}
-			wkf = b
-		default:
-			// if a template was already found, it's a mistake
-			if templateFileName != "" {
-				mError.Append(fmt.Errorf("Two template files found: %s and %s", templateFileName, hdr.Name))
-				break
-			}
-			if err := yaml.Unmarshal(b, &tmpl); err != nil {
-				mError.Append(sdk.WrapError(err, "Unable to unmarshal template %s", hdr.Name))
-				continue
-			}
-			templateFileName = hdr.Name
-		}
-	}
-
-	if !mError.IsEmpty() {
-		return wt, sdk.NewError(sdk.ErrWorkflowInvalid, mError)
-	}
-
-	// init workflow template struct from data
-	wt = tmpl.GetTemplate(wkf, pips, apps, envs)
-
-	return wt, nil
 }

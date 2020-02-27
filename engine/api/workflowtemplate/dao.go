@@ -53,6 +53,20 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...
 	return &wt, nil
 }
 
+func getAudit(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.AuditWorkflowTemplate, error) {
+	var awt sdk.AuditWorkflowTemplate
+
+	found, err := gorpmapping.Get(ctx, db, q, &awt)
+	if err != nil {
+		return nil, sdk.WrapError(err, "cannot get workflow template audit")
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+
+	return &awt, nil
+}
+
 // LoadAll workflow templates from database.
 func LoadAll(ctx context.Context, db gorp.SqlExecutor, opts ...LoadOptionFunc) ([]sdk.WorkflowTemplate, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM workflow_template")
@@ -105,8 +119,8 @@ func InsertAudit(db gorp.SqlExecutor, awt *sdk.AuditWorkflowTemplate) error {
 	return sdk.WrapError(gorpmapping.Insert(db, awt), "unable to insert audit for workflow template %d", awt.WorkflowTemplateID)
 }
 
-// GetAuditsByTemplateIDAndVersionGTE returns all workflow template audits by template id and version greater or equal.
-func GetAuditsByTemplateIDAndVersionGTE(db gorp.SqlExecutor, templateID, version int64) ([]sdk.AuditWorkflowTemplate, error) {
+// LoadAuditsByTemplateIDAndVersionGTE returns all workflow template audits by template id and version greater or equal.
+func LoadAuditsByTemplateIDAndVersionGTE(db gorp.SqlExecutor, templateID, version int64) ([]sdk.AuditWorkflowTemplate, error) {
 	awts := []sdk.AuditWorkflowTemplate{}
 
 	if _, err := db.Select(&awts,
@@ -122,36 +136,38 @@ func GetAuditsByTemplateIDAndVersionGTE(db gorp.SqlExecutor, templateID, version
 	return awts, nil
 }
 
-// GetAuditLatestByTemplateID returns workflow template latest audit by template id.
-func GetAuditLatestByTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64) (*sdk.AuditWorkflowTemplate, error) {
-	var awt sdk.AuditWorkflowTemplate
-
-	query := gorpmapping.NewQuery(`SELECT * FROM workflow_template_audit WHERE workflow_template_id = $1 ORDER BY created DESC LIMIT 1`).Args(templateID)
-	found, err := gorpmapping.Get(ctx, db, query, &awt)
-	if err != nil {
-		return nil, sdk.WrapError(err, "cannot get latest audit for template %d", templateID)
-	}
-	if !found {
-		return nil, nil
-	}
-
-	return &awt, nil
+// LoadAuditLatestByTemplateID returns workflow template latest audit by template id.
+func LoadAuditLatestByTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64) (*sdk.AuditWorkflowTemplate, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM workflow_template_audit
+    WHERE workflow_template_id = $1
+    ORDER BY created DESC
+    LIMIT 1
+  `).Args(templateID)
+	return getAudit(ctx, db, query)
 }
 
-// GetAuditOldestByTemplateID returns workflow template oldtest audit by template id.
-func GetAuditOldestByTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64) (*sdk.AuditWorkflowTemplate, error) {
-	var awt sdk.AuditWorkflowTemplate
+// LoadAuditByTemplateIDAndVersion returns workflow template audit by template id and version.
+func LoadAuditByTemplateIDAndVersion(ctx context.Context, db gorp.SqlExecutor, templateID, version int64) (*sdk.AuditWorkflowTemplate, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM workflow_template_audit
+    WHERE workflow_template_id = $1 AND (data_after->>'version')::int = $2
+  `).Args(templateID, version)
+	return getAudit(ctx, db, query)
+}
 
-	query := gorpmapping.NewQuery(`SELECT * FROM workflow_template_audit WHERE workflow_template_id = $1 ORDER BY created ASC LIMIT 1`).Args(templateID)
-	found, err := gorpmapping.Get(ctx, db, query, &awt)
-	if err != nil {
-		return nil, sdk.WrapError(err, "cannot get oldtest audit for template %d", templateID)
-	}
-	if !found {
-		return nil, nil
-	}
-
-	return &awt, nil
+// LoadAuditOldestByTemplateID returns workflow template oldtest audit by template id.
+func LoadAuditOldestByTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64) (*sdk.AuditWorkflowTemplate, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM workflow_template_audit
+    WHERE workflow_template_id = $1
+    ORDER BY created ASC
+    LIMIT 1
+  `).Args(templateID)
+	return getAudit(ctx, db, query)
 }
 
 func getInstance(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadInstanceOptionFunc) (*sdk.WorkflowTemplateInstance, error) {

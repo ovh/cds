@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ovh/cds/engine/api/notification"
+
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/venom"
 	"github.com/sguiheux/go-coverage"
@@ -689,7 +691,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 			return nil
 		}
 		nodeRun.Translate(r.Header.Get("Accept-Language"))
-		event.PublishWorkflowNodeRun(context.Background(), api.mustDB(), api.Cache, nodeRun, work, nil)
+		event.PublishWorkflowNodeRun(context.Background(), nodeRun, work, notification.GetUserWorkflowEvents(ctx, api.mustDB(), api.Cache, work, nil, nodeRun))
 		return nil
 	}
 }

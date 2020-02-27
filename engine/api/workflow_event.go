@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 
+	"github.com/ovh/cds/engine/api/notification"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -48,7 +50,7 @@ func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 			continue
 		}
 
-		event.PublishWorkflowNodeRun(ctx, db, store, *nr, wr.Workflow, &previousNodeRun)
+		event.PublishWorkflowNodeRun(ctx, *nr, wr.Workflow, notification.GetUserWorkflowEvents(ctx, db, store, wr.Workflow, &previousNodeRun, *nr))
 		e := &workflow.VCSEventMessenger{}
 		if err := e.SendVCSEvent(ctx, db, store, proj, *wr, wnr); err != nil {
 			log.Warning(ctx, "WorkflowSendEvent> Cannot send vcs notification")

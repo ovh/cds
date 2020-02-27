@@ -2,9 +2,10 @@ package v2_test
 
 import (
 	"context"
-	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"reflect"
 	"testing"
+
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 
 	"github.com/ovh/cds/sdk/exportentities"
 

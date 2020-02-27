@@ -7,7 +7,7 @@ import {
     Output,
     ViewChild
 } from '@angular/core';
-import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
+import {ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig} from '@richardlt/ng2-semantic-ui';
 import {
     InstanceStatus,
     InstanceStatusUtil,
@@ -19,11 +19,11 @@ import {
     WorkflowTemplateBulkOperation,
     WorkflowTemplateInstance
 } from 'app/model/workflow-template.model';
-import { WorkflowTemplateService } from 'app/service/workflow-template/workflow-template.service';
-import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { Column, ColumnType, Select } from 'app/shared/table/data-table.component';
-import { Observable, Subscription } from 'rxjs';
-import { finalize } from 'rxjs/internal/operators/finalize';
+import {WorkflowTemplateService} from 'app/service/workflow-template/workflow-template.service';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
+import {Column, ColumnType, Select} from 'app/shared/table/data-table.component';
+import {Observable, Subscription} from 'rxjs';
+import {finalize} from 'rxjs/internal/operators/finalize';
 
 @Component({
     selector: 'app-workflow-template-bulk-modal',
@@ -33,7 +33,7 @@ import { finalize } from 'rxjs/internal/operators/finalize';
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateBulkModalComponent {
-    @ViewChild('workflowTemplateBulkModal', { static: false }) workflowTemplateBulkModal: ModalTemplate<boolean, boolean, void>;
+    @ViewChild('workflowTemplateBulkModal', {static: false}) workflowTemplateBulkModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 
@@ -154,7 +154,8 @@ export class WorkflowTemplateBulkModalComponent {
                 this.loadingInstances = false;
                 this._cd.markForCheck();
             }))
-            .subscribe(is => this.instances = is.sort((a, b) => a.key() < b.key() ? -1 : 1));
+            .subscribe(is => this.instances = is.filter(i => !i.workflow.from_repository)
+                .sort((a, b) => a.key() < b.key() ? -1 : 1));
 
         this.selectedInstanceKeys = [];
 
@@ -182,9 +183,9 @@ export class WorkflowTemplateBulkModalComponent {
         this._workflowTemplateService.bulk(this.workflowTemplate.group.name, this.workflowTemplate.slug, req)
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(b => {
-            this.response = b;
-            this.startPollingStatus();
-        });
+                this.response = b;
+                this.startPollingStatus();
+            });
 
         this.moveToStep(2);
     }

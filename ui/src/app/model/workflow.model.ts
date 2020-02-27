@@ -676,15 +676,10 @@ export class WNodeHook {
 }
 
 export class WorkflowPull {
-    workflow: WorkflowPullItem;
-    pipelines: Array<WorkflowPullItem>;
-    applications: Array<WorkflowPullItem>;
-    environments: Array<WorkflowPullItem>;
-}
-
-export class WorkflowPullItem {
-    name: string;
-    value: string;
+    workflow: string;
+    pipelines: Array<string>;
+    applications: Array<string>;
+    environments: Array<string>;
 }
 
 export const notificationTypes = ['jabber', 'email', 'vcs'];

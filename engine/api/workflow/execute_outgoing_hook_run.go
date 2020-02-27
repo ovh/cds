@@ -62,17 +62,17 @@ loop:
 	}
 
 	report1, _, err := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, nil, node, int(nodeRun.SubNumber), nil)
-	report.Merge(ctx, report1, err) //nolint
+	report.Merge(ctx, report1)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to processNodeOutGoingHook")
+		return nil, sdk.WrapError(err, "unable to processNodeOutGoingHook")
 	}
 
 	oldStatus := wr.Status
 	r1, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
 	if err != nil {
-		return report, sdk.WrapError(err, "processNodeOutGoingHook> Unable to compute workflow run status")
+		return report, sdk.WrapError(err, "unable to compute workflow run status")
 	}
-	report.Merge(ctx, r1, nil) // nolint
+	report.Merge(ctx, r1)
 	if wr.Status != oldStatus {
 		report.Add(ctx, wr)
 	}

@@ -5,6 +5,7 @@ import (
 	json "encoding/json"
 	"fmt"
 	"strings"
+	"text/template"
 
 	"github.com/ovh/cds/sdk/slug"
 )
@@ -35,12 +36,12 @@ func (w *WorkflowTemplateRequest) Scan(src interface{}) error {
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplateRequest")
 }
 
-// WorkflowTemplateResult struct.
-type WorkflowTemplateResult struct {
-	Workflow     string
-	Pipelines    []string
-	Applications []string
-	Environments []string
+// WorkflowTemplateParsed struct.
+type WorkflowTemplateParsed struct {
+	Workflow     *template.Template
+	Pipelines    []*template.Template
+	Applications []*template.Template
+	Environments []*template.Template
 }
 
 // WorkflowTemplate struct.
@@ -185,6 +186,17 @@ func (w *WorkflowTemplate) Update(data WorkflowTemplate) {
 	w.Environments = data.Environments
 	w.Version = w.Version + 1
 	w.ImportURL = data.ImportURL
+}
+
+func (w WorkflowTemplate) Path() string {
+	return fmt.Sprintf("%s/%s", w.Group.Name, w.Slug)
+}
+
+func (w WorkflowTemplate) PathWithVersion() string {
+	if w.Version < 1 {
+		return w.Path()
+	}
+	return fmt.Sprintf("%s@%d", w.Path(), w.Version)
 }
 
 // WorkflowTemplatesToIDs returns ids of given workflow templates.

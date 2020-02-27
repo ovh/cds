@@ -305,10 +305,25 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project %s", key)
 		}
 
-		allMsg, wrkflw, oldWrkflw, err := workflow.Push(ctx, db, api.Cache, proj, tr, pushOptions, u, project.DecryptWithBuiltinKey)
+		data, err := exportentities.UntarWorkflowComponents(ctx, tr)
 		if err != nil {
 			return err
 		}
+
+		consumer := getAPIConsumer(ctx)
+
+		wti, err := workflowtemplate.PrePush(ctx, api.mustDB(), *consumer, *proj, &data, false)
+		if err != nil {
+			return err
+		}
+		allMsg, wrkflw, oldWrkflw, err := workflow.Push(ctx, db, api.Cache, proj, data, pushOptions, u, project.DecryptWithBuiltinKey)
+		if err != nil {
+			return err
+		}
+		if err := workflowtemplate.PostPush(ctx, api.mustDB(), *wrkflw, *consumer, wti); err != nil {
+			return err
+		}
+
 		msgListString := translate(r, allMsg)
 
 		if wrkflw != nil {
@@ -320,12 +335,6 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			event.PublishWorkflowUpdate(ctx, proj.Key, *wrkflw, *oldWrkflw, u)
 		} else {
 			event.PublishWorkflowAdd(ctx, proj.Key, *wrkflw, u)
-		}
-
-		if wrkflw.Template != nil {
-			if err := workflowtemplate.SetTemplateData(ctx, api.mustDB(), proj, wrkflw, getAPIConsumer(ctx), wrkflw.Template); err != nil {
-				log.Error(ctx, "postTemplateApplyHandler> unable to set template data: %v", err)
-			}
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)

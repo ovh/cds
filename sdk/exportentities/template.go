@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	yaml "gopkg.in/yaml.v2"
@@ -173,4 +174,91 @@ func DownloadTemplate(manifestURL string, tBuf io.Writer) error {
 
 	// make sure to check the error on Close
 	return sdk.WithStack(tw.Close())
+}
+
+// ReadFromTar returns a workflow template from given tar reader.
+func ReadTemplateFromTar(tr *tar.Reader) (sdk.WorkflowTemplate, error) {
+	var wt sdk.WorkflowTemplate
+
+	// extract template data from tar
+	var apps, pips, envs [][]byte
+	var wkf []byte
+	var tmpl Template
+
+	mError := new(sdk.MultiError)
+	var templateFileName string
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return wt, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Unable to read tar file"))
+		}
+
+		buff := new(bytes.Buffer)
+		if _, err := io.Copy(buff, tr); err != nil {
+			return wt, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Unable to read tar file"))
+		}
+
+		b := buff.Bytes()
+		switch {
+		case strings.Contains(hdr.Name, ".application."):
+			apps = append(apps, b)
+		case strings.Contains(hdr.Name, ".pipeline."):
+			pips = append(pips, b)
+		case strings.Contains(hdr.Name, ".environment."):
+			envs = append(envs, b)
+		case hdr.Name == "workflow.yml":
+			// if a workflow was already found, it's a mistake
+			if len(wkf) != 0 {
+				mError.Append(fmt.Errorf("Two workflow files found"))
+				break
+			}
+			wkf = b
+		default:
+			// if a template was already found, it's a mistake
+			if templateFileName != "" {
+				mError.Append(fmt.Errorf("Two template files found: %s and %s", templateFileName, hdr.Name))
+				break
+			}
+			if err := yaml.Unmarshal(b, &tmpl); err != nil {
+				mError.Append(sdk.WrapError(err, "Unable to unmarshal template %s", hdr.Name))
+				continue
+			}
+			templateFileName = hdr.Name
+		}
+	}
+
+	if !mError.IsEmpty() {
+		return wt, sdk.NewError(sdk.ErrWorkflowInvalid, mError)
+	}
+
+	// init workflow template struct from data
+	wt = tmpl.GetTemplate(wkf, pips, apps, envs)
+
+	return wt, nil
+}
+
+type TemplateInstance struct {
+	Name       string            `json:"name,omitempty" yaml:"name,omitempty" jsonschema_description:"Name of the generated the workflow."`
+	From       string            `json:"from,omitempty" yaml:"from,omitempty" jsonschema_description:"Path of the template used to generate the workflow (ex: my-group/my-template:1)."`
+	Parameters map[string]string `json:"parameters,omitempty" yaml:"parameters,omitempty" jsonschema_description:"Optional template parameters."`
+}
+
+func (t TemplateInstance) ParseFrom() (string, string, int64, error) {
+	pathWithVersion := strings.Split(t.From, "@")
+	path := strings.Split(pathWithVersion[0], "/")
+	if len(path) < 2 {
+		return "", "", 0, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given workflow template path")
+	}
+	var version int64
+	if len(pathWithVersion) > 1 {
+		var err error
+		version, err = strconv.ParseInt(pathWithVersion[1], 10, 64)
+		if err != nil {
+			return "", "", 0, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given version %d", version))
+		}
+	}
+	return path[0], path[1], version, nil
 }

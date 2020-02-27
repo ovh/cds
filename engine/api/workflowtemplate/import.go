@@ -3,9 +3,10 @@ package workflowtemplate
 import (
 	"context"
 
+	"github.com/ovh/cds/engine/api/event"
+
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -17,6 +18,8 @@ func Push(ctx context.Context, db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u 
 		return nil, err
 	}
 	if old == nil {
+		wt.Version = 1
+
 		if err := Insert(db, wt); err != nil {
 			return nil, err
 		}
@@ -35,7 +38,7 @@ func Push(ctx context.Context, db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u 
 	clone.Update(*wt)
 
 	// execute template with no instance only to check if parsing is ok
-	if _, err := Execute(&clone, nil); err != nil {
+	if _, err := Parse(clone); err != nil {
 		return nil, err
 	}
 

@@ -359,6 +359,15 @@ func templateBulkRun(v cli.Values) error {
 	if err != nil {
 		return err
 	}
+	// filter as code workflow
+	wtisFiltered := make([]sdk.WorkflowTemplateInstance, 0, len(wtis))
+	for i := range wtis {
+		if wtis[i].Workflow.FromRepository == "" {
+			wtisFiltered = append(wtisFiltered, wtis[i])
+		}
+	}
+	wtis = wtisFiltered
+
 	mwtis := make(map[string]sdk.WorkflowTemplateInstance, len(wtis))
 	for _, i := range wtis {
 		mwtis[i.Key()] = i
@@ -479,6 +488,11 @@ func templateBulkRun(v cli.Values) error {
 				}
 			}
 		}
+	}
+
+	if len(moperations) == 0 {
+		fmt.Printf("Nothing to do")
+		return nil
 	}
 
 	// send bulk request

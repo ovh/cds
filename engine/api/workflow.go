@@ -122,7 +122,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 					return err
 				}
 				if w1.TemplateInstance.Template != nil {
-					w1.FromTemplate = fmt.Sprintf("%s/%s", w1.TemplateInstance.Template.Group.Name, w1.TemplateInstance.Template.Slug)
+					w1.FromTemplate = fmt.Sprintf("%s@%d", w1.TemplateInstance.Template.Path(), w1.TemplateInstance.WorkflowTemplateVersion)
 					w1.TemplateUpToDate = w1.TemplateInstance.Template.Version == w1.TemplateInstance.WorkflowTemplateVersion
 				}
 			}
@@ -144,7 +144,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		w1.URLs.APIURL = api.Config.URL.API + api.Router.GetRoute("GET", api.getWorkflowHandler, map[string]string{"key": key, "permWorkflowName": w1.Name})
 		w1.URLs.UIURL = api.Config.URL.UI + "/project/" + key + "/workflow/" + w1.Name
 
-		//We filter project and workflow configurtaion key, because they are always set on insertHooks
+		//We filter project and workflow configuration key, because they are always set on insertHooks
 		w1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 		return service.WriteJSON(w, w1, http.StatusOK)
 	}

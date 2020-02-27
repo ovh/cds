@@ -30,6 +30,11 @@
                         <input *ngIf="!workflowTemplate.editable || importFromURL" class="ui input" type="text"
                             name="group" [ngModel]="workflowTemplate.group?.name" [readonly]="true">
                     </div>
+                    <div class="field">
+                        <label>{{'common_version' | translate}}</label>
+                        <input class="ui input" type="text" name="version" [ngModel]="workflowTemplate.version"
+                               [disabled]="true">
+                    </div>
                 </div>
                 <div class="field">
                     <label>{{'common_description' | translate}}</label>

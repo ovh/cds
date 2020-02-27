@@ -30,13 +30,13 @@ func loadDefault(ctx context.Context, db gorp.SqlExecutor, wts ...*sdk.WorkflowT
 
 func loadAudits(ctx context.Context, db gorp.SqlExecutor, wts ...*sdk.WorkflowTemplate) error {
 	for i := range wts {
-		latestAudit, err := GetAuditLatestByTemplateID(ctx, db, wts[i].ID)
-		if err != nil {
+		latestAudit, err := LoadAuditLatestByTemplateID(ctx, db, wts[i].ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
 
-		oldestAudit, err := GetAuditOldestByTemplateID(ctx, db, wts[i].ID)
-		if err != nil {
+		oldestAudit, err := LoadAuditOldestByTemplateID(ctx, db, wts[i].ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
 

@@ -1,13 +1,10 @@
 package workflowtemplate
 
 import (
-	"archive/tar"
 	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"regexp"
 	"strconv"
 	"strings"
@@ -18,10 +15,9 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/interpolate"
-	"github.com/ovh/cds/sdk/log"
 )
 
-func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) interface{} {
+func prepareParams(wt sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) interface{} {
 	m := make(map[string]interface{}, len(wt.Parameters))
 	for _, p := range wt.Parameters {
 		v, ok := r.Parameters[p.Key]
@@ -97,21 +93,12 @@ func decodeTemplateValue(value string) (string, error) {
 	return string(v), nil
 }
 
-// Execute returns yaml file from template.
-func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (sdk.WorkflowTemplateResult, error) {
-	result := sdk.WorkflowTemplateResult{
-		Pipelines:    make([]string, len(wt.Pipelines)),
-		Applications: make([]string, len(wt.Applications)),
-		Environments: make([]string, len(wt.Environments)),
-	}
-
-	var data map[string]interface{}
-	if instance != nil {
-		data = map[string]interface{}{
-			"id":     instance.ID,
-			"name":   instance.Request.WorkflowName,
-			"params": prepareParams(wt, instance.Request),
-		}
+// Parse return a template with parsed content.
+func Parse(wt sdk.WorkflowTemplate) (sdk.WorkflowTemplateParsed, error) {
+	result := sdk.WorkflowTemplateParsed{
+		Pipelines:    make([]*template.Template, len(wt.Pipelines)),
+		Applications: make([]*template.Template, len(wt.Applications)),
+		Environments: make([]*template.Template, len(wt.Environments)),
 	}
 
 	var multiErr sdk.MultiError
@@ -120,15 +107,9 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 	if err != nil {
 		return result, err
 	}
-	if tmpl, err := parseTemplate("workflow", 0, v); err != nil {
+	result.Workflow, err = parseTemplate("workflow", 0, v)
+	if err != nil {
 		multiErr.Append(err)
-	} else {
-		if data != nil {
-			result.Workflow, err = executeTemplate(tmpl, data)
-			if err != nil {
-				return result, err
-			}
-		}
 	}
 
 	for i, p := range wt.Pipelines {
@@ -136,14 +117,9 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 		if err != nil {
 			return result, err
 		}
-
-		if tmpl, err := parseTemplate("pipeline", i, v); err != nil {
+		result.Pipelines[i], err = parseTemplate("pipeline", i, v)
+		if err != nil {
 			multiErr.Append(err)
-		} else {
-			result.Pipelines[i], err = executeTemplate(tmpl, data)
-			if err != nil {
-				return result, err
-			}
 		}
 	}
 
@@ -152,16 +128,9 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 		if err != nil {
 			return result, err
 		}
-
-		if tmpl, err := parseTemplate("application", i, v); err != nil {
+		result.Applications[i], err = parseTemplate("application", i, v)
+		if err != nil {
 			multiErr.Append(err)
-		} else {
-			if data != nil {
-				result.Applications[i], err = executeTemplate(tmpl, data)
-				if err != nil {
-					return result, err
-				}
-			}
 		}
 	}
 
@@ -170,16 +139,9 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 		if err != nil {
 			return result, err
 		}
-
-		if tmpl, err := parseTemplate("environment", i, v); err != nil {
+		result.Environments[i], err = parseTemplate("environment", i, v)
+		if err != nil {
 			multiErr.Append(err)
-		} else {
-			if data != nil {
-				result.Environments[i], err = executeTemplate(tmpl, data)
-				if err != nil {
-					return result, err
-				}
-			}
 		}
 	}
 
@@ -203,100 +165,63 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 	return result, nil
 }
 
-// Tar returns in buffer the a tar file that contains all generated stuff in template result.
-func Tar(ctx context.Context, res sdk.WorkflowTemplateResult, w io.Writer) error {
-	tw := tar.NewWriter(w)
-	defer func() {
-		if err := tw.Close(); err != nil {
-			log.Error(ctx, "%v", sdk.WrapError(err, "Unable to close tar writer"))
-		}
-	}()
+// Execute returns yaml file from template.
+func Execute(wt sdk.WorkflowTemplate, instance sdk.WorkflowTemplateInstance) (exportentities.WorkflowComponents, error) {
+	result := exportentities.WorkflowComponents{
+		Pipelines:    make([]exportentities.PipelineV1, len(wt.Pipelines)),
+		Applications: make([]exportentities.Application, len(wt.Applications)),
+		Environments: make([]exportentities.Environment, len(wt.Environments)),
+	}
 
-	// add generated workflow to writer
-	bs := []byte(res.Workflow)
-	wor, err := exportentities.UnmarshalWorkflow(bs)
+	data := map[string]interface{}{
+		"id":     instance.ID,
+		"name":   instance.Request.WorkflowName,
+		"params": prepareParams(wt, instance.Request),
+	}
+
+	parsedTemplate, err := Parse(wt)
 	if err != nil {
-		return sdk.NewError(sdk.Error{
-			ID:      sdk.ErrWrongRequest.ID,
-			Message: "Cannot parse generated workflow",
-		}, err)
-	}
-	if err := tw.WriteHeader(&tar.Header{
-		Name: fmt.Sprintf(exportentities.PullWorkflowName, wor.GetName()),
-		Mode: 0644,
-		Size: int64(len(bs)),
-	}); err != nil {
-		return sdk.WrapError(err, "Unable to write header for workflow %s", wor.GetName())
-	}
-	if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
-		return sdk.WrapError(err, "Unable to copy workflow buffer")
+		return result, err
 	}
 
-	// add generated pipelines to writer
-	for _, p := range res.Pipelines {
-		bs := []byte(p)
-		var pip exportentities.PipelineV1
-		if err := yaml.Unmarshal(bs, &pip); err != nil {
-			return sdk.NewError(sdk.Error{
-				ID:      sdk.ErrWrongRequest.ID,
-				Message: "Cannot parse generated pipeline",
-			}, err)
+	workflowYaml, err := executeTemplate(parsedTemplate.Workflow, data)
+	if err != nil {
+		return result, err
+	}
+	result.Workflow, err = exportentities.UnmarshalWorkflow([]byte(workflowYaml))
+	if err != nil {
+		return result, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot parse generated workflow"))
+	}
+
+	for i := range parsedTemplate.Pipelines {
+		pipelineYaml, err := executeTemplate(parsedTemplate.Pipelines[i], data)
+		if err != nil {
+			return result, err
 		}
-		if err := tw.WriteHeader(&tar.Header{
-			Name: fmt.Sprintf(exportentities.PullPipelineName, pip.Name),
-			Mode: 0644,
-			Size: int64(len(bs)),
-		}); err != nil {
-			return sdk.WrapError(err, "Unable to write header for pipeline %s", pip.Name)
-		}
-		if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
-			return sdk.WrapError(err, "Unable to copy pipeline buffer")
+		if err := yaml.Unmarshal([]byte(pipelineYaml), &result.Pipelines[i]); err != nil {
+			return result, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot parse generated pipeline"))
 		}
 	}
 
-	// add generated applications to writer
-	for _, a := range res.Applications {
-		bs := []byte(a)
-		var app exportentities.Application
-		if err := yaml.Unmarshal(bs, &app); err != nil {
-			return sdk.NewError(sdk.Error{
-				ID:      sdk.ErrWrongRequest.ID,
-				Message: "Cannot parse generated application",
-			}, err)
+	for i := range parsedTemplate.Applications {
+		applicationYaml, err := executeTemplate(parsedTemplate.Applications[i], data)
+		if err != nil {
+			return result, err
 		}
-		if err := tw.WriteHeader(&tar.Header{
-			Name: fmt.Sprintf(exportentities.PullApplicationName, app.Name),
-			Mode: 0644,
-			Size: int64(len(bs)),
-		}); err != nil {
-			return sdk.WrapError(err, "Unable to write header for application %s", app.Name)
-		}
-		if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
-			return sdk.WrapError(err, "Unable to copy application buffer")
+		if err := yaml.Unmarshal([]byte(applicationYaml), &result.Applications[i]); err != nil {
+			return result, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot parse generated application"))
 		}
 	}
 
-	// add generated environments to writer
-	for _, e := range res.Environments {
-		bs := []byte(e)
-		var env exportentities.Environment
-		if err := yaml.Unmarshal(bs, &env); err != nil {
-			return sdk.NewError(sdk.Error{
-				ID:      sdk.ErrWrongRequest.ID,
-				Message: "Cannot parse generated environment",
-			}, err)
+	for i := range parsedTemplate.Environments {
+		environmentYaml, err := executeTemplate(parsedTemplate.Environments[i], data)
+		if err != nil {
+			return result, err
 		}
-		if err := tw.WriteHeader(&tar.Header{
-			Name: fmt.Sprintf(exportentities.PullEnvironmentName, env.Name),
-			Mode: 0644,
-			Size: int64(len(bs)),
-		}); err != nil {
-			return sdk.WrapError(err, "Unable to write header for environment %s", env.Name)
-		}
-		if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
-			return sdk.WrapError(err, "Unable to copy environment buffer")
+		if err := yaml.Unmarshal([]byte(environmentYaml), &result.Environments[i]); err != nil {
+			return result, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot parse generated environment"))
 		}
 	}
 
-	return nil
+	return result, nil
 }

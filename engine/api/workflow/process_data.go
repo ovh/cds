@@ -66,13 +66,13 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		if err != nil {
 			return nil, false, sdk.WrapError(err, "unable to processStartFromNode")
 		}
-		report, _ = report.Merge(ctx, r1, nil)
+		report.Merge(ctx, r1)
 
 		r2, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
 		if err != nil {
 			return nil, false, sdk.WrapError(err, "unable to compute workflow run status")
 		}
-		report.Merge(ctx, r2, nil) // nolint
+		report.Merge(ctx, r2)
 
 		return report, conditionOK, nil
 	}
@@ -83,13 +83,13 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		if err != nil {
 			return nil, false, sdk.WrapError(err, "unable to processStartFromRootNode")
 		}
-		report, _ = report.Merge(ctx, r1, nil)
+		report.Merge(ctx, r1)
 
 		r2, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
 		if err != nil {
 			return nil, false, sdk.WrapError(err, "unable to compute workflow run status")
 		}
-		report.Merge(ctx, r2, nil) // nolint
+		report.Merge(ctx, r2)
 
 		return report, conditionOK, nil
 	}
@@ -98,19 +98,19 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	if errT != nil {
 		return nil, false, errT
 	}
-	report, _ = report.Merge(ctx, r1, nil)
+	report.Merge(ctx, r1)
 
 	r2, errJ := processAllJoins(ctx, db, store, proj, wr, mapNodes)
 	if errJ != nil {
 		return nil, false, errJ
 	}
-	report, _ = report.Merge(ctx, r2, nil)
+	report.Merge(ctx, r2)
 
 	r1, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
 	if err != nil {
 		return nil, false, sdk.WrapError(err, "unable to compute workflow run status")
 	}
-	report.Merge(ctx, r1, nil) // nolint
+	report.Merge(ctx, r1)
 
 	return report, true, nil
 }

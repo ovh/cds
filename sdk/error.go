@@ -588,15 +588,18 @@ type Error struct {
 }
 
 func (e Error) Error() string {
+	var message string
 	if e.Message != "" {
-		return e.Message
+		message = e.Message
+	} else if en, ok := errorsAmericanEnglish[e.ID]; ok {
+		message = en
+	} else {
+		message = errorsAmericanEnglish[ErrUnknownError.ID]
 	}
-
-	if en, ok := errorsAmericanEnglish[e.ID]; ok {
-		return en
+	if e.from != "" {
+		message = fmt.Sprintf("%s (from: %s)", message, e.from)
 	}
-
-	return errorsAmericanEnglish[ErrUnknownError.ID]
+	return message
 }
 
 func (e Error) Translate(al string) string {
@@ -652,7 +655,8 @@ type errorWithStack struct {
 
 func (w errorWithStack) Error() string {
 	var cause string
-	if w.root.Error() != "" {
+	root := w.root.Error()
+	if root != "" && root != w.httpError.from {
 		cause = fmt.Sprintf(" (caused by: %s)", w.root)
 	}
 	return fmt.Sprintf("%s: %s%s", w.stack.String(), w.httpError, cause)
@@ -734,7 +738,7 @@ func NewError(httpError Error, err error) error {
 
 	// if it's already an error with stack, override the http error and set from value with err cause
 	if e, ok := err.(errorWithStack); ok {
-		httpError.from = Cause(e).Error()
+		httpError.from = e.httpError.from
 		e.httpError = httpError
 		return e
 	}
@@ -842,10 +846,6 @@ func ExtractHTTPError(source error, al string) Error {
 	// else set message for given accepted languages.
 	if httpError.Message == "" {
 		httpError.Message = httpError.Translate(al)
-	}
-
-	if httpError.from != "" {
-		httpError.Message = fmt.Sprintf("%s (from: %s)", httpError.Message, httpError.from)
 	}
 
 	return httpError

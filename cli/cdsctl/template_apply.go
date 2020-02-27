@@ -167,6 +167,7 @@ func templateApplyRun(v cli.Values) error {
 
 	importPush := v.GetBool("import-push")
 	importAsCode := v.GetBool("import-as-code")
+	detached := v.GetBool("detach")
 
 	// try to find existing .git repository
 	var localRepoURL string
@@ -259,7 +260,7 @@ func templateApplyRun(v cli.Values) error {
 			}
 		}
 
-		if !importAsCode && !importPush {
+		if !importAsCode && !importPush && !detached {
 			if localRepoURL != "" {
 				importAsCode = cli.AskConfirm(fmt.Sprintf("Import the generated workflow as code to the %s project", projectKey))
 			}
@@ -286,7 +287,7 @@ func templateApplyRun(v cli.Values) error {
 		ProjectKey:   projectKey,
 		WorkflowName: workflowName,
 		Parameters:   params,
-		Detached:     v.GetBool("detach"),
+		Detached:     detached,
 	}
 	if err := wt.CheckParams(req); err != nil {
 		return err

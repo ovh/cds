@@ -52,8 +52,19 @@ func SetLogger(l Logger) {
 	logger = l
 }
 
-func logWithLogger(level, format string, values ...interface{}) {
-	logger.Logf("["+level+"] "+format, values...)
+func logWithLogger(level string, fields log.Fields, format string, values ...interface{}) {
+	var fString string
+	for k, m := range fields {
+		if k != "stack_trace" {
+			fString = fmt.Sprintf("%s %s:%v", fString, k, m)
+		}
+	}
+	logger.Logf("["+level+"] "+format+fString, values...)
+	if fields != nil {
+		if v, ok := fields["stack_trace"]; ok {
+			logger.Logf("%s", v)
+		}
+	}
 }
 
 // Initialize init log level
@@ -138,7 +149,7 @@ func Initialize(conf *Conf) {
 // Debug prints debug log
 func Debug(format string, values ...interface{}) {
 	if logger != nil {
-		logWithLogger("DEBUG", format, values...)
+		logWithLogger("DEBUG", nil, format, values...)
 		return
 	}
 	log.Debugf(format, values...)
@@ -157,7 +168,7 @@ func Info(ctx context.Context, format string, values ...interface{}) {
 // InfoWithFields print info log with given logrus fields.
 func InfoWithFields(ctx context.Context, fields log.Fields, format string, values ...interface{}) {
 	if logger != nil {
-		logWithLogger("INFO", format, values...)
+		logWithLogger("INFO", fields, format, values...)
 		return
 	}
 	newEntry(ctx, fields).Infof(format, values...)
@@ -171,7 +182,7 @@ func Warning(ctx context.Context, format string, values ...interface{}) {
 // WarningWithFields print warning log with given logrus fields.
 func WarningWithFields(ctx context.Context, fields log.Fields, format string, values ...interface{}) {
 	if logger != nil {
-		logWithLogger("WARN", format, values...)
+		logWithLogger("WARN", fields, format, values...)
 		return
 	}
 	newEntry(ctx, fields).Warningf(format, values...)
@@ -185,7 +196,7 @@ func Error(ctx context.Context, format string, values ...interface{}) {
 // ErrorWithFields print error log with given logrus fields.
 func ErrorWithFields(ctx context.Context, fields log.Fields, format string, values ...interface{}) {
 	if logger != nil {
-		logWithLogger("ERROR", format, values...)
+		logWithLogger("ERROR", fields, format, values...)
 		return
 	}
 	newEntry(ctx, fields).Errorf(format, values...)
@@ -194,7 +205,7 @@ func ErrorWithFields(ctx context.Context, fields log.Fields, format string, valu
 // Fatalf prints fatal informations, then os.Exit(1)
 func Fatalf(format string, values ...interface{}) {
 	if logger != nil {
-		logWithLogger("FATAL", format, values...)
+		logWithLogger("FATAL", nil, format, values...)
 		return
 	}
 	log.Fatalf(format, values...)

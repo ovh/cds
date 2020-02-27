@@ -73,7 +73,7 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 			report.Add(ctx, wr)
 			return report, sdk.WithStack(sdk.ErrConditionsNotOk)
 		}
-		report.Merge(ctx, r1, nil) // nolint
+		report.Merge(ctx, r1)
 	}
 	return report, nil
 }
@@ -84,9 +84,9 @@ func manualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 
 	r1, condOk, err := processWorkflowDataRun(ctx, db, store, proj, wr, nil, e, &nodeID)
 	if err != nil {
-		return report, sdk.WrapError(err, "Unable to process workflow run")
+		return report, sdk.WrapError(err, "unable to process workflow run")
 	}
-	_, _ = report.Merge(ctx, r1, nil)
+	report.Merge(ctx, r1)
 	if !condOk {
 		return report, sdk.WithStack(sdk.ErrConditionsNotOk)
 	}
@@ -121,7 +121,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, pr
 		if err != nil {
 			return nil, err
 		}
-		report.Merge(ctx, r1, nil) // nolint
+		report.Merge(ctx, r1)
 	} else {
 		// Manual RUN
 		if opts.Manual == nil {
@@ -149,7 +149,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, pr
 			if errmr != nil {
 				return report, errmr
 			}
-			report.Merge(ctx, r1, nil) // nolint
+			report.Merge(ctx, r1)
 		} else {
 			// heck permission fo workflow node on handler layer
 			// MANUAL RUN FROM ROOT NODE
@@ -161,7 +161,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, pr
 			if errmr != nil {
 				return nil, errmr
 			}
-			report.Merge(ctx, r1, nil) // nolint
+			report.Merge(ctx, r1)
 		}
 	}
 
@@ -179,7 +179,7 @@ func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 	defer end()
 
 	if err := IsValid(ctx, store, db, &wr.Workflow, proj, LoadOptions{DeepPipeline: true}); err != nil {
-		return nil, sdk.WrapError(err, "Unable to valid workflow")
+		return nil, sdk.WrapError(err, "unable to valid workflow")
 	}
 
 	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
@@ -190,7 +190,7 @@ func manualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 	if errWR != nil {
 		return report, errWR
 	}
-	_, _ = report.Merge(ctx, r1, nil)
+	report.Merge(ctx, r1)
 	if !hasRun {
 		return report, sdk.WithStack(sdk.ErrConditionsNotOk)
 	}
