@@ -34,7 +34,9 @@ export function activate(context: ExtensionContext) {
     commands.registerCommand("extension.vsCdsRefreshExplorerQueue", () => queueExplorer.refresh()),
         window.registerTreeDataProvider("extension.vsCdsExplorerQueue", queueExplorer);
 
-    refreshQueueView = setInterval(() => queueExplorer.refresh(), 5000);
+    if ((Property.get("autoRefreshQueueSeconds") || -1 ) > 0) {
+        refreshQueueView = setInterval(() => queueExplorer.refresh(), 5000);
+    }
 }
 
 export function deactivate() {
@@ -51,20 +53,20 @@ async function addNewConfig(cdsconfig?: string): Promise<void> {
 
 async function getCdsconfigSelection(cdsconfig?: string): Promise<string | undefined> {
     const addNewCDSConfigFile = "+ Add new cds config file";
-
+ 
     if (cdsconfig) {
         return cdsconfig;
     }
-    const knownCdsconfigs = Property.get("knownCdsconfigs") || [];
-    const picks = [addNewCDSConfigFile, ...knownCdsconfigs!];
+    const cdsrcs = Property.get("cdsrcs") || [];
+    const picks = [addNewCDSConfigFile, ...cdsrcs!];
     const pick = await window.showQuickPick(picks);
 
     if (pick === addNewCDSConfigFile) {
         const cdsconfigUris = await window.showOpenDialog({});
         if (cdsconfigUris && cdsconfigUris.length === 1) {
             const cdsconfigPath = cdsconfigUris[0].fsPath;
-            knownCdsconfigs.push(cdsconfigPath);
-            Property.set("knownCdsconfigs", knownCdsconfigs);
+            cdsrcs.push(cdsconfigPath);
+            Property.set("cdsrcs", cdsrcs);
             return cdsconfigPath;
         }
         return undefined;
@@ -86,7 +88,7 @@ async function vsCdsremoveConfigFile(explorerNode: CDSObject) {
     if (CDSExt.getInstance().currentContext === contextObj) {
         CDSExt.getInstance().currentContext = undefined;
     }
-    Property.delete("knownCdsconfigs", contextObj.cdsctl.getConfigFile());
+    Property.delete("cdsrcs", contextObj.cdsctl.getConfigFile());
     refreshExplorer();
 }
 

@@ -116,12 +116,13 @@ class CDSContextNode implements CDSObject {
 }
 
 export async function discoverContexts(): Promise<CDSContext[]> {
-    const cdsConfigs = Property.get("knownCdsconfigs");
+    const cdsConfigs = Property.get("cdsrcs");
     if (!cdsConfigs) {
         return [];
     }
 
-    const allContextes: CDSContext[][] = await Promise.all(cdsConfigs.map(async (configFile): Promise<CDSContext[]> => {
+    const allContextes: CDSContext[][] = await Promise.all(cdsConfigs.map(async (configFileIn): Promise<CDSContext[]> => {
+        const configFile = Property.getConfigFileName(configFileIn);
         const config = toml.parse(fs.readFileSync(configFile, 'utf-8'));
         const ctxs = new Array<CDSContext>();
         let current: string = "";

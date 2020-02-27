@@ -2,11 +2,10 @@ import { ConfigurationTarget, workspace } from "vscode";
 import { LogCategory } from "./util.journal";
 
 interface IPropertiesMap {
-    "binaryFileLocation": string;
     "logLevel": LogCategory[];
-    "progressSpinner": string[];
     "statusBarPositionPriority": number;
-    "knownCdsconfigs": string[];
+    "cdsrcs": string[];
+    "autoRefreshQueueSeconds": number;
 }
 
 export class Property {
@@ -28,5 +27,13 @@ export class Property {
             v.splice(index, 1);
         }
         Property.set(name, v as never);
+    }
+
+    public static getConfigFileName(configFile: string) {
+        if (configFile.startsWith("~")) {
+            const homedir = require('os').homedir();
+            configFile = homedir + configFile.substring(1);
+        }
+        return configFile;
     }
 }

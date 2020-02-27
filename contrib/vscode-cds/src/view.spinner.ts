@@ -1,4 +1,3 @@
-import { Property } from "./util.property";
 
 export class Spinner {
     private state: number = 0;
@@ -25,11 +24,6 @@ export class Spinner {
     }
 
     private getStates(): string[] {
-        const states = Property.get("progressSpinner");
-
-        if (states) {
-            return states;
-        }
         return ["$(sync~spin)"];
     }
 }

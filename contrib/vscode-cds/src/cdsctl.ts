@@ -14,7 +14,7 @@ export class CdsCtl {
     private initialized: boolean;
 
     constructor(configFile: string, contextName: string) {
-        this.configFile = configFile;
+        this.configFile = Property.getConfigFileName(configFile);
         this.contextName = contextName;
         this.configUiURL = undefined;
         this.initialized = false;
@@ -132,9 +132,7 @@ export class CdsCtl {
     }
 
     public buildRawCDSCommand(cmd: string): string {
-        const rootCmd = Property.get("binaryFileLocation") || "cdsctl";
-        const configFile = this.configFile || "~/.cdsrc";
-        return `${rootCmd} -f ${configFile} -c ${this.contextName} ${cmd}`;
+        return `cdsctl -f ${this.configFile} -c ${this.contextName} ${cmd}`;
     }
 
     private buildCDSCommand(cmd: string): string {
