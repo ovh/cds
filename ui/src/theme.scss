@@ -29,21 +29,21 @@ $darkTheme_night_orange: #9e4607;
 
 a,
 .ui.breadcrumb a,
-.ui.list > a.item {
+.ui.list>a.item {
     .night & {
         color: #49a7ff;
     }
 }
 
-.ui.list .list > .disabled.item,
-.ui.list > .disabled.item {
+.ui.list .list>.disabled.item,
+.ui.list>.disabled.item {
     .night & {
         color: $darkTheme_grey_4 !important;
     }
 }
 
-.ui.list > .item > .content,
-.ui.list > .item > .content > .description {
+.ui.list>.item>.content,
+.ui.list>.item>.content>.description {
     .night & {
         color: $darkTheme_grey_6;
     }
@@ -68,7 +68,7 @@ a,
     }
 }
 
-.ui.cards > .card {
+.ui.cards>.card {
     .night & {
         background-color: $darkTheme_grey_0;
         box-shadow: 0px 1px 3px 0px $darkTheme_grey_2,
@@ -76,14 +76,14 @@ a,
     }
 }
 
-.ui.cards > .card > .content > .header {
+.ui.cards>.card>.content>.header {
     .night & {
         color: $darkTheme_grey_5;
     }
 }
 
-.ui.cards > .card .meta,
-.ui.cards > .card > .content > .description {
+.ui.cards>.card .meta,
+.ui.cards>.card>.content>.description {
     .night & {
         color: $darkTheme_grey_6;
     }
@@ -100,7 +100,7 @@ a.ui.card:hover,
     }
 }
 
-.ui.card > .content > .header {
+.ui.card>.content>.header {
     .night & {
         color: $darkTheme_grey_6;
     }
@@ -121,7 +121,7 @@ a.ui.card:hover,
     }
 }
 
-.ui.selection.dropdown .menu > .item {
+.ui.selection.dropdown .menu>.item {
     .night & {
         border-color: $darkTheme_grey_2;
     }
@@ -206,13 +206,13 @@ a.ui.card:hover,
     }
 }
 
-.ui.form .field > label {
+.ui.form .field>label {
     .night & {
         color: $darkTheme_grey_6;
     }
 }
 
-.ui.form .inline.fields .field > label {
+.ui.form .inline.fields .field>label {
     .night & {
         color: $darkTheme_grey_6;
     }
@@ -427,8 +427,7 @@ a.ui.basic.grey.label:hover {
 .table {
     background-color: transparent !important;
 
-    .night &,
-    :host-context(.night) & {
+    .night & {
         color: $darkTheme_grey_6;
     }
 }
@@ -438,22 +437,20 @@ a.ui.basic.grey.label:hover {
     color: grey;
     background-color: transparent !important;
 
-    .night &,
-    :host-context(.night) & {
+    .night & {
         color: $darkTheme_grey_6;
     }
 }
+
 .ui.table tr.active {
-    .night &,
-    :host-context(.night) & {
+    .night & {
         background-color: $darkTheme_grey_4 !important;
         color: $darkTheme_grey_6;
     }
 }
 
 .ui.popup {
-    .night &,
-    :host-context(.night) & {
+    .night & {
         background-color: $darkTheme_grey_1;
         border-color: $darkTheme_grey_5;
         color: $darkTheme_grey_6;
@@ -465,18 +462,16 @@ a.ui.basic.grey.label:hover {
 }
 
 .ui.modal,
-.ui.modal > .content {
-    .night &,
-    :host-context(.night) & {
+.ui.modal>.content {
+    .night & {
         background-color: $darkTheme_grey_1;
     }
 }
 
-.ui.modal > .header,
-.ui.modal > .actions,
+.ui.modal>.header,
+.ui.modal>.actions,
 .ui.dropdown .menu {
-    .night &,
-    :host-context(.night) & {
+    .night & {
         background-color: $darkTheme_grey_0;
         color: $darkTheme_grey_5;
 
@@ -486,27 +481,25 @@ a.ui.basic.grey.label:hover {
     }
 }
 
-.ui.modal > .close {
-    .night &,
-    :host-context(.night) & {
+.ui.modal>.close {
+    .night & {
         color: $darkTheme_grey_5;
     }
 }
 
 .ui.menu .dropdown.item .menu {
-    .night &,
-    :host-context(.night) & {
+    .night & {
         background-color: $darkTheme_grey_0;
     }
 }
 
-.ui.menu .dropdown.item .menu > .item {
+.ui.menu .dropdown.item .menu>.item {
     .night & {
         color: $darkTheme_grey_6 !important;
     }
 }
 
-.ui.toggle.checkbox input:checked ~ label,
+.ui.toggle.checkbox input:checked~label,
 .ui.toggle.checkbox label,
 .ui.checkbox label {
     .night & {
@@ -561,19 +554,19 @@ a.ui.basic.grey.label:hover {
     }
 }
 
-.ui.search > .results .result .title {
+.ui.search>.results .result .title {
     .night & {
         color: $darkTheme_grey_5;
     }
 }
 
-.ui.search > .results .result:hover {
+.ui.search>.results .result:hover {
     .night & {
         background-color: $darkBackground;
     }
 }
 
-.ui.search > .results {
+.ui.search>.results {
     .night & {
         background-color: $darkTheme_grey_0;
         border-color: $darkTheme_grey_1;
