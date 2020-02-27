@@ -10,6 +10,7 @@ import { Project } from "./models/project";
 import { WNode, Workflow } from "./models/workflow";
 import { Action, Stage, WorkflowNodeJobRun, WorkflowNodeRun, WorkflowRun } from "./models/workflow_run";
 import { Property } from "./util.property";
+import { Journal } from './util.journal';
 
 export interface CDSObject {
     readonly label: string;
@@ -116,6 +117,7 @@ class CDSContextNode implements CDSObject {
 }
 
 export async function discoverContexts(): Promise<CDSContext[]> {
+    const results = new Array<CDSContext>();
     const cdsConfigs = Property.get("cdsrcs");
     if (!cdsConfigs) {
         return [];
@@ -123,6 +125,15 @@ export async function discoverContexts(): Promise<CDSContext[]> {
 
     const allContextes: CDSContext[][] = await Promise.all(cdsConfigs.map(async (configFileIn): Promise<CDSContext[]> => {
         const configFile = Property.getConfigFileName(configFileIn);
+        try {
+            if (!fs.existsSync(configFile)) {
+                return results;
+            }
+        } catch (err) {
+            Journal.logInfo(`file ${configFile} does not exist`);
+            Journal.logError(err);
+        }
+
         const config = toml.parse(fs.readFileSync(configFile, 'utf-8'));
         const ctxs = new Array<CDSContext>();
         let current: string = "";
@@ -142,7 +153,6 @@ export async function discoverContexts(): Promise<CDSContext[]> {
         return ctxs;
     }));
 
-    const results = new Array<CDSContext>();
     allContextes.forEach((ctxs) => {
         ctxs.forEach((ctx) => {
             results.push(ctx);
