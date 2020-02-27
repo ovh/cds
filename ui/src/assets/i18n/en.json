@@ -874,6 +874,7 @@
   "workflow_notification_email_user": "Mails",
   "workflow_notification_form": "Add a notification",
   "workflow_notification_copy": "Copy",
+  "workflow_notification_vcs_status_enabled": "Send status on commit",
   "workflow_notification_vcs_comment_enabled": "Pull-request's comment enabled",
   "workflow_notification_vcs_comment_always": "Always send",
   "workflow_notification_vcs_pr_comment_body": "Pull-request's comment body",

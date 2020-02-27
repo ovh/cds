@@ -868,6 +868,7 @@
   "workflow_notification_to_group": "Envoyer au groupe",
   "workflow_notification_to_initiator": "Envoyer à l'initiateur",
   "workflow_notification_type": "Type de notification",
+  "workflow_notification_vcs_status_enabled": "Envoyer un status sur le commit",
   "workflow_notification_vcs_comment_always": "Toujours envoyer",
   "workflow_notification_vcs_comment_enabled": "Commentaire de pull-request activé",
   "workflow_notification_vcs_pr_comment_body": "Contenu du commentaire de pull-request",
