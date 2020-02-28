@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/namesgenerator"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 type workerStarterRequest struct {
@@ -228,10 +228,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 
 // a worker name must be 60 char max, without '.' and '_', "/" -> replaced by '-'
 func generateWorkerName(hatcheryName string, isRegister bool, model string) string {
-	ret := strings.ToLower(generateWorkerNameRandom(hatcheryName, isRegister, model))
-	ret = strings.Replace(ret, "/", "-", -1)
-	ret = strings.Replace(ret, ".", "-", -1)
-	return strings.Replace(ret, "_", "-", -1)
+	return slug.Convert(generateWorkerNameRandom(hatcheryName, isRegister, model))
 }
 
 func generateWorkerNameRandom(hatcheryName string, isRegister bool, modelName string) string {
