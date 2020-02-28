@@ -49,7 +49,7 @@ testcases:
           - result.code ShouldEqual 0
       - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow export ITSCWRKFLW16 ITSCWRKFLW16-WORKFLOW --format json"
         assertions:
-          - result.systemoutjson.pipeline_hooks.pipeline_hooks0.config.cron ShouldEqual '20 * * * *'
+          - result.systemoutjson.hooks.ITSCWRKFLW16-PIPELINE.config.cron ShouldEqual '20 * * * *'
 
   - name: get-updated-workflow
     steps:
