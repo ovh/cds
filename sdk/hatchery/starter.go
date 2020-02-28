@@ -227,11 +227,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 }
 
 // a worker name must be 60 char max, without '.' and '_', "/" -> replaced by '-'
-func generateWorkerName(hatcheryName string, isRegister bool, model string) string {
-	return slug.Convert(generateWorkerNameRandom(hatcheryName, isRegister, model))
-}
-
-func generateWorkerNameRandom(hatcheryName string, isRegister bool, modelName string) string {
+func generateWorkerName(hatcheryName string, isRegister bool, modelName string) string {
 	prefix := ""
 	if isRegister {
 		prefix = "register-"
@@ -243,25 +239,25 @@ func generateWorkerNameRandom(hatcheryName string, isRegister bool, modelName st
 	workerName := fmt.Sprintf("%s%s-%s-%s", prefix, hatcheryName, modelName, random)
 
 	if len(workerName) <= maxLength {
-		return workerName
+		return slug.Convert(workerName)
 	}
 	if len(hName) > 10 {
 		hName = ""
 	}
 	workerName = fmt.Sprintf("%s%s%s-%s", prefix, hName, modelName, random)
 	if len(workerName) <= maxLength {
-		return workerName
+		return slug.Convert(workerName)
 	}
 	if len(modelName) > 15 {
 		modelName = modelName[:15]
 	}
 	workerName = fmt.Sprintf("%s%s%s-%s", prefix, hName, modelName, random)
 	if len(workerName) <= maxLength {
-		return workerName
+		return slug.Convert(workerName)
 	}
 
 	if len(workerName) > maxLength {
-		return workerName[:maxLength]
+		return slug.Convert(workerName[:maxLength])
 	}
-	return workerName
+	return slug.Convert(workerName)
 }
