@@ -84,7 +84,6 @@ Example of an installation for a production with 18.000 jobs launched per day:
   - Redis: 128Mo
 - 3x `$engine start ui`
   - RAM: 128Mo per instance
-  - Redis: 128Mo
 - 3x `$engine start hooks`
   - RAM: 256Mo per instance
   - Redis: 256Mo
@@ -95,8 +94,6 @@ Example of an installation for a production with 18.000 jobs launched per day:
   - RAM: 256Mo per instance
 - 1x `$engine start repositories`
   - RAM: 256Mo per instance
-- 3x `$engine start ui`
-  - RAM: 128Mo per instance
-- 3x `$engine start migrate`
+- 1x `$engine start migrate`
   - RAM: 128Mo per instance
 - hatcheries: 256Mo per instance

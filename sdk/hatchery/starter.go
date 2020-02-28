@@ -73,7 +73,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			// this counter is reset with func workerRegister
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
 			arg := SpawnArguments{
-				WorkerName:   fmt.Sprintf("register-%s-%s-%s", h.Service().Name, strings.Replace(strings.ToLower(m.Name), "/", "-", -1), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+				WorkerName:   generateWorkerName(h.Service().Name, true, m.Name),
 				Model:        m,
 				RegisterOnly: true,
 				HatcheryName: h.Service().Name,
@@ -171,7 +171,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 
 	_, next = observability.Span(ctxJob, "hatchery.SpawnWorker")
 	arg := SpawnArguments{
-		WorkerName:   fmt.Sprintf("%s-%s-%s", h.Service().Name, strings.Replace(strings.ToLower(modelName), "/", "-", -1), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)),
+		WorkerName:   generateWorkerName(h.Service().Name, false, modelName),
 		Model:        j.model,
 		JobID:        j.id,
 		Requirements: j.requirements,
@@ -224,4 +224,41 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		next()
 	}
 	return true // ok for this job
+}
+
+// a worker name must be 60 char max, without '.' and '_' -> replaced by '-'
+func generateWorkerName(hatcheryName string, isRegister bool, model string) string {
+	prefix := ""
+	if isRegister {
+		prefix = "register-"
+	}
+
+	maxLength := 63
+	hName := strings.Replace(strings.ToLower(hatcheryName), "/", "-", -1) + "-"
+	modelName := strings.Replace(strings.ToLower(model), "/", "-", -1)
+	random := strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)
+	workerName := strings.Replace(fmt.Sprintf("%s%s-%s-%s", prefix, hatcheryName, modelName, random), ".", "-", -1)
+
+	if len(workerName) <= maxLength {
+		return workerName
+	}
+	if len(hName) > 10 {
+		hName = ""
+	}
+	workerName = fmt.Sprintf("%s%s%s-%s", prefix, hName, modelName, random)
+	if len(workerName) <= maxLength {
+		return workerName
+	}
+	if len(modelName) > 15 {
+		modelName = modelName[:15]
+	}
+	workerName = fmt.Sprintf("%s%s%s-%s", prefix, hName, modelName, random)
+	if len(workerName) <= maxLength {
+		return workerName
+	}
+
+	if len(workerName) > maxLength {
+		return workerName[:maxLength]
+	}
+	return workerName
 }

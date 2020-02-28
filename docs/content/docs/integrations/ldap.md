@@ -15,7 +15,7 @@ Edit the toml file:
 
 - section `[api.auth.ldap]`
   - enable the signin with `enabled = true`
-  - if you want to let user signup with GitHub, set `signupDisabled = true`
+  - if you want to disable signup, set `signupDisabled = true`
 
 ```toml
 [api.auth.ldap]

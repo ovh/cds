@@ -41,7 +41,7 @@ Edit the toml file:
 - section `[api.auth.gitlab]`
   - set a value to `applicationID` and `secret`
   - enable the signin with `enabled = true`
-  - if you want to let user signup with GitHub, set `signupDisabled = true`
+  - if you want to disable signup with GitLab, set `signupDisabled = true`
   
 ```toml
 [api.auth.gitlab]
