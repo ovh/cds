@@ -243,13 +243,7 @@ func interactiveChoosePipeline(pkey, defaultPipeline string) (string, *sdk.Pipel
 
 func craftWorkflowFile(workflowName, appName, pipName, destinationDir string) (string, error) {
 	// Crafting the workflow
-	wkflw := exportentities.Workflow{
-		Version:         exportentities.WorkflowVersion1,
-		Name:            workflowName,
-		ApplicationName: appName,
-		PipelineName:    pipName,
-	}
-
+	wkflw := exportentities.InitWorkflow(workflowName, appName, pipName)
 	b, err := exportentities.Marshal(wkflw, exportentities.FormatYAML)
 	if err != nil {
 		return "", fmt.Errorf("Unable to write workflow file format: %v", err)

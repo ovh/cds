@@ -130,7 +130,7 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 	t.Logf(">>%s", rec.Body.String())
 
 	assert.Equal(t, `name: test_1
-version: v1.0
+version: v2.0
 workflow:
   fork:
     depends_on:
@@ -263,7 +263,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	t.Logf(">>%s", rec.Body.String())
 
 	assert.Equal(t, `name: test_1
-version: v1.0
+version: v2.0
 workflow:
   pip1:
     pipeline: pip1

@@ -122,3 +122,16 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, opts Options) (Workflow, e
 	}
 	return workflowToExport, nil
 }
+
+func InitWorkflow(workName, appName, pipName string) Workflow {
+	return v2.Workflow{
+		Version: WorkflowVersion2,
+		Name:    workName,
+		Workflow: map[string]v2.NodeEntry{
+			pipName: {
+				ApplicationName: appName,
+				PipelineName:    pipName,
+			},
+		},
+	}
+}
