@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/sdk"
 )
 
 func TestPullRequests(t *testing.T) {
@@ -24,6 +25,8 @@ func TestPullRequestComment(t *testing.T) {
 	assert.NotEmpty(t, prs)
 	t.Logf("%v", prs)
 	if len(prs) > 0 {
-		test.NoError(t, client.PullRequestComment(context.Background(), "CDS/images", prs[0].ID, "this is a test"))
+		r := sdk.VCSPullRequestCommentRequest{Message: "this is a test"}
+		r.ID = prs[0].ID
+		test.NoError(t, client.PullRequestComment(context.Background(), "CDS/images", r))
 	}
 }
