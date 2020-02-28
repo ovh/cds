@@ -20,7 +20,7 @@ Edit the [toml configuration file]({{<relref "/hosting/configuration.md" >}}):
 
 - section `[api.auth.local]`
   - enable the signin with `enabled = true`
-  - if you want to let user signup with GitHub, set `signupDisabled = true`
+  - if you want to disable signup, set `signupDisabled = true`
   - you can authorize only some domains with the key `signupAllowedDomains`
   
 ```toml

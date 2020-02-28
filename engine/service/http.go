@@ -111,20 +111,13 @@ func WriteError(ctx context.Context, w http.ResponseWriter, r *http.Request, err
 	httpErr := sdk.ExtractHTTPError(err, al)
 	isErrWithStack := sdk.IsErrorWithStack(err)
 
-	fields := logrus.Fields{
-		"method":      r.Method,
-		"request_uri": r.RequestURI,
-		"status":      httpErr.Status,
-	}
+	fields := logrus.Fields{}
 	if isErrWithStack {
 		fields["stack_trace"] = fmt.Sprintf("%+v", err)
 	}
 
-	// ErrAlreadyTaken and ErrWorkerModelAlreadyBooked are not useful to log in warning
-	if sdk.ErrorIs(httpErr, sdk.ErrAlreadyTaken) ||
-		sdk.ErrorIs(httpErr, sdk.ErrWorkerModelAlreadyBooked) ||
-		sdk.ErrorIs(httpErr, sdk.ErrJobAlreadyBooked) || r.URL.Path == "/user/logged" {
-		log.WarningWithFields(ctx, fields, "%s", err)
+	if httpErr.Status < 500 {
+		log.InfoWithFields(ctx, fields, "%s", err)
 	} else {
 		log.ErrorWithFields(ctx, fields, "%s", err)
 	}
