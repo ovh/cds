@@ -823,8 +823,8 @@ func (api *API) getActionBuiltinUsageHandler() service.Handler {
 	}
 }
 
-func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, a *sdk.Action) (action.Usage, error) {
-	var usage action.Usage
+func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, a *sdk.Action) (sdk.ActionUsages, error) {
+	var usage sdk.ActionUsages
 	var err error
 	usage.Pipelines, err = action.GetPipelineUsages(db, group.SharedInfraGroup.ID, a.ID)
 	if err != nil {
@@ -848,7 +848,7 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			mProjectIDs[ps[i].ID] = struct{}{}
 		}
 
-		filteredPipelines := make([]action.UsagePipeline, 0, len(usage.Pipelines))
+		filteredPipelines := make([]sdk.UsagePipeline, 0, len(usage.Pipelines))
 		for i := range usage.Pipelines {
 			if _, ok := mProjectIDs[usage.Pipelines[i].ProjectID]; ok {
 				filteredPipelines = append(filteredPipelines, usage.Pipelines[i])
@@ -863,7 +863,7 @@ func getActionUsage(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			mGroupIDs[groupIDs[i]] = struct{}{}
 		}
 
-		filteredActions := make([]action.UsageAction, 0, len(usage.Actions))
+		filteredActions := make([]sdk.UsageAction, 0, len(usage.Actions))
 		for i := range usage.Actions {
 			if _, ok := mGroupIDs[usage.Actions[i].GroupID]; ok {
 				filteredActions = append(filteredActions, usage.Actions[i])

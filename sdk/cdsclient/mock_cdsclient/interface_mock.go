@@ -1800,6 +1800,26 @@ func (mr *MockActionClientMockRecorder) ActionGet(groupName, name interface{}, m
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ActionGet", reflect.TypeOf((*MockActionClient)(nil).ActionGet), varargs...)
 }
 
+// ActionUsage mocks base method
+func (m *MockActionClient) ActionUsage(groupName, name string, mods ...cdsclient.RequestModifier) (*sdk.ActionUsages, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{groupName, name}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ActionUsage", varargs...)
+	ret0, _ := ret[0].(*sdk.ActionUsages)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ActionUsage indicates an expected call of ActionUsage
+func (mr *MockActionClientMockRecorder) ActionUsage(groupName, name interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{groupName, name}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ActionUsage", reflect.TypeOf((*MockActionClient)(nil).ActionUsage), varargs...)
+}
+
 // ActionList mocks base method
 func (m *MockActionClient) ActionList() ([]sdk.Action, error) {
 	m.ctrl.T.Helper()
@@ -4469,6 +4489,26 @@ func (mr *MockInterfaceMockRecorder) ActionGet(groupName, name interface{}, mods
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{groupName, name}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ActionGet", reflect.TypeOf((*MockInterface)(nil).ActionGet), varargs...)
+}
+
+// ActionUsage mocks base method
+func (m *MockInterface) ActionUsage(groupName, name string, mods ...cdsclient.RequestModifier) (*sdk.ActionUsages, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{groupName, name}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ActionUsage", varargs...)
+	ret0, _ := ret[0].(*sdk.ActionUsages)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ActionUsage indicates an expected call of ActionUsage
+func (mr *MockInterfaceMockRecorder) ActionUsage(groupName, name interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{groupName, name}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ActionUsage", reflect.TypeOf((*MockInterface)(nil).ActionUsage), varargs...)
 }
 
 // ActionList mocks base method

@@ -35,6 +35,17 @@ func (c *client) ActionGet(groupName, name string, mods ...RequestModifier) (*sd
 	return &a, nil
 }
 
+func (c *client) ActionUsage(groupName, name string, mods ...RequestModifier) (*sdk.ActionUsages, error) {
+	var a sdk.ActionUsages
+
+	path := fmt.Sprintf("/action/%s/%s/usage", groupName, name)
+	if _, err := c.GetJSON(context.Background(), path, &a, mods...); err != nil {
+		return nil, err
+	}
+
+	return &a, nil
+}
+
 func (c *client) ActionList() ([]sdk.Action, error) {
 	actions := []sdk.Action{}
 	if _, err := c.GetJSON(context.Background(), "/action", &actions); err != nil {

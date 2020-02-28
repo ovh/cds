@@ -156,6 +156,7 @@ type DownloadClient interface {
 type ActionClient interface {
 	ActionDelete(groupName, name string) error
 	ActionGet(groupName, name string, mods ...RequestModifier) (*sdk.Action, error)
+	ActionUsage(groupName, name string, mods ...RequestModifier) (*sdk.ActionUsages, error)
 	ActionList() ([]sdk.Action, error)
 	ActionImport(content io.Reader, format string) error
 	ActionExport(groupName, name string, format string) ([]byte, error)

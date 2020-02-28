@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"path"
 	"time"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -28,6 +29,7 @@ var actionBuiltinCmd = cli.Command{
 func action() *cobra.Command {
 	return cli.NewCommand(actionCmd, nil, []*cobra.Command{
 		cli.NewListCommand(actionListCmd, actionListRun, nil),
+		cli.NewListCommand(actionUsageCmd, actionUsageRun, nil),
 		cli.NewGetCommand(actionShowCmd, actionShowRun, nil),
 		cli.NewCommand(actionDeleteCmd, actionDeleteRun, nil),
 		cli.NewCommand(actionDocCmd, actionDocRun, nil),
@@ -85,6 +87,46 @@ func actionListRun(v cli.Values) (cli.ListResult, error) {
 	}
 
 	return cli.AsListResult(ads), nil
+}
+
+var actionUsageCmd = cli.Command{
+	Name:  "usage",
+	Short: "CDS action usage",
+	Args: []cli.Arg{
+		{Name: "action-path"},
+	},
+}
+
+func actionUsageRun(v cli.Values) (cli.ListResult, error) {
+	groupName, actionName, err := cli.ParsePath(v.GetString("action-path"))
+	if err != nil {
+		return nil, err
+	}
+
+	usages, err := client.ActionUsage(groupName, actionName)
+	if err != nil {
+		return nil, err
+	}
+
+	type ActionUsageDisplay struct {
+		Type string `cli:"Type"`
+		Path  string `cli:"Path"`
+	}
+
+	au := []ActionUsageDisplay{}
+	for _, v := range usages.Pipelines {
+		au = append(au, ActionUsageDisplay{
+			Type:   "pipeline",
+			Path:   strings.Replace(fmt.Sprintf("%s - %s - %s", v.ProjectName, v.PipelineName, v.ActionName)," "," ",-1),
+		})
+	}
+	for _, v := range usages.Actions {
+		au = append(au, ActionUsageDisplay{
+			Type:   "action",
+			Path:   fmt.Sprintf("%s/%s", v.GroupName, v.ParentActionName),
+		})
+	}
+	return cli.AsListResult(au), nil
 }
 
 var actionShowCmd = cli.Command{
