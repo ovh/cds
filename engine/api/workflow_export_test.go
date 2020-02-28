@@ -165,6 +165,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	group2 := &sdk.Group{
 		Name: "Test_getWorkflowExportHandlerWithPermissions-Group2",
 	}
+
 	require.NoError(t, group.Insert(context.TODO(), api.mustDB(), group2))
 	group2, _ = group.LoadByName(context.TODO(), api.mustDB(), "Test_getWorkflowExportHandlerWithPermissions-Group2")
 

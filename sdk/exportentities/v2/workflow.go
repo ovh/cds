@@ -22,12 +22,11 @@ type Workflow struct {
 	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty" jsonschema_description:"Workflow hooks list."`
 
 	// extra workflow data
-	Permissions      map[string]int                 `json:"permissions,omitempty" yaml:"permissions,omitempty" jsonschema_description:"The permissions for the workflow (ex: myGroup: 7).\nhttps://ovh.github.io/cds/docs/concepts/permissions"`
-	Metadata         map[string]string              `json:"metadata,omitempty" yaml:"metadata,omitempty"`
-	PurgeTags        []string                       `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty"`
-	Notifications    []NotificationEntry            `json:"notify,omitempty" yaml:"notify,omitempty"` // This is used when the workflow have only one pipeline
-	HistoryLength    *int64                         `json:"history_length,omitempty" yaml:"history_length,omitempty"`
-	MapNotifications map[string][]NotificationEntry `json:"notifications,omitempty" yaml:"notifications,omitempty"` // This is used when the workflow have more than one pipeline
+	Permissions   map[string]int      `json:"permissions,omitempty" yaml:"permissions,omitempty" jsonschema_description:"The permissions for the workflow (ex: myGroup: 7).\nhttps://ovh.github.io/cds/docs/concepts/permissions"`
+	Metadata      map[string]string   `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	PurgeTags     []string            `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty"`
+	Notifications []NotificationEntry `json:"notifications,omitempty" yaml:"notifications,omitempty"` // This is used when the workflow have only one pipeline
+	HistoryLength *int64              `json:"history_length,omitempty" yaml:"history_length,omitempty"`
 }
 
 // NodeEntry represents a node as code

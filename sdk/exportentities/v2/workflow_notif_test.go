@@ -51,45 +51,48 @@ workflow:
 metadata:
   default_tags: git.branch,git.author
 notifications:
-  DDOS-me,DDOS-me_2:
-  - type: jabber
-    settings:
-      on_success: always
-      on_failure: change
-      on_start: true
-      send_to_groups: true
-      send_to_author: false
-      recipients:
-      - q
-      template:
-        subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-          {{.cds.status}}'
-        body: |-
-          Project : {{.cds.project}}
-          Application : {{.cds.application}}
-          Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
-          Status : {{.cds.status}}
-          Details : {{.cds.buildURL}}
-          Triggered by : {{.cds.triggered_by.username}}
-          Branch : {{.git.branch}}
-  DDOS-me_2:
-  - type: email
-    settings:
-      template:
-        subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-          {{.cds.status}}'
-        body: |-
-          Project : {{.cds.project}}
-          Application : {{.cds.application}}
-          Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
-          Status : {{.cds.status}}
-          Details : {{.cds.buildURL}}
-          Triggered by : {{.cds.triggered_by.username}}
-          Branch : {{.git.branch}}
-  - type: vcs
-    settings:
-      template:
-        disable_comment: true
+- type: jabber
+  pipelines:
+  - DDOS-me
+  - DDOS-me_2
+  settings:
+    on_success: always
+    on_failure: change
+    on_start: true
+    send_to_groups: true
+    send_to_author: false
+    recipients:
+    - q
+    template:
+      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
+        {{.cds.status}}'
+      body: |-
+        Project : {{.cds.project}}
+        Application : {{.cds.application}}
+        Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
+        Status : {{.cds.status}}
+        Details : {{.cds.buildURL}}
+        Triggered by : {{.cds.triggered_by.username}}
+        Branch : {{.git.branch}}
+- type: email
+  pipelines:
+  - DDOS-me_2
+  settings:
+    template:
+      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
+        {{.cds.status}}'
+      body: |-
+        Project : {{.cds.project}}
+        Application : {{.cds.application}}
+        Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
+        Status : {{.cds.status}}
+        Details : {{.cds.buildURL}}
+        Triggered by : {{.cds.triggered_by.username}}
+        Branch : {{.git.branch}}
+- type: vcs
+  settings:
+    template:
+      disable_comment: true
 `,
 			},
 		},
@@ -139,45 +142,41 @@ func TestFromYAMLToYAMLWithNotif(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "test one pipeline with one notif",
+			name: "two pipelines with one notif",
 			yaml: `name: test-notif-1
 version: v2.0
-pipeline: test
-notify:
+workflow:
+  test:
+    pipeline: test
+  test_2:
+    depends_on:
+    - test
+    when:
+    - success
+    pipeline: test
+notifications:
 - type: jabber
-  settings:
-    template:
-      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-        {{.cds.status}}'
-      body: |-
-        Project : {{.cds.project}}
-        Application : {{.cds.application}}
-        Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
-        Status : {{.cds.status}}
-        Details : {{.cds.buildURL}}
-        Triggered by : {{.cds.triggered_by.username}}
-        Branch : {{.git.branch}}
+  pipelines:
+  - test
+  - test_2
 `,
 		}, {
-			name: "test one pipeline with two notif",
-			yaml: `name: test-notif-2
+			name: "two pipelines with two notifs",
+			yaml: `name: test-notif-1
 version: v2.0
-pipeline: test
-notify:
-- type: jabber
-  settings:
-    template:
-      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-        {{.cds.status}}'
-      body: |-
-        Project : {{.cds.project}}
-        Application : {{.cds.application}}
-        Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
-        Status : {{.cds.status}}
-        Details : {{.cds.buildURL}}
-        Triggered by : {{.cds.triggered_by.username}}
-        Branch : {{.git.branch}}
+workflow:
+  test:
+    pipeline: test
+  test_2:
+    depends_on:
+    - test
+    when:
+    - success
+    pipeline: test
+notifications:
 - type: email
+  pipelines:
+  - test
   settings:
     on_success: always
     on_failure: change
@@ -197,73 +196,22 @@ notify:
         Details : {{.cds.buildURL}}
         Triggered by : {{.cds.triggered_by.username}}
         Branch : {{.git.branch}}
-`,
-		}, {
-			name: "two pipelines with one notif",
-			yaml: `name: test-notif-1
-version: v2.0
-workflow:
-  test:
-    pipeline: test
-  test_2:
-    depends_on:
-    - test
-    when:
-    - success
-    pipeline: test
-notifications:
-  test,test_2:
-  - type: jabber
-`,
-		}, {
-			name: "two pipelines with two notifs",
-			yaml: `name: test-notif-1
-version: v2.0
-workflow:
-  test:
-    pipeline: test
-  test_2:
-    depends_on:
-    - test
-    when:
-    - success
-    pipeline: test
-notifications:
-  test:
-  - type: email
-    settings:
-      on_success: always
-      on_failure: change
-      on_start: true
-      send_to_groups: true
-      send_to_author: false
-      recipients:
-      - a
-      template:
-        subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-          {{.cds.status}}'
-        body: |-
-          Project : {{.cds.project}}
-          Application : {{.cds.application}}
-          Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
-          Status : {{.cds.status}}
-          Details : {{.cds.buildURL}}
-          Triggered by : {{.cds.triggered_by.username}}
-          Branch : {{.git.branch}}
-  test,test_2:
-  - type: jabber
-    settings:
-      template:
-        subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-          {{.cds.status}}'
-        body: |-
-          Project : {{.cds.project}}
-          Application : {{.cds.application}}
-          Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
-          Status : {{.cds.status}}
-          Details : {{.cds.buildURL}}
-          Triggered by : {{.cds.triggered_by.username}}
-          Branch : {{.git.branch}}
+- type: jabber
+  pipelines:
+  - test
+  - test_2
+  settings:
+    template:
+      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
+        {{.cds.status}}'
+      body: |-
+        Project : {{.cds.project}}
+        Application : {{.cds.application}}
+        Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
+        Status : {{.cds.status}}
+        Details : {{.cds.buildURL}}
+        Triggered by : {{.cds.triggered_by.username}}
+        Branch : {{.git.branch}}
 `,
 		},
 	}

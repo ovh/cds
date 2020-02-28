@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -18,23 +17,25 @@ var (
 
 // NotificationEntry represents a notification set on a nodeEntry
 type NotificationEntry struct {
-	Type     string                        `json:"type" yaml:"type"`
-	Settings *sdk.UserNotificationSettings `json:"settings,omitempty" yaml:"settings,omitempty"`
+	Type      string                        `json:"type" yaml:"type"`
+	Pipelines []string                      `json:"pipelines" yaml:"pipelines"`
+	Settings  *sdk.UserNotificationSettings `json:"settings,omitempty" yaml:"settings,omitempty"`
 }
 
 // craftNotificationEntry returns the NotificationEntry and the name of the nodeEntries concerned
-func craftNotificationEntry(ctx context.Context, w sdk.Workflow, notif sdk.WorkflowNotification) ([]string, NotificationEntry, error) {
-	entry := NotificationEntry{}
-	nodeNames := make([]string, len(notif.SourceNodeRefs))
+func craftNotificationEntry(ctx context.Context, w sdk.Workflow, notif sdk.WorkflowNotification) (NotificationEntry, error) {
+	entry := NotificationEntry{
+		Pipelines: make([]string, len(notif.SourceNodeRefs)),
+	}
 	for i, ref := range notif.SourceNodeRefs {
 		node := w.WorkflowData.NodeByName(ref)
 		if node == nil {
 			log.Error(ctx, "unable to find workflow node %s", ref)
-			return nil, entry, sdk.ErrWorkflowNodeNotFound
+			return entry, sdk.ErrWorkflowNodeNotFound
 		}
-		nodeNames[i] = node.Name
+		entry.Pipelines[i] = node.Name
 	}
-	sort.Strings(nodeNames)
+	sort.Strings(entry.Pipelines)
 	entry.Type = notif.Type
 	entry.Settings = &notif.Settings
 
@@ -59,7 +60,7 @@ func craftNotificationEntry(ctx context.Context, w sdk.Workflow, notif sdk.Workf
 	if entry.Settings.Template != nil {
 		defaultTemplate, has := sdk.UserNotificationTemplateMap[entry.Type]
 		if !has {
-			return nil, entry, fmt.Errorf("workflow notification %s not found", entry.Type)
+			return entry, fmt.Errorf("workflow notification %s not found", entry.Type)
 		}
 		if defaultTemplate.Subject == entry.Settings.Template.Subject {
 			entry.Settings.Template.Subject = ""
@@ -85,20 +86,19 @@ func craftNotificationEntry(ctx context.Context, w sdk.Workflow, notif sdk.Workf
 		entry.Settings = nil
 	}
 
-	return nodeNames, entry, nil
+	return entry, nil
 }
 
 func craftNotifications(ctx context.Context, w sdk.Workflow, exportedWorkflow *Workflow) error {
-	for _, notif := range w.Notifications {
-		nodeNames, notifEntry, err := craftNotificationEntry(ctx, w, notif)
+	for i, notif := range w.Notifications {
+		notifEntry, err := craftNotificationEntry(ctx, w, notif)
 		if err != nil {
 			return sdk.WrapError(err, "unable to craft notification")
 		}
-		if exportedWorkflow.MapNotifications == nil {
-			exportedWorkflow.MapNotifications = make(map[string][]NotificationEntry)
+		if exportedWorkflow.Notifications == nil {
+			exportedWorkflow.Notifications = make([]NotificationEntry, len(w.Notifications))
 		}
-		s := strings.Join(nodeNames, ",")
-		exportedWorkflow.MapNotifications[s] = append(exportedWorkflow.MapNotifications[s], notifEntry)
+		exportedWorkflow.Notifications[i] = notifEntry
 
 	}
 	return nil
@@ -106,22 +106,10 @@ func craftNotifications(ctx context.Context, w sdk.Workflow, exportedWorkflow *W
 
 func CheckWorkflowNotificationsValidity(w Workflow) error {
 	mError := new(sdk.MultiError)
-	if len(w.Workflow) != 0 {
-		if len(w.Notifications) != 0 {
-			mError.Append(fmt.Errorf("Error: wrong usage: notify not allowed here"))
-		}
-	} else {
-		if len(w.MapNotifications) > 0 {
-			mError.Append(fmt.Errorf("Error: wrong usage: notifications not allowed here"))
-		}
-	}
-
-	for nodeNames := range w.MapNotifications {
-		names := strings.Split(nodeNames, ",")
-		for _, s := range names {
-			name := strings.TrimSpace(s)
-			if _, ok := w.Workflow[name]; !ok {
-				mError.Append(fmt.Errorf("Error: wrong usage: invalid notification on %s (%s is missing)", nodeNames, name))
+	for _, notifEntry := range w.Notifications {
+		for _, s := range notifEntry.Pipelines {
+			if _, ok := w.Workflow[s]; !ok {
+				mError.Append(fmt.Errorf("error: wrong usage: invalid notification on %s (%s is missing)", notifEntry.Pipelines, s))
 			}
 		}
 	}
@@ -186,30 +174,14 @@ func ProcessNotificationValues(notif NotificationEntry) (sdk.WorkflowNotificatio
 }
 
 func (w *Workflow) processNotifications(wrkflw *sdk.Workflow) error {
-	// Multiple pipelines in the workflow
-	if len(w.MapNotifications) > 0 {
-		for nodeNames, notifs := range w.MapNotifications {
-			nodes := strings.Split(nodeNames, ",")
-			// nodes are considered as references of nodes
-			for _, notif := range notifs {
-				n, err := ProcessNotificationValues(notif)
-				if err != nil {
-					return sdk.WrapError(err, "unable to process notification")
-				}
-				n.SourceNodeRefs = nodes
-				wrkflw.Notifications = append(wrkflw.Notifications, n)
-			}
+	for _, notif := range w.Notifications {
+		n, err := ProcessNotificationValues(notif)
+		if err != nil {
+			return sdk.WrapError(err, "unable to process notification")
 		}
-	} else {
-		//single pipeline
-		for _, notif := range w.Notifications {
-			n, err := ProcessNotificationValues(notif)
-			if err != nil {
-				return sdk.WrapError(err, "unable to process notification")
-			}
-			n.SourceNodeRefs = []string{wrkflw.WorkflowData.Node.Name}
-			wrkflw.Notifications = append(wrkflw.Notifications, n)
-		}
+		n.SourceNodeRefs = notif.Pipelines
+		wrkflw.Notifications = append(wrkflw.Notifications, n)
+
 	}
 	return nil
 }
