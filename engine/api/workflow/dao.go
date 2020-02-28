@@ -1330,7 +1330,7 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project,
 	if n.Context.ApplicationName != "" {
 		appDB, err := application.LoadByName(db, store, proj.Key, n.Context.ApplicationName, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
 		if err != nil {
-			if sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
+			if sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
 				return sdk.WithStack(sdk.ErrorWithData(sdk.ErrApplicationNotFound, n.Context.ApplicationName))
 			}
 			return sdk.WrapError(err, "unable to load application %s", n.Context.ApplicationName)

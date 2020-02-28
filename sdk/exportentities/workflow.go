@@ -3,7 +3,9 @@ package exportentities
 import (
 	"context"
 	"fmt"
-	"github.com/ghodss/yaml"
+
+	"gopkg.in/yaml.v2"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities/v1"
 	"github.com/ovh/cds/sdk/exportentities/v2"

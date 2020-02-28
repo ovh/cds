@@ -2,16 +2,16 @@ package v2_test
 
 import (
 	"context"
-	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"sort"
 	"strings"
 	"testing"
 
-	"github.com/ovh/cds/sdk/exportentities"
-
 	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
+
+	"github.com/ovh/cds/sdk/exportentities"
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -699,6 +699,11 @@ func TestFromYAMLToYAML(t *testing.T) {
 version: v2.0
 workflow:
   1_start:
+    conditions:
+      check:
+      - variable: git.branch
+        operator: eq
+        value: master
     pipeline: test
   2_webHook:
     depends_on:
