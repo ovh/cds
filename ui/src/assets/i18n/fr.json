@@ -859,7 +859,6 @@
   "workflow_notification_explanation": "_Une notification utilisateur peut être utile pour signaler le status d'un workflow en fonction de son état. Chaque pipeline d'un workflow peut donner lieu à une notification en fonction de sont statut en `Succès`, `En Echec` ou sur changement de statut. Le message envoyé aux destinataires peut être paramétré à l'aide de [variables CDS](https://ovh.github.io/cds/docs/concepts/variables/). Les notifications de type mail peuvent également contenir du HTML, cf. documentation [User Notifications](https://ovh.github.io/cds/docs/concepts/workflow/notifications/)._",
   "workflow_notification_form": "Ajouter une notification",
   "workflow_notification_jabber_user": "Utilisateurs jabber",
-  "workflow_notification_node_error": "Vous devez sélectionner au moins 1 pipeline",
   "workflow_notification_on_failure": "Envoyer en cas d'erreur",
   "workflow_notification_on_start": "Envoyer au lancement",
   "workflow_notification_on_success": "Envoyer en cas de succès",
