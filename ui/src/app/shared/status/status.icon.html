@@ -1,9 +1,9 @@
 <div class="status-icon" [ngSwitch]="status">
     <div class="wrapper">
         <ng-container *ngSwitchCase="pipelineStatusEnum.BUILDING">
-            <div *ngIf="loader" class="ui small active inline blue loader">
+            <i *ngIf="loader" class="spinner blue icon">
                 <span class="">{{value}}</span>
-            </div>
+            </i>
             <i *ngIf="!loader" class="blue circle outline icon"></i>
         </ng-container>
         <i class="check green icon" *ngSwitchCase="pipelineStatusEnum.SUCCESS"></i>
