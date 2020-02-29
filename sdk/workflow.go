@@ -253,7 +253,7 @@ type WorkflowNodeJobRunCount struct {
 // Label represent a label linked to a workflow
 type Label struct {
 	ID         int64  `json:"id" db:"id"`
-	Name       string `json:"name" db:"name"`
+	Name       string `json:"name" db:"name" cli:"label"`
 	Color      string `json:"color" db:"color"`
 	ProjectID  int64  `json:"project_id" db:"project_id"`
 	WorkflowID int64  `json:"workflow_id,omitempty" db:"-"`

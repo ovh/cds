@@ -34,7 +34,6 @@ require (
 	github.com/circonus-labs/circonus-gometrics v2.2.4+incompatible // indirect
 	github.com/circonus-labs/circonusllhist v0.0.0-20180430145027-5eb751da55c6 // indirect
 	github.com/dancannon/gorethink v4.0.0+incompatible // indirect
-
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dnaeon/go-vcr v0.0.0-20180920040454-5637cf3d8a31 // indirect
 	github.com/docker/distribution v2.7.0-rc.0+incompatible // indirect
@@ -62,7 +61,7 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
 	github.com/go-stomp/stomp v1.0.1 // indirect
 	github.com/gocql/gocql v0.0.0-20181018123354-22229812a83e // indirect
-	github.com/golang/mock v1.4.0
+	github.com/golang/mock v1.4.1
 	github.com/golang/protobuf v1.3.2
 	github.com/google/go-cmp v0.4.0 // indirect
 	github.com/googleapis/gnostic v0.1.0 // indirect
@@ -71,7 +70,6 @@ require (
 	github.com/gorhill/cronexpr v0.0.0-20161205141322-d520615e531a
 	github.com/gorilla/handlers v0.0.0-20160816184729-a5775781a543
 	github.com/gorilla/mux v1.6.2
-
 	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.9.6 // indirect
 	github.com/hashicorp/consul v1.3.0 // indirect
@@ -95,14 +93,12 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/itsjamie/gin-cors v0.0.0-20160420130702-97b4a9da7933
 	github.com/jefferai/jsonx v0.0.0-20160721235117-9cc31c3135ee // indirect
-
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/juju/errors v0.0.0-20190207033735-e65537c515d7 // indirect
 	github.com/juju/loggo v0.0.0-20190526231331-6e530bcce5d8 // indirect
 	github.com/juju/testing v0.0.0-20190429233213-dfc56b8c09fc // indirect
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-
 	github.com/keybase/go-crypto v0.0.0-20181127160227-255a5089e85a
 	github.com/keybase/go-keychain v0.0.0-20190828020956-aa639f275ae1
 	github.com/keybase/go.dbus v0.0.0-20190710215703-a33a09c8a604
@@ -110,7 +106,6 @@ require (
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lib/pq v1.0.0
-
 	github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d
@@ -134,23 +129,18 @@ require (
 	github.com/mndrix/tap-go v0.0.0-20170113192335-56cca451570b // indirect
 	github.com/mum4k/termdash v0.10.0
 	github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d
-
 	github.com/ncw/swift v0.0.0-20171019114456-c95c6e5c2d1a
 	github.com/nsf/termbox-go v0.0.0-20190817171036-93860e161317 // indirect
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.0-20160621093029-daf2955e742c
 	github.com/olivere/elastic v6.2.17+incompatible // indirect
-
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
-
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/ory-am/common v0.4.0 // indirect
 	github.com/ovh/cds/sdk/interpolate v0.0.0-20190319104452-71125b036b25
-
 	github.com/ovh/cds/sdk/izanami v0.0.0-20190703081656-683453b50b2a
 	github.com/ovh/configstore v0.3.2
 	github.com/ovh/symmecrypt v0.4.0
-
 	github.com/ovh/venom v0.25.0
 	github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -158,7 +148,6 @@ require (
 	github.com/pelletier/go-toml v1.4.0
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4 v2.3.0+incompatible // indirect
-
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.8.1
 	github.com/poy/onpar v0.0.0-20190519213022-ee068f8ea4d1 // indirect
@@ -194,7 +183,6 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945
 	github.com/yesnault/gorp v2.0.0+incompatible // indirect
-
 	github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed
 	github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908
 	github.com/ziutek/mymysql v1.5.4 // indirect
@@ -214,11 +202,9 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/gorethink/gorethink.v4 v4.1.0 // indirect
-
 	gopkg.in/gorp.v1 v1.7.1 // indirect
 	gopkg.in/h2non/gock.v1 v1.0.14
 	gopkg.in/ldap.v2 v2.5.1
-
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
 	gopkg.in/olivere/elastic.v6 v6.2.17
 	gopkg.in/ory-am/dockertest.v2 v2.2.3 // indirect

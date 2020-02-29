@@ -11,8 +11,9 @@ import (
 )
 
 var adminServicesCmd = cli.Command{
-	Name:  "services",
-	Short: "Manage CDS services",
+	Name:    "services",
+	Aliases: []string{"service"},
+	Short:   "Manage CDS services",
 }
 
 func adminServices() *cobra.Command {

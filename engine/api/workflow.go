@@ -249,7 +249,6 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
 		db := api.mustDB()
-		//u := getAPIConsumer(ctx)
 
 		var label sdk.Label
 		if err := service.UnmarshalBody(r, &label); err != nil {
