@@ -44,7 +44,7 @@ describe('CDS: Parameter Value Component', () => {
         tick(50);
 
         let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.blue.loader')).toBeTruthy('Building loader not displayed');
+        expect(compiled.querySelector('.spinner.blue.icon')).toBeTruthy('Building loader not displayed');
     }));
 
     it('should display fail icon', fakeAsync(() => {
