@@ -165,13 +165,15 @@ export class WorkflowNotificationListComponent {
         if (this.workflow.notifications) {
             this.workflow.notifications.forEach(n => {
                 let listNodes = new Array<string>();
-                n.node_id.forEach(id => {
-                    let node = mapNodes.get(id);
-                    if (node) {
-                        listNodes.push(node.name);
-                    }
-                });
-                this.mapNodesNotif.set(n.id, listNodes);
+                if (n.node_id) {
+                    n.node_id.forEach(id => {
+                        let node = mapNodes.get(id);
+                        if (node) {
+                            listNodes.push(node.name);
+                        }
+                    });
+                    this.mapNodesNotif.set(n.id, listNodes);
+                }
             });
         }
     }

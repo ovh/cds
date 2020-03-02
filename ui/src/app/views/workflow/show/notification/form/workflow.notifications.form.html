@@ -21,9 +21,6 @@
                     <sui-select-option *ngFor="let n of select.filteredOptions" [value]="n">
                     </sui-select-option>
                 </sui-multi-select>
-                <div class="ui error message" *ngIf="nodeError">
-                    {{ 'workflow_notification_node_error' | translate }}
-                </div>
             </div>
         </div>
         <ng-container *ngIf="notification.type === 'jabber' || notification.type === 'email'">
@@ -90,6 +87,11 @@
             </div>
         </ng-container>
         <ng-container *ngIf="notification.type === 'vcs'">
+            <div class="field">
+                <sui-checkbox class="toggle" name="statusEnabled" [(ngModel)]="statusEnabled">
+                    {{ 'workflow_notification_vcs_status_enabled' | translate}}
+                </sui-checkbox>
+            </div>
             <div class="field">
                 <sui-checkbox class="toggle" name="prEnabled" [(ngModel)]="commentEnabled">
                     {{ 'workflow_notification_vcs_comment_enabled' | translate}}

@@ -121,11 +121,13 @@ func CheckWorkflowNotificationsValidity(w Workflow) error {
 	}
 
 	for nodeNames := range w.MapNotifications {
-		names := strings.Split(nodeNames, ",")
-		for _, s := range names {
-			name := strings.TrimSpace(s)
-			if _, ok := w.Workflow[name]; !ok {
-				mError.Append(fmt.Errorf("Error: wrong usage: invalid notification on %s (%s is missing)", nodeNames, name))
+		if nodeNames != "" {
+			names := strings.Split(nodeNames, ",")
+			for _, s := range names {
+				name := strings.TrimSpace(s)
+				if _, ok := w.Workflow[name]; !ok {
+					mError.Append(fmt.Errorf("Error: wrong usage: invalid notification on %s (%s is missing)", nodeNames, name))
+				}
 			}
 		}
 	}
@@ -200,7 +202,9 @@ func (w *Workflow) processNotifications(wrkflw *sdk.Workflow) error {
 				if err != nil {
 					return sdk.WrapError(err, "unable to process notification")
 				}
-				n.SourceNodeRefs = nodes
+				if nodeNames != "" {
+					n.SourceNodeRefs = nodes
+				}
 				wrkflw.Notifications = append(wrkflw.Notifications, n)
 			}
 		}

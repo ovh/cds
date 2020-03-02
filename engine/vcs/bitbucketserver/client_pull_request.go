@@ -79,20 +79,21 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 }
 
 // PullRequestComment push a new comment on a pull request
-func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, prID int, text string) error {
+func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, prRequest sdk.VCSPullRequestCommentRequest) error {
+
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
 	payload := map[string]string{
-		"text": text,
+		"text": prRequest.Message,
 	}
 	values, err := json.Marshal(payload)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
 
-	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%d/comments", project, slug, prID)
+	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%d/comments", project, slug, prRequest.ID)
 
 	return b.do(ctx, "POST", "core", path, nil, values, nil, &options{asUser: true})
 }

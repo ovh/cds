@@ -38,8 +38,8 @@ export class WorkflowNotificationFormComponent implements OnInit {
     notifOnFailure: Array<string>;
     selectedUsers: string;
     commentEnabled = true;
+    statusEnabled = true;
     alwaysSend = true;
-    nodeError = false;
     loadingNotifTemplate = false;
     triggerConditions: WorkflowTriggerConditionCache;
 
@@ -94,6 +94,7 @@ export class WorkflowNotificationFormComponent implements OnInit {
         }
 
         if (this.notification && this.notification.type === 'vcs') {
+            this.statusEnabled = !this.notification.settings.template.disable_status;
             this.commentEnabled = !this.notification.settings.template.disable_comment;
             this.alwaysSend = this.notification.settings.on_success === 'always';
         }
@@ -110,12 +111,6 @@ export class WorkflowNotificationFormComponent implements OnInit {
     }
 
     createNotification(): void {
-        if (!this.notification.source_node_ref || this.notification.source_node_ref.length === 0) {
-            this.nodeError = true;
-            return;
-        }
-        this.nodeError = false;
-
         this.loading = true;
 
         if (this.selectedUsers != null) {
@@ -123,6 +118,7 @@ export class WorkflowNotificationFormComponent implements OnInit {
         }
         if (this.notification.type === 'vcs') {
             this.notification.settings.template.disable_comment = !this.commentEnabled;
+            this.notification.settings.template.disable_status = !this.statusEnabled;
             if (this.alwaysSend) {
                 this.notification.settings.on_success = 'always';
             } else {
