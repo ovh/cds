@@ -54,7 +54,7 @@ func getAllKeys(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.ProjectKey,
 	return keys, nil
 }
 
-// LoadAllKeys load all keys for the given application
+// LoadAllKeys load all keys for the given project
 func LoadAllKeys(db gorp.SqlExecutor, projectID int64) ([]sdk.ProjectKey, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT * 
@@ -118,7 +118,7 @@ func DeleteProjectKey(db gorp.SqlExecutor, projectID int64, keyName string) erro
 	return sdk.WrapError(err, "Cannot delete key %s", keyName)
 }
 
-func loadBuildinKey(db gorp.SqlExecutor, projectID int64) (*sdk.ProjectKey, error) {
+func loadBuiltinKey(db gorp.SqlExecutor, projectID int64) (*sdk.ProjectKey, error) {
 	query := gorpmapping.NewQuery(`
 	SELECT * 
 	FROM project_key

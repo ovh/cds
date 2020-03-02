@@ -42,7 +42,7 @@ func RefactorProjectKeys(ctx context.Context, db *gorp.DbMap) error {
 	for _, id := range ids {
 		if err := refactorProjectKeys(ctx, db, id); err != nil {
 			mError.Append(err)
-			log.Error(ctx, "migrate.RefactorProjectKeys> unable to migrate application_key %d: %v", id, err)
+			log.Error(ctx, "migrate.RefactorProjectKeys> unable to migrate project_key %d: %v", id, err)
 		}
 	}
 

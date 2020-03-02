@@ -36,7 +36,7 @@ func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content s
 		return "", sdk.WrapError(err, "Unable to request encrypted_data")
 	}
 
-	k, err := loadBuildinKey(db, projectID)
+	k, err := loadBuiltinKey(db, projectID)
 	if err != nil {
 		return "", sdk.WrapError(err, "Unable to load builtin key")
 	}
@@ -100,7 +100,7 @@ func DecryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, token string) (
 		return "", sdk.WithStack(sdk.ErrProjectSecretDataUnknown)
 	}
 
-	k, err := loadBuildinKey(db, projectID)
+	k, err := loadBuiltinKey(db, projectID)
 	if err != nil {
 		return "", sdk.WrapError(sdk.ErrProjectSecretDataUnknown, "Unable to load builtin key")
 	}

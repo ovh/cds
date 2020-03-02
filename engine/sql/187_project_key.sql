@@ -1,7 +1,7 @@
 -- +migrate Up
 
 CREATE TABLE project_key_tmp AS SELECT * FROM project_key;
- ALTER TABLE project_key_tmp ADD PRIMARY KEY (id);
+ALTER TABLE project_key_tmp ADD PRIMARY KEY (id);
 
 ALTER TABLE "project_key" ADD COLUMN IF NOT EXISTS sig BYTEA;
 ALTER TABLE "project_key" ADD COLUMN IF NOT EXISTS signer TEXT;
