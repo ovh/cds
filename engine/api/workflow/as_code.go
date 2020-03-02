@@ -16,7 +16,7 @@ import (
 )
 
 // UpdateWorkflowAsCode update an as code workflow
-func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj *sdk.Project, wf sdk.Workflow, app sdk.Application, branch string, message string, u *sdk.AuthentifiedUser) (*sdk.Operation, error) {
+func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExecutor, proj sdk.Project, wf sdk.Workflow, app sdk.Application, branch string, message string, u *sdk.AuthentifiedUser) (*sdk.Operation, error) {
 	if err := RenameNode(ctx, db, &wf); err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func UpdateWorkflowAsCode(ctx context.Context, store cache.Store, db gorp.SqlExe
 }
 
 // MigrateAsCode does a workflow pull and start an operation to push cds files into the git repository
-func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, app sdk.Application, u sdk.Identifiable, encryptFunc sdk.EncryptFunc, branch, message string) (*sdk.Operation, error) {
+func MigrateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wf *sdk.Workflow, app sdk.Application, u sdk.Identifiable, encryptFunc sdk.EncryptFunc, branch, message string) (*sdk.Operation, error) {
 	// Get repository
 	if wf.WorkflowData.Node.Context == nil || wf.WorkflowData.Node.Context.ApplicationID == 0 {
 		return nil, sdk.WithStack(sdk.ErrApplicationNotFound)

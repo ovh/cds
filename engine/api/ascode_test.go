@@ -5,6 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -12,12 +19,6 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -337,7 +338,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, globalError := application.ParseAndImport(context.Background(), db, api.Cache, p, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, globalError := application.ParseAndImport(context.Background(), db, api.Cache, *p, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
 	app.FromRepository = "urltomyrepo"
@@ -349,7 +350,7 @@ vcs_ssh_key: proj-blabla
 		ProjectKey: p.Key,
 		Name:       sdk.RandomString(10),
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, p, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	wf := sdk.Workflow{
 		Name:       sdk.RandomString(10),
@@ -368,7 +369,7 @@ vcs_ssh_key: proj-blabla
 
 	proj2, errP := project.Load(api.mustDB(), api.Cache, p.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	require.NoError(t, errP)
-	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &wf, proj2))
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj2, &wf))
 
 	// mock service
 	allSrv, err := services.LoadAll(context.TODO(), db)
@@ -454,8 +455,7 @@ vcs_ssh_key: proj-blabla
 	assert.Equal(t, 0, len(assDB))
 
 	// Check workflow has been migrated
-	wUpdated, err := workflow.Load(context.TODO(), db, api.Cache, p, wf.Name, workflow.LoadOptions{})
+	wUpdated, err := workflow.Load(context.TODO(), db, api.Cache, *p, wf.Name, workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.Equal(t, "urltomyrepo", wUpdated.FromRepository)
-
 }

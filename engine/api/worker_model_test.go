@@ -205,7 +205,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 		Name:       "pip1",
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -263,7 +263,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(context.Background(), db, api.Cache, &wf, proj))
+	test.NoError(t, workflow.Insert(context.Background(), db, api.Cache, *proj, &wf))
 
 	//Prepare request
 	vars := map[string]string{

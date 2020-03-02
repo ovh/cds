@@ -26,8 +26,8 @@ func Test_getNavbarHandler(t *testing.T) {
 	app2 := sdk.Application{
 		Name: "my-app-2",
 	}
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app1))
-	test.NoError(t, application.Insert(db, api.Cache, proj, &app2))
+	test.NoError(t, application.Insert(db, api.Cache, *proj, &app1))
+	test.NoError(t, application.Insert(db, api.Cache, *proj, &app2))
 
 	//Prepare request
 	uri := api.Router.GetRoute("GET", api.getNavbarHandler, nil)

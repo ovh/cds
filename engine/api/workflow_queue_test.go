@@ -70,7 +70,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 		ProjectKey: proj.Key,
 		Name:       "pip-" + sdk.RandomString(10),
 	}
-	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	script := assets.GetBuiltinOrPluginActionByName(t, api.mustDB(), sdk.ScriptAction)
 
@@ -96,7 +96,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 	app := &sdk.Application{
 		Name: "app-" + sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -170,8 +170,8 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
 
-	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, w.Name, workflow.LoadOptions{})
+	require.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj2, &w))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, w.Name, workflow.LoadOptions{})
 	require.NoError(t, err)
 
 	log.Debug("workflow %d groups: %+v", w1.ID, w1.Groups)
@@ -912,7 +912,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      sdk.RandomString(10),
 	}
-	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
+	assert.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	s := sdk.Stage{
 		PipelineID: pip.ID,
@@ -946,7 +946,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      sdk.RandomString(10),
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
+	assert.NoError(t, application.Insert(db, api.Cache, *proj, &app))
 
 	// Create workflow
 	w := sdk.Workflow{
@@ -968,16 +968,16 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 
 	p, err := project.Load(db, api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	assert.NoError(t, err)
-	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, p))
+	assert.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *p, &w))
 
-	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, p, w.ID, workflow.LoadOptions{DeepPipeline: true})
+	workflowDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *p, w.ID, workflow.LoadOptions{DeepPipeline: true})
 	assert.NoError(t, err)
 
 	wrDB, errwr := workflow.CreateRun(db, workflowDeepPipeline, nil, u)
 	assert.NoError(t, errwr)
 	wrDB.Workflow = *workflowDeepPipeline
 
-	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB,
+	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, *p, wrDB,
 		&sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
 		},
@@ -1060,7 +1060,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      sdk.RandomString(10),
 	}
-	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip))
+	assert.NoError(t, pipeline.InsertPipeline(db, pip))
 
 	s := sdk.Stage{
 		PipelineID: pip.ID,
@@ -1096,7 +1096,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		RepositoryFullname: "foo/bar",
 		VCSServer:          "repoManServ",
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
+	assert.NoError(t, application.Insert(db, api.Cache, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	// Create workflow
@@ -1119,7 +1119,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 
 	p, err := project.Load(db, api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	require.NoError(t, err)
-	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, &w, p))
+	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *p, &w))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	for _, s := range allSrv {
@@ -1207,13 +1207,13 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	wrDB, errwr := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr)
 
-	workflowWithDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, proj, w.ID, workflow.LoadOptions{DeepPipeline: true})
+	workflowWithDeepPipeline, err := workflow.LoadByID(context.TODO(), db, api.Cache, *proj, w.ID, workflow.LoadOptions{DeepPipeline: true})
 	assert.NoError(t, err)
 
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
 	wrDB.Workflow = *workflowWithDeepPipeline
-	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrDB, &sdk.WorkflowRunPostHandlerOption{
+	_, errmr := workflow.StartWorkflowRun(context.Background(), db, api.Cache, *p, wrDB, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
 			Payload: map[string]string{
@@ -1228,7 +1228,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	wrCB, errwr2 := workflow.CreateRun(db, &w, nil, u)
 	assert.NoError(t, errwr2)
 	wrCB.Workflow = w
-	_, errmr = workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrCB, &sdk.WorkflowRunPostHandlerOption{
+	_, errmr = workflow.StartWorkflowRun(context.Background(), db, api.Cache, *p, wrCB, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
 			Payload: map[string]string{
@@ -1285,7 +1285,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	assert.NoError(t, errwr3)
 	wrToTest.Workflow = *workflowWithDeepPipeline
 
-	_, errT := workflow.StartWorkflowRun(context.Background(), db, api.Cache, p, wrToTest, &sdk.WorkflowRunPostHandlerOption{
+	_, errT := workflow.StartWorkflowRun(context.Background(), db, api.Cache, *p, wrToTest, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
 			Payload: map[string]string{

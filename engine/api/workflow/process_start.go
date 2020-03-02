@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project,
+func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project,
 	wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, startingFromNode *int64, maxsn int64,
 	hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
@@ -51,7 +51,7 @@ func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.
 	return report, conditionOK, nil
 }
 
-func processStartFromRootNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func processStartFromRootNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	log.Debug("processWorkflowRun> starting from the root: %d (pipeline %s)", wr.Workflow.WorkflowData.Node.ID, wr.Workflow.Pipelines[wr.Workflow.WorkflowData.Node.Context.PipelineID].Name)
 	report := new(ProcessorReport)
 	//Run the root: manual or from an event
@@ -71,7 +71,7 @@ func processStartFromRootNode(ctx context.Context, db gorp.SqlExecutor, store ca
 	return report, conditionOK, nil
 }
 
-func processAllNodesTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node) (*ProcessorReport, error) {
+func processAllNodesTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
 	//Checks the triggers
 	for k := range wr.WorkflowNodeRuns {
@@ -89,7 +89,7 @@ func processAllNodesTriggers(ctx context.Context, db gorp.SqlExecutor, store cac
 	return report, nil
 }
 
-func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node) (*ProcessorReport, error) {
+func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
 	//Checks the joins
 	for i := range wr.Workflow.WorkflowData.Joins {

@@ -44,13 +44,13 @@ func TestParseAndImport(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       pipelineName,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	//Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, cache, proj, app))
+	test.NoError(t, application.Insert(db, cache, *proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
@@ -89,10 +89,10 @@ func TestParseAndImport(t *testing.T) {
 		},
 	}
 
-	_, _, err = workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, input, localConsumer, workflow.ImportOptions{Force: true})
+	_, _, err = workflow.ParseAndImport(context.TODO(), db, cache, *proj, nil, input, localConsumer, workflow.ImportOptions{Force: true})
 	assert.NoError(t, err)
 
-	w, errW := workflow.Load(context.TODO(), db, cache, proj, input.Name, workflow.LoadOptions{})
+	w, errW := workflow.Load(context.TODO(), db, cache, *proj, input.Name, workflow.LoadOptions{})
 	assert.NoError(t, errW)
 	assert.NotNil(t, w)
 
@@ -227,7 +227,7 @@ func TestParseAndImportFromRepository(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       pipelineName,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	//Application
 	app := &sdk.Application{
@@ -235,7 +235,7 @@ func TestParseAndImportFromRepository(t *testing.T) {
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
 	}
-	test.NoError(t, application.Insert(db, cache, proj, app))
+	test.NoError(t, application.Insert(db, cache, *proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
@@ -259,10 +259,10 @@ func TestParseAndImportFromRepository(t *testing.T) {
 		},
 	}
 
-	_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, input, u, workflow.ImportOptions{Force: true, FromRepository: "foo/myrepo"})
+	_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, *proj, nil, input, u, workflow.ImportOptions{Force: true, FromRepository: "foo/myrepo"})
 	assert.NoError(t, err)
 
-	w, errW := workflow.Load(context.TODO(), db, cache, proj, input.Name, workflow.LoadOptions{})
+	w, errW := workflow.Load(context.TODO(), db, cache, *proj, input.Name, workflow.LoadOptions{})
 	assert.NoError(t, errW)
 	assert.NotNil(t, w)
 

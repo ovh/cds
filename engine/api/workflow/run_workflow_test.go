@@ -35,7 +35,7 @@ func TestManualRun1(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -58,7 +58,7 @@ func TestManualRun1(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 	}
-	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip2))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -102,9 +102,9 @@ func TestManualRun1(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	require.NoError(t, err)
@@ -114,7 +114,7 @@ func TestManualRun1(t *testing.T) {
 	wr.Workflow = *w1
 	consumer, _ := authentication.LoadConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadConsumerOptions.WithAuthentifiedUser)
 
-	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
 			Payload: map[string]string{
@@ -127,7 +127,7 @@ func TestManualRun1(t *testing.T) {
 	wr2, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr2.Workflow = *w1
-	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr2, &sdk.WorkflowRunPostHandlerOption{
+	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr2, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
 		},
@@ -159,7 +159,7 @@ func TestManualRun1(t *testing.T) {
 	test.Equal(t, 2, len(jobs))
 
 	//TestprocessWorkflowRun
-	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr2, &sdk.WorkflowRunPostHandlerOption{
+	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr2, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
 		},
@@ -194,7 +194,7 @@ func TestManualRun2(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -217,7 +217,7 @@ func TestManualRun2(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 	}
-	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip2))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -261,9 +261,9 @@ func TestManualRun2(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	require.NoError(t, err)
@@ -272,7 +272,7 @@ func TestManualRun2(t *testing.T) {
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
-	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
 	}, consumer, nil)
 	require.NoError(t, errS)
@@ -280,12 +280,12 @@ func TestManualRun2(t *testing.T) {
 	wr2, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr2.Workflow = *w1
-	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr2, &sdk.WorkflowRunPostHandlerOption{
+	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr2, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
 	}, consumer, nil)
 	require.NoError(t, errS)
 
-	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+	_, errS = workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual:      &sdk.WorkflowNodeRunManual{Username: u.Username},
 		FromNodeIDs: []int64{wr.Workflow.WorkflowData.Node.ID},
 	}, consumer, nil)
@@ -421,7 +421,7 @@ func TestManualRun3(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	// one pipeline with two stages
 	s := sdk.NewStage("stage1-pipeline1")
@@ -461,7 +461,7 @@ func TestManualRun3(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 	}
-	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip2))
 	s = sdk.NewStage("stage 1-pipeline2")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -521,9 +521,9 @@ func TestManualRun3(t *testing.T) {
 	proj, err = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys, project.LoadOptions.WithIntegrations)
 	require.NoError(t, err)
 
-	require.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	require.NoError(t, err)
@@ -531,7 +531,7 @@ func TestManualRun3(t *testing.T) {
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
-	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
 	}, consumer, nil)
 	require.NoError(t, errS)
@@ -597,7 +597,7 @@ queueRun:
 		}
 
 		//TakeNodeJobRun
-		takenJob, _, _ := workflow.TakeNodeJobRun(context.TODO(), db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
+		takenJob, _, _ := workflow.TakeNodeJobRun(context.TODO(), db, cache, *proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
 			{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
@@ -640,7 +640,7 @@ queueRun:
 		}
 
 		//TestUpdateNodeJobRunStatus
-		_, err = workflow.UpdateNodeJobRunStatus(context.TODO(), db, cache, proj, j, sdk.StatusSuccess)
+		_, err = workflow.UpdateNodeJobRunStatus(context.TODO(), db, cache, *proj, j, sdk.StatusSuccess)
 		assert.NoError(t, err)
 		if t.Failed() {
 			tx.Rollback()
@@ -799,7 +799,7 @@ func TestNoStage(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
@@ -831,8 +831,8 @@ func TestNoStage(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	require.NoError(t, err)
@@ -841,7 +841,7 @@ func TestNoStage(t *testing.T) {
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
-	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
 	}, consumer, nil)
 	require.NoError(t, errS)
@@ -871,7 +871,7 @@ func TestNoJob(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	require.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -908,8 +908,8 @@ func TestNoJob(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{
+	require.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	require.NoError(t, err)
@@ -917,7 +917,7 @@ func TestNoJob(t *testing.T) {
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
-	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+	_, errS := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{Username: u.Username},
 	}, consumer, nil)
 	require.NoError(t, errS)

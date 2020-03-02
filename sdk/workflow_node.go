@@ -266,7 +266,7 @@ func (n *Node) IsLinkedToRepo(w *Workflow) bool {
 }
 
 // CheckApplicationDeploymentStrategies checks application deployment strategies
-func (n Node) CheckApplicationDeploymentStrategies(proj *Project, w *Workflow) error {
+func (n Node) CheckApplicationDeploymentStrategies(proj Project, w *Workflow) error {
 	if n.Context == nil {
 		return nil
 	}

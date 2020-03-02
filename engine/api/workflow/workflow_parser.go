@@ -27,7 +27,7 @@ type ImportOptions struct {
 }
 
 // Parse parse an exportentities.workflow and return the parsed workflow
-func Parse(ctx context.Context, proj *sdk.Project, ew exportentities.Workflow) (*sdk.Workflow, error) {
+func Parse(ctx context.Context, proj sdk.Project, ew exportentities.Workflow) (*sdk.Workflow, error) {
 	log.Info(ctx, "Parse>> Parse workflow %s in project %s", ew.GetName(), proj.Key)
 	log.Debug("Parse>> Workflow: %+v", ew)
 
@@ -51,7 +51,7 @@ func Parse(ctx context.Context, proj *sdk.Project, ew exportentities.Workflow) (
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, oldW *sdk.Workflow, ew exportentities.Workflow, u sdk.Identifiable, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.ParseAndImport")
 	defer end()
 

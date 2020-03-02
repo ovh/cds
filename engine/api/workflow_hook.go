@@ -47,19 +47,19 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
 
-		nodeID, errN := requestVarInt(r, "nodeID")
-		if errN != nil {
-			return sdk.WithStack(errN)
+		nodeID, err := requestVarInt(r, "nodeID")
+		if err != nil {
+			return err
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
-		if errP != nil {
-			return sdk.WithStack(errP)
+		p, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
+		if err != nil {
+			return sdk.WithStack(err)
 		}
 
-		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, workflowName, workflow.LoadOptions{})
-		if errW != nil {
-			return sdk.WithStack(errW)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *p, workflowName, workflow.LoadOptions{})
+		if err != nil {
+			return sdk.WithStack(err)
 		}
 
 		node := wf.WorkflowData.NodeByID(nodeID)
@@ -81,22 +81,22 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 		var webHookInfo repositoriesmanager.WebhooksInfos
 		if hasRepoManager {
 			// Call VCS to know if repository allows webhook and get the configuration fields
-			vcsServer := repositoriesmanager.GetProjectVCSServer(p, wf.GetApplication(node.Context.ApplicationID).VCSServer)
+			vcsServer := repositoriesmanager.GetProjectVCSServer(*p, wf.GetApplication(node.Context.ApplicationID).VCSServer)
 			if vcsServer != nil {
-				client, errclient := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, p.Key, vcsServer)
-				if errclient != nil {
-					return sdk.WrapError(errclient, "cannot get vcs client")
+				client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, p.Key, vcsServer)
+				if err != nil {
+					return sdk.WrapError(err, "cannot get vcs client")
 				}
-				var errWH error
-				webHookInfo, errWH = repositoriesmanager.GetWebhooksInfos(ctx, client)
-				if errWH != nil {
-					return sdk.WrapError(errWH, "cannot get vcs web hook info")
+
+				webHookInfo, err = repositoriesmanager.GetWebhooksInfos(ctx, client)
+				if err != nil {
+					return sdk.WrapError(err, "cannot get vcs web hook info")
 				}
 				repoWebHookEnable = webHookInfo.WebhooksSupported && !webHookInfo.WebhooksDisabled
 
-				pollInfo, errPoll := repositoriesmanager.GetPollingInfos(ctx, client, *p)
-				if errPoll != nil {
-					return sdk.WrapError(errPoll, "cannot get vcs poller info")
+				pollInfo, err := repositoriesmanager.GetPollingInfos(ctx, client, *p)
+				if err != nil {
+					return sdk.WrapError(err, "cannot get vcs poller info")
 				}
 				repoPollerEnable = pollInfo.PollingSupported && !pollInfo.PollingDisabled
 
@@ -223,25 +223,25 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
 		hookRunID := vars["hookRunID"]
-		number, errnum := requestVarInt(r, "number")
-		if errnum != nil {
-			return errnum
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return err
 		}
 
 		var callback sdk.WorkflowNodeOutgoingHookRunCallback
 		if err := service.UnmarshalBody(r, &callback); err != nil {
-			return sdk.WrapError(err, "Unable to unmarshal body")
+			return err
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 
 		defer tx.Rollback() // nolint
 
 		_, next := observability.Span(ctx, "project.Load")
-		proj, errP := project.Load(tx, api.Cache, key,
+		proj, err := project.Load(tx, api.Cache, key,
 			project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFeatures,
 			project.LoadOptions.WithIntegrations,
@@ -249,24 +249,24 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		)
 		next()
-		if errP != nil {
-			return sdk.WrapError(errP, "postWorkflowJobHookCallbackHandler> Cannot load project")
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project")
 		}
 		wr, err := workflow.LoadRun(ctx, tx, key, workflowName, number, workflow.LoadRunOptions{
 			DisableDetailledNodeRun: true,
 		})
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> Cannot load workflow run")
+			return sdk.WrapError(err, "cannot load workflow run")
 		}
 
 		pv, err := project.GetAllVariableInProject(tx, wr.Workflow.ProjectID, project.WithClearPassword())
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load project variable")
+			return sdk.WrapError(err, "cannot load project variable")
 		}
 
-		secrets, errSecret := workflow.LoadSecrets(tx, api.Cache, nil, wr, pv)
-		if errSecret != nil {
-			return sdk.WrapError(errSecret, "postWorkflowJobHookCallbackHandler> Cannot load secrets")
+		secrets, err := workflow.LoadSecrets(tx, api.Cache, nil, wr, pv)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load secrets")
 		}
 
 		// Hide secrets in payload
@@ -274,20 +274,20 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			callback.Log = strings.Replace(callback.Log, s.Value, "**"+s.Name+"**", -1)
 		}
 
-		report, err := workflow.UpdateOutgoingHookRunStatus(ctx, tx, api.Cache, proj, wr, hookRunID, callback)
+		report, err := workflow.UpdateOutgoingHookRunStatus(ctx, tx, api.Cache, *proj, wr, hookRunID, callback)
 		if err != nil {
-			return sdk.WrapError(err, "Unable to update outgoing hook run status")
+			return sdk.WrapError(err, "unable to update outgoing hook run status")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, key, report)
 
 		report, err = updateParentWorkflowRun(ctx, api.mustDB, api.Cache, wr)
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler")
+			return sdk.WithStack(err)
 		}
 
 		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, key, report)

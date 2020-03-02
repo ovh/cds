@@ -224,7 +224,7 @@ version: v1.0`),
 	assert.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
 
-	wk, err := workflow.Load(context.Background(), db, api.Cache, proj, "w-go-repo", workflow.LoadOptions{})
+	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 
@@ -468,7 +468,7 @@ version: v1.0`),
 	assert.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
 
-	wk, err := workflow.Load(context.Background(), db, api.Cache, proj, "w-go-repo", workflow.LoadOptions{})
+	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 
@@ -522,7 +522,7 @@ version: v1.0`),
 
 	assert.NotEqual(t, "Fail", wr.Status)
 
-	wk, err = workflow.Load(context.Background(), db, api.Cache, proj, "w-go-repo", workflow.LoadOptions{})
+	wk, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 
@@ -804,7 +804,7 @@ version: v1.0`),
 	assert.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
 
-	wk, err := workflow.Load(context.Background(), db, api.Cache, proj, "w-go-repo", workflow.LoadOptions{})
+	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 
@@ -878,7 +878,7 @@ version: v1.0`),
 
 	assert.NotEqual(t, "Fail", wr.Status)
 
-	wk, err = workflow.Load(context.Background(), db, api.Cache, proj, "w-go-repo", workflow.LoadOptions{})
+	wk, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 
@@ -1354,7 +1354,7 @@ version: v1.0`),
 	assert.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
 
-	wk, err := workflow.Load(context.Background(), db, api.Cache, proj, "w-go-repo", workflow.LoadOptions{})
+	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 
@@ -1438,7 +1438,7 @@ version: v1.0`),
 
 	assert.NotEqual(t, "Fail", wr.Status)
 
-	wk, err = workflow.Load(context.Background(), db, api.Cache, proj, "w-go-repo", workflow.LoadOptions{})
+	wk, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 
@@ -1510,7 +1510,7 @@ version: v1.0`),
 
 	assert.NotEqual(t, "Fail", wr.Status)
 
-	wk, err = workflow.Load(context.Background(), db, api.Cache, proj, "w-go-repo", workflow.LoadOptions{})
+	wk, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 
@@ -1531,5 +1531,4 @@ version: v1.0`),
 			t.Fatalf("unexpected hook: %T %+v", h, h)
 		}
 	}
-
 }

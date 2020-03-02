@@ -18,7 +18,7 @@ import (
 )
 
 // Export a workflow
-func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, w io.Writer, opts exportentities.Options) (int, error) {
+func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, name string, f exportentities.Format, w io.Writer, opts exportentities.Options) (int, error) {
 	ctx, end := observability.Span(ctx, "workflow.Export")
 	defer end()
 
@@ -51,8 +51,9 @@ func exportWorkflow(ctx context.Context, wf sdk.Workflow, f exportentities.Forma
 }
 
 // Pull a workflow with all it dependencies; it writes a tar buffer in the writer
-func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format,
+func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, name string, f exportentities.Format,
 	encryptFunc sdk.EncryptFunc, opts exportentities.Options) (exportentities.WorkflowPulled, error) {
+
 	ctx, end := observability.Span(ctx, "workflow.Pull")
 	defer end()
 

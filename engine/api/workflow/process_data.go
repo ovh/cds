@@ -21,7 +21,7 @@ type nodeRunContext struct {
 	NodeGroups         []sdk.GroupPermission
 }
 
-func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
+func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
 	//TRACEABILITY
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.processWorkflowDataRun",

@@ -64,7 +64,7 @@ func newActionDisplay(a sdk.Action) actionDisplay {
 
 type actionDisplay struct {
 	Created  string `cli:"Created"`
-	Fullname string `cli:"Fullname,Key"`
+	Fullname string `cli:"Fullname,key"`
 	Type     string `cli:"Type"`
 }
 
