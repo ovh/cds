@@ -60,7 +60,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return err
 		}
 
-		wfDB, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, workflowName, workflow.LoadOptions{
+		wfDB, err := workflow.Load(ctx, api.mustDB(), api.Cache, *p, workflowName, workflow.LoadOptions{
 			DeepPipeline:          migrate,
 			WithAsCodeUpdateEvent: migrate,
 		})
@@ -92,7 +92,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return err
 		}
 
-		ope, err := workflow.UpdateWorkflowAsCode(ctx, api.Cache, api.mustDB(), p, wk, app, branch, message, u.AuthentifiedUser)
+		ope, err := workflow.UpdateWorkflowAsCode(ctx, api.Cache, api.mustDB(), *p, wk, app, branch, message, u.AuthentifiedUser)
 		if err != nil {
 			return err
 		}
@@ -105,7 +105,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 				Type:      ascode.AsCodeWorkflow,
 				FromRepo:  wk.FromRepository,
 			}
-			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, p, &app, ed, u)
+			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *p, &app, ed, u)
 			if asCodeEvent != nil {
 				event.PublishAsCodeEvent(ctx, p.Key, *asCodeEvent, u)
 			}
@@ -121,7 +121,7 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 
 	// Sync as code event
 	if len(wf.AsCodeEvent) > 0 {
-		eventsLeft, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, proj, app, getAPIConsumer(ctx).AuthentifiedUser)
+		eventsLeft, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, *proj, app, getAPIConsumer(ctx).AuthentifiedUser)
 		if err != nil {
 			return err
 		}
@@ -147,18 +147,18 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 		}
 		wf.WorkflowData.Node.Hooks = append(wf.WorkflowData.Node.Hooks, h)
 
-		oldW, errOld := workflow.LoadByID(ctx, api.mustDB(), api.Cache, proj, wf.ID, workflow.LoadOptions{})
+		oldW, errOld := workflow.LoadByID(ctx, api.mustDB(), api.Cache, *proj, wf.ID, workflow.LoadOptions{})
 		if errOld != nil {
 			return errOld
 		}
 
-		if err := workflow.Update(ctx, api.mustDB(), api.Cache, wf, proj, workflow.UpdateOptions{OldWorkflow: oldW}); err != nil {
+		if err := workflow.Update(ctx, api.mustDB(), api.Cache, *proj, wf, workflow.UpdateOptions{OldWorkflow: oldW}); err != nil {
 			return err
 		}
 	}
 
 	// Export workflow + push + create pull request
-	ope, err := workflow.MigrateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, *app, u, project.EncryptWithBuiltinKey, branch, message)
+	ope, err := workflow.MigrateAsCode(ctx, api.mustDB(), api.Cache, *proj, wf, *app, u, project.EncryptWithBuiltinKey, branch, message)
 	if err != nil {
 		return sdk.WrapError(err, "unable to migrate workflow as code")
 	}
@@ -171,7 +171,7 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 			Name:      wf.Name,
 			Operation: ope,
 		}
-		asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, app, ed, u)
+		asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *proj, app, ed, u)
 		if asCodeEvent != nil {
 			event.PublishAsCodeEvent(ctx, proj.Key, *asCodeEvent, u)
 		}

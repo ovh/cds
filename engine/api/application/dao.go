@@ -15,7 +15,7 @@ import (
 
 const appRows = `
 application.id,
-application.name, 
+application.name,
 application.project_id,
 application.repo_fullname,
 application.repositories_manager_id,
@@ -150,7 +150,7 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, opts []LoadOptionFunc, dbApp
 }
 
 // Insert add an application id database
-func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application) error {
+func Insert(db gorp.SqlExecutor, store cache.Store, proj sdk.Project, app *sdk.Application) error {
 	if err := app.IsValid(); err != nil {
 		return sdk.WrapError(err, "application is not valid")
 	}

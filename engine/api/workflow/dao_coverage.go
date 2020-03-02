@@ -120,7 +120,7 @@ func (c *Coverage) PostUpdate(s gorp.SqlExecutor) error {
 	}
 
 	query := `
-    UPDATE workflow_node_run_coverage 
+    UPDATE workflow_node_run_coverage
     SET report=$1, trend=$2
     WHERE workflow_node_run_id=$3`
 	if _, err := s.Exec(query, reportS, trendS, c.WorkflowNodeRunID); err != nil {
@@ -131,7 +131,7 @@ func (c *Coverage) PostUpdate(s gorp.SqlExecutor) error {
 }
 
 // ComputeNewReport compute trends and import new coverage report
-func ComputeNewReport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, report coverage.Report, wnr *sdk.WorkflowNodeRun, proj *sdk.Project) error {
+func ComputeNewReport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, report coverage.Report, wnr *sdk.WorkflowNodeRun, proj sdk.Project) error {
 	covReport := sdk.WorkflowNodeRunCoverage{
 		WorkflowID:        wnr.WorkflowID,
 		WorkflowRunID:     wnr.WorkflowRunID,
@@ -145,12 +145,11 @@ func ComputeNewReport(ctx context.Context, db gorp.SqlExecutor, cache cache.Stor
 	}
 
 	// Get previous report
-	previousReport, errP := loadPreviousCoverageReport(db, wnr.WorkflowID, wnr.Number, wnr.VCSRepository, wnr.VCSBranch, covReport.ApplicationID)
-	if errP != nil && !sdk.ErrorIs(errP, sdk.ErrNotFound) {
-		return sdk.WrapError(errP, "computeNewReport> Unable to load previous report")
+	previousReport, err := loadPreviousCoverageReport(db, wnr.WorkflowID, wnr.Number, wnr.VCSRepository, wnr.VCSBranch, covReport.ApplicationID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return sdk.WrapError(err, "unable to load previous report")
 	}
-
-	if !sdk.ErrorIs(errP, sdk.ErrNotFound) {
+	if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		// remove data we don't need
 		previousReport.Report.Files = nil
 		covReport.Trend.CurrentBranch = previousReport.Report
@@ -168,7 +167,7 @@ func ComputeNewReport(ctx context.Context, db gorp.SqlExecutor, cache cache.Stor
 }
 
 // ComputeLatestDefaultBranchReport add the default branch coverage report into  the given report
-func ComputeLatestDefaultBranchReport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, wnr *sdk.WorkflowNodeRun, covReport *sdk.WorkflowNodeRunCoverage) error {
+func ComputeLatestDefaultBranchReport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, wnr *sdk.WorkflowNodeRun, covReport *sdk.WorkflowNodeRunCoverage) error {
 	// Get report latest report on previous branch
 	var defaultBranch string
 	projectVCSServer := repositoriesmanager.GetProjectVCSServer(proj, wnr.VCSServer)

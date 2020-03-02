@@ -25,15 +25,14 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		key := vars[permProjectKey]
 		force := FormBool(r, "force")
 
-		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
-		if errp != nil {
-			return sdk.WrapError(errp, "postApplicationImportHandler>> Unable load project")
+		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
+		if err != nil {
+			return sdk.WrapError(err, "unable load project")
 		}
 
-		body, errr := ioutil.ReadAll(r.Body)
-		if errr != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errr)
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 		defer r.Body.Close()
 
@@ -63,7 +62,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		newApp, msgList, globalError := application.ParseAndImport(ctx, tx, api.Cache, proj, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
+		newApp, msgList, globalError := application.ParseAndImport(ctx, tx, api.Cache, *proj, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import application %s", eapp.Name)

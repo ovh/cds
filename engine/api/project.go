@@ -45,7 +45,7 @@ func (api *API) getProjectsHandler_FilterByRepo(ctx context.Context, w http.Resp
 		ws := []sdk.Workflow{}
 		//Filter the workflow by applications
 		for i := range p.Workflows {
-			w, err := workflow.LoadByID(ctx, db, store, p, p.Workflows[i].ID, workflow.LoadOptions{})
+			w, err := workflow.LoadByID(ctx, db, store, *p, p.Workflows[i].ID, workflow.LoadOptions{})
 			if err != nil {
 				return err
 			}

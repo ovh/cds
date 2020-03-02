@@ -30,9 +30,9 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		}
 
 		options := workflow.LoadOptions{}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, options)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, options)
 		if err != nil {
-			return sdk.WrapError(err, "deleteWorkflowGroupHandler")
+			return sdk.WithStack(err)
 		}
 
 		var groupIndex int
@@ -94,9 +94,9 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 		}
 
 		options := workflow.LoadOptions{}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, options)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, options)
 		if err != nil {
-			return sdk.WrapError(err, "putWorkflowGroupHandler")
+			return sdk.WithStack(err)
 		}
 
 		var oldGp sdk.GroupPermission
@@ -149,7 +149,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 		}
 
 		options := workflow.LoadOptions{}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, options)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, name, options)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load workflow")
 		}

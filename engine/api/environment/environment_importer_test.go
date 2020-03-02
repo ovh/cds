@@ -97,7 +97,7 @@ func TestImportInto_Variable(t *testing.T) {
 		}
 	}()
 
-	environment.ImportInto(db, &proj, &env2, &env, msgChan, u)
+	environment.ImportInto(db, &env2, &env, msgChan, u)
 
 	close(msgChan)
 	<-done
@@ -188,7 +188,7 @@ func TestImportInto_Group(t *testing.T) {
 		}
 	}()
 
-	environment.ImportInto(db, &proj, &env2, &env, msgChan, u)
+	environment.ImportInto(db, &env2, &env, msgChan, u)
 
 	close(msgChan)
 	<-done

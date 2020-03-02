@@ -66,7 +66,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		_, msgList, globalError := environment.ParseAndImport(tx, proj, eenv, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
+		_, msgList, globalError := environment.ParseAndImport(tx, *proj, eenv, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import environment %s", eenv.Name)
@@ -144,8 +144,8 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 
 		defer tx.Rollback() // nolint
 
-		if err := environment.Import(api.mustDB(), proj, env, msgChan, getAPIConsumer(ctx)); err != nil {
-			return sdk.WrapError(err, "Error on import")
+		if err := environment.Import(api.mustDB(), *proj, env, msgChan, getAPIConsumer(ctx)); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		close(msgChan)
@@ -169,38 +169,31 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 		envName := vars["environmentName"]
 		format := r.FormValue("format")
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
-		if errProj != nil {
-			return sdk.WrapError(errProj, "Cannot load %s", key)
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
-
-		tx, errBegin := api.mustDB().Begin()
-		if errBegin != nil {
-			return sdk.WrapError(errBegin, "Cannot start transaction")
-		}
-
 		defer tx.Rollback() // nolint
 
 		if err := environment.Lock(tx, key, envName); err != nil {
 			return sdk.WrapError(err, "cannot lock env %s/%s", key, envName)
 		}
 
-		env, errEnv := environment.LoadEnvironmentByName(tx, key, envName)
-		if errEnv != nil {
-			return sdk.WrapError(errEnv, "Cannot load env %s/%s", key, envName)
+		env, err := environment.LoadEnvironmentByName(tx, key, envName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load env %s/%s", key, envName)
 		}
 
 		var payload = &exportentities.Environment{}
 
-		// Get body
-		data, errRead := ioutil.ReadAll(r.Body)
-		if errRead != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(errRead, "Unable to read body"))
+		data, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read body"))
 		}
 
-		f, errF := exportentities.GetFormat(format)
-		if errF != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errF)
+		f, err := exportentities.GetFormat(format)
+		if err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 
 		var errorParse error
@@ -230,8 +223,8 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 			}
 		}()
 
-		if err := environment.ImportInto(tx, proj, newEnv, env, msgChan, getAPIConsumer(ctx)); err != nil {
-			return sdk.WrapError(err, "Error on import")
+		if err := environment.ImportInto(tx, newEnv, env, msgChan, getAPIConsumer(ctx)); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		close(msgChan)
@@ -240,7 +233,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 		msgListString := translate(r, allMsg)
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)

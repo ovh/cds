@@ -27,7 +27,7 @@ type EntityData struct {
 }
 
 // UpdateAsCodeResult pulls repositories operation and the create pullrequest + update workflow
-func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, app *sdk.Application, ed EntityData, u sdk.Identifiable) *sdk.AsCodeEvent {
+func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, app *sdk.Application, ed EntityData, u sdk.Identifiable) *sdk.AsCodeEvent {
 	tick := time.NewTicker(2 * time.Second)
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer func() {
@@ -53,14 +53,14 @@ forLoop:
 				break forLoop
 			}
 			if ed.Operation.Status == sdk.OperationStatusDone {
-				vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
+				vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 				if vcsServer == nil {
 					log.Error(ctx, "postWorkflowAsCodeHandler> No vcsServer found")
 					ed.Operation.Status = sdk.OperationStatusError
 					ed.Operation.Error = "No vcsServer found"
 					return nil
 				}
-				client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, p.Key, vcsServer)
+				client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
 				if errclient != nil {
 					log.Error(ctx, "postWorkflowAsCodeHandler> unable to create repositories manager client: %v", errclient)
 					ed.Operation.Status = sdk.OperationStatusError

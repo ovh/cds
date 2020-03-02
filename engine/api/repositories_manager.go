@@ -54,25 +54,24 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 		key := vars[permProjectKey]
 		rmName := vars["name"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key)
-		if errP != nil {
-			return sdk.WrapError(errP, "repositoriesManagerAuthorize> Cannot load project")
+		proj, err := project.Load(api.mustDB(), api.Cache, key)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project")
 		}
 
-		if repositoriesmanager.GetProjectVCSServer(proj, rmName) != nil {
-			return sdk.WrapError(errP, "repositoriesManagerAuthorize> Cannot load project")
+		if repositoriesmanager.GetProjectVCSServer(*proj, rmName) != nil {
+			return sdk.WithStack(fmt.Errorf("cannot load project vcs server"))
 		}
 
-		vcsServer, errVcsServer := repositoriesmanager.NewVCSServerConsumer(api.mustDBWithCtx, api.Cache, rmName)
-		if errVcsServer != nil {
-			return sdk.WrapError(errVcsServer, "repositoriesManagerAuthorize> Cannot start transaction")
+		vcsServer, err := repositoriesmanager.NewVCSServerConsumer(api.mustDBWithCtx, api.Cache, rmName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 
 		token, url, err := vcsServer.AuthorizeRedirect(ctx)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerAuth, "repositoriesManagerAuthorize> error with AuthorizeRedirect %s", err)
+			return sdk.WrapError(sdk.ErrNoReposManagerAuth, "error with AuthorizeRedirect %s", err)
 		}
-		log.Debug("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s", proj.Key, token, url)
 
 		data := map[string]string{
 			"project_key":          proj.Key,
@@ -329,20 +328,20 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 
 		force := FormBool(r, "force")
 
-		p, errl := project.Load(api.mustDB(), api.Cache, projectKey)
-		if errl != nil {
-			return sdk.WrapError(errl, "deleteRepositoriesManagerHandler> Cannot load project %s", projectKey)
+		p, err := project.Load(api.mustDB(), api.Cache, projectKey)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load project %s", projectKey)
 		}
 
 		// Load the repositories manager from the DB
-		vcsServer := repositoriesmanager.GetProjectVCSServer(p, rmName)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(*p, rmName)
 		if vcsServer == nil {
 			return sdk.WithStack(sdk.ErrRepoNotFound)
 		}
 
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return sdk.WrapError(errb, "deleteRepositoriesManagerHandler> Cannot start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
@@ -380,24 +379,25 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 		rmName := vars["name"]
 		sync := FormBool(r, "synchronize")
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey)
-		if errproj != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
+		proj, err := project.Load(api.mustDB(), api.Cache, projectKey)
+		if err != nil {
+			return sdk.NewErrorWithStack(err,
+				sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth, "cannot get client got %s %s", projectKey, rmName))
 		}
 
 		log.Debug("getReposFromRepositoriesManagerHandler> Loading repo for %s", rmName)
 
-		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rmName)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(*proj, rmName)
 		if vcsServer == nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client got %s %s", projectKey, rmName)
 		}
 
 		log.Debug("getReposFromRepositoriesManagerHandler> Loading repo for %s; ok", vcsServer.Name)
 
-		var errAuthClient error
-		client, errAuthClient := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectKey, vcsServer)
-		if errAuthClient != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s: %v", projectKey, rmName, errAuthClient)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectKey, vcsServer)
+		if err != nil {
+			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
+				"cannot get client got %s %s", projectKey, rmName))
 		}
 
 		cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
@@ -413,13 +413,12 @@ func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 			log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 		}
 		if !find || len(repos) == 0 {
-			var errRepos error
-			repos, errRepos = client.Repos(ctx)
+			repos, err = client.Repos(ctx)
+			if err != nil {
+				return sdk.WrapError(err, "cannot get repos")
+			}
 			if err := api.Cache.SetWithTTL(cacheKey, repos, 0); err != nil {
 				log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
-			}
-			if errRepos != nil {
-				return sdk.WrapError(errRepos, "getReposFromRepositoriesManagerHandler> Cannot get repos: %v", errRepos)
 			}
 		}
 
@@ -439,27 +438,30 @@ func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Missing repository name 'repo' as a query parameter"))
 		}
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey)
-		if errproj != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
+		proj, err := project.Load(api.mustDB(), api.Cache, projectKey)
+		if err != nil {
+			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
+				"cannot get client got %s %s", projectKey, rmName))
 		}
 
-		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rmName)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(*proj, rmName)
 		if vcsServer == nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client got %s %s", projectKey, rmName)
 		}
 
 		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectKey, vcsServer)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getRepoFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
+			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
+				"cannot get client got %s %s", projectKey, rmName))
 		}
 
 		log.Info(ctx, "getRepoFromRepositoriesManagerHandler> Loading repository on %s", vcsServer.Name)
 
 		repo, err := client.RepoByFullname(ctx, repoName)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot get repos")
+			return sdk.WrapError(err, "cannot get repos")
 		}
+
 		return service.WriteJSON(w, repo, http.StatusOK)
 	}
 }
@@ -476,7 +478,7 @@ func (api *API) getRepositoriesManagerLinkedApplicationsHandler() service.Handle
 			return sdk.WrapError(err, "cannot get client got %s %s", projectKey, rmName)
 		}
 
-		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rmName)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(*proj, rmName)
 		if vcsServer == nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client got %s %s", projectKey, rmName)
 		}
@@ -550,14 +552,14 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 			}
 
 			for _, wf := range usage.Workflows {
-				wfDB, errWL := workflow.LoadByID(ctx, db, api.Cache, proj, wf.ID, workflow.LoadOptions{})
-				if errWL != nil {
-					return errWL
+				wfDB, err := workflow.LoadByID(ctx, db, api.Cache, *proj, wf.ID, workflow.LoadOptions{})
+				if err != nil {
+					return err
 				}
 
-				wfOld, errWL := workflow.LoadByID(ctx, db, api.Cache, proj, wf.ID, workflow.LoadOptions{})
-				if errWL != nil {
-					return errWL
+				wfOld, err := workflow.LoadByID(ctx, db, api.Cache, *proj, wf.ID, workflow.LoadOptions{})
+				if err != nil {
+					return err
 				}
 
 				if wfDB.WorkflowData.Node.Context == nil {
@@ -567,23 +569,23 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 					continue
 				}
 
-				payload, errD := wfDB.WorkflowData.Node.Context.DefaultPayloadToMap()
-				if errD != nil {
-					return sdk.WrapError(errP, "attachRepositoriesManager> Cannot DefaultPayloadToMap")
+				payload, err := wfDB.WorkflowData.Node.Context.DefaultPayloadToMap()
+				if err != nil {
+					return sdk.WithStack(err)
 				}
 
 				if _, ok := payload["git.branch"]; ok && payload["git.repository"] == app.RepositoryFullname {
 					continue
 				}
 
-				defaultPayload, errPay := workflow.DefaultPayload(ctx, db, api.Cache, proj, wfDB)
-				if errPay != nil {
-					return sdk.WrapError(errPay, "attachRepositoriesManager> Cannot get defaultPayload")
+				defaultPayload, err := workflow.DefaultPayload(ctx, db, api.Cache, *proj, wfDB)
+				if err != nil {
+					return sdk.WithStack(err)
 				}
 
 				wfDB.WorkflowData.Node.Context.DefaultPayload = defaultPayload
 
-				if err := workflow.Update(ctx, db, api.Cache, wfDB, proj, workflow.UpdateOptions{DisableHookManagement: true, OldWorkflow: wfOld}); err != nil {
+				if err := workflow.Update(ctx, db, api.Cache, *proj, wfDB, workflow.UpdateOptions{DisableHookManagement: true, OldWorkflow: wfOld}); err != nil {
 					return sdk.WrapError(err, "cannot update node context %d", wf.WorkflowData.Node.Context.ID)
 				}
 

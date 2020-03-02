@@ -54,7 +54,7 @@ func TestImport(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pipeline",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	//Pipeline
 	pipparam := sdk.Pipeline{
@@ -64,12 +64,12 @@ func TestImport(t *testing.T) {
 	}
 	sdk.AddParameter(&pipparam.Parameter, "name", sdk.StringParameter, "value")
 
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pipparam))
+	test.NoError(t, pipeline.InsertPipeline(db, &pipparam))
 	//Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, cache, proj, app))
+	test.NoError(t, application.Insert(db, cache, *proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
@@ -477,13 +477,13 @@ func TestImport(t *testing.T) {
 			}
 			var wf *sdk.Workflow
 			if workflowExists {
-				wf, err = workflow.Load(context.TODO(), db, cache, proj, tt.args.w.Name, workflow.LoadOptions{WithIcon: true})
+				wf, err = workflow.Load(context.TODO(), db, cache, *proj, tt.args.w.Name, workflow.LoadOptions{WithIcon: true})
 				if err != nil {
 					t.Errorf("%s", err)
 				}
 			}
 
-			if err := workflow.Import(context.TODO(), db, cache, proj, wf, tt.args.w, u, tt.args.force, nil); err != nil {
+			if err := workflow.Import(context.TODO(), db, cache, *proj, wf, tt.args.w, u, tt.args.force, nil); err != nil {
 				if !tt.wantErr {
 					t.Errorf("Import() error = %v, wantErr %v", err, tt.wantErr)
 				} else {

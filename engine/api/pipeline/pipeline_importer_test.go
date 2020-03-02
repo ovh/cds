@@ -55,7 +55,7 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, store cache.Store, tt t
 	proj, err := project.Load(db, store, tt.args.pip.ProjectKey, nil)
 	test.NoError(t, err)
 
-	if err := pipeline.ImportUpdate(context.TODO(), db, proj, tt.args.pip, msgChan, tt.args.u); (err != nil) != tt.wantErr {
+	if err := pipeline.ImportUpdate(context.TODO(), db, *proj, tt.args.pip, msgChan, tt.args.u); (err != nil) != tt.wantErr {
 		t.Errorf("%q. ImportUpdate() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 	}
 
@@ -99,7 +99,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip))
+			test.NoError(t, pipeline.InsertPipeline(db, args.pip))
 			args.pip.Stages = []sdk.Stage{
 				{
 					BuildOrder: 1,
@@ -136,7 +136,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip))
+			test.NoError(t, pipeline.InsertPipeline(db, args.pip))
 
 			args.pip.Stages = []sdk.Stage{
 				{
@@ -190,7 +190,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip))
+			test.NoError(t, pipeline.InsertPipeline(db, args.pip))
 
 			args.pip.Stages = []sdk.Stage{
 				{
@@ -232,7 +232,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip))
+			test.NoError(t, pipeline.InsertPipeline(db, args.pip))
 
 			args.pip.Stages = []sdk.Stage{
 				{
@@ -273,7 +273,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip))
+			test.NoError(t, pipeline.InsertPipeline(db, args.pip))
 
 			args.pip.Stages = []sdk.Stage{
 				{
@@ -359,7 +359,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Parameter = []sdk.Parameter{
 				{Name: "test", Value: "test_value", Type: sdk.StringParameter, Description: "test_description"},
 			}
-			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip))
+			test.NoError(t, pipeline.InsertPipeline(db, args.pip))
 
 			args.pip.Parameter = []sdk.Parameter{
 				{Name: "test", Value: "test_value_bis", Type: sdk.StringParameter, Description: "test_description_bis"},
@@ -443,7 +443,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip))
+			test.NoError(t, pipeline.InsertPipeline(db, args.pip))
 
 			args.pip.Parameter = []sdk.Parameter{
 				{Name: "test", Value: "test_value", Type: sdk.StringParameter, Description: "test_description"},
@@ -520,7 +520,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip))
+			test.NoError(t, pipeline.InsertPipeline(db, args.pip))
 
 			args.pip.Parameter = []sdk.Parameter{
 				{Name: "test", Value: "test_value", Type: sdk.StringParameter, Description: "test_description"},
@@ -598,7 +598,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip))
+			test.NoError(t, pipeline.InsertPipeline(db, args.pip))
 
 			args.pip.Parameter = []sdk.Parameter{
 				{Name: "test", Value: "test_value", Type: sdk.StringParameter, Description: "test_description"},

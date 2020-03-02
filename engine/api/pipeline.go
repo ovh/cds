@@ -62,7 +62,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 
 		u := getAPIConsumer(ctx)
 
-		ope, err := pipeline.UpdatePipelineAsCode(ctx, api.Cache, api.mustDB(), proj, p, branch, message, &apps[0], u)
+		ope, err := pipeline.UpdatePipelineAsCode(ctx, api.Cache, api.mustDB(), *proj, p, branch, message, &apps[0], u)
 		if err != nil {
 			return err
 		}
@@ -75,7 +75,7 @@ func (api *API) updateAsCodePipelineHandler() service.Handler {
 				Name:      pipelineDB.Name,
 				Operation: ope,
 			}
-			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, proj, &apps[0], ed, u)
+			asCodeEvent := ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, *proj, &apps[0], ed, u)
 			if asCodeEvent != nil {
 				event.PublishAsCodeEvent(ctx, proj.Key, *asCodeEvent, u)
 			}
@@ -190,7 +190,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 			}
 		}(&msgList)
 
-		if err := pipeline.ImportUpdate(ctx, tx, proj, audit.Pipeline, msgChan, u); err != nil {
+		if err := pipeline.ImportUpdate(ctx, tx, *proj, audit.Pipeline, msgChan, u); err != nil {
 			return sdk.WrapError(err, "cannot import pipeline")
 		}
 
@@ -198,7 +198,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		done.Wait()
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		event.PublishPipelineUpdate(ctx, key, audit.Pipeline.Name, name, u)
@@ -213,9 +213,9 @@ func (api *API) addPipelineHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		proj, errl := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
-		if errl != nil {
-			return sdk.WrapError(errl, "AddPipeline: Cannot load %s", key)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load %s", key)
 		}
 
 		var p sdk.Pipeline
@@ -225,7 +225,7 @@ func (api *API) addPipelineHandler() service.Handler {
 
 		// check pipeline name pattern
 		if regexp := sdk.NamePatternRegex; !regexp.MatchString(p.Name) {
-			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "AddPipeline: Pipeline name %s do not respect pattern %s", p.Name, sdk.NamePattern)
+			return sdk.NewErrorFrom(sdk.ErrInvalidPipelinePattern, "pipeline name %s do not respect pattern %s", p.Name, sdk.NamePattern)
 		}
 
 		// Check that pipeline does not already exists
@@ -234,22 +234,22 @@ func (api *API) addPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "cannot check if pipeline exist")
 		}
 		if exist {
-			return sdk.WrapError(sdk.ErrConflict, "addPipeline> Pipeline %s already exists", p.Name)
+			return sdk.NewErrorFrom(sdk.ErrConflict, "pipeline %s already exists", p.Name)
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "Cannot start transaction")
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
 		p.ProjectID = proj.ID
-		if err := pipeline.InsertPipeline(tx, api.Cache, proj, &p); err != nil {
-			return sdk.WrapError(err, "Cannot insert pipeline")
+		if err := pipeline.InsertPipeline(tx, &p); err != nil {
+			return sdk.WrapError(err, "cannot insert pipeline")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		event.PublishPipelineAdd(ctx, key, p, getAPIConsumer(ctx))

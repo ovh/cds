@@ -36,7 +36,7 @@ func TestPull(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -59,7 +59,7 @@ func TestPull(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip2",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip2))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -78,7 +78,7 @@ func TestPull(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	test.NoError(t, application.Insert(db, cache, proj, app))
+	test.NoError(t, application.Insert(db, cache, *proj, app))
 
 	//Environment
 	envName := sdk.RandomString(10)
@@ -122,14 +122,14 @@ func TestPull(t *testing.T) {
 
 	proj, _ = project.Load(db, cache, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 	test.Equal(t, w.Metadata, w1.Metadata)
 	test.Equal(t, w.PurgeTags, w1.PurgeTags)
 
-	pull, err := workflow.Pull(context.TODO(), db, cache, proj, w1.Name, exportentities.FormatYAML, project.EncryptWithBuiltinKey)
+	pull, err := workflow.Pull(context.TODO(), db, cache, *proj, w1.Name, exportentities.FormatYAML, project.EncryptWithBuiltinKey)
 	test.NoError(t, err)
 
 	buff := new(bytes.Buffer)
