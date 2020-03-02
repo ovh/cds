@@ -19,16 +19,17 @@ func (api *API) getKeysInProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key)
-		if errP != nil {
-			return sdk.WrapError(errP, "getKeysInProjectHandler> Cannot load project")
+		p, err := project.Load(api.mustDB(), api.Cache, key)
+		if err != nil {
+			return err
 		}
 
-		if errK := project.LoadAllKeys(api.mustDB(), p); errK != nil {
-			return sdk.WrapError(errK, "getKeysInProjectHandler> Cannot load project keys")
+		keys, err := project.LoadAllKeys(api.mustDB(), p.ID)
+		if err != nil {
+			return err
 		}
 
-		return service.WriteJSON(w, p.Keys, http.StatusOK)
+		return service.WriteJSON(w, keys, http.StatusOK)
 	}
 }
 
@@ -101,13 +102,18 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 			if errK != nil {
 				return sdk.WrapError(errK, "addKeyInProjectHandler> Cannot generate ssh key")
 			}
-			newKey.Key = k
+			newKey.Private = k.Private
+			newKey.Public = k.Public
+			newKey.Type = k.Type
 		case sdk.KeyTypePGP:
 			k, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInProjectHandler> Cannot generate pgpKey")
 			}
-			newKey.Key = k
+			newKey.Private = k.Private
+			newKey.Public = k.Public
+			newKey.Type = k.Type
+			newKey.KeyID = k.KeyID
 		default:
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInProjectHandler> unknown key of type: %s", newKey.Type)
 		}

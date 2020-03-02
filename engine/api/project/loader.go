@@ -135,11 +135,21 @@ func loadApplicationVariables(db gorp.SqlExecutor, store cache.Store, proj *sdk.
 }
 
 func loadKeys(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
-	return LoadAllKeys(db, proj)
+	keys, err := LoadAllKeys(db, proj.ID)
+	if err != nil {
+		return err
+	}
+	proj.Keys = keys
+	return nil
 }
 
 func loadClearKeys(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
-	return LoadAllDecryptedKeys(db, proj)
+	keys, err := LoadAllKeysWithPrivateContent(db, proj.ID)
+	if err != nil {
+		return err
+	}
+	proj.Keys = keys
+	return nil
 }
 
 func loadIntegrations(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {

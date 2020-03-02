@@ -36,10 +36,8 @@ var projectKeyCreateCmd = cli.Command{
 
 func projectCreateKeyRun(v cli.Values) error {
 	key := &sdk.ProjectKey{
-		Key: sdk.Key{
-			Name: v.GetString("key-name"),
-			Type: v.GetString("key-type"),
-		},
+		Name: v.GetString("key-name"),
+		Type: v.GetString("key-type"),
 	}
 	if err := client.ProjectKeyCreate(v.GetString(_ProjectKey), key); err != nil {
 		return err

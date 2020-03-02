@@ -41,7 +41,7 @@ func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content s
 		return "", sdk.WrapError(err, "Unable to load builtin key")
 	}
 
-	encryptedReader, err := shredder.GPGEncrypt([]byte(k.Key.Public), strings.NewReader(content))
+	encryptedReader, err := shredder.GPGEncrypt([]byte(k.Public), strings.NewReader(content))
 	if err != nil {
 		return "", sdk.WrapError(err, "Unable to encrypt content")
 	}
@@ -124,7 +124,7 @@ func DecryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, token string) (
 		return "", sdk.WrapError(err, "Unable to ungzip content")
 	}
 
-	decryptedReader, err := shredder.GPGDecrypt([]byte(k.Key.Private), []byte{}, uncompressedContent)
+	decryptedReader, err := shredder.GPGDecrypt([]byte(k.Private), []byte{}, uncompressedContent)
 	if err != nil {
 		return "", sdk.WrapError(err, "Unable to decrypt content")
 	}

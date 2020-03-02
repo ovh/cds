@@ -563,16 +563,16 @@ func (api *API) postProjectHandler() service.Handler {
 		}
 
 		if !sshExists {
-			p.Keys = append(p.Keys, sdk.ProjectKey{Key: sdk.Key{
+			p.Keys = append(p.Keys, sdk.ProjectKey{
 				Type: sdk.KeyTypeSSH,
 				Name: fmt.Sprintf("proj-%s-%s", sdk.KeyTypeSSH, strings.ToLower(p.Key))},
-			})
+			)
 		}
 		if !gpgExists {
-			p.Keys = append(p.Keys, sdk.ProjectKey{Key: sdk.Key{
+			p.Keys = append(p.Keys, sdk.ProjectKey{
 				Type: sdk.KeyTypePGP,
 				Name: fmt.Sprintf("proj-%s-%s", sdk.KeyTypePGP, strings.ToLower(p.Key))},
-			})
+			)
 		}
 		for i := range p.Keys {
 			k := &p.Keys[i]
@@ -583,13 +583,18 @@ func (api *API) postProjectHandler() service.Handler {
 				if errK != nil {
 					return sdk.WrapError(errK, "addProjectHandler> Cannot generate ssh key for project %s", p.Name)
 				}
-				k.Key = keyTemp
+				k.Private = keyTemp.Private
+				k.Public = keyTemp.Public
+				k.Type = keyTemp.Type
 			case sdk.KeyTypePGP:
 				keyTemp, errK := keys.GeneratePGPKeyPair(k.Name)
 				if errK != nil {
 					return sdk.WrapError(errK, "addProjectHandler> Cannot generate pgp key for project %s", p.Name)
 				}
-				k.Key = keyTemp
+				k.Private = keyTemp.Private
+				k.Public = keyTemp.Public
+				k.Type = keyTemp.Type
+				k.KeyID = keyTemp.KeyID
 			}
 			if errK := project.InsertKey(tx, k); errK != nil {
 				return sdk.WrapError(errK, "addProjectHandler> Cannot add key %s in project %s", k.Name, p.Name)
