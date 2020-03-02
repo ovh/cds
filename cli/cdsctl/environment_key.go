@@ -37,10 +37,8 @@ var environmentKeyCreateCmd = cli.Command{
 
 func environmentCreateKeyRun(v cli.Values) error {
 	key := &sdk.EnvironmentKey{
-		Key: sdk.Key{
-			Name: v.GetString("key-name"),
-			Type: v.GetString("key-type"),
-		},
+		Name: v.GetString("key-name"),
+		Type: v.GetString("key-type"),
 	}
 	if err := client.EnvironmentKeyCreate(v.GetString(_ProjectKey), v.GetString("env-name"), key); err != nil {
 		return err

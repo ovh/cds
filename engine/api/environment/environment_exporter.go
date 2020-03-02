@@ -28,9 +28,11 @@ func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, key str
 	env.Variable = variables
 
 	// Reload key
-	if errE := LoadAllDecryptedKeys(ctx, db, env); errE != nil {
-		return 0, sdk.WrapError(errE, "environment.Export> Cannot load env %s keys", envName)
+	keys, err := LoadAllKeysWithPrivateContent(db, env.ID)
+	if err != nil {
+		return 0, sdk.WrapError(err, "environment.Export> Cannot load env %s keys", envName)
 	}
+	env.Keys = keys
 
 	return ExportEnvironment(db, *env, f, encryptFunc, w)
 }

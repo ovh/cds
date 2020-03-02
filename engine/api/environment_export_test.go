@@ -43,10 +43,8 @@ func Test_getEnvironmentExportHandler(t *testing.T) {
 
 	//Insert ssh and gpg keys
 	k := &sdk.EnvironmentKey{
-		Key: sdk.Key{
-			Name: "mykey",
-			Type: sdk.KeyTypePGP,
-		},
+		Name:          "mykey",
+		Type:          sdk.KeyTypePGP,
 		EnvironmentID: env.ID,
 	}
 	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
@@ -58,10 +56,8 @@ func Test_getEnvironmentExportHandler(t *testing.T) {
 	test.NoError(t, environment.InsertKey(api.mustDB(), k))
 
 	k2 := &sdk.EnvironmentKey{
-		Key: sdk.Key{
-			Name: "mykey-ssh",
-			Type: sdk.KeyTypeSSH,
-		},
+		Name:          "mykey-ssh",
+		Type:          sdk.KeyTypeSSH,
 		EnvironmentID: env.ID,
 	}
 	kssh, errK := keys.GenerateSSHKey(k2.Name)

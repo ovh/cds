@@ -36,10 +36,8 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 	}
 
 	k := &sdk.EnvironmentKey{
-		Key: sdk.Key{
-			Name: "mykey",
-			Type: "pgp",
-		},
+		Name:          "mykey",
+		Type:          "pgp",
 		EnvironmentID: env.ID,
 	}
 
@@ -99,12 +97,10 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 	}
 
 	k := &sdk.EnvironmentKey{
-		Key: sdk.Key{
-			Name:    "mykey",
-			Type:    "pgp",
-			Public:  "pub",
-			Private: "priv",
-		},
+		Name:          "mykey",
+		Type:          "pgp",
+		Public:        "pub",
+		Private:       "priv",
 		EnvironmentID: env.ID,
 	}
 
@@ -155,10 +151,8 @@ func Test_addKeyInEnvironmentHandler(t *testing.T) {
 	}
 
 	k := &sdk.EnvironmentKey{
-		Key: sdk.Key{
-			Name: "mykey",
-			Type: "pgp",
-		},
+		Name: "mykey",
+		Type: "pgp",
 	}
 
 	vars := map[string]string{

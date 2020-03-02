@@ -2,125 +2,105 @@ package environment
 
 import (
 	"context"
-	"database/sql"
-	"encoding/base64"
 
 	"github.com/go-gorp/gorp"
-	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // InsertKey a new environment key in database
 func InsertKey(db gorp.SqlExecutor, key *sdk.EnvironmentKey) error {
-	dbEnvironmentKey := dbEnvironmentKey(*key)
-
-	s, errE := secret.Encrypt([]byte(key.Private))
-	if errE != nil {
-		return sdk.WrapError(errE, "InsertKey> Cannot encrypt private key")
+	dbEnvironmentKey := dbEnvironmentKey{EnvironmentKey: *key}
+	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbEnvironmentKey); err != nil {
+		return err
 	}
-	dbEnvironmentKey.Private = string(s)
-
-	if err := db.Insert(&dbEnvironmentKey); err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
-			err = sdk.ErrKeyAlreadyExist
-		}
-		return sdk.WrapError(err, "Cannot insert project key")
-	}
-	*key = sdk.EnvironmentKey(dbEnvironmentKey)
+	*key = dbEnvironmentKey.EnvironmentKey
 	return nil
 }
 
-// LoadAllEnvironmentKeysByProject Load all environment key for the given project
-func LoadAllEnvironmentKeysByProject(db gorp.SqlExecutor, projID int64) ([]sdk.EnvironmentKey, error) {
+func UpdateKey(db gorp.SqlExecutor, key *sdk.EnvironmentKey) error {
+	dbEnvironmentKey := dbEnvironmentKey{EnvironmentKey: *key}
+	if err := gorpmapping.UpdateAndSign(context.Background(), db, &dbEnvironmentKey); err != nil {
+		return err
+	}
+	*key = dbEnvironmentKey.EnvironmentKey
+	return nil
+}
+
+func getAllKeys(db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.EnvironmentKey, error) {
+	var ctx = context.Background()
 	var res []dbEnvironmentKey
-	query := `
-	SELECT DISTINCT ON (environment_key.name, environment_key.type) environment_key.name as d, environment_key.* FROM environment_key
-	JOIN environment ON environment.id = environment_key.environment_id
-	JOIN project ON project.id = environment.project_id
-	WHERE project.id = $1;
-	`
-	if _, err := db.Select(&res, query, projID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, sdk.WrapError(err, "Cannot load keys")
+	keys := make([]sdk.EnvironmentKey, 0, len(res))
+
+	if err := gorpmapping.GetAll(ctx, db, query, &res); err != nil {
+		return nil, err
 	}
 
-	keys := make([]sdk.EnvironmentKey, len(res))
 	for i := range res {
-		p := res[i]
-		p.Private = sdk.PasswordPlaceholder
-		keys[i] = sdk.EnvironmentKey(p)
+		isValid, err := gorpmapping.CheckSignature(res[i], res[i].Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "environment.getAllKeys> environment key %d data corrupted", res[i].ID)
+			continue
+		}
+		keys = append(keys, res[i].EnvironmentKey)
 	}
 	return keys, nil
 }
 
 // LoadAllKeys load all keys for the given environment
-func LoadAllKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
-	var res []dbEnvironmentKey
-	if _, err := db.Select(&res, "SELECT * FROM environment_key WHERE environment_id = $1", env.ID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		return sdk.WrapError(err, "Cannot load keys")
-	}
-
-	keys := make([]sdk.EnvironmentKey, len(res))
-	for i := range res {
-		p := res[i]
-		keys[i] = sdk.EnvironmentKey(p)
-		keys[i].Private = sdk.PasswordPlaceholder
-	}
-	env.Keys = keys
-	return nil
+func LoadAllKeys(db gorp.SqlExecutor, envID int64) ([]sdk.EnvironmentKey, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM environment_key WHERE environment_id = $1").Args(envID)
+	return getAllKeys(db, query)
 }
 
-// LoadAllBase64Keys Load environment key with encrypted secret
-func LoadAllBase64Keys(db gorp.SqlExecutor, env *sdk.Environment) error {
-	var res []dbEnvironmentKey
-	if _, err := db.Select(&res, "SELECT * FROM environment_key WHERE environment_id = $1", env.ID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		return sdk.WrapError(err, "Cannot load keys")
+// LoadAllKeysWithPrivateContent load all keys for the given environment
+func LoadAllKeysWithPrivateContent(db gorp.SqlExecutor, envID int64) ([]sdk.EnvironmentKey, error) {
+	keys, err := LoadAllKeys(db, envID)
+	if err != nil {
+		return nil, err
 	}
 
-	keys := make([]sdk.EnvironmentKey, len(res))
-	for i := range res {
-		p := res[i]
-		keys[i] = sdk.EnvironmentKey(p)
-		keys[i].Private = base64.StdEncoding.EncodeToString([]byte(keys[i].Private))
-	}
-	env.Keys = keys
-	return nil
-}
-
-// LoadAllDecryptedKeys load all keys for the given environment
-func LoadAllDecryptedKeys(ctx context.Context, db gorp.SqlExecutor, env *sdk.Environment) error {
-	var res []dbEnvironmentKey
-	if _, err := db.Select(&res, "SELECT * FROM environment_key WHERE environment_id = $1", env.ID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		return sdk.WrapError(err, "Cannot load keys")
-	}
-
-	keys := make([]sdk.EnvironmentKey, len(res))
-	for i := range res {
-		p := res[i]
-		keys[i] = sdk.EnvironmentKey(p)
-		decrypted, err := secret.Decrypt([]byte(keys[i].Private))
+	res := make([]sdk.EnvironmentKey, 0, len(keys))
+	for _, k := range keys {
+		x, err := LoadKey(db, k.ID, k.Name)
 		if err != nil {
-			log.Error(ctx, "LoadAllDecryptedKeys> Unable to decrypt private key %s/%s: %v", env.Name, keys[i].Name, err)
+			return nil, err
 		}
-		keys[i].Private = string(decrypted)
+		res = append(res, *x)
 	}
-	env.Keys = keys
-	return nil
+
+	return res, nil
+}
+
+func LoadKey(db gorp.SqlExecutor, id int64, keyName string) (*sdk.EnvironmentKey, error) {
+	query := gorpmapping.NewQuery(`
+	SELECT * 
+	FROM environment_key
+	WHERE id = $1 
+	AND name = $2
+	`).Args(id, keyName)
+	var k dbEnvironmentKey
+	found, err := gorpmapping.Get(context.Background(), db, query, &k, gorpmapping.GetOptions.WithDecryption)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	isValid, err := gorpmapping.CheckSignature(k, k.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		log.Error(context.Background(), "environment.LoadKey> project key %d data corrupted", k.ID)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	return &k.EnvironmentKey, nil
 }
 
 // DeleteEnvironmentKey Delete the given key from the given project

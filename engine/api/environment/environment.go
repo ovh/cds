@@ -103,11 +103,11 @@ func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sd
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrorWithData(sdk.ErrEnvironmentNotFound, envName)
 		}
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	env.LastModified = lastModified.Unix()
 	env.ProjectKey = projectKey
-	return &env, loadDependencies(db, &env)
+	return &env, sdk.WithStack(loadDependencies(db, &env))
 }
 
 // LoadByWorkflowID loads environments from database for a given workflow id
@@ -171,9 +171,12 @@ func loadDependencies(db gorp.SqlExecutor, env *sdk.Environment) error {
 	}
 	env.Variable = variables
 
-	if errK := LoadAllKeys(db, env); errK != nil {
-		return sdk.WrapError(errK, "loadDependencies> Cannot load environment dependencies")
+	keys, err := LoadAllKeys(db, env.ID)
+	if err != nil {
+		return sdk.WrapError(err, "loadDependencies> Cannot load environment dependencies")
 	}
+
+	env.Keys = keys
 
 	return nil
 }

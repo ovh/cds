@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"io/ioutil"
 	"net/http/httptest"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithoutSecret(t *testing.T) {
@@ -57,7 +57,7 @@ variables:
 	t.Logf(">>%s", rec.Body.String())
 
 	env, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv")
-	test.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.NotNil(t, env)
 	assert.Equal(t, "myNewEnv", env.Name)
@@ -99,18 +99,16 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 		Name:      "myNewEnv",
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, environment.InsertEnvironment(db, env))
+	require.NoError(t, environment.InsertEnvironment(db, env))
 
 	k := &sdk.EnvironmentKey{
-		Key: sdk.Key{
-			Name: "env-mykey",
-			Type: "pgp",
-		},
+		Name:          "env-mykey",
+		Type:          "pgp",
 		EnvironmentID: env.ID,
 	}
 
 	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
-	test.NoError(t, err)
+	require.NoError(t, err)
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
@@ -118,7 +116,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 		t.Fatal(err)
 	}
 
-	test.NoError(t, environment.InsertVariable(db, env.ID, &sdk.Variable{
+	require.NoError(t, environment.InsertVariable(db, env.ID, &sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -164,20 +162,22 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 	t.Logf(">>%s", rec.Body.String())
 
 	env, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	// reload variables with clear password
 	variables, errLoadVars := environment.GetAllVariable(db, proj.Key, "myNewEnv", environment.WithClearPassword())
-	test.NoError(t, errLoadVars)
+	require.NoError(t, errLoadVars)
 	env.Variable = variables
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
+	env.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env.ID)
+	require.NoError(t, err)
 
 	env1, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	// reload variables with clear password
 	variables1, errLoadVariables := environment.GetAllVariable(db, proj.Key, "myNewEnv-1", environment.WithClearPassword())
-	test.NoError(t, errLoadVariables)
+	require.NoError(t, errLoadVariables)
 	env1.Variable = variables1
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env1))
+	env1.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env1.ID)
+	require.NoError(t, err)
 
 	assert.NotNil(t, env1)
 	assert.Equal(t, "myNewEnv-1", env1.Name)
@@ -221,18 +221,16 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 		Name:      "myNewEnv",
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, environment.InsertEnvironment(db, env))
+	require.NoError(t, environment.InsertEnvironment(db, env))
 
 	k := &sdk.EnvironmentKey{
-		Key: sdk.Key{
-			Name: "env-mykey",
-			Type: "pgp",
-		},
+		Name:          "env-mykey",
+		Type:          "pgp",
 		EnvironmentID: env.ID,
 	}
 
 	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
-	test.NoError(t, err)
+	require.NoError(t, err)
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
@@ -240,7 +238,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 		t.Fatal(err)
 	}
 
-	test.NoError(t, environment.InsertVariable(db, env.ID, &sdk.Variable{
+	require.NoError(t, environment.InsertVariable(db, env.ID, &sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -286,20 +284,22 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	t.Logf(">>%s", rec.Body.String())
 
 	env, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	// reload variables with clear password
 	variables, errLoadVars := environment.GetAllVariable(db, proj.Key, "myNewEnv", environment.WithClearPassword())
-	test.NoError(t, errLoadVars)
+	require.NoError(t, errLoadVars)
 	env.Variable = variables
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
+	env.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env.ID)
+	require.NoError(t, err)
 
 	env1, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	// reload variables with clear password
 	variables1, errLoadVariables := environment.GetAllVariable(db, proj.Key, "myNewEnv-1", environment.WithClearPassword())
-	test.NoError(t, errLoadVariables)
+	require.NoError(t, errLoadVariables)
 	env1.Variable = variables1
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env1))
+	env1.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env1.ID)
+	require.NoError(t, err)
 
 	assert.NotNil(t, env1)
 	assert.Equal(t, "myNewEnv-1", env1.Name)
@@ -349,21 +349,22 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	t.Logf(">>%s", rec.Body.String())
 
 	env, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	// reload variables with clear password
 	variables, errLoadVars = environment.GetAllVariable(db, proj.Key, "myNewEnv", environment.WithClearPassword())
-	test.NoError(t, errLoadVars)
+	require.NoError(t, errLoadVars)
 	env.Variable = variables
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
+	env.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env.ID)
+	require.NoError(t, err)
 
 	env1, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	// reload variables with clear password
 	variables1, errLoadVariables = environment.GetAllVariable(db, proj.Key, "myNewEnv-1", environment.WithClearPassword())
-	test.NoError(t, errLoadVariables)
+	require.NoError(t, errLoadVariables)
 	env1.Variable = variables1
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env1))
-
+	env1.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env1.ID)
+	require.NoError(t, err)
 	assert.NotNil(t, env1)
 	assert.Equal(t, "myNewEnv-1", env1.Name)
 
@@ -428,12 +429,13 @@ keys:
 	t.Logf(">>%s", rec.Body.String())
 
 	env, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv")
-	test.NoError(t, err)
+	require.NoError(t, err)
 	// reload variables with clear password
 	variables, errLoadVars := environment.GetAllVariable(db, proj.Key, "myNewEnv", environment.WithClearPassword())
-	test.NoError(t, errLoadVars)
+	require.NoError(t, errLoadVars)
 	env.Variable = variables
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
+	env.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env.ID)
+	require.NoError(t, err)
 
 	assert.NotNil(t, env)
 	assert.Equal(t, "myNewEnv", env.Name)
@@ -472,7 +474,7 @@ func Test_postEnvironmentImportHandler_ExistingAppFromYAMLWithoutForce(t *testin
 		Name:      "myNewEnv",
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, environment.InsertEnvironment(db, &env))
+	require.NoError(t, environment.InsertEnvironment(db, &env))
 
 	//Prepare request
 	vars := map[string]string{
@@ -508,7 +510,7 @@ func Test_postEnvironmentImportHandler_ExistingAppFromYAMLInheritPermissions(t *
 		Name:      "myNewEnv",
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, environment.InsertEnvironment(db, &env))
+	require.NoError(t, environment.InsertEnvironment(db, &env))
 
 	//Prepare request
 	vars := map[string]string{
