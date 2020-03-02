@@ -103,6 +103,7 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv *exportentities.
 
 		k := sdk.EnvironmentKey{
 			EnvironmentID: env.ID,
+			Name:          kname,
 		}
 
 		k.KeyID = kk.KeyID
