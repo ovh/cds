@@ -171,7 +171,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -187,7 +187,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, globalError := application.ParseAndImport(context.Background(), db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
@@ -223,9 +223,9 @@ vcs_ssh_key: proj-blabla
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_purge_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -234,7 +234,7 @@ vcs_ssh_key: proj-blabla
 		wr, errWR := workflow.CreateRun(db, w1, nil, u)
 		assert.NoError(t, errWR)
 		wr.Workflow = *w1
-		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
 				Username: u.Username,
 				Payload: map[string]string{
@@ -271,7 +271,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -310,9 +310,9 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_purge_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -321,7 +321,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 		wfr, errWR := workflow.CreateRun(db, w1, nil, u)
 		assert.NoError(t, errWR)
 		wfr.Workflow = *w1
-		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
+		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
 				Username: u.Username,
 				Payload: map[string]string{
@@ -446,7 +446,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -462,7 +462,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, globalError := application.ParseAndImport(context.Background(), db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
@@ -498,9 +498,9 @@ vcs_ssh_key: proj-blabla
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_purge_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -508,7 +508,7 @@ vcs_ssh_key: proj-blabla
 	wr, errWR := workflow.CreateRun(db, w1, nil, u)
 	assert.NoError(t, errWR)
 	wr.Workflow = *w1
-	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+	_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			Username: u.Username,
 			Payload: map[string]string{
@@ -523,7 +523,7 @@ vcs_ssh_key: proj-blabla
 		wfr, errWR := workflow.CreateRun(db, w1, nil, u)
 		assert.NoError(t, errWR)
 		wfr.Workflow = *w1
-		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
+		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
 				Username: u.Username,
 				Payload: map[string]string{
@@ -637,7 +637,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -653,7 +653,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, globalError := application.ParseAndImport(context.Background(), db, cache, proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
@@ -689,9 +689,9 @@ vcs_ssh_key: proj-blabla
 		PurgeTags:     []string{"git.branch"},
 	}
 
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_purge_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -700,7 +700,7 @@ vcs_ssh_key: proj-blabla
 		wfr, errWR := workflow.CreateRun(db, w1, nil, u)
 		assert.NoError(t, errWR)
 		wfr.Workflow = *w1
-		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wfr, &sdk.WorkflowRunPostHandlerOption{
+		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wfr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
 				Username: u.Username,
 				Payload: map[string]string{
@@ -740,7 +740,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -777,9 +777,9 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		},
 		HistoryLength: 2,
 	}
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_purge_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -789,7 +789,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		wr, errWR := workflow.CreateRun(db, w1, nil, u)
 		assert.NoError(t, errWR)
 		wr.Workflow = *w1
-		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
 				Username: u.Username,
 				Payload: map[string]string{
@@ -826,7 +826,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -863,9 +863,9 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 		},
 		HistoryLength: 20,
 	}
-	test.NoError(t, workflow.Insert(context.TODO(), db, cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), db, cache, *proj, &w))
 
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, *proj, "test_purge_1", workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -875,7 +875,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 		wr, errWR := workflow.CreateRun(db, w1, nil, u)
 		assert.NoError(t, errWR)
 		wr.Workflow = *w1
-		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, proj, wr, &sdk.WorkflowRunPostHandlerOption{
+		_, errWr := workflow.StartWorkflowRun(context.TODO(), db, cache, *proj, wr, &sdk.WorkflowRunPostHandlerOption{
 			Manual: &sdk.WorkflowNodeRunManual{
 				Username: u.Username,
 				Payload: map[string]string{

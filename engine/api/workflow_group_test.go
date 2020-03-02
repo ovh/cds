@@ -31,7 +31,7 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -54,7 +54,7 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 	)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj2, &w))
 
 	t.Logf("%+v\n", proj)
 
@@ -103,7 +103,7 @@ func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -126,7 +126,7 @@ func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
 	)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj2, &w))
 
 	t.Logf("%+v\n", proj)
 
@@ -169,7 +169,7 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -192,7 +192,7 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 	)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj2, &w))
 
 	gr := sdk.Group{
 		Name: sdk.RandomString(10),
@@ -273,7 +273,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -297,7 +297,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 	)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj2))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj2, &w))
 
 	gr := sdk.Group{
 		Name: sdk.RandomString(10),
@@ -355,7 +355,7 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	newWf := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -406,7 +406,7 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 		project.LoadOptions.WithGroups,
 	)
 	test.NoError(t, errP)
-	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, workflow.LoadOptions{})
+	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{})
 	test.NoError(t, errL)
 
 	assert.Equal(t, 2, len(wfLoaded.Groups))
@@ -455,7 +455,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	newWf := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -510,7 +510,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	require.NoError(t, errP)
-	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, workflow.LoadOptions{DeepPipeline: true})
+	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{DeepPipeline: true})
 	require.NoError(t, errL)
 	assert.Equal(t, 2, len(wfLoaded.Groups))
 
@@ -529,7 +529,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	wfLoaded, errL = workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, workflow.LoadOptions{})
+	wfLoaded, errL = workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{})
 	test.NoError(t, errL)
 	assert.Equal(t, 2, len(wfLoaded.Groups))
 	assert.Equal(t, int64(300), wfLoaded.HistoryLength)
@@ -623,7 +623,7 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	newWf := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -678,7 +678,7 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
-	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, workflow.LoadOptions{DeepPipeline: true})
+	wfLoaded, errL := workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{DeepPipeline: true})
 	test.NoError(t, errL)
 	assert.Equal(t, 2, len(wfLoaded.Groups))
 
@@ -703,7 +703,7 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	wfLoaded, errL = workflow.Load(context.Background(), db, api.Cache, proj2, newWf.Name, workflow.LoadOptions{})
+	wfLoaded, errL = workflow.Load(context.Background(), db, api.Cache, *proj2, newWf.Name, workflow.LoadOptions{})
 	test.NoError(t, errL)
 	assert.Equal(t, 2, len(wfLoaded.Groups))
 	assert.Equal(t, int64(300), wfLoaded.HistoryLength)

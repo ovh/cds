@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-gorp/gorp"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/stretchr/testify/assert"
 
@@ -157,7 +158,7 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 		project.LoadOptions.WithIntegrations,
 	)
 	assert.NoError(t, errP)
-	if !assert.NoError(t, workflow.Insert(context.Background(), db, api.Cache, w, proj)) {
+	if !assert.NoError(t, workflow.Insert(context.Background(), db, api.Cache, *proj, w)) {
 		return
 	}
 
@@ -355,7 +356,7 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 		project.LoadOptions.WithIntegrations,
 	)
 	assert.NoError(t, errP)
-	if !assert.NoError(t, workflow.Insert(context.Background(), db, api.Cache, w, proj)) {
+	if !assert.NoError(t, workflow.Insert(context.Background(), db, api.Cache, *proj, w)) {
 		return
 	}
 
@@ -427,7 +428,7 @@ func createPipeline(t *testing.T, db gorp.SqlExecutor, api *API, proj *sdk.Proje
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip))
+	assert.NoError(t, pipeline.InsertPipeline(db, &pip))
 	return &pip
 }
 
@@ -438,7 +439,7 @@ func createApplication(t *testing.T, db gorp.SqlExecutor, api *API, proj *sdk.Pr
 		RepositoryFullname: "foo/myrepo",
 		VCSServer:          "github",
 	}
-	assert.NoError(t, application.Insert(db, api.Cache, proj, &app))
+	assert.NoError(t, application.Insert(db, api.Cache, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 	return &app
 }

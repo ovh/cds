@@ -17,7 +17,7 @@ import (
 )
 
 // ResyncCommitStatus resync commit status for a workflow run
-func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
+func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun) error {
 	_, end := observability.Span(ctx, "workflow.resyncCommitStatus",
 		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
 		observability.Tag(observability.TagWorkflowRun, wr.Number),
@@ -144,7 +144,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 }
 
 // sendVCSEventStatus send status
-func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif *sdk.WorkflowNotification) error {
+func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif *sdk.WorkflowNotification) error {
 	if notif == nil || notif.Settings.Template == nil || (notif.Settings.Template.DisableStatus != nil && *notif.Settings.Template.DisableStatus) {
 		return nil
 	}
@@ -281,7 +281,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	return nil
 }
 
-func sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif *sdk.WorkflowNotification) error {
+func sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif *sdk.WorkflowNotification) error {
 	if notif == nil || notif.Settings.Template == nil || (notif.Settings.Template.DisableComment != nil && *notif.Settings.Template.DisableComment) {
 		return nil
 	}

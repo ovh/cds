@@ -308,7 +308,7 @@ func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 }
 
 // InsertPipeline inserts pipeline informations in database
-func InsertPipeline(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p *sdk.Pipeline) error {
+func InsertPipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	query := `INSERT INTO pipeline (name, description, project_id, last_modified, from_repository) VALUES ($1, $2, $3, current_timestamp, $4) RETURNING id`
 
 	rx := sdk.NamePatternRegex

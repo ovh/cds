@@ -19,17 +19,22 @@ func Test_generateWorkerName(t *testing.T) {
 		{
 			name: "simple",
 			args: args{hatcheryName: "p999-prod", isRegister: true, model: "shared.infra-rust-official-1.41"},
-			want: "register-p999-prod-shared.infra-ru",
+			want: "register-p999-prod-shared-infra-ru",
+		},
+		{
+			name: "simple special char",
+			args: args{hatcheryName: "p999/prod", isRegister: true, model: "shared.infra-rust-official-1.41"},
+			want: "register-p999-prod-shared-infra-ru",
 		},
 		{
 			name: "long hatchery name",
 			args: args{hatcheryName: "p999-prod-xxxx-xxxx-xxxx-xxxx-xxxx", isRegister: true, model: "shared.infra-rust-official-1.41"},
-			want: "register-shared.infra-ru",
+			want: "register-shared-infra-ru",
 		},
 		{
 			name: "long model name",
 			args: args{hatcheryName: "hname", isRegister: true, model: "shared.infra-rust-official-1.41-xxx-xxx-xxx-xxx"},
-			want: "register-hname-shared.infra-ru",
+			want: "register-hname-shared-infra-ru",
 		},
 	}
 	for _, tt := range tests {

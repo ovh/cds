@@ -45,7 +45,7 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, nam
 	)
 	if oldProj != nil {
 		for _, w := range oldProj.Workflows {
-			require.NoError(t, workflow.Delete(context.TODO(), db, store, oldProj, &w))
+			require.NoError(t, workflow.Delete(context.TODO(), db, store, *oldProj, &w))
 		}
 		for _, app := range oldProj.Applications {
 			require.NoError(t, application.DeleteApplication(db, app.ID))
@@ -508,7 +508,7 @@ func InsertTestWorkflow(t *testing.T, db gorp.SqlExecutor, store cache.Store, pr
 		ProjectKey: proj.Key,
 		Name:       sdk.RandomString(10),
 	}
-	require.NoError(t, pipeline.InsertPipeline(db, store, proj, &pip))
+	require.NoError(t, pipeline.InsertPipeline(db, &pip))
 
 	script := GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
 
@@ -546,7 +546,7 @@ func InsertTestWorkflow(t *testing.T, db gorp.SqlExecutor, store cache.Store, pr
 		},
 	}
 
-	require.NoError(t, workflow.Insert(context.TODO(), db, store, &w, proj))
+	require.NoError(t, workflow.Insert(context.TODO(), db, store, *proj, &w))
 
 	return &w
 }

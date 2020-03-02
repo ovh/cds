@@ -307,7 +307,7 @@ version: v1.0`),
 	assert.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
 
-	wk, err := workflow.Load(context.Background(), db, api.Cache, proj, "w-go-repo", workflow.LoadOptions{})
+	wk, err := workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 
@@ -347,11 +347,11 @@ version: v1.0`),
 
 	assert.NotEqual(t, "Fail", wr.Status)
 
-	wk, err = workflow.Load(context.Background(), db, api.Cache, proj, "w-go-repo-renamed", workflow.LoadOptions{})
+	wk, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo-renamed", workflow.LoadOptions{})
 	assert.NoError(t, err)
 	assert.NotNil(t, wk)
 
-	_, err = workflow.Load(context.Background(), db, api.Cache, proj, "w-go-repo", workflow.LoadOptions{})
+	_, err = workflow.Load(context.Background(), db, api.Cache, *proj, "w-go-repo", workflow.LoadOptions{})
 	assert.Error(t, err)
 
 	require.Len(t, wk.WorkflowData.GetHooks(), 1)

@@ -87,7 +87,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		pip, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, proj, payload, getAPIConsumer(ctx),
+		pip, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, *proj, payload, getAPIConsumer(ctx),
 			pipeline.ImportOptions{Force: forceUpdate})
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
@@ -117,18 +117,18 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		format := r.FormValue("format")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key,
+		proj, err := project.Load(api.mustDB(), api.Cache, key,
 			project.LoadOptions.Default,
 			project.LoadOptions.WithGroups,
 		)
-		if errp != nil {
-			return sdk.WrapError(errp, "Unable to load project %s", key)
+		if err != nil {
+			return sdk.WrapError(err, "unable to load project %s", key)
 		}
 
 		// Get body
-		data, errRead := ioutil.ReadAll(r.Body)
-		if errRead != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(errRead, "Unable to read body"))
+		data, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read body"))
 		}
 
 		payload, err := exportentities.ParsePipeline(format, data)
@@ -136,23 +136,23 @@ func (api *API) putImportPipelineHandler() service.Handler {
 			return err
 		}
 
-		tx, errBegin := api.mustDB().Begin()
-		if errBegin != nil {
-			return sdk.WrapError(errBegin, "Cannot start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 
 		defer func() {
 			_ = tx.Rollback()
 		}()
 
-		pip, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, proj, payload, getAPIConsumer(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
+		pip, allMsg, err := pipeline.ParseAndImport(ctx, tx, api.Cache, *proj, payload, getAPIConsumer(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
 		msgListString := translate(r, allMsg)
-		if globalError != nil {
-			return sdk.WrapError(sdk.NewError(sdk.ErrInvalidPipeline, globalError), "unable to parse and import pipeline")
+		if err != nil {
+			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrInvalidPipeline, "unable to parse and import pipeline"))
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		event.PublishPipelineAdd(ctx, proj.Key, *pip, getAPIConsumer(ctx))

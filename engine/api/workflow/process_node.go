@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, parentNodeRun []*sdk.WorkflowNodeRun, node *sdk.Node, parentSubNumber int) (*ProcessorReport, error) {
+func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, parentNodeRun []*sdk.WorkflowNodeRun, node *sdk.Node, parentSubNumber int) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
 
 	for j := range node.Triggers {
@@ -49,7 +49,7 @@ func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	return report, nil
 }
 
-func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun,
+func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun,
 	mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parentNodeRuns []*sdk.WorkflowNodeRun,
 	hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
@@ -99,7 +99,7 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	return nil, false, nil
 }
 
-func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun,
+func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun,
 	mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parents []*sdk.WorkflowNodeRun,
 	hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
@@ -476,7 +476,7 @@ func computePayload(n *sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual
 	}
 }
 
-func computeNodeContextBuildParameters(ctx context.Context, proj *sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, n *sdk.Node, runContext nodeRunContext) {
+func computeNodeContextBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, n *sdk.Node, runContext nodeRunContext) {
 	nodeRunParams, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
 	if errParam != nil {
 		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{

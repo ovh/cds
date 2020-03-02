@@ -40,7 +40,7 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
 
@@ -108,8 +108,8 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		project.LoadOptions.WithGroups,
 	)
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &w))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -174,7 +174,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
 
@@ -240,9 +240,9 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		project.LoadOptions.WithGroups,
 	)
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj))
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &w))
 
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -297,7 +297,7 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	script := assets.GetBuiltinOrPluginActionByName(t, db, sdk.ScriptAction)
 
@@ -350,8 +350,8 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 		project.LoadOptions.WithGroups,
 	)
 
-	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, &w, proj))
-	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(context.TODO(), api.mustDB(), api.Cache, *proj, &w))
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request

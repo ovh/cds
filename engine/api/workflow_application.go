@@ -64,27 +64,27 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 
 		node := workflowRun.Workflow.WorkflowData.NodeByID(wNodeRun.WorkflowNodeID)
 		if node.Context == nil || node.Context.ApplicationID == 0 {
-			return sdk.WrapError(sdk.ErrApplicationNotFound, "releaseApplicationWorkflowHandler")
+			return sdk.WithStack(sdk.ErrApplicationNotFound)
 		}
 		app := workflowRun.Workflow.Applications[node.Context.ApplicationID]
 
 		if app.VCSServer == "" {
-			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
+			return sdk.WithStack(sdk.ErrNoReposManager)
 		}
 
-		rm := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
+		rm := repositoriesmanager.GetProjectVCSServer(*proj, app.VCSServer)
 		if rm == nil {
-			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
+			return sdk.WithStack(sdk.ErrNoReposManager)
 		}
 
 		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, rm)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot get client got %s %s", key, app.VCSServer)
+			return sdk.WrapError(err, "cannot get client got %s %s", key, app.VCSServer)
 		}
 
 		release, errRelease := client.Release(ctx, app.RepositoryFullname, req.TagName, req.ReleaseTitle, req.ReleaseContent)
 		if errRelease != nil {
-			return sdk.WrapError(errRelease, "releaseApplicationWorkflowHandler")
+			return sdk.WithStack(errRelease)
 		}
 
 		// Get artifacts to upload

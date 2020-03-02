@@ -18,7 +18,7 @@ import (
 
 var CacheOperationKey = cache.Key("repositories", "operation", "push")
 
-func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, wp exportentities.WorkflowPulled, branch, message string, isUpdate bool, u sdk.Identifiable) (*sdk.Operation, error) {
+func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, app *sdk.Application, wp exportentities.WorkflowPulled, branch, message string, isUpdate bool, u sdk.Identifiable) (*sdk.Operation, error) {
 	var vcsStrategy = app.RepositoryStrategy
 	if vcsStrategy.SSHKey != "" {
 		key := proj.GetSSHKey(vcsStrategy.SSHKey)
@@ -80,7 +80,7 @@ func PushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, 
 		Reader:      buf,
 		ContentType: "application/tar",
 	}
-	if err := PostRepositoryOperation(ctx, db, *proj, &ope, multipartData); err != nil {
+	if err := PostRepositoryOperation(ctx, db, proj, &ope, multipartData); err != nil {
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 	ope.RepositoryStrategy.SSHKeyContent = ""

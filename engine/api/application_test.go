@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,7 +50,7 @@ func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 			"a1": "a1",
 		},
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, *proj, app); err != nil {
 		t.Fatal(err)
 	}
 
@@ -94,7 +95,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, globalError := application.ParseAndImport(context.Background(), db, api.Cache, p, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, globalError := application.ParseAndImport(context.Background(), db, api.Cache, *p, eapp, application.ImportOptions{Force: true}, nil, u)
 	assert.NoError(t, globalError)
 
 	app.FromRepository = "myrepository"
