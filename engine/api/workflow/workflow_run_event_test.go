@@ -48,7 +48,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, cache, proj, &app))
+	assert.NoError(t, application.Insert(db, cache, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	tr := true
@@ -118,7 +118,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 			gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil)
 
-	err = workflow.ResyncCommitStatus(ctx, db, cache, proj, wr)
+	err = workflow.ResyncCommitStatus(ctx, db, cache, *proj, wr)
 	assert.NoError(t, err)
 	//assert.True(t, statusCall)
 
@@ -152,7 +152,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, cache, proj, &app))
+	assert.NoError(t, application.Insert(db, cache, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	tr := true
@@ -236,7 +236,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 			gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil)
 
-	err = workflow.ResyncCommitStatus(ctx, db, cache, proj, wr)
+	err = workflow.ResyncCommitStatus(ctx, db, cache, *proj, wr)
 	assert.NoError(t, err)
 }
 
@@ -268,7 +268,7 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 			ConnectionType: "ssh",
 		},
 	}
-	assert.NoError(t, application.Insert(db, cache, proj, &app))
+	assert.NoError(t, application.Insert(db, cache, *proj, &app))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
 	tr := true
@@ -366,6 +366,6 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 			return nil, 200, nil
 		}).MaxTimes(1)
 
-	err = workflow.ResyncCommitStatus(ctx, db, cache, proj, wr)
+	err = workflow.ResyncCommitStatus(ctx, db, cache, *proj, wr)
 	assert.NoError(t, err)
 }
