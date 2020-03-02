@@ -5,13 +5,12 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/ovh/cds/engine/api/project"
+	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-
-	"github.com/go-gorp/gorp"
 )
 
 // RefactorProjectKeys .

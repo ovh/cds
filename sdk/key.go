@@ -22,7 +22,7 @@ type ProjectKey struct {
 	Name      string `json:"name" db:"name" cli:"name"`
 	Public    string `json:"public" db:"public" cli:"publickey"`
 	Private   string `json:"private" db:"private" cli:"-" gorpmapping:"encrypted,ID,Name"`
-	KeyID     string `json:"keyID" db:"key_id" cli:"-"`
+	KeyID     string `json:"key_id" db:"key_id" cli:"-"`
 	Type      string `json:"type" db:"type" cli:"type"`
 	ProjectID int64  `json:"project_id" db:"project_id" cli:"-"`
 	Builtin   bool   `json:"-" db:"builtin" cli:"-"`
@@ -34,7 +34,7 @@ type ApplicationKey struct {
 	Name          string `json:"name" db:"name" cli:"name"`
 	Public        string `json:"public" db:"public" cli:"publickey"`
 	Private       string `json:"private" db:"private" cli:"-" gorpmapping:"encrypted,ID,Name"`
-	KeyID         string `json:"keyID" db:"key_id" cli:"-"`
+	KeyID         string `json:"key_id" db:"key_id" cli:"-"`
 	Type          string `json:"type" db:"type" cli:"type"`
 	ApplicationID int64  `json:"application_id" db:"application_id"`
 }

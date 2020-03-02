@@ -123,7 +123,6 @@ func loadBuildinKey(db gorp.SqlExecutor, projectID int64) (*sdk.ProjectKey, erro
 	SELECT * 
 	FROM project_key
 	WHERE id = $1 
-	AND name = $2
 	AND builtin = true 
 	AND name = 'builtin'
 	`).Args(projectID)
