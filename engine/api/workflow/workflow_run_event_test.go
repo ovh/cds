@@ -1,11 +1,11 @@
 package workflow_test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"github.com/go-gorp/gorp"
+	"github.com/golang/mock/gomock"
+	"github.com/ovh/cds/engine/api/services/mock_services"
+
 	"net/http"
 	"testing"
 
@@ -101,34 +101,26 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 	defer func() {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	statusCall := false
-	//This is a mock for the repositories service
-	services.HTTPClient = mock(
-		func(r *http.Request) (*http.Response, error) {
-			t.Logf("[MOCK] %s %v", r.Method, r.URL)
-			body := new(bytes.Buffer)
-			w := new(http.Response)
-			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
 
-			switch r.URL.String() {
-			case "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses":
-				if err := enc.Encode(nil); err != nil {
-					return writeError(w, err)
-				}
-				statusCall = true
-			default:
-				t.Fail()
-				return writeError(w, fmt.Errorf("route %s must not be called", r.URL.String()))
-			}
-			return w, nil
-		},
-	)
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses",
+			gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, 201, nil)
 
 	err = workflow.ResyncCommitStatus(ctx, db, cache, proj, wr)
 	assert.NoError(t, err)
-	assert.True(t, statusCall)
+	//assert.True(t, statusCall)
 
 }
 
@@ -213,45 +205,39 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
 
-	postStatusCall := false
-	//This is a mock for the repositories service
-	services.HTTPClient = mock(
-		func(r *http.Request) (*http.Response, error) {
-			t.Logf("[MOCK] %s %v", r.Method, r.URL)
-			body := new(bytes.Buffer)
-			w := new(http.Response)
-			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-			switch r.URL.String() {
-			case "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses":
-				if err := enc.Encode(nil); err != nil {
-					return writeError(w, err)
-				}
-			case "/vcs/gerrit":
-				conf := sdk.VCSConfiguration{
-					Type: "gerrit",
-				}
-				if err := enc.Encode(conf); err != nil {
-					return writeError(w, err)
-				}
-			case "/vcs/gerrit/status":
-				if err := enc.Encode(nil); err != nil {
-					return writeError(w, err)
-				}
-				postStatusCall = true
-			default:
-				t.Logf("THIS MUS NOT BE CALLED %s", r.URL.String())
-				t.Fail()
-				return writeError(w, fmt.Errorf("route %s must not be called", r.URL.String()))
-			}
-			return w, nil
-		},
-	)
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses",
+			gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, 201, nil).MaxTimes(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit",
+			gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			vcs := sdk.VCSConfiguration{Type: "gerrit"}
+			*(out.(*sdk.VCSConfiguration)) = vcs
+			return nil, 200, nil
+		}).MaxTimes(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/vcs/gerrit/status",
+			gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, 201, nil)
 
 	err = workflow.ResyncCommitStatus(ctx, db, cache, proj, wr)
 	assert.NoError(t, err)
-	assert.True(t, postStatusCall)
 }
 
 // Test TestResyncCommitStatusCommentPR with a notification where all is disabled.
@@ -345,48 +331,41 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 		_ = services.Delete(db, mockVCSSservice) // nolint
 	}()
 
-	commentCall := false
-	//This is a mock for the repositories service
-	services.HTTPClient = mock(
-		func(r *http.Request) (*http.Response, error) {
-			t.Logf("[MOCK] %s %v", r.Method, r.URL)
-			body := new(bytes.Buffer)
-			w := new(http.Response)
-			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-			switch r.URL.String() {
-			case "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses":
-				if err := enc.Encode(nil); err != nil {
-					return writeError(w, err)
-				}
-			case "/vcs/gerrit":
-				conf := sdk.VCSConfiguration{
-					Type: "gerrit",
-				}
-				if err := enc.Encode(conf); err != nil {
-					return writeError(w, err)
-				}
-			case "/vcs/gerrit/repos/foo/myrepo/pullrequests/comments":
-				commentCall = true
-				dec := json.NewDecoder(r.Body)
-				var request sdk.VCSPullRequestCommentRequest
-				assert.NoError(t, dec.Decode(&request))
-				assert.Equal(t, request.ChangeID, "MyGerritChangeId")
-				assert.Equal(t, request.Message, "MyTemplate")
-				if err := enc.Encode(nil); err != nil {
-					return writeError(w, err)
-				}
-			default:
-				t.Logf("THIS MUS NOT BE CALLED %s", r.URL.String())
-				t.Fail()
-				return writeError(w, fmt.Errorf("route %s must not be called", r.URL.String()))
-			}
-			return w, nil
-		},
-	)
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses",
+			gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, 201, nil).MaxTimes(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit",
+			gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			vcs := sdk.VCSConfiguration{Type: "gerrit"}
+			*(out.(*sdk.VCSConfiguration)) = vcs
+			return nil, 200, nil
+		}).MaxTimes(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/vcs/gerrit/repos/foo/myrepo/pullrequests/comments",
+			gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			assert.Equal(t, in.(sdk.VCSPullRequestCommentRequest).ChangeID, "MyGerritChangeId")
+			assert.Equal(t, in.(sdk.VCSPullRequestCommentRequest).Message, "MyTemplate")
+			return nil, 200, nil
+		}).MaxTimes(1)
 
 	err = workflow.ResyncCommitStatus(ctx, db, cache, proj, wr)
 	assert.NoError(t, err)
-	assert.True(t, commentCall)
 }
