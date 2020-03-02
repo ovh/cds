@@ -44,7 +44,7 @@ describe('CDS: Parameter Value Component', () => {
         tick(50);
 
         let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.gifloader')).toBeTruthy('Building loader not displayed');
+        expect(compiled.querySelector('#gifloader')).toBeTruthy('Building loader not displayed');
     }));
 
     it('should display fail icon', fakeAsync(() => {
