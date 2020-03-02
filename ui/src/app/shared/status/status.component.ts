@@ -10,7 +10,6 @@ import { PipelineStatus } from 'app/model/pipeline.model';
 export class StatusIconComponent {
     @Input() status: string;
     @Input() optional: boolean;
-    @Input() loader = true;
     pipelineStatusEnum = PipelineStatus;
 
     constructor() { }
