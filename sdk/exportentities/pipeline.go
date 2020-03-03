@@ -374,7 +374,7 @@ func ParsePipeline(format string, data []byte) (Pipeliner, error) {
 		return nil, sdk.NewError(sdk.ErrWrongRequest, err)
 	}
 
-	var version PipelineVersion
+	version := PipelineVersion1
 	if v, ok := rawPayload["version"]; ok {
 		switch v.(string) {
 		case PipelineVersion1:
