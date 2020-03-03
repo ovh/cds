@@ -39,7 +39,7 @@ export OS_REGION_NAME="opentack-region"
 openstack server create --flavor b2-15-flex --image "Debian 10" --key-name="your-key-name" --nic net-id=Ext-Net cdsdemo
 ```
 
-This new virtual machime is attached to the `default` security group. This group should allows ingress for port 22 (from your remote IP) and 80/443 (from everywhere for SSL configuration).
+This new virtual machime is attached to the `default` security group. This group should allows ingress for port 22 and port 443 (from your remote IP). It must also allow the port 80 for SSL configuration.
 
 ## Install Docker on your VM
 
@@ -63,23 +63,19 @@ apt-get -y upgrade && \
 apt-get install -y --allow-unauthenticated docker-ce docker-ce-cli containerd.io  && \
 curl -L https://github.com/docker/compose/releases/download/1.14.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose && \
 chmod +x /usr/local/bin/docker-compose && \
-usermod -aG docker debian
-echo "127.0.0.1	cdsdemo	cdsdemo" >> /etc/hosts
-
+usermod -aG docker debian && \
+echo "127.0.0.11 cdsdemo cdsdemo" >> /etc/hosts
 ```
-
-
 
 ## Configure SSL
 
 With `root` user:
 
 ```bash
-apt-get install certbot
-
 export DOMAIN='your-cdsdemo.domain'
 export YOUR_MAIL='admin@localhost.local'
 
+apt-get install certbot
 certbot certonly --standalone -d ${DOMAIN} --non-interactive --agree-tos --email ${YOUR_MAIL} --http-01-port=80
 
 # then generate pem file
@@ -160,7 +156,7 @@ service haproxy restart
 
 ## Register new OAuth Application on GitHub
 
-- go on `https://github.com/settings/applications/new`
+- go on https://github.com/settings/applications/new
 - Application name: `cds-demo`
 - Homepage URL: `https://your-cdsdemo.domain`
 - Authorization callback: `https://your-cdsdemo.domain/cdsapi/repositories_manager/oauth2/callback`
@@ -239,14 +235,13 @@ sleep 5
 
 ```
 
-Then run `boot.sh` file.
+With user debian
 
 ```
-# with user debian
 # be sure that you have group docker
 groups
 # you should have these groups:
-#debian adm dialout cdrom floppy sudo audio dip video plugdev netdev docker
+# debian adm dialout cdrom floppy sudo audio dip video plugdev netdev docker
 # if it's not the case, logout and re-login with debian user.
 
 cd /home/debian
@@ -271,18 +266,18 @@ The `docker ps` should returns this:
 ```
 
 $ docker ps
-CONTAINER ID        IMAGE                                                 COMMAND                  CREATED             STATUS                            PORTS                      NAMES
-b295902b57fa        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (healthy)            0.0.0.0:8080->8080/tcp     debian_cds-ui_1
-087c3b405b26        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (healthy)                                       debian_cds-elasticsearch_1
-33c68721ea18        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (healthy)                                       debian_cds-vcs_1
-eee126b42e73        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (healthy)            127.0.0.1:8083->8083/tcp   debian_cds-hooks_1
-9139f7b80f1b        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (healthy)                                       debian_cds-repositories_1
-442d7a34771a        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (health: starting)                              debian_cds-hatchery-swarm_1
-8ac1f861ca40        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (healthy)            0.0.0.0:8081->8081/tcp     debian_cds-api_1
-2e0787b8b946        bobrik/socat                                          "socat TCP4-LISTEN:2…"   3 minutes ago       Up 3 minutes                      127.0.0.1:2375->2375/tcp   debian_dockerhost_1
-3e38f0aff767        redis:alpine                                          "docker-entrypoint.s…"   3 minutes ago       Up 3 minutes                      6379/tcp                   debian_cds-cache_1
-60ab21aee94f        docker.elastic.co/elasticsearch/elasticsearch:6.7.2   "/usr/local/bin/dock…"   3 minutes ago       Up 3 minutes                      9200/tcp, 9300/tcp         debian_elasticsearch_1
-bd9bc2607ca0        postgres:9.6.2                                        "docker-entrypoint.s…"   3 minutes ago       Up 3 minutes                      5432/tcp                   debian_cds-db_1
+CONTAINER ID        IMAGE                                                 COMMAND                  CREATED             STATUS                    PORTS                      NAMES
+02b60d3f98c0        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   33 seconds ago      Up 32 seconds (healthy)   0.0.0.0:8080->8080/tcp     debian_cds-ui_1
+ae8e87c60e2b        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   35 seconds ago      Up 33 seconds (healthy)                              debian_cds-vcs_1
+c2b8852e487a        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   35 seconds ago      Up 33 seconds (healthy)   127.0.0.1:8083->8083/tcp   debian_cds-hooks_1
+fe2fcbee96aa        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   35 seconds ago      Up 33 seconds (healthy)                              debian_cds-repositories_1
+f2eb7b8c4329        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   35 seconds ago      Up 33 seconds (healthy)                              debian_cds-elasticsearch_1
+22dc66a1b2a2        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   35 seconds ago      Up 33 seconds (healthy)                              debian_cds-hatchery-swarm_1
+958ab1703f16        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   39 seconds ago      Up 39 seconds (healthy)   0.0.0.0:8081->8081/tcp     debian_cds-api_1
+9223395500ab        postgres:9.6.2                                        "docker-entrypoint.s…"   2 minutes ago       Up About a minute         5432/tcp                   debian_cds-db_1
+c9b58ce83003        docker.elastic.co/elasticsearch/elasticsearch:6.7.2   "/usr/local/bin/dock…"   2 minutes ago       Up About a minute         9200/tcp, 9300/tcp         debian_elasticsearch_1
+08cfe15c3e2c        bobrik/socat                                          "socat TCP4-LISTEN:2…"   2 minutes ago       Up About a minute         127.0.0.1:2375->2375/tcp   debian_dockerhost_1
+fc2ac075c000        redis:alpine                                          "docker-entrypoint.s…"   2 minutes ago       Up About a minute         6379/tcp                   debian_cds-cache_1
 ```
 
 ## Tips 
