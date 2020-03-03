@@ -46,7 +46,6 @@ type Action struct {
 	Description string `json:"description" yaml:"desc,omitempty" db:"description"`
 	Enabled     bool   `json:"enabled" yaml:"-" db:"enabled"`
 	Deprecated  bool   `json:"deprecated" yaml:"-" db:"deprecated"`
-	ParentName  string `json:"group_name,omitempty" yaml:"-" db:"group_name"`
 	// aggregates from action_edge
 	StepName       string `json:"step_name,omitempty" yaml:"step_name,omitempty" db:"-"`
 	Optional       bool   `json:"optional" yaml:"-" db:"-"`
