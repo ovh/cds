@@ -7,16 +7,15 @@ package mock_cdsclient
 import (
 	tar "archive/tar"
 	context "context"
-	io "io"
-	http "net/http"
-	reflect "reflect"
-	time "time"
-
 	gomock "github.com/golang/mock/gomock"
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 	venom "github.com/ovh/venom"
 	coverage "github.com/sguiheux/go-coverage"
+	io "io"
+	http "net/http"
+	reflect "reflect"
+	time "time"
 )
 
 // MockTemplateClient is a mock of TemplateClient interface
@@ -2128,10 +2127,10 @@ func (m *MockPipelineClient) EXPECT() *MockPipelineClientMockRecorder {
 }
 
 // PipelineGet mocks base method
-func (m *MockInterface) PipelineGet(projectKey, name string, opts ...cdsclient.RequestModifier) (*sdk.Pipeline, error) {
+func (m *MockPipelineClient) PipelineGet(projectKey, name string, mods ...cdsclient.RequestModifier) (*sdk.Pipeline, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{projectKey, name}
-	for _, a := range opts {
+	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "PipelineGet", varargs...)
@@ -2141,10 +2140,10 @@ func (m *MockInterface) PipelineGet(projectKey, name string, opts ...cdsclient.R
 }
 
 // PipelineGet indicates an expected call of PipelineGet
-func (mr *MockInterfaceMockRecorder) PipelineGet(projectKey, name interface{}, opts ...interface{}) *gomock.Call {
+func (mr *MockPipelineClientMockRecorder) PipelineGet(projectKey, name interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{projectKey, name}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PipelineGet", reflect.TypeOf((*MockInterface)(nil).PipelineGet), varargs...)
+	varargs := append([]interface{}{projectKey, name}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PipelineGet", reflect.TypeOf((*MockPipelineClient)(nil).PipelineGet), varargs...)
 }
 
 // PipelineDelete mocks base method
@@ -3520,6 +3519,34 @@ func (m *MockWorkflowClient) WorkflowDelete(projectKey, workflowName string) err
 func (mr *MockWorkflowClientMockRecorder) WorkflowDelete(projectKey, workflowName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowDelete", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowDelete), projectKey, workflowName)
+}
+
+// WorkflowLabelAdd mocks base method
+func (m *MockWorkflowClient) WorkflowLabelAdd(projectKey, name, labelName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowLabelAdd", projectKey, name, labelName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowLabelAdd indicates an expected call of WorkflowLabelAdd
+func (mr *MockWorkflowClientMockRecorder) WorkflowLabelAdd(projectKey, name, labelName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowLabelAdd", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowLabelAdd), projectKey, name, labelName)
+}
+
+// WorkflowLabelDelete mocks base method
+func (m *MockWorkflowClient) WorkflowLabelDelete(projectKey, name string, labelID int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowLabelDelete", projectKey, name, labelID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowLabelDelete indicates an expected call of WorkflowLabelDelete
+func (mr *MockWorkflowClientMockRecorder) WorkflowLabelDelete(projectKey, name, labelID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowLabelDelete", reflect.TypeOf((*MockWorkflowClient)(nil).WorkflowLabelDelete), projectKey, name, labelID)
 }
 
 // WorkflowGroupAdd mocks base method
@@ -5887,6 +5914,26 @@ func (mr *MockInterfaceMockRecorder) Maintenance(enable, hooks interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Maintenance", reflect.TypeOf((*MockInterface)(nil).Maintenance), enable, hooks)
 }
 
+// PipelineGet mocks base method
+func (m *MockInterface) PipelineGet(projectKey, name string, mods ...cdsclient.RequestModifier) (*sdk.Pipeline, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{projectKey, name}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PipelineGet", varargs...)
+	ret0, _ := ret[0].(*sdk.Pipeline)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PipelineGet indicates an expected call of PipelineGet
+func (mr *MockInterfaceMockRecorder) PipelineGet(projectKey, name interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{projectKey, name}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PipelineGet", reflect.TypeOf((*MockInterface)(nil).PipelineGet), varargs...)
+}
+
 // PipelineDelete mocks base method
 func (m *MockInterface) PipelineDelete(projectKey, name string) error {
 	m.ctrl.T.Helper()
@@ -7024,6 +7071,34 @@ func (m *MockInterface) WorkflowDelete(projectKey, workflowName string) error {
 func (mr *MockInterfaceMockRecorder) WorkflowDelete(projectKey, workflowName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowDelete", reflect.TypeOf((*MockInterface)(nil).WorkflowDelete), projectKey, workflowName)
+}
+
+// WorkflowLabelAdd mocks base method
+func (m *MockInterface) WorkflowLabelAdd(projectKey, name, labelName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowLabelAdd", projectKey, name, labelName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowLabelAdd indicates an expected call of WorkflowLabelAdd
+func (mr *MockInterfaceMockRecorder) WorkflowLabelAdd(projectKey, name, labelName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowLabelAdd", reflect.TypeOf((*MockInterface)(nil).WorkflowLabelAdd), projectKey, name, labelName)
+}
+
+// WorkflowLabelDelete mocks base method
+func (m *MockInterface) WorkflowLabelDelete(projectKey, name string, labelID int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowLabelDelete", projectKey, name, labelID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowLabelDelete indicates an expected call of WorkflowLabelDelete
+func (mr *MockInterfaceMockRecorder) WorkflowLabelDelete(projectKey, name, labelID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowLabelDelete", reflect.TypeOf((*MockInterface)(nil).WorkflowLabelDelete), projectKey, name, labelID)
 }
 
 // WorkflowGroupAdd mocks base method

@@ -41,6 +41,25 @@ func (c *client) WorkflowUpdate(projectKey, name string, wf *sdk.Workflow) error
 	return nil
 }
 
+func (c *client) WorkflowLabelAdd(projectKey, name, labelName string) error {
+	lbl := sdk.Label{
+		Name: labelName,
+	}
+	url := fmt.Sprintf("/project/%s/workflows/%s/label", projectKey, name)
+	if _, err := c.PostJSON(context.Background(), url, lbl, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) WorkflowLabelDelete(projectKey, name string, labelID int64) error {
+	url := fmt.Sprintf("/project/%s/workflows/%s/label/%d", projectKey, name, labelID)
+	if _, err := c.DeleteJSON(context.Background(), url, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) WorkflowGroupAdd(projectKey, name, groupName string, permission int) error {
 	gp := sdk.GroupPermission{
 		Group:      sdk.Group{Name: groupName},

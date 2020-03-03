@@ -294,6 +294,8 @@ type WorkflowClient interface {
 	WorkflowGet(projectKey, name string, opts ...RequestModifier) (*sdk.Workflow, error)
 	WorkflowUpdate(projectKey, name string, wf *sdk.Workflow) error
 	WorkflowDelete(projectKey string, workflowName string) error
+	WorkflowLabelAdd(projectKey, name, labelName string) error
+	WorkflowLabelDelete(projectKey, name string, labelID int64) error
 	WorkflowGroupAdd(projectKey, name, groupName string, permission int) error
 	WorkflowGroupDelete(projectKey, name, groupName string) error
 	WorkflowRunGet(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
@@ -463,6 +465,15 @@ func WithWorkflows() RequestModifier {
 	return func(r *http.Request) {
 		q := r.URL.Query()
 		q.Set("withWorkflows", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+// WithLabels allow a provider to retrieve a workflow with its labels
+func WithLabels() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withLabels", "true")
 		r.URL.RawQuery = q.Encode()
 	}
 }

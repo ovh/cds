@@ -371,7 +371,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 			return err
 		}
 
-		// Check is project exist
+		// Check if project exist
 		proj, err := project.Load(db, api.Cache, key, project.LoadOptions.WithLabels)
 		if err != nil {
 			return err
