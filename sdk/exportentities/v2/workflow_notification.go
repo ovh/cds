@@ -18,7 +18,7 @@ var (
 // NotificationEntry represents a notification set on a nodeEntry
 type NotificationEntry struct {
 	Type      string                        `json:"type" yaml:"type"`
-	Pipelines []string                      `json:"pipelines" yaml:"pipelines"`
+	Pipelines []string                      `json:"pipelines" yaml:"pipelines,omitempty"`
 	Settings  *sdk.UserNotificationSettings `json:"settings,omitempty" yaml:"settings,omitempty"`
 }
 

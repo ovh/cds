@@ -217,7 +217,7 @@ notifications:
 		{
 			name: "two pipelines with one notif without node name",
 			yaml: `name: test-notif-2-pipeline-no-node
-version: v1.0
+version: v2.0
 workflow:
   test:
     pipeline: test
@@ -228,8 +228,7 @@ workflow:
     - success
     pipeline: test
 notifications:
-  "":
-  - type: jabber
+- type: jabber
 `,
 		},
 	}
