@@ -68,6 +68,96 @@ echo "127.0.0.1	cdsdemo	cdsdemo" >> /etc/hosts
 
 ```
 
+
+
+## Configure SSL
+
+With `root` user:
+
+```bash
+apt-get install certbot
+
+export DOMAIN='your-cdsdemo.domain'
+export YOUR_MAIL='admin@localhost.local'
+
+certbot certonly --standalone -d ${DOMAIN} --non-interactive --agree-tos --email ${YOUR_MAIL} --http-01-port=80
+
+# then generate pem file
+mkdir /etc/haproxy/certs/
+cat /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/letsencrypt/live/$DOMAIN/privkey.pem > /etc/haproxy/certs/$DOMAIN.pem
+chmod -R go-rwx /etc/haproxy/certs
+
+```
+
+## Configure HAProxy
+
+In the content below, replace `your-cdsdemo.domain` by your domain name, then create the file `/etc/haproxy/haproxy.cfg` with the `root` user.
+
+```
+global
+	log /dev/log	local0
+	log /dev/log	local1 notice
+	chroot /var/lib/haproxy
+	stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+	stats timeout 30s
+	user haproxy
+	group haproxy
+	daemon
+
+	# Default SSL material locations
+	ca-base /etc/ssl/certs
+	crt-base /etc/ssl/private
+
+	ssl-default-bind-ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS
+	ssl-default-bind-options no-sslv3
+
+defaults
+	log	global
+	mode	http
+	option	httplog
+	option	dontlognull
+	timeout connect 5000
+	timeout client  50000
+	timeout server  50000
+	errorfile 400 /etc/haproxy/errors/400.http
+	errorfile 403 /etc/haproxy/errors/403.http
+	errorfile 408 /etc/haproxy/errors/408.http
+	errorfile 500 /etc/haproxy/errors/500.http
+	errorfile 502 /etc/haproxy/errors/502.http
+	errorfile 503 /etc/haproxy/errors/503.http
+	errorfile 504 /etc/haproxy/errors/504.http
+
+
+frontend webstats
+	bind your-cdsdemo.domain:9999 ssl crt /etc/haproxy/certs/your-cdsdemo.domain.pem
+
+frontend cdsdemo
+	bind your-cdsdemo.domain:443 ssl crt /etc/haproxy/certs/your-cdsdemo.domain.pem
+	redirect scheme https if !{ ssl_fc }
+	mode http
+	default_backend cdsdemo_ui
+
+	# you can enable stats if you want
+	# stats enable  # Enable stats page
+	# stats hide-version  # Hide HAProxy version
+	# stats realm Haproxy\ Statistics  # Title text for popup window
+	# stats uri /haproxy_stats  # Stats URI
+	# stats auth cds:your-strongpassword # Authentication credentials
+	# stats refresh 30s
+	# stats show-node
+
+backend cdsdemo_ui
+	mode http
+	balance roundrobin
+	server cdsui 127.0.0.1:8080 check
+```
+
+Then restart HAProxy
+
+```bash
+service haproxy restart
+```
+
 ## Register new OAuth Application on GitHub
 
 - go on `https://github.com/settings/applications/new`
@@ -174,7 +264,7 @@ Workflow MyFirstWorkflow #1 has been launched
 https://your-cdsdemo.domain/project/DEMO/workflow/MyFirstWorkflow/run/1
 ```
 
-This url is not accessible at the moment, since we have not configured the SSL and haproxy.
+This url should be accessible at the moment, since your have configured the SSL and haproxy.
 
 The `docker ps` should returns this:
 
@@ -193,90 +283,6 @@ eee126b42e73        ovhcom/cds-engine:latest                              "sh -c
 3e38f0aff767        redis:alpine                                          "docker-entrypoint.s…"   3 minutes ago       Up 3 minutes                      6379/tcp                   debian_cds-cache_1
 60ab21aee94f        docker.elastic.co/elasticsearch/elasticsearch:6.7.2   "/usr/local/bin/dock…"   3 minutes ago       Up 3 minutes                      9200/tcp, 9300/tcp         debian_elasticsearch_1
 bd9bc2607ca0        postgres:9.6.2                                        "docker-entrypoint.s…"   3 minutes ago       Up 3 minutes                      5432/tcp                   debian_cds-db_1
-```
-
-## Configure SSL
-
-With root user:
-
-```bash
-apt-get install certbot
-certbot certonly --standalone
-# enter your domain name, as `your-cdsdemo.domain`
-
-# then generate pem file
-DOMAIN='your-cdsdemo.domain' sudo -E bash -c 'cat /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/letsencrypt/live/$DOMAIN/privkey.pem > /etc/haproxy/certs/$DOMAIN.pem'
-chmod -R go-rwx /etc/haproxy/certs
-
-```
-
-## Configure HAProxy
-
-In the content below, replace `your-cdsdemo.domain` by your domain name, then create the file `/etc/haproxy/haproxy.cfg`.
-
-```
-global
-	log /dev/log	local0
-	log /dev/log	local1 notice
-	chroot /var/lib/haproxy
-	stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
-	stats timeout 30s
-	user haproxy
-	group haproxy
-	daemon
-
-	# Default SSL material locations
-	ca-base /etc/ssl/certs
-	crt-base /etc/ssl/private
-
-	ssl-default-bind-ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS
-	ssl-default-bind-options no-sslv3
-
-defaults
-	log	global
-	mode	http
-	option	httplog
-	option	dontlognull
-	timeout connect 5000
-	timeout client  50000
-	timeout server  50000
-	errorfile 400 /etc/haproxy/errors/400.http
-	errorfile 403 /etc/haproxy/errors/403.http
-	errorfile 408 /etc/haproxy/errors/408.http
-	errorfile 500 /etc/haproxy/errors/500.http
-	errorfile 502 /etc/haproxy/errors/502.http
-	errorfile 503 /etc/haproxy/errors/503.http
-	errorfile 504 /etc/haproxy/errors/504.http
-
-
-frontend webstats
-	bind your-cdsdemo.domain:9999 ssl crt /etc/haproxy/certs/your-cdsdemo.domain.pem
-
-frontend cdsdemo
-	bind your-cdsdemo.domain:443 ssl crt /etc/haproxy/certs/your-cdsdemo.domain.pem
-	redirect scheme https if !{ ssl_fc }
-	mode http
-	default_backend cdsdemo_ui
-
-	# you can enable stats if you want
-	# stats enable  # Enable stats page
-	# stats hide-version  # Hide HAProxy version
-	# stats realm Haproxy\ Statistics  # Title text for popup window
-	# stats uri /haproxy_stats  # Stats URI
-	# stats auth cds:your-strongpassword # Authentication credentials
-	# stats refresh 30s
-	# stats show-node
-
-backend cdsdemo_ui
-	mode http
-	balance roundrobin
-	server cdsui 127.0.0.1:8080 check
-```
-
-Then restart HAProxy
-
-```bash
-sudo service haproxy restart
 ```
 
 ## Tips 
