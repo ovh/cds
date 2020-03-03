@@ -75,7 +75,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	// The derivation branch is set in workflow parser it is not coming from the default branch
 	uptOptions := UpdateOptions{
 		DisableHookManagement: w.DerivationBranch != "",
-		OldWorkflow:           oldW,
+		OldWorkflowID:         oldW.ID,
 	}
 
 	if err := Update(ctx, db, store, proj, w, uptOptions); err != nil {

@@ -79,7 +79,7 @@ type LoadOptions struct {
 // UpdateOptions is option to parse a workflow
 type UpdateOptions struct {
 	DisableHookManagement bool
-	OldWorkflow           *sdk.Workflow
+	OldWorkflowID         int64
 }
 
 // CountVarInWorkflowData represents the result of CountVariableInWorkflow function
@@ -916,14 +916,12 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 		return sdk.WrapError(err, "unable to delete all integrations on workflow(%d - %s)", w.ID, w.Name)
 	}
 
+	var oldWf *sdk.Workflow
 	// Delete workflow data
-	if uptOption.OldWorkflow != nil && uptOption.OldWorkflow.ID != 0 {
-		if uptOption.OldWorkflow.WorkflowData == nil {
-			// this log should never happen
-			log.Error(ctx, "DeleteWorkflowData> workflowdata is nil on uptOption.OldWorkflow.ID:%d proj:%s", uptOption.OldWorkflow.ID, proj.Key)
-		}
+	if uptOption.OldWorkflowID > 0 {
 		// reload workflow
-		oldWf, err := LoadByID(ctx, db, store, proj, uptOption.OldWorkflow.ID, LoadOptions{
+		var err error
+		oldWf, err = LoadByID(ctx, db, store, proj, uptOption.OldWorkflowID, LoadOptions{
 			DeepPipeline:          true,
 			Base64Keys:            true,
 			WithAsCodeUpdateEvent: true,
@@ -931,20 +929,10 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 			WithIntegrations:      true,
 		})
 		if err != nil {
-			return sdk.WrapError(err, "Unable to load existing workflow with proj:%s ID:%d", proj.Key, uptOption.OldWorkflow.ID)
+			return sdk.WrapError(err, "Unable to load existing workflow with proj:%s ID:%d", proj.Key, uptOption.OldWorkflowID)
 		}
 		if err := DeleteWorkflowData(ctx, db, *oldWf); err != nil {
 			return sdk.WrapError(err, "unable to delete from old workflow data(%d - %s)", w.ID, w.Name)
-		}
-	} else {
-		oldW, err := Load(ctx, db, store, proj, w.Name, LoadOptions{})
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
-			return sdk.WrapError(err, "unable to load old workflow to delete workflow data")
-		}
-		if err == nil {
-			if err := DeleteWorkflowData(ctx, db, *oldW); err != nil {
-				return sdk.WrapError(err, "unable to delete from workflow data(%d - %s)", oldW.ID, oldW.Name)
-			}
 		}
 	}
 
@@ -967,11 +955,11 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	}
 
 	if !uptOption.DisableHookManagement {
-		if err := hookRegistration(ctx, db, store, proj, w, uptOption.OldWorkflow); err != nil {
+		if err := hookRegistration(ctx, db, store, proj, w, oldWf); err != nil {
 			return err
 		}
-		if uptOption.OldWorkflow != nil {
-			hookToDelete := computeHookToDelete(w, uptOption.OldWorkflow)
+		if oldWf != nil {
+			hookToDelete := computeHookToDelete(w, oldWf)
 			if err := hookUnregistration(ctx, db, store, proj, hookToDelete); err != nil {
 				return err
 			}

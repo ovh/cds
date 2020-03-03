@@ -1757,7 +1757,7 @@ vcs_ssh_key: proj-blabla
 		HookModelID: webHookID,
 	})
 
-	assert.NoError(t, workflow.Update(context.TODO(), db, cache, *proj, &w, workflow.UpdateOptions{OldWorkflow: oldW}))
+	assert.NoError(t, workflow.Update(context.TODO(), db, cache, *proj, &w, workflow.UpdateOptions{OldWorkflowID: oldW.ID}))
 
 	// Add check on HOOKS
 	assert.Equal(t, 2, len(w.WorkflowData.Node.Hooks))
@@ -1782,7 +1782,7 @@ vcs_ssh_key: proj-blabla
 		HookModelID: schedulerID,
 	})
 
-	assert.NoError(t, workflow.Update(context.TODO(), db, cache, *proj, &w, workflow.UpdateOptions{OldWorkflow: oldW}))
+	assert.NoError(t, workflow.Update(context.TODO(), db, cache, *proj, &w, workflow.UpdateOptions{OldWorkflowID: oldW.ID}))
 
 	// Add check on HOOKS
 	assert.Equal(t, 3, len(w.WorkflowData.Node.Hooks))
@@ -1818,7 +1818,7 @@ vcs_ssh_key: proj-blabla
 		}
 	}
 	w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks[:index], w.WorkflowData.Node.Hooks[index+1:]...)
-	assert.NoError(t, workflow.Update(context.TODO(), db, cache, *proj, &w, workflow.UpdateOptions{OldWorkflow: oldW}))
+	assert.NoError(t, workflow.Update(context.TODO(), db, cache, *proj, &w, workflow.UpdateOptions{OldWorkflowID: oldW.ID}))
 
 	// Add check on HOOKS
 	assert.Equal(t, 2, len(w.WorkflowData.Node.Hooks))

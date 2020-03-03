@@ -152,7 +152,7 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 			return errOld
 		}
 
-		if err := workflow.Update(ctx, api.mustDB(), api.Cache, *proj, wf, workflow.UpdateOptions{OldWorkflow: oldW}); err != nil {
+		if err := workflow.Update(ctx, api.mustDB(), api.Cache, *proj, wf, workflow.UpdateOptions{OldWorkflowID: oldW.ID}); err != nil {
 			return err
 		}
 	}
