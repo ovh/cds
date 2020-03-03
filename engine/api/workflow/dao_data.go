@@ -22,6 +22,7 @@ func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
 func DeleteWorkflowData(ctx context.Context, db gorp.SqlExecutor, w sdk.Workflow) error {
 	if w.WorkflowData == nil {
 		log.Error(ctx, "DeleteWorkflowData> workflowdata is nil on w.ID:%d", w.ID)
+		return nil
 	}
 	log.Debug("DeleteWorkflowData> deleting workflow data %d", w.ID)
 
