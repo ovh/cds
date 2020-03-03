@@ -11,7 +11,7 @@ import (
 // DeleteApplication Delete the given application
 func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 	// Delete variables
-	if err := DeleteAllVariable(db, applicationID); err != nil {
+	if err := DeleteAllVariables(db, applicationID); err != nil {
 		return err
 	}
 

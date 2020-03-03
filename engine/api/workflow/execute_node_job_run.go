@@ -431,11 +431,11 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 		// Application variables
 		av := []sdk.Variable{}
 		if app != nil {
-			appv, errA := application.GetAllVariableByID(db, app.ID, application.WithClearPassword())
-			if errA != nil {
-				return nil, sdk.WrapError(errA, "LoadSecrets> Cannot load application variables")
+			appVariables, err := application.LoadAllVariablesWithDecrytion(db, app.ID)
+			if err != nil {
+				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load application variables")
 			}
-			av = sdk.VariablesFilter(appv, sdk.SecretVariable, sdk.KeyVariable)
+			av = sdk.VariablesFilter(appVariables, sdk.SecretVariable)
 			av = sdk.VariablesPrefix(av, "cds.app.")
 
 			if err := application.DecryptVCSStrategyPassword(app); err != nil {
