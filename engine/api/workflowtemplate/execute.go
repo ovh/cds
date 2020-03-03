@@ -214,7 +214,7 @@ func Tar(ctx context.Context, res sdk.WorkflowTemplateResult, w io.Writer) error
 
 	// add generated workflow to writer
 	bs := []byte(res.Workflow)
-	wor, err := exportentities.UnmarshalWorklow(bs)
+	wor, err := exportentities.UnmarshalWorkflow(bs)
 	if err != nil {
 		return sdk.NewError(sdk.Error{
 			ID:      sdk.ErrWrongRequest.ID,

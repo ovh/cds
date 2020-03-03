@@ -52,7 +52,7 @@ type WorkflowVersion struct {
 	Version string `yaml:"version"`
 }
 
-func UnmarshalWorklow(body []byte) (Workflow, error) {
+func UnmarshalWorkflow(body []byte) (Workflow, error) {
 	var workflowVersion WorkflowVersion
 	if err := yaml.Unmarshal(body, &workflowVersion); err != nil {
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow data: %v", err)

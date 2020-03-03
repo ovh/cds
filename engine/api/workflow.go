@@ -208,7 +208,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load workflow audit %s/%s", key, workflowName)
 		}
 
-		exportWf, err := exportentities.UnmarshalWorklow([]byte(audit.DataBefore))
+		exportWf, err := exportentities.UnmarshalWorkflow([]byte(audit.DataBefore))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot unmarshal data before")
 		}

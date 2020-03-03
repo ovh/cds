@@ -54,7 +54,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.WrapError(errp, "postWorkflowPreviewHandler>> Unable load project")
 		}
 
-		ew, errw := exportentities.UnmarshalWorklow(body)
+		ew, errw := exportentities.UnmarshalWorkflow(body)
 		if errw != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, errw)
 		}
@@ -112,7 +112,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			return sdk.WrapError(errp, "Unable load project")
 		}
 
-		ew, errw := exportentities.UnmarshalWorklow(body)
+		ew, errw := exportentities.UnmarshalWorkflow(body)
 		if errw != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, errw)
 		}
@@ -218,7 +218,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		ew, errw := exportentities.UnmarshalWorklow(body)
+		ew, errw := exportentities.UnmarshalWorkflow(body)
 		if errw != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, errw)
 		}

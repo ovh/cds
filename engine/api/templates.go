@@ -353,7 +353,7 @@ func (api *API) applyTemplate(ctx context.Context, u sdk.Identifiable, p *sdk.Pr
 	// parse the generated workflow to find its name an update it in instance if not detached
 	// also set the template path in generated workflow if not detached
 	if !req.Detached {
-		wor, err := exportentities.UnmarshalWorklow([]byte(result.Workflow))
+		wor, err := exportentities.UnmarshalWorkflow([]byte(result.Workflow))
 		if err != nil {
 			return result, sdk.NewError(sdk.Error{
 				ID:      sdk.ErrWrongRequest.ID,
