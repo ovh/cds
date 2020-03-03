@@ -32,6 +32,13 @@ export const ErrorMessageMap: { [key: string]: Message } = {
     },
 };
 
+export const WarningMessageMap: { [key: string]: Message } = {
+    'MsgWorkflowDeprecatedVersion': {
+        title: 'Configuration yaml du workflow déprécié',
+        link: 'https://ovh.github.io/cds/docs/components/cdsctl/workflow/export/'
+    },
+};
+
 interface Message {
     title: string;
     description?: string;

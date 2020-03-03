@@ -152,8 +152,14 @@ export class PipelineRunRequest {
 export class SpawnInfo {
     api_time: Date;
     remote_time: Date;
-    is_error: boolean;
+    type: string;
+    message: SpawnInfoMessage;
     user_message: string;
+}
+
+export class SpawnInfoMessage {
+    args: Array<string>;
+    id: string;
 }
 
 export class BuildResult {

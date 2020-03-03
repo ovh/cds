@@ -3,11 +3,6 @@
         [class.above]="workflowRunData['status'] === pipelineStatusEnum.PENDING">
     </app-workflow-run-summary>
     <ng-container *ngIf="workflowRunData['status'] !== pipelineStatusEnum.PENDING; else pendingBlock">
-        <ng-container *ngIf="workflowRunData['workflow'] && workflowRunData['workflow'].workflow_data && !displayError">
-            <app-workflow-graph class="graph" [direction]="direction" [project]="project"
-                [workflowData]="workflowRunData['workflow']">
-            </app-workflow-graph>
-        </ng-container>
         <ng-container
             *ngIf="!workflowRunData['workflow'] || !workflowRunData['workflow'].workflow_data || displayError">
             <div class="ui grid">
@@ -18,7 +13,7 @@
                         <!-- ERRORS PANEL -->
                         <sui-accordion class="styled fluid">
                             <ng-container *ngFor="let info of workflowRunData['infos']; let first = first">
-                                <sui-accordion-panel [isOpen]="first" *ngIf="info.is_error">
+                                <sui-accordion-panel [isOpen]="first" *ngIf="info.type === 'Error'">
                                     <div title>
                                         <i class="dropdown icon"></i>
                                         <i class="red exclamation triangle icon"></i>
@@ -43,6 +38,44 @@
                     </div>
                 </div>
             </div>
+        </ng-container>
+        <ng-container
+                *ngIf="warnings && warnings.length > 0">
+            <div class="ui grid">
+                <div class="ui row">
+                    <div class="ui one wide column mt"></div>
+                    <div class="ui fourteen wide column mt">
+                        <!-- Warning PANEL -->
+                        <sui-accordion class="styled fluid">
+                            <ng-container *ngFor="let info of warnings; let first = first">
+                                <sui-accordion-panel [isOpen]="first">
+                                    <div title>
+                                        <i class="dropdown icon"></i>
+                                        <i class="yellow exclamation triangle icon"></i>
+                                        <span *ngIf="warningsMap[info.message.id]">{{warningsMap[info.message.id].title}}</span>
+                                        <span *ngIf="!warningsMap[info.message.id]">{{info.message.id}}</span>
+                                    </div>
+                                    <div content>
+                                        <p>
+                                            {{info.user_message}}.
+                                        </p>
+                                        <p *ngIf="warningsMap[info.message.id]">
+                                            <i class="book open icon"></i>{{'common_find_help' | translate}} <a
+                                                target="_blank"
+                                                [href]="warningsMap[info.message.id].link">{{'common_here' | translate}}</a>
+                                        </p>
+                                    </div>
+                                </sui-accordion-panel>
+                            </ng-container>
+                        </sui-accordion>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+        <ng-container *ngIf="workflowRunData['workflow'] && workflowRunData['workflow'].workflow_data && !displayError">
+            <app-workflow-graph class="graph" [direction]="direction" [project]="project"
+                                [workflowData]="workflowRunData['workflow']">
+            </app-workflow-graph>
         </ng-container>
     </ng-container>
     <ng-template #pendingBlock>
