@@ -2,6 +2,7 @@ package workflow_test
 
 import (
 	"context"
+
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/api/services/mock_services"
@@ -65,7 +66,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 			},
 		},
 		Workflow: sdk.Workflow{
-			WorkflowData: &sdk.WorkflowData{
+			WorkflowData: sdk.WorkflowData{
 				Node: sdk.Node{
 					ID: 1,
 					Context: &sdk.NodeContext{
@@ -169,7 +170,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 			},
 		},
 		Workflow: sdk.Workflow{
-			WorkflowData: &sdk.WorkflowData{
+			WorkflowData: sdk.WorkflowData{
 				Node: sdk.Node{
 					ID: 1,
 					Context: &sdk.NodeContext{
@@ -293,7 +294,7 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 			},
 		},
 		Workflow: sdk.Workflow{
-			WorkflowData: &sdk.WorkflowData{
+			WorkflowData: sdk.WorkflowData{
 				Node: sdk.Node{
 					ID: 1,
 					Context: &sdk.NodeContext{

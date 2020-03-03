@@ -449,7 +449,7 @@ func initWorkflow(t *testing.T, db gorp.SqlExecutor, proj *sdk.Project, app *sdk
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       sdk.RandomString(10),
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,

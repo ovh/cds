@@ -91,7 +91,7 @@ func TestPull(t *testing.T) {
 		ProjectKey: proj.Key,
 		Metadata:   sdk.Metadata{"triggered_by": "bla"},
 		PurgeTags:  []string{"aa", "bb"},
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
