@@ -82,6 +82,7 @@
             <div class="field">
                 <label>{{ 'workflow_notification_conditions' | translate }}</label>
                 <app-conditions *ngIf="!loading" [project]="project"
+                    [readonly]="!project.permissions.writable"
                     [triggerConditions]="triggerConditions" [(conditions)]="notification.settings.conditions">
                 </app-conditions>
             </div>
