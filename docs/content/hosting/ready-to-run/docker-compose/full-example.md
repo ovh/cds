@@ -39,7 +39,7 @@ export OS_REGION_NAME="opentack-region"
 openstack server create --flavor b2-15-flex --image "Debian 10" --key-name="your-key-name" --nic net-id=Ext-Net cdsdemo
 ```
 
-This new virtual machime is attached to the `default` security group. This group should allows ingress for port 22 (from your remote IP) and 443 only (from everywhere for SSL configuration).
+This new virtual machime is attached to the `default` security group. This group should allows ingress for port 22 (from your remote IP) and 80/443 (from everywhere for SSL configuration).
 
 ## Install Docker on your VM
 
