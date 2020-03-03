@@ -406,7 +406,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 	}
 	defer tx.Rollback() //nolint
 
-	spwnMsg := sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{ident.GetUsername()}}
+	spwnMsg := sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{ident.GetUsername()}, Type: sdk.MsgWorkflowNodeStop.Type}
 
 	stopInfos := sdk.SpawnInfo{
 		APITime:    time.Now(),
@@ -414,7 +414,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 		Message:    spwnMsg,
 	}
 
-	workflow.AddWorkflowRunInfo(run, false, spwnMsg)
+	workflow.AddWorkflowRunInfo(run, spwnMsg)
 
 	for _, wn := range run.WorkflowNodeRuns {
 		for _, wnr := range wn {
@@ -985,8 +985,9 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 					infos[i] = sdk.SpawnMsg{
 						ID:   msg.ID,
 						Args: msg.Args,
+						Type: msg.Type,
 					}
-					workflow.AddWorkflowRunInfo(wfRun, false, infos...)
+					workflow.AddWorkflowRunInfo(wfRun, infos...)
 				}
 				r1 := failInitWorkflowRun(ctx, db, wfRun, sdk.WrapError(errCreate, "unable to get workflow from repository."))
 				report.Merge(ctx, r1, nil) // nolint
@@ -1023,7 +1024,8 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 	var info sdk.SpawnMsg
 	if sdk.ErrorIs(err, sdk.ErrConditionsNotOk) {
 		info = sdk.SpawnMsg{
-			ID: sdk.MsgWorkflowConditionError.ID,
+			ID:   sdk.MsgWorkflowConditionError.ID,
+			Type: sdk.MsgWorkflowConditionError.Type,
 		}
 		if len(wfRun.WorkflowNodeRuns) == 0 {
 			wfRun.Status = sdk.StatusNeverBuilt
@@ -1034,10 +1036,11 @@ func failInitWorkflowRun(ctx context.Context, db *gorp.DbMap, wfRun *sdk.Workflo
 		info = sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
 			Args: []interface{}{sdk.Cause(err).Error()},
+			Type: sdk.MsgWorkflowError.Type,
 		}
 	}
 
-	workflow.AddWorkflowRunInfo(wfRun, !sdk.ErrorIs(err, sdk.ErrConditionsNotOk), info)
+	workflow.AddWorkflowRunInfo(wfRun, info)
 	if errU := workflow.UpdateWorkflowRun(ctx, db, wfRun); errU != nil {
 		log.Error(ctx, "unable to fail workflow run %v", errU)
 	}

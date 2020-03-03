@@ -187,5 +187,9 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	close(msgChan)
 	done.Wait()
 
+	if ew.GetVersion() == exportentities.WorkflowVersion1 {
+		msgList = append(msgList, sdk.NewMessage(sdk.MsgWorkflowDeprecatedVersion, nil))
+	}
+
 	return w, msgList, globalError
 }

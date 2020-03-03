@@ -59,7 +59,7 @@ func runFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 		// Add add code spawn info
 		for _, msg := range asCodeMsg {
-			AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
+			AddWorkflowRunInfo(wr, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args, Type: msg.Type})
 		}
 
 		//Process it
@@ -107,7 +107,7 @@ func StartWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, pr
 	defer tx.Rollback() // nolint
 
 	for _, msg := range asCodeInfos {
-		AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
+		AddWorkflowRunInfo(wr, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args, Type: msg.Type})
 	}
 
 	wr.Status = sdk.StatusWaiting
