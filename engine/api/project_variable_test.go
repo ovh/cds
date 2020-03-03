@@ -31,7 +31,7 @@ func Test_getVariableAuditInProjectHandler(t *testing.T) {
 		Type:  "string",
 		Value: "bar",
 	}
-	if err := project.InsertVariable(api.mustDB(), proj, &v, u); err != nil {
+	if err := project.InsertVariable(api.mustDB(), proj.ID, &v, u); err != nil {
 		t.Fatal(err)
 	}
 

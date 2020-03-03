@@ -35,7 +35,7 @@ type Project struct {
 	Applications     []Application        `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
 	ApplicationNames IDNames              `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
 	ProjectGroups    []GroupPermission    `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
-	Variable         []Variable           `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
+	Variables        []Variable           `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
 	Environments     []Environment        `json:"environments,omitempty" yaml:"environments,omitempty" db:"-"  cli:"-"`
 	EnvironmentNames IDNames              `json:"environment_names,omitempty" yaml:"environment_names,omitempty" db:"-"  cli:"-"`
 	Labels           []Label              `json:"labels,omitempty" yaml:"labels,omitempty" db:"-"  cli:"-"`
@@ -214,7 +214,7 @@ type ProjectVariableAudit struct {
 	VariableID     int64     `json:"variable_id" yaml:"-" db:"variable_id"`
 	Type           string    `json:"type" yaml:"-" db:"type"`
 	VariableBefore *Variable `json:"variable_before,omitempty" yaml:"-" db:"-"`
-	VariableAfter  *Variable `json:"variable_after,omitempty" yaml:"-" db:"-"`
+	VariableAfter  Variable  `json:"variable_after,omitempty" yaml:"-" db:"-"`
 	Versionned     time.Time `json:"versionned" yaml:"-" db:"versionned"`
 	Author         string    `json:"author" yaml:"-" db:"author"`
 }

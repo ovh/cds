@@ -691,6 +691,10 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.RefactorEnvironmentKeys(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
 
+	migrate.Add(ctx, sdk.Migration{Name: "RefactorProjectVariables", Release: "0.44.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.RefactorProjectVariables(ctx, a.DBConnectionFactory.GetDBMap())
+	}})
+
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {
 		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")

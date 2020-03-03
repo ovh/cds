@@ -157,7 +157,7 @@ func ParametersToMap(params []Parameter) map[string]string {
 
 // ParametersFromProjectVariables returns a map from a slice of parameters
 func ParametersFromProjectVariables(proj Project) map[string]string {
-	params := VariablesToParameters("cds.proj", proj.Variable)
+	params := VariablesToParameters("cds.proj", proj.Variables)
 	return ParametersToMap(params)
 }
 

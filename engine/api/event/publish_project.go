@@ -30,7 +30,7 @@ func PublishProjectEvent(ctx context.Context, payload interface{}, key string, u
 // PublishAddProject publishes an event for the creation of the given project
 func PublishAddProject(ctx context.Context, p *sdk.Project, u sdk.Identifiable) {
 	e := sdk.EventProjectAdd{
-		Variables:   p.Variable,
+		Variables:   p.Variables,
 		Permissions: p.ProjectGroups,
 		Keys:        p.Keys,
 		Metadata:    p.Metadata,
