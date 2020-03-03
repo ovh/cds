@@ -923,7 +923,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 			log.Error(ctx, "DeleteWorkflowData> workflowdata is nil on uptOption.OldWorkflow.ID:%d proj:%s", uptOption.OldWorkflow.ID, proj.Key)
 		}
 		// reload workflow
-		oldWf, err := LoadByID(ctx, db, store, proj, uptOption.OldWorkflow.ID, workflow.LoadOptions{
+		oldWf, err := LoadByID(ctx, db, store, proj, uptOption.OldWorkflow.ID, LoadOptions{
 			DeepPipeline:          true,
 			Base64Keys:            true,
 			WithAsCodeUpdateEvent: true,
