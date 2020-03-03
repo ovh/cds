@@ -33,13 +33,7 @@ var workflowLabelListCmd = cli.Command{
 }
 
 func workflowLabelListRun(v cli.Values) (cli.ListResult, error) {
-	modsWfs := []cdsclient.RequestModifier{}
-	modsWfs = append(modsWfs, func(r *http.Request) {
-		q := r.URL.Query()
-		q.Set("withLabels", "true")
-		r.URL.RawQuery = q.Encode()
-	})
-	wf, err := client.WorkflowGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), modsWfs...)
+	wf, err := client.WorkflowGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), cdsclient.WithLabels())
 	if err != nil {
 		return nil, err
 	}
@@ -75,14 +69,7 @@ var workflowLabelDeleteCmd = cli.Command{
 
 func workflowLabelDeleteRun(v cli.Values) error {
 	labelName := v.GetString("label")
-
-	modsWfs := []cdsclient.RequestModifier{}
-	modsWfs = append(modsWfs, func(r *http.Request) {
-		q := r.URL.Query()
-		q.Set("withLabels", "true")
-		r.URL.RawQuery = q.Encode()
-	})
-	wf, err := client.WorkflowGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), modsWfs...)
+	wf, err := client.WorkflowGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), cdsclient.WithLabels())
 	if err != nil {
 		return err
 	}

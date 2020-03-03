@@ -469,6 +469,15 @@ func WithWorkflows() RequestModifier {
 	}
 }
 
+// WithLabels allow a provider to retrieve a workflow with its labels
+func WithLabels() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withLabels", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
 // AuthClient is the interface for authentication management.
 type AuthClient interface {
 	AuthDriverList() (sdk.AuthDriverResponse, error)
