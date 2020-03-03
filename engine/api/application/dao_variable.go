@@ -156,6 +156,12 @@ func UpdateVariable(db gorp.SqlExecutor, appID int64, variable *sdk.Variable, va
 		return err
 	}
 
+	*variable = dbVar.Variable()
+
+	if variableBefore == nil && u == nil {
+		return nil
+	}
+
 	ava := &sdk.ApplicationVariableAudit{
 		ApplicationID:  appID,
 		Type:           sdk.AuditUpdate,
@@ -169,8 +175,6 @@ func UpdateVariable(db gorp.SqlExecutor, appID int64, variable *sdk.Variable, va
 	if err := inserAudit(db, ava); err != nil {
 		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
 	}
-
-	*variable = dbVar.Variable()
 
 	return nil
 }

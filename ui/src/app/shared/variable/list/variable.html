@@ -28,7 +28,7 @@
                 <div class="warname">
                     <div class="varname">
                         <div class="ui fluid input" *ngIf="mode === 'edit'">
-                            <input [(ngModel)]="v.name" (keydown)="v.hasChanged = true" name="varname" [disabled]="v.updating">
+                            <input [(ngModel)]="v.name" (keydown)="v.hasChanged = true" name="varname" [disabled]="true">
                         </div>
                     </div>
                 </div>

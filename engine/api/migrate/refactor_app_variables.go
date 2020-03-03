@@ -15,7 +15,7 @@ import (
 
 // RefactorApplicationVariables .
 func RefactorApplicationVariables(ctx context.Context, db *gorp.DbMap) error {
-	query := "SELECT id FROM application_key WHERE sig IS NULL"
+	query := "SELECT id FROM application_variable WHERE sig IS NULL"
 	rows, err := db.Query(query)
 	if err == sql.ErrNoRows {
 		return nil
@@ -40,9 +40,9 @@ func RefactorApplicationVariables(ctx context.Context, db *gorp.DbMap) error {
 
 	var mError = new(sdk.MultiError)
 	for _, id := range ids {
-		if err := refactorApplicationKeys(ctx, db, id); err != nil {
+		if err := refactorApplicationVariables(ctx, db, id); err != nil {
 			mError.Append(err)
-			log.Error(ctx, "migrate.RefactorApplicationKeys> unable to migrate application_key %d: %v", id, err)
+			log.Error(ctx, "migrate.RefactorApplicationVariables> unable to migrate application_variables %d: %v", id, err)
 		}
 	}
 
@@ -60,7 +60,7 @@ func refactorApplicationVariables(ctx context.Context, db *gorp.DbMap, id int64)
 
 	defer tx.Rollback() // nolint
 
-	query := "SELECT application_id, var_name, var_value, cipher_value, var_type FROM application_key WHERE id = $1 AND sig IS NULL FOR UPDATE SKIP LOCKED"
+	query := "SELECT application_id, var_name, var_value, cipher_value, var_type FROM application_variable WHERE id = $1 AND sig IS NULL FOR UPDATE SKIP LOCKED"
 	var (
 		applicationID sql.NullInt64
 		name          sql.NullString
@@ -134,7 +134,7 @@ func refactorApplicationVariables(ctx context.Context, db *gorp.DbMap, id int64)
 		return err
 	}
 
-	log.Info(ctx, "migrate.refactorApplicationKeys> key %s (%d) migrated", v.Name, v.ID)
+	log.Info(ctx, "migrate.refactorApplicationVariables> variable %s (%d) migrated", v.Name, v.ID)
 
 	if err := tx.Commit(); err != nil {
 		return err
