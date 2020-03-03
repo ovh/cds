@@ -185,7 +185,7 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	var wf = new(sdk.Workflow)
 	wf.Name = w.Name
 	wf.Description = w.Description
-	wf.WorkflowData = &sdk.WorkflowData{}
+	wf.WorkflowData = sdk.WorkflowData{}
 	// Init map
 	wf.Applications = make(map[int64]sdk.Application)
 	wf.Pipelines = make(map[int64]sdk.Pipeline)

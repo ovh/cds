@@ -1216,10 +1216,6 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	var wfRollback sdk.Workflow
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfRollback))
 
-	if wfRollback.WorkflowData == nil {
-		t.Fatal(fmt.Errorf("workflow not found"))
-	}
-
 	test.Equal(t, int64(0), wfRollback.WorkflowData.Node.Context.ApplicationID)
 
 	assert.Equal(t, true, wfRollback.Permissions.Readable)

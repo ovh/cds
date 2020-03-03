@@ -19,12 +19,8 @@ func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
 }
 
 // DeleteWorkflowData delete the relation representation of the workflow
-func DeleteWorkflowData(ctx context.Context, db gorp.SqlExecutor, wf sdk.Workflow) error {
-	if wf.WorkflowData == nil {
-		log.Error(ctx, "DeleteWorkflowData> workflowdata is nil on w.ID:%d", wf.ID)
-		return nil
-	}
-	log.Debug("DeleteWorkflowData> deleting workflow data %d", wf.ID)
+func DeleteWorkflowData(db gorp.SqlExecutor, wf sdk.Workflow) error {
+	log.Debug("DeleteWorkflowData> deleting workflow data %d", w.ID)
 
 	// Delete all JOINs
 	for _, j := range wf.WorkflowData.Joins {

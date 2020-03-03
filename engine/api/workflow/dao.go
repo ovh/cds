@@ -190,7 +190,7 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 	}
 	w.PurgeTags = purgeTags
 
-	data := &sdk.WorkflowData{}
+	data := sdk.WorkflowData{}
 	if err := gorpmapping.JSONNullString(res.WorkflowData, data); err != nil {
 		return sdk.WrapError(err, "Unable to unmarshall workflow data")
 	}
@@ -1030,10 +1030,6 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 	//Check project is not empty
 	if w.ProjectKey == "" {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
-	}
-
-	if w.WorkflowData == nil {
-		return sdk.WithStack(fmt.Errorf("bad workflow, workflow data must not be null"))
 	}
 
 	if w.Icon != "" {

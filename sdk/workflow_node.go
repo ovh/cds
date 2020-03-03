@@ -206,7 +206,7 @@ func (n *Node) maps(m map[int64]*Node) map[int64]*Node {
 	return m
 }
 
-func (n *Node) Ancestors(w *WorkflowData) []int64 {
+func (n *Node) Ancestors(w WorkflowData) []int64 {
 	if n == nil {
 		return nil
 	}
