@@ -925,7 +925,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load existing workflow with proj:%s ID:%d", proj.Key, uptOption.OldWorkflowID)
 		}
-		if err := DeleteWorkflowData(ctx, db, *oldWf); err != nil {
+		if err := DeleteWorkflowData(db, *oldWf); err != nil {
 			return sdk.WrapError(err, "unable to delete from old workflow data(%d - %s)", w.ID, w.Name)
 		}
 	}
@@ -1004,7 +1004,7 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 		return sdk.WrapError(err, "unable to delete hooks from workflow")
 	}
 
-	if err := DeleteWorkflowData(ctx, db, *w); err != nil {
+	if err := DeleteWorkflowData(db, *w); err != nil {
 		return sdk.WrapError(err, "unable to delete workflow data")
 	}
 
