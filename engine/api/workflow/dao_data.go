@@ -19,9 +19,9 @@ func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
 }
 
 // DeleteWorkflowData delete the relation representation of the workflow
-func DeleteWorkflowData(db gorp.SqlExecutor, w sdk.Workflow) error {
+func DeleteWorkflowData(ctx context.Context, db gorp.SqlExecutor, w sdk.Workflow) error {
 	if w.WorkflowData == nil {
-		return nil
+		log.Error(ctx, "DeleteWorkflowData> workflowdata is nil on w.ID:%d", w.ID)
 	}
 	log.Debug("DeleteWorkflowData> deleting workflow data %d", w.ID)
 
