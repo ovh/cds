@@ -314,9 +314,17 @@ func TestManualRun3(t *testing.T) {
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	ctx := context.Background()
 
-	require.NoError(t, project.AddKeyPair(db, proj, "key", u))
+	// Add variable
+	v := sdk.Variable{
+		Name:  "foo",
+		Type:  sdk.SecretVariable,
+		Value: "bar",
+	}
+	if err := project.InsertVariable(db, proj.ID, &v, u); err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
 
 	g0 := sdk.Group{Name: "g0"}
 	g1 := sdk.Group{Name: "g1"}
@@ -619,7 +627,7 @@ queueRun:
 			t.Fatal(err)
 		}
 
-		secrets, err := workflow.LoadSecrets(db, cache, nodeRun, workflowRun, proj.Variable)
+		secrets, err := workflow.LoadSecrets(db, cache, nodeRun, workflowRun, proj.Variables)
 		assert.NoError(t, err)
 		assert.Len(t, secrets, 1)
 
