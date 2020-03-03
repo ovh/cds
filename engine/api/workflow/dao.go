@@ -1401,8 +1401,8 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	var workflowExists bool
 	var oldWf *sdk.Workflow
 
-	if opts != nil && opts.OldWorkflow != nil {
-		oldWf = opts.OldWorkflow
+	if opts != nil && opts.OldWorkflow.ID > 0 {
+		oldWf = &opts.OldWorkflow
 	} else {
 		// load the workflow from database if exists
 		workflowExists, err = Exists(db, proj.Key, data.wrkflw.GetName())
