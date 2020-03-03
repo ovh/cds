@@ -921,13 +921,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sd
 	if uptOption.OldWorkflowID > 0 {
 		// reload workflow
 		var err error
-		oldWf, err = LoadByID(ctx, db, store, proj, uptOption.OldWorkflowID, LoadOptions{
-			DeepPipeline:          true,
-			Base64Keys:            true,
-			WithAsCodeUpdateEvent: true,
-			WithIcon:              true,
-			WithIntegrations:      true,
-		})
+		oldWf, err = LoadByID(ctx, db, store, proj, uptOption.OldWorkflowID, LoadOptions{})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load existing workflow with proj:%s ID:%d", proj.Key, uptOption.OldWorkflowID)
 		}
