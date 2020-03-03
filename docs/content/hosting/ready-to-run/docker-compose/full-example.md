@@ -39,6 +39,8 @@ export OS_REGION_NAME="opentack-region"
 openstack server create --flavor b2-15-flex --image "Debian 10" --key-name="your-key-name" --nic net-id=Ext-Net cdsdemo
 ```
 
+This new virtual machime is attached to the `default` security group. This group should allows ingress for port 22 (from your remote IP) and 443 only (from everywhere for SSL configuration).
+
 ## Install Docker on your VM
 
 ```bash
@@ -87,7 +89,7 @@ In the content below, replace the value of
  - CDS_GITHUB_CLIENT_ID
  - CDS_GITHUB_CLIENT_SECRET
 
-then create the file `/home/debian/boot.sh`.
+then create the file `/home/debian/boot.sh` with the user `debian`.
 
 ```bash
 #!/bin/bash
@@ -151,10 +153,47 @@ Then run `boot.sh` file.
 
 ```
 # with user debian
+# be sure that you have group docker
+groups
+# you should have these groups:
+#debian adm dialout cdrom floppy sudo audio dip video plugdev netdev docker
+# if it's not the case, logout and re-login with debian user.
+
 cd /home/debian
+chmod +x boot.sh
 ./boot.sh
 ```
 
+The `boot.sh` will ask you the password for `admin` user, you have to enter a strong password.
+The script will also ask you the context name for cdsctl, you can choose the default context `default`.
+
+At the end, you should have to log:
+
+```bash
+Workflow MyFirstWorkflow #1 has been launched
+https://your-cdsdemo.domain/project/DEMO/workflow/MyFirstWorkflow/run/1
+```
+
+This url is not accessible at the moment, since we have not configured the SSL and haproxy.
+
+The `docker ps` should returns this:
+
+```
+
+$ docker ps
+CONTAINER ID        IMAGE                                                 COMMAND                  CREATED             STATUS                            PORTS                      NAMES
+b295902b57fa        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (healthy)            0.0.0.0:8080->8080/tcp     debian_cds-ui_1
+087c3b405b26        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (healthy)                                       debian_cds-elasticsearch_1
+33c68721ea18        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (healthy)                                       debian_cds-vcs_1
+eee126b42e73        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (healthy)            127.0.0.1:8083->8083/tcp   debian_cds-hooks_1
+9139f7b80f1b        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (healthy)                                       debian_cds-repositories_1
+442d7a34771a        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (health: starting)                              debian_cds-hatchery-swarm_1
+8ac1f861ca40        ovhcom/cds-engine:latest                              "sh -c '/app/cds-eng…"   2 minutes ago       Up 2 minutes (healthy)            0.0.0.0:8081->8081/tcp     debian_cds-api_1
+2e0787b8b946        bobrik/socat                                          "socat TCP4-LISTEN:2…"   3 minutes ago       Up 3 minutes                      127.0.0.1:2375->2375/tcp   debian_dockerhost_1
+3e38f0aff767        redis:alpine                                          "docker-entrypoint.s…"   3 minutes ago       Up 3 minutes                      6379/tcp                   debian_cds-cache_1
+60ab21aee94f        docker.elastic.co/elasticsearch/elasticsearch:6.7.2   "/usr/local/bin/dock…"   3 minutes ago       Up 3 minutes                      9200/tcp, 9300/tcp         debian_elasticsearch_1
+bd9bc2607ca0        postgres:9.6.2                                        "docker-entrypoint.s…"   3 minutes ago       Up 3 minutes                      5432/tcp                   debian_cds-db_1
+```
 
 ## Configure SSL
 
