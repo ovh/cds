@@ -739,13 +739,8 @@ func (s *Service) postPullRequestCommentHandler() service.Handler {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
-		sid := muxVar(r, "id")
-		id, err := strconv.Atoi(sid)
-		if err != nil {
-			return sdk.WithStack(sdk.ErrWrongRequest)
-		}
 
-		var body string
+		var body sdk.VCSPullRequestCommentRequest
 		if err := service.UnmarshalBody(r, &body); err != nil {
 			return sdk.WithStack(err)
 		}
@@ -769,7 +764,7 @@ func (s *Service) postPullRequestCommentHandler() service.Handler {
 			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
 		}
 
-		if err := client.PullRequestComment(ctx, fmt.Sprintf("%s/%s", owner, repo), id, body); err != nil {
+		if err := client.PullRequestComment(ctx, fmt.Sprintf("%s/%s", owner, repo), body); err != nil {
 			return sdk.WrapError(err, "Unable to create new PR comment %s %s/%s", name, owner, repo)
 		}
 

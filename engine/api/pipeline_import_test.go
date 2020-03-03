@@ -99,6 +99,33 @@ jobs:
 	assert.Equal(t, 400, rec.Code)
 }
 
+func Test_putPipelineImportJSONWithoutVersionHandler(t *testing.T) {
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
+	u, pass := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	test.NotNil(t, proj)
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+		"pipelineKey":    "testest",
+	}
+	uri := api.Router.GetRoute("PUT", api.putImportPipelineHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri+"?format=json", nil)
+
+	bodyjson := `{"name":"testest","stages":["Stage 1"],"jobs":[{"job":"echo with default","stage":"Stage 1","steps":[{"script":["echo \"test\"","echo {{.limit | default \"\"}}"]}]}]}`
+	req.Body = ioutil.NopCloser(strings.NewReader(bodyjson))
+	req.Header.Set("Content-Type", "application/json")
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+}
+
 func Test_putPipelineImportDifferentStageHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
