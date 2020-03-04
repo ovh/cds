@@ -79,7 +79,6 @@ type LoadOptions struct {
 // UpdateOptions is option to parse a workflow
 type UpdateOptions struct {
 	DisableHookManagement bool
-	OldWorkflowID         int64
 }
 
 // CountVarInWorkflowData represents the result of CountVariableInWorkflow function
@@ -901,83 +900,77 @@ func RenameNode(ctx context.Context, db gorp.SqlExecutor, w *sdk.Workflow) error
 }
 
 // Update updates a workflow
-func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, w *sdk.Workflow, uptOption UpdateOptions) error {
+func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wf *sdk.Workflow, uptOption UpdateOptions) error {
 	ctx, end := observability.Span(ctx, "workflow.Update")
 	defer end()
-	if err := IsValid(ctx, store, db, w, proj, LoadOptions{}); err != nil {
+	if err := IsValid(ctx, store, db, wf, proj, LoadOptions{}); err != nil {
 		return err
 	}
 
-	if err := DeleteNotifications(db, w.ID); err != nil {
-		return sdk.WrapError(err, "unable to delete all notifications on workflow(%d - %s)", w.ID, w.Name)
+	if err := DeleteNotifications(db, wf.ID); err != nil {
+		return sdk.WrapError(err, "unable to delete all notifications on workflow(%d - %s)", wf.ID, wf.Name)
 	}
 
-	if err := integration.DeleteFromWorkflow(db, w.ID); err != nil {
-		return sdk.WrapError(err, "unable to delete all integrations on workflow(%d - %s)", w.ID, w.Name)
+	if err := integration.DeleteFromWorkflow(db, wf.ID); err != nil {
+		return sdk.WrapError(err, "unable to delete all integrations on workflow(%d - %s)", wf.ID, wf.Name)
 	}
 
-	var oldWf *sdk.Workflow
-	// Delete workflow data
-	if uptOption.OldWorkflowID > 0 {
-		// reload workflow
-		var err error
-		oldWf, err = LoadByID(ctx, db, store, proj, uptOption.OldWorkflowID, LoadOptions{})
-		if err != nil {
-			return sdk.WrapError(err, "Unable to load existing workflow with proj:%s ID:%d", proj.Key, uptOption.OldWorkflowID)
-		}
-		if err := DeleteWorkflowData(db, *oldWf); err != nil {
-			return sdk.WrapError(err, "unable to delete from old workflow data(%d - %s)", w.ID, w.Name)
-		}
+	// reload workflow to delete the current workflow data
+	oldWf, err := LoadByID(ctx, db, store, proj, wf.ID, LoadOptions{})
+	if err != nil {
+		return sdk.WrapError(err, "Unable to load existing workflow with proj:%s ID:%d", proj.Key, wf.ID)
+	}
+	if err := DeleteWorkflowData(db, *oldWf); err != nil {
+		return sdk.WrapError(err, "unable to delete from old workflow data(%d - %s)", wf.ID, wf.Name)
 	}
 
 	// Delete all node ID
-	w.ResetIDs()
+	wf.ResetIDs()
 
 	filteredPurgeTags := []string{}
-	for _, t := range w.PurgeTags {
+	for _, t := range wf.PurgeTags {
 		if t != "" {
 			filteredPurgeTags = append(filteredPurgeTags, t)
 		}
 	}
-	w.PurgeTags = filteredPurgeTags
-
-	if w.WorkflowData.Node.Context != nil && w.WorkflowData.Node.Context.ApplicationID != 0 {
+	wf.PurgeTags = filteredPurgeTags
+	if wf.WorkflowData.Node.Context != nil && wf.WorkflowData.Node.Context.ApplicationID != 0 {
 		var err error
-		if w.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, w); err != nil {
+		if wf.WorkflowData.Node.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, wf); err != nil {
 			log.Warning(ctx, "workflow.Update> Cannot set default payload : %v", err)
 		}
 	}
 
 	if !uptOption.DisableHookManagement {
-		if err := hookRegistration(ctx, db, store, proj, w, oldWf); err != nil {
+		if err := hookRegistration(ctx, db, store, proj, wf, oldWf); err != nil {
 			return err
 		}
 		if oldWf != nil {
-			hookToDelete := computeHookToDelete(w, oldWf)
+			hookToDelete := computeHookToDelete(wf, oldWf)
 			if err := hookUnregistration(ctx, db, store, proj, hookToDelete); err != nil {
 				return err
 			}
 		}
 	}
 
-	if err := InsertWorkflowData(db, w); err != nil {
+	if err := InsertWorkflowData(db, wf); err != nil {
 		return sdk.WrapError(err, "Update> Unable to insert workflow data")
 	}
 
 	// Insert notifications
-	for i := range w.Notifications {
-		n := &w.Notifications[i]
-		if err := InsertNotification(db, w, n); err != nil {
-			return sdk.WrapError(err, "Unable to update workflow(%d) notification (%#v)", w.ID, n)
+	for i := range wf.Notifications {
+		n := &wf.Notifications[i]
+		if err := InsertNotification(db, wf, n); err != nil {
+			return sdk.WrapError(err, "Unable to update workflow(%d) notification (%#v)", wf.ID, n)
 		}
 	}
 
-	w.LastModified = time.Now()
-	dbw := Workflow(*w)
+	wf.LastModified = time.Now()
+	dbw := Workflow(*wf)
 	if _, err := db.Update(&dbw); err != nil {
 		return sdk.WrapError(err, "Unable to update workflow")
 	}
-	*w = sdk.Workflow(dbw)
+	*wf = sdk.Workflow(dbw)
 
 	return nil
 }

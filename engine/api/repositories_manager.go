@@ -557,6 +557,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 					return err
 				}
 
+				// second load for publish the event below
 				wfOld, err := workflow.LoadByID(ctx, db, api.Cache, *proj, wf.ID, workflow.LoadOptions{})
 				if err != nil {
 					return err
@@ -585,7 +586,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 
 				wfDB.WorkflowData.Node.Context.DefaultPayload = defaultPayload
 
-				if err := workflow.Update(ctx, db, api.Cache, *proj, wfDB, workflow.UpdateOptions{DisableHookManagement: true, OldWorkflowID: wfOld.ID}); err != nil {
+				if err := workflow.Update(ctx, db, api.Cache, *proj, wfDB, workflow.UpdateOptions{DisableHookManagement: true}); err != nil {
 					return sdk.WrapError(err, "cannot update node context %d", wf.WorkflowData.Node.Context.ID)
 				}
 

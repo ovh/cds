@@ -453,7 +453,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.Update(ctx, tx, api.Cache, *p, &wf, workflow.UpdateOptions{OldWorkflowID: oldW.ID}); err != nil {
+		if err := workflow.Update(ctx, tx, api.Cache, *p, &wf, workflow.UpdateOptions{}); err != nil {
 			return sdk.WrapError(err, "cannot update workflow")
 		}
 

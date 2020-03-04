@@ -139,6 +139,8 @@ func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
 				if err := enc.Encode(pr); err != nil {
 					return writeError(w, err)
 				}
+			case "/vcs/github/repos/sguiheux/demo/hooks?url=http%3A%2F%2Flolcat.host&id=666":
+				// do nothing
 			default:
 				t.Fatalf("UNKNOWN ROUTE: %s", r.URL.String())
 			}
