@@ -3,7 +3,6 @@ package project
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -116,13 +115,7 @@ func InsertVariable(db gorp.SqlExecutor, projID int64, v *sdk.Variable, u sdk.Id
 	}
 
 	dbVar := newDBProjectVariable(*v, projID)
-
-	err := gorpmapping.InsertAndSign(context.Background(), db, &dbVar)
-	if err != nil && strings.Contains(err.Error(), "project_variable_pkey") {
-		return sdk.WithStack(sdk.ErrVariableExists)
-
-	}
-	if err != nil {
+	if err := gorpmapping.InsertAndSign(context.Background(), db, &dbVar); err != nil {
 		return sdk.WrapError(err, "Cannot insert variable %s", v.Name)
 	}
 
