@@ -216,7 +216,6 @@ pub struct Key {
     pub name: String,
     pub public: String,
     pub private: String,
-    #[serde(rename = "keyID")]
     pub key_id: String,
     #[serde(rename = "type")]
     pub _type: String,

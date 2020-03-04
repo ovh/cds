@@ -154,10 +154,10 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
 	}
 
 	pk := sdk.ProjectKey{}
-	pk.Key.KeyID = k.KeyID
-	pk.Key.Name = BuiltinGPGKey
-	pk.Key.Private = k.Private
-	pk.Key.Public = k.Public
+	pk.KeyID = k.KeyID
+	pk.Name = BuiltinGPGKey
+	pk.Private = k.Private
+	pk.Public = k.Public
 	pk.Type = sdk.KeyTypePGP
 	pk.ProjectID = proj.ID
 	pk.Builtin = true

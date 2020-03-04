@@ -27,10 +27,8 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	k := &sdk.ProjectKey{
-		Key: sdk.Key{
-			Name: "mykey",
-			Type: "pgp",
-		},
+		Name:      "mykey",
+		Type:      "pgp",
 		ProjectID: proj.ID,
 	}
 
@@ -38,7 +36,10 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	k.Key = kpgp
+	k.KeyID = kpgp.KeyID
+	k.Public = kpgp.Public
+	k.Private = kpgp.Private
+	k.Type = kpgp.Type
 
 	if err := project.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
@@ -76,12 +77,10 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	k := &sdk.ProjectKey{
-		Key: sdk.Key{
-			Name:    "mykey",
-			Type:    "pgp",
-			Public:  "pub",
-			Private: "priv",
-		},
+		Name:      "mykey",
+		Type:      "pgp",
+		Public:    "pub",
+		Private:   "priv",
 		ProjectID: proj.ID,
 	}
 
@@ -121,10 +120,8 @@ func Test_addKeyInProjectHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
 	k := &sdk.ProjectKey{
-		Key: sdk.Key{
-			Name: "mykey",
-			Type: "pgp",
-		},
+		Name: "mykey",
+		Type: "pgp",
 	}
 
 	vars := map[string]string{

@@ -17,7 +17,18 @@ import (
 
 type dbProject sdk.Project
 type dbProjectVariableAudit sdk.ProjectVariableAudit
-type dbProjectKey sdk.ProjectKey
+type dbProjectKey struct {
+	gorpmapping.SignedEntity
+	sdk.ProjectKey
+}
+
+func (e dbProjectKey) Canonical() gorpmapping.CanonicalForms {
+	var _ = []interface{}{e.ProjectID, e.ID, e.Name}
+	return gorpmapping.CanonicalForms{
+		"{{print .ProjectID}}{{print .ID}}{{.Name}}",
+	}
+}
+
 type dbLabel sdk.Label
 
 func init() {
