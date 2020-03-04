@@ -547,6 +547,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/workflow/label/add/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/development/rest/admin/</loc>
   </url>
   
@@ -828,6 +832,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/workflow/advanced/delete/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/workflow/label/delete/</loc>
   </url>
   
   <url>
@@ -1119,6 +1127,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/workflow/label/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/action/builtin/list/</loc>
   </url>
   
@@ -1240,6 +1252,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/cdsctl/workflow/artifact/list/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/docs/components/cdsctl/workflow/label/list/</loc>
   </url>
   
   <url>
