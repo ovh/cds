@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http/httptest"
 	"strings"
@@ -63,7 +64,7 @@ variables:
 	assert.Equal(t, "myNewEnv", env.Name)
 
 	//Check variables
-	for _, v := range env.Variable {
+	for _, v := range env.Variables {
 		switch v.Name {
 		case "var1":
 			assert.True(t, v.Type == sdk.StringVariable, "var1.type should be type string")
@@ -164,20 +165,18 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 	env, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables, errLoadVars := environment.GetAllVariable(db, proj.Key, "myNewEnv", environment.WithClearPassword())
-	require.NoError(t, errLoadVars)
-	env.Variable = variables
-	env.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env.ID)
-	require.NoError(t, err)
+	variables, errLoadVars := environment.LoadAllVariablesWithDecrytion(db, env.ID)
+	test.NoError(t, errLoadVars)
+	env.Variables = variables
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
 
 	env1, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables1, errLoadVariables := environment.GetAllVariable(db, proj.Key, "myNewEnv-1", environment.WithClearPassword())
-	require.NoError(t, errLoadVariables)
-	env1.Variable = variables1
-	env1.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env1.ID)
-	require.NoError(t, err)
+	variables1, errLoadVariables := environment.LoadAllVariablesWithDecrytion(db, env1.ID)
+	test.NoError(t, errLoadVariables)
+	env1.Variables = variables1
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env1))
 
 	assert.NotNil(t, env1)
 	assert.Equal(t, "myNewEnv-1", env1.Name)
@@ -197,7 +196,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 	}
 
 	//Check variables
-	for _, v := range env1.Variable {
+	for _, v := range env1.Variables {
 		switch v.Name {
 		case "myPassword":
 			assert.True(t, v.Type == sdk.SecretVariable, "myPassword.type should be type password")
@@ -286,20 +285,18 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	env, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables, errLoadVars := environment.GetAllVariable(db, proj.Key, "myNewEnv", environment.WithClearPassword())
-	require.NoError(t, errLoadVars)
-	env.Variable = variables
-	env.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env.ID)
-	require.NoError(t, err)
+	variables, errLoadVars := environment.LoadAllVariablesWithDecrytion(db, env.ID)
+	test.NoError(t, errLoadVars)
+	env.Variables = variables
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
 
 	env1, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables1, errLoadVariables := environment.GetAllVariable(db, proj.Key, "myNewEnv-1", environment.WithClearPassword())
-	require.NoError(t, errLoadVariables)
-	env1.Variable = variables1
-	env1.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env1.ID)
-	require.NoError(t, err)
+	variables1, errLoadVariables := environment.LoadAllVariablesWithDecrytion(db, env1.ID)
+	test.NoError(t, errLoadVariables)
+	env1.Variables = variables1
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env1))
 
 	assert.NotNil(t, env1)
 	assert.Equal(t, "myNewEnv-1", env1.Name)
@@ -319,7 +316,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	}
 
 	//Check variables
-	for _, v := range env1.Variable {
+	for _, v := range env1.Variables {
 		switch v.Name {
 		case "myPassword":
 			assert.True(t, v.Type == sdk.SecretVariable, "myPassword.type should be type password")
@@ -351,20 +348,19 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	env, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables, errLoadVars = environment.GetAllVariable(db, proj.Key, "myNewEnv", environment.WithClearPassword())
-	require.NoError(t, errLoadVars)
-	env.Variable = variables
-	env.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env.ID)
-	require.NoError(t, err)
+	variables, errLoadVars = environment.LoadAllVariablesWithDecrytion(db, env.ID)
+	test.NoError(t, errLoadVars)
+	env.Variables = variables
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
 
 	env1, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables1, errLoadVariables = environment.GetAllVariable(db, proj.Key, "myNewEnv-1", environment.WithClearPassword())
-	require.NoError(t, errLoadVariables)
-	env1.Variable = variables1
-	env1.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env1.ID)
-	require.NoError(t, err)
+	variables1, errLoadVariables = environment.LoadAllVariablesWithDecrytion(db, env1.ID)
+	test.NoError(t, errLoadVariables)
+	env1.Variables = variables1
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env1))
+
 	assert.NotNil(t, env1)
 	assert.Equal(t, "myNewEnv-1", env1.Name)
 
@@ -383,7 +379,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	}
 
 	//Check variables
-	for _, v := range env1.Variable {
+	for _, v := range env1.Variables {
 		switch v.Name {
 		case "myPassword":
 			assert.True(t, v.Type == sdk.SecretVariable, "myPassword.type should be type password")
@@ -431,11 +427,10 @@ keys:
 	env, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables, errLoadVars := environment.GetAllVariable(db, proj.Key, "myNewEnv", environment.WithClearPassword())
-	require.NoError(t, errLoadVars)
-	env.Variable = variables
-	env.Keys, err = environment.LoadAllKeysWithPrivateContent(db, env.ID)
-	require.NoError(t, err)
+	variables, errLoadVars := environment.LoadAllVariablesWithDecrytion(db, env.ID)
+	test.NoError(t, errLoadVars)
+	env.Variables = variables
+	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
 
 	assert.NotNil(t, env)
 	assert.Equal(t, "myNewEnv", env.Name)

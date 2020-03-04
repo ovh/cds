@@ -318,6 +318,6 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 		t.Fail()
 		return
 	}
-	assert.Equal(t, len(env2.Variable), 1)
-	assert.Equal(t, env2.Variable[0].Type, sdk.StringVariable)
+	assert.Equal(t, len(env2.Variables), 1)
+	assert.Equal(t, env2.Variables[0].Type, sdk.StringVariable)
 }

@@ -74,8 +74,8 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 		t.Fail()
 		return
 	}
-	assert.Equal(t, len(envDb.Variable), 1)
-	assert.Equal(t, envDb.Variable[0].Name, "foo")
+	assert.Equal(t, len(envDb.Variables), 1)
+	assert.Equal(t, envDb.Variables[0].Name, "foo")
 }
 
 func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
@@ -144,8 +144,8 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 		t.Fail()
 		return
 	}
-	assert.Equal(t, len(envDb.Variable), 1)
-	assert.Equal(t, envDb.Variable[0].Value, "new bar")
+	assert.Equal(t, len(envDb.Variables), 1)
+	assert.Equal(t, envDb.Variables[0].Value, "new bar")
 }
 
 func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
@@ -204,7 +204,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 		t.Fail()
 		return
 	}
-	assert.Equal(t, len(envDb.Variable), 0)
+	assert.Equal(t, len(envDb.Variables), 0)
 }
 
 func TestGetVariablesInEnvironmentHandler(t *testing.T) {
