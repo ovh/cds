@@ -191,7 +191,7 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 	w.PurgeTags = purgeTags
 
 	data := sdk.WorkflowData{}
-	if err := gorpmapping.JSONNullString(res.WorkflowData, data); err != nil {
+	if err := gorpmapping.JSONNullString(res.WorkflowData, &data); err != nil {
 		return sdk.WrapError(err, "Unable to unmarshall workflow data")
 	}
 	if data.Node.ID != 0 {
