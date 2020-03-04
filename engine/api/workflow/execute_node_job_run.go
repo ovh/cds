@@ -444,7 +444,7 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 		// Environment variables
 		ev := []sdk.Variable{}
 		if env != nil {
-			envv, errE := environment.GetAllVariableByID(db, env.ID, environment.WithClearPassword())
+			envv, errE := environment.LoadAllVariablesWithDecrytion(db, env.ID)
 			if errE != nil {
 				return nil, sdk.WrapError(errE, "LoadSecrets> Cannot load environment variables")
 			}

@@ -169,7 +169,7 @@ func ParametersFromApplicationVariables(app Application) map[string]string {
 
 // ParametersFromEnvironmentVariables returns a map from a slice of parameters
 func ParametersFromEnvironmentVariables(env Environment) map[string]string {
-	params := VariablesToParameters("cds.env", env.Variable)
+	params := VariablesToParameters("cds.env", env.Variables)
 	return ParametersToMap(params)
 }
 

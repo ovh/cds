@@ -279,7 +279,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 		}
 
 		variables := []sdk.Variable{}
-		for _, v := range env.Variable {
+		for _, v := range env.Variables {
 			// do not clone secret variable to avoid 'secret value not specified'
 			if v.Type != sdk.SecretVariable {
 				variables = append(variables, v)
@@ -290,7 +290,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			Name:       cloneName,
 			ProjectID:  p.ID,
 			ProjectKey: p.Key,
-			Variable:   variables,
+			Variables:  variables,
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -306,7 +306,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 		}
 
 		//Insert variables
-		for _, v := range envPost.Variable {
+		for _, v := range envPost.Variables {
 			if err := environment.InsertVariable(tx, envPost.ID, &v, getAPIConsumer(ctx)); err != nil {
 				return sdk.WrapError(err, "Unable to insert variable")
 			}

@@ -8,7 +8,7 @@ import (
 type Environment struct {
 	ID             int64            `json:"id" yaml:"-"`
 	Name           string           `json:"name" yaml:"name" cli:"name,key"`
-	Variable       []Variable       `json:"variables,omitempty" yaml:"variables"`
+	Variables      []Variable       `json:"variables,omitempty" yaml:"variables"`
 	ProjectID      int64            `json:"-" yaml:"-"`
 	ProjectKey     string           `json:"project_key" yaml:"-"`
 	LastModified   int64            `json:"last_modified"`
@@ -24,7 +24,7 @@ type EnvironmentVariableAudit struct {
 	VariableID     int64     `json:"variable_id" yaml:"-" db:"variable_id"`
 	Type           string    `json:"type" yaml:"-" db:"type"`
 	VariableBefore *Variable `json:"variable_before,omitempty" yaml:"-" db:"-"`
-	VariableAfter  *Variable `json:"variable_after,omitempty" yaml:"-" db:"-"`
+	VariableAfter  Variable  `json:"variable_after,omitempty" yaml:"-" db:"-"`
 	Versionned     time.Time `json:"versionned" yaml:"-" db:"versionned"`
 	Author         string    `json:"author" yaml:"-" db:"author"`
 }

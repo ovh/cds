@@ -15,17 +15,17 @@ import (
 // Export an environment
 func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, key string, envName string, f exportentities.Format, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
 	// Load app
-	env, errload := LoadEnvironmentByName(db, key, envName)
-	if errload != nil {
-		return 0, sdk.WrapError(errload, "environment.Export> Cannot load %s", envName)
+	env, err := LoadEnvironmentByName(db, key, envName)
+	if err != nil {
+		return 0, sdk.WrapError(err, "environment.Export> Cannot load %s", envName)
 	}
 
 	// reload variables with clear password
-	variables, errLoadVariables := GetAllVariable(db, key, envName, WithClearPassword())
-	if errLoadVariables != nil {
-		return 0, sdk.WrapError(errLoadVariables, "environment.Export> Cannot load variables value")
+	variables, err := LoadAllVariablesWithDecrytion(db, env.ID)
+	if err != nil {
+		return 0, err
 	}
-	env.Variable = variables
+	env.Variables = variables
 
 	// Reload key
 	keys, err := LoadAllKeysWithPrivateContent(db, env.ID)
@@ -41,7 +41,7 @@ func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, key str
 func ExportEnvironment(db gorp.SqlExecutor, env sdk.Environment, f exportentities.Format, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
 	// Parse variables
 	envvars := []sdk.Variable{}
-	for _, v := range env.Variable {
+	for _, v := range env.Variables {
 		switch v.Type {
 		case sdk.KeyVariable:
 			return 0, sdk.WrapError(fmt.Errorf("Unsupported variable %s", v.Name), "environment.Export> Unable to export application")
@@ -56,7 +56,7 @@ func ExportEnvironment(db gorp.SqlExecutor, env sdk.Environment, f exportentitie
 			envvars = append(envvars, v)
 		}
 	}
-	env.Variable = envvars
+	env.Variables = envvars
 
 	// Prepare keys
 	keys := []exportentities.EncryptedKey{}

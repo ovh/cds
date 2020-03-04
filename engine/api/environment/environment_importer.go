@@ -40,8 +40,8 @@ func Import(db gorp.SqlExecutor, proj sdk.Project, env *sdk.Environment, msgChan
 	}
 
 	//Insert all variables
-	for i := range env.Variable {
-		if err := InsertVariable(db, env.ID, &env.Variable[i], u); err != nil {
+	for i := range env.Variables {
+		if err := InsertVariable(db, env.ID, &env.Variables[i], u); err != nil {
 			return err
 		}
 	}
@@ -69,7 +69,7 @@ func ImportInto(db gorp.SqlExecutor, env *sdk.Environment, into *sdk.Environment
 	var updateVar = func(v *sdk.Variable) {
 		log.Debug("ImportInto> Updating var %s", v.Name)
 
-		varBefore, errV := GetVariableByID(db, into.ID, v.ID, WithClearPassword())
+		varBefore, errV := LoadVariable(db, into.ID, v.Name)
 		if errV != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCannotBeUpdated, v.Name, into.Name, errV)
 			return
@@ -91,20 +91,20 @@ func ImportInto(db gorp.SqlExecutor, env *sdk.Environment, into *sdk.Environment
 		msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCreated, v.Name, into.Name)
 	}
 
-	for i := range env.Variable {
-		log.Debug("ImportInto> Checking >> %s", env.Variable[i].Name)
+	for i := range env.Variables {
+		log.Debug("ImportInto> Checking >> %s", env.Variables[i].Name)
 		var found bool
-		for j := range into.Variable {
-			log.Debug("ImportInto> \t with >> %s", into.Variable[j].Name)
-			if env.Variable[i].Name == into.Variable[j].Name {
-				env.Variable[i].ID = into.Variable[j].ID
+		for j := range into.Variables {
+			log.Debug("ImportInto> \t with >> %s", into.Variables[j].Name)
+			if env.Variables[i].Name == into.Variables[j].Name {
+				env.Variables[i].ID = into.Variables[j].ID
 				found = true
-				updateVar(&env.Variable[i])
+				updateVar(&env.Variables[i])
 				break
 			}
 		}
 		if !found {
-			insertVar(&env.Variable[i])
+			insertVar(&env.Variables[i])
 		}
 	}
 
