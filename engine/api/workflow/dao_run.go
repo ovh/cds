@@ -998,9 +998,9 @@ func stopRunsBlocked(ctx context.Context, db *gorp.DbMap) error {
 	}
 
 	resp := []struct {
-		ID     int64  `db:"id"`
-		Status string `db:"status"`
-		Stages string `db:"stages"`
+		ID     int64          `db:"id"`
+		Status string         `db:"status"`
+		Stages sql.NullString `db:"stages"`
 	}{}
 
 	querySelectNodeRuns := `
@@ -1018,8 +1018,10 @@ func stopRunsBlocked(ctx context.Context, db *gorp.DbMap) error {
 			ID:     resp[i].ID,
 			Status: resp[i].Status,
 		}
-		if err := json.Unmarshal([]byte(resp[i].Stages), &nr.Stages); err != nil {
-			return sdk.WrapError(err, "cannot unmarshal stages")
+		if resp[i].Stages.Valid {
+			if err := json.Unmarshal([]byte(resp[i].Stages.String), &nr.Stages); err != nil {
+				return sdk.WrapError(err, "cannot unmarshal stages")
+			}
 		}
 
 		stopWorkflowNodeRunStages(ctx, db, &nr)
