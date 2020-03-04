@@ -181,7 +181,7 @@ func (ava *dbApplicationVariableAudit) PostUpdate(db gorp.SqlExecutor) error {
 	if ava.VariableBefore != nil {
 		v, err := json.Marshal(ava.VariableBefore)
 		if err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 		vB.Valid = true
 		vB.String = string(v)
@@ -189,14 +189,14 @@ func (ava *dbApplicationVariableAudit) PostUpdate(db gorp.SqlExecutor) error {
 
 	v, err := json.Marshal(ava.VariableAfter)
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	vA.Valid = true
 	vA.String = string(v)
 
 	query := "update application_variable_audit set variable_before = $2, variable_after = $3 where id = $1"
 	if _, err := db.Exec(query, ava.ID, vB, vA); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	return nil
 }

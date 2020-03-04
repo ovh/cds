@@ -111,12 +111,7 @@ func InsertVariable(db gorp.SqlExecutor, appID int64, v *sdk.Variable, u sdk.Ide
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
 	}
 
-	if sdk.NeedPlaceholder(v.Type) && v.Value == sdk.PasswordPlaceholder {
-		return fmt.Errorf("You try to insert a placeholder for new variable %s", v.Name)
-	}
-
 	dbVar := newDBApplicationVariable(*v, appID)
-
 	err := gorpmapping.InsertAndSign(context.Background(), db, &dbVar)
 	if err != nil && strings.Contains(err.Error(), "application_variable_pkey") {
 		return sdk.WithStack(sdk.ErrVariableExists)
@@ -190,10 +185,10 @@ func DeleteVariable(db gorp.SqlExecutor, appID int64, variable *sdk.Variable, u 
 
 	rowAffected, err := result.RowsAffected()
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	if rowAffected == 0 {
-		return ErrNoVariable
+		return sdk.WithStack(ErrNoVariable)
 	}
 
 	ava := &sdk.ApplicationVariableAudit{
