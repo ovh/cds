@@ -122,7 +122,7 @@ func loadBuiltinKey(db gorp.SqlExecutor, projectID int64) (*sdk.ProjectKey, erro
 	query := gorpmapping.NewQuery(`
 	SELECT * 
 	FROM project_key
-	WHERE id = $1 
+	WHERE project_id = $1 
 	AND builtin = true 
 	AND name = 'builtin'
 	`).Args(projectID)
