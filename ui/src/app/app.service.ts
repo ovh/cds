@@ -316,7 +316,6 @@ export class AppService {
         if (!event || !event.type_event) {
             return
         }
-        console.log(event);
         if (this.routeParams['key'] !== event.project_key || this.routeParams['workflowName'] !== event.workflow_name) {
             return;
         }
