@@ -129,7 +129,7 @@ func TestPull(t *testing.T) {
 	test.Equal(t, w.Metadata, w1.Metadata)
 	test.Equal(t, w.PurgeTags, w1.PurgeTags)
 
-	pull, err := workflow.Pull(context.TODO(), db, cache, *proj, w1.Name, exportentities.FormatYAML, project.EncryptWithBuiltinKey, exportentities.Options{})
+	pull, err := workflow.Pull(context.TODO(), db, cache, *proj, w1.Name, exportentities.FormatYAML, project.EncryptWithBuiltinKey)
 	test.NoError(t, err)
 
 	buff := new(bytes.Buffer)
