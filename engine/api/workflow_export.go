@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"io"
 	"net/http"
 
@@ -27,9 +28,9 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 		}
 		withPermissions := FormBool(r, "withPermissions")
 
-		opts := exportentities.Options{}
+		opts := make([]v2.ExportOptions, 0)
 		if withPermissions {
-			opts.WithPermission = true
+			opts = append(opts, v2.WorkflowWithPermissions)
 		}
 
 		f, err := exportentities.GetFormat(format)
@@ -41,7 +42,7 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
-		if _, err := workflow.Export(ctx, api.mustDB(), api.Cache, *proj, name, f, w, opts); err != nil {
+		if _, err := workflow.Export(ctx, api.mustDB(), api.Cache, *proj, name, f, w, opts...); err != nil {
 			return sdk.WithStack(err)
 		}
 
@@ -58,9 +59,9 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		withPermissions := FormBool(r, "withPermissions")
 
-		opts := exportentities.Options{}
+		opts := make([]v2.ExportOptions, 0)
 		if withPermissions {
-			opts.WithPermission = true
+			opts = append(opts, v2.WorkflowWithPermissions)
 		}
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)
@@ -68,7 +69,7 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		pull, err := workflow.Pull(ctx, api.mustDB(), api.Cache, *proj, name, exportentities.FormatYAML, project.EncryptWithBuiltinKey, opts)
+		pull, err := workflow.Pull(ctx, api.mustDB(), api.Cache, *proj, name, exportentities.FormatYAML, project.EncryptWithBuiltinKey, opts...)
 		if err != nil {
 			return err
 		}

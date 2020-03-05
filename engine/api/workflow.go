@@ -210,7 +210,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 
 		exportWf, err := exportentities.UnmarshalWorkflow([]byte(audit.DataBefore))
 		if err != nil {
-			return sdk.WrapError(err, "Cannot unmarshal data before")
+			return sdk.WrapError(err, "cannot unmarshal data before")
 		}
 
 		tx, err := db.Begin()

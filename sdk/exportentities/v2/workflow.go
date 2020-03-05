@@ -66,11 +66,10 @@ type HookEntry struct {
 	Conditions *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty" jsonschema_description:"Conditions to run this hook.\nhttps://ovh.github.io/cds/docs/concepts/workflow/run-conditions."`
 }
 
-// WorkflowOptions is the type for several workflow-as-code options
-type WorkflowOptions func(sdk.Workflow, *Workflow) error
+type ExportOptions func(w sdk.Workflow, exportedWorkflow *Workflow) error
 
 //NewWorkflow creates a new exportable workflow
-func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...WorkflowOptions) (Workflow, error) {
+func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...ExportOptions) (Workflow, error) {
 	exportedWorkflow := Workflow{}
 	exportedWorkflow.Name = w.Name
 	exportedWorkflow.Description = w.Description

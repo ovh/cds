@@ -34,7 +34,7 @@ func (a addWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sd
 	}
 
 	buffer := bytes.NewBufferString("")
-	if _, err := exportWorkflow(ctx, wEvent.Workflow, exportentities.FormatYAML, buffer, exportentities.Options{}); err != nil {
+	if _, err := exportWorkflow(ctx, wEvent.Workflow, exportentities.FormatYAML, buffer); err != nil {
 		return sdk.WrapError(err, "Unable to export workflow")
 	}
 
@@ -60,12 +60,12 @@ func (u updateWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e
 	}
 
 	oldWorkflowBuffer := bytes.NewBufferString("")
-	if _, err := exportWorkflow(ctx, wEvent.OldWorkflow, exportentities.FormatYAML, oldWorkflowBuffer, exportentities.Options{}); err != nil {
+	if _, err := exportWorkflow(ctx, wEvent.OldWorkflow, exportentities.FormatYAML, oldWorkflowBuffer); err != nil {
 		return sdk.WrapError(err, "Unable to export workflow")
 	}
 
 	newWorkflowBuffer := bytes.NewBufferString("")
-	if _, err := exportWorkflow(ctx, wEvent.NewWorkflow, exportentities.FormatYAML, newWorkflowBuffer, exportentities.Options{}); err != nil {
+	if _, err := exportWorkflow(ctx, wEvent.NewWorkflow, exportentities.FormatYAML, newWorkflowBuffer); err != nil {
 		return sdk.WrapError(err, "Unable to export workflow")
 	}
 

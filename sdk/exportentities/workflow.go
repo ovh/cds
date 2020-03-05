@@ -19,11 +19,6 @@ const (
 	PullEnvironmentName = "%s.env.yml"
 )
 
-type Options struct {
-	SkipIfOnlyOneRepoWebhook bool
-	WithPermission           bool
-}
-
 // WorkflowPulled contains all the yaml base64 that are needed to generate a workflow tar file.
 type WorkflowPulled struct {
 	Workflow     WorkflowPulledItem   `json:"workflow"`
@@ -110,15 +105,8 @@ func SetTemplate(w Workflow, path string) (Workflow, error) {
 	return nil, sdk.WithStack(fmt.Errorf("exportentities workflow cannot be cast %+v", w))
 }
 
-func NewWorkflow(ctx context.Context, w sdk.Workflow, opts Options) (Workflow, error) {
-	exportOptions := make([]v2.WorkflowOptions, 0)
-	if opts.WithPermission {
-		exportOptions = append(exportOptions, v2.WorkflowWithPermissions)
-	}
-	if opts.SkipIfOnlyOneRepoWebhook {
-		exportOptions = append(exportOptions, v2.WorkflowSkipIfOnlyOneRepoWebhook)
-	}
-	workflowToExport, err := v2.NewWorkflow(ctx, w, WorkflowVersion2, exportOptions...)
+func NewWorkflow(ctx context.Context, w sdk.Workflow, opts ...v2.ExportOptions) (Workflow, error) {
+	workflowToExport, err := v2.NewWorkflow(ctx, w, WorkflowVersion2, opts...)
 	if err != nil {
 		return workflowToExport, err
 	}
