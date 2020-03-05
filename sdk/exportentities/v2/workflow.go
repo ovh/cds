@@ -3,12 +3,14 @@ package v2
 import (
 	"context"
 	"fmt"
-	"github.com/fsamin/go-dump"
-	"github.com/ovh/cds/sdk"
 	"math/rand"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/fsamin/go-dump"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // Workflow is the "as code" representation of a sdk.Workflow
@@ -371,7 +373,7 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	rand.Seed(time.Now().Unix())
 	var attempt int
 	fakeID := rand.Int63n(5000)
-	// attempt is there to avoid infinite loop, but it should not happened becase we check validty and dependencies earlier
+	// attempt is there to avoid infinite loop, but it should not happened becase we check validity and dependencies earlier
 	for len(w.Workflow) != 0 && attempt < 10000 {
 		for name, entry := range w.Workflow {
 			entry.ID = fakeID

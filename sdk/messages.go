@@ -87,7 +87,7 @@ var (
 	MsgWorkflowErrorBadCdsDir              = &Message{"MsgWorkflowErrorBadCdsDir", trad{FR: "Un problème est survenu avec votre répertoire .cds", EN: "A problem occurred about your .cds directory"}, nil, RunInfoTypeError}
 	MsgWorkflowErrorUnknownKey             = &Message{"MsgWorkflowErrorUnknownKey", trad{FR: "La clé '%s' est incorrecte ou n'existe pas", EN: "The key '%s' is incorrect or doesn't exist"}, nil, RunInfoTypeError}
 	MsgWorkflowErrorBadVCSStrategy         = &Message{"MsgWorkflowErrorBadVCSStrategy", trad{FR: "Vos informations vcs_* sont incorrectes", EN: "Your vcs_* fields are incorrects"}, nil, RunInfoTypeError}
-	MsgWorkflowDeprecatedVersion           = &Message{"MsgWorkflowDeprecatedVersion", trad{FR: "La configuration yaml de votre workflow est dans un format déprécié. Exportez le avec la CLI `cdsctl workflow export %s %s`", EN: "The yaml workflow configuration format  is deprecated. Export your workflow with CLI `cdsctl workflow export %s %s`"}, nil, RunInfoTypeWarning}
+	MsgWorkflowDeprecatedVersion           = &Message{"MsgWorkflowDeprecatedVersion", trad{FR: "La configuration yaml de votre workflow est dans un format déprécié. Exportez le avec la CLI `cdsctl workflow export %s %s`", EN: "The yaml workflow configuration format is deprecated. Export your workflow with CLI `cdsctl workflow export %s %s`"}, nil, RunInfoTypeWarning}
 )
 
 // Messages contains all sdk Messages

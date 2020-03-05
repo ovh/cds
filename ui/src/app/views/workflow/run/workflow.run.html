@@ -52,7 +52,7 @@
                                     <div title>
                                         <i class="dropdown icon"></i>
                                         <i class="yellow exclamation triangle icon"></i>
-                                        <span *ngIf="warningsMap[info.message.id]">{{warningsMap[info.message.id].title}}</span>
+                                        <span *ngIf="warningsMap[info.message.id]">{{warningsMap[info.message.id].title | translate}}</span>
                                         <span *ngIf="!warningsMap[info.message.id]">{{info.message.id}}</span>
                                     </div>
                                     <div content>
