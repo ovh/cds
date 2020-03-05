@@ -100,7 +100,7 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(ws))
 
-	exp, err := exportentities.NewWorkflow(context.TODO(), *w1, exportentities.Options{})
+	exp, err := exportentities.NewWorkflow(context.TODO(), *w1)
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
@@ -340,7 +340,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 
 	assertEqualNode(t, &w.WorkflowData.Node, &w1.WorkflowData.Node)
 
-	exp, err := exportentities.NewWorkflow(context.TODO(), w, exportentities.Options{})
+	exp, err := exportentities.NewWorkflow(context.TODO(), w)
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
@@ -833,7 +833,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	}, []int64{w1.WorkflowData.Joins[0].JoinContext[0].ParentID, w1.WorkflowData.Joins[0].JoinContext[1].ParentID})
 	assert.Equal(t, pip5.ID, w.WorkflowData.Joins[0].Triggers[0].ChildNode.Context.PipelineID)
 
-	exp, err := exportentities.NewWorkflow(context.TODO(), *w1, exportentities.Options{})
+	exp, err := exportentities.NewWorkflow(context.TODO(), *w1)
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
@@ -1486,7 +1486,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 
 	assert.Len(t, w.WorkflowData.Node.Hooks, 1)
 
-	exp, err := exportentities.NewWorkflow(context.TODO(), *w1, exportentities.Options{})
+	exp, err := exportentities.NewWorkflow(context.TODO(), *w1)
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)

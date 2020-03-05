@@ -1034,7 +1034,7 @@ workflow:
 					}
 				}
 			})
-			exportedWorkflow, err := exportentities.NewWorkflow(context.TODO(), *w, exportentities.Options{})
+			exportedWorkflow, err := exportentities.NewWorkflow(context.TODO(), *w)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("NewWorkflow raised an error", err)
