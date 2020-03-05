@@ -54,7 +54,6 @@ require (
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
 	github.com/garyburd/redigo v1.6.0 // indirect
-	github.com/ghodss/yaml v1.0.0
 	github.com/gin-contrib/sse v0.0.0-20190301062529-5545eab6dad3 // indirect
 	github.com/gin-gonic/gin v1.3.0
 	github.com/go-errors/errors v1.0.1 // indirect

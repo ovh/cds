@@ -223,7 +223,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 
 		newWf, _, errP := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, exportWf, u, workflow.ImportOptions{Force: true, WorkflowName: workflowName})
 		if errP != nil {
-			return sdk.WrapError(errP, "Cannot parse and import previous workflow")
+			return sdk.WrapError(errP, "cannot parse and import previous workflow")
 		}
 
 		if err := tx.Commit(); err != nil {
