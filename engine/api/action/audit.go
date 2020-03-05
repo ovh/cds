@@ -7,8 +7,6 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -48,8 +46,8 @@ type addActionAudit struct{}
 
 func (a addActionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var aEvent sdk.EventActionAdd
-	if err := mapstructure.Decode(e.Payload, &aEvent); err != nil {
-		return sdk.WrapError(err, "unable to decode payload")
+	if err := json.Unmarshal(e.Payload, aEvent); err != nil {
+		return sdk.WrapError(err, "unable to unmarshal payload")
 	}
 
 	b, err := json.Marshal(aEvent.Action)
@@ -73,8 +71,8 @@ type updateActionAudit struct{}
 
 func (a updateActionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var aEvent sdk.EventActionUpdate
-	if err := mapstructure.Decode(e.Payload, &aEvent); err != nil {
-		return sdk.WrapError(err, "unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &aEvent); err != nil {
+		return sdk.WrapError(err, "unable to unmarshal payload")
 	}
 
 	before, err := json.Marshal(aEvent.OldAction)

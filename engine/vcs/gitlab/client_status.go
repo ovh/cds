@@ -2,10 +2,10 @@ package gitlab
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/sdk"
@@ -145,7 +145,7 @@ func processGitlabState(s gitlab.CommitStatus) string {
 func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
-	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
+	if err := json.Unmarshal(event.Payload, &eventNR); err != nil {
 		return data, sdk.WrapError(err, "cannot read payload")
 	}
 

@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
@@ -29,8 +27,8 @@ type addWorkflowAudit struct{}
 
 func (a addWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowAdd
-	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
 	buffer := bytes.NewBufferString("")
@@ -55,8 +53,8 @@ type updateWorkflowAudit struct{}
 
 func (u updateWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowUpdate
-	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
 	oldWorkflowBuffer := bytes.NewBufferString("")
@@ -87,8 +85,8 @@ type addWorkflowPermissionAudit struct{}
 
 func (a addWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionAdd
-	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
 	b, err := json.MarshalIndent(wEvent.Permission, "", "  ")
@@ -113,8 +111,8 @@ type updateWorkflowPermissionAudit struct{}
 
 func (u updateWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionUpdate
-	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
 	oldPerm, err := json.MarshalIndent(wEvent.OldPermission, "", "  ")
@@ -145,8 +143,8 @@ type deleteWorkflowPermissionAudit struct{}
 
 func (a deleteWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionDelete
-	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
 	b, err := json.MarshalIndent(wEvent.Permission, "", " ")

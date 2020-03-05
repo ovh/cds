@@ -1,7 +1,5 @@
 package sdk
 
-import "github.com/mitchellh/mapstructure"
-
 // EventProjectAdd represents the event when adding a project
 type EventProjectAdd struct {
 	Variables   []Variable        `json:"variables"`
@@ -88,85 +86,4 @@ type EventProjectIntegrationUpdate struct {
 // EventProjectIntegrationDelete represents the event when deleting a project integration
 type EventProjectIntegrationDelete struct {
 	Integration ProjectIntegration `json:"integration"`
-}
-
-// ToEventProjectVariableAdd get the payload as EventProjectVariableAdd
-func (e Event) ToEventProjectVariableAdd() (EventProjectVariableAdd, error) {
-	var varEvent EventProjectVariableAdd
-	if err := mapstructure.Decode(e.Payload, &varEvent); err != nil {
-		return varEvent, WrapError(err, "ToEventProjectVariableAdd> Unable to decode EventProjectVariableAdd")
-	}
-	return varEvent, nil
-}
-
-// ToEventProjectVariableUpdate get the payload as EventProjectVariableUpdate
-func (e Event) ToEventProjectVariableUpdate() (EventProjectVariableUpdate, error) {
-	var varEvent EventProjectVariableUpdate
-	if err := mapstructure.Decode(e.Payload, &varEvent); err != nil {
-		return varEvent, WrapError(err, "ToEventProjectVariableUpdate> Unable to decode EventProjectVariableUpdate")
-	}
-	return varEvent, nil
-}
-
-// ToEventProjectVariableDelete get the payload as EventProjectVariableDelete
-func (e Event) ToEventProjectVariableDelete() (EventProjectVariableDelete, error) {
-	var varEvent EventProjectVariableDelete
-	if err := mapstructure.Decode(e.Payload, &varEvent); err != nil {
-		return varEvent, WrapError(err, "ToEventProjectVariableDelete> Unable to decode EventProjectVariableDelete")
-	}
-	return varEvent, nil
-}
-
-// ToEventProjectPermissionAdd get the payload as EventProjectPermissionAdd
-func (e Event) ToEventProjectPermissionAdd() (EventProjectPermissionAdd, error) {
-	var permEvent EventProjectPermissionAdd
-	if err := mapstructure.Decode(e.Payload, &permEvent); err != nil {
-		return permEvent, WrapError(err, "ToEventProjectPermissionAdd> Unable to decode EventProjectPermissionAdd")
-	}
-	return permEvent, nil
-}
-
-// ToEventProjectPermissionDelete get the payload as EventProjectPermissionDelete
-func (e Event) ToEventProjectPermissionDelete() (EventProjectPermissionDelete, error) {
-	var permEvent EventProjectPermissionDelete
-	if err := mapstructure.Decode(e.Payload, &permEvent); err != nil {
-		return permEvent, WrapError(err, "ToEventProjectPermissionDelete> Unable to decode EventProjectPermissionDelete")
-	}
-	return permEvent, nil
-}
-
-// ToEventProjectKeyAdd get the payload as EventProjectKeyAdd
-func (e Event) ToEventProjectKeyAdd() (EventProjectKeyAdd, error) {
-	var keyEvent EventProjectKeyAdd
-	if err := mapstructure.Decode(e.Payload, &keyEvent); err != nil {
-		return keyEvent, WrapError(err, "ToEventProjectKeyAdd> Unable to decode EventProjectKeyAdd")
-	}
-	return keyEvent, nil
-}
-
-// ToEventProjectKeyDelete get the payload as EventProjectKeyDelete
-func (e Event) ToEventProjectKeyDelete() (EventProjectKeyDelete, error) {
-	var keyEvent EventProjectKeyDelete
-	if err := mapstructure.Decode(e.Payload, &keyEvent); err != nil {
-		return keyEvent, WrapError(err, "ToEventProjectKeyDelete> Unable to decode EventProjectKeyDelete")
-	}
-	return keyEvent, nil
-}
-
-// ToEventProjectVCSServerAdd get the payload as EventProjectVCSServerAdd
-func (e Event) ToEventProjectVCSServerAdd() (EventProjectVCSServerAdd, error) {
-	var vcsEvent EventProjectVCSServerAdd
-	if err := mapstructure.Decode(e.Payload, &vcsEvent); err != nil {
-		return vcsEvent, WrapError(err, "ToEventProjectVCSServerAdd> Unable to decode EventProjectVCSServerAdd")
-	}
-	return vcsEvent, nil
-}
-
-// ToEventProjectVCSServerDelete get the payload as EventProjectVCSServerDelete
-func (e Event) ToEventProjectVCSServerDelete() (EventProjectVCSServerDelete, error) {
-	var vcsEvent EventProjectVCSServerDelete
-	if err := mapstructure.Decode(e.Payload, &vcsEvent); err != nil {
-		return vcsEvent, WrapError(err, "ToEventProjectVCSServerDelete> Unable to decode EventProjectVCSServerDelete")
-	}
-	return vcsEvent, nil
 }

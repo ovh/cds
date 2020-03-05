@@ -2,11 +2,10 @@ package repositoriesmanager
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -60,8 +59,8 @@ func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store ca
 
 	var eventWNR sdk.EventRunWorkflowNode
 
-	if err := mapstructure.Decode(event.Payload, &eventWNR); err != nil {
-		return fmt.Errorf("repositoriesmanager>processEvent> Error during consumption: %v", err)
+	if err := json.Unmarshal(event.Payload, &eventWNR); err != nil {
+		return fmt.Errorf("cannot read payload: %v", err)
 	}
 	if eventWNR.RepositoryManagerName == "" {
 		return nil
