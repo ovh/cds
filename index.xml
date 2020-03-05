@@ -44,10 +44,10 @@ Groups A consumer includes a list of groups. Wildcard for a first level.</descri
     
     <item>
       <title>Docker Compose</title>
-      <link>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</link>
+      <link>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/docker-compose/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</guid>
+      <guid>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/docker-compose/</guid>
       <description>Run with Docker-Compose The docker-compose.yml contains:
  cds-db service with a PostgreSQL cds-cache service with a Redis elasticsearch service with an Elasticsearch dockerhost allows cds-hatchery-swarm service to communicate with the local docker daemon cds-migrate service to prepare DB tables cds-api service cds-ui service cds-elasticsearch service cds-hatchery-swarm service cds-vcs service cds-repositories service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.</description>
     </item>
@@ -117,6 +117,17 @@ name: my-workflow workflow: build: pipeline: build application: my-application d
     </item>
     
     <item>
+      <title>Docker Compose Full Tutorial</title>
+      <link>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/full-example/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/full-example/</guid>
+      <description>Run with Docker-Compose - Full Tutorial This page will help you to create a public instance of CDS:
+ installed on a Virtual Machine with a Public Cloud Instance on Openstack with a domain name and SSL configured installed with docker-compose  The whole tutorial of docker-compose is duplicated here. This article contains additional details on HAPRoxy, SSL configuration, IP Restriction.
+At the end of this tutorial, you will have a CDS running with all CDS Services and a Swarm Hatchery.</description>
+    </item>
+    
+    <item>
       <title>Import a CDS Workflow from a repository</title>
       <link>https://ovh.github.io/cds/docs/tutorials/import_workflow_with_webui/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -169,16 +180,6 @@ A metadata is composed by a key and a value.</description>
       <description>CDS API is the core component of CDS. To start CDS API, the only mandatory dependencies are a PostgreSQL database, a Redis server and a path to the directory containing other CDS binaries.
 There is are two ways to set up CDS:
  as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL database &amp;gt;= 9.5 and Redis &amp;gt;= 3.2. But for serious usage your may need:</description>
-    </item>
-    
-    <item>
-      <title>Run with Helm on Kubernetes</title>
-      <link>https://ovh.github.io/cds/hosting/ready-to-run/helm/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/hosting/ready-to-run/helm/</guid>
-      <description>Helm is the package manager for Kubernetes.
-You can find all informations to know how to run a CDS with Helm just here.</description>
     </item>
     
     <item>

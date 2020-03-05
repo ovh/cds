@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Docker Compose on CDS - Continuous Delivery Service</title>
+    <link>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</link>
+    <description>Recent content in Docker Compose on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Docker Compose</title>
+      <link>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/docker-compose/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/docker-compose/</guid>
+      <description>Run with Docker-Compose The docker-compose.yml contains:
+ cds-db service with a PostgreSQL cds-cache service with a Redis elasticsearch service with an Elasticsearch dockerhost allows cds-hatchery-swarm service to communicate with the local docker daemon cds-migrate service to prepare DB tables cds-api service cds-ui service cds-elasticsearch service cds-hatchery-swarm service cds-vcs service cds-repositories service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.</description>
+    </item>
+    
+    <item>
+      <title>Docker Compose Full Tutorial</title>
+      <link>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/full-example/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/full-example/</guid>
+      <description>Run with Docker-Compose - Full Tutorial This page will help you to create a public instance of CDS:
+ installed on a Virtual Machine with a Public Cloud Instance on Openstack with a domain name and SSL configured installed with docker-compose  The whole tutorial of docker-compose is duplicated here. This article contains additional details on HAPRoxy, SSL configuration, IP Restriction.
+At the end of this tutorial, you will have a CDS running with all CDS Services and a Swarm Hatchery.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -15,7 +15,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</loc>
+    <loc>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/docker-compose/</loc>
   </url>
   
   <url>
@@ -55,6 +55,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/full-example/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/docs/tutorials/import_workflow_with_webui/</loc>
   </url>
   
@@ -72,10 +76,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/hosting/requirements/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/hosting/ready-to-run/helm/</loc>
   </url>
   
   <url>
@@ -172,6 +172,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/docs/components/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</loc>
   </url>
   
   <url>

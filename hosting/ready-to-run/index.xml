@@ -11,26 +11,6 @@
     
     
     <item>
-      <title>Docker Compose</title>
-      <link>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</guid>
-      <description>Run with Docker-Compose The docker-compose.yml contains:
- cds-db service with a PostgreSQL cds-cache service with a Redis elasticsearch service with an Elasticsearch dockerhost allows cds-hatchery-swarm service to communicate with the local docker daemon cds-migrate service to prepare DB tables cds-api service cds-ui service cds-elasticsearch service cds-hatchery-swarm service cds-vcs service cds-repositories service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.</description>
-    </item>
-    
-    <item>
-      <title>Run with Helm on Kubernetes</title>
-      <link>https://ovh.github.io/cds/hosting/ready-to-run/helm/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/hosting/ready-to-run/helm/</guid>
-      <description>Helm is the package manager for Kubernetes.
-You can find all informations to know how to run a CDS with Helm just here.</description>
-    </item>
-    
-    <item>
       <title>Run with binaries</title>
       <link>https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

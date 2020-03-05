@@ -196,19 +196,35 @@
 	
 		
 			
-<a class="item" data-title="Docker Compose" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/"></a>
-
-		
-	
-		
-			
-<a class="item" data-title="Run with Helm on Kubernetes" href="https://ovh.github.io/cds/hosting/ready-to-run/helm/"></a>
-
-		
-	
-		
-			
 <a class="item" data-title="Run with binaries" href="https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Docker Compose">
+	<div class="container">
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Docker Compose" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/docker-compose/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Docker Compose Full Tutorial" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/full-example/"></a>
+
+		
+	
+
+	</div>
+</div>
 
 		
 	
@@ -227,7 +243,7 @@
     
     
     
-<h1>Docker Compose</h1>
+<h1>Run with binaries</h1>
 
 
 
@@ -235,10 +251,15 @@
 <ul>
 <li>
 <ul>
-<li><a href="#run-with-docker-compose">Run with Docker-Compose</a></li>
-<li><a href="#how-to-run">How to run</a></li>
-<li><a href="#setup-connection-with-a-vcs">Setup connection with a VCS</a></li>
-<li><a href="#then-next-with-actions-plugins">Then, next with Actions, Plugins</a></li>
+<li><a href="#prerequisite">Prerequisite</a></li>
+<li><a href="#get-the-latest-release-from-github">Get the latest release from GitHub</a></li>
+<li><a href="#generate-configuration">Generate configuration</a></li>
+<li><a href="#prepare-cache">Prepare Cache</a></li>
+<li><a href="#prepare-database">Prepare Database</a></li>
+<li><a href="#launch-cds-api">Launch CDS API</a></li>
+<li><a href="#launch-cds-ui-signup">Launch CDS UI &amp; Signup</a></li>
+<li><a href="#launch-cds-local-hatchery">Launch CDS Local Hatchery</a></li>
+<li><a href="#note-about-cds-engine">Note about CDS Engine</a></li>
 <li><a href="#go-further">Go further</a></li>
 </ul></li>
 </ul>
@@ -246,163 +267,190 @@
 
 
 
-<h2 id="run-with-docker-compose">Run with Docker-Compose</h2>
-
-<p>The <a href="https://github.com/ovh/cds/blob/master/docker-compose.yml">docker-compose.yml</a> contains:</p>
+<p>This article contains the steps to start CDS locally, with API, UI and a local Hatchery.</p>
 
 <ul>
-<li>cds-db service with a PostgreSQL</li>
-<li>cds-cache service with a Redis</li>
-<li>elasticsearch service with an Elasticsearch</li>
-<li>dockerhost allows cds-hatchery-swarm service to communicate with the local docker daemon</li>
-<li>cds-migrate service to prepare DB tables</li>
-<li>cds-api service</li>
-<li>cds-ui service</li>
-<li>cds-elasticsearch service</li>
-<li>cds-hatchery-swarm service</li>
-<li>cds-vcs service</li>
-<li>cds-repositories service</li>
+<li>Download CDS from GitHub</li>
+<li>Prepare Database</li>
+<li>Launch CDS API, CDS UI and a Local Hatchery</li>
 </ul>
 
-<p>Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.</p>
+<h2 id="prerequisite">Prerequisite</h2>
 
-<h2 id="how-to-run">How to run</h2>
+<ul>
+<li>a Redis</li>
+<li>a PostgreSQL 9.5 min</li>
+</ul>
 
-<pre><code class="language-bash">$ mkdir /tmp/cdstest &amp;&amp; cd /tmp/cdstest &amp;&amp; mkdir -p tools/smtpmock
-$ curl https://raw.githubusercontent.com/ovh/cds/master/docker-compose.yml -o docker-compose.yml
-$ export HOSTNAME=$(hostname)
+<h2 id="get-the-latest-release-from-github">Get the latest release from GitHub</h2>
 
-# Get the latest version
-$ docker pull ovhcom/cds-engine:latest
+<pre><code class="language-bash">mkdir $HOME/cds
+cd cds
 
-# Create PostgreSQL database, redis and elasticsearch
-$ docker-compose up --no-recreate -d cds-db cds-cache elasticsearch dockerhost
- 
-# check if database is up, the logs must contain &quot;LOG: database system is ready to accept connections&quot;
-$ docker-compose logs| grep 'database system is ready to accept connections'
-# you should have this line after few seconds: cds-db_1 | LOG:  database system is ready to accept connections
+LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d '&quot;' -f 4)
+OS=linux # could be linux, darwin, windows, freebsd, openbsd
+ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le
 
-$ docker-compose up --no-recreate cds-migrate
-# You should have this log: &quot;cdstest_cds-migrate_1 exited with code 0&quot;
+# GET Binaries from GitHub
+curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-engine-$OS-$ARCH -o cds-engine
+curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH -o cdsctl
+# if you don't want to use the your keychain, you have to use this:
+# curl -L https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH-nokeychain -o cdsctl
+chmod +x cds-engine cdsctl
 
-# prepare initial configuration.
-$ docker-compose up cds-prepare
-
-# disable the smtp server
-$ export CDS_EDIT_CONFIG=&quot;api.smtp.disable=true&quot;
-$ docker-compose up cds-edit-config
-
-# run API
-$ docker-compose up -d cds-api
-
-# the INIT_TOKEN variable will be used by cdsctl to create first admin user
-$ TOKEN_CMD=$(docker logs cdstest_cds-prepare_1|grep TOKEN) &amp;&amp; $TOKEN_CMD
-# if you have this error:  &quot;command too long: export INIT_TOKEN=....&quot;,
-# you can manually execute the command &quot;export INIT_TOKEN=....&quot;
-
-# create user
-$ curl 'http://localhost:8081/download/cdsctl/linux/amd64?variant=nokeychain' -o cdsctl
-# on OSX: $ curl 'http://localhost:8081/download/cdsctl/darwin/amd64?variant=nokeychain' -o cdsctl
-$ chmod +x cdsctl
-$ ./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
-# enter a strong password
-
-# verify the user
-$ VERIFY_CMD=$(docker-compose logs cds-api|grep 'cdsctl signup verify'|cut -d '$' -f2|xargs) &amp;&amp; ./$VERIFY_CMD
-# if you have this error:  &quot;such file or directory: ./cdsctl signup verify --api-url...&quot;, 
-# you can manually execute the command &quot;./cdsctl signup verify --api-url...&quot;
-
-# run cdsctl 
-$ ./cdsctl user me
-
-# should returns something like:
-#./cdsctl user me
-#created   2019-12-18 14:25:53.089718 +0000 UTC
-#fullname  admin
-#id        vvvvv-dddd-eeee-dddd-fffffffff
-#ring      ADMIN
-#username  admin
-
-# run others services
-$ docker-compose up -d cds-ui cds-hooks cds-elasticsearch cds-hatchery-swarm
-
-# create first worker model
-$ ./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/master/contrib/worker-models/go-official-1.13.yml
-
-# import Import a workflow template
-$ ./cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
-Workflow template shared.infra/demo-workflow-hello-world has been created
-Template successfully pushed !
-
-# create project, then create a workflow from template
-$ ./cdsctl project create DEMO FirstProject
-$ ./cdsctl template apply DEMO MyFirstWorkflow shared.infra/demo-workflow-hello-world --force --import-push --quiet
-
-# run CDS Workflow!
-$ ./cdsctl workflow run DEMO MyFirstWorkflow
-Workflow MyFirstWorkflow #1 has been launched
-http://localhost:8080/project/DEMO/workflow/MyFirstWorkflow/run/1
 </code></pre>
 
-<ul>
-<li>Login on WebUI</li>
-</ul>
+<h2 id="generate-configuration">Generate configuration</h2>
 
-<p>Open a browser on <a href="http://localhost:8080/account/signup">http://localhost:8080/account/signup</a>, then login with the user <code>admin</code>,</p>
+<p>Generate a <strong><a href="https://ovh.github.io/cds/hosting/configuration/">Configuration File</a></strong></p>
 
-<ul>
-<li>Check on UI</li>
-</ul>
+<pre><code class="language-bash">cd $HOME/cds
 
-<p>on <a href="http://localhost:8080/project/DEMO/workflow/MyFirstWorkflow/run/1">http://localhost:8080/project/DEMO/workflow/MyFirstWorkflow/run/1</a> you will have</p>
-
-<p><img src="https://ovh.github.io/cds/images/ready_to_run_docker_compose_ui.png" alt="Workflow Generated" /></p>
-
-<p>You see that the pipeline deploy in production was not launched automatically.
-There is a Run Condition on it <code>cds.manual = true</code>:</p>
-
-<p><img src="https://ovh.github.io/cds/images/ready_to_run_docker_compose_run_condition.png" alt="Run Condition" /></p>
-
-<p>The build pipeline contains two stages, with only one job in each stage</p>
-
-<p><img src="https://ovh.github.io/cds/images/ready_to_run_docker_compose_build_pipeline.png" alt="Build Pipeline" /></p>
-
-<h2 id="setup-connection-with-a-vcs">Setup connection with a VCS</h2>
-
-<pre><code class="language-bash"># READ THE section https://ovh.github.io/cds/docs/integrations/github/#create-a-cds-application-on-github to generate the clientId and clientSecret.
-# Short version: 
-# go on https://github.com/settings/applications/new
-# Application name: cds-test-docker-compose
-# Homepage URL: http://localhost:8080
-# Authorization callback: http://localhost:8080/cdsapi/repositories_manager/oauth2/callback
-# send click on register application.
-$ export CDS_EDIT_CONFIG=&quot;vcs.servers.github.github.clientId=xxxxx vcs.servers.github.github.clientSecret=xxxxx &quot; 
-$ docker-compose up cds-edit-config
-$ docker-compose up -d cds-vcs cds-repositories
+./cds-engine config new &gt; conf.toml
 </code></pre>
 
-<p>Notice that here, you have the VCS and Repositories services up and running.</p>
+<p>You will probably need to update some values in this file. If you need to automatize some update, you
+can use the <code>./cds-engine config edit</code> command.</p>
 
-<p><em>vcs</em>: The aim of this µService is to communicate with Repository Manager as GitHub, GitLab, Bitbucket…
-But, as your CDS is not probably public, GitHub won&rsquo;t be able to call your CDS to automatically run your workflow on each git push.</p>
+<p>Example:</p>
 
-<p><em>repositories</em>: this µService is used to enable the as-code feature.
-Users can store CDS Files on their repositories. This service clones user repositories on local filesystem.</p>
-
-<h2 id="then-next-with-actions-plugins">Then, next with Actions, Plugins</h2>
-
-<ul>
-<li>Import actions, example:</li>
-</ul>
-
-<pre><code class="language-bash">$ ./cdsctl action import https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.yml
+<pre><code class="language-bash">./engine config edit conf.toml api.directories.download=./binaries --output conf.toml
 </code></pre>
+
+<h2 id="prepare-cache">Prepare Cache</h2>
+
+<p>For this example, we consider that the redis is installed on <code>localhost</code>, port <code>6379</code> with no password.
+You can edit the section <code>api.cache.redis</code> in <code>conf.toml</code> file if needed.</p>
+
+<p>If it&rsquo;s just for test purpose, you can start a redis with docker, as:</p>
+
+<pre><code class="language-bash">docker run --name cds-cache -p 127.0.0.1:6379:6379 -d redis:5
+</code></pre>
+
+<h2 id="prepare-database">Prepare Database</h2>
+
+<p>For this example, we consider that the database is installed on <code>localhost</code>,
+port <code>5432</code>, with an existing empty database and user named <code>cds</code> and a password &lsquo;cds&rsquo;.</p>
+
+<p>You can edit the section <code>api.database</code> in <code>conf.toml</code> file if needed.</p>
+
+<p>If it&rsquo;s just for test purpose, you can start a postgreSQL database with docker, as:</p>
+
+<pre><code class="language-bash">docker run --name cds-db -e POSTGRES_PASSWORD=cds -e POSTGRES_USER=cds -e POSTGRES_DB=cds -p 127.0.0.1:5432:5432 -d postgres:9.5
+</code></pre>
+
+<pre><code class="language-bash">cd $HOME/cds
+./cds-engine download sql --config conf.toml
+./cds-engine database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql
+</code></pre>
+
+<h2 id="launch-cds-api">Launch CDS API</h2>
+
+<p>Generate a <strong><a href="https://ovh.github.io/cds/hosting/configuration/">Configuration File</a></strong></p>
+
+<pre><code class="language-bash">cd $HOME/cds
+
+./cds-engine download workers --config conf.toml
+./cds-engine start api --config conf.toml
+</code></pre>
+
+<p>Check that CDS is up and running:</p>
+
+<pre><code class="language-bash">curl http://localhost:8081/mon/version
+curl http://localhost:8081/mon/status
+</code></pre>
+
+<h2 id="launch-cds-ui-signup">Launch CDS UI &amp; Signup</h2>
+
+<pre><code class="language-bash">cd $HOME/cds
+./cds-engine download ui --config conf.toml
+./cds-engine start ui --config conf.toml
+</code></pre>
+
+<p>Then, open a browser on <a href="http://localhost:8080/">http://localhost:8080/</a> . You have to signup your first CDS user. It will be an administrator on CDS. In order to do that, just go on UI and click on signup or use <code>cdsctl signup</code>. If you don&rsquo;t have email service configured you just have to check your CDS API logs to have the confirmation link.</p>
+
+<p>Example of signup with cdsctl:</p>
+
+<pre><code class="language-bash">export INIT_TOKEN=`./cds-engine config init-token --config conf.toml`
+./cdsctl signup --api-url http://localhost:8081 --email admin@localhost.local --username admin --fullname admin
+</code></pre>
+
+<h2 id="launch-cds-local-hatchery">Launch CDS Local Hatchery</h2>
+
+<p>Start the local hatchery:</p>
+
+<pre><code class="language-bash">./cds-engine start hatchery:local --config $HOME/cds/conf.toml
+
+# notice that you can run api and hatchery with one common only:
+# ./cds-engine start api hatchery:local --config $HOME/cds/conf.toml
+</code></pre>
+
+<h2 id="note-about-cds-engine">Note about CDS Engine</h2>
+
+<p>It is possible to start all services as a single process <code>$ ./engine start api ui hooks hatchery:local --config config.toml</code>.</p>
+
+<pre><code class="language-bash">$ ./engine start api hooks hatchery:local --config config.toml
+Reading configuration file config.toml
+Starting service api
+...
+Starting service ui
+...
+Starting service hooks
+...
+Starting service vcs
+...
+Starting service hatchery:local
+...
+</code></pre>
+
+<p>For serious deployment, we strongly suggest to run each service as a dedicated process.</p>
+
+<pre><code class="language-bash">
+$ ./engine start api --config config.toml
+
+$ ./engine start ui --config config.toml
+
+$ ./engine start hooks --config config.toml
+
+$ ./engine start vcs --config config.toml
+
+$ ./engine start hatchery:local --config config.toml
+$ ./engine start hatchery:docker --config config.toml
+$ ./engine start hatchery:swarm --config config.toml
+$ ./engine start hatchery:marathon --config config.toml
+$ ./engine start hatchery:openstack --config config.toml
+$ ./engine start hatchery:vsphere --config config.toml
+
+</code></pre>
+
+<p>You can scale as you want each of this component, you probably will have to create a configuration for each instance of each service expect the API.</p>
+
+<pre><code class="language-bash">$ ./engine config new &gt; config.api.toml # All API instance can share the same configuration.
+
+$ cp config.api.toml config.hatchery.swarm-1.toml
+$ cp config.api.toml config.hatchery.swarm-2.toml
+$ cp config.api.toml config.hatchery.swarm-3.toml
+$ cp config.api.toml config.hooks.toml
+$ cp config.api.toml config.vcs.toml
+
+$ vi config.hatchery.local.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.local] sections
+$ vi config.hatchery.docker.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.docker] sections
+$ vi config.hatchery.swarm-1.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections
+$ vi config.hatchery.swarm-2.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections
+$ vi config.hatchery.swarm-3.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections
+$ vi config.hooks.toml # Edit the file and keep only the [logs] and [hooks] sections
+$ vi config.vcs.toml # Edit the file and keep only the [logs] and [vcs] sections
+
+...
+</code></pre>
+
+<p>If you decide to use consul or vault to store your configuration, you will have to use different key/secrets to store each piece of the configuration</p>
 
 <h2 id="go-further">Go further</h2>
 
 <ul>
-<li>How to use OpenStack infrastructure to spawn CDS Workers <a href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/">read more</a></li>
-<li>Link CDS to a repository manager, as <a href="https://ovh.github.io/cds/docs/integrations/github/">GitHub</a>, <a href="https://ovh.github.io/cds/docs/integrations/bitbucket/">Bitbucket Server</a> or <a href="https://ovh.github.io/cds/docs/integrations/gitlab/">GitLab</a></li>
+<li>How to use OpenStack infrastructure to spawn CDS container <a href="https://ovh.github.io/cds/docs/integrations/openstack/openstack_compute/">read more</a></li>
+<li>Link CDS to a Repository Manager as <a href="https://ovh.github.io/cds/docs/integrations/github/">GitHub</a>, <a href="https://ovh.github.io/cds/docs/integrations/bitbucket/">Bitbucket Server</a> or <a href="https://ovh.github.io/cds/docs/integrations/gitlab/">GitLab</a> setted up on your CDS Instance.</li>
 <li>Learn more about CDS variables <a href="https://ovh.github.io/cds/docs/concepts/variables/">read more</a></li>
 </ul>
 
