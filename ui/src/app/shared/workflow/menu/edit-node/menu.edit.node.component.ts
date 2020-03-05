@@ -14,7 +14,7 @@ import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -28,7 +28,6 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
 
     // Project that contains the workflow
     @Input() project: Project;
-
     @Input() node: WNode;
     _noderun: WorkflowNodeRun;
     @Input('noderun') set noderun(data: WorkflowNodeRun) {
@@ -57,9 +56,8 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
-        this.storeSubscription = this._store.select(WorkflowState.getCurrent())
-            .subscribe((s: WorkflowStateModel) => {
-            this.workflow = s.workflow;
+        this.storeSubscription = this._store.select(WorkflowState.getWorkflow()).subscribe((w: Workflow) => {
+            this.workflow = w;
             this.runnable = this.getCanBeRun();
             this._cd.markForCheck();
         });

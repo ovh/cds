@@ -1,4 +1,4 @@
-<div class="sidebarNodeRun" *ngIf="!loading && node">
+<div class="sidebarNodeRun" *ngIf="node">
     <div class="title">
         <h3 class="ui header">
             <div class="content">
@@ -12,7 +12,7 @@
         </h3>
     </div>
     <div class="control">
-        <div class="ui fluid buttons" *ngIf="currentWorkflowRun">
+        <div class="ui fluid buttons">
             <button class="ui positive icon button" [class.loading]="loading" [disabled]="loading || !canBeRun"
                 [title]="'btn_run' | translate" (click)="openRunNode()" *ngIf="currentWorkflowNodeRun?.status !== pipelineStatusEnum.BUILDING &&
                 currentWorkflowNodeRun?.status !== pipelineStatusEnum.WAITING">
@@ -34,10 +34,10 @@
             </ng-container>
         </div>
     </div>
-    <ng-container *ngIf="currentWorkflowNodeRun && currentWorkflowRun">
+    <ng-container *ngIf="currentWorkflowNodeRun">
         <div class="info">
             <div *ngIf="currentWorkflowNodeRun.tests" class="item pointing"
-                [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', currentWorkflowRun.num, 'node', currentWorkflowNodeRun.id]"
+                [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', runNumber, 'node', currentWorkflowNodeRun.id]"
                 [queryParams]="{name: node.name, tab: 'test'}">
                 <i class="bug icon"></i> {{currentWorkflowNodeRun.tests.total}}
                 <span
@@ -47,14 +47,14 @@
                     *ngIf="!currentWorkflowNodeRun || !currentWorkflowNodeRun.tests || currentWorkflowNodeRun.tests.total < 2">{{
                     'common_test' | translate }}</span>
                 <ng-container
-                    *ngIf="currentWorkflowRun && currentWorkflowNodeRun.tests && currentWorkflowNodeRun.tests.total > 0">
+                    *ngIf="currentWorkflowNodeRun.tests && currentWorkflowNodeRun.tests.total > 0">
                     (<i class="green check icon no-mrr"></i>{{currentWorkflowNodeRun.tests.ok}} <i
                         class="red remove icon status"></i>{{currentWorkflowNodeRun.tests.ko}}
                     <i class="grey ban icon status"></i>{{currentWorkflowNodeRun.tests.skipped}})
                 </ng-container>
             </div>
             <div *ngIf="currentWorkflowNodeRun.artifacts" class="item pointing"
-                [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', currentWorkflowRun.num, 'node', currentWorkflowNodeRun.id]"
+                [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', runNumber, 'node', currentWorkflowNodeRun.id]"
                 [queryParams]="{name: node.name, tab: 'artifact'}" [title]="'common_artifacts' | translate">
                 <i class="cloud upload icon"></i> {{currentWorkflowNodeRun.artifacts.length}}
                 <span
@@ -76,7 +76,7 @@
             <div class="stageContainer">
                 <div class="ui vertical fluid steps">
                     <ng-container *ngFor="let stage of currentWorkflowNodeRun.stages">
-                        <app-stage-step-summary [stage]="stage" [workflowRun]="currentWorkflowRun" [workflowNode]="node"
+                        <app-stage-step-summary [stage]="stage" [runNumber]="runNumber" [workflowNode]="node"
                                                 [workflowNodeRun]="currentWorkflowNodeRun">
                         </app-stage-step-summary>
                     </ng-container>
@@ -96,9 +96,9 @@
         </pre>
     </div>
 </div>
-<div class="ui text active loader" *ngIf="loading">{{ 'common_loading' | translate }}</div>
-<ng-container *ngIf="project && node && currentWorkflowRun">
+<div class="ui text active loader" *ngIf="!node">{{ 'common_loading' | translate }}</div>
+<ng-container *ngIf="project && node && workflowRun">
     <app-workflow-node-run-param [workflow]="workflow" [project]="project" [nodeRun]="currentWorkflowNodeRun"
-        [workflowRun]="currentWorkflowRun" [nodeToRun]="node" [num]="currentWorkflowRun.num" #workflowRunNode>
+        [workflowRun]="workflowRun" [nodeToRun]="node" [num]="runNumber" #workflowRunNode>
     </app-workflow-node-run-param>
 </ng-container>

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Stage } from 'app/model/stage.model';
 import { WNode } from 'app/model/workflow.model';
-import { WorkflowNodeJobRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 
 @Component({
     selector: 'app-job-step-summary',
@@ -14,7 +14,7 @@ import { WorkflowNodeJobRun, WorkflowRun } from 'app/model/workflow.run.model';
 export class JobStepSummaryComponent implements OnInit {
 
     @Input() job: WorkflowNodeJobRun;
-    @Input() workflowRun: WorkflowRun;
+    @Input() runNumber: number;
     @Input() workflowNode: WNode;
     @Input() stage: Stage;
 
@@ -40,7 +40,7 @@ export class JobStepSummaryComponent implements OnInit {
             'workflow',
             this._route.snapshot.params['workflowName'],
             'run',
-            this.workflowRun.num,
+            this.runNumber,
             'node',
             this.job.workflow_node_run_id
         ], {
@@ -48,7 +48,7 @@ export class JobStepSummaryComponent implements OnInit {
                 stageId: this.stage.id,
                 actionId: this.job.job.pipeline_action_id,
                 selectedNodeRunId: this.job.workflow_node_run_id,
-                selectedNodeRunNum: this.workflowRun.num,
+                selectedNodeRunNum: this.runNumber,
                 selectedNodeId: this._route.snapshot.queryParams['selectedNodeId'],
                 name: this.workflowNode.name
             }

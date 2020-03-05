@@ -13,7 +13,7 @@
   <ng-container *ngFor="let action_status of job.job?.step_status; let index = index;">
     <app-action-step-summary
       [action]="job.job.action.actions[index]"
-      [workflowRun]="workflowRun"
+      [runNumber]="runNumber"
       [workflowNode]="workflowNode"
       [stage]="stage"
       [job]="job"

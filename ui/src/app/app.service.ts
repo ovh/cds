@@ -340,9 +340,11 @@ export class AppService {
                 if (this.routeParams['number'] === event.workflow_run_num.toString()) {
                     this._store.dispatch(new GetWorkflowRun(
                         {
-                            projectKey: event.project_key, workflowName: event.workflow_name,
+                            projectKey: event.project_key,
+                            workflowName: event.workflow_name,
                             num: event.workflow_run_num
                         }));
+                    console.log(event);
                     if (this.routeParams['nodeId'] && this.routeParams['nodeId'].toString() === event.payload['ID']) {
                         this._store.dispatch(
                             new GetWorkflowNodeRun({

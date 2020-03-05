@@ -1,6 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Action, createSelector, State, StateContext } from '@ngxs/store';
-import { PipelineStatus } from 'app/model/pipeline.model';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -59,6 +58,17 @@ export function getInitialWorkflowState(): WorkflowStateModel {
     };
 }
 
+export class HookRunstateModel {
+    hook: WNodeHook;
+    workflowRun: WorkflowRun;
+}
+
+export class SidebarRunsStateModal {
+    filters: {};
+    listRuns: Array<WorkflowRun>;
+    loading: boolean;
+}
+
 @State<WorkflowStateModel>({
     name: 'workflow',
     defaults: getInitialWorkflowState()
@@ -69,6 +79,62 @@ export class WorkflowState {
         return createSelector(
             [WorkflowState],
             (state: WorkflowStateModel): WorkflowStateModel => state
+        );
+    }
+
+    static getWorkflow() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): Workflow => state.workflow
+        );
+    }
+
+    static getSelectedHook() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): WNodeHook => state.hook
+        );
+    }
+
+    static getSelectedWorkflowRun() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): WorkflowRun => state.workflowRun
+        );
+    }
+
+    static getListRuns() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): Array<WorkflowRun> => state.listRuns
+        );
+    }
+
+    static getLoadingRuns() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): boolean => state.loadingWorkflowRuns
+        );
+    }
+
+    static getRunSidebarFilters() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): {} => state.filters
+        );
+    }
+
+    static getSelectedNode() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): WNode => state.node
+        );
+    }
+
+    static getSelectedNodeRun() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): WorkflowNodeRun => state.workflowNodeRun
         );
     }
 
@@ -91,18 +157,19 @@ export class WorkflowState {
     @Action(actionWorkflow.CloseEditModal)
     closeEditModal(ctx: StateContext<WorkflowStateModel>) {
         const state = ctx.getState();
-        let node = state.node;
-        let hook = state.hook;
         if (!state.workflowNodeRun) {
-            node = null;
-            hook = null;
+            ctx.setState({
+                ...state,
+                node: null,
+                hook: null,
+                editModal: false
+            });
+            return
         }
         ctx.setState({
             ...state,
-            node: node,
-            hook: hook,
             editModal: false
-        })
+        });
     }
 
     @Action(actionWorkflow.CreateWorkflow)
@@ -979,23 +1046,14 @@ export class WorkflowState {
                 }),
                 tap((wr: WorkflowRun) => {
                     const stateRun = ctx.getState();
-                    let wnr = stateRun.workflowNodeRun;
-                    if (wnr && !PipelineStatus.isDone(wnr.status) && wr.nodes && wr.nodes[wnr.workflow_node_id]) {
-                        let wnrUpdated = wr.nodes[wnr.workflow_node_id].find(wnnr => wnnr.id === wnr.id);
-                        if (wnrUpdated) {
-                            wnr = wnrUpdated;
-                        }
-                    }
                     ctx.setState({
                         ...stateRun,
                         projectKey: action.payload.projectKey,
-                        workflowRun: wr,
-                        workflowNodeRun: wnr
+                        workflowRun: wr
                     });
                     ctx.dispatch(new UpdateWorkflowRunList({ workflowRun: wr }));
                     return wr;
                 }));
-
     }
 
     @Action(actionWorkflow.DeleteWorkflowRun)
@@ -1095,11 +1153,17 @@ export class WorkflowState {
         let index = runs.findIndex(wr => wr.id === action.payload.workflowRun.id);
         if (index === -1) {
             runs.push(action.payload.workflowRun);
+            ctx.setState({
+                ...state,
+                listRuns: runs.sort( (a, b) => b.num - a.num)
+            });
+            return
 
-        } else {
-            runs[index] = action.payload.workflowRun;
         }
-
+        if (runs[index].status === action.payload.workflowRun.status && runs[index].tags.length === action.payload.workflowRun.tags.length) {
+            return;
+        }
+        runs[index] = action.payload.workflowRun;
         ctx.setState({
             ...state,
             listRuns: runs

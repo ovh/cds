@@ -5,7 +5,7 @@ import { StepStatus } from 'app/model/job.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Stage } from 'app/model/stage.model';
 import { WNode } from 'app/model/workflow.model';
-import { WorkflowNodeJobRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 
 @Component({
     selector: 'app-action-step-summary',
@@ -17,7 +17,7 @@ export class ActionStepSummaryComponent implements OnInit {
 
     @Input() action: Action;
     @Input() actionStatus: StepStatus;
-    @Input() workflowRun: WorkflowRun;
+    @Input() runNumber: number;
     @Input() workflowNode: WNode;
     @Input() stage: Stage;
     @Input() job: WorkflowNodeJobRun;
@@ -39,7 +39,7 @@ export class ActionStepSummaryComponent implements OnInit {
           'workflow',
           this._route.snapshot.params['workflowName'],
           'run',
-          this.workflowRun.num,
+          this.runNumber,
           'node',
           this.job.workflow_node_run_id
       ], {queryParams: {

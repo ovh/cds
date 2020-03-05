@@ -320,20 +320,16 @@ export class Workflow {
                     for (let j = 0; j < n.triggers.length; j++) {
                         let t = n.triggers[j];
                         if (t.child_node.id === currentNodeID) {
-                            if (workflowRun.version < 2) {
-                                switch (n.type) {
-                                    case WNodeType.JOIN:
-                                        ancestors.push(...n.parents.map(p => p.parent_id));
-                                        break;
-                                    case WNodeType.FORK:
-                                        ancestors.push(...Workflow.getParentNodeIds(workflowRun, n.id));
-                                        break;
-                                    default:
-                                        ancestors.push(n.id);
+                            switch (n.type) {
+                                case WNodeType.JOIN:
+                                    ancestors.push(...n.parents.map(p => p.parent_id));
+                                    break;
+                                case WNodeType.FORK:
+                                    ancestors.push(...Workflow.getParentNodeIds(workflowRun, n.id));
+                                    break;
+                                default:
+                                    ancestors.push(n.id);
                                 }
-                            } else {
-                                ancestors.push(n.id);
-                            }
                             break loop;
                         }
                     }

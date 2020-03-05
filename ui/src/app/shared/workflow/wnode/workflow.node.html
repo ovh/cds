@@ -11,7 +11,7 @@
         [node]="node" [noderun]="currentNodeRun" [workflowrun]="workflowRun"></app-workflow-wnode-outgoing-hook>
 </div>
 <ng-template let-popup #popupNode>
-    <app-workflow-menu-wnode-edit (event)="receivedEvent($event)" [project]="project" [workflow]="workflow"
+    <app-workflow-menu-wnode-edit (event)="receivedEvent($event)" [project]="project"
         [node]="node" [popup]="popup" [workflowrun]="workflowRun" [noderun]="currentNodeRun" [readonly]="readonly"
         #menu></app-workflow-menu-wnode-edit>
 </ng-template>

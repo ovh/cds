@@ -7,8 +7,8 @@ import {
     OnDestroy,
     ViewChild
 } from '@angular/core';
-import { Router } from '@angular/router';
-import { Store } from '@ngxs/store';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Select, Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
@@ -17,10 +17,9 @@ import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.servic
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
 import { CleanWorkflowRun, GetWorkflowRuns } from 'app/store/workflow.action';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import cloneDeep from 'lodash-es/cloneDeep';
-import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { WorkflowState } from 'app/store/workflow.state';
+import { Observable, Subscription } from 'rxjs';
+import { finalize, first } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-sidebar-run-list',
@@ -34,6 +33,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
 
     @Input() project: Project;
 
+    workflowRuns = new Array<WorkflowRun>();
     _workflow: Workflow;
     @Input('workflow')
     set workflow(data: Workflow) {
@@ -47,8 +47,13 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     }
     get workflow() { return this._workflow; }
 
-    storeSub: Subscription;
-    workflowRuns: Array<WorkflowRun>;
+
+    @Select(WorkflowState.getListRuns()) listRuns$: Observable<Array<WorkflowRun>>;
+    listRunSubs: Subscription;
+    @Select(WorkflowState.getLoadingRuns()) loadings$: Observable<boolean>;
+    loadingSubs: Subscription;
+    @Select(WorkflowState.getRunSidebarFilters()) filters$: Observable<{}>;
+    filtersSubs: Subscription;
 
     // search part
     selectedTags: Array<string>;
@@ -56,39 +61,54 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     tagToDisplay: Array<string>;
     pipelineStatusEnum = PipelineStatus;
     ready = false;
-    tagsSubs: Subscription;
     filteredTags: { [key: number]: WorkflowRunTags[] } = {};
+    durationMap: { [key: number]: string} = {};
 
     durationIntervalID: number;
 
-    selectedWorkfowRun: WorkflowRun;
+    currentWorkflowRunNumber: number;
     offset = 0;
 
     constructor(
         private _workflowRunService: WorkflowRunService,
         private _duration: DurationService,
         private _router: Router,
+        private _routerActivated: ActivatedRoute,
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
+        this._routerActivated.params.subscribe(p => {
+            if (p['number']) {
+                this.currentWorkflowRunNumber = p['number'];
+            }
+        });
 
-        this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
-            this.selectedWorkfowRun = s.workflowRun;
-            if (s.listRuns) {
-                this.workflowRuns = cloneDeep(s.listRuns);
-                this.workflowRuns = this.workflowRuns.sort((a, b) => {
-                    return b.num - a.num;
-                });
+        this.listRunSubs = this.listRuns$.subscribe(runs => {
+            if (runs.length === 0 && this.workflowRuns.length === 0) {
+                return;
+            }
+            console.log('REFRESH RUNS', runs, this.workflowRuns);
+            this.workflowRuns = runs;
+            if (!this.durationIntervalID) {
                 this.refreshRun();
-                this.selectedTags = new Array<string>();
-                for (const key in s.filters) {
-                    if (s.filters.hasOwnProperty(key)) {
-                        this.selectedTags.push(key + ':' + s.filters[key]);
-                    }
+            }
+            this._cd.markForCheck();
+        });
+        this.filtersSubs = this.filters$.subscribe(fs => {
+            this.selectedTags = new Array<string>();
+            for (const key in fs) {
+                if (fs.hasOwnProperty(key)) {
+                    this.selectedTags.push(key + ':' + fs[key]);
                 }
             }
-            this.ready = !s.loadingWorkflowRuns;
             this._cd.markForCheck();
+            return;
+        });
+        this.loadingSubs = this.loadings$.subscribe( l => {
+           if (l !== !this.ready) {
+               this.ready = !l;
+               this._cd.markForCheck();
+           }
         });
     }
 
@@ -99,7 +119,6 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                 .pipe(finalize(() => this._cd.markForCheck()))
                 .subscribe((runs) => {
                     this.workflowRuns = this.workflowRuns.concat(runs);
-                    this.refreshRun();
                 });
         }
     }
@@ -109,8 +128,8 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         if (this.workflow.metadata && this.workflow.metadata['default_tags']) {
             this.tagToDisplay = this.workflow.metadata['default_tags'].split(',');
         }
-        this.tagsSubs = this._workflowRunService.getTags(this.project.key, this.workflow.name)
-            .pipe(finalize(() => this._cd.markForCheck()))
+        this._workflowRunService.getTags(this.project.key, this.workflow.name)
+            .pipe(first(), finalize(() => this._cd.markForCheck()))
             .subscribe(tags => {
                 this.tagsSelectable = new Array<string>();
                 Object.keys(tags).forEach(k => {
@@ -126,7 +145,9 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                     }
                 });
             });
-        this.refreshRun();
+        if (!this.durationIntervalID) {
+            this.refreshRun();
+        }
     }
 
     getFilteredTags(tags: WorkflowRunTags[]): WorkflowRunTags[] {
@@ -169,12 +190,14 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     }
 
     refreshRun(): void {
+        this.refreshDuration();
+        if (this.durationIntervalID) {
+            this.deleteInterval();
+        }
         if (this.workflowRuns) {
-            if (this.durationIntervalID) {
-                this.deleteInterval();
-            }
             this.refreshDuration();
             this.durationIntervalID = window.setInterval(() => {
+                console.log('I m in');
                 this.refreshDuration();
             }, 5000);
         }
@@ -191,17 +214,18 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                     stillWorking = true;
                 }
                 this.filteredTags[r.id] = this.getFilteredTags(r.tags);
-                r.duration = this.getDuration(r.status, r.start, r.last_execution);
+                this.durationMap[r.id] = this.getDuration(r.status, r.start, r.last_execution);
             });
             if (!stillWorking) {
                 this.deleteInterval();
             }
+            this._cd.markForCheck();
         }
 
     }
 
     changeRun(num: number) {
-        if (this.selectedWorkfowRun && this.selectedWorkfowRun.num === num) {
+        if (this.currentWorkflowRunNumber === num) {
             return
         }
         this._store.dispatch(new CleanWorkflowRun({}));
