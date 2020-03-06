@@ -13,8 +13,18 @@ import (
 )
 
 type dbEnvironmentVariableAudit sdk.EnvironmentVariableAudit
-type dbEnvironmentKey sdk.EnvironmentKey
 
+type dbEnvironmentKey struct {
+	gorpmapping.SignedEntity
+	sdk.EnvironmentKey
+}
+
+func (e dbEnvironmentKey) Canonical() gorpmapping.CanonicalForms {
+	var _ = []interface{}{e.EnvironmentID, e.ID, e.Name}
+	return gorpmapping.CanonicalForms{
+		"{{print .EnvironmentID}}{{print .ID}}{{.Name}}",
+	}
+}
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbEnvironmentVariableAudit{}, "environment_variable_audit", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbEnvironmentKey{}, "environment_key", true, "id"))

@@ -129,10 +129,8 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 	}
 
 	envk := &sdk.EnvironmentKey{
-		Key: sdk.Key{
-			Name: "my-env-key",
-			Type: "pgp",
-		},
+		Name:          "my-env-key",
+		Type:          "pgp",
 		EnvironmentID: env.ID,
 	}
 
