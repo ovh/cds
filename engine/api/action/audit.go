@@ -46,7 +46,7 @@ type addActionAudit struct{}
 
 func (a addActionAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var aEvent sdk.EventActionAdd
-	if err := json.Unmarshal(e.Payload, aEvent); err != nil {
+	if err := json.Unmarshal(e.Payload, &aEvent); err != nil {
 		return sdk.WrapError(err, "unable to unmarshal payload")
 	}
 
