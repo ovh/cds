@@ -1,7 +1,7 @@
 <div class="status-icon" [ngSwitch]="status">
     <div class="wrapper">
         <ng-container *ngSwitchCase="pipelineStatusEnum.BUILDING">
-            <img id="gifloader" height="24" width="24" src="/assets/images/loader.gif">
+            <img id="gifloader" height="24" width="24" src="./assets/images/loader.gif">
         </ng-container>
         <i class="check green icon" *ngSwitchCase="pipelineStatusEnum.SUCCESS"></i>
         <ng-container *ngSwitchCase="pipelineStatusEnum.FAIL">

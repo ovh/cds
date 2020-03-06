@@ -160,7 +160,7 @@ func (d *AuthDriver) openLDAP(ctx context.Context, conf Config) error {
 					return err
 				}
 				if err := d.conn.Bind(d.conf.ManagerDN, d.conf.ManagerPassword); err != nil {
-					return err
+					return sdk.WithStack(err)
 				}
 			} else {
 				return err
@@ -178,13 +178,13 @@ func (d *AuthDriver) bind(ctx context.Context, term, password string) error {
 
 	if err := d.conn.Bind(bindRequest, password); err != nil {
 		if !shoudRetry(ctx, err) {
-			return err
+			return sdk.WithStack(err)
 		}
 		if err := d.openLDAP(ctx, d.conf); err != nil {
 			return err
 		}
 		if err := d.conn.Bind(bindRequest, password); err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 	}
 	return nil
@@ -219,7 +219,7 @@ func (d *AuthDriver) search(ctx context.Context, term string, attributes ...stri
 		}
 		sr, err = d.conn.Search(searchRequest)
 		if err != nil {
-			return nil, err
+			return nil, sdk.WithStack(err)
 		}
 	}
 

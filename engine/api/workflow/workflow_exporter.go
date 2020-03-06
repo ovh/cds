@@ -98,9 +98,11 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.
 		}
 		env.Variable = vars
 
-		if err := environment.LoadAllDecryptedKeys(ctx, db, &env); err != nil {
+		keys, err := environment.LoadAllKeysWithPrivateContent(db, env.ID)
+		if err != nil {
 			return wp, sdk.WrapError(err, "cannot load environment keys %s", env.Name)
 		}
+		env.Keys = keys
 		wf.Environments[i] = env
 	}
 
