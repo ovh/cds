@@ -165,7 +165,7 @@ func LoadNodeRunByNodeJobID(db gorp.SqlExecutor, nodeJobRunID int64, loadOpts Lo
 }
 
 //LoadAndLockNodeRunByID load and lock a specific node run on a workflow
-func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeRun, error) {
+func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	var end func()
 	_, end = observability.Span(ctx, "workflow.LoadAndLockNodeRunByID")
 	defer end()
@@ -181,7 +181,7 @@ func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64) 
 		}
 		return nil, sdk.WrapError(err, "unable to load workflow_node_run node=%d", id)
 	}
-	return fromDBNodeRun(rr, LoadRunOptions{})
+	return fromDBNodeRun(rr, opts)
 }
 
 //LoadNodeRunByID load a specific node run on a workflow

@@ -492,12 +492,12 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 
 	for i := range report.WorkflowRuns() {
 		run := &report.WorkflowRuns()[i]
-		report, err := updateParentWorkflowRun(ctx, newDBFunc, store, run)
+		reportParent, err := updateParentWorkflowRun(ctx, newDBFunc, store, run)
 		if err != nil {
 			return nil, sdk.WithStack(err)
 		}
 
-		go WorkflowSendEvent(context.Background(), tx, store, proj.Key, report)
+		go WorkflowSendEvent(context.Background(), tx, store, proj.Key, reportParent)
 
 		if sdk.StatusIsTerminated(run.Status) {
 			//Start a goroutine to update commit statuses in repositories manager
@@ -652,9 +652,19 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 			return sdk.WrapError(err, "error while update job run. JobID on handler: %d", id)
 		}
 
+		isTerminated := sdk.StatusIsTerminated(step.Status)
+		loadRunOptions := workflow.LoadRunOptions{
+			WithArtifacts:           isTerminated,
+			WithCoverage:            isTerminated,
+			WithTests:               isTerminated,
+			WithVulnerabilities:     isTerminated,
+			DisableDetailledNodeRun: !isTerminated,
+			WithStaticFiles:         isTerminated,
+		}
+
 		var nodeRun sdk.WorkflowNodeRun
 		if !found {
-			nodeRun, err := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeJobRun.WorkflowNodeRunID)
+			nodeRun, err := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeJobRun.WorkflowNodeRunID, loadRunOptions)
 			if err != nil {
 				return sdk.WrapError(err, "cannot load node run: %d", nodeJobRun.WorkflowNodeRunID)
 			}
@@ -675,9 +685,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 		}
 
 		if nodeRun.ID == 0 {
-			nodeRunP, err := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{
-				DisableDetailledNodeRun: true,
-			})
+			nodeRunP, err := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, loadRunOptions)
 			if err != nil {
 				log.Warning(ctx, "postWorkflowJobStepStatusHandler> Unable to load node run for event: %v", err)
 				return nil
@@ -898,7 +906,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		nr, err := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeRunJob.WorkflowNodeRunID)
+		nr, err := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeRunJob.WorkflowNodeRunID, workflow.LoadRunOptions{})
 		if err != nil {
 			return sdk.WrapError(err, "node run not found: %d", nodeRunJob.WorkflowNodeRunID)
 		}
