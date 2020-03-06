@@ -74,11 +74,11 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.
 	//Reload app to retrieve secrets
 	for i := range wf.Applications {
 		app := wf.Applications[i]
-		vars, err := application.GetAllVariable(db, proj.Key, app.Name, application.WithClearPassword())
+		vars, err := application.LoadAllVariablesWithDecrytion(db, app.ID)
 		if err != nil {
 			return wp, sdk.WrapError(err, "cannot load application variables %s", app.Name)
 		}
-		app.Variable = vars
+		app.Variables = vars
 
 		keys, err := application.LoadAllKeysWithPrivateContent(db, app.ID)
 		if err != nil {

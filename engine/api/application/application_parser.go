@@ -72,7 +72,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store,
 		}
 
 		vv := sdk.Variable{Name: p, Type: v.Type, Value: v.Value}
-		app.Variable = append(app.Variable, vv)
+		app.Variables = append(app.Variables, vv)
 	}
 
 	//Compute keys

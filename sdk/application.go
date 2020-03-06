@@ -20,7 +20,7 @@ type Application struct {
 	Icon                 string                       `json:"icon"  db:"icon"`
 	ProjectID            int64                        `json:"-" db:"project_id"`
 	ProjectKey           string                       `json:"project_key" db:"-" cli:"project_key"`
-	Variable             []Variable                   `json:"variables,omitempty" db:"-"`
+	Variables            []Variable                   `json:"variables,omitempty" db:"-"`
 	Notifications        []UserNotification           `json:"notifications,omitempty" db:"-"`
 	LastModified         time.Time                    `json:"last_modified" db:"last_modified" mapstructure:"-"`
 	VCSServer            string                       `json:"vcs_server,omitempty" db:"vcs_server"`
@@ -93,7 +93,7 @@ type ApplicationVariableAudit struct {
 	VariableID     int64     `json:"variable_id" yaml:"-" db:"variable_id"`
 	Type           string    `json:"type" yaml:"-" db:"type"`
 	VariableBefore *Variable `json:"variable_before,omitempty" yaml:"-" db:"-"`
-	VariableAfter  *Variable `json:"variable_after,omitempty" yaml:"-" db:"-"`
+	VariableAfter  Variable  `json:"variable_after,omitempty" yaml:"-" db:"-"`
 	Versionned     time.Time `json:"versionned" yaml:"-" db:"versionned"`
 	Author         string    `json:"author" yaml:"-" db:"author"`
 }

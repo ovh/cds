@@ -54,7 +54,7 @@ func (api *API) getVariablesHandler() service.Handler {
 				return sdk.WrapError(err, "Cannot Load application")
 			}
 
-			for _, v := range app.Variable {
+			for _, v := range app.Variables {
 				appVar = append(appVar, fmt.Sprintf("{{.cds.app.%s}}", v.Name))
 			}
 
