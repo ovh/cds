@@ -1,11 +1,9 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Action } from 'app/model/action.model';
-import { StepStatus } from 'app/model/job.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
-import { Stage } from 'app/model/stage.model';
-import { WNode } from 'app/model/workflow.model';
-import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
+import { Store } from '@ngxs/store';
+import { WorkflowState } from 'app/store/workflow.state';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'app-action-step-summary',
@@ -15,21 +13,38 @@ import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 })
 export class ActionStepSummaryComponent implements OnInit {
 
-    @Input() action: Action;
-    @Input() actionStatus: StepStatus;
-    @Input() runNumber: number;
-    @Input() workflowNode: WNode;
-    @Input() stage: Stage;
-    @Input() job: WorkflowNodeJobRun;
+    // Step identifiers
+    @Input() stageId: number;
+    @Input() jobId: number;
+    @Input() stepOrder: number;
 
+    // Static step information
+    @Input() stepName: string;
+    @Input() stepOptionnal: boolean;
+
+    // Data for router
+    @Input() pipelineActionId: number;
+    @Input() workflowNodeRunId: number;
+    @Input() nodeName: string;
+
+    // Dynamic values
+    stepStatus: string;
     open = false;
 
-    constructor(private _router: Router, private _route: ActivatedRoute) {
-
-    }
+    constructor(private _router: Router, private _route: ActivatedRoute, private _store: Store, private _cd: ChangeDetectorRef) {}
 
     ngOnInit() {
-      this.open = this.actionStatus.status === PipelineStatus.FAIL;
+        this._store.select(WorkflowState.nodeRunJobStep).pipe(map(filterFn => filterFn(this.stageId, this.jobId, this.stepOrder))).subscribe( ss => {
+            if (!ss && !this.stepStatus) {
+                return;
+            }
+            if (ss && this.stepStatus && ss.status === this.stepStatus) {
+                return;
+            }
+            console.log('REFESH SIDEBAR STEP ' + this.jobId + '/' + this.stepOrder + ' ' + ss.status);
+            this.open = this.stepStatus === PipelineStatus.FAIL;
+            this._cd.detectChanges();
+        });
     }
 
     goToActionLogs() {
@@ -39,14 +54,14 @@ export class ActionStepSummaryComponent implements OnInit {
           'workflow',
           this._route.snapshot.params['workflowName'],
           'run',
-          this.runNumber,
+          this._route.snapshot.params['number'],
           'node',
-          this.job.workflow_node_run_id
+          this.workflowNodeRunId
       ], {queryParams: {
-          stageId: this.stage.id,
-          actionId: this.job.job.pipeline_action_id,
-          stepOrder: this.actionStatus.step_order,
-          name: this.workflowNode.name,
+          stageId: this.stageId,
+          actionId: this.pipelineActionId,
+          stepOrder: this.stepOrder,
+          name: this.nodeName,
       }});
     }
 }

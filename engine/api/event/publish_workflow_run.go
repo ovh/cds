@@ -79,8 +79,8 @@ func PublishWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		StagesSummary:  make([]sdk.StageSummary, len(nr.Stages)),
 		HookUUID:       nr.UUID,
 		Commits:        nr.Commits,
-		Artifacts:      nr.Artifacts,
-		Tests:          nr.Tests,
+		//Artifacts:      nr.Artifacts,
+		Tests: nr.Tests,
 	}
 
 	if nr.Callback != nil {

@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Action, createSelector, State, StateContext } from '@ngxs/store';
+import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
 import { WNode, WNodeHook, WNodeTrigger, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
@@ -136,6 +136,26 @@ export class WorkflowState {
             [WorkflowState],
             (state: WorkflowStateModel): WorkflowNodeRun => state.workflowNodeRun
         );
+    }
+
+    @Selector()
+    static nodeRunStage(state: WorkflowStateModel) {
+        return (id: number) => {
+            return state.workflowNodeRun.stages.find(s => s.id === id);
+        };
+    }
+
+    @Selector()
+    static nodeRunJob(state: WorkflowStateModel) {
+        return (idStage: number, idJob: number) => {
+            return state.workflowNodeRun.stages.find(s => s.id === idStage).run_jobs.find(rj => rj.id === idJob);
+        };
+    }
+
+    static nodeRunJobStep(state: WorkflowStateModel) {
+        return (idStage: number, idJob: number, stepNum: number) => {
+            return state.workflowNodeRun.stages.find(s => s.id === idStage).run_jobs.find(rj => rj.id === idJob).job.step_status[stepNum];
+        };
     }
 
     constructor(private _http: HttpClient, private _navbarService: NavbarService,
@@ -1123,6 +1143,7 @@ export class WorkflowState {
             }), tap((wnr: WorkflowNodeRun) => {
                 const stateNR = ctx.getState();
                 let node = Workflow.getNodeByID(wnr.workflow_node_id, stateNR.workflowRun.workflow);
+                console.log('Update node run state', wnr);
                 ctx.setState({
                     ...stateNR,
                     projectKey: action.payload.projectKey,
