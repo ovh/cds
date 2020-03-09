@@ -118,16 +118,15 @@ func refactorProjectVariables(ctx context.Context, db *gorp.DbMap, id int64) err
 		}
 		v.Value = s
 	} else {
-		s, err = stringIfValid("cipher_value", cipherValue)
-		if err != nil {
-			return err
+		s, _ = stringIfValid("cipher_value", cipherValue)
+		// ignore the error, to keep NULL value
+		if s != "" {
+			btes, err := secret.Decrypt([]byte(s))
+			if err != nil {
+				return err
+			}
+			v.Value = string(btes)
 		}
-
-		btes, err := secret.Decrypt([]byte(s))
-		if err != nil {
-			return err
-		}
-		v.Value = string(btes)
 	}
 
 	if err := project.UpdateVariable(tx, pID, &v, nil, nil); err != nil {

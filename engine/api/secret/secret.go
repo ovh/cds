@@ -117,12 +117,12 @@ func Decrypt(data []byte) ([]byte, error) {
 
 	if key == nil {
 		log.Error(context.TODO(), "Missing key, init failed?")
-		return nil, sdk.ErrSecretKeyFetchFailed
+		return nil, sdk.WithStack(sdk.ErrSecretKeyFetchFailed)
 	}
 
 	if len(data) < (nonceSize + macSize) {
 		log.Error(context.TODO(), "cannot decrypt secret, got invalid data")
-		return nil, sdk.ErrInvalidSecretFormat
+		return nil, sdk.WithStack(sdk.ErrInvalidSecretFormat)
 	}
 
 	// Split actual data, hmac and nonce
@@ -135,12 +135,12 @@ func Decrypt(data []byte) ([]byte, error) {
 	h.Write(data)
 	mac := h.Sum(nil)
 	if !hmac.Equal(mac, tag) {
-		return nil, fmt.Errorf("invalid hmac")
+		return nil, sdk.WithStack(fmt.Errorf("invalid hmac"))
 	}
 	// uncipher data
 	c, err := aes.NewCipher(key[:ckeySize])
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(fmt.Errorf("unable to create cypher block: %v", err))
 	}
 	ctr := cipher.NewCTR(c, data[:nonceSize])
 	ctr.XORKeyStream(out, data[nonceSize:])
