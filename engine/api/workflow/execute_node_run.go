@@ -347,9 +347,10 @@ func executeNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 				log.Error(ctx, "workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errWRun)
 				return report, nil
 			}
-			AddWorkflowRunInfo(workflowRun, false, sdk.SpawnMsg{
+			AddWorkflowRunInfo(workflowRun, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowNodeMutexRelease.ID,
 				Args: []interface{}{waitingRun.WorkflowNodeName},
+				Type: sdk.MsgWorkflowNodeMutexRelease.Type,
 			})
 
 			if err := UpdateWorkflowRun(ctx, db, workflowRun); err != nil {

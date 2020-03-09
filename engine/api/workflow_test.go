@@ -1171,6 +1171,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 
 	test.NoError(t, workflow.IsValid(context.Background(), api.Cache, db, wf, *proj, workflow.LoadOptions{}))
 	eWf, err := exportentities.NewWorkflow(context.TODO(), *wf)
+
 	test.NoError(t, err)
 	wfBts, err := yaml.Marshal(eWf)
 	test.NoError(t, err)

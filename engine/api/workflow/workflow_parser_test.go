@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -62,9 +63,10 @@ func TestParseAndImport(t *testing.T) {
 	//Reload project
 	proj, _ = project.Load(db, cache, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
-	input := &exportentities.Workflow{
-		Name: sdk.RandomString(10),
-		Workflow: map[string]exportentities.NodeEntry{
+	input := v2.Workflow{
+		Name:    sdk.RandomString(10),
+		Version: exportentities.WorkflowVersion2,
+		Workflow: map[string]v2.NodeEntry{
 			"root": {
 				PipelineName:    pipelineName,
 				ApplicationName: app.Name,
@@ -246,9 +248,10 @@ func TestParseAndImportFromRepository(t *testing.T) {
 	//Reload project
 	proj, _ = project.Load(db, cache, proj.Key, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
-	input := &exportentities.Workflow{
-		Name: sdk.RandomString(10),
-		Workflow: map[string]exportentities.NodeEntry{
+	input := v2.Workflow{
+		Name:    sdk.RandomString(10),
+		Version: exportentities.WorkflowVersion2,
+		Workflow: map[string]v2.NodeEntry{
 			"root": {
 				PipelineName:    pipelineName,
 				ApplicationName: app.Name,

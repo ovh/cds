@@ -1,4 +1,4 @@
-package exportentities_test
+package v2_test
 
 import (
 	"context"
@@ -6,31 +6,25 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ovh/cds/sdk/exportentities"
-
 	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
+
+	"github.com/ovh/cds/sdk/exportentities"
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 
 	"github.com/ovh/cds/sdk"
 )
 
 func TestWorkflow_checkDependencies(t *testing.T) {
 	type fields struct {
-		Name                   string
-		Description            string
-		Version                string
-		Workflow               map[string]exportentities.NodeEntry
-		Hooks                  map[string][]exportentities.HookEntry
-		Conditions             *exportentities.ConditionEntry
-		When                   []string
-		PipelineName           string
-		ApplicationName        string
-		EnvironmentName        string
-		ProjectIntegrationName string
-		PipelineHooks          []exportentities.HookEntry
-		Permissions            map[string]int
-		HistoryLength          int64
+		Name          string
+		Description   string
+		Version       string
+		Workflow      map[string]v2.NodeEntry
+		Hooks         map[string][]v2.HookEntry
+		Permissions   map[string]int
+		HistoryLength int64
 	}
 	tests := []struct {
 		name    string
@@ -38,16 +32,11 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Simple Workflow without dependencies should not raise an error",
-			fields: fields{
-				PipelineName: "pipeline",
-			},
-			wantErr: false,
-		},
-		{
 			name: "Complex Workflow with a dependency should not raise an error",
 			fields: fields{
-				Workflow: map[string]exportentities.NodeEntry{
+				Name:    "myWorkflow",
+				Version: exportentities.WorkflowVersion2,
+				Workflow: map[string]v2.NodeEntry{
 					"root": {
 						PipelineName: "pipeline",
 					},
@@ -62,7 +51,9 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 		{
 			name: "Complex Workflow with a dependencies and a join should not raise an error",
 			fields: fields{
-				Workflow: map[string]exportentities.NodeEntry{
+				Name:    "myWorkflow",
+				Version: exportentities.WorkflowVersion2,
+				Workflow: map[string]v2.NodeEntry{
 					"root": {
 						PipelineName: "pipeline",
 					},
@@ -85,20 +76,13 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			w := exportentities.Workflow{
-				Name:                   tt.fields.Name,
-				Description:            tt.fields.Description,
-				Version:                tt.fields.Version,
-				Workflow:               tt.fields.Workflow,
-				Hooks:                  tt.fields.Hooks,
-				Conditions:             tt.fields.Conditions,
-				When:                   tt.fields.When,
-				PipelineName:           tt.fields.PipelineName,
-				ApplicationName:        tt.fields.ApplicationName,
-				EnvironmentName:        tt.fields.EnvironmentName,
-				ProjectIntegrationName: tt.fields.ProjectIntegrationName,
-				PipelineHooks:          tt.fields.PipelineHooks,
-				Permissions:            tt.fields.Permissions,
+			w := v2.Workflow{
+				Name:        tt.fields.Name,
+				Description: tt.fields.Description,
+				Version:     tt.fields.Version,
+				Workflow:    tt.fields.Workflow,
+				Hooks:       tt.fields.Hooks,
+				Permissions: tt.fields.Permissions,
 			}
 			if err := w.CheckDependencies(); (err != nil) != tt.wantErr {
 				t.Errorf("Workflow.checkDependencies() error = %v, wantErr %v", err, tt.wantErr)
@@ -109,20 +93,11 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 
 func TestWorkflow_checkValidity(t *testing.T) {
 	type fields struct {
-		Name                   string
-		Version                string
-		Workflow               map[string]exportentities.NodeEntry
-		Hooks                  map[string][]exportentities.HookEntry
-		DependsOn              []string
-		Conditions             *exportentities.ConditionEntry
-		When                   []string
-		PipelineName           string
-		ApplicationName        string
-		EnvironmentName        string
-		ProjectIntegrationName string
-		PipelineHooks          []exportentities.HookEntry
-		Permissions            map[string]int
-		OneAtATime             *bool
+		Name        string
+		Version     string
+		Workflow    map[string]v2.NodeEntry
+		Hooks       map[string][]v2.HookEntry
+		Permissions map[string]int
 	}
 	tests := []struct {
 		name    string
@@ -130,25 +105,11 @@ func TestWorkflow_checkValidity(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Should raise an error",
-			fields: fields{
-				PipelineName: "pipeline",
-				Workflow: map[string]exportentities.NodeEntry{
-					"root": {
-						PipelineName: "pipeline",
-					},
-					"child": {
-						PipelineName: "pipeline",
-						DependsOn:    []string{"root"},
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
 			name: "Should not raise an error",
 			fields: fields{
-				Workflow: map[string]exportentities.NodeEntry{
+				Name:    "myWorkflow",
+				Version: exportentities.WorkflowVersion2,
+				Workflow: map[string]v2.NodeEntry{
 					"root": {
 						PipelineName: "pipeline",
 					},
@@ -157,33 +118,18 @@ func TestWorkflow_checkValidity(t *testing.T) {
 						DependsOn:    []string{"root"},
 					},
 				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "Too simple to raise an error",
-			fields: fields{
-				PipelineName: "pipeline",
 			},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			w := exportentities.Workflow{
-				Name:                   tt.fields.Name,
-				Version:                tt.fields.Version,
-				Workflow:               tt.fields.Workflow,
-				Hooks:                  tt.fields.Hooks,
-				Conditions:             tt.fields.Conditions,
-				When:                   tt.fields.When,
-				PipelineName:           tt.fields.PipelineName,
-				ApplicationName:        tt.fields.ApplicationName,
-				EnvironmentName:        tt.fields.EnvironmentName,
-				ProjectIntegrationName: tt.fields.ProjectIntegrationName,
-				PipelineHooks:          tt.fields.PipelineHooks,
-				Permissions:            tt.fields.Permissions,
-				OneAtATime:             tt.fields.OneAtATime,
+			w := v2.Workflow{
+				Name:        tt.fields.Name,
+				Version:     tt.fields.Version,
+				Workflow:    tt.fields.Workflow,
+				Hooks:       tt.fields.Hooks,
+				Permissions: tt.fields.Permissions,
 			}
 			if err := w.CheckValidity(); (err != nil) != tt.wantErr {
 				t.Errorf("Workflow.checkValidity() error = %v, wantErr %v", err, tt.wantErr)
@@ -193,24 +139,15 @@ func TestWorkflow_checkValidity(t *testing.T) {
 }
 
 func TestWorkflow_GetWorkflow(t *testing.T) {
-	strue := true
+	true := true
 	type fields struct {
-		Name                   string
-		Description            string
-		Version                string
-		Workflow               map[string]exportentities.NodeEntry
-		Hooks                  map[string][]exportentities.HookEntry
-		DependsOn              []string
-		Conditions             *exportentities.ConditionEntry
-		When                   []string
-		PipelineName           string
-		ApplicationName        string
-		EnvironmentName        string
-		ProjectIntegrationName string
-		PipelineHooks          []exportentities.HookEntry
-		Permissions            map[string]int
-		HistoryLength          int64
-		OneAtATime             *bool
+		Name          string
+		Description   string
+		Version       string
+		Workflow      map[string]v2.NodeEntry
+		Hooks         map[string][]v2.HookEntry
+		Permissions   map[string]int
+		HistoryLength int64
 	}
 	tsts := []struct {
 		name    string
@@ -218,98 +155,24 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		want    sdk.Workflow
 		wantErr bool
 	}{
-		// pipeline
-		{
-			name: "Simple workflow with mutex should not raise an error",
-			fields: fields{
-				PipelineName: "pipeline",
-				OneAtATime:   &strue,
-			},
-			wantErr: false,
-			want: sdk.Workflow{
-				HistoryLength: sdk.DefaultHistoryLength,
-				WorkflowData: &sdk.WorkflowData{
-					Node: sdk.Node{
-						Name: "pipeline",
-						Type: "pipeline",
-						Context: &sdk.NodeContext{
-							PipelineName: "pipeline",
-							Mutex:        true,
-						},
-					},
-				},
-			},
-		},
-		// pipeline
-		{
-			name: "Simple workflow should not raise an error",
-			fields: fields{
-				PipelineName: "pipeline",
-				Description:  "this is my description",
-				PipelineHooks: []exportentities.HookEntry{
-					{
-						Model: "Scheduler",
-						Config: map[string]string{
-							"crontab": "* * * * *",
-							"payload": "{}",
-						},
-						Conditions: &sdk.WorkflowNodeConditions{
-							LuaScript: "return true",
-						},
-					},
-				},
-			},
-			wantErr: false,
-			want: sdk.Workflow{
-				HistoryLength: sdk.DefaultHistoryLength,
-				Description:   "this is my description",
-				WorkflowData: &sdk.WorkflowData{
-					Node: sdk.Node{
-						Name: "pipeline",
-						Type: "pipeline",
-						Context: &sdk.NodeContext{
-							PipelineName: "pipeline",
-						},
-						Hooks: []sdk.NodeHook{
-							{
-								HookModelName: "Scheduler",
-								Conditions: sdk.WorkflowNodeConditions{
-									LuaScript: "return true",
-								},
-								Config: sdk.WorkflowNodeHookConfig{
-									"crontab": sdk.WorkflowNodeHookConfigValue{
-										Value:        "* * * * *",
-										Configurable: true,
-										Type:         sdk.HookConfigTypeString,
-									},
-									"payload": sdk.WorkflowNodeHookConfigValue{
-										Value:        "{}",
-										Configurable: true,
-										Type:         sdk.HookConfigTypeString,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
 		// hook conditions
 		{
 			name: "Workflow with multiple nodes should display hook conditions",
 			fields: fields{
-				Workflow: map[string]exportentities.NodeEntry{
+				Name:    "myWorkflow",
+				Version: exportentities.WorkflowVersion2,
+				Workflow: map[string]v2.NodeEntry{
 					"root": {
 						PipelineName: "pipeline-root",
 					},
 					"child": {
 						PipelineName: "pipeline-child",
 						DependsOn:    []string{"root"},
-						OneAtATime:   &exportentities.True,
+						OneAtATime:   &v2.True,
 					},
 				},
-				Hooks: map[string][]exportentities.HookEntry{
-					"root": []exportentities.HookEntry{{
+				Hooks: map[string][]v2.HookEntry{
+					"root": {{
 						Model: "Scheduler",
 						Config: map[string]string{
 							"crontab": "* * * * *",
@@ -323,6 +186,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
+				Name:          "myWorkflow",
 				HistoryLength: sdk.DefaultHistoryLength,
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
@@ -372,19 +236,22 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		{
 			name: "Complexe workflow without joins and mutex should not raise an error",
 			fields: fields{
-				Workflow: map[string]exportentities.NodeEntry{
+				Name:    "myWorkflow",
+				Version: exportentities.WorkflowVersion2,
+				Workflow: map[string]v2.NodeEntry{
 					"root": {
 						PipelineName: "pipeline-root",
 					},
 					"child": {
 						PipelineName: "pipeline-child",
 						DependsOn:    []string{"root"},
-						OneAtATime:   &exportentities.True,
+						OneAtATime:   &v2.True,
 					},
 				},
 			},
 			wantErr: false,
 			want: sdk.Workflow{
+				Name:          "myWorkflow",
 				HistoryLength: sdk.DefaultHistoryLength,
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
@@ -414,7 +281,9 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		{
 			name: "Complexe workflow without joins with a default payload on a non root node should raise an error",
 			fields: fields{
-				Workflow: map[string]exportentities.NodeEntry{
+				Name:    "myWorkflow",
+				Version: exportentities.WorkflowVersion2,
+				Workflow: map[string]v2.NodeEntry{
 					"root": {
 						PipelineName: "pipeline-root",
 					},
@@ -424,7 +293,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						Payload: map[string]interface{}{
 							"test": "content",
 						},
-						OneAtATime: &exportentities.True,
+						OneAtATime: &v2.True,
 					},
 				},
 			},
@@ -434,7 +303,9 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		{
 			name: "Complexe workflow unordered without joins should not raise an error",
 			fields: fields{
-				Workflow: map[string]exportentities.NodeEntry{
+				Name:    "myWorkflow",
+				Version: exportentities.WorkflowVersion2,
+				Workflow: map[string]v2.NodeEntry{
 					"child": {
 						PipelineName: "pipeline-child",
 						DependsOn:    []string{"root"},
@@ -447,6 +318,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
+				Name:          "myWorkflow",
 				HistoryLength: 25,
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
@@ -476,7 +348,9 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		{
 			name: "Complexe workflow without joins should not raise an error",
 			fields: fields{
-				Workflow: map[string]exportentities.NodeEntry{
+				Name:    "myWorkflow",
+				Version: exportentities.WorkflowVersion2,
+				Workflow: map[string]v2.NodeEntry{
 					"root": {
 						PipelineName: "pipeline-root",
 					},
@@ -492,6 +366,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
+				Name:          "myWorkflow",
 				HistoryLength: sdk.DefaultHistoryLength,
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
@@ -536,7 +411,9 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		{
 			name: "Complexe workflow with joins should not raise an error",
 			fields: fields{
-				Workflow: map[string]exportentities.NodeEntry{
+				Name:    "myWorkflow",
+				Version: exportentities.WorkflowVersion2,
+				Workflow: map[string]v2.NodeEntry{
 					"A": {
 						PipelineName: "pipeline",
 					},
@@ -565,7 +442,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						DependsOn:    []string{"D", "E"},
 					},
 				},
-				Hooks: map[string][]exportentities.HookEntry{
+				Hooks: map[string][]v2.HookEntry{
 					"A": {
 						{
 							Model: "Scheduler",
@@ -579,6 +456,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
+				Name:          "myWorkflow",
 				HistoryLength: sdk.DefaultHistoryLength,
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
@@ -700,31 +578,11 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 		},
 		{
-			name: "Complex workflow with integration should not raise an error",
-			fields: fields{
-				PipelineName:           "pipeline",
-				ProjectIntegrationName: "integration",
-			},
-			wantErr: false,
-			want: sdk.Workflow{
-				HistoryLength: sdk.DefaultHistoryLength,
-				WorkflowData: &sdk.WorkflowData{
-					Node: sdk.Node{
-						Name: "pipeline",
-						Ref:  "pipeline",
-						Type: "pipeline",
-						Context: &sdk.NodeContext{
-							PipelineName:           "pipeline",
-							ProjectIntegrationName: "integration",
-						},
-					},
-				},
-			},
-		},
-		{
 			name: "Root and a outgoing hook should not raise an error",
 			fields: fields{
-				Workflow: map[string]exportentities.NodeEntry{
+				Name:    "myWorkflow",
+				Version: exportentities.WorkflowVersion2,
+				Workflow: map[string]v2.NodeEntry{
 					"A": {
 						PipelineName: "pipeline",
 					},
@@ -739,6 +597,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
+				Name:          "myWorkflow",
 				HistoryLength: sdk.DefaultHistoryLength,
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
@@ -773,24 +632,16 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 
 	for _, tt := range tsts {
 		t.Run(tt.name, func(t *testing.T) {
-			w := exportentities.Workflow{
-				Name:                   tt.fields.Name,
-				Description:            tt.fields.Description,
-				Version:                tt.fields.Version,
-				Workflow:               tt.fields.Workflow,
-				Hooks:                  tt.fields.Hooks,
-				Conditions:             tt.fields.Conditions,
-				When:                   tt.fields.When,
-				PipelineName:           tt.fields.PipelineName,
-				ApplicationName:        tt.fields.ApplicationName,
-				EnvironmentName:        tt.fields.EnvironmentName,
-				ProjectIntegrationName: tt.fields.ProjectIntegrationName,
-				PipelineHooks:          tt.fields.PipelineHooks,
-				Permissions:            tt.fields.Permissions,
-				HistoryLength:          &tt.fields.HistoryLength,
-				OneAtATime:             tt.fields.OneAtATime,
+			w := v2.Workflow{
+				Name:          tt.fields.Name,
+				Description:   tt.fields.Description,
+				Version:       tt.fields.Version,
+				Workflow:      tt.fields.Workflow,
+				Hooks:         tt.fields.Hooks,
+				Permissions:   tt.fields.Permissions,
+				HistoryLength: &tt.fields.HistoryLength,
 			}
-			got, err := w.GetWorkflow()
+			got, err := exportentities.ParseWorkflow(w)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Workflow.GetWorkflow() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -845,9 +696,14 @@ func TestFromYAMLToYAML(t *testing.T) {
 		{
 			name: "1_start -> 2_webhook -> 3_after_webhook -> 4_fork_before_end -> 5_end",
 			yaml: `name: test1
-version: v1.0
+version: v2.0
 workflow:
   1_start:
+    conditions:
+      check:
+      - variable: git.branch
+        operator: eq
+        value: master
     pipeline: test
   2_webHook:
     depends_on:
@@ -876,7 +732,7 @@ workflow:
 		}, {
 			name: "test with outgoing hooks",
 			yaml: `name: DDOS
-version: v1.0
+version: v2.0
 workflow:
   1_test-outgoing-hooks:
     pipeline: DDOS-me
@@ -916,7 +772,7 @@ metadata:
 		}, {
 			name: "tests with outgoing hooks with a join",
 			yaml: `name: DDOS
-version: v1.0
+version: v2.0
 workflow:
   1_test-outgoing-hooks:
     pipeline: DDOS-me
@@ -963,7 +819,7 @@ metadata:
 		}, {
 			name: "test with outgoing hooks, a join, and a fork",
 			yaml: `name: DDOS
-version: v1.0
+version: v2.0
 workflow:
   1_test-outgoing-hooks:
     pipeline: DDOS-me
@@ -1023,27 +879,9 @@ metadata:
   default_tags: git.branch,git.author
 `,
 		}, {
-			name: "simple pipeline triggered by a webhook",
-			yaml: `name: test4
-version: v1.0
-pipeline: DDOS-me
-application: test1
-pipeline_hooks:
-- type: WebHook
-  config:
-    method: POST
-  conditions:
-    check:
-    - variable: lolilol
-      operator: eq
-      value: coucou
-metadata:
-  default_tags: git.branch,git.author
-`,
-		}, {
 			name: "pipeline with two hooks",
 			yaml: `name: test3
-version: v1.0
+version: v2.0
 workflow:
   1_start:
     pipeline: test
@@ -1080,7 +918,7 @@ hooks:
 		}, {
 			name: "workflow with template",
 			yaml: `name: test4
-version: v1.0
+version: v2.0
 template: shared.infra/example
 workflow:
   1_start:
@@ -1094,7 +932,7 @@ workflow:
 		{
 			name: "Join with condition",
 			yaml: `name: joins
-version: v1.0
+version: v2.0
 workflow:
   aa:
     pipeline: aa
@@ -1136,17 +974,9 @@ workflow:
 `,
 		},
 		{
-			name: "Workflow with mutex on root",
-			yaml: `name: mymutex
-version: v1.0
-one_at_a_time: true
-pipeline: env
-`,
-		},
-		{
 			name: "Workflow with mutex pipeline child",
 			yaml: `name: mymutex
-version: v1.0
+version: v2.0
 workflow:
   env:
     pipeline: env
@@ -1163,8 +993,7 @@ workflow:
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			var yamlWorkflow exportentities.Workflow
-			err := exportentities.Unmarshal([]byte(tst.yaml), exportentities.FormatYAML, &yamlWorkflow)
+			yamlWorkflow, err := exportentities.UnmarshalWorkflow([]byte(tst.yaml))
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("Unmarshal raised an error", err)
@@ -1175,7 +1004,7 @@ workflow:
 				t.Error("Unmarshal should return an error but it doesn't")
 				return
 			}
-			w, err := yamlWorkflow.GetWorkflow()
+			w, err := exportentities.ParseWorkflow(yamlWorkflow)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("GetWorkflow raised an error", err)

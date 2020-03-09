@@ -201,6 +201,7 @@ var (
 	ErrInvalidWorkerModelNamePattern                 = Error{ID: 185, Status: http.StatusBadRequest}
 	ErrWorkflowAsCodeResync                          = Error{ID: 186, Status: http.StatusForbidden}
 	ErrWorkflowNodeNameDuplicate                     = Error{ID: 187, Status: http.StatusBadRequest}
+	ErrUnsupportedMediaType                          = Error{ID: 188, Status: http.StatusUnsupportedMediaType}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -384,6 +385,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Invalid job requirement: network requirement must contains ':'. Example: golang.org:http, golang.org:443",
 	ErrWorkflowAsCodeResync.ID:                          "You cannot resynchronize an as-code workflow",
 	ErrWorkflowNodeNameDuplicate.ID:                     "You cannot have same name for different pipelines in your workflow",
+	ErrUnsupportedMediaType.ID:                          "Request format invalid",
 }
 
 var errorsFrench = map[int]string{
@@ -566,6 +568,7 @@ var errorsFrench = map[int]string{
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Pré-requis de job invalide: Le pré-requis network doit contenir un ':'. Exemple: golang.org:http, golang.org:443",
 	ErrWorkflowAsCodeResync.ID:                          "Impossible de resynchroniser un workflow en mode as-code",
 	ErrWorkflowNodeNameDuplicate.ID:                     "Vous ne pouvez pas avoir plusieurs fois le même nom de pipeline dans votre workflow",
+	ErrUnsupportedMediaType.ID:                          "Le format de la requête est invalide",
 }
 
 var errorsLanguages = []map[int]string{

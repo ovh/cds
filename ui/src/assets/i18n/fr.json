@@ -932,6 +932,7 @@
   "workflow_ascode_updated": "Brouillon mis à jour",
   "workflow_updated": "Workflow mis à jour",
   "workflow_vcs_resynced": "Statuts du dépot distant resynchronisés",
+  "workflow_warning_deprecated_yaml": "Configuration yaml du workflow dépréciée",
   "workflow_wizard_description": "Choisissez vos options de workflow",
   "workflow_wizard_repo_analyse": "Analyse du dépôt...",
   "workflow_wizard_select_repo_loading": "Chargement des dépots...",

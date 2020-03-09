@@ -1329,7 +1329,7 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj sdk.Project, 
 	if n.Context.ApplicationName != "" {
 		appDB, err := application.LoadByName(db, store, proj.Key, n.Context.ApplicationName, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
 		if err != nil {
-			if sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
+			if sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
 				return sdk.WithStack(sdk.ErrorWithData(sdk.ErrApplicationNotFound, n.Context.ApplicationName))
 			}
 			return sdk.WrapError(err, "unable to load application %s", n.Context.ApplicationName)
@@ -1390,12 +1390,13 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		oldWf = opts.OldWorkflow
 	} else {
 		// load the workflow from database if exists
-		workflowExists, err = Exists(db, proj.Key, data.wrkflw.Name)
+		workflowExists, err = Exists(db, proj.Key, data.wrkflw.GetName())
 		if err != nil {
 			return nil, nil, nil, sdk.WrapError(err, "Cannot check if workflow exists")
 		}
 		if workflowExists {
-			oldWf, err = Load(ctx, db, store, *proj, data.wrkflw.Name, LoadOptions{WithIcon: true})
+			oldWf, err = Load(ctx, db, store, *proj, data.wrkflw.GetName(), LoadOptions{WithIcon: true})
+
 			if err != nil {
 				return nil, nil, nil, sdk.WrapError(err, "Unable to load existing workflow")
 			}
@@ -1477,9 +1478,9 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		importOptions.HookUUID = opts.HookUUID
 	}
 
-	wf, msgList, err := ParseAndImport(ctx, tx, store, *proj, oldWf, &data.wrkflw, u, importOptions)
+	wf, msgList, err := ParseAndImport(ctx, tx, store, *proj, oldWf, data.wrkflw, u, importOptions)
 	if err != nil {
-		return msgList, nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.wrkflw.Name)
+		return msgList, nil, nil, sdk.WrapError(err, "unable to import workflow %s", data.wrkflw.GetName())
 	}
 
 	// If the workflow is "as-code", it should always be linked to a git repository

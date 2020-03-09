@@ -1,7 +1,8 @@
-package exportentities_test
+package v2_test
 
 import (
 	"context"
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"reflect"
 	"testing"
 
@@ -28,7 +29,7 @@ func Test_checkWorkflowNotificationsValidity(t *testing.T) {
 			want: nil,
 			args: args{
 				yaml: `name: test1
-version: v1.0
+version: v2.0
 workflow:
   DDOS-me:
     pipeline: DDOS-me
@@ -50,45 +51,48 @@ workflow:
 metadata:
   default_tags: git.branch,git.author
 notifications:
-  DDOS-me,DDOS-me_2:
-  - type: jabber
-    settings:
-      on_success: always
-      on_failure: change
-      on_start: true
-      send_to_groups: true
-      send_to_author: false
-      recipients:
-      - q
-      template:
-        subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-          {{.cds.status}}'
-        body: |-
-          Project : {{.cds.project}}
-          Application : {{.cds.application}}
-          Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
-          Status : {{.cds.status}}
-          Details : {{.cds.buildURL}}
-          Triggered by : {{.cds.triggered_by.username}}
-          Branch : {{.git.branch}}
-  DDOS-me_2:
-  - type: email
-    settings:
-      template:
-        subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-          {{.cds.status}}'
-        body: |-
-          Project : {{.cds.project}}
-          Application : {{.cds.application}}
-          Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
-          Status : {{.cds.status}}
-          Details : {{.cds.buildURL}}
-          Triggered by : {{.cds.triggered_by.username}}
-          Branch : {{.git.branch}}
-  - type: vcs
-    settings:
-      template:
-        disable_comment: true
+- type: jabber
+  pipelines:
+  - DDOS-me
+  - DDOS-me_2
+  settings:
+    on_success: always
+    on_failure: change
+    on_start: true
+    send_to_groups: true
+    send_to_author: false
+    recipients:
+    - q
+    template:
+      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
+        {{.cds.status}}'
+      body: |-
+        Project : {{.cds.project}}
+        Application : {{.cds.application}}
+        Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
+        Status : {{.cds.status}}
+        Details : {{.cds.buildURL}}
+        Triggered by : {{.cds.triggered_by.username}}
+        Branch : {{.git.branch}}
+- type: email
+  pipelines:
+  - DDOS-me_2
+  settings:
+    template:
+      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
+        {{.cds.status}}'
+      body: |-
+        Project : {{.cds.project}}
+        Application : {{.cds.application}}
+        Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
+        Status : {{.cds.status}}
+        Details : {{.cds.buildURL}}
+        Triggered by : {{.cds.triggered_by.username}}
+        Branch : {{.git.branch}}
+- type: vcs
+  settings:
+    template:
+      disable_comment: true
 `,
 			},
 		},
@@ -96,9 +100,9 @@ notifications:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var w exportentities.Workflow
+			var w v2.Workflow
 			test.NoError(t, yaml.Unmarshal([]byte(tt.args.yaml), &w))
-			if got := exportentities.CheckWorkflowNotificationsValidity(w); got != tt.want {
+			if got := v2.CheckWorkflowNotificationsValidity(w); got != tt.want {
 				t.Errorf("checkWorkflowNotificationsValidity() = %#v, want %v", got, tt.want)
 			}
 		})
@@ -107,7 +111,7 @@ notifications:
 
 func Test_processNotificationValues(t *testing.T) {
 	type args struct {
-		notif exportentities.NotificationEntry
+		notif v2.NotificationEntry
 	}
 	tests := []struct {
 		name    string
@@ -119,7 +123,7 @@ func Test_processNotificationValues(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := exportentities.ProcessNotificationValues(tt.args.notif)
+			got, err := v2.ProcessNotificationValues(tt.args.notif)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("processNotificationValues() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -138,45 +142,41 @@ func TestFromYAMLToYAMLWithNotif(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "test one pipeline with one notif",
+			name: "two pipelines with one notif",
 			yaml: `name: test-notif-1
-version: v1.0
-pipeline: test
-notify:
+version: v2.0
+workflow:
+  test:
+    pipeline: test
+  test_2:
+    depends_on:
+    - test
+    when:
+    - success
+    pipeline: test
+notifications:
 - type: jabber
-  settings:
-    template:
-      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-        {{.cds.status}}'
-      body: |-
-        Project : {{.cds.project}}
-        Application : {{.cds.application}}
-        Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
-        Status : {{.cds.status}}
-        Details : {{.cds.buildURL}}
-        Triggered by : {{.cds.triggered_by.username}}
-        Branch : {{.git.branch}}
+  pipelines:
+  - test
+  - test_2
 `,
 		}, {
-			name: "test one pipeline with two notif",
-			yaml: `name: test-notif-2
-version: v1.0
-pipeline: test
-notify:
-- type: jabber
-  settings:
-    template:
-      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-        {{.cds.status}}'
-      body: |-
-        Project : {{.cds.project}}
-        Application : {{.cds.application}}
-        Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
-        Status : {{.cds.status}}
-        Details : {{.cds.buildURL}}
-        Triggered by : {{.cds.triggered_by.username}}
-        Branch : {{.git.branch}}
+			name: "two pipelines with two notifs",
+			yaml: `name: test-notif-1
+version: v2.0
+workflow:
+  test:
+    pipeline: test
+  test_2:
+    depends_on:
+    - test
+    when:
+    - success
+    pipeline: test
+notifications:
 - type: email
+  pipelines:
+  - test
   settings:
     on_success: always
     on_failure: change
@@ -196,79 +196,28 @@ notify:
         Details : {{.cds.buildURL}}
         Triggered by : {{.cds.triggered_by.username}}
         Branch : {{.git.branch}}
-`,
-		}, {
-			name: "two pipelines with one notif",
-			yaml: `name: test-notif-1
-version: v1.0
-workflow:
-  test:
-    pipeline: test
-  test_2:
-    depends_on:
-    - test
-    when:
-    - success
-    pipeline: test
-notifications:
-  test,test_2:
-  - type: jabber
-`,
-		}, {
-			name: "two pipelines with two notifs",
-			yaml: `name: test-notif-1
-version: v1.0
-workflow:
-  test:
-    pipeline: test
-  test_2:
-    depends_on:
-    - test
-    when:
-    - success
-    pipeline: test
-notifications:
-  test:
-  - type: email
-    settings:
-      on_success: always
-      on_failure: change
-      on_start: true
-      send_to_groups: true
-      send_to_author: false
-      recipients:
-      - a
-      template:
-        subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-          {{.cds.status}}'
-        body: |-
-          Project : {{.cds.project}}
-          Application : {{.cds.application}}
-          Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
-          Status : {{.cds.status}}
-          Details : {{.cds.buildURL}}
-          Triggered by : {{.cds.triggered_by.username}}
-          Branch : {{.git.branch}}
-  test,test_2:
-  - type: jabber
-    settings:
-      template:
-        subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
-          {{.cds.status}}'
-        body: |-
-          Project : {{.cds.project}}
-          Application : {{.cds.application}}
-          Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
-          Status : {{.cds.status}}
-          Details : {{.cds.buildURL}}
-          Triggered by : {{.cds.triggered_by.username}}
-          Branch : {{.git.branch}}
+- type: jabber
+  pipelines:
+  - test
+  - test_2
+  settings:
+    template:
+      subject: '{{.cds.project}}/{{.cds.application}} {{.cds.pipeline}} {{.cds.environment}}#{{.cds.version}}
+        {{.cds.status}}'
+      body: |-
+        Project : {{.cds.project}}
+        Application : {{.cds.application}}
+        Pipeline : {{.cds.pipeline}}/{{.cds.environment}}#{{.cds.version}}
+        Status : {{.cds.status}}
+        Details : {{.cds.buildURL}}
+        Triggered by : {{.cds.triggered_by.username}}
+        Branch : {{.git.branch}}
 `,
 		},
 		{
 			name: "two pipelines with one notif without node name",
 			yaml: `name: test-notif-2-pipeline-no-node
-version: v1.0
+version: v2.0
 workflow:
   test:
     pipeline: test
@@ -279,15 +228,13 @@ workflow:
     - success
     pipeline: test
 notifications:
-  "":
-  - type: jabber
+- type: jabber
 `,
 		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			var yamlWorkflow exportentities.Workflow
-			err := exportentities.Unmarshal([]byte(tst.yaml), exportentities.FormatYAML, &yamlWorkflow)
+			yamlWorkflow, err := exportentities.UnmarshalWorkflow([]byte(tst.yaml))
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("Unmarshal raised an error", err)
@@ -298,7 +245,7 @@ notifications:
 				t.Error("Unmarshal should return an error but it doesn't")
 				return
 			}
-			w, err := yamlWorkflow.GetWorkflow()
+			w, err := exportentities.ParseWorkflow(yamlWorkflow)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("GetWorkflow raised an error", err)

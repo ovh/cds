@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"io"
 
 	"github.com/go-gorp/gorp"
@@ -18,7 +19,7 @@ import (
 )
 
 // Export a workflow
-func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, name string, f exportentities.Format, w io.Writer, opts ...exportentities.WorkflowOptions) (int, error) {
+func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, name string, f exportentities.Format, w io.Writer, opts ...v2.ExportOptions) (int, error) {
 	ctx, end := observability.Span(ctx, "workflow.Export")
 	defer end()
 
@@ -29,21 +30,16 @@ func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sd
 
 	// If repo is from as-code do not export WorkflowSkipIfOnlyOneRepoWebhook
 	if wf.FromRepository != "" {
-		opts = append(opts, exportentities.WorkflowSkipIfOnlyOneRepoWebhook)
+		opts = append(opts, v2.WorkflowSkipIfOnlyOneRepoWebhook)
 	}
 
 	return exportWorkflow(ctx, *wf, f, w, opts...)
 }
 
-func exportWorkflow(ctx context.Context, wf sdk.Workflow, f exportentities.Format, w io.Writer, opts ...exportentities.WorkflowOptions) (int, error) {
+func exportWorkflow(ctx context.Context, wf sdk.Workflow, f exportentities.Format, w io.Writer, opts ...v2.ExportOptions) (int, error) {
 	e, err := exportentities.NewWorkflow(ctx, wf, opts...)
 	if err != nil {
 		return 0, sdk.WrapError(err, "exportWorkflow")
-	}
-
-	// Useful to not display history_length in yaml or json if it's his default value
-	if e.HistoryLength != nil && *e.HistoryLength == sdk.DefaultHistoryLength {
-		e.HistoryLength = nil
 	}
 
 	// Marshal to the desired format
@@ -57,7 +53,8 @@ func exportWorkflow(ctx context.Context, wf sdk.Workflow, f exportentities.Forma
 
 // Pull a workflow with all it dependencies; it writes a tar buffer in the writer
 func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.Project, name string, f exportentities.Format,
-	encryptFunc sdk.EncryptFunc, opts ...exportentities.WorkflowOptions) (exportentities.WorkflowPulled, error) {
+	encryptFunc sdk.EncryptFunc, opts ...v2.ExportOptions) (exportentities.WorkflowPulled, error) {
+
 	ctx, end := observability.Span(ctx, "workflow.Pull")
 	defer end()
 
@@ -109,7 +106,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.
 	buffw := new(bytes.Buffer)
 	// If the repository is "as-code", hide the hook
 	if wf.FromRepository != "" {
-		opts = append(opts, exportentities.WorkflowSkipIfOnlyOneRepoWebhook)
+		opts = append(opts, v2.WorkflowSkipIfOnlyOneRepoWebhook)
 	}
 	if _, err := exportWorkflow(ctx, *wf, f, buffw, opts...); err != nil {
 		return wp, sdk.WrapError(err, "unable to export workflow")

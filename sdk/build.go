@@ -17,6 +17,7 @@ type SpawnInfo struct {
 type SpawnMsg struct {
 	ID   string        `json:"id" db:"-"`
 	Args []interface{} `json:"args" db:"-"`
+	Type string        `json:"type" db:"-"`
 }
 
 // ExecutedJob represents a running job

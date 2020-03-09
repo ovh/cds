@@ -182,6 +182,12 @@ func (r *WorkflowRun) GetOutgoingHookRun(uuid string) *WorkflowNodeRun {
 	return nil
 }
 
+const (
+	RunInfoTypInfo     = "Info"
+	RunInfoTypeWarning = "Warning"
+	RunInfoTypeError   = "Error"
+)
+
 //WorkflowRunInfo is an info on workflow run
 type WorkflowRunInfo struct {
 	APITime time.Time `json:"api_time,omitempty" db:"-"`
@@ -189,7 +195,7 @@ type WorkflowRunInfo struct {
 	// UserMessage contains msg translated for end user
 	UserMessage string `json:"user_message,omitempty" db:"-"`
 	SubNumber   int64  `json:"sub_number,omitempty" db:"-"`
-	IsError     bool   `json:"is_error" db:"-"`
+	Type        string `json:"type" db:"-"`
 }
 
 //WorkflowRunTag is a tag on workflow run
