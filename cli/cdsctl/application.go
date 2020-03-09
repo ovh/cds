@@ -8,8 +8,8 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 var applicationCmd = cli.Command{
@@ -138,14 +138,18 @@ var applicationImportCmd = cli.Command{
 
 func applicationImportRun(c cli.Values) error {
 	path := c.GetString("path")
-	contentFile, format, err := exportentities.OpenPath(path)
+	contentFile, _, err := exportentities.OpenPath(path)
 	if err != nil {
 		return err
 	}
 	defer contentFile.Close() //nolint
-	formatStr, _ := exportentities.GetFormatStr(format)
 
-	msgs, err := client.ApplicationImport(c.GetString(_ProjectKey), contentFile, formatStr, c.GetBool("force"))
+	var mods []cdsclient.RequestModifier
+	if c.GetBool("force") {
+		mods = append(mods, cdsclient.Force())
+	}
+
+	msgs, err := client.ApplicationImport(c.GetString(_ProjectKey), contentFile, mods...)
 	for _, msg := range msgs {
 		fmt.Println(msg)
 	}
@@ -170,7 +174,8 @@ var applicationExportCmd = cli.Command{
 }
 
 func applicationExportRun(c cli.Values) error {
-	btes, err := client.ApplicationExport(c.GetString(_ProjectKey), c.GetString(_ApplicationName), c.GetString("format"))
+	btes, err := client.ApplicationExport(c.GetString(_ProjectKey), c.GetString(_ApplicationName),
+		cdsclient.Format(c.GetString("format")))
 	if err != nil {
 		return err
 	}

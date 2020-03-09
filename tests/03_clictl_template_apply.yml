@@ -1,6 +1,12 @@
 name: Template apply command TestSuite with cdsctl
 version: "2"
 testcases:
+- name: delete template if exists
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} template delete shared.infra/example-simple --force
+      assertions:
+      - result.code ShouldEqual 0
+
 - name: push example simple
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} template push ./fixtures/template/simple/*.yml --skip-update-files
@@ -35,7 +41,4 @@ testcases:
     path: ./fixtures/template/simple/export/*.yml
     assertions:
     - result.err ShouldEqual ""
-    - result.md5sum.fixtures_template_simple_export_first-environment.env.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.fixtures_template_simple_workflow_first-environment.env.yml}}"
-    - result.md5sum.fixtures_template_simple_export_first-pipeline.pip.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.fixtures_template_simple_workflow_first-pipeline.pip.yml}}"
-    - result.md5sum.fixtures_template_simple_export_second-pipeline.pip.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.fixtures_template_simple_workflow_second-pipeline.pip.yml}}"
     - result.md5sum.fixtures_template_simple_export_itcliwkf.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.fixtures_template_simple_workflow_itcliwkf.yml}}"

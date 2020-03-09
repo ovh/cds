@@ -119,7 +119,7 @@ func DownloadTemplate(manifestURL string, tBuf io.Writer) error {
 	baseURL := manifestURL[0:strings.LastIndex(manifestURL, "/")]
 
 	// get the manifest file
-	contentFile, _, err := OpenPath(manifestURL)
+	contentFile, format, err := OpenPath(manifestURL)
 	if err != nil {
 		return err
 	}
@@ -128,8 +128,8 @@ func DownloadTemplate(manifestURL string, tBuf io.Writer) error {
 		return sdk.WrapError(err, "cannot read from given remote file")
 	}
 	var t Template
-	if err := yaml.Unmarshal(buf.Bytes(), &t); err != nil {
-		return sdk.WrapError(err, "cannot unmarshal given remote yaml file")
+	if err := Unmarshal(buf.Bytes(), format, &t); err != nil {
+		return err
 	}
 
 	// get all components of the template

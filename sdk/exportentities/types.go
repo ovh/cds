@@ -34,7 +34,6 @@ type (
 const (
 	FormatJSON Format = iota
 	FormatYAML
-	FormatTOML
 	UnknownFormat
 )
 

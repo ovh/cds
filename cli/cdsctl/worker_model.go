@@ -102,20 +102,23 @@ For admin:
 }
 
 func workerModelImportRun(c cli.Values) error {
-	force := c.GetBool("force")
 	if c.GetString("path") == "" {
 		return fmt.Errorf("path for worker model is mandatory")
 	}
 	files := strings.Split(c.GetString("path"), ",")
 
+	var mods []cdsclient.RequestModifier
+	if c.GetBool("force") {
+		mods = append(mods, cdsclient.Force())
+	}
+
 	for _, filepath := range files {
-		contentFile, format, err := exportentities.OpenPath(filepath)
+		contentFile, _, err := exportentities.OpenPath(filepath)
 		if err != nil {
 			return err
 		}
-		formatStr, _ := exportentities.GetFormatStr(format)
 
-		wm, err := client.WorkerModelImport(contentFile, formatStr, force)
+		wm, err := client.WorkerModelImport(contentFile, mods...)
 		if err != nil {
 			_ = contentFile.Close()
 			return err
@@ -197,7 +200,7 @@ func workerModelExportRun(c cli.Values) error {
 		return err
 	}
 
-	btes, err := client.WorkerModelExport(groupName, modelName, c.GetString("format"))
+	btes, err := client.WorkerModelExport(groupName, modelName, cdsclient.Format(c.GetString("format")))
 	if err != nil {
 		return err
 	}

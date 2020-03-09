@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/ovh/cds/sdk"
 	v1 "github.com/ovh/cds/sdk/exportentities/v1"
 	v2 "github.com/ovh/cds/sdk/exportentities/v2"
@@ -52,21 +50,21 @@ type WorkflowVersion struct {
 	Version string `yaml:"version"`
 }
 
-func UnmarshalWorkflow(body []byte) (Workflow, error) {
+func UnmarshalWorkflow(body []byte, format Format) (Workflow, error) {
 	var workflowVersion WorkflowVersion
-	if err := yaml.Unmarshal(body, &workflowVersion); err != nil {
+	if err := Unmarshal(body, format, &workflowVersion); err != nil {
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow data: %v", err)
 	}
 	switch workflowVersion.Version {
 	case WorkflowVersion1:
 		var workflowV1 v1.Workflow
-		if err := yaml.Unmarshal(body, &workflowV1); err != nil {
+		if err := Unmarshal(body, format, &workflowV1); err != nil {
 			return nil, sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow v1 format: %v", err)
 		}
 		return workflowV1, nil
 	case WorkflowVersion2:
 		var workflowV2 v2.Workflow
-		if err := yaml.Unmarshal(body, &workflowV2); err != nil {
+		if err := Unmarshal(body, format, &workflowV2); err != nil {
 			return nil, sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow v2 format: %v", err)
 		}
 		return workflowV2, nil

@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path"
-	"time"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	actionSDK "github.com/ovh/cds/sdk/action"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/slug"
 )
@@ -110,20 +111,20 @@ func actionUsageRun(v cli.Values) (cli.ListResult, error) {
 
 	type ActionUsageDisplay struct {
 		Type string `cli:"Type"`
-		Path  string `cli:"Path"`
+		Path string `cli:"Path"`
 	}
 
 	au := []ActionUsageDisplay{}
 	for _, v := range usages.Pipelines {
 		au = append(au, ActionUsageDisplay{
-			Type:   "pipeline",
-			Path:   strings.Replace(fmt.Sprintf("%s - %s - %s", v.ProjectName, v.PipelineName, v.ActionName)," "," ",-1),
+			Type: "pipeline",
+			Path: strings.Replace(fmt.Sprintf("%s - %s - %s", v.ProjectName, v.PipelineName, v.ActionName), " ", " ", -1),
 		})
 	}
 	for _, v := range usages.Actions {
 		au = append(au, ActionUsageDisplay{
-			Type:   "action",
-			Path:   fmt.Sprintf("%s/%s", v.GroupName, v.ParentActionName),
+			Type: "action",
+			Path: fmt.Sprintf("%s/%s", v.GroupName, v.ParentActionName),
 		})
 	}
 	return cli.AsListResult(au), nil
@@ -238,14 +239,13 @@ var actionImportCmd = cli.Command{
 
 func actionImportRun(v cli.Values) error {
 	path := v.GetString("path")
-	contentFile, format, err := exportentities.OpenPath(path)
+	contentFile, _, err := exportentities.OpenPath(path)
 	if err != nil {
 		return err
 	}
 	defer contentFile.Close() //nolint
-	formatStr, _ := exportentities.GetFormatStr(format)
 
-	if err := client.ActionImport(contentFile, formatStr); err != nil {
+	if err := client.ActionImport(contentFile); err != nil {
 		return err
 	}
 
@@ -274,7 +274,7 @@ func actionExportRun(v cli.Values) error {
 		return err
 	}
 
-	b, err := client.ActionExport(groupName, actionName, v.GetString("format"))
+	b, err := client.ActionExport(groupName, actionName, cdsclient.Format(v.GetString("format")))
 	if err != nil {
 		return err
 	}

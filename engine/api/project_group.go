@@ -232,7 +232,7 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		format := r.FormValue("format")
-		forceUpdate := FormBool(r, "forceUpdate")
+		force := FormBool(r, "force")
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key)
 		if err != nil {
@@ -280,7 +280,7 @@ func (api *API) postImportGroupsInProjectHandler() service.Handler {
 			data[i].Group = *grp
 		}
 
-		if forceUpdate {
+		if force {
 			if err := group.DeleteLinksGroupProjectForProjectID(tx, proj.ID); err != nil {
 				return sdk.WrapError(err, "cannot delete all groups for project %s", proj.Name)
 			}

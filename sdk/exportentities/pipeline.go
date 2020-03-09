@@ -358,7 +358,7 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 
 // ParsePipeline returns a pipeliner from given data.
 func ParsePipeline(format string, data []byte) (Pipeliner, error) {
-	f, err := GetFormat(format)
+	f, err := GetFormatFromPath(format)
 	if err != nil {
 		return nil, sdk.NewError(sdk.ErrWrongRequest, err)
 	}

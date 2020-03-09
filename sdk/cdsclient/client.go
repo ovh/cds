@@ -14,6 +14,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+var _ Interface = new(client)
+
 type client struct {
 	httpClient    *http.Client
 	httpSSEClient *http.Client

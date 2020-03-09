@@ -188,7 +188,7 @@ func Execute(wt sdk.WorkflowTemplate, instance sdk.WorkflowTemplateInstance) (ex
 	if err != nil {
 		return result, err
 	}
-	result.Workflow, err = exportentities.UnmarshalWorkflow([]byte(workflowYaml))
+	result.Workflow, err = exportentities.UnmarshalWorkflow([]byte(workflowYaml), exportentities.FormatYAML)
 	if err != nil {
 		return result, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot parse generated workflow"))
 	}

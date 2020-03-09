@@ -1360,7 +1360,9 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	opts *PushOption, u sdk.Identifiable, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, error) {
 	ctx, end := observability.Span(ctx, "workflow.Push")
 	defer end()
-	allMsg := []sdk.Message{}
+	if data.Workflow == nil {
+		return nil, nil, nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given workflow components, missing workflow file")
+	}
 
 	var err error
 	var workflowExists bool
@@ -1393,6 +1395,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 	defer tx.Rollback() // nolint
 
+	allMsg := []sdk.Message{}
 	for _, app := range data.Applications {
 		var fromRepo string
 		if opts != nil {

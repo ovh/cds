@@ -22,13 +22,12 @@ import (
 
 func (api *API) postWorkflowPreviewHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
-		body, errr := ioutil.ReadAll(r.Body)
-		if errr != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errr)
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 		defer r.Body.Close()
 
@@ -36,13 +35,12 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 		if contentType == "" {
 			contentType = http.DetectContentType(body)
 		}
-
-		if contentType != "application/x-yaml" && contentType != "text/x-yaml" {
-			return sdk.NewErrorFrom(sdk.ErrUnsupportedMediaType, fmt.Sprintf("unsupported content-type: %s", contentType))
+		format, err := exportentities.GetFormatFromContentType(contentType)
+		if err != nil {
+			return err
 		}
 
-		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key,
+		proj, err := project.Load(api.mustDB(), api.Cache, key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -50,18 +48,18 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		)
-		if errp != nil {
-			return sdk.WrapError(errp, "postWorkflowPreviewHandler>> Unable load project")
+		if err != nil {
+			return sdk.WrapError(err, "unable load project")
 		}
 
-		ew, errw := exportentities.UnmarshalWorkflow(body)
+		ew, errw := exportentities.UnmarshalWorkflow(body, format)
 		if errw != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, errw)
 		}
 
-		wf, globalError := workflow.Parse(ctx, *proj, ew)
-		if globalError != nil {
-			return sdk.WrapError(globalError, "unable import workflow %s", ew.GetName())
+		wf, err := workflow.Parse(ctx, *proj, ew)
+		if err != nil {
+			return sdk.WrapError(err, "unable import workflow %s", ew.GetName())
 		}
 
 		// Browse all node to find IDs
@@ -189,8 +187,14 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			contentType = http.DetectContentType(body)
 		}
 
-		if contentType != "application/x-yaml" && contentType != "text/x-yaml" {
-			return sdk.NewErrorFrom(sdk.ErrUnsupportedMediaType, fmt.Sprintf("unsupported content-type: %s", contentType))
+		format, err := exportentities.GetFormatFromContentType(contentType)
+		if err != nil {
+			return err
+		}
+
+		ew, err := exportentities.UnmarshalWorkflow(body, format)
+		if err != nil {
+			return err
 		}
 
 		// Load project
@@ -216,11 +220,6 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		// if workflow is as-code, we can't save it from edit as yml
 		if wf.FromRepository != "" {
 			return sdk.WithStack(sdk.ErrForbidden)
-		}
-
-		ew, errw := exportentities.UnmarshalWorkflow(body)
-		if errw != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errw)
 		}
 
 		tx, errtx := api.mustDB().Begin()

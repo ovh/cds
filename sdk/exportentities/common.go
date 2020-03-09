@@ -14,8 +14,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//GetFormat return a format
-func GetFormat(f string) (Format, error) {
+// GetFormatFromPath return a format.
+func GetFormatFromPath(f string) (Format, error) {
 	s := strings.ToLower(f)
 	s = strings.TrimSpace(s)
 	switch s {
@@ -23,20 +23,28 @@ func GetFormat(f string) (Format, error) {
 		return FormatYAML, nil
 	case "json", ".json":
 		return FormatJSON, nil
-	case "toml", "tml", ".toml", ".tml":
-		return FormatTOML, nil
 	default:
 		return UnknownFormat, sdk.WithStack(ErrUnsupportedFormat)
 	}
 }
 
-//GetFormatStr return a format in string
+// GetFormatFromContentType return a format.
+func GetFormatFromContentType(ct string) (Format, error) {
+	switch ct {
+	case "application/x-yaml", "text/x-yaml":
+		return FormatYAML, nil
+	case "application/json":
+		return FormatJSON, nil
+	default:
+		return UnknownFormat, sdk.WithStack(ErrUnsupportedFormat)
+	}
+}
+
+// GetFormatStr return a format in string.
 func GetFormatStr(f Format) (string, error) {
 	switch f {
 	case FormatJSON:
 		return "json", nil
-	case FormatTOML:
-		return "toml", nil
 	case FormatYAML:
 		return "yaml", nil
 	default:
@@ -44,7 +52,7 @@ func GetFormatStr(f Format) (string, error) {
 	}
 }
 
-//GetContentType returns the content type for a content type
+// GetContentType returns the content type for a content type.
 func GetContentType(f Format) string {
 	switch f {
 	case FormatYAML:
@@ -56,18 +64,32 @@ func GetContentType(f Format) string {
 	}
 }
 
-//Unmarshal supports JSON, YAML
+// Unmarshal supports JSON, YAML
 func Unmarshal(btes []byte, f Format, i interface{}) error {
-	var errMarshal error
+	var err error
 	switch f {
 	case FormatJSON:
-		errMarshal = json.Unmarshal(btes, i)
+		err = json.Unmarshal(btes, i)
 	case FormatYAML:
-		errMarshal = yaml.Unmarshal(btes, i)
+		err = yaml.Unmarshal(btes, i)
 	default:
-		errMarshal = ErrUnsupportedFormat
+		err = ErrUnsupportedFormat
 	}
-	return sdk.WithStack(errMarshal)
+	return sdk.WithStack(err)
+}
+
+// UnmarshalStrict supports JSON, YAML
+func UnmarshalStrict(btes []byte, f Format, i interface{}) error {
+	var err error
+	switch f {
+	case FormatJSON:
+		err = json.Unmarshal(btes, i)
+	case FormatYAML:
+		err = yaml.UnmarshalStrict(btes, i)
+	default:
+		err = ErrUnsupportedFormat
+	}
+	return sdk.WithStack(err)
 }
 
 //Marshal supports JSON, YAML
@@ -95,18 +117,14 @@ func ReadFile(filename string) ([]byte, Format, error) {
 }
 
 //OpenFile opens a file
-func OpenFile(filename string) (io.ReadCloser, Format, error) {
-	format := FormatYAML
-	if strings.HasSuffix(filename, ".json") {
-		format = FormatJSON
-	}
+func OpenFile(filename string) (io.ReadCloser, error) {
 	r, err := os.Open(filename)
-	return r, format, err
+	return r, err
 }
 
 // ReadURL reads the file given by an URL
 func ReadURL(u string, f string) ([]byte, Format, error) {
-	format, err := GetFormat(f)
+	format, err := GetFormatFromPath(f)
 	if err != nil {
 		return nil, format, err
 	}
@@ -129,35 +147,28 @@ func ReadURL(u string, f string) ([]byte, Format, error) {
 }
 
 // OpenURL opens an URL
-func OpenURL(u string, f string) (io.ReadCloser, Format, error) {
-	format, err := GetFormat(f)
-	if err != nil {
-		return nil, format, err
-	}
-
+func OpenURL(u string) (io.ReadCloser, error) {
 	netClient := &http.Client{
 		Timeout: time.Second * 10,
 	}
 	response, err := netClient.Get(u)
 	if err != nil {
-		return nil, format, sdk.WithStack(err)
+		return nil, sdk.WithStack(err)
 	}
-
-	return response.Body, format, err
+	return response.Body, err
 }
 
 // OpenPath opens an URL or a file
 func OpenPath(path string) (io.ReadCloser, Format, error) {
-	var contentFile io.ReadCloser
-	formatStr := "yaml"
-	if strings.HasSuffix(path, ".json") {
-		formatStr = "json"
+	format, err := GetFormatFromPath(path)
+	if err != nil {
+		return nil, format, err
 	}
-	format, _ := GetFormat(formatStr)
 
+	var contentFile io.ReadCloser
 	if sdk.IsURL(path) {
 		var err error
-		contentFile, format, err = OpenURL(path, formatStr)
+		contentFile, err = OpenURL(path)
 		if err != nil {
 			return nil, format, err
 		}

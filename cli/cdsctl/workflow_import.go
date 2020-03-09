@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -34,14 +35,18 @@ If you want to update also dependencies likes pipelines, applications or environ
 
 func workflowImportRun(c cli.Values) error {
 	path := c.GetString("path")
-	contentFile, format, err := exportentities.OpenPath(path)
+	contentFile, _, err := exportentities.OpenPath(path)
 	if err != nil {
 		return err
 	}
 	defer contentFile.Close() //nolint
-	formatStr, _ := exportentities.GetFormatStr(format)
 
-	msgs, err := client.WorkflowImport(c.GetString(_ProjectKey), contentFile, formatStr, c.GetBool("force"))
+	var mods []cdsclient.RequestModifier
+	if c.GetBool("force") {
+		mods = append(mods, cdsclient.Force())
+	}
+
+	msgs, err := client.WorkflowImport(c.GetString(_ProjectKey), contentFile, mods...)
 	for _, s := range msgs {
 		fmt.Println(s)
 	}

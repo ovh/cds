@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -106,14 +107,18 @@ var environmentImportCmd = cli.Command{
 
 func environmentImportRun(c cli.Values) error {
 	path := c.GetString("path")
-	contentFile, format, err := exportentities.OpenPath(path)
+	contentFile, _, err := exportentities.OpenPath(path)
 	if err != nil {
 		return err
 	}
 	defer contentFile.Close() //nolint
-	formatStr, _ := exportentities.GetFormatStr(format)
 
-	msgs, err := client.EnvironmentImport(c.GetString(_ProjectKey), contentFile, formatStr, c.GetBool("force"))
+	var mods []cdsclient.RequestModifier
+	if c.GetBool("force") {
+		mods = append(mods, cdsclient.Force())
+	}
+
+	msgs, err := client.EnvironmentImport(c.GetString(_ProjectKey), contentFile, mods...)
 	for _, s := range msgs {
 		fmt.Println(s)
 	}
@@ -140,7 +145,8 @@ var environmentExportCmd = cli.Command{
 }
 
 func environmentExportRun(c cli.Values) error {
-	btes, err := client.EnvironmentExport(c.GetString(_ProjectKey), c.GetString("environment-name"), c.GetString("format"))
+	btes, err := client.EnvironmentExport(c.GetString(_ProjectKey), c.GetString("environment-name"),
+		cdsclient.Format(c.GetString("format")))
 	if err != nil {
 		return err
 	}

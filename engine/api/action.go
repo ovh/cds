@@ -600,8 +600,7 @@ func (api *API) getActionExportHandler() service.Handler {
 		if format == "" {
 			format = "yaml"
 		}
-
-		f, err := exportentities.GetFormat(format)
+		f, err := exportentities.GetFormatFromPath(format)
 		if err != nil {
 			return err
 		}
@@ -628,18 +627,14 @@ func (api *API) importActionHandler() service.Handler {
 		if contentType == "" {
 			contentType = http.DetectContentType(body)
 		}
+		format, err := exportentities.GetFormatFromContentType(contentType)
+		if err != nil {
+			return err
+		}
 
 		var ea exportentities.Action
-		switch contentType {
-		case "application/json":
-			err = json.Unmarshal(body, &ea)
-		case "application/x-yaml", "text/x-yam":
-			err = yaml.Unmarshal(body, &ea)
-		default:
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unsupported content-type: %s", contentType)
-		}
-		if err != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, err)
+		if err := exportentities.Unmarshal(body, format, &ea); err != nil {
+			return err
 		}
 
 		tx, err := api.mustDB().Begin()

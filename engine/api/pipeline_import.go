@@ -59,15 +59,15 @@ func (api *API) importPipelineHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		format := r.FormValue("format")
-		forceUpdate := FormBool(r, "forceUpdate")
+		force := FormBool(r, "force")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key,
+		proj, err := project.Load(api.mustDB(), api.Cache, key,
 			project.LoadOptions.Default,
 			project.LoadOptions.WithGroups,
 		)
-		if errp != nil {
-			return sdk.WrapError(errp, "Unable to load project %s", key)
+		if err != nil {
+			return sdk.WrapError(err, "unable to load project %s", key)
 		}
 
 		// get request body
@@ -88,7 +88,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		pip, allMsg, globalError := pipeline.ParseAndImport(ctx, tx, api.Cache, *proj, payload, getAPIConsumer(ctx),
-			pipeline.ImportOptions{Force: forceUpdate})
+			pipeline.ImportOptions{Force: force})
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import pipeline")

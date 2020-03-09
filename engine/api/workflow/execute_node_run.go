@@ -776,7 +776,10 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	chanNodeJobRunDone := make(chan bool, stopWorkflowNodeRunNBWorker)
 	chanErr := make(chan error, stopWorkflowNodeRunNBWorker)
 	for i := 0; i < stopWorkflowNodeRunNBWorker && i < len(ids); i++ {
-		report.Merge(ctx, stopWorkflowNodeJobRun(ctx, dbFunc, store, proj, stopInfos, chanNjrID, chanErr, chanNodeJobRunDone, &wg))
+		go func() {
+			r := stopWorkflowNodeJobRun(ctx, dbFunc, store, proj, stopInfos, chanNjrID, chanErr, chanNodeJobRunDone, &wg)
+			report.Merge(ctx, r)
+		}()
 	}
 
 	wg.Add(len(ids))

@@ -80,6 +80,23 @@ func TarWorkflowComponents(ctx context.Context, w WorkflowComponents, writer io.
 		}
 	}()
 
+	if w.Template.Name != "" {
+		bs, err := yaml.Marshal(w.Template)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		if err := tw.WriteHeader(&tar.Header{
+			Name: fmt.Sprintf(PullWorkflowName, w.Template.Name),
+			Mode: 0644,
+			Size: int64(len(bs)),
+		}); err != nil {
+			return sdk.WrapError(err, "unable to write template header for %s", w.Template.Name)
+		}
+		if _, err := tw.Write(bs); err != nil {
+			return sdk.WrapError(err, "unable to write template value")
+		}
+	}
+
 	if w.Workflow != nil {
 		bs, err := yaml.Marshal(w.Workflow)
 		if err != nil {
@@ -171,12 +188,17 @@ func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowCompo
 			return res, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read tar file"))
 		}
 
+		format, err := GetFormatFromPath(hdr.Name)
+		if err != nil {
+			return res, err
+		}
+
 		var templateOrWorkflowFileName string
 		b := buff.Bytes()
 		switch {
 		case strings.Contains(hdr.Name, ".app."):
 			var app Application
-			if err := yaml.Unmarshal(b, &app); err != nil {
+			if err := Unmarshal(b, format, &app); err != nil {
 				log.Error(ctx, "ExtractWorkflowFromTar> Unable to unmarshal application %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("unable to unmarshal application %s: %v", hdr.Name, err))
 				continue
@@ -184,7 +206,7 @@ func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowCompo
 			res.Applications = append(res.Applications, app)
 		case strings.Contains(hdr.Name, ".pip."):
 			var pip PipelineV1
-			if err := yaml.Unmarshal(b, &pip); err != nil {
+			if err := Unmarshal(b, format, &pip); err != nil {
 				log.Error(ctx, "ExtractWorkflowFromTar> Unable to unmarshal pipeline %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("unable to unmarshal pipeline %s: %v", hdr.Name, err))
 				continue
@@ -192,7 +214,7 @@ func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowCompo
 			res.Pipelines = append(res.Pipelines, pip)
 		case strings.Contains(hdr.Name, ".env."):
 			var env Environment
-			if err := yaml.Unmarshal(b, &env); err != nil {
+			if err := Unmarshal(b, format, &env); err != nil {
 				log.Error(ctx, "ExtractWorkflowFromTar> Unable to unmarshal environment %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("unable to unmarshal environment %s: %v", hdr.Name, err))
 				continue
@@ -210,13 +232,13 @@ func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowCompo
 			templateOrWorkflowFileName = hdr.Name
 
 			var tmp TemplateInstance
-			isTemplate := yaml.UnmarshalStrict(b, &tmp) == nil && tmp.From != ""
+			isTemplate := UnmarshalStrict(b, format, &tmp) == nil && tmp.From != ""
 			if isTemplate {
 				res.Template = tmp
 				continue
 			}
 
-			res.Workflow, err = UnmarshalWorkflow(b)
+			res.Workflow, err = UnmarshalWorkflow(b, format)
 			if err != nil {
 				log.Error(ctx, "Push> Unable to unmarshal workflow %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("unable to unmarshal workflow %s: %v", hdr.Name, err))
