@@ -63,7 +63,7 @@ func (api *API) getVariablesInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load %s", key)
 		}
 
-		return service.WriteJSON(w, p.Variable, http.StatusOK)
+		return service.WriteJSON(w, p.Variables, http.StatusOK)
 	}
 }
 
@@ -85,12 +85,12 @@ func (api *API) deleteVariableFromProjectHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		varToDelete, errV := project.GetVariableInProject(api.mustDB(), p.ID, varName)
+		varToDelete, errV := project.LoadVariable(api.mustDB(), p.ID, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "deleteVariableFromProject> Cannot load variable %s", varName)
 		}
 
-		if err := project.DeleteVariable(tx, p, varToDelete, getAPIConsumer(ctx)); err != nil {
+		if err := project.DeleteVariable(tx, p.ID, varToDelete, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot delete %s", varName)
 		}
 
@@ -115,14 +115,10 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return err
 		}
-		if newVar.Name != varName || newVar.Type == sdk.KeyVariable {
-			return sdk.WithStack(sdk.ErrWrongRequest)
-		}
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInProject: Cannot load %s", key)
-
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -132,21 +128,19 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		previousVar, err := project.GetVariableByID(tx, p.ID, newVar.ID, project.WithClearPassword())
-		if err := project.UpdateVariable(tx, p, &newVar, previousVar, getAPIConsumer(ctx)); err != nil {
+		previousVar, err := project.LoadVariable(tx, p.ID, varName)
+		if err != nil {
+			return err
+		}
+		if err := project.UpdateVariable(tx, p.ID, &newVar, previousVar, getAPIConsumer(ctx)); err != nil {
 			return sdk.WrapError(err, "updateVariableInProject: Cannot update variable %s in project %s", varName, p.Name)
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateVariableInProject: cannot commit transaction")
-
 		}
 
 		event.PublishUpdateProjectVariable(ctx, p, newVar, *previousVar, getAPIConsumer(ctx))
-
-		if sdk.NeedPlaceholder(newVar.Type) {
-			newVar.Value = sdk.PasswordPlaceholder
-		}
 
 		return service.WriteJSON(w, newVar, http.StatusOK)
 	}
@@ -170,16 +164,7 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "AddVariableInProject: Cannot load %s", key)
-		}
-
-		varInProject, err := project.CheckVariableInProject(api.mustDB(), p.ID, varName)
-		if err != nil {
-			return sdk.WrapError(err, "AddVariableInProject: Cannot check if variable %s is already in the project %s", varName, p.Name)
-		}
-
-		if varInProject {
-			return sdk.WithStack(sdk.ErrVariableExists)
+			return err
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -188,16 +173,12 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		switch newVar.Type {
-		case sdk.KeyVariable:
-			err = project.AddKeyPair(tx, p, newVar.Name, getAPIConsumer(ctx))
-			break
-		default:
-			err = project.InsertVariable(tx, p, &newVar, getAPIConsumer(ctx))
-			break
+		if !sdk.IsInArray(newVar.Type, sdk.AvailableVariableType) {
+			return sdk.WithStack(sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid variable type %s", newVar.Type))
 		}
-		if err != nil {
-			return sdk.WrapError(err, "AddVariableInProject: Cannot add variable %s in project %s", varName, p.Name)
+
+		if err := project.InsertVariable(tx, p.ID, &newVar, getAPIConsumer(ctx)); err != nil {
+			return err
 
 		}
 
@@ -207,10 +188,6 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 
 		// Send Add variable event
 		event.PublishAddProjectVariable(ctx, p, newVar, getAPIConsumer(ctx))
-
-		if sdk.NeedPlaceholder(newVar.Type) {
-			newVar.Value = sdk.PasswordPlaceholder
-		}
 
 		return service.WriteJSON(w, newVar, http.StatusOK)
 	}
@@ -228,9 +205,9 @@ func (api *API) getVariableInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "getVariableInProjectHandler: Cannot load %s", key)
 		}
 
-		variable, errV := project.GetVariableInProject(api.mustDB(), p.ID, varName)
-		if errV != nil {
-			return sdk.WrapError(errV, "getVariableAuditInProjectHandler> Cannot load variable %s", varName)
+		variable, err := project.LoadVariable(api.mustDB(), p.ID, varName)
+		if err != nil {
+			return err
 		}
 
 		return service.WriteJSON(w, variable, http.StatusOK)
@@ -239,24 +216,23 @@ func (api *API) getVariableInProjectHandler() service.Handler {
 
 func (api *API) getVariableAuditInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		varName := vars["name"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key)
-		if errP != nil {
-			return sdk.WrapError(errP, "getVariableAuditInProjectHandler> Cannot load project %s", key)
+		p, err := project.Load(api.mustDB(), api.Cache, key)
+		if err != nil {
+			return err
 		}
 
-		variable, errV := project.GetVariableInProject(api.mustDB(), p.ID, varName)
-		if errV != nil {
-			return sdk.WrapError(errV, "getVariableAuditInProjectHandler> Cannot load variable %s", varName)
+		variable, err := project.LoadVariable(api.mustDB(), p.ID, varName)
+		if err != nil {
+			return err
 		}
 
-		audits, errA := project.LoadVariableAudits(api.mustDB(), p.ID, variable.ID)
-		if errA != nil {
-			return sdk.WrapError(errA, "getVariableAuditInProjectHandler> Cannot load audit for variable %s", varName)
+		audits, err := project.LoadVariableAudits(api.mustDB(), p.ID, variable.ID)
+		if err != nil {
+			return err
 		}
 		return service.WriteJSON(w, audits, http.StatusOK)
 	}

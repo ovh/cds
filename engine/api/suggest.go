@@ -25,13 +25,13 @@ func (api *API) getVariablesHandler() service.Handler {
 
 		var allVariables []string
 
-		// Load variable project
-		projectVar, err := project.GetAllVariableNameInProjectByKey(api.mustDB(), projectKey)
+		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, project.LoadOptions.WithVariables)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot Load project variables")
+			return err
 		}
+		var projectVar = make([]string, len(proj.Variables))
 		for i := range projectVar {
-			projectVar[i] = fmt.Sprintf("{{.cds.proj.%s}}", projectVar[i])
+			projectVar[i] = fmt.Sprintf("{{.cds.proj.%s}}", proj.Variables[i].Name)
 		}
 		allVariables = append(allVariables, projectVar...)
 

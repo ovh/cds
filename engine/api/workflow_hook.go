@@ -259,7 +259,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load workflow run")
 		}
 
-		pv, err := project.GetAllVariableInProject(tx, wr.Workflow.ProjectID, project.WithClearPassword())
+		pv, err := project.LoadAllVariablesWithDecrytion(tx, wr.Workflow.ProjectID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project variable")
 		}
@@ -321,7 +321,7 @@ func (api *API) getWorkflowJobHookDetailsHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		pv, err := project.GetAllVariableInProject(db, wr.Workflow.ProjectID, project.WithClearPassword())
+		pv, err := project.LoadAllVariablesWithDecrytion(db, wr.Workflow.ProjectID)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project variable")
 		}

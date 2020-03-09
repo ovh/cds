@@ -3,7 +3,6 @@ package project
 import (
 	"context"
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
@@ -31,11 +30,66 @@ func (e dbProjectKey) Canonical() gorpmapping.CanonicalForms {
 
 type dbLabel sdk.Label
 
+type dbProjectVariable struct {
+	gorpmapping.SignedEntity
+	ID          int64  `db:"id"`
+	ProjectID   int64  `db:"project_id"`
+	Name        string `db:"var_name"`
+	ClearValue  string `db:"var_value"`
+	CipherValue string `db:"cipher_value" gorpmapping:"encrypted,ID,Name"`
+	Type        string `db:"var_type"`
+}
+
+func (e dbProjectVariable) Canonical() gorpmapping.CanonicalForms {
+	var _ = []interface{}{e.ProjectID, e.ID, e.Name, e.Type}
+	return gorpmapping.CanonicalForms{
+		"{{print .ProjectID}}{{print .ID}}{{.Name}}{{.Type}}",
+	}
+}
+
+func newDBProjectVariable(v sdk.Variable, projID int64) dbProjectVariable {
+	if sdk.NeedPlaceholder(v.Type) {
+		return dbProjectVariable{
+			ID:          v.ID,
+			Name:        v.Name,
+			CipherValue: v.Value,
+			Type:        v.Type,
+			ProjectID:   projID,
+		}
+	}
+	return dbProjectVariable{
+		ID:         v.ID,
+		Name:       v.Name,
+		ClearValue: v.Value,
+		Type:       v.Type,
+		ProjectID:  projID,
+	}
+}
+
+func (e dbProjectVariable) Variable() sdk.Variable {
+	if sdk.NeedPlaceholder(e.Type) {
+		return sdk.Variable{
+			ID:    e.ID,
+			Name:  e.Name,
+			Value: e.CipherValue,
+			Type:  e.Type,
+		}
+	}
+
+	return sdk.Variable{
+		ID:    e.ID,
+		Name:  e.Name,
+		Value: e.ClearValue,
+		Type:  e.Type,
+	}
+}
+
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbProject{}, "project", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectVariableAudit{}, "project_variable_audit", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectKey{}, "project_key", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbLabel{}, "project_label", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbProjectVariable{}, "project_variable", true, "id"))
 }
 
 // PostGet is a db hook
@@ -128,7 +182,7 @@ func (pva *dbProjectVariableAudit) PostGet(db gorp.SqlExecutor) error {
 		if sdk.NeedPlaceholder(vAfter.Type) {
 			vAfter.Value = sdk.PasswordPlaceholder
 		}
-		pva.VariableAfter = vAfter
+		pva.VariableAfter = *vAfter
 	}
 
 	return nil
@@ -147,14 +201,12 @@ func (pva *dbProjectVariableAudit) PostUpdate(db gorp.SqlExecutor) error {
 		vB.String = string(v)
 	}
 
-	if pva.VariableAfter != nil {
-		v, err := json.Marshal(pva.VariableAfter)
-		if err != nil {
-			return err
-		}
-		vA.Valid = true
-		vA.String = string(v)
+	v, err := json.Marshal(pva.VariableAfter)
+	if err != nil {
+		return err
 	}
+	vA.Valid = true
+	vA.String = string(v)
 
 	query := "update project_variable_audit set variable_before = $2, variable_after = $3 where id = $1"
 	if _, err := db.Exec(query, pva.ID, vB, vA); err != nil {
@@ -172,22 +224,12 @@ func (pva *dbProjectVariableAudit) PostInsert(db gorp.SqlExecutor) error {
 func (pva *dbProjectVariableAudit) PreInsert(s gorp.SqlExecutor) error {
 	if pva.VariableBefore != nil {
 		if sdk.NeedPlaceholder(pva.VariableBefore.Type) {
-			secret, err := secret.Encrypt([]byte(pva.VariableBefore.Value))
-			if err != nil {
-				return err
-			}
-			pva.VariableBefore.Value = base64.StdEncoding.EncodeToString(secret)
+			pva.VariableBefore.Value = sdk.PasswordPlaceholder
 		}
 	}
-	if pva.VariableAfter != nil {
-		if sdk.NeedPlaceholder(pva.VariableAfter.Type) {
-			var err error
-			secret, err := secret.Encrypt([]byte(pva.VariableAfter.Value))
-			if err != nil {
-				return err
-			}
-			pva.VariableAfter.Value = base64.StdEncoding.EncodeToString(secret)
-		}
+	if sdk.NeedPlaceholder(pva.VariableAfter.Type) {
+		pva.VariableAfter.Value = sdk.PasswordPlaceholder
 	}
+
 	return nil
 }

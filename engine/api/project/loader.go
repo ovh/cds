@@ -111,11 +111,22 @@ func loadApplicationWithDeploymentStrategies(db gorp.SqlExecutor, store cache.St
 }
 
 func loadVariables(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
-	return loadAllVariables(db, store, proj)
+	vars, err := LoadAllVariables(db, proj.ID)
+	if err != nil {
+		return err
+	}
+	proj.Variables = vars
+	return nil
 }
 
 func loadVariablesWithClearPassword(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
-	return loadAllVariables(db, store, proj, WithClearPassword())
+	vars, err := LoadAllVariablesWithDecrytion(db, proj.ID)
+	if err != nil {
+		return err
+	}
+	proj.Variables = vars
+	return nil
+
 }
 
 func loadApplicationVariables(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project) error {
@@ -191,15 +202,6 @@ func loadWorkflowNames(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project
 		return sdk.WithStack(err)
 	}
 	proj.WorkflowNames = wfs
-	return nil
-}
-
-func loadAllVariables(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, args ...GetAllVariableFuncArg) error {
-	vars, err := GetAllVariableInProject(db, proj.ID, args...)
-	if err != nil && sdk.Cause(err) != sql.ErrNoRows {
-		return sdk.WithStack(err)
-	}
-	proj.Variable = vars
 	return nil
 }
 

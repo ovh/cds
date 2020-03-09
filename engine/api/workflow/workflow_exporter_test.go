@@ -24,11 +24,8 @@ import (
 func TestPull(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-
-	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
 	//First pipeline
 	pip := sdk.Pipeline{
