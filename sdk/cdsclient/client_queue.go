@@ -86,10 +86,13 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			_ = json.Unmarshal(content, &apiEvent) // ignore errors
 			// filter only EventRunWorkflowJob
 			if apiEvent.EventType == "sdk.EventRunWorkflowJob" {
-				jobRunID, ok := apiEvent.Payload["ID"].(float64)
-				status, okStatus := apiEvent.Payload["Status"].(string)
-				if ok && okStatus && status == sdk.StatusWaiting {
-					job, err := c.QueueJobInfo(ctx, int64(jobRunID))
+				var runJob sdk.EventRunWorkflowJob
+				if err := json.Unmarshal(apiEvent.Payload, &runJob); err != nil {
+					errs <- fmt.Errorf("unable to unmarshal job event: %v", err)
+					continue
+				}
+				if runJob.ID != 0 && runJob.Status == sdk.StatusWaiting {
+					job, err := c.QueueJobInfo(ctx, runJob.ID)
 
 					// Do not log the error if the job does not exist
 					if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
@@ -97,7 +100,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 					}
 
 					if err != nil {
-						errs <- fmt.Errorf("unable to get job %v info: %v", jobRunID, err)
+						errs <- fmt.Errorf("unable to get job %v info: %v", runJob.ID, err)
 						continue
 					}
 

@@ -232,7 +232,7 @@ export class WorkflowComponent {
         }
 
         if (this.saveAsCode) {
-            this.saveAsCode.show(this.editWorkflow, 'workflow');
+            this.saveAsCode.show(null, 'workflow');
         }
     }
 }

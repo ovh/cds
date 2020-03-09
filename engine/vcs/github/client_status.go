@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -152,8 +150,8 @@ func processGithubState(s Status) string {
 func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatusDetail bool) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
-	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
-		return data, sdk.WrapError(err, "Error during consumption")
+	if err := json.Unmarshal(event.Payload, &eventNR); err != nil {
+		return data, sdk.WrapError(err, "cannot unmarshal payload")
 	}
 	//We only manage status Success and Failure
 	if eventNR.Status == sdk.StatusChecking ||

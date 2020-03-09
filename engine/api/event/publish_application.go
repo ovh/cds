@@ -2,22 +2,22 @@ package event
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/fatih/structs"
 
 	"github.com/ovh/cds/sdk"
 )
 
 // PublishApplicationEvent publish application event
 func publishApplicationEvent(ctx context.Context, payload interface{}, key, appName string, u sdk.Identifiable) {
+	bts, _ := json.Marshal(payload)
 	event := sdk.Event{
 		Timestamp:       time.Now(),
 		Hostname:        hostname,
 		CDSName:         cdsname,
 		EventType:       fmt.Sprintf("%T", payload),
-		Payload:         structs.Map(payload),
+		Payload:         bts,
 		ProjectKey:      key,
 		ApplicationName: appName,
 	}
