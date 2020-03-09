@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"io/ioutil"
 	"net/http/httptest"
 	"strings"
@@ -168,7 +167,6 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 	variables, errLoadVars := environment.LoadAllVariablesWithDecrytion(db, env.ID)
 	test.NoError(t, errLoadVars)
 	env.Variables = variables
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
 
 	env1, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
 	require.NoError(t, err)
@@ -176,7 +174,6 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 	variables1, errLoadVariables := environment.LoadAllVariablesWithDecrytion(db, env1.ID)
 	test.NoError(t, errLoadVariables)
 	env1.Variables = variables1
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env1))
 
 	assert.NotNil(t, env1)
 	assert.Equal(t, "myNewEnv-1", env1.Name)
@@ -288,7 +285,6 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	variables, errLoadVars := environment.LoadAllVariablesWithDecrytion(db, env.ID)
 	test.NoError(t, errLoadVars)
 	env.Variables = variables
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
 
 	env1, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
 	require.NoError(t, err)
@@ -296,7 +292,6 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	variables1, errLoadVariables := environment.LoadAllVariablesWithDecrytion(db, env1.ID)
 	test.NoError(t, errLoadVariables)
 	env1.Variables = variables1
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env1))
 
 	assert.NotNil(t, env1)
 	assert.Equal(t, "myNewEnv-1", env1.Name)
@@ -351,7 +346,6 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	variables, errLoadVars = environment.LoadAllVariablesWithDecrytion(db, env.ID)
 	test.NoError(t, errLoadVars)
 	env.Variables = variables
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
 
 	env1, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
 	require.NoError(t, err)
@@ -359,7 +353,6 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	variables1, errLoadVariables = environment.LoadAllVariablesWithDecrytion(db, env1.ID)
 	test.NoError(t, errLoadVariables)
 	env1.Variables = variables1
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env1))
 
 	assert.NotNil(t, env1)
 	assert.Equal(t, "myNewEnv-1", env1.Name)
@@ -430,7 +423,6 @@ keys:
 	variables, errLoadVars := environment.LoadAllVariablesWithDecrytion(db, env.ID)
 	test.NoError(t, errLoadVars)
 	env.Variables = variables
-	test.NoError(t, environment.LoadAllDecryptedKeys(context.TODO(), db, env))
 
 	assert.NotNil(t, env)
 	assert.Equal(t, "myNewEnv", env.Name)
