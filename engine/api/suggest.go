@@ -35,11 +35,21 @@ func (api *API) getVariablesHandler() service.Handler {
 		}
 		allVariables = append(allVariables, projectVar...)
 
-		// Load env variable
-		envVarNameArray, err := environment.GetAllVariableNameByProject(api.mustDB(), projectKey)
+		env, err := environment.LoadEnvironmentByName(api.mustDB(), projectKey, appName)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot Load env variables")
+			return err
 		}
+
+		envVars, err := environment.LoadAllVariables(api.mustDB(), env.ID)
+		if err != nil {
+			return err
+		}
+
+		envVarNameArray := make([]string, len(envVars))
+		for i := range envVars {
+			envVarNameArray[i] = envVars[i].Name
+		}
+
 		for i := range envVarNameArray {
 			envVarNameArray[i] = fmt.Sprintf("{{.cds.env.%s}}", envVarNameArray[i])
 		}
