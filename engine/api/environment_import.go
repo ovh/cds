@@ -2,12 +2,10 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
@@ -29,47 +27,41 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		key := vars[permProjectKey]
 		force := FormBool(r, "force")
 
-		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithGroups)
-		if errp != nil {
-			return sdk.WrapError(errp, "Unable load project")
+		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithGroups)
+		if err != nil {
+			return sdk.WrapError(err, "unable load project")
 		}
 
-		body, errr := ioutil.ReadAll(r.Body)
-		if errr != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errr)
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
-		defer r.Body.Close()
+		defer r.Body.Close() // nolint
 
 		contentType := r.Header.Get("Content-Type")
 		if contentType == "" {
 			contentType = http.DetectContentType(body)
 		}
-
-		var eenv = new(exportentities.Environment)
-		var errenv error
-		switch contentType {
-		case "application/json":
-			errenv = json.Unmarshal(body, eenv)
-		case "application/x-yaml", "text/x-yam":
-			errenv = yaml.Unmarshal(body, eenv)
-		default:
-			return sdk.WrapError(sdk.ErrWrongRequest, "Unsupported content-type: %s", contentType)
+		format, err := exportentities.GetFormatFromContentType(contentType)
+		if err != nil {
+			return err
 		}
-		if errenv != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errenv)
+
+		var data exportentities.Environment
+		if err := exportentities.Unmarshal(body, format, &data); err != nil {
+			return err
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "Unable to start tx")
+			return sdk.WrapError(err, "unable to start tx")
 		}
 		defer tx.Rollback() // nolint
 
-		_, msgList, globalError := environment.ParseAndImport(tx, *proj, eenv, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
+		_, msgList, globalError := environment.ParseAndImport(tx, *proj, data, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getAPIConsumer(ctx))
 		msgListString := translate(r, msgList)
 		if globalError != nil {
-			globalError = sdk.WrapError(globalError, "Unable to import environment %s", eenv.Name)
+			globalError = sdk.WrapError(globalError, "Unable to import environment %s", data.Name)
 			if sdk.ErrorIsUnknown(globalError) {
 				return globalError
 			}
@@ -115,7 +107,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 			return err
 		}
 
-		env := payload.Environment()
+		env := data.Environment()
 		allMsg := []sdk.Message{}
 		msgChan := make(chan sdk.Message, 10)
 		done := make(chan bool)
@@ -131,7 +123,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 			}
 		}()
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "cannot start transaction")
 		}
@@ -177,19 +169,24 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-      return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read body"))
-		}
-		format, err := exportentities.GetFormat(format)
-		if err != nil {
-      return sdk.NewError(sdk.ErrWrongRequest, err)
+			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read body"))
 		}
 
-    var data exportentities.Environment
-		if err := exportentities.Unmarshal(body, format, &data) err != nil {
+		contentType := r.Header.Get("Content-Type")
+		if contentType == "" {
+			contentType = http.DetectContentType(body)
+		}
+		format, err := exportentities.GetFormatFromContentType(contentType)
+		if err != nil {
 			return err
 		}
 
-		newEnv := payload.Environment()
+		var data exportentities.Environment
+		if err := exportentities.Unmarshal(body, format, &data); err != nil {
+			return err
+		}
+
+		newEnv := data.Environment()
 		allMsg := []sdk.Message{}
 		msgChan := make(chan sdk.Message, 10)
 		done := make(chan bool)

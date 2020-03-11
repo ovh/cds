@@ -583,6 +583,15 @@ func (api *API) getActionExportHandler() service.Handler {
 		groupName := vars["permGroupName"]
 		actionName := vars["permActionName"]
 
+		format := FormString(r, "format")
+		if format == "" {
+			format = "yaml"
+		}
+		f, err := exportentities.GetFormatFromPath(format)
+		if err != nil {
+			return err
+		}
+
 		g, err := group.LoadByName(ctx, api.mustDB(), groupName)
 		if err != nil {
 			return err
@@ -594,15 +603,6 @@ func (api *API) getActionExportHandler() service.Handler {
 		}
 		if a == nil {
 			return sdk.WithStack(sdk.ErrNoAction)
-		}
-
-		format := FormString(r, "format")
-		if format == "" {
-			format = "yaml"
-		}
-		f, err := exportentities.GetFormatFromPath(format)
-		if err != nil {
-			return err
 		}
 
 		if err := action.Export(*a, f, w); err != nil {

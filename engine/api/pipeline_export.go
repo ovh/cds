@@ -9,7 +9,6 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	yaml "gopkg.in/yaml.v2"
 )
 
 func (api *API) getPipelineExportHandler() service.Handler {
@@ -18,19 +17,28 @@ func (api *API) getPipelineExportHandler() service.Handler {
 		key := vars[permProjectKey]
 		name := vars["pipelineKey"]
 
+		format := FormString(r, "format")
+		if format == "" {
+			format = "yaml"
+		}
+		f, err := exportentities.GetFormatFromPath(format)
+		if err != nil {
+			return err
+		}
+
 		pip, err := pipeline.Export(ctx, api.mustDB(), key, name)
 		if err != nil {
-			return sdk.WithStack(err)
+			return err
 		}
-		f, err := yaml.Marshal(pip)
+		buf, err := exportentities.Marshal(pip, f)
 		if err != nil {
-			return sdk.WithStack(err)
+			return err
 		}
-		if _, err := w.Write(f); err != nil {
+		if _, err := w.Write(buf); err != nil {
 			return sdk.WithStack(err)
 		}
 
-		w.Header().Add("Content-Type", string(exportentities.FormatYAML))
+		w.Header().Add("Content-Type", exportentities.GetContentType(f))
 		w.WriteHeader(http.StatusOK)
 
 		return nil

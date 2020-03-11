@@ -9,7 +9,6 @@ import (
 	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 
 	"github.com/gorilla/mux"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -25,6 +24,15 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		withPermissions := FormBool(r, "withPermissions")
 
+		format := FormString(r, "format")
+		if format == "" {
+			format = "yaml"
+		}
+		f, err := exportentities.GetFormatFromPath(format)
+		if err != nil {
+			return err
+		}
+
 		opts := make([]v2.ExportOptions, 0)
 		if withPermissions {
 			opts = append(opts, v2.WorkflowWithPermissions)
@@ -36,17 +44,17 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 		}
 		wk, err := workflow.Export(ctx, api.mustDB(), api.Cache, *proj, name, opts...)
 		if err != nil {
-			return sdk.WithStack(err)
+			return err
 		}
-		f, err := yaml.Marshal(wk)
+		buf, err := exportentities.Marshal(wk, f)
 		if err != nil {
-			return sdk.WithStack(err)
+			return err
 		}
-		if _, err := w.Write(f); err != nil {
+		if _, err := w.Write(buf); err != nil {
 			return sdk.WithStack(err)
 		}
 
-		w.Header().Add("Content-Type", string(exportentities.FormatYAML))
+		w.Header().Add("Content-Type", exportentities.GetContentType(f))
 		return nil
 	}
 }

@@ -581,10 +581,10 @@ type Error struct {
 	ID         int         `json:"id"`
 	Status     int         `json:"-"`
 	Message    string      `json:"message"`
-	Data       interface{} `json:"data"`
+	Data       interface{} `json:"data,omitempty"`
 	RequestID  string      `json:"request_id,omitempty"`
 	StackTrace string      `json:"stack_trace,omitempty"`
-	from       string
+	From       string      `json:"from,omitempty"`
 }
 
 func (e Error) Error() string {
@@ -596,8 +596,8 @@ func (e Error) Error() string {
 	} else {
 		message = errorsAmericanEnglish[ErrUnknownError.ID]
 	}
-	if e.from != "" {
-		message = fmt.Sprintf("%s (from: %s)", message, e.from)
+	if e.From != "" {
+		message = fmt.Sprintf("%s (from: %s)", message, e.From)
 	}
 	return message
 }
@@ -656,7 +656,7 @@ type errorWithStack struct {
 func (w errorWithStack) Error() string {
 	var cause string
 	root := w.root.Error()
-	if root != "" && root != w.httpError.from {
+	if root != "" && root != w.httpError.From {
 		cause = fmt.Sprintf(" (caused by: %s)", w.root)
 	}
 	return fmt.Sprintf("%s: %s%s", w.stack.String(), w.httpError, cause)
@@ -738,13 +738,13 @@ func NewError(httpError Error, err error) error {
 
 	// if it's already an error with stack, override the http error and set from value with err cause
 	if e, ok := err.(errorWithStack); ok {
-		httpError.from = e.httpError.from
+		httpError.From = e.httpError.From
 		e.httpError = httpError
 		return e
 	}
 
 	// if it's a library error create a new error with stack
-	httpError.from = err.Error()
+	httpError.From = err.Error()
 	return errorWithStack{
 		root:      errors.WithStack(err),
 		stack:     callers(),
@@ -803,7 +803,7 @@ func WithStack(err error) error {
 	// if it's a Error wrap it in error with stack
 	if e, ok := err.(Error); ok {
 		return errorWithStack{
-			root:      errors.New(e.Error()),
+			root:      errors.New(""),
 			stack:     callers(),
 			httpError: e,
 		}

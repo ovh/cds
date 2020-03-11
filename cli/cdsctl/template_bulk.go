@@ -3,14 +3,12 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
 	survey "gopkg.in/AlecAivazis/survey.v1"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -147,16 +145,7 @@ func templateExtractAndValidateFileParams(filePath string) (*sdk.WorkflowTemplat
 	}
 
 	var f templateBulkFile
-	var errU error
-	switch format {
-	case exportentities.FormatJSON:
-		errU = json.Unmarshal(buf.Bytes(), &f)
-	case exportentities.FormatYAML:
-		errU = yaml.Unmarshal(buf.Bytes(), &f)
-	default:
-		return nil, nil, exportentities.ErrUnsupportedFormat
-	}
-	if errU != nil {
+	if err := exportentities.Unmarshal(buf.Bytes(), format, &f); err != nil {
 		return nil, nil, fmt.Errorf("cannot unmarshal given file %v", err)
 	}
 

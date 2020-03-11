@@ -1414,7 +1414,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if opts != nil {
 			fromRepo = opts.FromRepository
 		}
-		envDB, msgList, err := environment.ParseAndImport(tx, *proj, &env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
+		envDB, msgList, err := environment.ParseAndImport(tx, *proj, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, u)
 		if err != nil {
 			return nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)
 		}

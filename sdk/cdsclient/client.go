@@ -23,7 +23,7 @@ type client struct {
 	name          string
 }
 
-// NewHTTPClient returns a new HTTP Client
+// NewHTTPClient returns a new HTTP Client.
 func NewHTTPClient(timeout time.Duration, insecureSkipVerifyTLS bool) *http.Client {
 	transport := http.Transport{
 		Proxy: http.ProxyFromEnvironment,

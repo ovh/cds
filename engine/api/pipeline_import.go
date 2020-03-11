@@ -2,12 +2,10 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -19,35 +17,28 @@ import (
 
 func (api *API) postPipelinePreviewHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		format := r.FormValue("format")
-
-		// Get body
-		data, errRead := ioutil.ReadAll(r.Body)
-		if errRead != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(errRead, "Unable to read body"))
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read body"))
 		}
 
-		// Compute format
-		f, errF := exportentities.GetFormat(format)
-		if errF != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errF)
+		contentType := r.Header.Get("Content-Type")
+		if contentType == "" {
+			contentType = http.DetectContentType(body)
+		}
+		format, err := exportentities.GetFormatFromContentType(contentType)
+		if err != nil {
+			return err
 		}
 
-		var payload exportentities.PipelineV1
-		var errorParse error
-		switch f {
-		case exportentities.FormatJSON:
-			errorParse = json.Unmarshal(data, &payload)
-		case exportentities.FormatYAML:
-			errorParse = yaml.Unmarshal(data, &payload)
-		}
-		if errorParse != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
+		var data exportentities.PipelineV1
+		if err := exportentities.Unmarshal(body, format, &data); err != nil {
+			return err
 		}
 
-		pip, errP := payload.Pipeline()
-		if errP != nil {
-			return sdk.WrapError(errP, "Unable to parse pipeline")
+		pip, err := data.Pipeline()
+		if err != nil {
+			return sdk.WrapError(err, "unable to parse pipeline")
 		}
 
 		return service.WriteJSON(w, pip, http.StatusOK)

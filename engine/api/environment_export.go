@@ -5,8 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
@@ -20,19 +18,28 @@ func (api *API) getEnvironmentExportHandler() service.Handler {
 		key := vars[permProjectKey]
 		envName := vars["environmentName"]
 
+		format := FormString(r, "format")
+		if format == "" {
+			format = "yaml"
+		}
+		f, err := exportentities.GetFormatFromPath(format)
+		if err != nil {
+			return err
+		}
+
 		env, err := environment.Export(ctx, api.mustDB(), key, envName, project.EncryptWithBuiltinKey)
 		if err != nil {
-			return sdk.WithStack(err)
+			return err
 		}
-		f, err := yaml.Marshal(env)
+		buf, err := exportentities.Marshal(env, f)
 		if err != nil {
-			return sdk.WithStack(err)
+			return err
 		}
-		if _, err := w.Write(f); err != nil {
+		if _, err := w.Write(buf); err != nil {
 			return sdk.WithStack(err)
 		}
 
-		w.Header().Add("Content-Type", string(exportentities.FormatYAML))
+		w.Header().Add("Content-Type", exportentities.GetContentType(f))
 		w.WriteHeader(http.StatusOK)
 		return nil
 	}

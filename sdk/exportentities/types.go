@@ -1,9 +1,5 @@
 package exportentities
 
-import (
-	"errors"
-)
-
 type (
 	//Format is a type
 	Format int
@@ -35,9 +31,4 @@ const (
 	FormatJSON Format = iota
 	FormatYAML
 	UnknownFormat
-)
-
-var (
-	// ErrUnsupportedFormat is for unknown format
-	ErrUnsupportedFormat = errors.New("Format is not supported")
 )

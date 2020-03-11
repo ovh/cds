@@ -24,7 +24,7 @@ func GetFormatFromPath(f string) (Format, error) {
 	case "json", ".json":
 		return FormatJSON, nil
 	default:
-		return UnknownFormat, sdk.WithStack(ErrUnsupportedFormat)
+		return UnknownFormat, sdk.NewErrorFrom(sdk.ErrWrongRequest, "format is not supported")
 	}
 }
 
@@ -36,19 +36,7 @@ func GetFormatFromContentType(ct string) (Format, error) {
 	case "application/json":
 		return FormatJSON, nil
 	default:
-		return UnknownFormat, sdk.WithStack(ErrUnsupportedFormat)
-	}
-}
-
-// GetFormatStr return a format in string.
-func GetFormatStr(f Format) (string, error) {
-	switch f {
-	case FormatJSON:
-		return "json", nil
-	case FormatYAML:
-		return "yaml", nil
-	default:
-		return "", sdk.WithStack(ErrUnsupportedFormat)
+		return UnknownFormat, sdk.NewErrorFrom(sdk.ErrWrongRequest, "format is not supported")
 	}
 }
 
@@ -73,7 +61,7 @@ func Unmarshal(btes []byte, f Format, i interface{}) error {
 	case FormatYAML:
 		err = yaml.Unmarshal(btes, i)
 	default:
-		err = ErrUnsupportedFormat
+		err = sdk.NewErrorFrom(sdk.ErrWrongRequest, "format is not supported")
 	}
 	return sdk.WithStack(err)
 }
@@ -87,7 +75,7 @@ func UnmarshalStrict(btes []byte, f Format, i interface{}) error {
 	case FormatYAML:
 		err = yaml.UnmarshalStrict(btes, i)
 	default:
-		err = ErrUnsupportedFormat
+		err = sdk.NewErrorFrom(sdk.ErrWrongRequest, "format is not supported")
 	}
 	return sdk.WithStack(err)
 }
@@ -95,25 +83,14 @@ func UnmarshalStrict(btes []byte, f Format, i interface{}) error {
 //Marshal supports JSON, YAML
 func Marshal(i interface{}, f Format) ([]byte, error) {
 	var btes []byte
-	var errMarshal error
+	var err error
 	switch f {
 	case FormatJSON:
-		btes, errMarshal = json.Marshal(i)
+		btes, err = json.Marshal(i)
 	case FormatYAML:
-		btes, errMarshal = yaml.Marshal(i)
+		btes, err = yaml.Marshal(i)
 	}
-	return btes, sdk.WithStack(errMarshal)
-}
-
-// ReadFile reads the file and return the content, the format and eventually an error
-func ReadFile(filename string) ([]byte, Format, error) {
-	format := FormatYAML
-	if strings.HasSuffix(filename, ".json") {
-		format = FormatJSON
-	}
-
-	btes, err := ioutil.ReadFile(filename)
-	return btes, format, err
+	return btes, sdk.WithStack(err)
 }
 
 //OpenFile opens a file

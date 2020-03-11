@@ -77,14 +77,13 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 
 func (api *API) postWorkflowImportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		force := FormBool(r, "force")
 
-		body, errr := ioutil.ReadAll(r.Body)
-		if errr != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errr)
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "can't "))
 		}
 		defer r.Body.Close()
 
@@ -92,13 +91,17 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		if contentType == "" {
 			contentType = http.DetectContentType(body)
 		}
-
-		if contentType != "application/x-yaml" && contentType != "text/x-yaml" {
-			return sdk.NewErrorFrom(sdk.ErrUnsupportedMediaType, fmt.Sprintf("unsupported content-type: %s", contentType))
+		format, err := exportentities.GetFormatFromContentType(contentType)
+		if err != nil {
+			return err
 		}
 
-		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key,
+		ew, err := exportentities.UnmarshalWorkflow(body, format)
+		if err != nil {
+			return err
+		}
+
+		proj, err := project.Load(api.mustDB(), api.Cache, key,
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -106,18 +109,13 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithIntegrations,
 		)
-		if errp != nil {
-			return sdk.WrapError(errp, "Unable load project")
+		if err != nil {
+			return sdk.WrapError(err, "unable load project")
 		}
 
-		ew, errw := exportentities.UnmarshalWorkflow(body)
-		if errw != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errw)
-		}
-
-		tx, errtx := api.mustDB().Begin()
-		if errtx != nil {
-			return sdk.WrapError(errtx, "Unable to start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "unable to start transaction")
 		}
 		defer tx.Rollback() // nolint
 
