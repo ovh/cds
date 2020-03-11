@@ -2,13 +2,12 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    Input,
     OnDestroy,
     OnInit,
     ViewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Select } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeType, Workflow } from 'app/model/workflow.model';
@@ -17,6 +16,7 @@ import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.servic
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
+import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
 import 'rxjs/add/observable/zip';
@@ -32,21 +32,17 @@ import { first } from 'rxjs/operators';
 @AutoUnsubscribe()
 export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
 
-    // Project that contains the workflow
-    @Input() project: Project;
-    @Input() workflow: Workflow;
+    project: Project;
+    workflow: Workflow;
+    workflowRun: WorkflowRun;
 
     @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
     nodeSubs: Subscription;
     node: WNode;
 
-    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
-    workflowRunSubs: Subscription;
-    currentWorkflowNodeRun: WorkflowNodeRun;
-
     @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
-    workflowRun: WorkflowRun;
+    currentWorkflowNodeRun: WorkflowNodeRun;
 
     // Loadder for button
     loading: false;
@@ -64,19 +60,42 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
 
     durationIntervalID: number;
 
+    // Data to display
+    currentNodeRunStatus: string;
+    currentNodeRunId: number;
+    currentNodeRunStart: string;
+    currentArtifactsNb: number;
+    stageIds = new Array<number>();
+    currentNodeRunTests: {
+        total: number;
+        ok: number;
+        ko: number;
+        skipped: number;
+    } = undefined;
+    currentCallbackLogs: string;
+
     constructor(
         private _wrService: WorkflowRunService,
         private _router: Router,
         private _activatedRoute: ActivatedRoute,
         private _durationService: DurationService,
+        private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
-        this._activatedRoute.params.subscribe(p => {
-            this.runNumber = p['number'];
-        });
+        if (this._activatedRoute.firstChild) {
+            this._activatedRoute.firstChild.params.subscribe(p => {
+                this.runNumber = p['number'];
+            });
+        }
+
     }
 
     ngOnInit(): void {
+        console.log('REINIT SIDEBAR RUN NODE');
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        this.workflow = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
+        this.workflowRun = this._store.selectSnapshot(WorkflowState.workflowRunSnapshot);
+
         this.nodeSubs = this.node$.subscribe(n => {
             if (!n && !this.node) {
                 return;
@@ -86,34 +105,73 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             }
             console.log('REFRESH SIDEBAR NODE');
             this.node = n;
+
             // Check is the node can be run
-            this.refresh();
+            this.canBeRun = this.getCanBeRun();
+            this._cd.markForCheck();
         });
 
         this.nodeRunSubs = this.nodeRun$.subscribe( nrs => {
             if (!nrs && !this.currentWorkflowNodeRun) {
                 return;
             }
+            // If event on same noderun with same status, check if tests or artifacts changed
+            if (nrs && nrs.id === this.currentNodeRunId && nrs.status === this.currentNodeRunStatus) {
+                if ( (!nrs.tests && !this.currentNodeRunTests) ||
+                    (nrs.tests && this.currentNodeRunTests && nrs.tests.total === this.currentNodeRunTests.total)) {
+                    if ( (!nrs.artifacts && !this.currentArtifactsNb) ||
+                        (nrs.artifacts && nrs.artifacts.length === this.currentArtifactsNb)) {
+                        console.log('nothing change');
+                        return;
+                    }
+                }
+            }
+            console.log(nrs.id, this.currentNodeRunId,
+                nrs.status, this.currentNodeRunStatus,
+                 nrs.tests, this.currentNodeRunTests,
+                nrs.artifacts, this.currentArtifactsNb);
             console.log('REFRESH SIDEBAR NODERUN');
+
+            this.currentNodeRunStatus = nrs.status;
+            this.currentNodeRunId = nrs.id;
+            this.currentNodeRunStart = nrs.start;
+
+            if (nrs.artifacts) {
+                this.currentArtifactsNb = nrs.artifacts.length;
+            } else {
+                this.currentArtifactsNb = 0;
+            }
+            if (nrs.tests) {
+                this.currentNodeRunTests =  {
+                    total: nrs.tests.total,
+                    ko: nrs.tests.ko,
+                    ok: nrs.tests.ok,
+                    skipped: nrs.tests.skipped
+                };
+            } else {
+                delete this.currentNodeRunTests;
+            }
+            this.stageIds = new Array<number>();
+            if (nrs.stages && nrs.stages.length > 0 && (this.stageIds.length === 0 || this.stageIds[0] !== nrs.stages[0].id)) {
+                this.stageIds.push(...nrs.stages.map(s => s.id));
+            }
+
+            if (nrs.callback && nrs.callback.log) {
+                this.currentCallbackLogs = nrs.callback.log;
+            } else {
+                delete this.currentCallbackLogs;
+            }
+
+
             this.currentWorkflowNodeRun = nrs;
 
             // Run interval to compute duration
             this.runDurationLoop();
-            this.refresh();
-        });
 
-        this.workflowRunSubs = this.workflowRun$.subscribe(wrs => {
-            if (!wrs && !this.workflowRun) {
-                return;
-            }
-            this.workflowRun = wrs;
-            this.refresh();
-        });
-    }
 
-    refresh(): void {
-        this.canBeRun = this.getCanBeRun();
-        this._cd.markForCheck();
+            this.canBeRun = this.getCanBeRun();
+            this._cd.markForCheck();
+        });
     }
 
     displayLogs() {

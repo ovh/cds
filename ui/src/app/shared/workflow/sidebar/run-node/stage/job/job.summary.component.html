@@ -9,16 +9,18 @@
     <i class="caret icon" [class.right]="!open" [class.down]="open"></i>
   </div>
 </a>
-<ng-container *ngIf="open">
+<div [hidden]="!open">
   <ng-container *ngFor="let stepOrder of stepIds">
     <app-action-step-summary
             [nodeName]="nodeName"
+            [runNumber]="runNumber"
             [pipelineActionId]="job.pipeline_action_id"
             [stepName]="job.action.actions[stepOrder].name"
             [stepOptionnal]="job.action.actions[stepOrder].optional"
             [stepOrder]="stepIds"
             [workflowNodeRunId]="workflowRunNodeId"
-            [stageId]="stageId">
+            [stageId]="stageId"
+            [jobId]="jobId">
     </app-action-step-summary>
   </ng-container>
-</ng-container>
+</div>

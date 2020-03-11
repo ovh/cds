@@ -197,7 +197,6 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         if (this.workflowRuns) {
             this.refreshDuration();
             this.durationIntervalID = window.setInterval(() => {
-                console.log('I m in');
                 this.refreshDuration();
             }, 5000);
         }

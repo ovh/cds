@@ -9,12 +9,13 @@
     <i class="caret icon" [class.right]="!open" [class.down]="open"></i>
   </div>
 </a>
-<ng-container *ngIf="open">
+<div [hidden]="!open">
   <ng-container *ngFor="let jid of jobsIds">
     <app-job-step-summary
             [jobId]="jid"
+            [runNumber]="runNumber"
             [stageId]="stageId"
             [workflowRunNodeId]="workflowNodeRunId"
             [nodeName]="nodeName"></app-job-step-summary>
   </ng-container>
-</ng-container>
+</div>

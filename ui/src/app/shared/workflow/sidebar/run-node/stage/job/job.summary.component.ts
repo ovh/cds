@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Store } from '@ngxs/store';
+import { Job } from 'app/model/job.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { WorkflowState } from 'app/store/workflow.state';
 import { map } from 'rxjs/operators';
-import { Store } from '@ngxs/store';
-import { Job } from 'app/model/job.model';
 
 @Component({
     selector: 'app-job-step-summary',
@@ -17,6 +17,7 @@ export class JobStepSummaryComponent implements OnInit {
     // Job Identifier - never change
     @Input() stageId: number;
     @Input() jobId: number;
+    @Input() runNumber: number;
 
     // Data for router
     @Input() nodeName: string;
@@ -78,7 +79,7 @@ export class JobStepSummaryComponent implements OnInit {
             'workflow',
             this._route.snapshot.params['workflowName'],
             'run',
-            this._route.snapshot.params['number'],
+            this.runNumber,
             'node',
             this.workflowRunNodeId
         ], {

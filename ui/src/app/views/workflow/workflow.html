@@ -93,8 +93,7 @@
             </app-workflow-sidebar-hook>
             <app-workflow-sidebar-run-list *ngSwitchCase="sidebarModes.RUNS" [project]="project" [workflow]="workflow">
             </app-workflow-sidebar-run-list>
-            <app-workflow-sidebar-run-node *ngSwitchCase="sidebarModes.RUN_NODE" [project]="project"
-                [workflow]="workflow"></app-workflow-sidebar-run-node>
+            <app-workflow-sidebar-run-node *ngSwitchCase="sidebarModes.RUN_NODE"></app-workflow-sidebar-run-node>
             <app-workflow-sidebar-run-hook *ngSwitchCase="sidebarModes.RUN_HOOK" [project]="project" [wname]="workflow.name">
             </app-workflow-sidebar-run-hook>
         </ng-container>

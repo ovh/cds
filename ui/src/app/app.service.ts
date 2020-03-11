@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AsCodeEventData } from 'app/model/ascode.model';
+import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AsCodeEvent } from 'app/store/ascode.action';
 import { UpdateMaintenance } from 'app/store/cds.action';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -28,8 +29,7 @@ import { PipelinesState, PipelinesStateModel } from './store/pipelines.state';
 import * as projectActions from './store/project.action';
 import { ProjectState, ProjectStateModel } from './store/project.state';
 import { ExternalChangeWorkflow, GetWorkflow, GetWorkflowNodeRun, GetWorkflowRun, UpdateWorkflowRunList } from './store/workflow.action';
-import { WorkflowState, WorkflowStateModel } from './store/workflow.state';
-import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowState } from './store/workflow.state';
 
 @Injectable()
 export class AppService {
@@ -334,16 +334,15 @@ export class AppService {
                     this._workflowRunService
                         .getWorkflowRun(event.project_key, event.workflow_name, event.workflow_run_num)
                         .pipe(first())
-                        .subscribe(wr => this._store.dispatch(new UpdateWorkflowRunList({ workflowRun: wr })));
+                        .subscribe(wrkRun => this._store.dispatch(new UpdateWorkflowRunList({ workflowRun: wrkRun })));
                 }
                 break;
             case EventType.RUN_WORKFLOW_NODE:
                 // Refresh node run if user is listening on it
                 const wnr = this._store.selectSnapshot<WorkflowNodeRun>((state) => {
-                    console.log(state.workflow.workflowNodeRun);
-                    return state;
+                    return state.workflow.workflowNodeRun;
                 });
-                console.log(wnr);
+                console.log('NodeRun Status: ' + wnr.status);
                 if (wnr && wnr.id === event.payload['ID']) {
                     this._store.dispatch(
                         new GetWorkflowNodeRun({
@@ -355,7 +354,7 @@ export class AppService {
                 }
 
                 // Refresh workflow run if user is listening on it
-                const wr = this._store.selectSnapshot<WorkflowRun>((state: WorkflowStateModel) => state.workflowRun);
+                const wr = this._store.selectSnapshot<WorkflowRun>((state) => state.workflow.workflowRun);
                 if (wr && wr.num === event.workflow_run_num) {
                     this._store.dispatch(new GetWorkflowRun(
                         {

@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PipelineStatus } from 'app/model/pipeline.model';
 import { Store } from '@ngxs/store';
-import { WorkflowState } from 'app/store/workflow.state';
-import { map } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
+import { PipelineStatus } from 'app/model/pipeline.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { WorkflowState } from 'app/store/workflow.state';
+import { Subscription } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'app-stage-step-summary',
@@ -22,7 +22,7 @@ export class StageStepSummaryComponent implements OnInit {
 
     open = false;
     stageName: string;
-    stageStatus: string;
+    stageStatus = '';
     stageWarning = false;
     jobsIds: Array<number>;
 
@@ -37,13 +37,12 @@ export class StageStepSummaryComponent implements OnInit {
 
     ngOnInit() {
         this.storeSubs = this._store.select(WorkflowState.nodeRunStage).pipe(map(filterFn => filterFn(this.stageId))).subscribe( s => {
-            console.log('>>>>>>>>>>', s);
             if (!s && !this.stageStatus) {
                 return;
             }
 
             // Check if new stage has a warning
-            let warn :boolean;
+            let warn = false;
             if (s && Array.isArray(s.run_jobs)) {
                 warn = s.run_jobs.reduce((fail, job) => {
                     if (!job.job || !Array.isArray(job.job.step_status)) {
@@ -55,8 +54,7 @@ export class StageStepSummaryComponent implements OnInit {
             if (s && s.id === this.stageId && this.stageStatus === s.status  && this.stageWarning === warn) {
                 return;
             }
-
-            console.log('REFESH SIDEBAR STAGE ' + this.stageId + ' ' + s.status);
+            console.log('REFESH SIDEBAR STAGE');
             if (s) {
                 this.stageName = s.name;
                 this.stageStatus = s.status;
@@ -66,8 +64,9 @@ export class StageStepSummaryComponent implements OnInit {
                 }
                 this.stageWarning = warn;
                 this.open = this.stageStatus === PipelineStatus.FAIL || PipelineStatus.isActive(this.stageStatus);
+                console.log(this.stageStatus, s.status);
             } else {
-                delete this.stageStatus;
+                this.stageStatus = '';
                 delete this.jobsIds;
                 this.stageWarning = false;
             }

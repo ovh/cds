@@ -58,22 +58,16 @@ export function getInitialWorkflowState(): WorkflowStateModel {
     };
 }
 
-export class HookRunstateModel {
-    hook: WNodeHook;
-    workflowRun: WorkflowRun;
-}
-
-export class SidebarRunsStateModal {
-    filters: {};
-    listRuns: Array<WorkflowRun>;
-    loading: boolean;
-}
-
 @State<WorkflowStateModel>({
     name: 'workflow',
     defaults: getInitialWorkflowState()
 })
 export class WorkflowState {
+
+    @Selector()
+    static workflowSnapshot(state: WorkflowStateModel) {
+        return state.workflow;
+    }
 
     static getCurrent() {
         return createSelector(
@@ -94,6 +88,11 @@ export class WorkflowState {
             [WorkflowState],
             (state: WorkflowStateModel): WNodeHook => state.hook
         );
+    }
+
+    @Selector()
+    static workflowRunSnapshot(state: WorkflowStateModel) {
+        return state.workflowRun;
     }
 
     static getSelectedWorkflowRun() {
@@ -124,11 +123,21 @@ export class WorkflowState {
         );
     }
 
+    @Selector()
+    static nodeSnapshot(state: WorkflowStateModel) {
+        return state.node;
+    }
+
     static getSelectedNode() {
         return createSelector(
             [WorkflowState],
             (state: WorkflowStateModel): WNode => state.node
         );
+    }
+
+    @Selector()
+    static nodeRunSnapshot(state: WorkflowStateModel) {
+        return state.workflowNodeRun;
     }
 
     static getSelectedNodeRun() {
@@ -141,6 +150,9 @@ export class WorkflowState {
     @Selector()
     static nodeRunStage(state: WorkflowStateModel) {
         return (id: number) => {
+            if (!state.workflowNodeRun || !state.workflowNodeRun.stages) {
+                return null;
+            }
             return state.workflowNodeRun.stages.find(s => s.id === id);
         };
     }
@@ -148,13 +160,32 @@ export class WorkflowState {
     @Selector()
     static nodeRunJob(state: WorkflowStateModel) {
         return (idStage: number, idJob: number) => {
-            return state.workflowNodeRun.stages.find(s => s.id === idStage).run_jobs.find(rj => rj.id === idJob);
+            if (!state.workflowNodeRun || !state.workflowNodeRun.stages) {
+                return null;
+            }
+            let stageJob = state.workflowNodeRun.stages.find(s => s.id === idStage);
+            if (!stageJob || !stageJob.run_jobs) {
+                return null;
+            }
+            return stageJob.run_jobs.find(rj => rj.id === idJob);
         };
     }
 
+    @Selector()
     static nodeRunJobStep(state: WorkflowStateModel) {
         return (idStage: number, idJob: number, stepNum: number) => {
-            return state.workflowNodeRun.stages.find(s => s.id === idStage).run_jobs.find(rj => rj.id === idJob).job.step_status[stepNum];
+            if (!state.workflowNodeRun || !state.workflowNodeRun.stages) {
+                return null;
+            }
+            let stageRunStep = state.workflowNodeRun.stages.find(s => s.id === idStage);
+            if (!stageRunStep || !stageRunStep.run_jobs) {
+                return null;
+            }
+            let j = stageRunStep.run_jobs.find(rj => rj.id === idJob);
+            if (!j || !j.job || !j.job.step_status) {
+                return null;
+            }
+            return j.job.step_status[stepNum];
         };
     }
 
@@ -1171,7 +1202,7 @@ export class WorkflowState {
     updateWorkflowRunList(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.UpdateWorkflowRunList) {
         const state = ctx.getState();
         let runs = cloneDeep(state.listRuns);
-        let index = runs.findIndex(wr => wr.id === action.payload.workflowRun.id);
+        let index = runs.findIndex(wklwRun => wklwRun.id === action.payload.workflowRun.id);
         if (index === -1) {
             runs.push(action.payload.workflowRun);
             ctx.setState({
@@ -1181,7 +1212,8 @@ export class WorkflowState {
             return
 
         }
-        if (runs[index].status === action.payload.workflowRun.status && runs[index].tags.length === action.payload.workflowRun.tags.length) {
+        if (runs[index].status === action.payload.workflowRun.status
+            && runs[index].tags.length === action.payload.workflowRun.tags.length) {
             return;
         }
         runs[index] = action.payload.workflowRun;

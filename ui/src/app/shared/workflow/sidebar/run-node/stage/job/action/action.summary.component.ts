@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PipelineStatus } from 'app/model/pipeline.model';
 import { Store } from '@ngxs/store';
+import { PipelineStatus } from 'app/model/pipeline.model';
 import { WorkflowState } from 'app/store/workflow.state';
 import { map } from 'rxjs/operators';
 
@@ -17,6 +17,7 @@ export class ActionStepSummaryComponent implements OnInit {
     @Input() stageId: number;
     @Input() jobId: number;
     @Input() stepOrder: number;
+    @Input() runNumber: number;
 
     // Static step information
     @Input() stepName: string;
@@ -34,16 +35,19 @@ export class ActionStepSummaryComponent implements OnInit {
     constructor(private _router: Router, private _route: ActivatedRoute, private _store: Store, private _cd: ChangeDetectorRef) {}
 
     ngOnInit() {
-        this._store.select(WorkflowState.nodeRunJobStep).pipe(map(filterFn => filterFn(this.stageId, this.jobId, this.stepOrder))).subscribe( ss => {
-            if (!ss && !this.stepStatus) {
-                return;
-            }
-            if (ss && this.stepStatus && ss.status === this.stepStatus) {
-                return;
-            }
-            console.log('REFESH SIDEBAR STEP ' + this.jobId + '/' + this.stepOrder + ' ' + ss.status);
-            this.open = this.stepStatus === PipelineStatus.FAIL;
-            this._cd.detectChanges();
+        this._store.select(WorkflowState.nodeRunJobStep)
+            .pipe(map(filterFn => filterFn(this.stageId, this.jobId, this.stepOrder))).subscribe( ss => {
+                if (!ss && !this.stepStatus) {
+                    return;
+                }
+
+                if (ss && this.stepStatus && ss.status === this.stepStatus) {
+                    return;
+                }
+                console.log('REFESH SIDEBAR STEP ' + this.jobId + '/' + this.stepOrder);
+                this.stepStatus = ss.status;
+                this.open = this.stepStatus === PipelineStatus.FAIL;
+                this._cd.detectChanges();
         });
     }
 
@@ -54,7 +58,7 @@ export class ActionStepSummaryComponent implements OnInit {
           'workflow',
           this._route.snapshot.params['workflowName'],
           'run',
-          this._route.snapshot.params['number'],
+          this.runNumber,
           'node',
           this.workflowNodeRunId
       ], {queryParams: {
