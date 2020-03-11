@@ -2,14 +2,15 @@ package sdk
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAncestorsSimple(t *testing.T) {
 	w := Workflow{
-		WorkflowData: &WorkflowData{
+		WorkflowData: WorkflowData{
 			Node: Node{
 				ID:   1,
 				Type: NodeTypePipeline,

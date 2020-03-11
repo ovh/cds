@@ -7,8 +7,8 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/exportentities/v1"
-	"github.com/ovh/cds/sdk/exportentities/v2"
+	v1 "github.com/ovh/cds/sdk/exportentities/v1"
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 )
 
 // Name pattern for pull files.

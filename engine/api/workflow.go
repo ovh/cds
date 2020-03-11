@@ -368,10 +368,6 @@ func (api *API) postWorkflowHandler() service.Handler {
 			return err
 		}
 
-		if data.WorkflowData == nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "no node found")
-		}
-
 		if err := workflow.RenameNode(ctx, api.mustDB(), &data); err != nil {
 			return err
 		}
@@ -457,7 +453,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.Update(ctx, tx, api.Cache, *p, &wf, workflow.UpdateOptions{OldWorkflow: oldW}); err != nil {
+		if err := workflow.Update(ctx, tx, api.Cache, *p, &wf, workflow.UpdateOptions{}); err != nil {
 			return sdk.WrapError(err, "cannot update workflow")
 		}
 

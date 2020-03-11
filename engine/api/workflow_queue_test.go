@@ -151,7 +151,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router) testRunWorkflowCtx 
 		Name:       "wkf-" + sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node-1",
 				Ref:  "node-1",
@@ -951,7 +951,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
@@ -1102,7 +1102,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",

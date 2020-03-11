@@ -121,7 +121,7 @@ func workflowRunManualRun(v cli.Values) error {
 		}
 
 		// Check if we are on the same repository and if we have a git.branch in the default payload
-		if wf.WorkflowData != nil && wf.WorkflowData.Node.Context != nil && wf.WorkflowData.Node.Context.ApplicationID != 0 {
+		if wf.WorkflowData.Node.Context != nil && wf.WorkflowData.Node.Context.ApplicationID != 0 {
 			app := wf.GetApplication(wf.WorkflowData.Node.Context.ApplicationID)
 			if remoteURL != "" && strings.Contains(remoteURL, app.RepositoryFullname) && currentBranch != "" {
 				defaultPayload, err := wf.WorkflowData.Node.Context.DefaultPayloadToMap()

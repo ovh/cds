@@ -57,7 +57,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 		Name:       "workflow1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Context: &sdk.NodeContext{
@@ -185,7 +185,7 @@ func Test_getWorkflowNotificationsConditionsHandler(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
@@ -303,7 +303,7 @@ func Test_getWorkflowHandler_CheckPermission(t *testing.T) {
 		Name:       "workflow1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Context: &sdk.NodeContext{
@@ -412,7 +412,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 		Name:       "workflow1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Context: &sdk.NodeContext{
@@ -472,7 +472,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 		Name:       "workflow1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Context: &sdk.NodeContext{
@@ -558,7 +558,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -621,7 +621,7 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -774,7 +774,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -833,7 +833,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	var workflow1 = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description 2",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -905,7 +905,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 	var wf = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -963,7 +963,7 @@ func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {
 	var workflow1 = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description 2",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -1040,7 +1040,7 @@ func Test_postWorkflowHandlerWithError(t *testing.T) {
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -1099,7 +1099,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	var wf = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -1139,7 +1139,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 		ID:          wf.ID,
 		Name:        "Name",
 		Description: "Description 2",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -1215,10 +1215,6 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 
 	var wfRollback sdk.Workflow
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfRollback))
-
-	if wfRollback.WorkflowData == nil {
-		t.Fatal(fmt.Errorf("workflow not found"))
-	}
 
 	test.Equal(t, int64(0), wfRollback.WorkflowData.Node.Context.ApplicationID)
 
@@ -1301,7 +1297,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	var wf = &sdk.Workflow{
 		Name:        name,
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -1396,7 +1392,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	var wkf = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -1485,7 +1481,7 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 			ProjectID:  proj.ID,
 			ProjectKey: proj.Key,
 			Name:       sdk.RandomString(10),
-			WorkflowData: &sdk.WorkflowData{
+			WorkflowData: sdk.WorkflowData{
 				Node: sdk.Node{
 					Name: "root",
 					Context: &sdk.NodeContext{
@@ -1554,7 +1550,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 			ProjectKey: proj.Key,
 			Name:       sdk.RandomString(10),
 			Groups:     proj.ProjectGroups,
-			WorkflowData: &sdk.WorkflowData{
+			WorkflowData: sdk.WorkflowData{
 				Node: sdk.Node{
 					Name: "root",
 					Context: &sdk.NodeContext{

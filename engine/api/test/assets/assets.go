@@ -534,7 +534,7 @@ func InsertTestWorkflow(t *testing.T, db gorp.SqlExecutor, store cache.Store, pr
 		Name:       name,
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",

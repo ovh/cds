@@ -356,7 +356,7 @@ vcs_ssh_key: proj-blabla
 		Name:       sdk.RandomString(10),
 		ProjectID:  p.ID,
 		ProjectKey: p.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,

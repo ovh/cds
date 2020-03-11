@@ -36,16 +36,16 @@ type PushOption struct {
 	RepositoryStrategy sdk.RepositoryStrategy
 	HookUUID           string
 	Force              bool
-	OldWorkflow        *sdk.Workflow
+	OldWorkflow        sdk.Workflow
 }
 
 // CreateFromRepository a workflow from a repository
-func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow,
+func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
 	opts sdk.WorkflowRunPostHandlerOption, u sdk.Identifiable, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
-	ope, err := createOperationRequest(*w, opts)
+	ope, err := createOperationRequest(*wf, opts)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to create operation request")
 	}
@@ -63,17 +63,17 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 		uuid = opts.Hook.WorkflowNodeHookUUID
 	} else {
 		// Search for repo web hook uuid
-		for _, h := range w.WorkflowData.Node.Hooks {
+		for _, h := range wf.WorkflowData.Node.Hooks {
 			if h.HookModelName == sdk.RepositoryWebHookModelName {
 				uuid = h.UUID
 				break
 			}
 		}
 	}
-	return extractWorkflow(ctx, db, store, p, w, ope, u, decryptFunc, uuid)
+	return extractWorkflow(ctx, db, store, p, wf, ope, u, decryptFunc, uuid)
 }
 
-func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow,
+func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
 	ope sdk.Operation, ident sdk.Identifiable, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.extractWorkflow")
 	defer end()
@@ -93,17 +93,17 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		FromRepository:     ope.RepositoryInfo.FetchURL,
 		IsDefaultBranch:    ope.Setup.Checkout.Tag == "" && ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
 		HookUUID:           hookUUID,
-		OldWorkflow:        w,
+		OldWorkflow:        *wf,
 	}
 
 	allMsg, workflowPushed, _, errP := Push(ctx, db, store, p, tr, opt, ident, decryptFunc)
 	if errP != nil {
 		return allMsg, sdk.WrapError(errP, "unable to get workflow from file")
 	}
-	*w = *workflowPushed
+	*wf = *workflowPushed
 
-	if w.Name != workflowPushed.Name {
-		log.Debug("workflow.extractWorkflow> Workflow has been renamed from %s to %s", w.Name, workflowPushed.Name)
+	if wf.Name != workflowPushed.Name {
+		log.Debug("workflow.extractWorkflow> Workflow has been renamed from %s to %s", wf.Name, workflowPushed.Name)
 	}
 
 	return append(allMsgs, allMsg...), nil

@@ -66,7 +66,7 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -214,7 +214,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 				Permission: 7,
 			},
 		},
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -324,7 +324,7 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{

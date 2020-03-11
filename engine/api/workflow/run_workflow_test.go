@@ -78,7 +78,7 @@ func TestManualRun1(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
@@ -237,7 +237,7 @@ func TestManualRun2(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
@@ -489,7 +489,7 @@ func TestManualRun3(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
@@ -815,7 +815,7 @@ func TestNoStage(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
@@ -892,7 +892,7 @@ func TestNoJob(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",

@@ -49,7 +49,7 @@ type Workflow struct {
 	Labels                  []Label                      `json:"labels" db:"-" cli:"labels"`
 	ToDelete                bool                         `json:"to_delete" db:"to_delete" cli:"-"`
 	Favorite                bool                         `json:"favorite" db:"-" cli:"favorite"`
-	WorkflowData            *WorkflowData                `json:"workflow_data" db:"-" cli:"-"`
+	WorkflowData            WorkflowData                 `json:"workflow_data" db:"-" cli:"-"`
 	EventIntegrations       []ProjectIntegration         `json:"event_integrations" db:"-" cli:"-"`
 	AsCodeEvent             []AsCodeEvent                `json:"as_code_events" db:"-" cli:"-"`
 	// aggregates
@@ -94,7 +94,7 @@ func (w *Workflow) ResetIDs() {
 
 //AddTrigger adds a trigger to the destination node from the node found by its name
 func (w *Workflow) AddTrigger(name string, dest Node) {
-	if w.WorkflowData == nil || w.WorkflowData.Node.Name == "" {
+	if w.WorkflowData.Node.Name == "" {
 		return
 	}
 

@@ -51,7 +51,7 @@ func TestCanBeRun(t *testing.T) {
 			Name:       "test_1",
 			ProjectID:  1,
 			ProjectKey: "key",
-			WorkflowData: &sdk.WorkflowData{
+			WorkflowData: sdk.WorkflowData{
 				Node: nodeRoot,
 			},
 		},
@@ -196,7 +196,7 @@ vcs_ssh_key: proj-blabla
 		Name:       "test_purge_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
@@ -284,7 +284,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 		Name:       "test_purge_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
@@ -471,7 +471,7 @@ vcs_ssh_key: proj-blabla
 		Name:       "test_purge_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
@@ -662,7 +662,7 @@ vcs_ssh_key: proj-blabla
 		Name:       "test_purge_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
@@ -753,7 +753,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		Name:       "test_purge_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
@@ -839,7 +839,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 		Name:       "test_purge_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",
