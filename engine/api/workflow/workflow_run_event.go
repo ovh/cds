@@ -24,13 +24,15 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	)
 	defer end()
 
+	commitsMap := make(map[string][]sdk.VCSCommitStatus)
 	for _, nodeRuns := range wr.WorkflowNodeRuns {
 		sort.Slice(nodeRuns, func(i, j int) bool {
 			return nodeRuns[i].SubNumber >= nodeRuns[j].SubNumber
 		})
 		nodeRun := nodeRuns[0]
-
-		if err := SendVCSEvent(ctx, db, store, proj, *wr, nodeRun); err != nil {
+		var err error
+		commitsMap, err = SendVCSEvent(ctx, db, store, proj, *wr, nodeRun, commitsMap)
+		if err != nil {
 			log.Error(ctx, "resyncCommitStatus > unable to send vcs event: %v", err)
 		}
 	}
@@ -38,14 +40,18 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	return nil
 }
 
-func SendVCSEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr sdk.WorkflowRun, nodeRun sdk.WorkflowNodeRun) error {
+func SendVCSEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr sdk.WorkflowRun, nodeRun sdk.WorkflowNodeRun, commitsStatusMap map[string][]sdk.VCSCommitStatus) (map[string][]sdk.VCSCommitStatus, error) {
 	if nodeRun.Status == sdk.StatusWaiting {
-		return nil
+		return commitsStatusMap, nil
+	}
+
+	if commitsStatusMap == nil {
+		commitsStatusMap = make(map[string][]sdk.VCSCommitStatus)
 	}
 
 	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
 	if !node.IsLinkedToRepo(&wr.Workflow) {
-		return nil
+		return commitsStatusMap, nil
 	}
 
 	var notif *sdk.WorkflowNotification
@@ -70,7 +76,7 @@ loopNotif:
 	}
 
 	if notif == nil {
-		return nil
+		return commitsStatusMap, nil
 	}
 
 	vcsServerName := wr.Workflow.Applications[node.Context.ApplicationID].VCSServer
@@ -78,15 +84,14 @@ loopNotif:
 
 	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, vcsServerName)
 	if vcsServer == nil {
-		return nil
+		return commitsStatusMap, nil
 	}
 
-	details := fmt.Sprintf("on project:%s workflow:%s node:%s num:%d sub:%d vcs:%s", proj.Name, wr.Workflow.Name, nodeRun.WorkflowNodeName, nodeRun.Number, nodeRun.SubNumber, vcsServer.Name)
-
 	//Get the RepositoriesManager Client
+	details := fmt.Sprintf("on project:%s workflow:%s node:%s num:%d sub:%d vcs:%s", proj.Name, wr.Workflow.Name, nodeRun.WorkflowNodeName, nodeRun.Number, nodeRun.SubNumber, vcsServer.Name)
 	client, errClient := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
 	if errClient != nil {
-		return sdk.WrapError(errClient, "resyncCommitStatus> Cannot get client %s", details)
+		return commitsStatusMap, sdk.WrapError(errClient, "resyncCommitStatus> Cannot get client %s", details)
 	}
 
 	ref := nodeRun.VCSHash
@@ -94,16 +99,24 @@ loopNotif:
 		ref = nodeRun.VCSTag
 	}
 
-	statuses, errStatuses := client.ListStatuses(ctx, repoFullName, ref)
-	if errStatuses != nil {
-		return sdk.WrapError(errStatuses, "resyncCommitStatus> Cannot get statuses %s", details)
+	var statuses []sdk.VCSCommitStatus
+	if commitsStatusMap != nil {
+		statuses = commitsStatusMap[ref]
 	}
 
-	var statusFound *sdk.VCSCommitStatus
+	if statuses == nil {
+		var err error
+		statuses, err = client.ListStatuses(ctx, repoFullName, ref)
+		if err != nil {
+			return commitsStatusMap, sdk.WrapError(err, "resyncCommitStatus> Cannot get statuses %s", details)
+		}
+		commitsStatusMap[ref] = statuses
+	}
 	expected := sdk.VCSCommitStatusDescription(proj.Key, wr.Workflow.Name, sdk.EventRunWorkflowNode{
 		NodeName: nodeRun.WorkflowNodeName,
 	})
 
+	var statusFound *sdk.VCSCommitStatus
 	for i, status := range statuses {
 		if status.Decription == expected {
 			statusFound = &statuses[i]
@@ -138,15 +151,15 @@ loopNotif:
 
 		if !skipStatus {
 			if err := sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notif, vcsServer.Name, client); err != nil {
-				return sdk.WrapError(err, "resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
+				return commitsStatusMap, sdk.WrapError(err, "resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
 			}
 		}
 	}
 
 	if err := sendVCSPullRequestComment(ctx, db, wr, &nodeRun, notif, vcsServer.Name, client); err != nil {
-		return sdk.WrapError(err, "resyncCommitStatus> Error sending pr comments %s %s err:%v", statusFound.State, details, err)
+		return commitsStatusMap, sdk.WrapError(err, "resyncCommitStatus> Error sending pr comments %s %s err:%v", statusFound.State, details, err)
 	}
-	return nil
+	return commitsStatusMap, nil
 }
 
 // sendVCSEventStatus send status

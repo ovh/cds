@@ -340,3 +340,132 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 	err := workflow.ResyncCommitStatus(ctx, db, cache, *proj, wr)
 	assert.NoError(t, err)
 }
+
+// Test TestResyncCommitStatus with a notification where all is disabled.
+// Must: no error returned, postComment must be called
+func TestResyncCommitStatusCommitCache(t *testing.T) {
+	db, cache, end := test.SetupPG(t)
+	defer end()
+
+	ctx := context.TODO()
+
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, pkey, pkey)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, proj, &sdk.ProjectVCSServer{
+		Name: "gerrit",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
+
+	// Create Application
+	app := sdk.Application{
+		Name:               sdk.RandomString(10),
+		ProjectID:          proj.ID,
+		RepositoryFullname: "foo/myrepo",
+		VCSServer:          "gerrit",
+		RepositoryStrategy: sdk.RepositoryStrategy{
+			ConnectionType: "ssh",
+		},
+	}
+	assert.NoError(t, application.Insert(db, cache, *proj, &app))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
+
+	tr := true
+	fls := false
+	wr := &sdk.WorkflowRun{
+		WorkflowNodeRuns: map[int64][]sdk.WorkflowNodeRun{
+			1: {
+				{
+					ID:             1,
+					ApplicationID:  app.ID,
+					Status:         sdk.StatusFail,
+					WorkflowNodeID: 1,
+					VCSHash:        "6c3efde",
+					BuildParameters: []sdk.Parameter{
+						{
+							Name:  "gerrit.change.id",
+							Type:  "string",
+							Value: "MyGerritChangeId",
+						},
+					},
+				},
+			},
+		},
+		Workflow: sdk.Workflow{
+			WorkflowData: sdk.WorkflowData{
+				Node: sdk.Node{
+					ID: 1,
+					Context: &sdk.NodeContext{
+						ApplicationID: app.ID,
+					},
+				},
+			},
+			Applications: map[int64]sdk.Application{
+				app.ID: app,
+			},
+			Notifications: []sdk.WorkflowNotification{
+				{
+					Settings: sdk.UserNotificationSettings{
+						Template: &sdk.UserNotificationTemplate{
+							DisableComment: &fls,
+							DisableStatus:  &tr,
+							Body:           "MyTemplate",
+						},
+					},
+					Type: "vcs",
+				},
+			},
+		},
+	}
+
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit/repos/foo/myrepo/commits/6c3efde/statuses",
+			gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, args ...interface{}) (http.Header, int, error) {
+			ss := []sdk.VCSCommitStatus{
+				{
+					State: "Success",
+					Ref:   "6c3efde",
+				},
+			}
+			*(out.(*[]sdk.VCSCommitStatus)) = ss
+			return nil, 200, nil
+		}).MaxTimes(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/gerrit",
+			gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}) (http.Header, int, error) {
+			vcs := sdk.VCSConfiguration{Type: "gerrit"}
+			*(out.(*sdk.VCSConfiguration)) = vcs
+			return nil, 200, nil
+		}).MaxTimes(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/vcs/gerrit/repos/foo/myrepo/pullrequests/comments",
+			gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			assert.Equal(t, in.(sdk.VCSPullRequestCommentRequest).ChangeID, "MyGerritChangeId")
+			assert.Equal(t, in.(sdk.VCSPullRequestCommentRequest).Message, "MyTemplate")
+			return nil, 200, nil
+		}).MaxTimes(1)
+
+	commitsMap, err := workflow.SendVCSEvent(ctx, db, cache, *proj, *wr, wr.WorkflowNodeRuns[1][0], nil)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(commitsMap))
+	assert.Equal(t, "Success", commitsMap["6c3efde"][0].State)
+}
