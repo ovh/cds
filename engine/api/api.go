@@ -699,6 +699,10 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.RefactorEnvironmentVariables(ctx, a.DBConnectionFactory.GetDBMap())
 	}})
 
+	migrate.Add(ctx, sdk.Migration{Name: "CleanDuplicateNodes", Release: "0.44.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.CleanDuplicateNodes(ctx, a.DBConnectionFactory.GetDBMap())
+	}})
+
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {
 		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")
