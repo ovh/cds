@@ -235,7 +235,7 @@ notifications:
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			yamlWorkflow, err := exportentities.UnmarshalWorkflow([]byte(tst.yaml))
+			yamlWorkflow, err := exportentities.UnmarshalWorkflow([]byte(tst.yaml), exportentities.FormatYAML)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("Unmarshal raised an error", err)

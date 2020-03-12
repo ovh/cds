@@ -122,17 +122,25 @@ var pipelineImportCmd = cli.Command{
 func pipelineImportRun(v cli.Values) error {
 	var reader io.ReadCloser
 	var err error
-	if sdk.IsURL(v.GetString("path")) {
-		reader, err = exportentities.OpenURL(v.GetString("path"))
+	path := v.GetString("path")
+	if sdk.IsURL(path) {
+		reader, err = exportentities.OpenURL(path)
 	} else {
-		reader, err = exportentities.OpenFile(v.GetString("path"))
+		reader, err = exportentities.OpenFile(path)
 	}
 	if err != nil {
 		return err
 	}
 	defer reader.Close() // nolint
 
-	var mods []cdsclient.RequestModifier
+	format, err := exportentities.GetFormatFromPath(path)
+	if err != nil {
+		return err
+	}
+
+	mods := []cdsclient.RequestModifier{
+		cdsclient.ContentType(format.ContentType()),
+	}
 	if v.GetBool("force") {
 		mods = append(mods, cdsclient.Force())
 	}

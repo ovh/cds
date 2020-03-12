@@ -107,15 +107,17 @@ func workerModelImportRun(c cli.Values) error {
 	}
 	files := strings.Split(c.GetString("path"), ",")
 
-	var mods []cdsclient.RequestModifier
-	if c.GetBool("force") {
-		mods = append(mods, cdsclient.Force())
-	}
-
 	for _, filepath := range files {
-		contentFile, _, err := exportentities.OpenPath(filepath)
+		contentFile, format, err := exportentities.OpenPath(filepath)
 		if err != nil {
 			return err
+		}
+
+		mods := []cdsclient.RequestModifier{
+			cdsclient.ContentType(format.ContentType()),
+		}
+		if c.GetBool("force") {
+			mods = append(mods, cdsclient.Force())
 		}
 
 		wm, err := client.WorkerModelImport(contentFile, mods...)

@@ -621,7 +621,7 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 			return err
 		}
 
-		is, err := workflowtemplate.GetInstancesByTemplateIDAndProjectIDs(api.mustDB(), wt.ID, sdk.ProjectsToIDs(ps))
+		is, err := workflowtemplate.LoadInstancesByTemplateIDAndProjectIDs(ctx, api.mustDB(), wt.ID, sdk.ProjectsToIDs(ps))
 		if err != nil {
 			return err
 		}
@@ -717,7 +717,7 @@ func (api *API) deleteTemplateInstanceHandler() service.Handler {
 			return err
 		}
 
-		wti, err := workflowtemplate.GetInstanceByIDForTemplateIDAndProjectIDs(api.mustDB(), instanceID, wt.ID, sdk.ProjectsToIDs(ps))
+		wti, err := workflowtemplate.LoadInstanceByIDForTemplateIDAndProjectIDs(ctx, api.mustDB(), instanceID, wt.ID, sdk.ProjectsToIDs(ps))
 		if err != nil {
 			return err
 		}

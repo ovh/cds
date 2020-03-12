@@ -3,9 +3,9 @@ package exportentities
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -14,14 +14,29 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// GetFormat return a format.
+func GetFormat(f string) (Format, error) {
+	s := strings.ToLower(f)
+	s = strings.TrimSpace(s)
+	switch s {
+	case "yaml", "yml":
+		return FormatYAML, nil
+	case "json":
+		return FormatJSON, nil
+	default:
+		return UnknownFormat, sdk.NewErrorFrom(sdk.ErrWrongRequest, "format is not supported")
+	}
+}
+
 // GetFormatFromPath return a format.
 func GetFormatFromPath(f string) (Format, error) {
 	s := strings.ToLower(f)
 	s = strings.TrimSpace(s)
+	s = filepath.Ext(s)
 	switch s {
-	case "yaml", "yml", ".yaml", ".yml":
+	case ".yaml", ".yml":
 		return FormatYAML, nil
-	case "json", ".json":
+	case ".json":
 		return FormatJSON, nil
 	default:
 		return UnknownFormat, sdk.NewErrorFrom(sdk.ErrWrongRequest, "format is not supported")
@@ -40,30 +55,15 @@ func GetFormatFromContentType(ct string) (Format, error) {
 	}
 }
 
-// GetContentType returns the content type for a content type.
-func GetContentType(f Format) string {
-	switch f {
-	case FormatYAML:
-		return "application/x-yaml"
-	case FormatJSON:
-		return "application/json"
-	default:
-		return "application/octet-stream"
-	}
-}
-
 // Unmarshal supports JSON, YAML
 func Unmarshal(btes []byte, f Format, i interface{}) error {
-	var err error
 	switch f {
 	case FormatJSON:
-		err = json.Unmarshal(btes, i)
+		return sdk.WithStack(json.Unmarshal(btes, i))
 	case FormatYAML:
-		err = yaml.Unmarshal(btes, i)
-	default:
-		err = sdk.NewErrorFrom(sdk.ErrWrongRequest, "format is not supported")
+		return sdk.WithStack(yaml.Unmarshal(btes, i))
 	}
-	return sdk.WithStack(err)
+	return sdk.NewErrorFrom(sdk.ErrWrongRequest, "format is not supported")
 }
 
 // UnmarshalStrict supports JSON, YAML
@@ -97,30 +97,6 @@ func Marshal(i interface{}, f Format) ([]byte, error) {
 func OpenFile(filename string) (io.ReadCloser, error) {
 	r, err := os.Open(filename)
 	return r, err
-}
-
-// ReadURL reads the file given by an URL
-func ReadURL(u string, f string) ([]byte, Format, error) {
-	format, err := GetFormatFromPath(f)
-	if err != nil {
-		return nil, format, err
-	}
-	var netClient = &http.Client{
-		Timeout: time.Second * 10,
-	}
-
-	response, err := netClient.Get(u)
-	if err != nil {
-		return nil, format, err
-	}
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, format, err
-	}
-	defer response.Body.Close()
-
-	return body, format, nil
 }
 
 // OpenURL opens an URL

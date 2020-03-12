@@ -239,13 +239,13 @@ var actionImportCmd = cli.Command{
 
 func actionImportRun(v cli.Values) error {
 	path := v.GetString("path")
-	contentFile, _, err := exportentities.OpenPath(path)
+	contentFile, format, err := exportentities.OpenPath(path)
 	if err != nil {
 		return err
 	}
 	defer contentFile.Close() //nolint
 
-	if err := client.ActionImport(contentFile); err != nil {
+	if err := client.ActionImport(contentFile, cdsclient.ContentType(format.ContentType())); err != nil {
 		return err
 	}
 

@@ -22,7 +22,7 @@ func (api *API) getEnvironmentExportHandler() service.Handler {
 		if format == "" {
 			format = "yaml"
 		}
-		f, err := exportentities.GetFormatFromPath(format)
+		f, err := exportentities.GetFormat(format)
 		if err != nil {
 			return err
 		}
@@ -39,7 +39,7 @@ func (api *API) getEnvironmentExportHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		w.Header().Add("Content-Type", exportentities.GetContentType(f))
+		w.Header().Add("Content-Type", f.ContentType())
 		w.WriteHeader(http.StatusOK)
 		return nil
 	}

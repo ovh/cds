@@ -8,10 +8,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ovh/cds/engine/api/workflowtemplate"
-
-	"github.com/ovh/cds/sdk/exportentities"
-
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
@@ -19,7 +15,9 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/operation"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -136,10 +134,10 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 			Size: int64(len(fcontent)),
 		}
 		if err := tw.WriteHeader(hdr); err != nil {
-			return nil, sdk.WrapError(err, "Cannot write header")
+			return nil, sdk.WrapError(err, "cannot write header")
 		}
 		if n, err := tw.Write(fcontent); err != nil {
-			return nil, sdk.WrapError(err, "Cannot write content")
+			return nil, sdk.WrapError(err, "cannot write content")
 		} else if n == 0 {
 			return nil, fmt.Errorf("nothing to write")
 		}
@@ -160,13 +158,13 @@ func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				return sdk.WrapError(c.Err(), "pollRepositoryOperation> Exiting")
+				return sdk.WrapError(c.Err(), "exiting")
 			}
 		case <-tickTimeout.C:
-			return sdk.WrapError(sdk.ErrRepoOperationTimeout, "pollRepositoryOperation> Timeout analyzing repository")
+			return sdk.WrapError(sdk.ErrRepoOperationTimeout, "timeout analyzing repository")
 		case <-tickPoll.C:
 			if err := operation.GetRepositoryOperation(c, db, ope); err != nil {
-				return sdk.WrapError(err, "Cannot get repository operation status")
+				return sdk.WrapError(err, "cannot get repository operation status")
 			}
 			switch ope.Status {
 			case sdk.OperationStatusError:

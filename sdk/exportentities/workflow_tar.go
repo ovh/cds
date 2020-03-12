@@ -9,9 +9,10 @@ import (
 	"io"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"gopkg.in/yaml.v2"
 )
 
 type WorkflowComponents struct {
@@ -170,8 +171,8 @@ func TarWorkflowComponents(ctx context.Context, w WorkflowComponents, writer io.
 
 func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowComponents, error) {
 	var res WorkflowComponents
-
 	mError := new(sdk.MultiError)
+
 	for {
 		hdr, err := tr.Next()
 		if err == io.EOF {
@@ -193,7 +194,6 @@ func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowCompo
 			return res, err
 		}
 
-		var templateOrWorkflowFileName string
 		b := buff.Bytes()
 		switch {
 		case strings.Contains(hdr.Name, ".app."):
@@ -221,15 +221,15 @@ func UntarWorkflowComponents(ctx context.Context, tr *tar.Reader) (WorkflowCompo
 			}
 			res.Environments = append(res.Environments, env)
 		default:
-			if templateOrWorkflowFileName != "" {
+			if res.Workflow != nil {
 				log.Error(ctx, "only one workflow or template file should be given: %s and %s",
-					templateOrWorkflowFileName, hdr.Name)
+					res.Workflow.GetName(), hdr.Name)
+			}
+			if res.Template.Name != "" {
 				mError.Append(fmt.Errorf("only one workflow or template file should be given: %s and %s",
-					templateOrWorkflowFileName, hdr.Name))
+					res.Template.Name, hdr.Name))
 				break
 			}
-
-			templateOrWorkflowFileName = hdr.Name
 
 			var tmp TemplateInstance
 			isTemplate := UnmarshalStrict(b, format, &tmp) == nil && tmp.From != ""

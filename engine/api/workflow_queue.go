@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ovh/cds/engine/api/notification"
-
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/venom"
 	"github.com/sguiheux/go-coverage"
@@ -17,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/metrics"
+	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"

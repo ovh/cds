@@ -32,3 +32,13 @@ const (
 	FormatYAML
 	UnknownFormat
 )
+
+func (f Format) ContentType() string {
+	switch f {
+	case FormatYAML:
+		return "application/x-yaml"
+	case FormatJSON:
+		return "application/json"
+	}
+	return "application/octet-stream"
+}

@@ -5,10 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ovh/cds/engine/api/workflowtemplate"
-
-	"github.com/ovh/cds/sdk/exportentities"
-
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -18,8 +14,10 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 

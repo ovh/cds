@@ -52,9 +52,9 @@ func (c *client) ActionList() ([]sdk.Action, error) {
 	return actions, nil
 }
 
-func (c *client) ActionImport(content io.Reader) error {
+func (c *client) ActionImport(content io.Reader, mods ...RequestModifier) error {
 	url := "/action/import"
-	_, _, code, err := c.Request(context.Background(), "POST", url, content)
+	_, _, code, err := c.Request(context.Background(), "POST", url, content, mods...)
 	if err != nil {
 		return err
 	}

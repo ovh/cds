@@ -99,7 +99,7 @@ func PrePush(ctx context.Context, db *gorp.DbMap, consumer sdk.AuthConsumer, p s
 	var wti *sdk.WorkflowTemplateInstance
 
 	// try to get a instance not assign to a workflow but with the same slug
-	wtis, err := GetInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(tx, wt.ID, p.ID, req.WorkflowName)
+	wtis, err := LoadInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, tx, wt.ID, p.ID, req.WorkflowName)
 	if err != nil {
 		return nil, err
 	}

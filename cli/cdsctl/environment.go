@@ -107,13 +107,15 @@ var environmentImportCmd = cli.Command{
 
 func environmentImportRun(c cli.Values) error {
 	path := c.GetString("path")
-	contentFile, _, err := exportentities.OpenPath(path)
+	contentFile, format, err := exportentities.OpenPath(path)
 	if err != nil {
 		return err
 	}
 	defer contentFile.Close() //nolint
 
-	var mods []cdsclient.RequestModifier
+	mods := []cdsclient.RequestModifier{
+		cdsclient.ContentType(format.ContentType()),
+	}
 	if c.GetBool("force") {
 		mods = append(mods, cdsclient.Force())
 	}

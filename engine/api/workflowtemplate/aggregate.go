@@ -43,7 +43,7 @@ func AggregateTemplateInstanceOnWorkflow(ctx context.Context, db gorp.SqlExecuto
 		return nil
 	}
 
-	wtis, err := GetInstancesByWorkflowIDs(ctx, db, sdk.WorkflowToIDs(ws))
+	wtis, err := LoadInstancesByWorkflowIDs(ctx, db, sdk.WorkflowToIDs(ws))
 	if err != nil {
 		return err
 	}

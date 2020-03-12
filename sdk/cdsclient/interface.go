@@ -159,7 +159,7 @@ type ActionClient interface {
 	ActionGet(groupName, name string, mods ...RequestModifier) (*sdk.Action, error)
 	ActionUsage(groupName, name string, mods ...RequestModifier) (*sdk.ActionUsages, error)
 	ActionList() ([]sdk.Action, error)
-	ActionImport(content io.Reader) error
+	ActionImport(content io.Reader, mods ...RequestModifier) error
 	ActionExport(groupName, name string, mods ...RequestModifier) ([]byte, error)
 	ActionBuiltinList() ([]sdk.Action, error)
 	ActionBuiltinGet(name string, mods ...RequestModifier) (*sdk.Action, error)
@@ -502,6 +502,12 @@ func Force() RequestModifier {
 		q := r.URL.Query()
 		q.Set("force", "true")
 		r.URL.RawQuery = q.Encode()
+	}
+}
+
+func ContentType(value string) RequestModifier {
+	return func(r *http.Request) {
+		r.Header.Add("Content-Type", value)
 	}
 }
 

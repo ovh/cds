@@ -6,8 +6,6 @@ import (
 	"io"
 	"net/http"
 
-	v2 "github.com/ovh/cds/sdk/exportentities/v2"
-
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/project"
@@ -15,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 )
 
 func (api *API) getWorkflowExportHandler() service.Handler {
@@ -28,7 +27,7 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 		if format == "" {
 			format = "yaml"
 		}
-		f, err := exportentities.GetFormatFromPath(format)
+		f, err := exportentities.GetFormat(format)
 		if err != nil {
 			return err
 		}
@@ -54,7 +53,7 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		w.Header().Add("Content-Type", exportentities.GetContentType(f))
+		w.Header().Add("Content-Type", f.ContentType())
 		return nil
 	}
 }
