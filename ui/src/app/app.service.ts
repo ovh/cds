@@ -2,13 +2,12 @@ import { Injectable } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { AsCodeEventData } from 'app/model/ascode.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AsCodeEvent } from 'app/store/ascode.action';
 import { UpdateMaintenance } from 'app/store/cds.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { filter, first } from 'rxjs/operators';
-import { Broadcast, BroadcastEvent } from './model/broadcast.model';
+import { Broadcast } from './model/broadcast.model';
 import { Event, EventType } from './model/event.model';
 import { LoadOpts } from './model/project.model';
 import { TimelineFilter } from './model/timeline.model';
@@ -67,13 +66,13 @@ export class AppService {
             return
         }
         if (event.type_event.indexOf(EventType.MAINTENANCE) === 0) {
-            this._store.dispatch(new UpdateMaintenance(event.payload['Enable']));
+            this._store.dispatch(new UpdateMaintenance(event.payload['enable']));
             return;
         }
         if (event.type_event.indexOf(EventType.ASCODE) === 0) {
             if (event.username === this._store.selectSnapshot(AuthenticationState.user).username) {
-                let e = event.payload['Event'];
-                this._store.dispatch(new AsCodeEvent({data: AsCodeEventData.FromEventsmanager(e['Data'])}));
+                let e: AsCodeEvent = <AsCodeEvent>event.payload['as_code_event'];
+                this._store.dispatch(e);
             }
             return;
         }
@@ -373,15 +372,15 @@ export class AppService {
         }
         switch (event.type_event) {
             case EventType.BROADCAST_ADD:
-                let bEvent: BroadcastEvent = <BroadcastEvent>event.payload['Broadcast'];
+                let bEvent: Broadcast = <Broadcast>event.payload;
                 if (bEvent) {
-                    this._broadcastStore.addBroadcastInCache(Broadcast.fromEvent(bEvent));
+                    this._broadcastStore.addBroadcastInCache(bEvent);
                 }
                 break;
             case EventType.BROADCAST_UPDATE:
-                let bUpEvent: BroadcastEvent = <BroadcastEvent>event.payload['NewBroadcast'];
+                let bUpEvent: Broadcast = <Broadcast>event.payload['NewBroadcast'];
                 if (bUpEvent) {
-                    this._broadcastStore.addBroadcastInCache(Broadcast.fromEvent(bUpEvent));
+                    this._broadcastStore.addBroadcastInCache(bUpEvent);
                 }
                 break;
             case EventType.BROADCAST_DELETE:

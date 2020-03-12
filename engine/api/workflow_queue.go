@@ -140,7 +140,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	}
 
 	// Load the secrets
-	pv, err := project.GetAllVariableInProject(tx, p.ID, project.WithClearPassword())
+	pv, err := project.LoadAllVariablesWithDecrytion(tx, p.ID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot load project variable")
 	}

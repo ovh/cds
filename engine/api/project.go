@@ -546,8 +546,8 @@ func (api *API) postProjectHandler() service.Handler {
 			}
 		}
 
-		for _, v := range p.Variable {
-			if errVar := project.InsertVariable(tx, &p, &v, consumer); errVar != nil {
+		for _, v := range p.Variables {
+			if errVar := project.InsertVariable(tx, p.ID, &v, consumer); errVar != nil {
 				return sdk.WrapError(errVar, "addProjectHandler> Cannot add variable %s in project %s", v.Name, p.Name)
 			}
 		}

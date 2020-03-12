@@ -54,7 +54,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
@@ -121,7 +121,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,

@@ -55,12 +55,13 @@ func processStartFromRootNode(ctx context.Context, db gorp.SqlExecutor, store ca
 	log.Debug("processWorkflowRun> starting from the root: %d (pipeline %s)", wr.Workflow.WorkflowData.Node.ID, wr.Workflow.Pipelines[wr.Workflow.WorkflowData.Node.Context.PipelineID].Name)
 	report := new(ProcessorReport)
 	//Run the root: manual or from an event
-	AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{
+	AddWorkflowRunInfo(wr, sdk.SpawnMsg{
 		ID: sdk.MsgWorkflowStarting.ID,
 		Args: []interface{}{
 			wr.Workflow.Name,
 			fmt.Sprintf("%d.%d", wr.Number, 0),
 		},
+		Type: sdk.MsgWorkflowStarting.Type,
 	})
 
 	r1, conditionOK, errP := processNodeRun(ctx, db, store, proj, wr, mapNodes, &wr.Workflow.WorkflowData.Node, 0, nil, hookEvent, manual)

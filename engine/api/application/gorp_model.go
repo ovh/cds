@@ -2,13 +2,11 @@ package application
 
 import (
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -28,11 +26,66 @@ func (e dbApplicationKey) Canonical() gorpmapping.CanonicalForms {
 
 type dbApplicationVulnerability sdk.Vulnerability
 
+type dbApplicationVariable struct {
+	gorpmapping.SignedEntity
+	ID            int64  `db:"id"`
+	ApplicationID int64  `db:"application_id"`
+	Name          string `db:"var_name"`
+	ClearValue    string `db:"var_value"`
+	CipherValue   string `db:"cipher_value" gorpmapping:"encrypted,ID,Name"`
+	Type          string `db:"var_type"`
+}
+
+func (e dbApplicationVariable) Canonical() gorpmapping.CanonicalForms {
+	var _ = []interface{}{e.ApplicationID, e.ID, e.Name, e.Type}
+	return gorpmapping.CanonicalForms{
+		"{{print .ApplicationID}}{{print .ID}}{{.Name}}{{.Type}}",
+	}
+}
+
+func newDBApplicationVariable(v sdk.Variable, appID int64) dbApplicationVariable {
+	if sdk.NeedPlaceholder(v.Type) {
+		return dbApplicationVariable{
+			ID:            v.ID,
+			Name:          v.Name,
+			CipherValue:   v.Value,
+			Type:          v.Type,
+			ApplicationID: appID,
+		}
+	}
+	return dbApplicationVariable{
+		ID:            v.ID,
+		Name:          v.Name,
+		ClearValue:    v.Value,
+		Type:          v.Type,
+		ApplicationID: appID,
+	}
+}
+
+func (e dbApplicationVariable) Variable() sdk.Variable {
+	if sdk.NeedPlaceholder(e.Type) {
+		return sdk.Variable{
+			ID:    e.ID,
+			Name:  e.Name,
+			Value: e.CipherValue,
+			Type:  e.Type,
+		}
+	}
+
+	return sdk.Variable{
+		ID:    e.ID,
+		Name:  e.Name,
+		Value: e.ClearValue,
+		Type:  e.Type,
+	}
+}
+
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbApplication{}, "application", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbApplicationVariableAudit{}, "application_variable_audit", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbApplicationKey{}, "application_key", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbApplicationVulnerability{}, "application_vulnerability", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbApplicationVariable{}, "application_variable", true, "id"))
 }
 
 type sqlApplicationJSON struct {
@@ -115,7 +168,7 @@ func (ava *dbApplicationVariableAudit) PostGet(db gorp.SqlExecutor) error {
 		if sdk.NeedPlaceholder(vAfter.Type) {
 			vAfter.Value = sdk.PasswordPlaceholder
 		}
-		ava.VariableAfter = vAfter
+		ava.VariableAfter = *vAfter
 	}
 
 	return nil
@@ -128,24 +181,22 @@ func (ava *dbApplicationVariableAudit) PostUpdate(db gorp.SqlExecutor) error {
 	if ava.VariableBefore != nil {
 		v, err := json.Marshal(ava.VariableBefore)
 		if err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 		vB.Valid = true
 		vB.String = string(v)
 	}
 
-	if ava.VariableAfter != nil {
-		v, err := json.Marshal(ava.VariableAfter)
-		if err != nil {
-			return err
-		}
-		vA.Valid = true
-		vA.String = string(v)
+	v, err := json.Marshal(ava.VariableAfter)
+	if err != nil {
+		return sdk.WithStack(err)
 	}
+	vA.Valid = true
+	vA.String = string(v)
 
 	query := "update application_variable_audit set variable_before = $2, variable_after = $3 where id = $1"
 	if _, err := db.Exec(query, ava.ID, vB, vA); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 	return nil
 }
@@ -159,22 +210,12 @@ func (ava *dbApplicationVariableAudit) PostInsert(db gorp.SqlExecutor) error {
 func (ava *dbApplicationVariableAudit) PreInsert(s gorp.SqlExecutor) error {
 	if ava.VariableBefore != nil {
 		if sdk.NeedPlaceholder(ava.VariableBefore.Type) {
-			secret, err := secret.Encrypt([]byte(ava.VariableBefore.Value))
-			if err != nil {
-				return err
-			}
-			ava.VariableBefore.Value = base64.StdEncoding.EncodeToString(secret)
+			ava.VariableBefore.Value = sdk.PasswordPlaceholder
 		}
 	}
-	if ava.VariableAfter != nil {
-		if sdk.NeedPlaceholder(ava.VariableAfter.Type) {
-			var err error
-			secret, err := secret.Encrypt([]byte(ava.VariableAfter.Value))
-			if err != nil {
-				return err
-			}
-			ava.VariableAfter.Value = base64.StdEncoding.EncodeToString(secret)
-		}
+	if sdk.NeedPlaceholder(ava.VariableAfter.Type) {
+		ava.VariableAfter.Value = sdk.PasswordPlaceholder
 	}
+
 	return nil
 }

@@ -25,9 +25,9 @@ func (api *API) getVariableAuditInEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errE, "getVariableAuditInEnvironmentHandler> Cannot load environment %s on project %s", envName, key)
 		}
 
-		variable, errV := environment.GetVariable(api.mustDB(), key, envName, varName)
-		if errV != nil {
-			return sdk.WrapError(errV, "getVariableAuditInEnvironmentHandler> Cannot load variable %s", varName)
+		variable, err := environment.LoadVariable(api.mustDB(), env.ID, varName)
+		if err != nil {
+			return err
 		}
 
 		audits, errA := environment.LoadVariableAudits(api.mustDB(), env.ID, variable.ID)
@@ -45,12 +45,17 @@ func (api *API) getVariableInEnvironmentHandler() service.Handler {
 		envName := vars["environmentName"]
 		name := vars["name"]
 
-		v, errVar := environment.GetVariable(api.mustDB(), key, envName, name)
-		if errVar != nil {
-			return sdk.WrapError(errVar, "getVariableInEnvironmentHandler: Cannot get variable %s for environment %s", name, envName)
+		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
+		if errE != nil {
+			return sdk.WrapError(errE, "getVariableInEnvironmentHandler> Cannot load environment %s on project %s", envName, key)
 		}
 
-		return service.WriteJSON(w, v, http.StatusOK)
+		variable, err := environment.LoadVariable(api.mustDB(), env.ID, name)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, variable, http.StatusOK)
 	}
 }
 
@@ -60,9 +65,14 @@ func (api *API) getVariablesInEnvironmentHandler() service.Handler {
 		key := vars[permProjectKey]
 		envName := vars["environmentName"]
 
-		variables, errVar := environment.GetAllVariable(api.mustDB(), key, envName)
-		if errVar != nil {
-			return sdk.WrapError(errVar, "getVariablesInEnvironmentHandler: Cannot get variables for environment %s", envName)
+		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
+		if errE != nil {
+			return sdk.WrapError(errE, "getVariablesInEnvironmentHandler> Cannot load environment %s on project %s", envName, key)
+		}
+
+		variables, err := environment.LoadAllVariables(api.mustDB(), env.ID)
+		if err != nil {
+			return err
 		}
 
 		return service.WriteJSON(w, variables, http.StatusOK)
@@ -91,9 +101,9 @@ func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		// clear passwordfor audit
-		varToDelete, errV := environment.GetVariable(tx, key, envName, varName, environment.WithClearPassword())
-		if errV != nil {
-			return sdk.WrapError(errV, "deleteVariableFromEnvironmentHandler> Cannot load variable %s", varName)
+		varToDelete, err := environment.LoadVariable(tx, env.ID, varName)
+		if err != nil {
+			return err
 		}
 
 		if err := environment.DeleteVariable(tx, env.ID, varToDelete, getAPIConsumer(ctx)); err != nil {
@@ -138,20 +148,20 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		varBefore, errV := environment.GetVariableByID(api.mustDB(), env.ID, newVar.ID, environment.WithClearPassword())
-		if errV != nil {
-			return sdk.WrapError(errV, "updateVariableInEnvironmentHandler> Cannot load variable %d", newVar.ID)
+		varBefore, err := environment.LoadVariable(api.mustDB(), env.ID, varName)
+		if err != nil {
+			return err
 		}
 
 		if err := environment.UpdateVariable(api.mustDB(), env.ID, &newVar, varBefore, getAPIConsumer(ctx)); err != nil {
-			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s", varName, envName)
+			return err
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentVariableUpdate(ctx, key, *env, newVar, varBefore, getAPIConsumer(ctx))
+		event.PublishEnvironmentVariableUpdate(ctx, key, *env, newVar, *varBefore, getAPIConsumer(ctx))
 
 		if sdk.NeedPlaceholder(newVar.Type) {
 			newVar.Value = sdk.PasswordPlaceholder
@@ -191,15 +201,12 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		var errInsert error
-		switch newVar.Type {
-		case sdk.KeyVariable:
-			errInsert = environment.AddKeyPairToEnvironment(tx, env.ID, newVar.Name, getAPIConsumer(ctx))
-		default:
-			errInsert = environment.InsertVariable(tx, env.ID, &newVar, getAPIConsumer(ctx))
+		if !sdk.IsInArray(newVar.Type, sdk.AvailableVariableType) {
+			return sdk.WithStack(sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid variable type %s", newVar.Type))
 		}
-		if errInsert != nil {
-			return sdk.WrapError(errInsert, "addVariableInEnvironmentHandler: Cannot add variable %s in environment %s", varName, envName)
+
+		if err := environment.InsertVariable(tx, env.ID, &newVar, getAPIConsumer(ctx)); err != nil {
+			return err
 		}
 
 		if err := tx.Commit(); err != nil {

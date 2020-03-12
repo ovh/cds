@@ -12,8 +12,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
@@ -210,8 +208,8 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load workflow audit %s/%s", key, workflowName)
 		}
 
-		var exportWf exportentities.Workflow
-		if err := yaml.Unmarshal([]byte(audit.DataBefore), &exportWf); err != nil {
+		exportWf, err := exportentities.UnmarshalWorkflow([]byte(audit.DataBefore))
+		if err != nil {
 			return sdk.WrapError(err, "cannot unmarshal data before")
 		}
 
@@ -223,9 +221,9 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 			_ = tx.Rollback()
 		}()
 
-		newWf, _, err := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, &exportWf, u, workflow.ImportOptions{Force: true, WorkflowName: workflowName})
-		if err != nil {
-			return sdk.WrapError(err, "cannot parse and import previous workflow")
+		newWf, _, errP := workflow.ParseAndImport(ctx, tx, api.Cache, *proj, wf, exportWf, u, workflow.ImportOptions{Force: true, WorkflowName: workflowName})
+		if errP != nil {
+			return sdk.WrapError(errP, "cannot parse and import previous workflow")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -370,10 +368,6 @@ func (api *API) postWorkflowHandler() service.Handler {
 			return err
 		}
 
-		if data.WorkflowData == nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "no node found")
-		}
-
 		if err := workflow.RenameNode(ctx, api.mustDB(), &data); err != nil {
 			return err
 		}
@@ -459,7 +453,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.Update(ctx, tx, api.Cache, *p, &wf, workflow.UpdateOptions{OldWorkflow: oldW}); err != nil {
+		if err := workflow.Update(ctx, tx, api.Cache, *p, &wf, workflow.UpdateOptions{}); err != nil {
 			return sdk.WrapError(err, "cannot update workflow")
 		}
 

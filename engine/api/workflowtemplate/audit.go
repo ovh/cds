@@ -7,8 +7,6 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -54,8 +52,8 @@ type addWorkflowTemplateAudit struct{}
 
 func (a addWorkflowTemplateAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wtEvent sdk.EventWorkflowTemplateAdd
-	if err := mapstructure.Decode(e.Payload, &wtEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wtEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
 	return InsertAudit(db, &sdk.AuditWorkflowTemplate{
@@ -73,8 +71,8 @@ type updateWorkflowTemplateAudit struct{}
 
 func (a updateWorkflowTemplateAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wtEvent sdk.EventWorkflowTemplateUpdate
-	if err := mapstructure.Decode(e.Payload, &wtEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wtEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
 	return InsertAudit(db, &sdk.AuditWorkflowTemplate{
@@ -94,8 +92,8 @@ type addWorkflowTemplateInstanceAudit struct{}
 
 func (a addWorkflowTemplateInstanceAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wtEvent sdk.EventWorkflowTemplateInstanceAdd
-	if err := mapstructure.Decode(e.Payload, &wtEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wtEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
 	b, err := json.Marshal(wtEvent.WorkflowTemplateInstance)
@@ -119,8 +117,8 @@ type updateWorkflowTemplateInstanceAudit struct{}
 
 func (a updateWorkflowTemplateInstanceAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
 	var wtEvent sdk.EventWorkflowTemplateInstanceUpdate
-	if err := mapstructure.Decode(e.Payload, &wtEvent); err != nil {
-		return sdk.WrapError(err, "Unable to decode payload")
+	if err := json.Unmarshal(e.Payload, &wtEvent); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshal payload")
 	}
 
 	before, err := json.Marshal(wtEvent.OldWorkflowTemplateInstance)

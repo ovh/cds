@@ -36,7 +36,7 @@ cdsctl is the CDS Command Line - you can script everything with it, cdsctl also 
 
 ## Want a try?
 
-Docker-Compose or Helm are your friends, see [Ready To Run Tutorials](https://ovh.github.io/cds/hosting/ready-to-run/)
+Docker-Compose is your friend, see [Ready To Run Tutorials](https://ovh.github.io/cds/hosting/ready-to-run/)
 
 ## Blog posts and talks
 
@@ -246,7 +246,7 @@ Do you have even more advanced automation needs, or the desire to develop an app
 
 #### Self-Hosting
 
-CDS is open-source since October 2016. You can install it freely in your company or at home. Some tutorials are available to help you start a CDS, [docker-compose](https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/), [Kubernetes with Helm](https://ovh.github.io/cds/hosting/ready-to-run/helm/), [Install with binaries](https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/).
+CDS is open-source since October 2016. You can install it freely in your company or at home. Some tutorials are available to help you start a CDS, [docker-compose](https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/), [Install with binaries](https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/).
 
 #### High Availability / Scalability / Upgrade without User Downtime
 

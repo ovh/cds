@@ -37,9 +37,10 @@ func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.S
 			r1, _, errPwnr := processNodeRun(ctx, db, store, proj, wr, mapNodes, &t.ChildNode, int(parentSubNumber), parentNodeRun, nil, nil)
 			if errPwnr != nil {
 				log.Error(ctx, "processWorkflowRun> Unable to process node ID=%d: %s", t.ChildNode.ID, errPwnr)
-				AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+				AddWorkflowRunInfo(wr, sdk.SpawnMsg{
 					ID:   sdk.MsgWorkflowError.ID,
 					Args: []interface{}{errPwnr.Error()},
+					Type: sdk.MsgWorkflowError.Type,
 				})
 			}
 			_, _ = report.Merge(ctx, r1, nil)
@@ -240,9 +241,10 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 		vcsInf, errVcs = getVCSInfos(ctx, db, store, proj.Key, vcsServer, currentJobGitValues, app.Name, app.VCSServer, app.RepositoryFullname)
 		if errVcs != nil {
-			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+			AddWorkflowRunInfo(wr, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowError.ID,
 				Args: []interface{}{errVcs.Error()},
+				Type: sdk.MsgWorkflowError.Type,
 			})
 			return nil, false, sdk.WrapError(errVcs, "unable to get git informations")
 		}
@@ -298,8 +300,8 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	for _, info := range wr.Infos {
-		if info.IsError && info.SubNumber == wr.LastSubNumber {
-			nr.Status = string(sdk.StatusFail)
+		if info.Type == sdk.RunInfoTypeError && info.SubNumber == wr.LastSubNumber {
+			nr.Status = sdk.StatusFail
 			nr.Done = time.Now()
 			break
 		}
@@ -365,9 +367,10 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 		if nbMutex > 0 {
 			log.Debug("Noderun %s processed but not executed because of mutex", n.Name)
-			AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{
+			AddWorkflowRunInfo(wr, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowNodeMutex.ID,
 				Args: []interface{}{n.Name},
+				Type: sdk.MsgWorkflowNodeMutex.Type,
 			})
 			if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
 				return nil, false, sdk.WrapError(err, "unable to update workflow run")
@@ -479,9 +482,10 @@ func computePayload(n *sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual
 func computeNodeContextBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, n *sdk.Node, runContext nodeRunContext) {
 	nodeRunParams, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
 	if errParam != nil {
-		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+		AddWorkflowRunInfo(wr, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
 			Args: []interface{}{errParam.Error()},
+			Type: sdk.MsgWorkflowError.Type,
 		})
 		// if there an error -> display it in workflowRunInfo and not stop the launch
 		log.Error(ctx, "processNode> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%v", proj.Name, wr.Number, run.SubNumber, wr.Workflow.Name, n.ID, run.Payload, errParam)

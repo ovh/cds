@@ -27,7 +27,7 @@ func generateTemplate(groupID int64, pipelineName string) *sdk.WorkflowTemplate 
 		Slug:    slug.Convert(name),
 		Workflow: base64.StdEncoding.EncodeToString([]byte(
 			`name: [[.name]]
-version: v1.0
+version: v2.0
 workflow:
   Node-1:
     pipeline: ` + pipelineName,
@@ -150,7 +150,7 @@ func Test_postTemplateBulkHandler(t *testing.T) {
 		Slug:    slug.Convert(name),
 		Workflow: base64.StdEncoding.EncodeToString([]byte(
 			`name: [[.name]]
-version: v1.0
+version: v2.0
 workflow:
   Node-1:
     pipeline: ` + pipelineName,

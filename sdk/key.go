@@ -41,6 +41,11 @@ type ApplicationKey struct {
 
 // EnvironmentKey represent a key attach to an environment
 type EnvironmentKey struct {
-	Key
-	EnvironmentID int64 `json:"environment_id" db:"environment_id"`
+	ID            int64  `json:"id" db:"id" cli:"-"`
+	Name          string `json:"name" db:"name" cli:"name"`
+	Public        string `json:"public" db:"public" cli:"publickey"`
+	Private       string `json:"private" db:"private" cli:"-" gorpmapping:"encrypted,ID,Name"`
+	KeyID         string `json:"key_id" db:"key_id" cli:"-"`
+	Type          string `json:"type" db:"type" cli:"type"`
+	EnvironmentID int64  `json:"environment_id" db:"environment_id"`
 }

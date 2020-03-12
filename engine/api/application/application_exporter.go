@@ -32,7 +32,7 @@ func Export(db gorp.SqlExecutor, cache cache.Store, key string, appName string, 
 func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentities.Format, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
 	// Parse variables
 	appvars := []sdk.Variable{}
-	for _, v := range app.Variable {
+	for _, v := range app.Variables {
 		switch v.Type {
 		case sdk.KeyVariable:
 			return 0, sdk.NewErrorFrom(sdk.ErrUnknownError, "variable %s: variable of type key are deprecated. Please use the standard keys from your project or your application", v.Name)
@@ -47,7 +47,7 @@ func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentitie
 			appvars = append(appvars, v)
 		}
 	}
-	app.Variable = appvars
+	app.Variables = appvars
 
 	// Prepare keys
 	keys := []exportentities.EncryptedKey{}

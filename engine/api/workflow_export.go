@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"io"
 	"net/http"
 
@@ -27,9 +28,9 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 		}
 		withPermissions := FormBool(r, "withPermissions")
 
-		opts := []exportentities.WorkflowOptions{}
+		opts := make([]v2.ExportOptions, 0)
 		if withPermissions {
-			opts = append(opts, exportentities.WorkflowWithPermissions)
+			opts = append(opts, v2.WorkflowWithPermissions)
 		}
 
 		f, err := exportentities.GetFormat(format)
@@ -58,9 +59,9 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		withPermissions := FormBool(r, "withPermissions")
 
-		opts := []exportentities.WorkflowOptions{}
+		opts := make([]v2.ExportOptions, 0)
 		if withPermissions {
-			opts = append(opts, exportentities.WorkflowWithPermissions)
+			opts = append(opts, v2.WorkflowWithPermissions)
 		}
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, project.LoadOptions.WithIntegrations)

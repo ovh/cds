@@ -109,7 +109,7 @@ func TestImport(t *testing.T) {
 					Name:      "test-1",
 					Metadata:  sdk.Metadata{"triggered_by": "bla"},
 					PurgeTags: []string{"aa", "bb"},
-					WorkflowData: &sdk.WorkflowData{
+					WorkflowData: sdk.WorkflowData{
 						Node: sdk.Node{
 							Name: "pipeline",
 							Ref:  "pipeline",
@@ -129,7 +129,7 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-1",
-					WorkflowData: &sdk.WorkflowData{
+					WorkflowData: sdk.WorkflowData{
 						Node: sdk.Node{
 							Name: "pipeline",
 							Ref:  "pipeline",
@@ -149,7 +149,7 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-1",
-					WorkflowData: &sdk.WorkflowData{
+					WorkflowData: sdk.WorkflowData{
 						Node: sdk.Node{
 							Name: "pipeline",
 							Ref:  "pipeline",
@@ -169,7 +169,7 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-2",
-					WorkflowData: &sdk.WorkflowData{
+					WorkflowData: sdk.WorkflowData{
 						Node: sdk.Node{
 							Name: "pipeline",
 							Ref:  "pipeline",
@@ -191,7 +191,7 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-3",
-					WorkflowData: &sdk.WorkflowData{
+					WorkflowData: sdk.WorkflowData{
 						Node: sdk.Node{
 							Name: "pipeline",
 							Ref:  "pipeline",
@@ -223,7 +223,7 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-3",
-					WorkflowData: &sdk.WorkflowData{
+					WorkflowData: sdk.WorkflowData{
 						Node: sdk.Node{
 							Name: "pipeline",
 							Ref:  "pipeline",
@@ -266,7 +266,7 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-4",
-					WorkflowData: &sdk.WorkflowData{
+					WorkflowData: sdk.WorkflowData{
 						Node: sdk.Node{
 							Name: "A",
 							Ref:  "A",
@@ -398,7 +398,7 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-5",
-					WorkflowData: &sdk.WorkflowData{
+					WorkflowData: sdk.WorkflowData{
 						Node: sdk.Node{
 							Name: "pipeline",
 							Ref:  "pipeline",
@@ -420,7 +420,7 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-6",
-					WorkflowData: &sdk.WorkflowData{
+					WorkflowData: sdk.WorkflowData{
 						Node: sdk.Node{
 							Name: "pipeline",
 							Ref:  "pipeline",
@@ -446,7 +446,7 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-1",
-					WorkflowData: &sdk.WorkflowData{
+					WorkflowData: sdk.WorkflowData{
 						Node: sdk.Node{
 							Name: "pipeline",
 							Ref:  "pipeline",

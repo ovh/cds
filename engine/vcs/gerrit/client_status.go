@@ -2,11 +2,11 @@ package gerrit
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/andygrunwald/go-gerrit"
-	"github.com/mitchellh/mapstructure"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -15,8 +15,8 @@ import (
 //SetStatus set build status on Gitlab
 func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	var eventNR sdk.EventRunWorkflowNode
-	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
-		return sdk.WrapError(err, "error during consumption")
+	if err := json.Unmarshal(event.Payload, &eventNR); err != nil {
+		return sdk.WrapError(err, "cannot unmarshal payload")
 	}
 
 	if eventNR.GerritChange == nil {

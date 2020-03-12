@@ -58,13 +58,13 @@ func TestImportInto_Variable(t *testing.T) {
 	test.NoError(t, environment.InsertVariable(db, env.ID, &v2, u))
 
 	var err error
-	env.Variable, err = environment.GetAllVariableByID(db, env.ID)
+	env.Variables, err = environment.LoadAllVariables(db, env.ID)
 	test.NoError(t, err)
 
 	env2 := sdk.Environment{
 		Name:      "testenv2",
 		ProjectID: proj.ID,
-		Variable: []sdk.Variable{
+		Variables: []sdk.Variable{
 			{
 				Name:  "v1",
 				Type:  sdk.TextVariable,
@@ -106,7 +106,7 @@ func TestImportInto_Variable(t *testing.T) {
 	assert.NoError(t, err)
 
 	var v0found, v1found, v2found, v3found bool
-	for _, v := range env3.Variable {
+	for _, v := range env3.Variables {
 		if v.Name == "v0" {
 			v0found = true
 			assert.Equal(t, "value0", v.Value)
@@ -166,7 +166,7 @@ func TestImportInto_Group(t *testing.T) {
 	test.NoError(t, environment.InsertEnvironment(db, &env))
 
 	var err error
-	env.Variable, err = environment.GetAllVariableByID(db, env.ID)
+	env.Variables, err = environment.LoadAllVariables(db, env.ID)
 	test.NoError(t, err)
 
 	env2 := sdk.Environment{

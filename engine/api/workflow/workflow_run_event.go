@@ -2,11 +2,11 @@ package workflow
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"time"
 
-	"github.com/fatih/structs"
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -260,9 +260,11 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	}
 
+	payload, _ := json.Marshal(eventWNR)
+
 	evt := sdk.Event{
 		EventType:       fmt.Sprintf("%T", eventWNR),
-		Payload:         structs.Map(eventWNR),
+		Payload:         payload,
 		Timestamp:       time.Now(),
 		ProjectKey:      proj.Key,
 		WorkflowName:    wr.Workflow.Name,

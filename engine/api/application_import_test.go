@@ -67,7 +67,7 @@ variables:
 	assert.Equal(t, "myNewApp", app.Name)
 
 	//Check variables
-	for _, v := range app.Variable {
+	for _, v := range app.Variables {
 		switch v.Name {
 		case "var1":
 			assert.True(t, v.Type == sdk.StringVariable, "var1.type should be type string")
@@ -119,7 +119,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 		t.Fatal(err)
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
+	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -189,7 +189,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 	}
 
 	//Check variables
-	for _, v := range app1.Variable {
+	for _, v := range app1.Variables {
 		switch v.Name {
 		case "myPassword":
 			assert.True(t, v.Type == sdk.SecretVariable, "myPassword.type should be type password")
@@ -228,7 +228,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 		t.Fatal(err)
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
+	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -298,7 +298,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	}
 
 	//Check variables
-	for _, v := range app1.Variable {
+	for _, v := range app1.Variables {
 		switch v.Name {
 		case "myPassword":
 			assert.True(t, v.Type == sdk.SecretVariable, "myPassword.type should be type password")
@@ -352,7 +352,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	}
 
 	//Check variables
-	for _, v := range app1.Variable {
+	for _, v := range app1.Variables {
 		switch v.Name {
 		case "myPassword":
 			assert.True(t, v.Type == sdk.SecretVariable, "myPassword.type should be type password")
@@ -405,7 +405,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	k2.KeyID = kssh.KeyID
 	test.NoError(t, application.InsertKey(api.mustDB(), k2))
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
+	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -417,8 +417,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 		application.LoadOptions.WithVariablesWithClearPassword,
 	)
 	test.NoError(t, err)
-	test.Equal(t, 1, len(app.Variable))
-	test.Equal(t, "MySecretValue", app.Variable[0].Value)
+	test.Equal(t, 1, len(app.Variables))
+	test.Equal(t, "MySecretValue", app.Variables[0].Value)
 	test.Equal(t, 2, len(app.Keys))
 
 	mKeys := make(map[string]sdk.ApplicationKey, 2)
@@ -490,8 +490,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 		application.LoadOptions.WithVariablesWithClearPassword,
 	)
 	test.NoError(t, err)
-	test.Equal(t, 1, len(app.Variable))
-	test.Equal(t, "MySecretValue", app.Variable[0].Value)
+	test.Equal(t, 1, len(app.Variables))
+	test.Equal(t, "MySecretValue", app.Variables[0].Value)
 	test.Equal(t, 2, len(app.Keys))
 	mKeys = make(map[string]sdk.ApplicationKey, 2)
 	mKeys[app.Keys[0].Type] = app.Keys[0]

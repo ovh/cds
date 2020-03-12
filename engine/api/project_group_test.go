@@ -30,7 +30,7 @@ func Test_ProjectPerms(t *testing.T) {
 
 	newWf := sdk.Workflow{
 		Name: sdk.RandomString(10),
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,

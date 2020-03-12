@@ -35,7 +35,7 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
@@ -107,7 +107,7 @@ func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
@@ -173,7 +173,7 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
@@ -277,7 +277,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
@@ -359,7 +359,7 @@ func Test_UpdateProjectPermsWithWorkflow(t *testing.T) {
 
 	newWf := sdk.Workflow{
 		Name: sdk.RandomString(10),
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
@@ -459,7 +459,7 @@ func Test_PermissionOnWorkflowInferiorOfProject(t *testing.T) {
 
 	newWf := sdk.Workflow{
 		Name: sdk.RandomString(10),
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
@@ -627,7 +627,7 @@ func Test_PermissionOnWorkflowWithRestrictionOnNode(t *testing.T) {
 
 	newWf := sdk.Workflow{
 		Name: sdk.RandomString(10),
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,

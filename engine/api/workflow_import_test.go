@@ -184,7 +184,7 @@ func Test_putWorkflowImportHandler(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Name: "pip1",
@@ -247,7 +247,7 @@ func Test_putWorkflowImportHandlerWithJoinAndCondition(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Name: "pip1",
@@ -374,7 +374,7 @@ func Test_putWorkflowImportHandlerWithJoinWithOrWithoutCondition(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Name: "pip1",
@@ -507,7 +507,7 @@ func Test_putWorkflowImportHandlerWithJoinWithoutCondition(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Name: "pip1",
@@ -678,7 +678,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Type:  sdk.StringVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, v1, u))
+	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &v1, u))
 
 	v2 := sdk.Variable{
 		Name:  "var2",
@@ -686,7 +686,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Type:  sdk.SecretVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, v2, u))
+	test.NoError(t, application.InsertVariable(api.mustDB(), app.ID, &v2, u))
 
 	//Insert ssh and gpg keys
 	k := &sdk.ApplicationKey{
@@ -720,7 +720,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Type: sdk.NodeTypePipeline,
@@ -813,7 +813,7 @@ func Test_putWorkflowImportHandlerMustNotHave2Joins(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Name: "pip1",

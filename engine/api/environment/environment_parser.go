@@ -69,7 +69,7 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv *exportentities.
 		}
 
 		vv := sdk.Variable{Name: p, Type: v.Type, Value: v.Value}
-		env.Variable = append(env.Variable, vv)
+		env.Variables = append(env.Variables, vv)
 	}
 
 	//Compute keys
@@ -102,12 +102,22 @@ func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv *exportentities.
 		}
 
 		k := sdk.EnvironmentKey{
-			Key:           *kk,
 			EnvironmentID: env.ID,
+			Name:          kname,
 		}
 
+		k.KeyID = kk.KeyID
+		k.Public = kk.Public
+		k.Private = kk.Private
+		k.Type = kk.Type
+
 		if keepOldValue && oldKey != nil {
-			k.Key = oldKey.Key
+			k.ID = oldKey.ID
+			k.EnvironmentID = oldKey.EnvironmentID
+			k.KeyID = oldKey.KeyID
+			k.Public = oldKey.Public
+			k.Private = oldKey.Private
+			k.Type = oldKey.Type
 		}
 
 		env.Keys = append(env.Keys, k)

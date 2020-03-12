@@ -253,7 +253,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 		Name:       "workflow1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "root",
 				Context: &sdk.NodeContext{

@@ -76,10 +76,6 @@ func (h NodeHook) Equals(h1 NodeHook) bool {
 
 // FilterHooksConfig filter all hooks configuration and remove some configuration key
 func (w *Workflow) FilterHooksConfig(s ...string) {
-	if w.WorkflowData == nil {
-		return
-	}
-
 	w.WorkflowData.Node.FilterHooksConfig(s...)
 	for i := range w.WorkflowData.Joins {
 		w.WorkflowData.Joins[i].FilterHooksConfig(s...)

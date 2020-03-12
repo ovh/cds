@@ -3,7 +3,7 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { PipelineStatus } from 'app/model/pipeline.model';
+import { PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowRun } from 'app/model/workflow.run.model';
 import { NotificationService } from 'app/service/notification/notification.service';
@@ -14,7 +14,7 @@ import { ChangeToRunView, GetWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { ErrorMessageMap } from './errors';
+import { ErrorMessageMap, WarningMessageMap } from './errors';
 
 @Component({
     selector: 'app-workflow-run',
@@ -39,7 +39,9 @@ export class WorkflowRunComponent implements OnInit {
     dataSubs: Subscription;
     paramsSubs: Subscription;
     loadingRun = true;
+    warningsMap = WarningMessageMap;
     errorsMap = ErrorMessageMap;
+    warnings: Array<SpawnInfo>;
     displayError = false;
 
     // id, status, workflows, infos, num
@@ -99,7 +101,8 @@ export class WorkflowRunComponent implements OnInit {
                 if (!this.workflowRunData) {
                     this.workflowRunData = {};
                 }
-                if (!this.workflowRunData['workflow'] || !this.workflowRunData['workflow'].workflow_data) {
+                if (!this.workflowRunData['workflow'] || !this.workflowRunData['workflow'].workflow_data
+                || this.workflowRunData['workflow'].workflow_data.node.id === 0) {
                     this.workflowRunData['workflow'] = s.workflowRun.workflow;
                     this.workflowName = s.workflowRun.workflow.name;
                 }
@@ -115,7 +118,8 @@ export class WorkflowRunComponent implements OnInit {
                 this.workflowRunData['num'] = s.workflowRun.num;
 
                 if (s.workflowRun.infos && s.workflowRun.infos.length > 0) {
-                    this.displayError = s.workflowRun.infos.some((info) => info.is_error);
+                    this.displayError = s.workflowRun.infos.some((info) => info.type === 'Error');
+                    this.warnings = s.workflowRun.infos.filter(i => i.type === 'Warning');
                 }
 
                 this.updateTitle(s.workflowRun);

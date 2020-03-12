@@ -2,10 +2,10 @@ package event
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/fatih/structs"
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -20,12 +20,13 @@ func publishRunWorkflow(ctx context.Context, payload interface{}, key, workflowN
 		eventIntegrationsID[i] = eventIntegration.ID
 	}
 
+	bts, _ := json.Marshal(payload)
 	event := sdk.Event{
 		Timestamp:           time.Now(),
 		Hostname:            hostname,
 		CDSName:             cdsname,
 		EventType:           fmt.Sprintf("%T", payload),
-		Payload:             structs.Map(payload),
+		Payload:             bts,
 		ProjectKey:          key,
 		ApplicationName:     appName,
 		PipelineName:        pipName,

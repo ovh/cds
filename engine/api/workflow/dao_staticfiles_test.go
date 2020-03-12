@@ -47,7 +47,7 @@ func TestInsertStaticFiles(t *testing.T) {
 		Name:       "test_staticfiles_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
 				Ref:  "node1",

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	v2 "github.com/ovh/cds/sdk/exportentities/v2"
 	"net/http"
 	"reflect"
 
@@ -30,7 +31,7 @@ func (api *API) getUserJSONSchema() service.Handler {
 
 		var sch *jsonschema.Schema
 		if filter == "" || filter == "workflow" {
-			sch = ref.ReflectFromType(reflect.TypeOf(exportentities.Workflow{}))
+			sch = ref.ReflectFromType(reflect.TypeOf(v2.Workflow{}))
 			buf, _ := json.Marshal(sch)
 			res.Workflow = string(buf)
 		}

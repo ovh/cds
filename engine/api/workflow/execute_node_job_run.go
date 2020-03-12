@@ -3,7 +3,6 @@ package workflow
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"fmt"
 	"sync"
 	"time"
@@ -317,9 +316,11 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Proj
 		envMap, has := wr.Workflow.Environments[n.Context.EnvironmentID]
 		if has {
 			env = &envMap
-			if err := environment.LoadAllBase64Keys(db, env); err != nil {
+			keys, err := environment.LoadAllKeysWithPrivateContent(db, n.Context.EnvironmentID)
+			if err != nil {
 				return nil, nil, err
 			}
+			env.Keys = keys
 		}
 	}
 
@@ -378,19 +379,10 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Proj
 				Type:  "string",
 				Value: k.KeyID,
 			})
-
-			unBase64, err64 := base64.StdEncoding.DecodeString(k.Private)
-			if err64 != nil {
-				return nil, nil, sdk.WrapError(err64, "LoadNodeJobRunKeys> Cannot decode env key %s", k.Name)
-			}
-			decrypted, errD := secret.Decrypt([]byte(unBase64))
-			if errD != nil {
-				log.Error(ctx, "LoadNodeJobRunKeys> Unable to decrypt env private key %s/%s: %v", env.Name, k.Name, errD)
-			}
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
 				Type:  k.Type,
-				Value: string(decrypted),
+				Value: k.Private,
 			})
 		}
 
@@ -431,11 +423,11 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 		// Application variables
 		av := []sdk.Variable{}
 		if app != nil {
-			appv, errA := application.GetAllVariableByID(db, app.ID, application.WithClearPassword())
-			if errA != nil {
-				return nil, sdk.WrapError(errA, "LoadSecrets> Cannot load application variables")
+			appVariables, err := application.LoadAllVariablesWithDecrytion(db, app.ID)
+			if err != nil {
+				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load application variables")
 			}
-			av = sdk.VariablesFilter(appv, sdk.SecretVariable, sdk.KeyVariable)
+			av = sdk.VariablesFilter(appVariables, sdk.SecretVariable)
 			av = sdk.VariablesPrefix(av, "cds.app.")
 
 			if err := application.DecryptVCSStrategyPassword(app); err != nil {
@@ -452,7 +444,7 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 		// Environment variables
 		ev := []sdk.Variable{}
 		if env != nil {
-			envv, errE := environment.GetAllVariableByID(db, env.ID, environment.WithClearPassword())
+			envv, errE := environment.LoadAllVariablesWithDecrytion(db, env.ID)
 			if errE != nil {
 				return nil, sdk.WrapError(errE, "LoadSecrets> Cannot load environment variables")
 			}

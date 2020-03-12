@@ -72,7 +72,7 @@ func LoadAllKeysWithPrivateContent(db gorp.SqlExecutor, appID int64) ([]sdk.Appl
 
 	res := make([]sdk.ApplicationKey, 0, len(keys))
 	for _, k := range keys {
-		x, err := LoadKey(db, k.ID, k.Name)
+		x, err := loadKey(db, k.ID, k.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -82,7 +82,7 @@ func LoadAllKeysWithPrivateContent(db gorp.SqlExecutor, appID int64) ([]sdk.Appl
 	return res, nil
 }
 
-func LoadKey(db gorp.SqlExecutor, id int64, keyName string) (*sdk.ApplicationKey, error) {
+func loadKey(db gorp.SqlExecutor, id int64, keyName string) (*sdk.ApplicationKey, error) {
 	query := gorpmapping.NewQuery(`
 	SELECT * 
 	FROM application_key

@@ -66,7 +66,7 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -130,7 +130,7 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 	t.Logf(">>%s", rec.Body.String())
 
 	assert.Equal(t, `name: test_1
-version: v1.0
+version: v2.0
 workflow:
   fork:
     depends_on:
@@ -165,6 +165,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	group2 := &sdk.Group{
 		Name: "Test_getWorkflowExportHandlerWithPermissions-Group2",
 	}
+
 	require.NoError(t, group.Insert(context.TODO(), api.mustDB(), group2))
 	group2, _ = group.LoadByName(context.TODO(), api.mustDB(), "Test_getWorkflowExportHandlerWithPermissions-Group2")
 
@@ -213,7 +214,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 				Permission: 7,
 			},
 		},
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
@@ -263,7 +264,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	t.Logf(">>%s", rec.Body.String())
 
 	assert.Equal(t, `name: test_1
-version: v1.0
+version: v2.0
 workflow:
   pip1:
     pipeline: pip1
@@ -323,7 +324,7 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		WorkflowData: &sdk.WorkflowData{
+		WorkflowData: sdk.WorkflowData{
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
