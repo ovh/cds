@@ -35,7 +35,7 @@ export class WorkflowNodeHookComponent implements OnInit {
     @Input() project: Project;
     @Input() node: WNode;
 
-    @ViewChild('deleteHookModal', {static: false})
+    @ViewChild('deleteHookModal')
     deleteHookModal: DeleteModalComponent;
 
     icon: string;

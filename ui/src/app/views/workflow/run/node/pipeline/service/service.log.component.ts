@@ -43,7 +43,7 @@ export class WorkflowServiceLogComponent implements OnDestroy {
         return this._nodeJobRun;
     }
 
-    @ViewChild('logsContent', { static: false }) logsElt: ElementRef;
+    @ViewChild('logsContent') logsElt: ElementRef;
 
     logsSplitted: Array<string> = [];
 

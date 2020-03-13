@@ -9,7 +9,7 @@ import { Parameter } from 'app/model/parameter.model';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowRunJobVariableComponent {
-    @ViewChild('jobVariablesModal', { static: false }) jobVariablesModal: ModalTemplate<boolean, boolean, void>;
+    @ViewChild('jobVariablesModal') jobVariablesModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
     open: boolean;
 

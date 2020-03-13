@@ -29,7 +29,7 @@ import { filter, finalize, first } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowAddComponent implements OnInit {
-    @ViewChild('codeMirror', { static: false }) codemirror: any;
+    @ViewChild('codeMirror') codemirror: any;
 
     workflow: Workflow;
     project: Project;

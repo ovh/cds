@@ -60,7 +60,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     iconUpdated = false;
     tagsToAdd = new Array<string>();
 
-    @ViewChild('updateWarning', { static: false })
+    @ViewChild('updateWarning')
     private warningUpdateModal: WarningModalComponent;
 
     loading = false;

@@ -24,7 +24,7 @@ import { Subscription } from 'rxjs/Subscription';
 })
 @AutoUnsubscribe()
 export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCondition> implements OnInit {
-    @ViewChild('textareaCodeMirror', { static: false }) codemirror: any;
+    @ViewChild('textareaCodeMirror') codemirror: any;
 
     @Input() project: Project;
     @Input() workflow: Workflow;

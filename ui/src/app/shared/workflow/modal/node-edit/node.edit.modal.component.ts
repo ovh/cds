@@ -40,7 +40,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     editMode: boolean;
 
 
-    @ViewChild('nodeEditModal', {static: false})
+    @ViewChild('nodeEditModal')
     public nodeEditModal: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;

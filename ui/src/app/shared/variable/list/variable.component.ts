@@ -51,7 +51,7 @@ export class VariableComponent extends Table<Variable> {
 
     @Output() event = new EventEmitter<VariableEvent>();
 
-    @ViewChild('auditModal', {static: false})
+    @ViewChild('auditModal')
     auditModal: SemanticModalComponent;
 
     public ready = false;

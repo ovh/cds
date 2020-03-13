@@ -28,9 +28,9 @@ import { first } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowTemplateEditComponent implements OnInit {
-    @ViewChild('templateApplyModal', { static: false })
+    @ViewChild('templateApplyModal')
     templateApplyModal: WorkflowTemplateApplyModalComponent;
-    @ViewChild('templateBulkModal', { static: false })
+    @ViewChild('templateBulkModal')
     templateBulkModal: WorkflowTemplateBulkModalComponent;
 
     oldWorkflowTemplate: WorkflowTemplate;

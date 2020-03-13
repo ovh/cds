@@ -43,13 +43,13 @@ const usernamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 export class UserEditComponent implements OnInit {
     transitionController = new TransitionController();
 
-    @ViewChild('consumerDetailsModal', { static: false })
+    @ViewChild('consumerDetailsModal')
     consumerDetailsModal: ConsumerDetailsModalComponent;
 
-    @ViewChild('consumerCreateModal', { static: false })
+    @ViewChild('consumerCreateModal')
     consumerCreateModal: ConsumerCreateModalComponent;
 
-    @ViewChild('ldapSigninForm', { static: false })
+    @ViewChild('ldapSigninForm')
     ldapSigninForm: NgForm;
 
     loading = false;

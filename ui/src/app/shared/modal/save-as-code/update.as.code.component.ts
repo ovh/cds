@@ -29,7 +29,7 @@ export class UpdateAsCodeComponent {
     dataToSave: any;
     dataType: string;
 
-    @ViewChild('updateAsCodeModal', { static: false })
+    @ViewChild('updateAsCodeModal')
     public myModalTemplate: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;

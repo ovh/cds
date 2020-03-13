@@ -22,7 +22,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
     @Input() project: Project;
     @Input() duration: string;
 
-    @ViewChild('workflowNodeRunParam', {static: false})
+    @ViewChild('workflowNodeRunParam')
     runWithParamComponent: WorkflowNodeRunParamComponent;
 
     node: WNode;

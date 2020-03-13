@@ -30,7 +30,7 @@ import { finalize } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class WorkflowSidebarRunListComponent implements OnDestroy {
-    @ViewChild('tagsList', {static: false}) tagsList: ElementRef;
+    @ViewChild('tagsList') tagsList: ElementRef;
 
     @Input() project: Project;
 
