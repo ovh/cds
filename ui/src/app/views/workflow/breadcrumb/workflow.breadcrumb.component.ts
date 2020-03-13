@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { Select } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
@@ -15,7 +15,7 @@ import { Observable, Subscription } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowBreadCrumbComponent {
+export class WorkflowBreadCrumbComponent implements OnInit {
     _project: Project;
     @Input() set project(p: Project) {
         this._project = p;
@@ -36,16 +36,19 @@ export class WorkflowBreadCrumbComponent {
 
     path: Array<PathItem>;
 
-    constructor(private _cd: ChangeDetectorRef) {
+    constructor(private _cd: ChangeDetectorRef) {}
+
+    ngOnInit(): void {
         this.workflowRunSub = this.workflowRun$.subscribe(wr => {
-           if (!wr && !this.workflowRun) {
-               return;
-           }
-           if (wr && this.workflowRun && wr.id === this.workflowRun.id) {
-               return;
-           }
-           this.workflowRun = wr;
-           this._cd.detectChanges();
+            if (!wr && !this.workflowRun) {
+                return;
+            }
+            if (wr && this.workflowRun && wr.id === this.workflowRun.id) {
+                return;
+            }
+            this.workflowRun = wr;
+            this.updatePath();
+            this._cd.detectChanges();
         });
     }
 

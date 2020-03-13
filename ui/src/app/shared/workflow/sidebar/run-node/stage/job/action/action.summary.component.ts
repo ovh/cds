@@ -37,7 +37,7 @@ export class ActionStepSummaryComponent implements OnInit {
     ngOnInit() {
         this._store.select(WorkflowState.nodeRunJobStep)
             .pipe(map(filterFn => filterFn(this.stageId, this.jobId, this.stepOrder))).subscribe( ss => {
-                if (!ss && !this.stepStatus) {
+                if (!ss) {
                     return;
                 }
 

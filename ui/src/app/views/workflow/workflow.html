@@ -94,7 +94,7 @@
                 <app-workflow-sidebar-hook [project]="project" [workflow]="workflow">
                 </app-workflow-sidebar-hook>
             </ng-container>
-            <ng-container>
+            <ng-container *ngIf="sidebarMode === sidebarModes.RUNS">
                 <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow">
                 </app-workflow-sidebar-run-list>
             </ng-container>
