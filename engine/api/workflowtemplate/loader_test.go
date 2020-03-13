@@ -1,4 +1,4 @@
-package workflowtemplate_test 
+package workflowtemplate_test
 
 import (
 	"context"
@@ -68,27 +68,15 @@ func TestLoadInstanceTemplate(t *testing.T) {
 
 	assert.Nil(t, workflowtemplate.LoadInstanceOptions.WithTemplate(context.TODO(), db, wtis...))
 
-	if !assert.NotNil(t, wtis[0].Template) {
-		t.FailNow()
-	}
-	if !assert.NotNil(t, wtis[0].Template.Group) {
-		t.FailNow()
-	}
+	require.NotNil(t, wtis[0].Template)
+	require.NotNil(t, wtis[0].Template.Group)
 	assert.Equal(t, "one/one", fmt.Sprintf("%s/%s", wtis[0].Template.Group.Name, wtis[0].Template.Slug))
 
-	if !assert.NotNil(t, wtis[1].Template) {
-		t.FailNow()
-	}
-	if !assert.NotNil(t, wtis[1].Template.Group) {
-		t.FailNow()
-	}
+	require.NotNil(t, wtis[1].Template)
+	require.NotNil(t, wtis[1].Template.Group)
 	assert.Equal(t, "one/one", fmt.Sprintf("%s/%s", wtis[1].Template.Group.Name, wtis[1].Template.Slug))
 
-	if !assert.NotNil(t, wtis[2].Template) {
-		t.FailNow()
-	}
-	if !assert.NotNil(t, wtis[2].Template.Group) {
-		t.FailNow()
-	}
+	require.NotNil(t, wtis[2].Template)
+	require.NotNil(t, wtis[2].Template.Group)
 	assert.Equal(t, "two/two", fmt.Sprintf("%s/%s", wtis[2].Template.Group.Name, wtis[2].Template.Slug))
 }

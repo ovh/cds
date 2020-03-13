@@ -357,7 +357,11 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
 		}
 
-		wti, err := workflowtemplate.PrePush(ctx, api.mustDB(), *consumer, *p, &data, req.Detached)
+		var mods []workflowtemplate.TemplateRequestModifierFunc
+		if req.Detached {
+			mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
+		}
+		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
 		if err != nil {
 			return err
 		}
@@ -376,7 +380,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "cannot push generated workflow")
 		}
-		if err := workflowtemplate.PostPush(ctx, api.mustDB(), *wkf, *consumer, wti); err != nil {
+		if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, api.mustDB(), *wkf, *consumer, wti); err != nil {
 			return err
 		}
 
@@ -511,7 +515,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						},
 					}
 
-					wti, err := workflowtemplate.PrePush(ctx, api.mustDB(), *consumer, *p, &data, false)
+					wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)
@@ -529,7 +533,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						continue
 					}
 
-					if err := workflowtemplate.PostPush(ctx, api.mustDB(), *wkf, *consumer, wti); err != nil {
+					if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, api.mustDB(), *wkf, *consumer, wti); err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)
 							return
@@ -621,7 +625,8 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 			return err
 		}
 
-		is, err := workflowtemplate.LoadInstancesByTemplateIDAndProjectIDs(ctx, api.mustDB(), wt.ID, sdk.ProjectsToIDs(ps))
+		is, err := workflowtemplate.LoadInstancesByTemplateIDAndProjectIDs(ctx, api.mustDB(), wt.ID, sdk.ProjectsToIDs(ps),
+			workflowtemplate.LoadInstanceOptions.WithAudits)
 		if err != nil {
 			return err
 		}
@@ -635,13 +640,10 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 			is[i].Project = &p
 		}
 
+		// Add project and workflow on instances
 		isPointers := make([]*sdk.WorkflowTemplateInstance, len(is))
 		for i := range is {
 			isPointers[i] = &is[i]
-		}
-
-		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplateInstance(api.mustDB(), isPointers...); err != nil {
-			return err
 		}
 		if err := workflow.AggregateOnWorkflowTemplateInstance(ctx, api.mustDB(), isPointers...); err != nil {
 			return err

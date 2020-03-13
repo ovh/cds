@@ -26,7 +26,7 @@ func Pull(ctx context.Context, wt *sdk.WorkflowTemplate, f exportentities.Format
 	tw := tar.NewWriter(w)
 	defer func() {
 		if err := tw.Close(); err != nil {
-			log.Error(ctx, "%v", sdk.WrapError(err, "Unable to close tar writer"))
+			log.Error(ctx, "%v", sdk.WrapError(err, "unable to close tar writer"))
 		}
 	}()
 
@@ -39,10 +39,6 @@ func Pull(ctx context.Context, wt *sdk.WorkflowTemplate, f exportentities.Format
 	if err != nil {
 		return err
 	}
-	if _, err := w.Write(bufft); err != nil {
-		return sdk.WithStack(err)
-	}
-
 	hdr := &tar.Header{
 		Name: fmt.Sprintf(exportentities.PullWorkflowName, wt.Slug),
 		Mode: 0644,

@@ -120,9 +120,10 @@ var pipelineImportCmd = cli.Command{
 }
 
 func pipelineImportRun(v cli.Values) error {
+	path := v.GetString("path")
+
 	var reader io.ReadCloser
 	var err error
-	path := v.GetString("path")
 	if sdk.IsURL(path) {
 		reader, err = exportentities.OpenURL(path)
 	} else {

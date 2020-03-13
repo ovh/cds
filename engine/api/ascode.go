@@ -158,7 +158,11 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 
 		consumer := getAPIConsumer(ctx)
 
-		wti, err := workflowtemplate.PrePush(ctx, api.mustDB(), *consumer, *proj, &data, !opt.IsDefaultBranch)
+		var mods []workflowtemplate.TemplateRequestModifierFunc
+		if !opt.IsDefaultBranch {
+			mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
+		}
+		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
 		if err != nil {
 			return err
 		}
@@ -166,7 +170,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "unable to push workflow")
 		}
-		if err := workflowtemplate.PostPush(ctx, api.mustDB(), *wrkflw, *consumer, wti); err != nil {
+		if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, api.mustDB(), *wrkflw, *consumer, wti); err != nil {
 			return err
 		}
 		msgListString := translate(r, allMsg)

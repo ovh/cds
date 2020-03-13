@@ -309,7 +309,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 
 		consumer := getAPIConsumer(ctx)
 
-		wti, err := workflowtemplate.PrePush(ctx, api.mustDB(), *consumer, *proj, &data, false)
+		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data)
 		if err != nil {
 			return err
 		}
@@ -317,7 +317,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if err := workflowtemplate.PostPush(ctx, api.mustDB(), *wrkflw, *consumer, wti); err != nil {
+		if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, api.mustDB(), *wrkflw, *consumer, wti); err != nil {
 			return err
 		}
 

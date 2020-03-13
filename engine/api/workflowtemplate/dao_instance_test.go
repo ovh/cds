@@ -52,6 +52,8 @@ func TestLoad_Instance(t *testing.T) {
 	proj1 := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	proj2 := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	grp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	wk1 := assets.InsertTestWorkflow(t, db, cache, proj2, sdk.RandomString(10))
+	wk2 := assets.InsertTestWorkflow(t, db, cache, proj2, sdk.RandomString(10))
 
 	tmpl := sdk.WorkflowTemplate{
 		GroupID: grp.ID,
@@ -73,6 +75,7 @@ func TestLoad_Instance(t *testing.T) {
 	require.NoError(t, workflowtemplate.InsertInstance(db, &wti1))
 
 	wti2 := sdk.WorkflowTemplateInstance{
+		WorkflowID:              &wk1.ID,
 		ProjectID:               proj2.ID,
 		WorkflowTemplateID:      tmpl.ID,
 		WorkflowTemplateVersion: tmpl.Version,
@@ -84,6 +87,7 @@ func TestLoad_Instance(t *testing.T) {
 	require.NoError(t, workflowtemplate.InsertInstance(db, &wti2))
 
 	wti3 := sdk.WorkflowTemplateInstance{
+		WorkflowID:              &wk2.ID,
 		ProjectID:               proj2.ID,
 		WorkflowTemplateID:      tmpl.ID,
 		WorkflowTemplateVersion: tmpl.Version,
@@ -101,4 +105,31 @@ func TestLoad_Instance(t *testing.T) {
 	is, err = workflowtemplate.LoadInstancesByTemplateIDAndProjectIDs(context.TODO(), db, tmpl.ID, []int64{proj1.ID, proj2.ID})
 	require.NoError(t, err)
 	assert.Len(t, is, 3)
+
+	is, err = workflowtemplate.LoadInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(context.TODO(), db, tmpl.ID, proj2.ID, "my-unknown-workflow")
+	require.NoError(t, err)
+	assert.Len(t, is, 0)
+
+	is, err = workflowtemplate.LoadInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(context.TODO(), db, tmpl.ID, proj2.ID, "my-workflow")
+	require.NoError(t, err)
+	assert.Len(t, is, 2)
+
+	is, err = workflowtemplate.LoadInstancesByWorkflowIDs(context.TODO(), db, []int64{wk1.ID})
+	require.NoError(t, err)
+	assert.Len(t, is, 1)
+
+	is, err = workflowtemplate.LoadInstancesByWorkflowIDs(context.TODO(), db, []int64{wk1.ID, wk2.ID})
+	require.NoError(t, err)
+	assert.Len(t, is, 2)
+
+	i, err := workflowtemplate.LoadInstanceByWorkflowID(context.TODO(), db, wk1.ID)
+	require.NoError(t, err)
+	assert.Equal(t, wti2.ID, i.ID)
+
+	i, err = workflowtemplate.LoadInstanceByIDForTemplateIDAndProjectIDs(context.TODO(), db, wti2.ID, tmpl.ID, []int64{proj1.ID})
+	require.Error(t, err)
+
+	i, err = workflowtemplate.LoadInstanceByIDForTemplateIDAndProjectIDs(context.TODO(), db, wti2.ID, tmpl.ID, []int64{proj2.ID})
+	require.NoError(t, err)
+	assert.Equal(t, wti2.ID, i.ID)
 }

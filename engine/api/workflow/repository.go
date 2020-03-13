@@ -99,7 +99,11 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		return allMsgs, err
 	}
 
-	wti, err := workflowtemplate.PrePush(ctx, db, consumer, *p, &data, !opt.IsDefaultBranch)
+	var mods []workflowtemplate.TemplateRequestModifierFunc
+	if !opt.IsDefaultBranch {
+		mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
+	}
+	wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, db, consumer, *p, &data, mods...)
 	if err != nil {
 		return allMsgs, err
 	}
@@ -107,7 +111,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	if err != nil {
 		return allMsg, sdk.WrapError(err, "unable to get workflow from file")
 	}
-	if err := workflowtemplate.PostPush(ctx, db, *workflowPushed, consumer, wti); err != nil {
+	if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, db, *workflowPushed, consumer, wti); err != nil {
 		return allMsg, err
 	}
 	*wf = *workflowPushed

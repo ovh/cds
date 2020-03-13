@@ -74,7 +74,7 @@ func workflowTarReaderToFiles(v cli.Values, dir string, tr *tar.Reader) error {
 	yes := v.GetBool("yes")
 	quiet := v.GetBool("quiet")
 	if tr == nil {
-		return fmt.Errorf("Unable to read workflow")
+		return fmt.Errorf("unable to read workflow")
 	}
 	// Iterate through the files in the archive.
 	for {

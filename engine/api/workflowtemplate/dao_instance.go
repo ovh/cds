@@ -10,6 +10,28 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func getInstances(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadInstanceOptionFunc) ([]sdk.WorkflowTemplateInstance, error) {
+	pwtis := []*sdk.WorkflowTemplateInstance{}
+
+	if err := gorpmapping.GetAll(ctx, db, q, &pwtis); err != nil {
+		return nil, sdk.WrapError(err, "cannot get workflow template instances")
+	}
+	if len(pwtis) > 0 {
+		for i := range opts {
+			if err := opts[i](ctx, db, pwtis...); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	wtis := make([]sdk.WorkflowTemplateInstance, len(pwtis))
+	for i := range wtis {
+		wtis[i] = *pwtis[i]
+	}
+
+	return wtis, nil
+}
+
 func getInstance(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadInstanceOptionFunc) (*sdk.WorkflowTemplateInstance, error) {
 	var wti sdk.WorkflowTemplateInstance
 
@@ -53,51 +75,33 @@ func DeleteInstanceNotIDAndWorkflowID(db gorp.SqlExecutor, id, workflowID int64)
 }
 
 // LoadInstancesByTemplateIDAndProjectIDs returns all workflow template instances by template id and project ids.
-func LoadInstancesByTemplateIDAndProjectIDs(ctx context.Context, db gorp.SqlExecutor, templateID int64, projectIDs []int64) ([]sdk.WorkflowTemplateInstance, error) {
-	wtis := []sdk.WorkflowTemplateInstance{}
-
+func LoadInstancesByTemplateIDAndProjectIDs(ctx context.Context, db gorp.SqlExecutor, templateID int64, projectIDs []int64, opts ...LoadInstanceOptionFunc) ([]sdk.WorkflowTemplateInstance, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM workflow_template_instance
     WHERE workflow_template_id = $1 AND project_id = ANY(string_to_array($2, ',')::int[])
   `).Args(templateID, gorpmapping.IDsToQueryString(projectIDs))
-	if err := gorpmapping.GetAll(ctx, db, query, &wtis); err != nil {
-		return nil, sdk.WrapError(err, "cannot get workflow template instances")
-	}
-
-	return wtis, nil
+	return getInstances(ctx, db, query, opts...)
 }
 
 // LoadInstancesByTemplateIDAndProjectIDAndRequestWorkflowName returns all workflow template instances by template id, project id and request workflow name.
-func LoadInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(ctx context.Context, db gorp.SqlExecutor, templateID, projectID int64, workflowName string) ([]sdk.WorkflowTemplateInstance, error) {
-	wtis := []sdk.WorkflowTemplateInstance{}
-
+func LoadInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(ctx context.Context, db gorp.SqlExecutor, templateID, projectID int64, workflowName string, opts ...LoadInstanceOptionFunc) ([]sdk.WorkflowTemplateInstance, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM workflow_template_instance
     WHERE workflow_template_id = $1 AND project_id = $2 AND (request->>'workflow_name')::text = $3
   `).Args(templateID, projectID, workflowName)
-	if err := gorpmapping.GetAll(ctx, db, query, &wtis); err != nil {
-		return nil, sdk.WrapError(err, "cannot get workflow template instances")
-	}
-
-	return wtis, nil
+	return getInstances(ctx, db, query, opts...)
 }
 
 // LoadInstancesByWorkflowIDs returns all workflow template instances by workflow ids.
-func LoadInstancesByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, workflowIDs []int64) ([]sdk.WorkflowTemplateInstance, error) {
-	wtis := []sdk.WorkflowTemplateInstance{}
-
+func LoadInstancesByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, workflowIDs []int64, opts ...LoadInstanceOptionFunc) ([]sdk.WorkflowTemplateInstance, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM workflow_template_instance
     WHERE workflow_id = ANY(string_to_array($1, ',')::int[])
   `).Args(gorpmapping.IDsToQueryString(workflowIDs))
-	if err := gorpmapping.GetAll(ctx, db, query, &wtis); err != nil {
-		return nil, sdk.WrapError(err, "cannot get workflow template instances")
-	}
-
-	return wtis, nil
+	return getInstances(ctx, db, query, opts...)
 }
 
 // LoadInstanceByWorkflowID returns a workflow template instance by workflow id.
@@ -107,16 +111,6 @@ func LoadInstanceByWorkflowID(ctx context.Context, db gorp.SqlExecutor, workflow
     FROM workflow_template_instance
     WHERE workflow_id = $1
   `).Args(workflowID)
-	return getInstance(ctx, db, query, opts...)
-}
-
-// LoadInstanceByWorkflowNameAndTemplateIDAndProjectID returns a workflow template instance by workflow name, template id and project id.
-func LoadInstanceByWorkflowNameAndTemplateIDAndProjectID(ctx context.Context, db gorp.SqlExecutor, workflowName string, templateID, projectID int64, opts ...LoadInstanceOptionFunc) (*sdk.WorkflowTemplateInstance, error) {
-	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM workflow_template_instance
-    WHERE workflow_name = $1 AND workflow_template_id = $2 AND project_id = $3
-  `).Args(workflowName, templateID, projectID)
 	return getInstance(ctx, db, query, opts...)
 }
 

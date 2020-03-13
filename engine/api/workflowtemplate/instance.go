@@ -13,9 +13,18 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// PrePush will execute the workflow template if given workflow components contains a template instance.
+type TemplateRequestModifierFunc func(req *sdk.WorkflowTemplateRequest)
+
+var TemplateRequestModifiers = struct {
+	Detached TemplateRequestModifierFunc
+}{
+	Detached: func(req *sdk.WorkflowTemplateRequest) { req.Detached = true },
+}
+
+// CheckAndExecuteTemplate will execute the workflow template if given workflow components contains a template instance.
 // When detached is set this will not create/update any template instance in database (this is useful for workflow ascode branches).
-func PrePush(ctx context.Context, db *gorp.DbMap, consumer sdk.AuthConsumer, p sdk.Project, data *exportentities.WorkflowComponents, detached bool) (*sdk.WorkflowTemplateInstance, error) {
+func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.AuthConsumer, p sdk.Project,
+	data *exportentities.WorkflowComponents, mods ...TemplateRequestModifierFunc) (*sdk.WorkflowTemplateInstance, error) {
 	if data.Template.Name == "" {
 		return nil, nil
 	}
@@ -24,7 +33,9 @@ func PrePush(ctx context.Context, db *gorp.DbMap, consumer sdk.AuthConsumer, p s
 		ProjectKey:   p.Key,
 		WorkflowName: data.Template.Name,
 		Parameters:   data.Template.Parameters,
-		Detached:     detached,
+	}
+	for i := range mods {
+		mods[i](&req)
 	}
 
 	var result exportentities.WorkflowComponents
@@ -165,9 +176,10 @@ func PrePush(ctx context.Context, db *gorp.DbMap, consumer sdk.AuthConsumer, p s
 	return wti, nil
 }
 
-// PostPush will perform some action after a successful workflow push, if it was generated from a template we want to set the workflow id
-// on generated template instance.
-func PostPush(ctx context.Context, db gorp.SqlExecutor, w sdk.Workflow, u sdk.Identifiable, wti *sdk.WorkflowTemplateInstance) error {
+// UpdateTemplateInstanceWithWorkflow will perform some action after a successful workflow push, if it was generated
+// from a template we want to set the workflow id on generated template instance.
+func UpdateTemplateInstanceWithWorkflow(ctx context.Context, db gorp.SqlExecutor, w sdk.Workflow,
+	u sdk.Identifiable, wti *sdk.WorkflowTemplateInstance) error {
 	if wti == nil {
 		return nil
 	}
