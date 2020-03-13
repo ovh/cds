@@ -105,7 +105,7 @@ func getVariableFromBitbucketServerAuthor(payload map[string]interface{}, actor 
 	if actor == nil {
 		return
 	}
-	payload[GIT_AUTHOR] = actor.Name
+	payload[GIT_AUTHOR] = actor.DisplayName
 	payload[GIT_AUTHOR_EMAIL] = actor.EmailAddress
 	payload[CDS_TRIGGERED_BY_USERNAME] = actor.Name
 	payload[CDS_TRIGGERED_BY_FULLNAME] = actor.DisplayName
