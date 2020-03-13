@@ -22,24 +22,24 @@ func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) 
 		run.VCSServer = vcsInfos.Server
 	}
 
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, vcsInfos.Repository)
+	sdk.ParameterAddIfNotExists(&run.BuildParameters, tagGitRepository, sdk.StringParameter, vcsInfos.Repository)
 
 	if vcsInfos.Tag == "" {
-		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, vcsInfos.Branch)
+		sdk.ParameterAddIfNotExists(&run.BuildParameters, tagGitBranch, sdk.StringParameter, vcsInfos.Branch)
 	}
 
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitTag, sdk.StringParameter, vcsInfos.Tag)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, vcsInfos.Hash)
+	sdk.ParameterAddIfNotExists(&run.BuildParameters, tagGitTag, sdk.StringParameter, vcsInfos.Tag)
+	sdk.ParameterAddIfNotExists(&run.BuildParameters, tagGitHash, sdk.StringParameter, vcsInfos.Hash)
 	hashShort := run.VCSHash
 	if len(hashShort) >= 7 {
 		hashShort = hashShort[:7]
 	}
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHashShort, sdk.StringParameter, hashShort)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.Author)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.Message)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.URL)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.HTTPUrl)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitServer, sdk.StringParameter, vcsInfos.Server)
+	sdk.ParameterAddIfNotExists(&run.BuildParameters, tagGitHashShort, sdk.StringParameter, hashShort)
+	sdk.ParameterAddIfNotExists(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.Author)
+	sdk.ParameterAddIfNotExists(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.Message)
+	sdk.ParameterAddIfNotExists(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.URL)
+	sdk.ParameterAddIfNotExists(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.HTTPUrl)
+	sdk.ParameterAddIfNotExists(&run.BuildParameters, tagGitServer, sdk.StringParameter, vcsInfos.Server)
 }
 
 func checkCondition(ctx context.Context, wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, params []sdk.Parameter) bool {
