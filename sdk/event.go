@@ -3,8 +3,6 @@ package sdk
 import (
 	"encoding/json"
 	"time"
-
-	"github.com/ovh/venom"
 )
 
 // Event represents a event from API
@@ -80,9 +78,6 @@ type EventRunWorkflowNode struct {
 	NodeType              string                    `json:"node_type,omitempty"`
 	GerritChange          *GerritChangeEvent        `json:"gerrit_change,omitempty"`
 	EventIntegrations     []int64                   `json:"event_integrations_id,omitempty"`
-	Commits               []VCSCommit               `json:"commits,omitempty"`
-	Artifacts             []WorkflowNodeRunArtifact `json:"artifacts,omitempty"`
-	Tests                 *venom.Tests              `json:"tests, omitempty"`
 }
 
 // GerritChangeEvent Gerrit information that are needed on event

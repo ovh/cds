@@ -41,12 +41,7 @@ func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 		}
 
 		nr, err := workflow.LoadNodeRunByID(db, wnr.ID, workflow.LoadRunOptions{
-			DisableDetailledNodeRun: false,
-			WithStaticFiles:         true,
-			WithVulnerabilities:     true,
-			WithTests:               true,
-			WithCoverage:            true,
-			WithArtifacts:           true,
+			DisableDetailledNodeRun: true,
 		})
 		if err != nil {
 			log.Warning(ctx, "workflowSendEvent > Cannot load workflow node run: %v", err)

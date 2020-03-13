@@ -341,7 +341,8 @@ export class AppService {
                 const wnr = this._store.selectSnapshot<WorkflowNodeRun>((state) => {
                     return state.workflow.workflowNodeRun;
                 });
-                if (wnr && wnr.id === event.payload['ID']) {
+                let wnrEvent = <WorkflowNodeRun>event.payload;
+                if (wnr && wnr.id === wnrEvent.id) {
                     this._store.dispatch(
                         new GetWorkflowNodeRun({
                             projectKey: event.project_key,
