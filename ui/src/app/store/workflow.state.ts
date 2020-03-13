@@ -123,6 +123,13 @@ export class WorkflowState {
         );
     }
 
+    static getSidebarMode() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): string => state.sidebar
+        );
+    }
+
     @Selector()
     static nodeSnapshot(state: WorkflowStateModel) {
         return state.node;
@@ -1174,7 +1181,6 @@ export class WorkflowState {
             }), tap((wnr: WorkflowNodeRun) => {
                 const stateNR = ctx.getState();
                 let node = Workflow.getNodeByID(wnr.workflow_node_id, stateNR.workflowRun.workflow);
-                console.log('Update node run state', wnr);
                 ctx.setState({
                     ...stateNR,
                     projectKey: action.payload.projectKey,

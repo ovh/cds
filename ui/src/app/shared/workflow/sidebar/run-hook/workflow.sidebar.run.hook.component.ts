@@ -57,7 +57,6 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
             if (h && this.hook && h.uuid === this.hook.uuid) {
                 return;
             }
-            console.log('REFRESH: HOOK');
             this.hookEvent = null;
             this.hook = h;
             this.loadHookDetails();
@@ -70,7 +69,6 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
             if (workRun && this.wr && this.wr.id === workRun.id && this.hookEvent) {
                 return
             }
-            console.log('REFRESH: WR');
             this.wr = workRun;
             this.loadHookDetails();
             this._cd.markForCheck();

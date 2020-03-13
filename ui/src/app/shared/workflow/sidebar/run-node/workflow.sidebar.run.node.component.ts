@@ -91,7 +91,6 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     }
 
     ngOnInit(): void {
-        console.log('REINIT SIDEBAR RUN NODE');
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.workflow = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
         this.workflowRun = this._store.selectSnapshot(WorkflowState.workflowRunSnapshot);
@@ -103,7 +102,6 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             if (n && this.node && n.id === this.node.id) {
                 return;
             }
-            console.log('REFRESH SIDEBAR NODE');
             this.node = n;
 
             // Check is the node can be run
@@ -121,16 +119,10 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
                     (nrs.tests && this.currentNodeRunTests && nrs.tests.total === this.currentNodeRunTests.total)) {
                     if ( (!nrs.artifacts && !this.currentArtifactsNb) ||
                         (nrs.artifacts && nrs.artifacts.length === this.currentArtifactsNb)) {
-                        console.log('nothing change');
                         return;
                     }
                 }
             }
-            console.log(nrs.id, this.currentNodeRunId,
-                nrs.status, this.currentNodeRunStatus,
-                 nrs.tests, this.currentNodeRunTests,
-                nrs.artifacts, this.currentArtifactsNb);
-            console.log('REFRESH SIDEBAR NODERUN');
 
             this.currentNodeRunStatus = nrs.status;
             this.currentNodeRunId = nrs.id;

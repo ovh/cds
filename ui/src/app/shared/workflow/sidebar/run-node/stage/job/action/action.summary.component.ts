@@ -44,9 +44,14 @@ export class ActionStepSummaryComponent implements OnInit {
                 if (ss && this.stepStatus && ss.status === this.stepStatus) {
                     return;
                 }
-                console.log('REFESH SIDEBAR STEP ' + this.jobId + '/' + this.stepOrder);
-                this.stepStatus = ss.status;
-                this.open = this.stepStatus === PipelineStatus.FAIL;
+                if (ss) {
+                    this.stepStatus = ss.status;
+                    this.open = this.stepStatus === PipelineStatus.FAIL;
+                } else {
+                    delete this.stepStatus;
+                    this.open = false;
+                }
+
                 this._cd.detectChanges();
         });
     }

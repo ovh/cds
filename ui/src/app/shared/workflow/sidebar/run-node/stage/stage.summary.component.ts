@@ -54,7 +54,6 @@ export class StageStepSummaryComponent implements OnInit {
             if (s && s.id === this.stageId && this.stageStatus === s.status  && this.stageWarning === warn) {
                 return;
             }
-            console.log('REFESH SIDEBAR STAGE');
             if (s) {
                 this.stageName = s.name;
                 this.stageStatus = s.status;
@@ -64,7 +63,6 @@ export class StageStepSummaryComponent implements OnInit {
                 }
                 this.stageWarning = warn;
                 this.open = this.stageStatus === PipelineStatus.FAIL || PipelineStatus.isActive(this.stageStatus);
-                console.log(this.stageStatus, s.status);
             } else {
                 this.stageStatus = '';
                 delete this.jobsIds;

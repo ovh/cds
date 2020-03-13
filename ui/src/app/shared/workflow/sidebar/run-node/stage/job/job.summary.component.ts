@@ -51,7 +51,6 @@ export class JobStepSummaryComponent implements OnInit {
                 return;
             }
 
-            console.log('REFESH SIDEBAR RUNJOB ' + this.jobId + ' ' + rj.status);
             if (rj) {
                 if (!this.job || rj.job.pipeline_action_id !== this.job.pipeline_action_id) {
                     this.job = rj.job;

@@ -341,7 +341,6 @@ export class AppService {
                 const wnr = this._store.selectSnapshot<WorkflowNodeRun>((state) => {
                     return state.workflow.workflowNodeRun;
                 });
-                console.log('NodeRun Status: ' + wnr.status);
                 if (wnr && wnr.id === event.payload['ID']) {
                     this._store.dispatch(
                         new GetWorkflowNodeRun({

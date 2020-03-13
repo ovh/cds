@@ -87,7 +87,6 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             if (runs.length === 0 && this.workflowRuns.length === 0) {
                 return;
             }
-            console.log('REFRESH RUNS', runs, this.workflowRuns);
             this.workflowRuns = runs;
             if (!this.durationIntervalID) {
                 this.refreshRun();
