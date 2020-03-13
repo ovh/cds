@@ -38,7 +38,7 @@
     "@angular/animations": "8.2.0",
     "@angular/common": "8.2.0",
     "@angular/compiler": "8.2.0",
-    "@angular/core": "8.2.0",
+    "@angular/core": "9.0.6",
     "@angular/forms": "8.2.0",
     "@angular/http": "7.2.16",
     "@angular/platform-browser": "8.2.0",
@@ -103,7 +103,7 @@
   "devDependencies": {
     "@angular-builders/custom-webpack": "8.1.0",
     "@angular-devkit/build-angular": "0.802.0",
-    "@angular/cli": "8.2.0",
+    "@angular/cli": "9.0.6",
     "@angular/compiler-cli": "8.2.0",
     "@commitlint/cli": "8.2.0",
     "@commitlint/config-conventional": "8.2.0",
