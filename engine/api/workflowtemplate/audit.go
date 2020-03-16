@@ -1,115 +1,77 @@
 package workflowtemplate
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
-	"strings"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	Audits = map[string]sdk.Audit{
-		fmt.Sprintf("%T", sdk.EventWorkflowTemplateAdd{}):            addWorkflowTemplateAudit{},
-		fmt.Sprintf("%T", sdk.EventWorkflowTemplateUpdate{}):         updateWorkflowTemplateAudit{},
-		fmt.Sprintf("%T", sdk.EventWorkflowTemplateInstanceAdd{}):    addWorkflowTemplateInstanceAudit{},
-		fmt.Sprintf("%T", sdk.EventWorkflowTemplateInstanceUpdate{}): updateWorkflowTemplateInstanceAudit{},
-	}
-)
-
-type addWorkflowTemplateAudit struct{}
-
-func (a addWorkflowTemplateAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
-	var wtEvent sdk.EventWorkflowTemplateAdd
-	if err := json.Unmarshal(e.Payload, &wtEvent); err != nil {
-		return sdk.WrapError(err, "Unable to unmarshal payload")
-	}
-
+// CreateAuditAdd create an audit for template add.
+func CreateAuditAdd(db gorp.SqlExecutor, wt sdk.WorkflowTemplate, u sdk.Identifiable) error {
 	return InsertAudit(db, &sdk.AuditWorkflowTemplate{
 		AuditCommon: sdk.AuditCommon{
-			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
-			Created:     e.Timestamp,
-			TriggeredBy: e.Username,
+			EventType:   "WorkflowTemplateAdd",
+			Created:     time.Now(),
+			TriggeredBy: u.GetUsername(),
 		},
-		WorkflowTemplateID: wtEvent.WorkflowTemplate.ID,
-		DataAfter:          wtEvent.WorkflowTemplate,
+		WorkflowTemplateID: wt.ID,
+		DataAfter:          wt,
 	})
 }
 
-type updateWorkflowTemplateAudit struct{}
-
-func (a updateWorkflowTemplateAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
-	var wtEvent sdk.EventWorkflowTemplateUpdate
-	if err := json.Unmarshal(e.Payload, &wtEvent); err != nil {
-		return sdk.WrapError(err, "Unable to unmarshal payload")
-	}
-
+// CreateAuditUpdate create an audit for template update.
+func CreateAuditUpdate(db gorp.SqlExecutor, oldT, newT sdk.WorkflowTemplate, changeMessage string, u sdk.Identifiable) error {
 	return InsertAudit(db, &sdk.AuditWorkflowTemplate{
 		AuditCommon: sdk.AuditCommon{
-			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
-			Created:     e.Timestamp,
-			TriggeredBy: e.Username,
+			EventType:   "WorkflowTemplateUpdate",
+			Created:     time.Now(),
+			TriggeredBy: u.GetUsername(),
 		},
-		WorkflowTemplateID: wtEvent.NewWorkflowTemplate.ID,
-		ChangeMessage:      wtEvent.ChangeMessage,
-		DataBefore:         wtEvent.OldWorkflowTemplate,
-		DataAfter:          wtEvent.NewWorkflowTemplate,
+		WorkflowTemplateID: newT.ID,
+		ChangeMessage:      changeMessage,
+		DataBefore:         oldT,
+		DataAfter:          newT,
 	})
 }
 
-type addWorkflowTemplateInstanceAudit struct{}
-
-func (a addWorkflowTemplateInstanceAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
-	var wtEvent sdk.EventWorkflowTemplateInstanceAdd
-	if err := json.Unmarshal(e.Payload, &wtEvent); err != nil {
-		return sdk.WrapError(err, "Unable to unmarshal payload")
-	}
-
-	b, err := json.Marshal(wtEvent.WorkflowTemplateInstance)
+// CreateAuditInstanceAdd create an audit for template instance add.
+func CreateAuditInstanceAdd(db gorp.SqlExecutor, wti sdk.WorkflowTemplateInstance, u sdk.Identifiable) error {
+	b, err := json.Marshal(wti)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to marshal workflow template instance")
+		return sdk.WrapError(err, "unable to marshal workflow template instance")
 	}
-
 	return InsertInstanceAudit(db, &sdk.AuditWorkflowTemplateInstance{
 		AuditCommon: sdk.AuditCommon{
-			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
-			Created:     e.Timestamp,
-			TriggeredBy: e.Username,
+			EventType:   "WorkflowTemplateInstanceAdd",
+			Created:     time.Now(),
+			TriggeredBy: u.GetUsername(),
 		},
-		WorkflowTemplateInstanceID: wtEvent.WorkflowTemplateInstance.ID,
+		WorkflowTemplateInstanceID: wti.ID,
 		DataType:                   "json",
 		DataAfter:                  string(b),
 	})
 }
 
-type updateWorkflowTemplateInstanceAudit struct{}
-
-func (a updateWorkflowTemplateInstanceAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sdk.Event) error {
-	var wtEvent sdk.EventWorkflowTemplateInstanceUpdate
-	if err := json.Unmarshal(e.Payload, &wtEvent); err != nil {
-		return sdk.WrapError(err, "Unable to unmarshal payload")
-	}
-
-	before, err := json.Marshal(wtEvent.OldWorkflowTemplateInstance)
+// CreateAuditInstanceUpdate create an audit for template instance update.
+func CreateAuditInstanceUpdate(db gorp.SqlExecutor, oldI, newI sdk.WorkflowTemplateInstance, u sdk.Identifiable) error {
+	before, err := json.Marshal(oldI)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to marshal workflow template instance")
+		return sdk.WrapError(err, "unable to marshal workflow template instance")
 	}
-
-	after, err := json.Marshal(wtEvent.NewWorkflowTemplateInstance)
+	after, err := json.Marshal(newI)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to marshal workflow template instance")
+		return sdk.WrapError(err, "unable to marshal workflow template instance")
 	}
-
 	return InsertInstanceAudit(db, &sdk.AuditWorkflowTemplateInstance{
 		AuditCommon: sdk.AuditCommon{
-			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
-			Created:     e.Timestamp,
-			TriggeredBy: e.Username,
+			EventType:   "WorkflowTemplateInstanceUpdate",
+			Created:     time.Now(),
+			TriggeredBy: u.GetUsername(),
 		},
-		WorkflowTemplateInstanceID: wtEvent.NewWorkflowTemplateInstance.ID,
+		WorkflowTemplateInstanceID: newI.ID,
 		DataType:                   "json",
 		DataBefore:                 string(before),
 		DataAfter:                  string(after),

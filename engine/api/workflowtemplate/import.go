@@ -3,8 +3,6 @@ package workflowtemplate
 import (
 	"context"
 
-	"github.com/ovh/cds/engine/api/event"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -29,7 +27,9 @@ func Push(ctx context.Context, db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u 
 			return nil, err
 		}
 
-		event.PublishWorkflowTemplateAdd(ctx, *newTemplate, u)
+		if err := CreateAuditAdd(db, *newTemplate, u); err != nil {
+			return nil, err
+		}
 
 		return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedInserted, newTemplate.Group.Name, newTemplate.Slug)}, nil
 	}
@@ -51,7 +51,9 @@ func Push(ctx context.Context, db gorp.SqlExecutor, wt *sdk.WorkflowTemplate, u 
 		return nil, err
 	}
 
-	event.PublishWorkflowTemplateUpdate(ctx, *old, *newTemplate, "", u)
+	if err := CreateAuditUpdate(db, *old, *newTemplate, "", u); err != nil {
+		return nil, err
+	}
 
 	return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedUpdated, newTemplate.Group.Name, newTemplate.Slug)}, nil
 }

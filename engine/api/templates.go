@@ -106,20 +106,32 @@ func (api *API) postTemplateHandler() service.Handler {
 			return err
 		}
 
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
 		// duplicate couple of group id and slug will failed with sql constraint
-		if err := workflowtemplate.Insert(api.mustDB(), &data); err != nil {
+		if err := workflowtemplate.Insert(tx, &data); err != nil {
 			return err
 		}
 
-		newTemplate, err := workflowtemplate.LoadByID(ctx, api.mustDB(), data.ID, workflowtemplate.LoadOptions.Default)
+		newTemplate, err := workflowtemplate.LoadByID(ctx, tx, data.ID, workflowtemplate.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 
-		event.PublishWorkflowTemplateAdd(ctx, *newTemplate, getAPIConsumer(ctx))
-
-		if err := workflowtemplate.LoadOptions.WithAudits(ctx, api.mustDB(), newTemplate); err != nil {
+		if err := workflowtemplate.CreateAuditAdd(tx, *newTemplate, getAPIConsumer(ctx)); err != nil {
 			return err
+		}
+
+		if err := workflowtemplate.LoadOptions.WithAudits(ctx, tx, newTemplate); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		// aggregate extra data for ui
@@ -221,6 +233,12 @@ func (api *API) putTemplateHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+
 		// update fields from request data
 		clone := sdk.WorkflowTemplate(*old)
 		clone.Update(data)
@@ -230,19 +248,25 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
-		if err := workflowtemplate.Update(api.mustDB(), &clone); err != nil {
+		if err := workflowtemplate.Update(tx, &clone); err != nil {
 			return err
 		}
 
-		newTemplate, err := workflowtemplate.LoadByID(ctx, api.mustDB(), clone.ID, workflowtemplate.LoadOptions.Default)
+		newTemplate, err := workflowtemplate.LoadByID(ctx, tx, clone.ID, workflowtemplate.LoadOptions.Default)
 		if err != nil {
 			return err
 		}
 
-		event.PublishWorkflowTemplateUpdate(ctx, *old, *newTemplate, data.ChangeMessage, getAPIConsumer(ctx))
-
-		if err := workflowtemplate.LoadOptions.WithAudits(ctx, api.mustDB(), newTemplate); err != nil {
+		if err := workflowtemplate.CreateAuditUpdate(tx, *old, *newTemplate, data.ChangeMessage, getAPIConsumer(ctx)); err != nil {
 			return err
+		}
+
+		if err := workflowtemplate.LoadOptions.WithAudits(ctx, tx, newTemplate); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 
 		// aggregate extra data for ui

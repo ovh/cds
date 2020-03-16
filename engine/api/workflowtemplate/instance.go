@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -105,7 +104,7 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 	if err != nil {
 		return nil, sdk.WrapError(err, "cannot start transaction")
 	}
-	defer func() { _ = tx.Rollback() }()
+	defer tx.Rollback() // nolint
 
 	var wti *sdk.WorkflowTemplateInstance
 
@@ -161,14 +160,18 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		return nil, err
 	}
 
-	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "cannot commit transaction")
+	if old != nil {
+		if err := CreateAuditInstanceUpdate(tx, *old, *wti, consumer); err != nil {
+			return nil, err
+		}
+	} else if !req.Detached {
+		if err := CreateAuditInstanceAdd(tx, *wti, consumer); err != nil {
+			return nil, err
+		}
 	}
 
-	if old != nil {
-		event.PublishWorkflowTemplateInstanceUpdate(ctx, *old, *wti, consumer)
-	} else if !req.Detached {
-		event.PublishWorkflowTemplateInstanceAdd(ctx, *wti, consumer)
+	if err := tx.Commit(); err != nil {
+		return nil, sdk.WrapError(err, "cannot commit transaction")
 	}
 
 	// if the template was successfully executed we want to return only the a file with template instance data
@@ -198,7 +201,9 @@ func UpdateTemplateInstanceWithWorkflow(ctx context.Context, db gorp.SqlExecutor
 		return err
 	}
 
-	event.PublishWorkflowTemplateInstanceUpdate(ctx, old, *wti, u)
+	if err := CreateAuditInstanceUpdate(db, old, *wti, u); err != nil {
+		return err
+	}
 
 	return nil
 }
