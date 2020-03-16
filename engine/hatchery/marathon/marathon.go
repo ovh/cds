@@ -88,15 +88,11 @@ func (h *HatcheryMarathon) Status(ctx context.Context) sdk.MonitoringStatus {
 func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
-		return fmt.Errorf("Invalid configuration")
+		return fmt.Errorf("Invalid hatchery marathon configuration")
 	}
 
-	if hconfig.API.HTTP.URL == "" {
-		return fmt.Errorf("API HTTP(s) URL is mandatory")
-	}
-
-	if hconfig.API.Token == "" {
-		return fmt.Errorf("API Token URL is mandatory")
+	if err := hconfig.Check(); err != nil {
+		return fmt.Errorf("Invalid marathon configuration: %v", err)
 	}
 
 	if hconfig.MarathonURL == "" {
@@ -105,10 +101,6 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 
 	if hconfig.MarathonIDPrefix == "" {
 		return fmt.Errorf("Marathon ID Prefix is mandatory")
-	}
-
-	if hconfig.Name == "" {
-		return fmt.Errorf("please enter a name in your marathon hatchery configuration")
 	}
 
 	h.marathonLabels = map[string]string{}

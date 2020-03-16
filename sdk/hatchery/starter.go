@@ -123,9 +123,8 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	if maxProv < 1 {
 		maxProv = defaultMaxProvisioning
 	}
-	if atomic.LoadInt64(&nbWorkerToStart) >= int64(maxProv) ||
-		atomic.LoadInt64(&nbWorkerToStart) > int64(h.Configuration().Provision.MaxWorker) {
-		log.Debug("hatchery> spawnWorkerForJob> max concurrent provisioning or max workers reached")
+	if atomic.LoadInt64(&nbWorkerToStart) >= int64(maxProv) {
+		log.Debug("hatchery> spawnWorkerForJob> max concurrent provisioning reached")
 		return false
 	}
 
