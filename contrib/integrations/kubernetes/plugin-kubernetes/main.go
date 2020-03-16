@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/blang/semver"
 	"github.com/golang/protobuf/ptypes/empty"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -286,6 +287,20 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 		helmVersion = "v2.12.2"
 	}
 
+	v, err := semver.Parse(helmVersion)
+	if err != nil {
+		return fmt.Errorf("Invalid Helm Version %s - err: %v", helmVersion, err)
+	}
+	supportedVersion := ">=2.0.0 <4.0.0"
+	expectedRange, err := semver.ParseRange(supportedVersion)
+	if err != nil {
+		return fmt.Errorf("Fail to parse semver range : %v", err)
+	}
+
+	if !expectedRange(v) {
+		return fmt.Errorf("Unsupported helm version, should be : %s", supportedVersion)
+	}
+
 	cwd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("cannot get current working directory : %v", err)
@@ -318,7 +333,7 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 		netClient := &http.Client{
 			Timeout: time.Second * 600,
 		}
-		response, err := netClient.Get("https://get.helm.sh/helm-" + helmVersion + "-" + sdk.GOOS + "-" + sdk.GOARCH + ".tar.gz")
+		response, err := netClient.Get(fmt.Sprintf("https://get.helm.sh/helm-%s-%s-%s.tar.gz", helmVersion, sdk.GOOS, sdk.GOARCH))
 		if err != nil {
 			return fmt.Errorf("Cannot download helm : %v", err)
 		}
