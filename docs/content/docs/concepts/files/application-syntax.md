@@ -49,7 +49,7 @@ deployments:
     helm_values:
       type: deploy/helm/values.yaml
     helm_version:
-      type: v2.12.2
+      type: 2.12.2
 ```
 
 ## Variables
@@ -151,7 +151,7 @@ deployments:
     helm_values:
       type: deploy/helm/values-cluster-A.yaml
     helm_version:
-      type: v2.12.2
+      type: 2.12.2
 
   my-kubernetes-cluster-B:
     namespace:
@@ -161,7 +161,7 @@ deployments:
     helm_values:
       type: deploy/helm/values-cluster-B.yaml
     helm_version:
-      type: v2.12.2
+      type: 2.12.2
 ```
 
 The list of the availabe deployment platform is available from the Web UI on the `project / integration` section, or with the command `cdsctl project integration list`

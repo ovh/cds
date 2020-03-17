@@ -284,10 +284,10 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 	helmVersion := q.GetOptions()["cds.integration.helm_version"]
 
 	if helmVersion == "" {
-		helmVersion = "v2.12.2"
+		helmVersion = "2.12.2"
 	}
 
-	v, err := semver.Parse(helmVersion)
+	version, err := semver.Parse(helmVersion)
 	if err != nil {
 		return fmt.Errorf("Invalid Helm Version %s - err: %v", helmVersion, err)
 	}
@@ -297,7 +297,7 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 		return fmt.Errorf("Fail to parse semver range : %v", err)
 	}
 
-	if !expectedRange(v) {
+	if !expectedRange(version) {
 		return fmt.Errorf("Unsupported helm version, should be : %s", supportedVersion)
 	}
 
@@ -319,21 +319,26 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 		if err != nil {
 			return fmt.Errorf("Cannot check helm version : %v", err)
 		}
+		installedHelm := strings.TrimPrefix(string(out), "Client: ")
+		installedVersion, err := semver.ParseTolerant(installedHelm)
+		if err != nil {
+			return fmt.Errorf("Invalid installed Helm Version %s - err: %v", installedHelm, err)
+		}
 
-		if !strings.Contains(string(out), helmVersion) {
+		if !version.Equals(installedVersion) {
 			fmt.Println("Helm in path is not at correct version, need installation")
-			fmt.Printf("Path version : %s", string(out))
-			fmt.Println("Target version : " + helmVersion)
+			fmt.Printf("Path version : %s\n", installedVersion.String())
+			fmt.Printf("Target version : %s\n", version.String())
 			helmFound = false
 		}
 	}
 
 	if !helmFound {
-		fmt.Println("Download helm in progress...")
+		fmt.Printf("Download helm %s in progress...\n", version.String())
 		netClient := &http.Client{
 			Timeout: time.Second * 600,
 		}
-		response, err := netClient.Get(fmt.Sprintf("https://get.helm.sh/helm-%s-%s-%s.tar.gz", helmVersion, sdk.GOOS, sdk.GOARCH))
+		response, err := netClient.Get(fmt.Sprintf("https://get.helm.sh/helm-v%s-%s-%s.tar.gz", version.String(), sdk.GOOS, sdk.GOARCH))
 		if err != nil {
 			return fmt.Errorf("Cannot download helm : %v", err)
 		}
@@ -359,10 +364,10 @@ func executeHelm(q *integrationplugin.DeployQuery) error {
 		binaryName = path.Join(".", binaryName, sdk.GOOS+"-"+sdk.GOARCH, "helm")
 	}
 
-	switch {
-	case strings.HasPrefix(helmVersion, "v2"):
+	switch version.Major {
+	case 2:
 		return executeHelmV2(binaryName, kubeCfg, q)
-	case strings.HasPrefix(helmVersion, "v3"):
+	case 3:
 		return executeHelmV3(binaryName, kubeCfg, q)
 	}
 
