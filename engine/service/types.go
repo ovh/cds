@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/rsa"
+	"fmt"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -61,6 +62,32 @@ type HatcheryCommonConfiguration struct {
 			ThresholdWarning  int `toml:"thresholdWarning" default:"360" comment:"log warning if spawn take more than this value (in seconds)" json:"thresholdWarning"`
 		} `toml:"spawnOptions" json:"spawnOptions"`
 	} `toml:"logOptions" comment:"Hatchery Log Configuration" json:"logOptions"`
+}
+
+func (hcc HatcheryCommonConfiguration) Check() error {
+	if hcc.Provision.MaxConcurrentProvisioning > hcc.Provision.MaxWorker {
+		return fmt.Errorf("maxConcurrentProvisioning (value: %d) cannot be less than maxWorker (value: %d) ",
+			hcc.Provision.MaxConcurrentProvisioning, hcc.Provision.MaxWorker)
+	}
+
+	if hcc.Provision.MaxConcurrentRegistering > hcc.Provision.MaxWorker {
+		return fmt.Errorf("maxConcurrentRegistering (value: %d) cannot be less than maxWorker (value: %d) ",
+			hcc.Provision.MaxConcurrentRegistering, hcc.Provision.MaxWorker)
+	}
+
+	if hcc.API.HTTP.URL == "" {
+		return fmt.Errorf("API HTTP(s) URL is mandatory")
+	}
+
+	if hcc.API.Token == "" {
+		return fmt.Errorf("API Token URL is mandatory")
+	}
+
+	if hcc.Name == "" {
+		return fmt.Errorf("please enter a name in your hatchery configuration")
+	}
+
+	return nil
 }
 
 // Common is the struct representing a CDS µService

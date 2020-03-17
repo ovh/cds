@@ -183,19 +183,11 @@ func (h *HatcheryKubernetes) getStartingConfig() (*clientcmdapi.Config, error) {
 func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
-		return fmt.Errorf("Invalid configuration")
+		return fmt.Errorf("Invalid hatchery kubernetes configuration")
 	}
 
-	if hconfig.API.HTTP.URL == "" {
-		return fmt.Errorf("API HTTP(s) URL is mandatory")
-	}
-
-	if hconfig.API.Token == "" {
-		return fmt.Errorf("API Token URL is mandatory")
-	}
-
-	if hconfig.Name == "" {
-		return fmt.Errorf("please enter a name in your kubernetes hatchery configuration")
+	if err := hconfig.Check(); err != nil {
+		return fmt.Errorf("Invalid hatchery kubernetes configuration: %v", err)
 	}
 
 	if hconfig.Namespace == "" {
