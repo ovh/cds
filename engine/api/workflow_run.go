@@ -364,7 +364,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 		}
 		workflowRuns := report.WorkflowRuns()
 
-		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, proj.Key, report)
+		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *proj, report)
 
 		go func(ID int64) {
 			wRun, errLw := workflow.LoadRunByID(api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
@@ -490,7 +490,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 		if err != nil {
 			return nil, sdk.WithStack(err)
 		}
-		go WorkflowSendEvent(context.Background(), dbFunc(), store, p.Key, report)
+		go WorkflowSendEvent(context.Background(), dbFunc(), store, *p, report)
 	}
 
 	return report, nil
@@ -529,7 +529,7 @@ func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
-	go WorkflowSendEvent(context.Background(), dbFunc(), store, parentProj.Key, report)
+	go WorkflowSendEvent(context.Background(), dbFunc(), store, *parentProj, report)
 
 	return report, nil
 }
@@ -678,7 +678,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to stop workflow run")
 		}
 
-		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, p.Key, report)
+		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, report)
 
 		return service.WriteJSON(w, nodeRun, http.StatusOK)
 	}
@@ -926,7 +926,7 @@ func (api *API) initWorkflowRun(ctx context.Context, db *gorp.DbMap, cache cache
 	var asCodeInfosMsg []sdk.Message
 	report := new(workflow.ProcessorReport)
 	defer func() {
-		go WorkflowSendEvent(context.Background(), db, cache, p.Key, report)
+		go WorkflowSendEvent(context.Background(), db, cache, *p, report)
 	}()
 
 	// IF NEW WORKFLOW RUN
