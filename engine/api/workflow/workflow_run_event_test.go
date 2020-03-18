@@ -463,9 +463,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 			assert.Equal(t, in.(sdk.VCSPullRequestCommentRequest).Message, "MyTemplate")
 			return nil, 200, nil
 		}).MaxTimes(1)
-
-	commitsMap, err := workflow.SendVCSEvent(ctx, db, cache, *proj, *wr, wr.WorkflowNodeRuns[1][0], nil)
+	e := workflow.VCSEventMessenger{}
+	err := e.SendVCSEvent(ctx, db, cache, *proj, *wr, wr.WorkflowNodeRuns[1][0])
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(commitsMap))
-	assert.Equal(t, "Success", commitsMap["6c3efde"][0].State)
 }
