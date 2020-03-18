@@ -41,7 +41,8 @@ func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 		}
 
 		event.PublishWorkflowNodeRun(ctx, db, store, wnr, wr.Workflow, &previousNodeRun)
-		if _, err := workflow.SendVCSEvent(ctx, db, store, proj, *wr, wnr, nil); err != nil {
+		e := &workflow.VCSEventMessenger{}
+		if err := e.SendVCSEvent(ctx, db, store, proj, *wr, wnr); err != nil {
 			log.Warning(ctx, "WorkflowSendEvent> Cannot send vcs notification")
 		}
 	}

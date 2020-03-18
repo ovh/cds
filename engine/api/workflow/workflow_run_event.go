@@ -16,6 +16,11 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+type VCSEventMessenger struct {
+	commitsStatuses map[string][]sdk.VCSCommitStatus
+	vcsClient       sdk.VCSAuthorizedClient
+}
+
 // ResyncCommitStatus resync commit status for a workflow run
 func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun) error {
 	_, end := observability.Span(ctx, "workflow.resyncCommitStatus",
@@ -24,15 +29,14 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	)
 	defer end()
 
-	commitsMap := make(map[string][]sdk.VCSCommitStatus)
+	eventMessenger := &VCSEventMessenger{commitsStatuses: make(map[string][]sdk.VCSCommitStatus)}
 	for _, nodeRuns := range wr.WorkflowNodeRuns {
 		sort.Slice(nodeRuns, func(i, j int) bool {
 			return nodeRuns[i].SubNumber >= nodeRuns[j].SubNumber
 		})
 		nodeRun := nodeRuns[0]
-		var err error
-		commitsMap, err = SendVCSEvent(ctx, db, store, proj, *wr, nodeRun, commitsMap)
-		if err != nil {
+
+		if err := eventMessenger.SendVCSEvent(ctx, db, store, proj, *wr, nodeRun); err != nil {
 			log.Error(ctx, "resyncCommitStatus > unable to send vcs event: %v", err)
 		}
 	}
@@ -40,18 +44,18 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	return nil
 }
 
-func SendVCSEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr sdk.WorkflowRun, nodeRun sdk.WorkflowNodeRun, commitsStatusMap map[string][]sdk.VCSCommitStatus) (map[string][]sdk.VCSCommitStatus, error) {
+func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, wr sdk.WorkflowRun, nodeRun sdk.WorkflowNodeRun) error {
 	if nodeRun.Status == sdk.StatusWaiting {
-		return commitsStatusMap, nil
+		return nil
 	}
 
-	if commitsStatusMap == nil {
-		commitsStatusMap = make(map[string][]sdk.VCSCommitStatus)
+	if e.commitsStatuses == nil {
+		e.commitsStatuses = make(map[string][]sdk.VCSCommitStatus)
 	}
 
 	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
 	if !node.IsLinkedToRepo(&wr.Workflow) {
-		return commitsStatusMap, nil
+		return nil
 	}
 
 	var notif *sdk.WorkflowNotification
@@ -76,7 +80,7 @@ loopNotif:
 	}
 
 	if notif == nil {
-		return commitsStatusMap, nil
+		return nil
 	}
 
 	vcsServerName := wr.Workflow.Applications[node.Context.ApplicationID].VCSServer
@@ -84,14 +88,16 @@ loopNotif:
 
 	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, vcsServerName)
 	if vcsServer == nil {
-		return commitsStatusMap, nil
+		return nil
 	}
 
 	//Get the RepositoriesManager Client
-	details := fmt.Sprintf("on project:%s workflow:%s node:%s num:%d sub:%d vcs:%s", proj.Name, wr.Workflow.Name, nodeRun.WorkflowNodeName, nodeRun.Number, nodeRun.SubNumber, vcsServer.Name)
-	client, errClient := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
-	if errClient != nil {
-		return commitsStatusMap, sdk.WrapError(errClient, "resyncCommitStatus> Cannot get client %s", details)
+	if e.vcsClient == nil {
+		var err error
+		e.vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
+		if err != nil {
+			return err
+		}
 	}
 
 	ref := nodeRun.VCSHash
@@ -99,18 +105,14 @@ loopNotif:
 		ref = nodeRun.VCSTag
 	}
 
-	var statuses []sdk.VCSCommitStatus
-	if commitsStatusMap != nil {
-		statuses = commitsStatusMap[ref]
-	}
-
-	if statuses == nil {
+	statuses, ok := e.commitsStatuses[ref]
+	if !ok {
 		var err error
-		statuses, err = client.ListStatuses(ctx, repoFullName, ref)
+		statuses, err = e.vcsClient.ListStatuses(ctx, repoFullName, ref)
 		if err != nil {
-			return commitsStatusMap, sdk.WrapError(err, "resyncCommitStatus> Cannot get statuses %s", details)
+			return err
 		}
-		commitsStatusMap[ref] = statuses
+		e.commitsStatuses[ref] = statuses
 	}
 	expected := sdk.VCSCommitStatusDescription(proj.Key, wr.Workflow.Name, sdk.EventRunWorkflowNode{
 		NodeName: nodeRun.WorkflowNodeName,
@@ -125,8 +127,8 @@ loopNotif:
 	}
 
 	if statusFound == nil || statusFound.State == "" {
-		if err := sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notif, vcsServer.Name, client); err != nil {
-			log.Error(ctx, "resyncCommitStatus> Error sending status %s err: %v", details, err)
+		if err := e.sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notif, vcsServer.Name); err != nil {
+			return err
 		}
 	} else {
 		skipStatus := false
@@ -150,20 +152,20 @@ loopNotif:
 		}
 
 		if !skipStatus {
-			if err := sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notif, vcsServer.Name, client); err != nil {
-				return commitsStatusMap, sdk.WrapError(err, "resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
+			if err := e.sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notif, vcsServer.Name); err != nil {
+				return err
 			}
 		}
 	}
 
-	if err := sendVCSPullRequestComment(ctx, db, wr, &nodeRun, notif, vcsServer.Name, client); err != nil {
-		return commitsStatusMap, sdk.WrapError(err, "resyncCommitStatus> Error sending pr comments %s %s err:%v", statusFound.State, details, err)
+	if err := e.sendVCSPullRequestComment(ctx, db, wr, &nodeRun, notif, vcsServer.Name); err != nil {
+		return err
 	}
-	return commitsStatusMap, nil
+	return nil
 }
 
 // sendVCSEventStatus send status
-func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif *sdk.WorkflowNotification, vcsServerName string, client sdk.VCSAuthorizedClient) error {
+func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif *sdk.WorkflowNotification, vcsServerName string) error {
 	if notif == nil || notif.Settings.Template == nil || (notif.Settings.Template.DisableStatus != nil && *notif.Settings.Template.DisableStatus) {
 		return nil
 	}
@@ -222,8 +224,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	report, err := nodeRun.Report()
 	if err != nil {
-		log.Error(ctx, "sendVCSEventStatus> unable to compute node run report%v", err)
-		return nil
+		return err
 	}
 
 	// Check if it's a gerrit or not
@@ -281,17 +282,17 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		EnvironmentName: envName,
 	}
 
-	if err := client.SetStatus(ctx, evt); err != nil {
+	if err := e.vcsClient.SetStatus(ctx, evt); err != nil {
 		if err2 := repositoriesmanager.RetryEvent(&evt, err, store); err2 != nil {
-			log.Error(ctx, "sendEvent>processEvent> err while retry event: %v", err2)
+			return err2
 		}
-		log.Error(ctx, "sendEvent> err:%v", err)
+		return err
 	}
 
 	return nil
 }
 
-func sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif *sdk.WorkflowNotification, vcsServerName string, client sdk.VCSAuthorizedClient) error {
+func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif *sdk.WorkflowNotification, vcsServerName string) error {
 	if notif == nil || notif.Settings.Template == nil || (notif.Settings.Template.DisableComment != nil && *notif.Settings.Template.DisableComment) {
 		return nil
 	}
@@ -316,8 +317,7 @@ func sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, wr sdk.
 
 	report, err := nodeRun.Report()
 	if err != nil {
-		log.Error(ctx, "sendVCSPullRequestComment> unable to compute node run report%v", err)
-		return nil
+		return err
 	}
 
 	// Check if it's a gerrit or not
@@ -344,31 +344,26 @@ func sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, wr sdk.
 	// If we are on Gerrit
 	if changeID != "" && vcsConf.Type == "gerrit" {
 		reqComment.ChangeID = changeID
-		if err := client.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
-			log.Error(ctx, "sendVCSPullRequestComment> unable to send PR report:%v", err)
-			return nil
+		if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
+			return err
 		}
 	} else if vcsConf.Type != "gerrit" {
 		//Check if this branch and this commit is a pullrequest
-		prs, err := client.PullRequests(ctx, app.RepositoryFullname)
+		prs, err := e.vcsClient.PullRequests(ctx, app.RepositoryFullname)
 		if err != nil {
-			log.Error(ctx, "sendVCSPullRequestComment> unable to get pull requests on repo %s: %v", app.RepositoryFullname, err)
-			return nil
+			return err
 		}
 
 		//Send comment on pull request
 		for _, pr := range prs {
 			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash && !pr.Merged && !pr.Closed {
 				reqComment.ID = pr.ID
-				if err := client.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
-					log.Error(ctx, "sendVCSPullRequestComment> unable to send PR report:%v", err)
-					return nil
+				if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
+					return err
 				}
-				// if we found the pull request for head branch we can break (only one PR for the branch should exist)
 				break
 			}
 		}
 	}
-
 	return nil
 }
