@@ -31,7 +31,7 @@ func Test_doWebHookExecutionBitbucket(t *testing.T) {
 	assert.Equal(t, 1, len(hs))
 	assert.Equal(t, "repo:refs_changed", hs[0].Payload["git.hook"])
 	assert.Equal(t, "name-of-branch", hs[0].Payload["git.branch"])
-	assert.Equal(t, "steven.guiheux", hs[0].Payload["git.author"])
+	assert.Equal(t, "Steven Guiheux", hs[0].Payload["git.author"])
 	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", hs[0].Payload["git.hash"])
 }
 
@@ -612,10 +612,10 @@ func Test_doWebHookExecutionBitbucketMultiple(t *testing.T) {
 
 	assert.Equal(t, 2, len(hs))
 	assert.Equal(t, "name-of-branch", hs[0].Payload["git.branch"])
-	assert.Equal(t, "steven.guiheux", hs[0].Payload["git.author"])
+	assert.Equal(t, "Steven Guiheux", hs[0].Payload["git.author"])
 	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", hs[0].Payload["git.hash"])
 	assert.Equal(t, "name-of-branch-bis", hs[1].Payload["git.branch"])
-	assert.Equal(t, "steven.guiheux", hs[1].Payload["git.author"])
+	assert.Equal(t, "Steven Guiheux", hs[1].Payload["git.author"])
 	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", hs[0].Payload["git.hash"])
 }
 
