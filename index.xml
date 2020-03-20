@@ -267,7 +267,7 @@ version: v1.0 name: CDS_SonarScanner description: Run Sonar analysis. You must h
       <guid>https://ovh.github.io/cds/docs/concepts/files/application-syntax/</guid>
       <description>An Application allows you to enable some features of CDS within a workflow:
  Variables Keys VCS Deployment  The application configuration format is as following:
-version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml  Variables Define application scoped variables as a dictionary.</description>
+version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml helm_version: type: 2.</description>
     </item>
     
     <item>
@@ -1007,7 +1007,7 @@ $ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ 
       <description>The Kubernetes Deployment Integration is a Self-Service integration that can be configured on a CDS Project.
 This integration enables the DeployApplication action
 Create Integration Model Create a file kubernetes-model-configuration.yml:
-name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &amp;quot;Keep empty if you don&#39;t use helm.</description>
+name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds for v2 or duration for v3 (ex: 3m) namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &amp;quot;Keep empty if you don&#39;t use helm.</description>
     </item>
     
     <item>

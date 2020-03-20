@@ -19,15 +19,15 @@
 <meta name="description"
     content="An Application allows you to enable some features of CDS within a workflow:
  Variables Keys VCS Deployment  The application configuration format is as following:
-version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml  Variables Define application scoped variables as a dictionary.">
+version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml helm_version: type: 2.">
 <meta property="og:description"
     content="An Application allows you to enable some features of CDS within a workflow:
  Variables Keys VCS Deployment  The application configuration format is as following:
-version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml  Variables Define application scoped variables as a dictionary.">
+version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml helm_version: type: 2.">
 <meta name="twitter:description"
     content="An Application allows you to enable some features of CDS within a workflow:
  Variables Keys VCS Deployment  The application configuration format is as following:
-version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml  Variables Define application scoped variables as a dictionary.">
+version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml helm_version: type: 2.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/concepts/files/application-syntax/">
 <meta property="og:title" content="Application configuration file">
 <meta name="twitter:title" content="Application configuration file">
@@ -561,6 +561,8 @@ deployments:
       value: deploy/helm/
     helm_values:
       type: deploy/helm/values.yaml
+    helm_version:
+      type: 2.12.2
 </code></pre>
 
 <h2 id="variables">Variables</h2>
@@ -698,6 +700,8 @@ deployments:
       value: deploy/helm/
     helm_values:
       type: deploy/helm/values-cluster-A.yaml
+    helm_version:
+      type: 2.12.2
 
   my-kubernetes-cluster-B:
     namespace:
@@ -706,6 +710,8 @@ deployments:
       value: deploy/helm/
     helm_values:
       type: deploy/helm/values-cluster-B.yaml
+    helm_version:
+      type: 2.12.2
 </code></pre>
 
 <p>The list of the availabe deployment platform is available from the Web UI on the <code>project / integration</code> section, or with the command <code>cdsctl project integration list</code></p>

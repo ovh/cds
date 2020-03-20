@@ -61,7 +61,7 @@ version: v1.0 name: CDS_SonarScanner description: Run Sonar analysis. You must h
       <guid>https://ovh.github.io/cds/docs/concepts/files/application-syntax/</guid>
       <description>An Application allows you to enable some features of CDS within a workflow:
  Variables Keys VCS Deployment  The application configuration format is as following:
-version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml  Variables Define application scoped variables as a dictionary.</description>
+version: v1.0 name: my-application variables: artifact.name: type: string value: my-application docker.image: value: my-org/my-application docker.registry: value: hub.docker.com keys: app-mySSHKey: type: ssh repo: my-org/my-application vcs_server: github vcs_connection_type: ssh vcs_ssh_key: app-mySSHKey deployments: my-kubernetes-cluster: timeout: value: 180 namespace: my-namespace helm_chart: value: deploy/helm/ helm_values: type: deploy/helm/values.yaml helm_version: type: 2.</description>
     </item>
     
     <item>

@@ -32,7 +32,7 @@ $ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ 
       <description>The Kubernetes Deployment Integration is a Self-Service integration that can be configured on a CDS Project.
 This integration enables the DeployApplication action
 Create Integration Model Create a file kubernetes-model-configuration.yml:
-name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &amp;quot;Keep empty if you don&#39;t use helm.</description>
+name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds for v2 or duration for v3 (ex: 3m) namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &amp;quot;Keep empty if you don&#39;t use helm.</description>
     </item>
     
   </channel>

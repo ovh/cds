@@ -20,17 +20,17 @@
     content="The Kubernetes Deployment Integration is a Self-Service integration that can be configured on a CDS Project.
 This integration enables the DeployApplication action
 Create Integration Model Create a file kubernetes-model-configuration.yml:
-name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &quot;Keep empty if you don&#39;t use helm.">
+name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds for v2 or duration for v3 (ex: 3m) namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &quot;Keep empty if you don&#39;t use helm.">
 <meta property="og:description"
     content="The Kubernetes Deployment Integration is a Self-Service integration that can be configured on a CDS Project.
 This integration enables the DeployApplication action
 Create Integration Model Create a file kubernetes-model-configuration.yml:
-name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &quot;Keep empty if you don&#39;t use helm.">
+name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds for v2 or duration for v3 (ex: 3m) namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &quot;Keep empty if you don&#39;t use helm.">
 <meta name="twitter:description"
     content="The Kubernetes Deployment Integration is a Self-Service integration that can be configured on a CDS Project.
 This integration enables the DeployApplication action
 Create Integration Model Create a file kubernetes-model-configuration.yml:
-name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &quot;Keep empty if you don&#39;t use helm.">
+name: Kubernetes default_config: api_url: type: string ca_certificate: type: text description: Certificate Authority bundle (PEM format) token: type: password deployment: true deployment_default_config: timeout: type: string value: 180 description: timeout in seconds for v2 or duration for v3 (ex: 3m) namespace: type: string value: default description: Kubernetes namespace in which you want to deploy your components (OPTIONAL) deployment_files: type: string description: Glob to yaml filepaths helm_chart: type: string description: &quot;Keep empty if you don&#39;t use helm.">
 <meta property="og:url" content="https://ovh.github.io/cds/docs/integrations/kubernetes/kubernetes_deployment/">
 <meta property="og:title" content="Kubernetes Deployment">
 <meta name="twitter:title" content="Kubernetes Deployment">
@@ -482,7 +482,7 @@ deployment_default_config:
   timeout:
     type: string
     value: 180
-    description: timeout in seconds
+    description: timeout in seconds for v2 or duration for v3 (ex: 3m)
   namespace:
     type: string
     value: default
@@ -496,6 +496,9 @@ deployment_default_config:
   helm_values:
     type: string
     description: specify helm values in a YAML file or a URL to configure/override your helm chart
+  helm_version:
+    type: string
+    description: specify helm version to use (default: v2.12.2)
 </code></pre>
 
 <p>Import the integration with :</p>
@@ -575,6 +578,10 @@ model:
       type: string
       description: specify helm values in a YAML file or a URL to configure/override
         your helm chart
+    helm_version:
+      value: &quot;&quot;
+      type: string
+      description: specify helm version to use (default: v2.12.2)
     namespace:
       value: default
       type: string
@@ -632,6 +639,10 @@ deployment_default_config:
     value: &quot;&quot;
     type: string
     description: specify helm values in a YAML file or a URL to configure/override your helm chart
+  helm_version:
+    value: &quot;&quot;
+    type: string
+    description: specify helm version to use (default: v2.12.2)
   namespace:
     value: default
     type: string
