@@ -990,6 +990,58 @@ workflow:
     one_at_a_time: true
 `,
 		},
+		{
+			name: "Workflow no declared joins",
+			yaml: `name: nojoins
+version: v2.0
+workflow:
+  p1:
+    pipeline: env
+  p5:
+    depends_on:
+    - p21
+    - p31
+    - p41
+    pipeline: env
+  p6:
+    depends_on:
+    - p21
+    - p31
+    - p41
+    - p42
+    pipeline: env
+  p7:
+    depends_on:
+    - p21
+    - p31
+    - p42
+    pipeline: env
+  p21:
+    depends_on:
+    - p1
+    pipeline: env
+  p22:
+    depends_on:
+    - p1
+    pipeline: env
+  p31:
+    depends_on:
+    - p1
+    pipeline: env
+  p32:
+    depends_on:
+    - p1
+    pipeline: env
+  p41:
+    depends_on:
+    - p1
+    pipeline: env
+  p42:
+    depends_on:
+    - p1
+    pipeline: env
+`,
+		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {

@@ -370,9 +370,9 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 		wf.HistoryLength = sdk.DefaultHistoryLength
 	}
 
-	rand.Seed(time.Now().Unix())
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 	var attempt int
-	fakeID := rand.Int63n(5000)
+	fakeID := r.Int63n(5000)
 	// attempt is there to avoid infinite loop, but it should not happened becase we check validity and dependencies earlier
 	for len(w.Workflow) != 0 && attempt < 10000 {
 		for name, entry := range w.Workflow {
@@ -503,8 +503,9 @@ func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, er
 		ancestor := w.WorkflowData.NodeByName(a)
 		if ancestor == nil {
 			ancestorsExist = false
+		} else {
+			ancestors = append(ancestors, ancestor)
 		}
-		ancestors = append(ancestors, ancestor)
 	} else {
 		for _, a := range e.DependsOn {
 			//Looking for the ancestor
@@ -546,8 +547,12 @@ func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, er
 	var join *sdk.Node
 	for i := range w.WorkflowData.Joins {
 		j := &w.WorkflowData.Joins[i]
-		var joinFound = true
 
+		if len(e.DependsOn) != len(j.JoinContext) {
+			continue
+		}
+
+		var joinFound = true
 		for _, ref := range j.JoinContext {
 			var refFound bool
 			for _, a := range e.DependsOn {

@@ -479,8 +479,12 @@ func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, er
 	var join *sdk.Node
 	for i := range w.WorkflowData.Joins {
 		j := &w.WorkflowData.Joins[i]
-		var joinFound = true
 
+		if len(e.DependsOn) != len(j.JoinContext) {
+			continue
+		}
+
+		var joinFound = true
 		for _, ref := range j.JoinContext {
 			var refFound bool
 			for _, a := range e.DependsOn {
