@@ -29,7 +29,7 @@ deployment_default_config:
   timeout:
     type: string
     value: 180
-    description: timeout in seconds
+    description: timeout in seconds for v2 or duration for v3 (ex: 3m)
   namespace:
     type: string
     value: default
@@ -43,6 +43,9 @@ deployment_default_config:
   helm_values:
     type: string
     description: specify helm values in a YAML file or a URL to configure/override your helm chart
+  helm_version:
+    type: string
+    description: specify helm version to use (default: v2.12.2)
 ```
 
 Import the integration with :
@@ -126,6 +129,10 @@ model:
       type: string
       description: specify helm values in a YAML file or a URL to configure/override
         your helm chart
+    helm_version:
+      value: ""
+      type: string
+      description: specify helm version to use (default: v2.12.2)
     namespace:
       value: default
       type: string
@@ -185,6 +192,10 @@ deployment_default_config:
     value: ""
     type: string
     description: specify helm values in a YAML file or a URL to configure/override your helm chart
+  helm_version:
+    value: ""
+    type: string
+    description: specify helm version to use (default: v2.12.2)
   namespace:
     value: default
     type: string

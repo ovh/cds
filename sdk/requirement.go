@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"net"
 	"time"
 )
@@ -177,7 +178,11 @@ func (a *Action) Requirement(name string, t string, value string) *Action {
 
 // CheckNetworkAccessRequirement returns true if req.Value can Dial
 func CheckNetworkAccessRequirement(req Requirement) bool {
-	conn, err := net.DialTimeout("tcp", req.Value, 10*time.Second)
+	d := net.Dialer{Timeout: 10 * time.Second}
+	ctx, cancel := context.WithTimeout(context.Background(), d.Timeout)
+	defer cancel()
+
+	conn, err := d.DialContext(ctx, "tcp", req.Value)
 	if err != nil {
 		return false
 	}

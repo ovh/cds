@@ -13,12 +13,12 @@ import (
 )
 
 // WorkflowSendEvent Send event on workflow run
-func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, key string, report *workflow.ProcessorReport) {
+func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, report *workflow.ProcessorReport) {
 	if report == nil {
 		return
 	}
 	for _, wr := range report.Workflows() {
-		event.PublishWorkflowRun(ctx, wr, key)
+		event.PublishWorkflowRun(ctx, wr, proj.Key)
 	}
 	for _, wnr := range report.Nodes() {
 		wr, errWR := workflow.LoadRunByID(db, wnr.WorkflowRunID, workflow.LoadRunOptions{
@@ -49,6 +49,10 @@ func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 		}
 
 		event.PublishWorkflowNodeRun(ctx, db, store, *nr, wr.Workflow, &previousNodeRun)
+		e := &workflow.VCSEventMessenger{}
+		if err := e.SendVCSEvent(ctx, db, store, proj, *wr, wnr); err != nil {
+			log.Warning(ctx, "WorkflowSendEvent> Cannot send vcs notification")
+		}
 	}
 
 	for _, jobrun := range report.Jobs() {
@@ -64,6 +68,6 @@ func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 			log.Warning(ctx, "workflowSendEvent> Cannot load workflow run %d: %s", noderun.WorkflowRunID, errWR)
 			continue
 		}
-		event.PublishWorkflowNodeJobRun(ctx, db, key, *wr, jobrun)
+		event.PublishWorkflowNodeJobRun(ctx, db, proj.Key, *wr, jobrun)
 	}
 }

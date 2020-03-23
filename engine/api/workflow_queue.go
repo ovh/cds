@@ -82,7 +82,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
-		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, p.Key, report)
+		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *p, report)
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
 	}
@@ -384,7 +384,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *proj, report)
 		next()
 
-		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, proj.Key, report)
+		go WorkflowSendEvent(context.Background(), api.mustDB(), api.Cache, *proj, report)
 
 		return nil
 	}
@@ -497,7 +497,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 			return nil, sdk.WithStack(err)
 		}
 
-		go WorkflowSendEvent(context.Background(), tx, store, proj.Key, reportParent)
+		go WorkflowSendEvent(context.Background(), tx, store, *proj, reportParent)
 
 		if sdk.StatusIsTerminated(run.Status) {
 			//Start a goroutine to update commit statuses in repositories manager

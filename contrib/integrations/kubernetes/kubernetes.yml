@@ -15,11 +15,11 @@ deployment_default_config:
   timeout:
     type: string
     value: 180
-    description: timeout in seconds
+    description: "timeout in seconds for v2 or duration for v3 (ex: 3m)"
   namespace:
     type: string
     value: default
-    description: Kubernetes namespace in which you want to deploy your components (OPTIONAL)
+    description: "Kubernetes namespace in which you want to deploy your components (OPTIONAL)"
   deployment_files:
     type: string
     description: Glob to yaml filepaths
@@ -29,3 +29,6 @@ deployment_default_config:
   helm_values:
     type: string
     description: specify helm values in a YAML file or a URL to configure/override your helm chart
+  helm_version:
+    type: string
+    description: "specify helm version to use (default: 2.12.2)"
