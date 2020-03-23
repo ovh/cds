@@ -30,8 +30,6 @@ export class WorkflowRunComponent implements OnInit {
     subWorkflowRun: Subscription;
 
 
-
-
     workflowName: string;
     version: string;
     direction: string;
@@ -72,6 +70,7 @@ export class WorkflowRunComponent implements OnInit {
 
         // Subscribe to workflow Run
         this.subWorkflowRun = this.workflowRun$.subscribe(wr => {
+            console.log(wr);
             if (!wr) {
                 return;
             }
@@ -81,22 +80,24 @@ export class WorkflowRunComponent implements OnInit {
             }
 
             console.log('state: Update workflow run');
+            if (!this.workflowRunData) {
+                this.workflowRunData = {};
+            }
 
             // If workflow run change, refresh workflow
-            if (wr && this.workflowRunData && this.workflowRunData['id'] !== wr.id) {
+            if (wr && this.workflowRunData['id'] !== wr.id) {
                this.workflowRunData['workflow'] = wr.workflow;
                this.workflowName = wr.workflow.name;
             }
 
-            if (wr && this.workflowRunData && this.workflowRunData['id'] && this.workflowRunData['id'] === wr.id
+            if (wr && this.workflowRunData['id'] && this.workflowRunData['id'] === wr.id
                 && this.workflowRunData['status'] !== wr.status && PipelineStatus.isDone(wr.status)) {
                 this.handleNotification(wr);
             }
 
             if (wr && wr.infos && wr.infos.length > 0 && (
-                !this.workflowRunData ||
-                (this.workflowRunData && !this.workflowRunData['infos']) ||
-                (this.workflowRunData && this.workflowRunData['infos'] && this.workflowRunData['infos'].length === wr.infos.length)
+                (!this.workflowRunData['infos']) ||
+                (this.workflowRunData['infos'] && this.workflowRunData['infos'].length === wr.infos.length)
                 )) {
                 this.displayError = wr.infos.some((info) => info.type === 'Error');
                 this.warnings = wr.infos.filter(i => i.type === 'Warning');
