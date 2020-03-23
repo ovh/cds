@@ -114,6 +114,7 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 
 		//now checks if all sources have been completed
 		var ok = true
+
 		nodeRunIDs := []int64{}
 		sourcesParams := map[string]string{}
 		for _, nodeRun := range sources {
@@ -122,9 +123,17 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 				break
 			}
 
-			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusFail || nodeRun.Status == sdk.StatusNeverBuilt || nodeRun.Status == sdk.StatusStopped {
+			if !sdk.StatusIsTerminated(nodeRun.Status) {
 				ok = false
 				break
+			}
+
+			// If there is no conditions on join, keep default condition ( only continue on success )
+			if j.Context == nil || (len(j.Context.Conditions.PlainConditions) == 0 && j.Context.Conditions.LuaScript == "") {
+				if nodeRun.Status == sdk.StatusFail || nodeRun.Status == sdk.StatusNeverBuilt || nodeRun.Status == sdk.StatusStopped {
+					ok = false
+					break
+				}
 			}
 
 			nodeRunIDs = append(nodeRunIDs, nodeRun.ID)
