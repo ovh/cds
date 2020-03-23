@@ -22,10 +22,10 @@ func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	}
 	for _, wnr := range report.Nodes() {
 		wr, errWR := workflow.LoadRunByID(db, wnr.WorkflowRunID, workflow.LoadRunOptions{
-			WithLightTests: true,
+			DisableDetailledNodeRun: true,
 		})
 		if errWR != nil {
-			log.Warning(ctx, "WorkflowSendEvent> Cannot load workflow run %d: %s", wnr.WorkflowRunID, errWR)
+			log.Warning(ctx, "workflowSendEvent> Cannot load workflow run %d: %s", wnr.WorkflowRunID, errWR)
 			continue
 		}
 
@@ -36,11 +36,19 @@ func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 			var errN error
 			previousNodeRun, errN = workflow.PreviousNodeRun(db, wnr, wnr.WorkflowNodeName, wr.WorkflowID)
 			if errN != nil {
-				log.Warning(ctx, "WorkflowSendEvent> Cannot load previous node run: %s", errN)
+				log.Warning(ctx, "workflowSendEvent> Cannot load previous node run: %v", errN)
 			}
 		}
 
-		event.PublishWorkflowNodeRun(ctx, db, store, wnr, wr.Workflow, &previousNodeRun)
+		nr, err := workflow.LoadNodeRunByID(db, wnr.ID, workflow.LoadRunOptions{
+			DisableDetailledNodeRun: true,
+		})
+		if err != nil {
+			log.Warning(ctx, "workflowSendEvent > Cannot load workflow node run: %v", err)
+			continue
+		}
+
+		event.PublishWorkflowNodeRun(ctx, db, store, *nr, wr.Workflow, &previousNodeRun)
 		e := &workflow.VCSEventMessenger{}
 		if err := e.SendVCSEvent(ctx, db, store, proj, *wr, wnr); err != nil {
 			log.Warning(ctx, "WorkflowSendEvent> Cannot send vcs notification")
@@ -50,14 +58,14 @@ func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	for _, jobrun := range report.Jobs() {
 		noderun, err := workflow.LoadNodeRunByID(db, jobrun.WorkflowNodeRunID, workflow.LoadRunOptions{})
 		if err != nil {
-			log.Warning(ctx, "WorkflowSendEvent> Cannot load workflow node run %d: %s", jobrun.WorkflowNodeRunID, err)
+			log.Warning(ctx, "workflowSendEvent> Cannot load workflow node run %d: %s", jobrun.WorkflowNodeRunID, err)
 			continue
 		}
 		wr, errWR := workflow.LoadRunByID(db, noderun.WorkflowRunID, workflow.LoadRunOptions{
 			WithLightTests: true,
 		})
 		if errWR != nil {
-			log.Warning(ctx, "WorkflowSendEvent> Cannot load workflow run %d: %s", noderun.WorkflowRunID, errWR)
+			log.Warning(ctx, "workflowSendEvent> Cannot load workflow run %d: %s", noderun.WorkflowRunID, errWR)
 			continue
 		}
 		event.PublishWorkflowNodeJobRun(ctx, db, proj.Key, *wr, jobrun)

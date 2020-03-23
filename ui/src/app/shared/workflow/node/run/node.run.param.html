@@ -4,10 +4,10 @@
     </div>
     <div class="content scrolling">
         <div class="ui form payload">
-            <ng-container *ngIf="_nodeToRun && _nodeToRun.type === nodeTypeEnum.PIPELINE && parameters?.length > 0 ">
+            <ng-container *ngIf="nodeToRun && nodeToRun.type === nodeTypeEnum.PIPELINE && parameters?.length > 0 ">
                 <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
                 <app-parameter-list [project]="project" [parameters]="parameters"
-                    [paramsRef]="workflow.pipelines[_nodeToRun.context.pipeline_id]?.parameters" mode="launcher"
+                    [paramsRef]="workflow.pipelines[nodeToRun.context.pipeline_id]?.parameters" mode="launcher"
                     [suggest]="[]"></app-parameter-list>
             </ng-container>
             <h3 *ngIf="!readOnly">{{ 'workflow_node_context_payload' | translate}}</h3>
@@ -57,10 +57,10 @@
             <div class="ui floating dropdown icon button" suiDropdown>
                 <i class="dropdown icon"></i>
                 <div class="menu" suiDropdownMenu>
-                    <div class="item" [class.disabled]="!nodeRun" (click)="run(true, false)" suiPopup [popupText]="'workflow_run_resync_help' | translate">
+                    <div class="item" [class.disabled]="!currentNodeRun" (click)="run(true, false)" suiPopup [popupText]="'workflow_run_resync_help' | translate">
                         <i class="sync icon"></i>{{'workflow_resync' | translate }}
                     </div>
-                    <div class="item" [class.disabled]="!nodeRun || nodeRun.status !== 'Fail'" (click)="run(false, true)"><i class="bug icon"></i>{{'workflow_run_only_failed' | translate }}</div>
+                    <div class="item" [class.disabled]="!currentNodeRun || currentNodeRun.status !== 'Fail'" (click)="run(false, true)"><i class="bug icon"></i>{{'workflow_run_only_failed' | translate }}</div>
                 </div>
             </div>
         </div>

@@ -1,18 +1,17 @@
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
-    Component,
+    Component, OnInit,
     QueryList,
     ViewChild,
     ViewChildren
 } from '@angular/core';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { SuiPopup, SuiPopupController, SuiPopupTemplateController } from '@richardlt/ng2-semantic-ui';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
-import { WorkflowRun } from 'app/model/workflow.run.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { WorkflowSidebarMode } from 'app/service/workflow/workflow.sidebar.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -30,8 +29,8 @@ import {
     UpdateFavoriteWorkflow
 } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Subscription } from 'rxjs';
-import { filter, finalize } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 
 @Component({
@@ -41,7 +40,7 @@ import { filter, finalize } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowComponent {
+export class WorkflowComponent implements OnInit {
     @ViewChild('templateApplyModal', { static: false })
     templateApplyModal: WorkflowTemplateApplyModalComponent;
 
@@ -58,6 +57,8 @@ export class WorkflowComponent {
     loadingFav = false;
 
     // Sidebar data
+    @Select(WorkflowState.getSidebarMode()) sibebar$: Observable<string>;
+    sidebarSubs: Subscription;
     sidebarMode = WorkflowSidebarMode.RUNS;
     sidebarModes = WorkflowSidebarMode;
 
@@ -77,8 +78,6 @@ export class WorkflowComponent {
     selectedNodeRef: string;
     selectecHookRef: string;
 
-    workflowRun: WorkflowRun;
-
     showButtons = false;
     loadingPopupButton = false;
 
@@ -91,16 +90,23 @@ export class WorkflowComponent {
         private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
-        this.dataRouteSubscription = this._activatedRoute.data.subscribe(datas => {
-            this.project = datas['project'];
-        });
 
+    }
+
+    ngOnInit(): void {
         this.projectSubscription = this._store.select(ProjectState)
-            .pipe(filter((projState) => projState.project && projState.project.key))
             .subscribe((projectState: ProjectStateModel) => {
                 this.project = projectState.project;
-                this._cd.markForCheck();
+                this._cd.detectChanges();
             });
+
+        this.sidebarSubs = this.sibebar$.subscribe( m => {
+            if (m === this.sidebarMode) {
+                return;
+            }
+            this.sidebarMode = m;
+            this._cd.detectChanges();
+        });
 
         this.asCodeEditorSubscription = this._workflowCore.getAsCodeEditor()
             .subscribe((state) => {
@@ -129,7 +135,6 @@ export class WorkflowComponent {
 
         this._store.dispatch(new CleanWorkflowState());
         this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
-            this.sidebarMode = s.sidebar;
             this.editWorkflow = s.editWorkflow;
 
             if (s.workflow && (!this.workflow || (this.workflow && s.workflow.id !== this.workflow.id))) {
@@ -144,11 +149,6 @@ export class WorkflowComponent {
                         this._store.dispatch(new SelectHook({hook: h, node: this.workflow.workflow_data.node}));
                     }
                 }
-            }
-            if (s.workflowRun) {
-                this.workflowRun = s.workflowRun;
-            } else {
-                delete this.workflowRun;
             }
             this._cd.markForCheck();
         });

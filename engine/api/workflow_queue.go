@@ -492,12 +492,12 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 
 	for i := range report.WorkflowRuns() {
 		run := &report.WorkflowRuns()[i]
-		report, err := updateParentWorkflowRun(ctx, newDBFunc, store, run)
+		reportParent, err := updateParentWorkflowRun(ctx, newDBFunc, store, run)
 		if err != nil {
 			return nil, sdk.WithStack(err)
 		}
 
-		go WorkflowSendEvent(context.Background(), tx, store, *proj, report)
+		go WorkflowSendEvent(context.Background(), tx, store, *proj, reportParent)
 
 		if sdk.StatusIsTerminated(run.Status) {
 			//Start a goroutine to update commit statuses in repositories manager
@@ -675,9 +675,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 		}
 
 		if nodeRun.ID == 0 {
-			nodeRunP, err := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{
-				DisableDetailledNodeRun: true,
-			})
+			nodeRunP, err := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 			if err != nil {
 				log.Warning(ctx, "postWorkflowJobStepStatusHandler> Unable to load node run for event: %v", err)
 				return nil

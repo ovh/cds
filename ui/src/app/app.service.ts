@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { WorkflowNodeRun } from 'app/model/workflow.run.model';
+import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AsCodeEvent } from 'app/store/ascode.action';
 import { UpdateMaintenance } from 'app/store/cds.action';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -333,26 +333,34 @@ export class AppService {
                     this._workflowRunService
                         .getWorkflowRun(event.project_key, event.workflow_name, event.workflow_run_num)
                         .pipe(first())
-                        .subscribe(wr => this._store.dispatch(new UpdateWorkflowRunList({ workflowRun: wr })));
+                        .subscribe(wrkRun => this._store.dispatch(new UpdateWorkflowRunList({ workflowRun: wrkRun })));
                 }
                 break;
             case EventType.RUN_WORKFLOW_NODE:
-                if (this.routeParams['number'] === event.workflow_run_num.toString()) {
+                // Refresh node run if user is listening on it
+                const wnr = this._store.selectSnapshot<WorkflowNodeRun>((state) => {
+                    return state.workflow.workflowNodeRun;
+                });
+                let wnrEvent = <WorkflowNodeRun>event.payload;
+                if (wnr && wnr.id === wnrEvent.id) {
+                    this._store.dispatch(
+                        new GetWorkflowNodeRun({
+                            projectKey: event.project_key,
+                            workflowName: event.workflow_name,
+                            num: event.workflow_run_num,
+                            nodeRunID: wnr.id
+                        }));
+                }
+
+                // Refresh workflow run if user is listening on it
+                const wr = this._store.selectSnapshot<WorkflowRun>((state) => state.workflow.workflowRun);
+                if (wr && wr.num === event.workflow_run_num) {
                     this._store.dispatch(new GetWorkflowRun(
                         {
-                            projectKey: event.project_key, workflowName: event.workflow_name,
+                            projectKey: event.project_key,
+                            workflowName: event.workflow_name,
                             num: event.workflow_run_num
                         }));
-                    let wnr = <WorkflowNodeRun>event.payload;
-                    if (this.routeParams['nodeId'] && this.routeParams['nodeId'].toString() === wnr.id) {
-                        this._store.dispatch(
-                            new GetWorkflowNodeRun({
-                                projectKey: event.project_key,
-                                workflowName: event.workflow_name,
-                                num: event.workflow_run_num,
-                                nodeRunID: this.routeParams['nodeId']
-                            }));
-                    }
                 }
                 break;
         }
