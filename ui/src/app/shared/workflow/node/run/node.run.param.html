@@ -6,7 +6,7 @@
         <div class="ui form payload">
             <ng-container *ngIf="nodeToRun && nodeToRun.type === nodeTypeEnum.PIPELINE && parameters?.length > 0 ">
                 <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
-                <app-parameter-list [project]="project" [parameters]="parameters"
+                <app-parameter-list [parameters]="parameters"
                     [paramsRef]="workflow.pipelines[nodeToRun.context.pipeline_id]?.parameters" mode="launcher"
                     [suggest]="[]"></app-parameter-list>
             </ng-container>
