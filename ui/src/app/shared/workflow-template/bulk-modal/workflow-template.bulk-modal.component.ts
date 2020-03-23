@@ -203,7 +203,7 @@ export class WorkflowTemplateBulkModalComponent {
     }
 
     startPollingStatus() {
-        this.pollingStatusSub = Observable.interval(500).subscribe(() => {
+        this.pollingStatusSub = Observable.interval(1000).subscribe(() => {
             this._workflowTemplateService.getBulk(this.workflowTemplate.group.name,
                 this.workflowTemplate.slug, this.response.id)
                 .pipe(finalize(() => this._cd.markForCheck()))
