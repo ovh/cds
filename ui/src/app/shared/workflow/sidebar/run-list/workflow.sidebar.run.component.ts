@@ -88,7 +88,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                 return;
             }
             this.workflowRuns = runs;
-            if (!this.durationIntervalID) {
+            if (!this.durationIntervalID && this.workflowRuns && this.workflow && this.workflowRuns.length > 0) {
                 this.refreshRun();
             }
             this._cd.markForCheck();
@@ -144,9 +144,10 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                     }
                 });
             });
-        if (!this.durationIntervalID) {
+        if (!this.durationIntervalID && this.workflowRuns && this.workflow && this.workflowRuns.length > 0) {
             this.refreshRun();
         }
+        this._cd.detectChanges();
     }
 
     getFilteredTags(tags: WorkflowRunTags[]): WorkflowRunTags[] {
@@ -189,37 +190,31 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     }
 
     refreshRun(): void {
-        this.refreshDuration();
         if (this.durationIntervalID) {
             this.deleteInterval();
         }
-        if (this.workflowRuns) {
+        this.refreshDuration();
+        this.durationIntervalID = window.setInterval(() => {
             this.refreshDuration();
-            this.durationIntervalID = window.setInterval(() => {
-                this.refreshDuration();
-            }, 5000);
-        }
+            this._cd.markForCheck();
+        }, 5000);
     }
 
     refreshDuration(): void {
-        if (this.workflowRuns) {
-            let stillWorking = false;
-            if (this.workflow && this.workflow.metadata && this.workflow.metadata['default_tags']) {
-                this.tagToDisplay = this.workflow.metadata['default_tags'].split(',');
-            }
-            this.workflowRuns.forEach((r) => {
-                if (PipelineStatus.isActive(r.status)) {
-                    stillWorking = true;
-                }
-                this.filteredTags[r.id] = this.getFilteredTags(r.tags);
-                this.durationMap[r.id] = this.getDuration(r.status, r.start, r.last_execution);
-            });
-            if (!stillWorking) {
-                this.deleteInterval();
-            }
-            this._cd.markForCheck();
+        let stillWorking = false;
+        if (this.workflow && this.workflow.metadata && this.workflow.metadata['default_tags']) {
+            this.tagToDisplay = this.workflow.metadata['default_tags'].split(',');
         }
-
+        this.workflowRuns.forEach((r) => {
+            if (PipelineStatus.isActive(r.status)) {
+                stillWorking = true;
+            }
+            this.filteredTags[r.id] = this.getFilteredTags(r.tags);
+            this.durationMap[r.id] = this.getDuration(r.status, r.start, r.last_execution);
+        });
+        if (!stillWorking) {
+            this.deleteInterval();
+        }
     }
 
     changeRun(num: number) {
