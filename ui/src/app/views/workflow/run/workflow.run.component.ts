@@ -29,10 +29,11 @@ export class WorkflowRunComponent implements OnInit {
     @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
     subWorkflowRun: Subscription;
 
-
     workflowName: string;
     version: string;
     direction: string;
+
+    paramsSub: Subscription;
 
     pipelineStatusEnum = PipelineStatus;
     notificationSubscription: Subscription;
@@ -60,13 +61,15 @@ export class WorkflowRunComponent implements OnInit {
         this.workflowName = this._activatedRoute.snapshot.parent.params['workflowName'];
         this._store.dispatch(new ChangeToRunView({}));
 
-        let number = this._activatedRoute.snapshot.params['number'];
-        this._store.dispatch(
-            new GetWorkflowRun({
-                projectKey: this.project.key,
-                workflowName: this.workflowName,
-                num: number
-            }));
+        this.paramsSub = this._activatedRoute.params.subscribe(p => {
+            this._store.dispatch(
+                new GetWorkflowRun({
+                    projectKey: this.project.key,
+                    workflowName: this.workflowName,
+                    num: p['number']
+                }));
+        });
+
 
         // Subscribe to workflow Run
         this.subWorkflowRun = this.workflowRun$.subscribe(wr => {

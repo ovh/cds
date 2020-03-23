@@ -143,6 +143,16 @@ export class WorkflowState {
     }
 
     @Selector()
+    static nodeRunByNodeID(state: WorkflowStateModel){
+        return (id: number) => {
+            if (!state.workflowRun || !state.workflowRun.nodes || !state.workflowRun.nodes[id] || state.workflowRun.nodes[id].length === 0) {
+                return null;
+            }
+            return state.workflowRun.nodes[id][0];
+        };
+    }
+
+    @Selector()
     static nodeRunSnapshot(state: WorkflowStateModel) {
         return state.workflowNodeRun;
     }

@@ -1,4 +1,4 @@
-<div class="workflowRunStatus" *ngIf="workflow">
+<div class="workflowRunStatus" *ngIf="workflowName">
     <div class="ui grid">
         <div class="row">
             <div class="two wide column"></div>
@@ -53,7 +53,7 @@
                                 <div class="five wide column">
                                     <div class="right floated">
                                         <button class="ui labeled icon button red"
-                                            [disabled]="loadingAction || !workflow.permissions.executable"
+                                            [disabled]="loadingAction || !canExecute"
                                             [class.loading]="loadingAction" (click)="stopWorkflow()" *ngIf="workflowRun.status === pipelineStatusEnum.WAITING ||
                                                 workflowRun.status === pipelineStatusEnum.BUILDING">
                                             <i class="stop icon"></i>

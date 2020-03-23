@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { IPopup, SuiActiveModal } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -24,9 +24,10 @@ import {
     SelectWorkflowNodeRun,
     UpdateWorkflow
 } from 'app/store/workflow.action';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { WorkflowState } from 'app/store/workflow.state';
+import { Observable, Subscription } from 'rxjs';
+import { finalize, map } from 'rxjs/operators';
+import { ProjectState } from 'app/store/project.state';
 
 @Component({
     selector: 'app-workflow-wnode',
@@ -39,7 +40,7 @@ export class WorkflowWNodeComponent implements OnInit {
 
     @Input() node: WNode;
     @Input() workflow: Workflow;
-    @Input() project: Project;
+    project: Project;
 
     @ViewChild('menu', { static: false })
     menu: WorkflowWNodeMenuEditComponent;
@@ -55,8 +56,9 @@ export class WorkflowWNodeComponent implements OnInit {
     editMode = false;
     readonly = true;
 
-    // Subscription
-    sub: Subscription;
+    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
+    workflowRunSub: Subscription;
+    nodeRunSub: Subscription;
 
     zone = new NgZone({});
 
@@ -78,29 +80,34 @@ export class WorkflowWNodeComponent implements OnInit {
         private _toast: ToastService,
         private _translate: TranslateService,
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        console.log('BUILD NODE');
+    }
 
     ngOnInit(): void {
-        this.sub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
+        this.workflowRunSub = this.workflowRun$.subscribe(wr => {
+            this.workflowRun = wr;
+        });
+
+        this.nodeRunSub = this._store.select(WorkflowState.nodeRunByNodeID).pipe(map(filterFn => filterFn(this.node.id))).subscribe( nodeRun => {
+            if (!nodeRun) {
+                return;
+            }
+            this.currentNodeRun = nodeRun;
+            if (this.currentNodeRun.status === PipelineStatus.SUCCESS) {
+                this.computeWarnings();
+            }
+        });
+        /*
+            this.sub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             this.readonly = !s.canEdit;
             this.editMode = s.editMode;
             this._cd.markForCheck();
-            if (s.workflowRun) {
-                if (this.workflowRun && this.workflowRun.id !== s.workflowRun.id) {
-                    this.currentNodeRun = null;
-                }
-                this.workflowRun = s.workflowRun;
 
-                if (this.workflowRun.nodes && this.workflowRun.nodes[this.node.id] && this.workflowRun.nodes[this.node.id].length > 0) {
-                    this.currentNodeRun = this.workflowRun.nodes[this.node.id][0];
-                }
-                if (this.currentNodeRun && this.currentNodeRun.status === PipelineStatus.SUCCESS) {
-                    this.computeWarnings();
-                }
-            } else {
-                this.workflowRun = null;
-            }
         });
+
+         */
     }
 
     clickOnNode(popup: IPopup): void {

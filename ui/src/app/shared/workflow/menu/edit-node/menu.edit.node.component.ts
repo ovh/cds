@@ -7,7 +7,7 @@ import {
     OnInit,
     Output
 } from '@angular/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { IPopup } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -15,7 +15,7 @@ import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WorkflowState } from 'app/store/workflow.state';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-menu-wnode-edit',
@@ -36,12 +36,8 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
     }
     get noderun() { return this._noderun }
 
-    _workflowrun: WorkflowRun;
-    @Input('workflowrun') set workflowrun(data: WorkflowRun) {
-        this._workflowrun = data;
-        this.runnable = this.getCanBeRun();
-    }
-    get workflowrun() { return this._workflowrun }
+    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
+    workflowRunSub: Subscription;
 
     @Input() popup: IPopup;
     @Input() readonly = true;
@@ -61,6 +57,10 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
             this.runnable = this.getCanBeRun();
             this._cd.markForCheck();
         });
+
+        this.workflowRunSub = this.workflowRun$.subscribe(wr => {
+            this.workflowrun
+        });
     }
 
     sendEvent(e: string): void {
@@ -77,7 +77,7 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
             return false;
         }
 
-        // If we are in a run, check if current node can be run ( compuite by cds api)
+        // If we are in a run, check if current node can be run ( compute by cds api)
         if (this.noderun && this.workflowrun && this.workflowrun.nodes) {
             let nodesRun = this.workflowrun.nodes[this.noderun.workflow_node_id];
             if (nodesRun) {

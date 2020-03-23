@@ -12,6 +12,7 @@ import {DeleteHookWorkflow, OpenEditModal, SelectHook} from 'app/store/workflow.
 import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
 import {finalize} from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
+import { ProjectState } from 'app/store/project.state';
 
 @Component({
     selector: 'app-workflow-node-hook',
@@ -32,11 +33,12 @@ export class WorkflowNodeHookComponent implements OnInit {
     @Input() readonly = false;
     @Input() workflow: Workflow;
     @Input() workflowRun: WorkflowRun;
-    @Input() project: Project;
     @Input() node: WNode;
 
     @ViewChild('deleteHookModal', {static: false})
     deleteHookModal: DeleteModalComponent;
+
+    projectKey: string;
 
     icon: string;
     loading = false;
@@ -49,6 +51,7 @@ export class WorkflowNodeHookComponent implements OnInit {
         private _store: Store, private _toast: ToastService, private _translate: TranslateService,
         private _cd: ChangeDetectorRef
     ) {
+        this.projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
     }
 
     ngOnInit(): void {
@@ -102,7 +105,7 @@ export class WorkflowNodeHookComponent implements OnInit {
     deleteHook(modal: SuiActiveModal<boolean, boolean, void>) {
         this.loading = true;
         this._store.dispatch(new DeleteHookWorkflow({
-            projectKey: this.project.key,
+            projectKey: this.projectKey,
             workflowName: this.workflow.name,
             hook: this.hook
         })).pipe(finalize(() => this.loading = false))

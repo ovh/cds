@@ -24,7 +24,6 @@ export class WorkflowWNodeJoinComponent {
     @Input() public node: WNode;
     @Input() public workflow: Workflow;
     @Input() public noderun: WorkflowNodeRun;
-    @Input() public workflowrun: WorkflowRun;
     @Input() public selected: boolean;
     @Input() public editMode: boolean;
 
