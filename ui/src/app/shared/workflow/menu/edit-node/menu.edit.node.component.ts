@@ -37,6 +37,7 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
     get noderun() { return this._noderun }
 
     @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
+    workflowrun: WorkflowRun;
     workflowRunSub: Subscription;
 
     @Input() popup: IPopup;
@@ -49,7 +50,9 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
     constructor(
         private _store: Store,
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {
+        console.log('BUILD MENU');
+    }
 
     ngOnInit(): void {
         this.storeSubscription = this._store.select(WorkflowState.getWorkflow()).subscribe((w: Workflow) => {
@@ -59,7 +62,7 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
         });
 
         this.workflowRunSub = this.workflowRun$.subscribe(wr => {
-            this.workflowrun
+            this.workflowrun = wr;
         });
     }
 
