@@ -19,7 +19,7 @@ var (
 //Status returns info about worker Model Status
 func Status(db *gorp.DbMap) sdk.MonitoringStatusLine {
 	status := sdk.MonitoringStatusOK
-	if time.Now().Sub(lastRequest) > 2*time.Second {
+	if time.Since(lastRequest) > 2*time.Second {
 		queryCount := `select count(worker_model.id) from worker_model where nb_spawn_err > 0`
 
 		count, errc := db.SelectInt(queryCount)

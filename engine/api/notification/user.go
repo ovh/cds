@@ -29,7 +29,6 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache
 
 	//Compute notification
 	params := map[string]string{}
-	log.Info(ctx, "############## nr.BuildParameters: %+v", nr.BuildParameters)
 	for _, p := range nr.BuildParameters {
 		params[p.Name] = p.Value
 	}
