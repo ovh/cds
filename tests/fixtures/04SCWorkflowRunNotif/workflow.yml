@@ -1,0 +1,20 @@
+name: 04SCWorkflowRunNotif-WORKFLOW
+version: v2.0
+workflow:
+  test-notif:
+    pipeline: 04SCWorkflowRunNotif-PIPELINE
+metadata:
+  default_tags: git.branch,git.author
+notifications:
+- type: jabber
+  pipelines:
+  - test-notif
+  settings:
+    on_success: always
+    recipients:
+    - notif@localhost.local
+    template:
+      body: |+
+        title:{{.cds.project}}/{{.cds.workflow}}#{{.cds.version}} {{.cds.status}}
+        url:{{.cds.buildURL}}
+        logcontent:{{.cds.build.logcontent | b64dec}}

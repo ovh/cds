@@ -1,0 +1,68 @@
+name: Create a simple workflow (04SCWorkflowRunNotif) that use all  worker command and run it
+version: "2"
+
+vars :
+  smtpmock.url: 'http://localhost:2024'
+  email: notif@localhost.local
+
+testcases:
+- name: Check SMTP mock
+  steps:  
+  - type: http
+    method: GET
+    url: '{{.smtpmock.url}}'
+    retry: 5
+    delay: 5
+
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./fixtures/04SCWorkflowRunNotif/pipeline.yml ]'
+  - script: '[ -f ./fixtures/04SCWorkflowRunNotif/application.yml ]'
+  - script: '[ -f ./fixtures/04SCWorkflowRunNotif/workflow.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWRUNNOTIF"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowrunworkercmd "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add 04SCWORKFLOWRUNNOTIF 04SCWorkflowRunNotif"
+
+- name: import pipeline and workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force 04SCWORKFLOWRUNNOTIF ./fixtures/04SCWorkflowRunNotif/pipeline.yml
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 04SCWORKFLOWRUNNOTIF ./fixtures/04SCWorkflowRunNotif/workflow.yml
+
+- name: run workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run 04SCWORKFLOWRUNNOTIF 04SCWorkflowRunNotif-WORKFLOW
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow 04SCWorkflowRunNotif-WORKFLOW #1 has been launched"
+
+- name: check workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNNOTIF 04SCWorkflowRunNotif-WORKFLOW 1 --format json
+    retry: 20
+    delay: 10
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.num ShouldContainSubstring 1
+    - result.systemoutjson.status ShouldEqual Success
+    - result.systemoutjson.tags ShouldContainSubstring triggered_by
+    - result.systemoutjson.tags ShouldContainSubstring tag1
+    - result.systemoutjson.tags ShouldContainSubstring tag2
+
+- name: post-create-user
+  steps:
+  - type: http
+    method: GET
+    url: '{{.smtpmock.url}}/messages/{{.email}}/latest'
+    assertions:
+    - result.statuscode ShouldEqual 200
+    retry: 10
+    delay: 3
+    vars:
+      verify: 
+        from: result.bodyjson.content
+        regex: logcontent:foo2
