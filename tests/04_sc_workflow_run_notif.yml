@@ -3,7 +3,6 @@ version: "2"
 
 vars :
   smtpmock.url: 'http://localhost:2024'
-  email: notif@localhost.local
 
 testcases:
 - name: Check SMTP mock
@@ -53,7 +52,7 @@ testcases:
   steps:
   - type: http
     method: GET
-    url: '{{.smtpmock.url}}/messages/{{.email}}/latest'
+    url: '{{.smtpmock.url}}/messages/notif@localhost.local/latest'
     assertions:
     - result.statuscode ShouldEqual 200
     retry: 10
