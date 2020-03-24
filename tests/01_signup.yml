@@ -7,10 +7,11 @@ vars:
   cdsctl.config : './cdsrc'
   smtpmock.url: 'http://localhost:2024'
   username: cds.integration.tests.rw
+  ring: 
   email: it-user-rw@localhost.local
   fullname: cds.integration.tests.rw
   password: "123456&éçà(§"
-  ring:
+
 
 testcases:
 - name: Check SMTP mock
