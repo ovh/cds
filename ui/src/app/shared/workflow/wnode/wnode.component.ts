@@ -6,7 +6,7 @@ import { IPopup, SuiActiveModal } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeHook, WNodeJoin, WNodeTrigger, WNodeType, Workflow } from 'app/model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -16,6 +16,7 @@ import { WorkflowHookModalComponent } from 'app/shared/workflow/modal/hook-add/h
 import { WorkflowTriggerComponent } from 'app/shared/workflow/modal/node-add/workflow.trigger.component';
 import { WorkflowNodeEditModalComponent } from 'app/shared/workflow/modal/node-edit/node.edit.modal.component';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
+import { ProjectState } from 'app/store/project.state';
 import {
     AddHookWorkflow,
     AddJoinWorkflow,
@@ -27,7 +28,6 @@ import {
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
 import { finalize, map, tap } from 'rxjs/operators';
-import { ProjectState } from 'app/store/project.state';
 
 @Component({
     selector: 'app-workflow-wnode',
@@ -57,10 +57,9 @@ export class WorkflowWNodeComponent implements OnInit {
     editModeSub: Subscription;
     editMode = false;
 
-    // Event on workflow run
-    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
-    workflowRun: WorkflowRun;
-    workflowRunSub: Subscription;
+    hasWorkflowRun: boolean;
+    routerSub: Subscription;
+
 
     currentNodeRun: WorkflowNodeRun;
     nodeRunSub: Subscription;
@@ -78,6 +77,7 @@ export class WorkflowWNodeComponent implements OnInit {
     constructor(
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
+        private _routerActivated: ActivatedRoute,
         private _store: Store,
         private _workflowCoreService: WorkflowCoreService,
         private _toast: ToastService,
@@ -88,18 +88,24 @@ export class WorkflowWNodeComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.workflowRunSub = this.workflowRun$.subscribe(wr => {
-            if (!wr && !this.workflowRun) {
+        this.routerSub = this._routerActivated.params.subscribe(p => {
+            if (!p['number'] && !this.hasWorkflowRun) {
                 return;
             }
-            if (wr && this.workflowRun) {
+            if (p['number'] && this.hasWorkflowRun) {
                 return;
             }
-            this.workflowRun = wr;
+
+            if (!p['number']) {
+                this.hasWorkflowRun = false;
+            } else {
+                this.hasWorkflowRun = true;
+            }
             this._cd.markForCheck();
         });
 
-        this.nodeRunSub = this._store.select(WorkflowState.nodeRunByNodeID).pipe(map(filterFn => filterFn(this.node.id))).subscribe( nodeRun => {
+        this.nodeRunSub = this._store.select(WorkflowState.nodeRunByNodeID)
+            .pipe(map(filterFn => filterFn(this.node.id))).subscribe( nodeRun => {
             if (!nodeRun) {
                 return;
             }
@@ -142,7 +148,7 @@ export class WorkflowWNodeComponent implements OnInit {
     dblClickOnNode() {
         switch (this.node.type) {
             case WNodeType.PIPELINE:
-                if (this.workflowRun && this.currentNodeRun) {
+                if (this.hasWorkflowRun && this.currentNodeRun) {
                     this._router.navigate([
                         'node', this.currentNodeRun.id
                     ], {
@@ -159,7 +165,7 @@ export class WorkflowWNodeComponent implements OnInit {
                 }
                 break;
             case WNodeType.OUTGOINGHOOK:
-                if (this.workflowRun
+                if (this.hasWorkflowRun
                     && this.currentNodeRun
                     && this.node.outgoing_hook.config['target_workflow']
                     && this.currentNodeRun.callback) {

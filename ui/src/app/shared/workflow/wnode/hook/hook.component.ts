@@ -1,18 +1,17 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
-import {Store} from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { SuiActiveModal } from '@richardlt/ng2-semantic-ui';
-import { Project } from 'app/model/project.model';
 import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from 'app/model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
+import { WorkflowNodeRunHookEvent, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import {DeleteModalComponent} from 'app/shared/modal/delete/delete.component';
 import {ToastService} from 'app/shared/toast/ToastService';
-import {DeleteHookWorkflow, OpenEditModal, SelectHook} from 'app/store/workflow.action';
-import {WorkflowState, WorkflowStateModel} from 'app/store/workflow.state';
-import {finalize} from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 import { ProjectState } from 'app/store/project.state';
+import {DeleteHookWorkflow, OpenEditModal, SelectHook} from 'app/store/workflow.action';
+import {WorkflowState} from 'app/store/workflow.state';
+import { Subscription } from 'rxjs/Subscription';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-node-hook',
@@ -22,30 +21,29 @@ import { ProjectState } from 'app/store/project.state';
 })
 @AutoUnsubscribe()
 export class WorkflowNodeHookComponent implements OnInit {
-    _hook: WNodeHook;
-    @Input('hook')
-    set hook(data: WNodeHook) {
-        if (data) {
-            this._hook = data;
-        }
-    }
-    get hook() { return this._hook; }
-    @Input() readonly = false;
+
+    @Input() hook: WNodeHook;
     @Input() workflow: Workflow;
-    @Input() workflowRun: WorkflowRun;
     @Input() node: WNode;
+
+    @Select(WorkflowState.getEditMode()) editMode$: Observable<boolean>;
+    editModeSub: Subscription;
+    editMode = false;
+
+    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
+    workflowRunSub: Subscription;
+
+    @Select(WorkflowState.getWorkflow()) workflow$: Observable<Workflow>;
+    workflowSub: Subscription;
 
     @ViewChild('deleteHookModal', {static: false})
     deleteHookModal: DeleteModalComponent;
 
     projectKey: string;
-
+    hookEvent: WorkflowNodeRunHookEvent;
+    currentRunID: number;
+    hasWritable: boolean;
     icon: string;
-    loading = false;
-    isSelected = false;
-    subSelect: Subscription;
-    nodeRun: WorkflowNodeRun;
-    editMode: boolean;
 
     constructor(
         private _store: Store, private _toast: ToastService, private _translate: TranslateService,
@@ -55,30 +53,48 @@ export class WorkflowNodeHookComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.subSelect = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
-            this.readonly = !s.canEdit;
-            this.editMode = s.editMode;
-            this.workflowRun = s.workflowRun;
-            if (this.workflowRun && this.node && this.workflowRun.nodes
-                && this.workflowRun.nodes[this.node.id] && this.workflowRun.nodes[this.node.id].length > 0) {
-                this.nodeRun = this.workflowRun.nodes[this.node.id][0];
-            }
+        // Check if hook event has changed
+        this.workflowRunSub = this.workflowRun$.subscribe(wr => {
+           if (!wr) {
+               return;
+           }
+           if (wr.id === this.currentRunID) {
+               return;
+           }
+           if (wr && this.node && wr.nodes && wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
+                let nodeRun = wr.nodes[this.node.id][0];
+                this.hookEvent = nodeRun.hook_event;
+                this.currentRunID = wr.id;
+                this._cd.markForCheck();
+           }
+        });
 
-            if (s.hook && this.hook && s.hook.uuid === this.hook.uuid) {
-                this.isSelected = true;
-            } else {
-                this.isSelected = false;
+        this.editModeSub = this.editMode$.subscribe(e => {
+            if (e === this.editMode) {
+                return;
             }
+            this.editMode = e;
             this._cd.markForCheck();
         });
 
-        if (this._hook) {
-            if (this._hook.config['hookIcon']) {
-                this.icon = (<WorkflowNodeHookConfigValue>this._hook.config['hookIcon']).value.toLowerCase();
+        this.workflowSub = this._store.select(WorkflowState.getWorkflow()).subscribe((w: Workflow) => {
+            if (this.hasWritable && w.permissions.writable) {
+                return;
+            }
+            if (!this.hasWritable && !w.permissions.writable) {
+                return;
+            }
+            this.hasWritable = w.permissions.writable;
+            this._cd.markForCheck();
+        });
+
+        if (this.hook) {
+            if (this.hook.config['hookIcon']) {
+                this.icon = (<WorkflowNodeHookConfigValue>this.hook.config['hookIcon']).value.toLowerCase();
             } else if (this.workflow.hook_models && this.workflow.hook_models[this.hook.hook_model_id]) {
                 this.icon = this.workflow.hook_models[this.hook.hook_model_id].icon.toLowerCase();
             } else {
-                this.icon = this._hook.model.icon;
+                this.icon = this.hook.model.icon;
             }
         }
     }
@@ -103,13 +119,12 @@ export class WorkflowNodeHookComponent implements OnInit {
     }
 
     deleteHook(modal: SuiActiveModal<boolean, boolean, void>) {
-        this.loading = true;
+        this._cd.markForCheck();
         this._store.dispatch(new DeleteHookWorkflow({
             projectKey: this.projectKey,
             workflowName: this.workflow.name,
             hook: this.hook
-        })).pipe(finalize(() => this.loading = false))
-            .subscribe(() => {
+        })).subscribe(() => {
                 if (this.editMode) {
                     this._toast.info('', this._translate.instant('workflow_ascode_updated'));
                 } else {

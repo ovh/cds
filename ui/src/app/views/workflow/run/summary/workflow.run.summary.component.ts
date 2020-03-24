@@ -19,10 +19,10 @@ import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.servic
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteWorkflowRun } from 'app/store/workflow.action';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { WorkflowState } from 'app/store/workflow.state';
+import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
-import { Observable } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-run-summary',

@@ -30,6 +30,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     workflow: Workflow;
     @Input('workflowData')
     set workflowData(data: Workflow) {
+        console.log(data);
         this.workflow = data;
         this.nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
         this.hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();

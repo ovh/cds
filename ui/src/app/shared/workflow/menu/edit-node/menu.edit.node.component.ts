@@ -10,12 +10,12 @@ import {
 import { Store } from '@ngxs/store';
 import { IPopup } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Project } from 'app/model/project.model';
 import { ProjectState } from 'app/store/project.state';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 
 @Component({
     selector: 'app-workflow-menu-wnode-edit',

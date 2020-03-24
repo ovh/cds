@@ -4,13 +4,13 @@ import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, WNodeJoin, Workflow } from 'app/model/workflow.model';
-import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
+import { ProjectState } from 'app/store/project.state';
 
 @Component({
     selector: 'app-workflow-wnode-join',
@@ -20,13 +20,12 @@ import { Subscription } from 'rxjs';
 })
 @AutoUnsubscribe()
 export class WorkflowWNodeJoinComponent {
-    @Input() public project: Project;
     @Input() public node: WNode;
     @Input() public workflow: Workflow;
-    @Input() public noderun: WorkflowNodeRun;
-    @Input() public selected: boolean;
+    @Input() noderunStatus: string;
     @Input() public editMode: boolean;
 
+    project: Project;
     pipelineStatus = PipelineStatus;
     linkJoinSubscription: Subscription;
     nodeToLink: WNode;
@@ -39,6 +38,7 @@ export class WorkflowWNodeJoinComponent {
         private _translate: TranslateService,
         private _cd: ChangeDetectorRef
     ) {
+        this.project = this.store.selectSnapshot(ProjectState.projectSnapshot);
         this.linkJoinSubscription = _workflowCore.getLinkJoinEvent().subscribe(n => {
             this.nodeToLink = n;
             this._cd.markForCheck();

@@ -57,7 +57,6 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
 
     constructor(private _modalService: SuiModalService, private _store: Store, private _cd: ChangeDetectorRef,
                 private _translate: TranslateService, private _toast: ToastService) {
-
         this.projectSubscriber = this._store.select(ProjectState)
             .subscribe((projState: ProjectStateModel) => {
                 this.project = projState.project;
