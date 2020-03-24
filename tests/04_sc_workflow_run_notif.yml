@@ -48,9 +48,6 @@ testcases:
     - result.systemoutjson.start ShouldNotBeEmpty
     - result.systemoutjson.num ShouldContainSubstring 1
     - result.systemoutjson.status ShouldEqual Success
-    - result.systemoutjson.tags ShouldContainSubstring triggered_by
-    - result.systemoutjson.tags ShouldContainSubstring tag1
-    - result.systemoutjson.tags ShouldContainSubstring tag2
 
 - name: check-mail-notif
   steps:
