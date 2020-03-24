@@ -27,7 +27,9 @@ testcases:
 - name: import pipeline and workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force 04SCWORKFLOWRUNNOTIF ./fixtures/04SCWorkflowRunNotif/pipeline.yml
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force 04SCWORKFLOWRUNNOTIF ./fixtures/04SCWorkflowRunNotif/empty.yml
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 04SCWORKFLOWRUNNOTIF ./fixtures/04SCWorkflowRunNotif/workflow.yml
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force 04SCWORKFLOWRUNNOTIF ./fixtures/04SCWorkflowRunNotif/workflow-empty.yml
 
 - name: run workflow
   steps:
@@ -52,6 +54,12 @@ testcases:
   steps:
   - type: http
     method: GET
+    url: '{{.smtpmock.url}}/messages/notif@localhost.local'
+    assertions:
+    - result.statuscode ShouldEqual 200
+    - result.bodyjson.__len__ ShouldEqual 1
+  - type: http
+    method: GET
     url: '{{.smtpmock.url}}/messages/notif@localhost.local/latest'
     assertions:
     - result.statuscode ShouldEqual 200
@@ -61,3 +69,31 @@ testcases:
       verify: 
         from: result.bodyjson.content
         regex: logcontent:foo2
+
+- name: run workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow run 04SCWORKFLOWRUNNOTIF 04SCWorkflowRunNotif-WORKFLOW-EMPTY
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow 04SCWorkflowRunNotif-WORKFLOW-EMPTY #1 has been launched"
+
+- name: check workflow
+  steps:
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNNOTIF 04SCWorkflowRunNotif-WORKFLOW-EMPTY 1 --format json
+    retry: 20
+    delay: 10
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.num ShouldContainSubstring 1
+    - result.systemoutjson.status ShouldEqual Success
+
+- name: check-mail-notif
+  steps:
+  - type: http
+    method: GET
+    url: '{{.smtpmock.url}}/messages/notif-empty@localhost.local'
+    assertions:
+    - result.statuscode ShouldEqual 200
+    - result.bodyjson.__len__ ShouldEqual 1
