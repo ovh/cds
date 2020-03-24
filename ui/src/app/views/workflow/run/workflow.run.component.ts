@@ -73,7 +73,6 @@ export class WorkflowRunComponent implements OnInit {
 
         // Subscribe to workflow Run
         this.subWorkflowRun = this.workflowRun$.subscribe(wr => {
-            console.log(wr);
             if (!wr) {
                 return;
             }
@@ -82,7 +81,6 @@ export class WorkflowRunComponent implements OnInit {
                return;
             }
 
-            console.log('state: Update workflow run');
             if (!this.workflowRunData) {
                 this.workflowRunData = {};
             }

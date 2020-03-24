@@ -76,7 +76,6 @@ export class WorkflowRunSummaryComponent implements OnInit {
 
     ngOnInit(): void {
         this.subWorkflowRun = this.workflowRun$.subscribe(wr => {
-            console.log('Coucou', wr);
             if (!wr) {
                 return;
             }

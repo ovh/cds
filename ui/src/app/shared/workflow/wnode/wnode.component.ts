@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Select, Store } from '@ngxs/store';
@@ -20,13 +20,13 @@ import {
     AddHookWorkflow,
     AddJoinWorkflow,
     AddNodeTriggerWorkflow,
-    OpenEditModal,
+    OpenEditModal, SelectWorkflowNode,
     SelectWorkflowNodeRun,
     UpdateWorkflow
 } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
+import { finalize, map, tap } from 'rxjs/operators';
 import { ProjectState } from 'app/store/project.state';
 
 @Component({
@@ -38,29 +38,32 @@ import { ProjectState } from 'app/store/project.state';
 @AutoUnsubscribe()
 export class WorkflowWNodeComponent implements OnInit {
 
+    // Data set by workflow graph
     @Input() node: WNode;
     @Input() workflow: Workflow;
-    project: Project;
 
     @ViewChild('menu', { static: false })
     menu: WorkflowWNodeMenuEditComponent;
     @ViewChild('workflowRunNode', { static: false })
     workflowRunNode: WorkflowNodeRunParamComponent;
 
-    // Selected workflow run
-    workflowRun: WorkflowRun;
-    currentNodeRun: WorkflowNodeRun;
+    project: Project;
+
     warnings = 0;
     loading: boolean;
 
+    // Event on edit mode
+    @Select(WorkflowState.getEditMode()) editMode$: Observable<boolean>;
+    editModeSub: Subscription;
     editMode = false;
-    readonly = true;
 
+    // Event on workflow run
     @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
+    workflowRun: WorkflowRun;
     workflowRunSub: Subscription;
-    nodeRunSub: Subscription;
 
-    zone = new NgZone({});
+    currentNodeRun: WorkflowNodeRun;
+    nodeRunSub: Subscription;
 
     // Modal
     @ViewChild('workflowDeleteNode', { static: false })
@@ -82,45 +85,57 @@ export class WorkflowWNodeComponent implements OnInit {
         private _cd: ChangeDetectorRef
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
-        console.log('BUILD NODE');
     }
 
     ngOnInit(): void {
         this.workflowRunSub = this.workflowRun$.subscribe(wr => {
+            if (!wr && !this.workflowRun) {
+                return;
+            }
+            if (wr && this.workflowRun) {
+                return;
+            }
             this.workflowRun = wr;
+            this._cd.markForCheck();
         });
 
         this.nodeRunSub = this._store.select(WorkflowState.nodeRunByNodeID).pipe(map(filterFn => filterFn(this.node.id))).subscribe( nodeRun => {
             if (!nodeRun) {
                 return;
             }
+            if (this.currentNodeRun && this.currentNodeRun.id === nodeRun.id && this.currentNodeRun.status === nodeRun.status) {
+                return;
+            }
+
             this.currentNodeRun = nodeRun;
             if (this.currentNodeRun.status === PipelineStatus.SUCCESS) {
                 this.computeWarnings();
             }
-        });
-        /*
-            this.sub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
-            this.readonly = !s.canEdit;
-            this.editMode = s.editMode;
             this._cd.markForCheck();
-
         });
-
-         */
+        this.editModeSub = this.editMode$.subscribe(e => {
+            if (e === this.editMode) {
+                return;
+            }
+            this.editMode = e;
+            this._cd.markForCheck();
+        });
     }
 
     clickOnNode(popup: IPopup): void {
         if (this.workflow.previewMode || !popup) {
             return;
         }
-        if (this.currentNodeRun) {
+        if (!this.currentNodeRun) {
+            this._store.dispatch(new SelectWorkflowNode({
+                node: this.node
+            })).pipe(tap(popup.open));
+        } else {
             this._store.dispatch(new SelectWorkflowNodeRun({
                 workflowNodeRun: this.currentNodeRun,
                 node: this.node
-            }));
+            })).pipe(tap(popup.open));
         }
-        popup.open();
 
     }
 

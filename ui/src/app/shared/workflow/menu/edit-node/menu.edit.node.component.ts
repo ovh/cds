@@ -27,16 +27,16 @@ import { ProjectState } from 'app/store/project.state';
 export class WorkflowWNodeMenuEditComponent implements OnInit {
 
     // Project that contains the workflow
-    @Input() node: WNode;
     @Input() popup: IPopup;
-    @Input() readonly = true;
     @Output() event = new EventEmitter<string>();
 
     project: Project;
     workflow: Workflow;
     workflowrun: WorkflowRun;
     noderun: WorkflowNodeRun;
+    node: WNode;
     runnable: boolean;
+    readonly = true;
 
     constructor(
         private _store: Store,
@@ -50,6 +50,8 @@ export class WorkflowWNodeMenuEditComponent implements OnInit {
         this.workflow = state.workflow;
         this.workflowrun = state.workflowRun;
         this.noderun = state.workflowNodeRun;
+        this.node = state.node;
+        this.readonly = !state.canEdit;
 
         this.runnable = this.getCanBeRun();
         this._cd.markForCheck();

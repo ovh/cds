@@ -10,7 +10,7 @@
         [node]="node" [noderun]="currentNodeRun"></app-workflow-wnode-outgoing-hook>
 </div>
 <ng-template let-popup #popupNode>
-    <app-workflow-menu-wnode-edit (event)="receivedEvent($event)" [node]="node" [popup]="popup"  [readonly]="readonly" #menu></app-workflow-menu-wnode-edit>
+    <app-workflow-menu-wnode-edit (event)="receivedEvent($event)" [popup]="popup" #menu></app-workflow-menu-wnode-edit>
 </ng-template>
 
 <!-- MODALS -->

@@ -69,6 +69,14 @@ export class WorkflowState {
         return state.workflow;
     }
 
+
+    static getEditMode() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): boolean => state.editMode
+        );
+    }
+
     static getCurrent() {
         return createSelector(
             [WorkflowState],
@@ -1238,6 +1246,21 @@ export class WorkflowState {
             listRuns: runs
         });
     }
+
+    @Action(actionWorkflow.SelectWorkflowNode)
+    selectWorkflowNode(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.SelectWorkflowNode) {
+        const state = ctx.getState();
+        if (state.node && state.node.id === action.payload.node.id) {
+            return;
+        }
+        ctx.setState({
+            ...state,
+            workflowNodeRun: null,
+            node: action.payload.node,
+            sidebar: WorkflowSidebarMode.RUNS
+        });
+    }
+
 
     @Action(actionWorkflow.SelectWorkflowNodeRun)
     selectWorkflowNodeRun(ctx: StateContext<WorkflowStateModel>, action: actionWorkflow.SelectWorkflowNodeRun) {
