@@ -6,7 +6,7 @@ workflow:
 metadata:
   default_tags: git.branch,git.author
 notifications:
-- type: jabber
+- type: email
   pipelines:
   - test-notif
   settings:
@@ -14,7 +14,7 @@ notifications:
     recipients:
     - notif@localhost.local
     template:
-      body: |+
+      body: |
         title:{{.cds.project}}/{{.cds.workflow}}#{{.cds.version}} {{.cds.status}}
         url:{{.cds.buildURL}}
         logcontent:{{.cds.build.logcontent | b64dec}}

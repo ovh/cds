@@ -21,7 +21,7 @@ testcases:
 - name: prepare test
   steps:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force 04SCWORKFLOWRUNNOTIF"
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowrunworkercmd "
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force 04scworkflowrunnotif"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add 04SCWORKFLOWRUNNOTIF 04SCWorkflowRunNotif"
 
 - name: import pipeline and workflow
