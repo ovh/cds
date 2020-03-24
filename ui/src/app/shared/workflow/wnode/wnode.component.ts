@@ -20,13 +20,13 @@ import {
     AddHookWorkflow,
     AddJoinWorkflow,
     AddNodeTriggerWorkflow,
-    OpenEditModal,
+    OpenEditModal, SelectWorkflowNode,
     SelectWorkflowNodeRun,
     UpdateWorkflow
 } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { finalize, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-wnode',
@@ -107,13 +107,17 @@ export class WorkflowWNodeComponent implements OnInit {
         if (this.workflow.previewMode || !popup) {
             return;
         }
-        popup.open();
-        if (this.currentNodeRun) {
+        if (!this.currentNodeRun) {
+            this._store.dispatch(new SelectWorkflowNode({
+                node: this.node
+            })).pipe(tap(popup.open));
+        } else {
             this._store.dispatch(new SelectWorkflowNodeRun({
                 workflowNodeRun: this.currentNodeRun,
                 node: this.node
-            }));
+            })).pipe(tap(popup.open));
         }
+
     }
 
     dblClickOnNode() {

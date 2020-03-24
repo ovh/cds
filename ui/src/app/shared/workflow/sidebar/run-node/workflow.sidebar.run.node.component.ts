@@ -110,7 +110,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
         });
 
         this.nodeRunSubs = this.nodeRun$.subscribe( nrs => {
-            if (!nrs && !this.currentWorkflowNodeRun) {
+            if (!nrs) {
                 return;
             }
             // If event on same noderun with same status, check if tests or artifacts changed
