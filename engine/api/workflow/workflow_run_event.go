@@ -158,6 +158,9 @@ loopNotif:
 		}
 	}
 
+	if !sdk.StatusIsTerminated(nodeRun.Status) {
+		return nil
+	}
 	if err := e.sendVCSPullRequestComment(ctx, db, wr, &nodeRun, notif, vcsServer.Name); err != nil {
 		return err
 	}
