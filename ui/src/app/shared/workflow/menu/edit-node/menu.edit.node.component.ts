@@ -7,15 +7,15 @@ import {
     OnInit,
     Output
 } from '@angular/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { IPopup } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
-import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { WorkflowState } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { Project } from 'app/model/project.model';
+import { ProjectState } from 'app/store/project.state';
 
 @Component({
     selector: 'app-workflow-menu-wnode-edit',
@@ -27,43 +27,32 @@ import { Observable, Subscription } from 'rxjs';
 export class WorkflowWNodeMenuEditComponent implements OnInit {
 
     // Project that contains the workflow
-    @Input() project: Project;
     @Input() node: WNode;
-    _noderun: WorkflowNodeRun;
-    @Input('noderun') set noderun(data: WorkflowNodeRun) {
-        this._noderun = data;
-        this.runnable = this.getCanBeRun();
-    }
-    get noderun() { return this._noderun }
-
-    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
-    workflowrun: WorkflowRun;
-    workflowRunSub: Subscription;
-
     @Input() popup: IPopup;
     @Input() readonly = true;
     @Output() event = new EventEmitter<string>();
-    runnable: boolean;
-    storeSubscription: Subscription;
+
+    project: Project;
     workflow: Workflow;
+    workflowrun: WorkflowRun;
+    noderun: WorkflowNodeRun;
+    runnable: boolean;
 
     constructor(
         private _store: Store,
         private _cd: ChangeDetectorRef
-    ) {
-        console.log('BUILD MENU');
-    }
+    ) {}
 
     ngOnInit(): void {
-        this.storeSubscription = this._store.select(WorkflowState.getWorkflow()).subscribe((w: Workflow) => {
-            this.workflow = w;
-            this.runnable = this.getCanBeRun();
-            this._cd.markForCheck();
-        });
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
 
-        this.workflowRunSub = this.workflowRun$.subscribe(wr => {
-            this.workflowrun = wr;
-        });
+        let state: WorkflowStateModel = this._store.selectSnapshot(WorkflowState);
+        this.workflow = state.workflow;
+        this.workflowrun = state.workflowRun;
+        this.noderun = state.workflowNodeRun;
+
+        this.runnable = this.getCanBeRun();
+        this._cd.markForCheck();
     }
 
     sendEvent(e: string): void {

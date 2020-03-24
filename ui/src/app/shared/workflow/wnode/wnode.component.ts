@@ -114,13 +114,14 @@ export class WorkflowWNodeComponent implements OnInit {
         if (this.workflow.previewMode || !popup) {
             return;
         }
-        popup.open();
         if (this.currentNodeRun) {
             this._store.dispatch(new SelectWorkflowNodeRun({
                 workflowNodeRun: this.currentNodeRun,
                 node: this.node
             }));
         }
+        popup.open();
+
     }
 
     dblClickOnNode() {
