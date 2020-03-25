@@ -151,6 +151,37 @@ func (g *githubClient) repoByFullname(ctx context.Context, fullname string) (Rep
 	return repo, nil
 }
 
+func (g *githubClient) UserHasWritePermission(ctx context.Context, fullname string) (bool, error) {
+	owner := strings.SplitN(fullname, "/", 2)[0]
+	if g.username == "" || owner == g.username {
+		return false, sdk.WrapError(sdk.ErrUserNotFound, "No user found in configuration")
+	}
+	url := "/repos/" + fullname + "/collaborators/" + g.username + "/permission"
+	k := cache.Key("vcs", "github", "user-write", g.OAuthToken, url)
+
+	status, resp, _, err := g.get(ctx, url)
+	if err != nil {
+		return false, err
+	}
+	if status >= 400 {
+		return false, sdk.NewError(sdk.ErrUnknownError, errorAPI(resp))
+	}
+	var permResp UserPermissionResponse
+	if status == http.StatusNotModified {
+		if _, err := g.Cache.Get(k, &permResp); err != nil {
+			log.Error(ctx, "cannot get from cache %s: %v", k, err)
+		}
+	} else {
+		if err := json.Unmarshal(resp, &permResp); err != nil {
+			return false, sdk.WrapError(err, "unable to unmarshal: %s", string(resp))
+		}
+		if err := g.Cache.SetWithTTL(k, permResp, 61*60); err != nil {
+			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
+		}
+	}
+	return permResp.Permission == "write" || permResp.Permission == "admin", nil
+}
+
 func (g *githubClient) GrantWritePermission(ctx context.Context, fullname string) error {
 	owner := strings.SplitN(fullname, "/", 2)[0]
 	if g.username == "" || owner == g.username {
