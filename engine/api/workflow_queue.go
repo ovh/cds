@@ -741,12 +741,12 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			return errM
 		}
 
-		permissions := sdk.PermissionReadExecute
+		permissions := sdk.PermissionRead
 
 		isW := isWorker(ctx)
 		isS := isService(ctx)
-		if !isW && !isS {
-			permissions = sdk.PermissionRead
+		if isW || isS {
+			permissions = sdk.PermissionReadExecute
 		}
 
 		filter := workflow.NewQueueFilter()
@@ -759,8 +759,10 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 		if modelType != "" {
 			filter.ModelType = []string{modelType}
 		}
+
 		var jobs []sdk.WorkflowNodeJobRun
-		if !isMaintainer(ctx) && !isAdmin(ctx) {
+		// If the consumer is a worker, a hatchery or a non maintainer user, filter the job by its groups
+		if isW || isS || !isMaintainer(ctx) {
 			jobs, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).GetGroupIDs())
 		} else {
 			jobs, err = workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
