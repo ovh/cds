@@ -10,8 +10,8 @@ import {ToastService} from 'app/shared/toast/ToastService';
 import { ProjectState } from 'app/store/project.state';
 import {DeleteHookWorkflow, OpenEditModal, SelectHook} from 'app/store/workflow.action';
 import {WorkflowState} from 'app/store/workflow.state';
-import { Subscription } from 'rxjs/Subscription';
 import { Observable } from 'rxjs';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-workflow-node-hook',

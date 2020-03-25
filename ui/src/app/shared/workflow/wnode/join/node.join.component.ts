@@ -7,10 +7,10 @@ import { WNode, WNodeJoin, Workflow } from 'app/model/workflow.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
-import { ProjectState } from 'app/store/project.state';
 
 @Component({
     selector: 'app-workflow-wnode-join',
