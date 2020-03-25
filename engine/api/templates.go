@@ -504,6 +504,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 					errorDefer := func(err error) error {
 						if err != nil {
+							log.Error(ctx, "%v", err)
 							bulk.Operations[i].Status = sdk.OperationStatusError
 							bulk.Operations[i].Error = fmt.Sprintf("%s", sdk.Cause(err))
 							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {

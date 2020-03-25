@@ -1,6 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
 import { ModalTemplate, SuiActiveModal, SuiModalService, TemplateModalConfig } from '@richardlt/ng2-semantic-ui';
 import { Operation } from 'app/model/operation.model';
 import { Pipeline } from 'app/model/pipeline.model';
@@ -10,10 +9,8 @@ import { ApplicationWorkflowService } from 'app/service/services.module';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { CDSWebWorker } from 'app/shared/worker/web.worker';
-import { AuthenticationState } from 'app/store/authentication.state';
-import { Subscription } from 'rxjs';
-import { first } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
+import { finalize, first } from 'rxjs/operators';
 
 @Component({
     selector: 'app-update-ascode',
@@ -22,29 +19,34 @@ import { first } from 'rxjs/operators';
 })
 @AutoUnsubscribe()
 export class UpdateAsCodeComponent {
-
-    @Input() project: Project;
-    @Input() appName: string;
-    @Input() name: string;
-    dataToSave: any;
-    dataType: string;
-
     @ViewChild('updateAsCodeModal', { static: false })
     public myModalTemplate: ModalTemplate<boolean, boolean, void>;
     modal: SuiActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
+    @Input() project: Project;
+    @Input() appName: string;
+    @Input() name: string;
+
+    dataToSave: any;
+    dataType: string;
     branches: Array<string>;
     selectedBranch: string;
     commitMessage: string;
     loading: boolean;
     webworkerSub: Subscription;
     ope: Operation;
+    pollingOperationSub: Subscription;
 
-    constructor(private _modalService: SuiModalService, private _awService: ApplicationWorkflowService,
-                private _cd: ChangeDetectorRef, private _toast: ToastService, private _translate: TranslateService,
-                private _workflowService: WorkflowService, private _store: Store, private _pipService: PipelineService) {
-    }
+    constructor(
+        private _modalService: SuiModalService,
+        private _awService: ApplicationWorkflowService,
+        private _cd: ChangeDetectorRef,
+        private _toast: ToastService,
+        private _translate: TranslateService,
+        private _workflowService: WorkflowService,
+        private _pipService: PipelineService
+    ) { }
 
     show(data: any, type: string) {
         this.loading = false;
@@ -59,6 +61,10 @@ export class UpdateAsCodeComponent {
                 }
                 this._cd.markForCheck();
             });
+    }
+
+    close() {
+        this.modal.approve(true);
     }
 
     optionsFilter = (opts: Array<string>, query: string): Array<string> => {
@@ -76,63 +82,39 @@ export class UpdateAsCodeComponent {
     };
 
     save(): void {
-        this.loading = true;
         switch (this.dataType) {
             case 'workflow':
-                this._workflowService.updateAsCode(
-                    this.project.key, this.name,
-                    this.selectedBranch, this.commitMessage,
-                    this.dataToSave).pipe(first()).subscribe(ope => {
-                    this.ope = ope;
-                    let zone = new NgZone({ enableLongStackTrace: false });
-                    let webworker = new CDSWebWorker('./assets/worker/web/operation.js');
-                    webworker.start({
-                        'user': this._store.selectSnapshot(AuthenticationState.user),
-                        'api': '/cdsapi',
-                        'path': '/project/' + this.project.key + '/workflows/' + this.name + '/ascode/' + this.ope.uuid
+                this.loading = true;
+                this._workflowService.updateAsCode(this.project.key, this.name, this.selectedBranch,
+                    this.commitMessage, this.dataToSave).subscribe(o => {
+                        this.ope = o;
+                        this.startPollingOperation();
                     });
-                    this.webworkerSub = webworker.response().subscribe(operation => {
-                        if (operation) {
-                            zone.run(() => {
-                                this.ope = JSON.parse(operation);
-                                if (this.ope.status > 1) {
-                                    this.loading = false;
-                                    webworker.stop();
-                                }
-                                this._cd.markForCheck();
-                            });
-                        }
-                    });
-                });
                 break;
             case 'pipeline':
-                this._pipService
-                    .updateAsCode(this.project.key, <Pipeline>this.dataToSave, this.selectedBranch, this.commitMessage)
-                    .subscribe(ope => {
-                    this.ope = ope;
-                    let zone = new NgZone({ enableLongStackTrace: false });
-                    let webworker = new CDSWebWorker('./assets/worker/web/operation.js');
-                    webworker.start({
-                        'user': this._store.selectSnapshot(AuthenticationState.user),
-                        'api': '/cdsapi',
-                        'path': '/project/' + this.project.key + '/workflows/' + this.name + '/ascode/' + this.ope.uuid
+                this.loading = true;
+                this._pipService.updateAsCode(this.project.key, <Pipeline>this.dataToSave,
+                    this.selectedBranch, this.commitMessage).subscribe(o => {
+                        this.ope = o;
+                        this.startPollingOperation();
                     });
-                    this.webworkerSub = webworker.response().subscribe(operation => {
-                        if (operation) {
-                            zone.run(() => {
-                                this.ope = JSON.parse(operation);
-                                if (this.ope.status > 1) {
-                                    this.loading = false;
-                                    webworker.stop();
-                                }
-                                this._cd.markForCheck();
-                            });
-                        }
-                    });
-                });
                 break;
             default:
                 this._toast.error('', this._translate.instant('ascode_error_unknown_type'))
         }
+    }
+
+    startPollingOperation() {
+        this.pollingOperationSub = Observable.interval(1000).subscribe(() => {
+            this._workflowService.getAsCodeOperation(this.project.key, this.name, this.ope.uuid)
+                .pipe(finalize(() => this._cd.markForCheck()))
+                .subscribe(o => {
+                    this.ope = o;
+                    if (this.ope.status > 1) {
+                        this.loading = false;
+                        this.pollingOperationSub.unsubscribe();
+                    }
+                });
+        });
     }
 }

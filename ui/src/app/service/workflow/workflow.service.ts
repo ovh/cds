@@ -8,11 +8,6 @@ import { Observable } from 'rxjs';
 export class WorkflowService {
     constructor(private _http: HttpClient) { }
 
-    /**
-     * Get the given workflow from API
-     * @param projectKey Project unique key
-     * @param workflowName Workflow Name
-     */
     getWorkflow(projectKey: string, workflowName: string): Observable<Workflow> {
         let params = new HttpParams();
         params = params.append('withUsage', 'true');
@@ -22,50 +17,27 @@ export class WorkflowService {
         return this._http.get<Workflow>(`/project/${projectKey}/workflows/${workflowName}`, { params });
     }
 
-    /**
-     * Pull the given workflow from API
-     * @param projectKey Project unique key
-     * @param workflowName Workflow Name
-     */
     pullWorkflow(projectKey: string, workflowName: string): Observable<WorkflowPull> {
         let params = new HttpParams();
         params = params.append('json', 'true');
         return this._http.get<WorkflowPull>(`/project/${projectKey}/pull/workflows/${workflowName}`, { params });
     }
 
-    /**
-     * Get workflow trigger condition
-     * @param projectKey Project unique key
-     * @param workflow Workflow to delete
-     * @returns {Observable<boolean>}
-     */
     getTriggerCondition(projectKey: string, workflowName: string, nodeID: number): Observable<WorkflowTriggerConditionCache> {
         let params = new HttpParams();
         if (nodeID) {
             params = params.append('nodeID', nodeID.toString());
         }
         return this._http.get<WorkflowTriggerConditionCache>(
-            `/project/${projectKey}/workflows/${workflowName}/triggers/condition`,  { params });
+            `/project/${projectKey}/workflows/${workflowName}/triggers/condition`, { params });
     }
 
-    /**
-     * Get workflow trigger hook condition
-     * @param projectKey Project unique key
-     * @param workflow Workflow to delete
-     * @returns {Observable<boolean>}
-     */
     getTriggerHookCondition(projectKey: string, workflowName: string): Observable<WorkflowTriggerConditionCache> {
         return this._http.get<WorkflowTriggerConditionCache>(
             `/project/${projectKey}/workflows/${workflowName}/hook/triggers/condition`);
     }
 
-    /**
-     * Update the workflow  as code
-     * @param projectKey
-     * @param workflowName
-     */
-    updateAsCode(projectKey: string, workflowName: string,
-                 branch: string, message: string, wf: Workflow): Observable<Operation> {
+    updateAsCode(projectKey: string, workflowName: string, branch: string, message: string, wf: Workflow): Observable<Operation> {
         let params = new HttpParams();
         params = params.append('branch', branch);
         params = params.append('message', message);
@@ -83,5 +55,9 @@ export class WorkflowService {
             `/project/${projectKey}/workflows/${workflowName}/runs/num`,
             { num: runNumber }
         );
+    }
+
+    getAsCodeOperation(projectKey: string, workflowName: string, operationUUID: string): Observable<Operation> {
+        return this._http.get<Operation>(`/project/${projectKey}/workflows/${workflowName}/ascode/${operationUUID}`);
     }
 }

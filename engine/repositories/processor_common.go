@@ -14,38 +14,36 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (repo.
 
 	r := s.Repo(*op)
 	if err := s.checkOrCreateFS(r); err != nil {
-		log.Error(ctx, "Repositories> processGitClone> checkOrCreateFS> [%s] Error %v", op.UUID, err)
 		return gitRepo, "", "", err
 	}
 
 	// Get the git repository
 	opts := []repo.Option{repo.WithVerbose()}
+
 	if op.RepositoryStrategy.ConnectionType == "ssh" {
-		log.Debug("Repositories> processGitClone> using ssh key %s", op.RepositoryStrategy.SSHKey)
+		log.Debug("processGitClone> using ssh key %s", op.RepositoryStrategy.SSHKey)
 		opts = append(opts, repo.WithSSHAuth([]byte(op.RepositoryStrategy.SSHKeyContent)))
 	} else if op.RepositoryStrategy.User != "" && op.RepositoryStrategy.Password != "" {
+		log.Debug("processGitClone> using user %s", op.RepositoryStrategy.User)
 		opts = append(opts, repo.WithHTTPAuth(op.RepositoryStrategy.User, op.RepositoryStrategy.Password))
 	}
 
 	gitRepo, err := repo.New(r.Basedir, opts...)
 	if err != nil {
-		log.Info(ctx, "Repositories> processGitClone> cloning %s into %s", r.URL, r.Basedir)
+		log.Info(ctx, "processGitClone> cloning %s into %s", r.URL, r.Basedir)
 		gitRepo, err = repo.Clone(r.Basedir, r.URL, opts...)
 		if err != nil {
-			log.Error(ctx, "Repositories> processGitClone> Clone> [%s] error %v", op.UUID, err)
 			return gitRepo, "", "", err
 		}
 	}
 
 	f, err := gitRepo.FetchURL()
 	if err != nil {
-		log.Error(ctx, "Repositories> processGitClone> gitRepo.FetchURL> [%s] Error: %v", op.UUID, err)
 		return gitRepo, "", "", err
 	}
 
 	d, err := gitRepo.DefaultBranch()
 	if err != nil {
-		log.Error(ctx, "Repositories> processGitClone> DefaultBranch> [%s] Error: %v", op.UUID, err)
 		return gitRepo, "", "", err
 	}
 
@@ -58,7 +56,6 @@ func (s *Service) processGitClone(ctx context.Context, op *sdk.Operation) (repo.
 	//Check branch
 	currentBranch, err := gitRepo.CurrentBranch()
 	if err != nil {
-		log.Error(ctx, "Repositories> processGitClone> CurrentBranch> [%s] error %v", op.UUID, err)
 		return gitRepo, "", "", err
 	}
 	return gitRepo, r.Basedir, currentBranch, nil

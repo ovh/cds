@@ -148,7 +148,6 @@ func UpdateFromRepository(db gorp.SqlExecutor, workflowID int64, fromRepository 
 	if _, err := db.Exec("UPDATE workflow SET from_repository = $1, last_modified = current_timestamp WHERE id = $2", fromRepository, workflowID); err != nil {
 		return sdk.WithStack(err)
 	}
-
 	return nil
 }
 

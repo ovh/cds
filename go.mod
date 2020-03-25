@@ -45,11 +45,11 @@ require (
 	github.com/duosecurity/duo_api_golang v0.0.0-20180315112207-d0530c80e49a // indirect
 	github.com/eapache/go-resiliency v1.1.0
 	github.com/fatih/color v1.7.0
-	github.com/fatih/structs v1.0.0
+	github.com/fatih/structs v1.0.0 // indirect
 	github.com/fortytw2/leaktest v1.2.0 // indirect
 	github.com/frankban/quicktest v1.6.0 // indirect
 	github.com/fsamin/go-dump v1.0.9
-	github.com/fsamin/go-repo v0.1.5
+	github.com/fsamin/go-repo v0.1.6
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
 	github.com/garyburd/redigo v1.6.0 // indirect
@@ -106,9 +106,9 @@ require (
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lib/pq v1.0.0
-	github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024
+	github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
-	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d
+	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d // indirect
 	github.com/marstr/guid v1.1.0 // indirect
 	github.com/maruel/panicparse v1.3.0
 	github.com/mattbaird/elastigo v0.0.0-20170123220020-2fe47fd29e4b // indirect
@@ -153,7 +153,6 @@ require (
 	github.com/poy/onpar v0.0.0-20190519213022-ee068f8ea4d1 // indirect
 	github.com/prometheus/client_golang v1.1.0 // indirect
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
-	github.com/prometheus/common v0.6.0
 	github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/samuel/go-zookeeper v0.0.0-20180130194729-c4fab1ac1bec // indirect
@@ -171,7 +170,7 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
 	github.com/stretchr/objx v0.2.0 // indirect
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5
 	github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926 // indirect
 	github.com/ugorji/go v1.1.7 // indirect
@@ -182,7 +181,6 @@ require (
 	github.com/xanzy/go-gitlab v0.15.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945
-	github.com/yesnault/gorp v2.0.0+incompatible // indirect
 	github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed
 	github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908
 	github.com/ziutek/mymysql v1.5.4 // indirect
@@ -193,7 +191,6 @@ require (
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a
 	golang.org/x/text v0.3.2
-	google.golang.org/appengine v1.6.1
 	google.golang.org/genproto v0.0.0-20190817000702-55e96fffbd48 // indirect
 	google.golang.org/grpc v1.23.0
 	gopkg.in/AlecAivazis/survey.v1 v1.7.1

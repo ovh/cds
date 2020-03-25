@@ -39,8 +39,6 @@ github.com/Shopify/sarama v1.19.0 h1:9oksLxC6uxVPHPVYUmq6xhr1BOF/hHobWH2UzO67z1s
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
 github.com/Shopify/toxiproxy v2.1.4+incompatible h1:TKdv8HiTLgE5wdJuEML90aBgNWsokNbMijUGhmcoBJc=
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
-github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755 h1:+xHAcx6b5TS1DiY+StyK2CrNvD0nQ97G7w45x4ljJFs=
-github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755/go.mod h1:Juc2PrI3wtNfUwptSvAIeNx+HrETwHQs6nf+TkOJlOA=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc h1:cAKDfWh5VpdgMhJosfJnn5/FoN2SRZ4p7fJNX58YPaU=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf h1:qet1QNfXsQxTZqLG4oE62mJzwPIB8+Tee4RNCL9ulrY=
@@ -142,10 +140,8 @@ github.com/frankban/quicktest v1.6.0 h1:Cd62nl66vQsx8Uv1t8M0eICyxIwZG7MxiAOrdnnU
 github.com/frankban/quicktest v1.6.0/go.mod h1:jaStnuzAqU1AJdCO0l53JDCJrVDKcS03DbaAcR7Ks/o=
 github.com/fsamin/go-dump v1.0.9 h1:3MAneAJLnGfKTJtFEAdgrD+QqqK2Hwj7EJUQMQZcDls=
 github.com/fsamin/go-dump v1.0.9/go.mod h1:ZgKd2aOXAFFbbFuUgvQhu7mwTlI3d3qnTICMWdvAa9o=
-github.com/fsamin/go-repo v0.1.4 h1:P70wyLGKAHeaVDuxHckc1mCM1tsqDsTNGrF/tu1+Z1s=
-github.com/fsamin/go-repo v0.1.4/go.mod h1:V7Te54EYyamyQIp6UKfONBbXBlPF4u3C1bvcH7OtdLM=
-github.com/fsamin/go-repo v0.1.5 h1:YON5aisDn+0DpJlXvqrPT9/EGv13JgYL3X/3GXRlLhY=
-github.com/fsamin/go-repo v0.1.5/go.mod h1:V7Te54EYyamyQIp6UKfONBbXBlPF4u3C1bvcH7OtdLM=
+github.com/fsamin/go-repo v0.1.6 h1:2ZEljhqi6Iscwe0lC2nXsI4b5AxOToZ+kVfuItSoQsQ=
+github.com/fsamin/go-repo v0.1.6/go.mod h1:JRLbo6sPXvAwwGs5RgifFk1pXiefeGf0hyHifEg1Vw4=
 github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be h1:UhjSvwE1gxUYfekK9BXZ/LL55we9Avg+2Pt0PIlMYCk=
 github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be/go.mod h1:kuiNcf1lKxl4isIY6bHxbBatpLD43c2RKWIV/AGlhXY=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
@@ -187,8 +183,6 @@ github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfb
 github.com/golang/mock v1.2.0/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
 github.com/golang/mock v1.3.1 h1:qGJ6qTW+x6xX/my+8YUVl4WNpX9B7+/l2tRsHGZ7f2s=
 github.com/golang/mock v1.3.1/go.mod h1:sBzyDLLjw3U8JLTeZvSv8jJB+tU5PVekmnlKIyFUx0Y=
-github.com/golang/mock v1.4.0 h1:Rd1kQnQu0Hq3qvJppYSG0HtP+f5LPPUiDswTLiEegLg=
-github.com/golang/mock v1.4.0/go.mod h1:UOMv5ysSaYNkG+OFQykRIcU/QvvxJf3p21QfJ2Bt3cw=
 github.com/golang/mock v1.4.1 h1:ocYkMQY5RrXTYgXl7ICpV0IXwlEQGwKIsery4gyXa1U=
 github.com/golang/mock v1.4.1/go.mod h1:UOMv5ysSaYNkG+OFQykRIcU/QvvxJf3p21QfJ2Bt3cw=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
@@ -539,8 +533,8 @@ github.com/stretchr/objx v0.2.0/go.mod h1:qt09Ya8vawLte6SNmTgCsAVtYtaKzEcn8ATUoH
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.3.1-0.20190311161405-34c6fa2dc709/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
-github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
-github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
+github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H4=
+github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5 h1:hNna6Fi0eP1f2sMBe/rJicDmaHmoXGe1Ta84FPYHLuE=
 github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5/go.mod h1:f1SCnEOt6sc3fOJfPQDRDzHOtSXuTtnz0ImG9kPRDV0=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 h1:LnC5Kc/wtumK+WB441p7ynQJzVuNRJiqddSIE3IlSEQ=
@@ -572,8 +566,6 @@ github.com/yesnault/go-keychain v0.0.0-20190829085436-f78f7ae28786 h1:3i+IgAiigX
 github.com/yesnault/go-keychain v0.0.0-20190829085436-f78f7ae28786/go.mod h1:EzotOW21xnO2Lld4dB8qr2bSnzi3nGtE9FG33n/y2Q8=
 github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945 h1:icS0gqYJLvPFpni3gxPml7gCSdCcJx72RrbkVgmvw80=
 github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945/go.mod h1:SsMrIuedaKvK8GekjwjVv8gMnHNAuvoINpKCARzdsEQ=
-github.com/yesnault/gorp v2.0.0+incompatible h1:4pwtvWrXQTAgGVnzAB0X5jX/mWRQEa8zmcdNT5U8jyg=
-github.com/yesnault/gorp v2.0.0+incompatible/go.mod h1:7nhqtxBPZoPXx86SqUzP/OFLd8prnhkydPk51uJthQc=
 github.com/yesnault/gorp v2.0.1-0.20190906143353-6210446a0d92+incompatible h1:lJBr14ALmOEDTV6iIAQLR8WSBSUIqeS8cFZ628Zl2fo=
 github.com/yesnault/gorp v2.0.1-0.20190906143353-6210446a0d92+incompatible/go.mod h1:7nhqtxBPZoPXx86SqUzP/OFLd8prnhkydPk51uJthQc=
 github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed h1:I1vcLHWU9m30rA90rMrKPu0eD3NDA4FBlkB8WMaDyUw=

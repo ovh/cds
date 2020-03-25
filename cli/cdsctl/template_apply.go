@@ -102,6 +102,9 @@ func suggestTemplate() (*sdk.WorkflowTemplate, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(wts) == 0 {
+		return nil, fmt.Errorf("no existing template found from CDS")
+	}
 	opts := make([]string, len(wts))
 	for i := range wts {
 		opts[i] = fmt.Sprintf("%s (%s/%s)", wts[i].Name, wts[i].Group.Name, wts[i].Slug)
@@ -260,7 +263,7 @@ func templateApplyRun(v cli.Values) error {
 			}
 		}
 
-		if !importAsCode && !importPush && !detached {
+		if !importAsCode && !importPush {
 			if localRepoURL != "" {
 				importAsCode = cli.AskConfirm(fmt.Sprintf("Import the generated workflow as code to the %s project", projectKey))
 			}

@@ -125,6 +125,7 @@
   "btn_logs": "Display logs",
   "btn_rename": "Rename",
   "btn_resync_repo": "Resynchronize",
+  "btn_resync_ascode_event": "Resynchronize repository modifications",
   "btn_run": "Run pipeline",
   "btn_run_workflow": "Run workflow",
   "btn_validate": "Validate",

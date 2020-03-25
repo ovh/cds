@@ -26,7 +26,7 @@ func (s *Service) checkOrCreateFS(r *sdk.OperationRepo) error {
 	path := filepath.Join(s.Cfg.Basedir, r.ID())
 	fi, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		return sdk.WrapError(os.MkdirAll(path, os.FileMode(0700)), "checkOrCreateFS> unable to create directory %s", path)
+		return sdk.WrapError(os.MkdirAll(path, os.FileMode(0700)), "unable to create directory %s", path)
 	}
 	if fi.IsDir() {
 		return nil

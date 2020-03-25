@@ -38,7 +38,8 @@ func (api *API) getWorkflowAsCodeHandler() service.Handler {
 }
 
 // postWorkflowAsCodeHandler Update an as code workflow
-// @title Make the workflow as code	// @title Update an as code workflow
+// @title Make the workflow as code
+// @title Update an as code workflow
 func (api *API) postWorkflowAsCodeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
