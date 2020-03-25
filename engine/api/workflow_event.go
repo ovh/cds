@@ -39,17 +39,19 @@ func WorkflowSendEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 				log.Warning(ctx, "workflowSendEvent> Cannot load previous node run: %v", errN)
 			}
 		}
-		// if report contains a node run with waiting status, this status
-		// could be overrided in the same process for empty pipeline, with the Success value.
-		// So, we keep the initial status from the report to avoid sending duplicate notification
-		statusBeforeReload := wnr.Status
+
 		nr, err := workflow.LoadNodeRunByID(db, wnr.ID, workflow.LoadRunOptions{
 			DisableDetailledNodeRun: false, // load build parameters, used in notif interpolate below
 		})
-		nr.Status = statusBeforeReload
 		if err != nil {
 			log.Warning(ctx, "workflowSendEvent > Cannot load workflow node run: %v", err)
 			continue
+		}
+		// if report contains a node run with waiting status, this status
+		// could be overrided in the same process for empty pipeline, with the Success value.
+		// So, we keep the initial status from the report to avoid sending duplicate notification
+		if len(wnr.Stages) == 0 {
+			nr.Status = wnr.Status
 		}
 
 		event.PublishWorkflowNodeRun(ctx, db, store, *nr, wr.Workflow, &previousNodeRun)
