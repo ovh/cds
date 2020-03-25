@@ -596,26 +596,27 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 
 		sdk.GoRoutine(ctx, "deleteWorkflowHandler",
 			func(ctx context.Context) {
+				consumer := getAPIConsumer(ctx)
 				txg, errT := api.mustDB().Begin()
 				if errT != nil {
-					log.Error(ctx, "deleteWorkflowHandler> Cannot start transaction: %v", errT)
+					log.Error(api.Router.Background, "deleteWorkflowHandler> Cannot start transaction: %v", errT)
 				}
 				defer txg.Rollback() // nolint
 
-				oldW, err := workflow.Load(context.Background(), txg, api.Cache, *p, name, workflow.LoadOptions{})
+				oldW, err := workflow.Load(api.Router.Background, txg, api.Cache, *p, name, workflow.LoadOptions{})
 				if err != nil {
-					log.Error(ctx, "deleteWorkflowHandler> unable to load workflow: %v", err)
+					log.Error(api.Router.Background, "deleteWorkflowHandler> unable to load workflow: %v", err)
 					return
 				}
 
-				if err := workflow.Delete(context.Background(), txg, api.Cache, *p, oldW); err != nil {
-					log.Error(ctx, "deleteWorkflowHandler> unable to delete workflow: %v", err)
+				if err := workflow.Delete(api.Router.Background, txg, api.Cache, *p, oldW); err != nil {
+					log.Error(api.Router.Background, "deleteWorkflowHandler> unable to delete workflow: %v", err)
 					return
 				}
 				if err := txg.Commit(); err != nil {
-					log.Error(ctx, "deleteWorkflowHandler> Cannot commit transaction: %v", err)
+					log.Error(api.Router.Background, "deleteWorkflowHandler> Cannot commit transaction: %v", err)
 				}
-				event.PublishWorkflowDelete(ctx, key, *oldW, getAPIConsumer((ctx)))
+				event.PublishWorkflowDelete(api.Router.Background, key, *oldW, consumer)
 			}, api.PanicDump())
 
 		return service.WriteJSON(w, nil, http.StatusOK)
