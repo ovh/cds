@@ -1677,7 +1677,7 @@
 	"title": "export",
 	"tags": [],
 	"description": "",
-	"content": " cdsctl pipeline export Export CDS pipeline\nSynopsis Export CDS pipeline\ncdsctl pipeline export [ PROJECT-KEY ] PIPELINE-NAME [flags]  Options  --format string yml or json (default \u0026quot;yml\u0026quot;)  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output  SEE ALSO  cdsctl pipeline - Manage CDS pipeline  "
+	"content": " cdsctl pipeline export Export CDS pipeline\nSynopsis Export CDS pipeline\ncdsctl pipeline export [ PROJECT-KEY ] PIPELINE-NAME [flags]  Options  --format string Specify export format (json or yaml) (default \u0026quot;yaml\u0026quot;)  Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output  SEE ALSO  cdsctl pipeline - Manage CDS pipeline  "
 },
 {
 	"uri": "https://ovh.github.io/cds/docs/components/cdsctl/project/integration/export/",
