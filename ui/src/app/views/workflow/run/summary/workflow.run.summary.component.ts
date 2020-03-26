@@ -79,6 +79,25 @@ export class WorkflowRunSummaryComponent implements OnInit {
             if (!wr) {
                 return;
             }
+            // If same run and status doesn't change, lets check spawninfos && tags
+            if (this.workflowRun && this.workflowRun.id === wr.id && this.workflowRun.status === wr.status) {
+                let refreshView = false;
+                if (!this.workflowRun.tags && wr.tags) {
+                    refreshView = true;
+                }
+                if (this.workflowRun.tags && wr.tags && this.workflowRun.tags.length !== wr.tags.length) {
+                    refreshView = true;
+                }
+                if (!this.workflowRun.infos && wr.infos) {
+                    refreshView = true;
+                }
+                if (this.workflowRun.infos && wr.infos && this.workflowRun.infos.length !== wr.infos.length) {
+                    refreshView = true;
+                }
+                if (!refreshView) {
+                    return;
+                }
+            }
             this.workflowRun = wr;
             if (this.workflowRun.tags) {
                 let tagTriggeredBy = this.workflowRun.tags.find((tag) => tag.tag === 'triggered_by');

@@ -39,8 +39,7 @@ export class WorkflowSidebarHookComponent implements OnInit {
     constructor(
         private _hookService: HookService,
         private _cd: ChangeDetectorRef
-    ) {
-    }
+    ) {}
 
     ngOnInit(): void {
         this.subHook = this.hooks$.subscribe((h: WNodeHook) => {

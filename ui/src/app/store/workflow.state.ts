@@ -69,14 +69,6 @@ export class WorkflowState {
         return state.workflow;
     }
 
-
-    static getEditMode() {
-        return createSelector(
-            [WorkflowState],
-            (state: WorkflowStateModel): boolean => state.editMode
-        );
-    }
-
     static getCurrent() {
         return createSelector(
             [WorkflowState],

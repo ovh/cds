@@ -6,7 +6,7 @@
             </a>
             <hr>
         </ng-container>
-        <ng-container *ngIf="node && !noderun">
+        <ng-container *ngIf="node && !workflowrun">
             <a class="item" (click)="sendEvent('pipeline')"
                 [class.disabled]="readonly">
                     {{ 'workflow_node_trigger_add' | translate }}
@@ -50,13 +50,13 @@
                     {{ 'btn_delete' | translate }}
             </a>
         </ng-container>
-        <ng-container *ngIf="node && noderun">
-            <ng-container *ngIf="node.type === 'pipeline'">
+        <ng-container *ngIf="node && noderun && node.type === 'pipeline'">
                 <a class="item" (click)="sendEvent('logs')">
                     {{'btn_logs' | translate }}
                 </a>
                 <hr>
-            </ng-container>
+        </ng-container>
+        <ng-container *ngIf="node && workflowrun">
             <a class="item" (click)="sendEvent('edit')">
                     {{ 'workflow_node_menu_edit_ro' | translate }}
             </a>

@@ -85,11 +85,8 @@ export class WorkflowRunComponent implements OnInit {
                 this.workflowRunData = {};
             }
 
-            console.log('UPDATE WR');
-
             // If workflow run change, refresh workflow
             if (wr && this.workflowRunData['id'] !== wr.id) {
-                console.log('UPDATE WR - WORKFLOW');
                this.workflowRunData['workflow'] = wr.workflow;
                this.workflowName = wr.workflow.name;
             }
@@ -110,6 +107,7 @@ export class WorkflowRunComponent implements OnInit {
             this.workflowRunData['id'] = wr.id;
             this.workflowRunData['infos'] = wr.infos;
             this.workflowRunData['num'] = wr.num;
+            this.workflowRunData['status'] = wr.status;
 
             this.updateTitle(wr);
             this._cd.markForCheck();

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { IPopup, SuiActiveModal } from '@richardlt/ng2-semantic-ui';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -26,7 +26,7 @@ import {
     UpdateWorkflow
 } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { finalize, map, tap } from 'rxjs/operators';
 
 @Component({
@@ -52,14 +52,7 @@ export class WorkflowWNodeComponent implements OnInit {
     warnings = 0;
     loading: boolean;
 
-    // Event on edit mode
-    @Select(WorkflowState.getEditMode()) editMode$: Observable<boolean>;
-    editModeSub: Subscription;
-    editMode = false;
-
     hasWorkflowRun: boolean;
-    routerSub: Subscription;
-
 
     currentNodeRun: WorkflowNodeRun;
     nodeRunSub: Subscription;
@@ -85,25 +78,13 @@ export class WorkflowWNodeComponent implements OnInit {
         private _cd: ChangeDetectorRef
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        let paramSnamp = this._routerActivated.snapshot.params;
+        if (paramSnamp['number']) {
+            this.hasWorkflowRun = true;
+        }
     }
 
     ngOnInit(): void {
-        this.routerSub = this._routerActivated.params.subscribe(p => {
-            if (!p['number'] && !this.hasWorkflowRun) {
-                return;
-            }
-            if (p['number'] && this.hasWorkflowRun) {
-                return;
-            }
-
-            if (!p['number']) {
-                this.hasWorkflowRun = false;
-            } else {
-                this.hasWorkflowRun = true;
-            }
-            this._cd.markForCheck();
-        });
-
         this.nodeRunSub = this._store.select(WorkflowState.nodeRunByNodeID)
             .pipe(map(filterFn => filterFn(this.node.id))).subscribe( nodeRun => {
             if (!nodeRun) {
@@ -112,18 +93,10 @@ export class WorkflowWNodeComponent implements OnInit {
             if (this.currentNodeRun && this.currentNodeRun.id === nodeRun.id && this.currentNodeRun.status === nodeRun.status) {
                 return;
             }
-
             this.currentNodeRun = nodeRun;
             if (this.currentNodeRun.status === PipelineStatus.SUCCESS) {
                 this.computeWarnings();
             }
-            this._cd.markForCheck();
-        });
-        this.editModeSub = this.editMode$.subscribe(e => {
-            if (e === this.editMode) {
-                return;
-            }
-            this.editMode = e;
             this._cd.markForCheck();
         });
     }
@@ -282,9 +255,10 @@ export class WorkflowWNodeComponent implements OnInit {
             hook
         });
 
+        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
         this._store.dispatch(action).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
-                if (!this.editMode) {
+                if (!editMode) {
                     this._toast.success('', this._translate.instant('workflow_updated'));
                 } else {
                     this._toast.info('', this._translate.instant('workflow_ascode_updated'))
@@ -296,8 +270,9 @@ export class WorkflowWNodeComponent implements OnInit {
     }
 
     createFork(): void {
+        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
         let n: WNode;
-        if (this.editMode) {
+        if (editMode) {
             n = Workflow.getNodeByRef(this.node.ref, this.workflow);
         } else {
             n = Workflow.getNodeByID(this.node.id, this.workflow);
@@ -341,13 +316,14 @@ export class WorkflowWNodeComponent implements OnInit {
 
     updateWorkflow(w: Workflow, modal: SuiActiveModal<boolean, boolean, void>): void {
         this.loading = true;
+        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
         this._store.dispatch(new UpdateWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             changes: w
         })).pipe(finalize(() => this.loading = false))
             .subscribe(() => {
-                if (!this.editMode) {
+                if (!editMode) {
                     this._toast.success('', this._translate.instant('workflow_updated'));
                 }
                 if (modal) {

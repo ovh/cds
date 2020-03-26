@@ -26,10 +26,6 @@ export class WorkflowNodeHookComponent implements OnInit {
     @Input() workflow: Workflow;
     @Input() node: WNode;
 
-    @Select(WorkflowState.getEditMode()) editMode$: Observable<boolean>;
-    editModeSub: Subscription;
-    editMode = false;
-
     @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
     workflowRunSub: Subscription;
 
@@ -50,6 +46,8 @@ export class WorkflowNodeHookComponent implements OnInit {
         private _cd: ChangeDetectorRef
     ) {
         this.projectKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+        let workflow = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
+        this.hasWritable = workflow.permissions.writable;
     }
 
     ngOnInit(): void {
@@ -62,30 +60,12 @@ export class WorkflowNodeHookComponent implements OnInit {
                return;
            }
            if (wr && this.node && wr.nodes && wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
-                let nodeRun = wr.nodes[this.node.id][0];
-                this.hookEvent = nodeRun.hook_event;
-                this.currentRunID = wr.id;
-                this._cd.markForCheck();
+               let nodeRun = wr.nodes[this.node.id][0];
+               this.hookEvent = nodeRun.hook_event;
+               this.currentRunID = wr.id;
+               this.hasWritable = false;
+               this._cd.markForCheck();
            }
-        });
-
-        this.editModeSub = this.editMode$.subscribe(e => {
-            if (e === this.editMode) {
-                return;
-            }
-            this.editMode = e;
-            this._cd.markForCheck();
-        });
-
-        this.workflowSub = this._store.select(WorkflowState.getWorkflow()).subscribe((w: Workflow) => {
-            if (this.hasWritable && w.permissions.writable) {
-                return;
-            }
-            if (!this.hasWritable && !w.permissions.writable) {
-                return;
-            }
-            this.hasWritable = w.permissions.writable;
-            this._cd.markForCheck();
         });
 
         if (this.hook) {
@@ -119,13 +99,14 @@ export class WorkflowNodeHookComponent implements OnInit {
     }
 
     deleteHook(modal: SuiActiveModal<boolean, boolean, void>) {
+        let editMode = this._store.selectSnapshot(WorkflowState).editMode;
         this._cd.markForCheck();
         this._store.dispatch(new DeleteHookWorkflow({
             projectKey: this.projectKey,
             workflowName: this.workflow.name,
             hook: this.hook
         })).subscribe(() => {
-                if (this.editMode) {
+                if (editMode) {
                     this._toast.info('', this._translate.instant('workflow_ascode_updated'));
                 } else {
                     this._toast.success('', this._translate.instant('workflow_updated'));

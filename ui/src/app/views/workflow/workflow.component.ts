@@ -136,17 +136,17 @@ export class WorkflowComponent implements OnInit {
 
         this._store.dispatch(new CleanWorkflowState());
         this.workflowSubscription = this.workflow$.subscribe(w => {
-            if (w && (!this.workflow || (this.workflow && w.id !== this.workflow.id))) {
-                this.workflow = w;
+            if (!w) {
+                return;
+            }
+            if (!this.workflow || (this.workflow && w.id !== this.workflow.id)) {
                 this.initRuns(this.project.key, w.name, this._store.selectSnapshot(WorkflowState).filters);
             }
-            if (w) {
-                this.workflow = w;
-                if (this.selectecHookRef) {
-                    let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
-                    if (h) {
-                        this._store.dispatch(new SelectHook({hook: h, node: this.workflow.workflow_data.node}));
-                    }
+            this.workflow = w;
+            if (this.selectecHookRef) {
+                let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
+                if (h) {
+                    this._store.dispatch(new SelectHook({hook: h, node: this.workflow.workflow_data.node}));
                 }
             }
             this._cd.markForCheck();
