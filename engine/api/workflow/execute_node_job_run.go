@@ -61,9 +61,9 @@ func (r *ProcessorReport) Add(ctx context.Context, i ...interface{}) {
 		case *sdk.WorkflowNodeJobRun:
 			r.jobs = append(r.jobs, *x)
 		case sdk.WorkflowNodeRun:
-			r.nodes = append(r.nodes, x)
+			r.addWorkflowNodeRun(ctx, x)
 		case *sdk.WorkflowNodeRun:
-			r.nodes = append(r.nodes, *x)
+			r.addWorkflowNodeRun(ctx, *x)
 		case sdk.WorkflowRun:
 			r.workflows = append(r.workflows, x)
 		case *sdk.WorkflowRun:
@@ -72,6 +72,16 @@ func (r *ProcessorReport) Add(ctx context.Context, i ...interface{}) {
 			log.Warning(ctx, "ProcessorReport> unknown type %T", w)
 		}
 	}
+}
+
+func (r *ProcessorReport) addWorkflowNodeRun(ctx context.Context, nr sdk.WorkflowNodeRun) {
+	for i := range r.nodes {
+		if nr.ID == r.nodes[i].ID {
+			r.nodes[i] = nr
+			return
+		}
+	}
+	r.nodes = append(r.nodes, nr)
 }
 
 //All returns all the objects in the reports

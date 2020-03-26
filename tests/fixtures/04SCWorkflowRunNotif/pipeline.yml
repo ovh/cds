@@ -1,0 +1,14 @@
+version: v1.0
+name: 04SCWorkflowRunNotif-PIPELINE
+stages:
+- Stage1
+
+jobs:
+- job: EXPORT
+  stage: Stage1
+  steps:
+    - script:
+      - set -ex
+      - echo "foo2" >> build.log
+      - BUILD_LOG=$(cat build.log | tail -n 200 | base64)
+      - worker export logcontent "$BUILD_LOG"
