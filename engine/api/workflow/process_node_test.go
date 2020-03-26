@@ -1012,18 +1012,6 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 				}
 			case "/vcs/stash/repos/ovh/cds/branches/?branch=feat%2Fbranch":
 				return writeError(w, sdk.ErrNotFound)
-			case "/vcs/github/repos/sguiheux/demo/branches":
-				bs := []sdk.VCSBranch{
-					{
-						LatestCommit: "defaultCommit",
-						DisplayID:    "defaultBranch",
-						Default:      true,
-						ID:           "1",
-					},
-				}
-				if err := enc.Encode(bs); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/stash/repos/ovh/cds/commits/defaultCommit":
 				c := sdk.VCSCommit{
 					Author: sdk.VCSAuthor{
@@ -1049,6 +1037,18 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 					SSHCloneURL:  "git://github.com/sguiheux/demo.git",
 				}
 				if err := enc.Encode(repo); err != nil {
+					return writeError(w, err)
+				}
+			case "/vcs/github/repos/sguiheux/demo/branches":
+				bs := []sdk.VCSBranch{
+					{
+						LatestCommit: "defaultCommit",
+						DisplayID:    "defaultBranch",
+						Default:      true,
+						ID:           "1",
+					},
+				}
+				if err := enc.Encode(bs); err != nil {
 					return writeError(w, err)
 				}
 				// NEED GET BRANCH TO GET LATEST COMMIT
@@ -1084,8 +1084,8 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	)
 
 	pip := createEmptyPipeline(t, db, cache, proj, u)
-	app1 := createApplication1(t, db, cache, proj, u)
-	app2 := createApplication2(t, db, cache, proj, u)
+	app1 := createApplication1(t, db, cache, proj, u) // github - sguiheux/demo
+	app2 := createApplication2(t, db, cache, proj, u) // stash - ovh/cds
 
 	// RELOAD PROJECT WITH DEPENDENCIES
 	proj.Applications = append(proj.Applications, *app1, *app2)
@@ -1102,7 +1102,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
 					PipelineID:    proj.Pipelines[0].ID,
-					ApplicationID: proj.Applications[0].ID,
+					ApplicationID: app1.ID, // github - sguiheux/demo
 				},
 				Triggers: []sdk.NodeTrigger{
 					{
@@ -1111,7 +1111,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 							Type: sdk.NodeTypePipeline,
 							Context: &sdk.NodeContext{
 								PipelineID:    proj.Pipelines[0].ID,
-								ApplicationID: proj.Applications[1].ID,
+								ApplicationID: app2.ID, // stash - ovh/cds
 							},
 							Triggers: []sdk.NodeTrigger{
 								{
@@ -1120,7 +1120,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 										Type: sdk.NodeTypePipeline,
 										Context: &sdk.NodeContext{
 											PipelineID:    proj.Pipelines[0].ID,
-											ApplicationID: proj.Applications[0].ID,
+											ApplicationID: app1.ID, // github - sguiheux/demo
 										},
 									},
 								},
@@ -1131,8 +1131,8 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 			},
 		},
 		Applications: map[int64]sdk.Application{
-			proj.Applications[0].ID: proj.Applications[0],
-			proj.Applications[1].ID: proj.Applications[1],
+			app1.ID: proj.Applications[0],
+			app2.ID: proj.Applications[1],
 		},
 		Pipelines: map[int64]sdk.Pipeline{
 			proj.Pipelines[0].ID: proj.Pipelines[0],

@@ -126,14 +126,6 @@ func ParameterAddOrSetValue(vars *[]Parameter, name string, parameterType string
 	}
 }
 
-// ParameterAddIfNotExists add a new parameter if it does not exist
-func ParameterAddIfNotExists(vars *[]Parameter, name string, parameterType string, value string) {
-	p := ParameterFind(*vars, name)
-	if p == nil {
-		AddParameter(vars, name, parameterType, value)
-	}
-}
-
 // ParameterValue return a parameter value given its name if it exists in array, else it returns empty string
 func ParameterValue(vars []Parameter, s string) string {
 	p := ParameterFind(vars, s)
