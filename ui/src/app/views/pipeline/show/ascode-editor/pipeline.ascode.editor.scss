@@ -1,5 +1,5 @@
 .codebar {
-    z-index: unset;
+    z-index: 10; // to be over code mirror fields of action component
     &.visible {
         width: 50%;
     }
