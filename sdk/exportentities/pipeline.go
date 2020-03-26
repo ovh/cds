@@ -1,11 +1,8 @@
 package exportentities
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
-
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -357,21 +354,10 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 }
 
 // ParsePipeline returns a pipeliner from given data.
-func ParsePipeline(format string, data []byte) (Pipeliner, error) {
-	f, err := GetFormat(format)
-	if err != nil {
-		return nil, sdk.NewError(sdk.ErrWrongRequest, err)
-	}
-
+func ParsePipeline(format Format, data []byte) (Pipeliner, error) {
 	rawPayload := make(map[string]interface{})
-	switch f {
-	case FormatJSON:
-		err = json.Unmarshal(data, &rawPayload)
-	case FormatYAML:
-		err = yaml.Unmarshal(data, &rawPayload)
-	}
-	if err != nil {
-		return nil, sdk.NewError(sdk.ErrWrongRequest, err)
+	if err := Unmarshal(data, format, &rawPayload); err != nil {
+		return nil, err
 	}
 
 	version := PipelineVersion1
@@ -389,15 +375,8 @@ func ParsePipeline(format string, data []byte) (Pipeliner, error) {
 	case PipelineVersion1:
 		payload = &PipelineV1{}
 	}
-
-	switch f {
-	case FormatJSON:
-		err = json.Unmarshal(data, payload)
-	case FormatYAML:
-		err = yaml.Unmarshal(data, payload)
-	}
-	if err != nil {
-		return nil, sdk.NewError(sdk.ErrWrongRequest, err)
+	if err := Unmarshal(data, format, payload); err != nil {
+		return nil, err
 	}
 
 	return payload, nil

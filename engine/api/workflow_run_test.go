@@ -2679,7 +2679,7 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 		FromNodeIDs: []int64{w1.WorkflowData.Node.ID},
 		Number:      &wrr.Number,
 	}
-	api.initWorkflowRun(context.TODO(), db, api.Cache, proj2, &wrr.Workflow, wrr, opts, &sdk.AuthConsumer{
+	api.initWorkflowRun(context.TODO(), proj2.Key, &wrr.Workflow, wrr, opts, &sdk.AuthConsumer{
 		AuthentifiedUser: u,
 	})
 

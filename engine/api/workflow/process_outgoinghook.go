@@ -40,9 +40,9 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 			log.Debug("hook %d is over, we have to reprocess al the things", node.ID)
 			r1, _, err := processWorkflowDataRun(ctx, db, store, proj, wr, nil, nil, nil)
 			if err != nil {
-				return nil, false, sdk.WrapError(err, "Unable to process workflow run after outgoing hooks")
+				return nil, false, sdk.WrapError(err, "unable to process workflow run after outgoing hooks")
 			}
-			report.Merge(ctx, r1, nil) // nolint
+			report.Merge(ctx, r1)
 			return report, false, nil
 		} else if exitingNodeRun != nil && exitingNodeRun.Status == sdk.StatusStopped {
 			return report, false, nil
@@ -51,7 +51,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 
 	srvs, err := services.LoadAllByType(ctx, db, services.TypeHooks)
 	if err != nil {
-		return nil, false, sdk.WrapError(err, "Cannot get hooks service")
+		return nil, false, sdk.WrapError(err, "cannot get hooks service")
 	}
 
 	node.OutGoingHookContext.Config[sdk.HookConfigModelName] = sdk.WorkflowNodeHookConfigValue{

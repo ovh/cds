@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/metrics"
+	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -689,7 +690,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 			return nil
 		}
 		nodeRun.Translate(r.Header.Get("Accept-Language"))
-		event.PublishWorkflowNodeRun(context.Background(), api.mustDB(), api.Cache, nodeRun, work, nil)
+		event.PublishWorkflowNodeRun(context.Background(), nodeRun, work, notification.GetUserWorkflowEvents(ctx, api.mustDB(), api.Cache, work, nil, nodeRun))
 		return nil
 	}
 }

@@ -23,6 +23,7 @@ export enum ColumnType {
     LINK = 'link',
     ROUTER_LINK = 'router-link',
     ROUTER_LINK_WITH_ICONS = 'router-link-with-icons',
+    ROUTER_LINK_WITH_LABELS = 'router-link-with-labels',
     MARKDOWN = 'markdown',
     DATE = 'date',
     BUTTON = 'button',
@@ -35,6 +36,7 @@ export enum ColumnType {
 }
 
 export type SelectorType<T> = (d: T) => ColumnType;
+export type SelectorFlag<T> = (d: T) => boolean;
 export type Selector<T> = (d: T, index?: number) => any;
 export type Filter<T> = (f: string) => (d: T) => boolean;
 export type Select<T> = (d: T) => boolean;
@@ -47,6 +49,7 @@ export class Column<T> {
     sortable: boolean;
     sortKey: string;
     disabled: boolean;
+    hidden: SelectorFlag<T>;
 }
 
 @Pipe({ name: 'selector' })
@@ -74,7 +77,8 @@ export class SelectorPipe<T> implements PipeTransform {
                 ...c,
                 type,
                 selector,
-                translate
+                translate,
+                hidden: c.hidden && c.hidden(data)
             };
         });
     }

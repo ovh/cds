@@ -13,23 +13,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func exportTemplate(wt sdk.WorkflowTemplate, f exportentities.Format, w io.Writer) (int, error) {
+func exportTemplate(wt sdk.WorkflowTemplate) (exportentities.Template, error) {
 	e, err := exportentities.NewTemplate(wt)
 	if err != nil {
-		return 0, err
+		return exportentities.Template{}, err
 	}
-
-	b, err := exportentities.Marshal(e, f)
-	if err != nil {
-		return 0, err
-	}
-
-	n, err := w.Write(b)
-	if err != nil {
-		return 0, sdk.WithStack(err)
-	}
-
-	return n, nil
+	return e, nil
 }
 
 // Pull writes the content of a template inside the given writer.
@@ -37,24 +26,28 @@ func Pull(ctx context.Context, wt *sdk.WorkflowTemplate, f exportentities.Format
 	tw := tar.NewWriter(w)
 	defer func() {
 		if err := tw.Close(); err != nil {
-			log.Error(ctx, "%v", sdk.WrapError(err, "Unable to close tar writer"))
+			log.Error(ctx, "%v", sdk.WrapError(err, "unable to close tar writer"))
 		}
 	}()
 
-	bufft := new(bytes.Buffer)
-	size, errw := exportTemplate(*wt, f, bufft)
-	if errw != nil {
-		return sdk.WrapError(errw, "Unable to export template")
+	ewt, err := exportTemplate(*wt)
+	if err != nil {
+		return sdk.WrapError(err, "unable to export template")
+	}
+
+	bufft, err := exportentities.Marshal(ewt, f)
+	if err != nil {
+		return err
 	}
 	hdr := &tar.Header{
 		Name: fmt.Sprintf(exportentities.PullWorkflowName, wt.Slug),
 		Mode: 0644,
-		Size: int64(size),
+		Size: int64(len(bufft)),
 	}
 	if err := tw.WriteHeader(hdr); err != nil {
 		return sdk.WrapError(err, "Unable to write tmpl header %+v", hdr)
 	}
-	if _, err := io.Copy(tw, bufft); err != nil {
+	if _, err := io.Copy(tw, bytes.NewReader(bufft)); err != nil {
 		return sdk.WrapError(err, "Unable to copy tmpl buffer")
 	}
 

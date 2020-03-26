@@ -14,6 +14,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+var _ Interface = new(client)
+
 type client struct {
 	httpClient    *http.Client
 	httpSSEClient *http.Client
@@ -21,7 +23,7 @@ type client struct {
 	name          string
 }
 
-// NewHTTPClient returns a new HTTP Client
+// NewHTTPClient returns a new HTTP Client.
 func NewHTTPClient(timeout time.Duration, insecureSkipVerifyTLS bool) *http.Client {
 	transport := http.Transport{
 		Proxy: http.ProxyFromEnvironment,

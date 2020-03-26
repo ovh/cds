@@ -1,9 +1,5 @@
 package exportentities
 
-import (
-	"errors"
-)
-
 type (
 	//Format is a type
 	Format int
@@ -34,11 +30,15 @@ type (
 const (
 	FormatJSON Format = iota
 	FormatYAML
-	FormatTOML
 	UnknownFormat
 )
 
-var (
-	// ErrUnsupportedFormat is for unknown format
-	ErrUnsupportedFormat = errors.New("Format is not supported")
-)
+func (f Format) ContentType() string {
+	switch f {
+	case FormatYAML:
+		return "application/x-yaml"
+	case FormatJSON:
+		return "application/json"
+	}
+	return "application/octet-stream"
+}

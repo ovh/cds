@@ -87,8 +87,9 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
             });
             return
         } else if (this.workflow) {
-            // retreive workflow template and instance from given workflow
-            let s = this.workflow.from_template.split('/');
+            // retrieve workflow template and instance from given workflow
+            let s = this.workflow.from_template.split('@');
+            s = s[0].split('/');
 
             forkJoin<WorkflowTemplate, WorkflowTemplateInstance> (
                 this._templateService.get(s[0], s.splice(1, s.length - 1).join('/')),

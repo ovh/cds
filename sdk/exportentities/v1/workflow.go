@@ -3,7 +3,6 @@ package v1
 import (
 	"fmt"
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -14,7 +13,6 @@ type Workflow struct {
 	Name        string `json:"name" yaml:"name" jsonschema_description:"The name of the workflow."`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	Version     string `json:"version,omitempty" yaml:"version,omitempty" jsonschema_description:"Version for the yaml syntax, latest is v1.0."`
-	Template    string `json:"template,omitempty" yaml:"template,omitempty" jsonschema_description:"Optional path of the template used to generate the workflow."`
 	// this will be filled for complex workflows
 	Workflow map[string]NodeEntry   `json:"workflow,omitempty" yaml:"workflow,omitempty" jsonschema_description:"Workflow nodes list."`
 	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty" jsonschema_description:"Workflow hooks list."`
@@ -215,13 +213,13 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	entries := w.Entries()
 	var attempt int
 	fakeID := rand.Int63n(5000)
-	// attempt is there to avoid infinite loop, but it should not happened becase we check validty and dependencies earlier
+	// attempt is there to avoid infinite loop, but it should not happened because we check validity and dependencies earlier
 	for len(entries) != 0 && attempt < 10000 {
 		for name, entry := range entries {
 			entry.ID = fakeID
 			ok, err := entry.processNode(name, wf)
 			if err != nil {
-				return nil, sdk.WrapError(err, "Unable to process node")
+				return nil, sdk.WrapError(err, "unable to process node")
 			}
 			if ok {
 				delete(entries, name)
@@ -231,7 +229,7 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 		attempt++
 	}
 	if len(entries) > 0 {
-		return nil, sdk.WithStack(fmt.Errorf("Unable to process %+v", entries))
+		return nil, sdk.WithStack(fmt.Errorf("unable to process %+v", entries))
 	}
 
 	//Process hooks
@@ -247,18 +245,6 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	//Compute notifications
 	if err := w.processNotifications(wf); err != nil {
 		return nil, err
-	}
-
-	// if there is a template instance id on the workflow export, add it
-	if w.Template != "" {
-		templatePath := strings.Split(w.Template, "/")
-		if len(templatePath) != 2 {
-			return nil, sdk.WithStack(fmt.Errorf("Invalid template path"))
-		}
-		wf.Template = &sdk.WorkflowTemplate{
-			Group: &sdk.Group{Name: templatePath[0]},
-			Slug:  templatePath[1],
-		}
 	}
 
 	wf.SortNode()

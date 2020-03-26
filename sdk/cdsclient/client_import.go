@@ -9,118 +9,55 @@ import (
 	"net/http"
 
 	"github.com/ovh/cds/sdk"
-
-	"github.com/ovh/cds/sdk/exportentities"
 )
 
-func (c *client) PipelineImport(projectKey string, content io.Reader, format string, force bool) ([]string, error) {
-	var url string
-	url = fmt.Sprintf("/project/%s/import/pipeline?format=%s", projectKey, format)
-
-	if force {
-		url += "&forceUpdate=true"
-	}
-
-	btes, _, _, err := c.Request(context.Background(), "POST", url, content)
-	messages := []string{}
-	_ = json.Unmarshal(btes, &messages)
-	return messages, err
-}
-
-func (c *client) ApplicationImport(projectKey string, content io.Reader, format string, force bool) ([]string, error) {
-	var url string
-	url = fmt.Sprintf("/project/%s/import/application", projectKey)
-	if force {
-		url += "?force=true"
-	}
-
-	mods := []RequestModifier{}
-	switch format {
-	case "json":
-		mods = []RequestModifier{
-			func(r *http.Request) {
-				r.Header.Set("Content-Type", "application/json")
-			},
-		}
-	case "yaml", "yml":
-		mods = []RequestModifier{
-			func(r *http.Request) {
-				r.Header.Set("Content-Type", "application/x-yaml")
-			},
-		}
-	default:
-		return nil, exportentities.ErrUnsupportedFormat
-	}
+func (c *client) PipelineImport(projectKey string, content io.Reader, mods ...RequestModifier) ([]string, error) {
+	url := fmt.Sprintf("/project/%s/import/pipeline", projectKey)
 
 	btes, _, _, err := c.Request(context.Background(), "POST", url, content, mods...)
+	if err != nil {
+		return nil, err
+	}
+
 	messages := []string{}
 	_ = json.Unmarshal(btes, &messages)
-
-	return messages, err
+	return messages, nil
 }
 
-func (c *client) EnvironmentImport(projectKey string, content io.Reader, format string, force bool) ([]string, error) {
-	var url string
-	url = fmt.Sprintf("/project/%s/import/environment", projectKey)
-	if force {
-		url += "?force=true"
-	}
-
-	mods := []RequestModifier{}
-	switch format {
-	case "json":
-		mods = []RequestModifier{
-			func(r *http.Request) {
-				r.Header.Set("Content-Type", "application/json")
-			},
-		}
-	case "yaml", "yml":
-		mods = []RequestModifier{
-			func(r *http.Request) {
-				r.Header.Set("Content-Type", "application/x-yaml")
-			},
-		}
-	default:
-		return nil, exportentities.ErrUnsupportedFormat
-	}
+func (c *client) ApplicationImport(projectKey string, content io.Reader, mods ...RequestModifier) ([]string, error) {
+	url := fmt.Sprintf("/project/%s/import/application", projectKey)
 
 	btes, _, _, err := c.Request(context.Background(), "POST", url, content, mods...)
+	if err != nil {
+		return nil, err
+	}
+
 	messages := []string{}
 	_ = json.Unmarshal(btes, &messages)
+	return messages, nil
+}
 
-	return messages, err
+func (c *client) EnvironmentImport(projectKey string, content io.Reader, mods ...RequestModifier) ([]string, error) {
+	url := fmt.Sprintf("/project/%s/import/environment", projectKey)
+
+	btes, _, _, err := c.Request(context.Background(), "POST", url, content, mods...)
+	if err != nil {
+		return nil, err
+	}
+
+	messages := []string{}
+	_ = json.Unmarshal(btes, &messages)
+	return messages, nil
 }
 
 // WorkerModelImport import a worker model via as code
-func (c *client) WorkerModelImport(content io.Reader, format string, force bool) (*sdk.Model, error) {
+func (c *client) WorkerModelImport(content io.Reader, mods ...RequestModifier) (*sdk.Model, error) {
 	url := "/worker/model/import"
-	if force {
-		url += "?force=true"
-	}
-
-	var mods []RequestModifier
-	switch format {
-	case "json":
-		mods = []RequestModifier{
-			func(r *http.Request) {
-				r.Header.Set("Content-Type", "application/json")
-			},
-		}
-	case "yaml", "yml":
-		mods = []RequestModifier{
-			func(r *http.Request) {
-				r.Header.Set("Content-Type", "application/x-yaml")
-			},
-		}
-	default:
-		return nil, exportentities.ErrUnsupportedFormat
-	}
 
 	btes, _, code, err := c.Request(context.Background(), "POST", url, content, mods...)
 	if err != nil {
 		return nil, err
 	}
-
 	if code >= 400 {
 		return nil, fmt.Errorf("HTTP Status code %d", code)
 	}
@@ -133,51 +70,30 @@ func (c *client) WorkerModelImport(content io.Reader, format string, force bool)
 	return &wm, nil
 }
 
-func (c *client) WorkflowImport(projectKey string, content io.Reader, format string, force bool) ([]string, error) {
-	var url string
-	url = fmt.Sprintf("/project/%s/import/workflows", projectKey)
-	if force {
-		url += "?force=true"
-	}
-
-	mods := []RequestModifier{}
-	switch format {
-	case "json":
-		mods = []RequestModifier{
-			func(r *http.Request) {
-				r.Header.Set("Content-Type", "application/json")
-			},
-		}
-	case "yaml", "yml":
-		mods = []RequestModifier{
-			func(r *http.Request) {
-				r.Header.Set("Content-Type", "application/x-yaml")
-			},
-		}
-	default:
-		return nil, exportentities.ErrUnsupportedFormat
-	}
+func (c *client) WorkflowImport(projectKey string, content io.Reader, mods ...RequestModifier) ([]string, error) {
+	url := fmt.Sprintf("/project/%s/import/workflows", projectKey)
 
 	btes, _, _, err := c.Request(context.Background(), "POST", url, content, mods...)
+	if err != nil {
+		return nil, err
+	}
+
 	messages := []string{}
 	_ = json.Unmarshal(btes, &messages)
-
 	return messages, err
 }
 
 func (c *client) WorkflowPush(projectKey string, tarContent io.Reader, mods ...RequestModifier) ([]string, *tar.Reader, error) {
 	url := fmt.Sprintf("/project/%s/push/workflows", projectKey)
 
-	mods = append(mods,
-		func(r *http.Request) {
-			r.Header.Set("Content-Type", "application/tar")
-		})
+	mods = append(mods, func(r *http.Request) {
+		r.Header.Set("Content-Type", "application/tar")
+	})
 
 	btes, headers, code, err := c.Request(context.Background(), "POST", url, tarContent, mods...)
 	if err != nil {
 		return nil, nil, err
 	}
-
 	if code >= 400 {
 		return nil, nil, fmt.Errorf("HTTP Status code %d", code)
 	}
