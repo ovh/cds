@@ -690,7 +690,7 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, *proj, workflowName, workflow.LoadOptions{})
 		if err != nil {
-			if sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return sdk.NewErrorFrom(sdk.ErrNotFound, "cannot load workflow %s", workflowName)
 			}
 			return sdk.WithStack(err)

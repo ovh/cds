@@ -577,7 +577,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 			return sdk.WrapError(errW, "Cannot check Workflow %s", key)
 		}
 		if !b {
-			return sdk.WithStack(sdk.ErrWorkflowNotFound)
+			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
 		tx, errT := api.mustDB().Begin()
@@ -713,7 +713,7 @@ func (api *API) getWorkflowNotificationsConditionsHandler() service.Handler {
 
 		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name, workflow.LoadRunOptions{})
 		if errr != nil {
-			if !sdk.ErrorIs(errr, sdk.ErrWorkflowNotFound) {
+			if !sdk.ErrorIs(errr, sdk.ErrNotFound) {
 				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
 			}
 		}

@@ -105,7 +105,6 @@ var (
 	ErrJobAlreadyBooked                              = Error{ID: 89, Status: http.StatusConflict}
 	ErrPipelineBuildNotFound                         = Error{ID: 90, Status: http.StatusNotFound}
 	ErrAlreadyTaken                                  = Error{ID: 91, Status: http.StatusGone}
-	ErrWorkflowNotFound                              = Error{ID: 92, Status: http.StatusNotFound}
 	ErrWorkflowNodeNotFound                          = Error{ID: 93, Status: http.StatusNotFound}
 	ErrWorkflowInvalidRoot                           = Error{ID: 94, Status: http.StatusBadRequest}
 	ErrWorkflowNodeRef                               = Error{ID: 95, Status: http.StatusBadRequest}
@@ -296,7 +295,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrJobAlreadyBooked.ID:                              "Job already booked",
 	ErrPipelineBuildNotFound.ID:                         "Pipeline build not found",
 	ErrAlreadyTaken.ID:                                  "This job is already taken by another worker",
-	ErrWorkflowNotFound.ID:                              "Workflow not found",
 	ErrWorkflowNodeNotFound.ID:                          "Workflow node not found",
 	ErrWorkflowInvalidRoot.ID:                           "Invalid workflow root",
 	ErrWorkflowNodeRef.ID:                               "Invalid workflow node reference",
@@ -480,7 +478,6 @@ var errorsFrench = map[int]string{
 	ErrJobAlreadyBooked.ID:                              "Le job est déjà réservé",
 	ErrPipelineBuildNotFound.ID:                         "Le pipeline build n'a pu être trouvé",
 	ErrAlreadyTaken.ID:                                  "Ce job est déjà en cours de traitement par un autre worker",
-	ErrWorkflowNotFound.ID:                              "Workflow introuvable",
 	ErrWorkflowNodeNotFound.ID:                          "Noeud de Workflow introuvable",
 	ErrWorkflowInvalidRoot.ID:                           "Racine de Workflow invalide",
 	ErrWorkflowNodeRef.ID:                               "Référence de noeud de workflow invalide",
