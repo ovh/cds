@@ -145,7 +145,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
                     let status = i.status(this.workflowTemplate);
 
                     let labels = [];
-                    if (i.workflow.from_repository) {
+                    if (i.workflow && i.workflow.from_repository) {
                         labels.push({ color: 'blue', title: 'as code' });
                     }
 
@@ -171,12 +171,11 @@ export class WorkflowTemplateEditComponent implements OnInit {
                 }
             }, <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.BUTTON,
-                hidden: (i: WorkflowTemplateInstance) => !!i.workflow.from_repository,
+                hidden: (i: WorkflowTemplateInstance) => i.workflow && !!i.workflow.from_repository,
                 name: 'common_action',
                 class: 'two right aligned',
                 selector: (i: WorkflowTemplateInstance) => {
                     return {
-                        hidden: !!i.workflow.from_repository,
                         title: 'common_update',
                         class: 'primary small',
                         click: () => {

@@ -351,7 +351,7 @@ func templateBulkRun(v cli.Values) error {
 	// filter as code workflow
 	wtisFiltered := make([]sdk.WorkflowTemplateInstance, 0, len(wtis))
 	for i := range wtis {
-		if wtis[i].Workflow.FromRepository == "" {
+		if wtis[i].Workflow == nil || wtis[i].Workflow.FromRepository == "" {
 			wtisFiltered = append(wtisFiltered, wtis[i])
 		}
 	}
