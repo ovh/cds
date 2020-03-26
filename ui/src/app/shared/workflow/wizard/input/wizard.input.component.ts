@@ -70,7 +70,6 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
     tags: string[] = [];
     loading: boolean;
     themeSubscription: Subscription;
-    pipSubscription: Subscription;
 
     constructor(
         private store: Store,

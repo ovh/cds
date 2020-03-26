@@ -22,6 +22,8 @@ import { UpdateWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
+import { ProjectState } from 'app/store/project.state';
+import { WorkflowState } from 'app/store/workflow.state';
 
 @Component({
     selector: 'app-workflow-node-outgoinghook',
@@ -33,10 +35,8 @@ import { finalize, first } from 'rxjs/operators';
 export class WorkflowWizardOutgoingHookComponent implements OnInit {
     @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
 
-    @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() mode = 'create'; // create / edit / ro
-    @Input() editMode: boolean;
 
     _outgoingHook: WNode;
     @Input('hook')
@@ -49,6 +49,9 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
 
     @Output() outgoinghookEvent = new EventEmitter<WNode>();
     @Output() outgoinghookChange = new EventEmitter<boolean>();
+
+    project: Project;
+    editMode: boolean;
 
     codeMirrorConfig: any;
     loadingModels = false;
@@ -81,6 +84,8 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
             autoRefresh: true,
             readOnly: this.mode === 'ro'
         };
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
     }
 
     ngOnInit(): void {

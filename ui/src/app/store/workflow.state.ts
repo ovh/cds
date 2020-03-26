@@ -69,6 +69,7 @@ export class WorkflowState {
         return state.workflow;
     }
 
+    /** @deprecated */
     static getCurrent() {
         return createSelector(
             [WorkflowState],

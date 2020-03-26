@@ -15,6 +15,8 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
 import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
+import { ProjectState } from 'app/store/project.state';
+import { WorkflowState } from 'app/store/workflow.state';
 
 @Component({
     selector: 'app-workflow-node-conditions',
@@ -26,9 +28,7 @@ import { Subscription } from 'rxjs/Subscription';
 export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCondition> implements OnInit {
     @ViewChild('textareaCodeMirror', { static: false }) codemirror: any;
 
-    @Input() project: Project;
     @Input() workflow: Workflow;
-    @Input() pipelineId: number;
     editableNode: WNode;
     @Input('node') set node(data: WNode) {
         if (data) {
@@ -74,9 +74,11 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         return this.editableHook;
     }
     @Input() readonly = true;
-    @Input() editMode: boolean;
 
     @Output() conditionsChange = new EventEmitter<boolean>();
+
+    project: Project;
+    editMode: boolean;
 
     codeMirrorConfig: any;
     loadingConditions = false;
@@ -95,6 +97,8 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
         private _cd: ChangeDetectorRef
     ) {
         super();
+        this.project = this.store.selectSnapshot(ProjectState.projectSnapshot);
+        this.editMode = this.store.selectSnapshot(WorkflowState).editMode;
     }
 
     getData(): Array<WorkflowNodeCondition> {

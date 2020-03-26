@@ -13,6 +13,8 @@ import { UpdateWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
+import { ProjectState } from 'app/store/project.state';
+import { WorkflowState } from 'app/store/workflow.state';
 
 @Component({
     selector: 'app-workflow-node-hook-form',
@@ -27,10 +29,9 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     _hook: WNodeHook = new WNodeHook();
     canDelete = false;
 
-    @Input() project: Project;
+
     @Input() workflow: Workflow;
     @Input() node: WNode;
-    @Input() editMode: boolean;
     @Input('hook')
     set hook(data: WNodeHook) {
         if (data) {
@@ -49,6 +50,9 @@ export class WorkflowNodeHookFormComponent implements OnInit {
 
     // Enable form button to update hook
     @Input() mode = 'create'; // create  update ro
+
+    project: Project;
+    editMode: boolean;
 
     hooksModel: Array<WorkflowHookModel>;
     selectedHookModel: WorkflowHookModel;
@@ -70,7 +74,10 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         private _translate: TranslateService,
         private _theme: ThemeStore,
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
+    }
 
     ngOnInit(): void {
         this.codeMirrorConfig = {

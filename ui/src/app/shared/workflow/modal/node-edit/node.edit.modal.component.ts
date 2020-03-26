@@ -37,7 +37,6 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     beforeNode: WNode;
     hook: WNodeHook;
     groups: Array<GroupPermission>;
-    editMode: boolean;
 
 
     @ViewChild('nodeEditModal', {static: false})
@@ -53,7 +52,6 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     projectSubscriber: Subscription;
     storeSub: Subscription;
     readonly = true;
-    nodeRun: WorkflowNodeRun;
 
     constructor(private _modalService: SuiModalService, private _store: Store, private _cd: ChangeDetectorRef,
                 private _translate: TranslateService, private _toast: ToastService) {
@@ -67,8 +65,6 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
             this._cd.markForCheck();
-            this.nodeRun = cloneDeep(s.workflowNodeRun);
-            this.editMode = s.editMode;
             if (!s.editModal) {
                 this.hook = undefined;
                 this.node = undefined;
