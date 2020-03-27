@@ -19,7 +19,7 @@ import { CloseEditModal, UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, Subscription } from 'rxjs';
-import { finalize, map, tap } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-node-edit-modal',
@@ -105,7 +105,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit {
                 } else {
                     this.workflow = stateSnap.workflow;
                 }
-                let open = this.currentNodeName != '';
+                let open = this.currentNodeName !== '';
 
                 this.currentNodeName = stateSnap.node.name;
                 this.currentNodeType = stateSnap.node.type;

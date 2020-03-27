@@ -18,12 +18,12 @@ import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
+import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
-import { ProjectState } from 'app/store/project.state';
-import { WorkflowState } from 'app/store/workflow.state';
 
 @Component({
     selector: 'app-workflow-node-outgoinghook',

@@ -9,13 +9,13 @@ import { HookService } from 'app/service/hook/hook.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
+import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { Observable } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
-import { ProjectState } from 'app/store/project.state';
-import { WorkflowState } from 'app/store/workflow.state';
-import { Observable } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-node-hook-form',

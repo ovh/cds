@@ -14,6 +14,7 @@ import { Application } from 'app/model/application.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
+import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { ApplicationWorkflowService } from 'app/service/application/application.workflow.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ThemeStore } from 'app/service/theme/theme.store';
@@ -21,14 +22,13 @@ import { VariableService } from 'app/service/variable/variable.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
+import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { Observable } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
-import { WorkflowState } from 'app/store/workflow.state';
-import { Observable } from 'rxjs';
-import { ProjectState } from 'app/store/project.state';
-import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 
 declare var CodeMirror: any;
 

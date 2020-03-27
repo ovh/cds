@@ -17,13 +17,12 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchApplication } from 'app/store/applications.action';
 import { ApplicationsState, ApplicationStateModel } from 'app/store/applications.state';
-import { UpdateWorkflow } from 'app/store/workflow.action';
-import cloneDeep from 'lodash-es/cloneDeep';
-import { filter, finalize, first, flatMap } from 'rxjs/operators';
 import { ProjectState } from 'app/store/project.state';
+import { UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Observable, Subscription } from 'rxjs';
-import { WorkflowRun } from 'app/model/workflow.run.model';
+import { filter, finalize, first, flatMap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-context',
