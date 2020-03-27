@@ -74,7 +74,7 @@ export class WorkflowTriggerComponent {
     }
 
     addOutgoingHook(): void {
-        this.destNode = this.worklflowAddOutgoingHook.hook;
+        this.destNode = this.worklflowAddOutgoingHook.outgoingHook;
         this.saveTrigger();
     }
 

@@ -20,8 +20,6 @@ export class WorkflowHookModalComponent {
     @Input() node: WNode;
     @Input() loading: boolean;
 
-    @Input() hook: WNodeHook;
-
     @Output() hookEvent = new EventEmitter<WNodeHook>();
     @Output() deleteHookEvent = new EventEmitter<WNodeHook>();
 

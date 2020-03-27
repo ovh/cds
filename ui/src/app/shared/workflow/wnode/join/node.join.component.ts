@@ -70,7 +70,7 @@ export class WorkflowWNodeJoinComponent {
             workflowName: w.name,
             changes: w
         })).subscribe(() => {
-            if (editMode) {
+            if (!editMode) {
                 this._toast.success('', this._translate.instant('workflow_updated'));
             } else {
                 this._toast.info('', this._translate.instant('workflow_ascode_updated'));

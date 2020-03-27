@@ -9,7 +9,7 @@ import {
     ViewChild
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { IdName, Project } from 'app/model/project.model';
 import { WorkflowHookModel } from 'app/model/workflow.hook.model';
 import { WNode, WNodeHook, WNodeOutgoingHook, WNodeType, Workflow } from 'app/model/workflow.model';
@@ -20,7 +20,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
@@ -38,17 +38,13 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
     @Input() workflow: Workflow;
     @Input() mode = 'create'; // create / edit / ro
 
-    _outgoingHook: WNode;
-    @Input('hook')
-    set hook(data: WNode) {
-        this._outgoingHook = cloneDeep(data);
-    }
-    get hook() {
-        return this._outgoingHook;
-    }
 
     @Output() outgoinghookEvent = new EventEmitter<WNode>();
     @Output() outgoinghookChange = new EventEmitter<boolean>();
+
+    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
+    outgoingHook: WNode;
+    nodeSub: Subscription;
 
     project: Project;
     editMode: boolean;
@@ -89,6 +85,13 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        if (this.mode !== 'create') {
+            this.nodeSub = this.node$.subscribe(n => {
+                this.outgoingHook = cloneDeep(n);
+                this._cd.markForCheck();
+            });
+        }
+
         this.themeSubscription = this._theme.get().pipe(finalize(() => this._cd.markForCheck())).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
@@ -103,13 +106,13 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
         }))
             .subscribe(ms => {
                 this.outgoingHookModels = ms;
-                if (this.hook) {
+                if (this.outgoingHook) {
                     // select model
-                    if (this.hook.outgoing_hook.hook_model_id) {
+                    if (this.outgoingHook.outgoing_hook.hook_model_id) {
                         this.selectedOutgoingHookModel = this.outgoingHookModels
-                            .find(m => m.id === this.hook.outgoing_hook.hook_model_id);
+                            .find(m => m.id === this.outgoingHook.outgoing_hook.hook_model_id);
                     }
-                    this.displayConfig = Object.keys(this._outgoingHook.outgoing_hook.config).length !== 0;
+                    this.displayConfig = Object.keys(this.outgoingHook.outgoing_hook.config).length !== 0;
                     if (this.selectedOutgoingHookModel.name === 'Workflow') {
                         this.updateWorkflowData(false);
                     }
@@ -119,21 +122,21 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
     }
 
     updateOutgoingHook(): void {
-        if (!this._outgoingHook) {
-            this._outgoingHook = new WNode();
-            this._outgoingHook.type = WNodeType.OUTGOINGHOOK;
-            this._outgoingHook.outgoing_hook = new WNodeOutgoingHook();
+        if (!this.outgoingHook) {
+            this.outgoingHook = new WNode();
+            this.outgoingHook.type = WNodeType.OUTGOINGHOOK;
+            this.outgoingHook.outgoing_hook = new WNodeOutgoingHook();
         }
-        this._outgoingHook.outgoing_hook.hook_model_id = this.selectedOutgoingHookModel.id;
-        this._outgoingHook.outgoing_hook.config = cloneDeep(this.selectedOutgoingHookModel.default_config);
-        this._outgoingHook.outgoing_hook.model = this.selectedOutgoingHookModel;
-        this.displayConfig = Object.keys(this._outgoingHook.outgoing_hook.config).length !== 0;
+        this.outgoingHook.outgoing_hook.hook_model_id = this.selectedOutgoingHookModel.id;
+        this.outgoingHook.outgoing_hook.config = cloneDeep(this.selectedOutgoingHookModel.default_config);
+        this.outgoingHook.outgoing_hook.model = this.selectedOutgoingHookModel;
+        this.displayConfig = Object.keys(this.outgoingHook.outgoing_hook.config).length !== 0;
 
 
         // Specific behavior for the 'workflow' hooks
         if (this.selectedOutgoingHookModel.name === 'Workflow') {
             // Current limitation: trigger only workflow in the same project
-            this._outgoingHook.outgoing_hook.config['target_project'].value = this.project.key;
+            this.outgoingHook.outgoing_hook.config['target_project'].value = this.project.key;
             // Load the workflow for the current project, but exclude the current workflow
             this.availableWorkflows = this.project.workflow_names.filter(idName => idName.name !== this.workflow.name);
         }
@@ -143,12 +146,12 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
         if (pushChange) {
             this.pushChange();
         }
-        if (this.hook && this.hook.outgoing_hook.config && this.hook.outgoing_hook.config['target_project']
-            && this.hook.outgoing_hook.config['target_workflow']) {
+        if (this.outgoingHook && this.outgoingHook.outgoing_hook.config && this.outgoingHook.outgoing_hook.config['target_project']
+            && this.outgoingHook.outgoing_hook.config['target_workflow']) {
             this.loadingHooks = true;
 
-            this._workflowService.getWorkflow(this.hook.outgoing_hook.config['target_project'].value,
-                this.hook.outgoing_hook.config['target_workflow'].value)
+            this._workflowService.getWorkflow(this.outgoingHook.outgoing_hook.config['target_project'].value,
+                this.outgoingHook.outgoing_hook.config['target_workflow'].value)
                 .pipe(first(), finalize(() => {
                     this.loadingHooks = false;
                     this._cd.markForCheck();
@@ -161,11 +164,11 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
                     } else {
                         this.availableHooks = [];
                     }
-                    if (this.hook || this.hook.outgoing_hook.config['target_hook']) {
+                    if (this.outgoingHook || this.outgoingHook.outgoing_hook.config['target_hook']) {
                         if (this.availableHooks
                             .findIndex(h =>
-                                h.uuid === this.hook.outgoing_hook.config['target_hook'].value) === -1) {
-                            this._outgoingHook.outgoing_hook.config['target_hook'].value = undefined;
+                                h.uuid === this.outgoingHook.outgoing_hook.config['target_hook'].value) === -1) {
+                            this.outgoingHook.outgoing_hook.config['target_hook'].value = undefined;
                         }
                     }
                 });
@@ -176,23 +179,23 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
 
     updateWorkflowOutgoingHook(): void {
         this.pushChange();
-        if (this.hook.outgoing_hook.config['target_hook']) {
-            this.hook.outgoing_hook.config['payload'].value = JSON.stringify(this.outgoing_default_payload, undefined, 4);
+        if (this.outgoingHook.outgoing_hook.config['target_hook']) {
+            this.outgoingHook.outgoing_hook.config['payload'].value = JSON.stringify(this.outgoing_default_payload, undefined, 4);
         }
     }
 
     updateWorkflow(): void {
         this.loading = true;
         let clonedWorkflow = cloneDeep(this.workflow);
-        let n = Workflow.getNodeByID(this.hook.id, clonedWorkflow);
+        let n = Workflow.getNodeByID(this.outgoingHook.id, clonedWorkflow);
 
-        n.outgoing_hook = this.hook.outgoing_hook;
+        n.outgoing_hook = this.outgoingHook.outgoing_hook;
         this._store.dispatch(new UpdateWorkflow({
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
             changes: clonedWorkflow
-        })).pipe(finalize(() => this.loading = false))
-            .subscribe(() => {
+        })).subscribe(() => {
+                this.loading = false
                 this.outgoinghookChange.emit(false);
                 if (this.editMode) {
                     this._toast.info('', this._translate.instant('workflow_ascode_updated'));

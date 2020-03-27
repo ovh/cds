@@ -64,6 +64,13 @@ export function getInitialWorkflowState(): WorkflowStateModel {
 })
 export class WorkflowState {
 
+    static getEditModal() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): boolean => state.editModal
+        );
+    }
+
     @Selector()
     static workflowSnapshot(state: WorkflowStateModel) {
         return state.workflow;

@@ -27,7 +27,7 @@ import {
 } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
-import { finalize, map, tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-wnode',
@@ -256,17 +256,18 @@ export class WorkflowWNodeComponent implements OnInit {
         });
 
         let editMode = this._store.selectSnapshot(WorkflowState).editMode;
-        this._store.dispatch(action).pipe(finalize(() => this.loading = false))
-            .subscribe(() => {
-                if (!editMode) {
-                    this._toast.success('', this._translate.instant('workflow_updated'));
-                } else {
-                    this._toast.info('', this._translate.instant('workflow_ascode_updated'))
-                }
-                if (modal) {
-                    modal.approve(null);
-                }
-            });
+        this._store.dispatch(action).subscribe(() => {
+            this.loading = false;
+            if (!editMode) {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            } else {
+                   this._toast.info('', this._translate.instant('workflow_ascode_updated'))
+            }
+            if (modal) {
+                modal.approve(null);
+            }
+            this._cd.markForCheck();
+        });
     }
 
     createFork(): void {
@@ -286,13 +287,12 @@ export class WorkflowWNodeComponent implements OnInit {
         t.parent_node_id = n.id;
         t.parent_node_name = n.ref;
 
-        this.loading = true;
         this._store.dispatch(new AddNodeTriggerWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             parentId: this.node.id,
             trigger: t
-        })).pipe(finalize(() => this.loading = false));
+        }));
     }
 
     createJoin(): void {
@@ -306,12 +306,11 @@ export class WorkflowWNodeComponent implements OnInit {
         p.parent_name = this.node.ref;
         join.parents.push(p);
 
-        this.loading = true;
         this._store.dispatch(new AddJoinWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             join
-        })).pipe(finalize(() => this.loading = false));
+        }));
     }
 
     updateWorkflow(w: Workflow, modal: SuiActiveModal<boolean, boolean, void>): void {
@@ -321,19 +320,21 @@ export class WorkflowWNodeComponent implements OnInit {
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             changes: w
-        })).pipe(finalize(() => this.loading = false))
-            .subscribe(() => {
-                if (!editMode) {
-                    this._toast.success('', this._translate.instant('workflow_updated'));
-                }
-                if (modal) {
-                    modal.approve(null);
-                }
-            }, () => {
-                if (Array.isArray(this.node.hooks) && this.node.hooks.length) {
-                    this.node.hooks.pop();
-                }
-            });
+        })).subscribe(() => {
+            this.loading = false;
+            if (!editMode) {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            }
+            if (modal) {
+                modal.approve(null);
+            }
+            this._cd.markForCheck();
+        }, () => {
+            if (Array.isArray(this.node.hooks) && this.node.hooks.length) {
+                this.node.hooks.pop();
+            }
+            this.loading = false;
+        });
     }
 
     linkJoin(): void {

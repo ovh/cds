@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowHookModel } from 'app/model/workflow.hook.model';
@@ -15,6 +15,7 @@ import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-node-hook-form',
@@ -24,36 +25,26 @@ import { WorkflowState } from 'app/store/workflow.state';
 })
 @AutoUnsubscribe()
 export class WorkflowNodeHookFormComponent implements OnInit {
-    @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
-
-    _hook: WNodeHook = new WNodeHook();
-    canDelete = false;
-
-
     @Input() workflow: Workflow;
-    @Input() node: WNode;
-    @Input('hook')
-    set hook(data: WNodeHook) {
-        if (data) {
-            this.canDelete = true;
-            this._hook = cloneDeep<WNodeHook>(data);
-            if (this.hooksModel) {
-                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this.hook.hook_model_id);
-                this._hook.model = this.selectedHookModel;
-            }
-            this.displayConfig = Object.keys(this._hook.config).length !== 0;
-        }
-    }
-    get hook() {
-        return this._hook;
-    }
 
     // Enable form button to update hook
     @Input() mode = 'create'; // create  update ro
 
+    @ViewChild('textareaCodeMirror', {static: false}) codemirror: any;
+
+    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
+    node: WNode;
+    nodeSub: Subscription;
+
+    @Select(WorkflowState.getSelectedHook()) hook$: Observable<WNodeHook>;
+    hook: WNodeHook;
+    hookSub: Subscription;
+
+
     project: Project;
     editMode: boolean;
 
+    canDelete = false;
     hooksModel: Array<WorkflowHookModel>;
     selectedHookModel: WorkflowHookModel;
     loadingModels = true;
@@ -80,6 +71,23 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.nodeSub = this.node$.subscribe(n => {
+            this.node = n;
+            this._cd.markForCheck();
+        });
+        this.hookSub = this.hook$.subscribe(h => {
+            if (!h) {
+                return;
+            }
+            this.hook = cloneDeep(h);
+            this.canDelete = true;
+            if (this.hooksModel) {
+                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this.hook.hook_model_id);
+                this.hook.model = this.selectedHookModel;
+            }
+            this.displayConfig = Object.keys(this.hook.config).length !== 0;
+            this._cd.markForCheck();
+        });
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -136,18 +144,22 @@ export class WorkflowNodeHookFormComponent implements OnInit {
                 projectKey: this.workflow.project_key,
                 workflowName: this.workflow.name,
                 changes: clonedWorkflow
-            })).pipe(finalize(() => this.loading = false))
-                .subscribe(() => {
+            })).subscribe(() => {
+                    this.loading = false;
                     if (this.editMode) {
                         this._toast.info('', this._translate.instant('workflow_ascode_updated'));
                     } else {
                         this._toast.success('', this._translate.instant('workflow_updated'));
                     }
+                    this._cd.markForCheck();
                 });
         }
     }
 
     updateHookModel(): void {
+        if (!this.hook) {
+            this.hook = new WNodeHook();
+        }
         this.hook.model = this.selectedHookModel;
         this.hook.config = cloneDeep(this.selectedHookModel.default_config);
         this.hook.hook_model_id = this.selectedHookModel.id;

@@ -11,7 +11,7 @@
                             (ngModelChange)="updateHookModel()"
                             [options]="hooksModel"
                             [isSearchable]="true"
-                            [isDisabled]="hook.uuid || mode === 'ro'"
+                            [isDisabled]="hook?.uuid || mode === 'ro'"
                             labelField="name" #select>
                     <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
                     </sui-select-option>
@@ -22,33 +22,33 @@
                     <sui-select-option value="">{{'common_loading' | translate}}</sui-select-option>
                 </sui-select>
             </ng-container>
-            <div class="inline fields uuid" *ngIf="_hook.uuid">
+            <div class="inline fields uuid" *ngIf="hook?.uuid">
                 <div class="four wide field"><label>UUID</label></div>
                 <div class="twelve wide field">
                     <input type="text" value="{{hook.uuid}}" disabled>
                 </div>
             </div>
-            <ng-container *ngIf="_hook.model && displayConfig">
-                <ng-container *ngIf="_hook.config && _hook.model.name !== 'Workflow'">
+            <ng-container *ngIf="hook?.model && displayConfig">
+                <ng-container *ngIf="hook.config && hook.model.name !== 'Workflow'">
                     <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
                     <div class="inline fields" *ngFor="let k of hook.config | keys">
                         <div class="four wide field"><label>{{k}}</label></div>
                         <div class="twelve wide field">
                             <!-- STRING -->
-                            <ng-container *ngIf="k !== 'payload' && (_hook.config[k].type === 'string' || !_hook.config[k].type)">
-                                <input type="text" [(ngModel)]="_hook.config[k].value" [readonly]="!_hook.config[k].configurable || mode === 'ro'"/>
+                            <ng-container *ngIf="k !== 'payload' && (hook.config[k].type === 'string' || !hook.config[k].type)">
+                                <input type="text" [(ngModel)]="hook.config[k].value" [readonly]="!hook.config[k].configurable || mode === 'ro'"/>
                             </ng-container>
                             <!-- PASSWORD -->
-                            <ng-container  *ngIf="k !== 'payload' && _hook.config[k].type === 'password'">
-                                <input type="password" [(ngModel)]="_hook.config[k].value"
-                                       [readonly]="!_hook.config[k].configurable || mode === 'ro'"/>
+                            <ng-container  *ngIf="k !== 'payload' && hook.config[k].type === 'password'">
+                                <input type="password" [(ngModel)]="hook.config[k].value"
+                                       [readonly]="!hook.config[k].configurable || mode === 'ro'"/>
                             </ng-container>
                             <!-- MULTICHOICE -->
-                            <ng-container *ngIf="k !== 'payload' && _hook.config[k].type === 'multiple' && _hook.config[k].multiple_choice_list">
+                            <ng-container *ngIf="k !== 'payload' && hook.config[k].type === 'multiple' && hook.config[k].multiple_choice_list">
                                 <div class="ui form">
                                     <sui-multi-select class="selection"
                                                 [(ngModel)]="tempMultipleConfig"
-                                                [options]="_hook.config[k].multiple_choice_list"
+                                                [options]="hook.config[k].multiple_choice_list"
                                                 (ngModelChange)="updateConfigMultipleChoice(k)"
                                                 [isSearchable]="true"
                                                 [isDisabled]="mode === 'ro'"
@@ -61,16 +61,16 @@
                             </ng-container>
 
                             <!-- PAYLOAD -->
-                            <ng-container *ngIf="k === 'payload' && _hook.config[k].type === 'string'">
+                            <ng-container *ngIf="k === 'payload' && hook.config[k].type === 'string'">
                                 <codemirror
                                     [class.invalid]="invalidJSON"
-                                    [(ngModel)]="_hook.config[k].value"
+                                    [(ngModel)]="hook.config[k].value"
                                     [config]="codeMirrorConfig"
                                     (change)="changeCodeMirror($event)"
                                     #textareaCodeMirror>
                                 </codemirror>
                             </ng-container>
-                            <ng-container *ngIf="_hook.config[k].type === 'integration'">
+                            <ng-container *ngIf="hook.config[k].type === 'integration'">
                                 <sui-select class="selection" placeholder="{{'integration_name' | translate}}"
                                             [(ngModel)]="selectedIntegration"
                                             (ngModelChange)="updateIntegration()"
@@ -84,7 +84,7 @@
                         </div>
                     </div>
                 </ng-container>
-                <div class="ui info message" *ngIf="!_hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
+                <div class="ui info message" *ngIf="!hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
             </ng-container>
 
             <button class="ui right floated green button" type="button" *ngIf="mode === 'update'" (click)="updateHook()"
