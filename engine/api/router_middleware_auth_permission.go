@@ -153,11 +153,19 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 		projectKey, has = routeVars["key"]
 	}
 	if !has {
-		return sdk.WrapError(sdk.ErrForbidden, "not authorized for workflow %s, missing project key value", workflowName)
+		return sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	if workflowName == "" {
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid given workflow name")
+	}
+
+	exists, err := workflow.Exists(api.mustDB(), projectKey, workflowName)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	perms, err := permission.LoadWorkflowMaxLevelPermission(ctx, api.mustDB(), projectKey, []string{workflowName}, getAPIConsumer(ctx).GetGroupIDs())

@@ -263,7 +263,7 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) (sdk.Workflows, error) {
 
 	if _, err := db.Select(&dbRes, query, projectKey); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrWorkflowNotFound
+			return nil, sdk.WithStack(sdk.ErrNotFound)
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflows project %s", projectKey)
 	}
@@ -511,7 +511,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, opts LoadO
 	next()
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrWorkflowNotFound
+			return nil, sdk.WithStack(sdk.ErrNotFound)
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflow")
 	}
