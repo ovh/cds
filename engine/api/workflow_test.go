@@ -1365,7 +1365,6 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 }
 
 func Test_deleteWorkflowHandler(t *testing.T) {
-
 	api, db, router, end := newTestAPI(t)
 	defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))

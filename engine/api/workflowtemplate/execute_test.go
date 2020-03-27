@@ -5,13 +5,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestExecuteTemplate(t *testing.T) {
-	tmpl := &sdk.WorkflowTemplate{
+	tmpl := sdk.WorkflowTemplate{
 		ID: 42,
 		Parameters: []sdk.WorkflowTemplateParameter{
 			{Key: "withDeploy", Type: sdk.ParameterTypeBoolean, Required: true},
@@ -22,19 +24,19 @@ func TestExecuteTemplate(t *testing.T) {
 		},
 		Workflow: base64.StdEncoding.EncodeToString([]byte(`
 name: [[.name]]
-description: Test simple workflow 👍
+description: Test simple workflow
 version: v1.0
 workflow:
-	Node-1:
-		pipeline: Pipeline-[[.id]]
-	[[if .params.withDeploy -]]
-	Node-2:
-		depends_on:
-		- Node-1
-		when:
-		- [[.params.deployWhen]]
-		pipeline: Pipeline-[[.id]]
-	[[- end -]]`)),
+  Node-1:
+    pipeline: Pipeline-[[.id]]
+  [[if .params.withDeploy -]]
+  Node-2:
+    depends_on:
+    - Node-1
+    when:
+    - [[.params.deployWhen]]
+    pipeline: Pipeline-[[.id]]
+  [[- end -]]`)),
 		Pipelines: []sdk.PipelineTemplate{{
 			Value: base64.StdEncoding.EncodeToString([]byte(`
 version: v1.0
@@ -43,15 +45,15 @@ stages:
 - Stage 1
 jobs:
 - job: Job 1
-	stage: Stage 1
-	steps:
-	- script:
-		- echo "Hello World!"
-		- echo "[[ "Hello World Lower!" | lower ]]"
-		- echo "[[.params.object.key1]]"
-		- echo "[[range .params.list]][[.]][[end]]"
-	- script:
-		- echo "{{.cds.run.number}}"`)),
+  stage: Stage 1
+  steps:
+  - script:
+    - echo "Hello World!"
+    - echo "[[ "Hello World Lower!" | lower ]]"
+    - echo "[[.params.object.key1]]"
+    - echo "[[range .params.list]][[.]][[end]]"
+  - script:
+    - echo "{{.cds.run.number}}"`)),
 		}},
 		Applications: []sdk.ApplicationTemplate{{
 			Value: base64.StdEncoding.EncodeToString([]byte(`
@@ -64,13 +66,13 @@ repo: [[.params.repo.repository]]`)),
 			Value: base64.StdEncoding.EncodeToString([]byte(`
 name: Environment-[[.id]]
 values:
-	key1:
-		type: string
-		value: value1`)),
+  key1:
+    type: string
+    value: value1`)),
 		}},
 	}
 
-	instance := &sdk.WorkflowTemplateInstance{
+	instance := sdk.WorkflowTemplateInstance{
 		ID: 5,
 		Request: sdk.WorkflowTemplateRequest{
 			WorkflowName: "my-workflow",
@@ -87,56 +89,64 @@ values:
 	res, err := workflowtemplate.Execute(tmpl, instance)
 	assert.Nil(t, err)
 
-	assert.Equal(t, `
-name: my-workflow
-description: Test simple workflow 👍
+	buf, err := yaml.Marshal(res.Workflow)
+	require.NoError(t, err)
+	assert.Equal(t, `name: my-workflow
+description: Test simple workflow
 version: v1.0
 workflow:
-	Node-1:
-		pipeline: Pipeline-5
-	Node-2:
-		depends_on:
-		- Node-1
-		when:
-		- failure
-		pipeline: Pipeline-5`, res.Workflow)
+  Node-1:
+    pipeline: Pipeline-5
+  Node-2:
+    depends_on:
+    - Node-1
+    when:
+    - failure
+    pipeline: Pipeline-5
+`, string(buf))
 
 	assert.Equal(t, 1, len(res.Pipelines))
-	assert.Equal(t, `
-version: v1.0
+	buf, err = yaml.Marshal(res.Pipelines[0])
+	require.NoError(t, err)
+	assert.Equal(t, `version: v1.0
 name: Pipeline-5
 stages:
 - Stage 1
 jobs:
 - job: Job 1
-	stage: Stage 1
-	steps:
-	- script:
-		- echo "Hello World!"
-		- echo "hello world lower!"
-		- echo "value1"
-		- echo "value1value2"
-	- script:
-		- echo "{{.cds.run.number}}"`, res.Pipelines[0])
+  stage: Stage 1
+  steps:
+  - script:
+    - echo "Hello World!"
+    - echo "hello world lower!"
+    - echo "value1"
+    - echo "value1value2"
+  - script:
+    - echo "{{.cds.run.number}}"
+`, string(buf))
 
 	assert.Equal(t, 1, len(res.Applications))
-	assert.Equal(t, `
-version: v1.0
+	buf, err = yaml.Marshal(res.Applications[0])
+	require.NoError(t, err)
+	assert.Equal(t, `version: v1.0
 name: my-workflow
 vcs_server: github
-repo: ovh/cds`, res.Applications[0])
+repo: ovh/cds
+`, string(buf))
 
 	assert.Equal(t, 1, len(res.Environments))
-	assert.Equal(t, `
-name: Environment-5
+	buf, err = yaml.Marshal(res.Environments[0])
+	require.NoError(t, err)
+	assert.Equal(t, `name: Environment-5
 values:
-	key1:
-		type: string
-		value: value1`, res.Environments[0])
+  key1:
+    type: string
+    value: value1
+`, string(buf))
 }
 
 func TestExecuteTemplateWithError(t *testing.T) {
-	tmpl := &sdk.WorkflowTemplate{
+	tmpl := sdk.WorkflowTemplate{
 		ID: 42,
 		Parameters: []sdk.WorkflowTemplateParameter{
 			{Key: "withDeploy", Type: sdk.ParameterTypeBoolean, Required: true},
@@ -165,7 +175,7 @@ name: Environment-[[if .id]]`)),
 		}},
 	}
 
-	_, err := workflowtemplate.Execute(tmpl, nil)
+	_, err := workflowtemplate.Parse(tmpl)
 	assert.NotNil(t, err)
 	e := sdk.ExtractHTTPError(err, "")
 	assert.Equal(t, sdk.ErrCannotParseTemplate.ID, e.ID)

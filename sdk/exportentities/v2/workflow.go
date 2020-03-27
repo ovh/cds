@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/fsamin/go-dump"
@@ -18,7 +17,6 @@ type Workflow struct {
 	Name        string `json:"name" yaml:"name" jsonschema_description:"The name of the workflow."`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	Version     string `json:"version,omitempty" yaml:"version,omitempty" jsonschema_description:"Version for the yaml syntax, latest is v1.0."`
-	Template    string `json:"template,omitempty" yaml:"template,omitempty" jsonschema_description:"Optional path of the template used to generate the workflow."`
 
 	Workflow map[string]NodeEntry   `json:"workflow,omitempty" yaml:"workflow,omitempty" jsonschema_description:"Workflow nodes list."`
 	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty" jsonschema_description:"Workflow hooks list."`
@@ -139,11 +137,6 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 		if err := f(w, &exportedWorkflow); err != nil {
 			return exportedWorkflow, sdk.WrapError(err, "Unable to run function")
 		}
-	}
-
-	if w.Template != nil {
-		path := fmt.Sprintf("%s/%s", w.Template.Group.Name, w.Template.Slug)
-		exportedWorkflow.Template = path
 	}
 
 	return exportedWorkflow, nil
@@ -335,10 +328,6 @@ func (w Workflow) GetVersion() string {
 	return w.Version
 }
 
-func (w *Workflow) SetTemplatePath(path string) {
-	w.Template = path
-}
-
 // GetWorkflow returns a fresh sdk.Workflow
 func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	var wf = new(sdk.Workflow)
@@ -405,18 +394,6 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	//Compute notifications
 	if err := w.processNotifications(wf); err != nil {
 		return nil, err
-	}
-
-	// if there is a template instance id on the workflow export, add it
-	if w.Template != "" {
-		templatePath := strings.Split(w.Template, "/")
-		if len(templatePath) != 2 {
-			return nil, sdk.WithStack(fmt.Errorf("Invalid template path"))
-		}
-		wf.Template = &sdk.WorkflowTemplate{
-			Group: &sdk.Group{Name: templatePath[0]},
-			Slug:  templatePath[1],
-		}
 	}
 
 	wf.SortNode()

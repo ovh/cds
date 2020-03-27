@@ -13,7 +13,6 @@ import (
 
 func (api *API) getPipelineExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		name := vars["pipelineKey"]
@@ -22,19 +21,25 @@ func (api *API) getPipelineExportHandler() service.Handler {
 		if format == "" {
 			format = "yaml"
 		}
-
-		// Export
 		f, err := exportentities.GetFormat(format)
 		if err != nil {
-			return sdk.WrapError(err, "Format invalid")
-		}
-		if _, err := pipeline.Export(ctx, api.mustDB(), api.Cache, key, name, f, w); err != nil {
-			return sdk.WrapError(err, "getPipelineExportHandler")
+			return err
 		}
 
-		w.Header().Add("Content-Type", exportentities.GetContentType(f))
+		pip, err := pipeline.Export(ctx, api.mustDB(), key, name)
+		if err != nil {
+			return err
+		}
+		buf, err := exportentities.Marshal(pip, f)
+		if err != nil {
+			return err
+		}
+		if _, err := w.Write(buf); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		w.Header().Add("Content-Type", f.ContentType())
 		w.WriteHeader(http.StatusOK)
-
 		return nil
 	}
 }

@@ -19,23 +19,23 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Environment and insert or update the environment in database
-func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv *exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Message, error) {
+func ParseAndImport(db gorp.SqlExecutor, proj sdk.Project, eenv exportentities.Environment, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Environment, []sdk.Message, error) {
 	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, opts.Force)
 	log.Debug("ParseAndImport>> Env: %+v", eenv)
 
-	//Check valid application name
+	// Check valid application name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(eenv.Name) {
-		return nil, nil, sdk.WrapError(sdk.ErrInvalidName, "ParseAndImport>> Environment name %s do not respect pattern %s", eenv.Name, sdk.NamePattern)
+		return nil, nil, sdk.NewErrorFrom(sdk.ErrInvalidName, "environment name %s do not respect pattern %s", eenv.Name, sdk.NamePattern)
 	}
 
-	//Check if env exist
-	oldEnv, errl := LoadEnvironmentByName(db, proj.Key, eenv.Name)
-	if errl != nil && !sdk.ErrorIs(errl, sdk.ErrEnvironmentNotFound) {
-		return nil, nil, sdk.WrapError(errl, "ParseAndImport>> Unable to load environment")
+	// Check if env exist
+	oldEnv, err := LoadEnvironmentByName(db, proj.Key, eenv.Name)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrEnvironmentNotFound) {
+		return nil, nil, sdk.WrapError(err, "unable to load environment")
 	}
 
-	//If the environment exists and we don't want to force, raise an error
+	// If the environment exists and we don't want to force, raise an error
 	var exist bool
 	if oldEnv != nil && !opts.Force {
 		return nil, nil, sdk.ErrEnvironmentExist

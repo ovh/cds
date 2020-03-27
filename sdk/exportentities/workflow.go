@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/ovh/cds/sdk"
 	v1 "github.com/ovh/cds/sdk/exportentities/v1"
 	v2 "github.com/ovh/cds/sdk/exportentities/v2"
@@ -25,6 +23,11 @@ type WorkflowPulled struct {
 	Pipelines    []WorkflowPulledItem `json:"pipelines"`
 	Applications []WorkflowPulledItem `json:"applications"`
 	Environments []WorkflowPulledItem `json:"environments"`
+}
+
+type Options struct {
+	SkipIfOnlyOneRepoWebhook bool
+	WithPermission           bool
 }
 
 // WorkflowPulledItem contains data for a workflow item.
@@ -47,21 +50,21 @@ type WorkflowVersion struct {
 	Version string `yaml:"version"`
 }
 
-func UnmarshalWorkflow(body []byte) (Workflow, error) {
+func UnmarshalWorkflow(body []byte, format Format) (Workflow, error) {
 	var workflowVersion WorkflowVersion
-	if err := yaml.Unmarshal(body, &workflowVersion); err != nil {
+	if err := Unmarshal(body, format, &workflowVersion); err != nil {
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow data: %v", err)
 	}
 	switch workflowVersion.Version {
 	case WorkflowVersion1:
 		var workflowV1 v1.Workflow
-		if err := yaml.Unmarshal(body, &workflowV1); err != nil {
+		if err := Unmarshal(body, format, &workflowV1); err != nil {
 			return nil, sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow v1 format: %v", err)
 		}
 		return workflowV1, nil
 	case WorkflowVersion2:
 		var workflowV2 v2.Workflow
-		if err := yaml.Unmarshal(body, &workflowV2); err != nil {
+		if err := Unmarshal(body, format, &workflowV2); err != nil {
 			return nil, sdk.WrapError(sdk.ErrWrongRequest, "invalid workflow v2 format: %v", err)
 		}
 		return workflowV2, nil
@@ -85,24 +88,6 @@ func ParseWorkflow(exportWorkflow Workflow) (*sdk.Workflow, error) {
 		return nil, sdk.WithStack(fmt.Errorf("exportentities workflow cannot be cast, unknown version %s", exportWorkflow.GetVersion()))
 	}
 	return nil, sdk.WithStack(fmt.Errorf("exportentities workflow cannot be cast %+v", exportWorkflow))
-}
-
-func SetTemplate(w Workflow, path string) (Workflow, error) {
-	switch w.GetVersion() {
-	case WorkflowVersion2:
-		workflowV2, ok := w.(v2.Workflow)
-		if ok {
-			workflowV2.Template = path
-			return workflowV2, nil
-		}
-	case WorkflowVersion1:
-		workflowV1, ok := w.(v1.Workflow)
-		if ok {
-			workflowV1.Template = path
-			return workflowV1, nil
-		}
-	}
-	return nil, sdk.WithStack(fmt.Errorf("exportentities workflow cannot be cast %+v", w))
 }
 
 func NewWorkflow(ctx context.Context, w sdk.Workflow, opts ...v2.ExportOptions) (Workflow, error) {

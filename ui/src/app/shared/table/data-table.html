@@ -31,14 +31,14 @@
         <tr>
             <td class="center aligned" [colSpan]="columnsCount">
                 <div class="ui active small inline loader"></div>
-                <div>{{ 'common_loading' | translate }}</div>
+                <div>{{ 'common_loading' | translate }}</div>
             </td>
         </tr>
     </tbody>
     <tbody *ngIf="!loading && dataForCurrentPage.length === 0">
         <tr>
             <td class="center" [colSpan]="columnsCount">
-                <div>{{ 'common_no_data' | translate }}</div>
+                <div>{{ 'common_no_data' | translate }}</div>
             </td>
         </tr>
     </tbody>
@@ -53,7 +53,8 @@
                 </div>
             </td>
             <ng-container *ngFor="let c of (columns | selector:d:i)">
-                <td *ngIf="!c.disabled" [ngSwitch]="c.type" class="wide" [ngClass]="c.class">
+                <td *ngIf="!c.disabled && c.hidden"></td>
+                <td *ngIf="!c.disabled && !c.hidden" [ngSwitch]="c.type" class="wide" [ngClass]="c.class">
                     <i *ngSwitchCase="'icon'" [ngClass]="c.selector"></i>
                     <a *ngSwitchCase="'router-link'" class="ui" [routerLink]="c.selector.link">
                         {{c.selector.value}}
@@ -92,6 +93,10 @@
                         <span *ngFor="let i of c.selector.icons" suiPopup [popupText]="i.label | translate">
                             {{' '}}<i [ngClass]="i.class" title="{{i.title | translate }}"></i>
                         </span>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'router-link-with-labels'">
+                        <a class="ui" [routerLink]="c.selector.link">{{c.selector.value}}</a>
+                        {{' '}}<span *ngFor="let l of c.selector.labels" class="ui label {{l.color}}">{{l.title | translate}}</span>
                     </ng-container>
                     <div *ngSwitchCase="'text-copy'" class="ui fluid action input">
                         <input type="text" value="{{c.selector}}">

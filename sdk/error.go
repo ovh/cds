@@ -105,7 +105,6 @@ var (
 	ErrJobAlreadyBooked                              = Error{ID: 89, Status: http.StatusConflict}
 	ErrPipelineBuildNotFound                         = Error{ID: 90, Status: http.StatusNotFound}
 	ErrAlreadyTaken                                  = Error{ID: 91, Status: http.StatusGone}
-	ErrWorkflowNotFound                              = Error{ID: 92, Status: http.StatusNotFound}
 	ErrWorkflowNodeNotFound                          = Error{ID: 93, Status: http.StatusNotFound}
 	ErrWorkflowInvalidRoot                           = Error{ID: 94, Status: http.StatusBadRequest}
 	ErrWorkflowNodeRef                               = Error{ID: 95, Status: http.StatusBadRequest}
@@ -296,7 +295,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrJobAlreadyBooked.ID:                              "Job already booked",
 	ErrPipelineBuildNotFound.ID:                         "Pipeline build not found",
 	ErrAlreadyTaken.ID:                                  "This job is already taken by another worker",
-	ErrWorkflowNotFound.ID:                              "Workflow not found",
 	ErrWorkflowNodeNotFound.ID:                          "Workflow node not found",
 	ErrWorkflowInvalidRoot.ID:                           "Invalid workflow root",
 	ErrWorkflowNodeRef.ID:                               "Invalid workflow node reference",
@@ -480,7 +478,6 @@ var errorsFrench = map[int]string{
 	ErrJobAlreadyBooked.ID:                              "Le job est déjà réservé",
 	ErrPipelineBuildNotFound.ID:                         "Le pipeline build n'a pu être trouvé",
 	ErrAlreadyTaken.ID:                                  "Ce job est déjà en cours de traitement par un autre worker",
-	ErrWorkflowNotFound.ID:                              "Workflow introuvable",
 	ErrWorkflowNodeNotFound.ID:                          "Noeud de Workflow introuvable",
 	ErrWorkflowInvalidRoot.ID:                           "Racine de Workflow invalide",
 	ErrWorkflowNodeRef.ID:                               "Référence de noeud de workflow invalide",
@@ -581,22 +578,25 @@ type Error struct {
 	ID         int         `json:"id"`
 	Status     int         `json:"-"`
 	Message    string      `json:"message"`
-	Data       interface{} `json:"data"`
+	Data       interface{} `json:"data,omitempty"`
 	RequestID  string      `json:"request_id,omitempty"`
 	StackTrace string      `json:"stack_trace,omitempty"`
-	from       string
+	From       string      `json:"from,omitempty"`
 }
 
 func (e Error) Error() string {
+	var message string
 	if e.Message != "" {
-		return e.Message
+		message = e.Message
+	} else if en, ok := errorsAmericanEnglish[e.ID]; ok {
+		message = en
+	} else {
+		message = errorsAmericanEnglish[ErrUnknownError.ID]
 	}
-
-	if en, ok := errorsAmericanEnglish[e.ID]; ok {
-		return en
+	if e.From != "" {
+		message = fmt.Sprintf("%s (from: %s)", message, e.From)
 	}
-
-	return errorsAmericanEnglish[ErrUnknownError.ID]
+	return message
 }
 
 func (e Error) Translate(al string) string {
@@ -652,7 +652,8 @@ type errorWithStack struct {
 
 func (w errorWithStack) Error() string {
 	var cause string
-	if w.root.Error() != "" {
+	root := w.root.Error()
+	if root != "" && root != w.httpError.From {
 		cause = fmt.Sprintf(" (caused by: %s)", w.root)
 	}
 	return fmt.Sprintf("%s: %s%s", w.stack.String(), w.httpError, cause)
@@ -734,13 +735,13 @@ func NewError(httpError Error, err error) error {
 
 	// if it's already an error with stack, override the http error and set from value with err cause
 	if e, ok := err.(errorWithStack); ok {
-		httpError.from = Cause(e).Error()
+		httpError.From = e.httpError.From
 		e.httpError = httpError
 		return e
 	}
 
 	// if it's a library error create a new error with stack
-	httpError.from = err.Error()
+	httpError.From = err.Error()
 	return errorWithStack{
 		root:      errors.WithStack(err),
 		stack:     callers(),
@@ -799,7 +800,7 @@ func WithStack(err error) error {
 	// if it's a Error wrap it in error with stack
 	if e, ok := err.(Error); ok {
 		return errorWithStack{
-			root:      errors.New(e.Error()),
+			root:      errors.New(""),
 			stack:     callers(),
 			httpError: e,
 		}
@@ -842,10 +843,6 @@ func ExtractHTTPError(source error, al string) Error {
 	// else set message for given accepted languages.
 	if httpError.Message == "" {
 		httpError.Message = httpError.Translate(al)
-	}
-
-	if httpError.from != "" {
-		httpError.Message = fmt.Sprintf("%s (from: %s)", httpError.Message, httpError.from)
 	}
 
 	return httpError

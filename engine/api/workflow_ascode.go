@@ -121,7 +121,7 @@ func (api *API) migrateWorkflowAsCode(ctx context.Context, w http.ResponseWriter
 
 	// Sync as code event
 	if len(wf.AsCodeEvent) > 0 {
-		eventsLeft, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, *proj, app, getAPIConsumer(ctx).AuthentifiedUser)
+		eventsLeft, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, *proj, *app, getAPIConsumer(ctx).AuthentifiedUser)
 		if err != nil {
 			return err
 		}

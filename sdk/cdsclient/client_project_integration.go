@@ -8,8 +8,9 @@ import (
 	"net/url"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/exportentities"
 )
 
 func (c *client) ProjectsList(opts ...RequestModifier) ([]sdk.Project, error) {
@@ -89,7 +90,7 @@ func (c *client) ProjectIntegrationDelete(projectKey string, integrationName str
 	return nil
 }
 
-func (c *client) ProjectIntegrationImport(projectKey string, content io.Reader, format string, force bool) (sdk.ProjectIntegration, error) {
+func (c *client) ProjectIntegrationImport(projectKey string, content io.Reader, mods ...RequestModifier) (sdk.ProjectIntegration, error) {
 	var pf sdk.ProjectIntegration
 
 	body, err := ioutil.ReadAll(content)
@@ -97,27 +98,22 @@ func (c *client) ProjectIntegrationImport(projectKey string, content io.Reader, 
 		return pf, err
 	}
 
-	f, err := exportentities.GetFormat(format)
-	if err != nil {
+	if err := yaml.Unmarshal(body, &pf); err != nil {
 		return pf, err
 	}
 
-	if err := exportentities.Unmarshal(body, f, &pf); err != nil {
-		return pf, err
-	}
-
-	//Get the integration to know if we have to POST or PUT
+	// Get the integration to know if we have to POST or PUT
 	oldPF, _ := c.ProjectIntegrationGet(projectKey, pf.Name, false)
 	if oldPF.Name == "" {
 		path := fmt.Sprintf("/project/%s/integrations", projectKey)
-		if _, err := c.PostJSON(context.Background(), path, &pf, &pf); err != nil {
+		if _, err := c.PostJSON(context.Background(), path, &pf, &pf, mods...); err != nil {
 			return pf, err
 		}
 		return pf, nil
 	}
 
 	path := fmt.Sprintf("/project/%s/integrations/%s", projectKey, pf.Name)
-	if _, err := c.PutJSON(context.Background(), path, &pf, &pf); err != nil {
+	if _, err := c.PutJSON(context.Background(), path, &pf, &pf, mods...); err != nil {
 		return pf, err
 	}
 	return pf, nil

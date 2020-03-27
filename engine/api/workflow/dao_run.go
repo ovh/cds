@@ -439,13 +439,13 @@ func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ..
 	runDB := &Run{}
 	if err := db.SelectOne(runDB, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrWorkflowNotFound
+			return nil, sdk.WithStack(sdk.ErrNotFound)
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflow run. query:%s args:%v", query, args)
 	}
 	wr := sdk.WorkflowRun(*runDB)
 	if !loadOpts.WithDeleted && wr.ToDelete {
-		return nil, sdk.WithStack(sdk.ErrWorkflowNotFound)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	tags, errT := loadTagsByRunID(db, wr.ID)

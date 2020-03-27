@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -57,15 +56,9 @@ func workflowPullRun(c cli.Values) error {
 		return fmt.Errorf("Unable to create directory %s: %v", c.GetString("output-dir"), err)
 	}
 
-	mods := []cdsclient.RequestModifier{}
+	var mods []cdsclient.RequestModifier
 	if c.GetBool("with-permissions") {
-		mods = append(mods,
-			func(r *http.Request) {
-				q := r.URL.Query()
-				q.Set("withPermissions", "true")
-				r.URL.RawQuery = q.Encode()
-			},
-		)
+		mods = append(mods, cdsclient.WithPermissions())
 	}
 
 	tr, err := client.WorkflowPull(c.GetString(_ProjectKey), c.GetString(_WorkflowName), mods...)
@@ -81,7 +74,7 @@ func workflowTarReaderToFiles(v cli.Values, dir string, tr *tar.Reader) error {
 	yes := v.GetBool("yes")
 	quiet := v.GetBool("quiet")
 	if tr == nil {
-		return fmt.Errorf("Unable to read workflow")
+		return fmt.Errorf("unable to read workflow")
 	}
 	// Iterate through the files in the archive.
 	for {

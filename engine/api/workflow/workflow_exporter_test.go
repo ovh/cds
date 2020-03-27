@@ -126,11 +126,11 @@ func TestPull(t *testing.T) {
 	test.Equal(t, w.Metadata, w1.Metadata)
 	test.Equal(t, w.PurgeTags, w1.PurgeTags)
 
-	pull, err := workflow.Pull(context.TODO(), db, cache, *proj, w1.Name, exportentities.FormatYAML, project.EncryptWithBuiltinKey)
+	pull, err := workflow.Pull(context.TODO(), db, cache, *proj, w1.Name, project.EncryptWithBuiltinKey)
 	test.NoError(t, err)
 
 	buff := new(bytes.Buffer)
-	test.NoError(t, pull.Tar(context.TODO(), buff))
+	test.NoError(t, exportentities.TarWorkflowComponents(context.TODO(), pull, buff))
 
 	// Open the tar archive for reading.
 	r := bytes.NewReader(buff.Bytes())
@@ -150,6 +150,5 @@ func TestPull(t *testing.T) {
 		test.NoError(t, err, "Unable to read the tar buffer")
 
 		t.Logf("%s", string(btes))
-
 	}
 }

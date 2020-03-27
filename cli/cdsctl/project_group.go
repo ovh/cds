@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -49,33 +49,33 @@ var projectGroupImportCmd = cli.Command{
 }
 
 func projectGroupImportRun(v cli.Values) error {
+	path := v.GetString("path")
+
 	var reader io.ReadCloser
-	defer func() {
-		if reader != nil {
-			reader.Close()
-		}
-	}()
-	var format = "yaml"
-
-	if strings.HasSuffix(v.GetString("path"), ".json") {
-		format = "json"
-	}
-
-	if sdk.IsURL(v.GetString("path")) {
-		var err error
-		reader, _, err = exportentities.OpenURL(v.GetString("path"), format)
-		if err != nil {
-			return err
-		}
+	var err error
+	if sdk.IsURL(path) {
+		reader, err = exportentities.OpenURL(path)
 	} else {
-		var err error
-		reader, _, err = exportentities.OpenFile(v.GetString("path"))
-		if err != nil {
-			return err
-		}
+		reader, err = exportentities.OpenFile(path)
+	}
+	if err != nil {
+		return err
+	}
+	defer reader.Close() // nolint
+
+	format, err := exportentities.GetFormatFromPath(path)
+	if err != nil {
+		return err
 	}
 
-	if _, err := client.ProjectGroupsImport(v.GetString(_ProjectKey), reader, format, v.GetBool("force")); err != nil {
+	mods := []cdsclient.RequestModifier{
+		cdsclient.ContentType(format.ContentType()),
+	}
+	if v.GetBool("force") {
+		mods = append(mods, cdsclient.Force())
+	}
+
+	if _, err := client.ProjectGroupsImport(v.GetString(_ProjectKey), reader, mods...); err != nil {
 		return err
 	}
 	fmt.Printf("Groups imported in project %s with success\n", v.GetString(_ProjectKey))

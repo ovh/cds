@@ -5,19 +5,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
-	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/operation"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
@@ -39,9 +37,9 @@ type PushOption struct {
 	OldWorkflow        sdk.Workflow
 }
 
-// CreateFromRepository a workflow from a repository
+// CreateFromRepository a workflow from a repository.
 func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
-	opts sdk.WorkflowRunPostHandlerOption, u sdk.Identifiable, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
+	opts sdk.WorkflowRunPostHandlerOption, u sdk.AuthConsumer, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
@@ -74,7 +72,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 }
 
 func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow,
-	ope sdk.Operation, ident sdk.Identifiable, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
+	ope sdk.Operation, consumer sdk.AuthConsumer, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.extractWorkflow")
 	defer end()
 	var allMsgs []sdk.Message
@@ -96,9 +94,25 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		OldWorkflow:        *wf,
 	}
 
-	allMsg, workflowPushed, _, errP := Push(ctx, db, store, p, tr, opt, ident, decryptFunc)
-	if errP != nil {
-		return allMsg, sdk.WrapError(errP, "unable to get workflow from file")
+	data, err := exportentities.UntarWorkflowComponents(ctx, tr)
+	if err != nil {
+		return allMsgs, err
+	}
+
+	var mods []workflowtemplate.TemplateRequestModifierFunc
+	if !opt.IsDefaultBranch {
+		mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
+	}
+	wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, db, consumer, *p, &data, mods...)
+	if err != nil {
+		return allMsgs, err
+	}
+	allMsg, workflowPushed, _, err := Push(ctx, db, store, p, data, opt, consumer, decryptFunc)
+	if err != nil {
+		return allMsg, sdk.WrapError(err, "unable to get workflow from file")
+	}
+	if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, db, *workflowPushed, consumer, wti); err != nil {
+		return allMsg, err
 	}
 	*wf = *workflowPushed
 
@@ -124,10 +138,10 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 			Size: int64(len(fcontent)),
 		}
 		if err := tw.WriteHeader(hdr); err != nil {
-			return nil, sdk.WrapError(err, "Cannot write header")
+			return nil, sdk.WrapError(err, "cannot write header")
 		}
 		if n, err := tw.Write(fcontent); err != nil {
-			return nil, sdk.WrapError(err, "Cannot write content")
+			return nil, sdk.WrapError(err, "cannot write content")
 		} else if n == 0 {
 			return nil, fmt.Errorf("nothing to write")
 		}
@@ -140,93 +154,6 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 	return tar.NewReader(buf), nil
 }
 
-type exportedEntities struct {
-	wrkflw exportentities.Workflow
-	apps   map[string]exportentities.Application
-	pips   map[string]exportentities.PipelineV1
-	envs   map[string]exportentities.Environment
-}
-
-func extractFromCDSFiles(ctx context.Context, tr *tar.Reader) (*exportedEntities, error) {
-	var res = exportedEntities{
-		apps: make(map[string]exportentities.Application),
-		pips: make(map[string]exportentities.PipelineV1),
-		envs: make(map[string]exportentities.Environment),
-	}
-
-	mError := new(sdk.MultiError)
-	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-			return nil, sdk.WithStack(err)
-		}
-
-		log.Debug("Push> Reading %s", hdr.Name)
-
-		buff := new(bytes.Buffer)
-		if _, err := io.Copy(buff, tr); err != nil {
-			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-			return nil, sdk.WithStack(err)
-		}
-
-		var workflowFileName string
-		b := buff.Bytes()
-		switch {
-		case strings.Contains(hdr.Name, ".app."):
-			var app exportentities.Application
-			if err := yaml.Unmarshal(b, &app); err != nil {
-				log.Error(ctx, "Push> Unable to unmarshal application %s: %v", hdr.Name, err)
-				mError.Append(fmt.Errorf("Unable to unmarshal application %s: %v", hdr.Name, err))
-				continue
-			}
-			res.apps[hdr.Name] = app
-		case strings.Contains(hdr.Name, ".pip."):
-			var pip exportentities.PipelineV1
-			if err := yaml.Unmarshal(b, &pip); err != nil {
-				log.Error(ctx, "Push> Unable to unmarshal pipeline %s: %v", hdr.Name, err)
-				mError.Append(fmt.Errorf("Unable to unmarshal pipeline %s: %v", hdr.Name, err))
-				continue
-			}
-			res.pips[hdr.Name] = pip
-		case strings.Contains(hdr.Name, ".env."):
-			var env exportentities.Environment
-			if err := yaml.Unmarshal(b, &env); err != nil {
-				log.Error(ctx, "Push> Unable to unmarshal environment %s: %v", hdr.Name, err)
-				mError.Append(fmt.Errorf("Unable to unmarshal environment %s: %v", hdr.Name, err))
-				continue
-			}
-			res.envs[hdr.Name] = env
-		default:
-			// if a workflow was already found, it's a mistake
-			if workflowFileName != "" {
-				log.Error(ctx, "two workflows files found: %s and %s", workflowFileName, hdr.Name)
-				mError.Append(fmt.Errorf("two workflows files found: %s and %s", workflowFileName, hdr.Name))
-				break
-			}
-			var err error
-			res.wrkflw, err = exportentities.UnmarshalWorkflow(b)
-			if err != nil {
-				log.Error(ctx, "Push> Unable to unmarshal workflow %s: %v", hdr.Name, err)
-				mError.Append(fmt.Errorf("Unable to unmarshal workflow %s: %v", hdr.Name, err))
-				continue
-			}
-		}
-	}
-
-	// We only use the multiError during unmarshalling steps.
-	// When a DB transaction has been started, just return at the first error
-	// because transaction may have to be aborted
-	if !mError.IsEmpty() {
-		return nil, sdk.NewError(sdk.ErrWorkflowInvalid, mError)
-	}
-
-	return &res, nil
-}
-
 func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache.Store, ope *sdk.Operation) error {
 	tickTimeout := time.NewTicker(10 * time.Minute)
 	tickPoll := time.NewTicker(2 * time.Second)
@@ -235,13 +162,13 @@ func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				return sdk.WrapError(c.Err(), "pollRepositoryOperation> Exiting")
+				return sdk.WrapError(c.Err(), "exiting")
 			}
 		case <-tickTimeout.C:
-			return sdk.WrapError(sdk.ErrRepoOperationTimeout, "pollRepositoryOperation> Timeout analyzing repository")
+			return sdk.WrapError(sdk.ErrRepoOperationTimeout, "timeout analyzing repository")
 		case <-tickPoll.C:
 			if err := operation.GetRepositoryOperation(c, db, ope); err != nil {
-				return sdk.WrapError(err, "Cannot get repository operation status")
+				return sdk.WrapError(err, "cannot get repository operation status")
 			}
 			switch ope.Status {
 			case sdk.OperationStatusError:

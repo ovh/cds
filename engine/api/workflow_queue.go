@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/metrics"
+	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -498,19 +499,6 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		}
 
 		go WorkflowSendEvent(context.Background(), tx, store, *proj, reportParent)
-
-		if sdk.StatusIsTerminated(run.Status) {
-			//Start a goroutine to update commit statuses in repositories manager
-			go func(wRun *sdk.WorkflowRun) {
-				//The function could be called with nil project so we need to test if project is not nil
-				if sdk.StatusIsTerminated(wRun.Status) && proj != nil {
-					wRun.LastExecution = time.Now()
-					if err := workflow.ResyncCommitStatus(context.Background(), dbFunc(context.Background()), store, *proj, wRun); err != nil {
-						log.Error(ctx, "workflow.UpdateNodeJobRunStatus> %v", err)
-					}
-				}
-			}(run)
-		}
 	}
 
 	return report, nil
@@ -689,7 +677,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 			return nil
 		}
 		nodeRun.Translate(r.Header.Get("Accept-Language"))
-		event.PublishWorkflowNodeRun(context.Background(), api.mustDB(), api.Cache, nodeRun, work, nil)
+		event.PublishWorkflowNodeRun(context.Background(), nodeRun, work, notification.GetUserWorkflowEvents(ctx, api.mustDB(), api.Cache, work, nil, nodeRun))
 		return nil
 	}
 }
@@ -741,12 +729,12 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			return errM
 		}
 
-		permissions := sdk.PermissionReadExecute
+		permissions := sdk.PermissionRead
 
 		isW := isWorker(ctx)
 		isS := isService(ctx)
-		if !isW && !isS {
-			permissions = sdk.PermissionRead
+		if isW || isS {
+			permissions = sdk.PermissionReadExecute
 		}
 
 		filter := workflow.NewQueueFilter()
@@ -759,8 +747,10 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 		if modelType != "" {
 			filter.ModelType = []string{modelType}
 		}
+
 		var jobs []sdk.WorkflowNodeJobRun
-		if !isMaintainer(ctx) && !isAdmin(ctx) {
+		// If the consumer is a worker, a hatchery or a non maintainer user, filter the job by its groups
+		if isW || isS || !isMaintainer(ctx) {
 			jobs, err = workflow.LoadNodeJobRunQueueByGroupIDs(ctx, api.mustDB(), api.Cache, filter, getAPIConsumer(ctx).GetGroupIDs())
 		} else {
 			jobs, err = workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)

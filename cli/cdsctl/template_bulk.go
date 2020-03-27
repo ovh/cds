@@ -3,14 +3,12 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
 	survey "gopkg.in/AlecAivazis/survey.v1"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -147,16 +145,7 @@ func templateExtractAndValidateFileParams(filePath string) (*sdk.WorkflowTemplat
 	}
 
 	var f templateBulkFile
-	var errU error
-	switch format {
-	case exportentities.FormatJSON:
-		errU = json.Unmarshal(buf.Bytes(), &f)
-	case exportentities.FormatYAML:
-		errU = yaml.Unmarshal(buf.Bytes(), &f)
-	default:
-		return nil, nil, exportentities.ErrUnsupportedFormat
-	}
-	if errU != nil {
+	if err := exportentities.Unmarshal(buf.Bytes(), format, &f); err != nil {
 		return nil, nil, fmt.Errorf("cannot unmarshal given file %v", err)
 	}
 
@@ -359,6 +348,15 @@ func templateBulkRun(v cli.Values) error {
 	if err != nil {
 		return err
 	}
+	// filter as code workflow
+	wtisFiltered := make([]sdk.WorkflowTemplateInstance, 0, len(wtis))
+	for i := range wtis {
+		if wtis[i].Workflow == nil || wtis[i].Workflow.FromRepository == "" {
+			wtisFiltered = append(wtisFiltered, wtis[i])
+		}
+	}
+	wtis = wtisFiltered
+
 	mwtis := make(map[string]sdk.WorkflowTemplateInstance, len(wtis))
 	for _, i := range wtis {
 		mwtis[i.Key()] = i
@@ -479,6 +477,11 @@ func templateBulkRun(v cli.Values) error {
 				}
 			}
 		}
+	}
+
+	if len(moperations) == 0 {
+		fmt.Printf("Nothing to do")
+		return nil
 	}
 
 	// send bulk request

@@ -5,7 +5,7 @@ import { Item } from 'app/shared/diff/list/diff.list.component';
 
 export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: WorkflowTemplate): Array<Item> {
     let beforeTemplate: any;
-    if (before) {
+    if (before && before.slug) {
         beforeTemplate = {
             name: before.name,
             slug: before.slug,
@@ -41,44 +41,44 @@ export function calculateWorkflowTemplateDiff(before: WorkflowTemplate, after: W
         }
     ];
 
-    let pipelinesLength = Math.max(before ? before.pipelines.length : 0, after ? after.pipelines.length : 0);
+    let pipelinesLength = Math.max(before && before.pipelines ? before.pipelines.length : 0, after && after.pipelines ? after.pipelines.length : 0);
     for (let i = 0; i < pipelinesLength; i++) {
         diffItems.push(
             <Item>{
                 translate: 'workflow_template_diff_pipeline',
                 translateData: { number: pipelinesLength > 1 ? i : '' },
-                before: before && before.pipelines[i] ? Base64.b64DecodeUnicode(before.pipelines[i].value) : null,
-                after: after && after.pipelines[i] ? Base64.b64DecodeUnicode(after.pipelines[i].value) : null,
+                before: before && before.pipelines && before.pipelines[i] ? Base64.b64DecodeUnicode(before.pipelines[i].value) : null,
+                after: after && after.pipelines && after.pipelines[i] ? Base64.b64DecodeUnicode(after.pipelines[i].value) : null,
                 type: 'text/x-yaml'
             })
     }
 
     let applicationsLength = Math.max(
-        before ? before.applications && before.applications.length : 0,
-        after ? after.applications && after.applications.length : 0
+        before && before.applications ? before.applications && before.applications.length : 0,
+        after && after.applications ? after.applications && after.applications.length : 0
     );
     for (let i = 0; i < applicationsLength; i++) {
         diffItems.push(
             <Item>{
                 translate: 'workflow_template_diff_application',
                 translateData: { number: applicationsLength > 1 ? i : '' },
-                before: before && before.applications[i] ? Base64.b64DecodeUnicode(before.applications[i].value) : null,
-                after: after && after.applications[i] ? Base64.b64DecodeUnicode(after.applications[i].value) : null,
+                before: before && before.applications && before.applications[i] ? Base64.b64DecodeUnicode(before.applications[i].value) : null,
+                after: after && after.applications && after.applications[i] ? Base64.b64DecodeUnicode(after.applications[i].value) : null,
                 type: 'text/x-yaml'
             })
     }
 
     let environmentsLength = Math.max(
-        before ? before.environments && before.environments.length : 0,
-        after ? after.environments && after.environments.length : 0
+        before && before.environments ? before.environments && before.environments.length : 0,
+        after && after.environments ? after.environments && after.environments.length : 0
     );
     for (let i = 0; i < environmentsLength; i++) {
         diffItems.push(
             <Item>{
                 translate: 'workflow_template_diff_environment',
                 translateData: { number: environmentsLength > 1 ? i : '' },
-                before: before && before.environments[i] ? Base64.b64DecodeUnicode(before.environments[i].value) : null,
-                after: after && after.environments[i] ? Base64.b64DecodeUnicode(after.environments[i].value) : null,
+                before: before && before.environments && before.environments[i] ? Base64.b64DecodeUnicode(before.environments[i].value) : null,
+                after: after && after.environments && after.environments[i] ? Base64.b64DecodeUnicode(after.environments[i].value) : null,
                 type: 'text/x-yaml'
             })
     }

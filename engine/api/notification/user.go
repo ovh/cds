@@ -120,7 +120,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache
 				if err != nil {
 					log.Error(ctx, "notification.GetUserWorkflowEvents> unable to handle event %+v: %v", jn, err)
 				}
-				go SendMailNotif(ctx, notif)
+				go sendMailNotif(ctx, notif)
 			}
 		}
 	}
@@ -208,9 +208,7 @@ func getWorkflowEvent(notif *sdk.UserNotificationSettings, params map[string]str
 		Subject: subject,
 		Body:    body,
 	}
-	for _, r := range notif.Recipients {
-		e.Recipients = append(e.Recipients, r)
-	}
+	e.Recipients = append(e.Recipients, notif.Recipients...)
 
 	return e, nil
 }

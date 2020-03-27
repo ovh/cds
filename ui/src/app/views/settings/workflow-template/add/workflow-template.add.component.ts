@@ -71,16 +71,16 @@ export class WorkflowTemplateAddComponent implements OnInit {
             this.workflowName = workflowName;
             let wt = <WorkflowTemplate>{
                 editable: true,
-                value: w.workflow.value
+                value: w.workflow
             };
             if (w.pipelines) {
-                wt.pipelines = w.pipelines.map(p => <PipelineTemplate>{ value: p.value });
+                wt.pipelines = w.pipelines.map(p => <PipelineTemplate>{ value: p });
             }
             if (w.applications) {
-                wt.applications = w.applications.map(a => <PipelineTemplate>{ value: a.value });
+                wt.applications = w.applications.map(a => <PipelineTemplate>{ value: a });
             }
             if (w.environments) {
-                wt.environments = w.environments.map(e => <PipelineTemplate>{ value: e.value });
+                wt.environments = w.environments.map(e => <PipelineTemplate>{ value: e });
             }
             this.workflowTemplate = wt;
             this._cd.markForCheck();

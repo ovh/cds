@@ -10,10 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	v2 "github.com/ovh/cds/sdk/exportentities/v2"
-
-	"github.com/ovh/cds/sdk"
 )
 
 func TestWorkflow_checkDependencies(t *testing.T) {
@@ -916,20 +915,6 @@ hooks:
       method: POST
 `,
 		}, {
-			name: "workflow with template",
-			yaml: `name: test4
-version: v2.0
-template: shared.infra/example
-workflow:
-  1_start:
-    pipeline: test
-  2_webHook:
-    depends_on:
-    - 1_start
-    pipeline: test
-`,
-		},
-		{
 			name: "Join with condition",
 			yaml: `name: joins
 version: v2.0
@@ -1045,7 +1030,7 @@ workflow:
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			yamlWorkflow, err := exportentities.UnmarshalWorkflow([]byte(tst.yaml))
+			yamlWorkflow, err := exportentities.UnmarshalWorkflow([]byte(tst.yaml), exportentities.FormatYAML)
 			if err != nil {
 				if !tst.wantErr {
 					t.Error("Unmarshal raised an error", err)
