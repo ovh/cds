@@ -43,6 +43,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
 
     project: Project;
     editMode: boolean;
+    isRun: boolean;
 
     canDelete = false;
     hooksModel: Array<WorkflowHookModel>;
@@ -79,6 +80,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             if (!h) {
                 return;
             }
+            console.log(h);
             this.hook = cloneDeep(h);
             this.canDelete = true;
             if (this.hooksModel) {
@@ -112,20 +114,24 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         if (!this.node && this.hook) {
             this.node = Workflow.getNodeByID(this.hook.node_id, this.workflow);
         }
-        this._hookService.getHookModel(this.project, this.workflow, this.node).pipe(
-            first(),
-            finalize(() => {
-                this.loadingModels = false;
-                this._cd.markForCheck();
-            })
-        ).subscribe(mds => {
-            this.hooksModel = mds;
-            if (this.hook && this.hook.hook_model_id) {
-                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this.hook.hook_model_id);
-                this.hook.model = this.selectedHookModel;
-                this.initConfig();
-            }
-        });
+        if (!this._store.selectSnapshot(WorkflowState).workflowRun) {
+            this._hookService.getHookModel(this.project, this.workflow, this.node).pipe(
+                first(),
+                finalize(() => {
+                    this.loadingModels = false;
+                    this._cd.markForCheck();
+                })
+            ).subscribe(mds => {
+                this.hooksModel = mds;
+                if (this.hook && this.hook.hook_model_id) {
+                    this.selectedHookModel = this.hooksModel.find(hm => hm.id === this.hook.hook_model_id);
+                    this.hook.model = this.selectedHookModel;
+                    this.initConfig();
+                }
+            });
+        } else {
+            this.isRun = true;
+        }
     }
 
     updateHook(): void {
