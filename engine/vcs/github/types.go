@@ -523,32 +523,34 @@ type ReleaseResponse struct {
 	UploadURL string `json:"upload_url"`
 }
 
+type GithubOwner struct {
+	Login             string `json:"login"`
+	ID                int    `json:"id"`
+	NodeID            string `json:"node_id"`
+	AvatarURL         string `json:"avatar_url"`
+	GravatarID        string `json:"gravatar_id"`
+	URL               string `json:"url"`
+	HTMLURL           string `json:"html_url"`
+	FollowersURL      string `json:"followers_url"`
+	FollowingURL      string `json:"following_url"`
+	GistsURL          string `json:"gists_url"`
+	StarredURL        string `json:"starred_url"`
+	SubscriptionsURL  string `json:"subscriptions_url"`
+	OrganizationsURL  string `json:"organizations_url"`
+	ReposURL          string `json:"repos_url"`
+	EventsURL         string `json:"events_url"`
+	ReceivedEventsURL string `json:"received_events_url"`
+	Type              string `json:"type"`
+	SiteAdmin         bool   `json:"site_admin"`
+}
+
 // RepositoryInvitation allows users or external services to invite other users to collaborate on a repo. The invited users (or external services on behalf of invited users) can choose to accept or decline the invitations.
 type RepositoryInvitation struct {
 	ID         int `json:"id"`
 	Repository struct {
-		ID     int    `json:"id"`
-		NodeID string `json:"node_id"`
-		Owner  struct {
-			Login             string `json:"login"`
-			ID                int    `json:"id"`
-			NodeID            string `json:"node_id"`
-			AvatarURL         string `json:"avatar_url"`
-			GravatarID        string `json:"gravatar_id"`
-			URL               string `json:"url"`
-			HTMLURL           string `json:"html_url"`
-			FollowersURL      string `json:"followers_url"`
-			FollowingURL      string `json:"following_url"`
-			GistsURL          string `json:"gists_url"`
-			StarredURL        string `json:"starred_url"`
-			SubscriptionsURL  string `json:"subscriptions_url"`
-			OrganizationsURL  string `json:"organizations_url"`
-			ReposURL          string `json:"repos_url"`
-			EventsURL         string `json:"events_url"`
-			ReceivedEventsURL string `json:"received_events_url"`
-			Type              string `json:"type"`
-			SiteAdmin         bool   `json:"site_admin"`
-		} `json:"owner"`
+		ID               int         `json:"id"`
+		NodeID           string      `json:"node_id"`
+		Owner            GithubOwner `json:"owner"`
 		Name             string      `json:"name"`
 		FullName         string      `json:"full_name"`
 		Description      string      `json:"description"`
@@ -625,50 +627,12 @@ type RepositoryInvitation struct {
 		SubscribersCount int  `json:"subscribers_count"`
 		NetworkCount     int  `json:"network_count"`
 	} `json:"repository"`
-	Invitee struct {
-		Login             string `json:"login"`
-		ID                int    `json:"id"`
-		NodeID            string `json:"node_id"`
-		AvatarURL         string `json:"avatar_url"`
-		GravatarID        string `json:"gravatar_id"`
-		URL               string `json:"url"`
-		HTMLURL           string `json:"html_url"`
-		FollowersURL      string `json:"followers_url"`
-		FollowingURL      string `json:"following_url"`
-		GistsURL          string `json:"gists_url"`
-		StarredURL        string `json:"starred_url"`
-		SubscriptionsURL  string `json:"subscriptions_url"`
-		OrganizationsURL  string `json:"organizations_url"`
-		ReposURL          string `json:"repos_url"`
-		EventsURL         string `json:"events_url"`
-		ReceivedEventsURL string `json:"received_events_url"`
-		Type              string `json:"type"`
-		SiteAdmin         bool   `json:"site_admin"`
-	} `json:"invitee"`
-	Inviter struct {
-		Login             string `json:"login"`
-		ID                int    `json:"id"`
-		NodeID            string `json:"node_id"`
-		AvatarURL         string `json:"avatar_url"`
-		GravatarID        string `json:"gravatar_id"`
-		URL               string `json:"url"`
-		HTMLURL           string `json:"html_url"`
-		FollowersURL      string `json:"followers_url"`
-		FollowingURL      string `json:"following_url"`
-		GistsURL          string `json:"gists_url"`
-		StarredURL        string `json:"starred_url"`
-		SubscriptionsURL  string `json:"subscriptions_url"`
-		OrganizationsURL  string `json:"organizations_url"`
-		ReposURL          string `json:"repos_url"`
-		EventsURL         string `json:"events_url"`
-		ReceivedEventsURL string `json:"received_events_url"`
-		Type              string `json:"type"`
-		SiteAdmin         bool   `json:"site_admin"`
-	} `json:"inviter"`
-	Permissions string `json:"permissions"`
-	CreatedAt   string `json:"created_at"`
-	URL         string `json:"url"`
-	HTMLURL     string `json:"html_url"`
+	Invitee     GithubOwner `json:"invitee"`
+	Inviter     GithubOwner `json:"inviter"`
+	Permissions string      `json:"permissions"`
+	CreatedAt   string      `json:"created_at"`
+	URL         string      `json:"url"`
+	HTMLURL     string      `json:"html_url"`
 }
 
 // DiffCommits represent response from github api for a diff between commits
@@ -734,4 +698,9 @@ type Ref struct {
 		Sha  string `json:"sha"`
 		URL  string `json:"url"`
 	} `json:"object"`
+}
+
+type UserPermissionResponse struct {
+	Permission string      `json:"permission"`
+	User       GithubOwner `json:"user"`
 }
