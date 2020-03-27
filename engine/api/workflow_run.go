@@ -610,9 +610,6 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 			}
 		}
 
-		if wfRun == nil {
-			wfRun = &sdk.WorkflowRun{Number: number, Workflow: *wf}
-		}
 		wfNodeRun := &sdk.WorkflowNodeRun{}
 		if branch != "" {
 			wfNodeRun.VCSBranch = branch
@@ -626,14 +623,20 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 			// Find hash and branch of ancestor node run
 			var nodeIDsAncestors []int64
 			if node != nil {
-				nodeIDsAncestors = node.Ancestors(wfRun.Workflow.WorkflowData)
+				nodeIDsAncestors = node.Ancestors(wf.WorkflowData)
 			}
 
-			for _, ancestorID := range nodeIDsAncestors {
-				if wfRun.WorkflowNodeRuns != nil && wfRun.WorkflowNodeRuns[ancestorID][0].VCSRepository == app.RepositoryFullname {
-					wfNodeRun.VCSHash = wfRun.WorkflowNodeRuns[ancestorID][0].VCSHash
-					wfNodeRun.VCSBranch = wfRun.WorkflowNodeRuns[ancestorID][0].VCSBranch
-					break
+			if wfRun != nil && wfRun.WorkflowNodeRuns != nil {
+				for _, ancestorID := range nodeIDsAncestors {
+					nodeRuns, ok := wfRun.WorkflowNodeRuns[ancestorID]
+					if !ok || len(nodeRuns) == 0 {
+						continue
+					}
+					if nodeRuns[0].VCSRepository == app.RepositoryFullname {
+						wfNodeRun.VCSHash = nodeRuns[0].VCSHash
+						wfNodeRun.VCSBranch = nodeRuns[0].VCSBranch
+						break
+					}
 				}
 			}
 		}
