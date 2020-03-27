@@ -108,5 +108,11 @@ func InitWorkflow(workName, appName, pipName string) Workflow {
 				PipelineName:    pipName,
 			},
 		},
+		Notifications: []v2.NotificationEntry{{
+			Type: sdk.VCSUserNotification,
+			Settings: &sdk.UserNotificationSettings{
+				OnSuccess: sdk.UserNotificationAlways,
+			},
+		}},
 	}
 }
