@@ -240,8 +240,11 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
             changes: clonedWorkflow
-        })).subscribe(() => {
-                this.loading = false;
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
+            .subscribe(() => {
                 this.conditionsChange.emit(false);
                 if (this.editMode) {
                     this._toast.info('', this._translate.instant('workflow_ascode_updated'));

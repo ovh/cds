@@ -260,7 +260,10 @@ export class WorkflowWizardNodeInputComponent implements OnInit {
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
             changes: clonedWorkflow
-        })).pipe(finalize(() => this.loading = false))
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        }))
             .subscribe(() => {
                 this.inputChange.emit(false);
                 if (this.editMode) {

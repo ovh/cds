@@ -144,14 +144,16 @@ export class WorkflowNodeHookFormComponent implements OnInit {
                 projectKey: this.workflow.project_key,
                 workflowName: this.workflow.name,
                 changes: clonedWorkflow
-            })).subscribe(() => {
-                    this.loading = false;
+            })).pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+                .subscribe(() => {
                     if (this.editMode) {
                         this._toast.info('', this._translate.instant('workflow_ascode_updated'));
                     } else {
                         this._toast.success('', this._translate.instant('workflow_updated'));
                     }
-                    this._cd.markForCheck();
                 });
         }
     }

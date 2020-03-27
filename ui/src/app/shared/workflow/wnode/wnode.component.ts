@@ -27,7 +27,7 @@ import {
 } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { finalize, map, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-wnode',
@@ -256,8 +256,10 @@ export class WorkflowWNodeComponent implements OnInit {
         });
 
         let editMode = this._store.selectSnapshot(WorkflowState).editMode;
-        this._store.dispatch(action).subscribe(() => {
+        this._store.dispatch(action).pipe(finalize(() => {
             this.loading = false;
+            this._cd.markForCheck();
+        })).subscribe(() => {
             if (!editMode) {
                 this._toast.success('', this._translate.instant('workflow_updated'));
             } else {
@@ -320,20 +322,20 @@ export class WorkflowWNodeComponent implements OnInit {
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             changes: w
-        })).subscribe(() => {
+        })).pipe(finalize(() => {
             this.loading = false;
+            this._cd.markForCheck();
+        })).subscribe(() => {
             if (!editMode) {
                 this._toast.success('', this._translate.instant('workflow_updated'));
             }
             if (modal) {
                 modal.approve(null);
             }
-            this._cd.markForCheck();
         }, () => {
             if (Array.isArray(this.node.hooks) && this.node.hooks.length) {
                 this.node.hooks.pop();
             }
-            this.loading = false;
         });
     }
 

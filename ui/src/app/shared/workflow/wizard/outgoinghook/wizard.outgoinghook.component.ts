@@ -194,8 +194,10 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit {
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
             changes: clonedWorkflow
+        })).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
         })).subscribe(() => {
-                this.loading = false
                 this.outgoinghookChange.emit(false);
                 if (this.editMode) {
                     this._toast.info('', this._translate.instant('workflow_ascode_updated'));

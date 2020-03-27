@@ -111,7 +111,6 @@ export class WorkflowNodeHookComponent implements OnInit {
                 } else {
                     this._toast.success('', this._translate.instant('workflow_updated'));
                 }
-
                 modal.approve(null);
             });
     }
