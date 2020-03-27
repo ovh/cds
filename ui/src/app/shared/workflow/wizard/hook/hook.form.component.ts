@@ -80,7 +80,6 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             if (!h) {
                 return;
             }
-            console.log(h);
             this.hook = cloneDeep(h);
             this.canDelete = true;
             if (this.hooksModel) {
