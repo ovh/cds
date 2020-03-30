@@ -64,11 +64,19 @@ export function getInitialWorkflowState(): WorkflowStateModel {
 })
 export class WorkflowState {
 
+    static getEditModal() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): boolean => state.editModal
+        );
+    }
+
     @Selector()
     static workflowSnapshot(state: WorkflowStateModel) {
         return state.workflow;
     }
 
+    /** @deprecated */
     static getCurrent() {
         return createSelector(
             [WorkflowState],
@@ -140,6 +148,17 @@ export class WorkflowState {
             [WorkflowState],
             (state: WorkflowStateModel): WNode => state.node
         );
+    }
+
+    @Selector()
+    static nodeRunByNodeID(state: WorkflowStateModel) {
+        return (id: number) => {
+            if (!state.workflowRun || !state.workflowRun.nodes || !state.workflowRun.nodes[id]
+                || state.workflowRun.nodes[id].length === 0) {
+                return null;
+            }
+            return state.workflowRun.nodes[id][0];
+        };
     }
 
     @Selector()

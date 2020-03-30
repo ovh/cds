@@ -28,7 +28,7 @@ import {
     SidebarRunsMode,
     UpdateFavoriteWorkflow
 } from 'app/store/workflow.action';
-import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { WorkflowState } from 'app/store/workflow.state';
 import { Observable, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
@@ -45,8 +45,11 @@ export class WorkflowComponent implements OnInit {
     templateApplyModal: WorkflowTemplateApplyModalComponent;
 
     project: Project;
+
+    @Select(WorkflowState.getWorkflow()) workflow$: Observable<Workflow>;
     workflow: Workflow;
     workflowSubscription: Subscription;
+
     projectSubscription: Subscription;
     dataRouteSubscription: Subscription;
     qpRouteSubscription: Subscription;
@@ -61,8 +64,6 @@ export class WorkflowComponent implements OnInit {
     sidebarSubs: Subscription;
     sidebarMode = WorkflowSidebarMode.RUNS;
     sidebarModes = WorkflowSidebarMode;
-
-    editWorkflow: Workflow;
 
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen = false;
@@ -134,25 +135,22 @@ export class WorkflowComponent implements OnInit {
         });
 
         this._store.dispatch(new CleanWorkflowState());
-        this.workflowSubscription = this._store.select(WorkflowState.getCurrent()).subscribe( (s: WorkflowStateModel) => {
-            this.editWorkflow = s.editWorkflow;
-
-            if (s.workflow && (!this.workflow || (this.workflow && s.workflow.id !== this.workflow.id))) {
-                this.workflow = s.workflow;
-                this.initRuns(s.projectKey, s.workflow.name, s.filters);
+        this.workflowSubscription = this.workflow$.subscribe(w => {
+            if (!w) {
+                return;
             }
-            if (s.workflow) {
-                this.workflow = s.workflow;
-                if (this.selectecHookRef) {
-                    let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
-                    if (h) {
-                        this._store.dispatch(new SelectHook({hook: h, node: this.workflow.workflow_data.node}));
-                    }
+            if (!this.workflow || (this.workflow && w.id !== this.workflow.id)) {
+                this.initRuns(this.project.key, w.name, this._store.selectSnapshot(WorkflowState).filters);
+            }
+            this.workflow = w;
+            if (this.selectecHookRef) {
+                let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
+                if (h) {
+                    this._store.dispatch(new SelectHook({hook: h, node: this.workflow.workflow_data.node}));
                 }
             }
             this._cd.markForCheck();
         });
-
 
         // Workflow subscription
         this.paramsRouteSubscription = this._activatedRoute.params.subscribe(params => {

@@ -1,8 +1,8 @@
 <div class="workflowFork pointing">
     <svg width="42" height="42">
-        <rect x="8" y="8" width="26" height="26" class="rect" [class.active]="selected"
-            [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
-            [class.success]="noderun?.status === pipelineStatus.SUCCESS" [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED"
-            [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED" />
+        <rect x="8" y="8" width="26" height="26" class="rect"
+            [class.building]="noderunStatus === pipelineStatus.BUILDING || noderunStatus === pipelineStatus.WAITING"
+            [class.success]="noderunStatus === pipelineStatus.SUCCESS" [class.fail]="noderunStatus === pipelineStatus.FAIL || noderunStatus === pipelineStatus.STOPPED"
+            [class.inactive]="noderunStatus === pipelineStatus.DISABLED || noderunStatus === pipelineStatus.SKIPPED" />
     </svg>
 </div>

@@ -1,8 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { PipelineStatus } from 'app/model/pipeline.model';
-import { Project } from 'app/model/project.model';
-import { WNode, Workflow } from 'app/model/workflow.model';
-import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 
 @Component({
@@ -13,11 +10,6 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 })
 @AutoUnsubscribe()
 export class WorkflowWNodeForkComponent {
-    @Input() public project: Project;
-    @Input() public node: WNode;
-    @Input() public workflow: Workflow;
-    @Input() public noderun: WorkflowNodeRun;
-    @Input() public selected: boolean;
-
+    @Input() noderunStatus: string;
     pipelineStatus = PipelineStatus;
 }
