@@ -71,9 +71,9 @@ type HandlerConfigParam func(*service.HandlerConfig)
 type HandlerConfigFunc func(service.Handler, ...HandlerConfigParam) *service.HandlerConfig
 
 func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
 		var name = sdk.RandomString(12)
-		rc := config[r.Method]
+		rc := config[req.Method]
 		if rc != nil && rc.Handler != nil {
 			name = runtime.FuncForPC(reflect.ValueOf(rc.Handler).Pointer()).Name()
 			name = strings.Replace(name, ".func1", "", 1)
@@ -82,14 +82,14 @@ func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.Ha
 		id := fmt.Sprintf("%d", sdk.GoroutineID())
 
 		labels := pprof.Labels(
-			"http-path", r.URL.Path,
+			"http-path", req.URL.Path,
 			"goroutine-id", id,
 			"goroutine-name", name+"-"+id,
 		)
-		ctx := pprof.WithLabels(r.Context(), labels)
+		ctx := pprof.WithLabels(req.Context(), labels)
 		pprof.SetGoroutineLabels(ctx)
-		r = r.WithContext(ctx)
-		fn(w, r)
+		req = req.WithContext(ctx)
+		fn(w, req)
 	}
 }
 
@@ -112,10 +112,10 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				switch t := re.(type) {
 				case string:
 					err = errors.New(t)
-				case error:
-					err = re.(error)
 				case sdk.Error:
 					err = re.(sdk.Error)
+				case error:
+					err = re.(error)
 				default:
 					err = sdk.ErrUnknownError
 				}
@@ -249,18 +249,19 @@ func (r *Router) computeScopeDetails() {
 
 // Handle adds all handler for their specific verb in gorilla router for given uri
 func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) {
+	uri = r.Prefix + uri
 	config, f := r.handle(uri, scope, handlers...)
 	r.Mux.Handle(uri, r.pprofLabel(config, r.compress(r.recoverWrap(f))))
 }
 
 func (r *Router) HandlePrefix(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) {
+	uri = r.Prefix + uri
 	config, f := r.handle(uri, scope, handlers...)
 	r.Mux.PathPrefix(uri).HandlerFunc(r.pprofLabel(config, r.compress(r.recoverWrap(f))))
 }
 
 // Handle adds all handler for their specific verb in gorilla router for given uri
 func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) (map[string]*service.HandlerConfig, http.HandlerFunc) {
-	uri = r.Prefix + uri
 	cfg := &service.RouterConfig{
 		Config: map[string]*service.HandlerConfig{},
 	}
@@ -396,7 +397,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 				"route":         cleanURL,
 				"request_uri":   req.RequestURI,
 				"deprecated":    rc.IsDeprecated,
-			}, "[%d] | %s | END | %s [%s]", responseWriter.statusCode, req.Method, req.URL, rc.Name)
+			}, "%s | END   | %s [%s] | [%d]", req.Method, req.URL, rc.Name, responseWriter.statusCode)
 
 			observability.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))
 			observability.Record(ctx, ServerRequestBytes, responseWriter.reqSize)
@@ -637,7 +638,7 @@ func EnableTracing() HandlerConfigParam {
 
 // NotFoundHandler is called by default by Mux is any matching handler has been found
 func NotFoundHandler(w http.ResponseWriter, req *http.Request) {
-	service.WriteError(context.Background(), w, req, sdk.WithStack(sdk.ErrNotFound))
+	service.WriteError(context.Background(), w, req, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("%s not found", req.URL.Path)))
 }
 
 // StatusPanic returns router status. If nbPanic > 30 -> Alert, if nbPanic > 0 -> Warn
