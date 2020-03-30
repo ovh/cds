@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Job, StepStatus } from 'app/model/job.model';
 import { PipelineStatus } from 'app/model/pipeline.model';
@@ -8,8 +8,11 @@ import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.servic
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { Select, Store } from '@ngxs/store';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { ProjectState } from 'app/store/project.state';
 
 @Component({
     selector: 'app-node-run-pipeline',
@@ -20,23 +23,14 @@ import { finalize } from 'rxjs/operators';
 @AutoUnsubscribe()
 export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
+    @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRun: WorkflowNodeRun;
+    nodeRunSubs: Subscription;
+
+    workflowName: string;
+    project: Project;
+
     jobTime: Map<number, string>;
-
-    @Input() workflowName: string;
-    @Input() project: Project;
-    @Input('run')
-    set run(data: WorkflowNodeRun) {
-        if (data) {
-            this.refreshNodeRun(data);
-
-            this.deleteInterval();
-            this.updateTime();
-            this.durationIntervalID = window.setInterval(() => {
-                this.updateTime();
-            }, 5000);
-        }
-    }
 
     queryParamsSub: Subscription;
     pipelineStatusEnum = PipelineStatus;
@@ -56,13 +50,29 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         private _route: ActivatedRoute,
         private _router: Router,
         private _workflowRunService: WorkflowRunService,
-        private _cd: ChangeDetectorRef
-    ) { }
+        private _cd: ChangeDetectorRef,
+        private _store: Store
+    ) {
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        this.workflowName = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun.workflow.name;
+    }
 
     ngOnInit() {
         this.updateSelectedItems(this._route.snapshot.queryParams);
         this.queryParamsSub = this._route.queryParams.subscribe((queryParams) => {
             this.updateSelectedItems(queryParams);
+        });
+
+        this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
+            if (!nr) {
+                return;
+            }
+            this.refreshNodeRun(nr);
+            this.deleteInterval();
+            this.updateTime();
+            this.durationIntervalID = window.setInterval(() => {
+                this.updateTime();
+                }, 5000);
         });
     }
 

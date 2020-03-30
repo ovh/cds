@@ -60,11 +60,11 @@ export class WorkflowRunArtifactListComponent implements OnInit  {
             if (!nr) {
                 return;
             }
-            if ( (!this.artifacts && nr.artifacts) || (this.artifacts && nr.artifacts && this.artifacts.length === nr.artifacts.length)) {
+            if ( (!this.artifacts && nr.artifacts) || (this.artifacts && nr.artifacts && this.artifacts.length !== nr.artifacts.length)) {
                 this.artifacts = nr.artifacts;
                 this._cd.markForCheck();
             }
-            if ( (!this.staticFiles && nr.static_files) || (this.staticFiles && nr.static_files && this.staticFiles.length )){
+            if ( (!this.staticFiles && nr.static_files) || (this.staticFiles && nr.static_files && this.staticFiles.length !== nr.static_files.length )){
                 this.staticFiles = nr.static_files;
                 this._cd.markForCheck();
             }
