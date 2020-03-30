@@ -155,7 +155,7 @@ export class PipelinesState {
         return this._http.post<Parameter>(url, parameter)
             .pipe(tap((param) => {
                 const state = ctx.getState();
-                let pipToUpdate = state.pipeline;
+                let pipToUpdate = cloneDeep(state.pipeline);
                 if (!pipToUpdate.parameters) {
                     pipToUpdate.parameters = new Array<Parameter>();
                 }
