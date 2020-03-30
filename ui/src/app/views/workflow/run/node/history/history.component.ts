@@ -9,6 +9,7 @@ import { Column, ColumnType } from 'app/shared/table/data-table.component';
 import { Store } from '@ngxs/store';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
+import { finalize, first } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-run-history',
@@ -17,8 +18,7 @@ import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowNodeRunHistoryComponent implements OnInit {
-    @Input() history: Array<WorkflowNodeRun>;
-
+    history: Array<WorkflowNodeRun>;
     project: Project;
     run: WorkflowRun;
     currentBuild: WorkflowNodeRun;
@@ -32,6 +32,8 @@ export class WorkflowNodeRunHistoryComponent implements OnInit {
         this.run = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun;
         this.currentBuild = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun;
         this.workflowName = this.run.workflow.name;
+        let nodeRun = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun;
+        this.history = this.run.nodes[nodeRun.workflow_node_id];
     }
 
     ngOnInit() {

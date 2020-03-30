@@ -1,6 +1,6 @@
 <div id="WorkflowNodeRun" *ngIf="nodeRun">
-    <ng-container *ngIf="nodeRun && workflowRun">
-        <app-workflow-node-run-summary [project]="project" [nodeRun]="nodeRun" [workflow]="workflowRun.workflow" [duration]="duration"></app-workflow-node-run-summary>
+    <ng-container *ngIf="nodeRun">
+        <app-workflow-node-run-summary></app-workflow-node-run-summary>
     </ng-container>
     <div class="CDSmenu">
         <sm-menu title="" class="pointing secondary">
@@ -8,10 +8,10 @@
                 <i class="sitemap icon"></i>
                 {{ 'common_pipeline' | translate }}
             </a>
-            <a sm-item [class.active]="selectedTab === 'commit'" [class.disabled]="!nodeRun || !nodeRun.commits || nodeRun.commits.length === 0" (click)="nodeRun.commits && nodeRun.commits.length !== 0 && showTab('commit')">
-                <span *ngIf="nodeRun.commits">{{ nodeRun.commits.length + ' '}}</span>
-                <span *ngIf="nodeRun.commits && nodeRun.commits.length > 1">{{ 'common_commits' | translate }}</span>
-                <span *ngIf="!nodeRun.commits || (nodeRun.commits && nodeRun.commits.length < 2)">{{ 'common_commit' | translate }}</span>
+            <a sm-item [class.active]="selectedTab === 'commit'" [class.disabled]="commitsLength === 0" (click)="commitsLength !== 0 && showTab('commit')">
+                {{ commitsLength + ' '}}
+                <span *ngIf="commitsLength > 1">{{ 'common_commits' | translate }}</span>
+                <span *ngIf="commitsLength < 2">{{ 'common_commit' | translate }}</span>
             </a>
             <a sm-item [class.active]="selectedTab === 'vuln'" [class.disabled]="!nodeRun || !nodeRun.vulnerabilities_report" (click)="showTab('vuln')">
                 <span  *ngIf="nbVuln > 0 || deltaVul !== 0">{{nbVuln + ' '}}</span>
@@ -31,15 +31,15 @@
             </a>
             <a sm-item
               [class.active]="selectedTab === 'artifact'"
-              (click)="((nodeRun.artifacts && nodeRun.artifacts.length !== 0) || (nodeRun.static_files && nodeRun.static_files.length !== 0)) && showTab('artifact')"
-              [class.disabled]="(!nodeRun || !nodeRun.artifacts || nodeRun.artifacts.length === 0) && (!nodeRun.static_files || nodeRun.static_files.length === 0)">
-                <span *ngIf="nodeRun && nodeRun.artifacts && nodeRun.artifacts.length > 1">{{ 'common_artifacts' | translate }}</span>
-                <span *ngIf="!nodeRun || !nodeRun.artifacts || nodeRun.artifacts.length < 2">{{ 'common_artifact' | translate }}</span>
-                <span *ngIf="nodeRun && nodeRun.artifacts ">{{ ' (' + nodeRun.artifacts.length + ')'}}</span>
+              (click)="(artifactLength !== 0 || staticFilesLength !== 0) && showTab('artifact')"
+              [class.disabled]="artifactLength === 0 && staticFilesLength === 0">
+                <span *ngIf="artifactLength + staticFilesLength > 1">{{ 'common_artifacts' | translate }}</span>
+                <span *ngIf="artifactLength + staticFilesLength < 2">{{ 'common_artifact' | translate }}</span>
+                <span>{{ ' (' + staticFilesLength + artifactLength + ')'}}</span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'history'" (click)="nodeRunsHistory.length !== 0 && showTab('history')" [class.disabled]="nodeRunsHistory.length === 0">
+            <a sm-item [class.active]="selectedTab === 'history'" (click)="historyLength !== 0 && showTab('history')" [class.disabled]="historyLength === 0">
                 {{ 'common_history' | translate }}
-                {{ ' (' + nodeRunsHistory.length + ')'}}
+                {{ ' (' + historyLength + ')'}}
             </a>
         </sm-menu>
     </div>
@@ -80,7 +80,7 @@
                     <app-workflow-tests-result></app-workflow-tests-result>
                 </div>
                 <div *ngSwitchCase="'history'">
-                    <app-workflow-node-run-history [history]="nodeRunsHistory"></app-workflow-node-run-history>
+                    <app-workflow-node-run-history></app-workflow-node-run-history>
                 </div>
             </div>
         </div>
