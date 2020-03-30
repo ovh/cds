@@ -62,14 +62,10 @@ func SyncAsCodeEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, pro
 			log.Debug("Pull request %s #%d not found", app.RepositoryFullname, int(ascodeEvt.PullRequestID))
 		}
 
-		// If the PR was deleted or closed we should remove the ascode data from the workflow, else if merged we want to set this value.
+		// If the PR was merged we want to set the repo url on the workflow
 		if ascodeEvt.Migrate && len(ascodeEvt.Data.Workflows) == 1 {
 			for id := range ascodeEvt.Data.Workflows {
-				if prNotFound || pr.Closed {
-					if err := workflow.UpdateFromRepository(tx, id, ""); err != nil {
-						return nil, fromRepo, err
-					}
-				} else if pr.Merged {
+				if pr.Merged {
 					if err := workflow.UpdateFromRepository(tx, id, fromRepo); err != nil {
 						return nil, fromRepo, err
 					}

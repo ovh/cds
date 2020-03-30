@@ -105,16 +105,15 @@ export class UpdateAsCodeComponent {
     }
 
     startPollingOperation() {
-        this.pollingOperationSub = Observable.interval(1000).subscribe(() => {
-            this._workflowService.getAsCodeOperation(this.project.key, this.name, this.ope.uuid)
-                .pipe(finalize(() => this._cd.markForCheck()))
-                .subscribe(o => {
-                    this.ope = o;
-                    if (this.ope.status > 1) {
-                        this.loading = false;
-                        this.pollingOperationSub.unsubscribe();
-                    }
-                });
-        });
+        this.pollingOperationSub = Observable.interval(1000)
+            .mergeMap(_ => this._workflowService.getAsCodeOperation(this.project.key, this.name, this.ope.uuid))
+            .first(o => o.status > 1)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(o => {
+                this.ope = o;
+            });
     }
 }
