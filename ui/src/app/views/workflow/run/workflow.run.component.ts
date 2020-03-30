@@ -62,6 +62,8 @@ export class WorkflowRunComponent implements OnInit {
         this._store.dispatch(new ChangeToRunView({}));
 
         this.paramsSub = this._activatedRoute.params.subscribe(p => {
+            this.workflowRunData = {};
+            this._cd.markForCheck();
             this._store.dispatch(
                 new GetWorkflowRun({
                     projectKey: this.project.key,
