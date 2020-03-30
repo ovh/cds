@@ -1,6 +1,11 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { Coverage } from 'app/model/coverage.model';
 import { Tests } from 'app/model/pipeline.model';
+import { Select, Store } from '@ngxs/store';
+import { WorkflowState } from 'app/store/workflow.state';
+import { Observable, Subscription } from 'rxjs';
+import { WorkflowNodeRun } from 'app/model/workflow.run.model';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-tests-result',
@@ -8,11 +13,15 @@ import { Tests } from 'app/model/pipeline.model';
     styleUrls: ['./tests.result.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WorkflowRunTestsResultComponent {
+@AutoUnsubscribe()
+export class WorkflowRunTestsResultComponent implements OnInit {
 
-    @Input() tests: Tests;
+    @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
+    nodeRunSubs: Subscription;
 
-    _coverage: Coverage;
+    tests: Tests;
+    coverage: Coverage;
+
     percentLines: number;
     currentBranchTrendLines: number;
     defaultBranchTrendLines: number;
@@ -24,66 +33,73 @@ export class WorkflowRunTestsResultComponent {
     defaultBranchTrendBranches: number;
 
     constructor(
+        private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
     }
 
-    @Input('coverage')
-    set coverage(data: Coverage) {
-        if (data && data.workflow_id) {
-            this._coverage = data;
-            if (this._coverage.report.total_branches) {
-                this.percentBranches =
-                    parseFloat((this._coverage.report.covered_branches * 100 / this._coverage.report.total_branches)
-                    .toFixed(2));
-                if (this._coverage.trend.current_branch_report.total_branches &&
-                    this._coverage.trend.current_branch_report.total_branches > 0 ) {
-                    this.currentBranchTrendBranches =
-                        parseFloat((this._coverage.trend.current_branch_report.covered_branches * 100
-                        / this._coverage.trend.current_branch_report.total_branches).toFixed(2));
-                }
-                if (this._coverage.trend.default_branch_report.total_branches &&
-                    this._coverage.trend.default_branch_report.total_branches > 0) {
-                    this.defaultBranchTrendBranches =
-                        parseFloat((this._coverage.trend.default_branch_report.covered_branches * 100
-                        / this._coverage.trend.default_branch_report.total_branches).toFixed(2));
-                }
+    ngOnInit(): void {
+        this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
+            if (!nr || (!nr.tests && !nr.coverage)) {
+                return;
             }
-            if (this._coverage.report.total_functions) {
-                this.percentFunctions =
-                    parseFloat((this._coverage.report.covered_functions * 100 / this._coverage.report.total_functions)
-                        .toFixed(2));
-                if (this._coverage.trend.current_branch_report.total_functions &&
-                    this._coverage.trend.current_branch_report.total_functions > 0) {
-                    this.currentBranchTrendFunctions =
-                        parseFloat((this._coverage.trend.current_branch_report.covered_functions * 100
-                        / this._coverage.trend.current_branch_report.total_functions).toFixed(2));
-                }
-                if (this._coverage.trend.default_branch_report.total_branches &&
-                    this._coverage.trend.default_branch_report.total_branches > 0) {
-                    this.defaultBranchTrendFunctions =
-                        parseFloat((this._coverage.trend.default_branch_report.covered_functions * 100
-                        / this._coverage.trend.default_branch_report.total_branches).toFixed(2));
-                }
+            if ( (!this.tests && nr.tests) || (this.tests && nr.tests && this.tests.total !== nr.tests.total)) {
+                this.tests = nr.tests;
+                this._cd.markForCheck();
             }
-            if (this._coverage.report.total_lines && this._coverage.report.total_lines > 0) {
-                this.percentLines =
-                    parseFloat((this._coverage.report.covered_lines * 100 / this._coverage.report.total_lines).toFixed(2));
-                if (this._coverage.trend.current_branch_report.total_lines && this._coverage.trend.current_branch_report.total_lines > 0) {
-                    this.currentBranchTrendLines =
-                        parseFloat((this._coverage.trend.current_branch_report.covered_lines * 100
-                        / this._coverage.trend.current_branch_report.total_lines).toFixed(2));
+            if (!this.coverage && nr.coverage) {
+                this.coverage = nr.coverage;
+                if (this.coverage.report.total_branches) {
+                    this.percentBranches =
+                        parseFloat((this.coverage.report.covered_branches * 100 / this.coverage.report.total_branches)
+                            .toFixed(2));
+                    if (this.coverage.trend.current_branch_report.total_branches &&
+                        this.coverage.trend.current_branch_report.total_branches > 0 ) {
+                        this.currentBranchTrendBranches =
+                            parseFloat((this.coverage.trend.current_branch_report.covered_branches * 100
+                                / this.coverage.trend.current_branch_report.total_branches).toFixed(2));
+                    }
+                    if (this.coverage.trend.default_branch_report.total_branches &&
+                        this.coverage.trend.default_branch_report.total_branches > 0) {
+                        this.defaultBranchTrendBranches =
+                            parseFloat((this.coverage.trend.default_branch_report.covered_branches * 100
+                                / this.coverage.trend.default_branch_report.total_branches).toFixed(2));
+                    }
                 }
-                if (this._coverage.trend.default_branch_report.total_lines && this._coverage.trend.default_branch_report.total_lines > 0) {
-                    this.defaultBranchTrendLines =
-                        parseFloat((this._coverage.trend.default_branch_report.covered_lines * 100
-                        / this._coverage.trend.default_branch_report.total_lines).toFixed(2));
+                if (this.coverage.report.total_functions) {
+                    this.percentFunctions =
+                        parseFloat((this.coverage.report.covered_functions * 100 / this.coverage.report.total_functions)
+                            .toFixed(2));
+                    if (this.coverage.trend.current_branch_report.total_functions &&
+                        this.coverage.trend.current_branch_report.total_functions > 0) {
+                        this.currentBranchTrendFunctions =
+                            parseFloat((this.coverage.trend.current_branch_report.covered_functions * 100
+                                / this.coverage.trend.current_branch_report.total_functions).toFixed(2));
+                    }
+                    if (this.coverage.trend.default_branch_report.total_branches &&
+                        this.coverage.trend.default_branch_report.total_branches > 0) {
+                        this.defaultBranchTrendFunctions =
+                            parseFloat((this.coverage.trend.default_branch_report.covered_functions * 100
+                                / this.coverage.trend.default_branch_report.total_branches).toFixed(2));
+                    }
                 }
+                if (this.coverage.report.total_lines && this.coverage.report.total_lines > 0) {
+                    this.percentLines =
+                        parseFloat((this.coverage.report.covered_lines * 100 / this.coverage.report.total_lines).toFixed(2));
+                    if (this.coverage.trend.current_branch_report.total_lines && this.coverage.trend.current_branch_report.total_lines > 0) {
+                        this.currentBranchTrendLines =
+                            parseFloat((this.coverage.trend.current_branch_report.covered_lines * 100
+                                / this.coverage.trend.current_branch_report.total_lines).toFixed(2));
+                    }
+                    if (this.coverage.trend.default_branch_report.total_lines && this.coverage.trend.default_branch_report.total_lines > 0) {
+                        this.defaultBranchTrendLines =
+                            parseFloat((this.coverage.trend.default_branch_report.covered_lines * 100
+                                / this.coverage.trend.default_branch_report.total_lines).toFixed(2));
+                    }
+                }
+                this._cd.markForCheck();
             }
-        }
-        this._cd.detectChanges();
-    };
-    get coverage(): Coverage {
-        return this._coverage;
+
+        });
     }
 }

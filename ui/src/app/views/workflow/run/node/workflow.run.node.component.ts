@@ -61,16 +61,7 @@ export class WorkflowNodeRunComponent {
         private _titleService: Title,
         private _cd: ChangeDetectorRef
     ) {
-        this._activatedRoute.data.subscribe(datas => {
-            this.project = datas['project'];
-        });
-
-        this.project$ = this._store.select(ProjectState)
-            .pipe(filter((prj) => prj != null))
-            .subscribe((projState: ProjectStateModel) => {
-                this.project = projState.project;
-            });
-
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.isAdmin = this._store.selectSnapshot(AuthenticationState.user).ring === 'ADMIN';
 
         // Tab selection
@@ -81,11 +72,14 @@ export class WorkflowNodeRunComponent {
                 this.selectedTab = 'pipeline';
             }
             this.pipelineName = q['name'] || '';
+            this._cd.markForCheck();
         });
 
         // Get workflow name
         this.workflowName = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root)['workflowName'];
         let historyChecked = false;
+
+
         this.storeSub = this._store.select(WorkflowState.getCurrent()).subscribe((s: WorkflowStateModel) => {
             if (!s.workflow || this.workflowName !== s.workflow.name) {
                 return;

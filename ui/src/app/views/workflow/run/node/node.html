@@ -68,19 +68,19 @@
         <div class="paddingContent">
             <div class="viewContent" [ngSwitch]="selectedTab">
                 <div *ngSwitchCase="'artifact'">
-                    <app-workflow-artifact-list [artifacts]="nodeRun.artifacts" [staticFiles]="nodeRun.static_files"></app-workflow-artifact-list>
+                    <app-workflow-artifact-list></app-workflow-artifact-list>
                 </div>
                 <div *ngSwitchCase="'vuln'">
                     <app-vulnerabilities [report]="nodeRun.vulnerabilities_report"></app-vulnerabilities>
                 </div>
                 <div *ngSwitchCase="'commit'">
-                    <app-commit-list [commits]="nodeRun.commits"></app-commit-list>
+                    <app-commit-list></app-commit-list>
                 </div>
                 <div *ngSwitchCase="'test'">
-                    <app-workflow-tests-result [tests]="nodeRun.tests" [coverage]="nodeRun.coverage"></app-workflow-tests-result>
+                    <app-workflow-tests-result></app-workflow-tests-result>
                 </div>
                 <div *ngSwitchCase="'history'">
-                    <app-workflow-node-run-history [run]="workflowRun" [project]="project" [currentBuild]="nodeRun" [history]="nodeRunsHistory" [workflowName]="workflowName"></app-workflow-node-run-history>
+                    <app-workflow-node-run-history [history]="nodeRunsHistory"></app-workflow-node-run-history>
                 </div>
             </div>
         </div>

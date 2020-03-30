@@ -6,6 +6,9 @@ import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { Column, ColumnType } from 'app/shared/table/data-table.component';
+import { Store } from '@ngxs/store';
+import { ProjectState } from 'app/store/project.state';
+import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 
 @Component({
     selector: 'app-workflow-node-run-history',
@@ -14,17 +17,21 @@ import { Column, ColumnType } from 'app/shared/table/data-table.component';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkflowNodeRunHistoryComponent implements OnInit {
-    @Input() project: Project;
-    @Input() run: WorkflowRun;
     @Input() history: Array<WorkflowNodeRun>;
-    @Input() currentBuild: WorkflowNodeRun;
-    @Input() workflowName: string;
+
+    project: Project;
+    run: WorkflowRun;
+    currentBuild: WorkflowNodeRun;
+    workflowName: string;
 
     loading: boolean;
     columns: Array<Column<WorkflowNodeRun>>;
 
-    constructor(private _router: Router) {
-
+    constructor(private _router: Router, private _store: Store) {
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        this.run = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun;
+        this.currentBuild = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowNodeRun;
+        this.workflowName = this.run.workflow.name;
     }
 
     ngOnInit() {
