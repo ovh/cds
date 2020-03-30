@@ -249,6 +249,17 @@ func (r *Router) computeScopeDetails() {
 
 // Handle adds all handler for their specific verb in gorilla router for given uri
 func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) {
+	config, f := r.handle(uri, scope, handlers...)
+	r.Mux.Handle(uri, r.pprofLabel(config, r.compress(r.recoverWrap(f))))
+}
+
+func (r *Router) HandlePrefix(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) {
+	config, f := r.handle(uri, scope, handlers...)
+	r.Mux.PathPrefix(uri).HandlerFunc(r.pprofLabel(config, r.compress(r.recoverWrap(f))))
+}
+
+// Handle adds all handler for their specific verb in gorilla router for given uri
+func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.HandlerConfig) (map[string]*service.HandlerConfig, http.HandlerFunc) {
 	uri = r.Prefix + uri
 	cfg := &service.RouterConfig{
 		Config: map[string]*service.HandlerConfig{},
@@ -429,8 +440,7 @@ func (r *Router) Handle(uri string, scope HandlerScope, handlers ...*service.Han
 		deferFunc(ctx)
 	}
 
-	// The chain is http -> mux -> f -> recover -> wrap -> pprof -> opencensus -> http
-	r.Mux.Handle(uri, r.pprofLabel(cfg.Config, r.compress(r.recoverWrap(f))))
+	return cfg.Config, f
 }
 
 type asynchronousRequest struct {
