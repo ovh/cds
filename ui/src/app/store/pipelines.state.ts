@@ -4,6 +4,7 @@ import { Job } from 'app/model/job.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline, PipelineAudit } from 'app/model/pipeline.model';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
+import * as actionAsCode from 'app/store/ascode.action';
 import { cloneDeep } from 'lodash-es';
 import { tap } from 'rxjs/operators';
 import * as actionPipeline from './pipelines.action';
@@ -580,5 +581,13 @@ export class PipelinesState {
             editPipeline: editPipeline,
             editMode: editMode,
         });
+    }
+
+    @Action(actionAsCode.ResyncEvents)
+    refreshAsCodeEvents(ctx: StateContext<PipelinesStateModel>, _) {
+        const state = ctx.getState();
+        if (state.pipeline) {
+            ctx.dispatch(new actionPipeline.ResyncPipeline({projectKey: state.currentProjectKey, pipelineName: state.pipeline.name}));
+        }
     }
 }
