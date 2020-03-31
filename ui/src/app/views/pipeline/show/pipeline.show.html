@@ -6,7 +6,7 @@
             [remote]="remote" [branch]="branch">
             <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
                 <a class="ui label small basic"
-                   [class.green]="pipeline && pipeline.from_repository && !pipeline.ascode_events"
+                   [class.green]="pipeline && pipeline.from_repository && (!pipeline.ascode_events || pipeline.ascode_events.length ===0)"
                    [class.orange]="pipeline && pipeline.from_repository && pipeline?.ascode_events?.length > 0"
                    suiPopup
                     [popupTemplate]="popupFromRepository" popupPlacement="bottom right" popupTrigger="outsideClick"
