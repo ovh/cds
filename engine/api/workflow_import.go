@@ -314,12 +314,8 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		mods := []workflowtemplate.TemplateRequestModifierFunc{
 			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
 		}
-		if pushOptions.FromRepository != "" {
-			mod, err := workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, api.mustDB(), api.Cache, *proj, pushOptions.FromRepository)
-			if err != nil {
-				return err
-			}
-			mods = append(mods, mod)
+		if pushOptions != nil && pushOptions.FromRepository != "" {
+			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, api.mustDB(), api.Cache, *proj, pushOptions.FromRepository))
 		}
 		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
 		if err != nil {

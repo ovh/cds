@@ -165,11 +165,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 		}
 		if opt.FromRepository != "" {
-			mod, err := workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, api.mustDB(), api.Cache, *proj, opt.FromRepository)
-			if err != nil {
-				return err
-			}
-			mods = append(mods, mod)
+			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, api.mustDB(), api.Cache, *proj, opt.FromRepository))
 		}
 		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
 		if err != nil {

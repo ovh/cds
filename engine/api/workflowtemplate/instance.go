@@ -16,20 +16,25 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-type TemplateRequestModifierFunc func(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest)
+type TemplateRequestModifierFunc func(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error
 
 var TemplateRequestModifiers = struct {
 	Detached                   TemplateRequestModifierFunc
 	DefaultKeys                func(proj sdk.Project) TemplateRequestModifierFunc
-	DefaultNameAndRepositories func(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, repoURL string) (TemplateRequestModifierFunc, error)
+	DefaultNameAndRepositories func(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, repoURL string) TemplateRequestModifierFunc
 }{
-	Detached:                   func(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) { req.Detached = true },
+	Detached:                   requestModifyDetached,
 	DefaultKeys:                requestModifyDefaultKeysfunc,
 	DefaultNameAndRepositories: requestModifyDefaultNameAndRepositories,
 }
 
+func requestModifyDetached(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
+	req.Detached = true
+	return nil
+}
+
 func requestModifyDefaultKeysfunc(proj sdk.Project) TemplateRequestModifierFunc {
-	return func(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) {
+	return func(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
 		defaultSSHKey := sdk.GenerateProjectDefaultKeyName(proj.Key, sdk.KeyTypeSSH)
 		defaultPGPKey := sdk.GenerateProjectDefaultKeyName(proj.Key, sdk.KeyTypePGP)
 		var defaultSSHKeyFound, defaultPGPKeyFound bool
@@ -58,29 +63,30 @@ func requestModifyDefaultKeysfunc(proj sdk.Project) TemplateRequestModifierFunc 
 				req.Parameters[p.Key] = defaultPGPKey
 			}
 		}
+		return nil
 	}
 }
 
-func requestModifyDefaultNameAndRepositories(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, repoURL string) (TemplateRequestModifierFunc, error) {
-	var repoPath string
-loopVCSServer:
-	for _, vcs := range proj.VCSServers {
-		repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, db, store, proj, vcs.Name, repositoriesmanager.Options{})
-		if err != nil {
-			return nil, err
-		}
-		for _, r := range repos {
-			path := fmt.Sprintf("%s/%s", vcs.Name, r.Fullname)
-			if repoURL == r.HTTPCloneURL || repoURL == r.SSHCloneURL {
-				repoPath = path
-				break loopVCSServer
+func requestModifyDefaultNameAndRepositories(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, repoURL string) TemplateRequestModifierFunc {
+	return func(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) error {
+		var repoPath string
+	loopVCSServer:
+		for _, vcs := range proj.VCSServers {
+			repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, db, store, proj, vcs.Name, repositoriesmanager.Options{})
+			if err != nil {
+				return err
+			}
+			for _, r := range repos {
+				path := fmt.Sprintf("%s/%s", vcs.Name, r.Fullname)
+				if repoURL == r.HTTPCloneURL || repoURL == r.SSHCloneURL {
+					repoPath = path
+					break loopVCSServer
+				}
 			}
 		}
-	}
 
-	return func(wt sdk.WorkflowTemplate, req *sdk.WorkflowTemplateRequest) {
 		if repoPath == "" {
-			return
+			return nil
 		}
 
 		splittedPath := strings.Split(repoPath, "/")
@@ -99,7 +105,9 @@ loopVCSServer:
 				req.Parameters[p.Key] = repoPath
 			}
 		}
-	}, nil
+
+		return nil
+	}
 }
 
 // CheckAndExecuteTemplate will execute the workflow template if given workflow components contains a template instance.
@@ -157,7 +165,9 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 		Parameters:   data.Template.Parameters,
 	}
 	for i := range mods {
-		mods[i](*wt, &req)
+		if err := mods[i](*wt, &req); err != nil {
+			return nil, err
+		}
 	}
 
 	var result exportentities.WorkflowComponents

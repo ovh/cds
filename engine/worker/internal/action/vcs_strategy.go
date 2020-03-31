@@ -32,7 +32,7 @@ func vcsStrategy(ctx context.Context, wk workerruntime.Runtime, params []sdk.Par
 		}
 		privateKeyVar := sdk.Variable{
 			Name:  "cds.key." + keyName.Value + ".priv",
-			Type:  sdk.KeyTypeSSH,
+			Type:  string(sdk.KeyTypeSSH),
 			Value: privateKey.Value,
 		}
 

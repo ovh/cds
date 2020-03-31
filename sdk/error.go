@@ -751,6 +751,10 @@ func NewError(httpError Error, err error) error {
 
 // NewErrorFrom returns the given error with given from details.
 func NewErrorFrom(err error, from string, args ...interface{}) error {
+	if err == nil {
+		return nil
+	}
+
 	switch e := err.(type) {
 	case errorWithStack:
 		e.httpError.From = fmt.Errorf(from, args...).Error()
