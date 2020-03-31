@@ -116,12 +116,13 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	if err != nil {
 		return allMsgs, err
 	}
-	allMsg, workflowPushed, _, err := Push(ctx, db, store, p, data, opt, consumer, decryptFunc)
+	msgList, workflowPushed, _, err := Push(ctx, db, store, p, data, opt, consumer, decryptFunc)
+	allMsgs = append(allMsgs, msgList...)
 	if err != nil {
-		return allMsg, sdk.WrapError(err, "unable to get workflow from file")
+		return allMsgs, sdk.WrapError(err, "unable to get workflow from file")
 	}
 	if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, db, *workflowPushed, consumer, wti); err != nil {
-		return allMsg, err
+		return allMsgs, err
 	}
 	*wf = *workflowPushed
 
@@ -129,7 +130,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 		log.Debug("workflow.extractWorkflow> Workflow has been renamed from %s to %s", wf.Name, workflowPushed.Name)
 	}
 
-	return append(allMsgs, allMsg...), nil
+	return allMsgs, nil
 }
 
 // ReadCDSFiles reads CDS files

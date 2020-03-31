@@ -153,7 +153,11 @@ func LoadAuditByTemplateIDAndVersion(ctx context.Context, db gorp.SqlExecutor, t
     FROM workflow_template_audit
     WHERE workflow_template_id = $1 AND (data_after->>'version')::int = $2
   `).Args(templateID, version)
-	return getAudit(ctx, db, query)
+	a, err := getAudit(ctx, db, query)
+	if err != nil {
+		return nil, sdk.NewErrorFrom(err, "could not find a template audit with version %d", version)
+	}
+	return a, nil
 }
 
 // LoadAuditOldestByTemplateID returns workflow template oldtest audit by template id.

@@ -141,12 +141,12 @@ func CheckAndExecuteTemplate(ctx context.Context, db *gorp.DbMap, consumer sdk.A
 
 	wt, err := LoadBySlugAndGroupID(ctx, db, templateSlug, grp.ID, LoadOptions.Default)
 	if err != nil {
-		return nil, sdk.WrapError(err, "could not find a template with slug %s in group %s", templateSlug, grp.Name)
+		return nil, sdk.NewErrorFrom(err, "could not find a template with slug %s in group %s", templateSlug, grp.Name)
 	}
 	if templateVersion > 0 {
 		wta, err := LoadAuditByTemplateIDAndVersion(ctx, db, wt.ID, templateVersion)
 		if err != nil {
-			return nil, sdk.WrapError(err, "could not find a template audit with version %d for %s", templateVersion, wt.Path())
+			return nil, err
 		}
 		wt = &wta.DataAfter
 	}

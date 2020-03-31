@@ -749,9 +749,16 @@ func NewError(httpError Error, err error) error {
 	}
 }
 
-// NewErrorFrom returns the given http error with from details.
-func NewErrorFrom(httpError Error, from string, args ...interface{}) error {
-	return NewError(httpError, fmt.Errorf(from, args...))
+// NewErrorFrom returns the given error with given from details.
+func NewErrorFrom(err error, from string, args ...interface{}) error {
+	switch e := err.(type) {
+	case errorWithStack:
+		e.httpError.From = fmt.Errorf(from, args...).Error()
+		return e
+	case Error:
+		return NewError(e, fmt.Errorf(from, args...))
+	}
+	return NewErrorWithStack(err, NewErrorFrom(ErrUnknownError, from, args...))
 }
 
 // WrapError returns an error with stack and message.
