@@ -228,6 +228,8 @@ func (api *API) postResyncPRAsCodeHandler() service.Handler {
 				return err
 			}
 			app = wkf.Applications[wkf.WorkflowData.Node.Context.ApplicationID]
+		default:
+			return sdk.WrapError(sdk.ErrWrongRequest, "Missing appName or repo query parameter")
 		}
 
 		if _, _, err := sync.SyncAsCodeEvent(ctx, api.mustDB(), api.Cache, *proj, app, getAPIConsumer(ctx).AuthentifiedUser); err != nil {
