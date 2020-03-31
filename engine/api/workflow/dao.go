@@ -1174,6 +1174,7 @@ func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 
 		// Add missing default value for hook
 		model := w.HookModels[h.HookModelID]
+		h.HookModelName = model.Name
 		for k := range model.DefaultConfig {
 			if _, ok := h.Config[k]; !ok {
 				h.Config[k] = model.DefaultConfig[k]
@@ -1196,6 +1197,16 @@ func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 				if !found {
 					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given value for hook config '%s', given value not in choices list", k)
 				}
+			}
+			v := h.Config[k]
+			v.Configurable = d.Configurable
+			h.Config[k] = v
+		}
+		// Check hooks duplication
+		for j := range n.Hooks {
+			h2 := n.Hooks[j]
+			if i != j && h.Ref() == h2.Ref() {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid workflow: duplicate hook %s", model.Name)
 			}
 		}
 	}
