@@ -362,7 +362,24 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.
 	return res, nil
 }
 
-// LoadByID loads a workflow for a given user (ie. checking permissions)
+// LoadAndLockByID loads a workflow
+func LoadAndLockByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
+	query := `
+		select *
+		from workflow
+		where id = $1 for update skip locked`
+	res, err := load(ctx, db, proj, opts, query, id)
+	if err != nil {
+		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
+	}
+
+	if err := IsValid(context.TODO(), store, db, res, proj, opts); err != nil {
+		return nil, sdk.WrapError(err, "Unable to valid workflow")
+	}
+	return res, nil
+}
+
+// LoadByID loads a workflow
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, id int64, opts LoadOptions) (*sdk.Workflow, error) {
 	query := `
 		select *
