@@ -438,11 +438,7 @@ func workflowInitRun(c cli.Values) error {
 	}
 
 	// Check if the project is linked to a repository
-	proj, err := client.ProjectGet(pkey, func(r *http.Request) {
-		q := r.URL.Query()
-		q.Set("withKeys", "true")
-		r.URL.RawQuery = q.Encode()
-	})
+	proj, err := client.ProjectGet(pkey, cdsclient.WithKeys())
 	if err != nil {
 		return fmt.Errorf("unable to get project: %v", err)
 	}

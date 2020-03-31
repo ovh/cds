@@ -646,9 +646,9 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 
 		var ps sdk.Projects
 		if isMaintainer(ctx) {
-			ps, err = project.LoadAll(ctx, api.mustDB(), api.Cache)
+			ps, err = project.LoadAll(ctx, api.mustDB(), api.Cache, project.LoadOptions.WithKeys)
 		} else {
-			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs())
+			ps, err = project.LoadAllByGroupIDs(ctx, api.mustDB(), api.Cache, getAPIConsumer(ctx).GetGroupIDs(), project.LoadOptions.WithKeys)
 		}
 		if err != nil {
 			return err
