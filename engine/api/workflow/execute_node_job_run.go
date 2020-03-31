@@ -350,7 +350,7 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Proj
 		})
 		secrets = append(secrets, sdk.Variable{
 			Name:  "cds.key." + k.Name + ".priv",
-			Type:  k.Type,
+			Type:  string(k.Type),
 			Value: k.Private,
 		})
 	}
@@ -371,7 +371,7 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Proj
 
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
-				Type:  k.Type,
+				Type:  string(k.Type),
 				Value: k.Private,
 			})
 		}
@@ -391,7 +391,7 @@ func LoadNodeJobRunKeys(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Proj
 			})
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
-				Type:  k.Type,
+				Type:  string(k.Type),
 				Value: k.Private,
 			})
 		}

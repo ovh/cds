@@ -305,7 +305,7 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 			}
 			// The key is unknown, we have to create a new one
 			app.VCSPGPKey = defaultPGPKey
-			app.Keys[app.VCSPGPKey] = exportentities.KeyValue{Type: sdk.KeyTypePGP}
+			app.Keys[app.VCSPGPKey] = exportentities.KeyValue{Type: string(sdk.KeyTypePGP)}
 
 			fmt.Printf(" * using PGP Key %s/%s for application VCS settings", cli.Magenta(proj.Key), cli.Magenta(app.VCSPGPKey))
 			fmt.Println()
@@ -322,7 +322,7 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 					app.VCSPGPKey = opts[selected]
 				} else {
 					app.VCSPGPKey = fmt.Sprintf("app-pgp-%s", repoManagerName)
-					app.Keys[app.VCSPGPKey] = exportentities.KeyValue{Type: sdk.KeyTypePGP}
+					app.Keys[app.VCSPGPKey] = exportentities.KeyValue{Type: string(sdk.KeyTypePGP)}
 				}
 			} else if len(projectPGPKeys) == 1 {
 				app.VCSPGPKey = projectPGPKeys[0].Name
@@ -344,7 +344,7 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 				}
 
 				app.VCSSSHKey = defaultSSHKey
-				app.Keys[app.VCSSSHKey] = exportentities.KeyValue{Type: sdk.KeyTypeSSH}
+				app.Keys[app.VCSSSHKey] = exportentities.KeyValue{Type: string(sdk.KeyTypeSSH)}
 
 				fmt.Printf(" * using SSH Key %s/%s for application VCS settings", cli.Magenta(proj.Key), cli.Magenta(app.VCSSSHKey))
 				fmt.Println()
@@ -362,7 +362,7 @@ func craftApplicationFile(proj *sdk.Project, existingApp *sdk.Application, fetch
 						app.VCSSSHKey = opts[selected]
 					} else {
 						app.VCSSSHKey = fmt.Sprintf("app-ssh-%s", repoManagerName)
-						app.Keys[app.VCSSSHKey] = exportentities.KeyValue{Type: sdk.KeyTypePGP}
+						app.Keys[app.VCSSSHKey] = exportentities.KeyValue{Type: string(sdk.KeyTypePGP)}
 					}
 				} else if len(projectSSHKeys) == 1 {
 					app.VCSSSHKey = projectSSHKeys[0].Name

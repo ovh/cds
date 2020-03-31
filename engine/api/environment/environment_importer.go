@@ -53,7 +53,7 @@ func Import(db gorp.SqlExecutor, proj sdk.Project, env *sdk.Environment, msgChan
 			return sdk.WrapError(err, "Unable to insert key %s", k.Name)
 		}
 		if msgChan != nil {
-			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentKeyCreated, strings.ToUpper(k.Type), k.Name, env.Name)
+			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentKeyCreated, strings.ToUpper(string(k.Type)), k.Name, env.Name)
 		}
 	}
 

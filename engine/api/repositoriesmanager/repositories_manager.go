@@ -85,6 +85,51 @@ func GetProjectVCSServer(p sdk.Project, name string) *sdk.ProjectVCSServer {
 	return nil
 }
 
+type Options struct {
+	Sync bool
+}
+
+func GetReposForProjectVCSServer(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, vcsServerName string, opts Options) ([]sdk.VCSRepo, error) {
+	log.Debug("GetReposForProjectVCSServer> Loading repo for %s", vcsServerName)
+
+	vcsServer := GetProjectVCSServer(proj, vcsServerName)
+	if vcsServer == nil {
+		return nil, sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client got %s %s", proj.Key, vcsServerName)
+	}
+
+	log.Debug("GetReposForProjectVCSServer> Loading repo for %s; ok", vcsServer.Name)
+
+	client, err := AuthorizedClient(ctx, db, store, proj.Key, vcsServer)
+	if err != nil {
+		return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
+			"cannot get client got %s %s", proj.Key, vcsServer.Name))
+	}
+
+	cacheKey := cache.Key("reposmanager", "repos", proj.Key, vcsServer.Name)
+	if opts.Sync {
+		if err := store.Delete(cacheKey); err != nil {
+			log.Error(ctx, "GetReposForProjectVCSServer> error on delete cache key %v: %s", cacheKey, err)
+		}
+	}
+
+	var repos []sdk.VCSRepo
+	find, err := store.Get(cacheKey, &repos)
+	if err != nil {
+		log.Error(ctx, "GetReposForProjectVCSServer> cannot get from cache %s: %v", cacheKey, err)
+	}
+	if !find || len(repos) == 0 {
+		repos, err = client.Repos(ctx)
+		if err != nil {
+			return nil, sdk.WrapError(err, "cannot get repos")
+		}
+		if err := store.SetWithTTL(cacheKey, repos, 0); err != nil {
+			log.Error(ctx, "GetReposForProjectVCSServer> cannot SetWithTTL: %s: %v", cacheKey, err)
+		}
+	}
+
+	return repos, nil
+}
+
 // NewVCSServerConsumer returns a sdk.VCSServer wrapping vcs µServices calls
 func NewVCSServerConsumer(dbFunc func(ctx context.Context) *gorp.DbMap, store cache.Store, name string) (sdk.VCSServer, error) {
 	return &vcsConsumer{name: name, dbFunc: dbFunc}, nil
