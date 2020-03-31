@@ -19,7 +19,7 @@
                 <ng-container
                         *ngIf="workflow && (workflow.from_repository || (workflow.as_code_events && workflow.as_code_events.length > 0))">
                     <app-ascode-event [events]="workflow.as_code_events" [repo]="workflow.from_repository"
-                                      [appName]="workflow.applications[workflow.workflow_data.node.context.application_id].name"
+                                      [appName]="workflow.applications[workflow.workflow_data.node.context.application_id]?.name"
                                       [project]="project"></app-ascode-event>
                 </ng-container>
                 <ng-container
