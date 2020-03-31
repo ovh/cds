@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
@@ -316,24 +315,11 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
 		}
 		if pushOptions.FromRepository != "" {
-			var repoPath string
-		loopVCSServer:
-			for _, vcs := range proj.VCSServers {
-				repos, err := repositoriesmanager.GetReposForProjectVCSServer(ctx, api.mustDB(), api.Cache, *proj, vcs.Name, repositoriesmanager.Options{})
-				if err != nil {
-					return err
-				}
-				for _, r := range repos {
-					path := fmt.Sprintf("%s/%s", vcs.Name, r.Fullname)
-					if pushOptions.FromRepository == r.HTTPCloneURL || pushOptions.FromRepository == r.SSHCloneURL {
-						repoPath = path
-						break loopVCSServer
-					}
-				}
+			mod, err := workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(ctx, api.mustDB(), api.Cache, *proj, pushOptions.FromRepository)
+			if err != nil {
+				return err
 			}
-			if repoPath != "" {
-				mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(repoPath))
-			}
+			mods = append(mods, mod)
 		}
 		wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *proj, &data, mods...)
 		if err != nil {

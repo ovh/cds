@@ -381,7 +381,9 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
 		}
 
-		var mods []workflowtemplate.TemplateRequestModifierFunc
+		mods := []workflowtemplate.TemplateRequestModifierFunc{
+			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
+		}
 		if req.Detached {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.Detached)
 		}
@@ -539,7 +541,10 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						},
 					}
 
-					wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data)
+					mods := []workflowtemplate.TemplateRequestModifierFunc{
+						workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
+					}
+					wti, err := workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), *consumer, *p, &data, mods...)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error(ctx, "%v", errD)
