@@ -1217,6 +1217,7 @@ export class WorkflowState {
             ...state,
             workflowRun: null,
             workflowNodeRun: null,
+            node: null,
             canEdit: state.workflow.permissions.writable,
             sidebar: WorkflowSidebarMode.RUNS
         });
