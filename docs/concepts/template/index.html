@@ -527,6 +527,7 @@ A template contains a workflow, pipelines, applications, environments in yaml fo
 <li><a href="#bulk-apply-a-template">Bulk apply a template</a></li>
 <li><a href="#import-create-export">Import/Create/Export</a></li>
 <li><a href="#delete-change-template-group">Delete/Change template group</a></li>
+<li><a href="#template-and-workflow-ascode">Template and workflow ascode</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -574,6 +575,23 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
 <pre><code class="language-sh">cdsctl template bulk
 </code></pre>
 
+<p>You can also use a file to list all test instances that you want to generate and the values for all the required parameters.</p>
+
+<pre><code class="language-yaml">template_path: shared.infra/example-simple                                                          
+instances:                                                                                          
+- workflow_path: DEMO/demo1                                                                         
+  parameters:                                                                                       
+  - withDeploy=true                                                                                 
+  - deployWhen=success                                                                              
+- workflow_path: DEMO/demo2                                                                         
+  parameters:                                                                                       
+  - withDeploy=false                                                                                
+  - data=[&quot;one&quot;, &quot;two&quot;] 
+</code></pre>
+
+<pre><code class="language-sh">cdsctl template bulk -f instances.yml
+</code></pre>
+
 <p><asciinema-player src="https://ovh.github.io/cds/images/workflow_template_bulk.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player></p>
 
 <p><img src="https://ovh.github.io/cds/images/workflow_template_bulk_ui.gif" alt="Bulk" /></p>
@@ -594,6 +612,26 @@ cdsctl template pull shared.infra/my-template --output-dir ./my-template
 
 <p>When removing a template, all info about the template and its instances are removed but all generated stuff will not be deleted.
 With the CDS UI you can change the template name or group, this will not affect template instances or generated workflow but no group members will be able to re-apply the template anymore.</p>
+
+<h2 id="template-and-workflow-ascode">Template and workflow ascode</h2>
+
+<p>You can both use a template and a workflow ascode. When using a template your repository will only contains one yaml file with the name of the template that you want to use and the values for all the required template parameters.
+You can create this file manually or directly with the CDS command line.</p>
+
+<pre><code class="language-yaml">name: demo
+from: shared.infra/example-with-repository@1
+parameters:
+  deployWhen: manual
+  repo: gitlab/richardlt/demo
+  ssh_key_name: proj-ssh-key
+  withDeploy: &quot;true&quot;
+</code></pre>
+
+<p><asciinema-player src="https://ovh.github.io/cds/images/workflow_template_apply_ascode.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player></p>
+
+<p>You can ask for a specific revision of the template or remove the version number to always get the its latest version.
+This means that you can use different template versions for different branches of your repository.
+Also you can change the template reference to use another template on a specific branch.</p>
 
 
 
