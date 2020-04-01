@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -197,4 +199,53 @@ func RegisterCommonMetricsView(ctx context.Context) {
 			}
 		})
 	})
+}
+
+func writeJSON(w http.ResponseWriter, i interface{}, statusCode int) error {
+	btes, _ := json.Marshal(i)
+	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(btes)))
+	w.WriteHeader(statusCode)
+	_, err := w.Write(btes)
+	return sdk.WithStack(err)
+}
+
+func GetMetricHandler(exporter *observability.HTTPExporter, prefix string) func() Handler {
+	return func() Handler {
+		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			view := strings.TrimPrefix(r.URL.Path, prefix)
+			formValues := r.URL.Query()
+			tags := make(map[string]string)
+			threshold := formValues.Get("threshold")
+			for k := range formValues {
+				if k != "threshold" {
+					tags[k] = formValues.Get(k)
+				}
+			}
+			log.Debug("GetMetricHandler> path: %s - tags: %v", view, tags)
+
+			if view == "" {
+				return writeJSON(w, exporter, http.StatusOK)
+			}
+
+			metricsView := exporter.GetView(view, tags)
+			if metricsView == nil {
+				return sdk.WithStack(sdk.ErrNotFound)
+			}
+
+			statusCode := http.StatusOK
+			if threshold != "" {
+				thresholdF, err := strconv.ParseFloat(threshold, 64)
+				if err != nil {
+					return sdk.WithStack(sdk.ErrWrongRequest)
+				}
+				if metricsView.Value >= thresholdF {
+					log.Error(context.Background(), "GetMetricHandler> %s threshold (%s) reached or exceeded : %v", metricsView.Name, threshold, metricsView.Value)
+					statusCode = 509 // Bandwidth Limit Exceeded
+				}
+			}
+
+			return writeJSON(w, metricsView, statusCode)
+		}
+	}
 }

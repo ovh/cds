@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -136,6 +137,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/db/migrate", ScopeNone(), r.GET(api.getMonDBStatusMigrateHandler, NeedAdmin(true)))
 	r.Handle("/mon/metrics", ScopeNone(), r.GET(service.GetPrometheustMetricsHandler(api), Auth(false)))
 	r.Handle("/mon/metrics/all", ScopeNone(), r.GET(service.GetMetricsHandler, Auth(false)))
+	r.HandlePrefix("/mon/metrics/detail/", ScopeNone(), r.GET(service.GetMetricHandler(observability.StatsHTTPExporter(), "/mon/metrics/detail/"), Auth(false)))
 	r.Handle("/mon/errors/{uuid}", ScopeNone(), r.GET(api.getErrorHandler, NeedAdmin(true)))
 	r.Handle("/mon/panic/{uuid}", ScopeNone(), r.GET(api.getPanicDumpHandler, Auth(false)))
 
